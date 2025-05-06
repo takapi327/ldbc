@@ -34,7 +34,7 @@ trait DateTime:
    *   The interval to be added to the column.
    */
   def DATE_ADD[A <: LocalDate | Option[LocalDate]](column: Column[A], interval: DateTime.Interval[Int]): Column[A] =
-    Column(s"DATE_ADD(${ column.name }, ${ interval.statement })")(using column.decoder, column.encoder)
+    Column.function(s"DATE_ADD(${ column.name }, ${ interval.statement })")(using column.decoder, column.encoder)
 
   /**
    * Function to perform addition on a specified date type column.
@@ -53,7 +53,7 @@ trait DateTime:
     Decoder[LocalDate],
     Encoder[LocalDate]
   ): Column[LocalDate] =
-    Column(s"DATE_ADD('${ date.toString }', ${ interval.statement })")
+    Column.function(s"DATE_ADD('${ date.toString }', ${ interval.statement })")
 
   /**
    * Function to perform subtraction on a given date type column.
@@ -69,7 +69,7 @@ trait DateTime:
    *   The interval to be subtraction to the column.
    */
   def DATE_SUB[A <: LocalDate | Option[LocalDate]](column: Column[A], interval: DateTime.Interval[Int]): Column[A] =
-    Column(s"DATE_SUB(${ column.name }, ${ interval.statement })")(using column.decoder, column.encoder)
+    Column.function(s"DATE_SUB(${ column.name }, ${ interval.statement })")(using column.decoder, column.encoder)
 
   /**
    * Function to perform subtraction on a given date.
@@ -88,7 +88,7 @@ trait DateTime:
     Decoder[LocalDate],
     Encoder[LocalDate]
   ): Column[LocalDate] =
-    Column(s"DATE_SUB('${ date.toString }', ${ interval.statement })")
+    Column.function(s"DATE_SUB('${ date.toString }', ${ interval.statement })")
 
   /**
    * Function to perform addition on a specified date type column.
@@ -110,7 +110,7 @@ trait DateTime:
     column: Column[A],
     time:   LocalTime
   ): Column[A] =
-    Column(s"ADDTIME(${ column.name }, '${ time.toString }')")(using column.decoder, column.encoder)
+    Column.function(s"ADDTIME(${ column.name }, '${ time.toString }')")(using column.decoder, column.encoder)
 
   /**
    * Function to perform addition on a specified date type column.
@@ -129,7 +129,7 @@ trait DateTime:
     dateTime: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime,
     time:     LocalTime
   ): Column[LocalTime] =
-    Column(s"ADDTIME('${ dateTime.toString }', '${ time.toString }')")
+    Column.function(s"ADDTIME('${ dateTime.toString }', '${ time.toString }')")
 
   /**
    * Function to convert a date-time value dt from the time zone specified by from_tz to the time zone specified by to_tz.
@@ -153,7 +153,7 @@ trait DateTime:
     from:   LocalTime,
     to:     LocalTime
   ): Column[A] =
-    Column(
+    Column.function(
       s"CONVERT_TZ(${ column.name }, '+${ from.getHour }:${ from.getMinute }', '+${ to.getHour }:${ to.getMinute }')"
     )(using column.decoder, column.encoder)
 
@@ -177,7 +177,7 @@ trait DateTime:
     from:     LocalTime,
     to:       LocalTime
   ): Column[LocalDateTime] =
-    Column(
+    Column.function(
       s"CONVERT_TZ('${ dateTime.toString }', '+${ from.getHour }:${ from.getMinute }', '+${ to.getHour }:${ to.getMinute }')"
     )
 
@@ -189,7 +189,7 @@ trait DateTime:
    *   // SELECT CURDATE() FROM date_time
    * }}}
    */
-  def CURDATE(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] = Column("CURDATE()")
+  def CURDATE(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] = Column.function("CURDATE()")
 
   /**
    * Function to return the current time in 'hh:mm:ss' format.
@@ -199,7 +199,7 @@ trait DateTime:
    *   // SELECT CURTIME() FROM date_time
    * }}}
    */
-  def CURTIME(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] = Column("CURTIME()")
+  def CURTIME(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] = Column.function("CURTIME()")
 
   /**
    * Function to extract the date portion of a date or date-time expression.
@@ -216,7 +216,7 @@ trait DateTime:
     A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime |
       Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]
   ](column: Column[A])(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] =
-    Column(s"DATE(${ column.name })")
+    Column.function(s"DATE(${ column.name })")
 
   /**
    * Function to extract the date portion of a date or date-time expression.
@@ -229,7 +229,7 @@ trait DateTime:
    *   The date or date-time expression from which the date portion is to be extracted.
    */
   def DATE(date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime): Column[LocalDate] =
-    Column(s"DATE('${ date.toString }')")
+    Column.function(s"DATE('${ date.toString }')")
 
   /**
    * Function to format a date value according to the format string.
@@ -252,7 +252,7 @@ trait DateTime:
     column: Column[A],
     format: String
   )(using Decoder[String], Encoder[String]): Column[String] =
-    Column(s"DATE_FORMAT(${ column.name }, '$format')")
+    Column.function(s"DATE_FORMAT(${ column.name }, '$format')")
 
   /**
    * Function to format a date value according to the format string.
@@ -268,7 +268,7 @@ trait DateTime:
    *   The format string.
    */
   def DATE_FORMAT(date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime, format: String): Column[String] =
-    Column(s"DATE_FORMAT('${ date.toString }', '$format')")
+    Column.function(s"DATE_FORMAT('${ date.toString }', '$format')")
 
   /**
    * Function to calculate the value of the number of days from one date to another.
@@ -292,7 +292,7 @@ trait DateTime:
     from: Column[A],
     to:   Column[B]
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
-    Column(s"DATEDIFF(${ from.name }, ${ to.name })")
+    Column.function(s"DATEDIFF(${ from.name }, ${ to.name })")
 
   /**
    * Function to calculate the value of the number of days from one date to another.
@@ -314,7 +314,7 @@ trait DateTime:
     from: Column[A],
     to:   LocalDate
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
-    Column(s"DATEDIFF(${ from.name }, '${ to.toString }')")
+    Column.function(s"DATEDIFF(${ from.name }, '${ to.toString }')")
 
   /**
    * Function to calculate the value of the number of days from one date to another.
@@ -333,7 +333,7 @@ trait DateTime:
     from: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime,
     to:   LocalDate
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
-    Column(s"DATEDIFF('${ from.toString }', '${ to.toString }')")
+    Column.function(s"DATEDIFF('${ from.toString }', '${ to.toString }')")
 
   /**
    * A function that returns the name of the day of the week corresponding to date.
@@ -354,7 +354,7 @@ trait DateTime:
   ](
     column: Column[A]
   )(using Decoder[String], Encoder[String]): Column[String] =
-    Column(s"DAYNAME(${ column.name })")
+    Column.function(s"DAYNAME(${ column.name })")
 
   /**
    * A function that returns the name of the day of the week corresponding to date.
@@ -373,7 +373,7 @@ trait DateTime:
   def DAYNAME(
     date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime
   )(using Decoder[String], Encoder[String]): Column[String] =
-    Column(s"DAYNAME('${ date.toString }')")
+    Column.function(s"DAYNAME('${ date.toString }')")
 
   /**
    * A function that returns the day of the month for date, in the range 1 to 31, or 0 for dates such as '0000-00-00' or '2008-00-00' that have a zero day part.
@@ -392,7 +392,7 @@ trait DateTime:
   ](
     column: Column[A]
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
-    Column(s"DAYOFMONTH(${ column.name })")
+    Column.function(s"DAYOFMONTH(${ column.name })")
 
   /**
    * A function that returns the day of the month for date, in the range 1 to 31, or 0 for dates such as '0000-00-00' or '2008-00-00' that have a zero day part.
@@ -408,7 +408,7 @@ trait DateTime:
   def DAYOFMONTH(
     date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
-    Column(s"DAYOFMONTH('${ date.toString }')")
+    Column.function(s"DAYOFMONTH('${ date.toString }')")
 
   /**
    * A function that returns the day of the week for date, in the range 1 to 7, where 1 represents Sunday.
@@ -428,7 +428,7 @@ trait DateTime:
   ](
     column: Column[A]
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
-    Column(s"DAYOFWEEK(${ column.name })")
+    Column.function(s"DAYOFWEEK(${ column.name })")
 
   /**
    * A function that returns the day of the week for date, in the range 1 to 7, where 1 represents Sunday.
@@ -445,7 +445,7 @@ trait DateTime:
   def DAYOFWEEK(
     date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
-    Column(s"DAYOFWEEK('${ date.toString }')")
+    Column.function(s"DAYOFWEEK('${ date.toString }')")
 
   /**
    * A function that returns the day of the year for date, in the range 1 to 366.
@@ -465,7 +465,7 @@ trait DateTime:
   ](
     column: Column[A]
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
-    Column(s"DAYOFYEAR(${ column.name })")
+    Column.function(s"DAYOFYEAR(${ column.name })")
 
   /**
    * A function that returns the day of the year for date, in the range 1 to 366.
@@ -482,7 +482,7 @@ trait DateTime:
   def DAYOFYEAR(
     date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
-    Column(s"DAYOFYEAR('${ date.toString }')")
+    Column.function(s"DAYOFYEAR('${ date.toString }')")
 
   /**
    * A function that returns the time part of the expression expr as a time value.
@@ -503,7 +503,7 @@ trait DateTime:
     column:   Column[A],
     timeUnit: DateTime.TimeUnit
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
-    Column(s"EXTRACT(${ timeUnit.toString } FROM ${ column.name })")
+    Column.function(s"EXTRACT(${ timeUnit.toString } FROM ${ column.name })")
 
   /**
    * A function that returns the time part of the expression expr as a time value.
@@ -521,7 +521,7 @@ trait DateTime:
     date:     LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime,
     timeUnit: DateTime.TimeUnit
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
-    Column(s"EXTRACT(${ timeUnit.toString } FROM '${ date.toString.replaceAll("T", " ") }')")
+    Column.function(s"EXTRACT(${ timeUnit.toString } FROM '${ date.toString.replaceAll("T", " ") }')")
 
   /**
    * Function to convert a day value to a date.
@@ -541,7 +541,7 @@ trait DateTime:
   def FROM_DAYS[A <: Int | Long | Option[Int | Long]](
     column: Column[A]
   )(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] =
-    Column(s"FROM_DAYS(${ column.name })")
+    Column.function(s"FROM_DAYS(${ column.name })")
 
   /**
    * Function to convert a day value to a date.
@@ -561,7 +561,7 @@ trait DateTime:
   def FROM_DAYS[A <: Int | Long | Option[Int | Long]](
     days: A
   )(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] =
-    Column(s"FROM_DAYS($days)")
+    Column.function(s"FROM_DAYS($days)")
 
   /**
    * Function to generate a UTC date in YYYYY-MM-DD hh:mm:ss format from a number.
@@ -577,7 +577,7 @@ trait DateTime:
   def FROM_UNIXTIME[A <: Int | Long | Option[Int | Long]](
     column: Column[A]
   )(using Decoder[LocalDateTime], Encoder[LocalDateTime]): Column[LocalDateTime] =
-    Column(s"FROM_UNIXTIME(${ column.name })")
+    Column.function(s"FROM_UNIXTIME(${ column.name })")
 
   /**
    * Function to generate a UTC date in YYYYY-MM-DD hh:mm:ss format from a number.
@@ -591,7 +591,7 @@ trait DateTime:
    *   The number from which to extract the date.
    */
   def FROM_UNIXTIME(timestamp: Int | Long)(using Decoder[String], Encoder[String]): Column[String] =
-    Column(s"FROM_UNIXTIME($timestamp)")
+    Column.function(s"FROM_UNIXTIME($timestamp)")
 
   /**
    * Function for extracting time-only values from date types.
@@ -611,7 +611,7 @@ trait DateTime:
   ](
     column: Column[A]
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
-    Column(s"HOUR(${ column.name })")
+    Column.function(s"HOUR(${ column.name })")
 
   /**
    * Function for extracting time-only values from date types.
@@ -627,7 +627,7 @@ trait DateTime:
   def HOUR(
     date: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
-    Column(s"HOUR('${ date.toString.replaceAll("T", " ") }')")
+    Column.function(s"HOUR('${ date.toString.replaceAll("T", " ") }')")
 
   /**
    * Function that returns the value corresponding to the last day of the month from a date or date-time value.
@@ -646,7 +646,7 @@ trait DateTime:
   ](
     column: Column[A]
   )(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] =
-    Column(s"LAST_DAY(${ column.name })")
+    Column.function(s"LAST_DAY(${ column.name })")
 
   /**
    * Function that returns the value corresponding to the last day of the month from a date or date-time value.
@@ -662,7 +662,7 @@ trait DateTime:
   def LAST_DAY(
     date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime
   )(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] =
-    Column(s"LAST_DAY('${ date.toString }')")
+    Column.function(s"LAST_DAY('${ date.toString }')")
 
   /**
    * Function to return a date calculated from a given year and annual total.
@@ -683,7 +683,7 @@ trait DateTime:
     day:    Int
   )(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] =
     require(day > 0, "The annual total must be greater than 0.")
-    Column(s"MAKEDATE(${ column.name }, $day)")
+    Column.function(s"MAKEDATE(${ column.name }, $day)")
 
   /**
    * Function to return a date calculated from a given year and annual total.
@@ -701,7 +701,7 @@ trait DateTime:
    */
   def MAKEDATE(year: Int | Year, day: Int)(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] =
     require(day > 0, "The annual total must be greater than 0.")
-    Column(s"MAKEDATE($year, $day)")
+    Column.function(s"MAKEDATE($year, $day)")
 
   /**
    * Function to return a time value calculated from the given hour, minute, and second.
@@ -728,7 +728,7 @@ trait DateTime:
     minute: Column[B],
     second: Column[C]
   )(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
-    Column(s"MAKETIME(${ hour.name }, ${ minute.name }, ${ second.name })")
+    Column.function(s"MAKETIME(${ hour.name }, ${ minute.name }, ${ second.name })")
 
   /**
    * Function to return a time value calculated from the given hour, minute, and second.
@@ -751,7 +751,7 @@ trait DateTime:
     minute: Int | Long,
     second: Int | Long
   )(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
-    Column(s"MAKETIME($hour, $minute, $second)")
+    Column.function(s"MAKETIME($hour, $minute, $second)")
 
   /**
    * Function that returns microseconds from a time or date-time expression as a number in the range 0 to 999999.
@@ -769,7 +769,7 @@ trait DateTime:
   ](
     column: Column[A]
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
-    Column(s"MICROSECOND(${ column.name })")
+    Column.function(s"MICROSECOND(${ column.name })")
 
   /**
    * Function that returns microseconds from a time or date-time expression as a number in the range 0 to 999999.
@@ -785,7 +785,7 @@ trait DateTime:
   def MICROSECOND(
     datetime: LocalDateTime | OffsetDateTime | ZonedDateTime
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
-    Column(s"MICROSECOND('${ datetime.toString.replaceAll("T", " ") }')")
+    Column.function(s"MICROSECOND('${ datetime.toString.replaceAll("T", " ") }')")
 
   /**
    * Function that returns the minute part of a date or date-time expression.
@@ -805,7 +805,7 @@ trait DateTime:
   ](
     column: Column[A]
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
-    Column(s"MINUTE(${ column.name })")
+    Column.function(s"MINUTE(${ column.name })")
 
   /**
    * Function that returns the minute part of a date or date-time expression.
@@ -822,7 +822,7 @@ trait DateTime:
   def MINUTE(
     time: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
-    Column(s"MINUTE('${ time.toString.replaceAll("T", " ") }')")
+    Column.function(s"MINUTE('${ time.toString.replaceAll("T", " ") }')")
 
   /**
    * Function that returns the month part of a date or date-time expression.
@@ -842,7 +842,7 @@ trait DateTime:
   ](
     column: Column[A]
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
-    Column(s"MONTH(${ column.name })")
+    Column.function(s"MONTH(${ column.name })")
 
   /**
    * Function that returns the month part of a date or date-time expression.
@@ -859,7 +859,7 @@ trait DateTime:
   def MONTH(
     date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
-    Column(s"MONTH('${ date.toString.replaceAll("T", " ") }')")
+    Column.function(s"MONTH('${ date.toString.replaceAll("T", " ") }')")
 
   /**
    * Function to return the full name of the month corresponding to a value of type Date.
@@ -881,7 +881,7 @@ trait DateTime:
   ](
     column: Column[A]
   )(using Decoder[String], Encoder[String]): Column[String] =
-    Column(s"MONTHNAME(${ column.name })")
+    Column.function(s"MONTHNAME(${ column.name })")
 
   /**
    * Function to return the full name of the month corresponding to a value of type Date.
@@ -900,7 +900,7 @@ trait DateTime:
   def MONTHNAME(
     date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime
   )(using Decoder[String], Encoder[String]): Column[String] =
-    Column(s"MONTHNAME('${ date.toString }')")
+    Column.function(s"MONTHNAME('${ date.toString }')")
 
   /**
    * Function to return the current date and time in 'YYYY-MM-DD hh:mm:ss' format.
@@ -910,7 +910,7 @@ trait DateTime:
    *   // SELECT NOW() FROM date_time
    * }}}
    */
-  def NOW()(using Decoder[LocalDateTime], Encoder[LocalDateTime]): Column[LocalDateTime] = Column("NOW()")
+  def NOW()(using Decoder[LocalDateTime], Encoder[LocalDateTime]): Column[LocalDateTime] = Column.function("NOW()")
 
   /**
    * Function to add the specified month to the yyyyMM value.
@@ -927,7 +927,7 @@ trait DateTime:
     } { yearMonth =>
       yearMonth.format(formatter)
     }
-    Column(s"PERIOD_ADD(${ period.format(formatter) }, $months)")
+    Column.function(s"PERIOD_ADD(${ period.format(formatter) }, $months)")
 
   /**
    * Function to return the quarter corresponding to date in the range 1 to 4.
@@ -946,7 +946,7 @@ trait DateTime:
   ](
     column: Column[A]
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
-    Column(s"QUARTER(${ column.name })")
+    Column.function(s"QUARTER(${ column.name })")
 
   /**
    * Function to return the quarter corresponding to date in the range 1 to 4.
@@ -962,7 +962,7 @@ trait DateTime:
   def QUARTER(
     date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
-    Column(s"QUARTER('${ date.toString }')")
+    Column.function(s"QUARTER('${ date.toString }')")
 
   /**
    * Function to convert TIME values to hh:mm:ss format.
@@ -977,7 +977,7 @@ trait DateTime:
    */
   def SEC_TO_TIME[A <: Long | Int | Option[Long | Int]](column: Column[A]): Column[LocalTime] =
     given Codec[LocalTime] = Codec[Int].imap(LocalTime.ofSecondOfDay(_))(_.toSecondOfDay)
-    Column(s"SEC_TO_TIME(${ column.name })")
+    Column.function(s"SEC_TO_TIME(${ column.name })")
 
   /**
    * Function to convert TIME values to hh:mm:ss format.
@@ -991,7 +991,7 @@ trait DateTime:
    */
   def SEC_TO_TIME(seconds: Long): Column[LocalTime] =
     given Codec[LocalTime] = Codec[Int].imap(LocalTime.ofSecondOfDay(_))(_.toSecondOfDay)
-    Column(s"SEC_TO_TIME($seconds)")
+    Column.function(s"SEC_TO_TIME($seconds)")
 
   /**
    * Function to return the second part of a date or date-time expression.
@@ -1010,7 +1010,7 @@ trait DateTime:
   ](
     column: Column[A]
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
-    Column(s"SECOND(${ column.name })")
+    Column.function(s"SECOND(${ column.name })")
 
   /**
    * Function to return the second part of a date or date-time expression.
@@ -1026,7 +1026,7 @@ trait DateTime:
   def SECOND(
     time: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
-    Column(s"SECOND('${ time.toString.replaceAll("T", " ") }')")
+    Column.function(s"SECOND('${ time.toString.replaceAll("T", " ") }')")
 
   /**
    * Function to calculate the difference time from a date/time or time type value.
@@ -1049,7 +1049,7 @@ trait DateTime:
     time:     Column[A],
     interval: Column[B]
   )(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
-    Column(s"SUBTIME(${ time.name }, ${ interval.name })")
+    Column.function(s"SUBTIME(${ time.name }, ${ interval.name })")
 
   /**
    * Function to calculate the difference time from a date/time or time type value.
@@ -1068,7 +1068,7 @@ trait DateTime:
     time:     LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime,
     interval: LocalTime
   )(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
-    Column(s"SUBTIME('${ time.toString.replaceAll("T", " ") }', '${ interval.toString }')")
+    Column.function(s"SUBTIME('${ time.toString.replaceAll("T", " ") }', '${ interval.toString }')")
 
   /**
    * Function to return the current date and time in 'YYYY-MM-DD hh:mm:ss' format.
@@ -1078,7 +1078,7 @@ trait DateTime:
    *   // SELECT SYSDATE() FROM date_time
    * }}}
    */
-  def SYSDATE()(using Decoder[LocalDateTime], Encoder[LocalDateTime]): Column[LocalDateTime] = Column("SYSDATE()")
+  def SYSDATE()(using Decoder[LocalDateTime], Encoder[LocalDateTime]): Column[LocalDateTime] = Column.function("SYSDATE()")
 
   /**
    * Function to extract only the time portion from a time or date-time expression value.
@@ -1095,7 +1095,7 @@ trait DateTime:
     A <: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime |
       Option[LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime]
   ](column: Column[A])(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
-    Column(s"TIME(${ column.name })")
+    Column.function(s"TIME(${ column.name })")
 
   /**
    * Function to extract only the time portion from a time or date-time expression value.
@@ -1110,7 +1110,7 @@ trait DateTime:
   def TIME(
     time: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime
   )(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
-    Column(s"TIME('${ time.toString.replaceAll("T", " ") }')")
+    Column.function(s"TIME('${ time.toString.replaceAll("T", " ") }')")
 
   /**
    * Function to convert the time portion from a date type value to seconds.
@@ -1127,7 +1127,7 @@ trait DateTime:
     A <: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime |
       Option[LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime]
   ](column: Column[A])(using Decoder[Long], Encoder[Long]): Column[Long] =
-    Column(s"TIME_TO_SEC(${ column.name })")
+    Column.function(s"TIME_TO_SEC(${ column.name })")
 
   /**
    * Function to convert the time portion from a date type value to seconds.
@@ -1143,7 +1143,7 @@ trait DateTime:
   def TIME_TO_SEC(
     time: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime
   )(using Decoder[Long], Encoder[Long]): Column[Long] =
-    Column(s"TIME_TO_SEC('${ time.toString.replaceAll("T", " ") }')")
+    Column.function(s"TIME_TO_SEC('${ time.toString.replaceAll("T", " ") }')")
 
   /**
    * A function that calculates the difference of the time portion from a date/time type value and returns the result as a time type.
@@ -1164,7 +1164,7 @@ trait DateTime:
     start: Column[A],
     end:   Column[A]
   )(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
-    Column(s"TIMEDIFF(${ start.name }, ${ end.name })")
+    Column.function(s"TIMEDIFF(${ start.name }, ${ end.name })")
 
   /**
    * A function that calculates the difference of the time portion from a date/time type value and returns the result as a time type.
@@ -1185,7 +1185,7 @@ trait DateTime:
     start: Column[A],
     end:   LocalDateTime | OffsetDateTime | ZonedDateTime
   )(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
-    Column(s"TIMEDIFF(${ start.name }, '${ end.toString.replaceAll("T", " ") }')")
+    Column.function(s"TIMEDIFF(${ start.name }, '${ end.toString.replaceAll("T", " ") }')")
 
   /**
    * A function that calculates the difference of the time portion from a date/time type value and returns the result as a time type.
@@ -1204,7 +1204,7 @@ trait DateTime:
     start: A,
     end:   A
   )(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
-    Column(s"TIMEDIFF('${ start.toString.replaceAll("T", " ") }', '${ end.toString.replaceAll("T", " ") }')")
+    Column.function(s"TIMEDIFF('${ start.toString.replaceAll("T", " ") }', '${ end.toString.replaceAll("T", " ") }')")
 
   /**
    * Function to return a date or date-time format value as a date-time value.
@@ -1220,7 +1220,7 @@ trait DateTime:
   def TIMESTAMP[A <: LocalDate | Option[LocalDate]](
     column: Column[A]
   )(using Decoder[Option[LocalDateTime]], Encoder[Option[LocalDateTime]]): Column[Option[LocalDateTime]] =
-    Column(s"TIMESTAMP(${ column.name })")
+    Column.function(s"TIMESTAMP(${ column.name })")
 
   /**
    * Function to return a date or date-time format value as a date-time value.
@@ -1236,7 +1236,7 @@ trait DateTime:
   def TIMESTAMP[A <: LocalDate](
     date: A
   )(using Decoder[Option[LocalDateTime]], Encoder[Option[LocalDateTime]]): Column[Option[LocalDateTime]] =
-    Column(s"TIMESTAMP('${ date.toString }')")
+    Column.function(s"TIMESTAMP('${ date.toString }')")
 
   /**
    * Function that adds the value of a time expression to the value of a date or date-time expression and returns the result as a date-time value.
@@ -1255,7 +1255,7 @@ trait DateTime:
     column1: Column[A],
     column2: Column[B]
   )(using Decoder[Option[LocalDateTime]], Encoder[Option[LocalDateTime]]): Column[Option[LocalDateTime]] =
-    Column(s"TIMESTAMP(${ column1.name }, ${ column2.name })")
+    Column.function(s"TIMESTAMP(${ column1.name }, ${ column2.name })")
 
 object DateTime:
 
