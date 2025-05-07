@@ -782,6 +782,17 @@ object Column extends TwiddleSyntax[Column]:
   def apply[A](name: String, alias: String)(using Decoder[A], Encoder[A]): Column[A] =
     Impl[A](name, s"$alias.`$name`")
 
+  /**
+   * Function to construct a function that is registered as reserved in MySQL.
+   * 
+   * @param name
+   *   Name of the function
+   * @tparam A
+   *   Type of the function
+   */
+  def function[A](name: String)(using decoder: Decoder[A], encoder: Encoder[A]): Column[A] =
+    Impl[A](s"$name", None, decoder, encoder)
+
   private[ldbc] case class Impl[A](
     name:    String,
     alias:   Option[String],
