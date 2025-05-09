@@ -16,7 +16,7 @@ ThisBuild / tlBaseVersion      := LdbcVersions.latest
 ThisBuild / tlFatalWarnings    := true
 ThisBuild / projectName        := "ldbc"
 ThisBuild / scalaVersion       := scala3
-ThisBuild / crossScalaVersions := Seq(scala3, scala36, "3.7.0")
+ThisBuild / crossScalaVersions := Seq(scala3, scala37)
 ThisBuild / githubWorkflowJavaVersions := Seq(
   JavaSpec.corretto(java11),
   JavaSpec.corretto(java17),
@@ -207,7 +207,7 @@ lazy val tests = crossProject(JVMPlatform)
   )
   .defaultSettings
   .settings(
-    crossScalaVersions := Seq(scala3, "3.7.0"),
+    crossScalaVersions := Seq(scala3, scala37),
     libraryDependencies ++= Seq(
       "org.typelevel" %% "munit-cats-effect" % "2.1.0" % Test,
       mysql            % Test
