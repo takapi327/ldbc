@@ -6,8 +6,16 @@
 
 package ldbc.core
 
-import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime, OffsetDateTime, OffsetTime, ZonedDateTime }
-import java.time.Year as JYear
+import java.time.{
+  Instant,
+  LocalDate,
+  LocalDateTime,
+  LocalTime,
+  OffsetDateTime,
+  OffsetTime,
+  Year as JYear,
+  ZonedDateTime
+}
 
 import scala.compiletime.{ erasedValue, error }
 
