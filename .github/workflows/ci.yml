@@ -28,7 +28,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-22.04]
-        scala: [3.3.5, 3.6.4]
+        scala: [3.3.5, 3.6.4, 3.7.0]
         java: [corretto@11, corretto@17, corretto@21]
         project: [ldbcJS, ldbcNative, ldbcJVM]
         exclude:
@@ -39,6 +39,10 @@ jobs:
           - scala: 3.6.4
             java: corretto@17
           - scala: 3.6.4
+            java: corretto@21
+          - scala: 3.7.0
+            java: corretto@17
+          - scala: 3.7.0
             java: corretto@21
           - project: ldbcNative
             java: corretto@17
@@ -262,6 +266,36 @@ jobs:
           tar xf targets.tar
           rm targets.tar
 
+      - name: Download target directories (3.7.0, ldbcJS)
+        uses: actions/download-artifact@v4
+        with:
+          name: target-${{ matrix.os }}-${{ matrix.java }}-3.7.0-ldbcJS
+
+      - name: Inflate target directories (3.7.0, ldbcJS)
+        run: |
+          tar xf targets.tar
+          rm targets.tar
+
+      - name: Download target directories (3.7.0, ldbcNative)
+        uses: actions/download-artifact@v4
+        with:
+          name: target-${{ matrix.os }}-${{ matrix.java }}-3.7.0-ldbcNative
+
+      - name: Inflate target directories (3.7.0, ldbcNative)
+        run: |
+          tar xf targets.tar
+          rm targets.tar
+
+      - name: Download target directories (3.7.0, ldbcJVM)
+        uses: actions/download-artifact@v4
+        with:
+          name: target-${{ matrix.os }}-${{ matrix.java }}-3.7.0-ldbcJVM
+
+      - name: Inflate target directories (3.7.0, ldbcJVM)
+        run: |
+          tar xf targets.tar
+          rm targets.tar
+
       - name: Import signing key
         if: env.PGP_SECRET != '' && env.PGP_PASSPHRASE == ''
         env:
@@ -345,7 +379,7 @@ jobs:
       - name: Submit Dependencies
         uses: scalacenter/sbt-dependency-submission@v2
         with:
-          modules-ignore: ldbcjs_3 ldbcjs_3 otel_3 mcp-ldbc-document-server_sjs1_3 docs_3 docs_3 tests_3 ldbcnative_3 ldbcnative_3 ldbcjvm_3 ldbcjvm_3 hikaricp_3 http4s_3 benchmark_3 benchmark_3
+          modules-ignore: ldbcjs_3 ldbcjs_3 ldbcjs_3 otel_3 mcp-ldbc-document-server_sjs1_3 docs_3 docs_3 docs_3 tests_3 tests_3 ldbcnative_3 ldbcnative_3 ldbcnative_3 ldbcjvm_3 ldbcjvm_3 ldbcjvm_3 hikaricp_3 http4s_3 benchmark_3 benchmark_3 benchmark_3
           configs-ignore: test scala-tool scala-doc-tool test-internal
 
   validate-steward:

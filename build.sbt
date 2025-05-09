@@ -16,7 +16,7 @@ ThisBuild / tlBaseVersion      := LdbcVersions.latest
 ThisBuild / tlFatalWarnings    := true
 ThisBuild / projectName        := "ldbc"
 ThisBuild / scalaVersion       := scala3
-ThisBuild / crossScalaVersions := Seq(scala3, scala36)
+ThisBuild / crossScalaVersions := Seq(scala3, scala36, "3.7.0")
 ThisBuild / githubWorkflowJavaVersions := Seq(
   JavaSpec.corretto(java11),
   JavaSpec.corretto(java17),
