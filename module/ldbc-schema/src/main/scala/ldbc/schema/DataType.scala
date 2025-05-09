@@ -6,7 +6,7 @@
 
 package ldbc.schema
 
-import java.time.{Year as JYear, *}
+import java.time.{ Year as JYear, * }
 
 import scala.compiletime.{ constValue, erasedValue, error }
 import scala.compiletime.ops.int.*
