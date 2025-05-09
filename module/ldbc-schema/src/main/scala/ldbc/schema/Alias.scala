@@ -6,8 +6,7 @@
 
 package ldbc.schema
 
-import java.time.*
-import java.time.Year as JYear
+import java.time.{ Year as JYear, * }
 
 import ldbc.statement.{ Column, TableQuery as AbstractTableQuery }
 

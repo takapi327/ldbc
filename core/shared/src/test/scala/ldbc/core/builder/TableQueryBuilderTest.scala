@@ -6,8 +6,7 @@
 
 package ldbc.core.builder
 
-import java.time.*
-import java.time.Year as JYear
+import java.time.{ Year as JYear, * }
 
 import org.specs2.mutable.Specification
 

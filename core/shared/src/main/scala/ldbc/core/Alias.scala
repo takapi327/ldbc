@@ -6,8 +6,7 @@
 
 package ldbc.core
 
-import java.time.*
-import java.time.Year as JYear
+import java.time.{ Year as JYear, * }
 
 import ldbc.core.attribute.*
 import ldbc.core.interpreter.Tuples
