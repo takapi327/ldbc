@@ -19,13 +19,13 @@ import ldbc.connector.{ ConnectionProvider as LdbcProvider, * }
 
 import jdbc.connector.{ ConnectionProvider as JdbcProvider, * }
 
-class LdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
+class LdbcNamedTupleDecoderTest extends NamedTupleDecoderTest:
   override def connection: Provider[IO] =
     LdbcProvider
       .default[IO]("127.0.0.1", 13306, "ldbc", "password", "world")
       .setSSL(SSL.Trusted)
 
-class JdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
+class JdbcNamedTupleDecoderTest extends NamedTupleDecoderTest:
 
   val ds = new MysqlDataSource()
   ds.setServerName("127.0.0.1")
@@ -37,16 +37,13 @@ class JdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
   override def connection: Provider[IO] =
     JdbcProvider.fromDataSource(ds, ExecutionContexts.synchronous)
 
-trait SQLStringContextQueryTest extends CatsEffectSuite:
+trait NamedTupleDecoderTest extends CatsEffectSuite:
 
   def connection: Provider[IO]
 
   test("The results obtained by JOIN can be mapped to the class NamedTuple.") {
-    case class City(id: Int, name: String)
-    case class Country(code: String, name: String)
-
-    given Decoder[City]    = Decoder.derived[City]
-    given Decoder[Country] = Decoder.derived[Country]
+    case class City(id: Int, name: String) derives Decoder
+    case class Country(code: String, name: String) derives Decoder
 
     assertIO(
       connection.use { conn =>
