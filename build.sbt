@@ -201,9 +201,9 @@ lazy val tests = crossProject(JVMPlatform)
   .in(file("tests"))
   .settings(
     crossScalaVersions := Seq(scala3, scala37),
-    name        := "tests",
-    description := "Projects for testing",
-    Test / fork := true,
+    name               := "tests",
+    description        := "Projects for testing",
+    Test / fork        := true,
     libraryDependencies ++= Seq(
       "org.typelevel" %% "munit-cats-effect" % "2.1.0" % Test,
       mysql            % Test
