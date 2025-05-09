@@ -216,7 +216,7 @@ lazy val tests = crossProject(JVMPlatform)
       val sourceDir = (Test / sourceDirectory).value
       CrossVersion.partialVersion(scalaVersion.value) match {
         case Some((3, 7)) => Seq(sourceDir / "scala-3.7")
-        case _ => Seq(sourceDir / "scala")
+        case _            => Seq(sourceDir / "scala")
       }
     }
   )
