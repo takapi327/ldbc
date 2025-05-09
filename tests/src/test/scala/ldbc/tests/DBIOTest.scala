@@ -30,7 +30,7 @@ class DBIOTest extends CatsEffectSuite:
     val program = DBIO.pure(1)
     assertIO(
       connection.use { conn =>
-        program.run(conn)
+        program.readOnly(conn)
       },
       1
     )
@@ -42,7 +42,7 @@ class DBIOTest extends CatsEffectSuite:
     val program3 = program2.ap(program1)
     assertIO(
       connection.use { conn =>
-        program3.run(conn)
+        program3.readOnly(conn)
       },
       2
     )
@@ -53,7 +53,7 @@ class DBIOTest extends CatsEffectSuite:
     val program2 = program1.map(_ + 1)
     assertIO(
       connection.use { conn =>
-        program2.run(conn)
+        program2.readOnly(conn)
       },
       2
     )
@@ -64,7 +64,7 @@ class DBIOTest extends CatsEffectSuite:
     val program2 = program1.flatMap(n => DBIO.pure(n + 1))
     assertIO(
       connection.use { conn =>
-        program2.run(conn)
+        program2.readOnly(conn)
       },
       2
     )
@@ -75,7 +75,7 @@ class DBIOTest extends CatsEffectSuite:
     val program2 = program1.tailRecM[DBIO, String](_.map(n => Right(n.toString)))
     assertIO(
       connection.use { conn =>
-        program2.run(conn)
+        program2.readOnly(conn)
       },
       "1"
     )
@@ -85,17 +85,17 @@ class DBIOTest extends CatsEffectSuite:
     val program = DBIO.raiseError[Int](new Exception("error"))
     interceptMessageIO[Exception]("error")(
       connection.use { conn =>
-        program.run(conn)
+        program.readOnly(conn)
       }
     )
   }
 
   test("DBIO#handleErrorWith") {
     val program1 = DBIO.raiseError[Int](new Exception("error"))
-    val program2 = program1.handleErrorWith(e => DBIO.pure(0))
+    val program2 = program1.handleErrorWith(_ => DBIO.pure(0))
     assertIO(
       connection.use { conn =>
-        program2.run(conn)
+        program2.readOnly(conn)
       },
       0
     )
@@ -105,7 +105,7 @@ class DBIOTest extends CatsEffectSuite:
     val program = DBIO.pure(1)
     assertIO(
       connection.use { conn =>
-        program.attempt.run(conn)
+        program.attempt.readOnly(conn)
       },
       Right(1)
     )
@@ -115,7 +115,7 @@ class DBIOTest extends CatsEffectSuite:
     val program = DBIO.raiseError[Int](new Exception("error"))
     assertIOBoolean(
       connection.use { conn =>
-        program.attempt.run(conn).map(_.isLeft)
+        program.attempt.readOnly(conn).map(_.isLeft)
       }
     )
   }

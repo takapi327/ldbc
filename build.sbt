@@ -200,18 +200,16 @@ lazy val tests = crossProject(JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .in(file("tests"))
   .settings(
-    name        := "tests",
-    description := "Projects for testing",
-    Test / fork := true,
-    scalacOptions += "-Ximplicit-search-limit:100000"
-  )
-  .defaultSettings
-  .settings(
+    crossScalaVersions := Seq(scala3, scala37),
+    name               := "tests",
+    description        := "Projects for testing",
+    Test / fork        := true,
     libraryDependencies ++= Seq(
       "org.typelevel" %% "munit-cats-effect" % "2.1.0" % Test,
       mysql            % Test
     )
   )
+  .defaultSettings
   .dependsOn(jdbcConnector, connector, queryBuilder, schema)
   .enablePlugins(NoPublishPlugin)
 
