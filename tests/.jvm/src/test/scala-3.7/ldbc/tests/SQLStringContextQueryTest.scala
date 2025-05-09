@@ -6,13 +6,18 @@
 
 package ldbc.tests
 
-import cats.effect.*
 import com.mysql.cj.jdbc.MysqlDataSource
-import jdbc.connector.{ConnectionProvider as JdbcProvider, *}
-import ldbc.connector.{ConnectionProvider as LdbcProvider, *}
+
+import cats.effect.*
+
+import munit.CatsEffectSuite
+
 import ldbc.dsl.*
 import ldbc.dsl.codec.*
-import munit.CatsEffectSuite
+
+import ldbc.connector.{ ConnectionProvider as LdbcProvider, * }
+
+import jdbc.connector.{ ConnectionProvider as JdbcProvider, * }
 
 class LdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
   override def connection: Provider[IO] =
@@ -40,7 +45,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
     case class City(id: Int, name: String)
     case class Country(code: String, name: String)
 
-    given Decoder[City] = Decoder.derived[City]
+    given Decoder[City]    = Decoder.derived[City]
     given Decoder[Country] = Decoder.derived[Country]
 
     assertIO(

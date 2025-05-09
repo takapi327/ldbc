@@ -100,9 +100,9 @@ object Decoder extends TwiddleSyntax[Decoder]:
     da.product(db)
 
   given [T <: Tuple, Labels <: Tuple, NT](using
-                                          m: Mirror.ProductOf[NT] {type MirroredElemTypes = T; type MirroredElemLabels = Labels},
-                                          decoder: Decoder[T]
-                                         ): Decoder[NT] =
+    m:       Mirror.ProductOf[NT] { type MirroredElemTypes = T; type MirroredElemLabels = Labels },
+    decoder: Decoder[T]
+  ): Decoder[NT] =
     decoder.map(t => m.fromProduct(t))
 
   given [H, T <: Tuple](using dh: Decoder[H], dt: Decoder[T]): Decoder[H *: T] =
