@@ -207,7 +207,14 @@ lazy val tests = crossProject(JVMPlatform)
     libraryDependencies ++= Seq(
       "org.typelevel" %% "munit-cats-effect" % "2.1.0" % Test,
       mysql            % Test
-    )
+    ),
+    Test / unmanagedSourceDirectories ++= {
+      val sourceDir = (Test / sourceDirectory).value
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((3, 7)) => Seq(sourceDir / "scala-3.7")
+        case _            => Nil
+      }
+    }
   )
   .defaultSettings
   .dependsOn(jdbcConnector, connector, queryBuilder, schema)
