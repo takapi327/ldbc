@@ -199,10 +199,10 @@ lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
   .in(file("tests"))
   .settings(
-    crossScalaVersions := Seq(scala3, scala37),
-    name               := "tests",
-    description        := "Projects for testing",
-    Test / fork        := true,
+    crossScalaVersions                      := Seq(scala3, scala37),
+    name                                    := "tests",
+    description                             := "Projects for testing",
+    Test / fork                             := true,
     libraryDependencies += "org.typelevel" %%% "munit-cats-effect" % "2.1.0" % Test,
     Test / unmanagedSourceDirectories ++= {
       val sourceDir = (Test / sourceDirectory).value
@@ -215,6 +215,11 @@ lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .defaultSettings
   .jvmSettings(libraryDependencies += mysql % Test)
   .jvmConfigure(_ dependsOn jdbcConnector.jvm)
+  .jsSettings(
+    Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
+  )
+  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
+  .nativeSettings(Test / nativeBrewFormulas += "s2n")
   .dependsOn(connector, queryBuilder, schema)
   .enablePlugins(NoPublishPlugin)
 
