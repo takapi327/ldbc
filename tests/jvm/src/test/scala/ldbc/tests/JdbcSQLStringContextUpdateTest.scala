@@ -37,7 +37,7 @@ class JdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest:
 
       override def apply(): Connection[IO] = value match
         case Some(v) => v._1
-        case None    => throw new FixtureNotInstantiatedException("setup")
+        case None    => throw new FixtureNotInstantiatedException("connection")
 
       override def beforeAll(): IO[Unit] =
         ConnectionProvider

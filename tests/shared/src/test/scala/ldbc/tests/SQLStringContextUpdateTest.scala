@@ -27,26 +27,25 @@ class LdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest:
 
       override def apply(): Connection[IO] = value match
         case Some(v) => v._1
-        case None    => throw new FixtureNotInstantiatedException("setup")
+        case None    => throw new FixtureNotInstantiatedException("connection")
 
       override def beforeAll(): IO[Unit] =
         ConnectionProvider
           .default[IO]("127.0.0.1", 13306, "ldbc", "password", "connector_test")
           .setSSL(SSL.Trusted)
+          .withBeforeAfter(
+            conn =>
+              sql"CREATE TABLE $table (`id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, `c1` VARCHAR(255) NOT NULL)".update
+                .commit(conn),
+            (_, conn) => sql"DROP TABLE $table".update.commit(conn) *> IO.unit
+          )
           .createConnection()
           .allocated
-          .flatMap {
-            case (conn, close) =>
-              sql"CREATE TABLE $table (`id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, `c1` VARCHAR(255) NOT NULL)".update
-                .commit(conn) *>
-                IO(this.value = Some((conn, close)))
+          .flatMap { value =>
+            IO(this.value = Some(value))
           }
 
-      override def afterAll(): IO[Unit] = value.fold(IO.unit) {
-        case (conn, close) =>
-          sql"DROP TABLE $table".update.commit(conn) *>
-            close
-      }
+      override def afterAll(): IO[Unit] = value.fold(IO.unit)(_._2)
 
 trait SQLStringContextUpdateTest extends CatsEffectSuite:
 
