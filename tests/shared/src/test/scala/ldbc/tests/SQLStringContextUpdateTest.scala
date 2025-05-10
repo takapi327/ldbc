@@ -6,8 +6,6 @@
 
 package ldbc.tests
 
-import com.mysql.cj.jdbc.MysqlDataSource
-
 import cats.effect.*
 
 import munit.CatsEffectSuite
@@ -16,31 +14,15 @@ import ldbc.sql.*
 
 import ldbc.dsl.*
 
-import ldbc.connector.{ ConnectionProvider as LdbcProvider, * }
-
-import jdbc.connector.{ ConnectionProvider as JdbcProvider, * }
+import ldbc.connector.*
 
 class LdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest:
   override def prefix: "jdbc" | "ldbc" = "ldbc"
 
   override def connection: Provider[IO] =
-    LdbcProvider
+    ConnectionProvider
       .default[IO]("127.0.0.1", 13306, "ldbc", "password", "connector_test")
       .setSSL(SSL.Trusted)
-
-class JdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest:
-
-  val ds = new MysqlDataSource()
-  ds.setServerName("127.0.0.1")
-  ds.setPortNumber(13306)
-  ds.setDatabaseName("world")
-  ds.setUser("ldbc")
-  ds.setPassword("password")
-  ds.setDatabaseName("connector_test")
-
-  override def prefix: "jdbc" | "ldbc" = "jdbc"
-  override def connection: Provider[IO] =
-    JdbcProvider.fromDataSource(ds, ExecutionContexts.synchronous)
 
 trait SQLStringContextUpdateTest extends CatsEffectSuite:
 
