@@ -10,8 +10,6 @@ import com.mysql.cj.jdbc.MysqlDataSource
 
 import cats.effect.*
 
-import munit.*
-
 import ldbc.sql.*
 
 import jdbc.connector.*
