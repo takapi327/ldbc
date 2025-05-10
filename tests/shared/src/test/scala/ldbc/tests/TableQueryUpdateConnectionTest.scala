@@ -6,8 +6,6 @@
 
 package ldbc.tests
 
-import com.mysql.cj.jdbc.MysqlDataSource
-
 import cats.data.NonEmptyList
 import cats.syntax.all.*
 
@@ -21,9 +19,7 @@ import ldbc.dsl.*
 
 import ldbc.query.builder.*
 
-import ldbc.connector.{ ConnectionProvider as LdbcProvider, * }
-
-import jdbc.connector.{ ConnectionProvider as JdbcProvider, * }
+import ldbc.connector.*
 
 import ldbc.tests.model.*
 
@@ -32,23 +28,9 @@ class LdbcTableQueryUpdateConnectionTest extends TableQueryUpdateConnectionTest:
   override def prefix: "jdbc" | "ldbc" = "ldbc"
 
   override def connection: Provider[IO] =
-    LdbcProvider
+    ConnectionProvider
       .default[IO]("127.0.0.1", 13306, "ldbc", "password", "world2")
       .setSSL(SSL.Trusted)
-
-class JdbcTableQueryUpdateConnectionTest extends TableQueryUpdateConnectionTest:
-
-  val ds = new MysqlDataSource()
-  ds.setServerName("127.0.0.1")
-  ds.setPortNumber(13306)
-  ds.setDatabaseName("world2")
-  ds.setUser("ldbc")
-  ds.setPassword("password")
-
-  override def prefix: "jdbc" | "ldbc" = "jdbc"
-
-  override def connection: Provider[IO] =
-    JdbcProvider.fromDataSource(ds, ExecutionContexts.synchronous)
 
 trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
 
