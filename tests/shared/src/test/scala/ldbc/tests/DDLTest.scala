@@ -46,34 +46,30 @@ trait DDLTest extends CatsEffectSuite:
 
   final val userTable = TableQuery[UserTable]
 
-  override def beforeAll(): Unit =
-    connection
-      .use { conn =>
-        // The following implementation is used to test the possibility of multiple executions.
-        DBIO
-          .sequence(
-            userTable.schema.create,
-            userTable.schema.createIfNotExists,
-            userTable.schema.dropIfExists,
-            userTable.schema.create
-          )
-          .commit(conn) *> IO.unit
+  override def munitFixtures = List(
+    ResourceSuiteLocalFixture(
+      "Database Setup",
+      Resource.make[IO, Unit](
+        connection
+          .use { conn =>
+            // The following implementation is used to test the possibility of multiple executions.
+            DBIO
+              .sequence(
+                userTable.schema.create,
+                userTable.schema.createIfNotExists,
+                userTable.schema.dropIfExists,
+                userTable.schema.create
+              )
+              .commit(conn) *> IO.unit
+          }
+      ) { _ =>
+        connection
+          .use { conn =>
+            DBIO.sequence(userTable.schema.drop).commit(conn) *> IO.unit
+          }
       }
-      .unsafeRunSync()
-
-  override def afterAll(): Unit =
-    connection
-      .use { conn =>
-        DBIO.sequence(userTable.schema.drop).commit(conn) *> IO.unit
-      }
-      .unsafeRunSync()
-
-  override def afterEach(context: AfterEach): Unit =
-    connection
-      .use { conn =>
-        DBIO.sequence(userTable.schema.truncate).commit(conn) *> IO.unit
-      }
-      .unsafeRunSync()
+    )
+  )
 
   test("When the table is created, the number of records is 0.") {
     assertIO(

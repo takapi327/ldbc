@@ -34,27 +34,23 @@ trait SQLStringContextUpdateTest extends CatsEffectSuite:
     case "jdbc" => sc("`jdbc_sql_string_context_table`")
     case "ldbc" => sc("`ldbc_sql_string_context_table`")
 
-  override def beforeAll(): Unit =
-    connection
-      .use { conn =>
-        sql"CREATE TABLE $table (`id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, `c1` VARCHAR(255) NOT NULL)".update
-          .commit(conn)
+  override def munitFixtures = List(
+    ResourceSuiteLocalFixture(
+      "Database Setup",
+      Resource.make[IO, Unit](
+        connection
+          .use { conn =>
+            sql"CREATE TABLE $table (`id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, `c1` VARCHAR(255) NOT NULL)".update
+              .commit(conn) *> IO.unit
+          }
+      ) { _ =>
+        connection
+          .use { conn =>
+            sql"DROP TABLE $table".update.commit(conn) *> IO.unit
+          }
       }
-      .unsafeRunSync()
-
-  override def afterAll(): Unit =
-    connection
-      .use { conn =>
-        sql"DROP TABLE $table".update.commit(conn)
-      }
-      .unsafeRunSync()
-
-  override def afterEach(context: AfterEach): Unit =
-    connection
-      .use { conn =>
-        sql"TRUNCATE TABLE $table".update.commit(conn)
-      }
-      .unsafeRunSync()
+    )
+  )
 
   test("As a result of entering one case of data, there will be one affected row.") {
     assertIO(

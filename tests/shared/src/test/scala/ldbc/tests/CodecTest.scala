@@ -32,19 +32,20 @@ trait CodecTest extends CatsEffectSuite:
   def prefix:     "jdbc" | "ldbc"
   def connection: Provider[IO]
 
-  override def beforeAll(): Unit =
-    connection
-      .use { conn =>
-        sql"CREATE DATABASE IF NOT EXISTS codec_test".update.commit(conn) *> IO.unit
+  override def munitFixtures = List(
+    ResourceSuiteLocalFixture(
+      "Database Setup",
+      Resource.make[IO, Unit](
+        connection.use { conn =>
+          sql"CREATE DATABASE IF NOT EXISTS codec_test".update.commit(conn) *> IO.unit
+        }
+      ) { _ =>
+        connection.use { conn =>
+          sql"DROP DATABASE IF EXISTS codec_test".update.commit(conn) *> IO.unit
+        }
       }
-      .unsafeRunSync()
-
-  override def afterAll(): Unit =
-    connection
-      .use { conn =>
-        sql"DROP DATABASE IF EXISTS codec_test".update.commit(conn) *> IO.unit
-      }
-      .unsafeRunSync()
+    )
+  )
 
   test("Encoder and Decoder work properly for data of type Boolean.") {
     assertIO(
