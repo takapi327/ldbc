@@ -17,13 +17,13 @@ import ldbc.sql.*
 import jdbc.connector.ConnectionProvider
 
 private case class JdbcConnectionFixture(
-                         name: String,
-                         provider: ConnectionProvider[IO],
-                         connectBeforeAll: Connection[IO] => IO[Unit],
-                         connectAfterAll: Connection[IO] => IO[Unit],
-                         connectBeforeEach: Connection[IO] => IO[Unit],
-                         connectAfterEach: Connection[IO] => IO[Unit]
-                       ) extends ConnectionFixture:
+  name:              String,
+  provider:          ConnectionProvider[IO],
+  connectBeforeAll:  Connection[IO] => IO[Unit],
+  connectAfterAll:   Connection[IO] => IO[Unit],
+  connectBeforeEach: Connection[IO] => IO[Unit],
+  connectAfterEach:  Connection[IO] => IO[Unit]
+) extends ConnectionFixture:
   override def withBeforeAll(f: Connection[IO] => IO[Unit]): ConnectionFixture =
     copy(connectBeforeAll = f)
 
@@ -42,11 +42,12 @@ private case class JdbcConnectionFixture(
 
       override def apply(): Connection[IO] = value match
         case Some(v) => v._1
-        case None => throw new FixtureNotInstantiatedException(name)
+        case None    => throw new FixtureNotInstantiatedException(name)
 
       override def beforeAll(): IO[Unit] =
-        provider.createConnection().allocated.flatMap { case (conn, close) =>
-          connectBeforeAll(conn) *> IO(this.value = Some((conn, close)))
+        provider.createConnection().allocated.flatMap {
+          case (conn, close) =>
+            connectBeforeAll(conn) *> IO(this.value = Some((conn, close)))
         }
 
       override def afterAll(): IO[Unit] =

@@ -34,7 +34,10 @@ trait SQLStringContextUpdateTest extends CatsEffectSuite:
   def connection: ConnectionFixture
 
   private lazy val connectionFixture = connection
-    .withBeforeAll(conn => sql"CREATE TABLE $table (`id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, `c1` VARCHAR(255) NOT NULL)".update.commit(conn) *> IO.unit)
+    .withBeforeAll(conn =>
+      sql"CREATE TABLE $table (`id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, `c1` VARCHAR(255) NOT NULL)".update
+        .commit(conn) *> IO.unit
+    )
     .withAfterAll(conn => sql"DROP TABLE $table".update.commit(conn) *> IO.unit)
     .withBeforeEach(conn => sql"TRUNCATE TABLE $table".update.commit(conn) *> IO.unit)
     .fixture

@@ -30,14 +30,14 @@ trait ConnectionFixture:
   def fixture: IOFixture[Connection[IO]]
 
 object ConnectionFixture:
-  
+
   private case class Impl(
-    name: String,
-    provider: ConnectionProvider[IO, Unit],
-    connectBeforeAll: Connection[IO] => IO[Unit],
-    connectAfterAll: Connection[IO] => IO[Unit],
+    name:              String,
+    provider:          ConnectionProvider[IO, Unit],
+    connectBeforeAll:  Connection[IO] => IO[Unit],
+    connectAfterAll:   Connection[IO] => IO[Unit],
     connectBeforeEach: Connection[IO] => IO[Unit],
-    connectAfterEach: Connection[IO] => IO[Unit]
+    connectAfterEach:  Connection[IO] => IO[Unit]
   ) extends ConnectionFixture:
     override def withBeforeAll(f: Connection[IO] => IO[Unit]): ConnectionFixture =
       copy(connectBeforeAll = f)
@@ -50,7 +50,7 @@ object ConnectionFixture:
 
     override def withAfterEach(f: Connection[IO] => IO[Unit]): ConnectionFixture =
       copy(connectAfterEach = f)
-      
+
     override val fixture: IOFixture[Connection[IO]] =
       new IOFixture[Connection[IO]](name):
         @volatile private var value: Option[(Connection[IO], IO[Unit])] = None
@@ -60,8 +60,9 @@ object ConnectionFixture:
           case None    => throw new FixtureNotInstantiatedException(name)
 
         override def beforeAll(): IO[Unit] =
-          provider.createConnection().allocated.flatMap { case (conn, close) =>
-            connectBeforeAll(conn) *> IO(this.value = Some((conn, close)))
+          provider.createConnection().allocated.flatMap {
+            case (conn, close) =>
+              connectBeforeAll(conn) *> IO(this.value = Some((conn, close)))
           }
 
         override def afterAll(): IO[Unit] =
