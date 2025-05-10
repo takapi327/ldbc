@@ -8,8 +8,6 @@ package ldbc.tests
 
 import java.time.*
 
-import com.mysql.cj.jdbc.MysqlDataSource
-
 import cats.effect.*
 
 import munit.*
@@ -18,31 +16,16 @@ import ldbc.sql.*
 
 import ldbc.dsl.*
 
-import ldbc.connector.{ ConnectionProvider as LdbcProvider, * }
-
-import jdbc.connector.{ ConnectionProvider as JdbcProvider, * }
+import ldbc.connector.*
 
 class LdbcCodecTest extends CodecTest:
 
   override def prefix: "jdbc" | "ldbc" = "ldbc"
 
   override def connection: Provider[IO] =
-    LdbcProvider
+    ConnectionProvider
       .default[IO]("127.0.0.1", 13306, "ldbc", "password", "world")
       .setSSL(SSL.Trusted)
-
-class JdbcCodecTest extends CodecTest:
-
-  val ds = new MysqlDataSource()
-  ds.setServerName("127.0.0.1")
-  ds.setPortNumber(13306)
-  ds.setUser("ldbc")
-  ds.setPassword("password")
-
-  override def prefix: "jdbc" | "ldbc" = "jdbc"
-
-  override def connection: Provider[IO] =
-    JdbcProvider.fromDataSource(ds, ExecutionContexts.synchronous)
 
 trait CodecTest extends CatsEffectSuite:
 
