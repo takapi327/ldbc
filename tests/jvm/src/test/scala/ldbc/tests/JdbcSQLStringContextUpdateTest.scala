@@ -37,20 +37,22 @@ class JdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest:
 
       override def apply(): Connection[IO] = value match
         case Some(v) => v._1
-        case None => throw new FixtureNotInstantiatedException("setup")
+        case None    => throw new FixtureNotInstantiatedException("setup")
 
       override def beforeAll(): IO[Unit] =
         ConnectionProvider
           .fromDataSource[IO](ds, ExecutionContexts.synchronous)
           .createConnection()
           .allocated
-          .flatMap { case (conn, close) =>
-            sql"CREATE TABLE $table (`id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, `c1` VARCHAR(255) NOT NULL)".update
-              .commit(conn) *>
-              IO(this.value = Some((conn, close)))
+          .flatMap {
+            case (conn, close) =>
+              sql"CREATE TABLE $table (`id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, `c1` VARCHAR(255) NOT NULL)".update
+                .commit(conn) *>
+                IO(this.value = Some((conn, close)))
           }
 
-      override def afterAll(): IO[Unit] = value.fold(IO.unit) { case (conn, close) =>
-        sql"DROP TABLE $table".update.commit(conn) *>
-          close
+      override def afterAll(): IO[Unit] = value.fold(IO.unit) {
+        case (conn, close) =>
+          sql"DROP TABLE $table".update.commit(conn) *>
+            close
       }
