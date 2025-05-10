@@ -6,23 +6,19 @@
 
 package ldbc.tests
 
-import com.mysql.cj.jdbc.MysqlDataSource
-
 import cats.effect.*
 
 import munit.*
 
 import ldbc.sql.*
 
-import ldbc.connector.{ ConnectionProvider as LdbcProvider, * }
-
-import jdbc.connector.{ ConnectionProvider as JdbcProvider, * }
+import ldbc.connector.*
 
 class LdbcConnectionTest extends ConnectionTest:
   override def prefix: "ldbc" = "ldbc"
 
   override def connection(databaseTerm: "SCHEMA" | "CATALOG" = "CATALOG"): Provider[IO] =
-    LdbcProvider
+    ConnectionProvider
       .default[IO](host, port, user, password, database)
       .setSSL(SSL.Trusted)
       .setDatabaseTerm(
@@ -30,21 +26,6 @@ class LdbcConnectionTest extends ConnectionTest:
           case "SCHEMA"  => DatabaseMetaData.DatabaseTerm.SCHEMA
           case "CATALOG" => DatabaseMetaData.DatabaseTerm.CATALOG
       )
-
-class JdbcConnectionTest extends ConnectionTest:
-
-  val ds = new MysqlDataSource()
-  ds.setServerName(host)
-  ds.setPortNumber(port)
-  ds.setDatabaseName(database)
-  ds.setUser(user)
-  ds.setPassword(password)
-
-  override def prefix: "jdbc" | "ldbc" = "jdbc"
-
-  override def connection(databaseTerm: "SCHEMA" | "CATALOG" = "CATALOG"): Provider[IO] =
-    ds.setDatabaseTerm(databaseTerm)
-    JdbcProvider.fromDataSource(ds, ExecutionContexts.synchronous)
 
 trait ConnectionTest extends CatsEffectSuite:
 
