@@ -6,8 +6,6 @@
 
 package ldbc.tests
 
-import com.mysql.cj.jdbc.MysqlDataSource
-
 import cats.effect.*
 
 import munit.*
@@ -18,28 +16,14 @@ import ldbc.dsl.*
 
 import ldbc.schema.*
 
-import ldbc.connector.{ ConnectionProvider as LdbcProvider, * }
-
-import jdbc.connector.{ ConnectionProvider as JdbcProvider, * }
+import ldbc.connector.*
 
 class LdbcDDLTest extends DDLTest:
 
   override def connection: Provider[IO] =
-    LdbcProvider
+    ConnectionProvider
       .default[IO]("127.0.0.1", 13306, "ldbc", "password", "connector_test")
       .setSSL(SSL.Trusted)
-
-class JdbcDDLTest extends DDLTest:
-
-  val ds = new MysqlDataSource()
-  ds.setServerName("127.0.0.1")
-  ds.setPortNumber(13306)
-  ds.setDatabaseName("connector_test")
-  ds.setUser("ldbc")
-  ds.setPassword("password")
-
-  override def connection: Provider[IO] =
-    JdbcProvider.fromDataSource(ds, ExecutionContexts.synchronous)
 
 trait DDLTest extends CatsEffectSuite:
 
