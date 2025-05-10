@@ -10,8 +10,6 @@ import com.mysql.cj.jdbc.MysqlDataSource
 
 import cats.effect.*
 
-import ldbc.sql.*
-
 import jdbc.connector.*
 
 class JdbcCodecTest extends CodecTest:
@@ -24,5 +22,8 @@ class JdbcCodecTest extends CodecTest:
 
   override def prefix: "jdbc" | "ldbc" = "jdbc"
 
-  override def connection: Provider[IO] =
-    ConnectionProvider.fromDataSource(ds, ExecutionContexts.synchronous)
+  override def connection: ConnectionFixture =
+    JdbcConnectionFixture(
+      "connection",
+      ConnectionProvider.fromDataSource(ds, ExecutionContexts.synchronous)
+    )
