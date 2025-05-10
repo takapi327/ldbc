@@ -47,6 +47,10 @@ class LdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest:
 
       override def afterAll(): IO[Unit] = value.fold(IO.unit)(_._2)
 
+      override def afterEach(context: AfterEach): IO[Unit] = value.fold(IO.unit) {
+        case (conn, _) => sql"TRUNCATE TABLE $table".update.commit(conn) *> IO.unit
+      }
+
 trait SQLStringContextUpdateTest extends CatsEffectSuite:
 
   def prefix: "jdbc" | "ldbc"

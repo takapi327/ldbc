@@ -56,3 +56,7 @@ class JdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest:
           sql"DROP TABLE $table".update.commit(conn) *>
             close
       }
+
+      override def afterEach(context: AfterEach): IO[Unit] = value.fold(IO.unit) {
+        case (conn, _) => sql"TRUNCATE TABLE $table".update.commit(conn) *> IO.unit
+      }
