@@ -10,7 +10,12 @@ import com.mysql.cj.jdbc.MysqlDataSource
 
 import cats.effect.*
 
+import munit.catseffect.IOFixture
+import munit.catseffect.ResourceFixture.FixtureNotInstantiatedException
+
 import ldbc.sql.*
+
+import ldbc.dsl.*
 
 import jdbc.connector.*
 
@@ -25,5 +30,27 @@ class JdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest:
   ds.setDatabaseName("connector_test")
 
   override def prefix: "jdbc" | "ldbc" = "jdbc"
-  override def connection: Provider[IO] =
-    ConnectionProvider.fromDataSource(ds, ExecutionContexts.synchronous)
+
+  override def connection: IOFixture[Connection[IO]] =
+    new IOFixture[Connection[IO]]("connection"):
+      @volatile private var value: Option[(Connection[IO], IO[Unit])] = None
+
+      override def apply(): Connection[IO] = value match
+        case Some(v) => v._1
+        case None => throw new FixtureNotInstantiatedException("setup")
+
+      override def beforeAll(): IO[Unit] =
+        ConnectionProvider
+          .fromDataSource[IO](ds, ExecutionContexts.synchronous)
+          .createConnection()
+          .allocated
+          .flatMap { case (conn, close) =>
+            sql"CREATE TABLE $table (`id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, `c1` VARCHAR(255) NOT NULL)".update
+              .commit(conn) *>
+              IO(this.value = Some((conn, close)))
+          }
+
+      override def afterAll(): IO[Unit] = value.fold(IO.unit) { case (conn, close) =>
+        sql"DROP TABLE $table".update.commit(conn) *>
+          close
+      }

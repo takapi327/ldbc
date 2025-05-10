@@ -9,6 +9,8 @@ package ldbc.tests
 import cats.effect.*
 
 import munit.CatsEffectSuite
+import munit.catseffect.IOFixture
+import munit.catseffect.ResourceFixture.FixtureNotInstantiatedException
 
 import ldbc.sql.*
 
@@ -19,81 +21,77 @@ import ldbc.connector.*
 class LdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest:
   override def prefix: "jdbc" | "ldbc" = "ldbc"
 
-  override def connection: Provider[IO] =
-    ConnectionProvider
-      .default[IO]("127.0.0.1", 13306, "ldbc", "password", "connector_test")
-      .setSSL(SSL.Trusted)
+  override def connection: IOFixture[Connection[IO]] =
+    new IOFixture[Connection[IO]]("connection"):
+      @volatile private var value: Option[(Connection[IO], IO[Unit])] = None
+
+      override def apply(): Connection[IO] = value match
+        case Some(v) => v._1
+        case None => throw new FixtureNotInstantiatedException("setup")
+
+      override def beforeAll(): IO[Unit] =
+        ConnectionProvider
+          .default[IO]("127.0.0.1", 13306, "ldbc", "password", "connector_test")
+          .setSSL(SSL.Trusted)
+          .createConnection()
+          .allocated
+          .flatMap { case (conn, close) =>
+            sql"CREATE TABLE $table (`id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, `c1` VARCHAR(255) NOT NULL)".update
+              .commit(conn) *>
+              IO(this.value = Some((conn, close)))
+          }
+
+      override def afterAll(): IO[Unit] = value.fold(IO.unit) { case (conn, close) =>
+        sql"DROP TABLE $table".update.commit(conn) *>
+          close
+      }
 
 trait SQLStringContextUpdateTest extends CatsEffectSuite:
 
   def prefix: "jdbc" | "ldbc"
 
-  def connection: Provider[IO]
+  def connection: IOFixture[Connection[IO]]
 
   final val table = prefix match
     case "jdbc" => sc("`jdbc_sql_string_context_table`")
     case "ldbc" => sc("`ldbc_sql_string_context_table`")
 
-  override def munitFixtures = List(
-    ResourceSuiteLocalFixture(
-      "Database Setup",
-      Resource.make[IO, Unit](
-        connection
-          .use { conn =>
-            sql"CREATE TABLE $table (`id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, `c1` VARCHAR(255) NOT NULL)".update
-              .commit(conn) *> IO.unit
-          }
-      ) { _ =>
-        connection
-          .use { conn =>
-            sql"DROP TABLE $table".update.commit(conn) *> IO.unit
-          }
-      }
-    )
-  )
+  override def munitFixtures = List(connection)
 
   test("As a result of entering one case of data, there will be one affected row.") {
     assertIO(
-      connection.use { conn =>
-        sql"INSERT INTO $table (`c1`) VALUES ('value1')".update.commit(conn)
-      },
+      sql"INSERT INTO $table (`c1`) VALUES ('value1')".update.commit(connection()),
       1
     )
   }
 
   test("As a result of entering data for two cases, there will be two affected rows.") {
     assertIO(
-      connection.use { conn =>
-        sql"INSERT INTO $table (`c1`) VALUES ('value1'),('value2')".update.commit(conn)
-      },
+      sql"INSERT INTO $table (`c1`) VALUES ('value1'),('value2')".update.commit(connection()),
       2
     )
   }
 
   test("The value generated when adding a record of AUTO_INCREMENT is returned.") {
     assertIO(
-      connection.use { conn =>
-        (for
-          _         <- sql"INSERT INTO $table (`id`, `c1`) VALUES ($None, ${ "column 1" })".update
-          generated <- sql"INSERT INTO $table (`id`, `c1`) VALUES ($None, ${ "column 2" })".returning[Long]
-        yield generated).transaction(conn)
-      },
+      (for
+        _         <- sql"INSERT INTO $table (`id`, `c1`) VALUES ($None, ${ "column 1" })".update
+        generated <- sql"INSERT INTO $table (`id`, `c1`) VALUES ($None, ${ "column 2" })".returning[Long]
+      yield generated).transaction(connection()),
       2L
     )
   }
 
   test("Not a single submission of result data rolled back in transaction has been reflected.　") {
     assertIO(
-      connection.use { conn =>
-        for
-          result <-
-            sql"INSERT INTO $table (`id`, `c1`) VALUES ($None, ${ "column 1" })".update
-              .flatMap(_ => sql"INSERT INTO $table (`id`, `xxx`) VALUES ($None, ${ "column 2" })".update)
-              .transaction(conn)
-              .attempt
-          count <- sql"SELECT count(*) FROM $table".query[Int].unsafe.readOnly(conn)
-        yield count
-      },
+      for
+        result <-
+          sql"INSERT INTO $table (`id`, `c1`) VALUES ($None, ${ "column 1" })".update
+            .flatMap(_ => sql"INSERT INTO $table (`id`, `xxx`) VALUES ($None, ${ "column 2" })".update)
+            .transaction(connection())
+            .attempt
+        count <- sql"SELECT count(*) FROM $table".query[Int].unsafe.readOnly(connection())
+      yield count,
       0
     )
   }
