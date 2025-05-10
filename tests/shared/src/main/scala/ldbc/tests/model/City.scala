@@ -7,12 +7,9 @@
 package ldbc.tests.model
 
 import ldbc.dsl.codec.Codec
-
+import ldbc.query.builder.{Column, Table}
+import ldbc.schema.{Table as SchemaTable, *}
 import ldbc.statement.formatter.Naming
-
-import ldbc.query.builder.{ Column, Table }
-
-import ldbc.schema.{ Table as SchemaTable, * }
 
 given Naming = Naming.PASCAL
 

@@ -6,21 +6,14 @@
 
 package ldbc.tests
 
-import com.mysql.cj.jdbc.MysqlDataSource
-
 import cats.effect.*
-
-import munit.*
-
-import ldbc.sql.*
-
+import com.mysql.cj.jdbc.MysqlDataSource
+import jdbc.connector.{ConnectionProvider as JdbcProvider, *}
+import ldbc.connector.{ConnectionProvider as LdbcProvider, *}
 import ldbc.dsl.*
-
 import ldbc.schema.*
-
-import ldbc.connector.{ ConnectionProvider as LdbcProvider, * }
-
-import jdbc.connector.{ ConnectionProvider as JdbcProvider, * }
+import ldbc.sql.*
+import munit.*
 
 class LdbcDDLTest extends DDLTest:
 

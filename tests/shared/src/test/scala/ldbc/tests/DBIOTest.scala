@@ -6,17 +6,12 @@
 
 package ldbc.tests
 
-import cats.syntax.all.*
-
 import cats.effect.IO
-
-import munit.CatsEffectSuite
-
-import ldbc.sql.*
-
-import ldbc.dsl.*
-
+import cats.syntax.all.*
 import ldbc.connector.*
+import ldbc.dsl.*
+import ldbc.sql.*
+import munit.CatsEffectSuite
 
 class DBIOTest extends CatsEffectSuite:
 

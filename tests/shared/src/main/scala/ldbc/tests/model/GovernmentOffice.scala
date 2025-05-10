@@ -6,13 +6,11 @@
 
 package ldbc.tests.model
 
-import java.time.LocalDate
-
 import ldbc.dsl.codec.Codec
-
-import ldbc.query.builder.{ Column, Table }
-
+import ldbc.query.builder.{Column, Table}
 import ldbc.schema.Table as SchemaTable
+
+import java.time.LocalDate
 
 case class GovernmentOffice(
   @Column("ID") id:         Int,

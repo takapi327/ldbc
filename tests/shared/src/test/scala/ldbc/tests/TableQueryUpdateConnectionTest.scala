@@ -6,42 +6,33 @@
 
 package ldbc.tests
 
-import com.mysql.cj.jdbc.MysqlDataSource
-
 import cats.data.NonEmptyList
-import cats.syntax.all.*
-
 import cats.effect.*
-
+import cats.syntax.all.*
+import com.mysql.cj.jdbc.MysqlDataSource
+import jdbc.connector.{ConnectionProvider as JdbcProvider, *}
+import ldbc.connector.{ConnectionProvider as LdbcProvider, *}
+import ldbc.dsl.*
+import ldbc.query.builder.*
+import ldbc.sql.*
+import ldbc.tests.model.*
 import munit.*
 
-import ldbc.sql.*
-
-import ldbc.dsl.*
-
-import ldbc.schema.*
-
-import ldbc.connector.{ ConnectionProvider as LdbcProvider, * }
-
-import jdbc.connector.{ ConnectionProvider as JdbcProvider, * }
-
-import ldbc.tests.model.*
-
-class LdbcTableSchemaUpdateConnectionTest extends TableSchemaUpdateConnectionTest:
+class LdbcTableQueryUpdateConnectionTest extends TableQueryUpdateConnectionTest:
 
   override def prefix: "jdbc" | "ldbc" = "ldbc"
 
   override def connection: Provider[IO] =
     LdbcProvider
-      .default[IO]("127.0.0.1", 13306, "ldbc", "password", "world3")
+      .default[IO]("127.0.0.1", 13306, "ldbc", "password", "world2")
       .setSSL(SSL.Trusted)
 
-class JdbcTableSchemaUpdateConnectionTest extends TableSchemaUpdateConnectionTest:
+class JdbcTableQueryUpdateConnectionTest extends TableQueryUpdateConnectionTest:
 
   val ds = new MysqlDataSource()
   ds.setServerName("127.0.0.1")
   ds.setPortNumber(13306)
-  ds.setDatabaseName("world3")
+  ds.setDatabaseName("world2")
   ds.setUser("ldbc")
   ds.setPassword("password")
 
@@ -50,14 +41,14 @@ class JdbcTableSchemaUpdateConnectionTest extends TableSchemaUpdateConnectionTes
   override def connection: Provider[IO] =
     JdbcProvider.fromDataSource(ds, ExecutionContexts.synchronous)
 
-trait TableSchemaUpdateConnectionTest extends CatsEffectSuite:
+trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
 
   def prefix:     "jdbc" | "ldbc"
   def connection: Provider[IO]
 
-  private final val country         = TableQuery[CountryTable]
-  private final val city            = TableQuery[CityTable]
-  private final val countryLanguage = TableQuery[CountryLanguageTable]
+  private final val country         = TableQuery[Country]
+  private final val city            = TableQuery[City]
+  private final val countryLanguage = TableQuery[CountryLanguage]
 
   private def code(index: Int): String = prefix match
     case "jdbc" => s"J$index"
@@ -395,7 +386,7 @@ trait TableSchemaUpdateConnectionTest extends CatsEffectSuite:
     )
   }
 
-  test("The value of AutoIncrement obtained during insert matches the specified value.") {
+  test("The value of AutoIncrement obtained during insert matches the specified value") {
     assertIO(
       connection.use { conn =>
         city
