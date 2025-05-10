@@ -213,7 +213,7 @@ lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .defaultSettings
   .jvmSettings(
-    Test / fork                             := true,
+    Test / fork                 := true,
     libraryDependencies += mysql % Test
   )
   .jvmConfigure(_ dependsOn jdbcConnector.jvm)
