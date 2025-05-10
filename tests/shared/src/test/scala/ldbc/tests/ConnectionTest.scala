@@ -6,12 +6,17 @@
 
 package ldbc.tests
 
-import cats.effect.*
 import com.mysql.cj.jdbc.MysqlDataSource
-import jdbc.connector.{ConnectionProvider as JdbcProvider, *}
-import ldbc.connector.{ConnectionProvider as LdbcProvider, *}
-import ldbc.sql.*
+
+import cats.effect.*
+
 import munit.*
+
+import ldbc.sql.*
+
+import ldbc.connector.{ ConnectionProvider as LdbcProvider, * }
+
+import jdbc.connector.{ ConnectionProvider as JdbcProvider, * }
 
 class LdbcConnectionTest extends ConnectionTest:
   override def prefix: "ldbc" = "ldbc"

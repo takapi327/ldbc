@@ -6,17 +6,26 @@
 
 package ldbc.tests
 
-import cats.data.NonEmptyList
-import cats.effect.*
-import cats.syntax.all.*
 import com.mysql.cj.jdbc.MysqlDataSource
-import jdbc.connector.{ConnectionProvider as JdbcProvider, *}
-import ldbc.connector.{ConnectionProvider as LdbcProvider, *}
-import ldbc.dsl.*
-import ldbc.schema.*
-import ldbc.sql.*
-import ldbc.tests.model.*
+
+import cats.data.NonEmptyList
+import cats.syntax.all.*
+
+import cats.effect.*
+
 import munit.*
+
+import ldbc.sql.*
+
+import ldbc.dsl.*
+
+import ldbc.schema.*
+
+import ldbc.connector.{ ConnectionProvider as LdbcProvider, * }
+
+import jdbc.connector.{ ConnectionProvider as JdbcProvider, * }
+
+import ldbc.tests.model.*
 
 class LdbcTableSchemaUpdateConnectionTest extends TableSchemaUpdateConnectionTest:
 

@@ -6,17 +6,23 @@
 
 package ldbc.tests
 
-import cats.effect.*
+import java.time.*
+
 import com.mysql.cj.jdbc.MysqlDataSource
-import jdbc.connector.{ConnectionProvider as JdbcProvider, *}
-import ldbc.connector.{ConnectionProvider as LdbcProvider, *}
+
+import cats.effect.*
+
+import munit.CatsEffectSuite
+
+import ldbc.sql.*
+
 import ldbc.dsl.*
 import ldbc.dsl.codec.auto.generic.toSlowCompile.given
 import ldbc.dsl.exception.DecodeFailureException
-import ldbc.sql.*
-import munit.CatsEffectSuite
 
-import java.time.*
+import ldbc.connector.{ ConnectionProvider as LdbcProvider, * }
+
+import jdbc.connector.{ ConnectionProvider as JdbcProvider, * }
 
 class LdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
   override def connection: Provider[IO] =

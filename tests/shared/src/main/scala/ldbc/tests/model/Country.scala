@@ -8,7 +8,9 @@ package ldbc.tests.model
 
 import ldbc.dsl.*
 import ldbc.dsl.codec.Codec
+
 import ldbc.query.builder.Table
+
 import ldbc.schema.Table as SchemaTable
 
 case class Country(

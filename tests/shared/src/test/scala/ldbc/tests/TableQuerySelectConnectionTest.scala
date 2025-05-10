@@ -6,15 +6,23 @@
 
 package ldbc.tests
 
-import cats.effect.*
 import com.mysql.cj.jdbc.MysqlDataSource
-import jdbc.connector.{ConnectionProvider as JdbcProvider, *}
-import ldbc.connector.{ConnectionProvider as LdbcProvider, *}
-import ldbc.dsl.*
-import ldbc.query.builder.*
-import ldbc.sql.*
-import ldbc.tests.model.*
+
+import cats.effect.*
+
 import munit.*
+
+import ldbc.sql.*
+
+import ldbc.dsl.*
+
+import ldbc.query.builder.*
+
+import ldbc.connector.{ ConnectionProvider as LdbcProvider, * }
+
+import jdbc.connector.{ ConnectionProvider as JdbcProvider, * }
+
+import ldbc.tests.model.*
 
 class LdbcTableQuerySelectConnectionTest extends TableQuerySelectConnectionTest:
 
