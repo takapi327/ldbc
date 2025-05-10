@@ -202,7 +202,7 @@ lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     crossScalaVersions                      := Seq(scala3, scala37),
     name                                    := "tests",
     description                             := "Projects for testing",
-    libraryDependencies += "org.typelevel" %%% "munit-cats-effect" % "2.1.0" % Test,
+    libraryDependencies += "org.typelevel" %%% "munit-cats-effect" % "2.1.0",
     Test / unmanagedSourceDirectories ++= {
       val sourceDir = (Test / sourceDirectory).value
       CrossVersion.partialVersion(scalaVersion.value) match {
