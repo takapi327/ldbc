@@ -6,8 +6,6 @@
 
 package ldbc.tests
 
-import com.mysql.cj.jdbc.MysqlDataSource
-
 import cats.effect.*
 
 import munit.*
@@ -16,46 +14,31 @@ import ldbc.sql.*
 
 import ldbc.dsl.*
 
-import ldbc.query.builder.*
+import ldbc.schema.*
 
-import ldbc.connector.{ ConnectionProvider as LdbcProvider, * }
-
-import jdbc.connector.{ ConnectionProvider as JdbcProvider, * }
+import ldbc.connector.*
 
 import ldbc.tests.model.*
 
-class LdbcTableQuerySelectConnectionTest extends TableQuerySelectConnectionTest:
+class LdbcTableSchemaSelectConnectionTest extends TableSchemaSelectConnectionTest:
 
   override def prefix: "jdbc" | "ldbc" = "ldbc"
 
   override def connection: Provider[IO] =
-    LdbcProvider
+    ConnectionProvider
       .default[IO]("127.0.0.1", 13306, "ldbc", "password", "world")
       .setSSL(SSL.Trusted)
 
-class JdbcTableQuerySelectConnectionTest extends TableQuerySelectConnectionTest:
+trait TableSchemaSelectConnectionTest extends CatsEffectSuite:
 
-  val ds = new MysqlDataSource()
-  ds.setServerName("127.0.0.1")
-  ds.setPortNumber(13306)
-  ds.setDatabaseName("world")
-  ds.setUser("ldbc")
-  ds.setPassword("password")
+  def prefix: "jdbc" | "ldbc"
 
-  override def prefix: "jdbc" | "ldbc" = "jdbc"
-
-  override def connection: Provider[IO] =
-    JdbcProvider.fromDataSource(ds, ExecutionContexts.synchronous)
-
-trait TableQuerySelectConnectionTest extends CatsEffectSuite:
-
-  def prefix:     "jdbc" | "ldbc"
   def connection: Provider[IO]
 
-  private final val country          = TableQuery[Country]
-  private final val city             = TableQuery[City]
-  private final val countryLanguage  = TableQuery[CountryLanguage]
-  private final val governmentOffice = TableQuery[GovernmentOffice]
+  private final val country:          TableQuery[CountryTable]          = TableQuery[CountryTable]
+  private final val city:             TableQuery[CityTable]             = TableQuery[CityTable]
+  private final val countryLanguage:  TableQuery[CountryLanguageTable]  = TableQuery[CountryLanguageTable]
+  private final val governmentOffice: TableQuery[GovernmentOfficeTable] = TableQuery[GovernmentOfficeTable]
 
   test(
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value."

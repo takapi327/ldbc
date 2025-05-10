@@ -6,39 +6,21 @@
 
 package ldbc.tests
 
-import com.mysql.cj.jdbc.MysqlDataSource
-
 import cats.effect.*
 
 import munit.*
 
 import ldbc.sql.*
 
-import ldbc.connector.{ ConnectionProvider as LdbcProvider, * }
-
-import jdbc.connector.{ ConnectionProvider as JdbcProvider, * }
+import ldbc.connector.*
 
 class LdbcDatabaseMetaDataTest extends DatabaseMetaDataTest:
   override def prefix: "ldbc" = "ldbc"
 
   override def connection: Provider[IO] =
-    LdbcProvider
+    ConnectionProvider
       .default[IO](host, port, user, password, database)
       .setSSL(SSL.Trusted)
-
-class JdbcDatabaseMetaDataTest extends DatabaseMetaDataTest:
-
-  val ds = new MysqlDataSource()
-  ds.setServerName(host)
-  ds.setPortNumber(port)
-  ds.setDatabaseName(database)
-  ds.setUser(user)
-  ds.setPassword(password)
-
-  override def prefix: "jdbc" | "ldbc" = "jdbc"
-
-  override def connection: Provider[IO] =
-    JdbcProvider.fromDataSource(ds, ExecutionContexts.synchronous)
 
 trait DatabaseMetaDataTest extends CatsEffectSuite:
 
