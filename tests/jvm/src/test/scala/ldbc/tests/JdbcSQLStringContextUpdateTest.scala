@@ -31,7 +31,7 @@ class JdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest:
 
   override def prefix: "jdbc" | "ldbc" = "jdbc"
 
-  override def connection: IOFixture[Connection[IO]] =
+  override val connection: IOFixture[Connection[IO]] =
     new IOFixture[Connection[IO]]("connection"):
       @volatile private var value: Option[(Connection[IO], IO[Unit])] = None
 

@@ -21,7 +21,7 @@ import ldbc.connector.*
 class LdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest:
   override def prefix: "jdbc" | "ldbc" = "ldbc"
 
-  override def connection: IOFixture[Connection[IO]] =
+  override val connection: IOFixture[Connection[IO]] =
     new IOFixture[Connection[IO]]("connection"):
       @volatile private var value: Option[(Connection[IO], IO[Unit])] = None
 
@@ -41,8 +41,8 @@ class LdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest:
           )
           .createConnection()
           .allocated
-          .flatMap { value =>
-            IO(this.value = Some(value))
+          .map { value =>
+            this.value = Some(value)
           }
 
       override def afterAll(): IO[Unit] = value.fold(IO.unit)(_._2)
