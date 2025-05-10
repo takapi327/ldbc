@@ -6,8 +6,6 @@
 
 package ldbc.tests
 
-import com.mysql.cj.jdbc.MysqlDataSource
-
 import cats.effect.*
 
 import munit.*
@@ -18,9 +16,7 @@ import ldbc.dsl.*
 
 import ldbc.query.builder.*
 
-import ldbc.connector.{ ConnectionProvider as LdbcProvider, * }
-
-import jdbc.connector.{ ConnectionProvider as JdbcProvider, * }
+import ldbc.connector.*
 
 import ldbc.tests.model.*
 
@@ -29,23 +25,9 @@ class LdbcTableQuerySelectConnectionTest extends TableQuerySelectConnectionTest:
   override def prefix: "jdbc" | "ldbc" = "ldbc"
 
   override def connection: Provider[IO] =
-    LdbcProvider
+    ConnectionProvider
       .default[IO]("127.0.0.1", 13306, "ldbc", "password", "world")
       .setSSL(SSL.Trusted)
-
-class JdbcTableQuerySelectConnectionTest extends TableQuerySelectConnectionTest:
-
-  val ds = new MysqlDataSource()
-  ds.setServerName("127.0.0.1")
-  ds.setPortNumber(13306)
-  ds.setDatabaseName("world")
-  ds.setUser("ldbc")
-  ds.setPassword("password")
-
-  override def prefix: "jdbc" | "ldbc" = "jdbc"
-
-  override def connection: Provider[IO] =
-    JdbcProvider.fromDataSource(ds, ExecutionContexts.synchronous)
 
 trait TableQuerySelectConnectionTest extends CatsEffectSuite:
 
