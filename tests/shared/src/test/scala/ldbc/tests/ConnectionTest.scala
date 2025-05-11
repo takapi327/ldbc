@@ -6,6 +6,8 @@
 
 package ldbc.tests
 
+import scala.concurrent.duration.*
+
 import cats.effect.*
 
 import munit.*
@@ -300,7 +302,7 @@ trait ConnectionTest extends CatsEffectSuite:
 
   test("The result of retrieving schemas information matches the specified value.") {
     assertIO(
-      connection("SCHEMA").use { conn =>
+      IO.sleep(5.seconds) *> connection("SCHEMA").use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getSchemas()
