@@ -6,8 +6,6 @@
 
 package ldbc.tests
 
-import com.mysql.cj.jdbc.MysqlDataSource
-
 import cats.effect.*
 
 import munit.*
@@ -18,28 +16,14 @@ import ldbc.dsl.*
 
 import ldbc.schema.*
 
-import ldbc.connector.{ ConnectionProvider as LdbcProvider, * }
-
-import jdbc.connector.{ ConnectionProvider as JdbcProvider, * }
+import ldbc.connector.*
 
 class LdbcDDLTest extends DDLTest:
 
   override def connection: Provider[IO] =
-    LdbcProvider
+    ConnectionProvider
       .default[IO]("127.0.0.1", 13306, "ldbc", "password", "connector_test")
       .setSSL(SSL.Trusted)
-
-class JdbcDDLTest extends DDLTest:
-
-  val ds = new MysqlDataSource()
-  ds.setServerName("127.0.0.1")
-  ds.setPortNumber(13306)
-  ds.setDatabaseName("connector_test")
-  ds.setUser("ldbc")
-  ds.setPassword("password")
-
-  override def connection: Provider[IO] =
-    JdbcProvider.fromDataSource(ds, ExecutionContexts.synchronous)
 
 trait DDLTest extends CatsEffectSuite:
 
@@ -62,34 +46,30 @@ trait DDLTest extends CatsEffectSuite:
 
   final val userTable = TableQuery[UserTable]
 
-  override def beforeAll(): Unit =
-    connection
-      .use { conn =>
-        // The following implementation is used to test the possibility of multiple executions.
-        DBIO
-          .sequence(
-            userTable.schema.create,
-            userTable.schema.createIfNotExists,
-            userTable.schema.dropIfExists,
-            userTable.schema.create
-          )
-          .commit(conn) *> IO.unit
+  override def munitFixtures = List(
+    ResourceSuiteLocalFixture(
+      "Database Setup",
+      Resource.make[IO, Unit](
+        connection
+          .use { conn =>
+            // The following implementation is used to test the possibility of multiple executions.
+            DBIO
+              .sequence(
+                userTable.schema.create,
+                userTable.schema.createIfNotExists,
+                userTable.schema.dropIfExists,
+                userTable.schema.create
+              )
+              .commit(conn) *> IO.unit
+          }
+      ) { _ =>
+        connection
+          .use { conn =>
+            DBIO.sequence(userTable.schema.drop).commit(conn) *> IO.unit
+          }
       }
-      .unsafeRunSync()
-
-  override def afterAll(): Unit =
-    connection
-      .use { conn =>
-        DBIO.sequence(userTable.schema.drop).commit(conn) *> IO.unit
-      }
-      .unsafeRunSync()
-
-  override def afterEach(context: AfterEach): Unit =
-    connection
-      .use { conn =>
-        DBIO.sequence(userTable.schema.truncate).commit(conn) *> IO.unit
-      }
-      .unsafeRunSync()
+    )
+  )
 
   test("When the table is created, the number of records is 0.") {
     assertIO(

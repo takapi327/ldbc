@@ -195,19 +195,14 @@ lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
     )
   }.taskValue)
 
-lazy val tests = crossProject(JVMPlatform)
-  .crossType(CrossType.Pure)
-  .withoutSuffixFor(JVMPlatform)
+lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Full)
   .in(file("tests"))
   .settings(
-    crossScalaVersions := Seq(scala3, scala37),
-    name               := "tests",
-    description        := "Projects for testing",
-    Test / fork        := true,
-    libraryDependencies ++= Seq(
-      "org.typelevel" %% "munit-cats-effect" % "2.1.0" % Test,
-      mysql            % Test
-    ),
+    crossScalaVersions                      := Seq(scala3, scala37),
+    name                                    := "tests",
+    description                             := "Projects for testing",
+    libraryDependencies += "org.typelevel" %%% "munit-cats-effect" % "2.1.0",
     Test / unmanagedSourceDirectories ++= {
       val sourceDir = (Test / sourceDirectory).value
       CrossVersion.partialVersion(scalaVersion.value) match {
@@ -217,7 +212,23 @@ lazy val tests = crossProject(JVMPlatform)
     }
   )
   .defaultSettings
-  .dependsOn(jdbcConnector, connector, queryBuilder, schema)
+  .jvmSettings(
+    Test / fork                 := true,
+    libraryDependencies += mysql % Test
+  )
+  .jvmConfigure(_ dependsOn jdbcConnector.jvm)
+  .jsSettings(
+    Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule)),
+    scalacOptions ++= {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((3, 7)) => Seq("-nowarn")
+        case _            => Nil
+      }
+    }
+  )
+  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
+  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .dependsOn(connector, queryBuilder, schema)
   .enablePlugins(NoPublishPlugin)
 
 lazy val benchmark = (project in file("benchmark"))
