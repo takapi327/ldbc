@@ -8,9 +8,9 @@ package ldbc.dsl.codec
 
 import java.time.*
 
+import scala.compiletime.constValue
 import scala.deriving.Mirror
 import scala.reflect.Enum
-import scala.compiletime.constValue
 
 import cats.data.NonEmptyList
 import cats.syntax.all.*

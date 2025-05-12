@@ -8,9 +8,9 @@ package ldbc.dsl.codec
 
 import java.time.*
 
+import scala.compiletime.constValue
 import scala.deriving.Mirror
 import scala.reflect.Enum
-import scala.compiletime.constValue
 
 import cats.syntax.all.*
 import cats.InvariantSemigroupal
@@ -18,6 +18,7 @@ import cats.InvariantSemigroupal
 import org.typelevel.twiddles.TwiddleSyntax
 
 import ldbc.sql.ResultSet
+
 import ldbc.dsl.util.Mirrors
 
 /**
@@ -77,8 +78,8 @@ object Codec extends TwiddleSyntax[Codec]:
   inline def derivedEnum[E <: Enum](using mirror: Mirror.SumOf[E]): Codec[E] =
     Codec[String].eimap { name =>
       Mirrors.summonLabels[mirror.MirroredElemLabels].indexOf(name) match
-        case -1 => Left(s"${constValue[mirror.MirroredLabel]} Enum value $name not found")
-        case i => Right(Mirrors.summonEnumCases[mirror.MirroredElemTypes, E](constValue[mirror.MirroredLabel])(i))
+        case -1 => Left(s"${ constValue[mirror.MirroredLabel] } Enum value $name not found")
+        case i  => Right(Mirrors.summonEnumCases[mirror.MirroredElemTypes, E](constValue[mirror.MirroredLabel])(i))
     } { `enum` =>
       val labels = Mirrors.summonLabels[mirror.MirroredElemLabels]
       labels(mirror.ordinal(`enum`))

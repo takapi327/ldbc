@@ -13,6 +13,7 @@ import com.mysql.cj.jdbc.MysqlDataSource
 import cats.effect.*
 
 import ldbc.sql.*
+
 import ldbc.dsl.*
 import ldbc.dsl.codec.Codec
 

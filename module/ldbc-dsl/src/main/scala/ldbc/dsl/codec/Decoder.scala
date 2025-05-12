@@ -6,9 +6,9 @@
 
 package ldbc.dsl.codec
 
+import scala.compiletime.constValue
 import scala.deriving.Mirror
 import scala.reflect.Enum
-import scala.compiletime.constValue
 
 import cats.{ Applicative, Eq }
 import cats.syntax.all.*
@@ -16,6 +16,7 @@ import cats.syntax.all.*
 import org.typelevel.twiddles.TwiddleSyntax
 
 import ldbc.sql.ResultSet
+
 import ldbc.dsl.util.Mirrors
 
 /**
@@ -81,7 +82,7 @@ object Decoder extends TwiddleSyntax[Decoder]:
   inline def derivedEnum[E <: Enum](using mirror: Mirror.SumOf[E]): Decoder[E] =
     Decoder[String].emap { name =>
       Mirrors.summonLabels[mirror.MirroredElemLabels].indexOf(name) match
-        case -1 => Left(s"${constValue[mirror.MirroredLabel]} Enum value $name not found")
+        case -1 => Left(s"${ constValue[mirror.MirroredLabel] } Enum value $name not found")
         case i  => Right(Mirrors.summonEnumCases[mirror.MirroredElemTypes, E](constValue[mirror.MirroredLabel])(i))
     }
 
