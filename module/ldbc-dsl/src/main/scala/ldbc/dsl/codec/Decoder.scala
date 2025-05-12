@@ -7,6 +7,8 @@
 package ldbc.dsl.codec
 
 import scala.deriving.Mirror
+import scala.reflect.Enum
+import scala.compiletime.constValue
 
 import cats.{ Applicative, Eq }
 import cats.syntax.all.*
@@ -14,6 +16,7 @@ import cats.syntax.all.*
 import org.typelevel.twiddles.TwiddleSyntax
 
 import ldbc.sql.ResultSet
+import ldbc.dsl.util.Mirrors
 
 /**
  * Trait to get the DataType that matches the Scala type information from the ResultSet.
@@ -74,6 +77,13 @@ object Decoder extends TwiddleSyntax[Decoder]:
 
   def derived[P <: Product](using mirror: Mirror.ProductOf[P], decoder: Decoder[mirror.MirroredElemTypes]): Decoder[P] =
     decoder.to[P]
+
+  inline def derivedEnum[E <: Enum](using mirror: Mirror.SumOf[E]): Decoder[E] =
+    Decoder[String].emap { name =>
+      Mirrors.summonLabels[mirror.MirroredElemLabels].indexOf(name) match
+        case -1 => Left(s"${constValue[mirror.MirroredLabel]} Enum value $name not found")
+        case i  => Right(Mirrors.summonEnumCases[mirror.MirroredElemTypes, E](constValue[mirror.MirroredLabel])(i))
+    }
 
   /**
    * An error indicating that decoding a value starting at column `offset` and spanning `length`

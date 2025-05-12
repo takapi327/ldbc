@@ -9,12 +9,16 @@ package ldbc.dsl.codec
 import java.time.*
 
 import scala.deriving.Mirror
+import scala.reflect.Enum
+import scala.compiletime.constValue
 
 import cats.data.NonEmptyList
 import cats.syntax.all.*
 import cats.ContravariantSemigroupal
 
 import org.typelevel.twiddles.TwiddleSyntax
+
+import ldbc.dsl.util.Mirrors
 
 /**
  * Trait for converting Scala types to types that can be handled by PreparedStatement.
@@ -62,6 +66,12 @@ object Encoder extends TwiddleSyntax[Encoder]:
 
   def derived[P <: Product](using mirror: Mirror.ProductOf[P], encoder: Encoder[mirror.MirroredElemTypes]): Encoder[P] =
     encoder.to[P]
+
+  inline def derivedEnum[E <: Enum](using mirror: Mirror.SumOf[E]): Encoder[E] =
+    val labels = Mirrors.summonLabels[mirror.MirroredElemLabels]
+    Encoder[String].contramap { `enum` =>
+      labels(mirror.ordinal(`enum`))
+    }
 
   given ContravariantSemigroupal[Encoder] with
     override def contramap[A, B](fa: Encoder[A])(f:  B => A):     Encoder[B]      = fa.contramap(f)
