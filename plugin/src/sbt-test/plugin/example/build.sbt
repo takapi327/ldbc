@@ -7,7 +7,7 @@
 lazy val root = (project in file("."))
   .settings(
     name                 := "ldbc-plugin-example",
-    scalaVersion         := sys.props.get("scala.version").getOrElse("3.3.0"),
+    scalaVersion         := sys.props.get("scala.version").getOrElse("3.3.6"),
     version              := "0.1",
     run / fork           := true,
     Compile / parseFiles := List(baseDirectory.value / "test.sql"),
