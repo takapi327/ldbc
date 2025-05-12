@@ -153,11 +153,8 @@ trait DataTypes:
 
   inline def LONGTEXT[T <: String | Option[String]](): LongText[T] = LongText(isOptional[T])
 
-  inline def ENUM[T <: ScalaEnum](using mirror: Mirror.Of[T]): Enum[T] =
+  inline def ENUM[T <: ScalaEnum | Option[ScalaEnum]](using mirror: Mirror.Of[Mirrors.ExtractOption[T]]): Enum[T] =
     Enum(Mirrors.summonLabels[mirror.MirroredElemLabels], isOptional[T])
-
-  inline def ENUMOpt[T <: ScalaEnum](using mirror: Mirror.Of[T]): Enum[Option[T]] =
-    Enum(Mirrors.summonLabels[mirror.MirroredElemLabels], true)
 
   /** ===== List of Date Data Types ===== */
 

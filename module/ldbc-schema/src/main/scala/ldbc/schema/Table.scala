@@ -24,6 +24,7 @@ import scala.quoted.*
 import scala.reflect.Enum
 
 import ldbc.dsl.codec.Codec
+import ldbc.dsl.util.Mirrors
 
 import ldbc.statement.{ AbstractTable, Column }
 
@@ -292,15 +293,10 @@ trait Table[T](val $name: String) extends AbstractTable[T]:
   /**
    * Create a column with a data type of ENUM.
    */
-  protected final inline def `enum`[A <: Enum](
+  protected final inline def `enum`[A <: Enum | Option[Enum]](
     name: String
-  )(using Codec[A], Mirror.Of[A]): DataTypeColumn.StringColumn[A] =
+  )(using Codec[A], Mirror.Of[Mirrors.ExtractOption[A]]): DataTypeColumn.StringColumn[A] =
     DataTypeColumn.string[A](name, Some($name), ENUM, Table.isOptional)
-
-  protected final inline def enumOpt[A <: Enum](
-    name: String
-  )(using Codec[A], Mirror.Of[A]): DataTypeColumn.StringColumn[Option[A]] =
-    DataTypeColumn.string[Option[A]](name, Some($name), ENUMOpt, true)
 
   /**
    * Create a column with a data type of DATE.
