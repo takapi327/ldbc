@@ -21,6 +21,7 @@ import scala.compiletime.erasedValue
 import scala.deriving.Mirror
 import scala.language.dynamics
 import scala.quoted.*
+import scala.reflect.Enum
 
 import ldbc.dsl.codec.Codec
 
@@ -29,7 +30,6 @@ import ldbc.statement.{ AbstractTable, Column }
 import ldbc.schema.attribute.Attribute
 import ldbc.schema.interpreter.*
 import ldbc.schema.macros.DataTypeColumnMacros.*
-import ldbc.schema.model.{ Enum as EnumModel, EnumDataType }
 import ldbc.schema.DataType.*
 
 trait Table[T](val $name: String) extends AbstractTable[T]:
@@ -292,10 +292,15 @@ trait Table[T](val $name: String) extends AbstractTable[T]:
   /**
    * Create a column with a data type of ENUM.
    */
-  protected final inline def `enum`[A <: EnumModel | Option[EnumModel]](
+  protected final inline def `enum`[A <: Enum](
     name: String
-  )(using Codec[A], EnumDataType[?]): DataTypeColumn.StringColumn[A] =
+  )(using Codec[A], Mirror.Of[A]): DataTypeColumn.StringColumn[A] =
     DataTypeColumn.string[A](name, Some($name), ENUM, Table.isOptional)
+
+  protected final inline def enumOpt[A <: Enum](
+                                                name: String
+                                              )(using Codec[A], Mirror.Of[A]): DataTypeColumn.StringColumn[Option[A]] =
+    DataTypeColumn.string[Option[A]](name, Some($name), ENUMOpt, true)
 
   /**
    * Create a column with a data type of DATE.

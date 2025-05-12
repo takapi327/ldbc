@@ -6,20 +6,12 @@
 
 package ldbc.schema
 
-import java.time.{
-  Instant,
-  LocalDate,
-  LocalDateTime,
-  LocalTime,
-  OffsetDateTime,
-  OffsetTime,
-  Year as JYear,
-  ZonedDateTime
-}
+import ldbc.dsl.util.Mirrors
 
-import scala.compiletime.{ erasedValue, error }
-
-import ldbc.schema.model.{ Enum as EnumModel, EnumDataType }
+import java.time.{Instant, LocalDate, LocalDateTime, LocalTime, OffsetDateTime, OffsetTime, ZonedDateTime, Year as JYear}
+import scala.compiletime.{erasedValue, error}
+import scala.reflect.Enum as ScalaEnum
+import scala.deriving.Mirror
 import ldbc.schema.DataType.*
 
 /**
@@ -150,7 +142,11 @@ trait DataTypes:
 
   inline def LONGTEXT[T <: String | Option[String]](): LongText[T] = LongText(isOptional[T])
 
-  inline def ENUM[T <: EnumModel | Option[EnumModel]](using EnumDataType[?]): Enum[T] = Enum(isOptional[T])
+  inline def ENUM[T <: ScalaEnum](using mirror: Mirror.Of[T]): Enum[T] =
+    Enum(Mirrors.summonLabels[mirror.MirroredElemLabels], isOptional[T])
+
+  inline def ENUMOpt[T <: ScalaEnum](using mirror: Mirror.Of[T]): Enum[Option[T]] =
+    Enum(Mirrors.summonLabels[mirror.MirroredElemLabels], true)
 
   /** ===== List of Date Data Types ===== */
 
