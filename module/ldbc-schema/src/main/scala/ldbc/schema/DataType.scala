@@ -1244,7 +1244,7 @@ object DataType:
    *   Scala types that match SQL DataType
    */
   private[ldbc] case class Enum[T <: ScalaEnum | Option[ScalaEnum]](
-                                                                   labels: List[String],
+    labels:     List[String],
     isOptional: Boolean,
     character:  Option[Character]  = None,
     collate:    Option[Collate[T]] = None,

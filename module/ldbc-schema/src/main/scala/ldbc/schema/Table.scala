@@ -298,8 +298,8 @@ trait Table[T](val $name: String) extends AbstractTable[T]:
     DataTypeColumn.string[A](name, Some($name), ENUM, Table.isOptional)
 
   protected final inline def enumOpt[A <: Enum](
-                                                name: String
-                                              )(using Codec[A], Mirror.Of[A]): DataTypeColumn.StringColumn[Option[A]] =
+    name: String
+  )(using Codec[A], Mirror.Of[A]): DataTypeColumn.StringColumn[Option[A]] =
     DataTypeColumn.string[Option[A]](name, Some($name), ENUMOpt, true)
 
   /**

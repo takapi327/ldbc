@@ -6,12 +6,23 @@
 
 package ldbc.schema
 
+import java.time.{
+  Instant,
+  LocalDate,
+  LocalDateTime,
+  LocalTime,
+  OffsetDateTime,
+  OffsetTime,
+  Year as JYear,
+  ZonedDateTime
+}
+
+import scala.compiletime.{ erasedValue, error }
+import scala.deriving.Mirror
+import scala.reflect.Enum as ScalaEnum
+
 import ldbc.dsl.util.Mirrors
 
-import java.time.{Instant, LocalDate, LocalDateTime, LocalTime, OffsetDateTime, OffsetTime, ZonedDateTime, Year as JYear}
-import scala.compiletime.{erasedValue, error}
-import scala.reflect.Enum as ScalaEnum
-import scala.deriving.Mirror
 import ldbc.schema.DataType.*
 
 /**
