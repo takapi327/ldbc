@@ -10,7 +10,6 @@ import java.time.{ LocalDate, LocalDateTime, LocalTime, Year as JYear }
 
 import org.scalatest.flatspec.AnyFlatSpec
 
-import ldbc.schema.model.EnumDataType
 import ldbc.schema.DataType.*
 
 class DataTypeTest extends AnyFlatSpec:
@@ -247,19 +246,18 @@ class DataTypeTest extends AnyFlatSpec:
   }
 
   it should "The query string generated from the Enum DataType model matches the specified one." in {
-    enum Status extends ldbc.schema.model.Enum:
+    enum Status:
       case Active, InActive
-    object Status extends EnumDataType[Status]
 
-    assert(ENUM[Status](using Status).queryString === "ENUM('Active','InActive') NOT NULL")
+    assert(ENUM[Status].queryString === "ENUM('Active','InActive') NOT NULL")
     assert(
-      ENUM[Status](using Status)
+      ENUM[Status]
         .DEFAULT(Status.Active)
         .queryString === "ENUM('Active','InActive') NOT NULL DEFAULT 'Active'"
     )
-    assert(ENUM[Option[Status]](using Status).queryString === "ENUM('Active','InActive') NULL")
+    assert(ENUMOpt[Status].queryString === "ENUM('Active','InActive') NULL")
     assert(
-      ENUM[Option[Status]](using Status).DEFAULT(None).queryString === "ENUM('Active','InActive') NULL DEFAULT NULL"
+      ENUMOpt[Status].DEFAULT(None).queryString === "ENUM('Active','InActive') NULL DEFAULT NULL"
     )
   }
 
