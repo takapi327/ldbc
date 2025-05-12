@@ -187,9 +187,8 @@ Example of using ENUM type:
 
 ```scala 3
 // ENUM definition
-enum UserStatus extends Enum:
+enum UserStatus:
   case Active, Inactive, Suspended
-object UserStatus extends EnumDataType[UserStatus]
 
 // Using ENUM in table definition
 class UserTable extends Table[User]("user"):
