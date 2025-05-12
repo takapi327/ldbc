@@ -228,24 +228,24 @@ class DataTypeCodeBuilderTest extends CatsEffectSuite:
     val dataType4 = DataType.ENUM(List("Active", "InActive"), None, None)
     assertEquals(
       builder("Status").build(dataType1),
-      "ENUM[Status](using Status).CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)"
+      "ENUM[Status].CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)"
     )
     assertEquals(
       builder("Option[Status]").build(dataType1),
-      "ENUM[Option[Status]](using Status).CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)"
+      "ENUM[Option[Status]].CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)"
     )
-    assertEquals(builder("Status").build(dataType2), "ENUM[Status](using Status).CHARACTER_SET(Character.utf8mb4)")
+    assertEquals(builder("Status").build(dataType2), "ENUM[Status].CHARACTER_SET(Character.utf8mb4)")
     assertEquals(
       builder("Option[Status]").build(dataType2),
-      "ENUM[Option[Status]](using Status).CHARACTER_SET(Character.utf8mb4)"
+      "ENUM[Option[Status]].CHARACTER_SET(Character.utf8mb4)"
     )
-    assertEquals(builder("Status").build(dataType3), "ENUM[Status](using Status).COLLATE(Collate.utf8mb4_bin)")
+    assertEquals(builder("Status").build(dataType3), "ENUM[Status].COLLATE(Collate.utf8mb4_bin)")
     assertEquals(
       builder("Option[Status]").build(dataType3),
-      "ENUM[Option[Status]](using Status).COLLATE(Collate.utf8mb4_bin)"
+      "ENUM[Option[Status]].COLLATE(Collate.utf8mb4_bin)"
     )
-    assertEquals(builder("Status").build(dataType4), "ENUM[Status](using Status)")
-    assertEquals(builder("Option[Status]").build(dataType4), "ENUM[Option[Status]](using Status)")
+    assertEquals(builder("Status").build(dataType4), "ENUM[Status]")
+    assertEquals(builder("Option[Status]").build(dataType4), "ENUM[Option[Status]]")
   }
 
   test("BLOB DataType construction to code string matches the specified string.") {
