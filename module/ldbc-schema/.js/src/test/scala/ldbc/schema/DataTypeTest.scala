@@ -255,9 +255,9 @@ class DataTypeTest extends AnyFlatSpec:
         .DEFAULT(Status.Active)
         .queryString === "ENUM('Active','InActive') NOT NULL DEFAULT 'Active'"
     )
-    assert(ENUMOpt[Status].queryString === "ENUM('Active','InActive') NULL")
+    assert(ENUM[Option[Status]].queryString === "ENUM('Active','InActive') NULL")
     assert(
-      ENUMOpt[Status].DEFAULT(None).queryString === "ENUM('Active','InActive') NULL DEFAULT NULL"
+      ENUM[Option[Status]].DEFAULT(None).queryString === "ENUM('Active','InActive') NULL DEFAULT NULL"
     )
   }
 
