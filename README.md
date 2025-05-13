@@ -357,12 +357,6 @@ We will continue to develop features and improve the stability of the ldbc conne
 
 - [ ] Failover Countermeasures
 
-#### Performance Verification
-
-- [ ] Comparison with JDBC
-- [ ] Comparison with other MySQL Scala libraries
-- [ ] Verification of operation in AWS and other infrastructure environments
-
 #### Other
 
 - [ ] Additional streaming implementation

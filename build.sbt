@@ -359,7 +359,7 @@ lazy val mcpDocumentServer = crossProject(JSPlatform)
     npmPackageAuthor       := "takapi327",
     npmPackageLicense      := Some("MIT"),
     npmPackageBinaryEnable := true,
-    npmPackageVersion      := "0.1.0-alpha4",
+    npmPackageVersion      := "0.1.0-alpha5",
     npmPackageREADME       := Some(baseDirectory.value / "README.md"),
     npmPackageAdditionalNpmConfig := Map(
       "homepage" -> _root_.io.circe.Json.fromString("https://takapi327.github.io/ldbc/"),
