@@ -145,9 +145,9 @@ private[ldbc] object TableModelGenerator:
     column.dataType.scalaType match
       case ScalaType.Enum(types) =>
         val enumName = formatter.format(column.name)
-        Some(s"""enum $enumName extends model.Enum:
+        Some(s"""enum $enumName:
            |    case ${ types.mkString(", ") }
-           |  object $enumName extends model.EnumDataType[$enumName]:
-           |    given ldbc.dsl.codec.Codec[$enumName] = ldbc.dsl.codec.Codec[Int].imap($enumName.fromOrdinal)(_.ordinal)
+           |  object $enumName:
+           |    given ldbc.dsl.codec.Codec[$enumName] = ldbc.dsl.codec.Codec.derivedEnum[$enumName]
            |""".stripMargin)
       case _ => None

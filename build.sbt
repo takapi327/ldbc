@@ -16,7 +16,7 @@ ThisBuild / tlBaseVersion      := LdbcVersions.latest
 ThisBuild / tlFatalWarnings    := true
 ThisBuild / projectName        := "ldbc"
 ThisBuild / scalaVersion       := scala3
-ThisBuild / crossScalaVersions := Seq(scala3, scala36)
+ThisBuild / crossScalaVersions := Seq(scala3, scala37)
 ThisBuild / githubWorkflowJavaVersions := Seq(
   JavaSpec.corretto(java11),
   JavaSpec.corretto(java17),
@@ -159,24 +159,40 @@ lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
     )
   }.taskValue)
 
-lazy val tests = crossProject(JVMPlatform)
-  .crossType(CrossType.Pure)
-  .withoutSuffixFor(JVMPlatform)
+lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Full)
   .in(file("tests"))
   .settings(
-    name        := "tests",
-    description := "Projects for testing",
-    Test / fork := true,
-    scalacOptions += "-Ximplicit-search-limit:100000"
+    crossScalaVersions                      := Seq(scala3, scala37),
+    name                                    := "tests",
+    description                             := "Projects for testing",
+    libraryDependencies += "org.typelevel" %%% "munit-cats-effect" % "2.1.0",
+    Test / unmanagedSourceDirectories ++= {
+      val sourceDir = (Test / sourceDirectory).value
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((3, 7)) => Seq(sourceDir / "scala-3.7")
+        case _            => Nil
+      }
+    }
   )
   .defaultSettings
-  .settings(
-    libraryDependencies ++= Seq(
-      "org.typelevel" %% "munit-cats-effect" % "2.1.0" % Test,
-      mysql            % Test
-    )
+  .jvmSettings(
+    Test / fork                 := true,
+    libraryDependencies += mysql % Test
   )
-  .dependsOn(jdbcConnector, connector, queryBuilder, schema)
+  .jvmConfigure(_ dependsOn jdbcConnector.jvm)
+  .jsSettings(
+    Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule)),
+    scalacOptions ++= {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((3, 7)) => Seq("-nowarn")
+        case _            => Nil
+      }
+    }
+  )
+  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
+  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .dependsOn(connector, queryBuilder, schema)
   .enablePlugins(NoPublishPlugin)
 
 lazy val benchmark = (project in file("benchmark"))
@@ -230,8 +246,8 @@ lazy val otelExample = crossProject(JVMPlatform)
   .settings(
     libraryDependencies ++= Seq(
       "org.typelevel"   %% "otel4s-oteljava"                           % "0.12.0",
-      "io.opentelemetry" % "opentelemetry-exporter-otlp"               % "1.49.0" % Runtime,
-      "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.49.0" % Runtime
+      "io.opentelemetry" % "opentelemetry-exporter-otlp"               % "1.50.0" % Runtime,
+      "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.50.0" % Runtime
     )
   )
   .settings(
@@ -308,7 +324,7 @@ lazy val mcpDocumentServer = crossProject(JSPlatform)
     npmPackageAuthor       := "takapi327",
     npmPackageLicense      := Some("MIT"),
     npmPackageBinaryEnable := true,
-    npmPackageVersion      := "0.1.0-alpha3",
+    npmPackageVersion      := "0.1.0-alpha4",
     npmPackageREADME       := Some(baseDirectory.value / "README.md"),
     npmPackageAdditionalNpmConfig := Map(
       "homepage" -> _root_.io.circe.Json.fromString("https://takapi327.github.io/ldbc/"),
