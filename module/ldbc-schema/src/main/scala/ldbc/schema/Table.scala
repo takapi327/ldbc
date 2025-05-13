@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -21,15 +21,16 @@ import scala.compiletime.erasedValue
 import scala.deriving.Mirror
 import scala.language.dynamics
 import scala.quoted.*
+import scala.reflect.Enum
 
 import ldbc.dsl.codec.Codec
+import ldbc.dsl.util.Mirrors
 
 import ldbc.statement.{ AbstractTable, Column }
 
 import ldbc.schema.attribute.Attribute
 import ldbc.schema.interpreter.*
 import ldbc.schema.macros.DataTypeColumnMacros.*
-import ldbc.schema.model.{ Enum as EnumModel, EnumDataType }
 import ldbc.schema.DataType.*
 
 trait Table[T](val $name: String) extends AbstractTable[T]:
@@ -292,9 +293,9 @@ trait Table[T](val $name: String) extends AbstractTable[T]:
   /**
    * Create a column with a data type of ENUM.
    */
-  protected final inline def `enum`[A <: EnumModel | Option[EnumModel]](
+  protected final inline def `enum`[A <: Enum | Option[Enum]](
     name: String
-  )(using Codec[A], EnumDataType[?]): DataTypeColumn.StringColumn[A] =
+  )(using Codec[A], Mirror.Of[Mirrors.ExtractOption[A]]): DataTypeColumn.StringColumn[A] =
     DataTypeColumn.string[A](name, Some($name), ENUM, Table.isOptional)
 
   /**

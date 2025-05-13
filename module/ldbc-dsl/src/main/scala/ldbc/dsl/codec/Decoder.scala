@@ -1,12 +1,14 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
 package ldbc.dsl.codec
 
+import scala.compiletime.constValue
 import scala.deriving.Mirror
+import scala.reflect.Enum
 
 import cats.{ Applicative, Eq }
 import cats.syntax.all.*
@@ -14,6 +16,8 @@ import cats.syntax.all.*
 import org.typelevel.twiddles.TwiddleSyntax
 
 import ldbc.sql.ResultSet
+
+import ldbc.dsl.util.Mirrors
 
 /**
  * Trait to get the DataType that matches the Scala type information from the ResultSet.
@@ -75,6 +79,13 @@ object Decoder extends TwiddleSyntax[Decoder]:
   def derived[P <: Product](using mirror: Mirror.ProductOf[P], decoder: Decoder[mirror.MirroredElemTypes]): Decoder[P] =
     decoder.to[P]
 
+  inline def derivedEnum[E <: Enum](using mirror: Mirror.SumOf[E]): Decoder[E] =
+    Decoder[String].emap { name =>
+      Mirrors.summonLabels[mirror.MirroredElemLabels].indexOf(name) match
+        case -1 => Left(s"${ constValue[mirror.MirroredLabel] } Enum value $name not found")
+        case i  => Right(Mirrors.summonEnumCases[mirror.MirroredElemTypes, E](constValue[mirror.MirroredLabel])(i))
+    }
+
   /**
    * An error indicating that decoding a value starting at column `offset` and spanning `length`
    * columns failed with reason `error`.
@@ -98,6 +109,9 @@ object Decoder extends TwiddleSyntax[Decoder]:
 
   given [A, B](using da: Decoder[A], db: Decoder[B]): Decoder[(A, B)] =
     da.product(db)
+
+  given [NT](using m: Mirror.ProductOf[NT], decoder: Decoder[m.MirroredElemTypes]): Decoder[NT] =
+    decoder.map(tuple => m.fromProduct(tuple))
 
   given [H, T <: Tuple](using dh: Decoder[H], dt: Decoder[T]): Decoder[H *: T] =
     dh.product(dt).map { case (h, t) => h *: t }

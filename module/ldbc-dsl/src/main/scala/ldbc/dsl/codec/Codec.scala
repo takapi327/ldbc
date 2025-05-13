@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -8,7 +8,9 @@ package ldbc.dsl.codec
 
 import java.time.*
 
+import scala.compiletime.constValue
 import scala.deriving.Mirror
+import scala.reflect.Enum
 
 import cats.syntax.all.*
 import cats.InvariantSemigroupal
@@ -16,6 +18,8 @@ import cats.InvariantSemigroupal
 import org.typelevel.twiddles.TwiddleSyntax
 
 import ldbc.sql.ResultSet
+
+import ldbc.dsl.util.Mirrors
 
 /**
  * Symmetric encoder and decoder of MySQL data to and from Scala types.
@@ -70,6 +74,16 @@ object Codec extends TwiddleSyntax[Codec]:
 
   def derived[P <: Product](using mirror: Mirror.ProductOf[P], codec: Codec[mirror.MirroredElemTypes]): Codec[P] =
     codec.to[P]
+
+  inline def derivedEnum[E <: Enum](using mirror: Mirror.SumOf[E]): Codec[E] =
+    Codec[String].eimap { name =>
+      Mirrors.summonLabels[mirror.MirroredElemLabels].indexOf(name) match
+        case -1 => Left(s"${ constValue[mirror.MirroredLabel] } Enum value $name not found")
+        case i  => Right(Mirrors.summonEnumCases[mirror.MirroredElemTypes, E](constValue[mirror.MirroredLabel])(i))
+    } { `enum` =>
+      val labels = Mirrors.summonLabels[mirror.MirroredElemLabels]
+      labels(mirror.ordinal(`enum`))
+    }
 
   private def readCatchError[A](offset: Int, func: => A): Either[Decoder.Error, A] =
     try Right(func)

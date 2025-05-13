@@ -23,10 +23,6 @@ services:
   mysql:
     image: mysql:@MYSQL_VERSION@
     container_name: ldbc
-    environment:
-      MYSQL_USER: 'ldbc'
-      MYSQL_PASSWORD: 'password'
-      MYSQL_ROOT_PASSWORD: 'root'
     ports:
       - 13306:3306
     volumes:
@@ -37,10 +33,16 @@ services:
       retries: 10
 ```
 
-次に、`database`ディレクトリに以下のSQLファイルを作成して、初期データを設定します：
+次に、`database`ディレクトリに以下のSQLファイルを作成して、ユーザーと初期データを設定します：
 
 ```sql
--- 01-create-database.sql
+-- user.sql
+CREATE USER 'ldbc'@'%' IDENTIFIED BY 'password';
+GRANT ALL PRIVILEGES ON *.* TO ldbc;
+```
+
+```sql
+-- schema.sql
 CREATE DATABASE IF NOT EXISTS sandbox_db;
 USE sandbox_db;
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -26,10 +26,16 @@ trait SSL:
 
   def tlsContext[F[_]: Network](using ae: ApplicativeError[F, Throwable]): Resource[F, TLSContext[F]]
 
+  def withTLSParameters(_tlsParameters: TLSParameters): SSL =
+    new SSL:
+      override def tlsParameters: TLSParameters = _tlsParameters
+      override def tlsContext[F[_]: Network](using ev: ApplicativeError[F, Throwable]): Resource[F, TLSContext[F]] =
+        outer.tlsContext
+
   def withFallback(_fallbackOk: Boolean): SSL =
     new SSL:
       override def fallbackOk: Boolean = _fallbackOk
-      def tlsContext[F[_]: Network](implicit ev: ApplicativeError[F, Throwable]): Resource[F, TLSContext[F]] =
+      override def tlsContext[F[_]: Network](implicit ev: ApplicativeError[F, Throwable]): Resource[F, TLSContext[F]] =
         outer.tlsContext
 
   def toSSLNegotiationOptions[F[_]: Network](logger: Option[String => F[Unit]])(using
@@ -39,7 +45,7 @@ trait SSL:
       case SSL.None => Resource.pure(None)
       case _        => tlsContext.map(SSLNegotiation.Options(_, tlsParameters, fallbackOk, logger).some)
 
-object SSL:
+object SSL extends SSLPlatform:
 
   /** `SSL` which indicates that SSL is not to be used. */
   object None extends SSL:

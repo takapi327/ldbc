@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -231,7 +231,7 @@ object Connection:
     release:                 (A, Connection[F]) => F[Unit]
   )(using ev: Async[F]): Resource[F, LdbcConnection[F]] =
 
-    def fail[A](msg: String): Resource[F, A] =
+    def fail[B](msg: String): Resource[F, B] =
       Resource.eval(ev.raiseError(new SQLClientInfoException(msg)))
 
     def sockets: Resource[F, Socket[F]] =

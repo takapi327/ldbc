@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -18,8 +18,11 @@ import java.time.{
 }
 
 import scala.compiletime.{ erasedValue, error }
+import scala.deriving.Mirror
+import scala.reflect.Enum as ScalaEnum
 
-import ldbc.schema.model.{ Enum as EnumModel, EnumDataType }
+import ldbc.dsl.util.Mirrors
+
 import ldbc.schema.DataType.*
 
 /**
@@ -150,7 +153,8 @@ trait DataTypes:
 
   inline def LONGTEXT[T <: String | Option[String]](): LongText[T] = LongText(isOptional[T])
 
-  inline def ENUM[T <: EnumModel | Option[EnumModel]](using EnumDataType[?]): Enum[T] = Enum(isOptional[T])
+  inline def ENUM[T <: ScalaEnum | Option[ScalaEnum]](using mirror: Mirror.Of[Mirrors.ExtractOption[T]]): Enum[T] =
+    Enum(Mirrors.summonLabels[mirror.MirroredElemLabels], isOptional[T])
 
   /** ===== List of Date Data Types ===== */
 

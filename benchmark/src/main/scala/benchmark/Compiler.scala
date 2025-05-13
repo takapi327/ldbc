@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -53,8 +53,8 @@ object Compiler:
       out,
       None
     ):
-    override def interpret(res: ParseResult, quiet: Boolean = false)(using state: State): State =
-      super.interpret(res, quiet)
+    override def interpret(res: ParseResult)(using state: State): State =
+      super.interpret(res)
 
   class TypeError(msg: String)   extends Exception(msg)
   class SyntaxError(msg: String) extends Exception(msg)

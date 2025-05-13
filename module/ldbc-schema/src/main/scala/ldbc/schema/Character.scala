@@ -1,13 +1,14 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
 package ldbc.schema
 
+import scala.reflect.Enum
+
 import ldbc.schema.attribute.Attribute
-import ldbc.schema.model.Enum
 
 /**
  * A model for representing character sets to be set in column definitions for the string data types CHAR, VARCHAR,

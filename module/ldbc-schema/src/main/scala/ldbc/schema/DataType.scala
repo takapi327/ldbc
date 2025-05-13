@@ -1,22 +1,21 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
 package ldbc.schema
 
-import java.time.*
-import java.time.Year as JYear
+import java.time.{ Year as JYear, * }
 
 import scala.compiletime.{ constValue, erasedValue, error }
 import scala.compiletime.ops.int.*
 import scala.compiletime.ops.string.*
+import scala.reflect.Enum as ScalaEnum
 
 import ldbc.sql.Types
 
 import ldbc.schema.interpreter.ExtractOption
-import ldbc.schema.model.{ Enum as EnumModel, EnumDataType }
 
 /**
  * Trait for representing SQL DataType
@@ -1244,15 +1243,15 @@ object DataType:
    * @tparam T
    *   Scala types that match SQL DataType
    */
-  private[ldbc] case class Enum[T <: EnumModel | Option[EnumModel]](
+  private[ldbc] case class Enum[T <: ScalaEnum | Option[ScalaEnum]](
+    labels:     List[String],
     isOptional: Boolean,
     character:  Option[Character]  = None,
     collate:    Option[Collate[T]] = None,
     default:    Option[Default]    = None
-  )(using enumDataType: EnumDataType[?])
-    extends DataType[T]:
+  ) extends DataType[T]:
 
-    override def typeName: String = s"ENUM(${ enumDataType.values.map(v => s"'$v'").mkString(",") })"
+    override def typeName: String = s"ENUM(${ labels.map(label => s"'$label'").mkString(",") })"
 
     override def sqlType: Int = Types.CHAR
 
