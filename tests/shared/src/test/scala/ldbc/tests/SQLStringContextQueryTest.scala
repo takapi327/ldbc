@@ -16,15 +16,35 @@ import ldbc.sql.*
 
 import ldbc.dsl.*
 import ldbc.dsl.codec.auto.generic.toSlowCompile.given
+import ldbc.dsl.codec.Codec
 import ldbc.dsl.exception.DecodeFailureException
 
 import ldbc.connector.*
+import ldbc.connector.exception.SQLException
 
 class LdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
   override def connection: Provider[IO] =
     ConnectionProvider
       .default[IO]("127.0.0.1", 13306, "ldbc", "password", "world")
       .setSSL(SSL.Trusted)
+
+  test(
+    "Attempting to decode something that does not match the value of Enum raises a SQLException."
+  ) {
+    enum MyEnum:
+      case A, B, C
+
+    given Codec[MyEnum] = Codec.derivedEnum[MyEnum]
+
+    interceptIO[SQLException](
+      connection.use { conn =>
+        sql"SELECT D"
+          .query[MyEnum]
+          .to[Option]
+          .readOnly(conn)
+      }
+    )
+  }
 
 trait SQLStringContextQueryTest extends CatsEffectSuite:
 
@@ -720,5 +740,23 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
           .to[Option]
           .readOnly(conn)
       }
+    )
+  }
+
+  test("Enum can be mapped to matching values.") {
+    enum MyEnum:
+      case A, B, C
+
+    given Codec[MyEnum] = Codec.derivedEnum[MyEnum]
+
+    assertIO(
+      connection.use { conn =>
+        (for
+          a <- sql"SELECT 'A'".query[MyEnum].to[Option]
+          b <- sql"SELECT 'B'".query[MyEnum].to[Option]
+          c <- sql"SELECT 'C'".query[MyEnum].to[Option]
+        yield (a, b, c)).readOnly(conn)
+      },
+      (Some(MyEnum.A), Some(MyEnum.B), Some(MyEnum.C))
     )
   }

@@ -6,8 +6,9 @@
 
 package ldbc.schema
 
+import scala.reflect.Enum
+
 import ldbc.schema.attribute.Attribute
-import ldbc.schema.model.Enum
 
 /**
  * A model for representing character sets to be set in column definitions for the string data types CHAR, VARCHAR,
