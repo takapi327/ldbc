@@ -513,6 +513,9 @@ jobs:
       - name: Checkout current branch (fast)
         uses: actions/checkout@v4
 
+      - name: Start up MySQL on Docker
+        run: docker compose up -d
+
       - name: Setup Java (corretto@21)
         id: setup-java-corretto-21
         if: matrix.java == 'corretto@21'
@@ -527,6 +530,9 @@ jobs:
         run: sbt +update
 
       - run: sbt '++ ${{ matrix.scala }}' coverage ldbcJVM/test coverageAggregate
+
+      - name: Stop MySQL on Docker
+        run: docker compose down
 
       - env:
           CODECOV_TOKEN: ${{secrets.CODECOV_TOKEN}}
