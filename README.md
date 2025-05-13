@@ -29,20 +29,20 @@ Please drop a :star: if this project interests you. I need encouragement.
 
 ldbc is available on the JVM, Scala.js, and ScalaNative
 
-| Module / Platform    | JVM | Scala Native | Scala.js |  
-|----------------------|:---:|:------------:|:--------:|
-| `ldbc-core`          |  ✅  |      ✅       |    ✅     |
-| `ldbc-sql`           |  ✅  |      ✅       |    ✅     |
-| `ldbc-connector`     |  ✅  |      ✅       |    ✅     | 
-| `jdbc-connector`     |  ✅  |      ❌       |    ❌     | 
-| `ldbc-dsl`           |  ✅  |      ✅       |    ✅     |
-| `ldbc-statement`     |  ✅  |      ✅       |    ✅     |
-| `ldbc-query-builder` |  ✅  |      ✅       |    ✅     |
-| `ldbc-schema`        |  ✅  |      ✅       |    ✅     |
-| `ldbc-schemaSpy`     |  ✅  |      ❌       |    ❌     | 
-| `ldbc-codegen`       |  ✅  |      ✅       |    ✅     |
-| `ldbc-hikari`        |  ✅  |      ❌       |    ❌     | 
-| `ldbc-plugin`        |  ✅  |      ❌       |    ❌     |
+| Module / Platform    | JVM | Scala Native | Scala.js | Scaladoc                                                                                                                                                                      |
+|----------------------|:---:|:------------:|:--------:|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ldbc-core`          |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://javadoc.io/badge2/io.github.takapi327/ldbc-core_3/javadoc.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-core_3)                   |
+| `ldbc-sql`           |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://javadoc.io/badge2/io.github.takapi327/ldbc-sql_3/javadoc.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-sql_3)                     |
+| `ldbc-connector`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://javadoc.io/badge2/io.github.takapi327/ldbc-connector_3/javadoc.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-connector_3)         |
+| `jdbc-connector`     |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://javadoc.io/badge2/io.github.takapi327/jdbc-connector_3/javadoc.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/jdbc-connector_3)         |
+| `ldbc-dsl`           |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://javadoc.io/badge2/io.github.takapi327/ldbc-dsl_3/javadoc.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3)                     |
+| `ldbc-statement`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://javadoc.io/badge2/io.github.takapi327/ldbc-statement_3/javadoc.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-statement_3)         |
+| `ldbc-query-builder` |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://javadoc.io/badge2/io.github.takapi327/ldbc-query-builder_3/javadoc.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-query-builder_3) |
+| `ldbc-schema`        |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://javadoc.io/badge2/io.github.takapi327/ldbc-schema_3/javadoc.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-schema_3)               |
+| `ldbc-schemaSpy`     |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://javadoc.io/badge2/io.github.takapi327/ldbc-schemaspy_3/javadoc.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-schemaspy_3)         |
+| `ldbc-codegen`       |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://javadoc.io/badge2/io.github.takapi327/ldbc-codegen_3/javadoc.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-codegen_3)             |
+| `ldbc-hikari`        |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://javadoc.io/badge2/io.github.takapi327/ldbc-hikari_3/javadoc.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-hikari_3)               |
+| `ldbc-plugin`        |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://javadoc.io/badge2/io.github.takapi327/ldbc-plugin_2.12_1.0/javadoc.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-plugin_2.12_1.0) |
 
 ## Performance
 
