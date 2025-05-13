@@ -149,6 +149,7 @@
     <li class="level2 nav-leaf"><a href="../qa/Is-there-a-function-to-limit-the-number-of-concurrent-queries.html">Q: Is there a function to limit the number of concurrent queries?</a></li>
     <li class="level2 nav-leaf"><a href="../qa/How-to-handle-multiple-databases.html">Q: How to handle multiple databases (multi-tenant environment)?</a></li>
     <li class="level2 nav-leaf"><a href="../qa/How-to-use-with-ZIO.html">Q: How to use with ZIO?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-the-Enum-type.html">Q: How to use the Enum type?</a></li>
     <li class="level1 nav-header">Reference</li>
     <li class="level2 nav-leaf"><a href="../reference/">Introduction</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Connector.html">Connector</a></li>
@@ -192,14 +193,10 @@
     
     <h2 id="database-setup" class="section"><a class="anchor-link left" href="#database-setup"><i class="icofont-laika link">&#xef71;</i></a>Database Setup</h2>
     <p>First, start a MySQL database using Docker. Create the following docker-compose.yml file:</p>
-    <pre><code class="nohighlight"><span class="attribute-name">services</span><span>:
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="attribute-name">services</span><span>:
   </span><span class="attribute-name">mysql</span><span>:
     </span><span class="attribute-name">image</span><span>: </span><span class="string-literal">mysql:8.4.0</span><span>
     </span><span class="attribute-name">container_name</span><span>: </span><span class="string-literal">ldbc</span><span>
-    </span><span class="attribute-name">environment</span><span>:
-      </span><span class="attribute-name">MYSQL_USER</span><span>: </span><span class="string-literal">&#39;ldbc&#39;</span><span>
-      </span><span class="attribute-name">MYSQL_PASSWORD</span><span>: </span><span class="string-literal">&#39;password&#39;</span><span>
-      </span><span class="attribute-name">MYSQL_ROOT_PASSWORD</span><span>: </span><span class="string-literal">&#39;root&#39;</span><span>
     </span><span class="attribute-name">ports</span><span>:
       - </span><span class="number-literal">13306</span><span>:3306
     </span><span class="attribute-name">volumes</span><span>:
@@ -208,8 +205,11 @@
       </span><span class="attribute-name">test</span><span>: </span><span class="string-literal">[ &quot;CMD&quot;, &quot;mysqladmin&quot;, &quot;ping&quot;, &quot;-h&quot;, &quot;localhost&quot; ]</span><span>
       </span><span class="attribute-name">timeout</span><span>: </span><span class="string-literal">20s</span><span>
       </span><span class="attribute-name">retries</span><span>: </span><span class="number-literal">10</span></code></pre>
-    <p>Next, create the following SQL file in the <code>database</code> directory to set up initial data:</p>
-    <pre><code class="nohighlight"><span class="comment">-- 01-create-database.sql
+    <p>Next, create the following SQL file in the <code>database</code> directory and set up the user and initial data:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">-- user.sql
+</span><span class="keyword">CREATE</span><span> </span><span class="keyword">USER</span><span> </span><span class="string-literal">&#39;ldbc&#39;</span><span>@</span><span class="string-literal">&#39;%&#39;</span><span> </span><span class="identifier">IDENTIFIED</span><span> </span><span class="keyword">BY</span><span> </span><span class="string-literal">&#39;password&#39;</span><span>;
+</span><span class="keyword">GRANT</span><span> </span><span class="keyword">ALL</span><span> </span><span class="keyword">PRIVILEGES</span><span> </span><span class="keyword">ON</span><span> *.* </span><span class="keyword">TO</span><span> </span><span class="identifier">ldbc</span><span>;</span></code></pre>
+    <pre><code class="nohighlight"><span class="comment">-- schema.sql
 </span><span class="keyword">CREATE</span><span> </span><span class="identifier">DATABASE</span><span> </span><span class="identifier">IF</span><span> </span><span class="keyword">NOT</span><span> </span><span class="keyword">EXISTS</span><span> </span><span class="identifier">sandbox_db</span><span>;
 </span><span class="identifier">USE</span><span> </span><span class="identifier">sandbox_db</span><span>;
 
@@ -275,9 +275,9 @@
 </span><span class="identifier">cd</span><span> ldbc-tutorial
 touch FirstSteps.scala</span></code></pre>
     <p>Add the following code to <code>FirstSteps.scala</code>:</p>
-    <pre><code class="nohighlight"><span class="comment">//&gt; using scala &quot;3.3.5&quot;
-//&gt; using dep &quot;io.github.takapi327::ldbc-dsl:0.3.0-RC2&quot;
-//&gt; using dep &quot;io.github.takapi327::ldbc-connector:0.3.0-RC2&quot;
+    <pre><code class="nohighlight"><span class="comment">//&gt; using scala &quot;3.3.6&quot;
+//&gt; using dep &quot;io.github.takapi327::ldbc-dsl:0.3.0&quot;
+//&gt; using dep &quot;io.github.takapi327::ldbc-connector:0.3.0&quot;
 </span><span>
 </span><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.*
 </span><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">syntax</span><span>.</span><span class="identifier">all</span><span>.*
@@ -308,7 +308,7 @@ touch FirstSteps.scala</span></code></pre>
     
     <h2 id="automatic-setup-script-optional" class="section"><a class="anchor-link left" href="#automatic-setup-script-optional"><i class="icofont-laika link">&#xef71;</i></a>Automatic Setup Script (Optional)</h2>
     <p>We also provide a Scala CLI script that automatically handles all the setup:</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span>scala-cli https://github.com/takapi</span><span class="number-literal">327</span><span>/ldbc/tree/master/docs/src/main/scala/</span><span class="number-literal">00</span><span>-Setup.scala --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-dsl:</span><span class="number-literal">0.3.0</span><span>-RC</span><span class="number-literal">2</span><span> --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-connector:</span><span class="number-literal">0.3.0</span><span>-RC</span><span class="number-literal">2</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span>scala-cli https://github.com/takapi</span><span class="number-literal">327</span><span>/ldbc/tree/master/docs/src/main/scala/</span><span class="number-literal">00</span><span>-Setup.scala --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-dsl:</span><span class="number-literal">0.3.0</span><span> --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-connector:</span><span class="number-literal">0.3.0</span></code></pre>
     
     <h2 id="next-steps" class="section"><a class="anchor-link left" href="#next-steps"><i class="icofont-laika link">&#xef71;</i></a>Next Steps</h2>
     <p>You&#39;re now ready to use ldbc! Proceed to <a href="Connection.html">Connection</a> to learn more about database connections.</p>

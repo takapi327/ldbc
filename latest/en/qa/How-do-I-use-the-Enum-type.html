@@ -6,7 +6,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="generator" content="Typelevel Laika + Helium Theme" />
-  <title>Q: How to use with ZIO?</title>
+  <title>Q: How to use the Enum type?</title>
   
   <meta name="author" content="ldbc contributors"/>
   
@@ -29,7 +29,7 @@
     <link rel="stylesheet" type="text/css" href="../../css/site.css" />
   <script src="../../helium/site/laika-helium.js"></script>
     <script src="../../helium/site/laika-versions.js"></script>
-  <script>initVersions("../../../", "/en/qa/How-to-use-with-ZIO.html", "latest", null);</script>
+  <script>initVersions("../../../", "/en/qa/How-do-I-use-the-Enum-type.html", "latest", null);</script>
   
   <script> /* for avoiding page load transitions */ </script>
 </head>
@@ -163,11 +163,11 @@
 
   
 <nav id="page-nav">
-  <p class="header"><a href="#">Q: How to use with ZIO?</a></p>
+  <p class="header"><a href="#">Q: How to use the Enum type?</a></p>
 
   <ul class="nav-list">
-    <li class="level1 nav-node"><a href="#a-for-use-with-zio-use-zio-interop-cats">A: For use with ZIO, use <code>zio-interop-cats</code>.</a></li>
-    <li class="level2 nav-leaf"><a href="#パフォーマンス">パフォーマンス</a></li>
+    <li class="level1 nav-leaf"><a href="#a-eenum-types-are-automatically-encoded-decoded-using-codec-derivedenum">A: EEnum types are automatically encoded/decoded using <code>Codec.derivedEnum</code>.</a></li>
+    <li class="level1 nav-leaf"><a href="#references">References</a></li>
   </ul>
 
   <p class="footer"></p>
@@ -176,50 +176,41 @@
 
   <main class="content">
 
-    <h1 id="q-how-to-use-with-zio" class="title">Q: How to use with ZIO?</h1>
+    <h1 id="q-how-to-use-the-enum-type" class="title">Q: How to use the Enum type?</h1>
     
-    <h2 id="a-for-use-with-zio-use-zio-interop-cats" class="section"><a class="anchor-link left" href="#a-for-use-with-zio-use-zio-interop-cats"><i class="icofont-laika link">&#xef71;</i></a>A: For use with ZIO, use <code>zio-interop-cats</code>.</h2>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;dev.zio&quot;</span><span> %% </span><span class="string-literal">&quot;zio-interop-cats&quot;</span><span> % </span><span class="string-literal">&quot;&lt;latest-version&gt;&quot;</span></code></pre>
-    <p>The following is sample code for using ldbc with ZIO.</p>
-    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">UUID</span><span>
+    <h2 id="a-eenum-types-are-automatically-encoded-decoded-using-codec-derivedenum" class="section"><a class="anchor-link left" href="#a-eenum-types-are-automatically-encoded-decoded-using-codec-derivedenum"><i class="icofont-laika link">&#xef71;</i></a>A: EEnum types are automatically encoded/decoded using <code>Codec.derivedEnum</code>.</h2>
+    <p>Enum types are automatically encoded/decoded using <code>Codec.derivedEnum</code>. The following example defines an Enum type named <code>Color</code> and encodes/decodes it using <code>Codec.derivedEnum</code>.</p>
+    <p>The Enum type treats the value of the Enum as it is as a string. For example, <code>Color.Red</code> is treated as <code>“Red”</code>. This can be used with MySQL&#39;s Enum type.</p>
+    <p>Example:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">codec</span><span>.*
 
-</span><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="identifier">std</span><span>.</span><span class="type-name">UUIDGen</span><span>
+</span><span class="keyword">enum</span><span> </span><span class="type-name">Color</span><span>:
+  </span><span class="keyword">case</span><span> </span><span class="type-name">Red</span><span>, </span><span class="type-name">Blue</span><span>, </span><span class="type-name">Yellow</span><span>
+</span><span class="keyword">object</span><span> </span><span class="type-name">Color</span><span>:
+  </span><span class="keyword">given</span><span> </span><span class="type-name">Codec</span><span>[</span><span class="type-name">Color</span><span>] = </span><span class="type-name">Codec</span><span>.</span><span class="identifier">derivedEnum</span><span>[</span><span class="type-name">Color</span><span>]
 
-</span><span class="keyword">import</span><span> </span><span class="identifier">fs2</span><span>.</span><span class="identifier">hashing</span><span>.</span><span class="type-name">Hashing</span><span>
-</span><span class="keyword">import</span><span> </span><span class="identifier">fs2</span><span>.</span><span class="identifier">io</span><span>.</span><span class="identifier">net</span><span>.</span><span class="type-name">Network</span><span>
+</span><span class="keyword">val</span><span> </span><span class="identifier">query</span><span> = </span><span class="string-literal">sql&quot;SELECT &#39;Red&#39;&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">Color</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">Option</span><span>]</span></code></pre>
+    <p>If you want to encode/decode an Enum using the values of the fields it contains instead of strings, you need to extend <code>Codec</code> to implement it. The following example defines an Enum type called <code>Color</code> and extends <code>Codec</code> to encode/decode it.</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">codec</span><span>.*
 
-</span><span class="keyword">import</span><span> </span><span class="identifier">zio</span><span>.*
-</span><span class="keyword">import</span><span> </span><span class="identifier">zio</span><span>.</span><span class="identifier">interop</span><span>.</span><span class="identifier">catz</span><span>.*
+</span><span class="keyword">enum</span><span> </span><span class="type-name">Color</span><span>(</span><span class="keyword">val</span><span> </span><span class="identifier">colorCode</span><span>: </span><span class="type-name">String</span><span>):
+  </span><span class="keyword">case</span><span> </span><span class="type-name">Red</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Color</span><span>(</span><span class="string-literal">&quot;FF0000&quot;</span><span>)
+  </span><span class="keyword">case</span><span> </span><span class="type-name">Blue</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Color</span><span>(</span><span class="string-literal">&quot;0000FF&quot;</span><span>)
+  </span><span class="keyword">case</span><span> </span><span class="type-name">Yellow</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Color</span><span>(</span><span class="string-literal">&quot;FFFF00&quot;</span><span>)
+</span><span class="keyword">object</span><span> </span><span class="type-name">Color</span><span>:
+  </span><span class="keyword">given</span><span> </span><span class="type-name">Codec</span><span>[</span><span class="type-name">Color</span><span>] = </span><span class="type-name">Codec</span><span>[</span><span class="type-name">String</span><span>].</span><span class="identifier">eimap</span><span> { </span><span class="identifier">str</span><span> =&gt;
+    </span><span class="type-name">Color</span><span>.</span><span class="identifier">values</span><span>.</span><span class="identifier">find</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">colorCode</span><span> == </span><span class="identifier">str</span><span>) </span><span class="keyword">match</span><span>
+      </span><span class="keyword">case</span><span> </span><span class="type-name">Some</span><span>(</span><span class="identifier">color</span><span>) =&gt; </span><span class="type-name">Right</span><span>(</span><span class="identifier">color</span><span>)
+      </span><span class="keyword">case</span><span> </span><span class="type-name">None</span><span>        =&gt; </span><span class="type-name">Left</span><span>(</span><span class="string-literal">s&quot;Invalid color code: </span><span class="substitution">$str</span><span class="string-literal">&quot;</span><span>)
+  } (</span><span class="identifier">_</span><span>.</span><span class="identifier">colorCode</span><span>)
 
-</span><span class="keyword">object</span><span> </span><span class="type-name">Main</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">ZIOAppDefault</span><span>:
-
-  </span><span class="keyword">given</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="identifier">std</span><span>.</span><span class="type-name">Console</span><span>[</span><span class="type-name">Task</span><span>] = </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="identifier">std</span><span>.</span><span class="type-name">Console</span><span>.</span><span class="identifier">make</span><span>[</span><span class="type-name">Task</span><span>]
-  </span><span class="keyword">given</span><span> </span><span class="type-name">UUIDGen</span><span>[</span><span class="type-name">Task</span><span>] </span><span class="keyword">with</span><span>
-    </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">randomUUID</span><span>: </span><span class="type-name">Task</span><span>[</span><span class="type-name">UUID</span><span>] = </span><span class="type-name">ZIO</span><span>.</span><span class="identifier">attempt</span><span>(</span><span class="type-name">UUID</span><span>.</span><span class="identifier">randomUUID</span><span>())
-  </span><span class="keyword">given</span><span> </span><span class="type-name">Hashing</span><span>[</span><span class="type-name">Task</span><span>] = </span><span class="type-name">Hashing</span><span>.</span><span class="identifier">forSync</span><span>[</span><span class="type-name">Task</span><span>]
-  </span><span class="keyword">given</span><span> </span><span class="type-name">Network</span><span>[</span><span class="type-name">Task</span><span>] = </span><span class="type-name">Network</span><span>.</span><span class="identifier">forAsync</span><span>[</span><span class="type-name">Task</span><span>]
-
-  </span><span class="keyword">private</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">provider</span><span> =
-    </span><span class="type-name">ConnectionProvider</span><span>
-      .</span><span class="identifier">default</span><span>[</span><span class="type-name">Task</span><span>](</span><span class="string-literal">&quot;127.0.0.1&quot;</span><span>, </span><span class="number-literal">13306</span><span>, </span><span class="string-literal">&quot;ldbc&quot;</span><span>, </span><span class="string-literal">&quot;password&quot;</span><span>, </span><span class="string-literal">&quot;world&quot;</span><span>)
-      .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)
-
-  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">run</span><span> =
-    </span><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
-      </span><span class="string-literal">sql&quot;SELECT Name FROM city&quot;</span><span>
-        .</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>]
-        .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
-        .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)
-        .</span><span class="identifier">flatMap</span><span> { </span><span class="identifier">cities</span><span> =&gt;
-          </span><span class="type-name">Console</span><span>.</span><span class="identifier">printLine</span><span>(</span><span class="identifier">cities</span><span>)
-        }
-    }</span></code></pre>
+</span><span class="keyword">val</span><span> </span><span class="identifier">query</span><span> = </span><span class="string-literal">sql&quot;SELECT &#39;FF0000&#39;&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">Color</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">Option</span><span>]</span></code></pre>
     
-    <h3 id="パフォーマンス" class="section"><a class="anchor-link left" href="#パフォーマンス"><i class="icofont-laika link">&#xef71;</i></a>パフォーマンス</h3>
-    <p>Performance results from the Cats Effect to ZIO conversion are shown below.</p>
-    <div class="default-image-block">
-      <img src="../../img/connector/Select_effect.svg" alt="Select Benchmark for Effect System">
-    </div>
+    <h2 id="references" class="section"><a class="anchor-link left" href="#references"><i class="icofont-laika link">&#xef71;</i></a>References</h2>
+    <ul>
+      <li><a href="../tutorial/Custom-Data-Type.html">Custom Data Types</a></li>
+      <li><a href="../tutorial/Schema.html#enum-type-and-special-data-types">ENUM Type and Special Data Types</a></li>
+    </ul>
 
     
 <hr class="footer-rule"/>

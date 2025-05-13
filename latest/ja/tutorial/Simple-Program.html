@@ -149,6 +149,7 @@
     <li class="level2 nav-leaf"><a href="../qa/Is-there-a-function-to-limit-the-number-of-concurrent-queries.html">Q: 同時実行のクエリ数を制限する機能はありますか？</a></li>
     <li class="level2 nav-leaf"><a href="../qa/How-to-handle-multiple-databases.html">Q: 複数のデータベース（マルチテナント環境）を扱う方法は？</a></li>
     <li class="level2 nav-leaf"><a href="../qa/How-to-use-with-ZIO.html">Q: ZIOで使用する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-the-Enum-type.html">Q: Enum型の使い方は？</a></li>
     <li class="level1 nav-header">Reference</li>
     <li class="level2 nav-leaf"><a href="../reference/">はじめに</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Connector.html">コネクタ</a></li>
@@ -239,7 +240,7 @@
     <p>このプログラムを実行すると、データベースから<code>Some(2)</code>という結果が返ってきます。</p>
     <p><strong>Scala CLIで実行</strong></p>
     <p>このプログラムは、Scala CLIを使って簡単に実行できます：</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span>scala-cli https://github.com/takapi</span><span class="number-literal">327</span><span>/ldbc/tree/master/docs/src/main/scala/</span><span class="number-literal">02</span><span>-Program.scala --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-dsl:</span><span class="number-literal">0.3.0</span><span>-RC</span><span class="number-literal">2</span><span> --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-connector:</span><span class="number-literal">0.3.0</span><span>-RC</span><span class="number-literal">2</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span>scala-cli https://github.com/takapi</span><span class="number-literal">327</span><span>/ldbc/tree/master/docs/src/main/scala/</span><span class="number-literal">02</span><span>-Program.scala --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-dsl:</span><span class="number-literal">0.3.0</span><span> --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-connector:</span><span class="number-literal">0.3.0</span></code></pre>
     
     <h2 id="_2つめのプログラム-複数のクエリの組み合わせ" class="section"><a class="anchor-link left" href="#_2つめのプログラム-複数のクエリの組み合わせ"><i class="icofont-laika link">&#xef71;</i></a>2つめのプログラム：複数のクエリの組み合わせ</h2>
     <p>実際のアプリケーションでは、一つのトランザクションで複数のクエリを実行したいケースが多くあります。<code>DBIO</code>モナドはこれを簡単に実現します。for内包表記を使って、複数のクエリを一つの大きなプログラムに組み合わせることができます：</p>
@@ -260,7 +261,7 @@
   .</span><span class="identifier">unsafeRunSync</span><span>()</span></code></pre>
     <p>実行結果は<code>(List(1), Some(2), 3)</code>のようになります。これは3つのクエリの結果が1つのタプルにまとめられたものです。</p>
     <p><strong>Scala CLIで実行</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span>scala-cli https://github.com/takapi</span><span class="number-literal">327</span><span>/ldbc/tree/master/docs/src/main/scala/</span><span class="number-literal">03</span><span>-Program.scala --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-dsl:</span><span class="number-literal">0.3.0</span><span>-RC</span><span class="number-literal">2</span><span> --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-connector:</span><span class="number-literal">0.3.0</span><span>-RC</span><span class="number-literal">2</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span>scala-cli https://github.com/takapi</span><span class="number-literal">327</span><span>/ldbc/tree/master/docs/src/main/scala/</span><span class="number-literal">03</span><span>-Program.scala --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-dsl:</span><span class="number-literal">0.3.0</span><span> --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-connector:</span><span class="number-literal">0.3.0</span></code></pre>
     
     <h2 id="_3つめのプログラム-データ更新操作" class="section"><a class="anchor-link left" href="#_3つめのプログラム-データ更新操作"><i class="icofont-laika link">&#xef71;</i></a>3つめのプログラム：データ更新操作</h2>
     <p>読み取りだけでなく、データベースに対して書き込みを行うプログラムも作成できます。以下は、ユーザーテーブルに新しいレコードを挿入する例です：</p>
@@ -277,7 +278,7 @@
   .</span><span class="identifier">unsafeRunSync</span><span>()</span></code></pre>
     <p><code>commit</code>メソッドは自動的に<code>AutoCommit</code>を有効にして、クエリ実行後にトランザクションをコミットします。これにより、変更がデータベースに永続化されます。</p>
     <p><strong>Scala CLIで実行</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span>scala-cli https://github.com/takapi</span><span class="number-literal">327</span><span>/ldbc/tree/master/docs/src/main/scala/</span><span class="number-literal">04</span><span>-Program.scala --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-dsl:</span><span class="number-literal">0.3.0</span><span>-RC</span><span class="number-literal">2</span><span> --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-connector:</span><span class="number-literal">0.3.0</span><span>-RC</span><span class="number-literal">2</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span>scala-cli https://github.com/takapi</span><span class="number-literal">327</span><span>/ldbc/tree/master/docs/src/main/scala/</span><span class="number-literal">04</span><span>-Program.scala --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-dsl:</span><span class="number-literal">0.3.0</span><span> --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-connector:</span><span class="number-literal">0.3.0</span></code></pre>
     
     <h2 id="トランザクション制御" class="section"><a class="anchor-link left" href="#トランザクション制御"><i class="icofont-laika link">&#xef71;</i></a>トランザクション制御</h2>
     <p>ldbcでは、以下の主要なトランザクション制御メソッドを提供しています：</p>

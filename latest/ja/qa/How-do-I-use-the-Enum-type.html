@@ -6,7 +6,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="generator" content="Typelevel Laika + Helium Theme" />
-  <title>Q: ldbcとは何ですか？</title>
+  <title>Q: Enum型の使い方は？</title>
   
   <meta name="author" content="ldbc contributors"/>
   
@@ -29,7 +29,7 @@
     <link rel="stylesheet" type="text/css" href="../../css/site.css" />
   <script src="../../helium/site/laika-helium.js"></script>
     <script src="../../helium/site/laika-versions.js"></script>
-  <script>initVersions("../../../", "/ja/qa/What-is-ldbc.html", "latest", null);</script>
+  <script>initVersions("../../../", "/ja/qa/How-do-I-use-the-Enum-type.html", "latest", null);</script>
   
   <script> /* for avoiding page load transitions */ </script>
 </head>
@@ -133,7 +133,7 @@
     <li class="level2 nav-leaf"><a href="../examples/Otel.html">OpenTelemetry</a></li>
     <li class="level1 nav-header">QA</li>
     <li class="level2 nav-leaf"><a href="index.html">はじめに</a></li>
-    <li class="level2 active nav-leaf"><a href="#">Q: ldbcとは何ですか？</a></li>
+    <li class="level2 nav-leaf"><a href="What-is-ldbc.html">Q: ldbcとは何ですか？</a></li>
     <li class="level2 nav-leaf"><a href="Which-dependencies-should-I-set.html">Q: どの依存関係を設定すればよいですか？</a></li>
     <li class="level2 nav-leaf"><a href="What-is-the-difference-between-a-Java-connect-and-a-Scala-connector.html">Q: JavaのコネクトとScalaのコネクタの違いは何ですか？</a></li>
     <li class="level2 nav-leaf"><a href="How-to-define-complex-queries-with-plain-queries.html">Q: プレーンクエリで複雑なクエリを定義する方法は？</a></li>
@@ -149,7 +149,7 @@
     <li class="level2 nav-leaf"><a href="Is-there-a-function-to-limit-the-number-of-concurrent-queries.html">Q: 同時実行のクエリ数を制限する機能はありますか？</a></li>
     <li class="level2 nav-leaf"><a href="How-to-handle-multiple-databases.html">Q: 複数のデータベース（マルチテナント環境）を扱う方法は？</a></li>
     <li class="level2 nav-leaf"><a href="How-to-use-with-ZIO.html">Q: ZIOで使用する方法は？</a></li>
-    <li class="level2 nav-leaf"><a href="How-do-I-use-the-Enum-type.html">Q: Enum型の使い方は？</a></li>
+    <li class="level2 active nav-leaf"><a href="#">Q: Enum型の使い方は？</a></li>
     <li class="level1 nav-header">Reference</li>
     <li class="level2 nav-leaf"><a href="../reference/">はじめに</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Connector.html">コネクタ</a></li>
@@ -163,11 +163,10 @@
 
   
 <nav id="page-nav">
-  <p class="header"><a href="#">Q: ldbcとは何ですか？</a></p>
+  <p class="header"><a href="#">Q: Enum型の使い方は？</a></p>
 
   <ul class="nav-list">
-    <li class="level1 nav-node"><a href="#a-ldbcは-型安全なデータベースアクセス-クエリ構築-スキーマ定義を実現するossライブラリです">A: ldbcは、型安全なデータベースアクセス、クエリ構築、スキーマ定義を実現するOSSライブラリです。</a></li>
-    <li class="level2 nav-leaf"><a href="#schemaを使ったクエリビルダーの例">Schemaを使ったクエリビルダーの例</a></li>
+    <li class="level1 nav-leaf"><a href="#a-enum型は-codec-derivedenumを使用して自動的にエンコード-デコードされます">A: Enum型は、<code>Codec.derivedEnum</code>を使用して自動的にエンコード/デコードされます。</a></li>
     <li class="level1 nav-leaf"><a href="#参考資料">参考資料</a></li>
   </ul>
 
@@ -177,62 +176,40 @@
 
   <main class="content">
 
-    <h1 id="q-ldbcとは何ですか" class="title">Q: ldbcとは何ですか？</h1>
+    <h1 id="q-enum型の使い方は" class="title">Q: Enum型の使い方は？</h1>
     
-    <h2 id="a-ldbcは-型安全なデータベースアクセス-クエリ構築-スキーマ定義を実現するossライブラリです" class="section"><a class="anchor-link left" href="#a-ldbcは-型安全なデータベースアクセス-クエリ構築-スキーマ定義を実現するossライブラリです"><i class="icofont-laika link">&#xef71;</i></a>A: ldbcは、型安全なデータベースアクセス、クエリ構築、スキーマ定義を実現するOSSライブラリです。</h2>
-    <p>ldbcは、Scalaの力を活かしてコンパイル時にエラーを防止しながら、直感的なコードでデータベース操作が可能になります。<br></p>
-    <p>たとえば、まずはスキーマの構築方法についてです。以下はスキーマ（テーブル）定義の例です。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Schema定義の例
-</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">User</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Long</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">email</span><span>: </span><span class="type-name">String</span><span>)
+    <h2 id="a-enum型は-codec-derivedenumを使用して自動的にエンコード-デコードされます" class="section"><a class="anchor-link left" href="#a-enum型は-codec-derivedenumを使用して自動的にエンコード-デコードされます"><i class="icofont-laika link">&#xef71;</i></a>A: Enum型は、<code>Codec.derivedEnum</code>を使用して自動的にエンコード/デコードされます。</h2>
+    <p>Enum型は<code>Codec.derivedEnum</code>を使用して自動的にエンコード/デコードされます。以下の例では、<code>Color</code>というEnum型を定義し、<code>Codec.derivedEnum</code>を使用してエンコード/デコードを行っています。</p>
+    <p>Enum型はEnumが持つ値をそのまま文字列として扱います。例えば、<code>Color.Red</code>は<code>&quot;Red&quot;</code>として扱われます。これはMySQLのEnum型で使用することができます。</p>
+    <p>Example:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">codec</span><span>.*
 
-</span><span class="keyword">class</span><span> </span><span class="type-name">UserTable</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>):
-  </span><span class="keyword">def</span><span> </span><span class="declaration-name">id</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="identifier">bigint</span><span>().</span><span class="identifier">autoIncrement</span><span>.</span><span class="identifier">primaryKey</span><span>
-  </span><span class="keyword">def</span><span> </span><span class="declaration-name">name</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">varchar</span><span>(</span><span class="number-literal">255</span><span>)
-  </span><span class="keyword">def</span><span> </span><span class="declaration-name">email</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">varchar</span><span>(</span><span class="number-literal">255</span><span>)
-  
-  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> * : </span><span class="type-name">Column</span><span>[</span><span class="type-name">User</span><span>] = (</span><span class="identifier">id</span><span> *: </span><span class="identifier">name</span><span> *: </span><span class="identifier">email</span><span>).</span><span class="identifier">to</span><span>[</span><span class="type-name">User</span><span>]</span></code></pre>
-    <p>ldbcでは、このようなスキーマ定義を行った後、TableQueryを使ってテーブルを抽象化することも可能です。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// TableQueryを使ったUserTableの抽象化
-</span><span class="keyword">val</span><span> </span><span class="identifier">userTable</span><span>: </span><span class="type-name">TableQuery</span><span>[</span><span class="type-name">UserTable</span><span>] = </span><span class="type-name">TableQuery</span><span>[</span><span class="type-name">UserTable</span><span>]
-</span><span class="comment">// これにより、QueryBuilderのAPIでschemaを利用できます。</span></code></pre>
-    <p>次に、上記のスキーマ定義を活用したクエリビルダーの使い方の例です。スキーマを基にしたTableQueryを使用して、データの挿入や取得を行う方法を示します。</p>
-    
-    <h3 id="schemaを使ったクエリビルダーの例" class="section"><a class="anchor-link left" href="#schemaを使ったクエリビルダーの例"><i class="icofont-laika link">&#xef71;</i></a>Schemaを使ったクエリビルダーの例</h3>
-    <pre><code class="nohighlight"><span class="comment">// Schema定義済みのUserTableとTableQueryを利用
-</span><span class="keyword">val</span><span> </span><span class="identifier">userTable</span><span>: </span><span class="type-name">TableQuery</span><span>[</span><span class="type-name">UserTable</span><span>] = </span><span class="type-name">TableQuery</span><span>[</span><span class="type-name">UserTable</span><span>]
+</span><span class="keyword">enum</span><span> </span><span class="type-name">Color</span><span>:
+  </span><span class="keyword">case</span><span> </span><span class="type-name">Red</span><span>, </span><span class="type-name">Blue</span><span>, </span><span class="type-name">Yellow</span><span>
+</span><span class="keyword">object</span><span> </span><span class="type-name">Color</span><span>:
+  </span><span class="keyword">given</span><span> </span><span class="type-name">Codec</span><span>[</span><span class="type-name">Color</span><span>] = </span><span class="type-name">Codec</span><span>.</span><span class="identifier">derivedEnum</span><span>[</span><span class="type-name">Color</span><span>]
 
-</span><span class="comment">// Schemaを使ったデータ挿入
-</span><span class="keyword">val</span><span> </span><span class="identifier">schemaInsert</span><span>: </span><span class="type-name">DBIO</span><span>[</span><span class="type-name">Int</span><span>] =
-  (</span><span class="identifier">userTable</span><span> += </span><span class="type-name">User</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;Charlie&quot;</span><span>, </span><span class="string-literal">&quot;charlie@example.com&quot;</span><span>)).</span><span class="identifier">update</span><span>
+</span><span class="keyword">val</span><span> </span><span class="identifier">query</span><span> = </span><span class="string-literal">sql&quot;SELECT &#39;Red&#39;&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">Color</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">Option</span><span>]</span></code></pre>
+    <p>Enumを文字列ではなくEnumが持つフィールドの値を使用してエンコード/デコードする場合は、<code>Codec</code>を拡張して実装する必要があります。以下の例では、<code>Color</code>というEnum型を定義し、<code>Codec</code>を拡張してエンコード/デコードを行っています。</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">codec</span><span>.*
 
-</span><span class="comment">// Schemaを使ったデータ取得（Userにマッピング）
-</span><span class="keyword">val</span><span> </span><span class="identifier">schemaSelect</span><span> = </span><span class="identifier">userTable</span><span>.</span><span class="identifier">selectAll</span><span>.</span><span class="identifier">query</span><span>.</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
+</span><span class="keyword">enum</span><span> </span><span class="type-name">Color</span><span>(</span><span class="keyword">val</span><span> </span><span class="identifier">colorCode</span><span>: </span><span class="type-name">String</span><span>):
+  </span><span class="keyword">case</span><span> </span><span class="type-name">Red</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Color</span><span>(</span><span class="string-literal">&quot;FF0000&quot;</span><span>)
+  </span><span class="keyword">case</span><span> </span><span class="type-name">Blue</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Color</span><span>(</span><span class="string-literal">&quot;0000FF&quot;</span><span>)
+  </span><span class="keyword">case</span><span> </span><span class="type-name">Yellow</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Color</span><span>(</span><span class="string-literal">&quot;FFFF00&quot;</span><span>)
+</span><span class="keyword">object</span><span> </span><span class="type-name">Color</span><span>:
+  </span><span class="keyword">given</span><span> </span><span class="type-name">Codec</span><span>[</span><span class="type-name">Color</span><span>] = </span><span class="type-name">Codec</span><span>[</span><span class="type-name">String</span><span>].</span><span class="identifier">eimap</span><span> { </span><span class="identifier">str</span><span> =&gt;
+    </span><span class="type-name">Color</span><span>.</span><span class="identifier">values</span><span>.</span><span class="identifier">find</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">colorCode</span><span> == </span><span class="identifier">str</span><span>) </span><span class="keyword">match</span><span>
+      </span><span class="keyword">case</span><span> </span><span class="type-name">Some</span><span>(</span><span class="identifier">color</span><span>) =&gt; </span><span class="type-name">Right</span><span>(</span><span class="identifier">color</span><span>)
+      </span><span class="keyword">case</span><span> </span><span class="type-name">None</span><span>        =&gt; </span><span class="type-name">Left</span><span>(</span><span class="string-literal">s&quot;Invalid color code: </span><span class="substitution">$str</span><span class="string-literal">&quot;</span><span>)
+  } (</span><span class="identifier">_</span><span>.</span><span class="identifier">colorCode</span><span>)
 
-</span><span class="comment">// 実行例
-</span><span class="keyword">for</span><span>
-  </span><span class="identifier">_</span><span>     &lt;- </span><span class="identifier">schemaInsert</span><span>.</span><span class="identifier">commit</span><span>(</span><span class="identifier">conn</span><span>)
-  </span><span class="identifier">users</span><span> &lt;- </span><span class="identifier">schemaSelect</span><span>.</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)
-</span><span class="keyword">yield</span><span> </span><span class="identifier">users</span><span>.</span><span class="identifier">foreach</span><span>(</span><span class="identifier">println</span><span>)</span></code></pre>
-    <p>また、プレーンクエリを直接使用してデータ操作を行うことも可能です。たとえば、以下の例ではプレーン SQL を使ってデータの挿入と取得を行っています。</p>
-    <pre><code class="nohighlight"><span class="comment">// プレーンクエリによるデータ挿入
-</span><span class="keyword">val</span><span> </span><span class="identifier">plainInsert</span><span>: </span><span class="type-name">DBIO</span><span>[</span><span class="type-name">Int</span><span>] =
-  </span><span class="string-literal">sql&quot;INSERT INTO user (id, name, email) VALUES (2, &#39;Dave&#39;, &#39;dave@example.com&#39;)&quot;</span><span>.</span><span class="identifier">update</span><span>
-
-</span><span class="comment">// プレーンクエリによるデータ取得（Userにマッピング）
-</span><span class="keyword">val</span><span> </span><span class="identifier">plainSelect</span><span>: </span><span class="type-name">DBIO</span><span>[</span><span class="type-name">List</span><span>[</span><span class="type-name">User</span><span>]] =
-  </span><span class="string-literal">sql&quot;SELECT id, name, email FROM user&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
-
-</span><span class="comment">// 実行例
-</span><span class="keyword">for</span><span>
-  </span><span class="identifier">_</span><span>     &lt;- </span><span class="identifier">plainInsert</span><span>.</span><span class="identifier">commit</span><span>(</span><span class="identifier">conn</span><span>)
-  </span><span class="identifier">users</span><span> &lt;- </span><span class="identifier">plainSelect</span><span>.</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)
-</span><span class="keyword">yield</span><span> </span><span class="identifier">users</span><span>.</span><span class="identifier">foreach</span><span>(</span><span class="identifier">println</span><span>)</span></code></pre>
-    <p>このように、ldbcはシンプルかつパワフルなAPIにより、スキーマ構築からそのスキーマを利用したクエリの構築まで、直感的にデータ操作を行える魅力的なライブラリです。</p>
+</span><span class="keyword">val</span><span> </span><span class="identifier">query</span><span> = </span><span class="string-literal">sql&quot;SELECT &#39;FF0000&#39;&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">Color</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">Option</span><span>]</span></code></pre>
     
     <h2 id="参考資料" class="section"><a class="anchor-link left" href="#参考資料"><i class="icofont-laika link">&#xef71;</i></a>参考資料</h2>
     <ul>
-      <li><a href="../tutorial/Query-Builder.html">クエリビルダーの使い方</a><br></li>
-      <li><a href="../tutorial/Schema.html">スキーマ定義の詳細</a></li>
+      <li><a href="../tutorial/Custom-Data-Type.html">カスタムデータ型</a></li>
+      <li><a href="../tutorial/Schema.html#enum型と特殊データ型">ENUM型と特殊データ型</a></li>
     </ul>
 
     
