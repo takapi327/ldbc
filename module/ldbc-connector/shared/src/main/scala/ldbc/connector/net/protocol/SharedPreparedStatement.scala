@@ -84,7 +84,10 @@ private[ldbc] trait SharedPreparedStatement[F[_]: MonadThrow]
       case value if value.isInstanceOf[LocalDate]   => setDate(parameterIndex, value.asInstanceOf[LocalDate])
       case value if value.isInstanceOf[LocalDateTime] =>
         setTimestamp(parameterIndex, value.asInstanceOf[LocalDateTime])
-      case unknown => MonadThrow[F].raiseError(new SQLException(s"Unsupported object type ${ unknown.getClass.getName } for setObject"))
+      case unknown =>
+        MonadThrow[F].raiseError(
+          new SQLException(s"Unsupported object type ${ unknown.getClass.getName } for setObject")
+        )
 
   override def executeUpdate(): F[Int] = executeLargeUpdate().map(_.toInt)
 
