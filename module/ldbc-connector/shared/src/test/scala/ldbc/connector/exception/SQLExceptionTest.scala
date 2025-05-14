@@ -13,7 +13,7 @@ import org.typelevel.otel4s.Attribute
 import ldbc.connector.data.Parameter
 import ldbc.connector.FTestPlatform
 
-class SQLExceptionTest extends FTestPlatform {
+class SQLExceptionTest extends FTestPlatform:
 
   test("SQLException should have correct basic properties") {
     val errorMessage = "Database connection failed"
@@ -99,4 +99,3 @@ class SQLExceptionTest extends FTestPlatform {
     assert(message.contains("SELECT * FROM users WHERE id = ?"), "Message should contain the SQL query")
     assert(message.contains("123"), "Message should contain the parameter value")
   }
-}
