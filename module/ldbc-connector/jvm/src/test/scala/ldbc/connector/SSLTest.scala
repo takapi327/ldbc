@@ -6,11 +6,12 @@
 
 package ldbc.connector
 
-import cats.effect.IO
-import fs2.io.net.Network
-import fs2.io.net.tls.TLSParameters
-
 import javax.net.ssl.SNIHostName
+
+import cats.effect.IO
+
+import fs2.io.net.tls.TLSParameters
+import fs2.io.net.Network
 
 class SSLTest extends FTestPlatform:
 
@@ -69,6 +70,6 @@ class SSLTest extends FTestPlatform:
 
   test("toSSLNegotiationOptions should return Some for SSL implementations") {
     assertIOBoolean(
-      SSL.Trusted.toSSLNegotiationOptions[IO](None).use(IO.pure).map(_.isDefined),
+      SSL.Trusted.toSSLNegotiationOptions[IO](None).use(IO.pure).map(_.isDefined)
     )
   }
