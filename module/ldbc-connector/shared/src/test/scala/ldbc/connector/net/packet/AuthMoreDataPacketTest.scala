@@ -17,7 +17,7 @@ class AuthMoreDataPacketTest extends FTestPlatform:
   test("AuthMoreDataPacket creation and properties") {
     val authData = Array[Byte](1, 2, 3, 4, 5)
     val packet = AuthMoreDataPacket(
-      status = AuthMoreDataPacket.STATUS,
+      status                   = AuthMoreDataPacket.STATUS,
       authenticationMethodData = authData
     )
 
@@ -28,11 +28,11 @@ class AuthMoreDataPacketTest extends FTestPlatform:
 
   test("AuthMoreDataPacket decoder") {
     // Create sample packet data that would be received from server
-    val authData = Array[Byte]('t', 'e', 's', 't', '_', 'd', 'a', 't', 'a')
+    val authData    = Array[Byte]('t', 'e', 's', 't', '_', 'd', 'a', 't', 'a')
     val packetBytes = authData
-    
+
     val bitVector = BitVector(packetBytes)
-    val result = AuthMoreDataPacket.decoder.decode(bitVector)
+    val result    = AuthMoreDataPacket.decoder.decode(bitVector)
 
     assert(result.isSuccessful)
     result match {
