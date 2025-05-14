@@ -59,7 +59,10 @@ class SQLTransactionRollbackExceptionTest extends FTestPlatform:
     assertEquals(fields.contains(Attribute("error.message", "Deadlock found when trying to get lock")), true)
     assertEquals(fields.contains(Attribute("error.sqlstate", "40001")), true)
     assertEquals(fields.contains(Attribute("error.vendorCode", 1213L)), true)
-    assertEquals(fields.contains(Attribute("error.sql", "UPDATE inventory SET quantity = quantity - ? WHERE product_id = ?")), true)
+    assertEquals(
+      fields.contains(Attribute("error.sql", "UPDATE inventory SET quantity = quantity - ? WHERE product_id = ?")),
+      true
+    )
     assertEquals(fields.contains(Attribute("error.detail", "Transaction was rolled back automatically")), true)
     assertEquals(fields.contains(Attribute("error.hint", "Try restarting the transaction")), true)
 
@@ -76,7 +79,7 @@ class SQLTransactionRollbackExceptionTest extends FTestPlatform:
       sqlState   = Some("40001"),
       vendorCode = Some(1213),
       sql        = Some("UPDATE accounts SET balance = balance - ? WHERE id = ?"),
-      params     = SortedMap(
+      params = SortedMap(
         1 -> Parameter.int(100),
         2 -> Parameter.int(42)
       )
@@ -88,7 +91,10 @@ class SQLTransactionRollbackExceptionTest extends FTestPlatform:
     assert(message.contains("Transaction rolled back"), "Message should contain the error description")
     assert(message.contains("40001"), "Message should contain the SQL state")
     assert(message.contains("1213"), "Message should contain the vendor code")
-    assert(message.contains("UPDATE accounts SET balance = balance - ? WHERE id = ?"), "Message should contain the SQL query")
+    assert(
+      message.contains("UPDATE accounts SET balance = balance - ? WHERE id = ?"),
+      "Message should contain the SQL query"
+    )
     assert(message.contains("100"), "Message should contain the first parameter value")
     assert(message.contains("42"), "Message should contain the second parameter value")
   }
@@ -97,4 +103,3 @@ class SQLTransactionRollbackExceptionTest extends FTestPlatform:
     val exception = new SQLTransactionRollbackException("Deadlock detected")
     assert(exception.isInstanceOf[SQLTransientException], "Should be an instance of SQLTransientException")
   }
-
