@@ -39,16 +39,22 @@ class ComStmtPrepareOkPacketTest extends FTestPlatform:
   test("ComStmtPrepareOkPacket decoder without CLIENT_OPTIONAL_RESULTSET_METADATA") {
     // Create sample packet data that would be received from server
     val packetBytes = Array[Byte](
-      0x00,                // status (OK)
-      0x40, 0xE2.toByte, 0x01, 0x00, // statementId (123456 in little-endian)
-      0x03, 0x00,          // numColumns (3)
-      0x02, 0x00,          // numParams (2)
-      0x00,                // reserved1
-      0x00, 0x00,          // warningCount (0)
-      0x00                 // metadataFollows (0)
+      0x00, // status (OK)
+      0x40,
+      0xe2.toByte,
+      0x01,
+      0x00, // statementId (123456 in little-endian)
+      0x03,
+      0x00, // numColumns (3)
+      0x02,
+      0x00, // numParams (2)
+      0x00, // reserved1
+      0x00,
+      0x00, // warningCount (0)
+      0x00  // metadataFollows (0)
     )
 
-    val bitVector = BitVector(packetBytes)
+    val bitVector       = BitVector(packetBytes)
     val capabilityFlags = Set[CapabilitiesFlags]() // No CLIENT_OPTIONAL_RESULTSET_METADATA
 
     val result = ComStmtPrepareOkPacket.decoder(capabilityFlags).decode(bitVector)
@@ -75,16 +81,22 @@ class ComStmtPrepareOkPacketTest extends FTestPlatform:
   test("ComStmtPrepareOkPacket decoder with CLIENT_OPTIONAL_RESULTSET_METADATA") {
     // Create sample packet data without metadataFollows field
     val packetBytes = Array[Byte](
-      0x00,                // status (OK)
-      0x40, 0xE2.toByte, 0x01, 0x00, // statementId (123456 in little-endian)
-      0x03, 0x00,          // numColumns (3)
-      0x02, 0x00,          // numParams (2)
-      0x00,                // reserved1
-      0x00, 0x00           // warningCount (0)
+      0x00, // status (OK)
+      0x40,
+      0xe2.toByte,
+      0x01,
+      0x00, // statementId (123456 in little-endian)
+      0x03,
+      0x00, // numColumns (3)
+      0x02,
+      0x00, // numParams (2)
+      0x00, // reserved1
+      0x00,
+      0x00 // warningCount (0)
       // No metadataFollows field when CLIENT_OPTIONAL_RESULTSET_METADATA is set
     )
 
-    val bitVector = BitVector(packetBytes)
+    val bitVector       = BitVector(packetBytes)
     val capabilityFlags = Set(CapabilitiesFlags.CLIENT_OPTIONAL_RESULTSET_METADATA)
 
     val result = ComStmtPrepareOkPacket.decoder(capabilityFlags).decode(bitVector)
