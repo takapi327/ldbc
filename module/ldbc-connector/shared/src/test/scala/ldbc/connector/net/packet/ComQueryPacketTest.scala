@@ -22,9 +22,9 @@ class ComQueryPacketTest extends FTestPlatform:
     val params = ListMap.empty[ColumnDataType, Any]
 
     val comQueryPacket = ComQueryPacket(
-      sql            = sql,
+      sql             = sql,
       capabilityFlags = capabilityFlags,
-      params         = params
+      params          = params
     )
 
     assertEquals(comQueryPacket.sql, sql)
@@ -41,9 +41,9 @@ class ComQueryPacketTest extends FTestPlatform:
     val params = ListMap.empty[ColumnDataType, Any]
 
     val comQueryPacket = ComQueryPacket(
-      sql            = sql,
+      sql             = sql,
       capabilityFlags = capabilityFlags,
-      params         = params
+      params          = params
     )
 
     val encoded = comQueryPacket.encode
@@ -53,7 +53,7 @@ class ComQueryPacketTest extends FTestPlatform:
     assertEquals(commandByte.toInt, CommandId.COM_QUERY)
 
     // Extract SQL part starting from command byte
-    val sqlBytes = encoded.drop(8).toByteArray
+    val sqlBytes   = encoded.drop(8).toByteArray
     val decodedSql = new String(sqlBytes, "UTF-8")
     assertEquals(decodedSql, sql)
   }
@@ -67,9 +67,9 @@ class ComQueryPacketTest extends FTestPlatform:
     val params = ListMap(ColumnDataType.MYSQL_TYPE_STRING -> "Alice")
 
     val comQueryPacket = ComQueryPacket(
-      sql            = sql,
+      sql             = sql,
       capabilityFlags = capabilityFlags,
-      params         = params
+      params          = params
     )
 
     val encoded = comQueryPacket.encode
@@ -85,7 +85,10 @@ class ComQueryPacketTest extends FTestPlatform:
     // Next byte should be 0x01 for parameters
     val paramFlagByte = encoded.drop(16).take(8).toByte()
     assertEquals(paramFlagByte.toInt, 0x01)
-    
+
     // Verify total length is reasonable (checking exact bytes would be complex due to encoding)
-    assert(encoded.size > (sql.length * 8 + 24), "Encoded data should be longer than just command + param count + flag + sql")
+    assert(
+      encoded.size > (sql.length * 8 + 24),
+      "Encoded data should be longer than just command + param count + flag + sql"
+    )
   }
