@@ -22,17 +22,17 @@ class SSLPlatformTest extends FTestPlatform:
 
   test("SSL.fromSSLContext") {
     val sslContext = SSLContext.getDefault
-    val ssl = SSL.fromSSLContext(sslContext)
-    val result = ssl.tlsContext[IO](Network[IO], implicitly).use(_ => IO.pure(true))
+    val ssl        = SSL.fromSSLContext(sslContext)
+    val result     = ssl.tlsContext[IO](Network[IO], implicitly).use(_ => IO.pure(true))
     assertIOBoolean(result)
   }
 
   test("SSL.fromKeyStoreResource") {
-    val resource = "keystore.jks"
+    val resource      = "keystore.jks"
     val storePassword = "password".toCharArray
-    val keyPassword = "password".toCharArray
-    
-    val ssl = SSL.fromKeyStoreResource(resource, storePassword, keyPassword)
+    val keyPassword   = "password".toCharArray
+
+    val ssl    = SSL.fromKeyStoreResource(resource, storePassword, keyPassword)
     val result = ssl.tlsContext[IO](Network[IO], implicitly).use(_ => IO.pure(true))
     assertIOBoolean(result)
   }
