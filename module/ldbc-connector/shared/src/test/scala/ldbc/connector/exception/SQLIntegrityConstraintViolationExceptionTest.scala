@@ -76,7 +76,7 @@ class SQLIntegrityConstraintViolationExceptionTest extends FTestPlatform:
       sqlState   = Some("23503"),
       vendorCode = Some(1452),
       sql        = Some("INSERT INTO orders (user_id, product_id) VALUES (?, ?)"),
-      params     = SortedMap(
+      params = SortedMap(
         1 -> Parameter.int(999),
         2 -> Parameter.int(101)
       )
@@ -88,7 +88,10 @@ class SQLIntegrityConstraintViolationExceptionTest extends FTestPlatform:
     assert(message.contains("Foreign key constraint violated"), "Message should contain the error description")
     assert(message.contains("23503"), "Message should contain the SQL state")
     assert(message.contains("1452"), "Message should contain the vendor code")
-    assert(message.contains("INSERT INTO orders (user_id, product_id) VALUES (?, ?)"), "Message should contain the SQL query")
+    assert(
+      message.contains("INSERT INTO orders (user_id, product_id) VALUES (?, ?)"),
+      "Message should contain the SQL query"
+    )
     assert(message.contains("999"), "Message should contain the first parameter value")
     assert(message.contains("101"), "Message should contain the second parameter value")
   }
