@@ -82,7 +82,7 @@ class ConnectionProviderTest extends FTestPlatform:
   }
 
   test("ConnectionProvider#addSocketOption") {
-    val option   = SocketOption.receiveBufferSize(1024)
+    val option   = SocketOption.noDelay(false)
     val provider = defaultProvider.addSocketOption(option)
     assertNotEquals(
       provider,
@@ -91,7 +91,7 @@ class ConnectionProviderTest extends FTestPlatform:
   }
 
   test("ConnectionProvider#setSocketOptions") {
-    val options  = List(SocketOption.receiveBufferSize(1024))
+    val options  = List(SocketOption.noDelay(false))
     val provider = defaultProvider.setSocketOptions(options)
     assertNotEquals(
       provider,
