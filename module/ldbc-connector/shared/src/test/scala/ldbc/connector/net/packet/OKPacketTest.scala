@@ -11,21 +11,20 @@ import scodec.Attempt
 
 import ldbc.connector.*
 import ldbc.connector.data.*
-
 import ldbc.connector.net.packet.response.OKPacket
 
 class OKPacketTest extends FTestPlatform:
 
   test("OKPacket creation and properties") {
     val okPacket = OKPacket(
-      status = OKPacket.STATUS,
-      affectedRows = 5,
-      lastInsertId = 10,
-      statusFlags = Set(ServerStatusFlags.SERVER_STATUS_AUTOCOMMIT),
-      warnings = Some(0),
-      info = Some("OK"),
+      status           = OKPacket.STATUS,
+      affectedRows     = 5,
+      lastInsertId     = 10,
+      statusFlags      = Set(ServerStatusFlags.SERVER_STATUS_AUTOCOMMIT),
+      warnings         = Some(0),
+      info             = Some("OK"),
       sessionStateInfo = None,
-      msg = None
+      msg              = None
     )
 
     assertEquals(okPacket.status, 0x00)
@@ -42,14 +41,14 @@ class OKPacketTest extends FTestPlatform:
   test("OKPacket decoder with CLIENT_PROTOCOL_41") {
     // Create sample packet data that would be received from server
     val packetBytes = Array[Byte](
-      0x05,             // affected rows (5)
-      0x0A,             // last insert ID (10)
-      0x02, 0x00,       // status flags (SERVER_STATUS_AUTOCOMMIT = 2)
-      0x00, 0x00,       // warnings (0)
-      0x02, 'O', 'K'    // info string "OK"
+      0x05,          // affected rows (5)
+      0x0a,          // last insert ID (10)
+      0x02, 0x00,    // status flags (SERVER_STATUS_AUTOCOMMIT = 2)
+      0x00, 0x00,    // warnings (0)
+      0x02, 'O', 'K' // info string "OK"
     )
 
-    val bitVector = BitVector(packetBytes)
+    val bitVector       = BitVector(packetBytes)
     val capabilityFlags = Set(CapabilitiesFlags.CLIENT_PROTOCOL_41)
 
     val result = OKPacket.decoder(capabilityFlags).decode(bitVector)
@@ -73,11 +72,11 @@ class OKPacketTest extends FTestPlatform:
   test("OKPacket decoder with CLIENT_SESSION_TRACK") {
     // Create sample packet with session state info
     val packetBytes = Array[Byte](
-      0x01,             // affected rows (1)
-      0x00,             // last insert ID (0)
-      0x40, 0x40,       // status flags including SERVER_SESSION_STATE_CHANGED (0x4000)
-      0x00, 0x00,       // warnings (0)
-      0x02, 'O', 'K',   // info string "OK"
+      0x01,               // affected rows (1)
+      0x00,               // last insert ID (0)
+      0x40, 0x40,         // status flags including SERVER_SESSION_STATE_CHANGED (0x4000)
+      0x00, 0x00,         // warnings (0)
+      0x02, 'O', 'K',     // info string "OK"
       0x03, 'S', 'S', 'I' // session state info "SSI"
     )
 
