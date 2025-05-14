@@ -11,7 +11,11 @@ import scodec.Attempt
 
 import ldbc.connector.*
 import ldbc.connector.data.*
-import ldbc.connector.net.packet.response.{ ColumnDefinition41Packet, ColumnDefinitionPacket, ColumnDefinition320Packet }
+import ldbc.connector.net.packet.response.{
+  ColumnDefinition320Packet,
+  ColumnDefinition41Packet,
+  ColumnDefinitionPacket
+}
 
 class ColumnDefinitionPacketTest extends FTestPlatform:
 
@@ -85,13 +89,13 @@ class ColumnDefinitionPacketTest extends FTestPlatform:
   test("ColumnDefinitionPacket decoder without CLIENT_PROTOCOL_41") {
     // Create sample packet data for column definition with protocol 320
     val packetBytes = Array[Byte](
-      0x05, 'u', 's', 'e', 'r', 's',           // table "users"
-      0x02, 'i', 'd',                          // name "id"
-      0x0c,                                    // length (12)
-      0x03,                                    // type (LONG = 3)
-      0x03,                                    // flags length (3)
-      0x03, 0x00,                              // flags (NOT_NULL_FLAG | PRI_KEY_FLAG)
-      0x00                                     // decimals
+      0x05, 'u', 's', 'e', 'r', 's', // table "users"
+      0x02, 'i', 'd',                // name "id"
+      0x0c,                          // length (12)
+      0x03,                          // type (LONG = 3)
+      0x03,                          // flags length (3)
+      0x03, 0x00,                    // flags (NOT_NULL_FLAG | PRI_KEY_FLAG)
+      0x00                           // decimals
     )
 
     val bitVector       = BitVector(packetBytes)
