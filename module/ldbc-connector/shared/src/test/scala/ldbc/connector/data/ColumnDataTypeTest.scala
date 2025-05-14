@@ -47,7 +47,7 @@ class ColumnDataTypeTest extends FTestPlatform:
 
   test("values should include all MySQL data types") {
     val values = ColumnDataType.values
-    
+
     // Verify presence of all MySQL data types
     assert(values.contains(ColumnDataType.MYSQL_TYPE_DECIMAL))
     assert(values.contains(ColumnDataType.MYSQL_TYPE_TINY))
@@ -80,6 +80,6 @@ class ColumnDataTypeTest extends FTestPlatform:
     assert(values.contains(ColumnDataType.MYSQL_TYPE_VAR_STRING))
     assert(values.contains(ColumnDataType.MYSQL_TYPE_STRING))
     assert(values.contains(ColumnDataType.MYSQL_TYPE_GEOMETRY))
-    
+
     assertEquals(values.length, 31)
   }
