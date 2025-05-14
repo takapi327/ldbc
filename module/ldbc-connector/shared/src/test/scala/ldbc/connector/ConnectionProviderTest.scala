@@ -10,14 +10,14 @@ import scala.concurrent.duration.Duration
 
 import cats.effect.IO
 
-import org.typelevel.otel4s.trace.Tracer
-
 import fs2.io.net.SocketOption
+
+import org.typelevel.otel4s.trace.Tracer
 
 import ldbc.sql.DatabaseMetaData
 
 class ConnectionProviderTest extends FTestPlatform:
-  
+
   /**
    * Default connection provider for testing
    */
@@ -32,7 +32,7 @@ class ConnectionProviderTest extends FTestPlatform:
       defaultProvider
     )
   }
-  
+
   test("ConnectionProvider#setPort") {
     val provider = defaultProvider.setPort(3306)
     assertNotEquals(
@@ -40,7 +40,7 @@ class ConnectionProviderTest extends FTestPlatform:
       defaultProvider
     )
   }
-  
+
   test("ConnectionProvider#setUser") {
     val provider = defaultProvider.setUser("root")
     assertNotEquals(
@@ -48,7 +48,7 @@ class ConnectionProviderTest extends FTestPlatform:
       defaultProvider
     )
   }
-  
+
   test("ConnectionProvider#setPassword") {
     val provider = defaultProvider.setPassword("newpassword")
     assertNotEquals(
@@ -56,7 +56,7 @@ class ConnectionProviderTest extends FTestPlatform:
       defaultProvider
     )
   }
-  
+
   test("ConnectionProvider#setDatabase") {
     val provider = defaultProvider.setDatabase("testdb")
     assertNotEquals(
@@ -64,7 +64,7 @@ class ConnectionProviderTest extends FTestPlatform:
       defaultProvider
     )
   }
-  
+
   test("ConnectionProvider#setDebug") {
     val provider = defaultProvider.setDebug(true)
     assertNotEquals(
@@ -72,7 +72,7 @@ class ConnectionProviderTest extends FTestPlatform:
       defaultProvider
     )
   }
-  
+
   test("ConnectionProvider#setSSL") {
     val provider = defaultProvider.setSSL(SSL.Trusted)
     assertNotEquals(
@@ -80,25 +80,25 @@ class ConnectionProviderTest extends FTestPlatform:
       defaultProvider
     )
   }
-  
+
   test("ConnectionProvider#addSocketOption") {
-    val option = SocketOption.receiveBufferSize(1024)
+    val option   = SocketOption.receiveBufferSize(1024)
     val provider = defaultProvider.addSocketOption(option)
     assertNotEquals(
       provider,
       defaultProvider
     )
   }
-  
+
   test("ConnectionProvider#setSocketOptions") {
-    val options = List(SocketOption.receiveBufferSize(1024))
+    val options  = List(SocketOption.receiveBufferSize(1024))
     val provider = defaultProvider.setSocketOptions(options)
     assertNotEquals(
       provider,
       defaultProvider
     )
   }
-  
+
   test("ConnectionProvider#setReadTimeout") {
     val provider = defaultProvider.setReadTimeout(Duration(5000, "ms"))
     assertNotEquals(
@@ -106,7 +106,7 @@ class ConnectionProviderTest extends FTestPlatform:
       defaultProvider
     )
   }
-  
+
   test("ConnectionProvider#setAllowPublicKeyRetrieval") {
     val provider = defaultProvider.setAllowPublicKeyRetrieval(true)
     assertNotEquals(
@@ -114,7 +114,7 @@ class ConnectionProviderTest extends FTestPlatform:
       defaultProvider
     )
   }
-  
+
   test("ConnectionProvider#setDatabaseTerm") {
     val provider = defaultProvider.setDatabaseTerm(DatabaseMetaData.DatabaseTerm.SCHEMA)
     assertNotEquals(
@@ -122,37 +122,37 @@ class ConnectionProviderTest extends FTestPlatform:
       defaultProvider
     )
   }
-  
+
   test("ConnectionProvider#setTracer") {
-    val tracer = Tracer.noop[IO]
+    val tracer   = Tracer.noop[IO]
     val provider = defaultProvider.setTracer(tracer)
     assertNotEquals(
       provider,
       defaultProvider
     )
   }
-  
+
   test("ConnectionProvider#withBefore") {
-    val before = (conn: Connection[IO]) => IO.unit
+    val before   = (conn: Connection[IO]) => IO.unit
     val provider = defaultProvider.withBefore(before)
     assertNotEquals(
       provider,
       defaultProvider
     )
   }
-  
+
   test("ConnectionProvider#withAfter") {
-    val after = (unit: Unit, conn: Connection[IO]) => IO.unit
+    val after    = (unit: Unit, conn: Connection[IO]) => IO.unit
     val provider = defaultProvider.withAfter(after)
     assertNotEquals(
       provider,
       defaultProvider
     )
   }
-  
+
   test("ConnectionProvider#withBeforeAfter") {
-    val before = (conn: Connection[IO]) => IO.unit
-    val after = (unit: Unit, conn: Connection[IO]) => IO.unit
+    val before   = (conn: Connection[IO]) => IO.unit
+    val after    = (unit: Unit, conn: Connection[IO]) => IO.unit
     val provider = defaultProvider.withBeforeAfter(before, after)
     assertNotEquals(
       provider,
