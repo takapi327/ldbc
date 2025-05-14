@@ -11,24 +11,24 @@ import scodec.Attempt
 
 import ldbc.connector.*
 import ldbc.connector.data.*
-import ldbc.connector.net.packet.response.{ ColumnDefinitionPacket, ColumnDefinition41Packet }
+import ldbc.connector.net.packet.response.{ ColumnDefinition41Packet, ColumnDefinitionPacket }
 
 class ColumnDefinitionPacketTest extends FTestPlatform:
 
   test("ColumnDefinitionPacket creation and properties") {
     val columnPacket = ColumnDefinition41Packet(
-      catalog    = "def",
-      schema     = "test_db",
-      table      = "users",
-      orgTable   = "users",
-      name       = "id",
-      orgName    = "id",
-      length    = 12,
-      characterSet    = 33,
-      columnLength  = 11,
-      columnType = ColumnDataType.MYSQL_TYPE_LONG,
-      flags      = Seq(ColumnDefinitionFlags.NOT_NULL_FLAG, ColumnDefinitionFlags.PRI_KEY_FLAG),
-      decimals   = 0
+      catalog      = "def",
+      schema       = "test_db",
+      table        = "users",
+      orgTable     = "users",
+      name         = "id",
+      orgName      = "id",
+      length       = 12,
+      characterSet = 33,
+      columnLength = 11,
+      columnType   = ColumnDataType.MYSQL_TYPE_LONG,
+      flags        = Seq(ColumnDefinitionFlags.NOT_NULL_FLAG, ColumnDefinitionFlags.PRI_KEY_FLAG),
+      decimals     = 0
     )
 
     assertEquals(columnPacket.catalog, "def")
@@ -48,19 +48,19 @@ class ColumnDefinitionPacketTest extends FTestPlatform:
   test("ColumnDefinitionPacket decoder with CLIENT_PROTOCOL_41") {
     // Create sample packet data for column definition with protocol 41
     val packetBytes = Array[Byte](
-      0x03, 'd', 'e', 'f',                    // catalog "def"
+      0x03, 'd', 'e', 'f',                     // catalog "def"
       0x07, 't', 'e', 's', 't', '_', 'd', 'b', // schema "test_db"
-      0x05, 'u', 's', 'e', 'r', 's',          // table "users"
-      0x05, 'u', 's', 'e', 'r', 's',          // org_table "users"
-      0x02, 'i', 'd',                         // name "id"
-      0x02, 'i', 'd',                         // org_name "id"
-      0x0c,                                   // length of fixed-length fields
-      0x21, 0x00,                             // character set (33)
-      0x0b, 0x00, 0x00, 0x00,                 // column length (11)
-      0x03,                                   // type (LONG = 3)
-      0x03, 0x00,                             // flags (NOT_NULL_FLAG | PRI_KEY_FLAG)
-      0x00,                                   // decimals
-      0x00, 0x00                              // filler
+      0x05, 'u', 's', 'e', 'r', 's',           // table "users"
+      0x05, 'u', 's', 'e', 'r', 's',           // org_table "users"
+      0x02, 'i', 'd',                          // name "id"
+      0x02, 'i', 'd',                          // org_name "id"
+      0x0c,                                    // length of fixed-length fields
+      0x21, 0x00,                              // character set (33)
+      0x0b, 0x00, 0x00, 0x00,                  // column length (11)
+      0x03,                                    // type (LONG = 3)
+      0x03, 0x00,                              // flags (NOT_NULL_FLAG | PRI_KEY_FLAG)
+      0x00,                                    // decimals
+      0x00, 0x00                               // filler
     )
 
     val bitVector       = BitVector(packetBytes)
@@ -98,15 +98,18 @@ class ColumnDefinitionPacketTest extends FTestPlatform:
 
     // Test numeric conversion and back (assuming a toBitMask and fromBitMask method exists)
     val flagsValue = flags.foldLeft(0L)((acc, flag) => acc | flag.code)
-    assertEquals(flagsValue, ColumnDefinitionFlags.NOT_NULL_FLAG.code |
-                           ColumnDefinitionFlags.PRI_KEY_FLAG.code |
-                           ColumnDefinitionFlags.UNSIGNED_FLAG.code)
+    assertEquals(
+      flagsValue,
+      ColumnDefinitionFlags.NOT_NULL_FLAG.code |
+        ColumnDefinitionFlags.PRI_KEY_FLAG.code |
+        ColumnDefinitionFlags.UNSIGNED_FLAG.code
+    )
 
     // From numeric value to flags - use exact matches to avoid false positives
-    val reconstructed = ColumnDefinitionFlags.values.filter { flag => 
+    val reconstructed = ColumnDefinitionFlags.values.filter { flag =>
       (flagsValue & flag.code) != 0 && (flag.code & flagsValue) == flag.code
     }
-    
+
     assert(reconstructed.contains(ColumnDefinitionFlags.NOT_NULL_FLAG))
     assert(reconstructed.contains(ColumnDefinitionFlags.PRI_KEY_FLAG))
     assert(reconstructed.contains(ColumnDefinitionFlags.UNSIGNED_FLAG))
