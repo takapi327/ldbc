@@ -107,13 +107,13 @@ class OKPacketTest extends FTestPlatform:
   test("OKPacket decoder with small affected rows (<=251)") {
     // Create packet with affected rows = 42 (small number, 1 byte)
     val packetBytes = Array[Byte](
-      0x2a,          // affected rows (42) - small number <=251
-      0x00,          // last insert ID (0)
-      0x02, 0x00,    // status flags
-      0x00, 0x00     // warnings
+      0x2a,       // affected rows (42) - small number <=251
+      0x00,       // last insert ID (0)
+      0x02, 0x00, // status flags
+      0x00, 0x00  // warnings
     )
 
-    val bitVector = BitVector(packetBytes)
+    val bitVector       = BitVector(packetBytes)
     val capabilityFlags = Set(CapabilitiesFlags.CLIENT_PROTOCOL_41)
 
     val result = OKPacket.decoder(capabilityFlags).decode(bitVector)
@@ -131,14 +131,17 @@ class OKPacketTest extends FTestPlatform:
   test("OKPacket decoder with 2-byte affected rows (length=252)") {
     // Create packet with affected rows that requires 2 bytes
     val packetBytes = Array[Byte](
-      0xfc.toByte,    // 252 - indicator for 2 byte integer
-      0x34, 0x12,     // affected rows (0x1234 = 4660)
-      0x00,           // last insert ID (0)
-      0x02, 0x00,     // status flags
-      0x00, 0x00      // warnings
+      0xfc.toByte, // 252 - indicator for 2 byte integer
+      0x34,
+      0x12, // affected rows (0x1234 = 4660)
+      0x00, // last insert ID (0)
+      0x02,
+      0x00, // status flags
+      0x00,
+      0x00 // warnings
     )
 
-    val bitVector = BitVector(packetBytes)
+    val bitVector       = BitVector(packetBytes)
     val capabilityFlags = Set(CapabilitiesFlags.CLIENT_PROTOCOL_41)
 
     val result = OKPacket.decoder(capabilityFlags).decode(bitVector)
@@ -156,14 +159,18 @@ class OKPacketTest extends FTestPlatform:
   test("OKPacket decoder with 3-byte affected rows (length=253)") {
     // Create packet with affected rows that requires 3 bytes
     val packetBytes = Array[Byte](
-      0xfd.toByte,           // 253 - indicator for 3 byte integer
-      0x45, 0x23, 0x01,      // affected rows (0x012345 = 74565)
-      0x00,                  // last insert ID (0)
-      0x02, 0x00,            // status flags
-      0x00, 0x00             // warnings
+      0xfd.toByte, // 253 - indicator for 3 byte integer
+      0x45,
+      0x23,
+      0x01, // affected rows (0x012345 = 74565)
+      0x00, // last insert ID (0)
+      0x02,
+      0x00, // status flags
+      0x00,
+      0x00 // warnings
     )
 
-    val bitVector = BitVector(packetBytes)
+    val bitVector       = BitVector(packetBytes)
     val capabilityFlags = Set(CapabilitiesFlags.CLIENT_PROTOCOL_41)
 
     val result = OKPacket.decoder(capabilityFlags).decode(bitVector)
@@ -181,14 +188,19 @@ class OKPacketTest extends FTestPlatform:
   test("OKPacket decoder with 4-byte affected rows (length=254)") {
     // Create packet with affected rows that requires 4 bytes
     val packetBytes = Array[Byte](
-      0xfe.toByte,                 // 254 - indicator for 4 byte integer
-      0x78, 0x56, 0x34, 0x12,      // affected rows (0x12345678 = 305419896)
-      0x00,                        // last insert ID (0)
-      0x02, 0x00,                  // status flags
-      0x00, 0x00                   // warnings
+      0xfe.toByte, // 254 - indicator for 4 byte integer
+      0x78,
+      0x56,
+      0x34,
+      0x12, // affected rows (0x12345678 = 305419896)
+      0x00, // last insert ID (0)
+      0x02,
+      0x00, // status flags
+      0x00,
+      0x00 // warnings
     )
 
-    val bitVector = BitVector(packetBytes)
+    val bitVector       = BitVector(packetBytes)
     val capabilityFlags = Set(CapabilitiesFlags.CLIENT_PROTOCOL_41)
 
     val result = OKPacket.decoder(capabilityFlags).decode(bitVector)
