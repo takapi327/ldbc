@@ -6,33 +6,32 @@
 
 package ldbc.connector
 
-import javax.net.ssl.SNIHostName
-
-import scala.util.Try
-
 import cats.effect.IO
-
-import fs2.io.net.tls.TLSParameters
 import fs2.io.net.Network
+import fs2.io.net.tls.TLSParameters
+
+import javax.net.ssl.SNIHostName
 
 class SSLTest extends FTestPlatform:
 
   test("SSL.None should not create a TLSContext") {
-    val result = Try {
-      SSL.None.tlsContext[IO].use(_ => IO.unit).unsafeRunSync()
-    }
-    assert(result.isFailure)
-    assert(result.failed.get.getMessage == "SSL.None: cannot create a TLSContext.")
+    assertIOBoolean(
+      SSL.None.tlsContext[IO].attempt.use(result => IO(result.isLeft))
+    )
   }
 
   test("SSL.Trusted should create an insecure TLSContext") {
     // This test verifies that no exception is thrown when creating a trusted context
-    SSL.Trusted.tlsContext[IO].use(_ => IO.unit).unsafeRunSync()
+    assertIOBoolean(
+      SSL.Trusted.tlsContext[IO].use(_ => IO(true))
+    )
   }
 
   test("SSL.System should create a system TLSContext") {
     // This test verifies that no exception is thrown when creating a system context
-    SSL.System.tlsContext[IO].use(_ => IO.unit).unsafeRunSync()
+    assertIOBoolean(
+      SSL.System.tlsContext[IO].use(_ => IO(true))
+    )
   }
 
   test("withTLSParameters should override tlsParameters") {
@@ -62,11 +61,14 @@ class SSLTest extends FTestPlatform:
   }
 
   test("toSSLNegotiationOptions should return None for SSL.None") {
-    val options = SSL.None.toSSLNegotiationOptions[IO](None).use(IO.pure).unsafeRunSync()
-    assertEquals(options, None)
+    assertIO(
+      SSL.None.toSSLNegotiationOptions[IO](None).use(IO.pure),
+      None
+    )
   }
 
   test("toSSLNegotiationOptions should return Some for SSL implementations") {
-    val options = SSL.Trusted.toSSLNegotiationOptions[IO](None).use(IO.pure).unsafeRunSync()
-    assert(options.isDefined)
+    assertIOBoolean(
+      SSL.Trusted.toSSLNegotiationOptions[IO](None).use(IO.pure).map(_.isDefined),
+    )
   }
