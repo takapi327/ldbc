@@ -6,9 +6,9 @@
 
 package ldbc.connector
 
+import java.io.FileInputStream
 import java.nio.file.Paths
 import java.security.KeyStore
-import java.io.FileInputStream
 
 import javax.net.ssl.SSLContext
 
@@ -32,13 +32,13 @@ class SSLPlatformTest extends FTestPlatform:
   }
 
   test("SSL.fromKeyStoreFile") {
-    val classLoader = getClass.getClassLoader
-    val resource = classLoader.getResource("keystore.jks")
-    val keyStorePath = Paths.get(resource.toURI)
+    val classLoader   = getClass.getClassLoader
+    val resource      = classLoader.getResource("keystore.jks")
+    val keyStorePath  = Paths.get(resource.toURI)
     val storePassword = "password".toCharArray
-    val keyPassword = "password".toCharArray
+    val keyPassword   = "password".toCharArray
 
-    val ssl = SSL.fromKeyStoreFile(keyStorePath, storePassword, keyPassword)
+    val ssl    = SSL.fromKeyStoreFile(keyStorePath, storePassword, keyPassword)
     val result = ssl.tlsContext[IO](Network[IO], implicitly).use(_ => IO.pure(true))
     assertIOBoolean(result)
   }
@@ -54,12 +54,12 @@ class SSLPlatformTest extends FTestPlatform:
   }
 
   test("SSL.fromKeyStore") {
-    val classLoader = getClass.getClassLoader
-    val resource = classLoader.getResource("keystore.jks")
-    val keyStore = KeyStore.getInstance("JKS")
+    val classLoader   = getClass.getClassLoader
+    val resource      = classLoader.getResource("keystore.jks")
+    val keyStore      = KeyStore.getInstance("JKS")
     val storePassword = "password".toCharArray
-    val keyPassword = "password".toCharArray
-    
+    val keyPassword   = "password".toCharArray
+
     // Initialize the KeyStore
     val inputStream = new FileInputStream(resource.getFile)
     try {
@@ -68,7 +68,7 @@ class SSLPlatformTest extends FTestPlatform:
       inputStream.close()
     }
 
-    val ssl = SSL.fromKeyStore(keyStore, keyPassword)
+    val ssl    = SSL.fromKeyStore(keyStore, keyPassword)
     val result = ssl.tlsContext[IO](Network[IO], implicitly).use(_ => IO.pure(true))
     assertIOBoolean(result)
   }
