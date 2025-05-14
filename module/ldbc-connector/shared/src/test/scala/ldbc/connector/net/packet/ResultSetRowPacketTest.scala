@@ -16,7 +16,7 @@ import ldbc.connector.net.packet.response.ResultSetRowPacket
 class ResultSetRowPacketTest extends FTestPlatform:
 
   test("ResultSetRowPacket creation and properties") {
-    val values = Array[Option[String]](Some("1"), Some("John"), Some("Doe"), None, Some("30"))
+    val values    = Array[Option[String]](Some("1"), Some("John"), Some("Doe"), None, Some("30"))
     val rowPacket = ResultSetRowPacket(values)
 
     assertEquals(rowPacket.values, values)
@@ -32,16 +32,26 @@ class ResultSetRowPacketTest extends FTestPlatform:
   test("ResultSetRowPacket decoder with simple values") {
     // Create sample packet data that would be received from server
     val packetBytes = Array[Byte](
-      0x01, '1',      // first column: value "1"
-      0x04, 'J', 'o', 'h', 'n', // second column: value "John"
-      0x03, 'D', 'o', 'e', // third column: value "Doe"
-      0xfb.toByte,    // fourth column: NULL value
-      0x02, '3', '0'  // fifth column: value "30"
+      0x01,
+      '1', // first column: value "1"
+      0x04,
+      'J',
+      'o',
+      'h',
+      'n', // second column: value "John"
+      0x03,
+      'D',
+      'o',
+      'e',         // third column: value "Doe"
+      0xfb.toByte, // fourth column: NULL value
+      0x02,
+      '3',
+      '0' // fifth column: value "30"
     )
 
-    val bitVector = BitVector(packetBytes)
+    val bitVector       = BitVector(packetBytes)
     val capabilityFlags = Set(CapabilitiesFlags.CLIENT_PROTOCOL_41)
-    val columnLength = 5
+    val columnLength    = 5
 
     val result = ResultSetRowPacket.decoder(capabilityFlags, columnLength).decode(bitVector)
 
@@ -66,16 +76,16 @@ class ResultSetRowPacketTest extends FTestPlatform:
     // Create sample packet data with length-encoded strings
     val longString = "a" * 300 // String that exceeds 251 chars
     val packetBytes = Array.concat(
-      Array[Byte](0x01, '1'), // first column: value "1"
+      Array[Byte](0x01, '1'),                              // first column: value "1"
       Array[Byte](0xfc.toByte) ++ Array[Byte](0x2c, 0x01), // length indicator for 300 bytes (0x012c)
-      longString.getBytes(), // actual 300 bytes of data
-      Array[Byte](0xfb.toByte), // NULL value
-      Array[Byte](0x03, '1', '0', '0') // value "100"
+      longString.getBytes(),                               // actual 300 bytes of data
+      Array[Byte](0xfb.toByte),                            // NULL value
+      Array[Byte](0x03, '1', '0', '0')                     // value "100"
     )
 
-    val bitVector = BitVector(packetBytes)
+    val bitVector       = BitVector(packetBytes)
     val capabilityFlags = Set(CapabilitiesFlags.CLIENT_PROTOCOL_41)
-    val columnLength = 4
+    val columnLength    = 4
 
     val result = ResultSetRowPacket.decoder(capabilityFlags, columnLength).decode(bitVector)
 
@@ -98,15 +108,15 @@ class ResultSetRowPacketTest extends FTestPlatform:
   test("ResultSetRowPacket decoder with non-ASCII characters") {
     // Test with Japanese characters
     val japaneseText = "こんにちは世界"
-    val bytesLength = japaneseText.getBytes("UTF-8").length.toByte
+    val bytesLength  = japaneseText.getBytes("UTF-8").length.toByte
     val packetBytes = Array.concat(
-      Array[Byte](0x01, '1'), // first column: value "1"
+      Array[Byte](0x01, '1'),                                    // first column: value "1"
       Array[Byte](bytesLength) ++ japaneseText.getBytes("UTF-8") // Japanese text
     )
 
-    val bitVector = BitVector(packetBytes)
+    val bitVector       = BitVector(packetBytes)
     val capabilityFlags = Set(CapabilitiesFlags.CLIENT_PROTOCOL_41)
-    val columnLength = 2
+    val columnLength    = 2
 
     val result = ResultSetRowPacket.decoder(capabilityFlags, columnLength).decode(bitVector)
 
