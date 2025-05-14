@@ -78,8 +78,8 @@ class SQLFeatureNotSupportedExceptionTest extends FTestPlatform:
 
   test("submitIssues should create exception with proper hint") {
     val errorMessage = "Batch operations not supported"
-    val detail = Some("This driver doesn't support batch operations")
-    val exception = SQLFeatureNotSupportedException.submitIssues(errorMessage, detail)
+    val detail       = Some("This driver doesn't support batch operations")
+    val exception    = SQLFeatureNotSupportedException.submitIssues(errorMessage, detail)
 
     assertEquals(exception.getMessage.contains(errorMessage), true)
     assertEquals(exception.getMessage.contains(detail.getOrElse("")), true)
