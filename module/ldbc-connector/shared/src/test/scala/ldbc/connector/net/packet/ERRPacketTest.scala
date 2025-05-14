@@ -115,6 +115,87 @@ class ERRPacketTest extends FTestPlatform:
     val authException = authErrPacket.toException
     assert(authException.isInstanceOf[SQLInvalidAuthorizationSpecException])
     assertEquals(authException.getSQLState, "28000")
+    
+    // Test SQLTransientConnectionException
+    val connectionErrPacket = ERRPacket(
+      status         = ERRPacket.STATUS,
+      errorCode      = 2003,
+      sqlStateMarker = '#'.toInt,
+      sqlState       = Some("08S01"),
+      errorMessage   = "Connection refused"
+    )
+    
+    val connectionException = connectionErrPacket.toException
+    assertEquals(connectionException.getSQLState, "08S01")
+    
+    // Test SQLDataException
+    val dataErrPacket = ERRPacket(
+      status         = ERRPacket.STATUS,
+      errorCode      = 1264,
+      sqlStateMarker = '#'.toInt,
+      sqlState       = Some("22000"),
+      errorMessage   = "Data truncation error"
+    )
+    
+    val dataException = dataErrPacket.toException
+    assert(dataException.isInstanceOf[SQLDataException])
+    assertEquals(dataException.getSQLState, "22000")
+    assertEquals(dataException.getErrorCode, 1264)
+    
+    // Test SQLIntegrityConstraintViolationException
+    val integrityErrPacket = ERRPacket(
+      status         = ERRPacket.STATUS,
+      errorCode      = 1062,
+      sqlStateMarker = '#'.toInt,
+      sqlState       = Some("23000"),
+      errorMessage   = "Duplicate entry for key 'PRIMARY'"
+    )
+    
+    val integrityException = integrityErrPacket.toException
+    assert(integrityException.isInstanceOf[SQLIntegrityConstraintViolationException])
+    assertEquals(integrityException.getSQLState, "23000")
+    assertEquals(integrityException.getErrorCode, 1062)
+    
+    // Test SQLTransactionRollbackException
+    val rollbackErrPacket = ERRPacket(
+      status         = ERRPacket.STATUS,
+      errorCode      = 1205,
+      sqlStateMarker = '#'.toInt,
+      sqlState       = Some("40000"),
+      errorMessage   = "Lock wait timeout exceeded; try restarting transaction"
+    )
+    
+    val rollbackException = rollbackErrPacket.toException
+    assert(rollbackException.isInstanceOf[SQLTransactionRollbackException])
+    assertEquals(rollbackException.getSQLState, "40000")
+    assertEquals(rollbackException.getErrorCode, 1205)
+    
+    // Test SQLFeatureNotSupportedException
+    val featureErrPacket = ERRPacket(
+      status         = ERRPacket.STATUS,
+      errorCode      = 1289,
+      sqlStateMarker = '#'.toInt,
+      sqlState       = Some("0A000"),
+      errorMessage   = "The 'OPTION' feature is not supported"
+    )
+    
+    val featureException = featureErrPacket.toException
+    assert(featureException.isInstanceOf[SQLFeatureNotSupportedException])
+    assertEquals(featureException.getSQLState, "0A000")
+    assertEquals(featureException.getErrorCode, 1289)
+    
+    // Test generic SQLException with no specific SQL state
+    val noStateErrPacket = ERRPacket(
+      status         = ERRPacket.STATUS,
+      errorCode      = 1234,
+      sqlStateMarker = 0,
+      sqlState       = None,
+      errorMessage   = "Unknown error occurred"
+    )
+    
+    val noStateException = noStateErrPacket.toException
+    assert(noStateException.isInstanceOf[SQLException])
+    assertEquals(noStateException.getErrorCode, 1234)
 
     // Test with SQL query
     val sqlSyntaxErrPacket = ERRPacket(
