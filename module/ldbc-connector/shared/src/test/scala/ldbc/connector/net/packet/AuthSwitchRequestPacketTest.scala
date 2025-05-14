@@ -17,8 +17,8 @@ class AuthSwitchRequestPacketTest extends FTestPlatform:
   test("AuthSwitchRequestPacket creation and properties") {
     val pluginData = Array[Byte](1, 2, 3, 4, 5)
     val packet = AuthSwitchRequestPacket(
-      status = AuthSwitchRequestPacket.STATUS,
-      pluginName = "mysql_native_password",
+      status             = AuthSwitchRequestPacket.STATUS,
+      pluginName         = "mysql_native_password",
       pluginProvidedData = pluginData
     )
 
@@ -32,12 +32,12 @@ class AuthSwitchRequestPacketTest extends FTestPlatform:
     // Create sample packet data that would be received from server
     val pluginName = "mysql_native_password"
     val pluginData = Array[Byte](1, 2, 3, 4, 5)
-    
+
     // Construct packet bytes: plugin name (null-terminated) + plugin data + ending byte
     val packetBytes = pluginName.getBytes ++ Array[Byte](0) ++ pluginData ++ Array[Byte](0)
-    
+
     val bitVector = BitVector(packetBytes)
-    val result = AuthSwitchRequestPacket.decoder.decode(bitVector)
+    val result    = AuthSwitchRequestPacket.decoder.decode(bitVector)
 
     assert(result.isSuccessful)
     result match {
@@ -49,27 +49,27 @@ class AuthSwitchRequestPacketTest extends FTestPlatform:
       case _ => fail("Decoding failed")
     }
   }
-  
+
   test("AuthSwitchRequestPacket with empty plugin data") {
-    val pluginName = "auth_plugin"
+    val pluginName      = "auth_plugin"
     val emptyPluginData = Array[Byte]()
-    
+
     val packet = AuthSwitchRequestPacket(
-      status = AuthSwitchRequestPacket.STATUS,
-      pluginName = pluginName,
+      status             = AuthSwitchRequestPacket.STATUS,
+      pluginName         = pluginName,
       pluginProvidedData = emptyPluginData
     )
-    
+
     // Test packet properties
     assertEquals(packet.status, 254)
     assertEquals(packet.pluginName, pluginName)
     assertEquals(packet.pluginProvidedData, emptyPluginData)
-    
+
     // Test decoding with empty plugin data
     val packetBytes = pluginName.getBytes ++ Array[Byte](0) ++ Array[Byte](0)
-    val bitVector = BitVector(packetBytes)
-    val result = AuthSwitchRequestPacket.decoder.decode(bitVector)
-    
+    val bitVector   = BitVector(packetBytes)
+    val result      = AuthSwitchRequestPacket.decoder.decode(bitVector)
+
     assert(result.isSuccessful)
     result match {
       case Attempt.Successful(decoded) =>
