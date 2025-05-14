@@ -205,9 +205,9 @@ class SharedPreparedStatementTest extends SharedPreparedStatement[IO], FTestPlat
       _       <- assertParameters(result1, SortedMap(1 -> Parameter.string("test string")))
 
       _       <- resetParams
-      _       <- setObject(1, Integer.valueOf(42).asInstanceOf[Object])
+      _       <- setObject(1, 42L.asInstanceOf[Object])
       result2 <- params.get
-      _       <- assertParameters(result2, SortedMap(1 -> Parameter.int(42)))
+      _       <- assertParameters(result2, SortedMap(1 -> Parameter.long(42L)))
 
       _       <- resetParams
       _       <- setObject(1, null)
