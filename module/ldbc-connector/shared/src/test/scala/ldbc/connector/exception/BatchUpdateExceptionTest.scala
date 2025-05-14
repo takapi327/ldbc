@@ -41,7 +41,7 @@ class BatchUpdateExceptionTest extends FTestPlatform:
 
   test("BatchUpdateException.fields should return correct attributes including updateCounts") {
     val updateCounts = List(1L, 0L, 1L, -3L)
-    
+
     val exception = new BatchUpdateException(
       message      = "Batch insert failed",
       updateCounts = updateCounts,
@@ -65,7 +65,7 @@ class BatchUpdateExceptionTest extends FTestPlatform:
 
   test("getMessage should include all relevant information") {
     val updateCounts = List(1L, 1L, -3L)
-    
+
     val exception = new BatchUpdateException(
       message      = "Batch operation partially failed",
       updateCounts = updateCounts,
@@ -93,7 +93,7 @@ class BatchUpdateExceptionTest extends FTestPlatform:
       updateCounts = List.empty,
       sqlState     = Some("01000")
     )
-    
+
     val fields = exception.fields
     assertEquals(fields.contains(Attribute("error.updateCounts", "[]")), true)
   }
