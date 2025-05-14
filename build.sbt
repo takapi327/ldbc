@@ -24,7 +24,7 @@ ThisBuild / githubWorkflowJavaVersions := Seq(
 )
 ThisBuild / githubWorkflowBuildPreamble ++= List(dockerRun) ++ nativeBrewInstallWorkflowSteps.value
 ThisBuild / nativeBrewInstallCond := Some("matrix.project == 'ldbcNative'")
-ThisBuild / githubWorkflowAddedJobs ++= Seq(sbtScripted.value)
+ThisBuild / githubWorkflowAddedJobs ++= Seq(sbtScripted.value, sbtCoverageReport.value)
 ThisBuild / githubWorkflowBuildPostamble += dockerStop
 ThisBuild / githubWorkflowTargetBranches        := Seq("**")
 ThisBuild / githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v")))
@@ -267,8 +267,7 @@ lazy val docs = (project in file("docs"))
     mdocVariables ++= Map(
       "ORGANIZATION"  -> organization.value,
       "SCALA_VERSION" -> scalaVersion.value,
-      "MYSQL_VERSION" -> mysqlVersion,
-      "VERSION" -> "0.3.0-RC2" // TODO: Manually set sbt typelevel as RC is not allowed as a VERSION in sbt typelevel setting
+      "MYSQL_VERSION" -> mysqlVersion
     ),
     laikaTheme := LaikaSettings.helium.value,
     // Modify tlSite task to run the LLM docs script after the site is generated
@@ -324,7 +323,7 @@ lazy val mcpDocumentServer = crossProject(JSPlatform)
     npmPackageAuthor       := "takapi327",
     npmPackageLicense      := Some("MIT"),
     npmPackageBinaryEnable := true,
-    npmPackageVersion      := "0.1.0-alpha4",
+    npmPackageVersion      := "0.1.0-alpha5",
     npmPackageREADME       := Some(baseDirectory.value / "README.md"),
     npmPackageAdditionalNpmConfig := Map(
       "homepage" -> _root_.io.circe.Json.fromString("https://takapi327.github.io/ldbc/"),
