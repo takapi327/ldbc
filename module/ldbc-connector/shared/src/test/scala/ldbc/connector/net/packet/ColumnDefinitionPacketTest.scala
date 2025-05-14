@@ -11,7 +11,7 @@ import scodec.Attempt
 
 import ldbc.connector.*
 import ldbc.connector.data.*
-import ldbc.connector.net.packet.response.{ ColumnDefinition41Packet, ColumnDefinitionPacket }
+import ldbc.connector.net.packet.response.{ ColumnDefinition41Packet, ColumnDefinitionPacket, ColumnDefinition320Packet }
 
 class ColumnDefinitionPacketTest extends FTestPlatform:
 
@@ -78,6 +78,43 @@ class ColumnDefinitionPacketTest extends FTestPlatform:
         assert(columnPacket.flags.contains(ColumnDefinitionFlags.NOT_NULL_FLAG))
         assert(columnPacket.flags.contains(ColumnDefinitionFlags.PRI_KEY_FLAG))
         assertEquals(columnPacket.fullName, "users.id")
+      case _ => fail("Decoding failed")
+    }
+  }
+
+  test("ColumnDefinitionPacket decoder without CLIENT_PROTOCOL_41") {
+    // Create sample packet data for column definition with protocol 320
+    val packetBytes = Array[Byte](
+      0x05, 'u', 's', 'e', 'r', 's',           // table "users"
+      0x02, 'i', 'd',                          // name "id"
+      0x0c,                                    // length (12)
+      0x03,                                    // type (LONG = 3)
+      0x03,                                    // flags length (3)
+      0x03, 0x00,                              // flags (NOT_NULL_FLAG | PRI_KEY_FLAG)
+      0x00                                     // decimals
+    )
+
+    val bitVector       = BitVector(packetBytes)
+    val capabilityFlags = Set.empty[CapabilitiesFlags] // No CLIENT_PROTOCOL_41 flag
+
+    val result = ColumnDefinitionPacket.decoder(capabilityFlags).decode(bitVector)
+
+    assert(result.isSuccessful)
+    result match {
+      case Attempt.Successful(decoded) =>
+        val columnPacket = decoded.value
+        assertEquals(columnPacket.table, "users")
+        assertEquals(columnPacket.name, "id")
+        assertEquals(columnPacket.columnType, ColumnDataType.MYSQL_TYPE_LONG)
+        assert(columnPacket.flags.contains(ColumnDefinitionFlags.NOT_NULL_FLAG))
+        assert(columnPacket.flags.contains(ColumnDefinitionFlags.PRI_KEY_FLAG))
+        assertEquals(columnPacket.fullName, "users.id")
+        // Confirm it's the right implementation
+        assert(columnPacket.isInstanceOf[ColumnDefinition320Packet])
+        val packet320 = columnPacket.asInstanceOf[ColumnDefinition320Packet]
+        assertEquals(packet320.length, 12)
+        assertEquals(packet320.flagsLength, 3)
+        assertEquals(packet320.decimals, 0)
       case _ => fail("Decoding failed")
     }
   }
