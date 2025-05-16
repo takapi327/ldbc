@@ -7,3 +7,16 @@ coverage:
     patch:
       default:
         informational: true
+  ignore:
+    - "benchmark"
+    - "examples"
+    - "plugin"
+    - "docs"
+    - "core"
+    - "module/ldbc-sql"
+    - "module/jdbc-connector"
+    - "module/ldbc-schemaspy"
+    - "module/ldbc-connector/shared/src/main/scala/ldbc/connector/net/protocol/CallableStatementImpl.scala"
+    - "module/ldbc-connector/shared/src/main/scala/ldbc/connector/net/protocol/ServerPreparedStatement.scala"
+    - "module/ldbc-connector/jvm/src/main/scala/ldbc/connector/SSLPlatform.scala"
+    - "module/ldbc-connector/shared/src/main/scala/ldbc/connector/net/protocol/Initial.scala"

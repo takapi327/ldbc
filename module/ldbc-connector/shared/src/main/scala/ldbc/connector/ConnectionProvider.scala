@@ -159,7 +159,7 @@ trait ConnectionProvider[F[_], A] extends Provider[F]:
    *     .setReadTimeout(Duration.Inf)
    * }}}
    *
-   * @param socketOptions
+   * @param readTimeout
    *   Read timeout value
    */
   def setReadTimeout(readTimeout: Duration): ConnectionProvider[F, A]
@@ -215,7 +215,7 @@ trait ConnectionProvider[F[_], A] extends Provider[F]:
    *     .setTracer(Tracer.noop[IO])
    * }}}
    *
-   * @param handler
+   * @param tracer
    *   Tracer to output metrics
    */
   def setTracer(tracer: Tracer[F]): ConnectionProvider[F, A]
