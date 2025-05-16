@@ -20,10 +20,10 @@ class ColumnTest extends AnyFlatSpec:
 
   given Codec[Token] = Codec[String].imap(Token.fromString)(_.value)
 
-  private val id1    = Column.Impl[Long]("id")
-  private val id2    = Column.Impl[Option[Long]]("id")
-  private val name1  = Column.Impl[String]("name")
-  private val name2  = Column.Impl[Option[String]]("name")
+  private val id1   = Column.Impl[Long]("id")
+  private val id2   = Column.Impl[Option[Long]]("id")
+  private val name1 = Column.Impl[String]("name")
+  private val name2 = Column.Impl[Option[String]]("name")
 
   it should "The string of the expression syntax that constructs the match with the specified value matches the specified string." in {
     assert((id1 === 1L).statement === "`id` = ?")
@@ -166,9 +166,9 @@ class ColumnTest extends AnyFlatSpec:
   }
 
   it should "The join query expression should produce the correct statement" in {
-    val otherId = Column.Impl[Long]("id")
+    val otherId   = Column.Impl[Long]("id")
     val otherName = Column.Impl[String]("name")
-    
+
     assert((id1 === otherId).statement === "`id` = `id`")
     assert((id1 >= otherId).statement === "`id` >= `id`")
     assert((id1 > otherId).statement === "`id` > `id`")
@@ -176,39 +176,39 @@ class ColumnTest extends AnyFlatSpec:
     assert((id1 < otherId).statement === "`id` < `id`")
     assert((id1 <> otherId).statement === "`id` <> `id`")
     assert((id1 !== otherId).statement === "`id` != `id`")
-    
+
     assert((name1 === otherName).statement === "`name` = `name`")
   }
-  
+
   it should "The count method should produce the correct statement" in {
     val countCol = id1.count
     assert(countCol.name === "COUNT(`id`)")
     val aliasedCountCol = id1.as("user").count
     assert(aliasedCountCol.alias === Some("COUNT(user)"))
   }
-  
+
   it should "The opt transformation should convert a Column[A] to a Column[Option[A]]" in {
     val optId = id1.opt
     assert(optId.isInstanceOf[Column[Option[Long]]])
-    
+
     val optName = name1.opt
     assert(optName.isInstanceOf[Column[Option[String]]])
   }
-  
+
   it should "Support OrderBy operations through asc and desc methods" in {
-    val ascOrder = id1.asc
+    val ascOrder  = id1.asc
     val descOrder = id1.desc
-    
+
     assert(ascOrder.statement === "`id` ASC")
     assert(descOrder.statement === "`id` DESC")
   }
-  
+
   it should "Support product operation to combine columns" in {
     val combined = id1.product(name1)
     assert(combined.name === "`id`, `name`")
     assert(combined.values === 2)
   }
-  
+
   it should "Support imap transformation with correct behavior" in {
     // Convert between String and Int
     val strToInt = name1.imap(_.toInt)(_.toString)
