@@ -7,3 +7,6 @@ coverage:
     patch:
       default:
         informational: true
+  ignore:
+    - "code/**"
+    - "module/ldbc-sql/**"
