@@ -39,32 +39,32 @@ class OrderByTest extends AnyFlatSpec:
 
   it should "create ascending order expression correctly" in {
     val column = Column[Int]("id")
-    val order = OrderBy.Order.asc(column)
+    val order  = OrderBy.Order.asc(column)
     assert(order.statement === "`id` ASC")
   }
 
   it should "create descending order expression correctly" in {
     val column = Column[Int]("id")
-    val order = OrderBy.Order.desc(column)
+    val order  = OrderBy.Order.desc(column)
     assert(order.statement === "`id` DESC")
   }
 
   it should "use column alias in order expression when available" in {
-    val column = Column[Int]("id").as("user_id")
-    val ascOrder = OrderBy.Order.asc(column)
+    val column    = Column[Int]("id").as("user_id")
+    val ascOrder  = OrderBy.Order.asc(column)
     val descOrder = OrderBy.Order.desc(column)
-    
+
     assert(ascOrder.statement === "user_id ASC")
     assert(descOrder.statement === "user_id DESC")
   }
 
   it should "combine multiple order expressions using Applicative" in {
-    val idColumn = Column[Int]("id")
+    val idColumn   = Column[Int]("id")
     val nameColumn = Column[String]("name")
-    
+
     import OrderBy.Order.given
     import cats.syntax.apply.*
-    
+
     val combinedOrder = (OrderBy.Order.asc(idColumn), OrderBy.Order.desc(nameColumn)).tupled
     assert(combinedOrder.statement === "`id` ASC, `name` DESC")
   }
@@ -76,9 +76,9 @@ class OrderByTest extends AnyFlatSpec:
       "SELECT id FROM table_name ORDER BY `id` ASC",
       List()
     )
-    
+
     val limited = orderBy.limit(5)
-    
+
     assert(limited.statement === "SELECT id FROM table_name ORDER BY `id` ASC LIMIT ?")
     assert(limited.params.length === 1)
   }
@@ -90,9 +90,9 @@ class OrderByTest extends AnyFlatSpec:
       "SELECT id FROM table_name ORDER BY `id` ASC",
       List()
     )
-    
+
     val limitedWithOffset = orderBy.limit(10).offset(5)
-    
+
     assert(limitedWithOffset.statement === "SELECT id FROM table_name ORDER BY `id` ASC LIMIT ? OFFSET ?")
     assert(limitedWithOffset.params.length === 2)
   }

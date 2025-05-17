@@ -17,8 +17,8 @@ class SchemaTest extends AnyFlatSpec with Matchers:
   }
 
   it should "concatenate two DDLs" in {
-    val ddl1 = Schema.DDL("CREATE TABLE test1")
-    val ddl2 = Schema.DDL("CREATE TABLE test2")
+    val ddl1     = Schema.DDL("CREATE TABLE test1")
+    val ddl2     = Schema.DDL("CREATE TABLE test2")
     val combined = ddl1 ++ ddl2
     combined.statements should be(List("CREATE TABLE test1", "CREATE TABLE test2"))
   }
@@ -33,11 +33,11 @@ class SchemaTest extends AnyFlatSpec with Matchers:
   }
 
   "Schema.apply" should "create a schema with provided DDL statements" in {
-    val create = Schema.DDL("CREATE TABLE test")
+    val create            = Schema.DDL("CREATE TABLE test")
     val createIfNotExists = Schema.DDL("CREATE TABLE IF NOT EXISTS test")
-    val drop = Schema.DDL("DROP TABLE test")
-    val dropIfExists = Schema.DDL("DROP TABLE IF EXISTS test")
-    val truncate = Schema.DDL("TRUNCATE TABLE test")
+    val drop              = Schema.DDL("DROP TABLE test")
+    val dropIfExists      = Schema.DDL("DROP TABLE IF EXISTS test")
+    val truncate          = Schema.DDL("TRUNCATE TABLE test")
 
     val schema = Schema(create, createIfNotExists, drop, dropIfExists, truncate)
 
@@ -68,7 +68,9 @@ class SchemaTest extends AnyFlatSpec with Matchers:
     val combined = schema1 ++ schema2
 
     combined.create.statements should be(List("CREATE TABLE test1", "CREATE TABLE test2"))
-    combined.createIfNotExists.statements should be(List("CREATE TABLE IF NOT EXISTS test1", "CREATE TABLE IF NOT EXISTS test2"))
+    combined.createIfNotExists.statements should be(
+      List("CREATE TABLE IF NOT EXISTS test1", "CREATE TABLE IF NOT EXISTS test2")
+    )
     combined.drop.statements should be(List("DROP TABLE test1", "DROP TABLE test2"))
     combined.dropIfExists.statements should be(List("DROP TABLE IF EXISTS test1", "DROP TABLE IF EXISTS test2"))
     combined.truncate.statements should be(List("TRUNCATE TABLE test1", "TRUNCATE TABLE test2"))
@@ -94,7 +96,7 @@ class SchemaTest extends AnyFlatSpec with Matchers:
     val ddl1 = Schema.DDL("CREATE TABLE test1")
     val ddl2 = Schema.DDL("CREATE TABLE test2")
     val ddl3 = Schema.DDL("CREATE TABLE test3")
-    
+
     val combined = ddl1 ++ ddl2 ++ ddl3
     combined.statements should be(List("CREATE TABLE test1", "CREATE TABLE test2", "CREATE TABLE test3"))
   }
