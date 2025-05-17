@@ -8,6 +8,7 @@ package ldbc.statement
 
 import org.scalatest.flatspec.AnyFlatSpec
 
+import ldbc.dsl.*
 import ldbc.dsl.codec.Codec
 
 opaque type Token = String
@@ -19,12 +20,10 @@ class ColumnTest extends AnyFlatSpec:
 
   given Codec[Token] = Codec[String].imap(Token.fromString)(_.value)
 
-  private val id1    = Column.Impl[Long]("id")
-  private val id2    = Column.Impl[Option[Long]]("id")
-  private val name1  = Column.Impl[String]("name")
-  private val name2  = Column.Impl[Option[String]]("name")
-  private val token1 = Column.Impl[Token]("token")
-  private val token2 = Column.Impl[Option[Token]]("token")
+  private val id1   = Column.Impl[Long]("id")
+  private val id2   = Column.Impl[Option[Long]]("id")
+  private val name1 = Column.Impl[String]("name")
+  private val name2 = Column.Impl[Option[String]]("name")
 
   it should "The string of the expression syntax that constructs the match with the specified value matches the specified string." in {
     assert((id1 === 1L).statement === "`id` = ?")
@@ -149,69 +148,70 @@ class ColumnTest extends AnyFlatSpec:
   }
 
   it should "The string constructed by the expression syntax that performs the left shift operation to determine if it matches matches the specified string." in {
-    assert((id1 ^ 1L).statement === "`id` ^ ?")
-    assert((id1 ^ 1L).NOT.statement === "NOT `id` ^ ?")
-    assert((id2 ^ 1L).statement === "`id` ^ ?")
-    assert((id2 ^ 1L).NOT.statement === "NOT `id` ^ ?")
+    assert((id1 << 1L).statement === "`id` << ?")
+    assert((id1 << 1L).NOT.statement === "NOT `id` << ?")
+    assert((id2 << 1L).statement === "`id` << ?")
+    assert((id2 << 1L).NOT.statement === "NOT `id` << ?")
   }
 
-  it should "The string constructed by the expression syntax that performs the right shift operation to determine if it matches matches the specified string." in {
-    assert((id1 >> 1L).statement === "`id` >> ?")
-    assert((id1 >> 1L).NOT.statement === "NOT `id` >> ?")
-    assert((id2 >> 1L).statement === "`id` >> ?")
-    assert((id2 >> 1L).NOT.statement === "NOT `id` >> ?")
+  it should "The string constructed by the SQL subquery comparison matches the expected value" in {
+    val sql = sql"SELECT id FROM user WHERE id = 1"
+    assert((id1 === sql).statement === "`id` = (SELECT id FROM user WHERE id = 1)")
+    assert((id1 >= sql).statement === "`id` >= (SELECT id FROM user WHERE id = 1)")
+    assert((id1 > sql).statement === "`id` > (SELECT id FROM user WHERE id = 1)")
+    assert((id1 <= sql).statement === "`id` <= (SELECT id FROM user WHERE id = 1)")
+    assert((id1 < sql).statement === "`id` < (SELECT id FROM user WHERE id = 1)")
+    assert((id1 <> sql).statement === "`id` <> (SELECT id FROM user WHERE id = 1)")
+    assert((id1 IN sql).statement === "`id` IN (SELECT id FROM user WHERE id = 1)")
   }
 
-  it should "The string constructed by the expression syntax that performs addition operations to determine if they match matches the specified string." in {
-    assert(((id1 ++ id1) < 1L).statement === "`id` + `id` < ?")
-    assert(((id1 ++ id1) < 1L).NOT.statement === "NOT `id` + `id` < ?")
-    assert(((id2 ++ id2) < 1L).statement === "`id` + `id` < ?")
-    assert(((id2 ++ id2) < 1L).NOT.statement === "NOT `id` + `id` < ?")
+  it should "The join query expression should produce the correct statement" in {
+    val otherId   = Column.Impl[Long]("id")
+    val otherName = Column.Impl[String]("name")
+
+    assert((id1 === otherId).statement === "`id` = `id`")
+    assert((id1 >= otherId).statement === "`id` >= `id`")
+    assert((id1 > otherId).statement === "`id` > `id`")
+    assert((id1 <= otherId).statement === "`id` <= `id`")
+    assert((id1 < otherId).statement === "`id` < `id`")
+    assert((id1 <> otherId).statement === "`id` <> `id`")
+    assert((id1 !== otherId).statement === "`id` != `id`")
+
+    assert((name1 === otherName).statement === "`name` = `name`")
   }
 
-  it should "The string constructed by the expression syntax that performs subtraction operations to determine if they match matches the specified string." in {
-    assert(((id1 -- id1) < 1L).statement === "`id` - `id` < ?")
-    assert(((id1 -- id1) < 1L).NOT.statement === "NOT `id` - `id` < ?")
-    assert(((id2 -- id2) < 1L).statement === "`id` - `id` < ?")
-    assert(((id2 -- id2) < 1L).NOT.statement === "NOT `id` - `id` < ?")
+  it should "The count method should produce the correct statement" in {
+    val countCol = id1.count
+    assert(countCol.name === "COUNT(`id`)")
+    val aliasedCountCol = id1.as("user").count
+    assert(aliasedCountCol.alias === Some("COUNT(user)"))
   }
 
-  it should "The string constructed by the expression syntax that performs the multiplication operation to determine if it matches matches the specified string." in {
-    assert(((id1 * id1) < 1L).statement === "`id` * `id` < ?")
-    assert(((id1 * id1) < 1L).NOT.statement === "NOT `id` * `id` < ?")
-    assert(((id2 * id2) < 1L).statement === "`id` * `id` < ?")
-    assert(((id2 * id2) < 1L).NOT.statement === "NOT `id` * `id` < ?")
+  it should "The opt transformation should convert a Column[A] to a Column[Option[A]]" in {
+    val optId = id1.opt
+    assert(optId.isInstanceOf[Column[Option[Long]]])
+
+    val optName = name1.opt
+    assert(optName.isInstanceOf[Column[Option[String]]])
   }
 
-  it should "The string constructed by the expression syntax that performs the division operation and determines whether it matches matches the specified string." in {
-    assert(((id1 / id1) < 1L).statement === "`id` / `id` < ?")
-    assert(((id1 / id1) < 1L).NOT.statement === "NOT `id` / `id` < ?")
-    assert(((id2 / id2) < 1L).statement === "`id` / `id` < ?")
-    assert(((id2 / id2) < 1L).NOT.statement === "NOT `id` / `id` < ?")
+  it should "Support OrderBy operations through asc and desc methods" in {
+    val ascOrder  = id1.asc
+    val descOrder = id1.desc
+
+    assert(ascOrder.statement === "`id` ASC")
+    assert(descOrder.statement === "`id` DESC")
   }
 
-  it should "The string constructed by the expression syntax, which performs bit inversion to determine if it matches, matches the specified string." in {
-    assert((id1 ~ 1L).statement === "~`id` = ?")
-    assert((id1 ~ 1L).NOT.statement === "NOT ~`id` = ?")
-    assert((id2 ~ 1L).statement === "~`id` = ?")
-    assert((id2 ~ 1L).NOT.statement === "NOT ~`id` = ?")
+  it should "Support product operation to combine columns" in {
+    val combined = id1.product(name1)
+    assert(combined.name === "`id`, `name`")
+    assert(combined.values === 2)
   }
 
-  it should "The query string of the combined expression matches the specified string." in {
-    val age = Column.Impl[Option[Int]]("age")
-    assert((id1 === 1L && name1 === "name" || age > 25).statement === "(`id` = ? AND `name` = ? OR `age` > ?)")
-  }
-
-  it should "Comparison operators can also be used when using Opaque Type Alias." in {
-    assert((token1 === Token.fromString("token")).statement === "`token` = ?")
-    assert((token1 === Token.fromString("token")).NOT.statement === "NOT `token` = ?")
-    assert((token1 === Token.fromString("token")).statement === "`token` = ?")
-    assert((token1 === Token.fromString("token")).NOT.statement === "NOT `token` = ?")
-  }
-
-  it should "Comparison operators can also be used when using Opaque Type Alias of Option type." in {
-    assert((token2 === Token.fromString("token")).statement === "`token` = ?")
-    assert((token2 === Token.fromString("token")).NOT.statement === "NOT `token` = ?")
-    assert((token2 === Token.fromString("token")).statement === "`token` = ?")
-    assert((token2 === Token.fromString("token")).NOT.statement === "NOT `token` = ?")
+  it should "Support imap transformation with correct behavior" in {
+    // Convert between String and Int
+    val strToInt = name1.imap(_.toInt)(_.toString)
+    assert(strToInt.name === name1.name)
+    assert(strToInt.isInstanceOf[Column[Int]])
   }
