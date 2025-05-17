@@ -20,3 +20,4 @@ coverage:
     - "module/ldbc-connector/shared/src/main/scala/ldbc/connector/net/protocol/ServerPreparedStatement.scala"
     - "module/ldbc-connector/jvm/src/main/scala/ldbc/connector/SSLPlatform.scala"
     - "module/ldbc-connector/shared/src/main/scala/ldbc/connector/net/protocol/Initial.scala"
+    - "module/ldbc-schema/src/main/scala/ldbc/schema/Character.scala"
