@@ -13,9 +13,9 @@ class ReferenceTest extends AnyFlatSpec, Matchers:
   case class User(id: Long, name: String, age: Int)
 
   class UserTable extends Table[User]("user"):
-    def id: Column[Long] = bigint("id").autoIncrement
+    def id:   Column[Long]   = bigint("id").autoIncrement
     def name: Column[String] = varchar(255, "name")
-    def age: Column[Int] = int("age")
+    def age:  Column[Int]    = int("age")
 
     override def * = (id *: name *: age).to[User]
 
