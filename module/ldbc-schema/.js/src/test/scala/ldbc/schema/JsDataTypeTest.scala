@@ -7,6 +7,7 @@
 package ldbc.schema
 
 class JsDataTypeTest extends DataTypeTest:
+
   it should "The query string generated from the Bit DataType model matches the specified one." in {
     assert(BIT[Byte](1).queryString === "BIT(1) NOT NULL")
     assert(BIT[Byte](64).DEFAULT("byte".getBytes.head).queryString === "BIT(64) NOT NULL DEFAULT 98")

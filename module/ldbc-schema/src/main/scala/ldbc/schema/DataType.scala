@@ -245,7 +245,7 @@ object DataType:
         |Consider using an alternative method to produce the effect of this attribute.
         |For example, an application could use the LPAD() function to zero-fill a number to the required width or to store a formatted number in a CHAR column.
         |""".stripMargin,
-      "Ldbc-Core 0.1.0"
+      "ldbc 0.1.0"
     )
     def ZEROFILL: Tinyint[T] = this.copy(isZerofill = true)
 
@@ -309,7 +309,7 @@ object DataType:
         |Consider using an alternative method to produce the effect of this attribute.
         |For example, an application could use the LPAD() function to zero-fill a number to the required width or to store a formatted number in a CHAR column.
         |""".stripMargin,
-      "Ldbc-Core 0.1.0"
+      "ldbc 0.1.0"
     )
     def ZEROFILL: Smallint[T] = this.copy(isZerofill = true)
 
@@ -373,7 +373,7 @@ object DataType:
         |Consider using an alternative method to produce the effect of this attribute.
         |For example, an application could use the LPAD() function to zero-fill a number to the required width or to store a formatted number in a CHAR column.
         |""".stripMargin,
-      "Ldbc-Core 0.1.0"
+      "ldbc 0.1.0"
     )
     def ZEROFILL: Mediumint[T] = this.copy(isZerofill = true)
 
@@ -437,7 +437,7 @@ object DataType:
         |Consider using an alternative method to produce the effect of this attribute.
         |For example, an application could use the LPAD() function to zero-fill a number to the required width or to store a formatted number in a CHAR column.
         |""".stripMargin,
-      "Ldbc-Core 0.1.0"
+      "ldbc 0.1.0"
     )
     def ZEROFILL: Integer[T] = this.copy(isZerofill = true)
 
@@ -501,7 +501,7 @@ object DataType:
         |Consider using an alternative method to produce the effect of this attribute.
         |For example, an application could use the LPAD() function to zero-fill a number to the required width or to store a formatted number in a CHAR column.
         |""".stripMargin,
-      "Ldbc-Core 0.1.0"
+      "ldbc 0.1.0"
     )
     def ZEROFILL: Bigint[T] = this.copy(isZerofill = true)
 
@@ -568,7 +568,7 @@ object DataType:
         |Consider using an alternative method to produce the effect of this attribute.
         |For example, an application could use the LPAD() function to zero-fill a number to the required width or to store a formatted number in a CHAR column.
         |""".stripMargin,
-      "Ldbc-Core 0.1.0"
+      "ldbc 0.1.0"
     )
     def ZEROFILL: Decimal[T] = this.copy(isZerofill = true)
 
@@ -632,7 +632,7 @@ object DataType:
         |Consider using an alternative method to produce the effect of this attribute.
         |For example, an application could use the LPAD() function to zero-fill a number to the required width or to store a formatted number in a CHAR column.
         |""".stripMargin,
-      "Ldbc-Core 0.1.0"
+      "ldbc 0.1.0"
     )
     def ZEROFILL: CFloat[T] = this.copy(isZerofill = true)
 
