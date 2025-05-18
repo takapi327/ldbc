@@ -17,15 +17,15 @@ case class ColumnDefinition(
     case _                                       => true
   }.headOption.getOrElse(true))
 
-  val _attributes = attributes.fold("")(attributes =>
+  val _attributes: String = attributes.fold("")(attributes =>
     val result = attributes.flatMap {
-      case attribute: CommentSet                              => Some(s"COMMENT(\"${ attribute.message }\")")
-      case attribute: ColumnDefinition.Attribute.Key          => Some(s"${ attribute.kind }")
-      case attribute: ColumnDefinition.Attribute.Visible      => Some(s"${ attribute.kind }")
-      case attribute: ColumnDefinition.Attribute.Collate      => Some(s"Collate.${ attribute.set }")
-      case attribute: ColumnDefinition.Attribute.ColumnFormat => Some(s"COLUMN_FORMAT.${ attribute.format }")
-      case attribute: ColumnDefinition.Attribute.Storage      => Some(s"STORAGE.${ attribute.kind }")
-      case _                                                  => None
+      case attribute: CommentSet => Some(s"COMMENT(\"${attribute.message}\")")
+      case attribute: ColumnDefinition.Attribute.Key => Some(s"${attribute.kind}")
+      case attribute: ColumnDefinition.Attribute.Visible => Some(s"${attribute.kind}")
+      case attribute: ColumnDefinition.Attribute.Collate => Some(s"Collate.${attribute.set}")
+      case attribute: ColumnDefinition.Attribute.ColumnFormat => Some(s"COLUMN_FORMAT.${attribute.format}")
+      case attribute: ColumnDefinition.Attribute.Storage => Some(s"STORAGE.${attribute.kind}")
+      case _ => None
     }
     if result.nonEmpty then ", " + result.mkString(", ") else ""
   )
