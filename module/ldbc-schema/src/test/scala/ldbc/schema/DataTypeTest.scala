@@ -10,63 +10,23 @@ import java.time.{ LocalDate, LocalDateTime, LocalTime, Year as JYear }
 
 import org.scalatest.flatspec.AnyFlatSpec
 
+import ldbc.sql.Types
+
 import ldbc.schema.DataType.*
 
-class DataTypeTest extends AnyFlatSpec:
-
-  it should "The query string generated from the Bit DataType model matches the specified one." in {
-    assert(BIT[Byte](1).queryString === "BIT(1) NOT NULL")
-    assert(BIT[Byte](64).DEFAULT("byte".getBytes.head).queryString === "BIT(64) NOT NULL DEFAULT '98'")
-    assert(BIT[Option[Short]](1).queryString === "BIT(1) NULL")
-    assert(BIT[Option[Short]](64).DEFAULT(None).queryString === "BIT(64) NULL DEFAULT NULL")
-    assert(BIT[Byte].queryString === "BIT NOT NULL")
-    assert(BIT[Byte].DEFAULT("byte".getBytes.head).queryString === "BIT NOT NULL DEFAULT '98'")
-    assert(BIT[Option[Short]].queryString === "BIT NULL")
-    assert(BIT[Option[Short]].DEFAULT(None).queryString === "BIT NULL DEFAULT NULL")
-  }
-
-  it should "The query string generated from the Tinyint DataType model matches the specified one." in {
-    assert(TINYINT[Byte](1).queryString === "TINYINT(1) NOT NULL")
-    assert(TINYINT[Byte](1).UNSIGNED.queryString === "TINYINT(1) UNSIGNED NOT NULL")
-    assert(TINYINT[Byte](64).DEFAULT("byte".getBytes.head).queryString === "TINYINT(64) NOT NULL DEFAULT '98'")
-    assert(
-      TINYINT[Byte](64)
-        .DEFAULT("byte".getBytes.head)
-        .UNSIGNED
-        .queryString === "TINYINT(64) UNSIGNED NOT NULL DEFAULT '98'"
-    )
-    assert(TINYINT[Option[Byte]](1).queryString === "TINYINT(1) NULL")
-    assert(TINYINT[Option[Byte]](1).UNSIGNED.queryString === "TINYINT(1) UNSIGNED NULL")
-    assert(TINYINT[Option[Byte]](64).DEFAULT(None).queryString === "TINYINT(64) NULL DEFAULT NULL")
-    assert(
-      TINYINT[Option[Byte]](64)
-        .DEFAULT("byte".getBytes.headOption)
-        .queryString === "TINYINT(64) NULL DEFAULT '98'"
-    )
-    assert(TINYINT[Option[Byte]](64).DEFAULT(None).queryString === "TINYINT(64) NULL DEFAULT NULL")
-    assert(TINYINT[Option[Byte]].DEFAULT(None).UNSIGNED.queryString === "TINYINT UNSIGNED NULL DEFAULT NULL")
-    assert(TINYINT[Byte].queryString === "TINYINT NOT NULL")
-    assert(TINYINT[Byte].UNSIGNED.queryString === "TINYINT UNSIGNED NOT NULL")
-    assert(TINYINT[Byte].DEFAULT("byte".getBytes.head).queryString === "TINYINT NOT NULL DEFAULT '98'")
-    assert(
-      TINYINT[Byte]
-        .DEFAULT("byte".getBytes.head)
-        .UNSIGNED
-        .queryString === "TINYINT UNSIGNED NOT NULL DEFAULT '98'"
-    )
-    assert(TINYINT[Option[Byte]].queryString === "TINYINT NULL")
-    assert(TINYINT[Option[Byte]].UNSIGNED.queryString === "TINYINT UNSIGNED NULL")
-    assert(TINYINT[Option[Byte]].DEFAULT(None).queryString === "TINYINT NULL DEFAULT NULL")
-    assert(
-      TINYINT[Option[Byte]]
-        .DEFAULT("byte".getBytes.headOption)
-        .queryString === "TINYINT NULL DEFAULT '98'"
-    )
-    assert(TINYINT[Option[Byte]].DEFAULT(None).queryString === "TINYINT NULL DEFAULT NULL")
-    assert(TINYINT[Option[Byte]].DEFAULT(None).UNSIGNED.queryString === "TINYINT UNSIGNED NULL DEFAULT NULL")
-  }
+trait DataTypeTest extends AnyFlatSpec:
 
   it should "The query string generated from the Smallint DataType model matches the specified one." in {
+    val smallintType = DataType.Smallint[Short](None, false, false, false, None)
+    assert(smallintType.typeName === "SMALLINT")
+    assert(smallintType.length === None)
+    assert(smallintType.sqlType === Types.SMALLINT)
+    assert(smallintType.isOptional === false)
+    assert(smallintType.queryString === "SMALLINT NOT NULL")
+    assert(smallintType.toOption.isOptional === true)
+    assert(smallintType.toOption.queryString === "SMALLINT NULL")
+    assert(smallintType.DEFAULT(1.toShort).queryString === "SMALLINT NOT NULL DEFAULT 1")
+    assert(smallintType.UNSIGNED.queryString === "SMALLINT UNSIGNED NOT NULL")
     assert(SMALLINT[Short](0).queryString === "SMALLINT(0) NOT NULL")
     assert(SMALLINT[Short](0).UNSIGNED.queryString === "SMALLINT(0) UNSIGNED NOT NULL")
     assert(SMALLINT[Short](255).DEFAULT(1).queryString === "SMALLINT(255) NOT NULL DEFAULT 1")
@@ -81,6 +41,16 @@ class DataTypeTest extends AnyFlatSpec:
   }
 
   it should "The query string generated from the Mediumint DataType model matches the specified one." in {
+    val mediumintType = DataType.Mediumint[Int](None, false, false, false, None)
+    assert(mediumintType.typeName === "MEDIUMINT")
+    assert(mediumintType.length === None)
+    assert(mediumintType.sqlType === Types.INTEGER)
+    assert(mediumintType.isOptional === false)
+    assert(mediumintType.queryString === "MEDIUMINT NOT NULL")
+    assert(mediumintType.toOption.isOptional === true)
+    assert(mediumintType.toOption.queryString === "MEDIUMINT NULL")
+    assert(mediumintType.DEFAULT(1).queryString === "MEDIUMINT NOT NULL DEFAULT 1")
+    assert(mediumintType.UNSIGNED.queryString === "MEDIUMINT UNSIGNED NOT NULL")
     assert(MEDIUMINT[Int](0).queryString === "MEDIUMINT(0) NOT NULL")
     assert(MEDIUMINT[Int](0).UNSIGNED.queryString === "MEDIUMINT(0) UNSIGNED NOT NULL")
     assert(MEDIUMINT[Int](255).DEFAULT(1).queryString === "MEDIUMINT(255) NOT NULL DEFAULT 1")
@@ -102,6 +72,16 @@ class DataTypeTest extends AnyFlatSpec:
   }
 
   it should "The query string generated from the Integer DataType model matches the specified one." in {
+    val integerType = DataType.Integer[Int](None, false, false, false, None)
+    assert(integerType.typeName === "INT")
+    assert(integerType.length === None)
+    assert(integerType.sqlType === Types.INTEGER)
+    assert(integerType.isOptional === false)
+    assert(integerType.queryString === "INT NOT NULL")
+    assert(integerType.toOption.isOptional === true)
+    assert(integerType.toOption.queryString === "INT NULL")
+    assert(integerType.DEFAULT(1).queryString === "INT NOT NULL DEFAULT 1")
+    assert(integerType.UNSIGNED.queryString === "INT UNSIGNED NOT NULL")
     assert(INT[Int](0).queryString === "INT(0) NOT NULL")
     assert(INT[Int](0).UNSIGNED.queryString === "INT(0) UNSIGNED NOT NULL")
     assert(INT[Int](255).DEFAULT(1).queryString === "INT(255) NOT NULL DEFAULT 1")
@@ -123,6 +103,16 @@ class DataTypeTest extends AnyFlatSpec:
   }
 
   it should "The query string generated from the Bigint DataType model matches the specified one." in {
+    val bigintType = DataType.Bigint[Long](None, false, false, false, None)
+    assert(bigintType.typeName === "BIGINT")
+    assert(bigintType.length === None)
+    assert(bigintType.sqlType === Types.BIGINT)
+    assert(bigintType.isOptional === false)
+    assert(bigintType.queryString === "BIGINT NOT NULL")
+    assert(bigintType.toOption.isOptional === true)
+    assert(bigintType.toOption.queryString === "BIGINT NULL")
+    assert(bigintType.DEFAULT(1L).queryString === "BIGINT NOT NULL DEFAULT 1")
+    assert(bigintType.UNSIGNED.queryString === "BIGINT UNSIGNED NOT NULL")
     assert(BIGINT[Long](0).queryString === "BIGINT(0) NOT NULL")
     assert(BIGINT[Long](0).UNSIGNED.queryString === "BIGINT(0) UNSIGNED NOT NULL")
     assert(BIGINT[Long](255).DEFAULT(1).queryString === "BIGINT(255) NOT NULL DEFAULT 1")
@@ -144,6 +134,15 @@ class DataTypeTest extends AnyFlatSpec:
   }
 
   it should "The query string generated from the Decimal DataType model matches the specified one." in {
+    val decimalType = DataType.Decimal[BigDecimal](10, 5, false, false, false, None)
+    assert(decimalType.typeName === "DECIMAL(10, 5)")
+    assert(decimalType.sqlType === Types.DECIMAL)
+    assert(decimalType.isOptional === false)
+    assert(decimalType.queryString === "DECIMAL(10, 5) NOT NULL")
+    assert(decimalType.toOption.isOptional === true)
+    assert(decimalType.toOption.queryString === "DECIMAL(10, 5) NULL")
+    assert(decimalType.DEFAULT(BigDecimal(1.5)).queryString === "DECIMAL(10, 5) NOT NULL DEFAULT '1.5'")
+    assert(decimalType.UNSIGNED.queryString === "DECIMAL(10, 5) UNSIGNED NOT NULL")
     assert(DECIMAL[BigDecimal](10, 7).queryString === "DECIMAL(10, 7) NOT NULL")
     assert(
       DECIMAL[BigDecimal](10, 7)
@@ -159,25 +158,31 @@ class DataTypeTest extends AnyFlatSpec:
     )
   }
 
-  it should "The query string generated from the Float DataType model matches the specified one." in {
-    assert(FLOAT[Float](0).queryString === "FLOAT(0) NOT NULL")
-    assert(FLOAT[Float](0).DEFAULT(1.2f).queryString === "FLOAT(0) NOT NULL DEFAULT 1.2")
-    assert(FLOAT[Option[Float]](0).queryString === "FLOAT(0) NULL")
-    assert(FLOAT[Option[Float]](0).DEFAULT(None).queryString === "FLOAT(0) NULL DEFAULT NULL")
-    assert(FLOAT[Option[Float]](0).DEFAULT(Some(1.2f)).queryString === "FLOAT(0) NULL DEFAULT 1.2")
-  }
-
   it should "The query string generated from the Char DataType model matches the specified one." in {
+    val charType = DataType.CChar[String](10, false, None, None, None)
+    assert(charType.typeName === "CHAR(10)")
+    assert(charType.sqlType === Types.CHAR)
+    assert(charType.isOptional === false)
+    assert(charType.queryString === "CHAR(10) NOT NULL")
+    assert(charType.toOption.isOptional === true)
+    assert(charType.toOption.queryString === "CHAR(10) NULL")
+    assert(charType.DEFAULT("test").queryString === "CHAR(10) NOT NULL DEFAULT 'test'")
     assert(CHAR[String](0).queryString === "CHAR(0) NOT NULL")
-    assert(CHAR[String](0).DEFAULT("test").queryString === "CHAR(0) NOT NULL DEFAULT 'test'")
     assert(CHAR[Option[String]](0).queryString === "CHAR(0) NULL")
     assert(CHAR[Option[String]](0).DEFAULT(None).queryString === "CHAR(0) NULL DEFAULT NULL")
     assert(CHAR[Option[String]](0).DEFAULT(Some("test")).queryString === "CHAR(0) NULL DEFAULT 'test'")
   }
 
   it should "The query string generated from the Varchar DataType model matches the specified one." in {
+    val varcharType = DataType.Varchar[String](50, false, None, None, None)
+    assert(varcharType.typeName === "VARCHAR(50)")
+    assert(varcharType.sqlType === Types.VARCHAR)
+    assert(varcharType.isOptional === false)
+    assert(varcharType.queryString === "VARCHAR(50) NOT NULL")
+    assert(varcharType.toOption.isOptional === true)
+    assert(varcharType.toOption.queryString === "VARCHAR(50) NULL")
+    assert(varcharType.DEFAULT("test").queryString === "VARCHAR(50) NOT NULL DEFAULT 'test'")
     assert(VARCHAR[String](0).queryString === "VARCHAR(0) NOT NULL")
-    assert(VARCHAR[String](0).DEFAULT("test").queryString === "VARCHAR(0) NOT NULL DEFAULT 'test'")
     assert(VARCHAR[Option[String]](0).queryString === "VARCHAR(0) NULL")
     assert(VARCHAR[Option[String]](0).DEFAULT(None).queryString === "VARCHAR(0) NULL DEFAULT NULL")
     assert(
@@ -188,58 +193,128 @@ class DataTypeTest extends AnyFlatSpec:
   }
 
   it should "The query string generated from the Binary DataType model matches the specified one." in {
+    val binaryType = DataType.Binary[Array[Byte]](10, false, None, None, None)
+    assert(binaryType.typeName === "BINARY(10)")
+    assert(binaryType.sqlType === Types.BINARY)
+    assert(binaryType.isOptional === false)
+    assert(binaryType.queryString === "BINARY(10) NOT NULL")
+    assert(binaryType.toOption.isOptional === true)
+    assert(binaryType.toOption.queryString === "BINARY(10) NULL")
     assert(BINARY[Array[Byte]](0).queryString === "BINARY(0) NOT NULL")
     assert(BINARY[Option[Array[Byte]]](0).queryString === "BINARY(0) NULL")
   }
 
   it should "The query string generated from the Varbinary DataType model matches the specified one." in {
+    val varbinaryType = DataType.Varbinary[Array[Byte]](50, false, None, None, None)
+    assert(varbinaryType.typeName === "VARBINARY(50)")
+    assert(varbinaryType.sqlType === Types.VARBINARY)
+    assert(varbinaryType.isOptional === false)
+    assert(varbinaryType.queryString === "VARBINARY(50) NOT NULL")
+    assert(varbinaryType.toOption.isOptional === true)
+    assert(varbinaryType.toOption.queryString === "VARBINARY(50) NULL")
     assert(VARBINARY[Array[Byte]](0).queryString === "VARBINARY(0) NOT NULL")
     assert(VARBINARY[Option[Array[Byte]]](0).queryString === "VARBINARY(0) NULL")
   }
 
   it should "The query string generated from the Tinyblob DataType model matches the specified one." in {
+    val tinyblobType = DataType.Tinyblob[Array[Byte]](false, None)
+    assert(tinyblobType.typeName === "TINYBLOB")
+    assert(tinyblobType.sqlType === Types.VARBINARY)
+    assert(tinyblobType.isOptional === false)
+    assert(tinyblobType.queryString === "TINYBLOB NOT NULL")
+    assert(tinyblobType.toOption.isOptional === true)
+    assert(tinyblobType.toOption.queryString === "TINYBLOB NULL")
     assert(TINYBLOB[Array[Byte]]().queryString === "TINYBLOB NOT NULL")
     assert(TINYBLOB[Option[Array[Byte]]]().queryString === "TINYBLOB NULL")
     assert(TINYBLOB[Option[Array[Byte]]]().DEFAULT(None).queryString === "TINYBLOB NULL DEFAULT NULL")
   }
 
   it should "The query string generated from the Blob DataType model matches the specified one." in {
+    val blobType = DataType.Blob[Array[Byte]](None, false, None)
+    assert(blobType.typeName === "BLOB")
+    assert(blobType.sqlType === Types.BLOB)
+    assert(blobType.isOptional === false)
+    assert(blobType.queryString === "BLOB NOT NULL")
+    assert(blobType.toOption.isOptional === true)
+    assert(blobType.toOption.queryString === "BLOB NULL")
     assert(BLOB[Array[Byte]](0).queryString === "BLOB(0) NOT NULL")
     assert(BLOB[Option[Array[Byte]]](0).queryString === "BLOB(0) NULL")
     assert(BLOB[Option[Array[Byte]]](0).DEFAULT(None).queryString === "BLOB(0) NULL DEFAULT NULL")
   }
 
   it should "The query string generated from the Mediumblob DataType model matches the specified one." in {
+    val mediumblobType = DataType.Mediumblob[Array[Byte]](false, None)
+    assert(mediumblobType.typeName === "MEDIUMBLOB")
+    assert(mediumblobType.sqlType === Types.LONGVARBINARY)
+    assert(mediumblobType.isOptional === false)
+    assert(mediumblobType.queryString === "MEDIUMBLOB NOT NULL")
+    assert(mediumblobType.toOption.isOptional === true)
+    assert(mediumblobType.toOption.queryString === "MEDIUMBLOB NULL")
     assert(MEDIUMBLOB[Array[Byte]]().queryString === "MEDIUMBLOB NOT NULL")
     assert(MEDIUMBLOB[Option[Array[Byte]]]().queryString === "MEDIUMBLOB NULL")
     assert(MEDIUMBLOB[Option[Array[Byte]]]().DEFAULT(None).queryString === "MEDIUMBLOB NULL DEFAULT NULL")
   }
 
   it should "The query string generated from the LongBlob DataType model matches the specified one." in {
+    val longblobType = DataType.LongBlob[Array[Byte]](false, None)
+    assert(longblobType.typeName === "LONGBLOB")
+    assert(longblobType.sqlType === Types.LONGVARBINARY)
+    assert(longblobType.isOptional === false)
+    assert(longblobType.queryString === "LONGBLOB NOT NULL")
+    assert(longblobType.toOption.isOptional === true)
+    assert(longblobType.toOption.queryString === "LONGBLOB NULL")
     assert(LONGBLOB[Array[Byte]]().queryString === "LONGBLOB NOT NULL")
     assert(LONGBLOB[Option[Array[Byte]]]().queryString === "LONGBLOB NULL")
     assert(LONGBLOB[Option[Array[Byte]]]().DEFAULT(None).queryString === "LONGBLOB NULL DEFAULT NULL")
   }
 
   it should "The query string generated from the TinyText DataType model matches the specified one." in {
+    val tinytextType = DataType.TinyText[String](false, None, None, None)
+    assert(tinytextType.typeName === "TINYTEXT")
+    assert(tinytextType.sqlType === Types.VARCHAR)
+    assert(tinytextType.isOptional === false)
+    assert(tinytextType.queryString === "TINYTEXT NOT NULL")
+    assert(tinytextType.toOption.isOptional === true)
+    assert(tinytextType.toOption.queryString === "TINYTEXT NULL")
     assert(TINYTEXT[String]().queryString === "TINYTEXT NOT NULL")
     assert(TINYTEXT[Option[String]]().queryString === "TINYTEXT NULL")
     assert(TINYTEXT[Option[String]]().DEFAULT(None).queryString === "TINYTEXT NULL DEFAULT NULL")
   }
 
   it should "The query string generated from the Text DataType model matches the specified one." in {
+    val textType = DataType.Text[String](false, None, None, None)
+    assert(textType.typeName === "TEXT")
+    assert(textType.sqlType === Types.LONGVARCHAR)
+    assert(textType.isOptional === false)
+    assert(textType.queryString === "TEXT NOT NULL")
+    assert(textType.toOption.isOptional === true)
+    assert(textType.toOption.queryString === "TEXT NULL")
     assert(TEXT[String]().queryString === "TEXT NOT NULL")
     assert(TEXT[Option[String]]().queryString === "TEXT NULL")
     assert(TEXT[Option[String]]().DEFAULT(None).queryString === "TEXT NULL DEFAULT NULL")
   }
 
   it should "The query string generated from the MediumText DataType model matches the specified one." in {
+    val mediumtextType = DataType.MediumText[String](false, None, None, None)
+    assert(mediumtextType.typeName === "MEDIUMTEXT")
+    assert(mediumtextType.sqlType === Types.LONGVARCHAR)
+    assert(mediumtextType.isOptional === false)
+    assert(mediumtextType.queryString === "MEDIUMTEXT NOT NULL")
+    assert(mediumtextType.toOption.isOptional === true)
+    assert(mediumtextType.toOption.queryString === "MEDIUMTEXT NULL")
     assert(MEDIUMTEXT[String]().queryString === "MEDIUMTEXT NOT NULL")
     assert(MEDIUMTEXT[Option[String]]().queryString === "MEDIUMTEXT NULL")
     assert(MEDIUMTEXT[Option[String]]().DEFAULT(None).queryString === "MEDIUMTEXT NULL DEFAULT NULL")
   }
 
   it should "The query string generated from the LongText DataType model matches the specified one." in {
+    val longtextType = DataType.LongText[String](false, None, None, None)
+    assert(longtextType.typeName === "LONGTEXT")
+    assert(longtextType.sqlType === Types.LONGVARCHAR)
+    assert(longtextType.isOptional === false)
+    assert(longtextType.queryString === "LONGTEXT NOT NULL")
+    assert(longtextType.toOption.isOptional === true)
+    assert(longtextType.toOption.queryString === "LONGTEXT NULL")
     assert(LONGTEXT[String]().queryString === "LONGTEXT NOT NULL")
     assert(LONGTEXT[Option[String]]().queryString === "LONGTEXT NULL")
     assert(LONGTEXT[Option[String]]().DEFAULT(None).queryString === "LONGTEXT NULL DEFAULT NULL")
@@ -249,28 +324,28 @@ class DataTypeTest extends AnyFlatSpec:
     enum Status:
       case Active, InActive
 
+    val enumType = DataType.Enum[Status](List("Active", "InActive"), false, None, None, None)
+    assert(enumType.typeName === "ENUM('Active','InActive')")
+    assert(enumType.sqlType === Types.CHAR)
+    assert(enumType.isOptional === false)
+    assert(enumType.queryString === "ENUM('Active','InActive') NOT NULL")
+    assert(enumType.toOption.isOptional === true)
+    assert(enumType.toOption.queryString === "ENUM('Active','InActive') NULL")
+    assert(enumType.DEFAULT(Status.Active).queryString === "ENUM('Active','InActive') NOT NULL DEFAULT 'Active'")
     assert(ENUM[Status].queryString === "ENUM('Active','InActive') NOT NULL")
-    assert(
-      ENUM[Status]
-        .DEFAULT(Status.Active)
-        .queryString === "ENUM('Active','InActive') NOT NULL DEFAULT 'Active'"
-    )
-    assert(ENUM[Option[Status]].queryString === "ENUM('Active','InActive') NULL")
-    assert(
-      ENUM[Option[Status]].DEFAULT(None).queryString === "ENUM('Active','InActive') NULL DEFAULT NULL"
-    )
   }
 
   it should "The query string generated from the Date DataType model matches the specified one." in {
+    val dateType = DataType.Date[LocalDate](false, None)
+    assert(dateType.typeName === "DATE")
+    assert(dateType.sqlType === Types.DATE)
+    assert(dateType.isOptional === false)
+    assert(dateType.queryString === "DATE NOT NULL")
+    assert(dateType.toOption.isOptional === true)
+    assert(dateType.toOption.queryString === "DATE NULL")
+    assert(dateType.DEFAULT(LocalDate.of(2023, 1, 1)).queryString === "DATE NOT NULL DEFAULT '2023-01-01'")
+    assert(dateType.DEFAULT_CURRENT_DATE().queryString === "DATE NOT NULL DEFAULT (CURRENT_DATE)")
     assert(DATE[LocalDate].queryString === "DATE NOT NULL")
-    assert(
-      DATE[LocalDate]
-        .DEFAULT(LocalDate.of(2023, 2, 10))
-        .queryString === "DATE NOT NULL DEFAULT '2023-02-10'"
-    )
-    assert(DATE[LocalDate].DEFAULT(0).queryString === "DATE NOT NULL DEFAULT 0")
-    assert(DATE[LocalDate].DEFAULT("2023-02-10").queryString === "DATE NOT NULL DEFAULT '2023-02-10'")
-    assert(DATE[LocalDate].DEFAULT_CURRENT_DATE().queryString === "DATE NOT NULL DEFAULT (CURRENT_DATE)")
     assert(DATE[Option[LocalDate]].queryString === "DATE NULL")
     assert(DATE[Option[LocalDate]].DEFAULT(None).queryString === "DATE NULL DEFAULT NULL")
     assert(
@@ -284,19 +359,17 @@ class DataTypeTest extends AnyFlatSpec:
   }
 
   it should "The query string generated from the DateTime DataType model matches the specified one." in {
+    val dateTimeType = DataType.DateTime[LocalDateTime](None, false, None)
+    assert(dateTimeType.typeName === "DATETIME")
+    assert(dateTimeType.sqlType === Types.TIMESTAMP)
+    assert(dateTimeType.isOptional === false)
+    assert(dateTimeType.queryString === "DATETIME NOT NULL")
+    assert(dateTimeType.toOption.isOptional === true)
+    assert(dateTimeType.toOption.queryString === "DATETIME NULL")
+    assert(dateTimeType.DEFAULT(LocalDateTime.of(2023, 1, 1, 12, 0)).queryString === "DATETIME NOT NULL DEFAULT '2023-01-01T12:00'")
+    assert(dateTimeType.DEFAULT_CURRENT_TIMESTAMP().queryString === "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP")
+    assert(dateTimeType.DEFAULT_CURRENT_TIMESTAMP(true).queryString === "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
     assert(DATETIME[LocalDateTime].queryString === "DATETIME NOT NULL")
-    assert(DATETIME[LocalDateTime](6).queryString === "DATETIME(6) NOT NULL")
-    assert(
-      DATETIME[LocalDateTime]
-        .DEFAULT(LocalDateTime.of(2023, 2, 10, 10, 0))
-        .queryString === "DATETIME NOT NULL DEFAULT '2023-02-10T10:00'"
-    )
-    assert(DATETIME[LocalDateTime].DEFAULT(0).queryString === "DATETIME NOT NULL DEFAULT 0")
-    assert(
-      DATETIME[LocalDateTime]
-        .DEFAULT("2023-02-10 10:00:00")
-        .queryString === "DATETIME NOT NULL DEFAULT '2023-02-10 10:00:00'"
-    )
     assert(DATETIME[Option[LocalDateTime]].queryString === "DATETIME NULL")
     assert(DATETIME[Option[LocalDateTime]](6).queryString === "DATETIME(6) NULL")
     assert(DATETIME[Option[LocalDateTime]].DEFAULT(None).queryString === "DATETIME NULL DEFAULT NULL")
@@ -335,19 +408,17 @@ class DataTypeTest extends AnyFlatSpec:
   }
 
   it should "The query string generated from the TimeStamp DataType model matches the specified one." in {
+    val timestampType = DataType.TimeStamp[LocalDateTime](None, false, None)
+    assert(timestampType.typeName === "TIMESTAMP")
+    assert(timestampType.sqlType === Types.TIMESTAMP)
+    assert(timestampType.isOptional === false)
+    assert(timestampType.queryString === "TIMESTAMP NOT NULL")
+    assert(timestampType.toOption.isOptional === true)
+    assert(timestampType.toOption.queryString === "TIMESTAMP NULL")
+    assert(timestampType.DEFAULT(LocalDateTime.of(2023, 1, 1, 12, 0)).queryString === "TIMESTAMP NOT NULL DEFAULT '2023-01-01T12:00'")
+    assert(timestampType.DEFAULT_CURRENT_TIMESTAMP().queryString === "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP")
+    assert(timestampType.DEFAULT_CURRENT_TIMESTAMP(true).queryString === "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
     assert(TIMESTAMP[LocalDateTime].queryString === "TIMESTAMP NOT NULL")
-    assert(TIMESTAMP[LocalDateTime](6).queryString === "TIMESTAMP(6) NOT NULL")
-    assert(
-      TIMESTAMP[LocalDateTime]
-        .DEFAULT(LocalDateTime.of(2023, 2, 10, 10, 0))
-        .queryString === "TIMESTAMP NOT NULL DEFAULT '2023-02-10T10:00'"
-    )
-    assert(TIMESTAMP[LocalDateTime].DEFAULT(0).queryString === "TIMESTAMP NOT NULL DEFAULT 0")
-    assert(
-      TIMESTAMP[LocalDateTime]
-        .DEFAULT("2023-02-10 10:00:00")
-        .queryString === "TIMESTAMP NOT NULL DEFAULT '2023-02-10 10:00:00'"
-    )
     assert(TIMESTAMP[Option[LocalDateTime]].queryString === "TIMESTAMP NULL")
     assert(TIMESTAMP[Option[LocalDateTime]](5).queryString === "TIMESTAMP(5) NULL")
     assert(TIMESTAMP[Option[LocalDateTime]].DEFAULT(None).queryString === "TIMESTAMP NULL DEFAULT NULL")
@@ -386,6 +457,14 @@ class DataTypeTest extends AnyFlatSpec:
   }
 
   it should "The query string generated from the Time DataType model matches the specified one." in {
+    val timeType = DataType.Time[LocalTime](None, false, None)
+    assert(timeType.typeName === "TIME")
+    assert(timeType.sqlType === Types.TIME)
+    assert(timeType.isOptional === false)
+    assert(timeType.queryString === "TIME NOT NULL")
+    assert(timeType.toOption.isOptional === true)
+    assert(timeType.toOption.queryString === "TIME NULL")
+    assert(timeType.DEFAULT(LocalTime.of(12, 30)).queryString === "TIME NOT NULL DEFAULT '12:30'")
     assert(TIME[LocalTime].queryString === "TIME NOT NULL")
     assert(TIME[LocalTime].DEFAULT(LocalTime.of(10, 0, 10)).queryString === "TIME NOT NULL DEFAULT '10:00:10'")
     assert(TIME[LocalTime].DEFAULT(0).queryString === "TIME NOT NULL DEFAULT 0")
@@ -403,10 +482,15 @@ class DataTypeTest extends AnyFlatSpec:
   }
 
   it should "The query string generated from the Year DataType model matches the specified one." in {
+    val yearType = DataType.Year[JYear](None, false, None)
+    assert(yearType.typeName === "YEAR")
+    assert(yearType.sqlType === Types.DATE)
+    assert(yearType.isOptional === false)
+    assert(yearType.queryString === "YEAR NOT NULL")
+    assert(yearType.toOption.isOptional === true)
+    assert(yearType.toOption.queryString === "YEAR NULL")
+    assert(yearType.DEFAULT(JYear.of(2023)).queryString === "YEAR NOT NULL DEFAULT '2023'")
     assert(YEAR[JYear].queryString === "YEAR NOT NULL")
-    assert(YEAR[JYear].DEFAULT(JYear.of(2023)).queryString === "YEAR NOT NULL DEFAULT '2023'")
-    assert(YEAR[JYear].DEFAULT(0).queryString === "YEAR NOT NULL DEFAULT 0")
-    assert(YEAR[JYear].DEFAULT(2023).queryString === "YEAR NOT NULL DEFAULT 2023")
     assert(YEAR[Option[JYear]].queryString === "YEAR NULL")
     assert(YEAR[Option[JYear]].DEFAULT(None).queryString === "YEAR NULL DEFAULT NULL")
     assert(YEAR[Option[JYear]].DEFAULT(Some(JYear.of(2023))).queryString === "YEAR NULL DEFAULT '2023'")
@@ -415,10 +499,25 @@ class DataTypeTest extends AnyFlatSpec:
   }
 
   it should "The query string generated from the Serial DataType model matches the specified one." in {
+    val serialType = DataType.Alias.Serial[BigInt]()
+    assert(serialType.typeName === "SERIAL")
+    assert(serialType.sqlType === Types.BIGINT)
+    assert(serialType.isOptional === false)
+    assert(serialType.queryString === "SERIAL")
+    assert(serialType.toOption.isOptional === true)
+    assert(serialType.toOption.queryString === "SERIAL NULL")
     assert(SERIAL[BigInt].queryString === "SERIAL")
   }
 
   it should "The query string generated from the Boolean DataType model matches the specified one." in {
+    val booleanType = DataType.Alias.Bool[Boolean](false, None)
+    assert(booleanType.typeName === "BOOLEAN")
+    assert(booleanType.sqlType === Types.BOOLEAN)
+    assert(booleanType.isOptional === false)
+    assert(booleanType.queryString === "BOOLEAN NOT NULL")
+    assert(booleanType.toOption.isOptional === true)
+    assert(booleanType.toOption.queryString === "BOOLEAN NULL")
+    assert(booleanType.DEFAULT(true).queryString === "BOOLEAN NOT NULL DEFAULT true")
     assert(BOOLEAN[Boolean].queryString === "BOOLEAN NOT NULL")
     assert(BOOLEAN[Boolean].DEFAULT(true).queryString === "BOOLEAN NOT NULL DEFAULT true")
     assert(BOOLEAN[Boolean].DEFAULT(false).queryString === "BOOLEAN NOT NULL DEFAULT false")
