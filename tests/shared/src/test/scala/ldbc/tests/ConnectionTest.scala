@@ -302,6 +302,7 @@ trait ConnectionTest extends CatsEffectSuite:
 
   test("The result of retrieving schemas information matches the specified value.") {
     assertIO(
+      // Waiting for Schema values to increase or decrease in other tests.
       IO.sleep(5.seconds) *> connection("SCHEMA").use { conn =>
         for
           metaData  <- conn.getMetaData()

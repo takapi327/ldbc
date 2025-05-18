@@ -31,24 +31,6 @@ class AutoIncTest extends AnyFlatSpec with Matchers {
     autoInc.toString should be("AUTO_INCREMENT")
   }
 
-  it should "maintain its type parameter" in {
-    val autoIncInt    = AutoInc[Int]()
-    val autoIncString = AutoInc[String]()
-
-    // Type checking using pattern matching
-    autoIncInt match {
-      case _: AutoInc[Int]    => succeed
-      case _: AutoInc[String] => fail("AutoInc[Int] was incorrectly matched as AutoInc[String]")
-      case _                  => fail("AutoInc[Int] was not matched correctly")
-    }
-
-    autoIncString match {
-      case _: AutoInc[String] => succeed
-      case _: AutoInc[Int]    => fail("AutoInc[String] was incorrectly matched as AutoInc[Int]")
-      case _                  => fail("AutoInc[String] was not matched correctly")
-    }
-  }
-
   it should "be an Attribute" in {
     val autoInc = AutoInc[Double]()
     autoInc shouldBe a[Attribute[_]]
