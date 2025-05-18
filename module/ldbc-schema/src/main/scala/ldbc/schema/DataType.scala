@@ -83,27 +83,6 @@ sealed trait DataType[T]:
 object DataType:
 
   /**
-   * Methods for mapping specific types to DataType.
-   *
-   * @tparam D
-   *   Trait for representing SQL DataType
-   * @tparam T
-   *   Scala types that match SQL DataType
-   */
-  def mapping[D <: DataType[?], T]: Conversion[D, DataType[T]] =
-    v =>
-      new DataType[T]:
-        override def typeName: String = v.typeName
-
-        override def sqlType: Int = v.sqlType
-
-        override def queryString: String = v.queryString
-
-        override def isOptional: Boolean = v.isOptional
-
-        override def default: Option[Default] = v.default
-
-  /**
    * Trait for representing numeric data types in SQL DataType
    *
    * @tparam T
