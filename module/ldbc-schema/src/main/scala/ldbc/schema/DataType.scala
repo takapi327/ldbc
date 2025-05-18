@@ -74,11 +74,11 @@ sealed trait DataType[T]:
   /** Methods for overriding the DataType type with the Option type. */
   def toOption: DataType[Option[ExtractOption[T]]] =
     new DataType[Option[ExtractOption[T]]]:
-      override def typeName:    String          = self.typeName
-      override def sqlType:     Int             = self.sqlType
-      override def queryString: String          = s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
-      override def isOptional:  Boolean         = true
-      override def default:     Option[Default] = self.default
+      override def typeName:    String  = self.typeName
+      override def sqlType:     Int     = self.sqlType
+      override def queryString: String  = s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      override def isOptional:  Boolean = true
+      override def default: Option[Default] = self.default
 
 object DataType:
 
