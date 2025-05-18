@@ -12,6 +12,7 @@ import java.nio.file.Files
 import scala.io.Codec
 
 import ldbc.statement.formatter.Naming
+
 import ldbc.codegen.model.*
 
 private[ldbc] object DatabaseModelGenerator:

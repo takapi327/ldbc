@@ -9,6 +9,7 @@ package ldbc.codegen.builder
 import munit.CatsEffectSuite
 
 import ldbc.statement.formatter.Naming
+
 import ldbc.codegen.model.DataType
 
 class DataTypeCodeBuilderTest extends CatsEffectSuite:

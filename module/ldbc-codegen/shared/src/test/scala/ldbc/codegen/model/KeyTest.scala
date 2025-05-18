@@ -24,7 +24,8 @@ class KeyTest extends CatsEffectSuite:
       Some(Key.IndexOption.empty.setComment(CommentSet("Email index")))
     )
 
-    val expected = """INDEX_KEY(Some("idx_user_email"), Some(Index.Type.BTREE), Some(Index.IndexOption(None, None, None, Some(Comment("Email index")), None, None)), email *: createdAt)"""
+    val expected =
+      """INDEX_KEY(Some("idx_user_email"), Some(Index.Type.BTREE), Some(Index.IndexOption(None, None, None, Some(Comment("Email index")), None, None)), email *: createdAt)"""
     assertEquals(index.toCode(tableName, camelCaseFormatter, camelCaseFormatter), expected)
   }
 
@@ -48,7 +49,8 @@ class KeyTest extends CatsEffectSuite:
       Some(Key.IndexOption.empty.setSize(Key.KeyBlockSize(8)))
     )
 
-    val expected = """CONSTRAINT("pk_users", PRIMARY_KEY(Index.Type.BTREE, Index.IndexOption(Some(8), None, None, None, None, None), id))"""
+    val expected =
+      """CONSTRAINT("pk_users", PRIMARY_KEY(Index.Type.BTREE, Index.IndexOption(Some(8), None, None, None, None, None), id))"""
     assertEquals(primary.toCode(tableName, camelCaseFormatter, camelCaseFormatter), expected)
   }
 
@@ -98,7 +100,8 @@ class KeyTest extends CatsEffectSuite:
       Key.Reference("roles", List("id"), Some(List(Key.OnDelete("CASCADE"), Key.OnUpdate("SET NULL"))))
     )
 
-    val expected = """CONSTRAINT("fk_constraint", FOREIGN_KEY(Some("fk_user_role"), user_profiles.roleId, REFERENCE(roles.table, roles.table.id).onDelete(CASCADE).onUpdate(SET NULL)))"""
+    val expected =
+      """CONSTRAINT("fk_constraint", FOREIGN_KEY(Some("fk_user_role"), user_profiles.roleId, REFERENCE(roles.table, roles.table.id).onDelete(CASCADE).onUpdate(SET NULL)))"""
     assertEquals(foreign.toCode(tableName, camelCaseFormatter, camelCaseFormatter), expected)
   }
 
@@ -111,7 +114,8 @@ class KeyTest extends CatsEffectSuite:
       .setEngineAttribute(Key.EngineAttribute("test-engine"))
       .setSecondaryEngineAttribute(Key.SecondaryEngineAttribute("secondary"))
 
-    val expected = "Index.IndexOption(Some(4), Some(Index.Type.HASH), Some(ngram), Some(Comment(\"Test index\")), Some(test-engine), Some(secondary))"
+    val expected =
+      "Index.IndexOption(Some(4), Some(Index.Type.HASH), Some(ngram), Some(Comment(\"Test index\")), Some(test-engine), Some(secondary))"
     assertEquals(option.toCode, expected)
   }
 

@@ -7,6 +7,7 @@
 package ldbc.codegen.builder
 
 import ldbc.statement.formatter.Naming
+
 import ldbc.codegen.model.DataType
 
 /**

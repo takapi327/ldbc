@@ -11,6 +11,7 @@ import java.nio.charset.Charset
 import java.nio.file.Files
 
 import ldbc.statement.formatter.Naming
+
 import ldbc.codegen.parser.yml.Parser as YmlParser
 import ldbc.codegen.parser.Parser
 
