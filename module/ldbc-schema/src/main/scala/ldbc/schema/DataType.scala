@@ -1571,6 +1571,10 @@ object DataType:
 
       override def default: Option[Default] = None
 
+      override def toOption: DataType[Option[ExtractOption[T]]] = throw new UnsupportedOperationException(
+        "Serial type cannot be converted to Option"
+      )
+
     /**
      * Alias for TINYINT(1)
      *

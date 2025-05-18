@@ -515,6 +515,31 @@ trait DataTypeTest extends AnyFlatSpec:
     )
   }
 
+  it should "The query string generated from the Enum DataType model matches the specified one." in {
+    enum Status:
+      case Active, InActive
+
+    val enumType = DataType.Enum[Status](List("Active", "InActive"), false, None, None, None)
+    assert(enumType.typeName === "ENUM('Active','InActive')")
+    assert(enumType.sqlType === Types.CHAR)
+    assert(enumType.isOptional === false)
+    assert(enumType.queryString === "ENUM('Active','InActive') NOT NULL")
+    assert(enumType.toOption.isOptional === true)
+    assert(enumType.toOption.sqlType === Types.CHAR)
+    assert(enumType.toOption.queryString === "ENUM('Active','InActive') NULL")
+    assert(enumType.DEFAULT(Status.Active).queryString === "ENUM('Active','InActive') NOT NULL DEFAULT 'Active'")
+    assert(ENUM[Status].queryString === "ENUM('Active','InActive') NOT NULL")
+    assert(
+      ENUM[Status]
+        .DEFAULT(Status.Active)
+        .queryString === "ENUM('Active','InActive') NOT NULL DEFAULT 'Active'"
+    )
+    assert(ENUM[Option[Status]].queryString === "ENUM('Active','InActive') NULL")
+    assert(
+      ENUM[Option[Status]].DEFAULT(None).queryString === "ENUM('Active','InActive') NULL DEFAULT NULL"
+    )
+  }
+
   it should "The query string generated from the Enum DataType model with CHARACTER_SET and COLLATE matches the specified one." in {
     enum Status:
       case Active, InActive
@@ -544,4 +569,235 @@ trait DataTypeTest extends AnyFlatSpec:
     assert(
       optionalWithDefault.queryString === "ENUM('Active','InActive') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL"
     )
+  }
+
+  it should "The query string generated from the Date DataType model matches the specified one." in {
+    val dateType = DataType.Date[LocalDate](false, None)
+    assert(dateType.typeName === "DATE")
+    assert(dateType.sqlType === Types.DATE)
+    assert(dateType.isOptional === false)
+    assert(dateType.queryString === "DATE NOT NULL")
+    assert(dateType.toOption.isOptional === true)
+    assert(dateType.toOption.sqlType === Types.DATE)
+    assert(dateType.toOption.queryString === "DATE NULL")
+    assert(dateType.DEFAULT(LocalDate.of(2023, 2, 10)).queryString === "DATE NOT NULL DEFAULT '2023-02-10'")
+    assert(dateType.DEFAULT_CURRENT_DATE().queryString === "DATE NOT NULL DEFAULT (CURRENT_DATE)")
+    assert(DATE[LocalDate].queryString === "DATE NOT NULL")
+    assert(
+      DATE[LocalDate]
+        .DEFAULT(LocalDate.of(2023, 2, 10))
+        .queryString === "DATE NOT NULL DEFAULT '2023-02-10'"
+    )
+    assert(DATE[LocalDate].DEFAULT(0).queryString === "DATE NOT NULL DEFAULT 0")
+    assert(DATE[LocalDate].DEFAULT("2023-02-10").queryString === "DATE NOT NULL DEFAULT '2023-02-10'")
+    assert(DATE[LocalDate].DEFAULT_CURRENT_DATE().queryString === "DATE NOT NULL DEFAULT (CURRENT_DATE)")
+    assert(DATE[Option[LocalDate]].queryString === "DATE NULL")
+    assert(DATE[Option[LocalDate]].DEFAULT(None).queryString === "DATE NULL DEFAULT NULL")
+    assert(
+      DATE[Option[LocalDate]]
+        .DEFAULT(Some(LocalDate.of(2023, 2, 10)))
+        .queryString === "DATE NULL DEFAULT '2023-02-10'"
+    )
+    assert(DATE[Option[LocalDate]].DEFAULT(0).queryString === "DATE NULL DEFAULT 0")
+    assert(DATE[Option[LocalDate]].DEFAULT("2023-02-10").queryString === "DATE NULL DEFAULT '2023-02-10'")
+    assert(DATE[Option[LocalDate]].DEFAULT_CURRENT_DATE().queryString === "DATE NULL DEFAULT (CURRENT_DATE)")
+  }
+
+  it should "The query string generated from the DateTime DataType model matches the specified one." in {
+    val dateTimeType = DataType.DateTime[LocalDateTime](None, false, None)
+    assert(dateTimeType.typeName === "DATETIME")
+    assert(dateTimeType.sqlType === Types.TIMESTAMP)
+    assert(dateTimeType.isOptional === false)
+    assert(dateTimeType.queryString === "DATETIME NOT NULL")
+    assert(dateTimeType.toOption.isOptional === true)
+    assert(dateTimeType.toOption.sqlType === Types.TIMESTAMP)
+    assert(dateTimeType.toOption.queryString === "DATETIME NULL")
+    assert(dateTimeType.DEFAULT(LocalDateTime.of(2023, 2, 10, 10, 0)).queryString === "DATETIME NOT NULL DEFAULT '2023-02-10T10:00'")
+    assert(dateTimeType.DEFAULT_CURRENT_TIMESTAMP().queryString === "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP")
+    assert(dateTimeType.DEFAULT_CURRENT_TIMESTAMP(true).queryString === "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+    assert(DATETIME[LocalDateTime].queryString === "DATETIME NOT NULL")
+    assert(DATETIME[LocalDateTime](6).queryString === "DATETIME(6) NOT NULL")
+    assert(
+      DATETIME[LocalDateTime]
+        .DEFAULT(LocalDateTime.of(2023, 2, 10, 10, 0))
+        .queryString === "DATETIME NOT NULL DEFAULT '2023-02-10T10:00'"
+    )
+    assert(DATETIME[LocalDateTime].DEFAULT(0).queryString === "DATETIME NOT NULL DEFAULT 0")
+    assert(
+      DATETIME[LocalDateTime]
+        .DEFAULT("2023-02-10 10:00:00")
+        .queryString === "DATETIME NOT NULL DEFAULT '2023-02-10 10:00:00'"
+    )
+    assert(DATETIME[Option[LocalDateTime]].queryString === "DATETIME NULL")
+    assert(DATETIME[Option[LocalDateTime]](6).queryString === "DATETIME(6) NULL")
+    assert(DATETIME[Option[LocalDateTime]].DEFAULT(None).queryString === "DATETIME NULL DEFAULT NULL")
+    assert(
+      DATETIME[Option[LocalDateTime]]
+        .DEFAULT(Some(LocalDateTime.of(2023, 2, 10, 10, 0)))
+        .queryString === "DATETIME NULL DEFAULT '2023-02-10T10:00'"
+    )
+    assert(DATETIME[Option[LocalDateTime]].DEFAULT(None).queryString === "DATETIME NULL DEFAULT NULL")
+    assert(DATETIME[Option[LocalDateTime]].DEFAULT(0).queryString === "DATETIME NULL DEFAULT 0")
+    assert(
+      DATETIME[Option[LocalDateTime]]
+        .DEFAULT("2023-02-10 10:00:00")
+        .queryString === "DATETIME NULL DEFAULT '2023-02-10 10:00:00'"
+    )
+    assert(
+      DATETIME[Option[LocalDateTime]]
+        .DEFAULT_CURRENT_TIMESTAMP()
+        .queryString === "DATETIME NULL DEFAULT CURRENT_TIMESTAMP"
+    )
+    assert(
+      DATETIME[Option[LocalDateTime]](6)
+        .DEFAULT_CURRENT_TIMESTAMP()
+        .queryString === "DATETIME(6) NULL DEFAULT CURRENT_TIMESTAMP(6)"
+    )
+    assert(
+      DATETIME[Option[LocalDateTime]]
+        .DEFAULT_CURRENT_TIMESTAMP(true)
+        .queryString === "DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
+    )
+    assert(
+      DATETIME[Option[LocalDateTime]](6)
+        .DEFAULT_CURRENT_TIMESTAMP(true)
+        .queryString === "DATETIME(6) NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)"
+    )
+  }
+
+  it should "The query string generated from the TimeStamp DataType model matches the specified one." in {
+    val timeStampType = DataType.TimeStamp[LocalDateTime](None, false, None)
+    assert(timeStampType.typeName === "TIMESTAMP")
+    assert(timeStampType.sqlType === Types.TIMESTAMP)
+    assert(timeStampType.isOptional === false)
+    assert(timeStampType.queryString === "TIMESTAMP NOT NULL")
+    assert(timeStampType.toOption.isOptional === true)
+    assert(timeStampType.toOption.sqlType === Types.TIMESTAMP)
+    assert(timeStampType.toOption.queryString === "TIMESTAMP NULL")
+    assert(timeStampType.DEFAULT(LocalDateTime.of(2023, 2, 10, 10, 0)).queryString === "TIMESTAMP NOT NULL DEFAULT '2023-02-10T10:00'")
+    assert(timeStampType.DEFAULT_CURRENT_TIMESTAMP().queryString === "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP")
+    assert(timeStampType.DEFAULT_CURRENT_TIMESTAMP(true).queryString === "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+    assert(TIMESTAMP[LocalDateTime].queryString === "TIMESTAMP NOT NULL")
+    assert(TIMESTAMP[LocalDateTime](6).queryString === "TIMESTAMP(6) NOT NULL")
+    assert(
+      TIMESTAMP[LocalDateTime]
+        .DEFAULT(LocalDateTime.of(2023, 2, 10, 10, 0))
+        .queryString === "TIMESTAMP NOT NULL DEFAULT '2023-02-10T10:00'"
+    )
+    assert(TIMESTAMP[LocalDateTime].DEFAULT(0).queryString === "TIMESTAMP NOT NULL DEFAULT 0")
+    assert(
+      TIMESTAMP[LocalDateTime]
+        .DEFAULT("2023-02-10 10:00:00")
+        .queryString === "TIMESTAMP NOT NULL DEFAULT '2023-02-10 10:00:00'"
+    )
+    assert(TIMESTAMP[Option[LocalDateTime]].queryString === "TIMESTAMP NULL")
+    assert(TIMESTAMP[Option[LocalDateTime]](5).queryString === "TIMESTAMP(5) NULL")
+    assert(TIMESTAMP[Option[LocalDateTime]].DEFAULT(None).queryString === "TIMESTAMP NULL DEFAULT NULL")
+    assert(
+      TIMESTAMP[Option[LocalDateTime]]
+        .DEFAULT(Some(LocalDateTime.of(2023, 2, 10, 10, 0)))
+        .queryString === "TIMESTAMP NULL DEFAULT '2023-02-10T10:00'"
+    )
+    assert(TIMESTAMP[Option[LocalDateTime]].DEFAULT(None).queryString === "TIMESTAMP NULL DEFAULT NULL")
+    assert(TIMESTAMP[Option[LocalDateTime]].DEFAULT(0).queryString === "TIMESTAMP NULL DEFAULT 0")
+    assert(
+      TIMESTAMP[Option[LocalDateTime]]
+        .DEFAULT("2023-02-10 10:00:00")
+        .queryString === "TIMESTAMP NULL DEFAULT '2023-02-10 10:00:00'"
+    )
+    assert(
+      TIMESTAMP[Option[LocalDateTime]]
+        .DEFAULT_CURRENT_TIMESTAMP()
+        .queryString === "TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP"
+    )
+    assert(
+      TIMESTAMP[Option[LocalDateTime]](6)
+        .DEFAULT_CURRENT_TIMESTAMP()
+        .queryString === "TIMESTAMP(6) NULL DEFAULT CURRENT_TIMESTAMP(6)"
+    )
+    assert(
+      TIMESTAMP[Option[LocalDateTime]]
+        .DEFAULT_CURRENT_TIMESTAMP(true)
+        .queryString === "TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
+    )
+    assert(
+      TIMESTAMP[Option[LocalDateTime]](6)
+        .DEFAULT_CURRENT_TIMESTAMP(true)
+        .queryString === "TIMESTAMP(6) NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)"
+    )
+  }
+
+  it should "The query string generated from the Time DataType model matches the specified one." in {
+    val timeType = DataType.Time[LocalTime](None, false, None)
+    assert(timeType.typeName === "TIME")
+    assert(timeType.sqlType === Types.TIME)
+    assert(timeType.isOptional === false)
+    assert(timeType.queryString === "TIME NOT NULL")
+    assert(timeType.toOption.isOptional === true)
+    assert(timeType.toOption.sqlType === Types.TIME)
+    assert(timeType.toOption.queryString === "TIME NULL")
+    assert(timeType.DEFAULT(LocalTime.of(10, 10, 0)).queryString === "TIME NOT NULL DEFAULT '10:10'")
+    assert(TIME[LocalTime].queryString === "TIME NOT NULL")
+    assert(TIME[LocalTime].DEFAULT(LocalTime.of(10, 0, 10)).queryString === "TIME NOT NULL DEFAULT '10:00:10'")
+    assert(TIME[LocalTime].DEFAULT(0).queryString === "TIME NOT NULL DEFAULT 0")
+    assert(TIME[LocalTime].DEFAULT("23:59:59").queryString === "TIME NOT NULL DEFAULT '23:59:59'")
+    assert(TIME[Option[LocalTime]].queryString === "TIME NULL")
+    assert(TIME[Option[LocalTime]].DEFAULT(None).queryString === "TIME NULL DEFAULT NULL")
+    assert(
+      TIME[Option[LocalTime]]
+        .DEFAULT(Some(LocalTime.of(10, 0, 0)))
+        .queryString === "TIME NULL DEFAULT '10:00'"
+    )
+    assert(TIME[Option[LocalTime]].DEFAULT(None).queryString === "TIME NULL DEFAULT NULL")
+    assert(TIME[Option[LocalTime]].DEFAULT(0).queryString === "TIME NULL DEFAULT 0")
+    assert(TIME[Option[LocalTime]].DEFAULT("23:59:59").queryString === "TIME NULL DEFAULT '23:59:59'")
+  }
+
+  it should "The query string generated from the Year DataType model matches the specified one." in {
+    val yearType = DataType.Year[JYear](None, false, None)
+    assert(yearType.typeName === "YEAR")
+    assert(yearType.sqlType === Types.DATE)
+    assert(yearType.isOptional === false)
+    assert(yearType.queryString === "YEAR NOT NULL")
+    assert(yearType.toOption.isOptional === true)
+    assert(yearType.toOption.sqlType === Types.DATE)
+    assert(yearType.toOption.queryString === "YEAR NULL")
+    assert(yearType.DEFAULT(JYear.of(2023)).queryString === "YEAR NOT NULL DEFAULT '2023'")
+    assert(YEAR[JYear].queryString === "YEAR NOT NULL")
+    assert(YEAR[JYear].DEFAULT(JYear.of(2023)).queryString === "YEAR NOT NULL DEFAULT '2023'")
+    assert(YEAR[JYear].DEFAULT(0).queryString === "YEAR NOT NULL DEFAULT 0")
+    assert(YEAR[JYear].DEFAULT(2023).queryString === "YEAR NOT NULL DEFAULT 2023")
+    assert(YEAR[Option[JYear]].queryString === "YEAR NULL")
+    assert(YEAR[Option[JYear]].DEFAULT(None).queryString === "YEAR NULL DEFAULT NULL")
+    assert(YEAR[Option[JYear]].DEFAULT(Some(JYear.of(2023))).queryString === "YEAR NULL DEFAULT '2023'")
+    assert(YEAR[Option[JYear]].DEFAULT(0).queryString === "YEAR NULL DEFAULT 0")
+    assert(YEAR[Option[JYear]].DEFAULT(2023).queryString === "YEAR NULL DEFAULT 2023")
+  }
+
+  it should "The query string generated from the Serial DataType model matches the specified one." in {
+    val serialType = DataType.Alias.Serial[BigInt]()
+    assert(serialType.typeName === "SERIAL")
+    assert(serialType.sqlType === Types.BIGINT)
+    assert(serialType.isOptional === false)
+    assert(serialType.queryString === "SERIAL")
+    assertThrows[UnsupportedOperationException](serialType.toOption)
+    assert(SERIAL[BigInt].queryString === "SERIAL")
+  }
+
+  it should "The query string generated from the Boolean DataType model matches the specified one." in {
+    val boolType = DataType.Alias.Bool[Boolean](false, None)
+    assert(boolType.typeName === "BOOLEAN")
+    assert(boolType.sqlType === Types.BOOLEAN)
+    assert(boolType.isOptional === false)
+    assert(boolType.queryString === "BOOLEAN NOT NULL")
+    assert(boolType.toOption.isOptional === true)
+    assert(boolType.toOption.sqlType === Types.BOOLEAN)
+    assert(boolType.toOption.queryString === "BOOLEAN NULL")
+    assert(boolType.DEFAULT(true).queryString === "BOOLEAN NOT NULL DEFAULT true")
+    assert(BOOLEAN[Boolean].queryString === "BOOLEAN NOT NULL")
+    assert(BOOLEAN[Boolean].DEFAULT(true).queryString === "BOOLEAN NOT NULL DEFAULT true")
+    assert(BOOLEAN[Boolean].DEFAULT(false).queryString === "BOOLEAN NOT NULL DEFAULT false")
+    assert(BOOLEAN[Option[Boolean]].queryString === "BOOLEAN NULL")
+    assert(BOOLEAN[Option[Boolean]].DEFAULT(None).queryString === "BOOLEAN NULL DEFAULT NULL")
+    assert(BOOLEAN[Option[Boolean]].DEFAULT(Some(true)).queryString === "BOOLEAN NULL DEFAULT true")
   }
