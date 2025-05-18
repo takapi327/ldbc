@@ -6,6 +6,8 @@
 
 package ldbc.tests
 
+import scala.concurrent.duration.*
+
 import cats.effect.*
 
 import munit.*
