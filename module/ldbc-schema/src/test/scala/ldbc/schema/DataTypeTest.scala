@@ -612,9 +612,17 @@ trait DataTypeTest extends AnyFlatSpec:
     assert(dateTimeType.toOption.isOptional === true)
     assert(dateTimeType.toOption.sqlType === Types.TIMESTAMP)
     assert(dateTimeType.toOption.queryString === "DATETIME NULL")
-    assert(dateTimeType.DEFAULT(LocalDateTime.of(2023, 2, 10, 10, 0)).queryString === "DATETIME NOT NULL DEFAULT '2023-02-10T10:00'")
+    assert(
+      dateTimeType
+        .DEFAULT(LocalDateTime.of(2023, 2, 10, 10, 0))
+        .queryString === "DATETIME NOT NULL DEFAULT '2023-02-10T10:00'"
+    )
     assert(dateTimeType.DEFAULT_CURRENT_TIMESTAMP().queryString === "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP")
-    assert(dateTimeType.DEFAULT_CURRENT_TIMESTAMP(true).queryString === "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+    assert(
+      dateTimeType
+        .DEFAULT_CURRENT_TIMESTAMP(true)
+        .queryString === "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
+    )
     assert(DATETIME[LocalDateTime].queryString === "DATETIME NOT NULL")
     assert(DATETIME[LocalDateTime](6).queryString === "DATETIME(6) NOT NULL")
     assert(
@@ -674,9 +682,17 @@ trait DataTypeTest extends AnyFlatSpec:
     assert(timeStampType.toOption.isOptional === true)
     assert(timeStampType.toOption.sqlType === Types.TIMESTAMP)
     assert(timeStampType.toOption.queryString === "TIMESTAMP NULL")
-    assert(timeStampType.DEFAULT(LocalDateTime.of(2023, 2, 10, 10, 0)).queryString === "TIMESTAMP NOT NULL DEFAULT '2023-02-10T10:00'")
+    assert(
+      timeStampType
+        .DEFAULT(LocalDateTime.of(2023, 2, 10, 10, 0))
+        .queryString === "TIMESTAMP NOT NULL DEFAULT '2023-02-10T10:00'"
+    )
     assert(timeStampType.DEFAULT_CURRENT_TIMESTAMP().queryString === "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP")
-    assert(timeStampType.DEFAULT_CURRENT_TIMESTAMP(true).queryString === "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+    assert(
+      timeStampType
+        .DEFAULT_CURRENT_TIMESTAMP(true)
+        .queryString === "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
+    )
     assert(TIMESTAMP[LocalDateTime].queryString === "TIMESTAMP NOT NULL")
     assert(TIMESTAMP[LocalDateTime](6).queryString === "TIMESTAMP(6) NOT NULL")
     assert(
