@@ -12,7 +12,7 @@ import java.nio.file.Files
 import scala.io.Codec
 
 import ldbc.codegen.builder.ColumnCodeBuilder
-import ldbc.codegen.formatter.Naming
+import ldbc.statement.formatter.Naming
 import ldbc.codegen.model.*
 import ldbc.codegen.parser.yml.Parser
 

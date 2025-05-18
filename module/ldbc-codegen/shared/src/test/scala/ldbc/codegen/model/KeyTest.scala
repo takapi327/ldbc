@@ -8,7 +8,7 @@ package ldbc.codegen.model
 
 import munit.CatsEffectSuite
 
-import ldbc.codegen.formatter.Naming
+import ldbc.statement.formatter.Naming
 
 class KeyTest extends CatsEffectSuite:
 
