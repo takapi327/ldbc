@@ -22,3 +22,4 @@ coverage:
     - "module/ldbc-connector/jvm/src/main/scala/ldbc/connector/SSLPlatform.scala"
     - "module/ldbc-connector/shared/src/main/scala/ldbc/connector/net/protocol/Initial.scala"
     - "module/ldbc-schema/src/main/scala/ldbc/schema/Character.scala"
+    - "module/ldbc-hikari/src/main/scala/ldbc/hikari/Configuration.scala"
