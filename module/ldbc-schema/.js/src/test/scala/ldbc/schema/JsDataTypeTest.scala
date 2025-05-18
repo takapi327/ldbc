@@ -6,8 +6,6 @@
 
 package ldbc.schema
 
-import ldbc.sql.Types
-
 class JsDataTypeTest extends DataTypeTest:
   it should "The query string generated from the Bit DataType model matches the specified one." in {
     assert(BIT[Byte](1).queryString === "BIT(1) NOT NULL")
@@ -59,23 +57,6 @@ class JsDataTypeTest extends DataTypeTest:
     )
     assert(TINYINT[Option[Byte]].DEFAULT(None).queryString === "TINYINT NULL DEFAULT NULL")
     assert(TINYINT[Option[Byte]].DEFAULT(None).UNSIGNED.queryString === "TINYINT UNSIGNED NULL DEFAULT NULL")
-  }
-
-  it should "The query string generated from the Float DataType model matches the specified one." in {
-    val floatType = DataType.CFloat[Float](10, false, false, false, None)
-    assert(floatType.typeName === "FLOAT(10)")
-    assert(floatType.sqlType === Types.FLOAT)
-    assert(floatType.isOptional === false)
-    assert(floatType.queryString === "FLOAT(10) NOT NULL")
-    assert(floatType.toOption.isOptional === true)
-    assert(floatType.toOption.queryString === "FLOAT(10) NULL")
-    assert(floatType.DEFAULT(1.5f).queryString === "FLOAT(10) NOT NULL DEFAULT 1.5")
-    assert(floatType.UNSIGNED.queryString === "FLOAT(10) UNSIGNED NOT NULL")
-    assert(FLOAT[Float](0).queryString === "FLOAT(0) NOT NULL")
-    assert(FLOAT[Float](0).DEFAULT(1.2f).queryString === "FLOAT(0) NOT NULL DEFAULT 1.2")
-    assert(FLOAT[Option[Float]](0).queryString === "FLOAT(0) NULL")
-    assert(FLOAT[Option[Float]](0).DEFAULT(None).queryString === "FLOAT(0) NULL DEFAULT NULL")
-    assert(FLOAT[Option[Float]](0).DEFAULT(Some(1.2f)).queryString === "FLOAT(0) NULL DEFAULT 1.2")
   }
 
   it should "The query string generated from the Float DataType model matches the specified one." in {
