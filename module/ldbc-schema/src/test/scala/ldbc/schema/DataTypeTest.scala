@@ -38,7 +38,13 @@ trait DataTypeTest extends AnyFlatSpec:
     assert(SMALLINT[Short](255).DEFAULT(1).queryString === "SMALLINT(255) NOT NULL DEFAULT 1")
     assert(SMALLINT[Short](255).DEFAULT(1).UNSIGNED.queryString === "SMALLINT(255) UNSIGNED NOT NULL DEFAULT 1")
     assert(SMALLINT[Short](255).DEFAULT(1).ZEROFILL.queryString === "SMALLINT(255) ZEROFILL NOT NULL DEFAULT 1")
-    assert(SMALLINT[Short](255).DEFAULT(1).UNSIGNED.ZEROFILL.queryString === "SMALLINT(255) UNSIGNED ZEROFILL NOT NULL DEFAULT 1")
+    assert(
+      SMALLINT[Short](255)
+        .DEFAULT(1)
+        .UNSIGNED
+        .ZEROFILL
+        .queryString === "SMALLINT(255) UNSIGNED ZEROFILL NOT NULL DEFAULT 1"
+    )
     assert(SMALLINT[Option[Short]](0).queryString === "SMALLINT(0) NULL")
     assert(SMALLINT[Option[Short]](0).UNSIGNED.queryString === "SMALLINT(0) UNSIGNED NULL")
     assert(SMALLINT[Option[Short]](0).ZEROFILL.queryString === "SMALLINT(0) ZEROFILL NULL")
@@ -52,7 +58,11 @@ trait DataTypeTest extends AnyFlatSpec:
       SMALLINT[Option[Short]](255).DEFAULT(None).ZEROFILL.queryString === "SMALLINT(255) ZEROFILL NULL DEFAULT NULL"
     )
     assert(
-      SMALLINT[Option[Short]](255).DEFAULT(None).UNSIGNED.ZEROFILL.queryString === "SMALLINT(255) UNSIGNED ZEROFILL NULL DEFAULT NULL"
+      SMALLINT[Option[Short]](255)
+        .DEFAULT(None)
+        .UNSIGNED
+        .ZEROFILL
+        .queryString === "SMALLINT(255) UNSIGNED ZEROFILL NULL DEFAULT NULL"
     )
   }
 
@@ -78,7 +88,13 @@ trait DataTypeTest extends AnyFlatSpec:
     assert(MEDIUMINT[Int](255).DEFAULT(1).queryString === "MEDIUMINT(255) NOT NULL DEFAULT 1")
     assert(MEDIUMINT[Int](255).DEFAULT(1).UNSIGNED.queryString === "MEDIUMINT(255) UNSIGNED NOT NULL DEFAULT 1")
     assert(MEDIUMINT[Int](255).DEFAULT(1).ZEROFILL.queryString === "MEDIUMINT(255) ZEROFILL NOT NULL DEFAULT 1")
-    assert(MEDIUMINT[Int](255).DEFAULT(1).UNSIGNED.ZEROFILL.queryString === "MEDIUMINT(255) UNSIGNED ZEROFILL NOT NULL DEFAULT 1")
+    assert(
+      MEDIUMINT[Int](255)
+        .DEFAULT(1)
+        .UNSIGNED
+        .ZEROFILL
+        .queryString === "MEDIUMINT(255) UNSIGNED ZEROFILL NOT NULL DEFAULT 1"
+    )
     assert(MEDIUMINT[Option[Int]](0).queryString === "MEDIUMINT(0) NULL")
     assert(MEDIUMINT[Option[Int]](0).UNSIGNED.queryString === "MEDIUMINT(0) UNSIGNED NULL")
     assert(MEDIUMINT[Option[Int]](0).ZEROFILL.queryString === "MEDIUMINT(0) ZEROFILL NULL")
@@ -87,7 +103,13 @@ trait DataTypeTest extends AnyFlatSpec:
     assert(MEDIUMINT[Option[Int]](255).DEFAULT(Some(2)).queryString === "MEDIUMINT(255) NULL DEFAULT 2")
     assert(MEDIUMINT[Option[Int]].DEFAULT(None).UNSIGNED.queryString === "MEDIUMINT UNSIGNED NULL DEFAULT NULL")
     assert(MEDIUMINT[Option[Int]].DEFAULT(None).ZEROFILL.queryString === "MEDIUMINT ZEROFILL NULL DEFAULT NULL")
-    assert(MEDIUMINT[Option[Int]].DEFAULT(None).UNSIGNED.ZEROFILL.queryString === "MEDIUMINT UNSIGNED ZEROFILL NULL DEFAULT NULL")
+    assert(
+      MEDIUMINT[Option[Int]]
+        .DEFAULT(None)
+        .UNSIGNED
+        .ZEROFILL
+        .queryString === "MEDIUMINT UNSIGNED ZEROFILL NULL DEFAULT NULL"
+    )
     assert(MEDIUMINT[Int].queryString === "MEDIUMINT NOT NULL")
     assert(MEDIUMINT[Int].UNSIGNED.queryString === "MEDIUMINT UNSIGNED NOT NULL")
     assert(MEDIUMINT[Int].ZEROFILL.queryString === "MEDIUMINT ZEROFILL NOT NULL")
@@ -104,7 +126,13 @@ trait DataTypeTest extends AnyFlatSpec:
     assert(MEDIUMINT[Option[Int]].DEFAULT(Some(2)).queryString === "MEDIUMINT NULL DEFAULT 2")
     assert(MEDIUMINT[Option[Int]].DEFAULT(None).UNSIGNED.queryString === "MEDIUMINT UNSIGNED NULL DEFAULT NULL")
     assert(MEDIUMINT[Option[Int]].DEFAULT(None).ZEROFILL.queryString === "MEDIUMINT ZEROFILL NULL DEFAULT NULL")
-    assert(MEDIUMINT[Option[Int]].DEFAULT(None).UNSIGNED.ZEROFILL.queryString === "MEDIUMINT UNSIGNED ZEROFILL NULL DEFAULT NULL")
+    assert(
+      MEDIUMINT[Option[Int]]
+        .DEFAULT(None)
+        .UNSIGNED
+        .ZEROFILL
+        .queryString === "MEDIUMINT UNSIGNED ZEROFILL NULL DEFAULT NULL"
+    )
   }
 
   it should "The query string generated from the Integer DataType model matches the specified one." in {
@@ -138,7 +166,13 @@ trait DataTypeTest extends AnyFlatSpec:
     assert(INT[Option[Int]](255).DEFAULT(Some(2)).queryString === "INT(255) NULL DEFAULT 2")
     assert(INT[Option[Int]](255).DEFAULT(None).UNSIGNED.queryString === "INT(255) UNSIGNED NULL DEFAULT NULL")
     assert(INT[Option[Int]](255).DEFAULT(None).ZEROFILL.queryString === "INT(255) ZEROFILL NULL DEFAULT NULL")
-    assert(INT[Option[Int]](255).DEFAULT(None).UNSIGNED.ZEROFILL.queryString === "INT(255) UNSIGNED ZEROFILL NULL DEFAULT NULL")
+    assert(
+      INT[Option[Int]](255)
+        .DEFAULT(None)
+        .UNSIGNED
+        .ZEROFILL
+        .queryString === "INT(255) UNSIGNED ZEROFILL NULL DEFAULT NULL"
+    )
     assert(INT[Int].queryString === "INT NOT NULL")
     assert(INT[Int].UNSIGNED.queryString === "INT UNSIGNED NOT NULL")
     assert(INT[Int].ZEROFILL.queryString === "INT ZEROFILL NOT NULL")
@@ -180,7 +214,9 @@ trait DataTypeTest extends AnyFlatSpec:
     assert(BIGINT[Long](255).DEFAULT(1).queryString === "BIGINT(255) NOT NULL DEFAULT 1")
     assert(BIGINT[Long](255).DEFAULT(1).UNSIGNED.queryString === "BIGINT(255) UNSIGNED NOT NULL DEFAULT 1")
     assert(BIGINT[Long](255).DEFAULT(1).ZEROFILL.queryString === "BIGINT(255) ZEROFILL NOT NULL DEFAULT 1")
-    assert(BIGINT[Long](255).DEFAULT(1).UNSIGNED.ZEROFILL.queryString === "BIGINT(255) UNSIGNED ZEROFILL NOT NULL DEFAULT 1")
+    assert(
+      BIGINT[Long](255).DEFAULT(1).UNSIGNED.ZEROFILL.queryString === "BIGINT(255) UNSIGNED ZEROFILL NOT NULL DEFAULT 1"
+    )
     assert(BIGINT[Option[Long]](0).queryString === "BIGINT(0) NULL")
     assert(BIGINT[Option[Long]](0).UNSIGNED.queryString === "BIGINT(0) UNSIGNED NULL")
     assert(BIGINT[Option[Long]](0).ZEROFILL.queryString === "BIGINT(0) ZEROFILL NULL")
@@ -189,7 +225,9 @@ trait DataTypeTest extends AnyFlatSpec:
     assert(BIGINT[Option[Long]](255).DEFAULT(Some(2)).queryString === "BIGINT(255) NULL DEFAULT 2")
     assert(BIGINT[Option[Long]].DEFAULT(None).UNSIGNED.queryString === "BIGINT UNSIGNED NULL DEFAULT NULL")
     assert(BIGINT[Option[Long]].DEFAULT(None).ZEROFILL.queryString === "BIGINT ZEROFILL NULL DEFAULT NULL")
-    assert(BIGINT[Option[Long]].DEFAULT(None).UNSIGNED.ZEROFILL.queryString === "BIGINT UNSIGNED ZEROFILL NULL DEFAULT NULL")
+    assert(
+      BIGINT[Option[Long]].DEFAULT(None).UNSIGNED.ZEROFILL.queryString === "BIGINT UNSIGNED ZEROFILL NULL DEFAULT NULL"
+    )
     assert(BIGINT[Long].queryString === "BIGINT NOT NULL")
     assert(BIGINT[Long].UNSIGNED.queryString === "BIGINT UNSIGNED NOT NULL")
     assert(BIGINT[Long].ZEROFILL.queryString === "BIGINT ZEROFILL NOT NULL")
@@ -206,7 +244,9 @@ trait DataTypeTest extends AnyFlatSpec:
     assert(BIGINT[Option[Long]].DEFAULT(Some(2)).queryString === "BIGINT NULL DEFAULT 2")
     assert(BIGINT[Option[Long]].DEFAULT(None).UNSIGNED.queryString === "BIGINT UNSIGNED NULL DEFAULT NULL")
     assert(BIGINT[Option[Long]].DEFAULT(None).ZEROFILL.queryString === "BIGINT ZEROFILL NULL DEFAULT NULL")
-    assert(BIGINT[Option[Long]].DEFAULT(None).UNSIGNED.ZEROFILL.queryString === "BIGINT UNSIGNED ZEROFILL NULL DEFAULT NULL")
+    assert(
+      BIGINT[Option[Long]].DEFAULT(None).UNSIGNED.ZEROFILL.queryString === "BIGINT UNSIGNED ZEROFILL NULL DEFAULT NULL"
+    )
   }
 
   it should "The query string generated from the Decimal DataType model matches the specified one." in {
@@ -256,9 +296,25 @@ trait DataTypeTest extends AnyFlatSpec:
     assert(DECIMAL[Option[BigDecimal]](10, 7).ZEROFILL.queryString === "DECIMAL(10, 7) ZEROFILL NULL")
     assert(DECIMAL[Option[BigDecimal]](10, 7).UNSIGNED.ZEROFILL.queryString === "DECIMAL(10, 7) UNSIGNED ZEROFILL NULL")
     assert(DECIMAL[Option[BigDecimal]](10, 7).DEFAULT(None).queryString === "DECIMAL(10, 7) NULL DEFAULT NULL")
-    assert(DECIMAL[Option[BigDecimal]](10, 7).DEFAULT(None).UNSIGNED.queryString === "DECIMAL(10, 7) UNSIGNED NULL DEFAULT NULL")
-    assert(DECIMAL[Option[BigDecimal]](10, 7).DEFAULT(None).ZEROFILL.queryString === "DECIMAL(10, 7) ZEROFILL NULL DEFAULT NULL")
-    assert(DECIMAL[Option[BigDecimal]](10, 7).DEFAULT(None).UNSIGNED.ZEROFILL.queryString === "DECIMAL(10, 7) UNSIGNED ZEROFILL NULL DEFAULT NULL")
+    assert(
+      DECIMAL[Option[BigDecimal]](10, 7)
+        .DEFAULT(None)
+        .UNSIGNED
+        .queryString === "DECIMAL(10, 7) UNSIGNED NULL DEFAULT NULL"
+    )
+    assert(
+      DECIMAL[Option[BigDecimal]](10, 7)
+        .DEFAULT(None)
+        .ZEROFILL
+        .queryString === "DECIMAL(10, 7) ZEROFILL NULL DEFAULT NULL"
+    )
+    assert(
+      DECIMAL[Option[BigDecimal]](10, 7)
+        .DEFAULT(None)
+        .UNSIGNED
+        .ZEROFILL
+        .queryString === "DECIMAL(10, 7) UNSIGNED ZEROFILL NULL DEFAULT NULL"
+    )
     assert(
       DECIMAL[Option[BigDecimal]](10, 7)
         .DEFAULT(Some(BigDecimal(10, 7)))
