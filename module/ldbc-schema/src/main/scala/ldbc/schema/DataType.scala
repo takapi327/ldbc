@@ -142,14 +142,14 @@ object DataType:
 
     override def toOption: DataType[Option[ExtractOption[T]]] =
       new DataType[Option[ExtractOption[T]]]:
-        override def typeName:    String  = self.typeName
-        override def sqlType:     Int     = self.sqlType
-        override def queryString: String  =
-          typeName ++ character.fold("")(v => s" ${v.queryString}") ++ collate.fold("")(v =>
-            s" ${v.queryString}"
-          ) ++ s" $nullType" ++ default.fold("")(v => s" ${v.queryString}")
-        override def isOptional:  Boolean = true
-        override def default: Option[Default] = self.default
+        override def typeName: String = self.typeName
+        override def sqlType:  Int    = self.sqlType
+        override def queryString: String =
+          typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ collate.fold("")(v =>
+            s" ${ v.queryString }"
+          ) ++ s" $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+        override def isOptional: Boolean         = true
+        override def default:    Option[Default] = self.default
 
   /**
    * SQL DataType to represent BLOB type of string data trait.

@@ -358,170 +358,190 @@ trait DataTypeTest extends AnyFlatSpec:
   }
 
   it should "The query string generated from the Char DataType model with CHARACTER_SET and COLLATE matches the specified one." in {
-    val charType = DataType.CChar[String](10, false, None, None, None)
+    val charType    = DataType.CChar[String](10, false, None, None, None)
     val withCharSet = charType.CHARACTER_SET(Character.utf8mb4)
     assert(withCharSet.queryString === "CHAR(10) CHARACTER SET utf8mb4 NOT NULL")
     assert(withCharSet.toOption.queryString === "CHAR(10) CHARACTER SET utf8mb4 NULL")
-    
+
     val withCollate = charType.COLLATE(Collate.utf8mb4_bin)
     assert(withCollate.queryString === "CHAR(10) COLLATE utf8mb4_bin NOT NULL")
     assert(withCollate.toOption.queryString === "CHAR(10) COLLATE utf8mb4_bin NULL")
-    
+
     val withBoth = charType.CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)
     assert(withBoth.queryString === "CHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL")
     assert(withBoth.toOption.queryString === "CHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL")
-    
+
     val withDefault = withBoth.DEFAULT("test")
     assert(withDefault.queryString === "CHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT 'test'")
-    
+
     val optionalWithBoth = CHAR[Option[String]](20).CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_general_ci)
     assert(optionalWithBoth.queryString === "CHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL")
-    
+
     val optionalWithDefault = optionalWithBoth.DEFAULT(Some("value"))
-    assert(optionalWithDefault.queryString === "CHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT 'value'")
+    assert(
+      optionalWithDefault.queryString === "CHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT 'value'"
+    )
   }
 
   it should "The query string generated from the Varchar DataType model with CHARACTER_SET and COLLATE matches the specified one." in {
     val varcharType = DataType.Varchar[String](50, false, None, None, None)
     val withCharSet = varcharType.CHARACTER_SET(Character.utf8mb4)
     assert(withCharSet.queryString === "VARCHAR(50) CHARACTER SET utf8mb4 NOT NULL")
-    
+
     val withCollate = varcharType.COLLATE(Collate.utf8mb4_bin)
     assert(withCollate.queryString === "VARCHAR(50) COLLATE utf8mb4_bin NOT NULL")
-    
+
     val withBoth = varcharType.CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)
     assert(withBoth.queryString === "VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL")
-    
+
     val withDefault = withBoth.DEFAULT("test")
     assert(withDefault.queryString === "VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT 'test'")
-    
-    val optionalWithBoth = VARCHAR[Option[String]](100).CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_general_ci)
+
+    val optionalWithBoth =
+      VARCHAR[Option[String]](100).CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_general_ci)
     assert(optionalWithBoth.queryString === "VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL")
   }
 
   it should "The query string generated from the Binary DataType model with CHARACTER_SET and COLLATE matches the specified one." in {
-    val binaryType = DataType.Binary[Array[Byte]](10, false, None, None, None)
+    val binaryType  = DataType.Binary[Array[Byte]](10, false, None, None, None)
     val withCharSet = binaryType.CHARACTER_SET(Character.binary)
     assert(withCharSet.queryString === "BINARY(10) CHARACTER SET binary NOT NULL")
-    
+
     val withCollate = binaryType.COLLATE(Collate.binary)
     assert(withCollate.queryString === "BINARY(10) COLLATE binary NOT NULL")
-    
+
     val withBoth = binaryType.CHARACTER_SET(Character.binary).COLLATE(Collate.binary)
     assert(withBoth.queryString === "BINARY(10) CHARACTER SET binary COLLATE binary NOT NULL")
-    
+
     val optionalWithBoth = BINARY[Option[Array[Byte]]](15).CHARACTER_SET(Character.binary).COLLATE(Collate.binary)
     assert(optionalWithBoth.queryString === "BINARY(15) CHARACTER SET binary COLLATE binary NULL")
   }
 
   it should "The query string generated from the Varbinary DataType model with CHARACTER_SET and COLLATE matches the specified one." in {
     val varbinaryType = DataType.Varbinary[Array[Byte]](50, false, None, None, None)
-    val withCharSet = varbinaryType.CHARACTER_SET(Character.binary)
+    val withCharSet   = varbinaryType.CHARACTER_SET(Character.binary)
     assert(withCharSet.queryString === "VARBINARY(50) CHARACTER SET binary NOT NULL")
-    
+
     val withCollate = varbinaryType.COLLATE(Collate.binary)
     assert(withCollate.queryString === "VARBINARY(50) COLLATE binary NOT NULL")
-    
+
     val withBoth = varbinaryType.CHARACTER_SET(Character.binary).COLLATE(Collate.binary)
     assert(withBoth.queryString === "VARBINARY(50) CHARACTER SET binary COLLATE binary NOT NULL")
-    
+
     val optionalWithBoth = VARBINARY[Option[Array[Byte]]](100).CHARACTER_SET(Character.binary).COLLATE(Collate.binary)
     assert(optionalWithBoth.queryString === "VARBINARY(100) CHARACTER SET binary COLLATE binary NULL")
   }
 
   it should "The query string generated from the TinyText DataType model with CHARACTER_SET and COLLATE matches the specified one." in {
     val tinytextType = DataType.TinyText[String](false, None, None, None)
-    val withCharSet = tinytextType.CHARACTER_SET(Character.utf8mb4)
+    val withCharSet  = tinytextType.CHARACTER_SET(Character.utf8mb4)
     assert(withCharSet.queryString === "TINYTEXT CHARACTER SET utf8mb4 NOT NULL")
-    
+
     val withCollate = tinytextType.COLLATE(Collate.utf8mb4_bin)
     assert(withCollate.queryString === "TINYTEXT COLLATE utf8mb4_bin NOT NULL")
-    
+
     val withBoth = tinytextType.CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)
     assert(withBoth.queryString === "TINYTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL")
-    
-    val optionalWithBoth = TINYTEXT[Option[String]]().CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_general_ci)
+
+    val optionalWithBoth =
+      TINYTEXT[Option[String]]().CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_general_ci)
     assert(optionalWithBoth.queryString === "TINYTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL")
-    
+
     val optionalWithDefault = optionalWithBoth.DEFAULT(None)
-    assert(optionalWithDefault.queryString === "TINYTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL")
+    assert(
+      optionalWithDefault.queryString === "TINYTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL"
+    )
   }
 
   it should "The query string generated from the Text DataType model with CHARACTER_SET and COLLATE matches the specified one." in {
-    val textType = DataType.Text[String](false, None, None, None)
+    val textType    = DataType.Text[String](false, None, None, None)
     val withCharSet = textType.CHARACTER_SET(Character.utf8mb4)
     assert(withCharSet.queryString === "TEXT CHARACTER SET utf8mb4 NOT NULL")
-    
+
     val withCollate = textType.COLLATE(Collate.utf8mb4_bin)
     assert(withCollate.queryString === "TEXT COLLATE utf8mb4_bin NOT NULL")
-    
+
     val withBoth = textType.CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)
     assert(withBoth.queryString === "TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL")
-    
+
     val optionalWithBoth = TEXT[Option[String]]().CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_general_ci)
     assert(optionalWithBoth.queryString === "TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL")
-    
+
     val optionalWithDefault = optionalWithBoth.DEFAULT(None)
-    assert(optionalWithDefault.queryString === "TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL")
+    assert(
+      optionalWithDefault.queryString === "TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL"
+    )
   }
 
   it should "The query string generated from the MediumText DataType model with CHARACTER_SET and COLLATE matches the specified one." in {
     val mediumtextType = DataType.MediumText[String](false, None, None, None)
-    val withCharSet = mediumtextType.CHARACTER_SET(Character.utf8mb4)
+    val withCharSet    = mediumtextType.CHARACTER_SET(Character.utf8mb4)
     assert(withCharSet.queryString === "MEDIUMTEXT CHARACTER SET utf8mb4 NOT NULL")
-    
+
     val withCollate = mediumtextType.COLLATE(Collate.utf8mb4_bin)
     assert(withCollate.queryString === "MEDIUMTEXT COLLATE utf8mb4_bin NOT NULL")
-    
+
     val withBoth = mediumtextType.CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)
     assert(withBoth.queryString === "MEDIUMTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL")
-    
-    val optionalWithBoth = MEDIUMTEXT[Option[String]]().CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_general_ci)
+
+    val optionalWithBoth =
+      MEDIUMTEXT[Option[String]]().CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_general_ci)
     assert(optionalWithBoth.queryString === "MEDIUMTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL")
-    
+
     val optionalWithDefault = optionalWithBoth.DEFAULT(None)
-    assert(optionalWithDefault.queryString === "MEDIUMTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL")
+    assert(
+      optionalWithDefault.queryString === "MEDIUMTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL"
+    )
   }
 
   it should "The query string generated from the LongText DataType model with CHARACTER_SET and COLLATE matches the specified one." in {
     val longtextType = DataType.LongText[String](false, None, None, None)
-    val withCharSet = longtextType.CHARACTER_SET(Character.utf8mb4)
+    val withCharSet  = longtextType.CHARACTER_SET(Character.utf8mb4)
     assert(withCharSet.queryString === "LONGTEXT CHARACTER SET utf8mb4 NOT NULL")
-    
+
     val withCollate = longtextType.COLLATE(Collate.utf8mb4_bin)
     assert(withCollate.queryString === "LONGTEXT COLLATE utf8mb4_bin NOT NULL")
-    
+
     val withBoth = longtextType.CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)
     assert(withBoth.queryString === "LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL")
-    
-    val optionalWithBoth = LONGTEXT[Option[String]]().CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_general_ci)
+
+    val optionalWithBoth =
+      LONGTEXT[Option[String]]().CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_general_ci)
     assert(optionalWithBoth.queryString === "LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL")
-    
+
     val optionalWithDefault = optionalWithBoth.DEFAULT(None)
-    assert(optionalWithDefault.queryString === "LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL")
+    assert(
+      optionalWithDefault.queryString === "LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL"
+    )
   }
 
   it should "The query string generated from the Enum DataType model with CHARACTER_SET and COLLATE matches the specified one." in {
     enum Status:
       case Active, InActive
 
-    val enumType = DataType.Enum[Status](List("Active", "InActive"), false, None, None, None)
+    val enumType    = DataType.Enum[Status](List("Active", "InActive"), false, None, None, None)
     val withCharSet = enumType.CHARACTER_SET(Character.utf8mb4)
     assert(withCharSet.queryString === "ENUM('Active','InActive') CHARACTER SET utf8mb4 NOT NULL")
-    
+
     val withCollate = enumType.COLLATE(Collate.utf8mb4_bin)
     assert(withCollate.queryString === "ENUM('Active','InActive') COLLATE utf8mb4_bin NOT NULL")
-    
+
     val withBoth = enumType.CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)
     assert(withBoth.queryString === "ENUM('Active','InActive') CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL")
-    
+
     val withDefault = withBoth.DEFAULT(Status.Active)
-    assert(withDefault.queryString === "ENUM('Active','InActive') CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT 'Active'")
-    
+    assert(
+      withDefault.queryString === "ENUM('Active','InActive') CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT 'Active'"
+    )
+
     val optionalEnumType = DataType.Enum[Option[Status]](List("Active", "InActive"), true, None, None, None)
     val optionalWithBoth = optionalEnumType.CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_general_ci)
-    assert(optionalWithBoth.queryString === "ENUM('Active','InActive') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL")
-    
+    assert(
+      optionalWithBoth.queryString === "ENUM('Active','InActive') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL"
+    )
+
     val optionalWithDefault = optionalWithBoth.DEFAULT(None)
-    assert(optionalWithDefault.queryString === "ENUM('Active','InActive') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL")
+    assert(
+      optionalWithDefault.queryString === "ENUM('Active','InActive') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL"
+    )
   }
