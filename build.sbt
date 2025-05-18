@@ -5,7 +5,6 @@
  */
 
 import com.typesafe.tools.mima.core.*
-
 import BuildSettings.*
 import Dependencies.*
 import Implicits.*
@@ -32,7 +31,7 @@ ThisBuild / githubWorkflowTargetBranches        := Seq("**")
 ThisBuild / githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v")))
 ThisBuild / tlSitePublishBranch                 := None
 ThisBuild / mimaBinaryIssueFilters ++= List(
-  ProblemFilters.exclude[DirectMissingMethodProblem]("ldbc.schema.DataType.mapping"),
+  ProblemFilters.exclude[DirectMissingMethodProblem]("ldbc.schema.DataType.mapping")
 )
 
 ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
