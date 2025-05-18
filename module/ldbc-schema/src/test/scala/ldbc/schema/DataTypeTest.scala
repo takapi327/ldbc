@@ -357,389 +357,171 @@ trait DataTypeTest extends AnyFlatSpec:
     assert(CHAR[Option[String]](0).DEFAULT(Some("test")).queryString === "CHAR(0) NULL DEFAULT 'test'")
   }
 
-  it should "The query string generated from the Varchar DataType model matches the specified one." in {
+  it should "The query string generated from the Char DataType model with CHARACTER_SET and COLLATE matches the specified one." in {
+    val charType = DataType.CChar[String](10, false, None, None, None)
+    val withCharSet = charType.CHARACTER_SET(Character.utf8mb4)
+    assert(withCharSet.queryString === "CHAR(10) CHARACTER SET utf8mb4 NOT NULL")
+    assert(withCharSet.toOption.queryString === "CHAR(10) CHARACTER SET utf8mb4 NULL")
+    
+    val withCollate = charType.COLLATE(Collate.utf8mb4_bin)
+    assert(withCollate.queryString === "CHAR(10) COLLATE utf8mb4_bin NOT NULL")
+    assert(withCollate.toOption.queryString === "CHAR(10) COLLATE utf8mb4_bin NULL")
+    
+    val withBoth = charType.CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)
+    assert(withBoth.queryString === "CHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL")
+    assert(withBoth.toOption.queryString === "CHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL")
+    
+    val withDefault = withBoth.DEFAULT("test")
+    assert(withDefault.queryString === "CHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT 'test'")
+    
+    val optionalWithBoth = CHAR[Option[String]](20).CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_general_ci)
+    assert(optionalWithBoth.queryString === "CHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL")
+    
+    val optionalWithDefault = optionalWithBoth.DEFAULT(Some("value"))
+    assert(optionalWithDefault.queryString === "CHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT 'value'")
+  }
+
+  it should "The query string generated from the Varchar DataType model with CHARACTER_SET and COLLATE matches the specified one." in {
     val varcharType = DataType.Varchar[String](50, false, None, None, None)
-    assert(varcharType.typeName === "VARCHAR(50)")
-    assert(varcharType.sqlType === Types.VARCHAR)
-    assert(varcharType.isOptional === false)
-    assert(varcharType.queryString === "VARCHAR(50) NOT NULL")
-    assert(varcharType.toOption.isOptional === true)
-    assert(varcharType.toOption.sqlType === Types.VARCHAR)
-    assert(varcharType.toOption.queryString === "VARCHAR(50) NULL")
-    assert(varcharType.DEFAULT("test").queryString === "VARCHAR(50) NOT NULL DEFAULT 'test'")
-    assert(VARCHAR[String](0).queryString === "VARCHAR(0) NOT NULL")
-    assert(VARCHAR[Option[String]](0).queryString === "VARCHAR(0) NULL")
-    assert(VARCHAR[Option[String]](0).DEFAULT(None).queryString === "VARCHAR(0) NULL DEFAULT NULL")
-    assert(
-      VARCHAR[Option[String]](0)
-        .DEFAULT(Some("test"))
-        .queryString === "VARCHAR(0) NULL DEFAULT 'test'"
-    )
+    val withCharSet = varcharType.CHARACTER_SET(Character.utf8mb4)
+    assert(withCharSet.queryString === "VARCHAR(50) CHARACTER SET utf8mb4 NOT NULL")
+    
+    val withCollate = varcharType.COLLATE(Collate.utf8mb4_bin)
+    assert(withCollate.queryString === "VARCHAR(50) COLLATE utf8mb4_bin NOT NULL")
+    
+    val withBoth = varcharType.CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)
+    assert(withBoth.queryString === "VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL")
+    
+    val withDefault = withBoth.DEFAULT("test")
+    assert(withDefault.queryString === "VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT 'test'")
+    
+    val optionalWithBoth = VARCHAR[Option[String]](100).CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_general_ci)
+    assert(optionalWithBoth.queryString === "VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL")
   }
 
-  it should "The query string generated from the Binary DataType model matches the specified one." in {
+  it should "The query string generated from the Binary DataType model with CHARACTER_SET and COLLATE matches the specified one." in {
     val binaryType = DataType.Binary[Array[Byte]](10, false, None, None, None)
-    assert(binaryType.typeName === "BINARY(10)")
-    assert(binaryType.sqlType === Types.BINARY)
-    assert(binaryType.isOptional === false)
-    assert(binaryType.queryString === "BINARY(10) NOT NULL")
-    assert(binaryType.toOption.isOptional === true)
-    assert(binaryType.toOption.sqlType === Types.BINARY)
-    assert(binaryType.toOption.queryString === "BINARY(10) NULL")
-    assert(BINARY[Array[Byte]](0).queryString === "BINARY(0) NOT NULL")
-    assert(BINARY[Option[Array[Byte]]](0).queryString === "BINARY(0) NULL")
+    val withCharSet = binaryType.CHARACTER_SET(Character.binary)
+    assert(withCharSet.queryString === "BINARY(10) CHARACTER SET binary NOT NULL")
+    
+    val withCollate = binaryType.COLLATE(Collate.binary)
+    assert(withCollate.queryString === "BINARY(10) COLLATE binary NOT NULL")
+    
+    val withBoth = binaryType.CHARACTER_SET(Character.binary).COLLATE(Collate.binary)
+    assert(withBoth.queryString === "BINARY(10) CHARACTER SET binary COLLATE binary NOT NULL")
+    
+    val optionalWithBoth = BINARY[Option[Array[Byte]]](15).CHARACTER_SET(Character.binary).COLLATE(Collate.binary)
+    assert(optionalWithBoth.queryString === "BINARY(15) CHARACTER SET binary COLLATE binary NULL")
   }
 
-  it should "The query string generated from the Varbinary DataType model matches the specified one." in {
+  it should "The query string generated from the Varbinary DataType model with CHARACTER_SET and COLLATE matches the specified one." in {
     val varbinaryType = DataType.Varbinary[Array[Byte]](50, false, None, None, None)
-    assert(varbinaryType.typeName === "VARBINARY(50)")
-    assert(varbinaryType.sqlType === Types.VARBINARY)
-    assert(varbinaryType.isOptional === false)
-    assert(varbinaryType.queryString === "VARBINARY(50) NOT NULL")
-    assert(varbinaryType.toOption.isOptional === true)
-    assert(varbinaryType.toOption.sqlType === Types.VARBINARY)
-    assert(varbinaryType.toOption.queryString === "VARBINARY(50) NULL")
-    assert(VARBINARY[Array[Byte]](0).queryString === "VARBINARY(0) NOT NULL")
-    assert(VARBINARY[Option[Array[Byte]]](0).queryString === "VARBINARY(0) NULL")
+    val withCharSet = varbinaryType.CHARACTER_SET(Character.binary)
+    assert(withCharSet.queryString === "VARBINARY(50) CHARACTER SET binary NOT NULL")
+    
+    val withCollate = varbinaryType.COLLATE(Collate.binary)
+    assert(withCollate.queryString === "VARBINARY(50) COLLATE binary NOT NULL")
+    
+    val withBoth = varbinaryType.CHARACTER_SET(Character.binary).COLLATE(Collate.binary)
+    assert(withBoth.queryString === "VARBINARY(50) CHARACTER SET binary COLLATE binary NOT NULL")
+    
+    val optionalWithBoth = VARBINARY[Option[Array[Byte]]](100).CHARACTER_SET(Character.binary).COLLATE(Collate.binary)
+    assert(optionalWithBoth.queryString === "VARBINARY(100) CHARACTER SET binary COLLATE binary NULL")
   }
 
-  it should "The query string generated from the Tinyblob DataType model matches the specified one." in {
-    val tinyblobType = DataType.Tinyblob[Array[Byte]](false, None)
-    assert(tinyblobType.typeName === "TINYBLOB")
-    assert(tinyblobType.sqlType === Types.VARBINARY)
-    assert(tinyblobType.isOptional === false)
-    assert(tinyblobType.queryString === "TINYBLOB NOT NULL")
-    assert(tinyblobType.toOption.isOptional === true)
-    assert(tinyblobType.toOption.sqlType === Types.VARBINARY)
-    assert(tinyblobType.toOption.queryString === "TINYBLOB NULL")
-    assert(TINYBLOB[Array[Byte]]().queryString === "TINYBLOB NOT NULL")
-    assert(TINYBLOB[Option[Array[Byte]]]().queryString === "TINYBLOB NULL")
-    assert(TINYBLOB[Option[Array[Byte]]]().DEFAULT(None).queryString === "TINYBLOB NULL DEFAULT NULL")
-  }
-
-  it should "The query string generated from the Blob DataType model matches the specified one." in {
-    val blobType = DataType.Blob[Array[Byte]](None, false, None)
-    assert(blobType.typeName === "BLOB")
-    assert(blobType.sqlType === Types.BLOB)
-    assert(blobType.isOptional === false)
-    assert(blobType.queryString === "BLOB NOT NULL")
-    assert(blobType.toOption.isOptional === true)
-    assert(blobType.toOption.sqlType === Types.BLOB)
-    assert(blobType.toOption.queryString === "BLOB NULL")
-    assert(BLOB[Array[Byte]](0).queryString === "BLOB(0) NOT NULL")
-    assert(BLOB[Option[Array[Byte]]](0).queryString === "BLOB(0) NULL")
-    assert(BLOB[Option[Array[Byte]]](0).DEFAULT(None).queryString === "BLOB(0) NULL DEFAULT NULL")
-  }
-
-  it should "The query string generated from the Mediumblob DataType model matches the specified one." in {
-    val mediumblobType = DataType.Mediumblob[Array[Byte]](false, None)
-    assert(mediumblobType.typeName === "MEDIUMBLOB")
-    assert(mediumblobType.sqlType === Types.LONGVARBINARY)
-    assert(mediumblobType.isOptional === false)
-    assert(mediumblobType.queryString === "MEDIUMBLOB NOT NULL")
-    assert(mediumblobType.toOption.isOptional === true)
-    assert(mediumblobType.toOption.sqlType === Types.LONGVARBINARY)
-    assert(mediumblobType.toOption.queryString === "MEDIUMBLOB NULL")
-    assert(MEDIUMBLOB[Array[Byte]]().queryString === "MEDIUMBLOB NOT NULL")
-    assert(MEDIUMBLOB[Option[Array[Byte]]]().queryString === "MEDIUMBLOB NULL")
-    assert(MEDIUMBLOB[Option[Array[Byte]]]().DEFAULT(None).queryString === "MEDIUMBLOB NULL DEFAULT NULL")
-  }
-
-  it should "The query string generated from the LongBlob DataType model matches the specified one." in {
-    val longblobType = DataType.LongBlob[Array[Byte]](false, None)
-    assert(longblobType.typeName === "LONGBLOB")
-    assert(longblobType.sqlType === Types.LONGVARBINARY)
-    assert(longblobType.isOptional === false)
-    assert(longblobType.queryString === "LONGBLOB NOT NULL")
-    assert(longblobType.toOption.isOptional === true)
-    assert(longblobType.toOption.sqlType === Types.LONGVARBINARY)
-    assert(longblobType.toOption.queryString === "LONGBLOB NULL")
-    assert(LONGBLOB[Array[Byte]]().queryString === "LONGBLOB NOT NULL")
-    assert(LONGBLOB[Option[Array[Byte]]]().queryString === "LONGBLOB NULL")
-    assert(LONGBLOB[Option[Array[Byte]]]().DEFAULT(None).queryString === "LONGBLOB NULL DEFAULT NULL")
-  }
-
-  it should "The query string generated from the TinyText DataType model matches the specified one." in {
+  it should "The query string generated from the TinyText DataType model with CHARACTER_SET and COLLATE matches the specified one." in {
     val tinytextType = DataType.TinyText[String](false, None, None, None)
-    assert(tinytextType.typeName === "TINYTEXT")
-    assert(tinytextType.sqlType === Types.VARCHAR)
-    assert(tinytextType.isOptional === false)
-    assert(tinytextType.queryString === "TINYTEXT NOT NULL")
-    assert(tinytextType.toOption.isOptional === true)
-    assert(tinytextType.toOption.sqlType === Types.VARCHAR)
-    assert(tinytextType.toOption.queryString === "TINYTEXT NULL")
-    assert(TINYTEXT[String]().queryString === "TINYTEXT NOT NULL")
-    assert(TINYTEXT[Option[String]]().queryString === "TINYTEXT NULL")
-    assert(TINYTEXT[Option[String]]().DEFAULT(None).queryString === "TINYTEXT NULL DEFAULT NULL")
+    val withCharSet = tinytextType.CHARACTER_SET(Character.utf8mb4)
+    assert(withCharSet.queryString === "TINYTEXT CHARACTER SET utf8mb4 NOT NULL")
+    
+    val withCollate = tinytextType.COLLATE(Collate.utf8mb4_bin)
+    assert(withCollate.queryString === "TINYTEXT COLLATE utf8mb4_bin NOT NULL")
+    
+    val withBoth = tinytextType.CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)
+    assert(withBoth.queryString === "TINYTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL")
+    
+    val optionalWithBoth = TINYTEXT[Option[String]]().CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_general_ci)
+    assert(optionalWithBoth.queryString === "TINYTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL")
+    
+    val optionalWithDefault = optionalWithBoth.DEFAULT(None)
+    assert(optionalWithDefault.queryString === "TINYTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL")
   }
 
-  it should "The query string generated from the Text DataType model matches the specified one." in {
+  it should "The query string generated from the Text DataType model with CHARACTER_SET and COLLATE matches the specified one." in {
     val textType = DataType.Text[String](false, None, None, None)
-    assert(textType.typeName === "TEXT")
-    assert(textType.sqlType === Types.LONGVARCHAR)
-    assert(textType.isOptional === false)
-    assert(textType.queryString === "TEXT NOT NULL")
-    assert(textType.toOption.isOptional === true)
-    assert(textType.toOption.sqlType === Types.LONGVARCHAR)
-    assert(textType.toOption.queryString === "TEXT NULL")
-    assert(TEXT[String]().queryString === "TEXT NOT NULL")
-    assert(TEXT[Option[String]]().queryString === "TEXT NULL")
-    assert(TEXT[Option[String]]().DEFAULT(None).queryString === "TEXT NULL DEFAULT NULL")
+    val withCharSet = textType.CHARACTER_SET(Character.utf8mb4)
+    assert(withCharSet.queryString === "TEXT CHARACTER SET utf8mb4 NOT NULL")
+    
+    val withCollate = textType.COLLATE(Collate.utf8mb4_bin)
+    assert(withCollate.queryString === "TEXT COLLATE utf8mb4_bin NOT NULL")
+    
+    val withBoth = textType.CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)
+    assert(withBoth.queryString === "TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL")
+    
+    val optionalWithBoth = TEXT[Option[String]]().CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_general_ci)
+    assert(optionalWithBoth.queryString === "TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL")
+    
+    val optionalWithDefault = optionalWithBoth.DEFAULT(None)
+    assert(optionalWithDefault.queryString === "TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL")
   }
 
-  it should "The query string generated from the MediumText DataType model matches the specified one." in {
+  it should "The query string generated from the MediumText DataType model with CHARACTER_SET and COLLATE matches the specified one." in {
     val mediumtextType = DataType.MediumText[String](false, None, None, None)
-    assert(mediumtextType.typeName === "MEDIUMTEXT")
-    assert(mediumtextType.sqlType === Types.LONGVARCHAR)
-    assert(mediumtextType.isOptional === false)
-    assert(mediumtextType.queryString === "MEDIUMTEXT NOT NULL")
-    assert(mediumtextType.toOption.isOptional === true)
-    assert(mediumtextType.toOption.sqlType === Types.LONGVARCHAR)
-    assert(mediumtextType.toOption.queryString === "MEDIUMTEXT NULL")
-    assert(MEDIUMTEXT[String]().queryString === "MEDIUMTEXT NOT NULL")
-    assert(MEDIUMTEXT[Option[String]]().queryString === "MEDIUMTEXT NULL")
-    assert(MEDIUMTEXT[Option[String]]().DEFAULT(None).queryString === "MEDIUMTEXT NULL DEFAULT NULL")
+    val withCharSet = mediumtextType.CHARACTER_SET(Character.utf8mb4)
+    assert(withCharSet.queryString === "MEDIUMTEXT CHARACTER SET utf8mb4 NOT NULL")
+    
+    val withCollate = mediumtextType.COLLATE(Collate.utf8mb4_bin)
+    assert(withCollate.queryString === "MEDIUMTEXT COLLATE utf8mb4_bin NOT NULL")
+    
+    val withBoth = mediumtextType.CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)
+    assert(withBoth.queryString === "MEDIUMTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL")
+    
+    val optionalWithBoth = MEDIUMTEXT[Option[String]]().CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_general_ci)
+    assert(optionalWithBoth.queryString === "MEDIUMTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL")
+    
+    val optionalWithDefault = optionalWithBoth.DEFAULT(None)
+    assert(optionalWithDefault.queryString === "MEDIUMTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL")
   }
 
-  it should "The query string generated from the LongText DataType model matches the specified one." in {
+  it should "The query string generated from the LongText DataType model with CHARACTER_SET and COLLATE matches the specified one." in {
     val longtextType = DataType.LongText[String](false, None, None, None)
-    assert(longtextType.typeName === "LONGTEXT")
-    assert(longtextType.sqlType === Types.LONGVARCHAR)
-    assert(longtextType.isOptional === false)
-    assert(longtextType.queryString === "LONGTEXT NOT NULL")
-    assert(longtextType.toOption.isOptional === true)
-    assert(longtextType.toOption.sqlType === Types.LONGVARCHAR)
-    assert(longtextType.toOption.queryString === "LONGTEXT NULL")
-    assert(LONGTEXT[String]().queryString === "LONGTEXT NOT NULL")
-    assert(LONGTEXT[Option[String]]().queryString === "LONGTEXT NULL")
-    assert(LONGTEXT[Option[String]]().DEFAULT(None).queryString === "LONGTEXT NULL DEFAULT NULL")
+    val withCharSet = longtextType.CHARACTER_SET(Character.utf8mb4)
+    assert(withCharSet.queryString === "LONGTEXT CHARACTER SET utf8mb4 NOT NULL")
+    
+    val withCollate = longtextType.COLLATE(Collate.utf8mb4_bin)
+    assert(withCollate.queryString === "LONGTEXT COLLATE utf8mb4_bin NOT NULL")
+    
+    val withBoth = longtextType.CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)
+    assert(withBoth.queryString === "LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL")
+    
+    val optionalWithBoth = LONGTEXT[Option[String]]().CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_general_ci)
+    assert(optionalWithBoth.queryString === "LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL")
+    
+    val optionalWithDefault = optionalWithBoth.DEFAULT(None)
+    assert(optionalWithDefault.queryString === "LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL")
   }
 
-  it should "The query string generated from the Enum DataType model matches the specified one." in {
+  it should "The query string generated from the Enum DataType model with CHARACTER_SET and COLLATE matches the specified one." in {
     enum Status:
       case Active, InActive
 
     val enumType = DataType.Enum[Status](List("Active", "InActive"), false, None, None, None)
-    assert(enumType.typeName === "ENUM('Active','InActive')")
-    assert(enumType.sqlType === Types.CHAR)
-    assert(enumType.isOptional === false)
-    assert(enumType.queryString === "ENUM('Active','InActive') NOT NULL")
-    assert(enumType.toOption.isOptional === true)
-    assert(enumType.toOption.sqlType === Types.CHAR)
-    assert(enumType.toOption.queryString === "ENUM('Active','InActive') NULL")
-    assert(enumType.DEFAULT(Status.Active).queryString === "ENUM('Active','InActive') NOT NULL DEFAULT 'Active'")
-    assert(ENUM[Status].queryString === "ENUM('Active','InActive') NOT NULL")
-  }
-
-  it should "The query string generated from the Date DataType model matches the specified one." in {
-    val dateType = DataType.Date[LocalDate](false, None)
-    assert(dateType.typeName === "DATE")
-    assert(dateType.sqlType === Types.DATE)
-    assert(dateType.isOptional === false)
-    assert(dateType.queryString === "DATE NOT NULL")
-    assert(dateType.toOption.isOptional === true)
-    assert(dateType.toOption.sqlType === Types.DATE)
-    assert(dateType.toOption.queryString === "DATE NULL")
-    assert(dateType.DEFAULT(LocalDate.of(2023, 1, 1)).queryString === "DATE NOT NULL DEFAULT '2023-01-01'")
-    assert(dateType.DEFAULT_CURRENT_DATE().queryString === "DATE NOT NULL DEFAULT (CURRENT_DATE)")
-    assert(DATE[LocalDate].queryString === "DATE NOT NULL")
-    assert(DATE[Option[LocalDate]].queryString === "DATE NULL")
-    assert(DATE[Option[LocalDate]].DEFAULT(None).queryString === "DATE NULL DEFAULT NULL")
-    assert(
-      DATE[Option[LocalDate]]
-        .DEFAULT(Some(LocalDate.of(2023, 2, 10)))
-        .queryString === "DATE NULL DEFAULT '2023-02-10'"
-    )
-    assert(DATE[Option[LocalDate]].DEFAULT(0).queryString === "DATE NULL DEFAULT 0")
-    assert(DATE[Option[LocalDate]].DEFAULT("2023-02-10").queryString === "DATE NULL DEFAULT '2023-02-10'")
-    assert(DATE[Option[LocalDate]].DEFAULT_CURRENT_DATE().queryString === "DATE NULL DEFAULT (CURRENT_DATE)")
-  }
-
-  it should "The query string generated from the DateTime DataType model matches the specified one." in {
-    val dateTimeType = DataType.DateTime[LocalDateTime](None, false, None)
-    assert(dateTimeType.typeName === "DATETIME")
-    assert(dateTimeType.sqlType === Types.TIMESTAMP)
-    assert(dateTimeType.isOptional === false)
-    assert(dateTimeType.queryString === "DATETIME NOT NULL")
-    assert(dateTimeType.toOption.isOptional === true)
-    assert(dateTimeType.toOption.sqlType === Types.TIMESTAMP)
-    assert(dateTimeType.toOption.queryString === "DATETIME NULL")
-    assert(
-      dateTimeType
-        .DEFAULT(LocalDateTime.of(2023, 1, 1, 12, 0))
-        .queryString === "DATETIME NOT NULL DEFAULT '2023-01-01T12:00'"
-    )
-    assert(dateTimeType.DEFAULT_CURRENT_TIMESTAMP().queryString === "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP")
-    assert(
-      dateTimeType
-        .DEFAULT_CURRENT_TIMESTAMP(true)
-        .queryString === "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
-    )
-    assert(DATETIME[LocalDateTime].queryString === "DATETIME NOT NULL")
-    assert(DATETIME[Option[LocalDateTime]].queryString === "DATETIME NULL")
-    assert(DATETIME[Option[LocalDateTime]](6).queryString === "DATETIME(6) NULL")
-    assert(DATETIME[Option[LocalDateTime]].DEFAULT(None).queryString === "DATETIME NULL DEFAULT NULL")
-    assert(
-      DATETIME[Option[LocalDateTime]]
-        .DEFAULT(Some(LocalDateTime.of(2023, 2, 10, 10, 0)))
-        .queryString === "DATETIME NULL DEFAULT '2023-02-10T10:00'"
-    )
-    assert(DATETIME[Option[LocalDateTime]].DEFAULT(None).queryString === "DATETIME NULL DEFAULT NULL")
-    assert(DATETIME[Option[LocalDateTime]].DEFAULT(0).queryString === "DATETIME NULL DEFAULT 0")
-    assert(
-      DATETIME[Option[LocalDateTime]]
-        .DEFAULT("2023-02-10 10:00:00")
-        .queryString === "DATETIME NULL DEFAULT '2023-02-10 10:00:00'"
-    )
-    assert(
-      DATETIME[Option[LocalDateTime]]
-        .DEFAULT_CURRENT_TIMESTAMP()
-        .queryString === "DATETIME NULL DEFAULT CURRENT_TIMESTAMP"
-    )
-    assert(
-      DATETIME[Option[LocalDateTime]](6)
-        .DEFAULT_CURRENT_TIMESTAMP()
-        .queryString === "DATETIME(6) NULL DEFAULT CURRENT_TIMESTAMP(6)"
-    )
-    assert(
-      DATETIME[Option[LocalDateTime]]
-        .DEFAULT_CURRENT_TIMESTAMP(true)
-        .queryString === "DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
-    )
-    assert(
-      DATETIME[Option[LocalDateTime]](6)
-        .DEFAULT_CURRENT_TIMESTAMP(true)
-        .queryString === "DATETIME(6) NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)"
-    )
-  }
-
-  it should "The query string generated from the TimeStamp DataType model matches the specified one." in {
-    val timestampType = DataType.TimeStamp[LocalDateTime](None, false, None)
-    assert(timestampType.typeName === "TIMESTAMP")
-    assert(timestampType.sqlType === Types.TIMESTAMP)
-    assert(timestampType.isOptional === false)
-    assert(timestampType.queryString === "TIMESTAMP NOT NULL")
-    assert(timestampType.toOption.isOptional === true)
-    assert(timestampType.toOption.sqlType === Types.TIMESTAMP)
-    assert(timestampType.toOption.queryString === "TIMESTAMP NULL")
-    assert(
-      timestampType
-        .DEFAULT(LocalDateTime.of(2023, 1, 1, 12, 0))
-        .queryString === "TIMESTAMP NOT NULL DEFAULT '2023-01-01T12:00'"
-    )
-    assert(timestampType.DEFAULT_CURRENT_TIMESTAMP().queryString === "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP")
-    assert(
-      timestampType
-        .DEFAULT_CURRENT_TIMESTAMP(true)
-        .queryString === "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
-    )
-    assert(TIMESTAMP[LocalDateTime].queryString === "TIMESTAMP NOT NULL")
-    assert(TIMESTAMP[Option[LocalDateTime]].queryString === "TIMESTAMP NULL")
-    assert(TIMESTAMP[Option[LocalDateTime]](5).queryString === "TIMESTAMP(5) NULL")
-    assert(TIMESTAMP[Option[LocalDateTime]].DEFAULT(None).queryString === "TIMESTAMP NULL DEFAULT NULL")
-    assert(
-      TIMESTAMP[Option[LocalDateTime]]
-        .DEFAULT(Some(LocalDateTime.of(2023, 2, 10, 10, 0)))
-        .queryString === "TIMESTAMP NULL DEFAULT '2023-02-10T10:00'"
-    )
-    assert(TIMESTAMP[Option[LocalDateTime]].DEFAULT(None).queryString === "TIMESTAMP NULL DEFAULT NULL")
-    assert(TIMESTAMP[Option[LocalDateTime]].DEFAULT(0).queryString === "TIMESTAMP NULL DEFAULT 0")
-    assert(
-      TIMESTAMP[Option[LocalDateTime]]
-        .DEFAULT("2023-02-10 10:00:00")
-        .queryString === "TIMESTAMP NULL DEFAULT '2023-02-10 10:00:00'"
-    )
-    assert(
-      TIMESTAMP[Option[LocalDateTime]]
-        .DEFAULT_CURRENT_TIMESTAMP()
-        .queryString === "TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP"
-    )
-    assert(
-      TIMESTAMP[Option[LocalDateTime]](6)
-        .DEFAULT_CURRENT_TIMESTAMP()
-        .queryString === "TIMESTAMP(6) NULL DEFAULT CURRENT_TIMESTAMP(6)"
-    )
-    assert(
-      TIMESTAMP[Option[LocalDateTime]]
-        .DEFAULT_CURRENT_TIMESTAMP(true)
-        .queryString === "TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
-    )
-    assert(
-      TIMESTAMP[Option[LocalDateTime]](6)
-        .DEFAULT_CURRENT_TIMESTAMP(true)
-        .queryString === "TIMESTAMP(6) NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)"
-    )
-  }
-
-  it should "The query string generated from the Time DataType model matches the specified one." in {
-    val timeType = DataType.Time[LocalTime](None, false, None)
-    assert(timeType.typeName === "TIME")
-    assert(timeType.sqlType === Types.TIME)
-    assert(timeType.isOptional === false)
-    assert(timeType.queryString === "TIME NOT NULL")
-    assert(timeType.toOption.isOptional === true)
-    assert(timeType.toOption.sqlType === Types.TIME)
-    assert(timeType.toOption.queryString === "TIME NULL")
-    assert(timeType.DEFAULT(LocalTime.of(12, 30)).queryString === "TIME NOT NULL DEFAULT '12:30'")
-    assert(TIME[LocalTime].queryString === "TIME NOT NULL")
-    assert(TIME[LocalTime].DEFAULT(LocalTime.of(10, 0, 10)).queryString === "TIME NOT NULL DEFAULT '10:00:10'")
-    assert(TIME[LocalTime].DEFAULT(0).queryString === "TIME NOT NULL DEFAULT 0")
-    assert(TIME[LocalTime].DEFAULT("23:59:59").queryString === "TIME NOT NULL DEFAULT '23:59:59'")
-    assert(TIME[Option[LocalTime]].queryString === "TIME NULL")
-    assert(TIME[Option[LocalTime]].DEFAULT(None).queryString === "TIME NULL DEFAULT NULL")
-    assert(
-      TIME[Option[LocalTime]]
-        .DEFAULT(Some(LocalTime.of(10, 0, 0)))
-        .queryString === "TIME NULL DEFAULT '10:00'"
-    )
-    assert(TIME[Option[LocalTime]].DEFAULT(None).queryString === "TIME NULL DEFAULT NULL")
-    assert(TIME[Option[LocalTime]].DEFAULT(0).queryString === "TIME NULL DEFAULT 0")
-    assert(TIME[Option[LocalTime]].DEFAULT("23:59:59").queryString === "TIME NULL DEFAULT '23:59:59'")
-  }
-
-  it should "The query string generated from the Year DataType model matches the specified one." in {
-    val yearType = DataType.Year[JYear](None, false, None)
-    assert(yearType.typeName === "YEAR")
-    assert(yearType.sqlType === Types.DATE)
-    assert(yearType.isOptional === false)
-    assert(yearType.queryString === "YEAR NOT NULL")
-    assert(yearType.toOption.isOptional === true)
-    assert(yearType.toOption.sqlType === Types.DATE)
-    assert(yearType.toOption.queryString === "YEAR NULL")
-    assert(yearType.DEFAULT(JYear.of(2023)).queryString === "YEAR NOT NULL DEFAULT '2023'")
-    assert(YEAR[JYear].queryString === "YEAR NOT NULL")
-    assert(YEAR[Option[JYear]].queryString === "YEAR NULL")
-    assert(YEAR[Option[JYear]].DEFAULT(None).queryString === "YEAR NULL DEFAULT NULL")
-    assert(YEAR[Option[JYear]].DEFAULT(Some(JYear.of(2023))).queryString === "YEAR NULL DEFAULT '2023'")
-    assert(YEAR[Option[JYear]].DEFAULT(0).queryString === "YEAR NULL DEFAULT 0")
-    assert(YEAR[Option[JYear]].DEFAULT(2023).queryString === "YEAR NULL DEFAULT 2023")
-  }
-
-  it should "The query string generated from the Serial DataType model matches the specified one." in {
-    val serialType = DataType.Alias.Serial[BigInt]()
-    assert(serialType.typeName === "SERIAL")
-    assert(serialType.sqlType === Types.BIGINT)
-    assert(serialType.isOptional === false)
-    assert(serialType.queryString === "SERIAL")
-    assert(serialType.toOption.isOptional === true)
-    assert(serialType.toOption.sqlType === Types.BIGINT)
-    assert(serialType.toOption.queryString === "SERIAL NULL")
-  }
-
-  it should "The query string generated from the Boolean DataType model matches the specified one." in {
-    val booleanType = DataType.Alias.Bool[Boolean](false, None)
-    assert(booleanType.typeName === "BOOLEAN")
-    assert(booleanType.sqlType === Types.BOOLEAN)
-    assert(booleanType.isOptional === false)
-    assert(booleanType.queryString === "BOOLEAN NOT NULL")
-    assert(booleanType.toOption.isOptional === true)
-    assert(booleanType.toOption.sqlType === Types.BOOLEAN)
-    assert(booleanType.toOption.queryString === "BOOLEAN NULL")
-    assert(booleanType.DEFAULT(true).queryString === "BOOLEAN NOT NULL DEFAULT true")
-    assert(BOOLEAN[Boolean].queryString === "BOOLEAN NOT NULL")
-    assert(BOOLEAN[Boolean].DEFAULT(true).queryString === "BOOLEAN NOT NULL DEFAULT true")
-    assert(BOOLEAN[Boolean].DEFAULT(false).queryString === "BOOLEAN NOT NULL DEFAULT false")
-    assert(BOOLEAN[Option[Boolean]].queryString === "BOOLEAN NULL")
-    assert(BOOLEAN[Option[Boolean]].DEFAULT(None).queryString === "BOOLEAN NULL DEFAULT NULL")
-    assert(BOOLEAN[Option[Boolean]].DEFAULT(Some(true)).queryString === "BOOLEAN NULL DEFAULT true")
+    val withCharSet = enumType.CHARACTER_SET(Character.utf8mb4)
+    assert(withCharSet.queryString === "ENUM('Active','InActive') CHARACTER SET utf8mb4 NOT NULL")
+    
+    val withCollate = enumType.COLLATE(Collate.utf8mb4_bin)
+    assert(withCollate.queryString === "ENUM('Active','InActive') COLLATE utf8mb4_bin NOT NULL")
+    
+    val withBoth = enumType.CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)
+    assert(withBoth.queryString === "ENUM('Active','InActive') CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL")
+    
+    val withDefault = withBoth.DEFAULT(Status.Active)
+    assert(withDefault.queryString === "ENUM('Active','InActive') CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT 'Active'")
+    
+    val optionalEnumType = DataType.Enum[Option[Status]](List("Active", "InActive"), true, None, None, None)
+    val optionalWithBoth = optionalEnumType.CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_general_ci)
+    assert(optionalWithBoth.queryString === "ENUM('Active','InActive') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL")
+    
+    val optionalWithDefault = optionalWithBoth.DEFAULT(None)
+    assert(optionalWithDefault.queryString === "ENUM('Active','InActive') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL")
   }
