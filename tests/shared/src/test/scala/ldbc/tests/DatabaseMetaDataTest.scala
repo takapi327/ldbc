@@ -1446,7 +1446,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getCatalogs") {
     // Waiting for Schema values to increase or decrease in other tests.
-    IO.sleep(5.seconds) *> cassertIO(
+    IO.sleep(5.seconds) *> assertIO(
       connection.use { conn =>
         for
           metaData  <- conn.getMetaData()
