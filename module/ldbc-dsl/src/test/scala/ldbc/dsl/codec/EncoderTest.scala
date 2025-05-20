@@ -35,7 +35,7 @@ class EncoderTest extends CatsEffectSuite:
   test("Encoder derived should work with case classes") {
     case class User(id: Long, name: String)
     given Encoder[User] = Encoder.derived[User]
-    val user = User(1L, "test")
+    val user            = User(1L, "test")
     assertEquals(
       Encoder[User].encode(user),
       Encoder.Encoded.Success(List(1, "test"))
@@ -55,20 +55,20 @@ class EncoderTest extends CatsEffectSuite:
   test("Encoder.Encoded product with success and failure should result in failure") {
     val success = Encoder.Encoded.Success(List("test"))
     val failure = Encoder.Encoded.Failure(NonEmptyList.of("test"))
-    val result = success.product(failure)
+    val result  = success.product(failure)
     assertEquals(result, Encoder.Encoded.Failure(NonEmptyList.of("test")))
   }
 
   test("Encoder.Encoded product with two successes should combine their values") {
     val success1 = Encoder.Encoded.success(List("test1"))
     val success2 = Encoder.Encoded.success(List("test2"))
-    val result = success1.product(success2)
+    val result   = success1.product(success2)
     assertEquals(result, Encoder.Encoded.Success(List("test1", "test2")))
   }
 
   test("Encoder.Encoded product with two failures should combine their error messages") {
     val failure1 = Encoder.Encoded.failure("test1")
     val failure2 = Encoder.Encoded.failure("test2")
-    val result = failure1.product(failure2)
+    val result   = failure1.product(failure2)
     assertEquals(result, Encoder.Encoded.Failure(NonEmptyList.of("test2", "test1")))
   }
