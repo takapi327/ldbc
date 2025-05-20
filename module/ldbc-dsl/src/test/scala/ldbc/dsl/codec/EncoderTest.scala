@@ -43,13 +43,17 @@ class EncoderTest extends CatsEffectSuite:
   }
 
   test("Encoder product should combine two encoders") {
-    val tuple = Encoder[String].product(Encoder[Long])
-    assertEquals(tuple.encode(("test", 123L)), Encoder.Encoded.Success(List("test", 123L)))
+    val tuple2 = Encoder[String].product(Encoder[Long])
+    val tuple3 = Encoder[String].product(Encoder[Long]).product(Encoder[Int])
+    assertEquals(tuple2.encode(("test", 123L)), Encoder.Encoded.Success(List("test", 123L)))
+    assertEquals(tuple3.encode((("test", 123L), 456)), Encoder.Encoded.Success(List("test", 123L, 456)))
   }
 
   test("Encoder for tuple should work with predefined instances") {
-    val tuple = Encoder[(String, Long)]
-    assertEquals(tuple.encode(("test", 123L)), Encoder.Encoded.Success(List("test", 123L)))
+    val tuple2 = Encoder[(String, Long)]
+    val tuple3 = Encoder[(String, Long, Int)]
+    assertEquals(tuple2.encode(("test", 123L)), Encoder.Encoded.Success(List("test", 123L)))
+    assertEquals(tuple3.encode(("test", 123L, 456)), Encoder.Encoded.Success(List("test", 123L, 456)))
   }
 
   test("Encoder.Encoded product with success and failure should result in failure") {
