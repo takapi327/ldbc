@@ -27,7 +27,7 @@ class EncoderTest extends CatsEffectSuite:
   }
 
   test("Encoder opt should handle Option values") {
-    val stringOpt = string.opt
+    val stringOpt: Encoder[Option[String]] = string.opt
     assertEquals(stringOpt.encode(None), Encoder.Encoded.Success(List(None)))
     assertEquals(stringOpt.encode(Some("test")), Encoder.Encoded.Success(List("test")))
   }
@@ -56,6 +56,13 @@ class EncoderTest extends CatsEffectSuite:
     val success = Encoder.Encoded.Success(List("test"))
     val failure = Encoder.Encoded.Failure(NonEmptyList.of("test"))
     val result  = success.product(failure)
+    assertEquals(result, Encoder.Encoded.Failure(NonEmptyList.of("test")))
+  }
+
+  test("Encoder.Encoded product with failure and success should result in failure") {
+    val failure = Encoder.Encoded.Failure(NonEmptyList.of("test"))
+    val success = Encoder.Encoded.Success(List("test"))
+    val result  = failure.product(success)
     assertEquals(result, Encoder.Encoded.Failure(NonEmptyList.of("test")))
   }
 
