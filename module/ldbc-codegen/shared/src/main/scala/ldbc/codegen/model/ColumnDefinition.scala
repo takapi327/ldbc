@@ -17,7 +17,7 @@ case class ColumnDefinition(
     case _                                       => true
   }.headOption.getOrElse(true))
 
-  val _attributes = attributes.fold("")(attributes =>
+  val _attributes: String = attributes.fold("")(attributes =>
     val result = attributes.flatMap {
       case attribute: CommentSet                              => Some(s"COMMENT(\"${ attribute.message }\")")
       case attribute: ColumnDefinition.Attribute.Key          => Some(s"${ attribute.kind }")

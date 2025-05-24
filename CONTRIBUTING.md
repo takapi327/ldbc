@@ -4,6 +4,8 @@ These guidelines are meant to be a living document that should be changed and ad
 
 ## Tooling
 
+The ldbc development environment is managed by [Nix](https://github.com/NixOS/nix), so you should only need to run `nix develop`.
+
 ldbc is built with [sbt](https://github.com/sbt/sbt), and you should be able to jump right in by running `sbt test`.
 
 Please make sure to run `sbt scalafmtAll` (and commit the results!) before opening a pull request. This will take care of running both scalafmt, ensuring that the build doesn't just immediately fail to compile your work.

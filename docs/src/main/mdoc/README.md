@@ -37,18 +37,18 @@ Note that **ldbc** is pre-1.0 software and is still undergoing active developmen
 
 ldbc is available on the JVM, Scala.js, and ScalaNative
 
-| Module / Platform    | JVM | Scala Native | Scala.js | Scaladoc                                                                                                                                                                      |
-|----------------------|:---:|:------------:|:--------:|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `ldbc-sql`           |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://javadoc.io/badge2/io.github.takapi327/ldbc-sql_3/javadoc.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-sql_3)                     |
-| `ldbc-connector`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://javadoc.io/badge2/io.github.takapi327/ldbc-connector_3/javadoc.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-connector_3)         |
-| `jdbc-connector`     |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://javadoc.io/badge2/io.github.takapi327/jdbc-connector_3/javadoc.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/jdbc-connector_3)         |
-| `ldbc-dsl`           |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://javadoc.io/badge2/io.github.takapi327/ldbc-dsl_3/javadoc.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3)                     |
-| `ldbc-statement`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://javadoc.io/badge2/io.github.takapi327/ldbc-statement_3/javadoc.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-statement_3)         |
-| `ldbc-query-builder` |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://javadoc.io/badge2/io.github.takapi327/ldbc-query-builder_3/javadoc.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-query-builder_3) |
-| `ldbc-schema`        |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://javadoc.io/badge2/io.github.takapi327/ldbc-schema_3/javadoc.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-schema_3)               |
-| `ldbc-codegen`       |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://javadoc.io/badge2/io.github.takapi327/ldbc-codegen_3/javadoc.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-codegen_3)             |
-| `ldbc-hikari`        |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://javadoc.io/badge2/io.github.takapi327/ldbc-hikari_3/javadoc.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-hikari_3)               |
-| `ldbc-plugin`        |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://javadoc.io/badge2/io.github.takapi327/ldbc-plugin_2.12_1.0/javadoc.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-plugin_2.12_1.0) |
+| Module / Platform    | JVM | Scala Native | Scala.js | Scaladoc                                                                                                                                                  |
+|----------------------|:---:|:------------:|:--------:|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ldbc-sql`           |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-sql_3)           |
+| `ldbc-connector`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-connector_3)     |
+| `jdbc-connector`     |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/jdbc-connector_3)     |
+| `ldbc-dsl`           |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3)           |
+| `ldbc-statement`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-statement_3)     |
+| `ldbc-query-builder` |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-query-builder_3) |
+| `ldbc-schema`        |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-schema_3)        |
+| `ldbc-codegen`       |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-codegen_3)       |
+| `ldbc-hikari`        |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-hikari_3)        |
+| `ldbc-plugin`        |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-plugin_2.12_1.0) |
 
 ## Quick Start
 

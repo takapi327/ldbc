@@ -37,7 +37,7 @@ trait Parameter:
    */
   def encode: BitVector
 
-  override def toString: String = new String(sql)
+  override def toString: String = sql
 
 object Parameter:
 

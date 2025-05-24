@@ -6,6 +6,8 @@
 
 package ldbc.tests
 
+import scala.concurrent.duration.*
+
 import cats.effect.*
 
 import munit.*
@@ -1443,7 +1445,8 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
   }
 
   test(s"$prefix: getCatalogs") {
-    assertIO(
+    // Waiting for Schema values to increase or decrease in other tests.
+    IO.sleep(5.seconds) *> assertIO(
       connection.use { conn =>
         for
           metaData  <- conn.getMetaData()

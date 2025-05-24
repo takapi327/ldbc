@@ -20,7 +20,7 @@ import ldbc.sql.PreparedStatement
 import ldbc.connector.data.*
 import ldbc.connector.exception.SQLException
 
-private[ldbc] trait SharedPreparedStatement[F[_]: Functor]
+private[ldbc] trait SharedPreparedStatement[F[_]: MonadThrow]
   extends PreparedStatement[F],
           StatementImpl.ShareStatement[F]:
 
@@ -84,7 +84,10 @@ private[ldbc] trait SharedPreparedStatement[F[_]: Functor]
       case value if value.isInstanceOf[LocalDate]   => setDate(parameterIndex, value.asInstanceOf[LocalDate])
       case value if value.isInstanceOf[LocalDateTime] =>
         setTimestamp(parameterIndex, value.asInstanceOf[LocalDateTime])
-      case unknown => throw new SQLException(s"Unsupported object type ${ unknown.getClass.getName } for setObject")
+      case unknown =>
+        MonadThrow[F].raiseError(
+          new SQLException(s"Unsupported object type ${ unknown.getClass.getName } for setObject")
+        )
 
   override def executeUpdate(): F[Int] = executeLargeUpdate().map(_.toInt)
 
