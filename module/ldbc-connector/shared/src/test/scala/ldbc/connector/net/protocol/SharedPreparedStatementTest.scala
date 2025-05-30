@@ -35,7 +35,7 @@ class SharedPreparedStatementTest extends SharedPreparedStatement[IO], FTestPlat
   override val updateCount:       Ref[IO, Long]              = Ref.unsafe[IO, Long](0L)
 
   // Implementation of required methods from Statement
-  override def clearBatch(): IO[Unit] = IO.unit
+  override def clearBatch():       IO[Unit]      = IO.unit
   override def getGeneratedKeys(): IO[ResultSet] =
     IO.raiseError(new UnsupportedOperationException("Not implemented for test"))
 
@@ -256,7 +256,7 @@ class SharedPreparedStatementTest extends SharedPreparedStatement[IO], FTestPlat
       _      <- setInt(1, 100)
       params <- params.get
       result <- IO.delay(buildBatchQuery("SELECT * FROM users WHERE id = ?", params)).attempt
-      _ <- IO(
+      _      <- IO(
              assert(
                result.isLeft && result.left.exists(
                  _.getMessage == "The batch query must be an INSERT, UPDATE, or DELETE statement."

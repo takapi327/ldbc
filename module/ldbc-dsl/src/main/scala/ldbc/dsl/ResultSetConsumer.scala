@@ -57,7 +57,7 @@ object ResultSetConsumer:
       if resultSet.next() then
         decoder.decode(resultSet, FIRST_OFFSET) match
           case Right(value) => ev.pure(Some(value))
-          case Left(error) =>
+          case Left(error)  =>
             ev.raiseError(new DecodeFailureException(error.message, decoder.offset, statement, error.cause))
       else ev.pure(None)
 

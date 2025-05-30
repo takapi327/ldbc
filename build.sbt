@@ -13,11 +13,11 @@ import ProjectKeys.*
 import ScalaVersions.*
 import Workflows.*
 
-ThisBuild / tlBaseVersion      := LdbcVersions.latest
-ThisBuild / tlFatalWarnings    := true
-ThisBuild / projectName        := "ldbc"
-ThisBuild / scalaVersion       := scala3
-ThisBuild / crossScalaVersions := Seq(scala3, scala37)
+ThisBuild / tlBaseVersion              := LdbcVersions.latest
+ThisBuild / tlFatalWarnings            := true
+ThisBuild / projectName                := "ldbc"
+ThisBuild / scalaVersion               := scala3
+ThisBuild / crossScalaVersions         := Seq(scala3, scala37)
 ThisBuild / githubWorkflowJavaVersions := Seq(
   JavaSpec.corretto(java11),
   JavaSpec.corretto(java17),
@@ -386,17 +386,17 @@ lazy val mcpDocumentServer = crossProject(JSPlatform)
     libraryDependencies += "io.github.takapi327" %%% "mcp-scala-server" % "0.1.0-alpha2"
   )
   .jsSettings(
-    npmPackageName         := "@ldbc/mcp-document-server",
-    npmPackageDescription  := (Compile / description).value,
-    npmPackageKeywords     := Seq("mcp", "scala", "ldbc"),
-    npmPackageAuthor       := "takapi327",
-    npmPackageLicense      := Some("MIT"),
-    npmPackageBinaryEnable := true,
-    npmPackageVersion      := "0.1.0-alpha5",
-    npmPackageREADME       := Some(baseDirectory.value / "README.md"),
+    npmPackageName                := "@ldbc/mcp-document-server",
+    npmPackageDescription         := (Compile / description).value,
+    npmPackageKeywords            := Seq("mcp", "scala", "ldbc"),
+    npmPackageAuthor              := "takapi327",
+    npmPackageLicense             := Some("MIT"),
+    npmPackageBinaryEnable        := true,
+    npmPackageVersion             := "0.1.0-alpha5",
+    npmPackageREADME              := Some(baseDirectory.value / "README.md"),
     npmPackageAdditionalNpmConfig := Map(
-      "homepage" -> _root_.io.circe.Json.fromString("https://takapi327.github.io/ldbc/"),
-      "private"  -> _root_.io.circe.Json.fromBoolean(false),
+      "homepage"      -> _root_.io.circe.Json.fromString("https://takapi327.github.io/ldbc/"),
+      "private"       -> _root_.io.circe.Json.fromBoolean(false),
       "publishConfig" -> _root_.io.circe.Json.obj(
         "access" -> _root_.io.circe.Json.fromString("public")
       )

@@ -64,7 +64,7 @@ object Main extends ResourceApp.Forever:
   override def run(args: List[String]): Resource[IO, Unit] =
     for
       conn <- provider.createConnection()
-      _ <- EmberServerBuilder
+      _    <- EmberServerBuilder
              .default[IO]
              .withHttpApp(routes(conn).orNotFound)
              .build

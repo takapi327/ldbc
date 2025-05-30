@@ -88,7 +88,7 @@ object BitVectorSocket:
       socket        <- sockets
       initialPacket <- Resource.eval(Initial[F](socket).start)
       _             <- Resource.eval(initialPacketRef.set(Some(initialPacket)))
-      socket$ <- sslOptions.fold(socket.pure[Resource[F, *]])(option =>
+      socket$       <- sslOptions.fold(socket.pure[Resource[F, *]])(option =>
                    SSLNegotiation.negotiateSSL(socket, capabilitiesFlags, option, sequenceIdRef)
                  )
       carryRef <- Resource.eval(Ref[F].of(Chunk.empty[Byte]))

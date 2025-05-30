@@ -13,7 +13,7 @@ import ldbc.connector.net.packet.request.SSLRequestPacket
 class SSLRequestPacketTest extends FTestPlatform:
 
   test("SSLRequestPacket creation and properties") {
-    val sequenceId = 1.toByte
+    val sequenceId      = 1.toByte
     val capabilityFlags = Set(
       CapabilitiesFlags.CLIENT_SSL,
       CapabilitiesFlags.CLIENT_PROTOCOL_41
@@ -30,7 +30,7 @@ class SSLRequestPacketTest extends FTestPlatform:
   }
 
   test("SSLRequestPacket encoder with CLIENT_PROTOCOL_41") {
-    val sequenceId = 1.toByte
+    val sequenceId      = 1.toByte
     val capabilityFlags = Set(
       CapabilitiesFlags.CLIENT_SSL,
       CapabilitiesFlags.CLIENT_PROTOCOL_41
@@ -68,7 +68,7 @@ class SSLRequestPacketTest extends FTestPlatform:
   }
 
   test("SSLRequestPacket encoder without CLIENT_PROTOCOL_41") {
-    val sequenceId = 2.toByte
+    val sequenceId      = 2.toByte
     val capabilityFlags = Set(
       CapabilitiesFlags.CLIENT_SSL
         // No CLIENT_PROTOCOL_41

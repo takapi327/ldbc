@@ -33,7 +33,7 @@ private object DBIOA:
    * @see: https://scala-lang.org/2024/08/19/given-priority-change-3.7.html
    */
   implicit def monadThrowDBIO: MonadThrow[DBIO] = new MonadThrow[DBIO]:
-    override def pure[A](a:        A): DBIO[A] = DBIO.liftF(DBIO.Pure(a))
+    override def pure[A](a:        A):                             DBIO[A] = DBIO.liftF(DBIO.Pure(a))
     override def flatMap[A, B](fa: DBIO[A])(f: A => DBIO[B]) = fa.flatMap(f)
     override def tailRecM[A, B](a: A)(f: A => DBIO[Either[A, B]]): DBIO[B] = f(a).flatMap {
       case Left(next)   => tailRecM(next)(f)
@@ -131,7 +131,7 @@ object DBIO extends ParamBinder:
   def sequence(statements: List[String]): DBIO[Array[Int]] = liftF(Sequence(statements))
   def pure[A](value:       A):            DBIO[A]          = Free.pure(value)
   def raiseError[A](e:     Throwable):    DBIO[A]          = Free.liftF(RaiseError(e))
-  def sequence[A](dbios: DBIO[A]*): DBIO[List[A]] =
+  def sequence[A](dbios: DBIO[A]*):       DBIO[List[A]]    =
     dbios.toList.sequence
 
   extension [F[_]: MonadCancelThrow](connection: Connection[F])
@@ -154,12 +154,12 @@ object DBIO extends ParamBinder:
               (for
                 prepareStatement <- connection.prepareStatement(statement)
                 resultSet        <- paramBind(prepareStatement, params) >> prepareStatement.executeQuery()
-                result <- {
+                result           <- {
                   val builder = factory.newBuilder
                   while resultSet.next() do
                     decoder.decode(resultSet, 1) match
                       case Right(value) => builder += value
-                      case Left(error) =>
+                      case Left(error)  =>
                         throw new ldbc.dsl.exception.DecodeFailureException(
                           error.message,
                           decoder.offset,
@@ -178,7 +178,7 @@ object DBIO extends ParamBinder:
             case Update(statement, params) =>
               (for
                 prepareStatement <- connection.prepareStatement(statement)
-                result <-
+                result           <-
                   paramBind(prepareStatement, params) >> prepareStatement.executeUpdate() <* prepareStatement
                     .close()
               yield result)

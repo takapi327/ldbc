@@ -56,6 +56,6 @@ object SqlFileBuilder:
 
     Files.write(outputFile.toPath, queryString.getBytes(summon[Codec].name))
 
-  def build(output: String, database: Database): Unit = build(output, None, database)
+  def build(output: String, database: Database):                   Unit = build(output, None, database)
   def build(output: String, fileName: String, database: Database): Unit =
     build(output, Some(fileName), database)

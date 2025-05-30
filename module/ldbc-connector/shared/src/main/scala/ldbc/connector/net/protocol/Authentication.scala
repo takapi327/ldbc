@@ -43,7 +43,7 @@ trait Authentication[F[_]: Hashing: Sync]:
       case "mysql_native_password" => Right(MysqlNativePasswordPlugin[F]())
       case "sha256_password"       => Right(Sha256PasswordPlugin[F]())
       case "caching_sha2_password" => Right(CachingSha2PasswordPlugin[F](version))
-      case unknown =>
+      case unknown                 =>
         Left(
           new SQLInvalidAuthorizationSpecException(
             s"Unknown authentication plugin: $pluginName",

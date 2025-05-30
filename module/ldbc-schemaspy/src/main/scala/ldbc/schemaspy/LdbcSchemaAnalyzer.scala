@@ -136,7 +136,7 @@ class LdbcSchemaAnalyzer(
     val results = mustacheSummaryDiagramFactory.generateSummaryDiagrams(db, tables, progressListener)
     results.getOutputExceptions.stream().forEachOrdered(_.printStackTrace())
 
-    val dataTableConfig = new DataTableConfig(commandLineArguments)
+    val dataTableConfig  = new DataTableConfig(commandLineArguments)
     val mustacheCompiler = new MustacheCompiler(
       db.getName,
       db.getSchema.getName,

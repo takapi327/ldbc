@@ -69,7 +69,7 @@ object ConnectionProvider:
       _logHandler: Option[LogHandler[F]]
     ): ConnectionProvider[F] =
       new ConnectionProvider[F]:
-        override def logHandler: Option[LogHandler[F]] = _logHandler
+        override def logHandler:         Option[LogHandler[F]]      = _logHandler
         override def createConnection(): Resource[F, Connection[F]] =
           Resource
             .fromAutoCloseable(ev.blocking {

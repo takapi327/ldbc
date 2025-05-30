@@ -41,7 +41,7 @@ case class DataTypeCodeBuilder(scalaType: String, formatter: Naming):
       case data: DataType.VARBINARY => s"${ data.name }[$scalaType](${ data.length })"
       case data: DataType.TINYBLOB  => s"${ data.name }[$scalaType]()"
       case data: DataType.TINYTEXT  => s"${ data.name }[$scalaType]()" + buildCharacterSet(data.character, data.collate)
-      case data: DataType.ENUM =>
+      case data: DataType.ENUM      =>
         s"${ data.name }[$scalaType]" + buildCharacterSet(
           data.character,
           data.collate

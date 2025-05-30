@@ -650,8 +650,8 @@ object MysqlType:
       case name
         if name.contains("DECIMAL") | name.contains("DEC") | name.contains("NUMERIC") | name.contains("FIXED") =>
         if fullMysqlTypeName.contains("UNSIGNED") then MysqlType.DECIMAL_UNSIGNED else MysqlType.DECIMAL
-      case name if name.contains("TINYBLOB") => MysqlType.TINYBLOB
-      case name if name.contains("TINYTEXT") => MysqlType.TINYTEXT
+      case name if name.contains("TINYBLOB")                                                => MysqlType.TINYBLOB
+      case name if name.contains("TINYTEXT")                                                => MysqlType.TINYTEXT
       case name if name.contains("TINYINT") | name.contains("TINY") | name.contains("INT1") =>
         if fullMysqlTypeName.contains("UNSIGNED") then MysqlType.TINYINT_UNSIGNED else MysqlType.TINYINT
       case name
@@ -661,7 +661,7 @@ object MysqlType:
         if fullMysqlTypeName.contains("UNSIGNED") then MysqlType.SMALLINT_UNSIGNED else MysqlType.SMALLINT
       case name if name.contains("BIGINT") | name.contains("SERIAL") | name.contains("INT8") =>
         if fullMysqlTypeName.contains("UNSIGNED") then MysqlType.BIGINT_UNSIGNED else MysqlType.BIGINT
-      case name if name.contains("POINT") => MysqlType.GEOMETRY
+      case name if name.contains("POINT")                                                  => MysqlType.GEOMETRY
       case name if name.contains("INT") | name.contains("INTEGER") | name.contains("INT4") =>
         if fullMysqlTypeName.contains("UNSIGNED") then MysqlType.INT_UNSIGNED else MysqlType.INT
       case name if name.contains("DOUBLE") | name.contains("REAL") | name.contains("FLOAT8") =>

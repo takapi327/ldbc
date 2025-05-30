@@ -46,7 +46,7 @@ trait ColumnParser extends DataTypeParser:
       failureMessage("default null", "DEFAULT NULL")
     )
 
-  private def bitValue: Parser[Int] = opt("b") ~> "'" ~> digit <~ "'"
+  private def bitValue:  Parser[Int]     = opt("b") ~> "'" ~> digit <~ "'"
   private def boolValue: Parser[Boolean] = (caseSensitivity("true") | caseSensitivity("false")) ^^ {
     case str if "(?i)true".r.matches(str)  => true
     case str if "(?i)false".r.matches(str) => false

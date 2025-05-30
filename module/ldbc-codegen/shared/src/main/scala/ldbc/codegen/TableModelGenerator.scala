@@ -54,7 +54,7 @@ private[ldbc] object TableModelGenerator:
 
     val custom = customParser.flatMap(_.find(_.name == statement.tableName))
 
-    val className = classNameFormatter.format(statement.tableName)
+    val className  = classNameFormatter.format(statement.tableName)
     val properties = statement.columnDefinitions.map(column =>
       propertyGenerator(
         className,
@@ -75,7 +75,7 @@ private[ldbc] object TableModelGenerator:
       )
 
     val directory = sourceManaged.toPath.resolve(database)
-    val output = if !directory.toFile.exists() then
+    val output    = if !directory.toFile.exists() then
       directory.toFile.getParentFile.mkdirs()
       Files.createDirectory(directory)
     else directory

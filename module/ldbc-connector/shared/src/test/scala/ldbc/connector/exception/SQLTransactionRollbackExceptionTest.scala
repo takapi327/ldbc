@@ -79,7 +79,7 @@ class SQLTransactionRollbackExceptionTest extends FTestPlatform:
       sqlState   = Some("40001"),
       vendorCode = Some(1213),
       sql        = Some("UPDATE accounts SET balance = balance - ? WHERE id = ?"),
-      params = SortedMap(
+      params     = SortedMap(
         1 -> Parameter.int(100),
         2 -> Parameter.int(42)
       )

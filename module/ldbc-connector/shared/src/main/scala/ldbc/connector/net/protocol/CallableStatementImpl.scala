@@ -161,7 +161,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer](
     checkClosed() *> moreResults.get.flatMap { isMoreResults =>
       if isMoreResults then
         resultSets.get.flatMap {
-          case Nil => moreResults.set(false) *> F.pure(false)
+          case Nil               => moreResults.set(false) *> F.pure(false)
           case resultSet :: tail =>
             currentResultSet.set(Some(resultSet)) *> resultSets.set(tail) *> F.pure(true)
         }
@@ -219,7 +219,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer](
                     args
                       .foldLeft(F.pure(Vector.empty[Long])) { ($acc, _) =>
                         for
-                          acc <- $acc
+                          acc    <- $acc
                           result <-
                             protocol
                               .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
@@ -248,7 +248,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer](
       case Statement.RETURN_GENERATED_KEYS =>
         for
           lastInsertId <- lastInsertId.get
-          resultSet <- F.pure(
+          resultSet    <- F.pure(
                          ResultSetImpl(
                            Vector(new ColumnDefinitionPacket:
                              override def table:      String                     = ""
@@ -540,8 +540,8 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer](
 
   private def receiveUntilOkPacket(resultSets: Vector[ResultSetImpl]): F[Vector[ResultSetImpl]] =
     protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
-      case _: OKPacket      => resultSets.pure[F]
-      case error: ERRPacket => F.raiseError(error.toException(Some(sql), None))
+      case _: OKPacket                 => resultSets.pure[F]
+      case error: ERRPacket            => F.raiseError(error.toException(Some(sql), None))
       case result: ColumnsNumberPacket =>
         for
           columnDefinitions <-
@@ -575,7 +575,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer](
               protocol.initialPacket.serverVersion
             )
         )
-      case error: ERRPacket => F.raiseError(error.toException(Some(sql), None))
+      case error: ERRPacket            => F.raiseError(error.toException(Some(sql), None))
       case result: ColumnsNumberPacket =>
         for
           columnDefinitions <-

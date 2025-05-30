@@ -81,7 +81,7 @@ class ColumnDefinitionTest extends CatsEffectSuite:
 
   test("ColumnDefinition should filter out unsupported attributes in _attributes string") {
     val defaultAttr = ColumnDefinition.Attribute.Default.Value("active")
-    val column = ColumnDefinition(
+    val column      = ColumnDefinition(
       "status",
       DataType.ENUM(List("active", "inactive", "suspended"), None, None),
       Some(

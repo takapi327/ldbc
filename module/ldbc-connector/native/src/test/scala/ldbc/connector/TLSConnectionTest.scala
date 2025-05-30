@@ -17,7 +17,7 @@ class TLSConnectionTest extends FTestPlatform:
   test("Verify that you can connect to MySQL with a TLS connection") {
     assertIO(
       (for
-        ca <- Resource.eval(Files[IO].readAll(Path("database/ssl/ca.pem")).through(text.utf8.decode).compile.string)
+        ca  <- Resource.eval(Files[IO].readAll(Path("database/ssl/ca.pem")).through(text.utf8.decode).compile.string)
         cfg <- S2nConfig.builder
                  .withPemsToTrustStore(List(ca))
                  .build[IO]

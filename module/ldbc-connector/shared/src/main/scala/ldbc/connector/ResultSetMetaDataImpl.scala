@@ -122,7 +122,7 @@ private[ldbc] class ResultSetMetaDataImpl(
   private def getMaxBytesPerChar(charsetIndex: Int, javaCharsetName: String): Int =
     CharsetMapping.getStaticMysqlCharsetNameForCollationIndex(charsetIndex) match
       case Some(charsetName) => CharsetMapping.getStaticMblen(charsetName)
-      case None =>
+      case None              =>
         CharsetMapping.getStaticMysqlCharsetForJavaEncoding(javaCharsetName, Some(version)) match
           case Some(charsetName) => CharsetMapping.getStaticMblen(charsetName)
           case None              => 1

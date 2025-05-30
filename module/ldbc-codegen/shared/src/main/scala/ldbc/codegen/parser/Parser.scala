@@ -24,7 +24,7 @@ case class Parser(fileName: String) extends DatabaseStatementParser, SetParser:
     var currentDatabase: String = ""
     phrase(rep(sentence) <~ end) ^^ { statements =>
       statements.flatMap {
-        case statement: Table.CreateStatement => Some(currentDatabase -> List(statement))
+        case statement: Table.CreateStatement    => Some(currentDatabase -> List(statement))
         case statement: Database.CreateStatement =>
           currentDatabase = statement.name
           None

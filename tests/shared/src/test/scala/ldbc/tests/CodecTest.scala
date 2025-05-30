@@ -152,8 +152,8 @@ trait CodecTest extends CatsEffectSuite:
     assertIO(
       connectionFixture().setCatalog("codec_test") *>
         (for
-          _ <- sql"CREATE TABLE array_byte_test (data BLOB)".update
-          _ <- sql"INSERT INTO array_byte_test (data) VALUES (${ Array[Byte](1, 2, 3) })".update
+          _      <- sql"CREATE TABLE array_byte_test (data BLOB)".update
+          _      <- sql"INSERT INTO array_byte_test (data) VALUES (${ Array[Byte](1, 2, 3) })".update
           result <-
             sql"SELECT * FROM array_byte_test WHERE data = ${ Array[Byte](1, 2, 3) }".query[Array[Byte]].to[Option]
         yield result.map(_.mkString(","))).transaction(connectionFixture()),
@@ -165,8 +165,8 @@ trait CodecTest extends CatsEffectSuite:
     assertIO(
       connectionFixture().setCatalog("codec_test") *>
         (for
-          _ <- sql"CREATE TABLE local_time_test (time TIME)".update
-          _ <- sql"INSERT INTO local_time_test (time) VALUES (${ LocalTime.of(12, 34, 56) })".update
+          _      <- sql"CREATE TABLE local_time_test (time TIME)".update
+          _      <- sql"INSERT INTO local_time_test (time) VALUES (${ LocalTime.of(12, 34, 56) })".update
           result <-
             sql"SELECT * FROM local_time_test WHERE time = ${ LocalTime.of(12, 34, 56) }".query[LocalTime].to[Option]
         yield result).transaction(connectionFixture()),
@@ -178,8 +178,8 @@ trait CodecTest extends CatsEffectSuite:
     assertIO(
       connectionFixture().setCatalog("codec_test") *>
         (for
-          _ <- sql"CREATE TABLE local_date_test (date DATE)".update
-          _ <- sql"INSERT INTO local_date_test (date) VALUES (${ LocalDate.of(2023, 4, 5) })".update
+          _      <- sql"CREATE TABLE local_date_test (date DATE)".update
+          _      <- sql"INSERT INTO local_date_test (date) VALUES (${ LocalDate.of(2023, 4, 5) })".update
           result <-
             sql"SELECT * FROM local_date_test WHERE date = ${ LocalDate.of(2023, 4, 5) }".query[LocalDate].to[Option]
         yield result).transaction(connectionFixture()),
@@ -219,8 +219,8 @@ trait CodecTest extends CatsEffectSuite:
     assertIO(
       connectionFixture().setCatalog("codec_test") *>
         (for
-          _ <- sql"CREATE TABLE year_month_test (ymonth VARCHAR(7))".update
-          _ <- sql"INSERT INTO year_month_test (ymonth) VALUES (${ YearMonth.of(2023, 4) })".update
+          _      <- sql"CREATE TABLE year_month_test (ymonth VARCHAR(7))".update
+          _      <- sql"INSERT INTO year_month_test (ymonth) VALUES (${ YearMonth.of(2023, 4) })".update
           result <-
             sql"SELECT * FROM year_month_test WHERE ymonth = ${ YearMonth.of(2023, 4) }".query[YearMonth].to[Option]
         yield result).transaction(connectionFixture()),

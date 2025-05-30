@@ -76,7 +76,7 @@ class SQLIntegrityConstraintViolationExceptionTest extends FTestPlatform:
       sqlState   = Some("23503"),
       vendorCode = Some(1452),
       sql        = Some("INSERT INTO orders (user_id, product_id) VALUES (?, ?)"),
-      params = SortedMap(
+      params     = SortedMap(
         1 -> Parameter.int(999),
         2 -> Parameter.int(101)
       )
