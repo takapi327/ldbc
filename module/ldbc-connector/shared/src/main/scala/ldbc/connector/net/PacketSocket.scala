@@ -74,7 +74,7 @@ object PacketSocket:
       sequenceIdRef.get.map(sequenceId =>
         val bits        = request.encode
         val payloadSize = bits.toByteArray.length
-        val header = Chunk(
+        val header      = Chunk(
           payloadSize.toByte,
           ((payloadSize >> 8) & 0xff).toByte,
           ((payloadSize >> 16) & 0xff).toByte,
@@ -86,7 +86,7 @@ object PacketSocket:
     override def send(request: RequestPacket): F[Unit] =
       for
         bits <- buildRequest(request)
-        _ <-
+        _    <-
           debug(
             s"Client ${ AnsiColor.BLUE }→${ AnsiColor.RESET } Server: ${ AnsiColor.YELLOW }$request${ AnsiColor.RESET }"
           )

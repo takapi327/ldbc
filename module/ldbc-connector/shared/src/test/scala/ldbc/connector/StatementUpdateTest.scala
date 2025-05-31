@@ -58,12 +58,12 @@ class StatementUpdateTest extends FTestPlatform:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          _ <-
+          _         <-
             statement
               .executeUpdate(
                 "CREATE TABLE `auto_inc_table`(`id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, `c1` VARCHAR(255) NOT NULL)"
               )
-          _ <- statement.executeUpdate("INSERT INTO `auto_inc_table`(`id`, `c1`) VALUES (null, 'column 1')")
+          _         <- statement.executeUpdate("INSERT INTO `auto_inc_table`(`id`, `c1`) VALUES (null, 'column 1')")
           resultSet <-
             statement.executeUpdate(
               "INSERT INTO `auto_inc_table`(`id`, `c1`) VALUES (null, 'column 2')",

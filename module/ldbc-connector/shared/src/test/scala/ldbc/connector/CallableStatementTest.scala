@@ -47,7 +47,7 @@ class CallableStatementTest extends FTestPlatform:
         for
           callableStatement <- conn.prepareCall("CALL proc1()")
           resultSet         <- callableStatement.executeUpdate() *> callableStatement.getResultSet()
-          value <- resultSet match
+          value             <- resultSet match
                      case Some(rs) => IO(rs.getString(1))
                      case None     => IO.raiseError(new Exception("No result set"))
         yield Option(value)
@@ -219,7 +219,7 @@ class CallableStatementTest extends FTestPlatform:
       connection.use { conn =>
         for
           callableStatement <- conn.prepareCall("CALL demoSp(?, ?)")
-          _ <- callableStatement.setString(1, "abcdefg") *> callableStatement
+          _                 <- callableStatement.setString(1, "abcdefg") *> callableStatement
                  .registerOutParameter(2, Types.INTEGER)
         yield true
       }
@@ -233,7 +233,7 @@ class CallableStatementTest extends FTestPlatform:
       connection.use { conn =>
         for
           callableStatement <- conn.prepareCall("CALL demoSp(?, ?)")
-          _ <- callableStatement.setString(1, "abcdefg") *> callableStatement
+          _                 <- callableStatement.setString(1, "abcdefg") *> callableStatement
                  .registerOutParameter(2, Types.VARCHAR)
         yield true
       }
@@ -245,7 +245,7 @@ class CallableStatementTest extends FTestPlatform:
       connection.use { conn =>
         for
           callableStatement <- conn.prepareCall("CALL proc3(?, ?)")
-          _ <- callableStatement.setInt(1, 1024) *> callableStatement
+          _                 <- callableStatement.setInt(1, 1024) *> callableStatement
                  .registerOutParameter(2, Types.VARCHAR)
         yield true
       }

@@ -68,7 +68,7 @@ class BinaryProtocolValuePacketTest extends FTestPlatform:
 
   test("BinaryProtocolValuePacket encoder with string types") {
     val testString = "Hello MySQL"
-    val values = ListMap(
+    val values     = ListMap(
       ColumnDataType.MYSQL_TYPE_STRING -> testString
     )
 

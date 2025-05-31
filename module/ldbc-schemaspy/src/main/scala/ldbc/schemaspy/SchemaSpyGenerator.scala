@@ -119,7 +119,7 @@ object SchemaSpyGenerator:
     val sqlService = new SqlService()
 
     val databaseArguments: Seq[String] = buildDatabaseArguments(database)
-    val userArguments: Seq[String] = Seq(
+    val userArguments:     Seq[String] = Seq(
       "-u",
       user,
       "-o",

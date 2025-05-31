@@ -67,7 +67,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer](
   override def executeQuery(): F[ResultSet] =
     checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, ResultSet]("statement") { (span: Span[F]) =>
       for
-        parameter <- params.get
+        parameter   <- params.get
         columnCount <-
           span.addAttributes(
             (attributes ++ List(
@@ -199,7 +199,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer](
                         args
                           .foldLeft(F.pure(Vector.empty[Long])) { ($acc, _) =>
                             for
-                              acc <- $acc
+                              acc    <- $acc
                               result <-
                                 protocol
                                   .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))

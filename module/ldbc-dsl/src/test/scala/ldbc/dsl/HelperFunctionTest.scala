@@ -32,7 +32,7 @@ class HelperFunctionTest extends munit.CatsEffectSuite:
   test("A statement that constructs VALUES in multiple sql is the same as the specified string.") {
     case class Value(c1: Int, c2: String)
     given Codec[Value] = Codec.derived[Value]
-    val sql = sql"INSERT INTO `table` (`column1`, `column2`) " ++ values(
+    val sql            = sql"INSERT INTO `table` (`column1`, `column2`) " ++ values(
       NonEmptyList.of(Value(1, "value1"), Value(2, "value2"))
     )
     assertEquals(sql.statement, "INSERT INTO `table` (`column1`, `column2`) VALUES(?,?),(?,?)")

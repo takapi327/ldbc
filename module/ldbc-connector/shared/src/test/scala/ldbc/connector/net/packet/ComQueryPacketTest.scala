@@ -15,7 +15,7 @@ import ldbc.connector.net.packet.request.ComQueryPacket
 class ComQueryPacketTest extends FTestPlatform:
 
   test("ComQueryPacket creation and properties") {
-    val sql = "SELECT * FROM users"
+    val sql             = "SELECT * FROM users"
     val capabilityFlags = Set(
       CapabilitiesFlags.CLIENT_PROTOCOL_41
     )
@@ -34,7 +34,7 @@ class ComQueryPacketTest extends FTestPlatform:
   }
 
   test("ComQueryPacket encoder without query attributes") {
-    val sql = "SELECT * FROM users WHERE id = 1"
+    val sql             = "SELECT * FROM users WHERE id = 1"
     val capabilityFlags = Set(
       CapabilitiesFlags.CLIENT_PROTOCOL_41
     )
@@ -59,7 +59,7 @@ class ComQueryPacketTest extends FTestPlatform:
   }
 
   test("ComQueryPacket encoder with query attributes") {
-    val sql = "SELECT * FROM users WHERE name = ?"
+    val sql             = "SELECT * FROM users WHERE name = ?"
     val capabilityFlags = Set(
       CapabilitiesFlags.CLIENT_PROTOCOL_41,
       CapabilitiesFlags.CLIENT_QUERY_ATTRIBUTES

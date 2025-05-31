@@ -55,7 +55,7 @@ object BuildSettings {
     run / fork       := true,
     developers += tlGitHubDev("takapi327", "Takahiko Tominaga"),
     headerMappings := headerMappings.value + (HeaderFileType.scala -> customCommentStyle),
-    headerLicense := Some(
+    headerLicense  := Some(
       HeaderLicense.Custom(
         """|Copyright (c) 2023-2025 by Takahiko Tominaga
          |This software is licensed under the MIT License (MIT).

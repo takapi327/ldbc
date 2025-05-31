@@ -74,13 +74,13 @@ class ResultSetRowPacketTest extends FTestPlatform:
 
   test("ResultSetRowPacket decoder with length-encoded strings") {
     // Create sample packet data with length-encoded strings
-    val longString = "a" * 300 // String that exceeds 251 chars
+    val longString  = "a" * 300 // String that exceeds 251 chars
     val packetBytes = Array.concat(
-      Array[Byte](0x01, '1'),                              // first column: value "1"
+      Array[Byte](0x01, '1'), // first column: value "1"
       Array[Byte](0xfc.toByte) ++ Array[Byte](0x2c, 0x01), // length indicator for 300 bytes (0x012c)
-      longString.getBytes(),                               // actual 300 bytes of data
-      Array[Byte](0xfb.toByte),                            // NULL value
-      Array[Byte](0x03, '1', '0', '0')                     // value "100"
+      longString.getBytes(), // actual 300 bytes of data
+      Array[Byte](0xfb.toByte), // NULL value
+      Array[Byte](0x03, '1', '0', '0') // value "100"
     )
 
     val bitVector       = BitVector(packetBytes)
@@ -109,7 +109,7 @@ class ResultSetRowPacketTest extends FTestPlatform:
     // Test with Japanese characters
     val japaneseText = "こんにちは世界"
     val bytesLength  = japaneseText.getBytes("UTF-8").length.toByte
-    val packetBytes = Array.concat(
+    val packetBytes  = Array.concat(
       Array[Byte](0x01, '1'),                                    // first column: value "1"
       Array[Byte](bytesLength) ++ japaneseText.getBytes("UTF-8") // Japanese text
     )

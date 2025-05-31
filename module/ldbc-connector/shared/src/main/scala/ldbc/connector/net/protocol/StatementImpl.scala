@@ -61,7 +61,7 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer](
                            )
               _ <- currentResultSet.set(Some(resultSet))
             yield resultSet
-          case error: ERRPacket => F.raiseError(error.toException(Some(sql), None))
+          case error: ERRPacket            => F.raiseError(error.toException(Some(sql), None))
           case result: ColumnsNumberPacket =>
             for
               columnDefinitions <-
@@ -142,7 +142,7 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer](
                 args
                   .foldLeft(F.pure(Vector.empty[Long])) { ($acc, _) =>
                     for
-                      acc <- $acc
+                      acc    <- $acc
                       result <-
                         protocol
                           .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))

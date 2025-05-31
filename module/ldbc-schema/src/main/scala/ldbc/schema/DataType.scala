@@ -121,8 +121,8 @@ object DataType:
 
     override def toOption: DataType[Option[ExtractOption[T]]] =
       new DataType[Option[ExtractOption[T]]]:
-        override def typeName: String = self.typeName
-        override def sqlType:  Int    = self.sqlType
+        override def typeName:    String = self.typeName
+        override def sqlType:     Int    = self.sqlType
         override def queryString: String =
           typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ collate.fold("")(v =>
             s" ${ v.queryString }"

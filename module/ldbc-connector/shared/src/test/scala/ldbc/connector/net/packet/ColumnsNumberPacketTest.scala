@@ -34,7 +34,7 @@ class ColumnsNumberPacketTest extends FTestPlatform:
     // Test with size 0
     val bits0   = BitVector(0) ++ padding
     val result0 = ColumnsNumberPacket.decoder(Set.empty).decode(bits0)
-    val ok = OKPacket(
+    val ok      = OKPacket(
       status           = 0,
       affectedRows     = 0,
       lastInsertId     = 0,
@@ -42,7 +42,7 @@ class ColumnsNumberPacketTest extends FTestPlatform:
       warnings         = None,
       info             = None,
       sessionStateInfo = None,
-      msg = Some(
+      msg              = Some(
         value = ""
       )
     )
@@ -51,7 +51,7 @@ class ColumnsNumberPacketTest extends FTestPlatform:
     // Test with size 255 (this is ERRPacket.STATUS)
     val bits255   = BitVector(255) ++ padding
     val result255 = ColumnsNumberPacket.decoder(Set.empty).decode(bits255)
-    val err = ERRPacket(
+    val err       = ERRPacket(
       status         = 255,
       errorCode      = 0,
       sqlStateMarker = 0,

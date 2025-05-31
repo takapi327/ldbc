@@ -56,7 +56,7 @@ object OrderBy:
     def desc[T](column: Column[T]): Order[T] = Impl(s"${ column.alias.getOrElse(column.name) } DESC")
 
     given Applicative[Order] with
-      override def pure[A](x: A): Order[A] = Impl("")
+      override def pure[A](x: A):                             Order[A] = Impl("")
       override def ap[A, B](ff: Order[A => B])(fa: Order[A]): Order[B] =
         val statement = if ff.statement.isEmpty then fa.statement else s"${ ff.statement }, ${ fa.statement }"
         Impl(statement)

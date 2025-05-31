@@ -23,7 +23,7 @@ trait Sha256PasswordPlugin[F[_]: Hashing: Sync] extends AuthenticationPlugin[F] 
     val scrambleLength = scramble.length
     (0 until length).map(pos => (from(pos) ^ scramble(pos % scrambleLength)).toByte).toArray
 
-  override def name: String = "sha256_password"
+  override def name:                                                  String        = "sha256_password"
   override def hashPassword(password: String, scramble: Array[Byte]): F[ByteVector] =
     if password.isEmpty then Sync[F].pure(ByteVector.empty)
     else

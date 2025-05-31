@@ -48,7 +48,7 @@ object Workflows {
       name   = "Generate coverage report",
       javas  = List(githubWorkflowJavaVersions.value.last),
       scalas = githubWorkflowScalaVersions.value.toList,
-      steps = List(WorkflowStep.Checkout) ++ List(dockerRun) ++ WorkflowStep.SetupJava(
+      steps  = List(WorkflowStep.Checkout) ++ List(dockerRun) ++ WorkflowStep.SetupJava(
         List(githubWorkflowJavaVersions.value.last)
       ) ++ githubWorkflowGeneratedCacheSteps.value ++ List(
         WorkflowStep.Sbt(List("coverage", "ldbcJVM/test", "coverageAggregate")),

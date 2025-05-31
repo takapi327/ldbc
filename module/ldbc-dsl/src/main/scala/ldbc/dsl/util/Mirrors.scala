@@ -33,10 +33,10 @@ object Mirrors:
   inline def summonEnumCases[T <: Tuple, A](inline typeName: String): List[A] =
     inline erasedValue[T] match
       case _: EmptyTuple => Nil
-      case _: (h *: t) =>
+      case _: (h *: t)   =>
         inline summonInline[Mirror.Of[h]] match
           case m: Mirror.Singleton => m.fromProduct(EmptyTuple).asInstanceOf[A] :: summonEnumCases[t, A](typeName)
-          case m: Mirror =>
+          case m: Mirror           =>
             error(
               s"Cannot summon enum cases for type $typeName: ${ constValue[m.MirroredLabel] } is not a singleton mirror."
             )

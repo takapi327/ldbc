@@ -578,7 +578,7 @@ trait ConnectionTest extends CatsEffectSuite:
     assertIO(
       connection().use { conn =>
         for
-          metaData <- conn.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <-
             metaData.getCrossReference(Some("world"), None, "city", Some("world"), None, Some("government_office"))
         yield
@@ -690,7 +690,7 @@ trait ConnectionTest extends CatsEffectSuite:
     assertIO(
       connection().use { conn =>
         for
-          metaData <- conn.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <-
             metaData.getIndexInfo(Some("world"), None, Some("city"), true, true)
         yield

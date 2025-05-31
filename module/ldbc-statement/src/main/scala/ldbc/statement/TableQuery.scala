@@ -140,7 +140,7 @@ trait TableQuery[A, O]:
       Parameter.Dynamic.many(column.encoder.asInstanceOf[Encoder[B]].encode(value))
     }
     Insert.Impl(
-      table = table,
+      table     = table,
       statement =
         s"INSERT INTO $name (${ column.name }) VALUES ${ values.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(",") })").toList.mkString(",") }",
       params = params ++ parameterBinders
@@ -160,7 +160,7 @@ trait TableQuery[A, O]:
   inline def +=(value: Entity): Insert[A] =
     inline this match
       case Join.On(_, _, _, _, _) => error("Join Query does not yet support Insert processing.")
-      case _ =>
+      case _                      =>
         Insert.Impl(
           table     = table,
           statement = s"INSERT INTO $name ${ column.insertStatement }",
@@ -196,9 +196,9 @@ trait TableQuery[A, O]:
   inline def ++=(values: NonEmptyList[Entity]): Insert[A] =
     inline this match
       case Join.On(_, _, _, _, _) => error("Join Query does not yet support Insert processing.")
-      case _ =>
+      case _                      =>
         Insert.Impl(
-          table = table,
+          table     = table,
           statement =
             s"INSERT INTO $name (${ column.name }) VALUES ${ values.map(_ => s"(${ List.fill(column.values)("?").mkString(",") })").toList.mkString(",") }",
           params = params ++ values.toList.flatMap { value =>
@@ -224,7 +224,7 @@ trait TableQuery[A, O]:
   inline def update[C](func: A => Column[C])(values: C): Update[A] =
     inline this match
       case Join.On(_, _, _, _, _) => error("Join Query does not yet support Update processing.")
-      case _ =>
+      case _                      =>
         val columns          = func(table)
         val parameterBinders = Parameter.Dynamic.many(columns.encoder.encode(values))
         Update.Impl[A](table, s"UPDATE $name SET ${ columns.updateStatement }", params ++ parameterBinders)
@@ -242,7 +242,7 @@ trait TableQuery[A, O]:
    */
   def update(value: Entity): Update[A] =
     val parameterBinders = Parameter.Dynamic.many(column.encoder.encode(value))
-    val statement =
+    val statement        =
       s"UPDATE $name SET ${ column.updateStatement }"
     Update.Impl[A](table, statement, params ++ parameterBinders)
 

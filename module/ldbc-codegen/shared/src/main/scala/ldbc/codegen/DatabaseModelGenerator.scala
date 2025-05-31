@@ -44,7 +44,7 @@ private[ldbc] object DatabaseModelGenerator:
     val className = classNameFormatter.format(statement.name)
 
     val directory = sourceManaged.toPath.resolve(statement.name)
-    val output = if !directory.toFile.exists() then
+    val output    = if !directory.toFile.exists() then
       directory.toFile.getParentFile.mkdirs()
       Files.createDirectory(directory)
     else directory
