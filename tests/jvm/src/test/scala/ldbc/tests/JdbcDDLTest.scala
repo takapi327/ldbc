@@ -10,8 +10,6 @@ import com.mysql.cj.jdbc.MysqlDataSource
 
 import cats.effect.*
 
-import ldbc.sql.*
-
 import jdbc.connector.*
 
 class JdbcDDLTest extends DDLTest:
