@@ -63,9 +63,6 @@ ThisBuild / mimaBinaryIssueFilters ++= List(
   ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.model.Key#Unique.toCode")
 )
 
-ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
-sonatypeRepository                 := "https://s01.oss.sonatype.org/service/local"
-
 lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
   .default("core", "ldbc core project")
