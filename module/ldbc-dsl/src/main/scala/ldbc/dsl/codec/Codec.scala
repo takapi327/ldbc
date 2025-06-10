@@ -86,9 +86,10 @@ object Codec extends TwiddleSyntax[Codec]:
     }
 
   private def readCatchError[A](offset: Int, func: => A): Either[Decoder.Error, A] =
-    try Option(func) match
-      case Some(result) => Right(result)
-      case None => Left(Decoder.Error(offset, "Result is null", None))
+    try
+      Option(func) match
+        case Some(result) => Right(result)
+        case None         => Left(Decoder.Error(offset, "Result is null", None))
     catch case ex: Throwable => Left(Decoder.Error(offset, ex.getMessage, Some(ex)))
 
   given InvariantSemigroupal[Codec] with
