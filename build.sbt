@@ -158,7 +158,7 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .jvmSettings(
     libraryDependencies ++= Seq(
-      "io.circe" %%% "circe-generic" % "0.14.13",
+      "io.circe" %%% "circe-generic" % "0.14.14",
       "io.circe" %%% "circe-yaml"    % "0.16.1"
     )
   )
