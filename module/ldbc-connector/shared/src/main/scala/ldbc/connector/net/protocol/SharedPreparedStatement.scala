@@ -70,18 +70,18 @@ private[ldbc] trait SharedPreparedStatement[F[_]: MonadThrow]
 
   override def setObject(parameterIndex: Int, value: Object): F[Unit] =
     value match
-      case null                                     => setNull(parameterIndex, MysqlType.NULL.jdbcType)
-      case value if value.isInstanceOf[Boolean]     => setBoolean(parameterIndex, value.asInstanceOf[Boolean])
-      case value if value.isInstanceOf[Byte]        => setByte(parameterIndex, value.asInstanceOf[Byte])
-      case value if value.isInstanceOf[Short]       => setShort(parameterIndex, value.asInstanceOf[Short])
-      case value if value.isInstanceOf[Int]         => setInt(parameterIndex, value.asInstanceOf[Int])
-      case value if value.isInstanceOf[Long]        => setLong(parameterIndex, value.asInstanceOf[Long])
-      case value if value.isInstanceOf[Float]       => setFloat(parameterIndex, value.asInstanceOf[Float])
-      case value if value.isInstanceOf[Double]      => setDouble(parameterIndex, value.asInstanceOf[Double])
-      case value if value.isInstanceOf[String]      => setString(parameterIndex, value.asInstanceOf[String])
-      case value if value.isInstanceOf[Array[Byte]] => setBytes(parameterIndex, value.asInstanceOf[Array[Byte]])
-      case value if value.isInstanceOf[LocalTime]   => setTime(parameterIndex, value.asInstanceOf[LocalTime])
-      case value if value.isInstanceOf[LocalDate]   => setDate(parameterIndex, value.asInstanceOf[LocalDate])
+      case null                                       => setNull(parameterIndex, MysqlType.NULL.jdbcType)
+      case value if value.isInstanceOf[Boolean]       => setBoolean(parameterIndex, value.asInstanceOf[Boolean])
+      case value if value.isInstanceOf[Byte]          => setByte(parameterIndex, value.asInstanceOf[Byte])
+      case value if value.isInstanceOf[Short]         => setShort(parameterIndex, value.asInstanceOf[Short])
+      case value if value.isInstanceOf[Int]           => setInt(parameterIndex, value.asInstanceOf[Int])
+      case value if value.isInstanceOf[Long]          => setLong(parameterIndex, value.asInstanceOf[Long])
+      case value if value.isInstanceOf[Float]         => setFloat(parameterIndex, value.asInstanceOf[Float])
+      case value if value.isInstanceOf[Double]        => setDouble(parameterIndex, value.asInstanceOf[Double])
+      case value if value.isInstanceOf[String]        => setString(parameterIndex, value.asInstanceOf[String])
+      case value if value.isInstanceOf[Array[Byte]]   => setBytes(parameterIndex, value.asInstanceOf[Array[Byte]])
+      case value if value.isInstanceOf[LocalTime]     => setTime(parameterIndex, value.asInstanceOf[LocalTime])
+      case value if value.isInstanceOf[LocalDate]     => setDate(parameterIndex, value.asInstanceOf[LocalDate])
       case value if value.isInstanceOf[LocalDateTime] =>
         setTimestamp(parameterIndex, value.asInstanceOf[LocalDateTime])
       case unknown =>

@@ -19,8 +19,6 @@ import cats.data.NonEmptyList
 import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
-import ldbc.sql.*
-
 import ldbc.dsl.codec.Codec
 import ldbc.dsl.SQL
 

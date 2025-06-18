@@ -80,7 +80,7 @@ class OKPacketTest extends FTestPlatform:
       0x03, 'S', 'S', 'I' // session state info "SSI"
     )
 
-    val bitVector = BitVector(packetBytes)
+    val bitVector       = BitVector(packetBytes)
     val capabilityFlags = Set(
       CapabilitiesFlags.CLIENT_PROTOCOL_41,
       CapabilitiesFlags.CLIENT_SESSION_TRACK

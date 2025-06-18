@@ -174,16 +174,16 @@ trait HikariConfigBuilder:
     }
 
   /** List of variables predefined as default settings. */
-  val connectionTimeout:      Long    = getConnectionTimeout.getOrElse(Duration(30, TimeUnit.SECONDS)).toMillis
-  val idleTimeout:            Long    = getIdleTimeout.getOrElse(Duration(10, TimeUnit.MINUTES)).toMillis
-  val leakDetectionThreshold: Long    = getLeakDetectionThreshold.getOrElse(Duration.Zero).toMillis
-  val maximumPoolSize:        Int     = getMaximumPoolSize.getOrElse(maxCore * 2)
-  val maxLifetime:            Long    = getMaxLifetime.getOrElse(Duration(30, TimeUnit.MINUTES)).toMillis
-  val minimumIdle:            Int     = getMinimumIdle.getOrElse(10)
-  val validationTimeout:      Long    = getValidationTimeout.getOrElse(Duration(5, TimeUnit.SECONDS)).toMillis
-  val allowPoolSuspension:    Boolean = getAllowPoolSuspension.getOrElse(false)
-  val autoCommit:             Boolean = getAutoCommit.getOrElse(true)
-  val initializationFailTimeout: Long =
+  val connectionTimeout:         Long    = getConnectionTimeout.getOrElse(Duration(30, TimeUnit.SECONDS)).toMillis
+  val idleTimeout:               Long    = getIdleTimeout.getOrElse(Duration(10, TimeUnit.MINUTES)).toMillis
+  val leakDetectionThreshold:    Long    = getLeakDetectionThreshold.getOrElse(Duration.Zero).toMillis
+  val maximumPoolSize:           Int     = getMaximumPoolSize.getOrElse(maxCore * 2)
+  val maxLifetime:               Long    = getMaxLifetime.getOrElse(Duration(30, TimeUnit.MINUTES)).toMillis
+  val minimumIdle:               Int     = getMinimumIdle.getOrElse(10)
+  val validationTimeout:         Long    = getValidationTimeout.getOrElse(Duration(5, TimeUnit.SECONDS)).toMillis
+  val allowPoolSuspension:       Boolean = getAllowPoolSuspension.getOrElse(false)
+  val autoCommit:                Boolean = getAutoCommit.getOrElse(true)
+  val initializationFailTimeout: Long    =
     getInitializationFailTimeout.getOrElse(Duration(1, TimeUnit.MILLISECONDS)).toMillis
   val isolateInternalQueries: Boolean = getIsolateInternalQueries.getOrElse(false)
   val readonly:               Boolean = getReadonly.getOrElse(false)

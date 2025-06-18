@@ -14,7 +14,7 @@ object Generator {
     sbtVersion:   String,
     dir:          File
   ): Seq[File] = {
-    val file = dir / "Version.scala"
+    val file        = dir / "Version.scala"
     val scalaSource =
       s"""|package ldbc.build
           |

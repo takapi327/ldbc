@@ -622,7 +622,7 @@ class ConnectionTest extends FTestPlatform:
 
     assertIO(
       connection.use(_.getMetaData().map(_.getDriverVersion())),
-      "ldbc-connector-0.3.0"
+      "ldbc-connector-0.3.2"
     )
   }
 
@@ -1427,7 +1427,7 @@ class ConnectionTest extends FTestPlatform:
     assertIO(
       connection.use { conn =>
         for
-          metaData <- conn.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <-
             metaData.getCrossReference(None, Some("world"), "city", None, Some("world"), Some("government_office"))
         yield
@@ -1559,7 +1559,7 @@ class ConnectionTest extends FTestPlatform:
     assertIO(
       connection.use { conn =>
         for
-          metaData <- conn.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <-
             metaData.getIndexInfo(None, Some("world"), Some("city"), true, true)
         yield
@@ -1712,7 +1712,7 @@ class ConnectionTest extends FTestPlatform:
         statement <- connection.createStatement()
         _         <- statement.execute("CREATE DATABASE IF NOT EXISTS connector_before_after_test")
         _         <- connection.setSchema("connector_before_after_test")
-        _ <- statement.execute(
+        _         <- statement.execute(
                """
             |CREATE TABLE IF NOT EXISTS test (
             |  id INT PRIMARY KEY AUTO_INCREMENT,

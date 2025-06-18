@@ -12,8 +12,6 @@ import cats.effect.*
 
 import munit.CatsEffectSuite
 
-import ldbc.sql.*
-
 import ldbc.dsl.*
 import ldbc.dsl.codec.auto.generic.toSlowCompile.given
 import ldbc.dsl.codec.Codec

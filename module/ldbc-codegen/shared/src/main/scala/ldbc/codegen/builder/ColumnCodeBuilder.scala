@@ -32,7 +32,7 @@ case class ColumnCodeBuilder(formatter: Naming):
   private def buildScalaType(column: ColumnDefinition, customColumn: Option[Parser.Column]): String =
     val code = customColumn match
       case Some(custom) => column.dataType.getTypeMatches(custom.`type`)
-      case None =>
+      case None         =>
         column.dataType.scalaType match
           case ScalaType.Enum(_) => formatter.format(column.name)
           case _                 => column.dataType.scalaType.code

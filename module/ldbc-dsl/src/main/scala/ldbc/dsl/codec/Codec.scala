@@ -47,21 +47,21 @@ trait Codec[A] extends Encoder[A], Decoder[A]:
 
   /** Contramap inputs from, and map outputs to, a new type `B`, yielding a `Codec[B]`. */
   def imap[B](f: A => B)(g: B => A): Codec[B] = new Codec[B]:
-    override def offset:           Int             = self.offset
-    override def encode(value: B): Encoder.Encoded = self.encode(g(value))
+    override def offset:                                   Int                      = self.offset
+    override def encode(value: B):                         Encoder.Encoded          = self.encode(g(value))
     override def decode(resultSet: ResultSet, index: Int): Either[Decoder.Error, B] =
       self.decode(resultSet, index).map(f)
 
   /** Contramap inputs from, and map decoded results to a new type `B` or an error, yielding a `Codec[B]`. */
   def eimap[B](f: A => Either[String, B])(g: B => A): Codec[B] = new Codec[B]:
-    override def offset:           Int             = self.offset
-    override def encode(value: B): Encoder.Encoded = self.encode(g(value))
+    override def offset:                                   Int                      = self.offset
+    override def encode(value: B):                         Encoder.Encoded          = self.encode(g(value))
     override def decode(resultSet: ResultSet, index: Int): Either[Decoder.Error, B] =
       self.decode(resultSet, index).flatMap(f(_).leftMap(Decoder.Error(offset, _)))
 
   /** Lift this `Codec` into `Option`, where `None` is mapped to and from a vector of `NULL`. */
   override def opt: Codec[Option[A]] = new Codec[Option[A]]:
-    override def offset: Int = self.offset
+    override def offset:                   Int             = self.offset
     override def encode(value: Option[A]): Encoder.Encoded =
       value.fold(Encoder.Encoded.success(List(None)))(self.encode)
     override def decode(resultSet: ResultSet, index: Int): Either[Decoder.Error, Option[A]] =
@@ -86,7 +86,10 @@ object Codec extends TwiddleSyntax[Codec]:
     }
 
   private def readCatchError[A](offset: Int, func: => A): Either[Decoder.Error, A] =
-    try Right(func)
+    try
+      Option(func) match
+        case Some(result) => Right(result)
+        case None         => Left(Decoder.Error(offset, "Result is null", None))
     catch case ex: Throwable => Left(Decoder.Error(offset, ex.getMessage, Some(ex)))
 
   given InvariantSemigroupal[Codec] with

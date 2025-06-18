@@ -84,20 +84,20 @@ trait Column[A]:
 
   def product[B](fb: Column[B]): Column[(A, B)] =
     new Column[(A, B)]:
-      override def name: String = s"${ self.name }, ${ fb.name }"
+      override def name:  String         = s"${ self.name }, ${ fb.name }"
       override def alias: Option[String] = (self.alias, fb.alias) match
         case (Some(a), Some(b)) => Some(s"$a, $b")
         case (Some(a), None)    => Some(a)
         case (None, Some(b))    => Some(b)
         case (None, None)       => None
-      override def as(name: String): Column[(A, B)]  = this
-      override def decoder:          Decoder[(A, B)] = self.decoder.product(fb.decoder)
-      override def encoder:          Encoder[(A, B)] = self.encoder.product(fb.encoder)
-      override def updateStatement:  String          = s"${ self.updateStatement }, ${ fb.updateStatement }"
-      override def duplicateKeyUpdateStatement: String =
+      override def as(name: String):            Column[(A, B)]  = this
+      override def decoder:                     Decoder[(A, B)] = self.decoder.product(fb.decoder)
+      override def encoder:                     Encoder[(A, B)] = self.encoder.product(fb.encoder)
+      override def updateStatement:             String          = s"${ self.updateStatement }, ${ fb.updateStatement }"
+      override def duplicateKeyUpdateStatement: String          =
         s"${ self.duplicateKeyUpdateStatement }, ${ fb.duplicateKeyUpdateStatement }"
-      override def values: Int = self.values + fb.values
-      override def opt: Column[Option[(A, B)]] =
+      override def values: Int                    = self.values + fb.values
+      override def opt:    Column[Option[(A, B)]] =
         val decoder = new Decoder[Option[(A, B)]]:
           override def offset: Int = self.decoder.offset + fb.decoder.offset
           override def decode(resultSet: ResultSet, index: Int): Either[Decoder.Error, Option[(A, B)]] =
@@ -766,7 +766,7 @@ object Column extends TwiddleSyntax[Column]:
     override def name:             String         = ""
     override def alias:            Option[String] = None
     override def as(name: String): Column[A]      = this
-    override def decoder: Decoder[A] = new Decoder[A]:
+    override def decoder:          Decoder[A]     = new Decoder[A]:
       override def offset:                                   Int                      = 0
       override def decode(resultSet: ResultSet, index: Int): Either[Decoder.Error, A] = Right(value)
     override def encoder:                     Encoder[A]      = (value: A) => Encoder.Encoded.success(List.empty)
@@ -811,7 +811,7 @@ object Column extends TwiddleSyntax[Column]:
   ) extends Column[Option[A]]:
     override def as(name: String): Column[Option[A]]  = this.copy(alias = Some(s"$name.${ this.name }"))
     override def decoder:          Decoder[Option[A]] = _decoder.opt
-    override def encoder: Encoder[Option[A]] = {
+    override def encoder:          Encoder[Option[A]] = {
       case Some(v) => _encoder.encode(v)
       case None    => Encoder.Encoded.success(List(None))
     }
@@ -824,7 +824,7 @@ object Column extends TwiddleSyntax[Column]:
     right: Column[A]
   )(using codec: Codec[A])
     extends Column[A]:
-    override def name: String = s"${ left.noBagQuotLabel } $flag ${ right.noBagQuotLabel }"
+    override def name:  String         = s"${ left.noBagQuotLabel } $flag ${ right.noBagQuotLabel }"
     override def alias: Option[String] = Some(
       s"${ left.alias.getOrElse(left.name) } $flag ${ right.alias.getOrElse(right.name) }"
     )

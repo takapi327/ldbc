@@ -16,7 +16,7 @@ class AuthSwitchRequestPacketTest extends FTestPlatform:
 
   test("AuthSwitchRequestPacket creation and properties") {
     val pluginData = Array[Byte](1, 2, 3, 4, 5)
-    val packet = AuthSwitchRequestPacket(
+    val packet     = AuthSwitchRequestPacket(
       status             = AuthSwitchRequestPacket.STATUS,
       pluginName         = "mysql_native_password",
       pluginProvidedData = pluginData

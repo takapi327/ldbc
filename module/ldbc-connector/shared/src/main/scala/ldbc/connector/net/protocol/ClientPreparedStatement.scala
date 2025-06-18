@@ -85,7 +85,7 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer](
                     protocol.initialPacket.serverVersion
                   )
               )
-            case error: ERRPacket => F.raiseError(error.toException(Some(sql), None, params))
+            case error: ERRPacket            => F.raiseError(error.toException(Some(sql), None, params))
             case result: ColumnsNumberPacket =>
               for
                 columnDefinitions <-
@@ -208,7 +208,7 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer](
                         args
                           .foldLeft(F.pure(Vector.empty[Long])) { ($acc, _) =>
                             for
-                              acc <- $acc
+                              acc    <- $acc
                               result <-
                                 protocol
                                   .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))

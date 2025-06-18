@@ -69,7 +69,7 @@ object ConnectionProvider:
       _logHandler: Option[LogHandler[F]]
     ): ConnectionProvider[F] =
       new ConnectionProvider[F]:
-        override def logHandler: Option[LogHandler[F]] = _logHandler
+        override def logHandler:         Option[LogHandler[F]]      = _logHandler
         override def createConnection(): Resource[F, Connection[F]] =
           Resource
             .fromAutoCloseable(ev.blocking {
@@ -153,7 +153,7 @@ object ConnectionProvider:
     dataSource: DataSource,
     connectEC:  ExecutionContext,
     logHandler: Option[LogHandler[F]] = None
-  ): ConnectionProvider[F] = DataSourceProvider(dataSource, connectEC, logHandler)
+  ): ConnectionProvider[F] = DataSourceProvider[F](dataSource, connectEC, logHandler)
 
   /**
    * Construct a `Provider` that wraps an existing `Connection`. Closing the connection is the responsibility of
@@ -167,7 +167,7 @@ object ConnectionProvider:
   def fromConnection[F[_]: Console: Sync](
     connection: java.sql.Connection,
     logHandler: Option[LogHandler[F]] = None
-  ): ConnectionProvider[F] = JavaConnectionProvider(connection, logHandler)
+  ): ConnectionProvider[F] = JavaConnectionProvider[F](connection, logHandler)
 
   /** Module of constructors for `Provider` that use the JDBC `DriverManager` to allocate connections. Note that
    * `DriverManager` is unbounded and will happily allocate new connections until server resources are exhausted. It

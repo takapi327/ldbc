@@ -119,7 +119,7 @@ class GroupByTest extends AnyFlatSpec:
   }
 
   it should "use column aliases in GroupBy correctly" in {
-    val column = Column[String]("department").as("dept_name")
+    val column  = Column[String]("department").as("dept_name")
     val groupBy = GroupBy[Table, String](
       Table(),
       column,

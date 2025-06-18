@@ -413,8 +413,8 @@ object CharsetMapping:
     Collation(323, "utf8mb4_mn_cyrl_0900_as_cs", 0, MYSQL_CHARSET_NAME_utf8mb4)
   )
 
-  lazy val COLLATION_INDEX_TO_COLLATION_NAME: List[String] = collations.map(_.charset.charsetName)
-  lazy val COLLATION_INDEX_TO_CHARSET: Map[Int, MysqlCharset] =
+  lazy val COLLATION_INDEX_TO_COLLATION_NAME: List[String]           = collations.map(_.charset.charsetName)
+  lazy val COLLATION_INDEX_TO_CHARSET:        Map[Int, MysqlCharset] =
     collations.map(collation => collation.index -> collation.charset).toMap
 
   lazy val CHARSET_NAME_TO_CHARSET: Map[String, MysqlCharset] =

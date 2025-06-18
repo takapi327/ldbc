@@ -146,7 +146,7 @@ object Connection:
     val logger: String => F[Unit] = s => Console[F].println(s"TLS: $s")
 
     for
-      sslOp <- ssl.toSSLNegotiationOptions(if debug then logger.some else none)
+      sslOp      <- ssl.toSSLNegotiationOptions(if debug then logger.some else none)
       connection <- fromSocketGroup(
                       Network[F],
                       host,
@@ -188,14 +188,14 @@ object Connection:
     val hostInfo = HostInfo(host, port, user, password, database)
     for
       given Exchange[F] <- Resource.eval(Exchange[F])
-      protocol <-
+      protocol          <-
         Protocol[F](sockets, hostInfo, debug, sslOptions, allowPublicKeyRetrieval, readTimeout, capabilityFlags)
       _                <- Resource.eval(protocol.startAuthentication(user, password.getOrElse("")))
       serverVariables  <- Resource.eval(protocol.serverVariables())
       readOnly         <- Resource.eval(Ref[F].of[Boolean](false))
       autoCommit       <- Resource.eval(Ref[F].of[Boolean](true))
       connectionClosed <- Resource.eval(Ref[F].of[Boolean](false))
-      connection <-
+      connection       <-
         Resource.make(
           Temporal[F].pure(
             ConnectionImpl[F](

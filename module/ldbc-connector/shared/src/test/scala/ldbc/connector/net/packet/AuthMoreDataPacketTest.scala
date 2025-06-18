@@ -16,7 +16,7 @@ class AuthMoreDataPacketTest extends FTestPlatform:
 
   test("AuthMoreDataPacket creation and properties") {
     val authData = Array[Byte](1, 2, 3, 4, 5)
-    val packet = AuthMoreDataPacket(
+    val packet   = AuthMoreDataPacket(
       status                   = AuthMoreDataPacket.STATUS,
       authenticationMethodData = authData
     )

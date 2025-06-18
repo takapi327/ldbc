@@ -21,7 +21,7 @@ object Naming:
       case "CAMEL"  => CAMEL
       case "PASCAL" => PASCAL
       case "SNAKE"  => SNAKE
-      case unknown =>
+      case unknown  =>
         throw new IllegalArgumentException(
           s"$unknown does not match any of the Naming, it must be CAMEL, PASCAL, SNAKE."
         )

@@ -51,7 +51,7 @@ class PackageTest extends FTestPlatform:
   }
 
   test("lengthEncodedIntDecoder should decode 2-byte integers (252-65535)") {
-    val value = 500
+    val value     = 500
     val bitVector = BitVector(
       Array[Byte](
         0xfc.toByte, // 252 indicates 2-byte integer
@@ -66,7 +66,7 @@ class PackageTest extends FTestPlatform:
   }
 
   test("lengthEncodedIntDecoder should decode 3-byte integers") {
-    val value = 100000
+    val value     = 100000
     val bitVector = BitVector(
       Array[Byte](
         0xfd.toByte, // 253 indicates 3-byte integer
@@ -82,7 +82,7 @@ class PackageTest extends FTestPlatform:
   }
 
   test("lengthEncodedIntDecoder should decode 4-byte integers") {
-    val value = 16777216 // 2^24
+    val value     = 16777216 // 2^24
     val bitVector = BitVector(
       Array[Byte](
         0xfe.toByte, // 254 indicates 4-byte integer

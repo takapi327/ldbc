@@ -17,6 +17,6 @@ object Pretty:
     else
       s.lastIndexWhere(_ == ' ', w) match
         case -1 => wrap(w + 1, s, delim)
-        case n =>
+        case n  =>
           val (s1, s2) = s.splitAt(n)
           s1 + delim + wrap(w, s2.trim, delim)

@@ -10,8 +10,6 @@ import cats.effect.*
 
 import munit.*
 
-import ldbc.sql.*
-
 import ldbc.dsl.*
 
 import ldbc.schema.*
@@ -289,8 +287,8 @@ trait TableSchemaSelectConnectionTest extends CatsEffectSuite:
       connection.use { conn =>
         (for
           codeOpt <- country.select(_.code).where(_.code _equals "JPN").query.to[Option]
-          cities <- codeOpt match
-                      case None => DBIO.pure[List[(String, String)]](List.empty)
+          cities  <- codeOpt match
+                      case None       => DBIO.pure[List[(String, String)]](List.empty)
                       case Some(code) =>
                         city
                           .select(v => v.name *: v.countryCode)
