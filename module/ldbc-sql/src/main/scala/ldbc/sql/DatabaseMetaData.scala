@@ -1101,14 +1101,14 @@ trait DatabaseMetaData[F[_]]:
    *        procedure name as it is stored in the database
    * @return <code>ResultSet</code> - each row is a procedure description
    */
-  def getProcedures(catalog: String, schemaPattern: String, procedureNamePattern: String): F[ResultSet] =
+  def getProcedures(catalog: String, schemaPattern: String, procedureNamePattern: String): F[ResultSet[F]] =
     getProcedures(Some(catalog), Some(schemaPattern), Some(procedureNamePattern))
 
   def getProcedures(
     catalog:              Option[String],
     schemaPattern:        Option[String],
     procedureNamePattern: Option[String]
-  ): F[ResultSet]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the given catalog's stored procedure parameter
@@ -1205,7 +1205,7 @@ trait DatabaseMetaData[F[_]]:
     schemaPattern:        String,
     procedureNamePattern: String,
     columnNamePattern:    String
-  ): F[ResultSet] =
+  ): F[ResultSet[F]] =
     getProcedureColumns(Some(catalog), Some(schemaPattern), Some(procedureNamePattern), Some(columnNamePattern))
 
   def getProcedureColumns(
@@ -1213,7 +1213,7 @@ trait DatabaseMetaData[F[_]]:
     schemaPattern:        Option[String],
     procedureNamePattern: Option[String],
     columnNamePattern:    Option[String]
-  ): F[ResultSet]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the tables available in the given catalog.
@@ -1264,7 +1264,7 @@ trait DatabaseMetaData[F[_]]:
     schemaPattern:    String,
     tableNamePattern: String,
     types:            Array[String]
-  ): F[ResultSet] =
+  ): F[ResultSet[F]] =
     getTables(Some(catalog), Some(schemaPattern), Some(tableNamePattern), types)
 
   def getTables(
@@ -1272,7 +1272,7 @@ trait DatabaseMetaData[F[_]]:
     schemaPattern:    Option[String],
     tableNamePattern: Option[String],
     types:            Array[String]
-  ): F[ResultSet]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves the schema names available in this database.  The results
@@ -1288,7 +1288,7 @@ trait DatabaseMetaData[F[_]]:
    * @return a <code>ResultSet</code> object in which each row is a
    *         schema description
    */
-  def getSchemas(): F[ResultSet] = getSchemas(None, None)
+  def getSchemas(): F[ResultSet[F]] = getSchemas(None, None)
 
   /**
    * Retrieves the catalog names available in this database.  The results
@@ -1302,7 +1302,7 @@ trait DatabaseMetaData[F[_]]:
    * @return a <code>ResultSet</code> object in which each row has a
    *         single <code>String</code> column that is a catalog name
    */
-  def getCatalogs(): F[ResultSet]
+  def getCatalogs(): F[ResultSet[F]]
 
   /**
    * Retrieves the table types available in this database.  The results
@@ -1318,7 +1318,7 @@ trait DatabaseMetaData[F[_]]:
    * @return a <code>ResultSet</code> object in which each row has a
    *         single <code>String</code> column that is a table type
    */
-  def getTableTypes(): ResultSet
+  def getTableTypes(): F[ResultSet[F]]
 
   /**
    * Retrieves a description of table columns available in
@@ -1371,20 +1371,8 @@ trait DatabaseMetaData[F[_]]:
    *  <LI><B>SCOPE_TABLE</B> String {@code =>} table name that this the scope
    *      of a reference attribute (<code>null</code> if the DATA_TYPE isn't REF)
    *  <LI><B>SOURCE_DATA_TYPE</B> short {@code =>} source type of a distinct type or user-generated
-   *      Ref type, SQL type from java.sql.Types (<code>null</code> if DATA_TYPE
+   *      Ref type,SQL type from java.sql.Types (<code>null</code> if DATA_TYPE
    *      isn't DISTINCT or user-generated REF)
-   *   <LI><B>IS_AUTOINCREMENT</B> String  {@code =>} Indicates whether this column is auto incremented
-   *       <UL>
-   *       <LI> YES           --- if the column is auto incremented
-   *       <LI> NO            --- if the column is not auto incremented
-   *       <LI> empty string  --- if it cannot be determined whether the column is auto incremented
-   *       </UL>
-   *   <LI><B>IS_GENERATEDCOLUMN</B> String  {@code =>} Indicates whether this is a generated column
-   *       <UL>
-   *       <LI> YES           --- if this a generated column
-   *       <LI> NO            --- if this not a generated column
-   *       <LI> empty string  --- if it cannot be determined whether this is a generated column
-   *       </UL>
    *  </OL>
    *
    * <p>The COLUMN_SIZE column specifies the column size for the given column.
@@ -1413,7 +1401,7 @@ trait DatabaseMetaData[F[_]]:
     schemaPattern:     String,
     tableName:         String,
     columnNamePattern: String
-  ): F[ResultSet] =
+  ): F[ResultSet[F]] =
     getColumns(Some(catalog), Some(schemaPattern), Some(tableName), Some(columnNamePattern))
 
   def getColumns(
@@ -1421,7 +1409,7 @@ trait DatabaseMetaData[F[_]]:
     schemaPattern:     Option[String],
     tableName:         Option[String],
     columnNamePattern: Option[String]
-  ): F[ResultSet]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the access rights for a table's columns.
@@ -1457,7 +1445,7 @@ trait DatabaseMetaData[F[_]]:
    *        name as it is stored in the database
    * @return <code>ResultSet</code> - each row is a column privilege description
    */
-  def getColumnPrivileges(catalog: String, schema: String, table: String, columnNamePattern: String): F[ResultSet] =
+  def getColumnPrivileges(catalog: String, schema: String, table: String, columnNamePattern: String): F[ResultSet[F]] =
     getColumnPrivileges(Some(catalog), Some(schema), Some(table), Some(columnNamePattern))
 
   def getColumnPrivileges(
@@ -1465,7 +1453,7 @@ trait DatabaseMetaData[F[_]]:
     schema:            Option[String],
     table:             Option[String],
     columnNamePattern: Option[String]
-  ): F[ResultSet]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the access rights for each table available
@@ -1505,14 +1493,14 @@ trait DatabaseMetaData[F[_]]:
    *        table name as it is stored in the database
    * @return <code>ResultSet</code> - each row is a table privilege description
    */
-  def getTablePrivileges(catalog: String, schemaPattern: String, tableNamePattern: String): F[ResultSet] =
+  def getTablePrivileges(catalog: String, schemaPattern: String, tableNamePattern: String): F[ResultSet[F]] =
     getTablePrivileges(Some(catalog), Some(schemaPattern), Some(tableNamePattern))
 
   def getTablePrivileges(
     catalog:          Option[String],
     schemaPattern:    Option[String],
     tableNamePattern: Option[String]
-  ): F[ResultSet]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of a table's optimal set of columns that
@@ -1570,7 +1558,7 @@ trait DatabaseMetaData[F[_]]:
     table:    String,
     scope:    Int,
     nullable: Boolean
-  ): F[ResultSet] =
+  ): F[ResultSet[F]] =
     getBestRowIdentifier(Some(catalog), Some(schema), table, Some(scope), Some(nullable))
 
   def getBestRowIdentifier(
@@ -1579,7 +1567,7 @@ trait DatabaseMetaData[F[_]]:
     table:    String,
     scope:    Option[Int],
     nullable: Option[Boolean]
-  ): F[ResultSet]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of a table's columns that are automatically
@@ -1624,10 +1612,10 @@ trait DatabaseMetaData[F[_]]:
    * @return a <code>ResultSet</code> object in which each row is a
    *         column description
    */
-  def getVersionColumns(catalog: String, schema: String, table: String): F[ResultSet] =
+  def getVersionColumns(catalog: String, schema: String, table: String): F[ResultSet[F]] =
     getVersionColumns(Some(catalog), Some(schema), table)
 
-  def getVersionColumns(catalog: Option[String], schema: Option[String], table: String): F[ResultSet]
+  def getVersionColumns(catalog: Option[String], schema: Option[String], table: String): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the given table's primary key columns.  They
@@ -1657,10 +1645,10 @@ trait DatabaseMetaData[F[_]]:
    *        in the database
    * @return <code>ResultSet</code> - each row is a primary key column description
    */
-  def getPrimaryKeys(catalog: String, schema: String, table: String): F[ResultSet] =
+  def getPrimaryKeys(catalog: String, schema: String, table: String): F[ResultSet[F]] =
     getPrimaryKeys(Some(catalog), Some(schema), table)
 
-  def getPrimaryKeys(catalog: Option[String], schema: Option[String], table: String): F[ResultSet]
+  def getPrimaryKeys(catalog: Option[String], schema: Option[String], table: String): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the primary key columns that are
@@ -1735,10 +1723,10 @@ trait DatabaseMetaData[F[_]]:
    *        in the database
    * @return <code>ResultSet</code> - each row is a primary key column description
    */
-  def getImportedKeys(catalog: String, schema: String, table: String): F[ResultSet] =
+  def getImportedKeys(catalog: String, schema: String, table: String): F[ResultSet[F]] =
     getImportedKeys(Some(catalog), Some(schema), table)
 
-  def getImportedKeys(catalog: Option[String], schema: Option[String], table: String): F[ResultSet]
+  def getImportedKeys(catalog: Option[String], schema: Option[String], table: String): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the foreign key columns that reference the
@@ -1751,7 +1739,9 @@ trait DatabaseMetaData[F[_]]:
    *  <LI><B>PKTABLE_CAT</B> String {@code =>} primary key table catalog (may be <code>null</code>)
    *  <LI><B>PKTABLE_SCHEM</B> String {@code =>} primary key table schema (may be <code>null</code>)
    *  <LI><B>PKTABLE_NAME</B> String {@code =>} primary key table name
+   *      being imported
    *  <LI><B>PKCOLUMN_NAME</B> String {@code =>} primary key column name
+   *      being imported
    *  <LI><B>FKTABLE_CAT</B> String {@code =>} foreign key table catalog (may be <code>null</code>)
    *      being exported (may be <code>null</code>)
    *  <LI><B>FKTABLE_SCHEM</B> String {@code =>} foreign key table schema (may be <code>null</code>)
@@ -1783,7 +1773,7 @@ trait DatabaseMetaData[F[_]]:
    *      <LI> importedKeyNoAction - do not allow delete of primary
    *               key if it has been imported
    *      <LI> importedKeyCascade - delete rows that import a deleted key
-   *      <LI> importedKeySetNull - change imported key to <code>NULL</code> if
+   *      <LI> importedKeySetNull - change imported key to NULL if
    *               its primary key has been deleted
    *      <LI> importedKeyRestrict - same as importedKeyNoAction
    *                                 (for ODBC 2.x compatibility)
@@ -1802,7 +1792,7 @@ trait DatabaseMetaData[F[_]]:
    *  </OL>
    *
    * @param catalog a catalog name; must match the catalog name as it
-   *        is stored in this database; "" retrieves those without a catalog;
+   *        is stored in the database; "" retrieves those without a catalog;
    *        <code>null</code> means that the catalog name should not be used to narrow
    *        the search
    * @param schema a schema name; must match the schema name
@@ -1810,14 +1800,13 @@ trait DatabaseMetaData[F[_]]:
    *        <code>null</code> means that the schema name should not be used to narrow
    *        the search
    * @param table a table name; must match the table name as it is stored
-   *        in this database
-   * @return a <code>ResultSet</code> object in which each row is a
-   *         foreign key column description
+   *        in the database
+   * @return <code>ResultSet</code> - each row is a primary key column description
    */
-  def getExportedKeys(catalog: String, schema: String, table: String): F[ResultSet] =
+  def getExportedKeys(catalog: String, schema: String, table: String): F[ResultSet[F]] =
     getExportedKeys(Some(catalog), Some(schema), table)
 
-  def getExportedKeys(catalog: Option[String], schema: Option[String], table: String): F[ResultSet]
+  def getExportedKeys(catalog: Option[String], schema: Option[String], table: String): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the foreign key columns in the given foreign key
@@ -1832,7 +1821,9 @@ trait DatabaseMetaData[F[_]]:
    *  <LI><B>PKTABLE_CAT</B> String {@code =>} parent key table catalog (may be <code>null</code>)
    *  <LI><B>PKTABLE_SCHEM</B> String {@code =>} parent key table schema (may be <code>null</code>)
    *  <LI><B>PKTABLE_NAME</B> String {@code =>} parent key table name
+   *      being imported
    *  <LI><B>PKCOLUMN_NAME</B> String {@code =>} parent key column name
+   *      being imported
    *  <LI><B>FKTABLE_CAT</B> String {@code =>} foreign key table catalog (may be <code>null</code>)
    *      being exported (may be <code>null</code>)
    *  <LI><B>FKTABLE_SCHEM</B> String {@code =>} foreign key table schema (may be <code>null</code>)
@@ -1864,7 +1855,7 @@ trait DatabaseMetaData[F[_]]:
    *      <LI> importedKeyNoAction - do not allow delete of parent
    *               key if it has been imported
    *      <LI> importedKeyCascade - delete rows that import a deleted key
-   *      <LI> importedKeySetNull - change imported key to <code>NULL</code> if
+   *      <LI> importedKeySetNull - change imported key to NULL if
    *               its primary key has been deleted
    *      <LI> importedKeyRestrict - same as importedKeyNoAction
    *                                 (for ODBC 2.x compatibility)
@@ -1907,7 +1898,7 @@ trait DatabaseMetaData[F[_]]:
     foreignCatalog: String,
     foreignSchema:  String,
     foreignTable:   String
-  ): F[ResultSet] =
+  ): F[ResultSet[F]] =
     getCrossReference(
       Some(parentCatalog),
       Some(parentSchema),
@@ -1924,7 +1915,7 @@ trait DatabaseMetaData[F[_]]:
     foreignCatalog: Option[String],
     foreignSchema:  Option[String],
     foreignTable:   Option[String]
-  ): F[ResultSet]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of all the data types supported by
@@ -1988,7 +1979,7 @@ trait DatabaseMetaData[F[_]]:
    * @return a <code>ResultSet</code> object in which each row is an SQL
    *         type description
    */
-  def getTypeInfo(): ResultSet
+  def getTypeInfo(): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the given table's indices and statistics. They are
@@ -2053,7 +2044,7 @@ trait DatabaseMetaData[F[_]]:
     table:       String,
     unique:      Boolean,
     approximate: Boolean
-  ): F[ResultSet] =
+  ): F[ResultSet[F]] =
     getIndexInfo(Some(catalog), Some(schema), Some(table), unique, approximate)
 
   def getIndexInfo(
@@ -2062,7 +2053,7 @@ trait DatabaseMetaData[F[_]]:
     table:       Option[String],
     unique:      Boolean,
     approximate: Boolean
-  ): F[ResultSet]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves whether this database supports the given result set type.
@@ -2251,7 +2242,7 @@ trait DatabaseMetaData[F[_]]:
    *        STRUCT, or DISTINCT) to include; <code>null</code> returns all types
    * @return <code>ResultSet</code> object in which each row describes a UDT
    */
-  def getUDTs(catalog: String, schemaPattern: String, typeNamePattern: String, types: Array[Int]): ResultSet =
+  def getUDTs(catalog: String, schemaPattern: String, typeNamePattern: String, types: Array[Int]): F[ResultSet[F]] =
     getUDTs(Some(catalog), Some(schemaPattern), Some(typeNamePattern), types)
 
   def getUDTs(
@@ -2259,53 +2250,7 @@ trait DatabaseMetaData[F[_]]:
     schemaPattern:   Option[String],
     typeNamePattern: Option[String],
     types:           Array[Int]
-  ): ResultSet
-
-  /**
-   * Retrieves the connection that produced this metadata object.
-   *
-   * @return the connection that produced this metadata object
-   */
-  def getConnection(): Connection[F]
-
-  /**
-   * Retrieves whether this database supports savepoints.
-   *
-   * @return <code>true</code> if savepoints are supported;
-   *         <code>false</code> otherwise
-   */
-  def supportsSavepoints(): Boolean
-
-  /**
-   * Retrieves whether this database supports named parameters to callable
-   * statements.
-   *
-   * @return <code>true</code> if named parameters are supported;
-   *         <code>false</code> otherwise
-   */
-  def supportsNamedParameters(): Boolean
-
-  /**
-   * Retrieves whether it is possible to have multiple <code>ResultSet</code> objects
-   * returned from a <code>CallableStatement</code> object
-   * simultaneously.
-   *
-   * @return <code>true</code> if a <code>CallableStatement</code> object
-   *         can return multiple <code>ResultSet</code> objects
-   *         simultaneously; <code>false</code> otherwise
-   */
-  def supportsMultipleOpenResults(): Boolean
-
-  /**
-   * Retrieves whether auto-generated keys can be retrieved after
-   * a statement has been executed
-   *
-   * @return <code>true</code> if auto-generated keys can be retrieved
-   *         after a statement has executed; <code>false</code> otherwise
-   * <p>If <code>true</code> is returned, the JDBC driver must support the
-   * returning of auto-generated keys for at least SQL INSERT statements
-   */
-  def supportsGetGeneratedKeys(): Boolean
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the user-defined type (UDT) hierarchies defined in a
@@ -2345,14 +2290,14 @@ trait DatabaseMetaData[F[_]]:
    * @return a <code>ResultSet</code> object in which a row gives information
    *         about the designated UDT
    */
-  def getSuperTypes(catalog: String, schemaPattern: String, typeNamePattern: String): ResultSet =
+  def getSuperTypes(catalog: String, schemaPattern: String, typeNamePattern: String): F[ResultSet[F]] =
     getSuperTypes(Some(catalog), Some(schemaPattern), Some(typeNamePattern))
 
   def getSuperTypes(
     catalog:         Option[String],
     schemaPattern:   Option[String],
     typeNamePattern: Option[String]
-  ): ResultSet
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the table hierarchies defined in a particular
@@ -2385,14 +2330,14 @@ trait DatabaseMetaData[F[_]]:
    *        name
    * @return a <code>ResultSet</code> object in which each row is a type description
    */
-  def getSuperTables(catalog: String, schemaPattern: String, tableNamePattern: String): ResultSet =
+  def getSuperTables(catalog: String, schemaPattern: String, tableNamePattern: String): F[ResultSet[F]] =
     getSuperTables(Some(catalog), Some(schemaPattern), Some(tableNamePattern))
 
   def getSuperTables(
     catalog:          Option[String],
     schemaPattern:    Option[String],
     tableNamePattern: Option[String]
-  ): ResultSet
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the given attribute of the given type
@@ -2424,8 +2369,8 @@ trait DatabaseMetaData[F[_]]:
    *  <LI><B>NUM_PREC_RADIX</B> int {@code =>} Radix (typically either 10 or 2)
    *  <LI><B>NULLABLE</B> int {@code =>} whether NULL is allowed
    *      <UL>
-   *      <LI> attributeNoNulls - might not allow NULL values
-   *      <LI> attributeNullable - definitely allows NULL values
+   *      <LI> attributeNoNulls - might not allow <code>NULL</code> values
+   *      <LI> attributeNullable - definitely allows <code>NULL</code> values
    *      <LI> attributeNullableUnknown - nullability unknown
    *      </UL>
    *  <LI><B>REMARKS</B> String {@code =>} comment describing column (may be <code>null</code>)
@@ -2474,7 +2419,7 @@ trait DatabaseMetaData[F[_]]:
     schemaPattern:        String,
     typeNamePattern:      String,
     attributeNamePattern: String
-  ): ResultSet =
+  ): F[ResultSet[F]] =
     getAttributes(Some(catalog), Some(schemaPattern), Some(typeNamePattern), Some(attributeNamePattern))
 
   def getAttributes(
@@ -2482,7 +2427,7 @@ trait DatabaseMetaData[F[_]]:
     schemaPattern:        Option[String],
     typeNamePattern:      Option[String],
     attributeNamePattern: Option[String]
-  ): ResultSet
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves whether this database supports the given result set holdability.
@@ -2587,10 +2532,10 @@ trait DatabaseMetaData[F[_]]:
    * @return a <code>ResultSet</code> object in which each row is a
    *         schema description
    */
-  def getSchemas(catalog: String, schemaPattern: String): F[ResultSet] =
+  def getSchemas(catalog: String, schemaPattern: String): F[ResultSet[F]] =
     getSchemas(Some(catalog), Some(schemaPattern))
 
-  def getSchemas(catalog: Option[String], schemaPattern: Option[String]): F[ResultSet]
+  def getSchemas(catalog: Option[String], schemaPattern: Option[String]): F[ResultSet[F]]
 
   /**
    * Retrieves whether this database supports invoking user-defined or vendor functions
@@ -2629,7 +2574,7 @@ trait DatabaseMetaData[F[_]]:
    * @return      A <code>ResultSet</code> object; each row is a supported client info
    * property
    */
-  def getClientInfoProperties(): ResultSet
+  def getClientInfoProperties(): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the  system and user functions available
@@ -2650,7 +2595,7 @@ trait DatabaseMetaData[F[_]]:
    *  <LI><B>REMARKS</B> String {@code =>} explanatory comment on the function
    * <LI><B>FUNCTION_TYPE</B> short {@code =>} kind of function:
    *      <UL>
-   *      <LI>functionResultUnknown - Cannot determine if a return value
+   *      <LI> functionResultUnknown - Cannot determine if a return value
    *       or table will be returned
    *      <LI> functionNoTable- Does not return a table
    *      <LI> functionReturnsTable - Returns a table
@@ -2676,14 +2621,14 @@ trait DatabaseMetaData[F[_]]:
    *        function name as it is stored in the database
    * @return <code>ResultSet</code> - each row is a function description
    */
-  def getFunctions(catalog: String, schemaPattern: String, functionNamePattern: String): F[ResultSet] =
+  def getFunctions(catalog: String, schemaPattern: String, functionNamePattern: String): F[ResultSet[F]] =
     getFunctions(Some(catalog), Some(schemaPattern), Some(functionNamePattern))
 
   def getFunctions(
     catalog:             Option[String],
     schemaPattern:       Option[String],
     functionNamePattern: Option[String]
-  ): F[ResultSet]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the given catalog's system or user
@@ -2780,7 +2725,7 @@ trait DatabaseMetaData[F[_]]:
     schemaPattern:       String,
     functionNamePattern: String,
     columnNamePattern:   String
-  ): F[ResultSet] =
+  ): F[ResultSet[F]] =
     getFunctionColumns(Some(catalog), Some(schemaPattern), Some(functionNamePattern), Some(columnNamePattern))
 
   def getFunctionColumns(
@@ -2788,7 +2733,7 @@ trait DatabaseMetaData[F[_]]:
     schemaPattern:       Option[String],
     functionNamePattern: Option[String],
     columnNamePattern:   Option[String]
-  ): F[ResultSet]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the pseudo or hidden columns available
@@ -2854,7 +2799,7 @@ trait DatabaseMetaData[F[_]]:
     schemaPattern:     String,
     tableNamePattern:  String,
     columnNamePattern: String
-  ): ResultSet =
+  ): F[ResultSet[F]] =
     getPseudoColumns(Some(catalog), Some(schemaPattern), Some(tableNamePattern), Some(columnNamePattern))
 
   def getPseudoColumns(
@@ -2862,7 +2807,7 @@ trait DatabaseMetaData[F[_]]:
     schemaPattern:     Option[String],
     tableNamePattern:  Option[String],
     columnNamePattern: Option[String]
-  ): ResultSet
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves whether a generated key will always be returned if the column
@@ -2973,8 +2918,7 @@ object DatabaseMetaData:
    * <P>
    * A possible value for the column
    * <code>COLUMN_TYPE</code>
-   * in the <code>ResultSet</code>
-   * returned by the method <code>getProcedureColumns</code>.
+   * in the <code>ResultSet</code> object returned by the method <code>getProcedureColumns</code>.
    */
   val procedureColumnResult: Int = 3
 
@@ -2983,8 +2927,7 @@ object DatabaseMetaData:
    * <P>
    * A possible value for the column
    * <code>COLUMN_TYPE</code>
-   * in the <code>ResultSet</code>
-   * returned by the method <code>getProcedureColumns</code>.
+   * in the <code>ResultSet</code> object returned by the method <code>getProcedureColumns</code>.
    */
   val procedureColumnOut: Int = 4
 
@@ -2993,8 +2936,7 @@ object DatabaseMetaData:
    * <P>
    * A possible value for the column
    * <code>COLUMN_TYPE</code>
-   * in the <code>ResultSet</code>
-   * returned by the method <code>getProcedureColumns</code>.
+   * in the <code>ResultSet</code> object returned by the method <code>getProcedureColumns</code>.
    */
   val procedureColumnReturn: Int = 5
 
