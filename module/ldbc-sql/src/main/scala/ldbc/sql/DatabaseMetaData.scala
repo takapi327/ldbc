@@ -2253,6 +2253,52 @@ trait DatabaseMetaData[F[_]]:
   ): F[ResultSet[F]]
 
   /**
+   * Retrieves the connection that produced this metadata object.
+   *
+   * @return the connection that produced this metadata object
+   */
+  def getConnection(): Connection[F]
+
+  /**
+   * Retrieves whether this database supports savepoints.
+   *
+   * @return <code>true</code> if savepoints are supported;
+   *         <code>false</code> otherwise
+   */
+  def supportsSavepoints(): Boolean
+
+  /**
+   * Retrieves whether this database supports named parameters to callable
+   * statements.
+   *
+   * @return <code>true</code> if named parameters are supported;
+   *         <code>false</code> otherwise
+   */
+  def supportsNamedParameters(): Boolean
+
+  /**
+   * Retrieves whether it is possible to have multiple <code>ResultSet</code> objects
+   * returned from a <code>CallableStatement</code> object
+   * simultaneously.
+   *
+   * @return <code>true</code> if a <code>CallableStatement</code> object
+   *         can return multiple <code>ResultSet</code> objects
+   *         simultaneously; <code>false</code> otherwise
+   */
+  def supportsMultipleOpenResults(): Boolean
+
+  /**
+   * Retrieves whether auto-generated keys can be retrieved after
+   * a statement has been executed
+   *
+   * @return <code>true</code> if auto-generated keys can be retrieved
+   *         after a statement has executed; <code>false</code> otherwise
+   *         <p>If <code>true</code> is returned, the JDBC driver must support the
+   *         returning of auto-generated keys for at least SQL INSERT statements
+   */
+  def supportsGetGeneratedKeys(): Boolean
+
+  /**
    * Retrieves a description of the user-defined type (UDT) hierarchies defined in a
    * particular schema in this database. Only the immediate super type/
    * sub type relationship is modeled.
