@@ -78,7 +78,7 @@ trait ResultSet[F[_]]:
    * @return <code>true</code> if the last column value read was SQL
    *         <code>NULL</code> and <code>false</code> otherwise
    */
-  def wasNull(): Boolean
+  def wasNull(): F[Boolean]
 
   /**
    * Retrieves the value of the designated column in the current row
