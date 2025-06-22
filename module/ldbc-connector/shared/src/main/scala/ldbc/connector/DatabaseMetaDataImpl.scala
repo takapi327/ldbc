@@ -36,6 +36,12 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
   connectionClosed:              Ref[F, Boolean],
   statementClosed:               Ref[F, Boolean],
   resultSetClosed:               Ref[F, Boolean],
+  lastColumnReadNullable: Ref[F, Boolean],
+  currentCursor:       Ref[F, Int],
+  currentRow:          Ref[F, Option[ResultSetRowPacket]],
+  fetchSize: Ref[F, Long],
+  useCursorFetch: Ref[F, Boolean],
+  useServerPrepStmts: Ref[F, Boolean],
   database:                      Option[String]                = None,
   databaseTerm:                  DatabaseMetaData.DatabaseTerm = DatabaseMetaData.DatabaseTerm.CATALOG,
   getProceduresReturnsFunctions: Boolean                       = true,
@@ -43,7 +49,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
   transformedBitIsBoolean:       Boolean                       = false,
   yearIsDateType:                Boolean                       = true,
   nullDatabaseMeansCurrent:      Boolean                       = false
-)(using F: Concurrent[F])
+)(using F: Sync[F])
   extends DatabaseMetaDataImpl.StaticDatabaseMetaData[F]:
 
   private enum FunctionConstant:
@@ -192,7 +198,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
     catalog:              Option[String],
     schemaPattern:        Option[String],
     procedureNamePattern: Option[String]
-  ): F[ResultSet] =
+  ): F[ResultSet[F]] =
     val db = getDatabase(catalog, schemaPattern)
 
     val sqlBuf = new StringBuilder(
@@ -257,7 +263,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
     schemaPattern:        Option[String],
     procedureNamePattern: Option[String],
     columnNamePattern:    Option[String]
-  ): F[ResultSet] =
+  ): F[ResultSet[F]] =
     val db = getDatabase(catalog, schemaPattern)
 
     val supportsFractSeconds = protocol.initialPacket.serverVersion.compare(Version(5, 6, 4)) >= 0
@@ -443,7 +449,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
     schemaPattern:    Option[String],
     tableNamePattern: Option[String],
     types:            Array[String]
-  ): F[ResultSet] =
+  ): F[ResultSet[F]] =
     val db = getDatabase(catalog, schemaPattern)
 
     val sqlBuf = new StringBuilder(
@@ -514,10 +520,11 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
       ) *> preparedStatement.executeQuery()
     }
 
-  override def getCatalogs(): F[ResultSet] =
+  override def getCatalogs(): F[ResultSet[F]] =
     (if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then F.pure(List.empty[String])
      else getDatabases(None)).map { dbList =>
       ResultSetImpl(
+        protocol,
         Vector("TABLE_CAT").map { value =>
           new ColumnDefinitionPacket:
             override def table:      String                     = ""
@@ -527,12 +534,20 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
         },
         dbList.map(name => ResultSetRowPacket(Array(Some(name)))).toVector,
         serverVariables,
-        protocol.initialPacket.serverVersion
+        protocol.initialPacket.serverVersion,
+        resultSetClosed,
+        lastColumnReadNullable,
+        currentCursor,
+        currentRow,
+        fetchSize,
+        useCursorFetch,
+        useServerPrepStmts,
       )
     }
 
-  override def getTableTypes(): ResultSet =
-    ResultSetImpl(
+  override def getTableTypes(): F[ResultSet[F]] =
+    F.pure(ResultSetImpl(
+      protocol,
       Vector(
         new ColumnDefinitionPacket:
           override def table:      String                     = ""
@@ -545,15 +560,22 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
         .map(tableType => ResultSetRowPacket(Array(Some(tableType.name))))
         .toVector,
       serverVariables,
-      protocol.initialPacket.serverVersion
-    )
+      protocol.initialPacket.serverVersion,
+      resultSetClosed,
+      lastColumnReadNullable,
+      currentCursor,
+      currentRow,
+      fetchSize,
+      useCursorFetch,
+      useServerPrepStmts,
+    ))
 
   override def getColumns(
     catalog:           Option[String],
     schemaPattern:     Option[String],
     tableName:         Option[String],
     columnNamePattern: Option[String]
-  ): F[ResultSet] =
+  ): F[ResultSet[F]] =
     val db = getDatabase(catalog, schemaPattern)
 
     val sqlBuf = new StringBuilder(
@@ -741,6 +763,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
       }
       .map { resultSet =>
         ResultSetImpl(
+          protocol,
           Vector(
             "TABLE_CAT",
             "TABLE_SCHEM",
@@ -773,9 +796,16 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
               override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
               override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
           ),
-          resultSet.asInstanceOf[ResultSetImpl].records,
+          resultSet.asInstanceOf[ResultSetImpl[F]].records,
           serverVariables,
-          protocol.initialPacket.serverVersion
+          protocol.initialPacket.serverVersion,
+          resultSetClosed,
+          lastColumnReadNullable,
+          currentCursor,
+          currentRow,
+          fetchSize,
+          useCursorFetch,
+          useServerPrepStmts,
         )
       }
 
@@ -784,7 +814,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
     schema:            Option[String],
     table:             Option[String],
     columnNamePattern: Option[String]
-  ): F[ResultSet] =
+  ): F[ResultSet[F]] =
     val db = getDatabase(catalog, schema)
 
     val sqlBuf = new StringBuilder(
@@ -828,7 +858,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
     catalog:          Option[String],
     schemaPattern:    Option[String],
     tableNamePattern: Option[String]
-  ): F[ResultSet] =
+  ): F[ResultSet[F]] =
 
     val db = getDatabase(catalog, schemaPattern)
 
@@ -868,55 +898,57 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
       }
       .flatMap { resultSet =>
 
-        val keys = Vector.newBuilder[(Option[String], Option[String], Option[String], String, String)]
-        while resultSet.next() do
-          val host    = Option(resultSet.getString(1))
-          val db      = Option(resultSet.getString(2))
-          val table   = Option(resultSet.getString(3))
-          val grantor = Option(resultSet.getString(4))
-          val user    = Option(resultSet.getString(5)).getOrElse("%")
+        val keys = Monad[F].whileM[Vector, Vector[(Option[String], Option[String], Option[String], String, String)]](resultSet.next()) {
+          for
+            host    <- resultSet.getString(1).map(Option(_))
+            db      <- resultSet.getString(2).map(Option(_))
+            table   <- resultSet.getString(3).map(Option(_))
+            grantor <- resultSet.getString(4).map(Option(_))
+            user    <- resultSet.getString(5).map(Option(_)).map(_.getOrElse("%"))
+            value <- resultSet.getString(6).map(Option(_))
+          yield
+            val fullUser = new StringBuilder(user)
+            host.foreach(h => fullUser.append("@").append(h))
 
-          val fullUser = new StringBuilder(user)
-          host.foreach(h => fullUser.append("@").append(h))
+            val keys = Vector.newBuilder[(Option[String], Option[String], Option[String], String, String)]
+            value match
+              case Some(value) =>
+                val allPrivileges = value.toUpperCase(Locale.ENGLISH)
+                val stringTokenizer = new StringTokenizer(allPrivileges, ",")
 
-          Option(resultSet.getString(6)) match
-            case Some(value) =>
-              val allPrivileges   = value.toUpperCase(Locale.ENGLISH)
-              val stringTokenizer = new StringTokenizer(allPrivileges, ",")
+                while stringTokenizer.hasMoreTokens do
+                  val privilege = stringTokenizer.nextToken().trim
 
-              while stringTokenizer.hasMoreTokens do
-                val privilege = stringTokenizer.nextToken().trim
+                  keys += ((db, table, grantor, fullUser.toString(), privilege))
+                end while
+              case None => // no privileges
 
-                keys += ((db, table, grantor, fullUser.toString(), privilege))
-              end while
+            keys.result()
+        }
 
-            case None => // no privileges
-        end while
-
-        val records = keys
-          .result()
-          .traverse { (db, table, grantor, user, privilege) =>
-            val columnResults = getColumns(catalog, schemaPattern, table, None)
-            columnResults.map { columnResult =>
-              val records = Vector.newBuilder[ResultSetRowPacket]
-              while columnResult.next() do
-                val rows = Array(
-                  if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then Some("def") else db, // TABLE_CAT
-                  if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then db else None,        // TABLE_SCHEM
-                  table,                                                                            // TABLE_NAME
-                  grantor,                                                                          // GRANTOR
-                  Some(user),                                                                       // GRANTEE
-                  Some(privilege),                                                                  // PRIVILEGE
-                  None                                                                              // IS_GRANTABLE
-                )
-                records += ResultSetRowPacket(rows)
-              records.result()
-            }
-          }
-          .map(_.flatten)
-
-        records.map { records =>
+        for
+          keys <- keys.map(_.flatten)
+          records <- keys
+            .traverse { (db, table, grantor, user, privilege) =>
+              val columnResults = getColumns(catalog, schemaPattern, table, None)
+              columnResults.flatMap { columnResult =>
+                Monad[F].whileM[Vector, ResultSetRowPacket](columnResult.next()) {
+                  val rows = Array(
+                    if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then Some("def") else db, // TABLE_CAT
+                    if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then db else None, // TABLE_SCHEM
+                    table, // TABLE_NAME
+                    grantor, // GRANTOR
+                    Some(user), // GRANTEE
+                    Some(privilege), // PRIVILEGE
+                    None // IS_GRANTABLE
+                  )
+                  F.pure(ResultSetRowPacket(rows))
+                }
+              }
+            }.map(_.flatten)
+        yield
           ResultSetImpl(
+            protocol,
             Vector(
               "TABLE_CAT",
               "TABLE_SCHEM",
@@ -927,16 +959,22 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
               "IS_GRANTABLE"
             ).map { value =>
               new ColumnDefinitionPacket:
-                override def table:      String                     = ""
-                override def name:       String                     = value
-                override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
-                override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
+                override def table: String = ""
+                override def name: String = value
+                override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
+                override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
             },
             records,
             serverVariables,
-            protocol.initialPacket.serverVersion
+            protocol.initialPacket.serverVersion,
+            resultSetClosed,
+            lastColumnReadNullable,
+            currentCursor,
+            currentRow,
+            fetchSize,
+            useCursorFetch,
+            useServerPrepStmts,
           )
-        }
       }
 
   override def getBestRowIdentifier(
@@ -945,7 +983,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
     table:    String,
     scope:    Option[Int],
     nullable: Option[Boolean]
-  ): F[ResultSet] =
+  ): F[ResultSet[F]] =
 
     val db = getDatabase(catalog, schema)
 
@@ -959,14 +997,14 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
       case None => ()
 
     prepareMetaDataSafeStatement(sqlBuf.toString()).flatMap { preparedStatement =>
-      preparedStatement.executeQuery().map { resultSet =>
-        val builder = Vector.newBuilder[Option[(Int, String, Int, String, Int, Int, Int, Int)]]
-        while resultSet.next() do
-          resultSet.getString("Key") match
+      preparedStatement.executeQuery().flatMap { resultSet =>
+        val decodedF = Monad[F].whileM[Vector, Option[(Int, String, Int, String, Int, Int, Int, Int)]](resultSet.next()) {
+          resultSet.getString("Key").flatMap {
             case key if key.startsWith("PRI") =>
-              val field  = resultSet.getString("Field")
-              val `type` = resultSet.getString("Type")
-              (Option(field), Option(`type`)) match
+              for
+                field  <- resultSet.getString("Field")
+                `type` <- resultSet.getString("Type")
+              yield (Option(field), Option(`type`)) match
                 case (Some(columnName), Some(value)) =>
                   val (size, decimals, typeName, hasLength) = parseTypeColumn(value)
                   val mysqlType                             = MysqlType.getByName(typeName.toUpperCase)
@@ -974,7 +1012,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
                     if mysqlType == MysqlType.YEAR && !yearIsDateType then SMALLINT
                     else mysqlType.jdbcType
                   val columnSize = if hasLength then size + decimals else mysqlType.precision.toInt
-                  builder += Some(
+                  Some(
                     (
                       DatabaseMetaData.bestRowSession,
                       columnName,
@@ -986,53 +1024,63 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
                       DatabaseMetaData.bestRowNotPseudo
                     )
                   )
-                case _ => builder += None
-            case _ => builder += None
+                case _ => None
+            case _ => F.pure(None)
+          }
+        }
 
-        val decoded = builder.result()
+        decodedF.map { decoded =>
+          ResultSetImpl(
+            protocol,
+            Vector(
+              "SCOPE",
+              "COLUMN_NAME",
+              "DATA_TYPE",
+              "TYPE_NAME",
+              "COLUMN_SIZE",
+              "BUFFER_LENGTH",
+              "DECIMAL_DIGITS",
+              "PSEUDO_COLUMN"
+            ).map { value =>
+              new ColumnDefinitionPacket:
+                override def table: String = ""
 
-        ResultSetImpl(
-          Vector(
-            "SCOPE",
-            "COLUMN_NAME",
-            "DATA_TYPE",
-            "TYPE_NAME",
-            "COLUMN_SIZE",
-            "BUFFER_LENGTH",
-            "DECIMAL_DIGITS",
-            "PSEUDO_COLUMN"
-          ).map { value =>
-            new ColumnDefinitionPacket:
-              override def table: String = ""
+                override def name: String = value
 
-              override def name: String = value
+                override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
 
-              override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
-
-              override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
-          },
-          decoded.flatten.map {
-            case (scope, columnName, dataType, typeName, columnSize, bufferLength, decimalDigits, pseudoColumn) =>
-              ResultSetRowPacket(
-                Array(
-                  Some(scope.toString),
-                  Some(columnName),
-                  Some(dataType.toString),
-                  Some(typeName),
-                  Some(columnSize.toString),
-                  Some(bufferLength.toString),
-                  Some(decimalDigits.toString),
-                  Some(pseudoColumn.toString)
+                override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
+            },
+            decoded.flatten.map {
+              case (scope, columnName, dataType, typeName, columnSize, bufferLength, decimalDigits, pseudoColumn) =>
+                ResultSetRowPacket(
+                  Array(
+                    Some(scope.toString),
+                    Some(columnName),
+                    Some(dataType.toString),
+                    Some(typeName),
+                    Some(columnSize.toString),
+                    Some(bufferLength.toString),
+                    Some(decimalDigits.toString),
+                    Some(pseudoColumn.toString)
+                  )
                 )
-              )
-          },
-          serverVariables,
-          protocol.initialPacket.serverVersion
-        )
+            },
+            serverVariables,
+            protocol.initialPacket.serverVersion,
+            resultSetClosed,
+            lastColumnReadNullable,
+            currentCursor,
+            currentRow,
+            fetchSize,
+            useCursorFetch,
+            useServerPrepStmts,
+          )
+        }
       } <* preparedStatement.close()
     }
 
-  override def getVersionColumns(catalog: Option[String], schema: Option[String], table: String): F[ResultSet] =
+  override def getVersionColumns(catalog: Option[String], schema: Option[String], table: String): F[ResultSet[F]] =
 
     val db = getDatabase(catalog, schema)
 
@@ -1076,7 +1124,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
       setting *> preparedStatement.executeQuery()
     }
 
-  override def getPrimaryKeys(catalog: Option[String], schema: Option[String], table: String): F[ResultSet] =
+  override def getPrimaryKeys(catalog: Option[String], schema: Option[String], table: String): F[ResultSet[F]] =
 
     val db = getDatabase(catalog, schema)
 
@@ -1104,7 +1152,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
       setting *> preparedStatement.executeQuery()
     }
 
-  override def getImportedKeys(catalog: Option[String], schema: Option[String], table: String): F[ResultSet] =
+  override def getImportedKeys(catalog: Option[String], schema: Option[String], table: String): F[ResultSet[F]] =
 
     val db = getDatabase(catalog, schema)
 
@@ -1149,7 +1197,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
       setting *> preparedStatement.executeQuery()
     }
 
-  override def getExportedKeys(catalog: Option[String], schema: Option[String], table: String): F[ResultSet] =
+  override def getExportedKeys(catalog: Option[String], schema: Option[String], table: String): F[ResultSet[F]] =
 
     val db = getDatabase(catalog, schema)
 
@@ -1202,7 +1250,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
     foreignCatalog: Option[String],
     foreignSchema:  Option[String],
     foreignTable:   Option[String]
-  ): F[ResultSet] =
+  ): F[ResultSet[F]] =
 
     val primaryDb = getDatabase(parentCatalog, parentSchema)
     val foreignDb = getDatabase(foreignCatalog, foreignSchema)
@@ -1279,7 +1327,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
       setting *> preparedStatement.executeQuery()
     }
 
-  override def getTypeInfo(): ResultSet =
+  override def getTypeInfo(): F[ResultSet[F]] =
     val types = Vector(
       ResultSetRowPacket(getTypeInfo("BIT")),
       ResultSetRowPacket(getTypeInfo("TINYINT")),
@@ -1327,39 +1375,46 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
       ResultSetRowPacket(getTypeInfo("TIMESTAMP"))
     )
 
-    ResultSetImpl(
-      Vector(
-        "TYPE_NAME",
-        "DATA_TYPE",
-        "PRECISION",
-        "LITERAL_PREFIX",
-        "LITERAL_SUFFIX",
-        "CREATE_PARAMS",
-        "NULLABLE",
-        "CASE_SENSITIVE",
-        "SEARCHABLE",
-        "UNSIGNED_ATTRIBUTE",
-        "FIXED_PREC_SCALE",
-        "AUTO_INCREMENT",
-        "LOCAL_TYPE_NAME",
-        "MINIMUM_SCALE",
-        "MAXIMUM_SCALE",
-        "SQL_DATA_TYPE",
-        "SQL_DATETIME_SUB",
-        "NUM_PREC_RADIX"
-      ).map { value =>
-        new ColumnDefinitionPacket:
-          override def table: String = ""
-
-          override def name: String = value
-
-          override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
-
-          override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
-      },
-      types,
-      serverVariables,
-      protocol.initialPacket.serverVersion
+    F.pure(
+      ResultSetImpl(
+        protocol,
+        Vector(
+          "TYPE_NAME",
+          "DATA_TYPE",
+          "PRECISION",
+          "LITERAL_PREFIX",
+          "LITERAL_SUFFIX",
+          "CREATE_PARAMS",
+          "NULLABLE",
+          "CASE_SENSITIVE",
+          "SEARCHABLE",
+          "UNSIGNED_ATTRIBUTE",
+          "FIXED_PREC_SCALE",
+          "AUTO_INCREMENT",
+          "LOCAL_TYPE_NAME",
+          "MINIMUM_SCALE",
+          "MAXIMUM_SCALE",
+          "SQL_DATA_TYPE",
+          "SQL_DATETIME_SUB",
+          "NUM_PREC_RADIX"
+        ).map { value =>
+          new ColumnDefinitionPacket:
+            override def table: String = ""
+            override def name: String = value
+            override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
+            override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
+        },
+        types,
+        serverVariables,
+        protocol.initialPacket.serverVersion,
+        resultSetClosed,
+        lastColumnReadNullable,
+        currentCursor,
+        currentRow,
+        fetchSize,
+        useCursorFetch,
+        useServerPrepStmts,
+      )
     )
 
   override def getIndexInfo(
@@ -1368,7 +1423,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
     table:       Option[String],
     unique:      Boolean,
     approximate: Boolean
-  ): F[ResultSet] =
+  ): F[ResultSet[F]] =
 
     val db = getDatabase(catalog, schema)
 
@@ -1405,7 +1460,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
     schemaPattern:   Option[String],
     typeNamePattern: Option[String],
     types:           Array[Int]
-  ): ResultSet =
+  ): F[ResultSet[F]] =
     emptyResultSet(
       Vector(
         "TYPE_CAT",
@@ -1426,7 +1481,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
     catalog:         Option[String],
     schemaPattern:   Option[String],
     typeNamePattern: Option[String]
-  ): ResultSet =
+  ): F[ResultSet[F]] =
     emptyResultSet(
       Vector(
         "TYPE_CAT",
@@ -1442,7 +1497,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
     catalog:          Option[String],
     schemaPattern:    Option[String],
     tableNamePattern: Option[String]
-  ): ResultSet =
+  ): F[ResultSet[F]] =
     emptyResultSet(
       Vector(
         "TYPE_CAT",
@@ -1457,7 +1512,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
     schemaPattern:        Option[String],
     typeNamePattern:      Option[String],
     attributeNamePattern: Option[String]
-  ): ResultSet =
+  ): F[ResultSet[F]] =
     emptyResultSet(
       Vector(
         "TYPE_CAT",
@@ -1488,10 +1543,11 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
 
   override def getDatabaseMinorVersion(): Int = protocol.initialPacket.serverVersion.minor
 
-  override def getSchemas(catalog: Option[String], schemaPattern: Option[String]): F[ResultSet] =
+  override def getSchemas(catalog: Option[String], schemaPattern: Option[String]): F[ResultSet[F]] =
     (if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then getDatabases(schemaPattern)
      else F.pure(List.empty[String])).map { dbList =>
       ResultSetImpl(
+        protocol,
         Vector("TABLE_CATALOG", "TABLE_SCHEM").map { value =>
           new ColumnDefinitionPacket:
             override def table:      String                     = ""
@@ -1501,11 +1557,18 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
         },
         dbList.map(name => ResultSetRowPacket(Array(Some("def"), Some(name)))).toVector,
         serverVariables,
-        protocol.initialPacket.serverVersion
+        protocol.initialPacket.serverVersion,
+        resultSetClosed,
+        lastColumnReadNullable,
+        currentCursor,
+        currentRow,
+        fetchSize,
+        useCursorFetch,
+        useServerPrepStmts,
       )
     }
 
-  override def getClientInfoProperties(): ResultSet =
+  override def getClientInfoProperties(): F[ResultSet[F]] =
     emptyResultSet(
       Vector(
         "NAME",
@@ -1519,7 +1582,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
     catalog:             Option[String],
     schemaPattern:       Option[String],
     functionNamePattern: Option[String]
-  ): F[ResultSet] =
+  ): F[ResultSet[F]] =
 
     val db = getDatabase(catalog, schemaPattern)
 
@@ -1560,7 +1623,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
     schemaPattern:       Option[String],
     functionNamePattern: Option[String],
     columnNamePattern:   Option[String]
-  ): F[ResultSet] =
+  ): F[ResultSet[F]] =
 
     val supportsFractSeconds = protocol.initialPacket.serverVersion.compare(Version(5, 6, 4)) >= 0
 
@@ -1724,7 +1787,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
     schemaPattern:     Option[String],
     tableNamePattern:  Option[String],
     columnNamePattern: Option[String]
-  ): ResultSet =
+  ): F[ResultSet[F]] =
     emptyResultSet(
       Vector(
         "TABLE_CAT",
@@ -1760,7 +1823,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
     for
       params            <- Ref[F].of(SortedMap.empty[Int, Parameter])
       batchedArgs       <- Ref[F].of(Vector.empty[String])
-      currentResultSet  <- Ref[F].of[Option[ResultSet]](None)
+      currentResultSet  <- Ref[F].of[Option[ResultSet[F]]](None)
       updateCount       <- Ref[F].of(-1L)
       moreResults       <- Ref[F].of(false)
       autoGeneratedKeys <- Ref[F].of(Statement.NO_GENERATED_KEYS)
@@ -1779,6 +1842,9 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
       moreResults,
       autoGeneratedKeys,
       lastInsertId,
+      fetchSize,
+      useCursorFetch,
+      useServerPrepStmts,
       ResultSet.TYPE_SCROLL_INSENSITIVE,
       ResultSet.CONCUR_READ_ONLY
     )
@@ -1841,10 +1907,8 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
     for
       prepareStatement <- prepareMetaDataSafeStatement(sqlBuf.toString)
       resultSet        <- prepareStatement.executeQuery()
-    yield
-      val builder = List.newBuilder[String]
-      while resultSet.next() do builder += resultSet.getString(1)
-      builder.result()
+      decoded          <- Monad[F].whileM[Vector, String](resultSet.next())(resultSet.getString(1))
+    yield decoded.toList
 
   private def parseTypeColumn(`type`: String): (Int, Int, String, Boolean) =
     if `type`.indexOf("enum") != -1 then
@@ -1932,8 +1996,9 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
       Some("10") // NUM_PREC_RADIX
     )
 
-  private def emptyResultSet(fields: Vector[String]): ResultSet =
-    ResultSetImpl(
+  private def emptyResultSet(fields: Vector[String]): F[ResultSet[F]] =
+    F.pure(ResultSetImpl(
+      protocol,
       fields.map { value =>
         new ColumnDefinitionPacket:
           override def table:      String                     = ""
@@ -1943,8 +2008,15 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
       },
       Vector.empty,
       serverVariables,
-      protocol.initialPacket.serverVersion
-    )
+      protocol.initialPacket.serverVersion,
+      resultSetClosed,
+      lastColumnReadNullable,
+      currentCursor,
+      currentRow,
+      fetchSize,
+      useCursorFetch,
+      useServerPrepStmts,
+    ))
 
   private def getFunctionConstant(constant: FunctionConstant): Int =
     constant match
