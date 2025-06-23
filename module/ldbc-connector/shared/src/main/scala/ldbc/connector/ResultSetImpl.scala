@@ -47,12 +47,6 @@ private[ldbc] case class ResultSetImpl[F[_]](
 )(using ev: MonadThrow[F])
   extends ResultSet[F]:
 
-  // private final val recordSize:             Int                        = records.size
-  // private final var isClosed:               Boolean                    = false
-  // private final var lastColumnReadNullable: Boolean                    = false
-  // private final var currentCursor:          Int                        = 0
-  // private final var currentRow:             Option[ResultSetRowPacket] = records.headOption
-
   override def next(): F[Boolean] =
     checkClosed() *> currentCursor.get.flatMap { cursor =>
       if cursor < records.size then
