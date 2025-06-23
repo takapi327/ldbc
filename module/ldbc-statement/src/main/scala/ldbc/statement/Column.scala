@@ -13,10 +13,9 @@ import cats.InvariantSemigroupal
 
 import org.typelevel.twiddles.TwiddleSyntax
 
-import ldbc.sql.ResultSet
-
 import ldbc.dsl.*
 import ldbc.dsl.codec.*
+import ldbc.dsl.free.ResultSetIO
 
 import ldbc.statement.Expression.*
 
@@ -100,11 +99,11 @@ trait Column[A]:
       override def opt:    Column[Option[(A, B)]] =
         val decoder = new Decoder[Option[(A, B)]]:
           override def offset: Int = self.decoder.offset + fb.decoder.offset
-          override def decode(resultSet: ResultSet, index: Int): Either[Decoder.Error, Option[(A, B)]] =
+          override def decode(index: Int): Either[Decoder.Error, ResultSetIO[Option[(A, B)]]] =
             for
-              v1 <- self.opt.decoder.decode(resultSet, index)
-              v2 <- fb.opt.decoder.decode(resultSet, index + self.decoder.offset)
-            yield v1.flatMap(a => v2.map(b => (a, b)))
+              v1 <- self.opt.decoder.decode(index)
+              v2 <- fb.opt.decoder.decode(index + self.decoder.offset)
+            yield v1.flatMap(opt1 => v2.map(opt2 => opt1.flatMap(a => opt2.map(b => (a, b)))))
 
         val encoder: Encoder[Option[(A, B)]] = {
           case Some((v1, v2)) => self.opt.encoder.encode(Some(v1)).product(fb.opt.encoder.encode(Some(v2)))
@@ -768,7 +767,7 @@ object Column extends TwiddleSyntax[Column]:
     override def as(name: String): Column[A]      = this
     override def decoder:          Decoder[A]     = new Decoder[A]:
       override def offset:                                   Int                      = 0
-      override def decode(resultSet: ResultSet, index: Int): Either[Decoder.Error, A] = Right(value)
+      override def decode(index: Int): Either[Decoder.Error, ResultSetIO[A]] = Right(ResultSetIO.pure(value))
     override def encoder:                     Encoder[A]      = (value: A) => Encoder.Encoded.success(List.empty)
     override def insertStatement:             String          = ""
     override def updateStatement:             String          = ""
