@@ -6,7 +6,7 @@
 
 package ldbc.tests
 
-import java.sql.{ SQLException, SQLSyntaxErrorException}
+import java.sql.{ SQLException, SQLSyntaxErrorException }
 
 import com.mysql.cj.jdbc.MysqlDataSource
 
