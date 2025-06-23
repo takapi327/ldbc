@@ -12,7 +12,6 @@ import cats.syntax.all.*
 import ldbc.sql.ResultSet
 
 import ldbc.dsl.codec.Decoder
-import ldbc.dsl.exception.DecodeFailureException
 import ldbc.dsl.free.ResultSetIO
 import ldbc.dsl.free.ResultSetIO.*
 import ldbc.dsl.util.FactoryCompat
@@ -66,10 +65,7 @@ object ResultSetConsumer:
     override def consume(resultSet: ResultSet[F], statement: String): F[Option[T]] =
       resultSet.next().flatMap {
         case true =>
-          decoder.decode(FIRST_OFFSET) match
-            case Right(value) => value.foldMap(resultSet.interpreter).map(Option(_))
-            case Left(error)  =>
-              ev.raiseError(new DecodeFailureException(error.message, decoder.offset, statement, error.cause))
+          decoder.decode(FIRST_OFFSET, statement).foldMap(resultSet.interpreter).map(Option(_))
         case false => ev.pure(None)
       }
 
@@ -82,13 +78,7 @@ object ResultSetConsumer:
 
       def loop(acc: collection.mutable.Builder[T, G[T]]): ResultSetIO[collection.mutable.Builder[T, G[T]]] =
         ResultSetIO.next().flatMap {
-          case true =>
-            decoder.decode(FIRST_OFFSET) match
-              case Right(value) => value.flatMap(v => loop(acc += v))
-              case Left(error)  =>
-                ResultSetIO.raiseError(
-                  new DecodeFailureException(error.message, decoder.offset, statement, error.cause)
-                )
+          case true => decoder.decode(FIRST_OFFSET, statement).flatMap(v => loop(acc += v))
           case false => ResultSetIO.pure(acc)
         }
 

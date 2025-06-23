@@ -41,29 +41,29 @@ trait Codec[A] extends Encoder[A], Decoder[A]:
 
     override def offset:                Int                                        = self.offset + fb.offset
     override def encode(value: (A, B)): Encoder.Encoded                            = pe.encode(value)
-    override def decode(index: Int):    Either[Decoder.Error, ResultSetIO[(A, B)]] = pd.decode(index)
+    override def decode(index: Int, statement: String): ResultSetIO[(A, B)] = pd.decode(index, statement)
 
   /** Contramap inputs from, and map outputs to, a new type `B`, yielding a `Codec[B]`. */
   def imap[B](f: A => B)(g: B => A): Codec[B] = new Codec[B]:
     override def offset:             Int                                   = self.offset
     override def encode(value: B):   Encoder.Encoded                       = self.encode(g(value))
-    override def decode(index: Int): Either[Decoder.Error, ResultSetIO[B]] =
-      self.map(f).decode(index)
+    override def decode(index: Int, statement: String): ResultSetIO[B] =
+      self.map(f).decode(index, statement)
 
   /** Contramap inputs from, and map decoded results to a new type `B` or an error, yielding a `Codec[B]`. */
   def eimap[B](f: A => Either[String, B])(g: B => A): Codec[B] = new Codec[B]:
     override def offset:             Int                                   = self.offset
     override def encode(value: B):   Encoder.Encoded                       = self.encode(g(value))
-    override def decode(index: Int): Either[Decoder.Error, ResultSetIO[B]] =
-      self.emap(f).decode(index)
+    override def decode(index: Int, statement: String): ResultSetIO[B] =
+      self.emap(f).decode(index, statement)
 
   /** Lift this `Codec` into `Option`, where `None` is mapped to and from a vector of `NULL`. */
   override def opt: Codec[Option[A]] = new Codec[Option[A]]:
     override def offset:                   Int             = self.offset
     override def encode(value: Option[A]): Encoder.Encoded =
       value.fold(Encoder.Encoded.success(List(None)))(self.encode)
-    override def decode(index: Int): Either[Decoder.Error, ResultSetIO[Option[A]]] =
-      self.decode(index).map(_.map(Option(_)))
+    override def decode(index: Int, statement: String): ResultSetIO[Option[A]] =
+      self.decode(index, statement).map(Option(_))
 
 object Codec extends TwiddleSyntax[Codec]:
 
@@ -82,13 +82,6 @@ object Codec extends TwiddleSyntax[Codec]:
       labels(mirror.ordinal(`enum`))
     }
 
-  private def readCatchError[A](offset: Int, func: => A): Either[Decoder.Error, A] =
-    try
-      Option(func) match
-        case Some(result) => Right(result)
-        case None         => Left(Decoder.Error(offset, "Result is null", None))
-    catch case ex: Throwable => Left(Decoder.Error(offset, ex.getMessage, Some(ex)))
-
   given InvariantSemigroupal[Codec] with
     override def imap[A, B](fa:    Codec[A])(f:  A => B)(g: B => A): Codec[B]      = fa.imap(f)(g)
     override def product[A, B](fa: Codec[A], fb: Codec[B]):          Codec[(A, B)] = fa product fb
@@ -96,80 +89,67 @@ object Codec extends TwiddleSyntax[Codec]:
   given Codec[Boolean] with
     override def offset:                 Int             = 1
     override def encode(value: Boolean): Encoder.Encoded = Encoder.Encoded.success(List(value))
-    override def decode(index: Int): Either[Decoder.Error, ResultSetIO[Boolean]] =
-      readCatchError(offset, ResultSetIO.getBoolean(index))
+    override def decode(index: Int, statement: String): ResultSetIO[Boolean] = ResultSetIO.getBoolean(index)
 
   given Codec[Byte] with
     override def offset:              Int                                      = 1
     override def encode(value: Byte): Encoder.Encoded                          = Encoder.Encoded.success(List(value))
-    override def decode(index: Int):  Either[Decoder.Error, ResultSetIO[Byte]] =
-      readCatchError(offset, ResultSetIO.getByte(index))
+    override def decode(index: Int, statement: String): ResultSetIO[Byte] = ResultSetIO.getByte(index)
 
   given Codec[Short] with
     override def offset:               Int                                       = 1
     override def encode(value: Short): Encoder.Encoded                           = Encoder.Encoded.success(List(value))
-    override def decode(index: Int):   Either[Decoder.Error, ResultSetIO[Short]] =
-      readCatchError(offset, ResultSetIO.getShort(index))
+    override def decode(index: Int, statement: String): ResultSetIO[Short] = ResultSetIO.getShort(index)
 
   given Codec[Int] with
     override def offset:             Int                                     = 1
     override def encode(value: Int): Encoder.Encoded                         = Encoder.Encoded.success(List(value))
-    override def decode(index: Int): Either[Decoder.Error, ResultSetIO[Int]] =
-      readCatchError(offset, ResultSetIO.getInt(index))
+    override def decode(index: Int, statement: String): ResultSetIO[Int] = ResultSetIO.getInt(index)
 
   given Codec[Long] with
     override def offset:              Int                                      = 1
     override def encode(value: Long): Encoder.Encoded                          = Encoder.Encoded.success(List(value))
-    override def decode(index: Int):  Either[Decoder.Error, ResultSetIO[Long]] =
-      readCatchError(offset, ResultSetIO.getLong(index))
+    override def decode(index: Int, statement: String): ResultSetIO[Long] = ResultSetIO.getLong(index)
 
   given Codec[Float] with
     override def offset:               Int                                       = 1
     override def encode(value: Float): Encoder.Encoded                           = Encoder.Encoded.success(List(value))
-    override def decode(index: Int):   Either[Decoder.Error, ResultSetIO[Float]] =
-      readCatchError(offset, ResultSetIO.getFloat(index))
+    override def decode(index: Int, statement: String): ResultSetIO[Float] = ResultSetIO.getFloat(index)
 
   given Codec[Double] with
     override def offset:                Int             = 1
     override def encode(value: Double): Encoder.Encoded = Encoder.Encoded.success(List(value))
-    override def decode(index: Int): Either[Decoder.Error, ResultSetIO[Double]] =
-      readCatchError(offset, ResultSetIO.getDouble(index))
+    override def decode(index: Int, statement: String): ResultSetIO[Double] = ResultSetIO.getDouble(index)
 
   given Codec[BigDecimal] with
     override def offset:                    Int             = 1
     override def encode(value: BigDecimal): Encoder.Encoded = Encoder.Encoded.success(List(value))
-    override def decode(index: Int): Either[Decoder.Error, ResultSetIO[BigDecimal]] =
-      readCatchError(offset, ResultSetIO.getBigDecimal(index))
+    override def decode(index: Int, statement: String): ResultSetIO[BigDecimal] = ResultSetIO.getBigDecimal(index)
 
   given Codec[String] with
     override def offset:                Int             = 1
     override def encode(value: String): Encoder.Encoded = Encoder.Encoded.success(List(value))
-    override def decode(index: Int): Either[Decoder.Error, ResultSetIO[String]] =
-      readCatchError(offset, ResultSetIO.getString(index))
+    override def decode(index: Int, statement: String): ResultSetIO[String] = ResultSetIO.getString(index)
 
   given Codec[Array[Byte]] with
     override def offset:                     Int             = 1
     override def encode(value: Array[Byte]): Encoder.Encoded = Encoder.Encoded.success(List(value))
-    override def decode(index: Int): Either[Decoder.Error, ResultSetIO[Array[Byte]]] =
-      readCatchError(offset, ResultSetIO.getBytes(index))
+    override def decode(index: Int, statement: String): ResultSetIO[Array[Byte]] = ResultSetIO.getBytes(index)
 
   given Codec[LocalTime] with
     override def offset:                   Int             = 1
     override def encode(value: LocalTime): Encoder.Encoded = Encoder.Encoded.success(List(value))
-    override def decode(index: Int): Either[Decoder.Error, ResultSetIO[LocalTime]] =
-      readCatchError(offset, ResultSetIO.getTime(index))
+    override def decode(index: Int, statement: String): ResultSetIO[LocalTime] = ResultSetIO.getTime(index)
 
   given Codec[LocalDate] with
     override def offset:                   Int             = 1
     override def encode(value: LocalDate): Encoder.Encoded = Encoder.Encoded.success(List(value))
-    override def decode(index: Int): Either[Decoder.Error, ResultSetIO[LocalDate]] =
-      readCatchError(offset, ResultSetIO.getDate(index))
+    override def decode(index: Int, statement: String): ResultSetIO[LocalDate] = ResultSetIO.getDate(index)
 
   given Codec[LocalDateTime] with
     override def offset:                       Int             = 1
     override def encode(value: LocalDateTime): Encoder.Encoded = Encoder.Encoded.success(List(value))
-    override def decode(index: Int): Either[Decoder.Error, ResultSetIO[LocalDateTime]] =
-      readCatchError(offset, ResultSetIO.getTimestamp(index))
+    override def decode(index: Int, statement: String): ResultSetIO[LocalDateTime] = ResultSetIO.getTimestamp(index)
 
   given [A](using codec: Codec[Int]): Codec[Year] =
     codec.imap(Year.of)(_.getValue)
@@ -183,7 +163,7 @@ object Codec extends TwiddleSyntax[Codec]:
   given Codec[None.type] with
     override def offset:                   Int             = 1
     override def encode(value: None.type): Encoder.Encoded = Encoder.Encoded.success(List(None))
-    override def decode(index: Int): Either[Decoder.Error, ResultSetIO[None.type]] = Right(ResultSetIO.pure(None))
+    override def decode(index: Int, statement: String): ResultSetIO[None.type] = ResultSetIO.pure(None)
 
   given [A](using codec: Codec[A]): Codec[Option[A]] = codec.opt
 
