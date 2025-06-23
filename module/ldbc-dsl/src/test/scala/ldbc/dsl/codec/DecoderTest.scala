@@ -10,14 +10,19 @@ import scala.reflect.Enum
 
 import cats.syntax.all.*
 
+import cats.effect.IO
+
 import munit.CatsEffectSuite
 
 import ldbc.sql.{ ResultSet, ResultSetMetaData }
+import ldbc.dsl.free.ResultSetIO
+import ldbc.dsl.free.ResultSetIO.*
+import ldbc.dsl.exception.DecodeFailureException
 
 class DecoderTest extends CatsEffectSuite:
 
   // Mock ResultSet for testing with minimum implementations needed
-  private class MockResultSet extends ResultSet:
+  private class MockResultSet extends ResultSet[IO]:
     private var nullFlag    = false
     private var stringValue = ""
     private var longValue   = 0L
@@ -26,70 +31,73 @@ class DecoderTest extends CatsEffectSuite:
     def setLongValue(value:   Long):    Unit = longValue   = value
     def setNull(isNull:       Boolean): Unit = nullFlag    = isNull
 
-    override def getString(columnIndex: Int):    String = stringValue
-    override def getString(columnLabel: String): String = stringValue
+    override def getString(columnIndex: Int):    IO[String] = IO(stringValue)
+    override def getString(columnLabel: String): IO[String] = IO(stringValue)
 
-    override def getLong(columnIndex: Int):    Long = longValue
-    override def getLong(columnLabel: String): Long = longValue
+    override def getLong(columnIndex: Int):    IO[Long] = IO(longValue)
+    override def getLong(columnLabel: String): IO[Long] = IO(longValue)
 
-    override def wasNull(): Boolean = nullFlag
+    override def wasNull(): IO[Boolean] = IO(nullFlag)
 
     // Implement the minimum required methods with default values
-    override def absolute(row:              Int):    Boolean                 = false
-    override def afterLast():                        Unit                    = {}
-    override def beforeFirst():                      Unit                    = {}
-    override def close():                            Unit                    = {}
-    override def first():                            Boolean                 = false
-    override def getBigDecimal(columnIndex: Int):    BigDecimal              = BigDecimal(0)
-    override def getBigDecimal(columnLabel: String): BigDecimal              = BigDecimal(0)
-    override def getBoolean(columnIndex:    Int):    Boolean                 = false
-    override def getBoolean(columnLabel:    String): Boolean                 = false
-    override def getByte(columnIndex:       Int):    Byte                    = 0
-    override def getByte(columnLabel:       String): Byte                    = 0
-    override def getBytes(columnIndex:      Int):    Array[Byte]             = Array.empty
-    override def getBytes(columnLabel:      String): Array[Byte]             = Array.empty
-    override def getConcurrency():                   Int                     = 0
-    override def getDate(columnIndex:       Int):    java.time.LocalDate     = java.time.LocalDate.now
-    override def getDate(columnLabel:       String): java.time.LocalDate     = java.time.LocalDate.now
-    override def getDouble(columnIndex:     Int):    Double                  = 0.0
-    override def getDouble(columnLabel:     String): Double                  = 0.0
-    override def getFloat(columnIndex:      Int):    Float                   = 0.0f
-    override def getFloat(columnLabel:      String): Float                   = 0.0f
-    override def getInt(columnIndex:        Int):    Int                     = 0
-    override def getInt(columnLabel:        String): Int                     = 0
-    override def getMetaData():                      ResultSetMetaData       = null
-    override def getRow():                           Int                     = 0
-    override def getShort(columnIndex:      Int):    Short                   = 0
-    override def getShort(columnLabel:      String): Short                   = 0
-    override def getTime(columnIndex:       Int):    java.time.LocalTime     = java.time.LocalTime.now
-    override def getTime(columnLabel:       String): java.time.LocalTime     = java.time.LocalTime.now
-    override def getTimestamp(columnIndex:  Int):    java.time.LocalDateTime = java.time.LocalDateTime.now
-    override def getTimestamp(columnLabel:  String): java.time.LocalDateTime = java.time.LocalDateTime.now
-    override def getType():                          Int                     = 0
-    override def isAfterLast():                      Boolean                 = false
-    override def isBeforeFirst():                    Boolean                 = false
-    override def isFirst():                          Boolean                 = false
-    override def isLast():                           Boolean                 = false
-    override def last():                             Boolean                 = false
-    override def next():                             Boolean                 = false
-    override def previous():                         Boolean                 = false
-    override def relative(rows:             Int):    Boolean                 = false
+    override def absolute(row:              Int):    IO[Boolean]                 = IO(false)
+    override def afterLast():                        IO[Unit]                    = IO.unit
+    override def beforeFirst():                      IO[Unit]                    = IO.unit
+    override def close():                            IO[Unit]                    = IO.unit
+    override def first():                            IO[Boolean]                 = IO(false)
+    override def getBigDecimal(columnIndex: Int):    IO[BigDecimal]              = IO(BigDecimal(0))
+    override def getBigDecimal(columnLabel: String): IO[BigDecimal]              = IO(BigDecimal(0))
+    override def getBoolean(columnIndex:    Int):    IO[Boolean]                 = IO(false)
+    override def getBoolean(columnLabel:    String): IO[Boolean]                 = IO(false)
+    override def getByte(columnIndex:       Int):    IO[Byte]                    = IO(0)
+    override def getByte(columnLabel:       String): IO[Byte]                    = IO(0)
+    override def getBytes(columnIndex:      Int):    IO[Array[Byte]]             = IO(Array.empty)
+    override def getBytes(columnLabel:      String): IO[Array[Byte]]             = IO(Array.empty)
+    override def getConcurrency():                   IO[Int]                     = IO(0)
+    override def getDate(columnIndex:       Int):    IO[java.time.LocalDate]     = IO(java.time.LocalDate.now)
+    override def getDate(columnLabel:       String): IO[java.time.LocalDate]     = IO(java.time.LocalDate.now)
+    override def getDouble(columnIndex:     Int):    IO[Double]                  = IO(0.0)
+    override def getDouble(columnLabel:     String): IO[Double]                  = IO(0.0)
+    override def getFloat(columnIndex:      Int):    IO[Float]                   = IO(0.0f)
+    override def getFloat(columnLabel:      String): IO[Float]                   = IO(0.0f)
+    override def getInt(columnIndex:        Int):    IO[Int]                     = IO(0)
+    override def getInt(columnLabel:        String): IO[Int]                     = IO(0)
+    override def getMetaData():                      IO[ResultSetMetaData]       = IO(null)
+    override def getRow():                           IO[Int]                     = IO(0)
+    override def getShort(columnIndex:      Int):    IO[Short]                   = IO(0)
+    override def getShort(columnLabel:      String): IO[Short]                   = IO(0)
+    override def getTime(columnIndex:       Int):    IO[java.time.LocalTime]     = IO(java.time.LocalTime.now)
+    override def getTime(columnLabel:       String): IO[java.time.LocalTime]     = IO(java.time.LocalTime.now)
+    override def getTimestamp(columnIndex:  Int):    IO[java.time.LocalDateTime] = IO(java.time.LocalDateTime.now)
+    override def getTimestamp(columnLabel:  String): IO[java.time.LocalDateTime] = IO(java.time.LocalDateTime.now)
+    override def getType():                          IO[Int]                     = IO(0)
+    override def isAfterLast():                      IO[Boolean]                 = IO(false)
+    override def isBeforeFirst():                    IO[Boolean]                 = IO(false)
+    override def isFirst():                          IO[Boolean]                 = IO(false)
+    override def isLast():                           IO[Boolean]                 = IO(false)
+    override def last():                             IO[Boolean]                 = IO(false)
+    override def next():                             IO[Boolean]                 = IO(false)
+    override def previous():                         IO[Boolean]                 = IO(false)
+    override def relative(rows:             Int):    IO[Boolean]                 = IO(false)
 
   // Create simple string and long decoders for testing
   private val stringDecoder = new Decoder[String]:
-    override def decode(resultSet: ResultSet, index: Int): Either[Decoder.Error, String] =
-      Right(resultSet.getString(index))
+    override def decode(index: Int, statement: String): ResultSetIO[String] =
+      ResultSetIO.getString(index)
 
   private val longDecoder = new Decoder[Long]:
-    override def decode(resultSet: ResultSet, index: Int): Either[Decoder.Error, Long] =
-      Right(resultSet.getLong(index))
+    override def decode(index: Int, statement: String): ResultSetIO[Long] =
+      ResultSetIO.getLong(index)
 
   test("Decoder map should transform the output") {
     val mockResultSet = new MockResultSet()
     mockResultSet.setLongValue(123L)
 
     val stringifiedLong = longDecoder.map(_.toString)
-    assertEquals(stringifiedLong.decode(mockResultSet, 1), Right("123"))
+    assertIO(
+      stringifiedLong.decode(1, "empty statement").foldMap(mockResultSet.interpreter),
+      "123"
+    )
   }
 
   test("Decoder emap should transform with possible failures") {
@@ -97,12 +105,14 @@ class DecoderTest extends CatsEffectSuite:
     mockResultSet.setStringValue("123")
 
     val successDecoder = stringDecoder.emap(s => Right(s.toInt))
-    val failureDecoder = stringDecoder.emap(s => Left(s"Invalid value: $s"))
+    assertIO(
+      successDecoder.decode(1, "empty statement").foldMap(mockResultSet.interpreter),
+      123
+    )
 
-    assertEquals(successDecoder.decode(mockResultSet, 1), Right(123))
-    assertEquals(
-      failureDecoder.decode(mockResultSet, 1).left.map(_.message),
-      Left("Invalid value: 123")
+    val failureDecoder = stringDecoder.emap(s => Left(s"Invalid value: $s"))
+    interceptIO[DecodeFailureException](
+      failureDecoder.decode(1, "empty statement").foldMap(mockResultSet.interpreter)
     )
   }
 
@@ -112,7 +122,10 @@ class DecoderTest extends CatsEffectSuite:
     mockResultSet.setLongValue(123L)
 
     val tupleDecoder = stringDecoder.product(longDecoder)
-    assertEquals(tupleDecoder.decode(mockResultSet, 1), Right(("test", 123L)))
+    assertIO(
+      tupleDecoder.decode(1, "empty statement").foldMap(mockResultSet.interpreter),
+      ("test", 123L)
+    )
   }
 
   test("Decoder opt should handle null values") {
@@ -122,11 +135,18 @@ class DecoderTest extends CatsEffectSuite:
     // Test non-null case
     mockResultSet.setNull(false)
     val optDecoder = stringDecoder.opt
-    assertEquals(optDecoder.decode(mockResultSet, 1), Right(Some("test")))
+    assertIO(
+      optDecoder.decode(1, "empty statement").foldMap(mockResultSet.interpreter),
+      Some("test")
+    )
 
     // Test null case
     mockResultSet.setNull(true)
-    assertEquals(optDecoder.decode(mockResultSet, 1), Right(None))
+    mockResultSet.setStringValue(null)
+    assertIO(
+      optDecoder.decode(1, "empty statement").foldMap(mockResultSet.interpreter),
+      None
+    )
   }
 
   test("Decoder derived should work with case classes") {
@@ -138,11 +158,9 @@ class DecoderTest extends CatsEffectSuite:
     mockResultSet.setStringValue("test")
 
     val userDecoder = Decoder[User]
-    // Note: This test is somewhat artificial since our mock doesn't properly handle multiple columns
-    // In a real implementation, we'd need to test with a more sophisticated mock
-    assertEquals(
-      userDecoder.decode(mockResultSet, 1).map(_.id),
-      Right(1L)
+    assertIO(
+      userDecoder.decode(1, "empty statement").foldMap(mockResultSet.interpreter).map(_.id),
+      1L
     )
   }
 
@@ -151,10 +169,16 @@ class DecoderTest extends CatsEffectSuite:
     mockResultSet.setStringValue("42")
 
     val pureDecoder = cats.Applicative[Decoder].pure(123)
-    assertEquals(pureDecoder.decode(mockResultSet, 1), Right(123))
+    assertIO(
+      pureDecoder.decode(1, "empty statement").foldMap(mockResultSet.interpreter),
+      123
+    )
 
     val mappedDecoder = pureDecoder.map(_ + 1)
-    assertEquals(mappedDecoder.decode(mockResultSet, 1), Right(124))
+    assertIO(
+      mappedDecoder.decode(1, "empty statement").foldMap(mockResultSet.interpreter),
+      124
+    )
   }
 
   test("Decoder for tuples should work with predefined instances") {
@@ -163,7 +187,10 @@ class DecoderTest extends CatsEffectSuite:
     mockResultSet.setLongValue(123L)
 
     val tupleDecoder = Decoder[(String, Long)]
-    assertEquals(tupleDecoder.decode(mockResultSet, 1), Right(("test", 123L)))
+    assertIO(
+      tupleDecoder.decode(1, "empty statement").foldMap(mockResultSet.interpreter),
+      ("test", 123L)
+    )
   }
 
   // If your codebase includes enums, test the enum decoder
@@ -177,5 +204,8 @@ class DecoderTest extends CatsEffectSuite:
     given Decoder[TestEnum] = Decoder.derivedEnum[TestEnum]
     val enumDecoder         = Decoder[TestEnum]
 
-    assertEquals(enumDecoder.decode(mockResultSet, 1).map(_.toString), Right("First"))
+    assertIO(
+      enumDecoder.decode(1, "empty statement").foldMap(mockResultSet.interpreter).map(_.toString),
+      "First"
+    )
   }
