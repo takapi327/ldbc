@@ -64,7 +64,7 @@ trait Codec[A] extends Encoder[A], Decoder[A]:
       value.fold(Encoder.Encoded.success(List(None)))(self.encode)
     override def decode(index: Int, statement: String): ResultSetIO[Option[A]] =
       for
-        value <- self.decode(index, statement)
+        value   <- self.decode(index, statement)
         wasNull <- ResultSetIO.wasNull()
       yield if wasNull then None else Some(value)
 

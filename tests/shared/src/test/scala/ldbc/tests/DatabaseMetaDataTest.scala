@@ -1410,14 +1410,14 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
           result    <-
             Monad[IO].whileM[List, String](resultSet.next()) {
               for
-                tableCat   <- resultSet.getString("TABLE_CAT")
-                tableSchem <- resultSet.getString("TABLE_SCHEM")
-                tableName  <- resultSet.getString("TABLE_NAME")
-                tableType  <- resultSet.getString("TABLE_TYPE")
-                remarks    <- resultSet.getString("REMARKS")
-                typeCat    <- resultSet.getString("TYPE_CAT")
-                typeSchem  <- resultSet.getString("TYPE_SCHEM")
-                typeName   <- resultSet.getString("TYPE_NAME")
+                tableCat       <- resultSet.getString("TABLE_CAT")
+                tableSchem     <- resultSet.getString("TABLE_SCHEM")
+                tableName      <- resultSet.getString("TABLE_NAME")
+                tableType      <- resultSet.getString("TABLE_TYPE")
+                remarks        <- resultSet.getString("REMARKS")
+                typeCat        <- resultSet.getString("TYPE_CAT")
+                typeSchem      <- resultSet.getString("TYPE_SCHEM")
+                typeName       <- resultSet.getString("TYPE_NAME")
                 selfRefColName <- resultSet.getString("SELF_REFERENCING_COL_NAME")
                 refGeneration  <- resultSet.getString("REF_GENERATION")
               yield s"$tableCat, $tableSchem, $tableName, $tableType, $remarks, $typeCat, $typeSchem, $typeName, $selfRefColName, $refGeneration"

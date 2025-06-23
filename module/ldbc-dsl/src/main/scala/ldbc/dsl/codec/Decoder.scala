@@ -75,7 +75,7 @@ trait Decoder[A]:
     override def offset:                                Int                    = self.offset
     override def decode(index: Int, statement: String): ResultSetIO[Option[A]] =
       for
-        value <- self.decode(index, statement)
+        value   <- self.decode(index, statement)
         wasNull <- ResultSetIO.wasNull()
       yield if wasNull then None else Some(value)
 

@@ -73,7 +73,7 @@ class Select:
         for
           statement <- conn.createStatement()
           resultSet <- statement.executeQuery(s"SELECT * FROM jdbc_statement_test LIMIT $len")
-          decoded <- consume(resultSet)
+          decoded   <- consume(resultSet)
         yield decoded
       }
       .unsafeRunSync()
@@ -86,7 +86,7 @@ class Select:
           statement <- conn.prepareStatement("SELECT * FROM jdbc_prepare_statement_test LIMIT ?")
           _         <- statement.setInt(1, len)
           resultSet <- statement.executeQuery()
-          decoded <- consume(resultSet)
+          decoded   <- consume(resultSet)
         yield decoded
       }
       .unsafeRunSync()
