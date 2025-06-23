@@ -6,7 +6,7 @@
 
 package ldbc.tests
 
-import java.sql.SQLSyntaxErrorException
+import java.sql.{ SQLException, SQLSyntaxErrorException}
 
 import com.mysql.cj.jdbc.MysqlDataSource
 
@@ -41,6 +41,21 @@ class JdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
       connection.use { conn =>
         sql"SELECT D"
           .query[MyEnum]
+          .to[Option]
+          .readOnly(conn)
+      }
+    )
+  }
+
+  test(
+    "If the number of columns retrieved is different from the number of fields in the class to be mapped, an exception is raised."
+  ) {
+    case class City(id: Int, name: String, age: Int)
+
+    interceptIO[SQLException](
+      connection.use { conn =>
+        sql"SELECT Id, Name FROM city LIMIT 1"
+          .query[City]
           .to[Option]
           .readOnly(conn)
       }
