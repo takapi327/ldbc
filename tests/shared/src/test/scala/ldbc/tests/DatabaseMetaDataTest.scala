@@ -1198,15 +1198,15 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getProcedures(None, None, None)
-          result <- Monad[IO].whileM[List, String](resultSet.next()) {
-            for
-              procedureCat   <- resultSet.getString("PROCEDURE_CAT")
-              procedureSchem <- resultSet.getString("PROCEDURE_SCHEM")
-              procedureName  <- resultSet.getString("PROCEDURE_NAME")
-              procedureType  <- resultSet.getShort("PROCEDURE_TYPE")
-              specificName   <- resultSet.getString("SPECIFIC_NAME")
-            yield s"$procedureCat, $procedureSchem, $procedureName, $procedureType, $specificName"
-          }
+          result    <- Monad[IO].whileM[List, String](resultSet.next()) {
+                      for
+                        procedureCat   <- resultSet.getString("PROCEDURE_CAT")
+                        procedureSchem <- resultSet.getString("PROCEDURE_SCHEM")
+                        procedureName  <- resultSet.getString("PROCEDURE_NAME")
+                        procedureType  <- resultSet.getShort("PROCEDURE_TYPE")
+                        specificName   <- resultSet.getString("SPECIFIC_NAME")
+                      yield s"$procedureCat, $procedureSchem, $procedureName, $procedureType, $specificName"
+                    }
         yield result
       },
       List(
@@ -1276,29 +1276,30 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getProcedureColumns(None, None, None, None)
-          result <- Monad[IO].whileM[List, String](resultSet.next()) {
-            for
-              procedureCat    <- resultSet.getString("PROCEDURE_CAT")
-              procedureSchem  <- resultSet.getString("PROCEDURE_SCHEM")
-              procedureName   <- resultSet.getString("PROCEDURE_NAME")
-              columnName      <- resultSet.getString("COLUMN_NAME")
-              columnType      <- resultSet.getInt("COLUMN_TYPE")
-              dataType        <- resultSet.getInt("DATA_TYPE")
-              typeName        <- resultSet.getString("TYPE_NAME")
-              precision       <- resultSet.getInt("PRECISION")
-              length          <- resultSet.getInt("LENGTH")
-              scale           <- resultSet.getInt("SCALE")
-              radix           <- resultSet.getInt("RADIX")
-              nullable        <- resultSet.getInt("NULLABLE")
-              remarks         <- resultSet.getString("REMARKS")
-              columnDef       <- resultSet.getString("COLUMN_DEF")
-              sqlDataType     <- resultSet.getInt("SQL_DATA_TYPE")
-              sqlDatetimeSub  <- resultSet.getInt("SQL_DATETIME_SUB")
-              charOctetLength <- resultSet.getInt("CHAR_OCTET_LENGTH")
-              ordinalPosition <- resultSet.getInt("ORDINAL_POSITION")
-              isNullable      <- resultSet.getString("IS_NULLABLE")
-            yield s"$procedureCat, $procedureSchem, $procedureName, $columnName, $columnType, $dataType, $typeName, $precision, $length, $scale, $radix, $nullable, $remarks, $columnDef, $sqlDataType, $sqlDatetimeSub, $charOctetLength, $ordinalPosition, $isNullable"
-          }
+          result    <-
+            Monad[IO].whileM[List, String](resultSet.next()) {
+              for
+                procedureCat    <- resultSet.getString("PROCEDURE_CAT")
+                procedureSchem  <- resultSet.getString("PROCEDURE_SCHEM")
+                procedureName   <- resultSet.getString("PROCEDURE_NAME")
+                columnName      <- resultSet.getString("COLUMN_NAME")
+                columnType      <- resultSet.getInt("COLUMN_TYPE")
+                dataType        <- resultSet.getInt("DATA_TYPE")
+                typeName        <- resultSet.getString("TYPE_NAME")
+                precision       <- resultSet.getInt("PRECISION")
+                length          <- resultSet.getInt("LENGTH")
+                scale           <- resultSet.getInt("SCALE")
+                radix           <- resultSet.getInt("RADIX")
+                nullable        <- resultSet.getInt("NULLABLE")
+                remarks         <- resultSet.getString("REMARKS")
+                columnDef       <- resultSet.getString("COLUMN_DEF")
+                sqlDataType     <- resultSet.getInt("SQL_DATA_TYPE")
+                sqlDatetimeSub  <- resultSet.getInt("SQL_DATETIME_SUB")
+                charOctetLength <- resultSet.getInt("CHAR_OCTET_LENGTH")
+                ordinalPosition <- resultSet.getInt("ORDINAL_POSITION")
+                isNullable      <- resultSet.getString("IS_NULLABLE")
+              yield s"$procedureCat, $procedureSchem, $procedureName, $columnName, $columnType, $dataType, $typeName, $precision, $length, $scale, $radix, $nullable, $remarks, $columnDef, $sqlDataType, $sqlDatetimeSub, $charOctetLength, $ordinalPosition, $isNullable"
+            }
         yield result
       },
       List(
@@ -1406,20 +1407,21 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getTables(Some("world"), None, None, Array.empty[String])
-          result <- Monad[IO].whileM[List, String](resultSet.next()) {
-            for
-              tableCat      <- resultSet.getString("TABLE_CAT")
-              tableSchem    <- resultSet.getString("TABLE_SCHEM")
-              tableName     <- resultSet.getString("TABLE_NAME")
-              tableType     <- resultSet.getString("TABLE_TYPE")
-              remarks       <- resultSet.getString("REMARKS")
-              typeCat       <- resultSet.getString("TYPE_CAT")
-              typeSchem     <- resultSet.getString("TYPE_SCHEM")
-              typeName      <- resultSet.getString("TYPE_NAME")
-              selfRefColName = resultSet.getString("SELF_REFERENCING_COL_NAME")
-              refGeneration = resultSet.getString("REF_GENERATION")
-            yield s"$tableCat, $tableSchem, $tableName, $tableType, $remarks, $typeCat, $typeSchem, $typeName, $selfRefColName, $refGeneration"
-          }
+          result    <-
+            Monad[IO].whileM[List, String](resultSet.next()) {
+              for
+                tableCat   <- resultSet.getString("TABLE_CAT")
+                tableSchem <- resultSet.getString("TABLE_SCHEM")
+                tableName  <- resultSet.getString("TABLE_NAME")
+                tableType  <- resultSet.getString("TABLE_TYPE")
+                remarks    <- resultSet.getString("REMARKS")
+                typeCat    <- resultSet.getString("TYPE_CAT")
+                typeSchem  <- resultSet.getString("TYPE_SCHEM")
+                typeName   <- resultSet.getString("TYPE_NAME")
+                selfRefColName = resultSet.getString("SELF_REFERENCING_COL_NAME")
+                refGeneration  = resultSet.getString("REF_GENERATION")
+              yield s"$tableCat, $tableSchem, $tableName, $tableType, $remarks, $typeCat, $typeSchem, $typeName, $selfRefColName, $refGeneration"
+            }
         yield result
       },
       List(
@@ -1437,9 +1439,9 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getSchemas()
-          result <- Monad[IO].whileM[List, String](resultSet.next()) {
-            resultSet.getString("TABLE_SCHEM")
-          }
+          result    <- Monad[IO].whileM[List, String](resultSet.next()) {
+                      resultSet.getString("TABLE_SCHEM")
+                    }
         yield result
       },
       List.empty
@@ -1453,9 +1455,9 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getCatalogs()
-          result <- Monad[IO].whileM[List, String](resultSet.next()) {
-            resultSet.getString("TABLE_CAT")
-          }
+          result    <- Monad[IO].whileM[List, String](resultSet.next()) {
+                      resultSet.getString("TABLE_CAT")
+                    }
         yield result
       },
       List(
@@ -1476,11 +1478,11 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         for
-          metaData <- conn.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <- metaData.getTableTypes()
-          result <- Monad[IO].whileM[List, String](resultSet.next()) {
-            resultSet.getString("TABLE_TYPE")
-          }
+          result    <- Monad[IO].whileM[List, String](resultSet.next()) {
+                      resultSet.getString("TABLE_TYPE")
+                    }
         yield result
       },
       List(
@@ -1499,33 +1501,34 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getColumns(None, None, Some("tax"), None)
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              tableCat        <- resultSet.getString("TABLE_CAT")
-              tableSchem      <- resultSet.getString("TABLE_SCHEM")
-              tableName       <- resultSet.getString("TABLE_NAME")
-              columnName      <- resultSet.getString("COLUMN_NAME")
-              dataType        <- resultSet.getInt("DATA_TYPE")
-              typeName        <- resultSet.getString("TYPE_NAME")
-              columnSize      <- resultSet.getInt("COLUMN_SIZE")
-              bufferLength    <- resultSet.getInt("BUFFER_LENGTH")
-              decimalDigits   <- resultSet.getInt("DECIMAL_DIGITS")
-              numPrecRadix    <- resultSet.getInt("NUM_PREC_RADIX")
-              nullable        <- resultSet.getInt("NULLABLE")
-              remarks         <- resultSet.getString("REMARKS")
-              columnDef       <- resultSet.getString("COLUMN_DEF")
-              sqlDataType     <- resultSet.getInt("SQL_DATA_TYPE")
-              sqlDatetimeSub  <- resultSet.getInt("SQL_DATETIME_SUB")
-              charOctetLength <- resultSet.getInt("CHAR_OCTET_LENGTH")
-              ordinalPosition <- resultSet.getInt("ORDINAL_POSITION")
-              isNullable      <- resultSet.getString("IS_NULLABLE")
-              scopeCatalog    <- resultSet.getString("SCOPE_CATALOG")
-              scopeSchema     <- resultSet.getString("SCOPE_SCHEMA")
-              scopeTable      <- resultSet.getString("SCOPE_TABLE")
-              sourceDataType  <- resultSet.getShort("SOURCE_DATA_TYPE")
-              isAutoincrement <- resultSet.getString("IS_AUTOINCREMENT")
-            yield s"$tableCat, $tableSchem, $tableName, $columnName, $dataType, $typeName, $columnSize, $bufferLength, $decimalDigits, $numPrecRadix, $nullable, $remarks, $columnDef, $sqlDataType, $sqlDatetimeSub, $charOctetLength, $ordinalPosition, $isNullable, $scopeCatalog, $scopeSchema, $scopeTable, $sourceDataType, $isAutoincrement"
-          }
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                tableCat        <- resultSet.getString("TABLE_CAT")
+                tableSchem      <- resultSet.getString("TABLE_SCHEM")
+                tableName       <- resultSet.getString("TABLE_NAME")
+                columnName      <- resultSet.getString("COLUMN_NAME")
+                dataType        <- resultSet.getInt("DATA_TYPE")
+                typeName        <- resultSet.getString("TYPE_NAME")
+                columnSize      <- resultSet.getInt("COLUMN_SIZE")
+                bufferLength    <- resultSet.getInt("BUFFER_LENGTH")
+                decimalDigits   <- resultSet.getInt("DECIMAL_DIGITS")
+                numPrecRadix    <- resultSet.getInt("NUM_PREC_RADIX")
+                nullable        <- resultSet.getInt("NULLABLE")
+                remarks         <- resultSet.getString("REMARKS")
+                columnDef       <- resultSet.getString("COLUMN_DEF")
+                sqlDataType     <- resultSet.getInt("SQL_DATA_TYPE")
+                sqlDatetimeSub  <- resultSet.getInt("SQL_DATETIME_SUB")
+                charOctetLength <- resultSet.getInt("CHAR_OCTET_LENGTH")
+                ordinalPosition <- resultSet.getInt("ORDINAL_POSITION")
+                isNullable      <- resultSet.getString("IS_NULLABLE")
+                scopeCatalog    <- resultSet.getString("SCOPE_CATALOG")
+                scopeSchema     <- resultSet.getString("SCOPE_SCHEMA")
+                scopeTable      <- resultSet.getString("SCOPE_TABLE")
+                sourceDataType  <- resultSet.getShort("SOURCE_DATA_TYPE")
+                isAutoincrement <- resultSet.getString("IS_AUTOINCREMENT")
+              yield s"$tableCat, $tableSchem, $tableName, $columnName, $dataType, $typeName, $columnSize, $bufferLength, $decimalDigits, $numPrecRadix, $nullable, $remarks, $columnDef, $sqlDataType, $sqlDatetimeSub, $charOctetLength, $ordinalPosition, $isNullable, $scopeCatalog, $scopeSchema, $scopeTable, $sourceDataType, $isAutoincrement"
+            }
         yield result
       },
       Vector(
@@ -1542,18 +1545,19 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getColumnPrivileges(Some("connector_test"), None, Some("tax"), Some("id"))
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              tableCat    <- resultSet.getString("TABLE_CAT")
-              tableSchem  <- resultSet.getString("TABLE_SCHEM")
-              tableName   <- resultSet.getString("TABLE_NAME")
-              columnName  <- resultSet.getString("COLUMN_NAME")
-              grantor     <- resultSet.getString("GRANTOR")
-              grantee     <- resultSet.getString("GRANTEE")
-              privilege   <- resultSet.getString("PRIVILEGE")
-              isGrantable <- resultSet.getString("IS_GRANTABLE")
-            yield s"$tableCat, $tableSchem, $tableName, $columnName, $grantor, $grantee, $privilege, $isGrantable"
-          }
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                tableCat    <- resultSet.getString("TABLE_CAT")
+                tableSchem  <- resultSet.getString("TABLE_SCHEM")
+                tableName   <- resultSet.getString("TABLE_NAME")
+                columnName  <- resultSet.getString("COLUMN_NAME")
+                grantor     <- resultSet.getString("GRANTOR")
+                grantee     <- resultSet.getString("GRANTEE")
+                privilege   <- resultSet.getString("PRIVILEGE")
+                isGrantable <- resultSet.getString("IS_GRANTABLE")
+              yield s"$tableCat, $tableSchem, $tableName, $columnName, $grantor, $grantee, $privilege, $isGrantable"
+            }
         yield result
       },
       Vector()
@@ -1566,17 +1570,17 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getTablePrivileges(None, None, Some("tax"))
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              tableCat    <- resultSet.getString("TABLE_CAT")
-              tableSchem  <- resultSet.getString("TABLE_SCHEM")
-              tableName   <- resultSet.getString("TABLE_NAME")
-              grantor     <- resultSet.getString("GRANTOR")
-              grantee     <- resultSet.getString("GRANTEE")
-              privilege   <- resultSet.getString("PRIVILEGE")
-              isGrantable <- resultSet.getString("IS_GRANTABLE")
-            yield s"$tableCat, $tableSchem, $tableName, $grantor, $grantee, $privilege, $isGrantable"
-          }
+          result    <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+                      for
+                        tableCat    <- resultSet.getString("TABLE_CAT")
+                        tableSchem  <- resultSet.getString("TABLE_SCHEM")
+                        tableName   <- resultSet.getString("TABLE_NAME")
+                        grantor     <- resultSet.getString("GRANTOR")
+                        grantee     <- resultSet.getString("GRANTEE")
+                        privilege   <- resultSet.getString("PRIVILEGE")
+                        isGrantable <- resultSet.getString("IS_GRANTABLE")
+                      yield s"$tableCat, $tableSchem, $tableName, $grantor, $grantee, $privilege, $isGrantable"
+                    }
         yield result
       },
       Vector.empty
@@ -1589,18 +1593,19 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getBestRowIdentifier(None, None, "tax", Some(1), Some(true))
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              scope         <- resultSet.getShort("SCOPE")
-              columnName    <- resultSet.getString("COLUMN_NAME")
-              dataType      <- resultSet.getInt("DATA_TYPE")
-              typeName      <- resultSet.getString("TYPE_NAME")
-              columnSize    <- resultSet.getInt("COLUMN_SIZE")
-              bufferLength  <- resultSet.getInt("BUFFER_LENGTH")
-              decimalDigits <- resultSet.getShort("DECIMAL_DIGITS")
-              pseudoColumn  <- resultSet.getShort("PSEUDO_COLUMN")
-            yield s"$scope, $columnName, $dataType, $typeName, $columnSize, $bufferLength, $decimalDigits, $pseudoColumn"
-          }
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                scope         <- resultSet.getShort("SCOPE")
+                columnName    <- resultSet.getString("COLUMN_NAME")
+                dataType      <- resultSet.getInt("DATA_TYPE")
+                typeName      <- resultSet.getString("TYPE_NAME")
+                columnSize    <- resultSet.getInt("COLUMN_SIZE")
+                bufferLength  <- resultSet.getInt("BUFFER_LENGTH")
+                decimalDigits <- resultSet.getShort("DECIMAL_DIGITS")
+                pseudoColumn  <- resultSet.getShort("PSEUDO_COLUMN")
+              yield s"$scope, $columnName, $dataType, $typeName, $columnSize, $bufferLength, $decimalDigits, $pseudoColumn"
+            }
         yield result
       },
       Vector("2, id, -5, bigint, 19, 65535, 0, 1")
@@ -1613,18 +1618,19 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getVersionColumns(None, None, "tax")
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              scope         <- resultSet.getShort("SCOPE")
-              columnName    <- resultSet.getString("COLUMN_NAME")
-              dataType      <- resultSet.getInt("DATA_TYPE")
-              typeName      <- resultSet.getString("TYPE_NAME")
-              columnSize    <- resultSet.getInt("COLUMN_SIZE")
-              bufferLength  <- resultSet.getInt("BUFFER_LENGTH")
-              decimalDigits <- resultSet.getShort("DECIMAL_DIGITS")
-              pseudoColumn  <- resultSet.getShort("PSEUDO_COLUMN")
-            yield s"$scope, $columnName, $dataType, $typeName, $columnSize, $bufferLength, $decimalDigits, $pseudoColumn"
-          }
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                scope         <- resultSet.getShort("SCOPE")
+                columnName    <- resultSet.getString("COLUMN_NAME")
+                dataType      <- resultSet.getInt("DATA_TYPE")
+                typeName      <- resultSet.getString("TYPE_NAME")
+                columnSize    <- resultSet.getInt("COLUMN_SIZE")
+                bufferLength  <- resultSet.getInt("BUFFER_LENGTH")
+                decimalDigits <- resultSet.getShort("DECIMAL_DIGITS")
+                pseudoColumn  <- resultSet.getShort("PSEUDO_COLUMN")
+              yield s"$scope, $columnName, $dataType, $typeName, $columnSize, $bufferLength, $decimalDigits, $pseudoColumn"
+            }
         yield result
       },
       Vector()
@@ -1637,16 +1643,16 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getPrimaryKeys(None, None, "tax")
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              tableCat   <- resultSet.getString("TABLE_CAT")
-              tableSchem <- resultSet.getString("TABLE_SCHEM")
-              tableName  <- resultSet.getString("TABLE_NAME")
-              columnName <- resultSet.getString("COLUMN_NAME")
-              keySeq     <- resultSet.getShort("KEY_SEQ")
-              pkName     <- resultSet.getString("PK_NAME")
-            yield s"$tableCat, $tableSchem, $tableName, $columnName, $keySeq, $pkName"
-          }
+          result    <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+                      for
+                        tableCat   <- resultSet.getString("TABLE_CAT")
+                        tableSchem <- resultSet.getString("TABLE_SCHEM")
+                        tableName  <- resultSet.getString("TABLE_NAME")
+                        columnName <- resultSet.getString("COLUMN_NAME")
+                        keySeq     <- resultSet.getShort("KEY_SEQ")
+                        pkName     <- resultSet.getString("PK_NAME")
+                      yield s"$tableCat, $tableSchem, $tableName, $columnName, $keySeq, $pkName"
+                    }
         yield result
       },
       Vector("connector_test, null, tax, id, 1, PRIMARY")
@@ -1659,24 +1665,25 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getImportedKeys(None, None, "tax")
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              pkTableCat    <- resultSet.getString("PKTABLE_CAT")
-              pkTableSchem  <- resultSet.getString("PKTABLE_SCHEM")
-              pkTableName   <- resultSet.getString("PKTABLE_NAME")
-              pkColumnName  <- resultSet.getString("PKCOLUMN_NAME")
-              fkTableCat    <- resultSet.getString("FKTABLE_CAT")
-              fkTableSchem  <- resultSet.getString("FKTABLE_SCHEM")
-              fkTableName   <- resultSet.getString("FKTABLE_NAME")
-              fkColumnName  <- resultSet.getString("FKCOLUMN_NAME")
-              keySeq        <- resultSet.getShort("KEY_SEQ")
-              updateRule    <- resultSet.getShort("UPDATE_RULE")
-              deleteRule    <- resultSet.getShort("DELETE_RULE")
-              fkName        <- resultSet.getString("FK_NAME")
-              pkName        <- resultSet.getString("PK_NAME")
-              deferrability <- resultSet.getShort("DEFERRABILITY")
-            yield s"$pkTableCat, $pkTableSchem, $pkTableName, $pkColumnName, $fkTableCat, $fkTableSchem, $fkTableName, $fkColumnName, $keySeq, $updateRule, $deleteRule, $fkName, $pkName, $deferrability"
-          }
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                pkTableCat    <- resultSet.getString("PKTABLE_CAT")
+                pkTableSchem  <- resultSet.getString("PKTABLE_SCHEM")
+                pkTableName   <- resultSet.getString("PKTABLE_NAME")
+                pkColumnName  <- resultSet.getString("PKCOLUMN_NAME")
+                fkTableCat    <- resultSet.getString("FKTABLE_CAT")
+                fkTableSchem  <- resultSet.getString("FKTABLE_SCHEM")
+                fkTableName   <- resultSet.getString("FKTABLE_NAME")
+                fkColumnName  <- resultSet.getString("FKCOLUMN_NAME")
+                keySeq        <- resultSet.getShort("KEY_SEQ")
+                updateRule    <- resultSet.getShort("UPDATE_RULE")
+                deleteRule    <- resultSet.getShort("DELETE_RULE")
+                fkName        <- resultSet.getString("FK_NAME")
+                pkName        <- resultSet.getString("PK_NAME")
+                deferrability <- resultSet.getShort("DEFERRABILITY")
+              yield s"$pkTableCat, $pkTableSchem, $pkTableName, $pkColumnName, $fkTableCat, $fkTableSchem, $fkTableName, $fkColumnName, $keySeq, $updateRule, $deleteRule, $fkName, $pkName, $deferrability"
+            }
         yield result
       },
       Vector()
@@ -1689,24 +1696,25 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getExportedKeys(None, None, "tax")
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              pkTableCat    <- resultSet.getString("PKTABLE_CAT")
-              pkTableSchem  <- resultSet.getString("PKTABLE_SCHEM")
-              pkTableName   <- resultSet.getString("PKTABLE_NAME")
-              pkColumnName  <- resultSet.getString("PKCOLUMN_NAME")
-              fkTableCat    <- resultSet.getString("FKTABLE_CAT")
-              fkTableSchem  <- resultSet.getString("FKTABLE_SCHEM")
-              fkTableName   <- resultSet.getString("FKTABLE_NAME")
-              fkColumnName  <- resultSet.getString("FKCOLUMN_NAME")
-              keySeq        <- resultSet.getShort("KEY_SEQ")
-              updateRule    <- resultSet.getShort("UPDATE_RULE")
-              deleteRule    <- resultSet.getShort("DELETE_RULE")
-              fkName        <- resultSet.getString("FK_NAME")
-              pkName        <- resultSet.getString("PK_NAME")
-              deferrability <- resultSet.getShort("DEFERRABILITY")
-            yield s"$pkTableCat, $pkTableSchem, $pkTableName, $pkColumnName, $fkTableCat, $fkTableSchem, $fkTableName, $fkColumnName, $keySeq, $updateRule, $deleteRule, $fkName, $pkName, $deferrability"
-          }
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                pkTableCat    <- resultSet.getString("PKTABLE_CAT")
+                pkTableSchem  <- resultSet.getString("PKTABLE_SCHEM")
+                pkTableName   <- resultSet.getString("PKTABLE_NAME")
+                pkColumnName  <- resultSet.getString("PKCOLUMN_NAME")
+                fkTableCat    <- resultSet.getString("FKTABLE_CAT")
+                fkTableSchem  <- resultSet.getString("FKTABLE_SCHEM")
+                fkTableName   <- resultSet.getString("FKTABLE_NAME")
+                fkColumnName  <- resultSet.getString("FKCOLUMN_NAME")
+                keySeq        <- resultSet.getShort("KEY_SEQ")
+                updateRule    <- resultSet.getShort("UPDATE_RULE")
+                deleteRule    <- resultSet.getShort("DELETE_RULE")
+                fkName        <- resultSet.getString("FK_NAME")
+                pkName        <- resultSet.getString("PK_NAME")
+                deferrability <- resultSet.getShort("DEFERRABILITY")
+              yield s"$pkTableCat, $pkTableSchem, $pkTableName, $pkColumnName, $fkTableCat, $fkTableSchem, $fkTableName, $fkColumnName, $keySeq, $updateRule, $deleteRule, $fkName, $pkName, $deferrability"
+            }
         yield result
       },
       Vector()
@@ -1719,24 +1727,25 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getCrossReference(None, None, "tax", None, None, Some("film"))
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              pkTableCat    <- resultSet.getString("PKTABLE_CAT")
-              pkTableSchem  <- resultSet.getString("PKTABLE_SCHEM")
-              pkTableName   <- resultSet.getString("PKTABLE_NAME")
-              pkColumnName  <- resultSet.getString("PKCOLUMN_NAME")
-              fkTableCat    <- resultSet.getString("FKTABLE_CAT")
-              fkTableSchem  <- resultSet.getString("FKTABLE_SCHEM")
-              fkTableName   <- resultSet.getString("FKTABLE_NAME")
-              fkColumnName  <- resultSet.getString("FKCOLUMN_NAME")
-              keySeq        <- resultSet.getShort("KEY_SEQ")
-              updateRule    <- resultSet.getShort("UPDATE_RULE")
-              deleteRule    <- resultSet.getShort("DELETE_RULE")
-              fkName        <- resultSet.getString("FK_NAME")
-              pkName        <- resultSet.getString("PK_NAME")
-              deferrability <- resultSet.getShort("DEFERRABILITY")
-            yield s"$pkTableCat, $pkTableSchem, $pkTableName, $pkColumnName, $fkTableCat, $fkTableSchem, $fkTableName, $fkColumnName, $keySeq, $updateRule, $deleteRule, $fkName, $pkName, $deferrability"
-          }
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                pkTableCat    <- resultSet.getString("PKTABLE_CAT")
+                pkTableSchem  <- resultSet.getString("PKTABLE_SCHEM")
+                pkTableName   <- resultSet.getString("PKTABLE_NAME")
+                pkColumnName  <- resultSet.getString("PKCOLUMN_NAME")
+                fkTableCat    <- resultSet.getString("FKTABLE_CAT")
+                fkTableSchem  <- resultSet.getString("FKTABLE_SCHEM")
+                fkTableName   <- resultSet.getString("FKTABLE_NAME")
+                fkColumnName  <- resultSet.getString("FKCOLUMN_NAME")
+                keySeq        <- resultSet.getShort("KEY_SEQ")
+                updateRule    <- resultSet.getShort("UPDATE_RULE")
+                deleteRule    <- resultSet.getShort("DELETE_RULE")
+                fkName        <- resultSet.getString("FK_NAME")
+                pkName        <- resultSet.getString("PK_NAME")
+                deferrability <- resultSet.getShort("DEFERRABILITY")
+              yield s"$pkTableCat, $pkTableSchem, $pkTableName, $pkColumnName, $fkTableCat, $fkTableSchem, $fkTableName, $fkColumnName, $keySeq, $updateRule, $deleteRule, $fkName, $pkName, $deferrability"
+            }
         yield result
       },
       Vector()
@@ -1749,22 +1758,23 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getIndexInfo(None, None, Some("tax"), false, false)
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              tableCat        <- resultSet.getString("TABLE_CAT")
-              tableSchem      <- resultSet.getString("TABLE_SCHEM")
-              tableName       <- resultSet.getString("TABLE_NAME")
-              nonUnique       <- resultSet.getBoolean("NON_UNIQUE")
-              indexQualifier  <- resultSet.getString("INDEX_QUALIFIER")
-              indexName       <- resultSet.getString("INDEX_NAME")
-              typed           <- resultSet.getShort("TYPE")
-              ordinalPosition <- resultSet.getInt("ORDINAL_POSITION")
-              columnName      <- resultSet.getString("COLUMN_NAME")
-              ascOrDesc       <- resultSet.getString("ASC_OR_DESC")
-              pages           <- resultSet.getInt("PAGES")
-              filterCondition <- resultSet.getString("FILTER_CONDITION")
-            yield s"$tableCat, $tableSchem, $tableName, $nonUnique, $indexQualifier, $indexName, $typed, $ordinalPosition, $columnName, $ascOrDesc, $pages, $filterCondition"
-          }
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                tableCat        <- resultSet.getString("TABLE_CAT")
+                tableSchem      <- resultSet.getString("TABLE_SCHEM")
+                tableName       <- resultSet.getString("TABLE_NAME")
+                nonUnique       <- resultSet.getBoolean("NON_UNIQUE")
+                indexQualifier  <- resultSet.getString("INDEX_QUALIFIER")
+                indexName       <- resultSet.getString("INDEX_NAME")
+                typed           <- resultSet.getShort("TYPE")
+                ordinalPosition <- resultSet.getInt("ORDINAL_POSITION")
+                columnName      <- resultSet.getString("COLUMN_NAME")
+                ascOrDesc       <- resultSet.getString("ASC_OR_DESC")
+                pages           <- resultSet.getInt("PAGES")
+                filterCondition <- resultSet.getString("FILTER_CONDITION")
+              yield s"$tableCat, $tableSchem, $tableName, $nonUnique, $indexQualifier, $indexName, $typed, $ordinalPosition, $columnName, $ascOrDesc, $pages, $filterCondition"
+            }
         yield result
       },
       Vector(
@@ -1897,19 +1907,19 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         for
-          metaData <- conn.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <- metaData.getUDTs(None, None, None, Array.empty[Int])
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              typeCat   <- resultSet.getString("TYPE_CAT")
-              typeSchem <- resultSet.getString("TYPE_SCHEM")
-              typeName  <- resultSet.getString("TYPE_NAME")
-              className <- resultSet.getString("CLASS_NAME")
-              dataType  <- resultSet.getInt("DATA_TYPE")
-              remarks   <- resultSet.getString("REMARKS")
-              baseType  <- resultSet.getShort("BASE_TYPE")
-            yield s"$typeCat, $typeSchem, $typeName, $className, $dataType, $remarks, $baseType"
-          }
+          result    <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+                      for
+                        typeCat   <- resultSet.getString("TYPE_CAT")
+                        typeSchem <- resultSet.getString("TYPE_SCHEM")
+                        typeName  <- resultSet.getString("TYPE_NAME")
+                        className <- resultSet.getString("CLASS_NAME")
+                        dataType  <- resultSet.getInt("DATA_TYPE")
+                        remarks   <- resultSet.getString("REMARKS")
+                        baseType  <- resultSet.getShort("BASE_TYPE")
+                      yield s"$typeCat, $typeSchem, $typeName, $className, $dataType, $remarks, $baseType"
+                    }
         yield result
       },
       Vector()
@@ -1960,18 +1970,18 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         for
-          metaData <- conn.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <- metaData.getSuperTypes(None, None, None)
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              typeCat        <- resultSet.getString("TYPE_CAT")
-              typeSchem      <- resultSet.getString("TYPE_SCHEM")
-              typeName       <- resultSet.getString("TYPE_NAME")
-              superTypeCat   <- resultSet.getString("SUPERTYPE_CAT")
-              superTypeSchem <- resultSet.getString("SUPERTYPE_SCHEM")
-              superTypeName  <- resultSet.getString("SUPERTYPE_NAME")
-            yield s"$typeCat, $typeSchem, $typeName, $superTypeCat, $superTypeSchem, $superTypeName"
-          }
+          result    <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+                      for
+                        typeCat        <- resultSet.getString("TYPE_CAT")
+                        typeSchem      <- resultSet.getString("TYPE_SCHEM")
+                        typeName       <- resultSet.getString("TYPE_NAME")
+                        superTypeCat   <- resultSet.getString("SUPERTYPE_CAT")
+                        superTypeSchem <- resultSet.getString("SUPERTYPE_SCHEM")
+                        superTypeName  <- resultSet.getString("SUPERTYPE_NAME")
+                      yield s"$typeCat, $typeSchem, $typeName, $superTypeCat, $superTypeSchem, $superTypeName"
+                    }
         yield result
       },
       Vector()
@@ -1982,16 +1992,16 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         for
-          metaData <- conn.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <- metaData.getSuperTables(None, None, None)
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              tableCat       <- resultSet.getString("TABLE_CAT")
-              tableSchem     <- resultSet.getString("TABLE_SCHEM")
-              tableName      <- resultSet.getString("TABLE_NAME")
-              superTableName <- resultSet.getString("SUPERTABLE_NAME")
-            yield s"$tableCat, $tableSchem, $tableName, $superTableName"
-          }
+          result    <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+                      for
+                        tableCat       <- resultSet.getString("TABLE_CAT")
+                        tableSchem     <- resultSet.getString("TABLE_SCHEM")
+                        tableName      <- resultSet.getString("TABLE_NAME")
+                        superTableName <- resultSet.getString("SUPERTABLE_NAME")
+                      yield s"$tableCat, $tableSchem, $tableName, $superTableName"
+                    }
         yield result
       },
       Vector()
@@ -2001,28 +2011,29 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
   test(s"$prefix: getAttributes") {
     assertIO(
       connection.use { conn =>
-        for 
-          metaData <- conn.getMetaData()
+        for
+          metaData  <- conn.getMetaData()
           resultSet <- metaData.getAttributes(None, None, None, None)
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              typeName          <- resultSet.getString("TYPE_NAME")
-              attributeName     <- resultSet.getString("ATTR_NAME")
-              attributeType     <- resultSet.getString("DATA_TYPE")
-              attributeTypeName <- resultSet.getString("ATTR_TYPE_NAME")
-              attributeSize     <- resultSet.getInt("ATTR_SIZE")
-              decimalDigits     <- resultSet.getInt("DECIMAL_DIGITS")
-              numPrecRadix      <- resultSet.getInt("NUM_PREC_RADIX")
-              nullable          <- resultSet.getInt("NULLABLE")
-              remarks           <- resultSet.getString("REMARKS")
-              attrDef           <- resultSet.getString("ATTR_DEF")
-              sqlDataType       <- resultSet.getInt("SQL_DATA_TYPE")
-              sqlDateTimeSub    <- resultSet.getInt("SQL_DATETIME_SUB")
-              charOctetLength   <- resultSet.getInt("CHAR_OCTET_LENGTH")
-              ordinalPosition   <- resultSet.getInt("ORDINAL_POSITION")
-              isNullable        <- resultSet.getString("IS_NULLABLE")
-            yield s"$typeName, $attributeName, $attributeType, $attributeTypeName, $attributeSize, $decimalDigits, $numPrecRadix, $nullable, $remarks, $attrDef, $sqlDataType, $sqlDateTimeSub, $charOctetLength, $ordinalPosition, $isNullable"
-          }
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                typeName          <- resultSet.getString("TYPE_NAME")
+                attributeName     <- resultSet.getString("ATTR_NAME")
+                attributeType     <- resultSet.getString("DATA_TYPE")
+                attributeTypeName <- resultSet.getString("ATTR_TYPE_NAME")
+                attributeSize     <- resultSet.getInt("ATTR_SIZE")
+                decimalDigits     <- resultSet.getInt("DECIMAL_DIGITS")
+                numPrecRadix      <- resultSet.getInt("NUM_PREC_RADIX")
+                nullable          <- resultSet.getInt("NULLABLE")
+                remarks           <- resultSet.getString("REMARKS")
+                attrDef           <- resultSet.getString("ATTR_DEF")
+                sqlDataType       <- resultSet.getInt("SQL_DATA_TYPE")
+                sqlDateTimeSub    <- resultSet.getInt("SQL_DATETIME_SUB")
+                charOctetLength   <- resultSet.getInt("CHAR_OCTET_LENGTH")
+                ordinalPosition   <- resultSet.getInt("ORDINAL_POSITION")
+                isNullable        <- resultSet.getString("IS_NULLABLE")
+              yield s"$typeName, $attributeName, $attributeType, $attributeTypeName, $attributeSize, $decimalDigits, $numPrecRadix, $nullable, $remarks, $attrDef, $sqlDataType, $sqlDateTimeSub, $charOctetLength, $ordinalPosition, $isNullable"
+            }
         yield result
       },
       Vector()
@@ -2135,12 +2146,12 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getSchemas(None, None)
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              tableSchem   <- resultSet.getString("TABLE_SCHEM")
-              tableCatalog <- resultSet.getString("TABLE_CATALOG")
-            yield s"$tableSchem, $tableCatalog"
-          }
+          result    <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+                      for
+                        tableSchem   <- resultSet.getString("TABLE_SCHEM")
+                        tableCatalog <- resultSet.getString("TABLE_CATALOG")
+                      yield s"$tableSchem, $tableCatalog"
+                    }
         yield result
       },
       Vector()
@@ -2171,16 +2182,16 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         for
-          metaData <- conn.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <- metaData.getClientInfoProperties()
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              name <- resultSet.getString("NAME")
-              maxLen <- resultSet.getInt("MAX_LEN")
-              defaultValue <- resultSet.getString("DEFAULT_VALUE")
-              description <- resultSet.getString("DESCRIPTION")
-            yield s"$name, $maxLen, $defaultValue, $description"
-          }
+          result    <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+                      for
+                        name         <- resultSet.getString("NAME")
+                        maxLen       <- resultSet.getInt("MAX_LEN")
+                        defaultValue <- resultSet.getString("DEFAULT_VALUE")
+                        description  <- resultSet.getString("DESCRIPTION")
+                      yield s"$name, $maxLen, $defaultValue, $description"
+                    }
         yield result
       },
       Vector()
@@ -2193,15 +2204,15 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getFunctions(None, None, None)
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              functionCat   <- resultSet.getString("FUNCTION_CAT")
-              functionSchem <- resultSet.getString("FUNCTION_SCHEM")
-              functionName  <- resultSet.getString("FUNCTION_NAME")
-              functionType  <- resultSet.getInt("FUNCTION_TYPE")
-              specificName  <- resultSet.getString("SPECIFIC_NAME")
-            yield s"$functionCat, $functionSchem, $functionName, $functionType, $specificName"
-          }
+          result    <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+                      for
+                        functionCat   <- resultSet.getString("FUNCTION_CAT")
+                        functionSchem <- resultSet.getString("FUNCTION_SCHEM")
+                        functionName  <- resultSet.getString("FUNCTION_NAME")
+                        functionType  <- resultSet.getInt("FUNCTION_TYPE")
+                        specificName  <- resultSet.getString("SPECIFIC_NAME")
+                      yield s"$functionCat, $functionSchem, $functionName, $functionType, $specificName"
+                    }
         yield result
       },
       Vector(
@@ -2240,26 +2251,27 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getFunctionColumns(None, None, None, None)
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              functionCat <- resultSet.getString("FUNCTION_CAT")
-              functionSchem <- resultSet.getString("FUNCTION_SCHEM")
-              functionName <- resultSet.getString("FUNCTION_NAME")
-              columnName <- resultSet.getString("COLUMN_NAME")
-              columnType <- resultSet.getInt("COLUMN_TYPE")
-              dataType <- resultSet.getInt("DATA_TYPE")
-              typeName <- resultSet.getString("TYPE_NAME")
-              precision <- resultSet.getInt("PRECISION")
-              length <- resultSet.getInt("LENGTH")
-              scale <- resultSet.getInt("SCALE")
-              radix <- resultSet.getInt("RADIX")
-              nullable <- resultSet.getInt("NULLABLE")
-              remarks <- resultSet.getString("REMARKS")
-              charOctetLength <- resultSet.getInt("CHAR_OCTET_LENGTH")
-              ordinalPosition <- resultSet.getInt("ORDINAL_POSITION")
-              isNullable <- resultSet.getString("IS_NULLABLE")
-            yield s"$functionCat, $functionSchem, $functionName, $columnName, $columnType, $dataType, $typeName, $precision, $length, $scale, $radix, $nullable, $remarks, $charOctetLength, $ordinalPosition, $isNullable"
-          }
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                functionCat     <- resultSet.getString("FUNCTION_CAT")
+                functionSchem   <- resultSet.getString("FUNCTION_SCHEM")
+                functionName    <- resultSet.getString("FUNCTION_NAME")
+                columnName      <- resultSet.getString("COLUMN_NAME")
+                columnType      <- resultSet.getInt("COLUMN_TYPE")
+                dataType        <- resultSet.getInt("DATA_TYPE")
+                typeName        <- resultSet.getString("TYPE_NAME")
+                precision       <- resultSet.getInt("PRECISION")
+                length          <- resultSet.getInt("LENGTH")
+                scale           <- resultSet.getInt("SCALE")
+                radix           <- resultSet.getInt("RADIX")
+                nullable        <- resultSet.getInt("NULLABLE")
+                remarks         <- resultSet.getString("REMARKS")
+                charOctetLength <- resultSet.getInt("CHAR_OCTET_LENGTH")
+                ordinalPosition <- resultSet.getInt("ORDINAL_POSITION")
+                isNullable      <- resultSet.getString("IS_NULLABLE")
+              yield s"$functionCat, $functionSchem, $functionName, $columnName, $columnType, $dataType, $typeName, $precision, $length, $scale, $radix, $nullable, $remarks, $charOctetLength, $ordinalPosition, $isNullable"
+            }
         yield result
       },
       Vector(
@@ -2321,23 +2333,24 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         for
-          metaData <- conn.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <- metaData.getPseudoColumns(None, None, None, None)
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              tableCat        <- resultSet.getString("TABLE_CAT")
-              tableSchem      <- resultSet.getString("TABLE_SCHEM")
-              tableName       <- resultSet.getString("TABLE_NAME")
-              columnName      <- resultSet.getString("COLUMN_NAME")
-              dataType        <- resultSet.getInt("DATA_TYPE")
-              columnSize      <- resultSet.getInt("COLUMN_SIZE")
-              decimalDigits   <- resultSet.getInt("DECIMAL_DIGITS")
-              numPrecRadix    <- resultSet.getInt("NUM_PREC_RADIX")
-              remarks         <- resultSet.getString("REMARKS")
-              charOctetLength <- resultSet.getInt("CHAR_OCTET_LENGTH")
-              isNullable      <- resultSet.getInt("IS_NULLABLE")
-            yield s"$tableCat, $tableSchem, $tableName, $columnName, $dataType, $columnSize, $decimalDigits, $numPrecRadix, $remarks, $charOctetLength, $isNullable"
-          }
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                tableCat        <- resultSet.getString("TABLE_CAT")
+                tableSchem      <- resultSet.getString("TABLE_SCHEM")
+                tableName       <- resultSet.getString("TABLE_NAME")
+                columnName      <- resultSet.getString("COLUMN_NAME")
+                dataType        <- resultSet.getInt("DATA_TYPE")
+                columnSize      <- resultSet.getInt("COLUMN_SIZE")
+                decimalDigits   <- resultSet.getInt("DECIMAL_DIGITS")
+                numPrecRadix    <- resultSet.getInt("NUM_PREC_RADIX")
+                remarks         <- resultSet.getString("REMARKS")
+                charOctetLength <- resultSet.getInt("CHAR_OCTET_LENGTH")
+                isNullable      <- resultSet.getInt("IS_NULLABLE")
+              yield s"$tableCat, $tableSchem, $tableName, $columnName, $dataType, $columnSize, $decimalDigits, $numPrecRadix, $remarks, $charOctetLength, $isNullable"
+            }
         yield result
       },
       Vector()
