@@ -74,7 +74,10 @@ trait Decoder[A]:
   def opt: Decoder[Option[A]] = new Decoder[Option[A]]:
     override def offset:                                Int                    = self.offset
     override def decode(index: Int, statement: String): ResultSetIO[Option[A]] =
-      self.decode(index, statement).map(Option(_))
+      for
+        value <- self.decode(index, statement)
+        wasNull <- ResultSetIO.wasNull()
+      yield if wasNull then None else Some(value)
 
 object Decoder extends TwiddleSyntax[Decoder]:
 

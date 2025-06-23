@@ -1418,8 +1418,8 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
                 typeCat    <- resultSet.getString("TYPE_CAT")
                 typeSchem  <- resultSet.getString("TYPE_SCHEM")
                 typeName   <- resultSet.getString("TYPE_NAME")
-                selfRefColName = resultSet.getString("SELF_REFERENCING_COL_NAME")
-                refGeneration  = resultSet.getString("REF_GENERATION")
+                selfRefColName <- resultSet.getString("SELF_REFERENCING_COL_NAME")
+                refGeneration  <- resultSet.getString("REF_GENERATION")
               yield s"$tableCat, $tableSchem, $tableName, $tableType, $remarks, $typeCat, $typeSchem, $typeName, $selfRefColName, $refGeneration"
             }
         yield result

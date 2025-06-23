@@ -63,7 +63,10 @@ trait Codec[A] extends Encoder[A], Decoder[A]:
     override def encode(value: Option[A]): Encoder.Encoded =
       value.fold(Encoder.Encoded.success(List(None)))(self.encode)
     override def decode(index: Int, statement: String): ResultSetIO[Option[A]] =
-      self.decode(index, statement).map(Option(_))
+      for
+        value <- self.decode(index, statement)
+        wasNull <- ResultSetIO.wasNull()
+      yield if wasNull then None else Some(value)
 
 object Codec extends TwiddleSyntax[Codec]:
 
