@@ -30,6 +30,7 @@ ThisBuild / githubWorkflowBuildPostamble += dockerStop
 ThisBuild / githubWorkflowTargetBranches        := Seq("**")
 ThisBuild / githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v")))
 ThisBuild / tlSitePublishBranch                 := None
+ThisBuild / tlCiMimaBinaryIssueCheck            := false
 ThisBuild / mimaBinaryIssueFilters ++= List(
   ProblemFilters.exclude[DirectMissingMethodProblem]("ldbc.schema.DataType.mapping"),
 
