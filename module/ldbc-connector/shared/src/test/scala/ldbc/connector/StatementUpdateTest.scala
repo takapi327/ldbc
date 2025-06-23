@@ -71,7 +71,7 @@ class StatementUpdateTest extends FTestPlatform:
             ) *> statement.getGeneratedKeys()
           _         <- resultSet.next()
           generated <- resultSet.getLong(1)
-          _ <- statement.executeUpdate("DROP TABLE `auto_inc_table`")
+          _         <- statement.executeUpdate("DROP TABLE `auto_inc_table`")
         yield generated
       },
       2L

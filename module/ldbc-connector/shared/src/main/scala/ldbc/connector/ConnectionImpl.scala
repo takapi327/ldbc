@@ -29,17 +29,17 @@ import ldbc.connector.net.protocol.*
 import ldbc.connector.util.StringHelper
 
 private[ldbc] case class ConnectionImpl[F[_]: Tracer: Console: Exchange: UUIDGen](
-  protocol:         Protocol[F],
-  serverVariables:  Map[String, String],
-  database:         Option[String],
-  readOnly:         Ref[F, Boolean],
-  isAutoCommit:     Ref[F, Boolean],
-  connectionClosed: Ref[F, Boolean],
-  fetchSize: Ref[F, Long],
-  useCursorFetch: Ref[F, Boolean],
+  protocol:           Protocol[F],
+  serverVariables:    Map[String, String],
+  database:           Option[String],
+  readOnly:           Ref[F, Boolean],
+  isAutoCommit:       Ref[F, Boolean],
+  connectionClosed:   Ref[F, Boolean],
+  fetchSize:          Ref[F, Long],
+  useCursorFetch:     Ref[F, Boolean],
   useServerPrepStmts: Ref[F, Boolean],
-  databaseTerm:     DatabaseMetaData.DatabaseTerm = DatabaseMetaData.DatabaseTerm.CATALOG,
-  logHandler:       LogHandler[F]
+  databaseTerm:       DatabaseMetaData.DatabaseTerm = DatabaseMetaData.DatabaseTerm.CATALOG,
+  logHandler:         LogHandler[F]
 )(using ev: Sync[F])
   extends LdbcConnection[F]:
 
@@ -95,8 +95,8 @@ private[ldbc] case class ConnectionImpl[F[_]: Tracer: Console: Exchange: UUIDGen
     isClosed().ifM(
       ev.raiseError(new SQLException("No operations allowed after connection closed.")),
       (for
-        statementClosed <- Ref[F].of[Boolean](false)
-        resultSetClosed <- Ref[F].of[Boolean](false)
+        statementClosed        <- Ref[F].of[Boolean](false)
+        resultSetClosed        <- Ref[F].of[Boolean](false)
         lastColumnReadNullable <- Ref[F].of(true)
         resultSetCurrentCursor <- Ref[F].of(0)
         resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
@@ -136,7 +136,7 @@ private[ldbc] case class ConnectionImpl[F[_]: Tracer: Console: Exchange: UUIDGen
         for
           statement <- createStatement()
           result    <- statement.executeQuery("SELECT DATABASE()")
-          value <- result.getString(1)
+          value     <- result.getString(1)
         yield Option(value).getOrElse("")
       case DatabaseMetaData.DatabaseTerm.SCHEMA => ev.pure(null)
 
@@ -162,7 +162,7 @@ private[ldbc] case class ConnectionImpl[F[_]: Tracer: Console: Exchange: UUIDGen
     for
       statement <- createStatement()
       result    <- statement.executeQuery("SELECT @@session.transaction_isolation")
-      value <- result.getString(1)
+      value     <- result.getString(1)
     yield Option(value) match
       case Some("READ-UNCOMMITTED") => Connection.TRANSACTION_READ_UNCOMMITTED
       case Some("READ-COMMITTED")   => Connection.TRANSACTION_READ_COMMITTED
@@ -538,7 +538,7 @@ private[ldbc] case class ConnectionImpl[F[_]: Tracer: Console: Exchange: UUIDGen
         for
           statement <- createStatement()
           result    <- statement.executeQuery("SELECT DATABASE()")
-          value <- result.getString(1)
+          value     <- result.getString(1)
         yield Option(value).getOrElse("")
       case DatabaseMetaData.DatabaseTerm.CATALOG => ev.pure(null)
 

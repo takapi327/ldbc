@@ -478,39 +478,45 @@ private[jdbc] case class DatabaseMetaDataImpl[F[_]: Sync](
     catalog:         Option[String],
     schemaPattern:   Option[String],
     typeNamePattern: Option[String]
-  ): F[ResultSet[F]] = Sync[F].blocking(
-    metaData.getSuperTypes(
-      catalog.orNull,
-      schemaPattern.orNull,
-      typeNamePattern.orNull
+  ): F[ResultSet[F]] = Sync[F]
+    .blocking(
+      metaData.getSuperTypes(
+        catalog.orNull,
+        schemaPattern.orNull,
+        typeNamePattern.orNull
+      )
     )
-  ).map(ResultSetImpl.apply)
+    .map(ResultSetImpl.apply)
 
   override def getSuperTables(
     catalog:          Option[String],
     schemaPattern:    Option[String],
     tableNamePattern: Option[String]
-  ): F[ResultSet[F]] = Sync[F].blocking(
-    metaData.getSuperTables(
-      catalog.orNull,
-      schemaPattern.orNull,
-      tableNamePattern.orNull
+  ): F[ResultSet[F]] = Sync[F]
+    .blocking(
+      metaData.getSuperTables(
+        catalog.orNull,
+        schemaPattern.orNull,
+        tableNamePattern.orNull
+      )
     )
-  ).map(ResultSetImpl.apply)
+    .map(ResultSetImpl.apply)
 
   override def getAttributes(
     catalog:              Option[String],
     schemaPattern:        Option[String],
     typeNamePattern:      Option[String],
     attributeNamePattern: Option[String]
-  ): F[ResultSet[F]] = Sync[F].blocking(
-    metaData.getAttributes(
-      catalog.orNull,
-      schemaPattern.orNull,
-      typeNamePattern.orNull,
-      attributeNamePattern.orNull
+  ): F[ResultSet[F]] = Sync[F]
+    .blocking(
+      metaData.getAttributes(
+        catalog.orNull,
+        schemaPattern.orNull,
+        typeNamePattern.orNull,
+        attributeNamePattern.orNull
+      )
     )
-  ).map(ResultSetImpl.apply)
+    .map(ResultSetImpl.apply)
 
   override def supportsResultSetHoldability(holdability: Int): Boolean =
     metaData.supportsResultSetHoldability(holdability)
@@ -586,13 +592,15 @@ private[jdbc] case class DatabaseMetaDataImpl[F[_]: Sync](
     tableNamePattern:  Option[String],
     columnNamePattern: Option[String]
   ): F[ResultSet[F]] =
-    Sync[F].blocking(
-      metaData.getPseudoColumns(
-        catalog.orNull,
-        schemaPattern.orNull,
-        tableNamePattern.orNull,
-        columnNamePattern.orNull
+    Sync[F]
+      .blocking(
+        metaData.getPseudoColumns(
+          catalog.orNull,
+          schemaPattern.orNull,
+          tableNamePattern.orNull,
+          columnNamePattern.orNull
+        )
       )
-    ).map(ResultSetImpl.apply)
+      .map(ResultSetImpl.apply)
 
   override def generatedKeyAlwaysReturned(): Boolean = metaData.generatedKeyAlwaysReturned

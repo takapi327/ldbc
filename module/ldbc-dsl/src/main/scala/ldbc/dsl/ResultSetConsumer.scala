@@ -13,9 +13,9 @@ import ldbc.sql.ResultSet
 
 import ldbc.dsl.codec.Decoder
 import ldbc.dsl.exception.DecodeFailureException
-import ldbc.dsl.util.FactoryCompat
 import ldbc.dsl.free.ResultSetIO
 import ldbc.dsl.free.ResultSetIO.*
+import ldbc.dsl.util.FactoryCompat
 
 /**
  * Trait for generating the specified data type from a ResultSet.
@@ -45,12 +45,12 @@ object ResultSetConsumer:
   private val FIRST_OFFSET = 1
 
   def consume[F[_]: MonadThrow, T: Decoder, G[_]](
-    resultSet: ResultSet[F],
-    statement: String,
+    resultSet:     ResultSet[F],
+    statement:     String,
     factoryCompat: FactoryCompat[T, G[T]]
   ): F[G[T]] =
-      given FactoryCompat[T, G[T]] = factoryCompat
-      summon[ResultSetConsumer[F, G[T]]].consume(resultSet, statement)
+    given FactoryCompat[T, G[T]] = factoryCompat
+    summon[ResultSetConsumer[F, G[T]]].consume(resultSet, statement)
 
   given [F[_], T](using
     consumer: ResultSetConsumer[F, Option[T]],
@@ -65,10 +65,11 @@ object ResultSetConsumer:
   given [F[_], T](using decoder: Decoder[T], ev: MonadThrow[F]): ResultSetConsumer[F, Option[T]] with
     override def consume(resultSet: ResultSet[F], statement: String): F[Option[T]] =
       resultSet.next().flatMap {
-        case true => decoder.decode(FIRST_OFFSET) match
-          case Right(value) => value.foldMap(resultSet.interpreter).map(Option(_))
-          case Left(error)  =>
-            ev.raiseError(new DecodeFailureException(error.message, decoder.offset, statement, error.cause))
+        case true =>
+          decoder.decode(FIRST_OFFSET) match
+            case Right(value) => value.foldMap(resultSet.interpreter).map(Option(_))
+            case Left(error)  =>
+              ev.raiseError(new DecodeFailureException(error.message, decoder.offset, statement, error.cause))
         case false => ev.pure(None)
       }
 
@@ -84,7 +85,10 @@ object ResultSetConsumer:
           case true =>
             decoder.decode(FIRST_OFFSET) match
               case Right(value) => value.flatMap(v => loop(acc += v))
-              case Left(error) => ResultSetIO.raiseError(new DecodeFailureException(error.message, decoder.offset, statement, error.cause))
+              case Left(error)  =>
+                ResultSetIO.raiseError(
+                  new DecodeFailureException(error.message, decoder.offset, statement, error.cause)
+                )
           case false => ResultSetIO.pure(acc)
         }
 

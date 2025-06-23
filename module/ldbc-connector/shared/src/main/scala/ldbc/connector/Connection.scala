@@ -75,9 +75,9 @@ object Connection:
     socketOptions:           List[SocketOption] = defaultSocketOptions,
     readTimeout:             Duration = Duration.Inf,
     allowPublicKeyRetrieval: Boolean = false,
-    fetchSize: Long = 0L,
-    useCursorFetch: Boolean = false,
-    useServerPrepStmt: Boolean = false,
+    fetchSize:               Long = 0L,
+    useCursorFetch:          Boolean = false,
+    useServerPrepStmt:       Boolean = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
     logHandler:              Option[LogHandler[F]] = None
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] = this.default[F, Unit](
@@ -113,9 +113,9 @@ object Connection:
     socketOptions:           List[SocketOption] = defaultSocketOptions,
     readTimeout:             Duration = Duration.Inf,
     allowPublicKeyRetrieval: Boolean = false,
-    fetchSize: Long = 0L,
-    useCursorFetch: Boolean = false,
-    useServerPrepStmt: Boolean = false,
+    fetchSize:               Long = 0L,
+    useCursorFetch:          Boolean = false,
+    useServerPrepStmt:       Boolean = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
     logHandler:              Option[LogHandler[F]] = None
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] = this.default(
@@ -149,9 +149,9 @@ object Connection:
     socketOptions:           List[SocketOption] = defaultSocketOptions,
     readTimeout:             Duration = Duration.Inf,
     allowPublicKeyRetrieval: Boolean = false,
-    fetchSize: Long = 0L,
-    useCursorFetch: Boolean = false,
-    useServerPrepStmt: Boolean = false,
+    fetchSize:               Long = 0L,
+    useCursorFetch:          Boolean = false,
+    useServerPrepStmt:       Boolean = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
     logHandler:              Option[LogHandler[F]] = None,
     before:                  Connection[F] => F[A],
@@ -174,9 +174,9 @@ object Connection:
                       sslOp,
                       readTimeout,
                       allowPublicKeyRetrieval,
-        fetchSize,
-        useCursorFetch,
-        useServerPrepStmt,
+                      fetchSize,
+                      useCursorFetch,
+                      useServerPrepStmt,
                       databaseTerm,
                       logHandler.getOrElse(noopLogger),
                       before,
@@ -195,9 +195,9 @@ object Connection:
     sslOptions:              Option[SSLNegotiation.Options[F]],
     readTimeout:             Duration = Duration.Inf,
     allowPublicKeyRetrieval: Boolean = false,
-    fetchSize: Long = 0L,
-    useCursorFetch: Boolean = false,
-    useServerPrepStmt: Boolean = false,
+    fetchSize:               Long = 0L,
+    useCursorFetch:          Boolean = false,
+    useServerPrepStmt:       Boolean = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = None,
     logHandler:              LogHandler[F],
     acquire:                 Connection[F] => F[A],
@@ -211,15 +211,15 @@ object Connection:
       given Exchange[F] <- Resource.eval(Exchange[F])
       protocol          <-
         Protocol[F](sockets, hostInfo, debug, sslOptions, allowPublicKeyRetrieval, readTimeout, capabilityFlags)
-      _                <- Resource.eval(protocol.startAuthentication(user, password.getOrElse("")))
-      serverVariables  <- Resource.eval(protocol.serverVariables())
-      readOnly         <- Resource.eval(Ref[F].of[Boolean](false))
-      autoCommit       <- Resource.eval(Ref[F].of[Boolean](true))
-      connectionClosed <- Resource.eval(Ref[F].of[Boolean](false))
+      _                 <- Resource.eval(protocol.startAuthentication(user, password.getOrElse("")))
+      serverVariables   <- Resource.eval(protocol.serverVariables())
+      readOnly          <- Resource.eval(Ref[F].of[Boolean](false))
+      autoCommit        <- Resource.eval(Ref[F].of[Boolean](true))
+      connectionClosed  <- Resource.eval(Ref[F].of[Boolean](false))
       fetchSize         <- Resource.eval(Ref[F].of(fetchSize))
       useCursorFetch    <- Resource.eval(Ref[F].of(useCursorFetch))
       useServerPrepStmt <- Resource.eval(Ref[F].of(useServerPrepStmt))
-      connection       <-
+      connection        <-
         Resource.make(
           Temporal[F].pure(
             ConnectionImpl[F](
@@ -252,9 +252,9 @@ object Connection:
     sslOptions:              Option[SSLNegotiation.Options[F]],
     readTimeout:             Duration = Duration.Inf,
     allowPublicKeyRetrieval: Boolean = false,
-    fetchSize: Long = 0L,
-    useCursorFetch: Boolean = false,
-    useServerPrepStmt: Boolean = false,
+    fetchSize:               Long = 0L,
+    useCursorFetch:          Boolean = false,
+    useServerPrepStmt:       Boolean = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = None,
     logHandler:              LogHandler[F],
     acquire:                 Connection[F] => F[A],

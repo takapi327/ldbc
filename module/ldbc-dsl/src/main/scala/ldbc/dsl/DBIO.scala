@@ -155,7 +155,7 @@ object DBIO extends ParamBinder:
                 prepareStatement <- connection.prepareStatement(statement)
                 resultSet        <- paramBind(prepareStatement, params) >> prepareStatement.executeQuery()
                 result <- ResultSetConsumer.consume(resultSet, statement, factory)(using summon[MonadThrow[F]], decoder)
-                _ <- prepareStatement.close()
+                _      <- prepareStatement.close()
               yield result)
                 .onError(ex =>
                   connection.logHandler.run(LogEvent.ProcessingFailure(statement, params.map(_.value), ex))

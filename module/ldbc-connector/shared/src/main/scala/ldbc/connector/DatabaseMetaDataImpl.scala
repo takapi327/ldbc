@@ -36,12 +36,12 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
   connectionClosed:              Ref[F, Boolean],
   statementClosed:               Ref[F, Boolean],
   resultSetClosed:               Ref[F, Boolean],
-  lastColumnReadNullable: Ref[F, Boolean],
-  currentCursor:       Ref[F, Int],
-  currentRow:          Ref[F, Option[ResultSetRowPacket]],
-  fetchSize: Ref[F, Long],
-  useCursorFetch: Ref[F, Boolean],
-  useServerPrepStmts: Ref[F, Boolean],
+  lastColumnReadNullable:        Ref[F, Boolean],
+  currentCursor:                 Ref[F, Int],
+  currentRow:                    Ref[F, Option[ResultSetRowPacket]],
+  fetchSize:                     Ref[F, Long],
+  useCursorFetch:                Ref[F, Boolean],
+  useServerPrepStmts:            Ref[F, Boolean],
   database:                      Option[String]                = None,
   databaseTerm:                  DatabaseMetaData.DatabaseTerm = DatabaseMetaData.DatabaseTerm.CATALOG,
   getProceduresReturnsFunctions: Boolean                       = true,
@@ -541,34 +541,36 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
         currentRow,
         fetchSize,
         useCursorFetch,
-        useServerPrepStmts,
+        useServerPrepStmts
       )
     }
 
   override def getTableTypes(): F[ResultSet[F]] =
-    F.pure(ResultSetImpl(
-      protocol,
-      Vector(
-        new ColumnDefinitionPacket:
-          override def table:      String                     = ""
-          override def name:       String                     = "TABLE_TYPE"
-          override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
-          override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
-      ),
-      TableType.values
-        .filterNot(_ == TableType.UNKNOWN)
-        .map(tableType => ResultSetRowPacket(Array(Some(tableType.name))))
-        .toVector,
-      serverVariables,
-      protocol.initialPacket.serverVersion,
-      resultSetClosed,
-      lastColumnReadNullable,
-      currentCursor,
-      currentRow,
-      fetchSize,
-      useCursorFetch,
-      useServerPrepStmts,
-    ))
+    F.pure(
+      ResultSetImpl(
+        protocol,
+        Vector(
+          new ColumnDefinitionPacket:
+            override def table:      String                     = ""
+            override def name:       String                     = "TABLE_TYPE"
+            override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
+            override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
+        ),
+        TableType.values
+          .filterNot(_ == TableType.UNKNOWN)
+          .map(tableType => ResultSetRowPacket(Array(Some(tableType.name))))
+          .toVector,
+        serverVariables,
+        protocol.initialPacket.serverVersion,
+        resultSetClosed,
+        lastColumnReadNullable,
+        currentCursor,
+        currentRow,
+        fetchSize,
+        useCursorFetch,
+        useServerPrepStmts
+      )
+    )
 
   override def getColumns(
     catalog:           Option[String],
@@ -761,52 +763,53 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
 
         settings *> preparedStatement.executeQuery()
       }
-      .map { case (resultSet: ResultSetImpl[F]) =>
-        ResultSetImpl(
-          protocol,
-          Vector(
-            "TABLE_CAT",
-            "TABLE_SCHEM",
-            "TABLE_NAME",
-            "COLUMN_NAME",
-            "DATA_TYPE",
-            "TYPE_NAME",
-            "COLUMN_SIZE",
-            "BUFFER_LENGTH",
-            "DECIMAL_DIGITS",
-            "NUM_PREC_RADIX",
-            "NULLABLE",
-            "REMARKS",
-            "COLUMN_DEF",
-            "SQL_DATA_TYPE",
-            "SQL_DATETIME_SUB",
-            "CHAR_OCTET_LENGTH",
-            "ORDINAL_POSITION",
-            "IS_NULLABLE",
-            "SCOPE_CATALOG",
-            "SCOPE_SCHEMA",
-            "SCOPE_TABLE",
-            "SOURCE_DATA_TYPE",
-            "IS_AUTOINCREMENT",
-            "IS_GENERATEDCOLUMN"
-          ).map(value =>
-            new ColumnDefinitionPacket:
-              override def table:      String                     = ""
-              override def name:       String                     = value
-              override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
-              override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
-          ),
-          resultSet.records,
-          serverVariables,
-          protocol.initialPacket.serverVersion,
-          resultSet.isClosed,
-          resultSet.lastColumnReadNullable,
-          resultSet.currentCursor,
-          resultSet.currentRow,
-          resultSet.fetchSize,
-          resultSet.useCursorFetch,
-          resultSet.useServerPrepStmts,
-        )
+      .map {
+        case (resultSet: ResultSetImpl[F]) =>
+          ResultSetImpl(
+            protocol,
+            Vector(
+              "TABLE_CAT",
+              "TABLE_SCHEM",
+              "TABLE_NAME",
+              "COLUMN_NAME",
+              "DATA_TYPE",
+              "TYPE_NAME",
+              "COLUMN_SIZE",
+              "BUFFER_LENGTH",
+              "DECIMAL_DIGITS",
+              "NUM_PREC_RADIX",
+              "NULLABLE",
+              "REMARKS",
+              "COLUMN_DEF",
+              "SQL_DATA_TYPE",
+              "SQL_DATETIME_SUB",
+              "CHAR_OCTET_LENGTH",
+              "ORDINAL_POSITION",
+              "IS_NULLABLE",
+              "SCOPE_CATALOG",
+              "SCOPE_SCHEMA",
+              "SCOPE_TABLE",
+              "SOURCE_DATA_TYPE",
+              "IS_AUTOINCREMENT",
+              "IS_GENERATEDCOLUMN"
+            ).map(value =>
+              new ColumnDefinitionPacket:
+                override def table:      String                     = ""
+                override def name:       String                     = value
+                override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
+                override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
+            ),
+            resultSet.records,
+            serverVariables,
+            protocol.initialPacket.serverVersion,
+            resultSet.isClosed,
+            resultSet.lastColumnReadNullable,
+            resultSet.currentCursor,
+            resultSet.currentRow,
+            resultSet.fetchSize,
+            resultSet.useCursorFetch,
+            resultSet.useServerPrepStmts
+          )
       }
 
   override def getColumnPrivileges(
@@ -898,14 +901,16 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
       }
       .flatMap { resultSet =>
 
-        val keys = Monad[F].whileM[Vector, Vector[(Option[String], Option[String], Option[String], String, String)]](resultSet.next()) {
+        val keys = Monad[F].whileM[Vector, Vector[(Option[String], Option[String], Option[String], String, String)]](
+          resultSet.next()
+        ) {
           for
             host    <- resultSet.getString(1).map(Option(_))
             db      <- resultSet.getString(2).map(Option(_))
             table   <- resultSet.getString(3).map(Option(_))
             grantor <- resultSet.getString(4).map(Option(_))
             user    <- resultSet.getString(5).map(Option(_)).map(_.getOrElse("%"))
-            value <- resultSet.getString(6).map(Option(_))
+            value   <- resultSet.getString(6).map(Option(_))
           yield
             val fullUser = new StringBuilder(user)
             host.foreach(h => fullUser.append("@").append(h))
@@ -913,7 +918,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
             val keys = Vector.newBuilder[(Option[String], Option[String], Option[String], String, String)]
             value match
               case Some(value) =>
-                val allPrivileges = value.toUpperCase(Locale.ENGLISH)
+                val allPrivileges   = value.toUpperCase(Locale.ENGLISH)
                 val stringTokenizer = new StringTokenizer(allPrivileges, ",")
 
                 while stringTokenizer.hasMoreTokens do
@@ -927,54 +932,55 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
         }
 
         for
-          keys <- keys.map(_.flatten)
+          keys    <- keys.map(_.flatten)
           records <- keys
-            .traverse { (db, table, grantor, user, privilege) =>
-              val columnResults = getColumns(catalog, schemaPattern, table, None)
-              columnResults.flatMap { columnResult =>
-                Monad[F].whileM[Vector, ResultSetRowPacket](columnResult.next()) {
-                  val rows = Array(
-                    if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then Some("def") else db, // TABLE_CAT
-                    if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then db else None, // TABLE_SCHEM
-                    table, // TABLE_NAME
-                    grantor, // GRANTOR
-                    Some(user), // GRANTEE
-                    Some(privilege), // PRIVILEGE
-                    None // IS_GRANTABLE
-                  )
-                  F.pure(ResultSetRowPacket(rows))
-                }
-              }
-            }.map(_.flatten)
-        yield
-          ResultSetImpl(
-            protocol,
-            Vector(
-              "TABLE_CAT",
-              "TABLE_SCHEM",
-              "TABLE_NAME",
-              "GRANTOR",
-              "GRANTEE",
-              "PRIVILEGE",
-              "IS_GRANTABLE"
-            ).map { value =>
-              new ColumnDefinitionPacket:
-                override def table: String = ""
-                override def name: String = value
-                override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
-                override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
-            },
-            records,
-            serverVariables,
-            protocol.initialPacket.serverVersion,
-            resultSetClosed,
-            lastColumnReadNullable,
-            currentCursor,
-            currentRow,
-            fetchSize,
-            useCursorFetch,
-            useServerPrepStmts,
-          )
+                       .traverse { (db, table, grantor, user, privilege) =>
+                         val columnResults = getColumns(catalog, schemaPattern, table, None)
+                         columnResults.flatMap { columnResult =>
+                           Monad[F].whileM[Vector, ResultSetRowPacket](columnResult.next()) {
+                             val rows = Array(
+                               if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then Some("def")
+                               else db,                                                                   // TABLE_CAT
+                               if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then db else None, // TABLE_SCHEM
+                               table,                                                                     // TABLE_NAME
+                               grantor,                                                                   // GRANTOR
+                               Some(user),                                                                // GRANTEE
+                               Some(privilege),                                                           // PRIVILEGE
+                               None // IS_GRANTABLE
+                             )
+                             F.pure(ResultSetRowPacket(rows))
+                           }
+                         }
+                       }
+                       .map(_.flatten)
+        yield ResultSetImpl(
+          protocol,
+          Vector(
+            "TABLE_CAT",
+            "TABLE_SCHEM",
+            "TABLE_NAME",
+            "GRANTOR",
+            "GRANTEE",
+            "PRIVILEGE",
+            "IS_GRANTABLE"
+          ).map { value =>
+            new ColumnDefinitionPacket:
+              override def table:      String                     = ""
+              override def name:       String                     = value
+              override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
+              override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
+          },
+          records,
+          serverVariables,
+          protocol.initialPacket.serverVersion,
+          resultSetClosed,
+          lastColumnReadNullable,
+          currentCursor,
+          currentRow,
+          fetchSize,
+          useCursorFetch,
+          useServerPrepStmts
+        )
       }
 
   override def getBestRowIdentifier(
@@ -997,89 +1003,91 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
       case None => ()
 
     prepareMetaDataSafeStatement(sqlBuf.toString()).flatMap { preparedStatement =>
-      preparedStatement.executeQuery().flatMap { case resultSet: ResultSetImpl[F] =>
-        val decodedF = Monad[F].whileM[Vector, Option[(Int, String, Int, String, Int, Int, Int, Int)]](resultSet.next()) {
-          resultSet.getString("Key").flatMap {
-            case key if key.startsWith("PRI") =>
-              for
-                field  <- resultSet.getString("Field")
-                `type` <- resultSet.getString("Type")
-              yield (Option(field), Option(`type`)) match
-                case (Some(columnName), Some(value)) =>
-                  val (size, decimals, typeName, hasLength) = parseTypeColumn(value)
-                  val mysqlType                             = MysqlType.getByName(typeName.toUpperCase)
-                  val dataType                              =
-                    if mysqlType == MysqlType.YEAR && !yearIsDateType then SMALLINT
-                    else mysqlType.jdbcType
-                  val columnSize = if hasLength then size + decimals else mysqlType.precision.toInt
-                  Some(
-                    (
-                      DatabaseMetaData.bestRowSession,
-                      columnName,
-                      dataType,
-                      typeName,
-                      columnSize,
-                      DatabaseMetaDataImpl.maxBufferSize,
-                      decimals,
-                      DatabaseMetaData.bestRowNotPseudo
-                    )
+      preparedStatement.executeQuery().flatMap {
+        case resultSet: ResultSetImpl[F] =>
+          val decodedF =
+            Monad[F].whileM[Vector, Option[(Int, String, Int, String, Int, Int, Int, Int)]](resultSet.next()) {
+              resultSet.getString("Key").flatMap {
+                case key if key.startsWith("PRI") =>
+                  for
+                    field  <- resultSet.getString("Field")
+                    `type` <- resultSet.getString("Type")
+                  yield (Option(field), Option(`type`)) match
+                    case (Some(columnName), Some(value)) =>
+                      val (size, decimals, typeName, hasLength) = parseTypeColumn(value)
+                      val mysqlType                             = MysqlType.getByName(typeName.toUpperCase)
+                      val dataType                              =
+                        if mysqlType == MysqlType.YEAR && !yearIsDateType then SMALLINT
+                        else mysqlType.jdbcType
+                      val columnSize = if hasLength then size + decimals else mysqlType.precision.toInt
+                      Some(
+                        (
+                          DatabaseMetaData.bestRowSession,
+                          columnName,
+                          dataType,
+                          typeName,
+                          columnSize,
+                          DatabaseMetaDataImpl.maxBufferSize,
+                          decimals,
+                          DatabaseMetaData.bestRowNotPseudo
+                        )
+                      )
+                    case _ => None
+                case _ => F.pure(None)
+              }
+            }
+
+          decodedF.flatMap { decoded =>
+            val records = decoded.flatten.map {
+              case (scope, columnName, dataType, typeName, columnSize, bufferLength, decimalDigits, pseudoColumn) =>
+                ResultSetRowPacket(
+                  Array(
+                    Some(scope.toString),
+                    Some(columnName),
+                    Some(dataType.toString),
+                    Some(typeName),
+                    Some(columnSize.toString),
+                    Some(bufferLength.toString),
+                    Some(decimalDigits.toString),
+                    Some(pseudoColumn.toString)
                   )
-                case _ => None
-            case _ => F.pure(None)
-          }
-        }
-
-        decodedF.flatMap { decoded =>
-          val records = decoded.flatten.map {
-            case (scope, columnName, dataType, typeName, columnSize, bufferLength, decimalDigits, pseudoColumn) =>
-              ResultSetRowPacket(
-                Array(
-                  Some(scope.toString),
-                  Some(columnName),
-                  Some(dataType.toString),
-                  Some(typeName),
-                  Some(columnSize.toString),
-                  Some(bufferLength.toString),
-                  Some(decimalDigits.toString),
-                  Some(pseudoColumn.toString)
                 )
+            }
+            resultSet.currentRow.set(records.headOption) *> resultSet.currentCursor.set(0).map { _ =>
+              ResultSetImpl(
+                protocol,
+                Vector(
+                  "SCOPE",
+                  "COLUMN_NAME",
+                  "DATA_TYPE",
+                  "TYPE_NAME",
+                  "COLUMN_SIZE",
+                  "BUFFER_LENGTH",
+                  "DECIMAL_DIGITS",
+                  "PSEUDO_COLUMN"
+                ).map { value =>
+                  new ColumnDefinitionPacket:
+                    override def table: String = ""
+
+                    override def name: String = value
+
+                    override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
+
+                    override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
+                },
+                records,
+                serverVariables,
+                protocol.initialPacket.serverVersion,
+                resultSet.isClosed,
+                resultSet.lastColumnReadNullable,
+                resultSet.currentCursor,
+                resultSet.currentRow,
+                resultSet.fetchSize,
+                resultSet.useCursorFetch,
+                resultSet.useServerPrepStmts
               )
+            }
           }
-          resultSet.currentRow.set(records.headOption) *> resultSet.currentCursor.set(0).map { _ =>
-            ResultSetImpl(
-              protocol,
-              Vector(
-                "SCOPE",
-                "COLUMN_NAME",
-                "DATA_TYPE",
-                "TYPE_NAME",
-                "COLUMN_SIZE",
-                "BUFFER_LENGTH",
-                "DECIMAL_DIGITS",
-                "PSEUDO_COLUMN"
-              ).map { value =>
-                new ColumnDefinitionPacket:
-                  override def table: String = ""
-
-                  override def name: String = value
-
-                  override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
-
-                  override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
-              },
-              records,
-              serverVariables,
-              protocol.initialPacket.serverVersion,
-              resultSet.isClosed,
-              resultSet.lastColumnReadNullable,
-              resultSet.currentCursor,
-              resultSet.currentRow,
-              resultSet.fetchSize,
-              resultSet.useCursorFetch,
-              resultSet.useServerPrepStmts,
-            )
-          }
-        }
       }
     }
 
@@ -1402,10 +1410,10 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
           "NUM_PREC_RADIX"
         ).map { value =>
           new ColumnDefinitionPacket:
-            override def table: String = ""
-            override def name: String = value
-            override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
-            override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
+            override def table:      String                     = ""
+            override def name:       String                     = value
+            override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
+            override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
         },
         types,
         serverVariables,
@@ -1416,7 +1424,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
         currentRow,
         fetchSize,
         useCursorFetch,
-        useServerPrepStmts,
+        useServerPrepStmts
       )
     )
 
@@ -1567,7 +1575,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
         currentRow,
         fetchSize,
         useCursorFetch,
-        useServerPrepStmts,
+        useServerPrepStmts
       )
     }
 
@@ -2000,26 +2008,28 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
     )
 
   private def emptyResultSet(fields: Vector[String]): F[ResultSet[F]] =
-    F.pure(ResultSetImpl(
-      protocol,
-      fields.map { value =>
-        new ColumnDefinitionPacket:
-          override def table:      String                     = ""
-          override def name:       String                     = value
-          override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
-          override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
-      },
-      Vector.empty,
-      serverVariables,
-      protocol.initialPacket.serverVersion,
-      resultSetClosed,
-      lastColumnReadNullable,
-      currentCursor,
-      currentRow,
-      fetchSize,
-      useCursorFetch,
-      useServerPrepStmts,
-    ))
+    F.pure(
+      ResultSetImpl(
+        protocol,
+        fields.map { value =>
+          new ColumnDefinitionPacket:
+            override def table:      String                     = ""
+            override def name:       String                     = value
+            override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
+            override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
+        },
+        Vector.empty,
+        serverVariables,
+        protocol.initialPacket.serverVersion,
+        resultSetClosed,
+        lastColumnReadNullable,
+        currentCursor,
+        currentRow,
+        fetchSize,
+        useCursorFetch,
+        useServerPrepStmts
+      )
+    )
 
   private def getFunctionConstant(constant: FunctionConstant): Int =
     constant match

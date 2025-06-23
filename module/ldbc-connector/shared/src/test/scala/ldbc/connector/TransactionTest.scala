@@ -7,6 +7,7 @@
 package ldbc.connector
 
 import cats.Monad
+
 import cats.effect.*
 
 import org.typelevel.otel4s.trace.Tracer
@@ -234,9 +235,9 @@ class TransactionTest extends FTestPlatform:
         query     <- conn.clientPreparedStatement("SELECT * FROM `transaction_test` WHERE `c1` = ?")
         _         <- query.setLong(1, 1L)
         resultSet <- query.executeQuery()
-        result <- Monad[IO].whileM[List, Long](resultSet.next()) {
-          resultSet.getLong(1)
-        }
+        result    <- Monad[IO].whileM[List, Long](resultSet.next()) {
+                    resultSet.getLong(1)
+                  }
       yield result.contains(1L)
     })
   }
@@ -260,9 +261,9 @@ class TransactionTest extends FTestPlatform:
         query     <- conn.clientPreparedStatement("SELECT * FROM `transaction_test` WHERE `c1` = ?")
         _         <- query.setLong(1, 2L)
         resultSet <- query.executeQuery()
-        result <- Monad[IO].whileM[List, Long](resultSet.next()) {
-          resultSet.getLong(1)
-        }
+        result    <- Monad[IO].whileM[List, Long](resultSet.next()) {
+                    resultSet.getLong(1)
+                  }
       yield result.isEmpty
     })
   }

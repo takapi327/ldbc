@@ -9,6 +9,7 @@ package ldbc.connector
 import com.comcast.ip4s.UnknownHostException
 
 import cats.Monad
+
 import cats.effect.*
 
 import org.typelevel.otel4s.trace.Tracer
@@ -905,15 +906,16 @@ class ConnectionTest extends FTestPlatform:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getProcedures(Some("connector_test"), None, Some("demoSp"))
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              procedureCat   <- resultSet.getString("PROCEDURE_CAT")
-              procedureSchem <- resultSet.getString("PROCEDURE_SCHEM")
-              procedureName  <- resultSet.getString("PROCEDURE_NAME")
-              remarks        <- resultSet.getString("REMARKS")
-              procedureType  <- resultSet.getString("PROCEDURE_TYPE")
-            yield s"Procedure Catalog: $procedureCat, Procedure Schema: $procedureSchem, Procedure Name: $procedureName, Remarks: $remarks, Procedure Type: $procedureType"
-          }
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                procedureCat   <- resultSet.getString("PROCEDURE_CAT")
+                procedureSchem <- resultSet.getString("PROCEDURE_SCHEM")
+                procedureName  <- resultSet.getString("PROCEDURE_NAME")
+                remarks        <- resultSet.getString("REMARKS")
+                procedureType  <- resultSet.getString("PROCEDURE_TYPE")
+              yield s"Procedure Catalog: $procedureCat, Procedure Schema: $procedureSchem, Procedure Name: $procedureName, Remarks: $remarks, Procedure Type: $procedureType"
+            }
         yield result
       },
       Vector(
@@ -937,15 +939,16 @@ class ConnectionTest extends FTestPlatform:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getProcedureColumns(Some("connector_test"), None, Some("demoSp"), None)
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              procedureCat   <- resultSet.getString("PROCEDURE_CAT")
-              procedureSchem <- resultSet.getString("PROCEDURE_SCHEM")
-              procedureName  <- resultSet.getString("PROCEDURE_NAME")
-              columnName     <- resultSet.getString("COLUMN_NAME")
-              columnType     <- resultSet.getString("COLUMN_TYPE")
-            yield s"Procedure Catalog: $procedureCat, Procedure Schema: $procedureSchem, Procedure Name: $procedureName, Column Name: $columnName, Column Type: $columnType"
-          }
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                procedureCat   <- resultSet.getString("PROCEDURE_CAT")
+                procedureSchem <- resultSet.getString("PROCEDURE_SCHEM")
+                procedureName  <- resultSet.getString("PROCEDURE_NAME")
+                columnName     <- resultSet.getString("COLUMN_NAME")
+                columnType     <- resultSet.getString("COLUMN_TYPE")
+              yield s"Procedure Catalog: $procedureCat, Procedure Schema: $procedureSchem, Procedure Name: $procedureName, Column Name: $columnName, Column Type: $columnType"
+            }
         yield result
       },
       Vector(
@@ -970,20 +973,21 @@ class ConnectionTest extends FTestPlatform:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getTables(Some("connector_test"), None, Some("all_types"), Array.empty[String])
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              tableCat               <- resultSet.getString("TABLE_CAT")
-              tableSchem             <- resultSet.getString("TABLE_SCHEM")
-              tableName              <- resultSet.getString("TABLE_NAME")
-              tableType              <- resultSet.getString("TABLE_TYPE")
-              remarks                <- resultSet.getString("REMARKS")
-              typeCat                <- resultSet.getString("TYPE_CAT")
-              typeSchem              <- resultSet.getString("TYPE_SCHEM")
-              typeName               <- resultSet.getString("TYPE_NAME")
-              selfReferencingColName <- resultSet.getString("SELF_REFERENCING_COL_NAME")
-              refGeneration          <- resultSet.getString("REF_GENERATION")
-            yield s"Table Catalog: $tableCat, Table Schema: $tableSchem, Table Name: $tableName, Table Type: $tableType, Remarks: $remarks, Type Catalog: $typeCat, Type Schema: $typeSchem, Type Name: $typeName, Self Referencing Column Name: $selfReferencingColName, Reference Generation: $refGeneration"
-          }
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                tableCat               <- resultSet.getString("TABLE_CAT")
+                tableSchem             <- resultSet.getString("TABLE_SCHEM")
+                tableName              <- resultSet.getString("TABLE_NAME")
+                tableType              <- resultSet.getString("TABLE_TYPE")
+                remarks                <- resultSet.getString("REMARKS")
+                typeCat                <- resultSet.getString("TYPE_CAT")
+                typeSchem              <- resultSet.getString("TYPE_SCHEM")
+                typeName               <- resultSet.getString("TYPE_NAME")
+                selfReferencingColName <- resultSet.getString("SELF_REFERENCING_COL_NAME")
+                refGeneration          <- resultSet.getString("REF_GENERATION")
+              yield s"Table Catalog: $tableCat, Table Schema: $tableSchem, Table Name: $tableName, Table Type: $tableType, Remarks: $remarks, Type Catalog: $typeCat, Type Schema: $typeSchem, Type Name: $typeName, Self Referencing Column Name: $selfReferencingColName, Reference Generation: $refGeneration"
+            }
         yield result
       },
       Vector(
@@ -1008,12 +1012,12 @@ class ConnectionTest extends FTestPlatform:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getSchemas()
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              tableCatalog <- resultSet.getString("TABLE_CATALOG")
-              tableSchem   <- resultSet.getString("TABLE_SCHEM")
-            yield s"Table Catalog: $tableCatalog, Table Schema: $tableSchem"
-          }
+          result    <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+                      for
+                        tableCatalog <- resultSet.getString("TABLE_CATALOG")
+                        tableSchem   <- resultSet.getString("TABLE_SCHEM")
+                      yield s"Table Catalog: $tableCatalog, Table Schema: $tableSchem"
+                    }
         yield result
       },
       Vector(
@@ -1045,11 +1049,10 @@ class ConnectionTest extends FTestPlatform:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getCatalogs()
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              tableCatalog <- resultSet.getString("TABLE_CAT")
-            yield s"Table Catalog: $tableCatalog"
-          }
+          result    <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+                      for tableCatalog <- resultSet.getString("TABLE_CAT")
+                      yield s"Table Catalog: $tableCatalog"
+                    }
         yield result
       },
       Vector(
@@ -1079,13 +1082,12 @@ class ConnectionTest extends FTestPlatform:
     assertIO(
       connection.use { conn =>
         for
-          metaData <- conn.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <- metaData.getTableTypes()
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              tableType <- resultSet.getString("TABLE_TYPE")
-            yield s"Table Type: $tableType"
-          }
+          result    <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+                      for tableType <- resultSet.getString("TABLE_TYPE")
+                      yield s"Table Type: $tableType"
+                    }
         yield result
       },
       Vector(
@@ -1114,34 +1116,35 @@ class ConnectionTest extends FTestPlatform:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getColumns(None, None, Some("privileges_table"), None)
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              tableCat <- resultSet.getString("TABLE_CAT")
-              tableSchem <- resultSet.getString("TABLE_SCHEM")
-              tableName <- resultSet.getString("TABLE_NAME")
-              columnName <- resultSet.getString("COLUMN_NAME")
-              dataType <- resultSet.getInt("DATA_TYPE")
-              typeName <- resultSet.getString("TYPE_NAME")
-              columnSize <- resultSet.getInt("COLUMN_SIZE")
-              bufferLength <- resultSet.getInt("BUFFER_LENGTH")
-              decimalDigits <- resultSet.getInt("DECIMAL_DIGITS")
-              numPrecRadix <- resultSet.getInt("NUM_PREC_RADIX")
-              nullable <- resultSet.getInt("NULLABLE")
-              remarks <- resultSet.getString("REMARKS")
-              columnDef <- resultSet.getString("COLUMN_DEF")
-              sqlDataType <- resultSet.getInt("SQL_DATA_TYPE")
-              sqlDatetimeSub <- resultSet.getInt("SQL_DATETIME_SUB")
-              charOctetLength <- resultSet.getInt("CHAR_OCTET_LENGTH")
-              ordinalPosition <- resultSet.getInt("ORDINAL_POSITION")
-              isNullable <- resultSet.getString("IS_NULLABLE")
-              scopeCatalog <- resultSet.getString("SCOPE_CATALOG")
-              scopeSchema <- resultSet.getString("SCOPE_SCHEMA")
-              scopeTable <- resultSet.getString("SCOPE_TABLE")
-              sourceDataType <- resultSet.getShort("SOURCE_DATA_TYPE")
-              isAutoincrement <- resultSet.getString("IS_AUTOINCREMENT")
-              isGeneratedcolumn <- resultSet.getString("IS_GENERATEDCOLUMN")
-            yield s"Table Cat: $tableCat, Table Schem: $tableSchem, Table Name: $tableName, Column Name: $columnName, Data Type: $dataType, Type Name: $typeName, Column Size: $columnSize, Buffer Length: $bufferLength, Decimal Digits: $decimalDigits, Num Prec Radix: $numPrecRadix, Nullable: $nullable, Remarks: $remarks, Column Def: $columnDef, SQL Data Type: $sqlDataType, SQL Datetime Sub: $sqlDatetimeSub, Char Octet Length: $charOctetLength, Ordinal Position: $ordinalPosition, Is Nullable: $isNullable, Scope Catalog: $scopeCatalog, Scope Schema: $scopeSchema, Scope Table: $scopeTable, Source Data Type: $sourceDataType, Is Autoincrement: $isAutoincrement, Is Generatedcolumn: $isGeneratedcolumn"
-          }
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                tableCat          <- resultSet.getString("TABLE_CAT")
+                tableSchem        <- resultSet.getString("TABLE_SCHEM")
+                tableName         <- resultSet.getString("TABLE_NAME")
+                columnName        <- resultSet.getString("COLUMN_NAME")
+                dataType          <- resultSet.getInt("DATA_TYPE")
+                typeName          <- resultSet.getString("TYPE_NAME")
+                columnSize        <- resultSet.getInt("COLUMN_SIZE")
+                bufferLength      <- resultSet.getInt("BUFFER_LENGTH")
+                decimalDigits     <- resultSet.getInt("DECIMAL_DIGITS")
+                numPrecRadix      <- resultSet.getInt("NUM_PREC_RADIX")
+                nullable          <- resultSet.getInt("NULLABLE")
+                remarks           <- resultSet.getString("REMARKS")
+                columnDef         <- resultSet.getString("COLUMN_DEF")
+                sqlDataType       <- resultSet.getInt("SQL_DATA_TYPE")
+                sqlDatetimeSub    <- resultSet.getInt("SQL_DATETIME_SUB")
+                charOctetLength   <- resultSet.getInt("CHAR_OCTET_LENGTH")
+                ordinalPosition   <- resultSet.getInt("ORDINAL_POSITION")
+                isNullable        <- resultSet.getString("IS_NULLABLE")
+                scopeCatalog      <- resultSet.getString("SCOPE_CATALOG")
+                scopeSchema       <- resultSet.getString("SCOPE_SCHEMA")
+                scopeTable        <- resultSet.getString("SCOPE_TABLE")
+                sourceDataType    <- resultSet.getShort("SOURCE_DATA_TYPE")
+                isAutoincrement   <- resultSet.getString("IS_AUTOINCREMENT")
+                isGeneratedcolumn <- resultSet.getString("IS_GENERATEDCOLUMN")
+              yield s"Table Cat: $tableCat, Table Schem: $tableSchem, Table Name: $tableName, Column Name: $columnName, Data Type: $dataType, Type Name: $typeName, Column Size: $columnSize, Buffer Length: $bufferLength, Decimal Digits: $decimalDigits, Num Prec Radix: $numPrecRadix, Nullable: $nullable, Remarks: $remarks, Column Def: $columnDef, SQL Data Type: $sqlDataType, SQL Datetime Sub: $sqlDatetimeSub, Char Octet Length: $charOctetLength, Ordinal Position: $ordinalPosition, Is Nullable: $isNullable, Scope Catalog: $scopeCatalog, Scope Schema: $scopeSchema, Scope Table: $scopeTable, Source Data Type: $sourceDataType, Is Autoincrement: $isAutoincrement, Is Generatedcolumn: $isGeneratedcolumn"
+            }
         yield result
       },
       Vector(
@@ -1168,18 +1171,19 @@ class ConnectionTest extends FTestPlatform:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getColumnPrivileges(None, Some("connector_test"), Some("privileges_table"), None)
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              tableCat    <- resultSet.getString("TABLE_CAT")
-              tableSchem  <- resultSet.getString("TABLE_SCHEM")
-              tableName   <- resultSet.getString("TABLE_NAME")
-              columnName  <- resultSet.getString("COLUMN_NAME")
-              grantor     <- resultSet.getString("GRANTOR")
-              grantee     <- resultSet.getString("GRANTEE")
-              privilege   <- resultSet.getString("PRIVILEGE")
-              isGrantable <- resultSet.getString("IS_GRANTABLE")
-            yield s"Table Cat: $tableCat, Table Schem: $tableSchem, Table Name: $tableName, Column Name: $columnName, Grantor: $grantor, Grantee: $grantee, Privilege: $privilege, Is Grantable: $isGrantable"
-          }
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                tableCat    <- resultSet.getString("TABLE_CAT")
+                tableSchem  <- resultSet.getString("TABLE_SCHEM")
+                tableName   <- resultSet.getString("TABLE_NAME")
+                columnName  <- resultSet.getString("COLUMN_NAME")
+                grantor     <- resultSet.getString("GRANTOR")
+                grantee     <- resultSet.getString("GRANTEE")
+                privilege   <- resultSet.getString("PRIVILEGE")
+                isGrantable <- resultSet.getString("IS_GRANTABLE")
+              yield s"Table Cat: $tableCat, Table Schem: $tableSchem, Table Name: $tableName, Column Name: $columnName, Grantor: $grantor, Grantee: $grantee, Privilege: $privilege, Is Grantable: $isGrantable"
+            }
         yield result
       },
       Vector(
@@ -1206,17 +1210,18 @@ class ConnectionTest extends FTestPlatform:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getTablePrivileges(None, None, Some("privileges_table"))
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              tableCat    <- resultSet.getString("TABLE_CAT")
-              tableSchem  <- resultSet.getString("TABLE_SCHEM")
-              tableName   <- resultSet.getString("TABLE_NAME")
-              grantor     <- resultSet.getString("GRANTOR")
-              grantee     <- resultSet.getString("GRANTEE")
-              privilege   <- resultSet.getString("PRIVILEGE")
-              isGrantable <- resultSet.getString("IS_GRANTABLE")
-            yield s"Table Cat: $tableCat, Table Schem: $tableSchem, Table Name: $tableName, Grantor: $grantor, Grantee: $grantee, Privilege: $privilege, Is Grantable: $isGrantable"
-          }
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                tableCat    <- resultSet.getString("TABLE_CAT")
+                tableSchem  <- resultSet.getString("TABLE_SCHEM")
+                tableName   <- resultSet.getString("TABLE_NAME")
+                grantor     <- resultSet.getString("GRANTOR")
+                grantee     <- resultSet.getString("GRANTEE")
+                privilege   <- resultSet.getString("PRIVILEGE")
+                isGrantable <- resultSet.getString("IS_GRANTABLE")
+              yield s"Table Cat: $tableCat, Table Schem: $tableSchem, Table Name: $tableName, Grantor: $grantor, Grantee: $grantee, Privilege: $privilege, Is Grantable: $isGrantable"
+            }
         yield result
       },
       Vector(
@@ -1246,18 +1251,19 @@ class ConnectionTest extends FTestPlatform:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getBestRowIdentifier(None, Some("connector_test"), "privileges_table", None, None)
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              scope         <- resultSet.getShort("SCOPE")
-              columnName    <- resultSet.getString("COLUMN_NAME")
-              dataType      <- resultSet.getInt("DATA_TYPE")
-              typeName      <- resultSet.getString("TYPE_NAME")
-              columnSize    <- resultSet.getInt("COLUMN_SIZE")
-              bufferLength  <- resultSet.getInt("BUFFER_LENGTH")
-              decimalDigits <- resultSet.getShort("DECIMAL_DIGITS")
-              pseudoColumn  <- resultSet.getShort("PSEUDO_COLUMN")
-            yield s"Scope: $scope, Column Name: $columnName, Data Type: $dataType, Type Name: $typeName, Column Size: $columnSize, Buffer Length: $bufferLength, Decimal Digits: $decimalDigits, Pseudo Column: $pseudoColumn"
-          }
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                scope         <- resultSet.getShort("SCOPE")
+                columnName    <- resultSet.getString("COLUMN_NAME")
+                dataType      <- resultSet.getInt("DATA_TYPE")
+                typeName      <- resultSet.getString("TYPE_NAME")
+                columnSize    <- resultSet.getInt("COLUMN_SIZE")
+                bufferLength  <- resultSet.getInt("BUFFER_LENGTH")
+                decimalDigits <- resultSet.getShort("DECIMAL_DIGITS")
+                pseudoColumn  <- resultSet.getShort("PSEUDO_COLUMN")
+              yield s"Scope: $scope, Column Name: $columnName, Data Type: $dataType, Type Name: $typeName, Column Size: $columnSize, Buffer Length: $bufferLength, Decimal Digits: $decimalDigits, Pseudo Column: $pseudoColumn"
+            }
         yield result
       },
       Vector(
@@ -1281,18 +1287,19 @@ class ConnectionTest extends FTestPlatform:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getVersionColumns(None, Some("connector_test"), "privileges_table")
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              scope         <- resultSet.getShort("SCOPE")
-              columnName    <- resultSet.getString("COLUMN_NAME")
-              dataType      <- resultSet.getInt("DATA_TYPE")
-              typeName      <- resultSet.getString("TYPE_NAME")
-              columnSize    <- resultSet.getInt("COLUMN_SIZE")
-              bufferLength  <- resultSet.getInt("BUFFER_LENGTH")
-              decimalDigits <- resultSet.getShort("DECIMAL_DIGITS")
-              pseudoColumn  <- resultSet.getShort("PSEUDO_COLUMN")
-            yield s"Scope: $scope, Column Name: $columnName, Data Type: $dataType, Type Name: $typeName, Column Size: $columnSize, Buffer Length: $bufferLength, Decimal Digits: $decimalDigits, Pseudo Column: $pseudoColumn"
-          }
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                scope         <- resultSet.getShort("SCOPE")
+                columnName    <- resultSet.getString("COLUMN_NAME")
+                dataType      <- resultSet.getInt("DATA_TYPE")
+                typeName      <- resultSet.getString("TYPE_NAME")
+                columnSize    <- resultSet.getInt("COLUMN_SIZE")
+                bufferLength  <- resultSet.getInt("BUFFER_LENGTH")
+                decimalDigits <- resultSet.getShort("DECIMAL_DIGITS")
+                pseudoColumn  <- resultSet.getShort("PSEUDO_COLUMN")
+              yield s"Scope: $scope, Column Name: $columnName, Data Type: $dataType, Type Name: $typeName, Column Size: $columnSize, Buffer Length: $bufferLength, Decimal Digits: $decimalDigits, Pseudo Column: $pseudoColumn"
+            }
         yield result
       },
       Vector(
@@ -1316,16 +1323,17 @@ class ConnectionTest extends FTestPlatform:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getPrimaryKeys(None, Some("connector_test"), "privileges_table")
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              tableCat   <- resultSet.getString("TABLE_CAT")
-              tableSchem <- resultSet.getString("TABLE_SCHEM")
-              tableName  <- resultSet.getString("TABLE_NAME")
-              columnName <- resultSet.getString("COLUMN_NAME")
-              keySeq     <- resultSet.getShort("KEY_SEQ")
-              pkName     <- resultSet.getString("PK_NAME")
-            yield s"Table Cat: $tableCat, Table Schem: $tableSchem, Table Name: $tableName, Column Name: $columnName, Key Seq: $keySeq, PK Name: $pkName"
-          }
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                tableCat   <- resultSet.getString("TABLE_CAT")
+                tableSchem <- resultSet.getString("TABLE_SCHEM")
+                tableName  <- resultSet.getString("TABLE_NAME")
+                columnName <- resultSet.getString("COLUMN_NAME")
+                keySeq     <- resultSet.getShort("KEY_SEQ")
+                pkName     <- resultSet.getString("PK_NAME")
+              yield s"Table Cat: $tableCat, Table Schem: $tableSchem, Table Name: $tableName, Column Name: $columnName, Key Seq: $keySeq, PK Name: $pkName"
+            }
         yield result
       },
       Vector(
@@ -1350,24 +1358,25 @@ class ConnectionTest extends FTestPlatform:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getImportedKeys(None, Some("world"), "city")
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              pktableCat    <- resultSet.getString("PKTABLE_CAT")
-              pktableSchem  <- resultSet.getString("PKTABLE_SCHEM")
-              pktableName   <- resultSet.getString("PKTABLE_NAME")
-              pkcolumnName  <- resultSet.getString("PKCOLUMN_NAME")
-              fktableCat    <- resultSet.getString("FKTABLE_CAT")
-              fktableSchem  <- resultSet.getString("FKTABLE_SCHEM")
-              fktableName   <- resultSet.getString("FKTABLE_NAME")
-              fkcolumnName  <- resultSet.getString("FKCOLUMN_NAME")
-              keySeq        <- resultSet.getShort("KEY_SEQ")
-              updateRule    <- resultSet.getShort("UPDATE_RULE")
-              deleteRule    <- resultSet.getShort("DELETE_RULE")
-              fkName        <- resultSet.getString("FK_NAME")
-              pkName        <- resultSet.getString("PK_NAME")
-              deferrability <- resultSet.getShort("DEFERRABILITY")
-            yield s"PK Table Cat: $pktableCat, PK Table Schem: $pktableSchem, PK Table Name: $pktableName, PK Column Name: $pkcolumnName, FK Table Cat: $fktableCat, FK Table Schem: $fktableSchem, FK Table Name: $fktableName, FK Column Name: $fkcolumnName, Key Seq: $keySeq, Update Rule: $updateRule, Delete Rule: $deleteRule, FK Name: $fkName, PK Name: $pkName, Deferrability: $deferrability"
-          }
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                pktableCat    <- resultSet.getString("PKTABLE_CAT")
+                pktableSchem  <- resultSet.getString("PKTABLE_SCHEM")
+                pktableName   <- resultSet.getString("PKTABLE_NAME")
+                pkcolumnName  <- resultSet.getString("PKCOLUMN_NAME")
+                fktableCat    <- resultSet.getString("FKTABLE_CAT")
+                fktableSchem  <- resultSet.getString("FKTABLE_SCHEM")
+                fktableName   <- resultSet.getString("FKTABLE_NAME")
+                fkcolumnName  <- resultSet.getString("FKCOLUMN_NAME")
+                keySeq        <- resultSet.getShort("KEY_SEQ")
+                updateRule    <- resultSet.getShort("UPDATE_RULE")
+                deleteRule    <- resultSet.getShort("DELETE_RULE")
+                fkName        <- resultSet.getString("FK_NAME")
+                pkName        <- resultSet.getString("PK_NAME")
+                deferrability <- resultSet.getShort("DEFERRABILITY")
+              yield s"PK Table Cat: $pktableCat, PK Table Schem: $pktableSchem, PK Table Name: $pktableName, PK Column Name: $pkcolumnName, FK Table Cat: $fktableCat, FK Table Schem: $fktableSchem, FK Table Name: $fktableName, FK Column Name: $fkcolumnName, Key Seq: $keySeq, Update Rule: $updateRule, Delete Rule: $deleteRule, FK Name: $fkName, PK Name: $pkName, Deferrability: $deferrability"
+            }
         yield result
       },
       Vector(
@@ -1392,24 +1401,25 @@ class ConnectionTest extends FTestPlatform:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getExportedKeys(None, Some("world"), "city")
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              pktableCat    <- resultSet.getString("PKTABLE_CAT")
-              pktableSchem  <- resultSet.getString("PKTABLE_SCHEM")
-              pktableName   <- resultSet.getString("PKTABLE_NAME")
-              pkcolumnName  <- resultSet.getString("PKCOLUMN_NAME")
-              fktableCat    <- resultSet.getString("FKTABLE_CAT")
-              fktableSchem  <- resultSet.getString("FKTABLE_SCHEM")
-              fktableName   <- resultSet.getString("FKTABLE_NAME")
-              fkcolumnName  <- resultSet.getString("FKCOLUMN_NAME")
-              keySeq        <- resultSet.getShort("KEY_SEQ")
-              updateRule    <- resultSet.getShort("UPDATE_RULE")
-              deleteRule    <- resultSet.getShort("DELETE_RULE")
-              fkName        <- resultSet.getString("FK_NAME")
-              pkName        <- resultSet.getString("PK_NAME")
-              deferrability <- resultSet.getShort("DEFERRABILITY")
-            yield s"PK Table Cat: $pktableCat, PK Table Schem: $pktableSchem, PK Table Name: $pktableName, PK Column Name: $pkcolumnName, FK Table Cat: $fktableCat, FK Table Schem: $fktableSchem, FK Table Name: $fktableName, FK Column Name: $fkcolumnName, Key Seq: $keySeq, Update Rule: $updateRule, Delete Rule: $deleteRule, FK Name: $fkName, PK Name: $pkName, Deferrability: $deferrability"
-          }
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                pktableCat    <- resultSet.getString("PKTABLE_CAT")
+                pktableSchem  <- resultSet.getString("PKTABLE_SCHEM")
+                pktableName   <- resultSet.getString("PKTABLE_NAME")
+                pkcolumnName  <- resultSet.getString("PKCOLUMN_NAME")
+                fktableCat    <- resultSet.getString("FKTABLE_CAT")
+                fktableSchem  <- resultSet.getString("FKTABLE_SCHEM")
+                fktableName   <- resultSet.getString("FKTABLE_NAME")
+                fkcolumnName  <- resultSet.getString("FKCOLUMN_NAME")
+                keySeq        <- resultSet.getShort("KEY_SEQ")
+                updateRule    <- resultSet.getShort("UPDATE_RULE")
+                deleteRule    <- resultSet.getShort("DELETE_RULE")
+                fkName        <- resultSet.getString("FK_NAME")
+                pkName        <- resultSet.getString("PK_NAME")
+                deferrability <- resultSet.getShort("DEFERRABILITY")
+              yield s"PK Table Cat: $pktableCat, PK Table Schem: $pktableSchem, PK Table Name: $pktableName, PK Column Name: $pkcolumnName, FK Table Cat: $fktableCat, FK Table Schem: $fktableSchem, FK Table Name: $fktableName, FK Column Name: $fkcolumnName, Key Seq: $keySeq, Update Rule: $updateRule, Delete Rule: $deleteRule, FK Name: $fkName, PK Name: $pkName, Deferrability: $deferrability"
+            }
         yield result
       },
       Vector(
@@ -1435,24 +1445,25 @@ class ConnectionTest extends FTestPlatform:
           metaData  <- conn.getMetaData()
           resultSet <-
             metaData.getCrossReference(None, Some("world"), "city", None, Some("world"), Some("government_office"))
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              pktableCat    <- resultSet.getString("PKTABLE_CAT")
-              pktableSchem  <- resultSet.getString("PKTABLE_SCHEM")
-              pktableName   <- resultSet.getString("PKTABLE_NAME")
-              pkcolumnName  <- resultSet.getString("PKCOLUMN_NAME")
-              fktableCat    <- resultSet.getString("FKTABLE_CAT")
-              fktableSchem  <- resultSet.getString("FKTABLE_SCHEM")
-              fktableName   <- resultSet.getString("FKTABLE_NAME")
-              fkcolumnName  <- resultSet.getString("FKCOLUMN_NAME")
-              keySeq        <- resultSet.getShort("KEY_SEQ")
-              updateRule    <- resultSet.getShort("UPDATE_RULE")
-              deleteRule    <- resultSet.getShort("DELETE_RULE")
-              fkName        <- resultSet.getString("FK_NAME")
-              pkName        <- resultSet.getString("PK_NAME")
-              deferrability <- resultSet.getShort("DEFERRABILITY")
-            yield s"PK Table Cat: $pktableCat, PK Table Schem: $pktableSchem, PK Table Name: $pktableName, PK Column Name: $pkcolumnName, FK Table Cat: $fktableCat, FK Table Schem: $fktableSchem, FK Table Name: $fktableName, FK Column Name: $fkcolumnName, Key Seq: $keySeq, Update Rule: $updateRule, Delete Rule: $deleteRule, FK Name: $fkName, PK Name: $pkName, Deferrability: $deferrability"
-          }
+          result <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                pktableCat    <- resultSet.getString("PKTABLE_CAT")
+                pktableSchem  <- resultSet.getString("PKTABLE_SCHEM")
+                pktableName   <- resultSet.getString("PKTABLE_NAME")
+                pkcolumnName  <- resultSet.getString("PKCOLUMN_NAME")
+                fktableCat    <- resultSet.getString("FKTABLE_CAT")
+                fktableSchem  <- resultSet.getString("FKTABLE_SCHEM")
+                fktableName   <- resultSet.getString("FKTABLE_NAME")
+                fkcolumnName  <- resultSet.getString("FKCOLUMN_NAME")
+                keySeq        <- resultSet.getShort("KEY_SEQ")
+                updateRule    <- resultSet.getShort("UPDATE_RULE")
+                deleteRule    <- resultSet.getShort("DELETE_RULE")
+                fkName        <- resultSet.getString("FK_NAME")
+                pkName        <- resultSet.getString("PK_NAME")
+                deferrability <- resultSet.getShort("DEFERRABILITY")
+              yield s"PK Table Cat: $pktableCat, PK Table Schem: $pktableSchem, PK Table Name: $pktableName, PK Column Name: $pkcolumnName, FK Table Cat: $fktableCat, FK Table Schem: $fktableSchem, FK Table Name: $fktableName, FK Column Name: $fkcolumnName, Key Seq: $keySeq, Update Rule: $updateRule, Delete Rule: $deleteRule, FK Name: $fkName, PK Name: $pkName, Deferrability: $deferrability"
+            }
         yield result
       },
       Vector(
@@ -1475,30 +1486,31 @@ class ConnectionTest extends FTestPlatform:
     assertIO(
       connection.use { conn =>
         for
-          metaData <- conn.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <- metaData.getTypeInfo()
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              typeName          <- resultSet.getString("TYPE_NAME")
-              dataType          <- resultSet.getInt("DATA_TYPE")
-              precision         <- resultSet.getInt("PRECISION")
-              literalPrefix     <- resultSet.getString("LITERAL_PREFIX")
-              literalSuffix     <- resultSet.getString("LITERAL_SUFFIX")
-              createParams      <- resultSet.getString("CREATE_PARAMS")
-              nullable          <- resultSet.getShort("NULLABLE")
-              caseSensitive     <- resultSet.getBoolean("CASE_SENSITIVE")
-              searchable        <- resultSet.getShort("SEARCHABLE")
-              unsignedAttribute <- resultSet.getBoolean("UNSIGNED_ATTRIBUTE")
-              fixedPrecScale    <- resultSet.getBoolean("FIXED_PREC_SCALE")
-              autoIncrement     <- resultSet.getBoolean("AUTO_INCREMENT")
-              localTypeName     <- resultSet.getString("LOCAL_TYPE_NAME")
-              minimumScale      <- resultSet.getShort("MINIMUM_SCALE")
-              maximumScale      <- resultSet.getShort("MAXIMUM_SCALE")
-              sqlDataType       <- resultSet.getShort("SQL_DATA_TYPE")
-              sqlDatetimeSub    <- resultSet.getShort("SQL_DATETIME_SUB")
-              numPrecRadix      <- resultSet.getShort("NUM_PREC_RADIX")
-            yield s"Type Name: $typeName, Data Type: $dataType, Precision: $precision, Literal Prefix: $literalPrefix, Literal Suffix: $literalSuffix, Create Params: $createParams, Nullable: $nullable, Case Sensitive: $caseSensitive, Searchable: $searchable, Unsigned Attribute: $unsignedAttribute, Fixed Prec Scale: $fixedPrecScale, Auto Increment: $autoIncrement, Local Type Name: $localTypeName, Minimum Scale: $minimumScale, Maximum Scale: $maximumScale, SQL Data Type: $sqlDataType, SQL Datetime Sub: $sqlDatetimeSub, Num Prec Radix: $numPrecRadix"
-          }
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                typeName          <- resultSet.getString("TYPE_NAME")
+                dataType          <- resultSet.getInt("DATA_TYPE")
+                precision         <- resultSet.getInt("PRECISION")
+                literalPrefix     <- resultSet.getString("LITERAL_PREFIX")
+                literalSuffix     <- resultSet.getString("LITERAL_SUFFIX")
+                createParams      <- resultSet.getString("CREATE_PARAMS")
+                nullable          <- resultSet.getShort("NULLABLE")
+                caseSensitive     <- resultSet.getBoolean("CASE_SENSITIVE")
+                searchable        <- resultSet.getShort("SEARCHABLE")
+                unsignedAttribute <- resultSet.getBoolean("UNSIGNED_ATTRIBUTE")
+                fixedPrecScale    <- resultSet.getBoolean("FIXED_PREC_SCALE")
+                autoIncrement     <- resultSet.getBoolean("AUTO_INCREMENT")
+                localTypeName     <- resultSet.getString("LOCAL_TYPE_NAME")
+                minimumScale      <- resultSet.getShort("MINIMUM_SCALE")
+                maximumScale      <- resultSet.getShort("MAXIMUM_SCALE")
+                sqlDataType       <- resultSet.getShort("SQL_DATA_TYPE")
+                sqlDatetimeSub    <- resultSet.getShort("SQL_DATETIME_SUB")
+                numPrecRadix      <- resultSet.getShort("NUM_PREC_RADIX")
+              yield s"Type Name: $typeName, Data Type: $dataType, Precision: $precision, Literal Prefix: $literalPrefix, Literal Suffix: $literalSuffix, Create Params: $createParams, Nullable: $nullable, Case Sensitive: $caseSensitive, Searchable: $searchable, Unsigned Attribute: $unsignedAttribute, Fixed Prec Scale: $fixedPrecScale, Auto Increment: $autoIncrement, Local Type Name: $localTypeName, Minimum Scale: $minimumScale, Maximum Scale: $maximumScale, SQL Data Type: $sqlDataType, SQL Datetime Sub: $sqlDatetimeSub, Num Prec Radix: $numPrecRadix"
+            }
         yield result
       },
       Vector(
@@ -1567,22 +1579,23 @@ class ConnectionTest extends FTestPlatform:
           metaData  <- conn.getMetaData()
           resultSet <-
             metaData.getIndexInfo(None, Some("world"), Some("city"), true, true)
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              tableCat        <- resultSet.getString("TABLE_CAT")
-              tableSchem      <- resultSet.getString("TABLE_SCHEM")
-              tableName       <- resultSet.getString("TABLE_NAME")
-              nonUnique       <- resultSet.getBoolean("NON_UNIQUE")
-              indexQualifier  <- resultSet.getString("INDEX_QUALIFIER")
-              indexName       <- resultSet.getString("INDEX_NAME")
-              `type`          <- resultSet.getShort("TYPE")
-              ordinalPosition <- resultSet.getShort("ORDINAL_POSITION")
-              columnName      <- resultSet.getString("COLUMN_NAME")
-              ascOrDesc       <- resultSet.getString("ASC_OR_DESC")
-              pages           <- resultSet.getLong("PAGES")
-              filterCondition <- resultSet.getString("FILTER_CONDITION")
-            yield s"Table Cat: $tableCat, Table Schem: $tableSchem, Table Name: $tableName, Non Unique: $nonUnique, Index Qualifier: $indexQualifier, Index Name: $indexName, Type: ${ `type` }, Ordinal Position: $ordinalPosition, Column Name: $columnName, Asc Or Desc: $ascOrDesc, Pages: $pages, Filter Condition: $filterCondition"
-          }
+          result <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                tableCat        <- resultSet.getString("TABLE_CAT")
+                tableSchem      <- resultSet.getString("TABLE_SCHEM")
+                tableName       <- resultSet.getString("TABLE_NAME")
+                nonUnique       <- resultSet.getBoolean("NON_UNIQUE")
+                indexQualifier  <- resultSet.getString("INDEX_QUALIFIER")
+                indexName       <- resultSet.getString("INDEX_NAME")
+                `type`          <- resultSet.getShort("TYPE")
+                ordinalPosition <- resultSet.getShort("ORDINAL_POSITION")
+                columnName      <- resultSet.getString("COLUMN_NAME")
+                ascOrDesc       <- resultSet.getString("ASC_OR_DESC")
+                pages           <- resultSet.getLong("PAGES")
+                filterCondition <- resultSet.getString("FILTER_CONDITION")
+              yield s"Table Cat: $tableCat, Table Schem: $tableSchem, Table Name: $tableName, Non Unique: $nonUnique, Index Qualifier: $indexQualifier, Index Name: $indexName, Type: ${ `type` }, Ordinal Position: $ordinalPosition, Column Name: $columnName, Asc Or Desc: $ascOrDesc, Pages: $pages, Filter Condition: $filterCondition"
+            }
         yield result
       },
       Vector(
@@ -1606,15 +1619,16 @@ class ConnectionTest extends FTestPlatform:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getFunctions(None, Some("sys"), None)
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              functionCat   <- resultSet.getString("FUNCTION_CAT")
-              functionSchem <- resultSet.getString("FUNCTION_SCHEM")
-              functionName  <- resultSet.getString("FUNCTION_NAME")
-              functionType  <- resultSet.getShort("FUNCTION_TYPE")
-              specificName  <- resultSet.getString("SPECIFIC_NAME")
-            yield s"Function Cat: $functionCat, Function Schem: $functionSchem, Function Name: $functionName, Function Type: $functionType, Specific Name: $specificName"
-          }
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                functionCat   <- resultSet.getString("FUNCTION_CAT")
+                functionSchem <- resultSet.getString("FUNCTION_SCHEM")
+                functionName  <- resultSet.getString("FUNCTION_NAME")
+                functionType  <- resultSet.getShort("FUNCTION_TYPE")
+                specificName  <- resultSet.getString("SPECIFIC_NAME")
+              yield s"Function Cat: $functionCat, Function Schem: $functionSchem, Function Name: $functionName, Function Type: $functionType, Specific Name: $specificName"
+            }
         yield result
       },
       Vector(
@@ -1659,27 +1673,28 @@ class ConnectionTest extends FTestPlatform:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getFunctionColumns(None, Some("sys"), None, Some("in_host"))
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              functionCat     <- resultSet.getString("FUNCTION_CAT")
-              functionSchem   <- resultSet.getString("FUNCTION_SCHEM")
-              functionName    <- resultSet.getString("FUNCTION_NAME")
-              columnName      <- resultSet.getString("COLUMN_NAME")
-              columnType      <- resultSet.getShort("COLUMN_TYPE")
-              dataType        <- resultSet.getInt("DATA_TYPE")
-              typeName        <- resultSet.getString("TYPE_NAME")
-              precision       <- resultSet.getInt("PRECISION")
-              length          <- resultSet.getInt("LENGTH")
-              scale           <- resultSet.getShort("SCALE")
-              radix           <- resultSet.getShort("RADIX")
-              nullable        <- resultSet.getShort("NULLABLE")
-              remarks         <- resultSet.getString("REMARKS")
-              charOctetLength <- resultSet.getInt("CHAR_OCTET_LENGTH")
-              ordinalPosition <- resultSet.getInt("ORDINAL_POSITION")
-              isNullable      <- resultSet.getString("IS_NULLABLE")
-              specificName    <- resultSet.getString("SPECIFIC_NAME")
-            yield s"Function Cat: $functionCat, Function Schem: $functionSchem, Function Name: $functionName, Column Name: $columnName, Column Type: $columnType, Data Type: $dataType, Type Name: $typeName, Precision: $precision, Length: $length, Scale: $scale, Radix: $radix, Nullable: $nullable, Remarks: $remarks, Char Octet Length: $charOctetLength, Ordinal Position: $ordinalPosition, Is Nullable: $isNullable, Specific Name: $specificName"
-          }
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                functionCat     <- resultSet.getString("FUNCTION_CAT")
+                functionSchem   <- resultSet.getString("FUNCTION_SCHEM")
+                functionName    <- resultSet.getString("FUNCTION_NAME")
+                columnName      <- resultSet.getString("COLUMN_NAME")
+                columnType      <- resultSet.getShort("COLUMN_TYPE")
+                dataType        <- resultSet.getInt("DATA_TYPE")
+                typeName        <- resultSet.getString("TYPE_NAME")
+                precision       <- resultSet.getInt("PRECISION")
+                length          <- resultSet.getInt("LENGTH")
+                scale           <- resultSet.getShort("SCALE")
+                radix           <- resultSet.getShort("RADIX")
+                nullable        <- resultSet.getShort("NULLABLE")
+                remarks         <- resultSet.getString("REMARKS")
+                charOctetLength <- resultSet.getInt("CHAR_OCTET_LENGTH")
+                ordinalPosition <- resultSet.getInt("ORDINAL_POSITION")
+                isNullable      <- resultSet.getString("IS_NULLABLE")
+                specificName    <- resultSet.getString("SPECIFIC_NAME")
+              yield s"Function Cat: $functionCat, Function Schem: $functionSchem, Function Name: $functionName, Column Name: $columnName, Column Type: $columnType, Data Type: $dataType, Type Name: $typeName, Precision: $precision, Length: $length, Scale: $scale, Radix: $radix, Nullable: $nullable, Remarks: $remarks, Char Octet Length: $charOctetLength, Ordinal Position: $ordinalPosition, Is Nullable: $isNullable, Specific Name: $specificName"
+            }
         yield result
       },
       Vector(
@@ -1747,12 +1762,12 @@ class ConnectionTest extends FTestPlatform:
           statement <- conn.createStatement()
           _         <- statement.execute("INSERT INTO test (name) VALUES ('test')")
           resultSet <- statement.executeQuery("SELECT * FROM test")
-          result <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              id   <- resultSet.getInt("id")
-              name <- resultSet.getString("name")
-            yield s"ID: $id, Name: $name"
-          }
+          result    <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+                      for
+                        id   <- resultSet.getInt("id")
+                        name <- resultSet.getString("name")
+                      yield s"ID: $id, Name: $name"
+                    }
         yield result
       },
       Vector("ID: 1, Name: test")

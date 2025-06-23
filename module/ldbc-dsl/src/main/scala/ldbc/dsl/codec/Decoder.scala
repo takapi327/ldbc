@@ -15,8 +15,8 @@ import cats.syntax.all.*
 
 import org.typelevel.twiddles.TwiddleSyntax
 
-import ldbc.dsl.util.Mirrors
 import ldbc.dsl.free.ResultSetIO
+import ldbc.dsl.util.Mirrors
 
 /**
  * Trait to get the DataType that matches the Scala type information from the ResultSet.
@@ -42,24 +42,26 @@ trait Decoder[A]:
 
   /** Map decoded results to a new type `B`, yielding a `Decoder[B]`. */
   def map[B](f: A => B): Decoder[B] = new Decoder[B]:
-    override def offset:                                   Int                      = self.offset
+    override def offset:             Int                                   = self.offset
     override def decode(index: Int): Either[Decoder.Error, ResultSetIO[B]] =
       self.decode(index).map(_.map(f))
 
   /** Map decoded results to a new type `B` or an error, yielding a `Decoder[B]`. */
   def emap[B](f: A => Either[String, B]): Decoder[B] = new Decoder[B]:
-    override def offset:                                   Int                      = self.offset
+    override def offset:             Int                                   = self.offset
     override def decode(index: Int): Either[Decoder.Error, ResultSetIO[B]] = {
-      self.decode(index).map(_.flatMap { a =>
-        f(a) match
-          case Left(error)  => ResultSetIO.raiseError(new IllegalArgumentException(error))
-          case Right(value) => ResultSetIO.pure(value)
-      })
+      self
+        .decode(index)
+        .map(_.flatMap { a =>
+          f(a) match
+            case Left(error)  => ResultSetIO.raiseError(new IllegalArgumentException(error))
+            case Right(value) => ResultSetIO.pure(value)
+        })
     }
 
   /** `Decoder` is semigroupal: a pair of decoders make a decoder for a pair. */
   def product[B](fb: Decoder[B]): Decoder[(A, B)] = new Decoder[(A, B)]:
-    override def offset:                                   Int                           = self.offset + fb.offset
+    override def offset:             Int                                        = self.offset + fb.offset
     override def decode(index: Int): Either[Decoder.Error, ResultSetIO[(A, B)]] =
       for
         a <- self.decode(index)
@@ -68,9 +70,9 @@ trait Decoder[A]:
 
   /** Lift this `Decoder` into `Option`. */
   def opt: Decoder[Option[A]] = new Decoder[Option[A]]:
-    override def offset:                                   Int                              = self.offset
+    override def offset:             Int                                           = self.offset
     override def decode(index: Int): Either[Decoder.Error, ResultSetIO[Option[A]]] =
-     self.decode(index).map(_.map(Option(_)))
+      self.decode(index).map(_.map(Option(_)))
 
 object Decoder extends TwiddleSyntax[Decoder]:
 
@@ -100,7 +102,7 @@ object Decoder extends TwiddleSyntax[Decoder]:
     override def ap[A, B](fab: Decoder[A => B])(fa: Decoder[A]): Decoder[B] =
       map(fab.product(fa)) { case (fabb, a) => fabb(a) }
     override def pure[A](x: A): Decoder[A] = new Decoder[A]:
-      override def offset:                                   Int                      = 0
+      override def offset:             Int                                   = 0
       override def decode(index: Int): Either[Decoder.Error, ResultSetIO[A]] = Right(ResultSetIO.pure(x))
 
   given [A](using codec: Codec[A]): Decoder[A] = codec.asDecoder
