@@ -78,7 +78,7 @@ object ResultSetConsumer:
 
       def loop(acc: collection.mutable.Builder[T, G[T]]): ResultSetIO[collection.mutable.Builder[T, G[T]]] =
         ResultSetIO.next().flatMap {
-          case true => decoder.decode(FIRST_OFFSET, statement).flatMap(v => loop(acc += v))
+          case true  => decoder.decode(FIRST_OFFSET, statement).flatMap(v => loop(acc += v))
           case false => ResultSetIO.pure(acc)
         }
 
