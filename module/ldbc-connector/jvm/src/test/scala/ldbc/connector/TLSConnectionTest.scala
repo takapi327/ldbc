@@ -25,7 +25,8 @@ class TLSConnectionTest extends FTestPlatform:
           for
             statement <- conn.createStatement()
             result    <- statement.executeQuery("SELECT 1")
-          yield result.getInt(1)
+            value <- result.getInt(1)
+          yield value
         },
       1
     )

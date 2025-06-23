@@ -69,8 +69,8 @@ class StatementUpdateTest extends FTestPlatform:
               "INSERT INTO `auto_inc_table`(`id`, `c1`) VALUES (null, 'column 2')",
               Statement.RETURN_GENERATED_KEYS
             ) *> statement.getGeneratedKeys()
-          _         = resultSet.next()
-          generated = resultSet.getLong(1)
+          _         <- resultSet.next()
+          generated <- resultSet.getLong(1)
           _ <- statement.executeUpdate("DROP TABLE `auto_inc_table`")
         yield generated
       },
