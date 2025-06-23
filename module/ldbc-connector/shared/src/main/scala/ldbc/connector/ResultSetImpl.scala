@@ -448,14 +448,14 @@ private[ldbc] case class ResultSetImpl[F[_]](
   private def rowDecode[T](index: Int, decode: String => Either[String, T]): F[Option[T]] =
     for
       row      <- currentRow.get
-      valueOpt <- try ev.pure(row.flatMap(_.values(index - 1))) catch
-        case e => ev.raiseError(new SQLException(e.getMessage, sql = statement))
-      decoded <-                      valueOpt match
-        case None        => ev.pure(None)
-        case Some(value) =>
-          decode(value) match
-            case Left(error)         => ev.raiseError(new SQLException(error, sql = statement))
-            case Right(decodedValue) => ev.pure(Some(decodedValue))
+      valueOpt <- try ev.pure(row.flatMap(_.values(index - 1)))
+                  catch case e => ev.raiseError(new SQLException(e.getMessage, sql = statement))
+      decoded <- valueOpt match
+                   case None        => ev.pure(None)
+                   case Some(value) =>
+                     decode(value) match
+                       case Left(error)         => ev.raiseError(new SQLException(error, sql = statement))
+                       case Right(decodedValue) => ev.pure(Some(decodedValue))
     yield decoded
 
   private def findByName(columnLabel: String): F[Int] =
