@@ -195,7 +195,8 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
           lastInsertId <- lastInsertId.get
           lastColumnReadNullable <- Ref[F].of(true)
           resultSetCurrentCursor <- Ref[F].of(0)
-          resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
+          record = ResultSetRowPacket(Array(Some(lastInsertId.toString)))
+          resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](Some(record))
           resultSet = ResultSetImpl(
                         protocol,
                         Vector(new ColumnDefinitionPacket:
@@ -206,7 +207,7 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
                           override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_LONGLONG
 
                           override def flags: Seq[ColumnDefinitionFlags] = Seq.empty),
-                        Vector(ResultSetRowPacket(Array(Some(lastInsertId.toString)))),
+                        Vector(record),
                         serverVariables,
                         protocol.initialPacket.serverVersion,
                         resultSetClosed,

@@ -8,7 +8,6 @@ package ldbc.connector.net.protocol
 
 import java.time.*
 
-import scala.collection.mutable
 import scala.collection.immutable.{ ListMap, SortedMap }
 
 import cats.*
@@ -276,7 +275,8 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
           lastInsertId <- lastInsertId.get
           lastColumnReadNullable <- Ref[F].of(true)
           resultSetCurrentCursor <- Ref[F].of(0)
-          resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
+          record = ResultSetRowPacket(Array(Some(lastInsertId.toString)))
+          resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](Some(record))
           resultSet    <- F.pure(
                          ResultSetImpl(
                            protocol,
@@ -285,7 +285,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                              override def name:       String                     = "GENERATED_KEYS"
                              override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_LONGLONG
                              override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty),
-                           Vector(ResultSetRowPacket(Array(Some(lastInsertId.toString)))),
+                           Vector(record),
                            serverVariables,
                            protocol.initialPacket.serverVersion,
                              resultSetClosed,
@@ -592,7 +592,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
             )
           lastColumnReadNullable <- Ref[F].of(true)
           resultSetCurrentCursor <- Ref[F].of(0)
-          resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
+          resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](resultSetRow.headOption)
           resultSet = ResultSetImpl(
             protocol,
                         columnDefinitions,
@@ -623,8 +623,8 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
         yield
           ResultSetImpl
             .empty(
-              protocol, 
-              serverVariables, 
+              protocol,
+              serverVariables,
               protocol.initialPacket.serverVersion,
               resultSetClosed,
               lastColumnReadNullable,
@@ -647,7 +647,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                           )
           lastColumnReadNullable <- Ref[F].of(true)
           resultSetCurrentCursor <- Ref[F].of(0)
-          resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
+          resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](resultSetRow.headOption)
           resultSet = ResultSetImpl(
                         protocol,
                         columnDefinitions,
@@ -914,56 +914,49 @@ object CallableStatementImpl:
       resultSet:      ResultSetImpl[F],
       isFunctionCall: Boolean
     ): F[ParamInfo] =
-      val builder = List.newBuilder[CallableStatementParameter]
-      
-      def loop(acc: mutable.Builder[CallableStatementParameter, List[CallableStatementParameter]]): F[mutable.Builder[CallableStatementParameter, List[CallableStatementParameter]]] =
-        resultSet.next().flatMap { hasNext =>
-          if hasNext then
-            for
-              index <- resultSet.getRow()
-              paramName <- resultSet.getString(4)
-              procedureColumn <- resultSet.getInt(5)
-              jdbcType <- resultSet.getInt(6)
-              typeName <- resultSet.getString(7)
-              precision <- resultSet.getInt(8)
-              scale <- resultSet.getInt(19)
-              nullability <- resultSet.getShort(12)
-              inOutModifier = procedureColumn match {
-                case DatabaseMetaData.procedureColumnIn    => ParameterMetaData.parameterModeIn
-                case DatabaseMetaData.procedureColumnInOut => ParameterMetaData.parameterModeInOut
-                case DatabaseMetaData.procedureColumnOut | DatabaseMetaData.procedureColumnReturn =>
-                  ParameterMetaData.parameterModeOut
-                case _ => ParameterMetaData.parameterModeUnknown
-              }
-              (isOutParameter, isInParameter) =
-                if index - 1 == 0 && isFunctionCall then (true, false)
-                else if inOutModifier == DatabaseMetaData.procedureColumnInOut then (true, true)
-                else if inOutModifier == DatabaseMetaData.procedureColumnIn then (false, true)
-                else if inOutModifier == DatabaseMetaData.procedureColumnOut then (true, false)
-                else (false, false)
-              value = CallableStatementParameter(
-                Option(paramName),
-                isInParameter,
-                isOutParameter,
-                index,
-                jdbcType,
-                Option(typeName),
-                precision,
-                scale,
-                nullability,
-                inOutModifier
-              )
-              result <- loop(acc += value)
-            yield result 
+      val parameterListF = Monad[F].whileM[List, CallableStatementParameter](resultSet.next()) {
+        for
+          index <- resultSet.getRow()
+          paramName <- resultSet.getString(4)
+          procedureColumn <- resultSet.getInt(5)
+          jdbcType <- resultSet.getInt(6)
+          typeName <- resultSet.getString(7)
+          precision <- resultSet.getInt(8)
+          scale <- resultSet.getInt(10)
+          nullability <- resultSet.getShort(12)
+        yield
+          val inOutModifier = procedureColumn match
+            case DatabaseMetaData.procedureColumnIn    => ParameterMetaData.parameterModeIn
+            case DatabaseMetaData.procedureColumnInOut => ParameterMetaData.parameterModeInOut
+            case DatabaseMetaData.procedureColumnOut | DatabaseMetaData.procedureColumnReturn =>
+              ParameterMetaData.parameterModeOut
+            case _ => ParameterMetaData.parameterModeUnknown
 
-          else Sync[F].pure(acc)
-        }
+          val (isOutParameter, isInParameter) =
+            if index - 1 == 0 && isFunctionCall then (true, false)
+            else if inOutModifier == DatabaseMetaData.procedureColumnInOut then (true, true)
+            else if inOutModifier == DatabaseMetaData.procedureColumnIn then (false, true)
+            else if inOutModifier == DatabaseMetaData.procedureColumnOut then (true, false)
+            else (false, false)
+
+          CallableStatementParameter(
+              Option(paramName),
+              isInParameter,
+              isOutParameter,
+              index,
+              jdbcType,
+              Option(typeName),
+              precision,
+              scale,
+              nullability,
+              inOutModifier
+          )
+      }
 
       for
-        builder <- loop(builder)
         numParameters <- resultSet.rowLength()
+        parameterList <- parameterListF
       yield
-        val parameterList = builder.result()
         ParamInfo(
           nativeSql = nativeSql,
           dbInUse = database,

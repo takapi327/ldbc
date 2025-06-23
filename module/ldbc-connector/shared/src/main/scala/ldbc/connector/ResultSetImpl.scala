@@ -56,8 +56,7 @@ private[ldbc] case class ResultSetImpl[F[_]](
     checkClosed() *> currentCursor.get.flatMap { cursor =>
       if cursor < records.size then
         currentRow.set(records.lift(cursor)) *>
-          currentCursor.update(_ + 1) *>
-          currentRow.get.map(_.isDefined)
+          currentCursor.update(_ + 1).as(true)
       else currentCursor.update(_ + 1).as(false)
     }
 
@@ -202,7 +201,7 @@ private[ldbc] case class ResultSetImpl[F[_]](
     yield value
 
   override def getBoolean(columnLabel: String): F[Boolean] =
-    for 
+    for
       index <- findByName(columnLabel)
       value <- getBoolean(index)
     yield value
@@ -214,7 +213,7 @@ private[ldbc] case class ResultSetImpl[F[_]](
     yield value
 
   override def getShort(columnLabel: String): F[Short] =
-    for 
+    for
       index <- findByName(columnLabel)
       value <- getShort(index)
     yield value
@@ -226,7 +225,7 @@ private[ldbc] case class ResultSetImpl[F[_]](
     yield value
 
   override def getLong(columnLabel: String): F[Long] =
-    for 
+    for
       index <- findByName(columnLabel)
       value <- getLong(index)
     yield value
@@ -341,17 +340,16 @@ private[ldbc] case class ResultSetImpl[F[_]](
         sql = statement
       ))
     else
-      currentCursor.set(records.length) *> 
-        currentRow.set(records.lastOption) *> 
+      currentCursor.set(records.length) *>
+        currentRow.set(records.lastOption) *>
         currentRow.get.map { row =>
           row.isDefined && records.nonEmpty
         }
 
   override def getRow(): F[Int] =
     currentCursor.get.map { cursor =>
-      cursor > records.length match
-        case true  => 0
-        case false => cursor
+      if cursor > records.size then 0
+      else cursor
     }
 
   override def absolute(row: Int): F[Boolean] =
@@ -370,8 +368,8 @@ private[ldbc] case class ResultSetImpl[F[_]](
         currentRow.set(records.lift(records.length + row)) *>
         ev.pure(position >= 1 && position <= records.length)
     else
-      currentCursor.set(0) *> 
-        currentRow.set(None) *> 
+      currentCursor.set(0) *>
+        currentRow.set(None) *>
         ev.pure(false)
 
   override def relative(rows: Int): F[Boolean] =
@@ -384,8 +382,8 @@ private[ldbc] case class ResultSetImpl[F[_]](
       currentCursor.get.flatMap { cursor =>
         val position = cursor + rows
         if position >= 1 && position <= records.length then
-          currentCursor.set(position) *> 
-            currentRow.set(records.lift(position - 1)) *> 
+          currentCursor.set(position) *>
+            currentRow.set(records.lift(position - 1)) *>
             ev.pure(true)
         else
           currentCursor.set(0) *>
@@ -402,13 +400,13 @@ private[ldbc] case class ResultSetImpl[F[_]](
     else
       currentCursor.get.flatMap { cursor =>
         if cursor > 0 then
-          currentCursor.set(cursor - 1) *> 
+          currentCursor.set(cursor - 1) *>
             currentRow.set(records.lift(cursor - 1)) *>
             currentRow.get.map { row =>
               row.isDefined
             }
         else
-          currentCursor.set(0) *> 
+          currentCursor.set(0) *>
             currentRow.set(None) *>
             ev.pure(false)
       }
@@ -425,7 +423,7 @@ private[ldbc] case class ResultSetImpl[F[_]](
    * @return true if result set contains rows
    */
   def hasRows(): F[Boolean] =
-    checkClosed() *> 
+    checkClosed() *>
       ev.pure(records.length > 0)
 
   /**
@@ -435,7 +433,7 @@ private[ldbc] case class ResultSetImpl[F[_]](
    *   the number of rows
    */
   def rowLength(): F[Int] =
-    checkClosed() *> 
+    checkClosed() *>
       ev.pure(records.length)
 
   private def rowDecode[T](index: Int, decode: String => Either[String, T]): F[Option[T]] =

@@ -97,7 +97,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
         _ <- params.set(SortedMap.empty)
         lastColumnReadNullable <- Ref[F].of(true)
         resultSetCurrentCursor <- Ref[F].of(0)
-        resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
+        resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](resultSetRow.headOption)
         resultSet = ResultSetImpl(
           protocol,
                       columnDefinitions,
@@ -247,7 +247,8 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
           lastInsertId <- lastInsertId.get
           lastColumnReadNullable <- Ref[F].of(true)
           resultSetCurrentCursor <- Ref[F].of(0)
-          resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
+          record = ResultSetRowPacket(Array(Some(lastInsertId.toString)))
+          resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](Some(record))
           resultSet = ResultSetImpl(
                         protocol,
                         Vector(new ColumnDefinitionPacket:
@@ -255,7 +256,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
                           override def name:       String                     = "GENERATED_KEYS"
                           override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_LONGLONG
                           override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty),
-                        Vector(ResultSetRowPacket(Array(Some(lastInsertId.toString)))),
+                        Vector(record),
                         serverVariables,
                         protocol.initialPacket.serverVersion,
                           resultSetClosed,

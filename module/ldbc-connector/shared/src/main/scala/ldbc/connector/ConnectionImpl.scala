@@ -251,13 +251,15 @@ private[ldbc] case class ConnectionImpl[F[_]: Tracer: Console: Exchange: UUIDGen
                        metaData.getProcedureColumns(None, database, Some(procName), Some("%")),
                        metaData.getProcedureColumns(database, None, Some(procName), Some("%"))
                      )
+      _ = println(s"Preparing call for procedure: $procName with SQL: $sql")
       paramInfo <-
-        CallableStatementImpl.ParamInfo(
+        CallableStatementImpl.ParamInfo[F](
           sql,
           database,
           resultSet.asInstanceOf[ResultSetImpl[F]],
           isFunctionCall = false
         )
+      _ = println(s"Extracted parameter info: $paramInfo")
       params                  <- Ref[F].of(SortedMap.empty[Int, Parameter])
       batchedArgs             <- Ref[F].of(Vector.empty[String])
       statementClosed         <- Ref[F].of[Boolean](false)
