@@ -95,8 +95,8 @@ private[ldbc] case class ConnectionImpl[F[_]: Tracer: Console: Exchange: UUIDGen
     isClosed().ifM(
       ev.raiseError(new SQLException("No operations allowed after connection closed.")),
       (for
-        statementClosed        <- Ref[F].of[Boolean](false)
-        resultSetClosed        <- Ref[F].of[Boolean](false)
+        statementClosed <- Ref[F].of[Boolean](false)
+        resultSetClosed <- Ref[F].of[Boolean](false)
       yield DatabaseMetaDataImpl[F](
         protocol,
         serverVariables,
