@@ -97,18 +97,12 @@ private[ldbc] case class ConnectionImpl[F[_]: Tracer: Console: Exchange: UUIDGen
       (for
         statementClosed        <- Ref[F].of[Boolean](false)
         resultSetClosed        <- Ref[F].of[Boolean](false)
-        lastColumnReadNullable <- Ref[F].of(true)
-        resultSetCurrentCursor <- Ref[F].of(0)
-        resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
       yield DatabaseMetaDataImpl[F](
         protocol,
         serverVariables,
         connectionClosed,
         statementClosed,
         resultSetClosed,
-        lastColumnReadNullable,
-        resultSetCurrentCursor,
-        resultSetCurrentRow,
         fetchSize,
         useCursorFetch,
         useServerPrepStmts,

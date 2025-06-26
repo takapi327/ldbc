@@ -10,8 +10,6 @@ import java.time.*
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAccessor
 
-import scala.util.Try
-
 import cats.syntax.all.*
 import cats.MonadThrow
 
@@ -35,9 +33,6 @@ private[ldbc] case class ResultSetImpl[F[_]](
   serverVariables:        Map[String, String],
   version:                Version,
   isClosed:               Ref[F, Boolean],
-  lastColumnReadNullable: Ref[F, Boolean],
-  currentCursor:          Ref[F, Int],
-  currentRow:             Ref[F, Option[ResultSetRowPacket]],
   fetchSize:              Ref[F, Long],
   useCursorFetch:         Ref[F, Boolean],
   useServerPrepStmts:     Ref[F, Boolean],
@@ -47,147 +42,104 @@ private[ldbc] case class ResultSetImpl[F[_]](
 )(using ev: MonadThrow[F])
   extends ResultSet[F]:
 
+  private final var lastColumnReadNullable: Boolean = false
+  private final var currentCursor: Int = 0
+  private final var currentRow: Option[ResultSetRowPacket] = records.headOption
+
   override def next(): F[Boolean] =
-    checkClosed() *> currentCursor.get.flatMap { cursor =>
-      if cursor < records.size then
-        currentRow.set(records.lift(cursor)) *>
-          currentCursor.update(_ + 1).as(true)
-      else currentCursor.update(_ + 1).as(false)
+    checkClosed().map { _ =>
+      if currentCursor < records.length then
+        // Use apply instead of lift for index access from a performance standpoint.
+        currentRow = Some(records(currentCursor))
+        currentCursor = currentCursor + 1
+        true
+      else
+        currentCursor = currentCursor + 1
+        currentRow = None
+        false
     }
 
   override def close(): F[Unit] = isClosed.set(true)
 
-  override def wasNull(): F[Boolean] = lastColumnReadNullable.get
+  override def wasNull(): F[Boolean] = ev.pure(lastColumnReadNullable)
 
   override def getString(columnIndex: Int): F[String] =
-    checkClosed() *> rowDecode[String](columnIndex, str => Right(str)).flatMap {
-      case None        => lastColumnReadNullable.set(true) *> ev.pure(null)
-      case Some(value) => lastColumnReadNullable.set(false) *> ev.pure(value)
-    }
+    rowDecode[String](columnIndex, identity, null)
 
   override def getBoolean(columnIndex: Int): F[Boolean] =
-    checkClosed() *> rowDecode[Boolean](
+    rowDecode[Boolean](
       columnIndex,
       {
-        case "true" | "1"  => Right(true)
-        case "false" | "0" => Right(false)
-        case unknown       => Left(s"Unknown boolean value: $unknown")
-      }
-    ).flatMap {
-      case None        => lastColumnReadNullable.set(true) *> ev.pure(false)
-      case Some(value) => lastColumnReadNullable.set(false) *> ev.pure(value)
-    }
+        case "true" | "1" => true
+        case _ => false
+      },
+      false
+    )
 
   override def getByte(columnIndex: Int): F[Byte] =
-    checkClosed() *> rowDecode[Byte](
+    rowDecode[Byte](
       columnIndex,
       str => {
-        if str.length == 1 && !str.forall(_.isDigit) then Right(str.getBytes().head)
-        else Right(str.toByte)
-      }
-    ).flatMap {
-      case None =>
-        lastColumnReadNullable.set(true) *> ev.pure(0)
-      case Some(value) =>
-        lastColumnReadNullable.set(false) *> ev.pure(value)
-    }
+        if str.length == 1 && !str.forall(_.isDigit) then str.getBytes().head
+        else str.toByte
+      },
+      0
+    )
 
   override def getShort(columnIndex: Int): F[Short] =
-    checkClosed() *> rowDecode[Short](columnIndex, str => Try(str.toShort).toEither.left.map(_.getMessage)).flatMap {
-      case None =>
-        lastColumnReadNullable.set(true) *> ev.pure(0)
-      case Some(value) =>
-        lastColumnReadNullable.set(false) *> ev.pure(value)
-    }
+    rowDecode[Short](columnIndex, _.toShort, 0)
 
   override def getInt(columnIndex: Int): F[Int] =
-    checkClosed() *> rowDecode[Int](columnIndex, str => Try(str.toInt).toEither.left.map(_.getMessage)).flatMap {
-      case None =>
-        lastColumnReadNullable.set(true) *> ev.pure(0)
-      case Some(value) =>
-        lastColumnReadNullable.set(false) *> ev.pure(value)
-    }
+    rowDecode[Int](columnIndex, _.toInt, 0)
 
   override def getLong(columnIndex: Int): F[Long] =
-    checkClosed() *> rowDecode[Long](
+    rowDecode[Long](
       columnIndex,
-      str => Try(str.toLong).toEither.left.map(_.getMessage)
-    ).flatMap {
-      case None =>
-        lastColumnReadNullable.set(true) *> ev.pure(0L)
-      case Some(value) =>
-        lastColumnReadNullable.set(false) *> ev.pure(value)
-    }
+      _.toLong,
+      0L
+    )
 
   override def getFloat(columnIndex: Int): F[Float] =
-    checkClosed() *> rowDecode[Float](
+    rowDecode[Float](
       columnIndex,
-      str => Try(str.toFloat).toEither.left.map(_.getMessage)
-    ).flatMap {
-      case None =>
-        lastColumnReadNullable.set(true) *> ev.pure(0f)
-      case Some(value) =>
-        lastColumnReadNullable.set(false) *> ev.pure(value)
-    }
+      _.toFloat,
+      0f
+    )
 
   override def getDouble(columnIndex: Int): F[Double] =
-    checkClosed() *> rowDecode[Double](
+    rowDecode[Double](
       columnIndex,
-      str => Try(str.toDouble).toEither.left.map(_.getMessage)
-    ).flatMap {
-      case None =>
-        lastColumnReadNullable.set(true) *> ev.pure(0.0)
-      case Some(value) =>
-        lastColumnReadNullable.set(false) *> ev.pure(value)
-    }
+      _.toDouble,
+      0.0
+    )
 
   override def getBytes(columnIndex: Int): F[Array[Byte]] =
-    checkClosed() *> rowDecode[Array[Byte]](
+    rowDecode[Array[Byte]](
       columnIndex,
-      str => Right(str.getBytes("UTF-8"))
-    ).flatMap {
-      case Some(value) =>
-        lastColumnReadNullable.set(false) *> ev.pure(value)
-      case None =>
-        lastColumnReadNullable.set(true) *> ev.pure(null)
-    }
+      _.getBytes("UTF-8"),
+      null
+    )
 
   override def getDate(columnIndex: Int): F[LocalDate] =
-    checkClosed() *> rowDecode[LocalDate](
+    rowDecode[LocalDate](
       columnIndex,
-      str => Try(LocalDate.parse(str, localDateFormatter)).toEither.left.map(_.getMessage)
-    ).flatMap {
-      case Some(value) =>
-        lastColumnReadNullable.set(false) *> ev.pure(value)
-      case None =>
-        lastColumnReadNullable.set(true) *> ev.pure(null)
-    }
+      str => LocalDate.parse(str, localDateFormatter),
+      null
+    )
 
   override def getTime(columnIndex: Int): F[LocalTime] =
-    checkClosed() *> rowDecode[LocalTime](
+    rowDecode[LocalTime](
       columnIndex,
-      str => Try(LocalTime.parse(str, timeFormatter(6))).toEither.left.map(_.getMessage)
-    ).flatMap {
-      case Some(value) =>
-        lastColumnReadNullable.set(false) *> ev.pure(value)
-      case None =>
-        lastColumnReadNullable.set(true) *> ev.pure(null)
-    }
+      str => LocalTime.parse(str, timeFormatter(6)),
+      null
+    )
 
   override def getTimestamp(columnIndex: Int): F[LocalDateTime] =
-    checkClosed() *>
-      rowDecode[LocalDateTime](
-        columnIndex,
-        str => {
-          val parser = ResultSetImpl.temporalDecode(localDateTimeFormatter(6), LocalDateTime.parse)
-          Try(parser(str)).toEither.left.map(_.getMessage)
-        }
-      ).flatMap {
-        case Some(value) =>
-          lastColumnReadNullable.set(false) *> ev.pure(value)
-        case None =>
-          lastColumnReadNullable.set(true) *> ev.pure(null)
-      }
+    rowDecode[LocalDateTime](
+      columnIndex, 
+      str => LocalDateTime.parse(str, localDateTimeFormatter(6)),
+      null
+    )
 
   override def getString(columnLabel: String): F[String] =
     for
@@ -267,15 +219,11 @@ private[ldbc] case class ResultSetImpl[F[_]](
     }
 
   override def getBigDecimal(columnIndex: Int): F[BigDecimal] =
-    checkClosed() *> rowDecode[BigDecimal](
+    rowDecode[BigDecimal](
       columnIndex,
-      str => Try(BigDecimal(str)).toEither.left.map(_.getMessage)
-    ).flatMap {
-      case Some(value) =>
-        lastColumnReadNullable.set(false) *> ev.pure(value)
-      case None =>
-        lastColumnReadNullable.set(true) *> ev.pure(null)
-    }
+      str => BigDecimal(str),
+      null
+    )
 
   override def getBigDecimal(columnLabel: String): F[BigDecimal] =
     for
@@ -284,20 +232,16 @@ private[ldbc] case class ResultSetImpl[F[_]](
     yield value
 
   override def isBeforeFirst(): F[Boolean] =
-    currentCursor.get.map { cursor =>
-      cursor <= 0 && records.nonEmpty
-    }
+    ev.pure(currentCursor <= 0 && records.nonEmpty)
 
   override def isAfterLast(): F[Boolean] =
-    currentCursor.get.map { cursor =>
-      cursor > records.length && records.nonEmpty
-    }
+    ev.pure(currentCursor > records.length && records.nonEmpty)
 
   override def isFirst(): F[Boolean] =
-    currentCursor.get.map(_ > 0)
+    ev.pure(currentCursor > 0)
 
   override def isLast(): F[Boolean] =
-    currentCursor.get.map(_ == records.length)
+    ev.pure(currentCursor == records.length)
 
   override def beforeFirst(): F[Unit] =
     if resultSetType == ResultSet.TYPE_FORWARD_ONLY then
@@ -307,7 +251,9 @@ private[ldbc] case class ResultSetImpl[F[_]](
           sql = statement
         )
       )
-    else currentCursor.set(0)
+    else
+      currentCursor = 0
+      ev.unit
 
   override def afterLast(): F[Unit] =
     if resultSetType == ResultSet.TYPE_FORWARD_ONLY then
@@ -317,7 +263,9 @@ private[ldbc] case class ResultSetImpl[F[_]](
           sql = statement
         )
       )
-    else currentCursor.set(records.length + 1)
+    else
+      currentCursor = records.length + 1
+      ev.unit
 
   override def first(): F[Boolean] =
     if resultSetType == ResultSet.TYPE_FORWARD_ONLY then
@@ -328,11 +276,9 @@ private[ldbc] case class ResultSetImpl[F[_]](
         )
       )
     else
-      currentCursor.set(1) *>
-        currentRow.set(records.headOption) *>
-        currentRow.get.map { row =>
-          row.isDefined && records.nonEmpty
-        }
+      currentCursor = 1
+      currentRow = records.headOption
+      ev.pure(currentRow.isDefined && records.nonEmpty)
 
   override def last(): F[Boolean] =
     if resultSetType == ResultSet.TYPE_FORWARD_ONLY then
@@ -343,19 +289,18 @@ private[ldbc] case class ResultSetImpl[F[_]](
         )
       )
     else
-      currentCursor.set(records.length) *>
-        currentRow.set(records.lastOption) *>
-        currentRow.get.map { row =>
-          row.isDefined && records.nonEmpty
-        }
+      currentCursor = records.length
+      currentRow    = records.lastOption
+      ev.pure(currentRow.isDefined && records.nonEmpty)
 
   override def getRow(): F[Int] =
-    currentCursor.get.map { cursor =>
-      if cursor > records.size then 0
-      else cursor
-    }
+    ev.pure(
+      if currentCursor > records.length then 0
+      else currentCursor
+    )
 
   override def absolute(row: Int): F[Boolean] =
+    val recordSize = records.length
     if resultSetType == ResultSet.TYPE_FORWARD_ONLY then
       ev.raiseError(
         new SQLException(
@@ -364,18 +309,18 @@ private[ldbc] case class ResultSetImpl[F[_]](
         )
       )
     else if row > 0 then
-      currentCursor.set(row) *>
-        currentRow.set(records.lift(row - 1)) *>
-        ev.pure(row >= 1 && row <= records.length)
+      currentCursor = row
+      currentRow    = records.lift(row - 1)
+      ev.pure(row >= 1 && row <= recordSize)
     else if row < 0 then
-      val position = records.length + row + 1
-      currentCursor.set(position) *>
-        currentRow.set(records.lift(records.length + row)) *>
-        ev.pure(position >= 1 && position <= records.length)
+      val position = recordSize + row + 1
+      currentCursor = position
+      currentRow    = records.lift(recordSize + row)
+      ev.pure(position >= 1 && position <= recordSize)
     else
-      currentCursor.set(0) *>
-        currentRow.set(None) *>
-        ev.pure(false)
+      currentCursor = 0
+      currentRow    = None
+      ev.pure(false)
 
   override def relative(rows: Int): F[Boolean] =
     if resultSetType == ResultSet.TYPE_FORWARD_ONLY then
@@ -386,17 +331,15 @@ private[ldbc] case class ResultSetImpl[F[_]](
         )
       )
     else
-      currentCursor.get.flatMap { cursor =>
-        val position = cursor + rows
-        if position >= 1 && position <= records.length then
-          currentCursor.set(position) *>
-            currentRow.set(records.lift(position - 1)) *>
-            ev.pure(true)
-        else
-          currentCursor.set(0) *>
-            currentRow.set(records.headOption) *>
-            ev.pure(false)
-      }
+      val position = currentCursor + rows
+      if position >= 1 && position <= records.length then
+        currentCursor = position
+        currentRow    = records.lift(position - 1)
+        ev.pure(true)
+      else
+        currentCursor = 0
+        currentRow    = records.lift(currentCursor)
+        ev.pure(false)
 
   override def previous(): F[Boolean] =
     if resultSetType == ResultSet.TYPE_FORWARD_ONLY then
@@ -406,19 +349,14 @@ private[ldbc] case class ResultSetImpl[F[_]](
           sql = statement
         )
       )
+    else if currentCursor > 0 then
+      currentCursor = currentCursor - 1
+      currentRow    = records.lift(currentCursor - 1)
+      ev.pure(currentRow.isDefined)
     else
-      currentCursor.get.flatMap { cursor =>
-        if cursor > 0 then
-          currentCursor.set(cursor - 1) *>
-            currentRow.set(records.lift(cursor - 1)) *>
-            currentRow.get.map { row =>
-              row.isDefined
-            }
-        else
-          currentCursor.set(0) *>
-            currentRow.set(None) *>
-            ev.pure(false)
-      }
+      currentCursor = 0
+      currentRow    = None
+      ev.pure(false)
 
   override def getType(): F[Int] =
     checkClosed() *> ev.pure(resultSetType)
@@ -433,7 +371,7 @@ private[ldbc] case class ResultSetImpl[F[_]](
    */
   def hasRows(): F[Boolean] =
     checkClosed() *>
-      ev.pure(records.length > 0)
+      ev.pure(records.nonEmpty)
 
   /**
    * Returns the number of rows in this <code>ResultSet</code> object.
@@ -445,18 +383,29 @@ private[ldbc] case class ResultSetImpl[F[_]](
     checkClosed() *>
       ev.pure(records.length)
 
-  private def rowDecode[T](index: Int, decode: String => Either[String, T]): F[Option[T]] =
-    for
-      row      <- currentRow.get
-      valueOpt <- try ev.pure(row.flatMap(_.values(index - 1)))
-                  catch case e => ev.raiseError(new SQLException(e.getMessage, sql = statement))
-      decoded <- valueOpt match
-                   case None        => ev.pure(None)
-                   case Some(value) =>
-                     decode(value) match
-                       case Left(error)         => ev.raiseError(new SQLException(error, sql = statement))
-                       case Right(decodedValue) => ev.pure(Some(decodedValue))
-    yield decoded
+  //private def rowDecode[T](index: Int, decode: String => Either[String, T]): F[Option[T]] =
+  //  (for
+  //    row <- currentRow
+  //    value <- row.values(index - 1)
+  //  yield value) match
+  //    case None => ev.pure(None)
+  //    case Some(value) =>
+  //      decode(value) match
+  //        case Left(error) => ev.raiseError(new SQLException(error, sql = statement))
+  //        case Right(decodedValue) => ev.pure(Some(decodedValue))
+  private def rowDecode[T](index: Int, decode: String => T, defaultValue: T): F[T] =
+    (for
+      row <- currentRow
+      value <- row.values(index - 1)
+      decoded <- try { Option(decode(value)) }
+      catch case _ => None
+    yield decoded) match
+      case None =>
+        lastColumnReadNullable = true
+        ev.pure(defaultValue)
+      case Some(decodedValue) =>
+        lastColumnReadNullable = false
+        ev.pure(decodedValue)
 
   private def findByName(columnLabel: String): F[Int] =
     val column = columns.zipWithIndex
@@ -495,9 +444,6 @@ private[ldbc] object ResultSetImpl:
     serverVariables:        Map[String, String],
     version:                Version,
     isClosed:               Ref[F, Boolean],
-    lastColumnReadNullable: Ref[F, Boolean],
-    currentCursor:          Ref[F, Int],
-    currentRow:             Ref[F, Option[ResultSetRowPacket]],
     fetchSize:              Ref[F, Long],
     useCursorFetch:         Ref[F, Boolean],
     useServerPrepStmts:     Ref[F, Boolean]
@@ -509,9 +455,6 @@ private[ldbc] object ResultSetImpl:
       serverVariables,
       version,
       isClosed,
-      lastColumnReadNullable,
-      currentCursor,
-      currentRow,
       fetchSize,
       useCursorFetch,
       useServerPrepStmts,
@@ -523,9 +466,6 @@ private[ldbc] object ResultSetImpl:
     serverVariables:        Map[String, String],
     version:                Version,
     isClosed:               Ref[F, Boolean],
-    lastColumnReadNullable: Ref[F, Boolean],
-    currentCursor:          Ref[F, Int],
-    currentRow:             Ref[F, Option[ResultSetRowPacket]],
     fetchSize:              Ref[F, Long],
     useCursorFetch:         Ref[F, Boolean],
     useServerPrepStmts:     Ref[F, Boolean]
@@ -537,9 +477,6 @@ private[ldbc] object ResultSetImpl:
       serverVariables,
       version,
       isClosed,
-      lastColumnReadNullable,
-      currentCursor,
-      currentRow,
       fetchSize,
       useCursorFetch,
       useServerPrepStmts

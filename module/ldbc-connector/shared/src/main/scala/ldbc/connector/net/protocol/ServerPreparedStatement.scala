@@ -95,9 +95,6 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
             BinaryProtocolResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions)
           )
         _                      <- params.set(SortedMap.empty)
-        lastColumnReadNullable <- Ref[F].of(true)
-        resultSetCurrentCursor <- Ref[F].of(0)
-        resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](resultSetRow.headOption)
         resultSet = ResultSetImpl(
                       protocol,
                       columnDefinitions,
@@ -105,9 +102,6 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
                       serverVariables,
                       protocol.initialPacket.serverVersion,
                       resultSetClosed,
-                      lastColumnReadNullable,
-                      resultSetCurrentCursor,
-                      resultSetCurrentRow,
                       fetchSize,
                       useCursorFetch,
                       useServerPrepStmts,
@@ -245,10 +239,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
       case Statement.RETURN_GENERATED_KEYS =>
         for
           lastInsertId           <- lastInsertId.get
-          lastColumnReadNullable <- Ref[F].of(true)
-          resultSetCurrentCursor <- Ref[F].of(0)
           record = ResultSetRowPacket(Array(Some(lastInsertId.toString)))
-          resultSetCurrentRow <- Ref[F].of[Option[ResultSetRowPacket]](Some(record))
           resultSet = ResultSetImpl(
                         protocol,
                         Vector(new ColumnDefinitionPacket:
@@ -260,9 +251,6 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
                         serverVariables,
                         protocol.initialPacket.serverVersion,
                         resultSetClosed,
-                        lastColumnReadNullable,
-                        resultSetCurrentCursor,
-                        resultSetCurrentRow,
                         fetchSize,
                         useCursorFetch,
                         useServerPrepStmts

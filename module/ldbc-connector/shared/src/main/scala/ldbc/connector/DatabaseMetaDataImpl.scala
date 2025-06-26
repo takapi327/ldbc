@@ -36,9 +36,6 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
   connectionClosed:              Ref[F, Boolean],
   statementClosed:               Ref[F, Boolean],
   resultSetClosed:               Ref[F, Boolean],
-  lastColumnReadNullable:        Ref[F, Boolean],
-  currentCursor:                 Ref[F, Int],
-  currentRow:                    Ref[F, Option[ResultSetRowPacket]],
   fetchSize:                     Ref[F, Long],
   useCursorFetch:                Ref[F, Boolean],
   useServerPrepStmts:            Ref[F, Boolean],
@@ -536,9 +533,6 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
         serverVariables,
         protocol.initialPacket.serverVersion,
         resultSetClosed,
-        lastColumnReadNullable,
-        currentCursor,
-        currentRow,
         fetchSize,
         useCursorFetch,
         useServerPrepStmts
@@ -563,9 +557,6 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
         serverVariables,
         protocol.initialPacket.serverVersion,
         resultSetClosed,
-        lastColumnReadNullable,
-        currentCursor,
-        currentRow,
         fetchSize,
         useCursorFetch,
         useServerPrepStmts
@@ -803,9 +794,6 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
             serverVariables,
             protocol.initialPacket.serverVersion,
             resultSet.isClosed,
-            resultSet.lastColumnReadNullable,
-            resultSet.currentCursor,
-            resultSet.currentRow,
             resultSet.fetchSize,
             resultSet.useCursorFetch,
             resultSet.useServerPrepStmts
@@ -974,9 +962,6 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
           serverVariables,
           protocol.initialPacket.serverVersion,
           resultSetClosed,
-          lastColumnReadNullable,
-          currentCursor,
-          currentRow,
           fetchSize,
           useCursorFetch,
           useServerPrepStmts
@@ -1037,7 +1022,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
               }
             }
 
-          decodedF.flatMap { decoded =>
+          decodedF.map { decoded =>
             val records = decoded.flatten.map {
               case (scope, columnName, dataType, typeName, columnSize, bufferLength, decimalDigits, pseudoColumn) =>
                 ResultSetRowPacket(
@@ -1053,40 +1038,35 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
                   )
                 )
             }
-            resultSet.currentRow.set(records.headOption) *> resultSet.currentCursor.set(0).map { _ =>
-              ResultSetImpl(
-                protocol,
-                Vector(
-                  "SCOPE",
-                  "COLUMN_NAME",
-                  "DATA_TYPE",
-                  "TYPE_NAME",
-                  "COLUMN_SIZE",
-                  "BUFFER_LENGTH",
-                  "DECIMAL_DIGITS",
-                  "PSEUDO_COLUMN"
-                ).map { value =>
-                  new ColumnDefinitionPacket:
-                    override def table: String = ""
+            ResultSetImpl(
+              protocol,
+              Vector(
+                "SCOPE",
+                "COLUMN_NAME",
+                "DATA_TYPE",
+                "TYPE_NAME",
+                "COLUMN_SIZE",
+                "BUFFER_LENGTH",
+                "DECIMAL_DIGITS",
+                "PSEUDO_COLUMN"
+              ).map { value =>
+                new ColumnDefinitionPacket:
+                  override def table: String = ""
 
-                    override def name: String = value
+                  override def name: String = value
 
-                    override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
+                  override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
 
-                    override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
-                },
-                records,
-                serverVariables,
-                protocol.initialPacket.serverVersion,
-                resultSet.isClosed,
-                resultSet.lastColumnReadNullable,
-                resultSet.currentCursor,
-                resultSet.currentRow,
-                resultSet.fetchSize,
-                resultSet.useCursorFetch,
-                resultSet.useServerPrepStmts
-              )
-            }
+                  override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
+              },
+              records,
+              serverVariables,
+              protocol.initialPacket.serverVersion,
+              resultSet.isClosed,
+              resultSet.fetchSize,
+              resultSet.useCursorFetch,
+              resultSet.useServerPrepStmts
+            )
           }
       }
     }
@@ -1419,9 +1399,6 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
         serverVariables,
         protocol.initialPacket.serverVersion,
         resultSetClosed,
-        lastColumnReadNullable,
-        currentCursor,
-        currentRow,
         fetchSize,
         useCursorFetch,
         useServerPrepStmts
@@ -1570,9 +1547,6 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
         serverVariables,
         protocol.initialPacket.serverVersion,
         resultSetClosed,
-        lastColumnReadNullable,
-        currentCursor,
-        currentRow,
         fetchSize,
         useCursorFetch,
         useServerPrepStmts
@@ -2022,9 +1996,6 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
         serverVariables,
         protocol.initialPacket.serverVersion,
         resultSetClosed,
-        lastColumnReadNullable,
-        currentCursor,
-        currentRow,
         fetchSize,
         useCursorFetch,
         useServerPrepStmts

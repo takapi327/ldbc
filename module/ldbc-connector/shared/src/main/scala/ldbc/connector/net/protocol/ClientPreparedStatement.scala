@@ -80,24 +80,18 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
             ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)
           ) *>
           protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
-            case _: OKPacket =>
-              for
-                lastColumnReadNullable <- Ref[F].of(true)
-                resultSetCurrentCursor <- Ref[F].of(0)
-                resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
-              yield ResultSetImpl
+            case _: OKPacket => F.pure(
+              ResultSetImpl
                 .empty(
                   protocol,
                   serverVariables,
                   protocol.initialPacket.serverVersion,
                   resultSetClosed,
-                  lastColumnReadNullable,
-                  resultSetCurrentCursor,
-                  resultSetCurrentRow,
                   fetchSize,
                   useCursorFetch,
                   useServerPrepStmts
                 )
+            )
             case error: ERRPacket            => F.raiseError(error.toException(Some(sql), None, params))
             case result: ColumnsNumberPacket =>
               for
@@ -110,9 +104,6 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
                   protocol.readUntilEOF[ResultSetRowPacket](
                     ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions.length)
                   )
-                lastColumnReadNullable <- Ref[F].of(true)
-                resultSetCurrentCursor <- Ref[F].of(0)
-                resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](resultSetRow.headOption)
                 resultSet = ResultSetImpl(
                               protocol,
                               columnDefinitions,
@@ -120,9 +111,6 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
                               serverVariables,
                               protocol.initialPacket.serverVersion,
                               resultSetClosed,
-                              lastColumnReadNullable,
-                              resultSetCurrentCursor,
-                              resultSetCurrentRow,
                               fetchSize,
                               useCursorFetch,
                               useServerPrepStmts,
@@ -264,10 +252,6 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
       case Statement.RETURN_GENERATED_KEYS =>
         for
           lastInsertId           <- lastInsertId.get
-          lastColumnReadNullable <- Ref[F].of(true)
-          resultSetCurrentCursor <- Ref[F].of(0)
-          record = ResultSetRowPacket(Array(Some(lastInsertId.toString)))
-          resultSetCurrentRow <- Ref[F].of[Option[ResultSetRowPacket]](Some(record))
           resultSet = ResultSetImpl(
                         protocol,
                         Vector(new ColumnDefinitionPacket:
@@ -275,13 +259,10 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
                           override def name:       String                     = "GENERATED_KEYS"
                           override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_LONGLONG
                           override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty),
-                        Vector(record),
+                        Vector(ResultSetRowPacket(Array(Some(lastInsertId.toString)))),
                         serverVariables,
                         protocol.initialPacket.serverVersion,
                         resultSetClosed,
-                        lastColumnReadNullable,
-                        resultSetCurrentCursor,
-                        resultSetCurrentRow,
                         fetchSize,
                         useCursorFetch,
                         useServerPrepStmts

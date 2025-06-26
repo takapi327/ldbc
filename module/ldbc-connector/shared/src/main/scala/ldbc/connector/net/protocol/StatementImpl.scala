@@ -55,9 +55,6 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
         protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
           case _: OKPacket =>
             for
-              lastColumnReadNullable <- Ref[F].of(true)
-              resultSetCurrentCursor <- Ref[F].of(0)
-              resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
               resultSet              <- F.pure(
                              ResultSetImpl
                                .empty(
@@ -65,9 +62,6 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
                                  serverVariables,
                                  protocol.initialPacket.serverVersion,
                                  resultSetClosed,
-                                 lastColumnReadNullable,
-                                 resultSetCurrentCursor,
-                                 resultSetCurrentRow,
                                  fetchSize,
                                  useCursorFetch,
                                  useServerPrepStmts
@@ -87,9 +81,6 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
                 protocol.readUntilEOF[ResultSetRowPacket](
                   ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions.length)
                 )
-              lastColumnReadNullable <- Ref[F].of(true)
-              resultSetCurrentCursor <- Ref[F].of(0)
-              resultSetCurrentRow    <- Ref[F].of(resultSetRow.headOption)
               resultSet = ResultSetImpl(
                             protocol,
                             columnDefinitions,
@@ -97,9 +88,6 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
                             serverVariables,
                             protocol.initialPacket.serverVersion,
                             resultSetClosed,
-                            lastColumnReadNullable,
-                            resultSetCurrentCursor,
-                            resultSetCurrentRow,
                             fetchSize,
                             useCursorFetch,
                             useServerPrepStmts,
@@ -192,10 +180,7 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
       case Statement.RETURN_GENERATED_KEYS =>
         for
           lastInsertId           <- lastInsertId.get
-          lastColumnReadNullable <- Ref[F].of(true)
-          resultSetCurrentCursor <- Ref[F].of(0)
           record = ResultSetRowPacket(Array(Some(lastInsertId.toString)))
-          resultSetCurrentRow <- Ref[F].of[Option[ResultSetRowPacket]](Some(record))
           resultSet = ResultSetImpl(
                         protocol,
                         Vector(new ColumnDefinitionPacket:
@@ -210,9 +195,6 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
                         serverVariables,
                         protocol.initialPacket.serverVersion,
                         resultSetClosed,
-                        lastColumnReadNullable,
-                        resultSetCurrentCursor,
-                        resultSetCurrentRow,
                         fetchSize,
                         useCursorFetch,
                         useServerPrepStmts
