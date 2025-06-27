@@ -33,9 +33,9 @@ private[ldbc] case class ResultSetImpl[F[_]](
   serverVariables:      Map[String, String],
   version:              Version,
   isClosed:             Ref[F, Boolean],
-  fetchSize:            Ref[F, Long],
-  useCursorFetch:       Ref[F, Boolean],
-  useServerPrepStmts:   Ref[F, Boolean],
+  fetchSize:            Long,
+  useCursorFetch:       Boolean,
+  useServerPrepStmts:   Boolean,
   resultSetType:        Int            = ResultSet.TYPE_FORWARD_ONLY,
   resultSetConcurrency: Int            = ResultSet.CONCUR_READ_ONLY,
   statement:            Option[String] = None
@@ -444,9 +444,9 @@ private[ldbc] object ResultSetImpl:
     serverVariables:    Map[String, String],
     version:            Version,
     isClosed:           Ref[F, Boolean],
-    fetchSize:          Ref[F, Long],
-    useCursorFetch:     Ref[F, Boolean],
-    useServerPrepStmts: Ref[F, Boolean]
+    fetchSize:          Long,
+    useCursorFetch:     Boolean,
+    useServerPrepStmts: Boolean
   ): ResultSetImpl[F] =
     ResultSetImpl[F](
       protocol,
@@ -466,9 +466,9 @@ private[ldbc] object ResultSetImpl:
     serverVariables:    Map[String, String],
     version:            Version,
     isClosed:           Ref[F, Boolean],
-    fetchSize:          Ref[F, Long],
-    useCursorFetch:     Ref[F, Boolean],
-    useServerPrepStmts: Ref[F, Boolean]
+    fetchSize:          Long,
+    useCursorFetch:     Boolean,
+    useServerPrepStmts: Boolean
   ): ResultSetImpl[F] =
     this.apply[F](
       protocol,

@@ -77,7 +77,7 @@ object Connection:
     allowPublicKeyRetrieval: Boolean = false,
     fetchSize:               Long = 0L,
     useCursorFetch:          Boolean = false,
-    useServerPrepStmt:       Boolean = false,
+    useServerPrepStmts:       Boolean = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
     logHandler:              Option[LogHandler[F]] = None
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] = this.default[F, Unit](
@@ -93,7 +93,7 @@ object Connection:
     allowPublicKeyRetrieval,
     fetchSize,
     useCursorFetch,
-    useServerPrepStmt,
+    useServerPrepStmts,
     databaseTerm,
     logHandler,
     unitBefore,
@@ -115,7 +115,7 @@ object Connection:
     allowPublicKeyRetrieval: Boolean = false,
     fetchSize:               Long = 0L,
     useCursorFetch:          Boolean = false,
-    useServerPrepStmt:       Boolean = false,
+    useServerPrepStmts:       Boolean = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
     logHandler:              Option[LogHandler[F]] = None
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] = this.default(
@@ -131,7 +131,7 @@ object Connection:
     allowPublicKeyRetrieval,
     fetchSize,
     useCursorFetch,
-    useServerPrepStmt,
+    useServerPrepStmts,
     databaseTerm,
     logHandler,
     before,
@@ -151,7 +151,7 @@ object Connection:
     allowPublicKeyRetrieval: Boolean = false,
     fetchSize:               Long = 0L,
     useCursorFetch:          Boolean = false,
-    useServerPrepStmt:       Boolean = false,
+    useServerPrepStmts:       Boolean = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
     logHandler:              Option[LogHandler[F]] = None,
     before:                  Connection[F] => F[A],
@@ -176,7 +176,7 @@ object Connection:
                       allowPublicKeyRetrieval,
                       fetchSize,
                       useCursorFetch,
-                      useServerPrepStmt,
+        useServerPrepStmts,
                       databaseTerm,
                       logHandler.getOrElse(noopLogger),
                       before,
@@ -197,7 +197,7 @@ object Connection:
     allowPublicKeyRetrieval: Boolean = false,
     fetchSize:               Long = 0L,
     useCursorFetch:          Boolean = false,
-    useServerPrepStmt:       Boolean = false,
+    useServerPrepStmts:       Boolean = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = None,
     logHandler:              LogHandler[F],
     acquire:                 Connection[F] => F[A],
@@ -216,9 +216,6 @@ object Connection:
       readOnly          <- Resource.eval(Ref[F].of[Boolean](false))
       autoCommit        <- Resource.eval(Ref[F].of[Boolean](true))
       connectionClosed  <- Resource.eval(Ref[F].of[Boolean](false))
-      fetchSize         <- Resource.eval(Ref[F].of(fetchSize))
-      useCursorFetch    <- Resource.eval(Ref[F].of(useCursorFetch))
-      useServerPrepStmt <- Resource.eval(Ref[F].of(useServerPrepStmt))
       connection        <-
         Resource.make(
           Temporal[F].pure(
@@ -231,7 +228,7 @@ object Connection:
               connectionClosed,
               fetchSize,
               useCursorFetch,
-              useServerPrepStmt,
+              useServerPrepStmts,
               databaseTerm.getOrElse(DatabaseMetaData.DatabaseTerm.CATALOG),
               logHandler
             )
@@ -254,7 +251,7 @@ object Connection:
     allowPublicKeyRetrieval: Boolean = false,
     fetchSize:               Long = 0L,
     useCursorFetch:          Boolean = false,
-    useServerPrepStmt:       Boolean = false,
+    useServerPrepStmts:       Boolean = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = None,
     logHandler:              LogHandler[F],
     acquire:                 Connection[F] => F[A],
@@ -284,7 +281,7 @@ object Connection:
       allowPublicKeyRetrieval,
       fetchSize,
       useCursorFetch,
-      useServerPrepStmt,
+      useServerPrepStmts,
       databaseTerm,
       logHandler,
       acquire,

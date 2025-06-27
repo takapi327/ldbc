@@ -35,9 +35,9 @@ private[ldbc] case class ConnectionImpl[F[_]: Tracer: Console: Exchange: UUIDGen
   readOnly:           Ref[F, Boolean],
   isAutoCommit:       Ref[F, Boolean],
   connectionClosed:   Ref[F, Boolean],
-  fetchSize:          Ref[F, Long],
-  useCursorFetch:     Ref[F, Boolean],
-  useServerPrepStmts: Ref[F, Boolean],
+  fetchSize:          Long,
+  useCursorFetch:     Boolean,
+  useServerPrepStmts: Boolean,
   databaseTerm:       DatabaseMetaData.DatabaseTerm = DatabaseMetaData.DatabaseTerm.CATALOG,
   logHandler:         LogHandler[F]
 )(using ev: Sync[F])
