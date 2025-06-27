@@ -31,7 +31,7 @@ private[ldbc] case class ResultSetImpl[F[_]](
   serverVariables:      Map[String, String],
   version:              Version,
   isClosed:             Ref[F, Boolean],
-  fetchSize:            Long,
+  fetchSize:            Ref[F, Int],
   useCursorFetch:       Boolean,
   useServerPrepStmts:   Boolean,
   resultSetType:        Int            = ResultSet.TYPE_FORWARD_ONLY,
@@ -69,7 +69,7 @@ private[ldbc] object ResultSetImpl:
     serverVariables:    Map[String, String],
     version:            Version,
     isClosed:           Ref[F, Boolean],
-    fetchSize:          Long,
+    fetchSize:            Ref[F, Int],
     useCursorFetch:     Boolean,
     useServerPrepStmts: Boolean
   ): ResultSetImpl[F] =
@@ -91,7 +91,7 @@ private[ldbc] object ResultSetImpl:
     serverVariables:    Map[String, String],
     version:            Version,
     isClosed:           Ref[F, Boolean],
-    fetchSize:          Long,
+    fetchSize:            Ref[F, Int],
     useCursorFetch:     Boolean,
     useServerPrepStmts: Boolean
   ): ResultSetImpl[F] =

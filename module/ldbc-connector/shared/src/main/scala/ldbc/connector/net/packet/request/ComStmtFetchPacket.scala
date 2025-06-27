@@ -27,7 +27,7 @@ import ldbc.connector.data.CommandId
  */
 case class ComStmtFetchPacket(
   statementId: Long,
-  numRows:     Long
+  numRows:     Int
 ) extends RequestPacket:
 
   override protected def encodeBody: Attempt[BitVector] =

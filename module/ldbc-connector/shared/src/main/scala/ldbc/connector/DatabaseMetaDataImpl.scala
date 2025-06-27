@@ -39,7 +39,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
   connectionClosed:              Ref[F, Boolean],
   statementClosed:               Ref[F, Boolean],
   resultSetClosed:               Ref[F, Boolean],
-  fetchSize:                     Long,
+  fetchSize:                     Ref[F, Int],
   useCursorFetch:                Boolean,
   useServerPrepStmts:            Boolean,
   database:                      Option[String]                = None,

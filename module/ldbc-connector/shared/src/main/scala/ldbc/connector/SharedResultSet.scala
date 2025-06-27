@@ -28,7 +28,7 @@ private[ldbc] trait SharedResultSet[F[_]](using ev: MonadThrow[F]) extends Resul
   def serverVariables:      Map[String, String]
   def version:              Version
   def isClosed:             Ref[F, Boolean]
-  def fetchSize:            Long
+  def fetchSize:            Ref[F, Int]
   def useCursorFetch:       Boolean
   def useServerPrepStmts:   Boolean
   def resultSetType:        Int
