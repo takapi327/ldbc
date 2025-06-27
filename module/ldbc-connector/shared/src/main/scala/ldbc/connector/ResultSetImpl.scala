@@ -10,7 +10,7 @@ import java.time.*
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAccessor
 
-import scala.util.{ Try, Success, Failure }
+import scala.util.{ Failure, Success, Try }
 
 import cats.syntax.all.*
 import cats.MonadThrow
@@ -388,8 +388,8 @@ private[ldbc] case class ResultSetImpl[F[_]](
   private def rowDecode[T](index: Int, decode: String => T, defaultValue: T): F[T] =
     Try {
       for
-        row <- currentRow
-        value <- row.values(index - 1)
+        row     <- currentRow
+        value   <- row.values(index - 1)
         decoded <- Option(decode(value))
       yield decoded
     }.map {
@@ -401,11 +401,11 @@ private[ldbc] case class ResultSetImpl[F[_]](
         decodedValue
     } match {
       case Success(value) => ev.pure(value)
-      case Failure(_) =>
+      case Failure(_)     =>
         ev.raiseError(
           new SQLException(
             s"Column index $index does not exist in the ResultSet.",
-            sql = statement,
+            sql = statement
           )
         )
     }
