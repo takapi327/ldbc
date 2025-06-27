@@ -383,16 +383,6 @@ private[ldbc] case class ResultSetImpl[F[_]](
     checkClosed() *>
       ev.pure(records.length)
 
-  // private def rowDecode[T](index: Int, decode: String => Either[String, T]): F[Option[T]] =
-  //  (for
-  //    row <- currentRow
-  //    value <- row.values(index - 1)
-  //  yield value) match
-  //    case None => ev.pure(None)
-  //    case Some(value) =>
-  //      decode(value) match
-  //        case Left(error) => ev.raiseError(new SQLException(error, sql = statement))
-  //        case Right(decodedValue) => ev.pure(Some(decodedValue))
   private def rowDecode[T](index: Int, decode: String => T, defaultValue: T): F[T] =
     (for
       row     <- currentRow

@@ -8,6 +8,7 @@ package ldbc.connector
 
 import java.util.{ Locale, StringTokenizer }
 
+import collection.mutable
 import scala.collection.immutable.{ ListMap, SortedMap }
 
 import cats.*
@@ -29,6 +30,7 @@ import ldbc.connector.net.protocol.*
 import ldbc.connector.net.Protocol
 import ldbc.connector.util.StringHelper
 import ldbc.connector.util.Version
+import ldbc.connector.syntax.*
 
 private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
   protocol:                      Protocol[F],
@@ -889,9 +891,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
       }
       .flatMap { resultSet =>
 
-        val keys = Monad[F].whileM[Vector, Vector[(Option[String], Option[String], Option[String], String, String)]](
-          resultSet.next()
-        ) {
+        val keys = resultSet.whileM[Vector, Vector[(Option[String], Option[String], Option[String], String, String)]] {
           for
             host    <- resultSet.getString(1).map(Option(_))
             db      <- resultSet.getString(2).map(Option(_))
@@ -925,7 +925,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
                        .traverse { (db, table, grantor, user, privilege) =>
                          val columnResults = getColumns(catalog, schemaPattern, table, None)
                          columnResults.flatMap { columnResult =>
-                           Monad[F].whileM[Vector, ResultSetRowPacket](columnResult.next()) {
+                           columnResult.whileM[Vector, ResultSetRowPacket] {
                              val rows = Array(
                                if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then Some("def")
                                else db,                                                                   // TABLE_CAT
@@ -991,7 +991,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
       preparedStatement.executeQuery().flatMap {
         case resultSet: ResultSetImpl[F] =>
           val decodedF =
-            Monad[F].whileM[Vector, Option[(Int, String, Int, String, Int, Int, Int, Int)]](resultSet.next()) {
+            resultSet.whileM[Vector, Option[(Int, String, Int, String, Int, Int, Int, Int)]] {
               resultSet.getString("Key").flatMap {
                 case key if key.startsWith("PRI") =>
                   for
@@ -1892,8 +1892,8 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
     for
       prepareStatement <- prepareMetaDataSafeStatement(sqlBuf.toString)
       resultSet        <- prepareStatement.executeQuery()
-      decoded          <- Monad[F].whileM[Vector, String](resultSet.next())(resultSet.getString(1))
-    yield decoded.toList
+      decoded          <- resultSet.whileM[List, String](resultSet.getString(1))
+    yield decoded
 
   private def parseTypeColumn(`type`: String): (Int, Int, String, Boolean) =
     if `type`.indexOf("enum") != -1 then
