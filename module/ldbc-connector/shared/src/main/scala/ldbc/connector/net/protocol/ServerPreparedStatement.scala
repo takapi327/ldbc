@@ -23,7 +23,7 @@ import ldbc.connector.exception.SQLException
 import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.Protocol
-import ldbc.connector.ResultSetImpl
+import ldbc.connector.{ResultSetImpl, StreamingResultSet}
 
 /**
  * PreparedStatement for query construction at the server side.
@@ -67,6 +67,42 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
     Attribute("sql", sql)
   )
 
+  private def buildResultSet(
+                              columnDefinitions: Vector[ColumnDefinitionPacket],
+                              records:              Vector[ResultSetRowPacket],
+                            ): ResultSet[F] =
+    if useCursorFetch then
+      StreamingResultSet(
+        protocol,
+        statementId,
+        columnDefinitions,
+        records,
+        serverVariables,
+        protocol.initialPacket.serverVersion,
+        resultSetClosed,
+        fetchSize,
+        useCursorFetch,
+        useServerPrepStmts,
+        resultSetType,
+        resultSetConcurrency,
+        Some(sql)
+      )
+    else
+      ResultSetImpl(
+        protocol,
+        columnDefinitions,
+        records,
+        serverVariables,
+        protocol.initialPacket.serverVersion,
+        resultSetClosed,
+        fetchSize,
+        useCursorFetch,
+        useServerPrepStmts,
+        resultSetType,
+        resultSetConcurrency,
+        Some(sql)
+      )
+
   override def executeQuery(): F[ResultSet[F]] =
     checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, ResultSet[F]]("statement") { (span: Span[F]) =>
       for
@@ -95,20 +131,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
             BinaryProtocolResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions)
           )
         _ <- params.set(SortedMap.empty)
-        resultSet = ResultSetImpl(
-                      protocol,
-                      columnDefinitions,
-                      resultSetRow,
-                      serverVariables,
-                      protocol.initialPacket.serverVersion,
-                      resultSetClosed,
-                      fetchSize,
-                      useCursorFetch,
-                      useServerPrepStmts,
-                      resultSetType,
-                      resultSetConcurrency,
-                      Some(sql)
-                    )
+        resultSet = buildResultSet(columnDefinitions, resultSetRow)
         _ <- currentResultSet.set(Some(resultSet))
       yield resultSet
     }

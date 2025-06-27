@@ -99,7 +99,7 @@ object ComStmtExecutePacket:
   // @see https://dev.mysql.com/doc/dev/mysql-server/latest/mysql__com_8h.html
   enum EnumCursorType(val code: Short):
     case CURSOR_TYPE_NO_CURSOR     extends EnumCursorType(0)
-    case CURSOR_TYPE_READ_ONLY     extends EnumCursorType(1)
+    case CURSOR_TYPE_READ_ONLY     extends EnumCursorType(9)
     case CURSOR_TYPE_FOR_UPDATE    extends EnumCursorType(2)
     case CURSOR_TYPE_SCROLLABLE    extends EnumCursorType(4)
     case PARAMETER_COUNT_AVAILABLE extends EnumCursorType(8)
