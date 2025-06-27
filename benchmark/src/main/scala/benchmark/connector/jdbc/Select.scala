@@ -22,6 +22,8 @@ import cats.effect.unsafe.implicits.global
 
 import ldbc.sql.*
 
+import ldbc.connector.syntax.*
+
 import jdbc.connector.*
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -92,7 +94,7 @@ class Select:
       .unsafeRunSync()
 
   private def consume(resultSet: ResultSet[IO]): IO[List[BenchmarkType]] =
-    Monad[IO].whileM[List, BenchmarkType](resultSet.next()) {
+    resultSet.whileM[List, BenchmarkType] {
       for
         c1  <- resultSet.getLong(1)
         c2  <- resultSet.getShort(2)

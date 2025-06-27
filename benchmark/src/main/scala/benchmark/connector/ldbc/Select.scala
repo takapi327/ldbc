@@ -21,6 +21,7 @@ import cats.effect.unsafe.implicits.global
 import ldbc.sql.ResultSet
 
 import ldbc.connector.*
+import ldbc.connector.syntax.*
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
@@ -55,7 +56,7 @@ class Select:
       .default[IO]("127.0.0.1", 13306, "ldbc", "password", "benchmark")
       .setSSL(SSL.Trusted)
 
-  @Param(Array("100", "1000", "2000", "4000"))
+  @Param(Array("1000", "2000", "4000"))
   var len: Int = uninitialized
 
   @Benchmark
@@ -64,7 +65,7 @@ class Select:
       .use { conn =>
         for
           statement <- conn.createStatement()
-          resultSet <- statement.executeQuery(s"SELECT * FROM jdbc_statement_test LIMIT $len")
+          resultSet <- statement.executeQuery(s"SELECT * FROM jdbc_prepare_statement_test LIMIT $len")
           decoded   <- consume(resultSet)
         yield decoded
       }
@@ -84,7 +85,7 @@ class Select:
       .unsafeRunSync()
 
   private def consume(resultSet: ResultSet[IO]): IO[List[BenchmarkType]] =
-    Monad[IO].whileM[List, BenchmarkType](resultSet.next()) {
+    resultSet.whileM[List, BenchmarkType] {
       for
         c1  <- resultSet.getLong(1)
         c2  <- resultSet.getShort(2)
