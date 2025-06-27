@@ -8,7 +8,6 @@ package ldbc.connector
 
 import java.util.{ Locale, StringTokenizer }
 
-import collection.mutable
 import scala.collection.immutable.{ ListMap, SortedMap }
 
 import cats.*
@@ -28,9 +27,11 @@ import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.protocol.*
 import ldbc.connector.net.Protocol
+import ldbc.connector.syntax.*
 import ldbc.connector.util.StringHelper
 import ldbc.connector.util.Version
-import ldbc.connector.syntax.*
+
+import collection.mutable
 
 private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
   protocol:                      Protocol[F],
