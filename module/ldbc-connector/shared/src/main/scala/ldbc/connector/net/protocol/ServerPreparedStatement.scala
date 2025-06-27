@@ -79,7 +79,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
             ))*
           ) *>
             protocol.resetSequenceId *>
-            protocol.send(ComStmtExecutePacket(statementId, parameter)) *>
+            protocol.send(ComStmtExecutePacket(statementId, parameter, resultSetType, resultSetConcurrency, useCursorFetch)) *>
             protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
               case _: OKPacket                 => F.pure(ColumnsNumberPacket(0))
               case error: ERRPacket            => F.raiseError(error.toException(Some(sql), None, parameter))
@@ -123,7 +123,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
           ))*
         ) *>
           protocol.resetSequenceId *>
-          protocol.send(ComStmtExecutePacket(statementId, params)) *>
+          protocol.send(ComStmtExecutePacket(statementId, params, resultSetType, resultSetConcurrency, useCursorFetch)) *>
           protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
             case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
             case error: ERRPacket => F.raiseError(error.toException(Some(sql), None, params))

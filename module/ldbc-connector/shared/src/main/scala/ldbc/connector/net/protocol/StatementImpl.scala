@@ -181,8 +181,8 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
   private def preparedQueryRun(sql: String): F[ResultSet[F]] =
     for
       preparedStatement <- F.ifM[PreparedStatement[F]](F.pure(useServerPrepStmts))(
-                             buildServerPreparedStatement(sql),
-                             buildClientPreparedStatement(sql)
+                             F.pure(println("SERVER")) *> buildServerPreparedStatement(sql),
+                             F.pure(println("CLIENT")) *> buildClientPreparedStatement(sql)
                            )
       resultSet <- preparedStatement.executeQuery()
     yield resultSet
@@ -194,7 +194,7 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
     checkClosed() *> checkNullOrEmptyQuery(sql) *>
       F.ifM(F.pure(useServerFetch()))(
         preparedQueryRun(sql),
-        simpleQueryRun(sql)
+        F.pure("SIMPLE") *> simpleQueryRun(sql)
       )
 
   override def executeUpdate(sql: String): F[Int] =
