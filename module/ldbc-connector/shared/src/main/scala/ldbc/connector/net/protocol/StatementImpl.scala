@@ -6,7 +6,7 @@
 
 package ldbc.connector.net.protocol
 
-import scala.collection.immutable.{ListMap, SortedMap}
+import scala.collection.immutable.{ ListMap, SortedMap }
 
 import cats.*
 import cats.syntax.all.*
@@ -16,7 +16,7 @@ import cats.effect.*
 import org.typelevel.otel4s.trace.{ Span, Tracer }
 import org.typelevel.otel4s.Attribute
 
-import ldbc.sql.{ ResultSet, Statement, PreparedStatement }
+import ldbc.sql.{ PreparedStatement, ResultSet, Statement }
 
 import ldbc.connector.data.*
 import ldbc.connector.exception.SQLException
@@ -56,17 +56,17 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
           case _: OKPacket =>
             for
               resultSet <- F.pure(
-                ResultSetImpl
-                  .empty(
-                    protocol,
-                    serverVariables,
-                    protocol.initialPacket.serverVersion,
-                    resultSetClosed,
-                    fetchSize,
-                    useCursorFetch,
-                    useServerPrepStmts
-                  )
-              )
+                             ResultSetImpl
+                               .empty(
+                                 protocol,
+                                 serverVariables,
+                                 protocol.initialPacket.serverVersion,
+                                 resultSetClosed,
+                                 fetchSize,
+                                 useCursorFetch,
+                                 useServerPrepStmts
+                               )
+                           )
               _ <- currentResultSet.set(Some(resultSet))
             yield resultSet
           case error: ERRPacket            => F.raiseError(error.toException(Some(sql), None))
@@ -82,19 +82,19 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
                   ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions.length)
                 )
               resultSet = ResultSetImpl(
-                protocol,
-                columnDefinitions,
-                resultSetRow,
-                serverVariables,
-                protocol.initialPacket.serverVersion,
-                resultSetClosed,
-                fetchSize,
-                useCursorFetch,
-                useServerPrepStmts,
-                resultSetType,
-                resultSetConcurrency,
-                Some(sql)
-              )
+                            protocol,
+                            columnDefinitions,
+                            resultSetRow,
+                            serverVariables,
+                            protocol.initialPacket.serverVersion,
+                            resultSetClosed,
+                            fetchSize,
+                            useCursorFetch,
+                            useServerPrepStmts,
+                            resultSetType,
+                            resultSetConcurrency,
+                            Some(sql)
+                          )
               _ <- currentResultSet.set(Some(resultSet))
             yield resultSet
         }
@@ -103,27 +103,27 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
   private def buildServerPreparedStatement(sql: String): F[PreparedStatement[F]] =
     for
       result <- protocol.resetSequenceId *> protocol.send(ComStmtPreparePacket(sql)) *>
-        protocol.receive(ComStmtPrepareOkPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
-          case error: ERRPacket => F.raiseError(error.toException(Some(sql), None))
-          case ok: ComStmtPrepareOkPacket => F.pure(ok)
-        }
+                  protocol.receive(ComStmtPrepareOkPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
+                    case error: ERRPacket           => F.raiseError(error.toException(Some(sql), None))
+                    case ok: ComStmtPrepareOkPacket => F.pure(ok)
+                  }
       _ <- protocol.repeatProcess(
-        result.numParams,
-        ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags)
-      )
+             result.numParams,
+             ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags)
+           )
       _ <- protocol.repeatProcess(
-        result.numColumns,
-        ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags)
-      )
-      params <- Ref[F].of(SortedMap.empty[Int, Parameter])
-      batchedArgs <- Ref[F].of(Vector.empty[String])
-      statementClosed <- Ref[F].of[Boolean](false)
-      resultSetClosed <- Ref[F].of[Boolean](false)
-      currentResultSet <- Ref[F].of[Option[ResultSet[F]]](None)
-      updateCount <- Ref[F].of(-1L)
-      moreResults <- Ref[F].of(false)
+             result.numColumns,
+             ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags)
+           )
+      params            <- Ref[F].of(SortedMap.empty[Int, Parameter])
+      batchedArgs       <- Ref[F].of(Vector.empty[String])
+      statementClosed   <- Ref[F].of[Boolean](false)
+      resultSetClosed   <- Ref[F].of[Boolean](false)
+      currentResultSet  <- Ref[F].of[Option[ResultSet[F]]](None)
+      updateCount       <- Ref[F].of(-1L)
+      moreResults       <- Ref[F].of(false)
       autoGeneratedKeys <- Ref[F].of(Statement.NO_GENERATED_KEYS)
-      lastInsertId <- Ref[F].of(0L)
+      lastInsertId      <- Ref[F].of(0L)
     yield ServerPreparedStatement[F](
       protocol,
       serverVariables,
@@ -148,15 +148,15 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
 
   private def buildClientPreparedStatement(sql: String): F[PreparedStatement[F]] =
     for
-      params <- Ref[F].of(SortedMap.empty[Int, Parameter])
-      batchedArgs <- Ref[F].of(Vector.empty[String])
-      statementClosed <- Ref[F].of[Boolean](false)
-      resultSetClosed <- Ref[F].of[Boolean](false)
-      currentResultSet <- Ref[F].of[Option[ResultSet[F]]](None)
-      updateCount <- Ref[F].of(-1L)
-      moreResults <- Ref[F].of(false)
+      params            <- Ref[F].of(SortedMap.empty[Int, Parameter])
+      batchedArgs       <- Ref[F].of(Vector.empty[String])
+      statementClosed   <- Ref[F].of[Boolean](false)
+      resultSetClosed   <- Ref[F].of[Boolean](false)
+      currentResultSet  <- Ref[F].of[Option[ResultSet[F]]](None)
+      updateCount       <- Ref[F].of(-1L)
+      moreResults       <- Ref[F].of(false)
       autoGeneratedKeys <- Ref[F].of(Statement.NO_GENERATED_KEYS)
-      lastInsertId <- Ref[F].of(0L)
+      lastInsertId      <- Ref[F].of(0L)
     yield ClientPreparedStatement[F](
       protocol,
       serverVariables,
@@ -181,9 +181,9 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
   private def preparedQueryRun(sql: String): F[ResultSet[F]] =
     for
       preparedStatement <- F.ifM[PreparedStatement[F]](F.pure(useServerPrepStmts))(
-        buildServerPreparedStatement(sql),
-        buildClientPreparedStatement(sql)
-      )
+                             buildServerPreparedStatement(sql),
+                             buildClientPreparedStatement(sql)
+                           )
       resultSet <- preparedStatement.executeQuery()
     yield resultSet
 

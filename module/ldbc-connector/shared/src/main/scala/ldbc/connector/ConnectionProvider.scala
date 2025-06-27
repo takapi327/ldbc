@@ -233,7 +233,7 @@ trait ConnectionProvider[F[_], A] extends Provider[F]:
    *   Whether to use cursor fetch for large result sets.
    */
   def setUseCursorFetch(useCursorFetch: Boolean): ConnectionProvider[F, A]
-  
+
   /**
    * Update whether to use server prepared statements.
    *
@@ -391,8 +391,8 @@ object ConnectionProvider:
 
     override def setTracer(tracer: Tracer[F]): ConnectionProvider[F, A] =
       this.copy(tracer = Some(tracer))
-      
-    override def setUseCursorFetch(useCursorFetch: Boolean): ConnectionProvider[F, A] = 
+
+    override def setUseCursorFetch(useCursorFetch: Boolean): ConnectionProvider[F, A] =
       val useServerPrepStmts = if useCursorFetch then true else this.useServerPrepStmts
       this.copy(useCursorFetch = useCursorFetch, useServerPrepStmts = useServerPrepStmts)
 

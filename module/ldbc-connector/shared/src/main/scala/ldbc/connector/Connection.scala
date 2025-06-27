@@ -77,7 +77,7 @@ object Connection:
     allowPublicKeyRetrieval: Boolean = false,
     fetchSize:               Long = 0L,
     useCursorFetch:          Boolean = false,
-    useServerPrepStmts:       Boolean = false,
+    useServerPrepStmts:      Boolean = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
     logHandler:              Option[LogHandler[F]] = None
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] = this.default[F, Unit](
@@ -115,7 +115,7 @@ object Connection:
     allowPublicKeyRetrieval: Boolean = false,
     fetchSize:               Long = 0L,
     useCursorFetch:          Boolean = false,
-    useServerPrepStmts:       Boolean = false,
+    useServerPrepStmts:      Boolean = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
     logHandler:              Option[LogHandler[F]] = None
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] = this.default(
@@ -151,7 +151,7 @@ object Connection:
     allowPublicKeyRetrieval: Boolean = false,
     fetchSize:               Long = 0L,
     useCursorFetch:          Boolean = false,
-    useServerPrepStmts:       Boolean = false,
+    useServerPrepStmts:      Boolean = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
     logHandler:              Option[LogHandler[F]] = None,
     before:                  Connection[F] => F[A],
@@ -176,7 +176,7 @@ object Connection:
                       allowPublicKeyRetrieval,
                       fetchSize,
                       useCursorFetch,
-        useServerPrepStmts,
+                      useServerPrepStmts,
                       databaseTerm,
                       logHandler.getOrElse(noopLogger),
                       before,
@@ -197,7 +197,7 @@ object Connection:
     allowPublicKeyRetrieval: Boolean = false,
     fetchSize:               Long = 0L,
     useCursorFetch:          Boolean = false,
-    useServerPrepStmts:       Boolean = false,
+    useServerPrepStmts:      Boolean = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = None,
     logHandler:              LogHandler[F],
     acquire:                 Connection[F] => F[A],
@@ -211,12 +211,12 @@ object Connection:
       given Exchange[F] <- Resource.eval(Exchange[F])
       protocol          <-
         Protocol[F](sockets, hostInfo, debug, sslOptions, allowPublicKeyRetrieval, readTimeout, capabilityFlags)
-      _                 <- Resource.eval(protocol.startAuthentication(user, password.getOrElse("")))
-      serverVariables   <- Resource.eval(protocol.serverVariables())
-      readOnly          <- Resource.eval(Ref[F].of[Boolean](false))
-      autoCommit        <- Resource.eval(Ref[F].of[Boolean](true))
-      connectionClosed  <- Resource.eval(Ref[F].of[Boolean](false))
-      connection        <-
+      _                <- Resource.eval(protocol.startAuthentication(user, password.getOrElse("")))
+      serverVariables  <- Resource.eval(protocol.serverVariables())
+      readOnly         <- Resource.eval(Ref[F].of[Boolean](false))
+      autoCommit       <- Resource.eval(Ref[F].of[Boolean](true))
+      connectionClosed <- Resource.eval(Ref[F].of[Boolean](false))
+      connection       <-
         Resource.make(
           Temporal[F].pure(
             ConnectionImpl[F](
@@ -251,7 +251,7 @@ object Connection:
     allowPublicKeyRetrieval: Boolean = false,
     fetchSize:               Long = 0L,
     useCursorFetch:          Boolean = false,
-    useServerPrepStmts:       Boolean = false,
+    useServerPrepStmts:      Boolean = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = None,
     logHandler:              LogHandler[F],
     acquire:                 Connection[F] => F[A],
