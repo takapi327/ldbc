@@ -26,6 +26,7 @@ import ldbc.connector.exception.SQLException
 import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.Protocol
+import ldbc.connector.syntax.*
 
 case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
   protocol:                Protocol[F],
@@ -877,7 +878,7 @@ object CallableStatementImpl:
       resultSet:      ResultSetImpl[F],
       isFunctionCall: Boolean
     ): F[ParamInfo] =
-      val parameterListF = Monad[F].whileM[List, CallableStatementParameter](resultSet.next()) {
+      val parameterListF = resultSet.whileM[List, CallableStatementParameter] {
         for
           index           <- resultSet.getRow()
           paramName       <- resultSet.getString(4)
