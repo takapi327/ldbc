@@ -36,7 +36,9 @@ private[ldbc] case class StreamingResultSet[F[_]](
   extends SharedResultSet[F]:
 
   override def next(): F[Boolean] =
-    checkClosed() *> protocol.resetSequenceId *> fetchSize.get.flatMap(size => protocol.send(ComStmtFetchPacket(statementId, size))) *>
+    checkClosed() *> protocol.resetSequenceId *> fetchSize.get.flatMap(size =>
+      protocol.send(ComStmtFetchPacket(statementId, size))
+    ) *>
       protocol
         .readUntilEOF[BinaryProtocolResultSetRowPacket](
           BinaryProtocolResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columns)

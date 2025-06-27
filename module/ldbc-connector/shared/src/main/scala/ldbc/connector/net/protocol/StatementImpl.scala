@@ -342,7 +342,7 @@ object StatementImpl:
     override def executeBatch(): F[Array[Int]] = executeLargeBatch().map(_.map(_.toInt))
 
     override def setFetchSize(rows: Int): F[Unit] = fetchSize.set(rows)
-  
+
     override def getFetchSize(): F[Int] = fetchSize.get
 
     protected def checkClosed(): F[Unit] =

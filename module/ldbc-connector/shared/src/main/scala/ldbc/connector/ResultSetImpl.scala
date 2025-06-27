@@ -69,7 +69,7 @@ private[ldbc] object ResultSetImpl:
     serverVariables:    Map[String, String],
     version:            Version,
     isClosed:           Ref[F, Boolean],
-    fetchSize:            Ref[F, Int],
+    fetchSize:          Ref[F, Int],
     useCursorFetch:     Boolean,
     useServerPrepStmts: Boolean
   ): ResultSetImpl[F] =
@@ -91,7 +91,7 @@ private[ldbc] object ResultSetImpl:
     serverVariables:    Map[String, String],
     version:            Version,
     isClosed:           Ref[F, Boolean],
-    fetchSize:            Ref[F, Int],
+    fetchSize:          Ref[F, Int],
     useCursorFetch:     Boolean,
     useServerPrepStmts: Boolean
   ): ResultSetImpl[F] =
