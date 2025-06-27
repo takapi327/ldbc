@@ -233,7 +233,7 @@ trait ConnectionProvider[F[_], A] extends Provider[F]:
    * The number of rows to fetch at a time from the database.
    */
   def setFetchSize(fetchSize: Long): ConnectionProvider[F, A]
-  
+
   /**
    * Update whether to use cursor fetch for large result sets.
    * 
@@ -357,7 +357,7 @@ object ConnectionProvider:
     allowPublicKeyRetrieval: Boolean                               = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
     tracer:                  Option[Tracer[F]]                     = None,
-    fetchSize:              Long                                   = 0L,
+    fetchSize:               Long                                  = 0L,
     useCursorFetch:          Boolean                               = false,
     useServerPrepStmts:      Boolean                               = false,
     before:                  Option[Connection[F] => F[A]]         = None,
@@ -480,7 +480,7 @@ object ConnectionProvider:
             socketOptions           = socketOptions,
             readTimeout             = readTimeout,
             allowPublicKeyRetrieval = allowPublicKeyRetrieval,
-            fetchSize            = fetchSize,
+            fetchSize               = fetchSize,
             useCursorFetch          = useCursorFetch,
             useServerPrepStmts      = useServerPrepStmts,
             databaseTerm            = databaseTerm,
@@ -500,7 +500,7 @@ object ConnectionProvider:
             socketOptions           = socketOptions,
             readTimeout             = readTimeout,
             allowPublicKeyRetrieval = allowPublicKeyRetrieval,
-            fetchSize            = fetchSize,
+            fetchSize               = fetchSize,
             useCursorFetch          = useCursorFetch,
             useServerPrepStmts      = useServerPrepStmts,
             databaseTerm            = databaseTerm,
@@ -518,7 +518,7 @@ object ConnectionProvider:
             socketOptions           = socketOptions,
             readTimeout             = readTimeout,
             allowPublicKeyRetrieval = allowPublicKeyRetrieval,
-            fetchSize            = fetchSize,
+            fetchSize               = fetchSize,
             useCursorFetch          = useCursorFetch,
             useServerPrepStmts      = useServerPrepStmts,
             databaseTerm            = databaseTerm,

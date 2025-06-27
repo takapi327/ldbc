@@ -34,9 +34,9 @@ class SharedPreparedStatementTest extends SharedPreparedStatement[IO], FTestPlat
   override val statementClosed:   Ref[IO, Boolean]               = Ref.unsafe[IO, Boolean](false)
   override val updateCount:       Ref[IO, Long]                  = Ref.unsafe[IO, Long](0L)
 
-  override def fetchSize: Long = 0L
+  override def fetchSize:      Long    = 0L
   override def useCursorFetch: Boolean = false
-  override def resultSetType: Int = ResultSet.TYPE_FORWARD_ONLY
+  override def resultSetType:  Int     = ResultSet.TYPE_FORWARD_ONLY
 
   // Implementation of required methods from Statement
   override def clearBatch():       IO[Unit]          = IO.unit

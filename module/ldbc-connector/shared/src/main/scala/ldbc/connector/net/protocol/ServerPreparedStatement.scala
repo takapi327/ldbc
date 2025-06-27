@@ -18,12 +18,12 @@ import org.typelevel.otel4s.Attribute
 
 import ldbc.sql.{ ResultSet, Statement }
 
+import ldbc.connector.{ ResultSetImpl, StreamingResultSet }
 import ldbc.connector.data.*
 import ldbc.connector.exception.SQLException
 import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.Protocol
-import ldbc.connector.{ResultSetImpl, StreamingResultSet}
 
 /**
  * PreparedStatement for query construction at the server side.
@@ -68,9 +68,9 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
   )
 
   private def buildResultSet(
-                              columnDefinitions: Vector[ColumnDefinitionPacket],
-                              records:              Vector[ResultSetRowPacket],
-                            ): ResultSet[F] =
+    columnDefinitions: Vector[ColumnDefinitionPacket],
+    records:           Vector[ResultSetRowPacket]
+  ): ResultSet[F] =
     if useCursorFetch then
       StreamingResultSet(
         protocol,
@@ -115,7 +115,9 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
             ))*
           ) *>
             protocol.resetSequenceId *>
-            protocol.send(ComStmtExecutePacket(statementId, parameter, resultSetType, resultSetConcurrency, useCursorFetch)) *>
+            protocol.send(
+              ComStmtExecutePacket(statementId, parameter, resultSetType, resultSetConcurrency, useCursorFetch)
+            ) *>
             protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
               case _: OKPacket                 => F.pure(ColumnsNumberPacket(0))
               case error: ERRPacket            => F.raiseError(error.toException(Some(sql), None, parameter))
@@ -146,7 +148,9 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
           ))*
         ) *>
           protocol.resetSequenceId *>
-          protocol.send(ComStmtExecutePacket(statementId, params, resultSetType, resultSetConcurrency, useCursorFetch)) *>
+          protocol.send(
+            ComStmtExecutePacket(statementId, params, resultSetType, resultSetConcurrency, useCursorFetch)
+          ) *>
           protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
             case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
             case error: ERRPacket => F.raiseError(error.toException(Some(sql), None, params))

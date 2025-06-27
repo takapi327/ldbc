@@ -17,6 +17,7 @@ import scodec.interop.cats.*
 import cats.syntax.all.*
 
 import ldbc.sql.ResultSet
+
 import ldbc.connector.data.*
 
 /**
@@ -31,8 +32,8 @@ import ldbc.connector.data.*
  *   The parameters to bind to the prepared statement
  */
 case class ComStmtExecutePacket(
-  statementId: Long,
-  params:      SortedMap[Int, Parameter],
+  statementId:    Long,
+  params:         SortedMap[Int, Parameter],
   enumCursorType: ComStmtExecutePacket.EnumCursorType
 ) extends RequestPacket:
 
@@ -46,19 +47,21 @@ case class ComStmtExecutePacket(
 object ComStmtExecutePacket:
 
   def apply(
-    statementId: Long,
-    params:      SortedMap[Int, Parameter],
-    resultSetType: Int,
+    statementId:          Long,
+    params:               SortedMap[Int, Parameter],
+    resultSetType:        Int,
     resultSetConcurrency: Int,
-    useCursorFetch: Boolean
+    useCursorFetch:       Boolean
   ): ComStmtExecutePacket =
     val enumCursorType = (resultSetType, resultSetConcurrency, useCursorFetch) match {
       case (ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, false) => EnumCursorType.CURSOR_TYPE_NO_CURSOR
-      case (ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, true) => EnumCursorType.CURSOR_TYPE_READ_ONLY
-      case (ResultSet.TYPE_SCROLL_INSENSITIVE | ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY, _) => EnumCursorType.CURSOR_TYPE_NO_CURSOR
+      case (ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, true)  => EnumCursorType.CURSOR_TYPE_READ_ONLY
+      case (ResultSet.TYPE_SCROLL_INSENSITIVE | ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY, _) =>
+        EnumCursorType.CURSOR_TYPE_NO_CURSOR
       case (ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, _) => EnumCursorType.CURSOR_TYPE_NO_CURSOR
-      case (ResultSet.TYPE_SCROLL_INSENSITIVE | ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE, _) => EnumCursorType.CURSOR_TYPE_NO_CURSOR
-      case _      => EnumCursorType.PARAMETER_COUNT_AVAILABLE
+      case (ResultSet.TYPE_SCROLL_INSENSITIVE | ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE, _) =>
+        EnumCursorType.CURSOR_TYPE_NO_CURSOR
+      case _ => EnumCursorType.PARAMETER_COUNT_AVAILABLE
     }
     ComStmtExecutePacket(statementId, params, enumCursorType)
 

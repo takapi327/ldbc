@@ -13,7 +13,7 @@ import cats.MonadThrow
 
 import cats.effect.Ref
 
-import ldbc.sql.{ResultSet, ResultSetMetaData}
+import ldbc.sql.{ ResultSet, ResultSetMetaData }
 
 import ldbc.connector.data.Formatter.*
 import ldbc.connector.exception.SQLException

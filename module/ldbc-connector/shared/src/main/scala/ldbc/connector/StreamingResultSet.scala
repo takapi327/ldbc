@@ -20,7 +20,7 @@ import ldbc.connector.util.Version
 
 private[ldbc] case class StreamingResultSet[F[_]](
   protocol:             Protocol[F],
-  statementId:        Long,
+  statementId:          Long,
   columns:              Vector[ColumnDefinitionPacket],
   records:              Vector[ResultSetRowPacket],
   serverVariables:      Map[String, String],
@@ -32,14 +32,17 @@ private[ldbc] case class StreamingResultSet[F[_]](
   resultSetType:        Int            = ResultSet.TYPE_FORWARD_ONLY,
   resultSetConcurrency: Int            = ResultSet.CONCUR_READ_ONLY,
   statement:            Option[String] = None
-)(using ev: MonadThrow[F]) extends SharedResultSet[F]:
+)(using ev: MonadThrow[F])
+  extends SharedResultSet[F]:
 
   override def next(): F[Boolean] =
-    checkClosed() *> protocol.resetSequenceId *> protocol.send(ComStmtFetchPacket(statementId, fetchSize)) *>           
-      protocol.readUntilEOF[BinaryProtocolResultSetRowPacket](
-        BinaryProtocolResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columns)
-      ).map { resultSetRow =>
-        currentRow = resultSetRow.headOption
-        currentCursor = currentCursor + 1
-        resultSetRow.nonEmpty
-      }
+    checkClosed() *> protocol.resetSequenceId *> protocol.send(ComStmtFetchPacket(statementId, fetchSize)) *>
+      protocol
+        .readUntilEOF[BinaryProtocolResultSetRowPacket](
+          BinaryProtocolResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columns)
+        )
+        .map { resultSetRow =>
+          currentRow    = resultSetRow.headOption
+          currentCursor = currentCursor + 1
+          resultSetRow.nonEmpty
+        }
