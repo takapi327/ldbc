@@ -10,8 +10,6 @@ import java.time.*
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAccessor
 
-import scala.util.{ Failure, Success, Try }
-
 import cats.syntax.all.*
 import cats.MonadThrow
 
@@ -386,29 +384,28 @@ private[ldbc] case class ResultSetImpl[F[_]](
       ev.pure(records.length)
 
   private def rowDecode[T](index: Int, decode: String => T, defaultValue: T): F[T] =
-    Try {
-      for
+    try {
+      val decoded = for
         row     <- currentRow
         value   <- row.values(index - 1)
         decoded <- Option(decode(value))
       yield decoded
-    }.map {
-      case None =>
-        lastColumnReadNullable = true
-        defaultValue
-      case Some(decodedValue) =>
-        lastColumnReadNullable = false
-        decodedValue
-    } match {
-      case Success(value) => ev.pure(value)
-      case Failure(_)     =>
+
+      decoded match
+        case None =>
+          lastColumnReadNullable = true
+          ev.pure(defaultValue)
+        case Some(decodedValue) =>
+          lastColumnReadNullable = false
+          ev.pure(decodedValue)
+    } catch
+      case _ =>
         ev.raiseError(
           new SQLException(
             s"Column index $index does not exist in the ResultSet.",
             sql = statement
           )
         )
-    }
 
   private def findByName(columnLabel: String): F[Int] =
     val column = columns.zipWithIndex
