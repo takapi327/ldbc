@@ -221,6 +221,20 @@ trait ConnectionProvider[F[_], A] extends Provider[F]:
   def setTracer(tracer: Tracer[F]): ConnectionProvider[F, A]
 
   /**
+   * Update the fetch size for result sets.
+   *
+   * {{{
+   *   ConnectionProvider
+   *     ...
+   *     .setFetchSize(1000)
+   * }}}
+   *
+   * @param fetchSize
+   * The number of rows to fetch at a time from the database.
+   */
+  def setFetchSize(fetchSize: Long): ConnectionProvider[F, A]
+  
+  /**
    * Update whether to use cursor fetch for large result sets.
    * 
    * {{{
@@ -343,6 +357,7 @@ object ConnectionProvider:
     allowPublicKeyRetrieval: Boolean                               = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
     tracer:                  Option[Tracer[F]]                     = None,
+    fetchSize:              Long                                   = 0L,
     useCursorFetch:          Boolean                               = false,
     useServerPrepStmts:      Boolean                               = false,
     before:                  Option[Connection[F] => F[A]]         = None,
@@ -391,6 +406,9 @@ object ConnectionProvider:
 
     override def setTracer(tracer: Tracer[F]): ConnectionProvider[F, A] =
       this.copy(tracer = Some(tracer))
+
+    override def setFetchSize(fetchSize: Long): ConnectionProvider[F, A] =
+      this.copy(fetchSize = fetchSize)
 
     override def setUseCursorFetch(useCursorFetch: Boolean): ConnectionProvider[F, A] =
       val useServerPrepStmts = if useCursorFetch then true else this.useServerPrepStmts
@@ -462,6 +480,7 @@ object ConnectionProvider:
             socketOptions           = socketOptions,
             readTimeout             = readTimeout,
             allowPublicKeyRetrieval = allowPublicKeyRetrieval,
+            fetchSize            = fetchSize,
             useCursorFetch          = useCursorFetch,
             useServerPrepStmts      = useServerPrepStmts,
             databaseTerm            = databaseTerm,
@@ -481,6 +500,7 @@ object ConnectionProvider:
             socketOptions           = socketOptions,
             readTimeout             = readTimeout,
             allowPublicKeyRetrieval = allowPublicKeyRetrieval,
+            fetchSize            = fetchSize,
             useCursorFetch          = useCursorFetch,
             useServerPrepStmts      = useServerPrepStmts,
             databaseTerm            = databaseTerm,
@@ -498,6 +518,7 @@ object ConnectionProvider:
             socketOptions           = socketOptions,
             readTimeout             = readTimeout,
             allowPublicKeyRetrieval = allowPublicKeyRetrieval,
+            fetchSize            = fetchSize,
             useCursorFetch          = useCursorFetch,
             useServerPrepStmts      = useServerPrepStmts,
             databaseTerm            = databaseTerm,
