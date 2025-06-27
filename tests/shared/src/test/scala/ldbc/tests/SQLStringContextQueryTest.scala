@@ -48,7 +48,7 @@ class LdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
   ) {
     case class City(id: Int, name: String, age: Int)
 
-    interceptIO[ArrayIndexOutOfBoundsException](
+    interceptIO[SQLException](
       connection.use { conn =>
         sql"SELECT Id, Name FROM city LIMIT 1"
           .query[City]
