@@ -76,6 +76,10 @@ private[jdbc] open class PreparedStatementImpl[F[_]: Sync](statement: java.sql.P
 
   override def getMoreResults(): F[Boolean] = Sync[F].blocking(statement.getMoreResults())
 
+  override def setFetchSize(rows: Int): F[Unit] = Sync[F].pure(statement.setFetchSize(rows))
+
+  override def getFetchSize(): F[Int] = Sync[F].pure(statement.getFetchSize)
+
   override def clearBatch(): F[Unit] = Sync[F].blocking(statement.clearBatch())
 
   override def executeBatch(): F[Array[Int]] = Sync[F].blocking(statement.executeBatch())

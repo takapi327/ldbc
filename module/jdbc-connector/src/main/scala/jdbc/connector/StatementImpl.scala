@@ -30,6 +30,10 @@ private[jdbc] case class StatementImpl[F[_]: Sync](statement: java.sql.Statement
 
   override def getMoreResults(): F[Boolean] = Sync[F].blocking(statement.getMoreResults)
 
+  override def setFetchSize(rows: Int): F[Unit] = Sync[F].pure(statement.setFetchSize(rows))
+
+  override def getFetchSize(): F[Int] = Sync[F].pure(statement.getFetchSize)
+
   override def addBatch(sql: String): F[Unit] = Sync[F].blocking(statement.addBatch(sql))
 
   override def clearBatch(): F[Unit] = Sync[F].blocking(statement.clearBatch())
