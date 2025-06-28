@@ -52,65 +52,29 @@ private[ldbc] case class StreamingResultSet[F[_]](
       ).map { resultSetRow =>
         rows = resultSetRow
         currentCursor = 0
-        currentRow = resultSetRow.lift(currentCursor)
+        currentRow = None
+        isCompleteAllFetch = resultSetRow.length < size
       }
 
   /**
    * Closes the prepared statement on the server side.
    * Sets the completion flag to indicate no more rows are available.
    *
-   * @return an F[Boolean] that always returns true upon successful closure
+   * @return an F[Boolean] indicating whether rows were available in the final batch
    */
-  private def closeStmt(size: Int): F[Boolean] =
-    protocol.send(ComStmtClosePacket(statementId)).map { _ =>
-      isCompleteAllFetch = true
-      size > 1
-    }
-
-  /**
-   * Moves the cursor to the next row within the current batch.
-   * Updates the current row reference and increments the cursor position.
-   *
-   * @return an F[Boolean] that always returns true
-   */
-  private def moveToNextRowInBatch(): F[Boolean] =
-    currentCursor = currentCursor + 1
-    currentRow = rows.lift(currentCursor)
-    ev.pure(true)
-
-  /**
-   * Performs the initial fetch operation when no rows are currently loaded.
-   * Used when the result set is first accessed.
-   *
-   * @param size the number of rows to fetch
-   * @return an F[Boolean] that always returns true after successful fetch
-   */
-  private def performInitialFetch(size: Int): F[Boolean] =
-    fetchRow(size) *> ev.pure(true)
-
-  /**
-   * Fetches the next batch of rows from the server.
-   * If the returned batch is smaller than requested, closes the statement.
-   *
-   * @param size the number of rows to fetch
-   * @return an F[Boolean] indicating whether more rows are available
-   */
-  private def fetchNextBatch(size: Int): F[Boolean] =
-    fetchRow(size).flatMap { _ =>
-      if rows.length == size then
-        ev.pure(true)
-      else 
-        protocol.resetSequenceId *> closeStmt(size)
-    }
+  private def closeStmt(): F[Boolean] =
+    protocol.send(ComStmtClosePacket(statementId)).as(false)
 
   override def next(): F[Boolean] =
     checkClosed() *> fetchSize.get.flatMap { size =>
-      if isCompleteAllFetch then {
-        ev.pure(false)
-      } else if rows.isEmpty then
-        performInitialFetch(size)
-      else if size == currentCursor + 1 then
-        fetchNextBatch(size)
+      if isCompleteAllFetch && currentCursor >= rows.length then
+        protocol.resetSequenceId *> closeStmt()
+      else if rows.isEmpty then
+        fetchRow(size) *> next()
+      else if currentCursor >= rows.length then
+        fetchRow(size) *> next()
       else
-        moveToNextRowInBatch()
+        currentCursor = currentCursor + 1
+        currentRow = rows.lift(currentCursor - 1)
+        ev.pure(true)
     }
