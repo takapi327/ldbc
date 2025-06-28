@@ -35,16 +35,42 @@ private[ldbc] case class StreamingResultSet[F[_]](
 )(using ev: MonadThrow[F])
   extends SharedResultSet[F]:
 
+  private var isCompleteAllFetch: Boolean = false
+  private var rows: Vector[ResultSetRowPacket] = Vector.empty
+
+  private def fetchRow(size: Int): F[Unit] =
+    protocol.resetSequenceId *> protocol.send(ComStmtFetchPacket(statementId, size)) *>
+      protocol.readUntilEOF[BinaryProtocolResultSetRowPacket](
+        BinaryProtocolResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columns)
+      ).map { resultSetRow =>
+        rows = resultSetRow
+        currentCursor = 0
+        currentRow = resultSetRow.lift(currentCursor)
+      }
+
+  private def closeStmt: F[Boolean] =
+    protocol.send(ComStmtClosePacket(statementId)).map { _ =>
+      isCompleteAllFetch = true
+      true
+    }
+
   override def next(): F[Boolean] =
-    checkClosed() *> protocol.resetSequenceId *> fetchSize.get.flatMap(size =>
-      protocol.send(ComStmtFetchPacket(statementId, size))
-    ) *>
-      protocol
-        .readUntilEOF[BinaryProtocolResultSetRowPacket](
-          BinaryProtocolResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columns)
-        )
-        .map { resultSetRow =>
-          currentRow    = resultSetRow.headOption
-          currentCursor = currentCursor + 1
-          resultSetRow.nonEmpty
-        }
+    checkClosed() *> fetchSize.get.flatMap { size =>
+      if isCompleteAllFetch then
+        currentCursor = 0
+        ev.pure(false)
+      else
+        if rows.isEmpty then
+          fetchRow(size) *> ev.pure(true)
+        else
+          if size == currentCursor + 1 then
+            fetchRow(size).flatMap { _ =>
+              if rows.length == size then
+                ev.pure(true)
+              else protocol.resetSequenceId *> closeStmt
+            }
+          else
+            currentRow = rows.lift(currentCursor)
+            currentCursor = currentCursor + 1
+            ev.pure(true)
+    }
