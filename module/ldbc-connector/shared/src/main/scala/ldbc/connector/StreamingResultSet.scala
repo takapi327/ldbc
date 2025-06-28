@@ -61,21 +61,11 @@ private[ldbc] case class StreamingResultSet[F[_]](
    *
    * @return an F[Boolean] that always returns true upon successful closure
    */
-  private def closeStmt: F[Boolean] =
+  private def closeStmt(size: Int): F[Boolean] =
     protocol.send(ComStmtClosePacket(statementId)).map { _ =>
       isCompleteAllFetch = true
-      true
+      size > 1
     }
-
-  /**
-   * Determines if the cursor is at the end of the current batch.
-   * Used to decide when a new batch fetch is required.
-   *
-   * @param size the fetch size configured for this result set
-   * @return true if at the end of the current batch, false otherwise
-   */
-  private def isAtBatchEnd(size: Int): Boolean = 
-    size == currentCursor + 1
 
   /**
    * Moves the cursor to the next row within the current batch.
@@ -84,8 +74,8 @@ private[ldbc] case class StreamingResultSet[F[_]](
    * @return an F[Boolean] that always returns true
    */
   private def moveToNextRowInBatch(): F[Boolean] =
-    currentRow = rows.lift(currentCursor)
     currentCursor = currentCursor + 1
+    currentRow = rows.lift(currentCursor)
     ev.pure(true)
 
   /**
@@ -110,17 +100,16 @@ private[ldbc] case class StreamingResultSet[F[_]](
       if rows.length == size then
         ev.pure(true)
       else 
-        protocol.resetSequenceId *> closeStmt
+        protocol.resetSequenceId *> closeStmt(size)
     }
 
   override def next(): F[Boolean] =
     checkClosed() *> fetchSize.get.flatMap { size =>
-      if isCompleteAllFetch then
-        currentCursor = 0
+      if isCompleteAllFetch then {
         ev.pure(false)
-      else if rows.isEmpty then
+      } else if rows.isEmpty then
         performInitialFetch(size)
-      else if isAtBatchEnd(size) then
+      else if size == currentCursor + 1 then
         fetchNextBatch(size)
       else
         moveToNextRowInBatch()
