@@ -35,8 +35,8 @@ private[ldbc] case class StreamingResultSet[F[_]](
 )(using ev: MonadThrow[F])
   extends SharedResultSet[F]:
 
-  private var isCompleteAllFetch: Boolean = false
-  private var rows: Vector[ResultSetRowPacket] = Vector.empty
+  private var isCompleteAllFetch: Boolean                    = false
+  private var rows:               Vector[ResultSetRowPacket] = Vector.empty
 
   /**
    * Fetches the specified number of rows from the database server.
@@ -47,14 +47,16 @@ private[ldbc] case class StreamingResultSet[F[_]](
    */
   private def fetchRow(size: Int): F[Unit] =
     protocol.resetSequenceId *> protocol.send(ComStmtFetchPacket(statementId, size)) *>
-      protocol.readUntilEOF[BinaryProtocolResultSetRowPacket](
-        BinaryProtocolResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columns)
-      ).map { resultSetRow =>
-        rows = resultSetRow
-        currentCursor = 0
-        currentRow = None
-        isCompleteAllFetch = resultSetRow.length < size
-      }
+      protocol
+        .readUntilEOF[BinaryProtocolResultSetRowPacket](
+          BinaryProtocolResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columns)
+        )
+        .map { resultSetRow =>
+          rows               = resultSetRow
+          currentCursor      = 0
+          currentRow         = None
+          isCompleteAllFetch = resultSetRow.length < size
+        }
 
   /**
    * Closes the prepared statement on the server side.
@@ -67,14 +69,11 @@ private[ldbc] case class StreamingResultSet[F[_]](
 
   override def next(): F[Boolean] =
     checkClosed() *> fetchSize.get.flatMap { size =>
-      if isCompleteAllFetch && currentCursor >= rows.length then
-        protocol.resetSequenceId *> closeStmt()
-      else if rows.isEmpty then
-        fetchRow(size) *> next()
-      else if currentCursor >= rows.length then
-        fetchRow(size) *> next()
+      if isCompleteAllFetch && currentCursor >= rows.length then protocol.resetSequenceId *> closeStmt()
+      else if rows.isEmpty then fetchRow(size) *> next()
+      else if currentCursor >= rows.length then fetchRow(size) *> next()
       else
         currentCursor = currentCursor + 1
-        currentRow = rows.lift(currentCursor - 1)
+        currentRow    = rows.lift(currentCursor - 1)
         ev.pure(true)
     }
