@@ -363,6 +363,15 @@ private[ldbc] trait SharedResultSet[F[_]](using ev: MonadThrow[F]) extends Resul
     checkClosed() *>
       ev.pure(records.length)
 
+  /**
+   * Decodes a value from the current row at the specified column index.
+   * Handles null values and type conversion errors appropriately.
+   *
+   * @param index the 1-based column index
+   * @param decode the function to decode the string value to the target type
+   * @param defaultValue the default value to return for null columns
+   * @return the decoded value or default value for null columns
+   */
   private def rowDecode[T](index: Int, decode: String => T, defaultValue: T): F[T] =
     try {
       val decoded = for
@@ -387,6 +396,14 @@ private[ldbc] trait SharedResultSet[F[_]](using ev: MonadThrow[F]) extends Resul
           )
         )
 
+  /**
+   * Finds the column index by column name or alias.
+   * Performs case-insensitive matching against both name and full name.
+   *
+   * @param columnLabel the column name or alias to search for
+   * @return the 1-based column index if found
+   * @throws SQLException if the column name is not found
+   */
   private def findByName(columnLabel: String): F[Int] =
     val column = columns.zipWithIndex
       .find { (column: ColumnDefinitionPacket, _) =>
@@ -402,6 +419,13 @@ private[ldbc] trait SharedResultSet[F[_]](using ev: MonadThrow[F]) extends Resul
         )
       case Some((_, index)) => ev.pure(index + 1)
 
+  /**
+   * Checks if the result set is closed and throws an exception if it is.
+   * Should be called at the beginning of most public methods.
+   *
+   * @return unit if the result set is open
+   * @throws SQLException if the result set is closed
+   */
   protected def checkClosed(): F[Unit] =
     isClosed.get.flatMap { closed =>
       if closed then ev.raiseError(new SQLException(ResultSetImpl.CLOSED_MESSAGE, sql = statement))
