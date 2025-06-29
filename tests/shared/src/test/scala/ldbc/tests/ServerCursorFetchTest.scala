@@ -18,21 +18,22 @@ import ldbc.connector.syntax.*
 class LdbcServerCursorFetchTest extends ServerCursorFetchTest:
 
   override def provider: Provider[IO] =
-    ConnectionProvider.default[IO](
+    ConnectionProvider
+      .default[IO](
         host     = "127.0.0.1",
         port     = 13306,
         user     = "ldbc",
         password = "password",
-        database = "world",
+        database = "world"
       )
       .setSSL(SSL.Trusted)
       .setUseCursorFetch(true)
 
 trait ServerCursorFetchTest extends CatsEffectSuite:
 
-  protected val host: String = "127.0.0.1"
-  protected val port: Int = 13306
-  protected val user: String = "ldbc"
+  protected val host:     String = "127.0.0.1"
+  protected val port:     Int    = 13306
+  protected val user:     String = "ldbc"
   protected val password: String = "password"
   protected val database: String = "world"
 
@@ -45,9 +46,9 @@ trait ServerCursorFetchTest extends CatsEffectSuite:
           statement <- conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
           _         <- statement.setFetchSize(1)
           resultSet <- statement.executeQuery("SELECT * FROM `city`")
-          result <- resultSet.whileM[List, String](
-            resultSet.getString("Name")
-          )
+          result    <- resultSet.whileM[List, String](
+                      resultSet.getString("Name")
+                    )
         yield result.length
       },
       4079
@@ -59,11 +60,11 @@ trait ServerCursorFetchTest extends CatsEffectSuite:
       provider.use { conn =>
         for
           statement <- conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
-          _ <- statement.setFetchSize(5)
+          _         <- statement.setFetchSize(5)
           resultSet <- statement.executeQuery("SELECT * FROM `city`")
-          result <- resultSet.whileM[List, String](
-            resultSet.getString("Name")
-          )
+          result    <- resultSet.whileM[List, String](
+                      resultSet.getString("Name")
+                    )
         yield result.length
       },
       4079
@@ -75,11 +76,11 @@ trait ServerCursorFetchTest extends CatsEffectSuite:
       provider.use { conn =>
         for
           statement <- conn.prepareStatement("SELECT * FROM `city`")
-          _ <- statement.setFetchSize(1)
+          _         <- statement.setFetchSize(1)
           resultSet <- statement.executeQuery()
-          result <- resultSet.whileM[List, String](
-            resultSet.getString("Name")
-          )
+          result    <- resultSet.whileM[List, String](
+                      resultSet.getString("Name")
+                    )
         yield result.length
       },
       4079
@@ -91,11 +92,11 @@ trait ServerCursorFetchTest extends CatsEffectSuite:
       provider.use { conn =>
         for
           statement <- conn.prepareStatement("SELECT * FROM `city`")
-          _ <- statement.setFetchSize(5)
+          _         <- statement.setFetchSize(5)
           resultSet <- statement.executeQuery()
-          result <- resultSet.whileM[List, String](
-            resultSet.getString("Name")
-          )
+          result    <- resultSet.whileM[List, String](
+                      resultSet.getString("Name")
+                    )
         yield result.length
       },
       4079
