@@ -6,6 +6,8 @@
 
 package ldbc.connector
 
+import scala.concurrent.duration.*
+
 import cats.effect.*
 
 import ldbc.sql.ResultSet
@@ -14,6 +16,9 @@ import ldbc.connector.*
 import ldbc.connector.syntax.*
 
 class ServerCursorFetchTest extends FTestPlatform:
+
+  // In case of Scala.js, timeout occurs when FetchSize: 1, so it is necessary to extend the time.
+  override def munitIOTimeout: Duration = 60.seconds
 
   private val provider = ConnectionProvider
     .default[IO](
