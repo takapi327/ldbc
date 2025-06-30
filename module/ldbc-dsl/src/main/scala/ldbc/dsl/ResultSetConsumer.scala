@@ -12,7 +12,8 @@ import cats.syntax.all.*
 import ldbc.sql.ResultSet
 
 import ldbc.dsl.codec.Decoder
-import ldbc.dsl.exception.DecodeFailureException
+import ldbc.dsl.free.ResultSetIO
+import ldbc.dsl.free.ResultSetIO.*
 import ldbc.dsl.util.FactoryCompat
 
 /**
@@ -36,39 +37,49 @@ trait ResultSetConsumer[F[_], T]:
    * @return
    *   Type you want to build with data obtained from ResultSet
    */
-  def consume(resultSet: ResultSet, statement: String): F[T]
+  def consume(resultSet: ResultSet[F], statement: String): F[T]
 
 object ResultSetConsumer:
 
   private val FIRST_OFFSET = 1
 
+  def consume[F[_]: MonadThrow, T: Decoder, G[_]](
+    resultSet:     ResultSet[F],
+    statement:     String,
+    factoryCompat: FactoryCompat[T, G[T]]
+  ): F[G[T]] =
+    given FactoryCompat[T, G[T]] = factoryCompat
+    summon[ResultSetConsumer[F, G[T]]].consume(resultSet, statement)
+
   given [F[_], T](using
     consumer: ResultSetConsumer[F, Option[T]],
     ev:       MonadThrow[F]
   ): ResultSetConsumer[F, T] with
-    override def consume(resultSet: ResultSet, statement: String): F[T] =
+    override def consume(resultSet: ResultSet[F], statement: String): F[T] =
       consumer.consume(resultSet, statement).flatMap {
         case Some(value) => ev.pure(value)
         case None        => ev.raiseError(new NoSuchElementException(""))
       }
 
-  given [F[_], T](using decoder: Decoder[T], ev: ApplicativeThrow[F]): ResultSetConsumer[F, Option[T]] with
-    override def consume(resultSet: ResultSet, statement: String): F[Option[T]] =
-      if resultSet.next() then
-        decoder.decode(resultSet, FIRST_OFFSET) match
-          case Right(value) => ev.pure(Some(value))
-          case Left(error)  =>
-            ev.raiseError(new DecodeFailureException(error.message, decoder.offset, statement, error.cause))
-      else ev.pure(None)
+  given [F[_], T](using decoder: Decoder[T], ev: MonadThrow[F]): ResultSetConsumer[F, Option[T]] with
+    override def consume(resultSet: ResultSet[F], statement: String): F[Option[T]] =
+      resultSet.next().flatMap {
+        case true =>
+          decoder.decode(FIRST_OFFSET, statement).foldMap(resultSet.interpreter).map(Option(_))
+        case false => ev.pure(None)
+      }
 
-  given [F[_]: Applicative, T, G[_]](using
+  given [F[_], T, G[_]](using
     decoder:       Decoder[T],
     factoryCompat: FactoryCompat[T, G[T]]
-  ): ResultSetConsumer[F, G[T]] with
-    override def consume(resultSet: ResultSet, statement: String): F[G[T]] =
+  )(using ev: MonadThrow[F]): ResultSetConsumer[F, G[T]] with
+    override def consume(resultSet: ResultSet[F], statement: String): F[G[T]] =
       val builder = factoryCompat.newBuilder
-      while resultSet.next() do
-        decoder.decode(resultSet, FIRST_OFFSET) match
-          case Right(value) => builder += value
-          case Left(error)  => throw new DecodeFailureException(error.message, decoder.offset, statement, error.cause)
-      Applicative[F].pure(builder.result())
+
+      def loop(acc: collection.mutable.Builder[T, G[T]]): ResultSetIO[collection.mutable.Builder[T, G[T]]] =
+        ResultSetIO.next().flatMap {
+          case true  => decoder.decode(FIRST_OFFSET, statement).flatMap(v => loop(acc += v))
+          case false => ResultSetIO.pure(acc)
+        }
+
+      loop(builder).map(_.result()).foldMap(resultSet.interpreter)

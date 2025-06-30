@@ -221,6 +221,34 @@ trait ConnectionProvider[F[_], A] extends Provider[F]:
   def setTracer(tracer: Tracer[F]): ConnectionProvider[F, A]
 
   /**
+   * Update whether to use cursor fetch for large result sets.
+   * 
+   * {{{
+   *   ConnectionProvider
+   *     ...
+   *     .setUseCursorFetch(true)
+   * }}}
+   * 
+   * @param useCursorFetch
+   *   Whether to use cursor fetch for large result sets.
+   */
+  def setUseCursorFetch(useCursorFetch: Boolean): ConnectionProvider[F, A]
+
+  /**
+   * Update whether to use server prepared statements.
+   *
+   * {{{
+   *   ConnectionProvider
+   *     ...
+   *     .setUseServerPrepStmts(true)
+   * }}}
+   *
+   * @param useServerPrepStmts
+   *   Whether to use server prepared statements.
+   */
+  def setUseServerPrepStmts(useServerPrepStmts: Boolean): ConnectionProvider[F, A]
+
+  /**
    * Add an optional process to be executed immediately after connection is established.
    *
    * {{{
@@ -315,6 +343,8 @@ object ConnectionProvider:
     allowPublicKeyRetrieval: Boolean                               = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
     tracer:                  Option[Tracer[F]]                     = None,
+    useCursorFetch:          Boolean                               = false,
+    useServerPrepStmts:      Boolean                               = false,
     before:                  Option[Connection[F] => F[A]]         = None,
     after:                   Option[(A, Connection[F]) => F[Unit]] = None
   ) extends ConnectionProvider[F, A]:
@@ -362,6 +392,13 @@ object ConnectionProvider:
     override def setTracer(tracer: Tracer[F]): ConnectionProvider[F, A] =
       this.copy(tracer = Some(tracer))
 
+    override def setUseCursorFetch(useCursorFetch: Boolean): ConnectionProvider[F, A] =
+      val useServerPrepStmts = if useCursorFetch then true else this.useServerPrepStmts
+      this.copy(useCursorFetch = useCursorFetch, useServerPrepStmts = useServerPrepStmts)
+
+    override def setUseServerPrepStmts(useServerPrepStmts: Boolean): ConnectionProvider[F, A] =
+      this.copy(useServerPrepStmts = useServerPrepStmts)
+
     override def withBefore[B](before: Connection[F] => F[B]): ConnectionProvider[F, B] =
       Impl(
         host                    = host,
@@ -376,6 +413,9 @@ object ConnectionProvider:
         allowPublicKeyRetrieval = allowPublicKeyRetrieval,
         databaseTerm            = databaseTerm,
         logHandler              = logHandler,
+        tracer                  = tracer,
+        useCursorFetch          = useCursorFetch,
+        useServerPrepStmts      = useServerPrepStmts,
         before                  = Some(before),
         after                   = None
       )
@@ -399,6 +439,9 @@ object ConnectionProvider:
         allowPublicKeyRetrieval = allowPublicKeyRetrieval,
         databaseTerm            = databaseTerm,
         logHandler              = logHandler,
+        tracer                  = tracer,
+        useCursorFetch          = useCursorFetch,
+        useServerPrepStmts      = useServerPrepStmts,
         before                  = Some(before),
         after                   = Some(after)
       )
@@ -419,6 +462,8 @@ object ConnectionProvider:
             socketOptions           = socketOptions,
             readTimeout             = readTimeout,
             allowPublicKeyRetrieval = allowPublicKeyRetrieval,
+            useCursorFetch          = useCursorFetch,
+            useServerPrepStmts      = useServerPrepStmts,
             databaseTerm            = databaseTerm,
             logHandler              = logHandler
           )
@@ -436,6 +481,8 @@ object ConnectionProvider:
             socketOptions           = socketOptions,
             readTimeout             = readTimeout,
             allowPublicKeyRetrieval = allowPublicKeyRetrieval,
+            useCursorFetch          = useCursorFetch,
+            useServerPrepStmts      = useServerPrepStmts,
             databaseTerm            = databaseTerm,
             logHandler              = logHandler
           )
@@ -451,6 +498,8 @@ object ConnectionProvider:
             socketOptions           = socketOptions,
             readTimeout             = readTimeout,
             allowPublicKeyRetrieval = allowPublicKeyRetrieval,
+            useCursorFetch          = useCursorFetch,
+            useServerPrepStmts      = useServerPrepStmts,
             databaseTerm            = databaseTerm,
             logHandler              = logHandler
           )

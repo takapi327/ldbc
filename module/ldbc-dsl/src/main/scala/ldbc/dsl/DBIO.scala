@@ -154,21 +154,8 @@ object DBIO extends ParamBinder:
               (for
                 prepareStatement <- connection.prepareStatement(statement)
                 resultSet        <- paramBind(prepareStatement, params) >> prepareStatement.executeQuery()
-                result           <- {
-                  val builder = factory.newBuilder
-                  while resultSet.next() do
-                    decoder.decode(resultSet, 1) match
-                      case Right(value) => builder += value
-                      case Left(error)  =>
-                        throw new ldbc.dsl.exception.DecodeFailureException(
-                          error.message,
-                          decoder.offset,
-                          statement,
-                          error.cause
-                        )
-                  MonadCancelThrow[F].pure(builder.result())
-                }
-                _ <- prepareStatement.close()
+                result <- ResultSetConsumer.consume(resultSet, statement, factory)(using summon[MonadThrow[F]], decoder)
+                _      <- prepareStatement.close()
               yield result)
                 .onError(ex =>
                   connection.logHandler.run(LogEvent.ProcessingFailure(statement, params.map(_.value), ex))

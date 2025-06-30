@@ -15,7 +15,6 @@ import munit.CatsEffectSuite
 import ldbc.dsl.*
 import ldbc.dsl.codec.auto.generic.toSlowCompile.given
 import ldbc.dsl.codec.Codec
-import ldbc.dsl.exception.DecodeFailureException
 
 import ldbc.connector.*
 import ldbc.connector.exception.SQLException
@@ -38,6 +37,21 @@ class LdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
       connection.use { conn =>
         sql"SELECT D"
           .query[MyEnum]
+          .to[Option]
+          .readOnly(conn)
+      }
+    )
+  }
+
+  test(
+    "If the number of columns retrieved is different from the number of fields in the class to be mapped, an exception is raised."
+  ) {
+    case class City(id: Int, name: String, age: Int)
+
+    interceptIO[SQLException](
+      connection.use { conn =>
+        sql"SELECT Id, Name FROM city LIMIT 1"
+          .query[City]
           .to[Option]
           .readOnly(conn)
       }
@@ -723,21 +737,6 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
           .readOnly(conn)
       },
       Some((City(1, "Kabul"), Country("AFG", "Afghanistan")))
-    )
-  }
-
-  test(
-    "If the number of columns retrieved is different from the number of fields in the class to be mapped, an exception is raised."
-  ) {
-    case class City(id: Int, name: String, age: Int)
-
-    interceptIO[DecodeFailureException](
-      connection.use { conn =>
-        sql"SELECT Id, Name FROM city LIMIT 1"
-          .query[City]
-          .to[Option]
-          .readOnly(conn)
-      }
     )
   }
 

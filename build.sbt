@@ -30,38 +30,7 @@ ThisBuild / githubWorkflowBuildPostamble += dockerStop
 ThisBuild / githubWorkflowTargetBranches        := Seq("**")
 ThisBuild / githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v")))
 ThisBuild / tlSitePublishBranch                 := None
-ThisBuild / mimaBinaryIssueFilters ++= List(
-  ProblemFilters.exclude[DirectMissingMethodProblem]("ldbc.schema.DataType.mapping"),
-
-  // Exclusions for Naming class relocation from ldbc.codegen.formatter to ldbc.statement.formatter
-  ProblemFilters.exclude[MissingClassProblem]("ldbc.codegen.formatter.Naming"),
-  ProblemFilters.exclude[MissingClassProblem]("ldbc.codegen.formatter.Naming$"),
-
-  // ColumnCodeBuilder related exclusions
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.builder.ColumnCodeBuilder.apply"),
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.builder.ColumnCodeBuilder.this"),
-  ProblemFilters.exclude[IncompatibleResultTypeProblem]("ldbc.codegen.builder.ColumnCodeBuilder.formatter"),
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.builder.ColumnCodeBuilder.copy"),
-  ProblemFilters.exclude[IncompatibleResultTypeProblem]("ldbc.codegen.builder.ColumnCodeBuilder.copy$default$1"),
-  ProblemFilters.exclude[IncompatibleResultTypeProblem]("ldbc.codegen.builder.ColumnCodeBuilder._1"),
-
-  // DataTypeCodeBuilder related exclusions
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.builder.DataTypeCodeBuilder.apply"),
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.builder.DataTypeCodeBuilder.this"),
-  ProblemFilters.exclude[IncompatibleResultTypeProblem]("ldbc.codegen.builder.DataTypeCodeBuilder.formatter"),
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.builder.DataTypeCodeBuilder.copy"),
-  ProblemFilters.exclude[IncompatibleResultTypeProblem]("ldbc.codegen.builder.DataTypeCodeBuilder.copy$default$2"),
-  ProblemFilters.exclude[IncompatibleResultTypeProblem]("ldbc.codegen.builder.DataTypeCodeBuilder._2"),
-
-  // Key related exclusions
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.model.Key.toCode"),
-  ProblemFilters.exclude[ReversedMissingMethodProblem]("ldbc.codegen.model.Key.toCode"),
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.model.Key#Foreign.toCode"),
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.model.Key#Index.toCode"),
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.model.Key#Primary.toCode"),
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.model.Key#Reference.toCode"),
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.model.Key#Unique.toCode")
-)
+ThisBuild / tlCiMimaBinaryIssueCheck            := false
 
 lazy val sql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)

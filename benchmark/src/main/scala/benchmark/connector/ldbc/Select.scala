@@ -21,6 +21,7 @@ import cats.effect.unsafe.implicits.global
 import ldbc.sql.ResultSet
 
 import ldbc.connector.*
+import ldbc.connector.syntax.*
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
@@ -55,7 +56,7 @@ class Select:
       .default[IO]("127.0.0.1", 13306, "ldbc", "password", "benchmark")
       .setSSL(SSL.Trusted)
 
-  @Param(Array("100", "1000", "2000", "4000"))
+  @Param(Array("1000", "2000", "4000"))
   var len: Int = uninitialized
 
   @Benchmark
@@ -64,8 +65,9 @@ class Select:
       .use { conn =>
         for
           statement <- conn.createStatement()
-          resultSet <- statement.executeQuery(s"SELECT * FROM jdbc_statement_test LIMIT $len")
-        yield consume(resultSet)
+          resultSet <- statement.executeQuery(s"SELECT * FROM jdbc_prepare_statement_test LIMIT $len")
+          decoded   <- consume(resultSet)
+        yield decoded
       }
       .unsafeRunSync()
 
@@ -77,30 +79,29 @@ class Select:
           statement <- conn.prepareStatement("SELECT * FROM jdbc_prepare_statement_test LIMIT ?")
           _         <- statement.setInt(1, len)
           resultSet <- statement.executeQuery()
-        yield consume(resultSet)
+          decoded   <- consume(resultSet)
+        yield decoded
       }
       .unsafeRunSync()
 
-  private def consume(resultSet: ResultSet): List[BenchmarkType] =
-    val builder = List.newBuilder[BenchmarkType]
-    while resultSet.next() do
-      val c1  = resultSet.getLong(1)
-      val c2  = resultSet.getShort(2)
-      val c3  = resultSet.getInt(3)
-      val c4  = resultSet.getInt(4)
-      val c5  = resultSet.getInt(5)
-      val c6  = resultSet.getLong(6)
-      val c7  = resultSet.getFloat(7)
-      val c8  = resultSet.getDouble(8)
-      val c9  = resultSet.getBigDecimal(9)
-      val c10 = resultSet.getString(10)
-      val c11 = resultSet.getString(11)
-      val c12 = resultSet.getBoolean(12)
-      val c13 = resultSet.getDate(13)
-      val c14 = resultSet.getTime(14)
-      val c15 = resultSet.getTimestamp(15)
-      val c16 = resultSet.getTimestamp(16)
-
-      builder += ((c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16))
-
-    builder.result()
+  private def consume(resultSet: ResultSet[IO]): IO[List[BenchmarkType]] =
+    resultSet.whileM[List, BenchmarkType] {
+      for
+        c1  <- resultSet.getLong(1)
+        c2  <- resultSet.getShort(2)
+        c3  <- resultSet.getInt(3)
+        c4  <- resultSet.getInt(4)
+        c5  <- resultSet.getInt(5)
+        c6  <- resultSet.getLong(6)
+        c7  <- resultSet.getFloat(7)
+        c8  <- resultSet.getDouble(8)
+        c9  <- resultSet.getBigDecimal(9)
+        c10 <- resultSet.getString(10)
+        c11 <- resultSet.getString(11)
+        c12 <- resultSet.getBoolean(12)
+        c13 <- resultSet.getDate(13)
+        c14 <- resultSet.getTime(14)
+        c15 <- resultSet.getTimestamp(15)
+        c16 <- resultSet.getTimestamp(16)
+      yield (c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16)
+    }
