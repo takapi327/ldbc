@@ -6,12 +6,14 @@
 
 package ldbc.tests
 
+import cats.data.NonEmptyList
+
 import cats.effect.*
 
 import munit.*
 
 import ldbc.dsl.*
-import ldbc.dsl.exception.UnexpectedContinuation
+import ldbc.dsl.exception.*
 
 import ldbc.schema.*
 
@@ -577,3 +579,23 @@ trait TableSchemaSelectConnectionTest extends CatsEffectSuite:
       }
     )
   }
+
+  test(
+    "When nel is specified, if there is one or more data to be retrieved, it can be retrieved with NonEmptyList."
+  ) {
+    assertIO(
+      connection.use { conn =>
+        city.select(_.name).limit(5).query.nel.readOnly(conn)
+      },
+      NonEmptyList.of("Kabul", "Qandahar", "Herat", "Mazar-e-Sharif", "Amsterdam")
+    )
+  }
+
+  test("When nel is specified, an exception occurs if there is no data to be acquired.") {
+    interceptIO[UnexpectedEnd](
+      connection.use { conn =>
+        city.select(_.name).where(_.id === 9999999).query.nel.readOnly(conn)
+      }
+    )
+  }
+
