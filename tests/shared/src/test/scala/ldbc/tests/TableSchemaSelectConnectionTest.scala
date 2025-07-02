@@ -11,6 +11,7 @@ import cats.effect.*
 import munit.*
 
 import ldbc.dsl.*
+import ldbc.dsl.exception.UnexpectedContinuation
 
 import ldbc.schema.*
 
@@ -546,5 +547,32 @@ trait TableSchemaSelectConnectionTest extends CatsEffectSuite:
           )
         )
       )
+    )
+  }
+
+
+  test("If option is specified, the data to be acquired can be obtained with Some if the data to be acquired is one case.") {
+    assertIO(
+      connection.use { conn =>
+        city.select(_.name).limit(1).query.option.readOnly(conn)
+      },
+      Some("Kabul")
+    )
+  }
+
+  test("If option is specified, None is returned when there is no data to be acquired.") {
+    assertIO(
+      connection.use { conn =>
+        city.select(_.name).where(_.id === 9999999).query.option.readOnly(conn)
+      },
+      None
+    )
+  }
+
+  test("If option is specified, an exception occurs if there are two or more data to be acquired.") {
+    interceptIO[UnexpectedContinuation](
+      connection.use { conn =>
+        city.select(_.name).query.option.readOnly(conn)
+      }
     )
   }
