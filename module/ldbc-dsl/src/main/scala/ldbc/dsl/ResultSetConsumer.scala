@@ -7,11 +7,13 @@
 package ldbc.dsl
 
 import cats.*
+import cats.data.NonEmptyList
 import cats.syntax.all.*
 
 import ldbc.sql.ResultSet
 
 import ldbc.dsl.codec.Decoder
+import ldbc.dsl.exception.UnexpectedEnd
 import ldbc.dsl.free.ResultSetIO
 import ldbc.dsl.free.ResultSetIO.*
 import ldbc.dsl.util.FactoryCompat
@@ -50,6 +52,17 @@ object ResultSetConsumer:
   ): F[G[T]] =
     given FactoryCompat[T, G[T]] = factoryCompat
     summon[ResultSetConsumer[F, G[T]]].consume(resultSet, statement)
+
+  def consumeToNel[F[_]: MonadThrow, T: Decoder](
+    resultSet: ResultSet[F],
+    statement: String
+  ): F[NonEmptyList[T]] =
+    summon[ResultSetConsumer[F, List[T]]]
+      .consume(resultSet, statement)
+      .flatMap { results =>
+        if results.isEmpty then MonadThrow[F].raiseError(new UnexpectedEnd("No results found"))
+        else MonadThrow[F].pure(NonEmptyList.fromListUnsafe(results))
+      }
 
   given [F[_], T](using
     consumer: ResultSetConsumer[F, Option[T]],

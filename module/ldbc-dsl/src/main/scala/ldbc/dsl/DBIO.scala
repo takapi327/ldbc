@@ -7,6 +7,7 @@
 package ldbc.dsl
 
 import cats.*
+import cats.data.NonEmptyList
 import cats.free.Free
 import cats.syntax.all.*
 
@@ -66,6 +67,11 @@ object DBIO extends ParamBinder:
     params:    List[Parameter.Dynamic],
     decoder:   Decoder[A]
   ) extends DBIOA[Option[A]]
+  final case class QueryNel[A](
+    statement: String,
+    params:    List[Parameter.Dynamic],
+    decoder:   Decoder[A]
+  ) extends DBIOA[NonEmptyList[A]]
   final case class Update(statement: String, params: List[Parameter.Dynamic]) extends DBIOA[Int]
   final case class Returning[A](statement: String, params: List[Parameter.Dynamic], decoder: Decoder[A])
     extends DBIOA[A]
@@ -133,6 +139,8 @@ object DBIO extends ParamBinder:
     liftF(QueryTo(statement, params, decoder, factory))
   def queryOption[A](statement: String, params: List[Parameter.Dynamic], decoder: Decoder[A]): DBIO[Option[A]] =
     liftF(QueryOption(statement, params, decoder))
+  def queryNel[A](statement: String, params: List[Parameter.Dynamic], decoder: Decoder[A]): DBIO[NonEmptyList[A]] =
+    liftF(QueryNel(statement, params, decoder))
   def update(statement: String, params: List[Parameter.Dynamic]): DBIO[Int] =
     liftF(Update(statement, params))
   def returning[A](statement: String, params: List[Parameter.Dynamic], decoder: Decoder[A]): DBIO[A] =
@@ -193,6 +201,18 @@ object DBIO extends ParamBinder:
                 resultSet        <- paramBind(prepareStatement, params) >> prepareStatement.executeQuery()
                 result           <- decoded.foldMap(ResultSetIO.interpreter(resultSet))
                 _                <- prepareStatement.close()
+              yield result)
+                .onError(ex =>
+                  connection.logHandler.run(LogEvent.ProcessingFailure(statement, params.map(_.value), ex))
+                ) <*
+                connection.logHandler.run(LogEvent.Success(statement, params.map(_.value)))
+
+            case QueryNel(statement, params, decoder) =>
+              (for
+                prepareStatement <- connection.prepareStatement(statement)
+                resultSet        <- paramBind(prepareStatement, params) >> prepareStatement.executeQuery()
+                result <- ResultSetConsumer.consumeToNel(resultSet, statement)(using summon[MonadThrow[F]], decoder)
+                _      <- prepareStatement.close()
               yield result)
                 .onError(ex =>
                   connection.logHandler.run(LogEvent.ProcessingFailure(statement, params.map(_.value), ex))
