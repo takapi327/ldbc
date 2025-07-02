@@ -15,6 +15,7 @@ import munit.CatsEffectSuite
 import ldbc.dsl.*
 import ldbc.dsl.codec.auto.generic.toSlowCompile.given
 import ldbc.dsl.codec.Codec
+import ldbc.dsl.exception.UnexpectedContinuation
 
 import ldbc.connector.*
 import ldbc.connector.exception.SQLException
@@ -755,5 +756,33 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
         yield (a, b, c)).readOnly(conn)
       },
       (Some(MyEnum.A), Some(MyEnum.B), Some(MyEnum.C))
+    )
+  }
+
+  test(
+    "If option is specified, the data to be acquired can be obtained with Some if the data to be acquired is one case."
+  ) {
+    assertIO(
+      connection.use { conn =>
+        sql"SELECT Name FROM `city` LIMIT 1".query[String].option.readOnly(conn)
+      },
+      Some("Kabul")
+    )
+  }
+
+  test("If option is specified, None is returned when there is no data to be acquired.") {
+    assertIO(
+      connection.use { conn =>
+        sql"SELECT Name FROM `city` WHERE ID = 9999999".query[String].option.readOnly(conn)
+      },
+      None
+    )
+  }
+
+  test("If option is specified, an exception occurs if there are two or more data to be acquired.") {
+    interceptIO[UnexpectedContinuation](
+      connection.use { conn =>
+        sql"SELECT Name FROM `city`".query[String].option.readOnly(conn)
+      }
     )
   }
