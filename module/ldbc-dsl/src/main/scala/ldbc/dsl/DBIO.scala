@@ -180,13 +180,13 @@ object DBIO extends ParamBinder:
                             case false => ResultSetIO.pure(None)
                           }
                   next   <- ResultSetIO.next()
-                  result <- if next then
+                  result <- if next then {
                               ResultSetIO.raiseError(
                                 new UnexpectedContinuation(
                                   "Expected ResultSet exhaustion, but more rows were available."
                                 )
                               )
-                            else ResultSetIO.pure(data)
+                            } else ResultSetIO.pure(data)
                 yield result
               (for
                 prepareStatement <- connection.prepareStatement(statement)
