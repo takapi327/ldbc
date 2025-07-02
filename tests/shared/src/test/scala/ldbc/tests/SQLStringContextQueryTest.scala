@@ -799,7 +799,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
       NonEmptyList.of("Kabul", "Qandahar", "Herat", "Mazar-e-Sharif", "Amsterdam")
     )
   }
-  
+
   test("When nel is specified, an exception occurs if there is no data to be acquired.") {
     interceptIO[UnexpectedEnd](
       connection.use { conn =>

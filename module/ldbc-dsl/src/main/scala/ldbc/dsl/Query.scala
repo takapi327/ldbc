@@ -38,7 +38,7 @@ trait Query[T]:
    * If there is more than one row to be returned, an exception is raised.
    */
   def option: DBIO[Option[T]]
-  
+
   /**
    * A method to return the data to be retrieved from the database as a NonEmptyList type.
    * If there is no data, an exception is raised.
@@ -62,6 +62,6 @@ object Query:
 
     override def option: DBIO[Option[T]] =
       DBIO.queryOption(statement, params, decoder)
-      
+
     override def nel: DBIO[NonEmptyList[T]] =
       DBIO.queryNel(statement, params, decoder)

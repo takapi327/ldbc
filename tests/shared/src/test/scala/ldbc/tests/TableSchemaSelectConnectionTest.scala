@@ -598,4 +598,3 @@ trait TableSchemaSelectConnectionTest extends CatsEffectSuite:
       }
     )
   }
-

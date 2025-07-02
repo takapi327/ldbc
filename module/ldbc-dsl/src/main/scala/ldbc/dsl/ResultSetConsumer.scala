@@ -13,10 +13,10 @@ import cats.syntax.all.*
 import ldbc.sql.ResultSet
 
 import ldbc.dsl.codec.Decoder
+import ldbc.dsl.exception.UnexpectedEnd
 import ldbc.dsl.free.ResultSetIO
 import ldbc.dsl.free.ResultSetIO.*
 import ldbc.dsl.util.FactoryCompat
-import ldbc.dsl.exception.UnexpectedEnd
 
 /**
  * Trait for generating the specified data type from a ResultSet.
@@ -54,15 +54,14 @@ object ResultSetConsumer:
     summon[ResultSetConsumer[F, G[T]]].consume(resultSet, statement)
 
   def consumeToNel[F[_]: MonadThrow, T: Decoder](
-                                                resultSet:     ResultSet[F],
-                                                statement:     String,
-                                              ): F[NonEmptyList[T]] =
-    summon[ResultSetConsumer[F, List[T]]].consume(resultSet, statement)
+    resultSet: ResultSet[F],
+    statement: String
+  ): F[NonEmptyList[T]] =
+    summon[ResultSetConsumer[F, List[T]]]
+      .consume(resultSet, statement)
       .flatMap { results =>
-        if results.isEmpty then
-          MonadThrow[F].raiseError(new UnexpectedEnd("No results found"))
-        else
-          MonadThrow[F].pure(NonEmptyList.fromListUnsafe(results))
+        if results.isEmpty then MonadThrow[F].raiseError(new UnexpectedEnd("No results found"))
+        else MonadThrow[F].pure(NonEmptyList.fromListUnsafe(results))
       }
 
   given [F[_], T](using
