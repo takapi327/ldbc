@@ -30,6 +30,13 @@ trait Query[T]:
    * raised. Use the [[to]] method if you want to retrieve individual data.
    */
   def unsafe: DBIO[T]
+  
+  /**
+   * A method to return the data to be retrieved from the database as an Option type. If the data does not exist, None
+   * is returned.
+   * If there is more than one row to be returned, an exception is raised.
+   */
+  def option: DBIO[Option[T]]
 
 object Query:
 
@@ -45,3 +52,6 @@ object Query:
 
     override def unsafe: DBIO[T] =
       DBIO.queryA(statement, params, decoder)
+      
+    override def option: DBIO[Option[T]] =
+      DBIO.queryOption(statement, params, decoder)
