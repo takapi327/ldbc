@@ -17,9 +17,9 @@ import ldbc.sql.*
 import ldbc.sql.logging.LogEvent
 
 import ldbc.dsl.codec.Decoder
-import ldbc.dsl.util.FactoryCompat
 import ldbc.dsl.exception.UnexpectedContinuation
 import ldbc.dsl.free.ResultSetIO
+import ldbc.dsl.util.FactoryCompat
 
 /**
  * A trait that represents the execution of a query.
@@ -176,21 +176,23 @@ object DBIO extends ParamBinder:
               val decoded =
                 for
                   data <- ResultSetIO.next().flatMap {
-                    case true => decoder.decode(1, statement).map(Option(_))
-                    case false => ResultSetIO.pure(None)
-                  }
-                  next <- ResultSetIO.next()
+                            case true  => decoder.decode(1, statement).map(Option(_))
+                            case false => ResultSetIO.pure(None)
+                          }
+                  next   <- ResultSetIO.next()
                   result <- if next then
-                    ResultSetIO.raiseError(
-                      new UnexpectedContinuation("Expected ResultSet exhaustion, but more rows were available.")
-                    )
-                  else ResultSetIO.pure(data)
+                              ResultSetIO.raiseError(
+                                new UnexpectedContinuation(
+                                  "Expected ResultSet exhaustion, but more rows were available."
+                                )
+                              )
+                            else ResultSetIO.pure(data)
                 yield result
               (for
                 prepareStatement <- connection.prepareStatement(statement)
                 resultSet        <- paramBind(prepareStatement, params) >> prepareStatement.executeQuery()
-                result <- decoded.foldMap(ResultSetIO.interpreter(resultSet))
-                _ <- prepareStatement.close()
+                result           <- decoded.foldMap(ResultSetIO.interpreter(resultSet))
+                _                <- prepareStatement.close()
               yield result)
                 .onError(ex =>
                   connection.logHandler.run(LogEvent.ProcessingFailure(statement, params.map(_.value), ex))

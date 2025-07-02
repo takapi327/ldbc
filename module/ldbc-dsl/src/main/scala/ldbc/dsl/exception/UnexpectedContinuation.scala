@@ -7,12 +7,12 @@
 package ldbc.dsl.exception
 
 class UnexpectedContinuation(
-  message:   String,
+  message: String
 ) extends LdbcException(
-  message,
-  None,
-  None
-):
+    message,
+    None,
+    None
+  ):
 
   override def title: String = "Unexpected Continuation Exception"
   override protected def width = 180

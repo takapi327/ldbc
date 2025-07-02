@@ -550,8 +550,9 @@ trait TableSchemaSelectConnectionTest extends CatsEffectSuite:
     )
   }
 
-
-  test("If option is specified, the data to be acquired can be obtained with Some if the data to be acquired is one case.") {
+  test(
+    "If option is specified, the data to be acquired can be obtained with Some if the data to be acquired is one case."
+  ) {
     assertIO(
       connection.use { conn =>
         city.select(_.name).limit(1).query.option.readOnly(conn)

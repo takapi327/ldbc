@@ -758,8 +758,10 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
       (Some(MyEnum.A), Some(MyEnum.B), Some(MyEnum.C))
     )
   }
-  
-  test("If option is specified, the data to be acquired can be obtained with Some if the data to be acquired is one case.") {
+
+  test(
+    "If option is specified, the data to be acquired can be obtained with Some if the data to be acquired is one case."
+  ) {
     assertIO(
       connection.use { conn =>
         sql"SELECT Name FROM `city` LIMIT 1".query[String].option.readOnly(conn)
@@ -776,7 +778,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
       None
     )
   }
-  
+
   test("If option is specified, an exception occurs if there are two or more data to be acquired.") {
     interceptIO[UnexpectedContinuation](
       connection.use { conn =>
