@@ -256,7 +256,7 @@ object ResultSetIO:
             ): ResultSetIO[NonEmptyList[A]] =
     whileM[List, A](statement, decoder, summon[FactoryCompat[A, List[A]]]).flatMap { results =>
       if results.isEmpty then
-        module.raiseError(new UnexpectedContinuation("No results found"))
+        module.raiseError(new UnexpectedEnd("No results found"))
       else
         module.pure(NonEmptyList.fromListUnsafe(results))
     }
