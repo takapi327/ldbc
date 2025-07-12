@@ -16,15 +16,17 @@ import cats.data.Kleisli
 import cats.effect.kernel.{Poll, Sync}
 
 import ldbc.sql.*
+import ldbc.sql.logging.*
 
 /**
  * This code is based on doobie's code.
  * @see https://github.com/typelevel/doobie/blob/main/modules/free/src/main/scala/doobie/free/kleisliinterpreter.scala
  */
-class KleisliInterpreter[F[_]: Sync]:
+class KleisliInterpreter[F[_]: Sync](logHandler: LogHandler[F]):
   outer =>
 
   lazy val ConnectionInterpreter: ConnectionOp ~> ([A] =>> Kleisli[F, Connection[F], A]) = new ConnectionInterpreter {}
+  lazy val StatementInterpreter: StatementOp ~> ([A] =>> Kleisli[F, Statement[F], A]) = new StatementInterpreter {}
   lazy val PreparedStatementInterpreter: PreparedStatementOp ~> ([A] =>> Kleisli[F, PreparedStatement[F], A]) = new PreparedStatementInterpreter {}
   lazy val ResultSetInterpreter: ResultSetOp ~> ([A] =>> Kleisli[F, ResultSet[F], A]) = new ResultSetInterpreter {}
 
@@ -53,6 +55,7 @@ class KleisliInterpreter[F[_]: Sync]:
   def embed[J, A](e: Embedded[A]): Kleisli[F, J, A] =
     e match
       case Embedded.Connection(j, fa) => Kleisli(_ => fa.foldMap(ConnectionInterpreter).run(j.asInstanceOf[Connection[F]]))
+      case Embedded.Statement(j, fa) => Kleisli(_ => fa.foldMap(StatementInterpreter).run(j.asInstanceOf[Statement[F]]))
       case Embedded.PreparedStatement(j, fa) => Kleisli(_ => fa.foldMap(PreparedStatementInterpreter).run(j.asInstanceOf[PreparedStatement[F]]))
       case Embedded.ResultSet(j, fa) => Kleisli(_ => fa.foldMap(ResultSetInterpreter).run(j.asInstanceOf[ResultSet[F]]))
 
@@ -69,6 +72,7 @@ class KleisliInterpreter[F[_]: Sync]:
     override def uncancelable[A](body: Poll[ConnectionIO] => ConnectionIO[A]): Kleisli[F, Connection[F], A] = outer.uncancelable(this, ConnectionIO.capturePoll)(body)
     override def poll[A](poll: Any, fa: ConnectionIO[A]): Kleisli[F, Connection[F], A] = outer.poll(this)(poll, fa)
     override def onCancel[A](fa: ConnectionIO[A], fin: ConnectionIO[Unit]): Kleisli[F, Connection[F], A] = outer.onCancel(this)(fa, fin)
+    override def performLogging(event: LogEvent): Kleisli[F, Connection[F], Unit] = Kleisli(_ => logHandler.run(event))
 
     override def createStatement(): Kleisli[F, Connection[F], Statement[?]] = primitive[Connection[F], Statement[F]](_.createStatement())
       .asInstanceOf[Kleisli[F, Connection[F], Statement[?]]]
@@ -90,6 +94,23 @@ class KleisliInterpreter[F[_]: Sync]:
     override def setSavepoint(name: String): Kleisli[F, Connection[F], Savepoint] = primitive(_.setSavepoint(name))
     override def rollback(savepoint: Savepoint): Kleisli[F, Connection[F], Unit] = primitive(_.rollback(savepoint))
     override def releaseSavepoint(savepoint: Savepoint): Kleisli[F, Connection[F], Unit] = primitive(_.releaseSavepoint(savepoint))
+
+  trait StatementInterpreter extends StatementOp.Visitor[[A] =>> Kleisli[F, Statement[F], A]]:
+
+    override def embed[A](e: Embedded[A]): Kleisli[F, Statement[F], A] = outer.embed(e)
+    override def raiseError[A](err: Throwable): Kleisli[F, Statement[F], A] = outer.raiseError(err)
+    override def monotonic: Kleisli[F, Statement[F], FiniteDuration] = outer.monotonic[Statement[F]]
+    override def realTime: Kleisli[F, Statement[F], FiniteDuration] = outer.realTime[Statement[F]]
+    override def suspend[A](hint: Sync.Type)(thunk: => A): Kleisli[F, Statement[F], A] = outer.suspend(hint)(thunk)
+    override def canceled: Kleisli[F, Statement[F], Unit] = outer.canceled[Statement[F]]
+    override def handleErrorWith[A](fa: StatementIO[A])(f: Throwable => StatementIO[A]): Kleisli[F, Statement[F], A] = outer.handleErrorWith(this)(fa)(f)
+    override def forceR[A, B](fa: StatementIO[A])(fb: StatementIO[B]): Kleisli[F, Statement[F], B] = outer.forceR(this)(fa)(fb)
+    override def uncancelable[A](body: Poll[StatementIO] => StatementIO[A]): Kleisli[F, Statement[F], A] = outer.uncancelable(this, StatementIO.capturePoll)(body)
+    override def poll[A](poll: Any, fa: StatementIO[A]): Kleisli[F, Statement[F], A] = outer.poll(this)(poll, fa)
+    override def onCancel[A](fa: StatementIO[A], fin: StatementIO[Unit]): Kleisli[F, Statement[F], A] = outer.onCancel(this)(fa, fin)
+
+    override def addBatch(sql: String): Kleisli[F, Statement[F], Unit] = primitive(_.addBatch(sql))
+    override def executeBatch(): Kleisli[F, Statement[F], Array[Int]] = primitive(_.executeBatch())
 
   trait PreparedStatementInterpreter extends PreparedStatementOp.Visitor[[A] =>> Kleisli[F, PreparedStatement[F], A]]:
 
@@ -120,6 +141,11 @@ class KleisliInterpreter[F[_]: Sync]:
     override def setTime(index: Int, value: LocalTime): Kleisli[F, PreparedStatement[F], Unit] = primitive(_.setTime(index, value))
     override def setTimestamp(index: Int, value: LocalDateTime): Kleisli[F, PreparedStatement[F], Unit] = primitive(_.setTimestamp(index, value))
     override def setFetchSize(size: Int): Kleisli[F, PreparedStatement[F], Unit] = primitive(_.setFetchSize(size))
+    override def addBatch(sql: String): Kleisli[F, PreparedStatement[F], Unit] = primitive(_.addBatch(sql))
+    override def executeBatch(): Kleisli[F, PreparedStatement[F], Array[Int]] = primitive(_.executeBatch())
+    override def getGeneratedKeys(): Kleisli[F, PreparedStatement[F], ResultSet[?]] =
+      primitive[PreparedStatement[F], ResultSet[F]](_.getGeneratedKeys())
+        .asInstanceOf[Kleisli[F, PreparedStatement[F], ResultSet[?]]]
     override def executeQuery(): Kleisli[F, PreparedStatement[F], ResultSet[?]] =
       primitive[PreparedStatement[F], ResultSet[F]](_.executeQuery())
         .asInstanceOf[Kleisli[F, PreparedStatement[F], ResultSet[?]]]

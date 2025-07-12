@@ -77,6 +77,12 @@ object PreparedStatementOp:
     override def visit[F[_]](v: PreparedStatementOp.Visitor[F]): F[Unit] = v.setTimestamp(index, value)
   final case class SetFetchSize(size: Int) extends PreparedStatementOp[Unit]:
     override def visit[F[_]](v: PreparedStatementOp.Visitor[F]): F[Unit] = v.setFetchSize(size)
+  final case class AddBatch(sql: String) extends PreparedStatementOp[Unit]:
+    override def visit[F[_]](v: PreparedStatementOp.Visitor[F]): F[Unit] = v.addBatch(sql)
+  final case class ExecuteBatch() extends PreparedStatementOp[Array[Int]]:
+    override def visit[F[_]](v: PreparedStatementOp.Visitor[F]): F[Array[Int]] = v.executeBatch()
+  final case class GetGeneratedKeys() extends PreparedStatementOp[ResultSet[?]]:
+    override def visit[F[_]](v: PreparedStatementOp.Visitor[F]): F[ResultSet[?]] = v.getGeneratedKeys()
   final case class ExecuteQuery() extends PreparedStatementOp[ResultSet[?]]:
     override def visit[F[_]](v: PreparedStatementOp.Visitor[F]): F[ResultSet[?]] = v.executeQuery()
   final case class ExecuteUpdate() extends PreparedStatementOp[Int]:
@@ -85,7 +91,7 @@ object PreparedStatementOp:
     override def visit[F[_]](v: PreparedStatementOp.Visitor[F]): F[Unit] = v.setObject(index, value)
   final case class Execute() extends PreparedStatementOp[Boolean]:
     override def visit[F[_]](v: PreparedStatementOp.Visitor[F]): F[Boolean] = v.execute()
-  final case class AddBatch() extends PreparedStatementOp[Unit]:
+  case object AddBatch extends PreparedStatementOp[Unit]:
     override def visit[F[_]](v: PreparedStatementOp.Visitor[F]): F[Unit] = v.addBatch()
   final case class ExecuteLargeUpdate() extends PreparedStatementOp[Long]:
     override def visit[F[_]](v: PreparedStatementOp.Visitor[F]): F[Long] = v.executeLargeUpdate()
@@ -126,6 +132,9 @@ object PreparedStatementOp:
     def setDate(index: Int, value: LocalDate): F[Unit]
     def setTimestamp(index: Int, value: LocalDateTime): F[Unit]
     def setFetchSize(size: Int): F[Unit]
+    def addBatch(sql: String): F[Unit]
+    def executeBatch(): F[Array[Int]]
+    def getGeneratedKeys(): F[ResultSet[?]]
     def executeQuery(): F[ResultSet[?]]
     def executeUpdate(): F[Int]
     def setObject(index: Int, value: Object): F[Unit]
@@ -188,12 +197,15 @@ object PreparedStatementIO:
   def setDate(index: Int, value: LocalDate): PreparedStatementIO[Unit] = Free.liftF(PreparedStatementOp.SetDate(index, value))
   def setTimestamp(index: Int, value: LocalDateTime): PreparedStatementIO[Unit] = Free.liftF(PreparedStatementOp.SetTimestamp(index, value))
   def setFetchSize(size: Int): PreparedStatementIO[Unit] = Free.liftF(PreparedStatementOp.SetFetchSize(size))
+  def addBatch(sql: String): PreparedStatementIO[Unit] = Free.liftF(PreparedStatementOp.AddBatch(sql))
+  def executeBatch(): PreparedStatementIO[Array[Int]] = Free.liftF(PreparedStatementOp.ExecuteBatch())
+  def getGeneratedKeys(): PreparedStatementIO[ResultSet[?]] = Free.liftF(PreparedStatementOp.GetGeneratedKeys())
   def executeQuery(): PreparedStatementIO[ResultSet[?]] =
     Free.liftF(PreparedStatementOp.ExecuteQuery())
   def executeUpdate(): PreparedStatementIO[Int] = Free.liftF(PreparedStatementOp.ExecuteUpdate())
   def setObject(index: Int, value: Object): PreparedStatementIO[Unit] = Free.liftF(PreparedStatementOp.SetObject(index, value))
   def execute(): PreparedStatementIO[Boolean] = Free.liftF(PreparedStatementOp.Execute())
-  def addBatch(): PreparedStatementIO[Unit] = Free.liftF(PreparedStatementOp.AddBatch())
+  def addBatch(): PreparedStatementIO[Unit] = Free.liftF(PreparedStatementOp.AddBatch)
   def executeLargeUpdate(): PreparedStatementIO[Long] = Free.liftF(PreparedStatementOp.ExecuteLargeUpdate())
   def close(): PreparedStatementIO[Unit] = Free.liftF(PreparedStatementOp.Close())
 
@@ -261,10 +273,13 @@ object PreparedStatementIO:
           case PreparedStatementOp.SetDate(index, value) => preparedStatement.setDate(index, value)
           case PreparedStatementOp.SetTimestamp(index, value) => preparedStatement.setTimestamp(index, value)
           case PreparedStatementOp.SetFetchSize(size) => preparedStatement.setFetchSize(size)
+          case PreparedStatementOp.AddBatch(sql) => preparedStatement.addBatch(sql)
+          case PreparedStatementOp.ExecuteBatch() => preparedStatement.executeBatch()
+          case PreparedStatementOp.GetGeneratedKeys() => preparedStatement.getGeneratedKeys().asInstanceOf[F[ResultSet[?]]]
           case PreparedStatementOp.ExecuteQuery() => preparedStatement.executeQuery().asInstanceOf[F[ResultSet[?]]]
           case PreparedStatementOp.ExecuteUpdate() => preparedStatement.executeUpdate()
           case PreparedStatementOp.SetObject(index, value) => preparedStatement.setObject(index, value)
           case PreparedStatementOp.Execute() => preparedStatement.execute()
-          case PreparedStatementOp.AddBatch() => preparedStatement.addBatch()
+          case PreparedStatementOp.AddBatch => preparedStatement.addBatch()
           case PreparedStatementOp.ExecuteLargeUpdate() => preparedStatement.executeLargeUpdate()
           case PreparedStatementOp.Close() => preparedStatement.close()
