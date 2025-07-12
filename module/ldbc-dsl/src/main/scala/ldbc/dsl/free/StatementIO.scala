@@ -12,7 +12,7 @@ import cats.~>
 import cats.free.Free
 import cats.syntax.all.*
 
-import cats.effect.kernel.{Poll, Sync}
+import cats.effect.kernel.{ Poll, Sync }
 
 import ldbc.sql.*
 
@@ -50,25 +50,26 @@ object StatementOp:
 
   given Embeddable[StatementOp, Statement[?]] =
     new Embeddable[StatementOp, Statement[?]]:
-      override def embed[A](j: Statement[?], fa: Free[StatementOp, A]): Embedded.Statement[?, A] = Embedded.Statement(j, fa)
+      override def embed[A](j: Statement[?], fa: Free[StatementOp, A]): Embedded.Statement[?, A] =
+        Embedded.Statement(j, fa)
 
   trait Visitor[F[_]] extends (StatementOp ~> F):
     final def apply[A](fa: StatementOp[A]): F[A] = fa.visit(this)
 
-    def embed[A](e: Embedded[A]): F[A]
-    def handleErrorWith[A](fa: StatementIO[A])(f: Throwable => StatementIO[A]): F[A]
-    def raiseError[A](err: Throwable): F[A]
-    def monotonic: F[FiniteDuration]
-    def realTime: F[FiniteDuration]
-    def suspend[A](hint: Sync.Type)(thunk: => A): F[A]
-    def forceR[A, B](fa: StatementIO[A])(fb: StatementIO[B]): F[B]
-    def uncancelable[A](body: Poll[StatementIO] => StatementIO[A]): F[A]
-    def poll[A](poll: Any, fa: StatementIO[A]): F[A]
-    def canceled: F[Unit]
-    def onCancel[A](fa: StatementIO[A], fin: StatementIO[Unit]): F[A]
+    def embed[A](e:            Embedded[A]):                                      F[A]
+    def handleErrorWith[A](fa: StatementIO[A])(f:   Throwable => StatementIO[A]): F[A]
+    def raiseError[A](err:     Throwable):                                        F[A]
+    def monotonic:                                                                F[FiniteDuration]
+    def realTime:                                                                 F[FiniteDuration]
+    def suspend[A](hint:       Sync.Type)(thunk:    => A):                        F[A]
+    def forceR[A, B](fa:       StatementIO[A])(fb:  StatementIO[B]):              F[B]
+    def uncancelable[A](body:  Poll[StatementIO] => StatementIO[A]):              F[A]
+    def poll[A](poll:          Any, fa:             StatementIO[A]):              F[A]
+    def canceled:                                                                 F[Unit]
+    def onCancel[A](fa:        StatementIO[A], fin: StatementIO[Unit]):           F[A]
 
     def addBatch(sql: String): F[Unit]
-    def executeBatch(): F[Array[Int]]
+    def executeBatch():        F[Array[Int]]
 
 type StatementIO[A] = Free[StatementOp, A]
 
@@ -77,20 +78,23 @@ object StatementIO:
 
   def embed[F[_], J, A](j: J, fa: Free[F, A])(using ev: Embeddable[F, J]): Free[StatementOp, A] =
     Free.liftF(StatementOp.Embed(ev.embed(j, fa)))
-  def pure[A](a: A): StatementIO[A] = Free.pure(a)
+  def pure[A](a:         A):         StatementIO[A] = Free.pure(a)
   def raiseError[A](err: Throwable): StatementIO[A] = Free.liftF(StatementOp.RaiseError(err))
   def handleErrorWith[A](fa: StatementIO[A])(f: Throwable => StatementIO[A]): StatementIO[A] =
     Free.liftF[StatementOp, A](StatementOp.HandleErrorWith(fa, f))
   val monotonic: StatementIO[FiniteDuration] = Free.liftF[StatementOp, FiniteDuration](StatementOp.Monotonic)
-  val realtime: StatementIO[FiniteDuration] = Free.liftF[StatementOp, FiniteDuration](StatementOp.Realtime)
-  def suspend[A](hint: Sync.Type)(thunk: => A): StatementIO[A] = Free.liftF[StatementOp, A](StatementOp.Suspend(hint, () => thunk))
-  def forceR[A, B](fa: StatementIO[A])(fb: StatementIO[B]): StatementIO[B] = Free.liftF[StatementOp, B](StatementOp.ForceR(fa, fb))
-  def uncancelable[A](body: Poll[StatementIO] => StatementIO[A]): StatementIO[A] = Free.liftF[StatementOp, A](StatementOp.Uncancelable(body))
+  val realtime:  StatementIO[FiniteDuration] = Free.liftF[StatementOp, FiniteDuration](StatementOp.Realtime)
+  def suspend[A](hint: Sync.Type)(thunk: => A): StatementIO[A] =
+    Free.liftF[StatementOp, A](StatementOp.Suspend(hint, () => thunk))
+  def forceR[A, B](fa: StatementIO[A])(fb: StatementIO[B]): StatementIO[B] =
+    Free.liftF[StatementOp, B](StatementOp.ForceR(fa, fb))
+  def uncancelable[A](body: Poll[StatementIO] => StatementIO[A]): StatementIO[A] =
+    Free.liftF[StatementOp, A](StatementOp.Uncancelable(body))
   val canceled: StatementIO[Unit] = Free.liftF[StatementOp, Unit](StatementOp.Canceled)
-  def onCancel[A](fa: StatementIO[A], fin: StatementIO[Unit]): StatementIO[A] = Free.liftF[StatementOp, A](StatementOp.OnCancel(fa, fin))
+  def onCancel[A](fa: StatementIO[A], fin: StatementIO[Unit]): StatementIO[A] =
+    Free.liftF[StatementOp, A](StatementOp.OnCancel(fa, fin))
   def capturePoll[M[_]](mpoll: Poll[M]): Poll[StatementIO] = new Poll[StatementIO]:
     override def apply[A](fa: StatementIO[A]): StatementIO[A] = Free.liftF[StatementOp, A](StatementOp.Poll1(mpoll, fa))
-  
-  def addBatch(sql: String): StatementIO[Unit] = Free.liftF[StatementOp, Unit](StatementOp.AddBatch(sql))
-  def executeBatch(): StatementIO[Array[Int]] = Free.liftF[StatementOp, Array[Int]](StatementOp.ExecuteBatch())
-  
+
+  def addBatch(sql: String): StatementIO[Unit]       = Free.liftF[StatementOp, Unit](StatementOp.AddBatch(sql))
+  def executeBatch():        StatementIO[Array[Int]] = Free.liftF[StatementOp, Array[Int]](StatementOp.ExecuteBatch())

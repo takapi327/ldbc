@@ -14,9 +14,10 @@ import cats.free.Free
 import cats.MonadThrow
 
 import ldbc.sql.{ ResultSet, ResultSetMetaData }
-import ldbc.dsl.util.FactoryCompat
+
 import ldbc.dsl.codec.Decoder
 import ldbc.dsl.exception.*
+import ldbc.dsl.util.FactoryCompat
 
 sealed trait ResultSetOp[A]:
   def visit[F[_]](v: ResultSetOp.Visitor[F]): F[A]
@@ -24,152 +25,152 @@ sealed trait ResultSetOp[A]:
 object ResultSetOp:
   final case class Embed[A](e: Embedded[A]) extends ResultSetOp[A]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[A] = v.embed(e)
-  final case class Next()                                    extends ResultSetOp[Boolean]:
+  final case class Next() extends ResultSetOp[Boolean]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[Boolean] = v.next()
-  final case class Close()                                   extends ResultSetOp[Unit]:
+  final case class Close() extends ResultSetOp[Unit]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[Unit] = v.close()
-  final case class WasNull()                                 extends ResultSetOp[Boolean]:
+  final case class WasNull() extends ResultSetOp[Boolean]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[Boolean] = v.wasNull()
-  final case class GetString(columnIndex: Int)               extends ResultSetOp[String]:
+  final case class GetString(columnIndex: Int) extends ResultSetOp[String]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[String] = v.getString(columnIndex)
-  final case class GetBoolean(columnIndex: Int)              extends ResultSetOp[Boolean]:
+  final case class GetBoolean(columnIndex: Int) extends ResultSetOp[Boolean]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[Boolean] = v.getBoolean(columnIndex)
-  final case class GetByte(columnIndex: Int)                 extends ResultSetOp[Byte]:
+  final case class GetByte(columnIndex: Int) extends ResultSetOp[Byte]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[Byte] = v.getByte(columnIndex)
-  final case class GetShort(columnIndex: Int)                extends ResultSetOp[Short]:
+  final case class GetShort(columnIndex: Int) extends ResultSetOp[Short]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[Short] = v.getShort(columnIndex)
-  final case class GetInt(columnIndex: Int)                  extends ResultSetOp[Int]:
+  final case class GetInt(columnIndex: Int) extends ResultSetOp[Int]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[Int] = v.getInt(columnIndex)
-  final case class GetLong(columnIndex: Int)                 extends ResultSetOp[Long]:
+  final case class GetLong(columnIndex: Int) extends ResultSetOp[Long]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[Long] = v.getLong(columnIndex)
-  final case class GetFloat(columnIndex: Int)                extends ResultSetOp[Float]:
+  final case class GetFloat(columnIndex: Int) extends ResultSetOp[Float]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[Float] = v.getFloat(columnIndex)
-  final case class GetDouble(columnIndex: Int)               extends ResultSetOp[Double]:
+  final case class GetDouble(columnIndex: Int) extends ResultSetOp[Double]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[Double] = v.getDouble(columnIndex)
-  final case class GetBytes(columnIndex: Int)                extends ResultSetOp[Array[Byte]]:
+  final case class GetBytes(columnIndex: Int) extends ResultSetOp[Array[Byte]]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[Array[Byte]] = v.getBytes(columnIndex)
-  final case class GetDate(columnIndex: Int)                 extends ResultSetOp[LocalDate]:
+  final case class GetDate(columnIndex: Int) extends ResultSetOp[LocalDate]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[LocalDate] = v.getDate(columnIndex)
-  final case class GetTime(columnIndex: Int)                 extends ResultSetOp[LocalTime]:
+  final case class GetTime(columnIndex: Int) extends ResultSetOp[LocalTime]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[LocalTime] = v.getTime(columnIndex)
-  final case class GetTimestamp(columnIndex: Int)            extends ResultSetOp[LocalDateTime]:
+  final case class GetTimestamp(columnIndex: Int) extends ResultSetOp[LocalDateTime]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[LocalDateTime] = v.getTimestamp(columnIndex)
-  final case class GetStringByLabel(columnLabel: String)     extends ResultSetOp[String]:
+  final case class GetStringByLabel(columnLabel: String) extends ResultSetOp[String]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[String] = v.getString(columnLabel)
-  final case class GetBooleanByLabel(columnLabel: String)    extends ResultSetOp[Boolean]:
+  final case class GetBooleanByLabel(columnLabel: String) extends ResultSetOp[Boolean]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[Boolean] = v.getBoolean(columnLabel)
-  final case class GetByteByLabel(columnLabel: String)       extends ResultSetOp[Byte]:
+  final case class GetByteByLabel(columnLabel: String) extends ResultSetOp[Byte]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[Byte] = v.getByte(columnLabel)
-  final case class GetShortByLabel(columnLabel: String)      extends ResultSetOp[Short]:
+  final case class GetShortByLabel(columnLabel: String) extends ResultSetOp[Short]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[Short] = v.getShort(columnLabel)
-  final case class GetIntByLabel(columnLabel: String)        extends ResultSetOp[Int]:
+  final case class GetIntByLabel(columnLabel: String) extends ResultSetOp[Int]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[Int] = v.getInt(columnLabel)
-  final case class GetLongByLabel(columnLabel: String)       extends ResultSetOp[Long]:
+  final case class GetLongByLabel(columnLabel: String) extends ResultSetOp[Long]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[Long] = v.getLong(columnLabel)
-  final case class GetFloatByLabel(columnLabel: String)      extends ResultSetOp[Float]:
+  final case class GetFloatByLabel(columnLabel: String) extends ResultSetOp[Float]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[Float] = v.getFloat(columnLabel)
-  final case class GetDoubleByLabel(columnLabel: String)     extends ResultSetOp[Double]:
+  final case class GetDoubleByLabel(columnLabel: String) extends ResultSetOp[Double]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[Double] = v.getDouble(columnLabel)
-  final case class GetBytesByLabel(columnLabel: String)      extends ResultSetOp[Array[Byte]]:
+  final case class GetBytesByLabel(columnLabel: String) extends ResultSetOp[Array[Byte]]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[Array[Byte]] = v.getBytes(columnLabel)
-  final case class GetDateByLabel(columnLabel: String)       extends ResultSetOp[LocalDate]:
+  final case class GetDateByLabel(columnLabel: String) extends ResultSetOp[LocalDate]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[LocalDate] = v.getDate(columnLabel)
-  final case class GetTimeByLabel(columnLabel: String)       extends ResultSetOp[LocalTime]:
+  final case class GetTimeByLabel(columnLabel: String) extends ResultSetOp[LocalTime]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[LocalTime] = v.getTime(columnLabel)
-  final case class GetTimestampByLabel(columnLabel: String)  extends ResultSetOp[LocalDateTime]:
+  final case class GetTimestampByLabel(columnLabel: String) extends ResultSetOp[LocalDateTime]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[LocalDateTime] = v.getTimestamp(columnLabel)
-  final case class GetMetaData()                             extends ResultSetOp[ResultSetMetaData]:
+  final case class GetMetaData() extends ResultSetOp[ResultSetMetaData]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[ResultSetMetaData] = v.getMetaData()
-  final case class GetBigDecimal(columnIndex: Int)           extends ResultSetOp[BigDecimal]:
+  final case class GetBigDecimal(columnIndex: Int) extends ResultSetOp[BigDecimal]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[BigDecimal] = v.getBigDecimal(columnIndex)
   final case class GetBigDecimalByLabel(columnLabel: String) extends ResultSetOp[BigDecimal]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[BigDecimal] = v.getBigDecimal(columnLabel)
-  final case class IsBeforeFirst()                           extends ResultSetOp[Boolean]:
+  final case class IsBeforeFirst() extends ResultSetOp[Boolean]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[Boolean] = v.isBeforeFirst()
-  final case class IsFirst()                                 extends ResultSetOp[Boolean]:
+  final case class IsFirst() extends ResultSetOp[Boolean]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[Boolean] = v.isFirst()
-  final case class IsAfterLast()                             extends ResultSetOp[Boolean]:
+  final case class IsAfterLast() extends ResultSetOp[Boolean]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[Boolean] = v.isAfterLast()
-  final case class IsLast()                                  extends ResultSetOp[Boolean]:
+  final case class IsLast() extends ResultSetOp[Boolean]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[Boolean] = v.isLast()
-  final case class BeforeFirst()                             extends ResultSetOp[Unit]:
+  final case class BeforeFirst() extends ResultSetOp[Unit]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[Unit] = v.beforeFirst()
-  final case class AfterLast()                               extends ResultSetOp[Unit]:
+  final case class AfterLast() extends ResultSetOp[Unit]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[Unit] = v.afterLast()
-  final case class First()                                   extends ResultSetOp[Boolean]:
+  final case class First() extends ResultSetOp[Boolean]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[Boolean] = v.first()
-  final case class Last()                                    extends ResultSetOp[Boolean]:
+  final case class Last() extends ResultSetOp[Boolean]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[Boolean] = v.last()
-  final case class GetRow()                                  extends ResultSetOp[Int]:
+  final case class GetRow() extends ResultSetOp[Int]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[Int] = v.getRow()
-  final case class Absolute(row: Int)                        extends ResultSetOp[Boolean]:
+  final case class Absolute(row: Int) extends ResultSetOp[Boolean]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[Boolean] = v.absolute(row)
-  final case class Relative(rows: Int)                       extends ResultSetOp[Boolean]:
+  final case class Relative(rows: Int) extends ResultSetOp[Boolean]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[Boolean] = v.relative(rows)
-  final case class Previous()                                extends ResultSetOp[Boolean]:
+  final case class Previous() extends ResultSetOp[Boolean]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[Boolean] = v.previous()
-  final case class GetType()                                 extends ResultSetOp[Int]:
+  final case class GetType() extends ResultSetOp[Int]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[Int] = v.getType()
-  final case class GetConcurrency()                          extends ResultSetOp[Int]:
+  final case class GetConcurrency() extends ResultSetOp[Int]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[Int] = v.getConcurrency()
-  final case class RaiseError[A](e: Throwable)               extends ResultSetOp[A]:
+  final case class RaiseError[A](e: Throwable) extends ResultSetOp[A]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[A] = v.raiseError(e)
 
   given Embeddable[ResultSetOp, ResultSet[?]] =
     new Embeddable[ResultSetOp, ResultSet[?]]:
-      override def embed[A](j: ResultSet[?], fa: Free[ResultSetOp, A]): Embedded.ResultSet[?, A] = Embedded.ResultSet(j, fa)
+      override def embed[A](j: ResultSet[?], fa: Free[ResultSetOp, A]): Embedded.ResultSet[?, A] =
+        Embedded.ResultSet(j, fa)
 
   trait Visitor[F[_]] extends (ResultSetOp ~> F):
     final def apply[A](fa: ResultSetOp[A]): F[A] = fa.visit(this)
 
-    def embed[A](e: Embedded[A]): F[A]
-    def raiseError[A](err: Throwable): F[A]
+    def embed[A](e:        Embedded[A]): F[A]
+    def raiseError[A](err: Throwable):   F[A]
 
-    def next(): F[Boolean]
-    def close(): F[Unit]
-    def wasNull(): F[Boolean]
-    def getString(columnIndex: Int): F[String]
-    def getBoolean(columnIndex: Int): F[Boolean]
-    def getByte(columnIndex: Int): F[Byte]
-    def getShort(columnIndex: Int): F[Short]
-    def getInt(columnIndex: Int): F[Int]
-    def getLong(columnIndex: Int): F[Long]
-    def getFloat(columnIndex: Int): F[Float]
-    def getDouble(columnIndex: Int): F[Double]
-    def getBytes(columnIndex: Int): F[Array[Byte]]
-    def getDate(columnIndex: Int): F[LocalDate]
-    def getTime(columnIndex: Int): F[LocalTime]
-    def getTimestamp(columnIndex: Int): F[LocalDateTime]
-    def getString(columnLabel: String): F[String]
-    def getBoolean(columnLabel: String): F[Boolean]
-    def getByte(columnLabel: String): F[Byte]
-    def getShort(columnLabel: String): F[Short]
-    def getInt(columnLabel: String): F[Int]
-    def getLong(columnLabel: String): F[Long]
-    def getFloat(columnLabel: String): F[Float]
-    def getDouble(columnLabel: String): F[Double]
-    def getBytes(columnLabel: String): F[Array[Byte]]
-    def getDate(columnLabel: String): F[LocalDate]
-    def getTime(columnLabel: String): F[LocalTime]
-    def getTimestamp(columnLabel: String): F[LocalDateTime]
-    def getMetaData(): F[ResultSetMetaData]
-    def getBigDecimal(columnIndex: Int): F[BigDecimal]
+    def next():                             F[Boolean]
+    def close():                            F[Unit]
+    def wasNull():                          F[Boolean]
+    def getString(columnIndex:     Int):    F[String]
+    def getBoolean(columnIndex:    Int):    F[Boolean]
+    def getByte(columnIndex:       Int):    F[Byte]
+    def getShort(columnIndex:      Int):    F[Short]
+    def getInt(columnIndex:        Int):    F[Int]
+    def getLong(columnIndex:       Int):    F[Long]
+    def getFloat(columnIndex:      Int):    F[Float]
+    def getDouble(columnIndex:     Int):    F[Double]
+    def getBytes(columnIndex:      Int):    F[Array[Byte]]
+    def getDate(columnIndex:       Int):    F[LocalDate]
+    def getTime(columnIndex:       Int):    F[LocalTime]
+    def getTimestamp(columnIndex:  Int):    F[LocalDateTime]
+    def getString(columnLabel:     String): F[String]
+    def getBoolean(columnLabel:    String): F[Boolean]
+    def getByte(columnLabel:       String): F[Byte]
+    def getShort(columnLabel:      String): F[Short]
+    def getInt(columnLabel:        String): F[Int]
+    def getLong(columnLabel:       String): F[Long]
+    def getFloat(columnLabel:      String): F[Float]
+    def getDouble(columnLabel:     String): F[Double]
+    def getBytes(columnLabel:      String): F[Array[Byte]]
+    def getDate(columnLabel:       String): F[LocalDate]
+    def getTime(columnLabel:       String): F[LocalTime]
+    def getTimestamp(columnLabel:  String): F[LocalDateTime]
+    def getMetaData():                      F[ResultSetMetaData]
+    def getBigDecimal(columnIndex: Int):    F[BigDecimal]
     def getBigDecimal(columnLabel: String): F[BigDecimal]
-    def isBeforeFirst(): F[Boolean]
-    def isFirst(): F[Boolean]
-    def isAfterLast(): F[Boolean]
-    def isLast(): F[Boolean]
-    def beforeFirst(): F[Unit]
-    def afterLast(): F[Unit]
-    def first(): F[Boolean]
-    def last(): F[Boolean]
-    def getRow(): F[Int]
-    def absolute(row: Int): F[Boolean]
-    def relative(rows: Int): F[Boolean]
-    def previous(): F[Boolean]
-    def getType(): F[Int]
-    def getConcurrency(): F[Int]
-
+    def isBeforeFirst():                    F[Boolean]
+    def isFirst():                          F[Boolean]
+    def isAfterLast():                      F[Boolean]
+    def isLast():                           F[Boolean]
+    def beforeFirst():                      F[Unit]
+    def afterLast():                        F[Unit]
+    def first():                            F[Boolean]
+    def last():                             F[Boolean]
+    def getRow():                           F[Int]
+    def absolute(row:              Int):    F[Boolean]
+    def relative(rows:             Int):    F[Boolean]
+    def previous():                         F[Boolean]
+    def getType():                          F[Int]
+    def getConcurrency():                   F[Int]
 
 type ResultSetIO[A] = Free[ResultSetOp, A]
 
@@ -227,45 +228,43 @@ object ResultSetIO:
   def getConcurrency():    ResultSetIO[Int]     = Free.liftF(ResultSetOp.GetConcurrency())
 
   def unique[T](
-                 statement: String,
-                 decoder:   Decoder[T]
-               ): ResultSetIO[T] =
+    statement: String,
+    decoder:   Decoder[T]
+  ): ResultSetIO[T] =
     module.next().flatMap {
       case true  => decoder.decode(1, statement)
       case false => module.raiseError(new UnexpectedContinuation("Expected ResultSet to have at least one row."))
     }
 
   def whileM[G[_], T](
-                       statement: String,
-                       decoder: Decoder[T],
-                       factoryCompat: FactoryCompat[T, G[T]]
-                     ): ResultSetIO[G[T]] =
+    statement:     String,
+    decoder:       Decoder[T],
+    factoryCompat: FactoryCompat[T, G[T]]
+  ): ResultSetIO[G[T]] =
     val builder = factoryCompat.newBuilder
 
     def loop(acc: collection.mutable.Builder[T, G[T]]): ResultSetIO[collection.mutable.Builder[T, G[T]]] =
       module.next().flatMap {
-        case true => decoder.decode(1, statement).flatMap(v => loop(acc += v))
+        case true  => decoder.decode(1, statement).flatMap(v => loop(acc += v))
         case false => module.pure(acc)
       }
 
     loop(builder).map(_.result())
 
   def nel[A](
-              statement: String,
-              decoder:   Decoder[A]
-            ): ResultSetIO[NonEmptyList[A]] =
+    statement: String,
+    decoder:   Decoder[A]
+  ): ResultSetIO[NonEmptyList[A]] =
     whileM[List, A](statement, decoder, summon[FactoryCompat[A, List[A]]]).flatMap { results =>
-      if results.isEmpty then
-        module.raiseError(new UnexpectedEnd("No results found"))
-      else
-        module.pure(NonEmptyList.fromListUnsafe(results))
+      if results.isEmpty then module.raiseError(new UnexpectedEnd("No results found"))
+      else module.pure(NonEmptyList.fromListUnsafe(results))
     }
 
   extension [F[_]: MonadThrow](resultSet: ResultSet[F])
     def interpreter: ResultSetOp ~> F =
       new (ResultSetOp ~> F):
         override def apply[A](fa: ResultSetOp[A]): F[A] = fa match
-          case ResultSetOp.Embed(e)                         => ???
+          case ResultSetOp.Embed(e)                          => ???
           case ResultSetOp.Next()                            => resultSet.next()
           case ResultSetOp.Close()                           => resultSet.close()
           case ResultSetOp.WasNull()                         => resultSet.wasNull()

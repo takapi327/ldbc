@@ -11,13 +11,16 @@ import cats.effect.*
 import munit.*
 
 import ldbc.sql.*
-import ldbc.connector.*
+
 import ldbc.dsl.*
+
+import ldbc.connector.*
 
 class LdbcStreamQueryTest extends StreamQueryTest:
 
   override def provider: Provider[IO] =
-    ConnectionProvider.default[IO](host, port, user, password, database)
+    ConnectionProvider
+      .default[IO](host, port, user, password, database)
       .setSSL(SSL.None)
       .setUseCursorFetch(true)
       .setAllowPublicKeyRetrieval(true)
@@ -32,45 +35,17 @@ trait StreamQueryTest extends CatsEffectSuite:
 
   def provider: Provider[IO]
 
-  def stream(preparedStatement: ldbc.sql.PreparedStatement[IO]): fs2.Stream[IO, String] = fs2.Stream.bracket(preparedStatement.executeQuery())(_.close()).flatMap { resultSet =>
-    fs2.Stream.unfoldEval(resultSet) { rs =>
-      rs.next().flatMap {
-        case true  => rs.getString("Name").map(name => Some((name, rs)))
-        case false => IO.pure(None)
-      }
-    }
-  }
-
   test("Stream support test") {
     assertIO(
       provider.use { conn =>
-        sql"SELECT Name FROM `city`".query[String].stream(conn).take(5).compile.toList
+        sql"SELECT Name FROM `city`".query[String].stream.take(5).compile.toList.readOnly(conn)
       },
       List(
         "Kabul",
         "Qandahar",
         "Herat",
         "Mazar-e-Sharif",
-        "Tirana"
+        "Amsterdam"
       )
     )
   }
-
-  //test("") {
-  //  assertIO(
-  //    provider.use { conn =>
-  //      for
-  //        preparedStatement <- conn.prepareStatement("SELECT Name FROM `city`")
-  //        _ <- preparedStatement.setFetchSize(1)
-  //        names             <- stream(preparedStatement).compile.toList
-  //      yield names
-  //    },
-  //    List(
-  //      "Kabul",
-  //      "Qandahar",
-  //      "Herat",
-  //      "Mazar-e-Sharif",
-  //      "Tirana"
-  //    )
-  //  )
-  //}

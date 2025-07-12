@@ -16,8 +16,9 @@ import cats.free.Free
 sealed trait Embedded[A]
 object Embedded:
   final case class Connection[F[_], A](c: ldbc.sql.Connection[F], ci: ConnectionIO[A]) extends Embedded[A]
-  final case class Statement[F[_], A](p: ldbc.sql.Statement[F], pi: StatementIO[A]) extends Embedded[A]
-  final case class PreparedStatement[F[_], A](p: ldbc.sql.PreparedStatement[F], pi: PreparedStatementIO[A]) extends Embedded[A]
+  final case class Statement[F[_], A](p: ldbc.sql.Statement[F], pi: StatementIO[A])    extends Embedded[A]
+  final case class PreparedStatement[F[_], A](p: ldbc.sql.PreparedStatement[F], pi: PreparedStatementIO[A])
+    extends Embedded[A]
   final case class ResultSet[F[_], A](r: ldbc.sql.ResultSet[F], ri: ResultSetIO[A]) extends Embedded[A]
 
 trait Embeddable[F[_], J]:
