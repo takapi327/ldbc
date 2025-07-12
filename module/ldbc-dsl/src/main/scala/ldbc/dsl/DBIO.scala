@@ -15,7 +15,6 @@ import cats.syntax.all.*
 
 import cats.effect.*
 import cats.effect.kernel.{ CancelScope, Poll, Sync }
-import cats.effect.kernel.Resource.ExitCase
 
 import ldbc.sql.*
 import ldbc.sql.logging.LogEvent
@@ -243,16 +242,8 @@ object DBIO:
 
     def transaction[F[_]: Sync](connection: Connection[F]): F[A] =
       val interpreter = new KleisliInterpreter[F](connection.logHandler).ConnectionInterpreter
-      val acquire: ConnectionIO[A] = ConnectionIO.setReadOnly(false) *> ConnectionIO.setAutoCommit(false) *> dbio
-
-      val release = (_: A, exitCode: ExitCase) =>
-        (exitCode match
-          case ExitCase.Errored(_) | ExitCase.Canceled => ConnectionIO.rollback()
-          case _                                       => ConnectionIO.commit()
-        ) *> ConnectionIO.setAutoCommit(true)
-
-      Resource
-        .makeCase(acquire)(release)
-        .use(ConnectionIO.pure)
+      ((ConnectionIO.setReadOnly(false) *> ConnectionIO.setAutoCommit(false) *> dbio).onError {
+        _ => ConnectionIO.rollback()
+      } <* ConnectionIO.commit() <* ConnectionIO.setAutoCommit(true))
         .foldMap(interpreter)
         .run(connection)
