@@ -11,7 +11,6 @@ import java.time.*
 import cats.~>
 import cats.data.NonEmptyList
 import cats.free.Free
-import cats.MonadThrow
 
 import ldbc.sql.{ ResultSet, ResultSetMetaData }
 

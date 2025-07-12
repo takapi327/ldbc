@@ -10,7 +10,7 @@ import java.time.*
 
 import scala.concurrent.duration.FiniteDuration
 
-import cats.{ ~>, Applicative, MonadThrow }
+import cats.{ ~>, Applicative }
 import cats.free.Free
 import cats.syntax.all.*
 
