@@ -163,14 +163,14 @@ object DBIO:
     } <*
       ConnectionIO.performLogging(LogEvent.Success(statements.mkString("\n"), List.empty))
 
-  def stream[A](statement: String, params: List[Parameter.Dynamic], decoder: Decoder[A]): fs2.Stream[DBIO, A] =
+  def stream[A](statement: String, params: List[Parameter.Dynamic], decoder: Decoder[A], fetchSize: Int): fs2.Stream[DBIO, A] =
     (for
       preparedStatement              <- fs2.Stream.eval(ConnectionIO.prepareStatement(statement))
       (preparedStatement, resultSet) <- fs2.Stream.bracket {
                                           ConnectionIO.embed(
                                             preparedStatement,
                                             for
-                                              _         <- PreparedStatementIO.setFetchSize(1)
+                                              _         <- PreparedStatementIO.setFetchSize(fetchSize)
                                               _         <- PreparedStatementIO.paramBind(params)
                                               resultSet <- PreparedStatementIO.executeQuery()
                                             yield (preparedStatement, resultSet)

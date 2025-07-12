@@ -51,6 +51,15 @@ trait Query[T]:
    */
   def stream: fs2.Stream[DBIO, T]
 
+  /**
+   * A method to return the data to be retrieved from the database as a stream with a specified fetch size.
+   * If there is no data, an empty stream is returned.
+   *
+   * @param fetchSize
+   *   The number of rows to be fetched at a time
+   */
+  def stream(fetchSize: Int): fs2.Stream[DBIO, T]
+
 object Query:
 
   private[ldbc] case class Impl[T](
@@ -72,5 +81,7 @@ object Query:
     override def nel: DBIO[NonEmptyList[T]] =
       DBIO.queryNel(statement, params, decoder)
 
-    override def stream: fs2.Stream[DBIO, T] =
-      DBIO.stream(statement, params, decoder)
+    override def stream: fs2.Stream[DBIO, T] = stream(1)
+      
+    override def stream(fetchSize: Int): fs2.Stream[DBIO, T] =
+      DBIO.stream(statement, params, decoder, fetchSize)
