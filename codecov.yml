@@ -24,3 +24,4 @@ coverage:
     - "module/ldbc-schema/src/main/scala/ldbc/schema/Character.scala"
     - "module/ldbc-hikari/src/main/scala/ldbc/hikari/Configuration.scala"
     - "module/ldbc-dsl/src/main/scala/ldbc/dsl/ResultSetConsumer.scala"
+    - "module/ldbc-dsl/src/main/scala/ldbc/dsl/free"
