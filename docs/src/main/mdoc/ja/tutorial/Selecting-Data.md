@@ -249,6 +249,146 @@ sql"SELECT id, name, department FROM employees"
   }
 ```
 
+## ストリーミングによる大量データの効率的な処理
+
+大量のデータを処理する場合、すべてのデータを一度にメモリに読み込むとメモリ不足になる可能性があります。ldbcでは、**ストリーミング**を使ってデータを効率的に処理できます。
+
+### ストリーミングの基本的な使い方
+
+ストリーミングを使用すると、データを少しずつ取得して処理できるため、メモリ使用量を大幅に削減できます：
+
+```scala
+import fs2.Stream
+import cats.effect.*
+
+// 基本的なストリーミング
+val cityStream: Stream[DBIO, String] = 
+  sql"SELECT name FROM city"
+    .query[String]
+    .stream                    // Stream[DBIO, String]
+
+// 最初の5件のみを取得して処理
+val firstFiveCities: IO[List[String]] = provider.use { conn =>
+  cityStream
+    .take(5)                   // 最初の5件のみ
+    .compile.toList            // StreamをListに変換
+    .readOnly(conn)            // IO[List[String]]
+}
+```
+
+### フェッチサイズの指定
+
+`stream(fetchSize: Int)`メソッドを使用して、一度に取得する行数を制御できます：
+
+```scala
+// 一度に10行ずつ取得
+val efficientStream: Stream[DBIO, String] = 
+  sql"SELECT name FROM city"
+    .query[String]
+    .stream(10)                // fetchSize = 10
+
+// 大量データを効率的に処理
+val processLargeData: IO[Int] = provider.use { conn =>
+  sql"SELECT id, name, population FROM city"
+    .query[(Long, String, Int)]
+    .stream(100)               // 100行ずつ取得
+    .filter(_._3 > 1000000)    // 人口100万人以上
+    .map(_._2)                 // 都市名のみ取得
+    .compile.toList
+    .readOnly(conn)
+    .map(_.size)
+}
+```
+
+### ストリーミングでの実用的なデータ処理
+
+ストリーミングはFs2の`Stream`を返すため、豊富な関数型操作が利用できます：
+
+```scala
+// 大量のユーザーデータを段階的に処理
+val processUsers: IO[Unit] = provider.use { conn =>
+  sql"SELECT id, name, email, created_at FROM users"
+    .query[(Long, String, String, java.time.LocalDateTime)]
+    .stream(50)                // 50行ずつ取得
+    .filter(_._4.isAfter(lastWeek))  // 先週以降に作成されたユーザー
+    .map { case (id, name, email, _) => 
+      s"新規ユーザー: $name ($email)"
+    }
+    .evalMap(IO.println)       // 結果を順次出力
+    .compile.drain             // ストリームを実行
+    .readOnly(conn)
+}
+```
+
+### UseCursorFetchによる動作の最適化
+
+MySQLでは`UseCursorFetch`の設定によってストリーミングの効率が大きく変わります：
+
+```scala
+// UseCursorFetch=true（推奨）- 真のストリーミング
+val efficientProvider = ConnectionProvider
+  .default[IO](host, port, user, password, database)
+  .setUseCursorFetch(true)    // サーバーサイドカーソルを有効化
+  .setSSL(SSL.None)
+
+// UseCursorFetch=false（デフォルト）- 制限されたストリーミング
+val standardProvider = ConnectionProvider
+  .default[IO](host, port, user, password, database)
+  .setSSL(SSL.None)
+```
+
+**UseCursorFetch=trueの場合：**
+- サーバーサイドカーソルを使用して、必要な分だけデータを段階的に取得
+- メモリ使用量を大幅に削減（数百万行でも安全）
+- 真の意味でのストリーミング処理が可能
+
+**UseCursorFetch=falseの場合：**
+- クエリ実行時にすべての結果をメモリに読み込み
+- 小さなデータセットでは高速だが、大量データではリスク
+- ストリーミングの効果が限定的
+
+### 大量データ処理の実例
+
+以下は100万行のデータを安全に処理する例です：
+
+```scala
+// 効率的な大量データ処理
+val processMillionRecords: IO[Long] = 
+  ConnectionProvider
+    .default[IO](host, port, user, password, database)
+    .setUseCursorFetch(true)   // 重要：サーバーサイドカーソルを有効化
+    .use { conn =>
+      sql"SELECT id, amount FROM transactions WHERE year = 2024"
+        .query[(Long, BigDecimal)]
+        .stream(1000)          // 1000行ずつ処理
+        .filter(_._2 > 100)    // 100円以上の取引のみ
+        .map(_._2)             // 金額のみ抽出
+        .fold(BigDecimal(0))(_ + _)  // 合計を計算
+        .compile.lastOrError   // 最終結果を取得
+        .readOnly(conn)
+    }
+```
+
+### ストリーミングのメリット
+
+1. **メモリ効率**: 大量データでもメモリ使用量を一定に保てる
+2. **早期処理**: データを受信しながら同時に処理できる
+3. **中断可能**: 条件に応じて処理を途中で止められる
+4. **関数型操作**: `filter`、`map`、`take`などの豊富な操作
+
+```scala
+// 条件に応じた早期終了の例
+val findFirstLargeCity: IO[Option[String]] = provider.use { conn =>
+  sql"SELECT name, population FROM city ORDER BY population DESC"
+    .query[(String, Int)]
+    .stream(10)
+    .find(_._2 > 5000000)      // 人口500万人以上の最初の都市
+    .map(_.map(_._1))          // 都市名のみ取得
+    .compile.last
+    .readOnly(conn)
+}
+```
+
 ## まとめ
 
 ldbcは、データベースからのデータ取得を型安全かつ直感的に行うための機能を提供しています。このチュートリアルでは、以下の内容を説明しました：
@@ -258,9 +398,10 @@ ldbcは、データベースからのデータ取得を型安全かつ直感的�
 - ケースクラスへのマッピング
 - 複数テーブルの結合とネストしたデータ構造
 - 単一結果と複数結果の取得
+- **ストリーミングによる大量データの効率的な処理**
 - さまざまな実行メソッド
 
-これらの知識を活用して、アプリケーション内でデータベースから効率的にデータを取得し、Scalaの型システムの利点を最大限に活用してください。
+特にストリーミング機能を活用することで、大量のデータでもメモリ効率的に処理できるようになります。大量データを扱う場合は`UseCursorFetch=true`の設定を検討してください。
 
 ## 次のステップ
 

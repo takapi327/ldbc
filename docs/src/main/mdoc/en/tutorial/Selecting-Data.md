@@ -249,6 +249,146 @@ sql"SELECT id, name, department FROM employees"
   }
 ```
 
+## Efficient Processing of Large Data with Streaming
+
+When processing large amounts of data, loading all data into memory at once can cause memory exhaustion. ldbc allows you to process data efficiently using **streaming**.
+
+### Basic Usage of Streaming
+
+Streaming allows you to fetch and process data incrementally, significantly reducing memory usage:
+
+```scala
+import fs2.Stream
+import cats.effect.*
+
+// Basic streaming
+val cityStream: Stream[DBIO, String] = 
+  sql"SELECT name FROM city"
+    .query[String]
+    .stream                    // Stream[DBIO, String]
+
+// Fetch and process only the first 5 records
+val firstFiveCities: IO[List[String]] = provider.use { conn =>
+  cityStream
+    .take(5)                   // Only the first 5 records
+    .compile.toList            // Convert Stream to List
+    .readOnly(conn)            // IO[List[String]]
+}
+```
+
+### Specifying Fetch Size
+
+You can control the number of rows fetched at once using the `stream(fetchSize: Int)` method:
+
+```scala
+// Fetch 10 rows at a time
+val efficientStream: Stream[DBIO, String] = 
+  sql"SELECT name FROM city"
+    .query[String]
+    .stream(10)                // fetchSize = 10
+
+// Efficiently process large data
+val processLargeData: IO[Int] = provider.use { conn =>
+  sql"SELECT id, name, population FROM city"
+    .query[(Long, String, Int)]
+    .stream(100)               // Fetch 100 rows at a time
+    .filter(_._3 > 1000000)    // Cities with population over 1 million
+    .map(_._2)                 // Extract only city names
+    .compile.toList
+    .readOnly(conn)
+    .map(_.size)
+}
+```
+
+### Practical Data Processing with Streaming
+
+Since streaming returns Fs2 `Stream`, you can use rich functional operations:
+
+```scala
+// Process large user data incrementally
+val processUsers: IO[Unit] = provider.use { conn =>
+  sql"SELECT id, name, email, created_at FROM users"
+    .query[(Long, String, String, java.time.LocalDateTime)]
+    .stream(50)                // Fetch 50 rows at a time
+    .filter(_._4.isAfter(lastWeek))  // Users created since last week
+    .map { case (id, name, email, _) => 
+      s"New user: $name ($email)"
+    }
+    .evalMap(IO.println)       // Output results sequentially
+    .compile.drain             // Execute the stream
+    .readOnly(conn)
+}
+```
+
+### Optimizing Behavior with UseCursorFetch
+
+In MySQL, the efficiency of streaming changes significantly depending on the `UseCursorFetch` setting:
+
+```scala
+// UseCursorFetch=true (recommended) - True streaming
+val efficientProvider = ConnectionProvider
+  .default[IO](host, port, user, password, database)
+  .setUseCursorFetch(true)    // Enable server-side cursors
+  .setSSL(SSL.None)
+
+// UseCursorFetch=false (default) - Limited streaming
+val standardProvider = ConnectionProvider
+  .default[IO](host, port, user, password, database)
+  .setSSL(SSL.None)
+```
+
+**When UseCursorFetch=true:**
+- Uses server-side cursors to fetch data incrementally as needed
+- Significantly reduces memory usage (safe even with millions of rows)
+- Enables true streaming processing
+
+**When UseCursorFetch=false:**
+- Loads all results into memory when executing the query
+- Fast for small datasets but risky for large data
+- Limited effectiveness of streaming
+
+### Example of Large Data Processing
+
+Here's an example of safely processing one million rows:
+
+```scala
+// Efficient large data processing
+val processMillionRecords: IO[Long] = 
+  ConnectionProvider
+    .default[IO](host, port, user, password, database)
+    .setUseCursorFetch(true)   // Important: Enable server-side cursors
+    .use { conn =>
+      sql"SELECT id, amount FROM transactions WHERE year = 2024"
+        .query[(Long, BigDecimal)]
+        .stream(1000)          // Process 1000 rows at a time
+        .filter(_._2 > 100)    // Transactions over 100 yen only
+        .map(_._2)             // Extract amounts only
+        .fold(BigDecimal(0))(_ + _)  // Calculate sum
+        .compile.lastOrError   // Get final result
+        .readOnly(conn)
+    }
+```
+
+### Benefits of Streaming
+
+1. **Memory Efficiency**: Keep memory usage constant even with large data
+2. **Early Processing**: Process data while receiving it simultaneously
+3. **Interruptible**: Stop processing midway based on conditions
+4. **Functional Operations**: Rich operations like `filter`, `map`, `take`
+
+```scala
+// Example of early termination based on conditions
+val findFirstLargeCity: IO[Option[String]] = provider.use { conn =>
+  sql"SELECT name, population FROM city ORDER BY population DESC"
+    .query[(String, Int)]
+    .stream(10)
+    .find(_._2 > 5000000)      // First city with population over 5 million
+    .map(_.map(_._1))          // Extract only city name
+    .compile.last
+    .readOnly(conn)
+}
+```
+
 ## Summary
 
 ldbc provides features for retrieving data from databases in a type-safe and intuitive manner. In this tutorial, we covered:
@@ -258,9 +398,10 @@ ldbc provides features for retrieving data from databases in a type-safe and int
 - Mapping to case classes
 - Joining multiple tables and nested data structures
 - Getting single and multiple results
+- **Efficient processing of large data with streaming**
 - Various execution methods
 
-Use this knowledge to efficiently retrieve data from databases in your applications and maximize the benefits of Scala's type system.
+By leveraging streaming capabilities, you can process large amounts of data efficiently in terms of memory usage. When dealing with large datasets, consider setting `UseCursorFetch=true`.
 
 ## Next Steps
 
