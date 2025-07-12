@@ -242,8 +242,8 @@ object DBIO:
 
     def transaction[F[_]: Sync](connection: Connection[F]): F[A] =
       val interpreter = new KleisliInterpreter[F](connection.logHandler).ConnectionInterpreter
-      ((ConnectionIO.setReadOnly(false) *> ConnectionIO.setAutoCommit(false) *> dbio).onError {
-        _ => ConnectionIO.rollback()
+      ((ConnectionIO.setReadOnly(false) *> ConnectionIO.setAutoCommit(false) *> dbio).onError { _ =>
+        ConnectionIO.rollback()
       } <* ConnectionIO.commit() <* ConnectionIO.setAutoCommit(true))
         .foldMap(interpreter)
         .run(connection)
