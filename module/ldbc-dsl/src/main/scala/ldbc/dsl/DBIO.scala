@@ -23,7 +23,6 @@ import ldbc.sql.logging.LogEvent
 import ldbc.dsl.codec.Decoder
 import ldbc.dsl.exception.UnexpectedContinuation
 import ldbc.dsl.free.*
-import ldbc.dsl.free.ResultSetIO
 import ldbc.dsl.util.FactoryCompat
 
 type DBIO[A] = Free[ConnectionOp, A]
