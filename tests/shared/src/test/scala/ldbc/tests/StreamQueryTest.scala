@@ -47,3 +47,18 @@ trait StreamQueryTest extends CatsEffectSuite:
       )
     )
   }
+
+  test("Stream support test") {
+    assertIO(
+      provider.use { conn =>
+        sql"SELECT Name FROM `city`".query[String].stream(2).take(5).compile.toList.readOnly(conn)
+      },
+      List(
+        "Kabul",
+        "Qandahar",
+        "Herat",
+        "Mazar-e-Sharif",
+        "Amsterdam"
+      )
+    )
+  }
