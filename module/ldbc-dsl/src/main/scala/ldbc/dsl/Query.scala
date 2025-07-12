@@ -56,7 +56,9 @@ trait Query[T]:
    * If there is no data, an empty stream is returned.
    *
    * @param fetchSize
-   *   The number of rows to be fetched at a time
+   *   The number of rows to be fetched at a time (must be positive)
+   * @throws IllegalArgumentException
+   *   if fetchSize is zero or negative
    */
   def stream(fetchSize: Int): fs2.Stream[DBIO, T]
 
@@ -84,4 +86,6 @@ object Query:
     override def stream: fs2.Stream[DBIO, T] = stream(1)
 
     override def stream(fetchSize: Int): fs2.Stream[DBIO, T] =
-      DBIO.stream(statement, params, decoder, fetchSize)
+      if fetchSize <= 0 then
+        fs2.Stream.raiseError[DBIO](new IllegalArgumentException(s"fetchSize must be positive, but was: $fetchSize"))
+      else DBIO.stream(statement, params, decoder, fetchSize)

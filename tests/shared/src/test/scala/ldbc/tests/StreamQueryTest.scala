@@ -48,7 +48,7 @@ trait StreamQueryTest extends CatsEffectSuite:
     )
   }
 
-  test("Stream support test") {
+  test("Stream support test with fetchSize") {
     assertIO(
       provider.use { conn =>
         sql"SELECT Name FROM `city`".query[String].stream(2).take(5).compile.toList.readOnly(conn)
@@ -61,4 +61,20 @@ trait StreamQueryTest extends CatsEffectSuite:
         "Amsterdam"
       )
     )
+  }
+
+  test("Stream with negative fetchSize should fail") {
+    interceptIO[IllegalArgumentException] {
+      provider.use { conn =>
+        sql"SELECT Name FROM `city`".query[String].stream(-1).take(1).compile.toList.readOnly(conn)
+      }
+    }
+  }
+
+  test("Stream with zero fetchSize should fail") {
+    interceptIO[IllegalArgumentException] {
+      provider.use { conn =>
+        sql"SELECT Name FROM `city`".query[String].stream(0).take(1).compile.toList.readOnly(conn)
+      }
+    }
   }
