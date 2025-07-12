@@ -12,7 +12,6 @@ import cats.syntax.all.*
 
 import ldbc.dsl.codec.Decoder
 import ldbc.dsl.util.FactoryCompat
-import ldbc.dsl.free.*
 
 /**
  * Trait for determining what type of search system statements are retrieved from the database.
@@ -50,7 +49,7 @@ trait Query[T]:
    * A method to return the data to be retrieved from the database as a stream.
    * If there is no data, an empty stream is returned.
    */
-  def stream: fs2.Stream[ConnectionIO, T]
+  def stream: fs2.Stream[DBIO, T]
 
 object Query:
 
@@ -73,26 +72,5 @@ object Query:
     override def nel: DBIO[NonEmptyList[T]] =
       DBIO.queryNel(statement, params, decoder)
 
-    override def stream: fs2.Stream[ConnectionIO, T] =
-      for
-        preparedStatement <- fs2.Stream.eval(ConnectionIO.prepareStatement(statement))
-        (preparedStatement, resultSet) <- fs2.Stream.bracket {
-          ConnectionIO.embed(
-            preparedStatement,
-            for
-              _ <- PreparedStatementIO.setFetchSize(1)
-              _ <- PreparedStatementIO.paramBind(params)
-              resultSet <- PreparedStatementIO.executeQuery()
-            yield (preparedStatement, resultSet)
-          )
-        } ((preparedStatement, _) => ConnectionIO.embed(preparedStatement, PreparedStatementIO.close()))
-        result <- fs2.Stream.unfoldEval(resultSet) { rs =>
-          ConnectionIO.embed(
-            rs,
-            ResultSetIO.next().flatMap {
-              case true => decoder.decode(1, statement).map(name => Some((name, rs)))
-              case false => ResultSetIO.pure(None)
-            }
-          )
-        }
-      yield result
+    override def stream: fs2.Stream[DBIO, T] =
+      DBIO.stream(statement, params, decoder)
