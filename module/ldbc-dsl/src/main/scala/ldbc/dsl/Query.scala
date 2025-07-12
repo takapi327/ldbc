@@ -82,6 +82,6 @@ object Query:
       DBIO.queryNel(statement, params, decoder)
 
     override def stream: fs2.Stream[DBIO, T] = stream(1)
-      
+
     override def stream(fetchSize: Int): fs2.Stream[DBIO, T] =
       DBIO.stream(statement, params, decoder, fetchSize)
