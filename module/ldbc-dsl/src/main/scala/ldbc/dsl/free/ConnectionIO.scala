@@ -8,13 +8,14 @@ package ldbc.dsl.free
 
 import scala.concurrent.duration.FiniteDuration
 
-import cats.{~>, Applicative}
+import cats.~>
 import cats.free.Free
 import cats.syntax.all.*
 
-import cats.effect.kernel.{CancelScope, Poll, Sync}
+import cats.effect.kernel.{Poll, Sync}
 
 import ldbc.sql.*
+import ldbc.sql.logging.LogEvent
 
 sealed trait ConnectionOp[A]:
   def visit[F[_]](v: ConnectionOp.Visitor[F]): F[A]
@@ -42,6 +43,8 @@ object ConnectionOp:
     override def visit[F[_]](v: ConnectionOp.Visitor[F]): F[Unit] = v.canceled
   final case class OnCancel[A](fa: ConnectionIO[A], fin: ConnectionIO[Unit]) extends ConnectionOp[A]:
     override def visit[F[_]](v: ConnectionOp.Visitor[F]): F[A] = v.onCancel(fa, fin)
+  final case class PerformLogging(event: LogEvent) extends ConnectionOp[Unit]:
+    override def visit[F[_]](v: ConnectionOp.Visitor[F]): F[Unit] = v.performLogging(event)
 
   final case class CreateStatement() extends ConnectionOp[Statement[?]]:
     override def visit[F[_]](v: ConnectionOp.Visitor[F]): F[Statement[?]] = v.createStatement()
@@ -101,6 +104,7 @@ object ConnectionOp:
     def poll[A](poll: Any, fa: ConnectionIO[A]): F[A]
     def canceled: F[Unit]
     def onCancel[A](fa: ConnectionIO[A], fin: ConnectionIO[Unit]): F[A]
+    def performLogging(event: LogEvent): F[Unit]
 
     def createStatement(): F[Statement[?]]
     def prepareStatement(sql: String): F[PreparedStatement[?]]
@@ -124,61 +128,6 @@ type ConnectionIO[A] = Free[ConnectionOp, A]
 object ConnectionIO:
   module =>
 
-  private[ldbc] class Ops[A](connectionIO: ConnectionIO[A]):
-
-    def run[F[_]: Sync](connection: Connection[F]): F[A] =
-      connectionIO.foldMap(new KleisliInterpreter[F].ConnectionInterpreter)
-        .run(connection)
-
-    def readOnly[F[_]: Sync](connection: Connection[F]): F[A] =
-      (ConnectionIO.setReadOnly(true) *> connectionIO <* ConnectionIO.setReadOnly(false))
-        .foldMap(new KleisliInterpreter[F].ConnectionInterpreter)
-        .run(connection)
-
-    def commit[F[_] : Sync](connection: Connection[F]): F[A] =
-      (ConnectionIO.setReadOnly(false) *> ConnectionIO.setAutoCommit(false) *> connectionIO)
-        .foldMap(new KleisliInterpreter[F].ConnectionInterpreter)
-        .run(connection)
-
-    def rollback[F[_] : Sync](connection: Connection[F]): F[A] =
-      (ConnectionIO.setReadOnly(false) *> ConnectionIO.setAutoCommit(false) *> connectionIO <* ConnectionIO.rollback() <* ConnectionIO.setAutoCommit(true))
-        .foldMap(new KleisliInterpreter[F].ConnectionInterpreter)
-        .run(connection)
-
-    def transaction[F[_] : Sync](connection: Connection[F]): F[A] =
-      val interpreter = new KleisliInterpreter[F].ConnectionInterpreter
-      val acquire: ConnectionIO[A] = ConnectionIO.setReadOnly(false) *> ConnectionIO.setAutoCommit(false) *> connectionIO
-
-      val release = (_: A, exitCode: cats.effect.kernel.Resource.ExitCase) =>
-        (exitCode match
-          case cats.effect.kernel.Resource.ExitCase.Errored(_) | cats.effect.kernel.Resource.ExitCase.Canceled => ConnectionIO.rollback()
-          case _ => ConnectionIO.commit()
-        ) *> ConnectionIO.setAutoCommit(true)
-
-      cats.effect.kernel.Resource
-        .makeCase(acquire)(release)
-        .use(ConnectionIO.pure)
-        .foldMap(interpreter)
-        .run(connection)
-  
-  implicit val syncConnectionIO: Sync[ConnectionIO] =
-    new Sync[ConnectionIO]:
-      val monad = Free.catsFreeMonadForFree[ConnectionOp]
-      override val applicative: Applicative[ConnectionIO] = monad
-      override val rootCancelScope: CancelScope = CancelScope.Cancelable
-      override def pure[A](x: A): ConnectionIO[A] = monad.pure(x)
-      override def flatMap[A, B](fa: ConnectionIO[A])(f: A => ConnectionIO[B]): ConnectionIO[B] = monad.flatMap(fa)(f)
-      override def tailRecM[A, B](a: A)(f: A => ConnectionIO[Either[A, B]]): ConnectionIO[B] = monad.tailRecM(a)(f)
-      override def raiseError[A](e: Throwable): ConnectionIO[A] = module.raiseError(e)
-      override def handleErrorWith[A](fa: ConnectionIO[A])(f: Throwable => ConnectionIO[A]): ConnectionIO[A] = module.handleErrorWith(fa)(f)
-      override def monotonic: ConnectionIO[FiniteDuration] = module.monotonic
-      override def realTime: ConnectionIO[FiniteDuration] = module.realtime
-      override def suspend[A](hint: Sync.Type)(thunk: => A): ConnectionIO[A] = module.suspend(hint)(thunk)
-      override def forceR[A, B](fa: ConnectionIO[A])(fb: ConnectionIO[B]): ConnectionIO[B] = module.forceR(fa)(fb)
-      override def uncancelable[A](body: Poll[ConnectionIO] => ConnectionIO[A]): ConnectionIO[A] = module.uncancelable(body)
-      override def canceled: ConnectionIO[Unit] = module.canceled
-      override def onCancel[A](fa: ConnectionIO[A], fin: ConnectionIO[Unit]): ConnectionIO[A] = module.onCancel(fa, fin)
-
   def embed[F[_], J, A](j: J, fa: Free[F, A])(using ev: Embeddable[F, J]): Free[ConnectionOp, A] =
     Free.liftF(ConnectionOp.Embed(ev.embed(j, fa)))
   def pure[A](a: A): ConnectionIO[A] = Free.pure(a)
@@ -194,6 +143,7 @@ object ConnectionIO:
   def onCancel[A](fa: ConnectionIO[A], fin: ConnectionIO[Unit]): ConnectionIO[A] = Free.liftF[ConnectionOp, A](ConnectionOp.OnCancel(fa, fin))
   def capturePoll[M[_]](mpoll: Poll[M]): Poll[ConnectionIO] = new Poll[ConnectionIO]:
     override def apply[A](fa: ConnectionIO[A]): ConnectionIO[A] = Free.liftF[ConnectionOp, A](ConnectionOp.Poll1(mpoll, fa))
+  def performLogging(event: LogEvent): ConnectionIO[Unit] = Free.liftF[ConnectionOp, Unit](ConnectionOp.PerformLogging(event))
 
   def createStatement(): ConnectionIO[Statement[?]] =
     Free.liftF[ConnectionOp, Statement[?]](ConnectionOp.CreateStatement())
