@@ -8,6 +8,8 @@ package ldbc.tests
 
 import java.time.*
 
+import cats.data.NonEmptyList
+
 import cats.effect.*
 
 import munit.CatsEffectSuite
@@ -15,6 +17,7 @@ import munit.CatsEffectSuite
 import ldbc.dsl.*
 import ldbc.dsl.codec.auto.generic.toSlowCompile.given
 import ldbc.dsl.codec.Codec
+import ldbc.dsl.exception.*
 
 import ldbc.connector.*
 import ldbc.connector.exception.SQLException
@@ -755,5 +758,52 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
         yield (a, b, c)).readOnly(conn)
       },
       (Some(MyEnum.A), Some(MyEnum.B), Some(MyEnum.C))
+    )
+  }
+
+  test(
+    "If option is specified, the data to be acquired can be obtained with Some if the data to be acquired is one case."
+  ) {
+    assertIO(
+      connection.use { conn =>
+        sql"SELECT Name FROM `city` LIMIT 1".query[String].option.readOnly(conn)
+      },
+      Some("Kabul")
+    )
+  }
+
+  test("If option is specified, None is returned when there is no data to be acquired.") {
+    assertIO(
+      connection.use { conn =>
+        sql"SELECT Name FROM `city` WHERE ID = 9999999".query[String].option.readOnly(conn)
+      },
+      None
+    )
+  }
+
+  test("If option is specified, an exception occurs if there are two or more data to be acquired.") {
+    interceptIO[UnexpectedContinuation](
+      connection.use { conn =>
+        sql"SELECT Name FROM `city`".query[String].option.readOnly(conn)
+      }
+    )
+  }
+
+  test(
+    "When nel is specified, if there is one or more data to be retrieved, it can be retrieved with NonEmptyList."
+  ) {
+    assertIO(
+      connection.use { conn =>
+        sql"SELECT Name FROM `city` LIMIT 5".query[String].nel.readOnly(conn)
+      },
+      NonEmptyList.of("Kabul", "Qandahar", "Herat", "Mazar-e-Sharif", "Amsterdam")
+    )
+  }
+
+  test("When nel is specified, an exception occurs if there is no data to be acquired.") {
+    interceptIO[UnexpectedEnd](
+      connection.use { conn =>
+        sql"SELECT Name FROM `city` WHERE ID = 9999999".query[String].nel.readOnly(conn)
+      }
     )
   }

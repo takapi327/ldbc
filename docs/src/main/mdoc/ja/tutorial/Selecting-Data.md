@@ -38,7 +38,10 @@ sql"SELECT name FROM user"
 
 - `sql"SELECT name FROM user"` - SQLクエリを定義します。
 - `.query[String]` - 各行の結果を`String`型にマッピングします。これにより`Query[String]`型が生成されます。
-- `.to[List]` - 結果を`List`に集約します。`DBIO[List[String]]`型が生成されます。このメソッドは`FactoryCompat`を実装する任意のコレクション型（`List`、`Vector`、`Set`など）で使用できます。
+- `.to[List]` - 結果を`List`に集約します。`DBIO[List[String]]`型が生成されます。このメソッドは`FactoryCompat`を実装する任意のコレクション型（`List`、`Vector`、`Set`など）で使用できます。似たような方法として以下があります。
+    - `.unsafe`は単一の値を返し、正確に1行でない場合は例外を発生させる。
+    - `.option`は単一の値をOptionに包んで返し、返される行が複数ある場合は例外を発生させる。
+    - `.nel`は複数の値をNonEmptyListに包んで返し、返される行がない場合は例外を発生させます。
 - `.readOnly(conn)` - コネクションを読み取り専用モードで使用してクエリを実行します。戻り値は`IO[List[String]]`です。
 - `.unsafeRunSync()` - IOモナドを実行して実際の結果（`List[String]`）を取得します。
 - `.foreach(println)` - 結果の各要素を出力します。

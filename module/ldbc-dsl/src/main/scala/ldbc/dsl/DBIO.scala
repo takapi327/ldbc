@@ -7,6 +7,7 @@
 package ldbc.dsl
 
 import cats.*
+import cats.data.NonEmptyList
 import cats.free.Free
 import cats.syntax.all.*
 
@@ -17,6 +18,8 @@ import ldbc.sql.*
 import ldbc.sql.logging.LogEvent
 
 import ldbc.dsl.codec.Decoder
+import ldbc.dsl.exception.UnexpectedContinuation
+import ldbc.dsl.free.ResultSetIO
 import ldbc.dsl.util.FactoryCompat
 
 /**
@@ -59,6 +62,16 @@ object DBIO extends ParamBinder:
     decoder:   Decoder[A],
     factory:   FactoryCompat[A, G[A]]
   ) extends DBIOA[G[A]]
+  final case class QueryOption[A](
+    statement: String,
+    params:    List[Parameter.Dynamic],
+    decoder:   Decoder[A]
+  ) extends DBIOA[Option[A]]
+  final case class QueryNel[A](
+    statement: String,
+    params:    List[Parameter.Dynamic],
+    decoder:   Decoder[A]
+  ) extends DBIOA[NonEmptyList[A]]
   final case class Update(statement: String, params: List[Parameter.Dynamic]) extends DBIOA[Int]
   final case class Returning[A](statement: String, params: List[Parameter.Dynamic], decoder: Decoder[A])
     extends DBIOA[A]
@@ -124,6 +137,10 @@ object DBIO extends ParamBinder:
     factory:   FactoryCompat[A, G[A]]
   ): DBIO[G[A]] =
     liftF(QueryTo(statement, params, decoder, factory))
+  def queryOption[A](statement: String, params: List[Parameter.Dynamic], decoder: Decoder[A]): DBIO[Option[A]] =
+    liftF(QueryOption(statement, params, decoder))
+  def queryNel[A](statement: String, params: List[Parameter.Dynamic], decoder: Decoder[A]): DBIO[NonEmptyList[A]] =
+    liftF(QueryNel(statement, params, decoder))
   def update(statement: String, params: List[Parameter.Dynamic]): DBIO[Int] =
     liftF(Update(statement, params))
   def returning[A](statement: String, params: List[Parameter.Dynamic], decoder: Decoder[A]): DBIO[A] =
@@ -150,11 +167,51 @@ object DBIO extends ParamBinder:
                   connection.logHandler.run(LogEvent.ProcessingFailure(statement, params.map(_.value), ex))
                 ) <*
                 connection.logHandler.run(LogEvent.Success(statement, params.map(_.value)))
+
             case QueryTo(statement, params, decoder, factory) =>
               (for
                 prepareStatement <- connection.prepareStatement(statement)
                 resultSet        <- paramBind(prepareStatement, params) >> prepareStatement.executeQuery()
                 result <- ResultSetConsumer.consume(resultSet, statement, factory)(using summon[MonadThrow[F]], decoder)
+                _      <- prepareStatement.close()
+              yield result)
+                .onError(ex =>
+                  connection.logHandler.run(LogEvent.ProcessingFailure(statement, params.map(_.value), ex))
+                ) <*
+                connection.logHandler.run(LogEvent.Success(statement, params.map(_.value)))
+
+            case QueryOption(statement, params, decoder) =>
+              val decoded =
+                for
+                  data <- ResultSetIO.next().flatMap {
+                            case true  => decoder.decode(1, statement).map(Option(_))
+                            case false => ResultSetIO.pure(None)
+                          }
+                  next   <- ResultSetIO.next()
+                  result <- if next then {
+                              ResultSetIO.raiseError(
+                                new UnexpectedContinuation(
+                                  "Expected ResultSet exhaustion, but more rows were available."
+                                )
+                              )
+                            } else ResultSetIO.pure(data)
+                yield result
+              (for
+                prepareStatement <- connection.prepareStatement(statement)
+                resultSet        <- paramBind(prepareStatement, params) >> prepareStatement.executeQuery()
+                result           <- decoded.foldMap(ResultSetIO.interpreter(resultSet))
+                _                <- prepareStatement.close()
+              yield result)
+                .onError(ex =>
+                  connection.logHandler.run(LogEvent.ProcessingFailure(statement, params.map(_.value), ex))
+                ) <*
+                connection.logHandler.run(LogEvent.Success(statement, params.map(_.value)))
+
+            case QueryNel(statement, params, decoder) =>
+              (for
+                prepareStatement <- connection.prepareStatement(statement)
+                resultSet        <- paramBind(prepareStatement, params) >> prepareStatement.executeQuery()
+                result <- ResultSetConsumer.consumeToNel(resultSet, statement)(using summon[MonadThrow[F]], decoder)
                 _      <- prepareStatement.close()
               yield result)
                 .onError(ex =>

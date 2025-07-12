@@ -7,6 +7,7 @@
 package ldbc.dsl
 
 import cats.*
+import cats.data.NonEmptyList
 import cats.syntax.all.*
 
 import ldbc.dsl.codec.Decoder
@@ -31,7 +32,18 @@ trait Query[T]:
    */
   def unsafe: DBIO[T]
 
-  def stream[F[_]: MonadThrow](connection: ldbc.sql.Connection[F]): fs2.Stream[F, T]
+  /**
+   * A method to return the data to be retrieved from the database as an Option type. If the data does not exist, None
+   * is returned.
+   * If there is more than one row to be returned, an exception is raised.
+   */
+  def option: DBIO[Option[T]]
+
+  /**
+   * A method to return the data to be retrieved from the database as a NonEmptyList type.
+   * If there is no data, an exception is raised.
+   */
+  def nel: DBIO[NonEmptyList[T]]
 
 object Query:
 
@@ -48,22 +60,8 @@ object Query:
     override def unsafe: DBIO[T] =
       DBIO.queryA(statement, params, decoder)
 
-    import ldbc.dsl.free.ResultSetIO.*
-    override def stream[F[_]: MonadThrow](connection: ldbc.sql.Connection[F]): fs2.Stream[F, T] = {
-      val fo = for
-        preparedStatement <- connection.prepareStatement(statement)
-        _ <- preparedStatement.setFetchSize(1)
-        _        <- paramBind(preparedStatement, params)
-        resultSet <- preparedStatement.executeQuery()
-      yield resultSet
-      for
-        resultSet <- fs2.Stream.bracket(fo)(_.close())
-        result <- fs2.Stream.unfoldEval(resultSet) { rs =>
-          val free = ldbc.dsl.free.ResultSetIO.next().flatMap {
-            case true  => decoder.decode(1, statement).map(name => Some((name, rs)))
-            case false => ldbc.dsl.free.ResultSetIO.pure(None)
-          }
-          free.foldMap(rs.interpreter)
-        }
-      yield result
-    }
+    override def option: DBIO[Option[T]] =
+      DBIO.queryOption(statement, params, decoder)
+
+    override def nel: DBIO[NonEmptyList[T]] =
+      DBIO.queryNel(statement, params, decoder)

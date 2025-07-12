@@ -20,7 +20,7 @@ import ldbc.connector.syntax.*
 class LdbcServerCursorFetchTest extends ServerCursorFetchTest:
 
   // In case of Scala.js, timeout occurs when FetchSize: 1, so it is necessary to extend the time.
-  override def munitIOTimeout: Duration = 60.seconds
+  override def munitIOTimeout: Duration = 80.seconds
 
   override def provider: Provider[IO] =
     ConnectionProvider
