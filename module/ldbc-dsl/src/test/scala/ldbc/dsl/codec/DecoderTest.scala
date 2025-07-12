@@ -18,11 +18,11 @@ import ldbc.sql.{ ResultSet, ResultSetMetaData }
 import ldbc.sql.logging.*
 
 import ldbc.dsl.exception.DecodeFailureException
-import ldbc.dsl.free.ResultSetIO
 import ldbc.dsl.free.KleisliInterpreter
+import ldbc.dsl.free.ResultSetIO
 
 class DecoderTest extends CatsEffectSuite:
-  
+
   private val logHandler = new LogHandler[IO]:
     override def run(logEvent: LogEvent): IO[Unit] = IO.unit
   private val interpreter = new KleisliInterpreter[IO](logHandler)
@@ -211,7 +211,11 @@ class DecoderTest extends CatsEffectSuite:
     val enumDecoder         = Decoder[TestEnum]
 
     assertIO(
-      enumDecoder.decode(1, "empty statement").foldMap(interpreter.ResultSetInterpreter).run(mockResultSet).map(_.toString),
+      enumDecoder
+        .decode(1, "empty statement")
+        .foldMap(interpreter.ResultSetInterpreter)
+        .run(mockResultSet)
+        .map(_.toString),
       "First"
     )
   }
