@@ -231,7 +231,7 @@ object DBIO:
         .run(connection)
 
     def commit[F[_]: Sync](connection: Connection[F]): F[A] =
-      (ConnectionIO.setReadOnly(false) *> ConnectionIO.setAutoCommit(false) *> dbio)
+      (ConnectionIO.setReadOnly(false) *> ConnectionIO.setAutoCommit(true) *> dbio)
         .foldMap(new KleisliInterpreter[F](connection.logHandler).ConnectionInterpreter)
         .run(connection)
 

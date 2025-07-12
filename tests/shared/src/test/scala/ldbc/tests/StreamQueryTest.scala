@@ -10,8 +10,6 @@ import cats.effect.*
 
 import munit.*
 
-import ldbc.sql.*
-
 import ldbc.dsl.*
 
 import ldbc.connector.*
