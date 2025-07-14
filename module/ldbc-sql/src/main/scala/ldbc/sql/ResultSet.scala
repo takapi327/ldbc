@@ -13,7 +13,7 @@ import java.time.*
  *
  * TODO: Eventually replace with java.sql for cross-platform support
  */
-trait ResultSet:
+trait ResultSet[F[_]]:
 
   /**
    * Moves the cursor forward one row from its current position.
@@ -39,7 +39,7 @@ trait ResultSet:
    * @return <code>true</code> if the new current row is valid;
    *         <code>false</code> if there are no more rows
    */
-  def next(): Boolean
+  def next(): F[Boolean]
 
   /**
    * Releases this <code>ResultSet</code> object's database and
@@ -65,7 +65,7 @@ trait ResultSet:
    * Calling the method <code>close</code> on a <code>ResultSet</code>
    * object that is already closed is a no-op.
    */
-  def close(): Unit
+  def close(): F[Unit]
 
   /**
    * Reports whether
@@ -78,7 +78,7 @@ trait ResultSet:
    * @return <code>true</code> if the last column value read was SQL
    *         <code>NULL</code> and <code>false</code> otherwise
    */
-  def wasNull(): Boolean
+  def wasNull(): F[Boolean]
 
   /**
    * Retrieves the value of the designated column in the current row
@@ -89,7 +89,7 @@ trait ResultSet:
    * @return the column value; if the value is SQL <code>NULL</code>, the
    *         value returned is <code>null</code>
    */
-  def getString(columnIndex: Int): String
+  def getString(columnIndex: Int): F[String]
 
   /**
    * Retrieves the value of the designated column in the current row
@@ -107,7 +107,7 @@ trait ResultSet:
    * @return the column value; if the value is SQL <code>NULL</code>, the
    *         value returned is <code>false</code>
    */
-  def getBoolean(columnIndex: Int): Boolean
+  def getBoolean(columnIndex: Int): F[Boolean]
 
   /**
    * Retrieves the value of the designated column in the current row
@@ -118,7 +118,7 @@ trait ResultSet:
    * @return the column value; if the value is SQL <code>NULL</code>, the
    *         value returned is <code>0</code>
    */
-  def getByte(columnIndex: Int): Byte
+  def getByte(columnIndex: Int): F[Byte]
 
   /**
    * Retrieves the value of the designated column in the current row
@@ -129,7 +129,7 @@ trait ResultSet:
    * @return the column value; if the value is SQL <code>NULL</code>, the
    *         value returned is <code>0</code>
    */
-  def getShort(columnIndex: Int): Short
+  def getShort(columnIndex: Int): F[Short]
 
   /**
    * Retrieves the value of the designated column in the current row
@@ -140,7 +140,7 @@ trait ResultSet:
    * @return the column value; if the value is SQL <code>NULL</code>, the
    *         value returned is <code>0</code>
    */
-  def getInt(columnIndex: Int): Int
+  def getInt(columnIndex: Int): F[Int]
 
   /**
    * Retrieves the value of the designated column in the current row
@@ -151,7 +151,7 @@ trait ResultSet:
    * @return the column value; if the value is SQL <code>NULL</code>, the
    *         value returned is <code>0</code>
    */
-  def getLong(columnIndex: Int): Long
+  def getLong(columnIndex: Int): F[Long]
 
   /**
    * Retrieves the value of the designated column in the current row
@@ -162,7 +162,7 @@ trait ResultSet:
    * @return the column value; if the value is SQL <code>NULL</code>, the
    *         value returned is <code>0</code>
    */
-  def getFloat(columnIndex: Int): Float
+  def getFloat(columnIndex: Int): F[Float]
 
   /**
    * Retrieves the value of the designated column in the current row
@@ -173,7 +173,7 @@ trait ResultSet:
    * @return the column value; if the value is SQL <code>NULL</code>, the
    *         value returned is <code>0</code>
    */
-  def getDouble(columnIndex: Int): Double
+  def getDouble(columnIndex: Int): F[Double]
 
   /**
    * Retrieves the value of the designated column in the current row
@@ -185,7 +185,7 @@ trait ResultSet:
    * @return the column value; if the value is SQL <code>NULL</code>, the
    *         value returned is <code>null</code>
    */
-  def getBytes(columnIndex: Int): Array[Byte]
+  def getBytes(columnIndex: Int): F[Array[Byte]]
 
   /**
    * Retrieves the value of the designated column in the current row
@@ -196,7 +196,7 @@ trait ResultSet:
    * @return the column value; if the value is SQL <code>NULL</code>, the
    *         value returned is <code>null</code>
    */
-  def getDate(columnIndex: Int): LocalDate
+  def getDate(columnIndex: Int): F[LocalDate]
 
   /**
    * Retrieves the value of the designated column in the current row
@@ -207,7 +207,7 @@ trait ResultSet:
    * @return the column value; if the value is SQL <code>NULL</code>, the
    *         value returned is <code>null</code>
    */
-  def getTime(columnIndex: Int): LocalTime
+  def getTime(columnIndex: Int): F[LocalTime]
 
   /**
    * Retrieves the value of the designated column in the current row
@@ -218,7 +218,7 @@ trait ResultSet:
    * @return the column value; if the value is SQL <code>NULL</code>, the
    *         value returned is <code>null</code>
    */
-  def getTimestamp(columnIndex: Int): LocalDateTime
+  def getTimestamp(columnIndex: Int): F[LocalDateTime]
 
   /**
    * Retrieves the value of the designated column in the current row
@@ -229,7 +229,7 @@ trait ResultSet:
    * @return the column value; if the value is SQL <code>NULL</code>, the
    *         value returned is <code>null</code>
    */
-  def getString(columnLabel: String): String
+  def getString(columnLabel: String): F[String]
 
   /**
    * Retrieves the value of the designated column in the current row
@@ -247,7 +247,7 @@ trait ResultSet:
    * @return the column value; if the value is SQL <code>NULL</code>, the
    *         value returned is <code>false</code>
    */
-  def getBoolean(columnLabel: String): Boolean
+  def getBoolean(columnLabel: String): F[Boolean]
 
   /**
    * Retrieves the value of the designated column in the current row
@@ -258,7 +258,7 @@ trait ResultSet:
    * @return the column value; if the value is SQL <code>NULL</code>, the
    *         value returned is <code>0</code>
    */
-  def getByte(columnLabel: String): Byte
+  def getByte(columnLabel: String): F[Byte]
 
   /**
    * Retrieves the value of the designated column in the current row
@@ -269,7 +269,7 @@ trait ResultSet:
    * @return the column value; if the value is SQL <code>NULL</code>, the
    *         value returned is <code>0</code>
    */
-  def getShort(columnLabel: String): Short
+  def getShort(columnLabel: String): F[Short]
 
   /**
    * Retrieves the value of the designated column in the current row
@@ -280,7 +280,7 @@ trait ResultSet:
    * @return the column value; if the value is SQL <code>NULL</code>, the
    *         value returned is <code>0</code>
    */
-  def getInt(columnLabel: String): Int
+  def getInt(columnLabel: String): F[Int]
 
   /**
    * Retrieves the value of the designated column in the current row
@@ -291,7 +291,7 @@ trait ResultSet:
    * @return the column value; if the value is SQL <code>NULL</code>, the
    *         value returned is <code>0</code>
    */
-  def getLong(columnLabel: String): Long
+  def getLong(columnLabel: String): F[Long]
 
   /**
    * Retrieves the value of the designated column in the current row
@@ -302,7 +302,7 @@ trait ResultSet:
    * @return the column value; if the value is SQL <code>NULL</code>, the
    *         value returned is <code>0</code>
    */
-  def getFloat(columnLabel: String): Float
+  def getFloat(columnLabel: String): F[Float]
 
   /**
    * Retrieves the value of the designated column in the current row
@@ -313,7 +313,7 @@ trait ResultSet:
    * @return the column value; if the value is SQL <code>NULL</code>, the
    *         value returned is <code>0</code>
    */
-  def getDouble(columnLabel: String): Double
+  def getDouble(columnLabel: String): F[Double]
 
   /**
    * Retrieves the value of the designated column in the current row
@@ -325,7 +325,7 @@ trait ResultSet:
    * @return the column value; if the value is SQL <code>NULL</code>, the
    *         value returned is <code>null</code>
    */
-  def getBytes(columnLabel: String): Array[Byte]
+  def getBytes(columnLabel: String): F[Array[Byte]]
 
   /**
    * Retrieves the value of the designated column in the current row
@@ -336,7 +336,7 @@ trait ResultSet:
    * @return the column value; if the value is SQL <code>NULL</code>, the
    *         value returned is <code>null</code>
    */
-  def getDate(columnLabel: String): LocalDate
+  def getDate(columnLabel: String): F[LocalDate]
 
   /**
    * Retrieves the value of the designated column in the current row
@@ -348,7 +348,7 @@ trait ResultSet:
    *         if the value is SQL <code>NULL</code>,
    *         the value returned is <code>null</code>
    */
-  def getTime(columnLabel: String): LocalTime
+  def getTime(columnLabel: String): F[LocalTime]
 
   /**
    * Retrieves the value of the designated column in the current row
@@ -359,7 +359,7 @@ trait ResultSet:
    * @return the column value; if the value is SQL <code>NULL</code>, the
    *         value returned is <code>null</code>
    */
-  def getTimestamp(columnLabel: String): LocalDateTime
+  def getTimestamp(columnLabel: String): F[LocalDateTime]
 
   /**
    * Retrieves the  number, types and properties of
@@ -367,7 +367,7 @@ trait ResultSet:
    *
    * @return the description of this <code>ResultSet</code> object's columns
    */
-  def getMetaData(): ResultSetMetaData
+  def getMetaData(): F[ResultSetMetaData]
 
   /**
    * Retrieves the value of the designated column in the current row
@@ -379,7 +379,7 @@ trait ResultSet:
    *         if the value is SQL <code>null</code>, the value returned is
    *         <code>None</code> in the Scala programming language.
    */
-  def getBigDecimal(columnIndex: Int): BigDecimal
+  def getBigDecimal(columnIndex: Int): F[BigDecimal]
 
   /**
    * Retrieves the value of the designated column in the current row
@@ -391,7 +391,7 @@ trait ResultSet:
    *         if the value is SQL <code>NULL</code>, the value returned is
    *         <code>null</code> in the Scala programming language.
    */
-  def getBigDecimal(columnLabel: String): BigDecimal
+  def getBigDecimal(columnLabel: String): F[BigDecimal]
 
   /**
    * Retrieves whether the cursor is before the first row in
@@ -405,7 +405,7 @@ trait ResultSet:
    *         <code>false</code> if the cursor is at any other position or the
    *         result set contains no rows
    */
-  def isBeforeFirst(): Boolean
+  def isBeforeFirst(): F[Boolean]
 
   /**
    * Retrieves whether the cursor is on the first row of
@@ -418,7 +418,7 @@ trait ResultSet:
    * @return <code>true</code> if the cursor is on the first row;
    *         <code>false</code> otherwise
    */
-  def isFirst(): Boolean
+  def isFirst(): F[Boolean]
 
   /**
    * Retrieves whether the cursor is after the last row in
@@ -432,7 +432,7 @@ trait ResultSet:
    *         <code>false</code> if the cursor is at any other position or the
    *         result set contains no rows
    */
-  def isAfterLast(): Boolean
+  def isAfterLast(): F[Boolean]
 
   /**
    * Retrieves whether the cursor is on the last row of
@@ -449,21 +449,21 @@ trait ResultSet:
    * @return <code>true</code> if the cursor is on the last row;
    *         <code>false</code> otherwise
    */
-  def isLast(): Boolean
+  def isLast(): F[Boolean]
 
   /**
    * Moves the cursor to the front of
    * this <code>ResultSet</code> object, just before the
    * first row. This method has no effect if the result set contains no rows.
    */
-  def beforeFirst(): Unit
+  def beforeFirst(): F[Unit]
 
   /**
    * Moves the cursor to the end of
    * this <code>ResultSet</code> object, just after the
    * last row. This method has no effect if the result set contains no rows.
    */
-  def afterLast(): Unit
+  def afterLast(): F[Unit]
 
   /**
    * Moves the cursor to the first row in
@@ -472,7 +472,7 @@ trait ResultSet:
    * @return <code>true</code> if the cursor is on a valid row;
    *         <code>false</code> if there are no rows in the result set
    */
-  def first(): Boolean
+  def first(): F[Boolean]
 
   /**
    * Moves the cursor to the last row in
@@ -481,7 +481,7 @@ trait ResultSet:
    * @return <code>true</code> if the cursor is on a valid row;
    *         <code>false</code> if there are no rows in the result set
    */
-  def last(): Boolean
+  def last(): F[Boolean]
 
   /**
    * Retrieves the current row number.  The first row is number 1, the
@@ -493,7 +493,7 @@ trait ResultSet:
    *
    * @return the current row number; <code>0</code> if there is no current row
    */
-  def getRow(): Int
+  def getRow(): F[Int]
 
   /**
    * Moves the cursor to the given row number in
@@ -529,7 +529,7 @@ trait ResultSet:
    *            indicates the row number counting from the end of the result set
    * @return <code>true</code> if the cursor is moved to a position in this
    */
-  def absolute(row: Int): Boolean
+  def absolute(row: Int): F[Boolean]
 
   /**
    * Moves the cursor a relative number of rows, either positive or negative.
@@ -549,7 +549,7 @@ trait ResultSet:
    * @return <code>true</code> if the cursor is on a row;
    *         <code>false</code> otherwise
    */
-  def relative(rows: Int): Boolean
+  def relative(rows: Int): F[Boolean]
 
   /**
    * Moves the cursor to the previous row in this
@@ -564,7 +564,7 @@ trait ResultSet:
    * @return <code>true</code> if the cursor is now positioned on a valid row;
    *         <code>false</code> if the cursor is positioned before the first row
    */
-  def previous(): Boolean
+  def previous(): F[Boolean]
 
   /**
    * Retrieves the type of this <code>ResultSet</code> object.
@@ -575,7 +575,7 @@ trait ResultSet:
    *         <code>ResultSet.TYPE_SCROLL_INSENSITIVE</code>,
    *         or <code>ResultSet.TYPE_SCROLL_SENSITIVE</code>
    */
-  def getType(): Int
+  def getType(): F[Int]
 
   /**
    * Retrieves the concurrency mode of this <code>ResultSet</code> object.
@@ -586,7 +586,7 @@ trait ResultSet:
    *         <code>ResultSet.CONCUR_READ_ONLY</code>
    *         or <code>ResultSet.CONCUR_UPDATABLE</code>
    */
-  def getConcurrency(): Int
+  def getConcurrency(): F[Int]
 
 object ResultSet:
 

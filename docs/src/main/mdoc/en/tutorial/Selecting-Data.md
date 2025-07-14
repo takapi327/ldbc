@@ -38,7 +38,10 @@ Let's explain this code in detail:
 
 - `sql"SELECT name FROM user"` - Defines the SQL query.
 - `.query[String]` - Maps each row result to a `String` type. This generates a `Query[String]` type.
-- `.to[List]` - Aggregates the results into a `List`. This generates a `DBIO[List[String]]` type. This method can be used with any collection type that implements `FactoryCompat` (such as `List`, `Vector`, `Set`, etc.).
+- `.to[List]` - Aggregates the results into a `List`. This generates a `DBIO[List[String]]` type. This method can be used with any collection type that implements `FactoryCompat` (such as `List`, `Vector`, `Set`, etc.). Similar methods are:
+    - `.unsafe` which returns a single value, raising an exception if there is not exactly one row returned.
+    - `.option` which returns an Option, raising an exception if there is more than one row returned.
+    - `.nel` which returns an NonEmptyList, raising an exception if there are no rows returned.
 - `.readOnly(conn)` - Executes the query using the connection in read-only mode. The return value is `IO[List[String]]`.
 - `.unsafeRunSync()` - Executes the IO monad to get the actual result (`List[String]`).
 - `.foreach(println)` - Outputs each element of the result.

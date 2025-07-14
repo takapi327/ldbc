@@ -30,66 +30,7 @@ ThisBuild / githubWorkflowBuildPostamble += dockerStop
 ThisBuild / githubWorkflowTargetBranches        := Seq("**")
 ThisBuild / githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v")))
 ThisBuild / tlSitePublishBranch                 := None
-ThisBuild / mimaBinaryIssueFilters ++= List(
-  ProblemFilters.exclude[DirectMissingMethodProblem]("ldbc.schema.DataType.mapping"),
-
-  // Exclusions for Naming class relocation from ldbc.codegen.formatter to ldbc.statement.formatter
-  ProblemFilters.exclude[MissingClassProblem]("ldbc.codegen.formatter.Naming"),
-  ProblemFilters.exclude[MissingClassProblem]("ldbc.codegen.formatter.Naming$"),
-
-  // ColumnCodeBuilder related exclusions
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.builder.ColumnCodeBuilder.apply"),
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.builder.ColumnCodeBuilder.this"),
-  ProblemFilters.exclude[IncompatibleResultTypeProblem]("ldbc.codegen.builder.ColumnCodeBuilder.formatter"),
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.builder.ColumnCodeBuilder.copy"),
-  ProblemFilters.exclude[IncompatibleResultTypeProblem]("ldbc.codegen.builder.ColumnCodeBuilder.copy$default$1"),
-  ProblemFilters.exclude[IncompatibleResultTypeProblem]("ldbc.codegen.builder.ColumnCodeBuilder._1"),
-
-  // DataTypeCodeBuilder related exclusions
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.builder.DataTypeCodeBuilder.apply"),
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.builder.DataTypeCodeBuilder.this"),
-  ProblemFilters.exclude[IncompatibleResultTypeProblem]("ldbc.codegen.builder.DataTypeCodeBuilder.formatter"),
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.builder.DataTypeCodeBuilder.copy"),
-  ProblemFilters.exclude[IncompatibleResultTypeProblem]("ldbc.codegen.builder.DataTypeCodeBuilder.copy$default$2"),
-  ProblemFilters.exclude[IncompatibleResultTypeProblem]("ldbc.codegen.builder.DataTypeCodeBuilder._2"),
-
-  // Key related exclusions
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.model.Key.toCode"),
-  ProblemFilters.exclude[ReversedMissingMethodProblem]("ldbc.codegen.model.Key.toCode"),
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.model.Key#Foreign.toCode"),
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.model.Key#Index.toCode"),
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.model.Key#Primary.toCode"),
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.model.Key#Reference.toCode"),
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.model.Key#Unique.toCode")
-)
-
-lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
-  .crossType(CrossType.Full)
-  .default("core", "ldbc core project")
-  .settings(
-    onLoadMessage :=
-      s"""
-         |${ scala.Console.RED }WARNING: This project is deprecated and will be removed in future versions. Please use ldbc-schema instead.
-         |
-         |${ scala.Console.RED }${ organization.value } %% ${ name.value } % ${ version.value }
-         |
-         |         ${ scala.Console.RED }↓↓↓↓↓
-         |
-         |${ scala.Console.RED }${ organization.value } %% ldbc-schema % ${ version.value }
-         |
-         |""".stripMargin,
-    libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-core"   % "2.10.0",
-      "org.scalatest" %%% "scalatest"   % "3.2.18" % Test,
-      "org.specs2"    %%% "specs2-core" % "4.20.5" % Test
-    ),
-    Test / scalacOptions -= "-Werror"
-  )
-  .platformsSettings(JSPlatform, NativePlatform)(
-    libraryDependencies ++= Seq(
-      "io.github.cquiroz" %%% "scala-java-time" % "2.5.0"
-    )
-  )
+ThisBuild / tlCiMimaBinaryIssueCheck            := false
 
 lazy val sql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
@@ -138,14 +79,6 @@ lazy val schema = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.18" % Test)
   .settings(Test / scalacOptions -= "-Werror")
   .dependsOn(statement)
-
-lazy val schemaSpy = LepusSbtProject("ldbc-schemaSpy", "module/ldbc-schemaspy")
-  .settings(
-    description := "Project to generate SchemaSPY documentation",
-    onLoadMessage := s"${ scala.Console.RED }WARNING: This project is deprecated and will be removed in future versions.${ scala.Console.RESET }",
-    libraryDependencies += schemaspy
-  )
-  .dependsOn(core.jvm)
 
 lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
@@ -432,7 +365,6 @@ lazy val ldbc = tlCrossRootProject
   .settings(description := "Pure functional JDBC layer with Cats Effect 3 and Scala 3")
   .settings(commonSettings)
   .aggregate(
-    core,
     sql,
     jdbcConnector,
     connector,
@@ -445,7 +377,6 @@ lazy val ldbc = tlCrossRootProject
     tests,
     docs,
     benchmark,
-    schemaSpy,
     hikari,
     mcpDocumentServer
   )
