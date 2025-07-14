@@ -17,7 +17,7 @@ object Dependencies {
   val mysqlVersion = "8.4.0"
   val mysql        = "com.mysql" % "mysql-connector-j" % mysqlVersion
 
-  val typesafeConfig = "com.typesafe" % "config" % "1.4.3"
+  val typesafeConfig = "com.typesafe" % "config" % "1.4.4"
 
   val hikariCP = "com.zaxxer" % "HikariCP" % "6.3.0"
 
