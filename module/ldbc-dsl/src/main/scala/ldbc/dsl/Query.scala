@@ -45,6 +45,23 @@ trait Query[T]:
    */
   def nel: DBIO[NonEmptyList[T]]
 
+  /**
+   * A method to return the data to be retrieved from the database as a stream.
+   * If there is no data, an empty stream is returned.
+   */
+  def stream: fs2.Stream[DBIO, T]
+
+  /**
+   * A method to return the data to be retrieved from the database as a stream with a specified fetch size.
+   * If there is no data, an empty stream is returned.
+   *
+   * @param fetchSize
+   *   The number of rows to be fetched at a time (must be positive)
+   * @throws IllegalArgumentException
+   *   if fetchSize is zero or negative
+   */
+  def stream(fetchSize: Int): fs2.Stream[DBIO, T]
+
 object Query:
 
   private[ldbc] case class Impl[T](
@@ -65,3 +82,10 @@ object Query:
 
     override def nel: DBIO[NonEmptyList[T]] =
       DBIO.queryNel(statement, params, decoder)
+
+    override def stream: fs2.Stream[DBIO, T] = stream(1)
+
+    override def stream(fetchSize: Int): fs2.Stream[DBIO, T] =
+      if fetchSize <= 0 then
+        fs2.Stream.raiseError[DBIO](new IllegalArgumentException(s"fetchSize must be positive, but was: $fetchSize"))
+      else DBIO.stream(statement, params, decoder, fetchSize)

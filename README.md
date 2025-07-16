@@ -357,7 +357,6 @@ We will continue to develop features and improve the stability of the ldbc conne
 
 #### Other
 
-- [ ] Additional streaming implementation
 - [ ] Integration with java.sql API
 - [ ] etc...
 

@@ -10,6 +10,8 @@ import cats.{ Foldable, Functor, Reducible }
 import cats.data.NonEmptyList
 import cats.syntax.all.*
 
+import cats.effect.kernel.Sync
+
 import ldbc.dsl.*
 import ldbc.dsl.codec.Encoder
 
@@ -174,3 +176,5 @@ trait HelperFunctionsSyntax extends StringContextSyntax:
     orderByOpt((s1 :: s2 :: ss.toList).flatten)
 
   implicit def toDBIO[A](dbio: DBIO[A]): DBIO.Ops[A] = new DBIO.Ops(dbio)
+
+  implicit val syncDBIO: Sync[DBIO] = DBIO.syncDBIO
