@@ -6,4 +6,5 @@
 
 package jdbc
 
-package object connector
+package object connector:
+  export ldbc.Provider

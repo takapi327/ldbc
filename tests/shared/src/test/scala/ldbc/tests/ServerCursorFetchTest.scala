@@ -14,7 +14,6 @@ import munit.*
 
 import ldbc.sql.*
 
-import ldbc.dsl.Provider
 import ldbc.connector.*
 import ldbc.connector.syntax.*
 

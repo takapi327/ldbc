@@ -6,4 +6,5 @@
 
 package ldbc
 
-package object connector
+package object connector:
+  export ldbc.Provider
