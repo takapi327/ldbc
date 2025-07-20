@@ -27,6 +27,9 @@ import ldbc.dsl.syntax.*
  */
 package object dsl extends HelperFunctionsSyntax:
 
+  export ldbc.DBIO
+  export ldbc.Provider
+
   private[ldbc] trait ParamBinder:
     protected def paramBind[F[_]: MonadThrow](
       prepareStatement: PreparedStatement[F],

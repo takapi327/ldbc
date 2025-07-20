@@ -15,7 +15,7 @@ import org.typelevel.twiddles.TwiddleSyntax
 
 import ldbc.dsl.*
 import ldbc.dsl.codec.*
-import ldbc.dsl.free.ResultSetIO
+import ldbc.free.ResultSetIO
 
 import ldbc.statement.Expression.*
 
