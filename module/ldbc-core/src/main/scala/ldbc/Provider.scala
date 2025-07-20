@@ -44,3 +44,14 @@ trait Provider[F[_]]:
    * }}}
    */
   def createConnection(): Resource[F, Connection[F]]
+
+  /**
+   * Create a connector managed by Resource.
+   *
+   * {{{
+   *   provider.createConnector().use { connector =>
+   *     ???
+   *   }
+   * }}}
+   */
+  def createConnector(): Resource[F, Connector[F]]

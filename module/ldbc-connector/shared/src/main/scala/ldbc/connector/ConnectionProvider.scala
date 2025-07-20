@@ -495,7 +495,10 @@ object ConnectionProvider:
           )
 
     override def use[B](f: Connector[F] => F[B]): F[B] =
-      createConnection().map(Connector.fromConnection).use(f)
+      createConnector().use(f)
+
+    override def createConnector(): Resource[F, Connector[F]] =
+      createConnection().map(Connector.fromConnection)
 
   def default[F[_]: Async: Network: Console: Hashing: UUIDGen](
     host: String,

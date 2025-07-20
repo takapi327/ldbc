@@ -37,7 +37,10 @@ object ConnectionProvider:
         .map(conn => ConnectionImpl(conn, logHandler.getOrElse(noopLogger)))
 
     override def use[A](f: Connector[F] => F[A]): F[A] =
-      createConnection().map(Connector.fromConnection).use(f)
+      createConnector().use(f)
+
+    override def createConnector(): Resource[F, Connector[F]] =
+      createConnection().map(Connector.fromConnection)
 
   private case class JavaConnectionProvider[F[_]: Sync](
     connection: java.sql.Connection,
@@ -47,7 +50,10 @@ object ConnectionProvider:
       Resource.pure(ConnectionImpl(connection, logHandler.getOrElse(noopLogger)))
 
     override def use[A](f: Connector[F] => F[A]): F[A] =
-      createConnection().map(Connector.fromConnection).use(f)
+      createConnector().use(f)
+
+    override def createConnector(): Resource[F, Connector[F]] =
+      createConnection().map(Connector.fromConnection)
 
   class DriverProvider[F[_]: Console](using ev: Async[F]):
 
@@ -67,7 +73,10 @@ object ConnectionProvider:
             .map(conn => ConnectionImpl(conn, logHandler.getOrElse(noopLogger)))
 
         override def use[A](f: Connector[F] => F[A]): F[A] =
-          createConnection().map(Connector.fromConnection).use(f)
+          createConnector().use(f)
+
+        override def createConnector(): Resource[F, Connector[F]] =
+          createConnection().map(Connector.fromConnection)
 
     /** Construct a new `Provider` that uses the JDBC `DriverManager` to allocate connections.
      *

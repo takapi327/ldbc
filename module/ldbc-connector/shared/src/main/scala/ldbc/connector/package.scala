@@ -8,3 +8,4 @@ package ldbc
 
 package object connector:
   export ldbc.Provider
+  export ldbc.Connector

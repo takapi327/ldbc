@@ -18,7 +18,7 @@ object Main extends IOApp.Simple:
 
   private val serviceName = "ldbc-otel-example"
 
-  private def resource: Resource[IO, Connection[IO]] =
+  private def resource: Resource[IO, Connector[IO]] =
     for
       otel <- Resource
                 .eval(IO.delay(GlobalOpenTelemetry.get))
@@ -28,7 +28,7 @@ object Main extends IOApp.Simple:
                       .default[IO]("127.0.0.1", 13307, "ldbc", "password", "world")
                       .setSSL(SSL.Trusted)
                       .setTracer(tracer)
-                      .createConnection()
+                      .createConnector()
     yield connection
 
   override def run: IO[Unit] =
