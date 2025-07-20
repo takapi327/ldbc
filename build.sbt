@@ -46,8 +46,8 @@ lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .module("core", "Core project for ldbc")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-free"         % "2.10.0",
-      "org.typelevel" %%% "cats-effect" % "3.6.1",
+      "org.typelevel" %%% "cats-free"   % "2.10.0",
+      "org.typelevel" %%% "cats-effect" % "3.6.1"
     )
   )
   .dependsOn(sql)
@@ -119,7 +119,6 @@ lazy val jdbcConnector = crossProject(JVMPlatform)
     description := "JDBC API wrapped project with Effect System."
   )
   .defaultSettings
-  .settings(libraryDependencies += catsEffect)
   .dependsOn(core)
 
 lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
@@ -128,7 +127,6 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     scalacOptions += "-Ykind-projector:underscores",
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-effect"       % "3.6.1",
       "co.fs2"        %%% "fs2-core"          % "3.12.0",
       "co.fs2"        %%% "fs2-io"            % "3.12.0",
       "org.scodec"    %%% "scodec-bits"       % "1.1.38",
