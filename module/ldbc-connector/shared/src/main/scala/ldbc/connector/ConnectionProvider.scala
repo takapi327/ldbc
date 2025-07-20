@@ -17,7 +17,8 @@ import fs2.io.net.*
 
 import org.typelevel.otel4s.trace.Tracer
 
-import ldbc.sql.{ DatabaseMetaData, Provider }
+import ldbc.{Provider, Connector}
+import ldbc.sql.DatabaseMetaData
 import ldbc.sql.logging.LogHandler
 
 trait ConnectionProvider[F[_], A] extends Provider[F]:
@@ -313,17 +314,6 @@ trait ConnectionProvider[F[_], A] extends Provider[F]:
    */
   def withBeforeAfter[B](before: Connection[F] => F[B], after: (B, Connection[F]) => F[Unit]): ConnectionProvider[F, B]
 
-  /**
-   * Create a connection managed by Resource.
-   * 
-   * {{{
-   *   provider.createConnection().user { connection =>
-   *     ???
-   *   }
-   * }}}
-   */
-  def createConnection(): Resource[F, Connection[F]]
-
 object ConnectionProvider:
 
   val defaultSocketOptions: List[SocketOption] =
@@ -504,8 +494,8 @@ object ConnectionProvider:
             logHandler              = logHandler
           )
 
-    override def use[B](f: Connection[F] => F[B]): F[B] =
-      createConnection().use(f)
+    override def use[B](f: Connector[F] => F[B]): F[B] =
+      createConnection().map(Connector.fromConnection).use(f)
 
   def default[F[_]: Async: Network: Console: Hashing: UUIDGen](
     host: String,
