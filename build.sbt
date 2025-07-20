@@ -41,19 +41,28 @@ lazy val sql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     )
   )
 
+lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
+  .module("core", "Core project for ldbc")
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel" %%% "cats-free"         % "2.10.0",
+      "org.typelevel" %%% "cats-effect" % "3.6.1",
+    )
+  )
+  .dependsOn(sql)
+
 lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("dsl", "Projects that provide a way to connect to the database")
   .settings(
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "twiddles-core"     % "0.8.0",
-      "org.typelevel" %%% "cats-free"         % "2.10.0",
-      "org.typelevel" %%% "cats-effect"       % "3.6.1",
       "co.fs2"        %%% "fs2-core"          % "3.12.0",
       "org.typelevel" %%% "munit-cats-effect" % "2.1.0" % Test
     )
   )
-  .dependsOn(sql)
+  .dependsOn(core)
 
 lazy val statement = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
@@ -111,7 +120,7 @@ lazy val jdbcConnector = crossProject(JVMPlatform)
   )
   .defaultSettings
   .settings(libraryDependencies += catsEffect)
-  .dependsOn(sql)
+  .dependsOn(core)
 
 lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
@@ -135,7 +144,7 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
   .nativeSettings(Test / nativeBrewFormulas += "s2n")
-  .dependsOn(sql)
+  .dependsOn(core)
 
 lazy val hikari = LepusSbtProject("ldbc-hikari", "module/ldbc-hikari")
   .settings(description := "Project to build HikariCP")
@@ -367,6 +376,7 @@ lazy val ldbc = tlCrossRootProject
   .settings(commonSettings)
   .aggregate(
     sql,
+    core,
     jdbcConnector,
     connector,
     dsl,
