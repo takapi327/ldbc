@@ -4,26 +4,23 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.dsl.free
+package ldbc.free
 
-import java.time.*
-
-import scala.concurrent.duration.FiniteDuration
-
-import cats.~>
 import cats.data.Kleisli
+import cats.effect.kernel.{Poll, Sync}
 import cats.free.Free
-
-import cats.effect.kernel.{ Poll, Sync }
-
+import cats.~>
 import ldbc.sql.*
 import ldbc.sql.logging.*
+
+import java.time.*
+import scala.concurrent.duration.FiniteDuration
 
 /**
  * This code is based on doobie's code.
  * @see https://github.com/typelevel/doobie/blob/main/modules/free/src/main/scala/doobie/free/kleisliinterpreter.scala
  */
-class KleisliInterpreter[F[_]: Sync](logHandler: LogHandler[F]):
+class KleisliInterpreter[F[_]: Sync](logHandler: LogHandler[F]) extends Interpreter[F]:
   outer =>
 
   lazy val ConnectionInterpreter: ConnectionOp ~> ([A] =>> Kleisli[F, Connection[F], A]) = new ConnectionInterpreter {}

@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.dsl.free
+package ldbc.free
 
 import scala.concurrent.duration.FiniteDuration
 
