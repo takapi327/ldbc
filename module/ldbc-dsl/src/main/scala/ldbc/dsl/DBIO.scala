@@ -21,11 +21,12 @@ import cats.effect.kernel.{ CancelScope, Poll, Sync }
 import ldbc.sql.*
 import ldbc.sql.logging.LogEvent
 
-import ldbc.*
-import ldbc.free.*
 import ldbc.dsl.codec.*
 import ldbc.dsl.exception.*
 import ldbc.dsl.util.FactoryCompat
+
+import ldbc.*
+import ldbc.free.*
 
 object DBIO:
 
@@ -35,62 +36,62 @@ object DBIO:
         for
           acc$  <- acc
           value <- param match
-            case Parameter.Dynamic.Success(value)  => PreparedStatementIO.pure(value)
-            case Parameter.Dynamic.Failure(errors) =>
-              PreparedStatementIO.raiseError(new IllegalArgumentException(errors.mkString(", ")))
+                     case Parameter.Dynamic.Success(value)  => PreparedStatementIO.pure(value)
+                     case Parameter.Dynamic.Failure(errors) =>
+                       PreparedStatementIO.raiseError(new IllegalArgumentException(errors.mkString(", ")))
         yield acc$ :+ value
     }
 
     for
       encodes <- encoded
       _       <- encodes.zipWithIndex.foldLeft(PreparedStatementIO.pure[Unit](())) {
-        case (acc, (value, index)) =>
-          acc *> (value match
-            case value: Boolean       => PreparedStatementIO.setBoolean(index + 1, value)
-            case value: Byte          => PreparedStatementIO.setByte(index + 1, value)
-            case value: Short         => PreparedStatementIO.setShort(index + 1, value)
-            case value: Int           => PreparedStatementIO.setInt(index + 1, value)
-            case value: Long          => PreparedStatementIO.setLong(index + 1, value)
-            case value: Float         => PreparedStatementIO.setFloat(index + 1, value)
-            case value: Double        => PreparedStatementIO.setDouble(index + 1, value)
-            case value: BigDecimal    => PreparedStatementIO.setBigDecimal(index + 1, value)
-            case value: String        => PreparedStatementIO.setString(index + 1, value)
-            case value: Array[Byte]   => PreparedStatementIO.setBytes(index + 1, value)
-            case value: LocalDate     => PreparedStatementIO.setDate(index + 1, value)
-            case value: LocalTime     => PreparedStatementIO.setTime(index + 1, value)
-            case value: LocalDateTime => PreparedStatementIO.setTimestamp(index + 1, value)
-            case None                 => PreparedStatementIO.setNull(index + 1, ldbc.sql.Types.NULL))
-      }
+             case (acc, (value, index)) =>
+               acc *> (value match
+                 case value: Boolean       => PreparedStatementIO.setBoolean(index + 1, value)
+                 case value: Byte          => PreparedStatementIO.setByte(index + 1, value)
+                 case value: Short         => PreparedStatementIO.setShort(index + 1, value)
+                 case value: Int           => PreparedStatementIO.setInt(index + 1, value)
+                 case value: Long          => PreparedStatementIO.setLong(index + 1, value)
+                 case value: Float         => PreparedStatementIO.setFloat(index + 1, value)
+                 case value: Double        => PreparedStatementIO.setDouble(index + 1, value)
+                 case value: BigDecimal    => PreparedStatementIO.setBigDecimal(index + 1, value)
+                 case value: String        => PreparedStatementIO.setString(index + 1, value)
+                 case value: Array[Byte]   => PreparedStatementIO.setBytes(index + 1, value)
+                 case value: LocalDate     => PreparedStatementIO.setDate(index + 1, value)
+                 case value: LocalTime     => PreparedStatementIO.setTime(index + 1, value)
+                 case value: LocalDateTime => PreparedStatementIO.setTimestamp(index + 1, value)
+                 case None                 => PreparedStatementIO.setNull(index + 1, ldbc.sql.Types.NULL))
+           }
     yield ()
 
   private def unique[T](
-                 statement: String,
-                 decoder: Decoder[T]
-               ): ResultSetIO[T] =
+    statement: String,
+    decoder:   Decoder[T]
+  ): ResultSetIO[T] =
     ResultSetIO.next().flatMap {
-      case true => decoder.decode(1, statement)
+      case true  => decoder.decode(1, statement)
       case false => ResultSetIO.raiseError(new UnexpectedContinuation("Expected ResultSet to have at least one row."))
     }
 
   private def whileM[G[_], T](
-                       statement: String,
-                       decoder: Decoder[T],
-                       factoryCompat: FactoryCompat[T, G[T]]
-                     ): ResultSetIO[G[T]] =
+    statement:     String,
+    decoder:       Decoder[T],
+    factoryCompat: FactoryCompat[T, G[T]]
+  ): ResultSetIO[G[T]] =
     val builder = factoryCompat.newBuilder
 
     def loop(acc: collection.mutable.Builder[T, G[T]]): ResultSetIO[collection.mutable.Builder[T, G[T]]] =
       ResultSetIO.next().flatMap {
-        case true => decoder.decode(1, statement).flatMap(v => loop(acc += v))
+        case true  => decoder.decode(1, statement).flatMap(v => loop(acc += v))
         case false => ResultSetIO.pure(acc)
       }
 
     loop(builder).map(_.result())
 
   private def nel[A](
-              statement: String,
-              decoder: Decoder[A]
-            ): ResultSetIO[NonEmptyList[A]] =
+    statement: String,
+    decoder:   Decoder[A]
+  ): ResultSetIO[NonEmptyList[A]] =
     whileM[List, A](statement, decoder, summon[FactoryCompat[A, List[A]]]).flatMap { results =>
       if results.isEmpty then ResultSetIO.raiseError(new UnexpectedEnd("No results found"))
       else ResultSetIO.pure(NonEmptyList.fromListUnsafe(results))

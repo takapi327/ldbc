@@ -12,7 +12,7 @@ import munit.*
 import munit.catseffect.IOFixture
 import munit.catseffect.ResourceFixture.FixtureNotInstantiatedException
 
-import ldbc.{Provider, Connector}
+import ldbc.{ Connector, Provider }
 
 private case class JdbcConnectionFixture(
   name:              String,

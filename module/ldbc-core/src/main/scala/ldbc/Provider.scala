@@ -8,8 +8,8 @@ package ldbc
 
 import cats.effect.*
 
-import ldbc.sql.Connection
 import ldbc.sql.logging.LogHandler
+import ldbc.sql.Connection
 
 /**
  * Trait for aggregating settings for building connections and providing connections to users.

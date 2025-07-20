@@ -12,9 +12,9 @@ import munit.*
 import munit.catseffect.IOFixture
 import munit.catseffect.ResourceFixture.FixtureNotInstantiatedException
 
-import ldbc.Connector
-
 import ldbc.connector.ConnectionProvider
+
+import ldbc.Connector
 
 trait ConnectionFixture:
   def name: String

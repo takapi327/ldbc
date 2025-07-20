@@ -19,13 +19,13 @@ trait Connector[F[_]]:
    * Handler for outputting logs of process execution using connections.
    */
   def logHandler: LogHandler[F]
-  
+
   def connection: Connection[F]
 
   def run[A](dbio: DBIO[A]): F[A]
-  
+
 object Connector:
-  
+
   private case class Impl[F[_]: Sync](
     logHandler: LogHandler[F],
     connection: Connection[F]

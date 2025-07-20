@@ -6,15 +6,18 @@
 
 package ldbc.free
 
-import cats.data.Kleisli
-import cats.effect.kernel.{Poll, Sync}
-import cats.free.Free
+import java.time.*
+
+import scala.concurrent.duration.FiniteDuration
+
 import cats.~>
+import cats.data.Kleisli
+import cats.free.Free
+
+import cats.effect.kernel.{ Poll, Sync }
+
 import ldbc.sql.*
 import ldbc.sql.logging.*
-
-import java.time.*
-import scala.concurrent.duration.FiniteDuration
 
 /**
  * This code is based on doobie's code.

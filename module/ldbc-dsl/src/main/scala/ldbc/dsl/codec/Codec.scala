@@ -16,8 +16,9 @@ import cats.InvariantSemigroupal
 
 import org.typelevel.twiddles.TwiddleSyntax
 
-import ldbc.free.ResultSetIO
 import ldbc.dsl.util.Mirrors
+
+import ldbc.free.ResultSetIO
 
 /**
  * Symmetric encoder and decoder of MySQL data to and from Scala types.

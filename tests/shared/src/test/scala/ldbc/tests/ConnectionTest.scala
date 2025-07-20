@@ -14,10 +14,11 @@ import cats.effect.*
 
 import munit.*
 
-import ldbc.Provider
 import ldbc.sql.*
 
 import ldbc.connector.*
+
+import ldbc.Provider
 
 class LdbcConnectionTest extends ConnectionTest:
   override def prefix: "ldbc" = "ldbc"

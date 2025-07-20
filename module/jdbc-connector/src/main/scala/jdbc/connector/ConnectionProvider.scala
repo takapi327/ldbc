@@ -18,9 +18,10 @@ import cats.Applicative
 import cats.effect.*
 import cats.effect.std.Console
 
-import ldbc.{Provider, Connector}
-import ldbc.sql.Connection
 import ldbc.sql.logging.{ LogEvent, LogHandler }
+import ldbc.sql.Connection
+
+import ldbc.{ Connector, Provider }
 
 object ConnectionProvider:
   private def noopLogger[F[_]: Applicative]: LogHandler[F] = (logEvent: LogEvent) => Applicative[F].unit

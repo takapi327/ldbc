@@ -15,9 +15,10 @@ import org.typelevel.twiddles.TwiddleSyntax
 
 import ldbc.dsl.*
 import ldbc.dsl.codec.*
-import ldbc.free.ResultSetIO
 
 import ldbc.statement.Expression.*
+
+import ldbc.free.ResultSetIO
 
 /**
  * Trait for representing SQL Column

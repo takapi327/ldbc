@@ -17,9 +17,10 @@ import fs2.io.net.*
 
 import org.typelevel.otel4s.trace.Tracer
 
-import ldbc.{Provider, Connector}
-import ldbc.sql.DatabaseMetaData
 import ldbc.sql.logging.LogHandler
+import ldbc.sql.DatabaseMetaData
+
+import ldbc.{ Connector, Provider }
 
 trait ConnectionProvider[F[_], A] extends Provider[F]:
 
