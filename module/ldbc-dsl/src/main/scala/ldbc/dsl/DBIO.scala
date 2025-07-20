@@ -6,6 +6,8 @@
 
 package ldbc.dsl
 
+import java.time.*
+
 import scala.concurrent.duration.FiniteDuration
 
 import cats.*
@@ -19,14 +21,80 @@ import cats.effect.kernel.{ CancelScope, Poll, Sync }
 import ldbc.sql.*
 import ldbc.sql.logging.LogEvent
 
-import ldbc.dsl.codec.Decoder
-import ldbc.dsl.exception.UnexpectedContinuation
-import ldbc.dsl.free.*
+import ldbc.*
+import ldbc.free.*
+import ldbc.dsl.codec.*
+import ldbc.dsl.exception.*
 import ldbc.dsl.util.FactoryCompat
 
-type DBIO[A] = Free[ConnectionOp, A]
-
 object DBIO:
+
+  private def paramBind(params: List[Parameter.Dynamic]): PreparedStatementIO[Unit] =
+    val encoded = params.foldLeft(PreparedStatementIO.pure(List.empty[Encoder.Supported])) {
+      case (acc, param) =>
+        for
+          acc$  <- acc
+          value <- param match
+            case Parameter.Dynamic.Success(value)  => PreparedStatementIO.pure(value)
+            case Parameter.Dynamic.Failure(errors) =>
+              PreparedStatementIO.raiseError(new IllegalArgumentException(errors.mkString(", ")))
+        yield acc$ :+ value
+    }
+
+    for
+      encodes <- encoded
+      _       <- encodes.zipWithIndex.foldLeft(PreparedStatementIO.pure[Unit](())) {
+        case (acc, (value, index)) =>
+          acc *> (value match
+            case value: Boolean       => PreparedStatementIO.setBoolean(index + 1, value)
+            case value: Byte          => PreparedStatementIO.setByte(index + 1, value)
+            case value: Short         => PreparedStatementIO.setShort(index + 1, value)
+            case value: Int           => PreparedStatementIO.setInt(index + 1, value)
+            case value: Long          => PreparedStatementIO.setLong(index + 1, value)
+            case value: Float         => PreparedStatementIO.setFloat(index + 1, value)
+            case value: Double        => PreparedStatementIO.setDouble(index + 1, value)
+            case value: BigDecimal    => PreparedStatementIO.setBigDecimal(index + 1, value)
+            case value: String        => PreparedStatementIO.setString(index + 1, value)
+            case value: Array[Byte]   => PreparedStatementIO.setBytes(index + 1, value)
+            case value: LocalDate     => PreparedStatementIO.setDate(index + 1, value)
+            case value: LocalTime     => PreparedStatementIO.setTime(index + 1, value)
+            case value: LocalDateTime => PreparedStatementIO.setTimestamp(index + 1, value)
+            case None                 => PreparedStatementIO.setNull(index + 1, ldbc.sql.Types.NULL))
+      }
+    yield ()
+
+  private def unique[T](
+                 statement: String,
+                 decoder: Decoder[T]
+               ): ResultSetIO[T] =
+    ResultSetIO.next().flatMap {
+      case true => decoder.decode(1, statement)
+      case false => ResultSetIO.raiseError(new UnexpectedContinuation("Expected ResultSet to have at least one row."))
+    }
+
+  private def whileM[G[_], T](
+                       statement: String,
+                       decoder: Decoder[T],
+                       factoryCompat: FactoryCompat[T, G[T]]
+                     ): ResultSetIO[G[T]] =
+    val builder = factoryCompat.newBuilder
+
+    def loop(acc: collection.mutable.Builder[T, G[T]]): ResultSetIO[collection.mutable.Builder[T, G[T]]] =
+      ResultSetIO.next().flatMap {
+        case true => decoder.decode(1, statement).flatMap(v => loop(acc += v))
+        case false => ResultSetIO.pure(acc)
+      }
+
+    loop(builder).map(_.result())
+
+  private def nel[A](
+              statement: String,
+              decoder: Decoder[A]
+            ): ResultSetIO[NonEmptyList[A]] =
+    whileM[List, A](statement, decoder, summon[FactoryCompat[A, List[A]]]).flatMap { results =>
+      if results.isEmpty then ResultSetIO.raiseError(new UnexpectedEnd("No results found"))
+      else ResultSetIO.pure(NonEmptyList.fromListUnsafe(results))
+    }
 
   def queryA[A](
     statement: String,
@@ -37,9 +105,9 @@ object DBIO:
       prepareStatement <- ConnectionIO.prepareStatement(statement)
       resultSet        <- ConnectionIO.embed(
                      prepareStatement,
-                     PreparedStatementIO.paramBind(params) *> PreparedStatementIO.executeQuery()
+                     paramBind(params) *> PreparedStatementIO.executeQuery()
                    )
-      result <- ConnectionIO.embed(resultSet, ResultSetIO.unique(statement, decoder))
+      result <- ConnectionIO.embed(resultSet, unique(statement, decoder))
       _      <- ConnectionIO.embed(prepareStatement, PreparedStatementIO.close())
     yield result).onError { ex =>
       ConnectionIO.performLogging(LogEvent.ProcessingFailure(statement, params.map(_.value), ex))
@@ -56,9 +124,9 @@ object DBIO:
       prepareStatement <- ConnectionIO.prepareStatement(statement)
       resultSet        <- ConnectionIO.embed(
                      prepareStatement,
-                     PreparedStatementIO.paramBind(params) *> PreparedStatementIO.executeQuery()
+                     paramBind(params) *> PreparedStatementIO.executeQuery()
                    )
-      result <- ConnectionIO.embed(resultSet, ResultSetIO.whileM(statement, decoder, factory))
+      result <- ConnectionIO.embed(resultSet, whileM(statement, decoder, factory))
       _      <- ConnectionIO.embed(prepareStatement, PreparedStatementIO.close())
     yield result).onError { ex =>
       ConnectionIO.performLogging(LogEvent.ProcessingFailure(statement, params.map(_.value), ex))
@@ -89,7 +157,7 @@ object DBIO:
       prepareStatement <- ConnectionIO.prepareStatement(statement)
       resultSet        <- ConnectionIO.embed(
                      prepareStatement,
-                     PreparedStatementIO.paramBind(params) *> PreparedStatementIO.executeQuery()
+                     paramBind(params) *> PreparedStatementIO.executeQuery()
                    )
       result <- ConnectionIO.embed(resultSet, decoded)
       _      <- ConnectionIO.embed(prepareStatement, PreparedStatementIO.close())
@@ -107,9 +175,9 @@ object DBIO:
       prepareStatement <- ConnectionIO.prepareStatement(statement)
       resultSet        <- ConnectionIO.embed(
                      prepareStatement,
-                     PreparedStatementIO.paramBind(params) *> PreparedStatementIO.executeQuery()
+                     paramBind(params) *> PreparedStatementIO.executeQuery()
                    )
-      result <- ConnectionIO.embed(resultSet, ResultSetIO.nel(statement, decoder))
+      result <- ConnectionIO.embed(resultSet, nel(statement, decoder))
       _      <- ConnectionIO.embed(prepareStatement, PreparedStatementIO.close())
     yield result).onError { ex =>
       ConnectionIO.performLogging(LogEvent.ProcessingFailure(statement, params.map(_.value), ex))
@@ -124,7 +192,7 @@ object DBIO:
       prepareStatement <- ConnectionIO.prepareStatement(statement)
       result           <- ConnectionIO.embed(
                   prepareStatement,
-                  PreparedStatementIO.paramBind(params) *> PreparedStatementIO.executeUpdate()
+                  paramBind(params) *> PreparedStatementIO.executeUpdate()
                 )
       _ <- ConnectionIO.embed(prepareStatement, PreparedStatementIO.close())
     yield result).onError { ex =>
@@ -141,10 +209,10 @@ object DBIO:
       prepareStatement <- ConnectionIO.prepareStatement(statement, Statement.RETURN_GENERATED_KEYS)
       resultSet        <- ConnectionIO.embed(
                      prepareStatement,
-                     PreparedStatementIO.paramBind(params) *> PreparedStatementIO.executeUpdate() *> PreparedStatementIO
+                     paramBind(params) *> PreparedStatementIO.executeUpdate() *> PreparedStatementIO
                        .getGeneratedKeys()
                    )
-      result <- ConnectionIO.embed(resultSet, ResultSetIO.unique(statement, decoder))
+      result <- ConnectionIO.embed(resultSet, unique(statement, decoder))
       _      <- ConnectionIO.embed(prepareStatement, PreparedStatementIO.close())
     yield result).onError { ex =>
       ConnectionIO.performLogging(LogEvent.ProcessingFailure(statement, params.map(_.value), ex))
@@ -176,7 +244,7 @@ object DBIO:
                                             preparedStatement,
                                             for
                                               _         <- PreparedStatementIO.setFetchSize(fetchSize)
-                                              _         <- PreparedStatementIO.paramBind(params)
+                                              _         <- paramBind(params)
                                               resultSet <- PreparedStatementIO.executeQuery()
                                             yield (preparedStatement, resultSet)
                                           )
@@ -224,31 +292,27 @@ object DBIO:
 
   private[ldbc] class Ops[A](dbio: DBIO[A]):
 
-    def run[F[_]: Sync](connection: Connection[F]): F[A] =
-      dbio
-        .foldMap(new KleisliInterpreter[F](connection.logHandler).ConnectionInterpreter)
-        .run(connection)
+    def run[F[_]](connector: Connector[F]): F[A] = connector.run(dbio)
 
-    def readOnly[F[_]: Sync](connection: Connection[F]): F[A] =
-      (ConnectionIO.setReadOnly(true) *> dbio <* ConnectionIO.setReadOnly(false))
-        .foldMap(new KleisliInterpreter[F](connection.logHandler).ConnectionInterpreter)
-        .run(connection)
+    def readOnly[F[_]](connector: Connector[F]): F[A] =
+      connector.run(ConnectionIO.setReadOnly(true) *> dbio <* ConnectionIO.setReadOnly(false))
 
-    def commit[F[_]: Sync](connection: Connection[F]): F[A] =
-      (ConnectionIO.setReadOnly(false) *> ConnectionIO.setAutoCommit(true) *> dbio)
-        .foldMap(new KleisliInterpreter[F](connection.logHandler).ConnectionInterpreter)
-        .run(connection)
+    def commit[F[_]](connector: Connector[F]): F[A] =
+      connector.run(ConnectionIO.setReadOnly(false) *> ConnectionIO.setAutoCommit(true) *> dbio)
 
-    def rollback[F[_]: Sync](connection: Connection[F]): F[A] =
-      (ConnectionIO.setReadOnly(false) *> ConnectionIO.setAutoCommit(false) *> dbio <* ConnectionIO
-        .rollback() <* ConnectionIO.setAutoCommit(true))
-        .foldMap(new KleisliInterpreter[F](connection.logHandler).ConnectionInterpreter)
-        .run(connection)
+    def rollback[F[_]](connector: Connector[F]): F[A] =
+      connector.run(
+        ConnectionIO.setReadOnly(false) *>
+          ConnectionIO.setAutoCommit(false) *>
+          dbio <*
+          ConnectionIO.rollback() <*
+          ConnectionIO.setAutoCommit(true)
+      )
 
-    def transaction[F[_]: Sync](connection: Connection[F]): F[A] =
-      val interpreter = new KleisliInterpreter[F](connection.logHandler).ConnectionInterpreter
-      ((ConnectionIO.setReadOnly(false) *> ConnectionIO.setAutoCommit(false) *> dbio).onError { _ =>
-        ConnectionIO.rollback()
-      } <* ConnectionIO.commit() <* ConnectionIO.setAutoCommit(true))
-        .foldMap(interpreter)
-        .run(connection)
+    def transaction[F[_]](connector: Connector[F]): F[A] =
+      connector.run(
+        (ConnectionIO.setReadOnly(false) *> ConnectionIO.setAutoCommit(false) *> dbio)
+          .onError { _ =>
+            ConnectionIO.rollback()
+          } <* ConnectionIO.commit() <* ConnectionIO.setAutoCommit(true)
+      )

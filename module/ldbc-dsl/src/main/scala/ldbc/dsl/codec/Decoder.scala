@@ -15,8 +15,8 @@ import cats.syntax.all.*
 
 import org.typelevel.twiddles.TwiddleSyntax
 
+import ldbc.free.ResultSetIO
 import ldbc.dsl.exception.DecodeFailureException
-import ldbc.dsl.free.ResultSetIO
 import ldbc.dsl.util.Mirrors
 
 /**

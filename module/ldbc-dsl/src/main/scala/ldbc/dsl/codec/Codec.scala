@@ -16,7 +16,7 @@ import cats.InvariantSemigroupal
 
 import org.typelevel.twiddles.TwiddleSyntax
 
-import ldbc.dsl.free.ResultSetIO
+import ldbc.free.ResultSetIO
 import ldbc.dsl.util.Mirrors
 
 /**
