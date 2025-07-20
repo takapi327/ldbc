@@ -14,6 +14,7 @@ import munit.*
 
 import ldbc.sql.*
 
+import ldbc.dsl.Provider
 import ldbc.connector.*
 import ldbc.connector.syntax.*
 
@@ -48,7 +49,7 @@ trait ServerCursorFetchTest extends CatsEffectSuite:
     assertIO(
       provider.use { conn =>
         for
-          statement <- conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
+          statement <- conn.connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
           _         <- statement.setFetchSize(1)
           resultSet <- statement.executeQuery("SELECT * FROM `city`")
           result    <- resultSet.whileM[List, String](
@@ -64,7 +65,7 @@ trait ServerCursorFetchTest extends CatsEffectSuite:
     assertIO(
       provider.use { conn =>
         for
-          statement <- conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
+          statement <- conn.connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
           _         <- statement.setFetchSize(5)
           resultSet <- statement.executeQuery("SELECT * FROM `city`")
           result    <- resultSet.whileM[List, String](
@@ -80,7 +81,7 @@ trait ServerCursorFetchTest extends CatsEffectSuite:
     assertIO(
       provider.use { conn =>
         for
-          statement <- conn.prepareStatement("SELECT * FROM `city`")
+          statement <- conn.connection.prepareStatement("SELECT * FROM `city`")
           _         <- statement.setFetchSize(1)
           resultSet <- statement.executeQuery()
           result    <- resultSet.whileM[List, String](
@@ -96,7 +97,7 @@ trait ServerCursorFetchTest extends CatsEffectSuite:
     assertIO(
       provider.use { conn =>
         for
-          statement <- conn.prepareStatement("SELECT * FROM `city`")
+          statement <- conn.connection.prepareStatement("SELECT * FROM `city`")
           _         <- statement.setFetchSize(5)
           resultSet <- statement.executeQuery()
           result    <- resultSet.whileM[List, String](

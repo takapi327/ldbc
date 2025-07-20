@@ -12,40 +12,38 @@ import munit.*
 import munit.catseffect.IOFixture
 import munit.catseffect.ResourceFixture.FixtureNotInstantiatedException
 
-import ldbc.sql.*
-
-import jdbc.connector.ConnectionProvider
+import ldbc.{Provider, Connector}
 
 private case class JdbcConnectionFixture(
   name:              String,
-  provider:          ConnectionProvider[IO],
-  connectBeforeAll:  Connection[IO] => IO[Unit],
-  connectAfterAll:   Connection[IO] => IO[Unit],
-  connectBeforeEach: Connection[IO] => IO[Unit],
-  connectAfterEach:  Connection[IO] => IO[Unit]
+  provider:          Provider[IO],
+  connectBeforeAll:  Connector[IO] => IO[Unit],
+  connectAfterAll:   Connector[IO] => IO[Unit],
+  connectBeforeEach: Connector[IO] => IO[Unit],
+  connectAfterEach:  Connector[IO] => IO[Unit]
 ) extends ConnectionFixture:
-  override def withBeforeAll(f: Connection[IO] => IO[Unit]): ConnectionFixture =
+  override def withBeforeAll(f: Connector[IO] => IO[Unit]): ConnectionFixture =
     copy(connectBeforeAll = f)
 
-  override def withAfterAll(f: Connection[IO] => IO[Unit]): ConnectionFixture =
+  override def withAfterAll(f: Connector[IO] => IO[Unit]): ConnectionFixture =
     copy(connectAfterAll = f)
 
-  override def withBeforeEach(f: Connection[IO] => IO[Unit]): ConnectionFixture =
+  override def withBeforeEach(f: Connector[IO] => IO[Unit]): ConnectionFixture =
     copy(connectBeforeEach = f)
 
-  override def withAfterEach(f: Connection[IO] => IO[Unit]): ConnectionFixture =
+  override def withAfterEach(f: Connector[IO] => IO[Unit]): ConnectionFixture =
     copy(connectAfterEach = f)
 
-  override val fixture: IOFixture[Connection[IO]] =
-    new IOFixture[Connection[IO]](name):
-      @volatile private var value: Option[(Connection[IO], IO[Unit])] = None
+  override val fixture: IOFixture[Connector[IO]] =
+    new IOFixture[Connector[IO]](name):
+      @volatile private var value: Option[(Connector[IO], IO[Unit])] = None
 
-      override def apply(): Connection[IO] = value match
+      override def apply(): Connector[IO] = value match
         case Some(v) => v._1
         case None    => throw new FixtureNotInstantiatedException(name)
 
       override def beforeAll(): IO[Unit] =
-        provider.createConnection().allocated.flatMap {
+        provider.createConnection().map(Connector.fromConnection).allocated.flatMap {
           case (conn, close) =>
             connectBeforeAll(conn) *> IO(this.value = Some((conn, close)))
         }
@@ -67,5 +65,5 @@ private case class JdbcConnectionFixture(
         }
 
 object JdbcConnectionFixture:
-  def apply(name: String, provider: ConnectionProvider[IO]): ConnectionFixture =
+  def apply(name: String, provider: Provider[IO]): ConnectionFixture =
     JdbcConnectionFixture(name, provider, _ => IO.unit, _ => IO.unit, _ => IO.unit, _ => IO.unit)
