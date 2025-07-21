@@ -14,6 +14,7 @@ coverage:
     - "docs"
     - "core"
     - "module/ldbc-sql"
+    - "module/ldbc-core"
     - "module/jdbc-connector"
     - "module/ldbc-schemaspy"
     - "tests/shared/src/main/scala/ldbc/tests/model"
@@ -24,4 +25,3 @@ coverage:
     - "module/ldbc-schema/src/main/scala/ldbc/schema/Character.scala"
     - "module/ldbc-hikari/src/main/scala/ldbc/hikari/Configuration.scala"
     - "module/ldbc-dsl/src/main/scala/ldbc/dsl/ResultSetConsumer.scala"
-    - "module/ldbc-dsl/src/main/scala/ldbc/dsl/free"
