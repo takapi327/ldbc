@@ -47,7 +47,7 @@ lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "cats-free"   % "2.10.0",
-      "org.typelevel" %%% "cats-effect" % "3.6.1"
+      "org.typelevel" %%% "cats-effect" % "3.6.2"
     )
   )
   .dependsOn(sql)
@@ -132,7 +132,7 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
       "org.scodec"    %%% "scodec-bits"       % "1.1.38",
       "org.scodec"    %%% "scodec-core"       % "2.2.2",
       "org.scodec"    %%% "scodec-cats"       % "1.2.0",
-      "org.typelevel" %%% "otel4s-core-trace" % "0.12.0",
+      "org.typelevel" %%% "otel4s-core-trace" % "0.13.1",
       "org.typelevel" %%% "twiddles-core"     % "0.8.0",
       "org.typelevel" %%% "munit-cats-effect" % "2.1.0" % Test
     )
@@ -252,9 +252,9 @@ lazy val otelExample = crossProject(JVMPlatform)
   .example("otel", "OpenTelemetry example project")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel"   %% "otel4s-oteljava"                           % "0.12.0",
-      "io.opentelemetry" % "opentelemetry-exporter-otlp"               % "1.51.0" % Runtime,
-      "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.51.0" % Runtime
+      "org.typelevel"   %% "otel4s-oteljava"                           % "0.13.1",
+      "io.opentelemetry" % "opentelemetry-exporter-otlp"               % "1.52.0" % Runtime,
+      "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.52.0" % Runtime
     )
   )
   .settings(
