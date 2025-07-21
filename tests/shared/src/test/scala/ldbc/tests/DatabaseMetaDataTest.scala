@@ -18,8 +18,6 @@ import ldbc.sql.*
 
 import ldbc.connector.*
 
-import ldbc.*
-
 class LdbcDatabaseMetaDataTest extends DatabaseMetaDataTest:
   override def prefix: "ldbc" = "ldbc"
 
