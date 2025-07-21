@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.dsl.free
+package ldbc.free
 
 import java.time.*
 
@@ -17,9 +17,6 @@ import cats.syntax.all.*
 import cats.effect.kernel.{ CancelScope, Poll, Sync }
 
 import ldbc.sql.*
-
-import ldbc.dsl.codec.Encoder
-import ldbc.dsl.Parameter
 
 sealed trait PreparedStatementOp[A]:
   def visit[F[_]](v: PreparedStatementOp.Visitor[F]): F[A]
@@ -243,37 +240,3 @@ object PreparedStatementIO:
   def addBatch():           PreparedStatementIO[Unit]    = Free.liftF(PreparedStatementOp.AddBatch)
   def executeLargeUpdate(): PreparedStatementIO[Long]    = Free.liftF(PreparedStatementOp.ExecuteLargeUpdate())
   def close():              PreparedStatementIO[Unit]    = Free.liftF(PreparedStatementOp.Close())
-
-  def paramBind(params: List[Parameter.Dynamic]): PreparedStatementIO[Unit] =
-    val encoded = params.foldLeft(module.pure(List.empty[Encoder.Supported])) {
-      case (acc, param) =>
-        for
-          acc$  <- acc
-          value <- param match
-                     case Parameter.Dynamic.Success(value)  => module.pure(value)
-                     case Parameter.Dynamic.Failure(errors) =>
-                       module.raiseError(new IllegalArgumentException(errors.mkString(", ")))
-        yield acc$ :+ value
-    }
-
-    for
-      encodes <- encoded
-      _       <- encodes.zipWithIndex.foldLeft(module.pure[Unit](())) {
-             case (acc, (value, index)) =>
-               acc *> (value match
-                 case value: Boolean       => module.setBoolean(index + 1, value)
-                 case value: Byte          => module.setByte(index + 1, value)
-                 case value: Short         => module.setShort(index + 1, value)
-                 case value: Int           => module.setInt(index + 1, value)
-                 case value: Long          => module.setLong(index + 1, value)
-                 case value: Float         => module.setFloat(index + 1, value)
-                 case value: Double        => module.setDouble(index + 1, value)
-                 case value: BigDecimal    => module.setBigDecimal(index + 1, value)
-                 case value: String        => module.setString(index + 1, value)
-                 case value: Array[Byte]   => module.setBytes(index + 1, value)
-                 case value: LocalDate     => module.setDate(index + 1, value)
-                 case value: LocalTime     => module.setTime(index + 1, value)
-                 case value: LocalDateTime => module.setTimestamp(index + 1, value)
-                 case None                 => module.setNull(index + 1, ldbc.sql.Types.NULL))
-           }
-    yield ()

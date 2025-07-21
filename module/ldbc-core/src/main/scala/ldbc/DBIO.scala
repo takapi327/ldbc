@@ -4,7 +4,10 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package jdbc
+package ldbc
 
-package object connector:
-  export ldbc.Provider
+import cats.free.Free
+
+import ldbc.free.*
+
+type DBIO[A] = Free[ConnectionOp, A]

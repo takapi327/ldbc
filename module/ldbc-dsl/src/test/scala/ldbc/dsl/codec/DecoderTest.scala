@@ -18,8 +18,9 @@ import ldbc.sql.{ ResultSet, ResultSetMetaData }
 import ldbc.sql.logging.*
 
 import ldbc.dsl.exception.DecodeFailureException
-import ldbc.dsl.free.KleisliInterpreter
-import ldbc.dsl.free.ResultSetIO
+
+import ldbc.free.KleisliInterpreter
+import ldbc.free.ResultSetIO
 
 class DecoderTest extends CatsEffectSuite:
 

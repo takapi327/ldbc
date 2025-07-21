@@ -4,9 +4,12 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.sql
+package ldbc
+
+import cats.effect.*
 
 import ldbc.sql.logging.LogHandler
+import ldbc.sql.Connection
 
 /**
  * Trait for aggregating settings for building connections and providing connections to users.
@@ -29,4 +32,26 @@ trait Provider[F[_]]:
    * @tparam A
    *   the result of applying [F] to
    */
-  def use[A](f: Connection[F] => F[A]): F[A]
+  def use[A](f: Connector[F] => F[A]): F[A]
+
+  /**
+   * Create a connection managed by Resource.
+   *
+   * {{{
+   *   provider.createConnection().use { connection =>
+   *     ???
+   *   }
+   * }}}
+   */
+  def createConnection(): Resource[F, Connection[F]]
+
+  /**
+   * Create a connector managed by Resource.
+   *
+   * {{{
+   *   provider.createConnector().use { connector =>
+   *     ???
+   *   }
+   * }}}
+   */
+  def createConnector(): Resource[F, Connector[F]]

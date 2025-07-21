@@ -25,4 +25,4 @@ class JdbcConnectionTest extends ConnectionTest:
 
   override def connection(databaseTerm: "SCHEMA" | "CATALOG" = "CATALOG"): Provider[IO] =
     ds.setDatabaseTerm(databaseTerm)
-    ConnectionProvider.fromDataSource(ds, ExecutionContexts.synchronous)
+    ConnectionProvider.fromDataSource[IO](ds, ExecutionContexts.synchronous)

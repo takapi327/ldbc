@@ -4,19 +4,14 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.dsl.free
+package ldbc.free
 
 import java.time.*
 
 import cats.~>
-import cats.data.NonEmptyList
 import cats.free.Free
 
 import ldbc.sql.{ ResultSet, ResultSetMetaData }
-
-import ldbc.dsl.codec.Decoder
-import ldbc.dsl.exception.*
-import ldbc.dsl.util.FactoryCompat
 
 sealed trait ResultSetOp[A]:
   def visit[F[_]](v: ResultSetOp.Visitor[F]): F[A]
@@ -225,36 +220,3 @@ object ResultSetIO:
   def previous():          ResultSetIO[Boolean] = Free.liftF(ResultSetOp.Previous())
   def getType():           ResultSetIO[Int]     = Free.liftF(ResultSetOp.GetType())
   def getConcurrency():    ResultSetIO[Int]     = Free.liftF(ResultSetOp.GetConcurrency())
-
-  def unique[T](
-    statement: String,
-    decoder:   Decoder[T]
-  ): ResultSetIO[T] =
-    module.next().flatMap {
-      case true  => decoder.decode(1, statement)
-      case false => module.raiseError(new UnexpectedContinuation("Expected ResultSet to have at least one row."))
-    }
-
-  def whileM[G[_], T](
-    statement:     String,
-    decoder:       Decoder[T],
-    factoryCompat: FactoryCompat[T, G[T]]
-  ): ResultSetIO[G[T]] =
-    val builder = factoryCompat.newBuilder
-
-    def loop(acc: collection.mutable.Builder[T, G[T]]): ResultSetIO[collection.mutable.Builder[T, G[T]]] =
-      module.next().flatMap {
-        case true  => decoder.decode(1, statement).flatMap(v => loop(acc += v))
-        case false => module.pure(acc)
-      }
-
-    loop(builder).map(_.result())
-
-  def nel[A](
-    statement: String,
-    decoder:   Decoder[A]
-  ): ResultSetIO[NonEmptyList[A]] =
-    whileM[List, A](statement, decoder, summon[FactoryCompat[A, List[A]]]).flatMap { results =>
-      if results.isEmpty then module.raiseError(new UnexpectedEnd("No results found"))
-      else module.pure(NonEmptyList.fromListUnsafe(results))
-    }

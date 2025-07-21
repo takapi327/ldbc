@@ -18,21 +18,10 @@ import cats.Applicative
 import cats.effect.*
 import cats.effect.std.Console
 
-import ldbc.sql.{ Connection, Provider }
 import ldbc.sql.logging.{ LogEvent, LogHandler }
+import ldbc.sql.Connection
 
-trait ConnectionProvider[F[_]] extends Provider[F]:
-
-  /**
-   * Create a connection managed by Resource.
-   *
-   * {{{
-   *   provider.createConnection().user { connection =>
-   *     ???
-   *   }
-   * }}}
-   */
-  def createConnection(): Resource[F, Connection[F]]
+import ldbc.{ Connector, Provider }
 
 object ConnectionProvider:
   private def noopLogger[F[_]: Applicative]: LogHandler[F] = (logEvent: LogEvent) => Applicative[F].unit
@@ -42,24 +31,30 @@ object ConnectionProvider:
     connectEC:  ExecutionContext,
     logHandler: Option[LogHandler[F]]
   )(using ev: Async[F])
-    extends ConnectionProvider[F]:
+    extends Provider[F]:
     override def createConnection(): Resource[F, Connection[F]] =
       Resource
         .fromAutoCloseable(ev.evalOn(ev.delay(dataSource.getConnection()), connectEC))
         .map(conn => ConnectionImpl(conn, logHandler.getOrElse(noopLogger)))
 
-    override def use[A](f: Connection[F] => F[A]): F[A] =
-      createConnection().use(f)
+    override def use[A](f: Connector[F] => F[A]): F[A] =
+      createConnector().use(f)
+
+    override def createConnector(): Resource[F, Connector[F]] =
+      createConnection().map(Connector.fromConnection)
 
   private case class JavaConnectionProvider[F[_]: Sync](
     connection: java.sql.Connection,
     logHandler: Option[LogHandler[F]]
-  ) extends ConnectionProvider[F]:
+  ) extends Provider[F]:
     override def createConnection(): Resource[F, Connection[F]] =
       Resource.pure(ConnectionImpl(connection, logHandler.getOrElse(noopLogger)))
 
-    override def use[A](f: Connection[F] => F[A]): F[A] =
-      createConnection().use(f)
+    override def use[A](f: Connector[F] => F[A]): F[A] =
+      createConnector().use(f)
+
+    override def createConnector(): Resource[F, Connector[F]] =
+      createConnection().map(Connector.fromConnection)
 
   class DriverProvider[F[_]: Console](using ev: Async[F]):
 
@@ -67,8 +62,8 @@ object ConnectionProvider:
       driver:      String,
       conn:        () => java.sql.Connection,
       _logHandler: Option[LogHandler[F]]
-    ): ConnectionProvider[F] =
-      new ConnectionProvider[F]:
+    ): Provider[F] =
+      new Provider[F]:
         override def logHandler:         Option[LogHandler[F]]      = _logHandler
         override def createConnection(): Resource[F, Connection[F]] =
           Resource
@@ -78,8 +73,11 @@ object ConnectionProvider:
             })
             .map(conn => ConnectionImpl(conn, logHandler.getOrElse(noopLogger)))
 
-        override def use[A](f: Connection[F] => F[A]): F[A] =
-          createConnection().use(f)
+        override def use[A](f: Connector[F] => F[A]): F[A] =
+          createConnector().use(f)
+
+        override def createConnector(): Resource[F, Connector[F]] =
+          createConnection().map(Connector.fromConnection)
 
     /** Construct a new `Provider` that uses the JDBC `DriverManager` to allocate connections.
      *
@@ -94,7 +92,7 @@ object ConnectionProvider:
       driver:     String,
       url:        String,
       logHandler: Option[LogHandler[F]]
-    ): ConnectionProvider[F] =
+    ): Provider[F] =
       create(driver, () => DriverManager.getConnection(url), logHandler)
 
     /** Construct a new `Provider` that uses the JDBC `DriverManager` to allocate connections.
@@ -116,7 +114,7 @@ object ConnectionProvider:
       user:       String,
       password:   String,
       logHandler: Option[LogHandler[F]]
-    ): ConnectionProvider[F] =
+    ): Provider[F] =
       create(driver, () => DriverManager.getConnection(url, user, password), logHandler)
 
     /** Construct a new `Provider` that uses the JDBC `DriverManager` to allocate connections.
@@ -135,7 +133,7 @@ object ConnectionProvider:
       url:        String,
       info:       java.util.Properties,
       logHandler: Option[LogHandler[F]]
-    ): ConnectionProvider[F] =
+    ): Provider[F] =
       create(driver, () => DriverManager.getConnection(url, info), logHandler)
 
   /**
@@ -153,7 +151,7 @@ object ConnectionProvider:
     dataSource: DataSource,
     connectEC:  ExecutionContext,
     logHandler: Option[LogHandler[F]] = None
-  ): ConnectionProvider[F] = DataSourceProvider[F](dataSource, connectEC, logHandler)
+  ): Provider[F] = DataSourceProvider[F](dataSource, connectEC, logHandler)
 
   /**
    * Construct a `Provider` that wraps an existing `Connection`. Closing the connection is the responsibility of
@@ -167,7 +165,7 @@ object ConnectionProvider:
   def fromConnection[F[_]: Console: Sync](
     connection: java.sql.Connection,
     logHandler: Option[LogHandler[F]] = None
-  ): ConnectionProvider[F] = JavaConnectionProvider[F](connection, logHandler)
+  ): Provider[F] = JavaConnectionProvider[F](connection, logHandler)
 
   /** Module of constructors for `Provider` that use the JDBC `DriverManager` to allocate connections. Note that
    * `DriverManager` is unbounded and will happily allocate new connections until server resources are exhausted. It

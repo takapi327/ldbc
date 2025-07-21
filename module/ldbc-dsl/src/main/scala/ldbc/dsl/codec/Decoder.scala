@@ -16,8 +16,9 @@ import cats.syntax.all.*
 import org.typelevel.twiddles.TwiddleSyntax
 
 import ldbc.dsl.exception.DecodeFailureException
-import ldbc.dsl.free.ResultSetIO
 import ldbc.dsl.util.Mirrors
+
+import ldbc.free.ResultSetIO
 
 /**
  * Trait to get the DataType that matches the Scala type information from the ResultSet.

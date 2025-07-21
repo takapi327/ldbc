@@ -36,7 +36,7 @@ class TLSConnectionTest extends FTestPlatform:
                     .setSSL(SSL.fromSecureContext(secureContext))
                     .use { conn =>
                       for
-                        statement <- conn.createStatement()
+                        statement <- conn.connection.createStatement()
                         result    <- statement.executeQuery("SELECT 1")
                         value     <- result.getInt(1)
                       yield value

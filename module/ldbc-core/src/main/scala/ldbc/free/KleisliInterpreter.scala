@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.dsl.free
+package ldbc.free
 
 import java.time.*
 
@@ -23,7 +23,7 @@ import ldbc.sql.logging.*
  * This code is based on doobie's code.
  * @see https://github.com/typelevel/doobie/blob/main/modules/free/src/main/scala/doobie/free/kleisliinterpreter.scala
  */
-class KleisliInterpreter[F[_]: Sync](logHandler: LogHandler[F]):
+class KleisliInterpreter[F[_]: Sync](logHandler: LogHandler[F]) extends Interpreter[F]:
   outer =>
 
   lazy val ConnectionInterpreter: ConnectionOp ~> ([A] =>> Kleisli[F, Connection[F], A]) = new ConnectionInterpreter {}

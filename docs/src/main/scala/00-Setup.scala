@@ -115,7 +115,7 @@ import ldbc.connector.*
   connection
     .use { conn =>
       createDatabase.commit(conn) *>
-        conn.setCatalog("sandbox_db") *>
+        conn.connection.setCatalog("sandbox_db") *>
         (setUpTables *> insertData)
           .transaction(conn)
           .as(println("Database setup completed"))
