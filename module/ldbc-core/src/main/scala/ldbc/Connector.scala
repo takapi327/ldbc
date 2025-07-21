@@ -13,6 +13,11 @@ import ldbc.sql.logging.LogHandler
 
 import ldbc.free.*
 
+/**
+ * Connector trait for managing database connections and executing DBIO actions.
+ *
+ * @tparam F the effect type
+ */
 trait Connector[F[_]]:
 
   /**
@@ -20,8 +25,14 @@ trait Connector[F[_]]:
    */
   def logHandler: LogHandler[F]
 
+  /**
+   * The connection to the database.
+   */
   def connection: Connection[F]
 
+  /**
+   * Runs a DBIO action using the provided connection.
+   */
   def run[A](dbio: DBIO[A]): F[A]
 
 object Connector:
@@ -31,7 +42,7 @@ object Connector:
     connection: Connection[F]
   ) extends Connector[F]:
 
-    val interpreter: Interpreter[F] = new KleisliInterpreter[F](logHandler)
+    private val interpreter: Interpreter[F] = new KleisliInterpreter[F](logHandler)
 
     override def run[A](dbio: DBIO[A]): F[A] = dbio.foldMap(interpreter.ConnectionInterpreter).run(connection)
 
