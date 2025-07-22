@@ -19,7 +19,7 @@ import cats.effect.*
 import cats.effect.kernel.{ CancelScope, Poll, Sync }
 
 import ldbc.sql.*
-import ldbc.sql.logging.LogEvent
+import ldbc.logging.LogEvent
 
 import ldbc.dsl.codec.*
 import ldbc.dsl.exception.*
