@@ -6,12 +6,14 @@
 
 package ldbc
 
+import cats.Applicative
+
 import cats.effect.*
 
 import ldbc.sql.*
-import ldbc.sql.logging.LogHandler
 
 import ldbc.free.*
+import ldbc.logging.{ LogEvent, LogHandler }
 
 /**
  * Connector trait for managing database connections and executing DBIO actions.
@@ -37,6 +39,8 @@ trait Connector[F[_]]:
 
 object Connector:
 
+  private def noopLogger[F[_]: Applicative]: LogHandler[F] = (logEvent: LogEvent) => Applicative[F].unit
+
   private case class Impl[F[_]: Sync](
     logHandler: LogHandler[F],
     connection: Connection[F]
@@ -48,6 +52,12 @@ object Connector:
 
   def fromConnection[F[_]: Sync](connection: Connection[F]): Connector[F] =
     Impl[F](
-      logHandler = connection.logHandler,
+      logHandler = noopLogger[F],
+      connection = connection
+    )
+
+  def fromConnection[F[_]: Sync](connection: Connection[F], logHandler: Option[LogHandler[F]] = None): Connector[F] =
+    Impl[F](
+      logHandler = logHandler.getOrElse(noopLogger),
       connection = connection
     )

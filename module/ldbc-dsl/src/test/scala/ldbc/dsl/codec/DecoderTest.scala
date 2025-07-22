@@ -15,12 +15,12 @@ import cats.effect.IO
 import munit.CatsEffectSuite
 
 import ldbc.sql.{ ResultSet, ResultSetMetaData }
-import ldbc.sql.logging.*
 
 import ldbc.dsl.exception.DecodeFailureException
 
 import ldbc.free.KleisliInterpreter
 import ldbc.free.ResultSetIO
+import ldbc.logging.*
 
 class DecoderTest extends CatsEffectSuite:
 

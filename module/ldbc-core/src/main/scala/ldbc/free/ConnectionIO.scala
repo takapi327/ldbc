@@ -15,7 +15,8 @@ import cats.syntax.all.*
 import cats.effect.kernel.{ Poll, Sync }
 
 import ldbc.sql.*
-import ldbc.sql.logging.LogEvent
+
+import ldbc.logging.LogEvent
 
 sealed trait ConnectionOp[A]:
   def visit[F[_]](v: ConnectionOp.Visitor[F]): F[A]

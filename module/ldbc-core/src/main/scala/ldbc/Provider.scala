@@ -8,7 +8,6 @@ package ldbc
 
 import cats.effect.*
 
-import ldbc.sql.logging.LogHandler
 import ldbc.sql.Connection
 
 /**
@@ -18,11 +17,6 @@ import ldbc.sql.Connection
  *   the effect type
  */
 trait Provider[F[_]]:
-
-  /**
-   *  Handler for outputting logs of process execution using connections.
-   */
-  def logHandler: Option[LogHandler[F]]
 
   /**
    * Allocates a resource and supplies it to the given function. The resource is released as soon as the resulting F[A] is completed, whether normally or as a raised error.
