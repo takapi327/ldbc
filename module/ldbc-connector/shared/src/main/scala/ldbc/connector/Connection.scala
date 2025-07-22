@@ -23,7 +23,6 @@ import fs2.io.net.*
 import org.typelevel.otel4s.trace.Tracer
 
 import ldbc.sql.{ Connection, DatabaseMetaData }
-import ldbc.sql.logging.{ LogEvent, LogHandler }
 
 import ldbc.connector.data.*
 import ldbc.connector.exception.*
@@ -55,7 +54,6 @@ object Connection:
 
   private def unitBefore[F[_]: Async]: Connection[F] => F[Unit]         = _ => Async[F].unit
   private def unitAfter[F[_]: Async]:  (Unit, Connection[F]) => F[Unit] = (_, _) => Async[F].unit
-  private def noopLogger[F[_]: Applicative]: LogHandler[F] = (logEvent: LogEvent) => Applicative[F].unit
 
   def apply[F[_]: Async: Network: Console: Hashing: UUIDGen](
     host: String,
@@ -78,7 +76,6 @@ object Connection:
     useCursorFetch:          Boolean = false,
     useServerPrepStmts:      Boolean = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
-    logHandler:              Option[LogHandler[F]] = None
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] = this.default[F, Unit](
     host,
     port,
@@ -93,7 +90,6 @@ object Connection:
     useCursorFetch,
     useServerPrepStmts,
     databaseTerm,
-    logHandler,
     unitBefore,
     unitAfter
   )
@@ -114,7 +110,6 @@ object Connection:
     useCursorFetch:          Boolean = false,
     useServerPrepStmts:      Boolean = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
-    logHandler:              Option[LogHandler[F]] = None
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] = this.default(
     host,
     port,
@@ -129,7 +124,6 @@ object Connection:
     useCursorFetch,
     useServerPrepStmts,
     databaseTerm,
-    logHandler,
     before,
     after
   )
@@ -148,7 +142,6 @@ object Connection:
     useCursorFetch:          Boolean = false,
     useServerPrepStmts:      Boolean = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
-    logHandler:              Option[LogHandler[F]] = None,
     before:                  Connection[F] => F[A],
     after:                   (A, Connection[F]) => F[Unit]
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] =
@@ -172,7 +165,6 @@ object Connection:
                       useCursorFetch,
                       useServerPrepStmts,
                       databaseTerm,
-                      logHandler.getOrElse(noopLogger),
                       before,
                       after
                     )
@@ -192,7 +184,6 @@ object Connection:
     useCursorFetch:          Boolean = false,
     useServerPrepStmts:      Boolean = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = None,
-    logHandler:              LogHandler[F],
     acquire:                 Connection[F] => F[A],
     release:                 (A, Connection[F]) => F[Unit]
   ): Resource[F, LdbcConnection[F]] =
@@ -222,7 +213,6 @@ object Connection:
               useCursorFetch,
               useServerPrepStmts,
               databaseTerm.getOrElse(DatabaseMetaData.DatabaseTerm.CATALOG),
-              logHandler
             )
           )
         )(_.close())
@@ -244,7 +234,6 @@ object Connection:
     useCursorFetch:          Boolean = false,
     useServerPrepStmts:      Boolean = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = None,
-    logHandler:              LogHandler[F],
     acquire:                 Connection[F] => F[A],
     release:                 (A, Connection[F]) => F[Unit]
   )(using ev: Async[F]): Resource[F, LdbcConnection[F]] =
@@ -273,7 +262,6 @@ object Connection:
       useCursorFetch,
       useServerPrepStmts,
       databaseTerm,
-      logHandler,
       acquire,
       release
     )

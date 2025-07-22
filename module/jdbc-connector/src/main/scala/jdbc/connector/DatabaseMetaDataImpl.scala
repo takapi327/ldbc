@@ -11,11 +11,9 @@ import cats.syntax.all.*
 import cats.effect.Sync
 
 import ldbc.sql.{ Connection, DatabaseMetaData, ResultSet, RowIdLifetime }
-import ldbc.sql.logging.LogHandler
 
 private[jdbc] case class DatabaseMetaDataImpl[F[_]: Sync](
   metaData:   java.sql.DatabaseMetaData,
-  logHandler: LogHandler[F]
 ) extends DatabaseMetaData[F]:
 
   override def allProceduresAreCallable(): Boolean = metaData.allProceduresAreCallable
@@ -464,7 +462,7 @@ private[jdbc] case class DatabaseMetaDataImpl[F[_]: Sync](
       )
       .map(ResultSetImpl.apply)
 
-  override def getConnection(): Connection[F] = ConnectionImpl(metaData.getConnection, logHandler)
+  override def getConnection(): Connection[F] = ConnectionImpl(metaData.getConnection)
 
   override def supportsSavepoints(): Boolean = metaData.supportsSavepoints
 

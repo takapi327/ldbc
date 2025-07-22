@@ -17,7 +17,7 @@ import fs2.io.net.*
 
 import org.typelevel.otel4s.trace.Tracer
 
-import ldbc.sql.logging.LogHandler
+import ldbc.logging.LogHandler
 import ldbc.sql.DatabaseMetaData
 
 import ldbc.{ Connector, Provider }
@@ -429,7 +429,6 @@ object ConnectionProvider:
         readTimeout             = readTimeout,
         allowPublicKeyRetrieval = allowPublicKeyRetrieval,
         databaseTerm            = databaseTerm,
-        logHandler              = logHandler,
         tracer                  = tracer,
         useCursorFetch          = useCursorFetch,
         useServerPrepStmts      = useServerPrepStmts,
@@ -456,7 +455,6 @@ object ConnectionProvider:
             useCursorFetch          = useCursorFetch,
             useServerPrepStmts      = useServerPrepStmts,
             databaseTerm            = databaseTerm,
-            logHandler              = logHandler
           )
         case (Some(b), None) =>
           Connection.withBeforeAfter(
@@ -475,7 +473,6 @@ object ConnectionProvider:
             useCursorFetch          = useCursorFetch,
             useServerPrepStmts      = useServerPrepStmts,
             databaseTerm            = databaseTerm,
-            logHandler              = logHandler
           )
         case (None, _) =>
           Connection(
@@ -492,14 +489,13 @@ object ConnectionProvider:
             useCursorFetch          = useCursorFetch,
             useServerPrepStmts      = useServerPrepStmts,
             databaseTerm            = databaseTerm,
-            logHandler              = logHandler
           )
 
     override def use[B](f: Connector[F] => F[B]): F[B] =
       createConnector().use(f)
 
     override def createConnector(): Resource[F, Connector[F]] =
-      createConnection().map(Connector.fromConnection)
+      createConnection().map(conn => Connector.fromConnection(conn, logHandler))
 
   def default[F[_]: Async: Network: Console: Hashing: UUIDGen](
     host: String,

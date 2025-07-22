@@ -13,18 +13,16 @@ import javax.sql.DataSource
 import scala.concurrent.ExecutionContext
 
 import cats.syntax.all.*
-import cats.Applicative
 
 import cats.effect.*
 import cats.effect.std.Console
 
-import ldbc.sql.logging.{ LogEvent, LogHandler }
 import ldbc.sql.Connection
+import ldbc.logging.LogHandler
 
 import ldbc.{ Connector, Provider }
 
 object ConnectionProvider:
-  private def noopLogger[F[_]: Applicative]: LogHandler[F] = (logEvent: LogEvent) => Applicative[F].unit
 
   private case class DataSourceProvider[F[_]](
     dataSource: DataSource,
@@ -35,49 +33,48 @@ object ConnectionProvider:
     override def createConnection(): Resource[F, Connection[F]] =
       Resource
         .fromAutoCloseable(ev.evalOn(ev.delay(dataSource.getConnection()), connectEC))
-        .map(conn => ConnectionImpl(conn, logHandler.getOrElse(noopLogger)))
+        .map(conn => ConnectionImpl(conn))
 
     override def use[A](f: Connector[F] => F[A]): F[A] =
       createConnector().use(f)
 
     override def createConnector(): Resource[F, Connector[F]] =
-      createConnection().map(Connector.fromConnection)
+      createConnection().map(conn => Connector.fromConnection(conn, logHandler))
 
   private case class JavaConnectionProvider[F[_]: Sync](
     connection: java.sql.Connection,
     logHandler: Option[LogHandler[F]]
   ) extends Provider[F]:
     override def createConnection(): Resource[F, Connection[F]] =
-      Resource.pure(ConnectionImpl(connection, logHandler.getOrElse(noopLogger)))
+      Resource.pure(ConnectionImpl(connection))
 
     override def use[A](f: Connector[F] => F[A]): F[A] =
       createConnector().use(f)
 
     override def createConnector(): Resource[F, Connector[F]] =
-      createConnection().map(Connector.fromConnection)
+      createConnection().map(conn => Connector.fromConnection(conn, logHandler))
 
   class DriverProvider[F[_]: Console](using ev: Async[F]):
 
     private def create(
       driver:      String,
       conn:        () => java.sql.Connection,
-      _logHandler: Option[LogHandler[F]]
+      logHandler: Option[LogHandler[F]]
     ): Provider[F] =
       new Provider[F]:
-        override def logHandler:         Option[LogHandler[F]]      = _logHandler
         override def createConnection(): Resource[F, Connection[F]] =
           Resource
             .fromAutoCloseable(ev.blocking {
               Class.forName(driver)
               conn()
             })
-            .map(conn => ConnectionImpl(conn, logHandler.getOrElse(noopLogger)))
+            .map(conn => ConnectionImpl(conn))
 
         override def use[A](f: Connector[F] => F[A]): F[A] =
           createConnector().use(f)
 
         override def createConnector(): Resource[F, Connector[F]] =
-          createConnection().map(Connector.fromConnection)
+          createConnection().map(conn => Connector.fromConnection(conn, logHandler))
 
     /** Construct a new `Provider` that uses the JDBC `DriverManager` to allocate connections.
      *
