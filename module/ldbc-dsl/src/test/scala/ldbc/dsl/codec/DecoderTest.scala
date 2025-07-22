@@ -15,7 +15,7 @@ import cats.effect.IO
 import munit.CatsEffectSuite
 
 import ldbc.sql.{ ResultSet, ResultSetMetaData }
-import ldbc.sql.logging.*
+import ldbc.logging.*
 
 import ldbc.dsl.exception.DecodeFailureException
 
