@@ -36,7 +36,7 @@ private[ldbc] case class ConnectionImpl[F[_]: Tracer: Console: Exchange: UUIDGen
   connectionClosed:   Ref[F, Boolean],
   useCursorFetch:     Boolean,
   useServerPrepStmts: Boolean,
-  databaseTerm:       DatabaseMetaData.DatabaseTerm = DatabaseMetaData.DatabaseTerm.CATALOG,
+  databaseTerm:       DatabaseMetaData.DatabaseTerm = DatabaseMetaData.DatabaseTerm.CATALOG
 )(using ev: Sync[F])
   extends LdbcConnection[F]:
 

@@ -13,7 +13,7 @@ import cats.effect.Sync
 import ldbc.sql.{ Connection, DatabaseMetaData, ResultSet, RowIdLifetime }
 
 private[jdbc] case class DatabaseMetaDataImpl[F[_]: Sync](
-  metaData:   java.sql.DatabaseMetaData,
+  metaData: java.sql.DatabaseMetaData
 ) extends DatabaseMetaData[F]:
 
   override def allProceduresAreCallable(): Boolean = metaData.allProceduresAreCallable

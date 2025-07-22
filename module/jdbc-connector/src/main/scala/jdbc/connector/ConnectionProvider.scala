@@ -18,9 +18,9 @@ import cats.effect.*
 import cats.effect.std.Console
 
 import ldbc.sql.Connection
-import ldbc.logging.LogHandler
 
 import ldbc.{ Connector, Provider }
+import ldbc.logging.LogHandler
 
 object ConnectionProvider:
 
@@ -57,8 +57,8 @@ object ConnectionProvider:
   class DriverProvider[F[_]: Console](using ev: Async[F]):
 
     private def create(
-      driver:      String,
-      conn:        () => java.sql.Connection,
+      driver:     String,
+      conn:       () => java.sql.Connection,
       logHandler: Option[LogHandler[F]]
     ): Provider[F] =
       new Provider[F]:

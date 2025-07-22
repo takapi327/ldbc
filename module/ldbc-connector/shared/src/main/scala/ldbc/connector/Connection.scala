@@ -75,7 +75,7 @@ object Connection:
     allowPublicKeyRetrieval: Boolean = false,
     useCursorFetch:          Boolean = false,
     useServerPrepStmts:      Boolean = false,
-    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
+    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG)
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] = this.default[F, Unit](
     host,
     port,
@@ -109,7 +109,7 @@ object Connection:
     allowPublicKeyRetrieval: Boolean = false,
     useCursorFetch:          Boolean = false,
     useServerPrepStmts:      Boolean = false,
-    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
+    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG)
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] = this.default(
     host,
     port,
@@ -212,7 +212,7 @@ object Connection:
               connectionClosed,
               useCursorFetch,
               useServerPrepStmts,
-              databaseTerm.getOrElse(DatabaseMetaData.DatabaseTerm.CATALOG),
+              databaseTerm.getOrElse(DatabaseMetaData.DatabaseTerm.CATALOG)
             )
           )
         )(_.close())

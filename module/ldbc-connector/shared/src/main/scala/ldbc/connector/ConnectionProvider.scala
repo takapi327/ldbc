@@ -17,10 +17,10 @@ import fs2.io.net.*
 
 import org.typelevel.otel4s.trace.Tracer
 
-import ldbc.logging.LogHandler
 import ldbc.sql.DatabaseMetaData
 
 import ldbc.{ Connector, Provider }
+import ldbc.logging.LogHandler
 
 trait ConnectionProvider[F[_], A] extends Provider[F]:
 
@@ -454,7 +454,7 @@ object ConnectionProvider:
             allowPublicKeyRetrieval = allowPublicKeyRetrieval,
             useCursorFetch          = useCursorFetch,
             useServerPrepStmts      = useServerPrepStmts,
-            databaseTerm            = databaseTerm,
+            databaseTerm            = databaseTerm
           )
         case (Some(b), None) =>
           Connection.withBeforeAfter(
@@ -472,7 +472,7 @@ object ConnectionProvider:
             allowPublicKeyRetrieval = allowPublicKeyRetrieval,
             useCursorFetch          = useCursorFetch,
             useServerPrepStmts      = useServerPrepStmts,
-            databaseTerm            = databaseTerm,
+            databaseTerm            = databaseTerm
           )
         case (None, _) =>
           Connection(
@@ -488,7 +488,7 @@ object ConnectionProvider:
             allowPublicKeyRetrieval = allowPublicKeyRetrieval,
             useCursorFetch          = useCursorFetch,
             useServerPrepStmts      = useServerPrepStmts,
-            databaseTerm            = databaseTerm,
+            databaseTerm            = databaseTerm
           )
 
     override def use[B](f: Connector[F] => F[B]): F[B] =

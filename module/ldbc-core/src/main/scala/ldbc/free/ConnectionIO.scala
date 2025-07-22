@@ -15,6 +15,7 @@ import cats.syntax.all.*
 import cats.effect.kernel.{ Poll, Sync }
 
 import ldbc.sql.*
+
 import ldbc.logging.LogEvent
 
 sealed trait ConnectionOp[A]:

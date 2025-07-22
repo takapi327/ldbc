@@ -19,7 +19,6 @@ import cats.effect.*
 import cats.effect.kernel.{ CancelScope, Poll, Sync }
 
 import ldbc.sql.*
-import ldbc.logging.LogEvent
 
 import ldbc.dsl.codec.*
 import ldbc.dsl.exception.*
@@ -27,6 +26,7 @@ import ldbc.dsl.util.FactoryCompat
 
 import ldbc.*
 import ldbc.free.*
+import ldbc.logging.LogEvent
 
 object DBIO:
 

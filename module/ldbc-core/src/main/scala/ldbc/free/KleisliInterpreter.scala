@@ -17,6 +17,7 @@ import cats.free.Free
 import cats.effect.kernel.{ Poll, Sync }
 
 import ldbc.sql.*
+
 import ldbc.logging.*
 
 /**
