@@ -15,7 +15,6 @@ import cats.syntax.all.*
 
 import org.typelevel.twiddles.TwiddleSyntax
 
-import ldbc.dsl.exception.DecodeFailureException
 import ldbc.dsl.util.Mirrors
 
 import ldbc.free.ResultSetIO
@@ -42,43 +41,39 @@ trait Decoder[A]:
    * @param statement
    *   Statement that configured the ResultSet, used for error messages.
    */
-  def decode(index: Int, statement: String): ResultSetIO[A]
+  def decode(index: Int, statement: String): ResultSetIO[Either[Decoder.Error, A]]
 
   /** Map decoded results to a new type `B`, yielding a `Decoder[B]`. */
   def map[B](f: A => B): Decoder[B] = new Decoder[B]:
     override def offset:                                Int            = self.offset
-    override def decode(index: Int, statement: String): ResultSetIO[B] =
-      self.decode(index, statement).map(f)
+    override def decode(index: Int, statement: String): ResultSetIO[Either[Decoder.Error, B]] =
+      self.decode(index, statement).map(_.map(f))
 
   /** Map decoded results to a new type `B` or an error, yielding a `Decoder[B]`. */
   def emap[B](f: A => Either[String, B]): Decoder[B] = new Decoder[B]:
     override def offset:                                Int            = self.offset
-    override def decode(index: Int, statement: String): ResultSetIO[B] =
+    override def decode(index: Int, statement: String): ResultSetIO[Either[Decoder.Error, B]] =
       self
         .decode(index, statement)
-        .flatMap { a =>
-          f(a) match
-            case Left(error)  => ResultSetIO.raiseError(new DecodeFailureException(error, offset, statement, None))
-            case Right(value) => ResultSetIO.pure(value)
-        }
+        .map(_.flatMap(f(_).leftMap(Decoder.Error(offset, _))))
 
   /** `Decoder` is semigroupal: a pair of decoders make a decoder for a pair. */
   def product[B](fb: Decoder[B]): Decoder[(A, B)] = new Decoder[(A, B)]:
     override def offset:                                Int                 = self.offset + fb.offset
-    override def decode(index: Int, statement: String): ResultSetIO[(A, B)] =
+    override def decode(index: Int, statement: String): ResultSetIO[Either[Decoder.Error, (A, B)]] =
       for
-        a <- self.decode(index, statement)
-        b <- fb.decode(index + self.offset, statement)
-      yield (a, b)
+        ae <- self.decode(index, statement)
+        be <- fb.decode(index + self.offset, statement)
+      yield ae.flatMap(a => be.map(b => (a, b)))
 
   /** Lift this `Decoder` into `Option`. */
   def opt: Decoder[Option[A]] = new Decoder[Option[A]]:
     override def offset:                                Int                    = self.offset
-    override def decode(index: Int, statement: String): ResultSetIO[Option[A]] =
+    override def decode(index: Int, statement: String): ResultSetIO[Either[Decoder.Error, Option[A]]] =
       for
         value   <- self.decode(index, statement)
         wasNull <- ResultSetIO.wasNull()
-      yield if wasNull then None else Some(value)
+      yield if wasNull then Right(None) else value.map(Some(_))
 
 object Decoder extends TwiddleSyntax[Decoder]:
 
@@ -109,7 +104,7 @@ object Decoder extends TwiddleSyntax[Decoder]:
       map(fab.product(fa)) { case (fabb, a) => fabb(a) }
     override def pure[A](x: A): Decoder[A] = new Decoder[A]:
       override def offset:                                Int            = 0
-      override def decode(index: Int, statement: String): ResultSetIO[A] = ResultSetIO.pure(x)
+      override def decode(index: Int, statement: String): ResultSetIO[Either[Decoder.Error, A]] = ResultSetIO.pure(Right(x))
 
   given [A](using codec: Codec[A]): Decoder[A] = codec.asDecoder
 
