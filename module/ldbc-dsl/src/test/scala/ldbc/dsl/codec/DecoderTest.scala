@@ -160,7 +160,11 @@ class DecoderTest extends CatsEffectSuite:
 
     val userDecoder = Decoder[User]
     assertIO(
-      userDecoder.decode(1, "empty statement").foldMap(interpreter.ResultSetInterpreter).run(mockResultSet).map(_.map(_.id)),
+      userDecoder
+        .decode(1, "empty statement")
+        .foldMap(interpreter.ResultSetInterpreter)
+        .run(mockResultSet)
+        .map(_.map(_.id)),
       Right(1L)
     )
   }

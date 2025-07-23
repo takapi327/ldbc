@@ -45,13 +45,13 @@ trait Decoder[A]:
 
   /** Map decoded results to a new type `B`, yielding a `Decoder[B]`. */
   def map[B](f: A => B): Decoder[B] = new Decoder[B]:
-    override def offset:                                Int            = self.offset
+    override def offset:                                Int                                   = self.offset
     override def decode(index: Int, statement: String): ResultSetIO[Either[Decoder.Error, B]] =
       self.decode(index, statement).map(_.map(f))
 
   /** Map decoded results to a new type `B` or an error, yielding a `Decoder[B]`. */
   def emap[B](f: A => Either[String, B]): Decoder[B] = new Decoder[B]:
-    override def offset:                                Int            = self.offset
+    override def offset:                                Int                                   = self.offset
     override def decode(index: Int, statement: String): ResultSetIO[Either[Decoder.Error, B]] =
       self
         .decode(index, statement)
@@ -59,7 +59,7 @@ trait Decoder[A]:
 
   /** `Decoder` is semigroupal: a pair of decoders make a decoder for a pair. */
   def product[B](fb: Decoder[B]): Decoder[(A, B)] = new Decoder[(A, B)]:
-    override def offset:                                Int                 = self.offset + fb.offset
+    override def offset: Int = self.offset + fb.offset
     override def decode(index: Int, statement: String): ResultSetIO[Either[Decoder.Error, (A, B)]] =
       for
         ae <- self.decode(index, statement)
@@ -68,7 +68,7 @@ trait Decoder[A]:
 
   /** Lift this `Decoder` into `Option`. */
   def opt: Decoder[Option[A]] = new Decoder[Option[A]]:
-    override def offset:                                Int                    = self.offset
+    override def offset:                                Int                                           = self.offset
     override def decode(index: Int, statement: String): ResultSetIO[Either[Decoder.Error, Option[A]]] =
       for
         value   <- self.decode(index, statement)
@@ -103,8 +103,9 @@ object Decoder extends TwiddleSyntax[Decoder]:
     override def ap[A, B](fab: Decoder[A => B])(fa: Decoder[A]): Decoder[B] =
       map(fab.product(fa)) { case (fabb, a) => fabb(a) }
     override def pure[A](x: A): Decoder[A] = new Decoder[A]:
-      override def offset:                                Int            = 0
-      override def decode(index: Int, statement: String): ResultSetIO[Either[Decoder.Error, A]] = ResultSetIO.pure(Right(x))
+      override def offset:                                Int                                   = 0
+      override def decode(index: Int, statement: String): ResultSetIO[Either[Decoder.Error, A]] =
+        ResultSetIO.pure(Right(x))
 
   given [A](using codec: Codec[A]): Decoder[A] = codec.asDecoder
 

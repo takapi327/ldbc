@@ -69,10 +69,12 @@ object DBIO:
     decoder:   Decoder[T]
   ): ResultSetIO[T] =
     ResultSetIO.next().flatMap {
-      case true  => decoder.decode(1, statement).flatMap {
-        case Right(value) => ResultSetIO.pure(value)
-        case Left(error)  => ResultSetIO.raiseError(new DecodeFailureException(error.message, decoder.offset, statement, error.cause))
-      }
+      case true =>
+        decoder.decode(1, statement).flatMap {
+          case Right(value) => ResultSetIO.pure(value)
+          case Left(error)  =>
+            ResultSetIO.raiseError(new DecodeFailureException(error.message, decoder.offset, statement, error.cause))
+        }
       case false => ResultSetIO.raiseError(new UnexpectedContinuation("Expected ResultSet to have at least one row."))
     }
 
@@ -85,10 +87,17 @@ object DBIO:
 
     def loop(acc: collection.mutable.Builder[T, G[T]]): ResultSetIO[collection.mutable.Builder[T, G[T]]] =
       ResultSetIO.next().flatMap {
-        case true  => decoder.decode(1, statement).flatMap {
-          case Right(value) => ResultSetIO.pure(value)
-          case Left(error)  => ResultSetIO.raiseError(new DecodeFailureException(error.message, decoder.offset, statement, error.cause))
-        }.flatMap(v => loop(acc += v))
+        case true =>
+          decoder
+            .decode(1, statement)
+            .flatMap {
+              case Right(value) => ResultSetIO.pure(value)
+              case Left(error)  =>
+                ResultSetIO.raiseError(
+                  new DecodeFailureException(error.message, decoder.offset, statement, error.cause)
+                )
+            }
+            .flatMap(v => loop(acc += v))
         case false => ResultSetIO.pure(acc)
       }
 
@@ -148,10 +157,14 @@ object DBIO:
     val decoded: ResultSetIO[Option[A]] =
       for
         data <- ResultSetIO.next().flatMap {
-                  case true  => decoder.decode(1, statement).flatMap {
-                    case Right(value) => ResultSetIO.pure(Option(value))
-                    case Left(error)  => ResultSetIO.raiseError(new DecodeFailureException(error.message, decoder.offset, statement, error.cause))
-                  }
+                  case true =>
+                    decoder.decode(1, statement).flatMap {
+                      case Right(value) => ResultSetIO.pure(Option(value))
+                      case Left(error)  =>
+                        ResultSetIO.raiseError(
+                          new DecodeFailureException(error.message, decoder.offset, statement, error.cause)
+                        )
+                    }
                   case false => ResultSetIO.pure(None)
                 }
         next   <- ResultSetIO.next()
@@ -265,10 +278,17 @@ object DBIO:
                   ConnectionIO.embed(
                     rs,
                     ResultSetIO.next().flatMap {
-                      case true  => decoder.decode(1, statement).flatMap {
-                        case Right(value) => ResultSetIO.pure(value)
-                        case Left(error)  => ResultSetIO.raiseError(new DecodeFailureException(error.message, decoder.offset, statement, error.cause))
-                      }.map(name => Some((name, rs)))
+                      case true =>
+                        decoder
+                          .decode(1, statement)
+                          .flatMap {
+                            case Right(value) => ResultSetIO.pure(value)
+                            case Left(error)  =>
+                              ResultSetIO.raiseError(
+                                new DecodeFailureException(error.message, decoder.offset, statement, error.cause)
+                              )
+                          }
+                          .map(name => Some((name, rs)))
                       case false => ResultSetIO.pure(None)
                     }
                   )
