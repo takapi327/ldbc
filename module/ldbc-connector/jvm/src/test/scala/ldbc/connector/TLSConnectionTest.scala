@@ -23,9 +23,10 @@ class TLSConnectionTest extends FTestPlatform:
         .setSSL(SSL.fromKeyStoreResource("keystore.jks", "password".toCharArray, "password".toCharArray))
         .use { conn =>
           for
-            statement <- conn.createStatement()
+            statement <- conn.connection.createStatement()
             result    <- statement.executeQuery("SELECT 1")
-          yield result.getInt(1)
+            value     <- result.getInt(1)
+          yield value
         },
       1
     )

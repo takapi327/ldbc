@@ -47,6 +47,7 @@ class Batch:
   @Benchmark
   def statement(): Unit =
     provider
+      .createConnection()
       .use { conn =>
         for
           statement <- conn.createStatement()
@@ -65,6 +66,7 @@ class Batch:
   @Benchmark
   def prepareStatement(): Unit =
     provider
+      .createConnection()
       .use { conn =>
         for
           statement <- conn.prepareStatement(s"INSERT INTO ldbc_test (c1, c2) VALUES (?, ?)")

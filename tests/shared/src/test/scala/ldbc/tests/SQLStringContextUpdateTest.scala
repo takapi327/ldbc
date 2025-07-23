@@ -70,10 +70,10 @@ trait SQLStringContextUpdateTest extends CatsEffectSuite:
     )
   }
 
-  test("Not a single submission of result data rolled back in transaction has been reflected.　") {
+  test("Not a single submission of result data rolled back in transaction has been reflected.") {
     assertIO(
       for
-        result <-
+        _ <-
           sql"INSERT INTO $table (`id`, `c1`) VALUES ($None, ${ "column 1" })".update
             .flatMap(_ => sql"INSERT INTO $table (`id`, `xxx`) VALUES ($None, ${ "column 2" })".update)
             .transaction(connectionFixture())

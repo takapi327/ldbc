@@ -6,8 +6,8 @@
 
 package ldbc
 
+import ldbc.dsl.*
 import ldbc.dsl.syntax.HelperFunctionsSyntax
-import ldbc.dsl.DBIO
 
 import ldbc.statement.Schema
 

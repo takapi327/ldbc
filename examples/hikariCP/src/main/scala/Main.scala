@@ -40,7 +40,7 @@ object Main extends ResourceApp.Simple:
     (for
       hikari     <- Resource.fromAutoCloseable(IO(ds))
       execution  <- ExecutionContexts.fixedThreadPool[IO](hikari.getMaximumPoolSize)
-      connection <- ConnectionProvider.fromDataSource[IO](hikari, execution).createConnection()
+      connection <- ConnectionProvider.fromDataSource[IO](hikari, execution).createConnector()
     yield connection).evalMap { conn =>
       for
         city <- sql"SELECT * FROM `city` WHERE ID = ${ 1 }".query[City].to[Option].readOnly(conn)

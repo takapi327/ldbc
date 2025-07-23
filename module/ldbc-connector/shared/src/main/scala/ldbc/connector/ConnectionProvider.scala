@@ -17,8 +17,10 @@ import fs2.io.net.*
 
 import org.typelevel.otel4s.trace.Tracer
 
-import ldbc.sql.{ DatabaseMetaData, Provider }
-import ldbc.sql.logging.LogHandler
+import ldbc.sql.DatabaseMetaData
+
+import ldbc.{ Connector, Provider }
+import ldbc.logging.LogHandler
 
 trait ConnectionProvider[F[_], A] extends Provider[F]:
 
@@ -221,6 +223,34 @@ trait ConnectionProvider[F[_], A] extends Provider[F]:
   def setTracer(tracer: Tracer[F]): ConnectionProvider[F, A]
 
   /**
+   * Update whether to use cursor fetch for large result sets.
+   * 
+   * {{{
+   *   ConnectionProvider
+   *     ...
+   *     .setUseCursorFetch(true)
+   * }}}
+   * 
+   * @param useCursorFetch
+   *   Whether to use cursor fetch for large result sets.
+   */
+  def setUseCursorFetch(useCursorFetch: Boolean): ConnectionProvider[F, A]
+
+  /**
+   * Update whether to use server prepared statements.
+   *
+   * {{{
+   *   ConnectionProvider
+   *     ...
+   *     .setUseServerPrepStmts(true)
+   * }}}
+   *
+   * @param useServerPrepStmts
+   *   Whether to use server prepared statements.
+   */
+  def setUseServerPrepStmts(useServerPrepStmts: Boolean): ConnectionProvider[F, A]
+
+  /**
    * Add an optional process to be executed immediately after connection is established.
    *
    * {{{
@@ -285,17 +315,6 @@ trait ConnectionProvider[F[_], A] extends Provider[F]:
    */
   def withBeforeAfter[B](before: Connection[F] => F[B], after: (B, Connection[F]) => F[Unit]): ConnectionProvider[F, B]
 
-  /**
-   * Create a connection managed by Resource.
-   * 
-   * {{{
-   *   provider.createConnection().user { connection =>
-   *     ???
-   *   }
-   * }}}
-   */
-  def createConnection(): Resource[F, Connection[F]]
-
 object ConnectionProvider:
 
   val defaultSocketOptions: List[SocketOption] =
@@ -315,6 +334,8 @@ object ConnectionProvider:
     allowPublicKeyRetrieval: Boolean                               = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
     tracer:                  Option[Tracer[F]]                     = None,
+    useCursorFetch:          Boolean                               = false,
+    useServerPrepStmts:      Boolean                               = false,
     before:                  Option[Connection[F] => F[A]]         = None,
     after:                   Option[(A, Connection[F]) => F[Unit]] = None
   ) extends ConnectionProvider[F, A]:
@@ -362,6 +383,13 @@ object ConnectionProvider:
     override def setTracer(tracer: Tracer[F]): ConnectionProvider[F, A] =
       this.copy(tracer = Some(tracer))
 
+    override def setUseCursorFetch(useCursorFetch: Boolean): ConnectionProvider[F, A] =
+      val useServerPrepStmts = if useCursorFetch then true else this.useServerPrepStmts
+      this.copy(useCursorFetch = useCursorFetch, useServerPrepStmts = useServerPrepStmts)
+
+    override def setUseServerPrepStmts(useServerPrepStmts: Boolean): ConnectionProvider[F, A] =
+      this.copy(useServerPrepStmts = useServerPrepStmts)
+
     override def withBefore[B](before: Connection[F] => F[B]): ConnectionProvider[F, B] =
       Impl(
         host                    = host,
@@ -376,6 +404,9 @@ object ConnectionProvider:
         allowPublicKeyRetrieval = allowPublicKeyRetrieval,
         databaseTerm            = databaseTerm,
         logHandler              = logHandler,
+        tracer                  = tracer,
+        useCursorFetch          = useCursorFetch,
+        useServerPrepStmts      = useServerPrepStmts,
         before                  = Some(before),
         after                   = None
       )
@@ -398,7 +429,9 @@ object ConnectionProvider:
         readTimeout             = readTimeout,
         allowPublicKeyRetrieval = allowPublicKeyRetrieval,
         databaseTerm            = databaseTerm,
-        logHandler              = logHandler,
+        tracer                  = tracer,
+        useCursorFetch          = useCursorFetch,
+        useServerPrepStmts      = useServerPrepStmts,
         before                  = Some(before),
         after                   = Some(after)
       )
@@ -419,8 +452,9 @@ object ConnectionProvider:
             socketOptions           = socketOptions,
             readTimeout             = readTimeout,
             allowPublicKeyRetrieval = allowPublicKeyRetrieval,
-            databaseTerm            = databaseTerm,
-            logHandler              = logHandler
+            useCursorFetch          = useCursorFetch,
+            useServerPrepStmts      = useServerPrepStmts,
+            databaseTerm            = databaseTerm
           )
         case (Some(b), None) =>
           Connection.withBeforeAfter(
@@ -436,8 +470,9 @@ object ConnectionProvider:
             socketOptions           = socketOptions,
             readTimeout             = readTimeout,
             allowPublicKeyRetrieval = allowPublicKeyRetrieval,
-            databaseTerm            = databaseTerm,
-            logHandler              = logHandler
+            useCursorFetch          = useCursorFetch,
+            useServerPrepStmts      = useServerPrepStmts,
+            databaseTerm            = databaseTerm
           )
         case (None, _) =>
           Connection(
@@ -451,12 +486,16 @@ object ConnectionProvider:
             socketOptions           = socketOptions,
             readTimeout             = readTimeout,
             allowPublicKeyRetrieval = allowPublicKeyRetrieval,
-            databaseTerm            = databaseTerm,
-            logHandler              = logHandler
+            useCursorFetch          = useCursorFetch,
+            useServerPrepStmts      = useServerPrepStmts,
+            databaseTerm            = databaseTerm
           )
 
-    override def use[B](f: Connection[F] => F[B]): F[B] =
-      createConnection().use(f)
+    override def use[B](f: Connector[F] => F[B]): F[B] =
+      createConnector().use(f)
+
+    override def createConnector(): Resource[F, Connector[F]] =
+      createConnection().map(conn => Connector.fromConnection(conn, logHandler))
 
   def default[F[_]: Async: Network: Console: Hashing: UUIDGen](
     host: String,
