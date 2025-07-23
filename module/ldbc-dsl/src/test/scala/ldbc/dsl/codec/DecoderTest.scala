@@ -16,10 +16,7 @@ import munit.CatsEffectSuite
 
 import ldbc.sql.{ ResultSet, ResultSetMetaData }
 
-import ldbc.dsl.exception.DecodeFailureException
-
 import ldbc.free.KleisliInterpreter
-import ldbc.free.ResultSetIO
 import ldbc.logging.*
 
 class DecoderTest extends CatsEffectSuite:
@@ -88,13 +85,9 @@ class DecoderTest extends CatsEffectSuite:
     override def relative(rows:             Int):    IO[Boolean]                 = IO(false)
 
   // Create simple string and long decoders for testing
-  private val stringDecoder = new Decoder[String]:
-    override def decode(index: Int, statement: String): ResultSetIO[String] =
-      ResultSetIO.getString(index)
+  private val stringDecoder = summon[Decoder[String]]
 
-  private val longDecoder = new Decoder[Long]:
-    override def decode(index: Int, statement: String): ResultSetIO[Long] =
-      ResultSetIO.getLong(index)
+  private val longDecoder = summon[Decoder[Long]]
 
   test("Decoder map should transform the output") {
     val mockResultSet = new MockResultSet()
@@ -103,7 +96,7 @@ class DecoderTest extends CatsEffectSuite:
     val stringifiedLong = longDecoder.map(_.toString)
     assertIO(
       stringifiedLong.decode(1, "empty statement").foldMap(interpreter.ResultSetInterpreter).run(mockResultSet),
-      "123"
+      Right("123")
     )
   }
 
@@ -114,12 +107,13 @@ class DecoderTest extends CatsEffectSuite:
     val successDecoder = stringDecoder.emap(s => Right(s.toInt))
     assertIO(
       successDecoder.decode(1, "empty statement").foldMap(interpreter.ResultSetInterpreter).run(mockResultSet),
-      123
+      Right(123)
     )
 
     val failureDecoder = stringDecoder.emap(s => Left(s"Invalid value: $s"))
-    interceptIO[DecodeFailureException](
-      failureDecoder.decode(1, "empty statement").foldMap(interpreter.ResultSetInterpreter).run(mockResultSet)
+    assertIO(
+      failureDecoder.decode(1, "empty statement").foldMap(interpreter.ResultSetInterpreter).run(mockResultSet),
+      Left(Decoder.Error(1, "Invalid value: 123", None))
     )
   }
 
@@ -131,7 +125,7 @@ class DecoderTest extends CatsEffectSuite:
     val tupleDecoder = stringDecoder.product(longDecoder)
     assertIO(
       tupleDecoder.decode(1, "empty statement").foldMap(interpreter.ResultSetInterpreter).run(mockResultSet),
-      ("test", 123L)
+      Right(("test", 123L))
     )
   }
 
@@ -144,7 +138,7 @@ class DecoderTest extends CatsEffectSuite:
     val optDecoder = stringDecoder.opt
     assertIO(
       optDecoder.decode(1, "empty statement").foldMap(interpreter.ResultSetInterpreter).run(mockResultSet),
-      Some("test")
+      Right(Some("test"))
     )
 
     // Test null case
@@ -152,7 +146,7 @@ class DecoderTest extends CatsEffectSuite:
     mockResultSet.setStringValue(null)
     assertIO(
       optDecoder.decode(1, "empty statement").foldMap(interpreter.ResultSetInterpreter).run(mockResultSet),
-      None
+      Right(None)
     )
   }
 
@@ -166,8 +160,8 @@ class DecoderTest extends CatsEffectSuite:
 
     val userDecoder = Decoder[User]
     assertIO(
-      userDecoder.decode(1, "empty statement").foldMap(interpreter.ResultSetInterpreter).run(mockResultSet).map(_.id),
-      1L
+      userDecoder.decode(1, "empty statement").foldMap(interpreter.ResultSetInterpreter).run(mockResultSet).map(_.map(_.id)),
+      Right(1L)
     )
   }
 
@@ -178,13 +172,13 @@ class DecoderTest extends CatsEffectSuite:
     val pureDecoder = cats.Applicative[Decoder].pure(123)
     assertIO(
       pureDecoder.decode(1, "empty statement").foldMap(interpreter.ResultSetInterpreter).run(mockResultSet),
-      123
+      Right(123)
     )
 
     val mappedDecoder = pureDecoder.map(_ + 1)
     assertIO(
       mappedDecoder.decode(1, "empty statement").foldMap(interpreter.ResultSetInterpreter).run(mockResultSet),
-      124
+      Right(124)
     )
   }
 
@@ -196,7 +190,7 @@ class DecoderTest extends CatsEffectSuite:
     val tupleDecoder = Decoder[(String, Long)]
     assertIO(
       tupleDecoder.decode(1, "empty statement").foldMap(interpreter.ResultSetInterpreter).run(mockResultSet),
-      ("test", 123L)
+      Right(("test", 123L))
     )
   }
 
@@ -216,7 +210,19 @@ class DecoderTest extends CatsEffectSuite:
         .decode(1, "empty statement")
         .foldMap(interpreter.ResultSetInterpreter)
         .run(mockResultSet)
-        .map(_.toString),
-      "First"
+        .map(_.map(_.toString)),
+      Right("First")
+    )
+  }
+
+  test("Decoder should handle null values gracefully") {
+    val mockResultSet = new MockResultSet()
+    mockResultSet.setStringValue(null)
+    mockResultSet.setNull(true)
+
+    val customDecoder = Decoder[String].imap(_.split(",").toList)(_.mkString(","))
+    assertIO(
+      customDecoder.decode(1, "empty statement").foldMap(interpreter.ResultSetInterpreter).run(mockResultSet),
+      Left(Decoder.Error(1, "Result is null", None))
     )
   }
