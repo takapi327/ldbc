@@ -100,11 +100,11 @@ trait Column[A]:
       override def opt:    Column[Option[(A, B)]] =
         val decoder = new Decoder[Option[(A, B)]]:
           override def offset: Int = self.decoder.offset + fb.decoder.offset
-          override def decode(index: Int, statement: String): ResultSetIO[Option[(A, B)]] =
+          override def decode(index: Int, statement: String): ResultSetIO[Either[Decoder.Error, Option[(A, B)]]] =
             for
-              v1 <- self.opt.decoder.decode(index, statement)
-              v2 <- fb.opt.decoder.decode(index + self.decoder.offset, statement)
-            yield v1.flatMap(a => v2.map(b => (a, b)))
+              v1E <- self.opt.decoder.decode(index, statement)
+              v2E <- fb.opt.decoder.decode(index + self.decoder.offset, statement)
+            yield v1E.flatMap(ap => v2E.map(bp => ap.flatMap(a => bp.map(b => (a, b)))))
 
         val encoder: Encoder[Option[(A, B)]] = {
           case Some((v1, v2)) => self.opt.encoder.encode(Some(v1)).product(fb.opt.encoder.encode(Some(v2)))
@@ -767,8 +767,9 @@ object Column extends TwiddleSyntax[Column]:
     override def alias:            Option[String] = None
     override def as(name: String): Column[A]      = this
     override def decoder:          Decoder[A]     = new Decoder[A]:
-      override def offset:                                Int            = 0
-      override def decode(index: Int, statement: String): ResultSetIO[A] = ResultSetIO.pure(value)
+      override def offset:                                Int                                   = 0
+      override def decode(index: Int, statement: String): ResultSetIO[Either[Decoder.Error, A]] =
+        ResultSetIO.pure(Right(value))
     override def encoder:                     Encoder[A]      = (value: A) => Encoder.Encoded.success(List.empty)
     override def insertStatement:             String          = ""
     override def updateStatement:             String          = ""
