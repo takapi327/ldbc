@@ -3,600 +3,170 @@
   laika.metadata.language = ja
 %}
 
-# マイグレーションノート (0.2.xから0.3.xへの移行)
+# マイグレーションノート (0.3.xから0.4.xへの移行)
 
-## パッケージ
+## アーキテクチャの大幅な改善
 
-**パッケージ名の変更**
+このリリースでは、ldbcプロジェクトの内部アーキテクチャが大幅に改善されました。最も重要な変更は、新しい`ldbc-core`モジュールの導入とFree Monadベースの新しいAPIです。
 
-| 0.2.x     | 0.3.x       |
-|-----------|-------------|
-| ldbc-core | ldbc-schema |
+### 新しいモジュール構造
 
-**新たなパッケージ**
+**新たに追加されたモジュール**
 
-新たに3種類のパッケージが追加されました。
+| Module / Platform | JVM | Scala Native | Scala.js | 説明                     |
+|-------------------|:---:|:------------:|:--------:|------------------------|
+| `ldbc-core`       |  ✅  |      ✅       |    ✅     | Free Monadベースの新しいコアAPI |
 
-| Module / Platform | JVM | Scala Native | Scala.js |  
-|-------------------|:---:|:------------:|:--------:|
-| `ldbc-connector`  |  ✅  |      ✅       |    ✅     | 
-| `jdbc-connector`  |  ✅  |      ❌       |    ❌     | 
-| `ldbc-statement`  |  ✅  |      ✅       |    ✅     | 
+**削除されたモジュール**
 
-**全てのパッケージ**
+- `ldbc-schemaSpy` - 非推奨のため削除されました
+
+**全てのパッケージ（0.4.x）**
 
 | Module / Platform    | JVM | Scala Native | Scala.js |  
 |----------------------|:---:|:------------:|:--------:|
 | `ldbc-sql`           |  ✅  |      ✅       |    ✅     |
+| `ldbc-core`          |  ✅  |      ✅       |    ✅     |
 | `ldbc-connector`     |  ✅  |      ✅       |    ✅     | 
 | `jdbc-connector`     |  ✅  |      ❌       |    ❌     | 
 | `ldbc-dsl`           |  ✅  |      ✅       |    ✅     |
 | `ldbc-statement`     |  ✅  |      ✅       |    ✅     |
 | `ldbc-query-builder` |  ✅  |      ✅       |    ✅     |
 | `ldbc-schema`        |  ✅  |      ✅       |    ✅     |
-| `ldbc-schemaSpy`     |  ✅  |      ❌       |    ❌     | 
 | `ldbc-codegen`       |  ✅  |      ✅       |    ✅     |
 | `ldbc-hikari`        |  ✅  |      ❌       |    ❌     | 
 | `ldbc-plugin`        |  ✅  |      ❌       |    ❌     |
 
-## 機能変更
+### モジュール依存関係の変更
 
-### コネクタ切り替え機能
-
-Scala MySQL コネクタに、jdbc と ldbc の接続切り替えのサポートが追加されました。
-
-この変更により、開発者はプロジェクトの要件に応じて jdbc または ldbc ライブラリを使用したデータベース接続を柔軟に選択できるようになりました。これにより、開発者は異なるライブラリの機能を利用できるようになり、接続の設定や操作の柔軟性が向上します。
-
-#### 変更方法
-
-まず、共通の依存関係を設定する。
-
-```scala 3
-libraryDependencies += "@ORGANIZATION@" %% "ldbc-dsl" % "@VERSION@"
+```
+0.3.x: ldbc-dsl → ldbc-sql
+0.4.x: ldbc-dsl → ldbc-core → ldbc-sql
 ```
 
-クロスプラットフォームプロジェクトでは（JVM、JS、ネイティブ）
+## 新機能
+
+### Free Monadベースの新しいAPI（ldbc-core）
+
+0.4.xでは、データベース操作をより関数型プログラミングに適した形で表現するため、Free Monadベースの新しいAPIが導入されました。
+
+#### DBIOモナド
 
 ```scala 3
-libraryDependencies += "@ORGANIZATION@" %%% "ldbc-dsl" % "@VERSION@"
+import ldbc.core.*
+import ldbc.free.*
+
+// Free Monadベースのデータベース操作
+type DBIO[A] = Free[ConnectionOp, A]
+
+// 使用例
+val dbio: DBIO[List[User]] = for
+  stmt <- ConnectionOp.createStatement
+  rs   <- StatementOp.executeQuery("SELECT * FROM users")
+  users <- ResultSetOp.to[List[User]]
+yield users
 ```
 
-使用される依存パッケージは、データベース接続が Java API を使用するコネクタを介して行われるか、または ldbc によって提供されるコネクタを介して行われるかによって異なります。
-
-**jdbcコネクタの使用**
+#### Provider/Connectorアーキテクチャ
 
 ```scala 3
-libraryDependencies += "@ORGANIZATION@" %% "jdbc-connector" % "@VERSION@"
+// 接続プロバイダ
+trait Provider[F[_]]:
+  def use[A](f: Connector[F] => F[A]): F[A]
+  
+// コネクタ（接続管理とDBIO実行）
+trait Connector[F[_]]:
+  def run[A](dbio: DBIO[A]): F[A]
 ```
 
-**ldbcコネクタの使用**
+この新しいアーキテクチャにより、以下のメリットが得られます：
+- **テスタビリティの向上**: DBIOの記述と実行を分離し、モックを使った単体テストが容易に
+- **型安全性の強化**: すべてのデータベース操作が型レベルで安全に表現
+- **効果の合成**: 複数のデータベース操作を関数型的に合成可能
+
+### ストリーミングサポートの改善
+
+`fs2-core`が`ldbc-dsl`の依存関係に追加され、データベースからのストリーミング処理がより効率的になりました。
 
 ```scala 3
-libraryDependencies += "@ORGANIZATION@" %% "ldbc-connector" % "@VERSION@"
-```
+import fs2.Stream
+import ldbc.dsl.*
 
-クロスプラットフォームプロジェクトでは（JVM、JS、ネイティブ）
-
-```scala 3
-libraryDependencies += "@ORGANIZATION@" %%% "ldbc-connector" % "@VERSION@"
-```
-
-#### 使用方法
-
-**jdbcコネクタの使用**
-
-```scala 3
-import jdbc.connector.*
-
-val ds = new com.mysql.cj.jdbc.MysqlDataSource()
-ds.setServerName("127.0.0.1")
-ds.setPortNumber(13306)
-ds.setDatabaseName("world")
-ds.setUser("ldbc")
-ds.setPassword("password")
-
-val provider = ConnectionProvider.fromDataSource(ex, ExecutionContexts.synchronous)
-```
-
-**ldbcコネクタの使用**
-
-```scala 3
-import ldbc.connector.*
-
-val provider =
-  ConnectionProvider
-    .default[IO]("127.0.0.1", 3306, "ldbc", "password", "ldbc")
-    .setSSL(SSL.Trusted)
-```
-
-データベースへの接続処理は、それぞれの方法で確立されたコネクションを使って行うことができる。
-
-```scala 3
-val result: IO[(List[Int], Option[Int], Int)] = provider.use { conn =>
-  (for
-    result1 <- sql"SELECT 1".query[Int].to[List]
-    result2 <- sql"SELECT 2".query[Int].to[Option]
-    result3 <- sql"SELECT 3".query[Int].unsafe
-  yield (result1, result2, result3)).readOnly(conn)
-}
+// 大量のデータをストリーミング処理
+val stream: Stream[IO, User] = 
+  sql"SELECT * FROM users".query[User].stream
 ```
 
 ## 破壊的変更
 
-### プレーン・クエリ構築の拡張
+### Logging機能のパッケージ移動
 
-プレーン・クエリを用いたデータベース接続メソッドによる検索対象の型の決定は、検索対象の型とそのフォーマット（リストまたはオプション）を一括して指定していた。
+Logging関連のクラスが`ldbc-sql`モジュールから新しい`ldbc-core`モジュールに移動されました。
 
-今回の修正ではこれを変更し、取得する型とその形式の指定を分離することで内部ロジックを共通化した。これにより、プレーン・クエリの構文はよりdoobieに近くなり、doobieのユーザは混乱することなく使用できるはずである。
+**パッケージ名の変更**
 
-**before**
+| 0.3.x                         | 0.4.x                     |
+|-------------------------------|---------------------------|
+| `ldbc.sql.logging.LogEvent`   | `ldbc.logging.LogEvent`   |
+| `ldbc.sql.logging.LogHandler` | `ldbc.logging.LogHandler` |
 
-```scala 3
-sql"SELECT id, name, age FROM user".toList[(Long, String, Int)].readOnly(connection)
-sql"SELECT id, name, age FROM user WHERE id = ${1L}".headOption[User].readOnly(connection)
-```
-
-**after**
-
-```scala 3
-sql"SELECT id, name, age FROM user".query[(Long, String, Int)].to[List].readOnly(connection)
-sql"SELECT id, name, age FROM user WHERE id = ${1L}".query[User].to[Option].readOnly(connection)
-```
-
-### AUTO INCREMENT値取得メソッド命名変更
-
-更新 API で AUTO INCREMENT 列によって生成された値を変換する API `updateReturningAutoGeneratedKey` の名前が `returning` に変更されました。
-
-これはMySQLの特徴で、MySQLはデータ挿入時にAUTO INCREMENTで生成された値を返しますが、他のRDBは動作が異なり、AUTO INCREMENTで生成された値以外の値を返すことがあります。
-API 名は、将来の拡張を考慮して、限定的な API 名をより拡張しやすくするために早い段階で変更されました。
-
-**before**
-
-```scala 3
-sql"INSERT INTO `table`(`id`, `c1`) VALUES ($None, ${ "column 1" })".updateReturningAutoGeneratedKey[Long]
-```
-
-**after**
-
-```scala 3
-sql"INSERT INTO `table`(`id`, `c1`) VALUES ($None, ${ "column 1" })".returning[Long]
-```
-
-### クエリビルダーの構築方法
-
-以前まではクエリビルダーはテーブルスキーマを構築しなければ使用することができませんでした。
-
-今回の更新で、より簡易的にクエリビルダーを使用できるように変更を行いました。
-
-**before**
-
-まずモデルに対応したテーブルスキーマを作成し、
-
-```scala 3
-case class User(
-  id: Long,
-  name: String,
-  age: Option[Int],
-)
-
-val userTable = Table[User]("user")(                 // CREATE TABLE `user` (
-  column("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY), //   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  column("name", VARCHAR(255)),                      //   `name` VARCHAR(255) NOT NULL,
-  column("age", INT.UNSIGNED.DEFAULT(None)),         //   `age` INT unsigned DEFAULT NULL
-)
-```
-
-次にテーブルスキーマを使用して`TableQuery`の構築を行います。
-
-```scala 3
-val tableQuery = TableQuery[IO, User](userTable)
-```
-
-最後にクエリ構築を行っていました。
-
-```scala 3
-val result: IO[List[User]] = connection.use { conn =>
-  tableQuery.selectAll.toList[User].readOnly(conn)
-  // "SELECT `id`, `name`, `age` FROM user"
-}
-```
-
-**after**
-
-今回の変更によって、モデルを構築し
-
-```scala 3
-import ldbc.dsl.codec.Codec
-import ldbc.query.builder.Table
-
-case class User(
-  id: Long,
-  name: String,
-  age: Option[Int],
-) derives Table
-object User:
-  given Codec[User] = Codec.derived[User]
-```
-
-次に`Table`を初期化を行います。
-
-```scala 3
-import ldbc.query.builder.Table
-
-val userTable = TableQuery[User]
-```
-
-最後にクエリ構築を行うことで利用可能となります。
-
-```scala
-val result: IO[List[User]] = provider.use { conn =>
-  userTable.selectAll.query.to[List].readOnly(conn)
-  // "SELECT `id`, `name`, `age` FROM user"
-}
-```
-
-#### Schemaを使用したクエリビルダーの構築
-
-以前までのスキーマを模したTableの構築方法は、Schemaプロジェクトを使用してテーブル型を構築する方法に変わります。
-以下では、Userモデルに対応するTable型の構築について見ていきます。
-
-```scala 3
-case class User(
-  id: Long,
-  name: String,
-  age: Option[Int],
-)
-```
-
-**Before**
-
-これまでは、Tableのインスタンスを直接作成する必要があった。Tableの引数には、Userクラスが持つプロパティと同じ順序で対応するカラムを渡す必要があり、カラムのデータ型も設定することが必須だった。
-
-このテーブル型を使ったTableQueryは、型安全なアクセスが可能なDynamicを使って実装したが、開発ツールでは補完ができなかった。
-
-また、この構築方法は、クラス生成に比べてコンパイル時間が少し遅かった。
-
-```scala 3
-val userTable = Table[User]("user")(
-  column("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY),
-  column("name", VARCHAR(255)),
-  column("age", INT.UNSIGNED.DEFAULT(None)),
-)
-```
-
-**After**
-
-今回の修正では、Table型の生成は、Tableを継承してクラスを作成する方法に変更された。また、カラムのデータ型は必須ではなくなり、実装者が任意に設定できるようになりました。
-
-このようにSlickと同様の構築方法に変更することで、実装者にとってより馴染みやすいものになっています。
-
-```scala 3
-class UserTable extends Table[User]("user"):
-  def id: Column[Long] = column[Long]("id")
-  def name: Column[String] = column[String]("name")
-  def age: Column[Option[Int]] = column[Option[Int]]("age")
-
-  override def * : Column[User] = (id *: name *: age).to[User]
-```
-
-カラムのデータ型はまだ設定できます。この設定は、たとえば、このテーブル・クラスを使ってスキーマを生成するときに使われます。
-
-```scala 3
-class UserTable extends Table[User]("user"):
-  def id: Column[Long] = column[Long]("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY)
-  def name: Column[String] = column[String]("name", VARCHAR(255))
-  def age: Column[Option[Int]] = column[Option[Int]]("age", INT.UNSIGNED.DEFAULT(None))
-
-  override def * : Column[User] = (id *: name *: age).to[User]
-```
-
-また、データ型を表現したカラム定義方法も存在します。上記の定義方法は以下のように書き換えることが可能です。
-この定義方法では、カラム名を変数名として使用できるためカラム名を引数として渡す必要はありません。
+**マイグレーション方法**
 
 ```diff
-class UserTable extends Table[User]("user"):
--  def id: Column[Long] = column[Long]("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY)
--  def name: Column[String] = column[String]("name", VARCHAR(255))
--  def age: Column[Option[Int]] = column[Option[Int]]("age", INT.UNSIGNED.DEFAULT(None))
-+  def id: Column[Long] = bigint().autoIncrement.primaryKey
-+  def name: Column[String] = varchar(255)
-+  def age: Column[Option[Int]] = int().unsigned.defaultNull
-
-  override def * : Column[User] = (id *: name *: age).to[User]
+-import ldbc.sql.logging.{ LogEvent, LogHandler }
++import ldbc.logging.{ LogEvent, LogHandler }
 ```
 
-カラム名はNamingを暗黙的に渡すことで書式を変更することができます。
-デフォルトはキャメルケースですが、パスカルケースに変更するには以下のようにします。
+この変更により、Logging機能がより基礎的なレイヤーに配置され、すべてのモジュールから利用しやすくなりました。
 
-```scala 3
-class UserTable extends Table[User]("user"):
-  given Naming = Naming.PASCAL
+### 依存関係の構造変更
 
-  def id: Column[Long] = bigint().autoIncrement.primaryKey
-  def name: Column[String] = varchar(255)
-  def age: Column[Option[Int]] = int().unsigned.defaultNull
+以下の依存関係が`ldbc-dsl`から`ldbc-core`に移動されました：
 
-  override def * : Column[User] = (id *: name *: age).to[User]
-```
+- `cats-free`
+- `cats-effect`
 
-特定のカラムの書式を変更したい場合は、カラム名を引数として渡すことで定義できます。
+`ldbc-dsl`を使用している場合、これらの依存関係は`ldbc-core`経由で提供されるため、明示的な依存関係の追加は不要です。
 
-```scala 3
-class UserTable extends Table[User]("user"):
-  def id: Column[Long] = bigint("ID").autoIncrement.primaryKey
-  def name: Column[String] = varchar("NAME", 255)
-  def age: Column[Option[Int]] = int("AGE").unsigned.defaultNull
+### 非推奨モジュールの削除
 
-  override def * : Column[User] = (id *: name *: age).to[User]
-```
+以下のモジュールが削除されました：
 
-### カスタムデータ型のサポート
+- `ldbc-schemaSpy` - 非推奨警告が出ていたモジュール
 
-ユーザー定義のデータ型を使用する際は、`ResultSetReader`と`Parameter`を使用してカスタムデータ型をサポートしていました。
+このモジュールを使用している場合は、代替の実装を検討してください。
 
-今回の更新で、`ResultSetReader`と`Parameter`を使用してカスタムデータ型をサポートする方法が変更されました。
+## 既存APIの継続サポート
 
-#### Encoder
+以下の機能は0.4.xでも引き続き利用可能です：
 
-クエリ文字列に動的に埋め込むために、`Parameter`から`Encoder`に変更。
+- プレーンクエリ構文（`sql"..."`）
+- クエリビルダー
+- カスタムデータ型のサポート（Encoder/Decoder/Codec）
+- Table/TableQuery API
+- 列の合成（twiddles）
 
-これにより、ユーザはEffect Typeを受け取るための冗長な処理を記述する必要がなくなり、よりシンプルな実装とカスタムデータ型のパラメータとしての使用が可能になります。
+これらのAPIに変更はないため、既存のコードはそのまま動作します。
 
-```scala 3
-enum Status(val code: Int, val name: String):
-  case Active   extends Status(1, "Active")
-  case InActive extends Status(2, "InActive")
-```
+## 依存ライブラリのバージョンアップ
 
-```diff
--given Parameter[Status] with
--  override def bind[F[_]](
--    statement: PreparedStatement[F],
--    index: Int,
--    status: Status
--  ): F[Unit] = statement.setInt(index, status.code)
+以下のライブラリがバージョンアップされました：
 
-+given Encoder[Status] = Encoder[Int].contramap(_.code)
-```
+| ライブラリ                                     | 0.3.x  | 0.4.x  |
+|-------------------------------------------|--------|--------|
+| cats-effect                               | 3.6.1  | 3.6.2  |
+| fs2-core                                  | -      | 3.12.0 |
+| otel4s-core-trace                         | 0.12.0 | 0.13.1 |
+| opentelemetry-exporter-otlp               | 1.51.0 | 1.52.0 |
+| opentelemetry-sdk-extension-autoconfigure | 1.51.0 | 1.52.0 |
 
-`Encoder`のエンコード処理では、`PreparedStatement`で扱えるScala型しか返すことができません。
+## マイグレーションのまとめ
 
-現在、以下のタイプがサポートされている。
+0.3.xから0.4.xへの移行における主要なポイント：
 
-| Scala Type                | Methods called in PreparedStatement |
-|---------------------------|-------------------------------------|
-| `Boolean`                 | `setBoolean`                        |
-| `Byte`                    | `setByte`                           |
-| `Short`                   | `setShort`                          |
-| `Int`                     | `setInt`                            |
-| `Long`                    | `setLong`                           |
-| `Float`                   | `setFloat`                          |
-| `Double`                  | `setDouble`                         |
-| `BigDecimal`              | `setBigDecimal`                     |
-| `String`                  | `setString`                         |
-| `Array[Byte]`             | `setBytes`                          |
-| `java.time.LocalDate`     | `setDate`                           |
-| `java.time.LocalTime`     | `setTime`                           |
-| `java.time.LocalDateTime` | `setTimestamp`                      |
-| `None`                    | `setNull`                           |
+1. **新しいアーキテクチャの採用を検討**: Free Monadベースの新しいAPIは、より高度な型安全性とテスタビリティを提供します
+2. **Loggingパッケージの変更**: `ldbc.sql.logging` → `ldbc.logging`へのimport文の更新
+3. **依存関係の確認**: `ldbc-schemaSpy`を使用している場合は代替手段の検討が必要
+4. **既存のAPIの継続利用**: 既存のDSL APIは引き続き利用可能で、段階的な移行が可能
 
-また、Encoderは複数の型を合成して新しい型を作成することができます。
-
-```scala 3
-val encoder: Encoder[(Int, String)] = Encoder[Int] *: Encoder[String]
-```
-
-合成した型は任意のクラスに変換することもできます。
-
-```scala 3
-case class Status(code: Int, name: String)
-given Encoder[Status] = (Encoder[Int] *: Encoder[String]).to[Status]
-```
-
-#### Decoder
-
-`ResultSet`からデータを取得する処理を`ResultSetReader`から`Decoder`に変更。
-
-```diff
--given ResultSetReader[IO, Status] =
--  ResultSetReader.mapping[IO, Int, Status](code => Status.fromCode(code))
-+given Decoder[Status] = Decoder[Int].map(code => Status.fromCode(code))
-```
-
-Decoderも複数の型を合成して新しい型を作成することができます。
-
-```scala 3
-val decoder: Decoder[(Int, String)] = Decoder[Int] *: Decoder[String]
-```
-
-合成した型は任意のクラスに変換することもできます。
-
-```scala 3
-case class Status(code: Int, name: String)
-given Decoder[Status] = (Decoder[Int] *: Decoder[String]).to[Status]
-```
-
-### Codecの導入
-
-`Codec`は、`Encoder`と`Decoder`を組み合わせたもので、`Codec`を使用することで、`Encoder`と`Decoder`を組み合わせることができます。
-
-```scala 3
-enum Status(val code: Int, val name: String):
-  case Active   extends Status(1, "Active")
-  case InActive extends Status(2, "InActive")
-
-given Codec[Status] = Codec[Int].imap(Status.fromCode)(_.code)
-```
-
-Codecも複数の型を合成して新しい型を作成することができます。
-
-```scala 3
-val codec: Codec[(Int, String)] = Codec[Int] *: Codec[String]
-```
-
-合成した型は任意のクラスに変換することもできます。
-
-```scala 3
-case class Status(code: Int, name: String)
-given Codec[Status] = (Codec[Int] *: Codec[String]).to[Status]
-```
-
-Codecは、`Encoder`と`Decoder`を組み合わせたものであるため、それぞれの型への変換処理を行うことができます。
-
-```scala 3
-val encoder: Encoder[Status] = Codec[Status].asEncoder
-val decoder: Decoder[Status] = Codec[Status].asDecoder
-```
-
-今回の変更により、ユーザーは`Codec`を使用して、`Encoder`と`Decoder`を組み合わせることができるようになりました。
-
-これにより、ユーザーは取得したレコードをネストした階層データに変換できます。
-
-```scala
-case class City(id: Int, name: String, countryCode: String)
-case class Country(code: String, name: String)
-case class CityWithCountry(city: City, country: Country)
-
-sql"SELECT city.Id, city.Name, city.CountryCode, country.Code, country.Name FROM city JOIN country ON city.CountryCode = country.Code".query[CityWithCountry]
-```
-
-Codecを始め`Encoder`と`Decoder`は暗黙的に解決されるため、ユーザーはこれらの型を明示的に指定する必要はありません。
-
-しかし、モデル内に多くのプロパティがある場合、暗黙的な検索は失敗する可能性があります。
-
-```shell
-[error]    |Implicit search problem too large.
-[error]    |an implicit search was terminated with failure after trying 100000 expressions.
-[error]    |The root candidate for the search was:
-[error]    |
-[error]    |  given instance given_Decoder_P in object Decoder  for  ldbc.dsl.codec.Decoder[City]}
-```
-
-このような場合は、コンパイルオプションの検索制限を上げると問題が解決することがあります。
-
-```scala
-scalacOptions += "-Ximplicit-search-limit:100000"
-```
-
-しかし、オプションでの制限拡張はコンパイル時間の増幅につながる可能性があります。その場合は、以下のように手動で任意の型を構築することで解決することもできます。
-
-```scala 3
-given Decoder[City] = Decoder.derived[City]
-// Or given Decoder[City] = (Decoder[Int] *: Decoder[String] *: Decoder[Int] *: ....).to[City]
-given Encoder[City] = Encoder.derived[City]
-// Or given Encoder[City] = (Encoder[Int] *: Encoder[String] *: Encoder[Int] *: ....).to[City]
-```
-
-もしくは、`Codec`を使用して`Encoder`と`Decoder`を組み合わせることで解決することもできます。
-
-```scala 3
-given Codec[City] = Codec.derived[City]
-// Or given Codec[City] = (Codec[Int] *: Codec[String] *: Codec[Int] *: ....).to[City]
-```
-
-### 列の絞り込み方法の変更
-
-これまで、列の絞り込みは単にタプルとして使用される列をグループ化してきました。
-
-```scala 3
-cityTable.select(city => (city.id, city.name))
-```
-
-しかし、これには問題がありました。カラムは1つの型パラメータを持つ型です。Scala2ではTupleの数に制限があったため、ボイラープレートか何かでTupleの数をすべて扱えるものを作る必要がありました。
-この場合、動的TupleはTupleまたはTuple.Mapとして扱われるため、Column型にアクセスしたい場合、その型はTupleとしてしか扱えないため、asInstanceOfを使って型をキャストする必要がありました。
-型をキャストすると、もちろん型の安全性が失われコードが複雑になってしまいます。
-
-この問題を解決するために、同じTypeLevelプロジェクトの一つである[twiddles](https://github.com/typelevel/twiddles)を採用することにしました。
-
-twiddlesを使うことで、カラムをより簡単に合成することができるようになります。
-
-```scala 3
-cityTable.select(city => city.id *: city.name)
-```
-
-また、内部コードではTupleの代わりに`Column[T]`を使用すればよいので、安全でない型キャストは必要なくなります。
-
-Twiddlesはまた、合成結果を別の型に変換することを容易にします。
-
-```scala 3
-case class City(id: Long, name: String)
-
-def id: Column[Int] = column[Int]("ID")
-def name: Column[String] = column[String]("Name")
-
-def city: Column[City] = (id *: name).to[City]
-```
-
-### TableからTableQueryへの変更
-
-これまでは、同じTable型を使って、モデルからテーブル型とテーブル情報を使ってクエリを構築していました。
-
-```scala 3
-case class City(id: Long, name: String) derives Table
-val cityTable = Table[City]
-```
-
-しかしこの実装は、同じ型が2つのものを表すのに使われるため間違った実装をするのは簡単でした。
-
-```scala 3
-cityTable.select(city => city.insert(???))
-```
-
-IDEのような開発ツールは、利用可能なすべてのAPIを補完するため実装者に少なからぬ混乱を引き起こす可能性があります。
-
-この問題を解決するために、Table型とTableQuery型を分離しました。
-
-```scala 3
-case class City(id: Long, name: String) derives Table
-val cityTable = TableQuery[City]
-```
-
-**テーブル名のカスタマイズはTableのderivedで行うことができます**
-
-```scala 3
-case class City(
-  id: Int,
-  name: String,
-  countryCode: String,
-  district: String,
-  population: Int
-)
-
-object City:
-  given Table[City] = Table.derived[City]("city")
-```
-
-### アップデート文の構築方法変更
-
-以前は、Update Statementは更新するカラムごとに1つずつ設定する必要がありました。この実装は、いくつかのカラムを個別に更新したい場合には便利ですが、更新したいカラムが追加されるたびにセットを記述するのは非常に面倒です。
-
-```scala 3
-cityTable
-  .update("id", 1L)
-  .set("name", "Tokyo")
-  .set("population", 1, false)
-```
-
-今回のアップデートにより、カラムを組み合わせることができるようになり、複数のカラムを一緒に指定して更新処理を行うことができるようになりました。
-
-```scala 3
-cityTable
-  .update(city => city.id *: city.name)((1L, "Tokyo"))
-  .set(_.population, 1, false)
-```
-
-今回のアップデートにより、カラムを組み合わせることができるようになり、複数のカラムを一緒に指定して更新処理を行うことができるようになった。setを使用して特定の列のみを更新することは可能です。また、set を使用して更新条件を設定できるため、条件が正の場合にのみ追加カラムを更新するクエリを作成できます。
-
-### テーブル結合の構築方法の変更
-
-以前は、テーブル結合は第2引数に結合条件を設定することで構築されていました。
-
-```scala 3
-cityTable.join(countryTable)((c, co) => c.countryCode === co.code)
-```
-
-この変更により、テーブルの結合条件は`on`APIで設定する必要があります。この変更は内部的な実装変更の結果です。
-
-```scala 3
-cityTable.join(countryTable).on((c, co) => c.countryCode === co.code)
-```
+詳細な使用例やベストプラクティスについては、[チュートリアル](../tutorial/index.md)を参照してください。
