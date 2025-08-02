@@ -100,8 +100,8 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
   def setHost(newHost: String): MySQLDataSource[F, A] = copy(host = newHost)
   def setPort(newPort: Int): MySQLDataSource[F, A] = copy(port = newPort)
   def setUser(newUser: String): MySQLDataSource[F, A] = copy(user = newUser)
-  def setPassword(newPassword: Option[String]): MySQLDataSource[F, A] = copy(password = newPassword)
-  def setDatabase(newDatabase: Option[String]): MySQLDataSource[F, A] = copy(database = newDatabase)
+  def setPassword(newPassword: String): MySQLDataSource[F, A] = copy(password = Some(newPassword))
+  def setDatabase(newDatabase: String): MySQLDataSource[F, A] = copy(database = Some(newDatabase))
   def setDebug(newDebug: Boolean): MySQLDataSource[F, A] = copy(debug = newDebug)
   def setSSL(newSSL: SSL): MySQLDataSource[F, A] = copy(ssl = newSSL)
   def setSocketOptions(newSocketOptions: List[SocketOption]): MySQLDataSource[F, A] =
@@ -110,8 +110,8 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
     copy(readTimeout = newReadTimeout)
   def setAllowPublicKeyRetrieval(newAllowPublicKeyRetrieval: Boolean): MySQLDataSource[F, A] =
     copy(allowPublicKeyRetrieval = newAllowPublicKeyRetrieval)
-  def setDatabaseTerm(newDatabaseTerm: Option[DatabaseMetaData.DatabaseTerm]): MySQLDataSource[F, A] =
-    copy(databaseTerm = newDatabaseTerm)
+  def setDatabaseTerm(newDatabaseTerm: DatabaseMetaData.DatabaseTerm): MySQLDataSource[F, A] =
+    copy(databaseTerm = Some(newDatabaseTerm))
   def setTracer(newTracer: Tracer[F]): MySQLDataSource[F, A] =
     copy(tracer = Some(newTracer))
   def setUseCursorFetch(newUseCursorFetch: Boolean): MySQLDataSource[F, A] =

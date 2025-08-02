@@ -22,6 +22,10 @@ import ldbc.sql.Connection
 import ldbc.{ Connector, Provider }
 import ldbc.logging.LogHandler
 
+@deprecated(
+  "Connection creation using ConnectionProvider is now deprecated. Please use jdbc.connector.MySQLDataSource from now on. ConnectionProvider will be removed in version 0.5.x.",
+  "ldbc 0.4.0"
+)
 object ConnectionProvider:
 
   private case class DataSourceProvider[F[_]](
