@@ -9,3 +9,4 @@ package ldbc
 package object connector:
   export ldbc.Connector
   export ldbc.Provider
+  export ldbc.DataSource

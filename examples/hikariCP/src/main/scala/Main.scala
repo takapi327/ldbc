@@ -8,6 +8,7 @@ import com.zaxxer.hikari.{ HikariConfig, HikariDataSource }
 
 import cats.effect.*
 
+import ldbc.Connector
 import ldbc.dsl.*
 import ldbc.dsl.codec.Codec
 
@@ -40,11 +41,9 @@ object Main extends ResourceApp.Simple:
     (for
       hikari     <- Resource.fromAutoCloseable(IO(ds))
       execution  <- ExecutionContexts.fixedThreadPool[IO](hikari.getMaximumPoolSize)
-      connection <- ConnectionProvider.fromDataSource[IO](hikari, execution).createConnector()
-    yield connection).evalMap { conn =>
+    yield Connector.fromDataSource(MySQLDataSource.fromDataSource[IO](hikari, execution))).evalMap { conn =>
       for
         city <- sql"SELECT * FROM `city` WHERE ID = ${ 1 }".query[City].to[Option].readOnly(conn)
-        _    <- IO.println(s"Found city: $city")
         // トランザクションの例
         _ <- sql"UPDATE `city` SET population = ${ city.map(_.population + 1000) }".update.transaction(conn)
       yield ()

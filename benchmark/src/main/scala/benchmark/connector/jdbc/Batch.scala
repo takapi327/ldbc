@@ -17,6 +17,7 @@ import com.mysql.cj.jdbc.MysqlDataSource
 import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
+import ldbc.DataSource
 import jdbc.connector.*
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -25,7 +26,7 @@ import jdbc.connector.*
 class Batch:
 
   @volatile
-  var provider: Provider[IO] = uninitialized
+  var datasource: DataSource[IO] = uninitialized
 
   @volatile
   var values: String = uninitialized
@@ -43,7 +44,7 @@ class Batch:
     ds.setPassword("password")
     ds.setRewriteBatchedStatements(true)
 
-    provider = ConnectionProvider.fromDataSource(ds, ExecutionContexts.synchronous)
+    datasource = MySQLDataSource.fromDataSource(ds, ExecutionContexts.synchronous)
 
     values = (1 to len).map(_ => "(?, ?)").mkString(",")
 
@@ -54,7 +55,7 @@ class Batch:
 
   @Benchmark
   def statement(): Unit =
-    provider
+    datasource
       .createConnection()
       .use { conn =>
         for
@@ -73,7 +74,7 @@ class Batch:
 
   @Benchmark
   def prepareStatement(): Unit =
-    provider
+    datasource
       .createConnection()
       .use { conn =>
         for

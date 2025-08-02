@@ -24,6 +24,7 @@ import ldbc.sql.*
 
 import ldbc.connector.syntax.*
 
+import ldbc.DataSource
 import jdbc.connector.*
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -51,7 +52,7 @@ class Select:
   )
 
   @volatile
-  var provider: Provider[IO] = uninitialized
+  var datasource: DataSource[IO] = uninitialized
 
   @Setup
   def setupDataSource(): Unit =
@@ -63,14 +64,14 @@ class Select:
     ds.setPassword("password")
     ds.setUseSSL(true)
 
-    provider = ConnectionProvider.fromDataSource(ds, ExecutionContexts.synchronous)
+    datasource = MySQLDataSource.fromDataSource[IO](ds, ExecutionContexts.synchronous)
 
   @Param(Array("100", "1000", "2000", "4000"))
   var len: Int = uninitialized
 
   @Benchmark
   def statement: List[BenchmarkType] =
-    provider
+    datasource
       .createConnection()
       .use { conn =>
         for
@@ -83,7 +84,7 @@ class Select:
 
   @Benchmark
   def prepareStatement: List[BenchmarkType] =
-    provider
+    datasource
       .createConnection()
       .use { conn =>
         for
