@@ -17,10 +17,10 @@ import ldbc.dsl.exception.*
 
 import ldbc.query.builder.*
 
-import ldbc.Connector
 import ldbc.connector.*
 
 import ldbc.tests.model.*
+import ldbc.Connector
 
 class LdbcTableQuerySelectConnectionTest extends TableQuerySelectConnectionTest:
 
@@ -36,7 +36,7 @@ class LdbcTableQuerySelectConnectionTest extends TableQuerySelectConnectionTest:
 
 trait TableQuerySelectConnectionTest extends CatsEffectSuite:
 
-  def prefix:     "jdbc" | "ldbc"
+  def prefix:    "jdbc" | "ldbc"
   def connector: Connector[IO]
 
   private final val country          = TableQuery[Country]
@@ -261,13 +261,13 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
       (for
         codeOpt <- country.select(_.code).where(_.code _equals "JPN").query.to[Option]
         cities  <- codeOpt match
-          case None       => DBIO.pure[List[(String, String)]](List.empty)
-          case Some(code) =>
-            city
-              .select(v => v.name *: v.countryCode)
-              .where(_.countryCode _equals code)
-              .query
-              .to[List]
+                    case None       => DBIO.pure[List[(String, String)]](List.empty)
+                    case Some(code) =>
+                      city
+                        .select(v => v.name *: v.countryCode)
+                        .where(_.countryCode _equals code)
+                        .query
+                        .to[List]
       yield cities.length).readOnly(connector),
       248
     )
@@ -450,22 +450,22 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
     assertIO(
       (for
         _ <- (country += Country(
-          "XXX",
-          "XXX",
-          Country.Continent.Asia,
-          "XXX",
-          BigDecimal(0),
-          None,
-          0,
-          None,
-          None,
-          None,
-          "XXX",
-          "XXX",
-          None,
-          None,
-          "XX"
-        )).update
+               "XXX",
+               "XXX",
+               Country.Continent.Asia,
+               "XXX",
+               BigDecimal(0),
+               None,
+               0,
+               None,
+               None,
+               None,
+               "XXX",
+               "XXX",
+               None,
+               None,
+               "XX"
+             )).update
         result <-
           (governmentOffice rightJoin city)
             .on((governmentOffice, city) => governmentOffice.cityId _equals city.id)

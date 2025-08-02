@@ -14,11 +14,12 @@ import munit.CatsEffectSuite
 
 import ldbc.dsl.*
 
-import ldbc.Connector
 import ldbc.connector.*
 
+import ldbc.Connector
+
 class DBIOTest extends CatsEffectSuite:
-  
+
   private val datasource = MySQLDataSource
     .build[IO]("127.0.0.1", 13306, "ldbc")
     .setPassword("password")

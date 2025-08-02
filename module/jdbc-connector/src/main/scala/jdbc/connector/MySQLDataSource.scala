@@ -14,17 +14,17 @@ import scala.concurrent.ExecutionContext
 
 import cats.effect.*
 
-import ldbc.DataSource as LdbcDataSource
-import ldbc.logging.LogHandler
-
 import ldbc.sql.Connection
+
+import ldbc.logging.LogHandler
+import ldbc.DataSource as LdbcDataSource
 
 object MySQLDataSource:
 
   private case class Impl[F[_]](
-                                               dataSource: DataSource,
-                                               connectEC:  ExecutionContext,
-                                             )(using ev: Async[F])
+    dataSource: DataSource,
+    connectEC:  ExecutionContext
+  )(using ev: Async[F])
     extends LdbcDataSource[F]:
     override def createConnection(): Resource[F, Connection[F]] =
       Resource
@@ -32,23 +32,24 @@ object MySQLDataSource:
         .map(conn => ConnectionImpl(conn))
 
   private case class JavaConnection[F[_]: Sync](
-                                                         connection: java.sql.Connection,
-                                                       ) extends LdbcDataSource[F]:
+    connection: java.sql.Connection
+  ) extends LdbcDataSource[F]:
     override def createConnection(): Resource[F, Connection[F]] =
       Resource.pure(ConnectionImpl(connection))
 
   class Driver[F[_]](using ev: Async[F]):
 
     private def create(
-                        driver:     String,
-                        conn:       () => java.sql.Connection,
-                      ): LdbcDataSource[F] =
-      () => Resource
-        .fromAutoCloseable(ev.blocking {
-          Class.forName(driver)
-          conn()
-        })
-        .map(conn => ConnectionImpl(conn))
+      driver: String,
+      conn:   () => java.sql.Connection
+    ): LdbcDataSource[F] =
+      () =>
+        Resource
+          .fromAutoCloseable(ev.blocking {
+            Class.forName(driver)
+            conn()
+          })
+          .map(conn => ConnectionImpl(conn))
 
     /** Construct a new `DataSource` that uses the JDBC `DriverManager` to allocate connections.
      *
@@ -58,9 +59,9 @@ object MySQLDataSource:
      *   a connection URL, specific to your driver
      */
     def apply(
-               driver:     String,
-               url:        String,
-             ): LdbcDataSource[F] =
+      driver: String,
+      url:    String
+    ): LdbcDataSource[F] =
       create(driver, () => DriverManager.getConnection(url))
 
     /** Construct a new `DataSource` that uses the JDBC `DriverManager` to allocate connections.
@@ -75,12 +76,12 @@ object MySQLDataSource:
      *   database password
      */
     def apply(
-               driver:     String,
-               url:        String,
-               user:       String,
-               password:   String,
-               logHandler: Option[LogHandler[F]]
-             ): LdbcDataSource[F] =
+      driver:     String,
+      url:        String,
+      user:       String,
+      password:   String,
+      logHandler: Option[LogHandler[F]]
+    ): LdbcDataSource[F] =
       create(driver, () => DriverManager.getConnection(url, user, password))
 
     /** Construct a new `DataSource` that uses the JDBC `DriverManager` to allocate connections.
@@ -93,11 +94,11 @@ object MySQLDataSource:
      *   a `Properties` containing connection information (see `DriverManager.getConnection`)
      */
     def apply(
-               driver:     String,
-               url:        String,
-               info:       java.util.Properties,
-               logHandler: Option[LogHandler[F]]
-             ): LdbcDataSource[F] =
+      driver:     String,
+      url:        String,
+      info:       java.util.Properties,
+      logHandler: Option[LogHandler[F]]
+    ): LdbcDataSource[F] =
       create(driver, () => DriverManager.getConnection(url, info))
 
   /**
@@ -110,9 +111,9 @@ object MySQLDataSource:
    *   Execution context dedicated to database connection.
    */
   def fromDataSource[F[_]: Async](
-                                            dataSource: DataSource,
-                                            connectEC:  ExecutionContext,
-                                          ): LdbcDataSource[F] = Impl[F](dataSource, connectEC)
+    dataSource: DataSource,
+    connectEC:  ExecutionContext
+  ): LdbcDataSource[F] = Impl[F](dataSource, connectEC)
 
   /**
    * Construct a `DataSource` that wraps an existing `Connection`. Closing the connection is the responsibility of
@@ -122,8 +123,8 @@ object MySQLDataSource:
    *   a raw JDBC `Connection` to wrap
    */
   def fromConnection[F[_]: Sync](
-                                           connection: java.sql.Connection,
-                                         ): LdbcDataSource[F] = JavaConnection[F](connection)
+    connection: java.sql.Connection
+  ): LdbcDataSource[F] = JavaConnection[F](connection)
 
   /** Module of constructors for `DataSource` that use the JDBC `DriverManager` to allocate connections. Note that
    * `DriverManager` is unbounded and will happily allocate new connections until server resources are exhausted. It

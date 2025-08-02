@@ -14,8 +14,9 @@ import ldbc.dsl.*
 
 import ldbc.schema.*
 
-import ldbc.Connector
 import ldbc.connector.*
+
+import ldbc.Connector
 
 class LdbcDDLTest extends DDLTest:
 

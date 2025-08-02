@@ -12,11 +12,12 @@ import com.mysql.cj.jdbc.MysqlDataSource
 
 import cats.effect.*
 
-import ldbc.Connector
 import ldbc.dsl.*
 import ldbc.dsl.codec.Codec
 
 import jdbc.connector.*
+
+import ldbc.Connector
 
 class JdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
 
@@ -27,7 +28,8 @@ class JdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
   ds.setUser("ldbc")
   ds.setPassword("password")
 
-  override def connector: Connector[IO] = Connector.fromDataSource(MySQLDataSource.fromDataSource(ds, ExecutionContexts.synchronous))
+  override def connector: Connector[IO] =
+    Connector.fromDataSource(MySQLDataSource.fromDataSource(ds, ExecutionContexts.synchronous))
 
   test(
     "Attempting to decode something that does not match the value of Enum raises a SQLException."

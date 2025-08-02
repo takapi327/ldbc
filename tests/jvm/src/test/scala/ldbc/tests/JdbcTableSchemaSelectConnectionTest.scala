@@ -11,6 +11,7 @@ import com.mysql.cj.jdbc.MysqlDataSource
 import cats.effect.*
 
 import jdbc.connector.*
+
 import ldbc.Connector
 
 class JdbcTableSchemaSelectConnectionTest extends TableSchemaSelectConnectionTest:
@@ -24,4 +25,5 @@ class JdbcTableSchemaSelectConnectionTest extends TableSchemaSelectConnectionTes
 
   override def prefix: "jdbc" | "ldbc" = "jdbc"
 
-  override def connector: Connector[IO] = Connector.fromDataSource(MySQLDataSource.fromDataSource(ds, ExecutionContexts.synchronous))
+  override def connector: Connector[IO] =
+    Connector.fromDataSource(MySQLDataSource.fromDataSource(ds, ExecutionContexts.synchronous))

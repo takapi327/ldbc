@@ -24,13 +24,14 @@ class LdbcConnectionTest extends ConnectionTest:
   override def prefix: "ldbc" = "ldbc"
 
   override def datasource(databaseTerm: "SCHEMA" | "CATALOG" = "CATALOG"): DataSource[IO] =
-    MySQLDataSource.build[IO](host, port, user)
+    MySQLDataSource
+      .build[IO](host, port, user)
       .setPassword(password)
       .setDatabase(database)
       .setSSL(SSL.Trusted)
       .setDatabaseTerm(
         databaseTerm match
-          case "SCHEMA" => DatabaseMetaData.DatabaseTerm.SCHEMA
+          case "SCHEMA"  => DatabaseMetaData.DatabaseTerm.SCHEMA
           case "CATALOG" => DatabaseMetaData.DatabaseTerm.CATALOG
       )
 
@@ -142,11 +143,15 @@ trait ConnectionTest extends CatsEffectSuite:
   }
 
   test("The storesUpperCaseIdentifiers method of DatabaseMetaData is always false.") {
-    assertIOBoolean(datasource().createConnection().use(_.getMetaData().map(meta => !meta.storesUpperCaseIdentifiers())))
+    assertIOBoolean(
+      datasource().createConnection().use(_.getMetaData().map(meta => !meta.storesUpperCaseIdentifiers()))
+    )
   }
 
   test("The stores Lower Case Identifiers retrieved from DatabaseMetaData matches the specified value.") {
-    assertIOBoolean(datasource().createConnection().use(_.getMetaData().map(meta => !meta.storesLowerCaseIdentifiers())))
+    assertIOBoolean(
+      datasource().createConnection().use(_.getMetaData().map(meta => !meta.storesLowerCaseIdentifiers()))
+    )
   }
 
   test("The stores Mixed Case Identifiers retrieved from DatabaseMetaData matches the specified value.") {
@@ -162,7 +167,9 @@ trait ConnectionTest extends CatsEffectSuite:
   }
 
   test("The stores Lower Case Quoted Identifiers retrieved from DatabaseMetaData matches the specified value.") {
-    assertIOBoolean(datasource().createConnection().use(_.getMetaData().map(meta => !meta.storesLowerCaseQuotedIdentifiers())))
+    assertIOBoolean(
+      datasource().createConnection().use(_.getMetaData().map(meta => !meta.storesLowerCaseQuotedIdentifiers()))
+    )
   }
 
   test("The stores Mixed Case Quoted Identifiers retrieved from DatabaseMetaData matches the specified value.") {

@@ -12,8 +12,9 @@ import munit.*
 
 import ldbc.dsl.*
 
-import ldbc.Connector
 import ldbc.connector.*
+
+import ldbc.Connector
 
 class LdbcStreamQueryTest extends StreamQueryTest:
 

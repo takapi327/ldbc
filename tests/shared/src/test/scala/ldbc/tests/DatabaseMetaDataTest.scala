@@ -16,8 +16,9 @@ import munit.*
 
 import ldbc.sql.*
 
-import ldbc.DataSource
 import ldbc.connector.*
+
+import ldbc.DataSource
 
 class LdbcDatabaseMetaDataTest extends DatabaseMetaDataTest:
   override def prefix: "ldbc" = "ldbc"

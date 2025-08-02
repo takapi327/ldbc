@@ -17,10 +17,10 @@ import ldbc.dsl.*
 
 import ldbc.query.builder.*
 
-import ldbc.Connector
 import ldbc.connector.*
 
 import ldbc.tests.model.*
+import ldbc.Connector
 
 class LdbcTableQueryUpdateConnectionTest extends TableQueryUpdateConnectionTest:
 
@@ -36,7 +36,7 @@ class LdbcTableQueryUpdateConnectionTest extends TableQueryUpdateConnectionTest:
 
 trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
 
-  def prefix:     "jdbc" | "ldbc"
+  def prefix:    "jdbc" | "ldbc"
   def connector: Connector[IO]
 
   private final val country         = TableQuery[Country]
@@ -243,12 +243,12 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
         cityOpt <-
           city.selectAll.where(_.countryCode _equals "JPN").and(_.name _equals "Tokyo").query.to[Option]
         result <- cityOpt match
-          case None            => DBIO.pure(0)
-          case Some(cityModel) =>
-            city
-              .update(cityModel.copy(district = "Tokyo-to"))
-              .where(v => (v.countryCode _equals "JPN") and (v.name _equals "Tokyo"))
-              .update
+                    case None            => DBIO.pure(0)
+                    case Some(cityModel) =>
+                      city
+                        .update(cityModel.copy(district = "Tokyo-to"))
+                        .where(v => (v.countryCode _equals "JPN") and (v.name _equals "Tokyo"))
+                        .update
       yield result)
         .transaction(connector),
       1
@@ -276,10 +276,10 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     assertIO(
       (for
         _ <- city
-          .update(_.name)("update Odawara")
-          .set(_.district, "not update Kanagawa", false)
-          .where(_.id _equals 1637)
-          .update
+               .update(_.name)("update Odawara")
+               .set(_.district, "not update Kanagawa", false)
+               .where(_.id _equals 1637)
+               .update
         updated <- city.select(v => v.name *: v.district).where(_.id _equals 1637).query.unsafe
       yield updated)
         .transaction(connector),
@@ -310,8 +310,8 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     assertIO(
       (for
         _ <- (city += City(1639, "update Kushiro", "JPN", "not update Hokkaido", 197608))
-          .onDuplicateKeyUpdate(_.name)
-          .update
+               .onDuplicateKeyUpdate(_.name)
+               .update
         updated <- city.select(v => v.name *: v.district).where(_.id _equals 1639).query.unsafe
       yield updated)
         .transaction(connector),
@@ -370,18 +370,18 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     assertIO(
       (for
         codeOpt <- country
-          .select(_.code)
-          .where(_.name _equals "United States")
-          .and(_.continent _equals Country.Continent.North_America)
-          .query
-          .to[Option]
+                     .select(_.code)
+                     .where(_.name _equals "United States")
+                     .and(_.continent _equals Country.Continent.North_America)
+                     .query
+                     .to[Option]
         result <- codeOpt match
-          case None       => DBIO.pure(0)
-          case Some(code) =>
-            city
-              .update(c => c.name *: c.district *: c.population)(("update New York", "TT", 2))
-              .where(v => v.name _equals "New York" and (v.countryCode _equals code))
-              .update
+                    case None       => DBIO.pure(0)
+                    case Some(code) =>
+                      city
+                        .update(c => c.name *: c.district *: c.population)(("update New York", "TT", 2))
+                        .where(v => v.name _equals "New York" and (v.countryCode _equals code))
+                        .update
       yield result)
         .rollback(connector),
       1

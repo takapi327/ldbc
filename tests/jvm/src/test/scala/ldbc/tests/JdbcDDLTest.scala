@@ -23,4 +23,5 @@ class JdbcDDLTest extends DDLTest:
   ds.setUser("ldbc")
   ds.setPassword("password")
 
-  override def connector: Connector[IO] = Connector.fromDataSource(MySQLDataSource.fromDataSource(ds, ExecutionContexts.synchronous))
+  override def connector: Connector[IO] =
+    Connector.fromDataSource(MySQLDataSource.fromDataSource(ds, ExecutionContexts.synchronous))

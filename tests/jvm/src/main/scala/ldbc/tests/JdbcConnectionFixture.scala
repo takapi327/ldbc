@@ -16,7 +16,7 @@ import ldbc.{ Connector, DataSource }
 
 private case class JdbcConnectionFixture(
   name:              String,
-  datasource:          DataSource[IO],
+  datasource:        DataSource[IO],
   connectBeforeAll:  Connector[IO] => IO[Unit],
   connectAfterAll:   Connector[IO] => IO[Unit],
   connectBeforeEach: Connector[IO] => IO[Unit],

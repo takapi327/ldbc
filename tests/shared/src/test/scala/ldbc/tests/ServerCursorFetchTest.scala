@@ -14,9 +14,10 @@ import munit.*
 
 import ldbc.sql.*
 
-import ldbc.DataSource
 import ldbc.connector.*
 import ldbc.connector.syntax.*
+
+import ldbc.DataSource
 
 class LdbcServerCursorFetchTest extends ServerCursorFetchTest:
 

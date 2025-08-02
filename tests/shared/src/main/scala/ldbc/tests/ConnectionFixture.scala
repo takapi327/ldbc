@@ -33,7 +33,7 @@ object ConnectionFixture:
 
   private case class Impl(
     name:              String,
-    datasource:          MySQLDataSource[IO, Unit],
+    datasource:        MySQLDataSource[IO, Unit],
     connectBeforeAll:  Connector[IO] => IO[Unit],
     connectAfterAll:   Connector[IO] => IO[Unit],
     connectBeforeEach: Connector[IO] => IO[Unit],
