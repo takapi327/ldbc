@@ -11,6 +11,7 @@ import com.mysql.cj.jdbc.MysqlDataSource
 import cats.effect.*
 
 import jdbc.connector.*
+import ldbc.DataSource
 
 class JdbcServerCursorFetchTest extends ServerCursorFetchTest:
 
@@ -22,5 +23,5 @@ class JdbcServerCursorFetchTest extends ServerCursorFetchTest:
   ds.setPassword(password)
   ds.setUseCursorFetch(true)
 
-  override def provider: Provider[IO] =
-    ConnectionProvider.fromDataSource(ds, ExecutionContexts.synchronous)
+  override def datasource: DataSource[IO] =
+    MySQLDataSource.fromDataSource(ds, ExecutionContexts.synchronous)

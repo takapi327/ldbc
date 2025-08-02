@@ -11,6 +11,7 @@ import com.mysql.cj.jdbc.MysqlDataSource
 import cats.effect.*
 
 import jdbc.connector.*
+import ldbc.DataSource
 
 class JdbcDatabaseMetaDataTest extends DatabaseMetaDataTest:
 
@@ -23,5 +24,5 @@ class JdbcDatabaseMetaDataTest extends DatabaseMetaDataTest:
 
   override def prefix: "jdbc" | "ldbc" = "jdbc"
 
-  override def connection: Provider[IO] =
-    ConnectionProvider.fromDataSource(ds, ExecutionContexts.synchronous)
+  override def datasource: DataSource[IO] =
+    MySQLDataSource.fromDataSource(ds, ExecutionContexts.synchronous)

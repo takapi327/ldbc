@@ -11,6 +11,7 @@ import com.mysql.cj.jdbc.MysqlDataSource
 import cats.effect.*
 
 import jdbc.connector.*
+import ldbc.DataSource
 
 class JdbcConnectionTest extends ConnectionTest:
 
@@ -23,6 +24,6 @@ class JdbcConnectionTest extends ConnectionTest:
 
   override def prefix: "jdbc" | "ldbc" = "jdbc"
 
-  override def connection(databaseTerm: "SCHEMA" | "CATALOG" = "CATALOG"): Provider[IO] =
+  override def datasource(databaseTerm: "SCHEMA" | "CATALOG" = "CATALOG"): DataSource[IO] =
     ds.setDatabaseTerm(databaseTerm)
-    ConnectionProvider.fromDataSource[IO](ds, ExecutionContexts.synchronous)
+    MySQLDataSource.fromDataSource[IO](ds, ExecutionContexts.synchronous)
