@@ -29,12 +29,12 @@ class TLSConnectionTest extends FTestPlatform:
                     .build[IO](
                       "127.0.0.1",
                       13306,
-                      "ldbc_ssl_user",
+                      "ldbc_ssl_user"
                     )
-          .setPassword("securepassword")
+                    .setPassword("securepassword")
                     .setDatabase("world")
                     .setSSL(SSL.fromSecureContext(secureContext))
-          .createConnection()
+                    .createConnection()
                     .use { conn =>
                       for
                         statement <- conn.createStatement()
