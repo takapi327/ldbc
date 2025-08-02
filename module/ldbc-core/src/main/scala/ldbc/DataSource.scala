@@ -6,7 +6,10 @@
 
 package ldbc
 
-package object connector:
-  export ldbc.Connector
-  export ldbc.DataSource
-  export ldbc.Provider
+import cats.effect.Resource
+
+import ldbc.sql.Connection
+
+trait DataSource[F[_]]:
+
+  def createConnection(): Resource[F, Connection[F]]

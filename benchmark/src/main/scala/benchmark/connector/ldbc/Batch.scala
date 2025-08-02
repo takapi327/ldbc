@@ -23,7 +23,7 @@ import ldbc.connector.*
 class Batch:
 
   @volatile
-  var provider: Provider[IO] = uninitialized
+  var datasource: DataSource[IO] = uninitialized
 
   @volatile
   var values: String = uninitialized
@@ -33,8 +33,10 @@ class Batch:
 
   @Setup
   def setup(): Unit =
-    provider = ConnectionProvider
-      .default[IO]("127.0.0.1", 13306, "ldbc", "password", "benchmark")
+    datasource = MySQLDataSource
+      .build[IO]("127.0.0.1", 13306, "ldbc")
+      .setPassword("password")
+      .setDatabase("benchmark")
       .setSSL(SSL.Trusted)
 
     values = (1 to len).map(_ => "(?, ?)").mkString(",")
@@ -46,7 +48,7 @@ class Batch:
 
   @Benchmark
   def statement(): Unit =
-    provider
+    datasource
       .createConnection()
       .use { conn =>
         for
@@ -65,7 +67,7 @@ class Batch:
 
   @Benchmark
   def prepareStatement(): Unit =
-    provider
+    datasource
       .createConnection()
       .use { conn =>
         for

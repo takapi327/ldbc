@@ -16,6 +16,10 @@ import ldbc.sql.Connection
  * @tparam F
  *   the effect type
  */
+@deprecated(
+  "Connection creation using Provider is now deprecated. Please use ldbc.DataSource from now on. Provider will be removed in version 0.5.x.",
+  "ldbc 0.4.0"
+)
 trait Provider[F[_]]:
 
   /**

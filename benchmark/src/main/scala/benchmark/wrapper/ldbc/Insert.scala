@@ -32,7 +32,7 @@ import jdbc.connector.*
 class Insert:
 
   @volatile
-  var provider: Provider[IO] = uninitialized
+  var connector: Connector[IO] = uninitialized
 
   @volatile
   var query: TableQuery[Test] = uninitialized
@@ -52,7 +52,7 @@ class Insert:
     ds.setUser("ldbc")
     ds.setPassword("password")
 
-    provider = ConnectionProvider.fromDataSource(ds, ExecutionContexts.synchronous)
+    connector = Connector.fromDataSource(MySQLDataSource.fromDataSource(ds, ExecutionContexts.synchronous))
 
     records = NonEmptyList.fromListUnsafe((1 to len).map(num => (num, s"record$num")).toList)
 
@@ -63,23 +63,17 @@ class Insert:
 
   @Benchmark
   def queryInsertN: Unit =
-    provider
-      .use { conn =>
-        query
-          .insertInto(test => test.c1 *: test.c2)
-          .values(records)
-          .update
-          .commit(conn)
-      }
+    query
+      .insertInto(test => test.c1 *: test.c2)
+      .values(records)
+      .update
+      .commit(connector)
       .unsafeRunSync()
 
   @Benchmark
   def dslInsertN: Unit =
-    provider
-      .use { conn =>
-        (sql"INSERT INTO `ldbc_wrapper_dsl_test` (`c1`, `c2`) " ++ values(records)).update
-          .commit(conn)
-      }
+    (sql"INSERT INTO `ldbc_wrapper_dsl_test` (`c1`, `c2`) " ++ values(records)).update
+      .commit(connector)
       .unsafeRunSync()
 
 case class Test(c0: Option[Int], c1: Int, c2: String)

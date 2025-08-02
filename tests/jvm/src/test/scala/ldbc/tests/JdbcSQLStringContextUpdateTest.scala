@@ -27,5 +27,5 @@ class JdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest:
   override def connection: ConnectionFixture =
     JdbcConnectionFixture(
       "connection",
-      ConnectionProvider.fromDataSource(ds, ExecutionContexts.synchronous)
+      MySQLDataSource.fromDataSource(ds, ExecutionContexts.synchronous)
     )
