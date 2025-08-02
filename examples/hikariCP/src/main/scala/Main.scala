@@ -8,11 +8,12 @@ import com.zaxxer.hikari.{ HikariConfig, HikariDataSource }
 
 import cats.effect.*
 
-import ldbc.Connector
 import ldbc.dsl.*
 import ldbc.dsl.codec.Codec
 
 import jdbc.connector.*
+
+import ldbc.Connector
 
 case class City(
   id:          Int,
@@ -39,8 +40,8 @@ object Main extends ResourceApp.Simple:
 
   override def run: Resource[IO, Unit] =
     (for
-      hikari     <- Resource.fromAutoCloseable(IO(ds))
-      execution  <- ExecutionContexts.fixedThreadPool[IO](hikari.getMaximumPoolSize)
+      hikari    <- Resource.fromAutoCloseable(IO(ds))
+      execution <- ExecutionContexts.fixedThreadPool[IO](hikari.getMaximumPoolSize)
     yield Connector.fromDataSource(MySQLDataSource.fromDataSource[IO](hikari, execution))).evalMap { conn =>
       for
         city <- sql"SELECT * FROM `city` WHERE ID = ${ 1 }".query[City].to[Option].readOnly(conn)

@@ -9,10 +9,11 @@ import cats.syntax.all.*
 import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
-import ldbc.Connector
 import ldbc.dsl.*
 
 import ldbc.connector.*
+
+import ldbc.Connector
 
 @main def setup(): Unit =
 
@@ -95,10 +96,10 @@ import ldbc.connector.*
       (3, 4, 1) -- Charlie ordered 1 Monitor
     """.update
   // #insertOrder
-  
+
   val datasource = MySQLDataSource
-  .build[IO]("127.0.0.1", 13306, "ldbc")
-  .setPassword("password")
+    .build[IO]("127.0.0.1", 13306, "ldbc")
+    .setPassword("password")
 
   // #connector
   def connector = Connector.fromDataSource(datasource)

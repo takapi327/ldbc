@@ -24,8 +24,9 @@ import ldbc.sql.*
 
 import ldbc.connector.syntax.*
 
-import ldbc.DataSource
 import jdbc.connector.*
+
+import ldbc.DataSource
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
