@@ -12,18 +12,19 @@ class TLSConnectionTest extends FTestPlatform:
 
   test("Verify that you can connect to MySQL with a TLS connection") {
     assertIO(
-      ConnectionProvider
-        .default[IO](
+      MySQLDataSource
+        .build[IO](
           "127.0.0.1",
           13306,
           "ldbc_ssl_user",
-          "securepassword",
-          "world"
         )
+        .setPassword("securepassword")
+        .setDatabase("world")
         .setSSL(SSL.fromKeyStoreResource("keystore.jks", "password".toCharArray, "password".toCharArray))
+        .createConnection()
         .use { conn =>
           for
-            statement <- conn.connection.createStatement()
+            statement <- conn.createStatement()
             result    <- statement.executeQuery("SELECT 1")
             value     <- result.getInt(1)
           yield value

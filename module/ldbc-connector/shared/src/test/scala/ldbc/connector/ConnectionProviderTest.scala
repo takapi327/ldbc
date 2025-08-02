@@ -16,6 +16,7 @@ import org.typelevel.otel4s.trace.Tracer
 
 import ldbc.sql.DatabaseMetaData
 
+@annotation.nowarn()
 class ConnectionProviderTest extends FTestPlatform:
 
   /**

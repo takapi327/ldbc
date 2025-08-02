@@ -20,23 +20,23 @@ class ServerCursorFetchTest extends FTestPlatform:
   // In case of Scala.js, timeout occurs when FetchSize: 1, so it is necessary to extend the time.
   override def munitIOTimeout: Duration = 60.seconds
 
-  private val provider = ConnectionProvider
-    .default[IO](
+  private val datasource = MySQLDataSource
+    .build[IO](
       host     = "127.0.0.1",
       port     = 13306,
       user     = "ldbc",
-      password = "password",
-      database = "world"
     )
+    .setPassword("password")
+    .setDatabase("world")
     .setUseCursorFetch(true)
     .setSSL(SSL.None)
     .setAllowPublicKeyRetrieval(true)
 
   test("Statement: Query result retrieval using server cursor matches the specified number of results.") {
     assertIO(
-      provider.use { conn =>
+      datasource.createConnection().use { conn =>
         for
-          statement <- conn.connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
+          statement <- conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
           _         <- statement.setFetchSize(1)
           resultSet <- statement.executeQuery("SELECT * FROM `city`")
           result    <- resultSet.whileM[List, String](
@@ -50,9 +50,9 @@ class ServerCursorFetchTest extends FTestPlatform:
 
   test("Statement: Query result retrieval using server cursor matches the specified number of results.") {
     assertIO(
-      provider.use { conn =>
+      datasource.createConnection().use { conn =>
         for
-          statement <- conn.connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
+          statement <- conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
           _         <- statement.setFetchSize(5)
           resultSet <- statement.executeQuery("SELECT * FROM `city`")
           result    <- resultSet.whileM[List, String](
@@ -66,9 +66,9 @@ class ServerCursorFetchTest extends FTestPlatform:
 
   test("PreparedStatement: Query result retrieval using server cursor matches the specified number of results.") {
     assertIO(
-      provider.use { conn =>
+      datasource.createConnection().use { conn =>
         for
-          statement <- conn.connection.prepareStatement("SELECT * FROM `city`")
+          statement <- conn.prepareStatement("SELECT * FROM `city`")
           _         <- statement.setFetchSize(1)
           resultSet <- statement.executeQuery()
           result    <- resultSet.whileM[List, String](
@@ -82,9 +82,9 @@ class ServerCursorFetchTest extends FTestPlatform:
 
   test("PreparedStatement: Query result retrieval using server cursor matches the specified number of results.") {
     assertIO(
-      provider.use { conn =>
+      datasource.createConnection().use { conn =>
         for
-          statement <- conn.connection.prepareStatement("SELECT * FROM `city`")
+          statement <- conn.prepareStatement("SELECT * FROM `city`")
           _         <- statement.setFetchSize(5)
           resultSet <- statement.executeQuery()
           result    <- resultSet.whileM[List, String](
