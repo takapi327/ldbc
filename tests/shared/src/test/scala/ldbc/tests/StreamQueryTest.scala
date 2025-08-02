@@ -12,16 +12,20 @@ import munit.*
 
 import ldbc.dsl.*
 
+import ldbc.Connector
 import ldbc.connector.*
 
 class LdbcStreamQueryTest extends StreamQueryTest:
 
-  override def provider: Provider[IO] =
-    ConnectionProvider
-      .default[IO](host, port, user, password, database)
-      .setSSL(SSL.None)
-      .setUseCursorFetch(true)
-      .setAllowPublicKeyRetrieval(true)
+  private val datasource = MySQLDataSource
+    .build[IO](host, port, user)
+    .setPassword(password)
+    .setDatabase(database)
+    .setSSL(SSL.None)
+    .setUseCursorFetch(true)
+    .setAllowPublicKeyRetrieval(true)
+
+  override def connector: Connector[IO] = Connector.fromDataSource(datasource)
 
 trait StreamQueryTest extends CatsEffectSuite:
 
@@ -31,13 +35,11 @@ trait StreamQueryTest extends CatsEffectSuite:
   protected val password: String = "password"
   protected val database: String = "world"
 
-  def provider: Provider[IO]
+  def connector: Connector[IO]
 
   test("Stream support test") {
     assertIO(
-      provider.use { conn =>
-        sql"SELECT Name FROM `city`".query[String].stream.take(5).compile.toList.readOnly(conn)
-      },
+      sql"SELECT Name FROM `city`".query[String].stream.take(5).compile.toList.readOnly(connector),
       List(
         "Kabul",
         "Qandahar",
@@ -50,9 +52,7 @@ trait StreamQueryTest extends CatsEffectSuite:
 
   test("Stream support test with fetchSize") {
     assertIO(
-      provider.use { conn =>
-        sql"SELECT Name FROM `city`".query[String].stream(2).take(5).compile.toList.readOnly(conn)
-      },
+      sql"SELECT Name FROM `city`".query[String].stream(2).take(5).compile.toList.readOnly(connector),
       List(
         "Kabul",
         "Qandahar",
@@ -65,16 +65,12 @@ trait StreamQueryTest extends CatsEffectSuite:
 
   test("Stream with negative fetchSize should fail") {
     interceptIO[IllegalArgumentException] {
-      provider.use { conn =>
-        sql"SELECT Name FROM `city`".query[String].stream(-1).take(1).compile.toList.readOnly(conn)
-      }
+      sql"SELECT Name FROM `city`".query[String].stream(-1).take(1).compile.toList.readOnly(connector)
     }
   }
 
   test("Stream with zero fetchSize should fail") {
     interceptIO[IllegalArgumentException] {
-      provider.use { conn =>
-        sql"SELECT Name FROM `city`".query[String].stream(0).take(1).compile.toList.readOnly(conn)
-      }
+      sql"SELECT Name FROM `city`".query[String].stream(0).take(1).compile.toList.readOnly(connector)
     }
   }

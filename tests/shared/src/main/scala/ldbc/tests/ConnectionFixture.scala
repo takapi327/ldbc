@@ -12,7 +12,7 @@ import munit.*
 import munit.catseffect.IOFixture
 import munit.catseffect.ResourceFixture.FixtureNotInstantiatedException
 
-import ldbc.connector.ConnectionProvider
+import ldbc.connector.MySQLDataSource
 
 import ldbc.Connector
 
@@ -33,7 +33,7 @@ object ConnectionFixture:
 
   private case class Impl(
     name:              String,
-    provider:          ConnectionProvider[IO, Unit],
+    datasource:          MySQLDataSource[IO, Unit],
     connectBeforeAll:  Connector[IO] => IO[Unit],
     connectAfterAll:   Connector[IO] => IO[Unit],
     connectBeforeEach: Connector[IO] => IO[Unit],
@@ -60,7 +60,7 @@ object ConnectionFixture:
           case None    => throw new FixtureNotInstantiatedException(name)
 
         override def beforeAll(): IO[Unit] =
-          provider.createConnection().map(Connector.fromConnection).allocated.flatMap {
+          datasource.createConnection().map(Connector.fromConnection).allocated.flatMap {
             case (conn, close) =>
               connectBeforeAll(conn) *> IO(this.value = Some((conn, close)))
           }
@@ -81,5 +81,5 @@ object ConnectionFixture:
             case (conn, _) => connectAfterEach(conn) *> IO.unit
           }
 
-  def apply(name: String, provider: ConnectionProvider[IO, Unit]): ConnectionFixture =
-    Impl(name, provider, _ => IO.unit, _ => IO.unit, _ => IO.unit, _ => IO.unit)
+  def apply(name: String, datasource: MySQLDataSource[IO, Unit]): ConnectionFixture =
+    Impl(name, datasource, _ => IO.unit, _ => IO.unit, _ => IO.unit, _ => IO.unit)

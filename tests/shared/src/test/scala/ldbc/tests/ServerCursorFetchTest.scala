@@ -14,6 +14,7 @@ import munit.*
 
 import ldbc.sql.*
 
+import ldbc.DataSource
 import ldbc.connector.*
 import ldbc.connector.syntax.*
 
@@ -22,17 +23,12 @@ class LdbcServerCursorFetchTest extends ServerCursorFetchTest:
   // In case of Scala.js, timeout occurs when FetchSize: 1, so it is necessary to extend the time.
   override def munitIOTimeout: Duration = 80.seconds
 
-  override def provider: Provider[IO] =
-    ConnectionProvider
-      .default[IO](
-        host     = "127.0.0.1",
-        port     = 13306,
-        user     = "ldbc",
-        password = "password",
-        database = "world"
-      )
-      .setSSL(SSL.Trusted)
-      .setUseCursorFetch(true)
+  override def datasource: DataSource[IO] = MySQLDataSource
+    .build[IO]("127.0.0.1", 13306, "ldbc")
+    .setPassword("password")
+    .setDatabase("world")
+    .setSSL(SSL.Trusted)
+    .setUseCursorFetch(true)
 
 trait ServerCursorFetchTest extends CatsEffectSuite:
 
@@ -42,13 +38,13 @@ trait ServerCursorFetchTest extends CatsEffectSuite:
   protected val password: String = "password"
   protected val database: String = "world"
 
-  def provider: Provider[IO]
+  def datasource: DataSource[IO]
 
   test("Statement: Query result retrieval using server cursor matches the specified number of results.") {
     assertIO(
-      provider.use { conn =>
+      datasource.createConnection().use { conn =>
         for
-          statement <- conn.connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
+          statement <- conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
           _         <- statement.setFetchSize(1)
           resultSet <- statement.executeQuery("SELECT * FROM `city`")
           result    <- resultSet.whileM[List, String](
@@ -62,9 +58,9 @@ trait ServerCursorFetchTest extends CatsEffectSuite:
 
   test("Statement: Query result retrieval using server cursor matches the specified number of results.") {
     assertIO(
-      provider.use { conn =>
+      datasource.createConnection().use { conn =>
         for
-          statement <- conn.connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
+          statement <- conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
           _         <- statement.setFetchSize(5)
           resultSet <- statement.executeQuery("SELECT * FROM `city`")
           result    <- resultSet.whileM[List, String](
@@ -78,9 +74,9 @@ trait ServerCursorFetchTest extends CatsEffectSuite:
 
   test("PreparedStatement: Query result retrieval using server cursor matches the specified number of results.") {
     assertIO(
-      provider.use { conn =>
+      datasource.createConnection().use { conn =>
         for
-          statement <- conn.connection.prepareStatement("SELECT * FROM `city`")
+          statement <- conn.prepareStatement("SELECT * FROM `city`")
           _         <- statement.setFetchSize(1)
           resultSet <- statement.executeQuery()
           result    <- resultSet.whileM[List, String](
@@ -94,9 +90,9 @@ trait ServerCursorFetchTest extends CatsEffectSuite:
 
   test("PreparedStatement: Query result retrieval using server cursor matches the specified number of results.") {
     assertIO(
-      provider.use { conn =>
+      datasource.createConnection().use { conn =>
         for
-          statement <- conn.connection.prepareStatement("SELECT * FROM `city`")
+          statement <- conn.prepareStatement("SELECT * FROM `city`")
           _         <- statement.setFetchSize(5)
           resultSet <- statement.executeQuery()
           result    <- resultSet.whileM[List, String](

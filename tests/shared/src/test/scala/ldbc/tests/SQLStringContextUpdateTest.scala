@@ -20,8 +20,10 @@ class LdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest:
   override def connection: ConnectionFixture =
     ConnectionFixture(
       "connection",
-      ConnectionProvider
-        .default[IO]("127.0.0.1", 13306, "ldbc", "password", "connector_test")
+      MySQLDataSource
+        .build[IO]("127.0.0.1", 13306, "ldbc")
+        .setPassword("password")
+        .setDatabase("connector_test")
         .setSSL(SSL.Trusted)
     )
 

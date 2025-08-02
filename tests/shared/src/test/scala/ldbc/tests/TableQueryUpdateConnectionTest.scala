@@ -17,6 +17,7 @@ import ldbc.dsl.*
 
 import ldbc.query.builder.*
 
+import ldbc.Connector
 import ldbc.connector.*
 
 import ldbc.tests.model.*
@@ -25,15 +26,18 @@ class LdbcTableQueryUpdateConnectionTest extends TableQueryUpdateConnectionTest:
 
   override def prefix: "jdbc" | "ldbc" = "ldbc"
 
-  override def connection: Provider[IO] =
-    ConnectionProvider
-      .default[IO]("127.0.0.1", 13306, "ldbc", "password", "world2")
-      .setSSL(SSL.Trusted)
+  private val datasource = MySQLDataSource
+    .build[IO]("127.0.0.1", 13306, "ldbc")
+    .setPassword("password")
+    .setDatabase("world2")
+    .setSSL(SSL.Trusted)
+
+  override def connector: Connector[IO] = Connector.fromDataSource(datasource)
 
 trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
 
   def prefix:     "jdbc" | "ldbc"
-  def connection: Provider[IO]
+  def connector: Connector[IO]
 
   private final val country         = TableQuery[Country]
   private final val city            = TableQuery[City]
@@ -47,30 +51,28 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     "New data can be registered with the value of Tuple."
   ) {
     assertIO(
-      connection.use { conn =>
-        country
-          .insert(
-            (
-              code(1),
-              s"${ prefix }_Test1",
-              Country.Continent.Asia,
-              "Northeast",
-              BigDecimal.decimal(390757.00),
-              None,
-              1,
-              None,
-              None,
-              None,
-              "Test",
-              "Test",
-              None,
-              None,
-              code(1)
-            )
+      country
+        .insert(
+          (
+            code(1),
+            s"${ prefix }_Test1",
+            Country.Continent.Asia,
+            "Northeast",
+            BigDecimal.decimal(390757.00),
+            None,
+            1,
+            None,
+            None,
+            None,
+            "Test",
+            "Test",
+            None,
+            None,
+            code(1)
           )
-          .update
-          .commit(conn)
-      },
+        )
+        .update
+        .commit(connector),
       1
     )
   }
@@ -79,47 +81,45 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     "New data can be registered with the value of Tuple."
   ) {
     assertIO(
-      connection.use { conn =>
-        country
-          .insert(
-            (
-              code(2),
-              s"${ prefix }_Test2",
-              Country.Continent.Asia,
-              "Northeast",
-              BigDecimal.decimal(390757.00),
-              None,
-              1,
-              None,
-              None,
-              None,
-              "Test",
-              "Test",
-              None,
-              None,
-              code(2)
-            ),
-            (
-              code(3),
-              s"${ prefix }_Test3",
-              Country.Continent.Asia,
-              "Northeast",
-              BigDecimal.decimal(390757.00),
-              None,
-              1,
-              None,
-              None,
-              None,
-              "Test",
-              "Test",
-              None,
-              None,
-              code(3)
-            )
+      country
+        .insert(
+          (
+            code(2),
+            s"${ prefix }_Test2",
+            Country.Continent.Asia,
+            "Northeast",
+            BigDecimal.decimal(390757.00),
+            None,
+            1,
+            None,
+            None,
+            None,
+            "Test",
+            "Test",
+            None,
+            None,
+            code(2)
+          ),
+          (
+            code(3),
+            s"${ prefix }_Test3",
+            Country.Continent.Asia,
+            "Northeast",
+            BigDecimal.decimal(390757.00),
+            None,
+            1,
+            None,
+            None,
+            None,
+            "Test",
+            "Test",
+            None,
+            None,
+            code(3)
           )
-          .update
-          .commit(conn)
-      },
+        )
+        .update
+        .commit(connector),
       2
     )
   }
@@ -145,10 +145,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
       code(4)
     )
     assertIO(
-      connection.use { conn =>
-        (country += newCountry).update
-          .commit(conn)
-      },
+      (country += newCountry).update.commit(connector),
       1
     )
   }
@@ -191,10 +188,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
       code(6)
     )
     assertIO(
-      connection.use { conn =>
-        (country ++= NonEmptyList.of(newCountry1, newCountry2)).update
-          .commit(conn)
-      },
+      (country ++= NonEmptyList.of(newCountry1, newCountry2)).update.commit(connector),
       2
     )
   }
@@ -203,13 +197,11 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     "Only specified items can be added to the data."
   ) {
     assertIO(
-      connection.use { conn =>
-        city
-          .insertInto(v => v.name *: v.countryCode *: v.district *: v.population)
-          .values(("Test", code(1), "T", 1))
-          .update
-          .commit(conn)
-      },
+      city
+        .insertInto(v => v.name *: v.countryCode *: v.district *: v.population)
+        .values(("Test", code(1), "T", 1))
+        .update
+        .commit(connector),
       1
     )
   }
@@ -218,16 +210,14 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     "Multiple additions of data can be made only for specified items."
   ) {
     assertIO(
-      connection.use { conn =>
-        city
-          .insertInto(v => v.name *: v.countryCode *: v.district *: v.population)
-          .values(
-            ("Test2", code(2), "T", 1),
-            ("Test3", code(3), "T3", 2)
-          )
-          .update
-          .commit(conn)
-      },
+      city
+        .insertInto(v => v.name *: v.countryCode *: v.district *: v.population)
+        .values(
+          ("Test2", code(2), "T", 1),
+          ("Test3", code(3), "T3", 2)
+        )
+        .update
+        .commit(connector),
       2
     )
   }
@@ -236,13 +226,11 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     "A stand-alone update succeeds."
   ) {
     assertIO(
-      connection.use { conn =>
-        city
-          .update(_.district)("Tokyo-test")
-          .where(_.name _equals "Tokyo")
-          .update
-          .commit(conn)
-      },
+      city
+        .update(_.district)("Tokyo-test")
+        .where(_.name _equals "Tokyo")
+        .update
+        .commit(connector),
       1
     )
   }
@@ -251,20 +239,18 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     "A stand-alone update from the model will be successful."
   ) {
     assertIO(
-      connection.use { conn =>
-        (for
-          cityOpt <-
-            city.selectAll.where(_.countryCode _equals "JPN").and(_.name _equals "Tokyo").query.to[Option]
-          result <- cityOpt match
-                      case None            => DBIO.pure(0)
-                      case Some(cityModel) =>
-                        city
-                          .update(cityModel.copy(district = "Tokyo-to"))
-                          .where(v => (v.countryCode _equals "JPN") and (v.name _equals "Tokyo"))
-                          .update
-        yield result)
-          .transaction(conn)
-      },
+      (for
+        cityOpt <-
+          city.selectAll.where(_.countryCode _equals "JPN").and(_.name _equals "Tokyo").query.to[Option]
+        result <- cityOpt match
+          case None            => DBIO.pure(0)
+          case Some(cityModel) =>
+            city
+              .update(cityModel.copy(district = "Tokyo-to"))
+              .where(v => (v.countryCode _equals "JPN") and (v.name _equals "Tokyo"))
+              .update
+      yield result)
+        .transaction(connector),
       1
     )
   }
@@ -273,15 +259,13 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     "Multiple columns are successfully updated."
   ) {
     assertIO(
-      connection.use { conn =>
-        city
-          .update(c => c.name *: c.countryCode *: c.district *: c.population)(
-            ("Jokohama [Yokohama]", "JPN", "Kanagawa", 2)
-          )
-          .where(_.name _equals "Jokohama [Yokohama]")
-          .update
-          .rollback(conn)
-      },
+      city
+        .update(c => c.name *: c.countryCode *: c.district *: c.population)(
+          ("Jokohama [Yokohama]", "JPN", "Kanagawa", 2)
+        )
+        .where(_.name _equals "Jokohama [Yokohama]")
+        .update
+        .rollback(connector),
       1
     )
   }
@@ -290,17 +274,15 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     "The values of columns that do not satisfy the condition are not updated."
   ) {
     assertIO(
-      connection.use { conn =>
-        (for
-          _ <- city
-                 .update(_.name)("update Odawara")
-                 .set(_.district, "not update Kanagawa", false)
-                 .where(_.id _equals 1637)
-                 .update
-          updated <- city.select(v => v.name *: v.district).where(_.id _equals 1637).query.unsafe
-        yield updated)
-          .transaction(conn)
-      },
+      (for
+        _ <- city
+          .update(_.name)("update Odawara")
+          .set(_.district, "not update Kanagawa", false)
+          .where(_.id _equals 1637)
+          .update
+        updated <- city.select(v => v.name *: v.district).where(_.id _equals 1637).query.unsafe
+      yield updated)
+        .transaction(connector),
       ("update Odawara", "Kanagawa")
     )
   }
@@ -309,17 +291,15 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     "If the primary key is duplicated, the data is updated."
   ) {
     assertIO(
-      connection.use { conn =>
-        (for
-          _ <-
-            city
-              .insert((1638, "update Kofu", "JPN", "Yamanashi", 199753))
-              .onDuplicateKeyUpdate(_.name)
-              .update
-          updated <- city.select(v => v.name *: v.district).where(_.id _equals 1638).query.unsafe
-        yield updated)
-          .transaction(conn)
-      },
+      (for
+        _ <-
+          city
+            .insert((1638, "update Kofu", "JPN", "Yamanashi", 199753))
+            .onDuplicateKeyUpdate(_.name)
+            .update
+        updated <- city.select(v => v.name *: v.district).where(_.id _equals 1638).query.unsafe
+      yield updated)
+        .transaction(connector),
       ("update Kofu", "Yamanashi")
     )
   }
@@ -328,15 +308,13 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     "If there are duplicate primary keys, only the specified columns are updated."
   ) {
     assertIO(
-      connection.use { conn =>
-        (for
-          _ <- (city += City(1639, "update Kushiro", "JPN", "not update Hokkaido", 197608))
-                 .onDuplicateKeyUpdate(_.name)
-                 .update
-          updated <- city.select(v => v.name *: v.district).where(_.id _equals 1639).query.unsafe
-        yield updated)
-          .transaction(conn)
-      },
+      (for
+        _ <- (city += City(1639, "update Kushiro", "JPN", "not update Hokkaido", 197608))
+          .onDuplicateKeyUpdate(_.name)
+          .update
+        updated <- city.select(v => v.name *: v.district).where(_.id _equals 1639).query.unsafe
+      yield updated)
+        .transaction(connector),
       ("update Kushiro", "Hokkaido")
     )
   }
@@ -345,15 +323,13 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     "Data is added if the primary key is not duplicated."
   ) {
     assertIOBoolean(
-      connection.use { conn =>
-        (for
-          length <- city.select(_.id.count).query.unsafe.map(_ + 1)
-          empty  <- city.selectAll.where(_.id _equals length).query.to[Option]
-          _      <- city.insert((length, "Nishinomiya", "JPN", "Hyogo", 0)).onDuplicateKeyUpdate(_.name).update
-          data   <- city.selectAll.where(_.id _equals length).query.to[Option]
-        yield empty.isEmpty & data.nonEmpty)
-          .transaction(conn)
-      }
+      (for
+        length <- city.select(_.id.count).query.unsafe.map(_ + 1)
+        empty  <- city.selectAll.where(_.id _equals length).query.to[Option]
+        _      <- city.insert((length, "Nishinomiya", "JPN", "Hyogo", 0)).onDuplicateKeyUpdate(_.name).update
+        data   <- city.selectAll.where(_.id _equals length).query.to[Option]
+      yield empty.isEmpty & data.nonEmpty)
+        .transaction(connector)
     )
   }
 
@@ -361,33 +337,29 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     "The value of AutoIncrement obtained during insert matches the specified value."
   ) {
     assertIOBoolean(
-      connection.use { conn =>
-        (for
-          length <- city.select(_.id.count).query.unsafe.map(_ + 1)
-          result <-
-            city
-              .insertInto(v => v.name *: v.countryCode *: v.district *: v.population)
-              .values(("Test4", code(4), "T", 1))
-              .returning[Int]
-        yield result === length)
-          .commit(conn)
-      }
+      (for
+        length <- city.select(_.id.count).query.unsafe.map(_ + 1)
+        result <-
+          city
+            .insertInto(v => v.name *: v.countryCode *: v.district *: v.population)
+            .values(("Test4", code(4), "T", 1))
+            .returning[Int]
+      yield result === length)
+        .commit(connector)
     )
   }
 
   test("The value of AutoIncrement obtained during insert matches the specified value") {
     assertIO(
-      connection.use { conn =>
-        city
-          .insertInto(v => v.name *: v.countryCode *: v.district *: v.population)
-          .select(
-            country
-              .select(c => c.name *: c.code *: c.region *: c.population)
-              .where(_.code _equals "JPN")
-          )
-          .update
-          .commit(conn)
-      },
+      city
+        .insertInto(v => v.name *: v.countryCode *: v.district *: v.population)
+        .select(
+          country
+            .select(c => c.name *: c.code *: c.region *: c.population)
+            .where(_.code _equals "JPN")
+        )
+        .update
+        .commit(connector),
       1
     )
   }
@@ -396,24 +368,22 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     "The update succeeds in the combined processing of multiple queries."
   ) {
     assertIO(
-      connection.use { conn =>
-        (for
-          codeOpt <- country
-                       .select(_.code)
-                       .where(_.name _equals "United States")
-                       .and(_.continent _equals Country.Continent.North_America)
-                       .query
-                       .to[Option]
-          result <- codeOpt match
-                      case None       => DBIO.pure(0)
-                      case Some(code) =>
-                        city
-                          .update(c => c.name *: c.district *: c.population)(("update New York", "TT", 2))
-                          .where(v => v.name _equals "New York" and (v.countryCode _equals code))
-                          .update
-        yield result)
-          .rollback(conn)
-      },
+      (for
+        codeOpt <- country
+          .select(_.code)
+          .where(_.name _equals "United States")
+          .and(_.continent _equals Country.Continent.North_America)
+          .query
+          .to[Option]
+        result <- codeOpt match
+          case None       => DBIO.pure(0)
+          case Some(code) =>
+            city
+              .update(c => c.name *: c.district *: c.population)(("update New York", "TT", 2))
+              .where(v => v.name _equals "New York" and (v.countryCode _equals code))
+              .update
+      yield result)
+        .rollback(connector),
       1
     )
   }
@@ -422,13 +392,11 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     "Bulk renewal succeeds."
   ) {
     assertIO(
-      connection.use { conn =>
-        countryLanguage
-          .update(_.isOfficial)(CountryLanguage.IsOfficial.T)
-          .where(_.countryCode _equals "JPN")
-          .update
-          .commit(conn)
-      },
+      countryLanguage
+        .update(_.isOfficial)(CountryLanguage.IsOfficial.T)
+        .where(_.countryCode _equals "JPN")
+        .update
+        .commit(connector),
       6
     )
   }
@@ -437,14 +405,12 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     "Successful batch update with specified number."
   ) {
     assertIO(
-      connection.use { conn =>
-        countryLanguage
-          .update(_.isOfficial)(CountryLanguage.IsOfficial.T)
-          .where(_.countryCode _equals "JPN")
-          .limit(3)
-          .update
-          .commit(conn)
-      },
+      countryLanguage
+        .update(_.isOfficial)(CountryLanguage.IsOfficial.T)
+        .where(_.countryCode _equals "JPN")
+        .limit(3)
+        .update
+        .commit(connector),
       3
     )
   }
@@ -453,12 +419,10 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     "Deletion by itself is successful."
   ) {
     assertIO(
-      connection.use { conn =>
-        country.delete
-          .where(v => v.code _equals code(5) or (v.code _equals code(6)))
-          .update
-          .commit(conn)
-      },
+      country.delete
+        .where(v => v.code _equals code(5) or (v.code _equals code(6)))
+        .update
+        .commit(connector),
       2
     )
   }
@@ -467,12 +431,10 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     "The number of deletions in multiple cases matches the number specified."
   ) {
     assertIO(
-      connection.use { conn =>
-        countryLanguage.delete
-          .where(_.countryCode _equals "AFG")
-          .update
-          .rollback(conn)
-      },
+      countryLanguage.delete
+        .where(_.countryCode _equals "AFG")
+        .update
+        .rollback(connector),
       5
     )
   }
