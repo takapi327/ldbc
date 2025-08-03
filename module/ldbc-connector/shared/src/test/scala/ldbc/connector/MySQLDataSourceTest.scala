@@ -279,7 +279,7 @@ class MySQLDataSourceTest extends FTestPlatform:
   test("MySQLDataSource with custom socket options") {
     val customOptions = List(
       SocketOption.noDelay(false),
-      SocketOption.keepAlive(true),
+      SocketOption.keepAlive(true)
     )
 
     val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")

@@ -183,7 +183,7 @@ class MySQLConfigTest extends FTestPlatform:
   test("MySQLConfig with custom socket options") {
     val customOptions = List(
       SocketOption.noDelay(false),
-      SocketOption.keepAlive(true),
+      SocketOption.keepAlive(true)
     )
 
     val config = MySQLConfig.default.setSocketOptions(customOptions)
