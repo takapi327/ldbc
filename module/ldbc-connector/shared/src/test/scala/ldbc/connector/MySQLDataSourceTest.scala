@@ -280,7 +280,6 @@ class MySQLDataSourceTest extends FTestPlatform:
     val customOptions = List(
       SocketOption.noDelay(false),
       SocketOption.keepAlive(true),
-      SocketOption.receiveBufferSize(8192)
     )
 
     val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
