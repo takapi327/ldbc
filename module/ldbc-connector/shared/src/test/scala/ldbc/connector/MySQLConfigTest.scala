@@ -188,7 +188,7 @@ class MySQLConfigTest extends FTestPlatform:
 
     val config = MySQLConfig.default.setSocketOptions(customOptions)
 
-    assertEquals(config.socketOptions.length, 3)
+    assertEquals(config.socketOptions.length, 2)
     assertEquals(config.socketOptions, customOptions)
   }
 

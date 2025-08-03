@@ -285,7 +285,7 @@ class MySQLDataSourceTest extends FTestPlatform:
     val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
       .setSocketOptions(customOptions)
 
-    assertEquals(dataSource.socketOptions.length, 3)
+    assertEquals(dataSource.socketOptions.length, 2)
     assertEquals(dataSource.socketOptions, customOptions)
   }
 
