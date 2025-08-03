@@ -21,9 +21,9 @@ object Connector:
   private def noopLogger[F[_]: Applicative]: LogHandler[F] = (logEvent: LogEvent) => Applicative[F].unit
 
   private case class Impl[F[_]: Sync](
-                                       logHandler: LogHandler[F],
-                                       connection: Connection[F]
-                                     ) extends Connector[F]:
+    logHandler: LogHandler[F],
+    connection: Connection[F]
+  ) extends Connector[F]:
 
     private val interpreter: Interpreter[F] = new KleisliInterpreter[F](logHandler)
 

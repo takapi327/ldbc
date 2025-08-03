@@ -18,28 +18,28 @@ import cats.effect.*
 
 import ldbc.sql.*
 
-import ldbc.logging.{ LogEvent, LogHandler }
 import ldbc.*
 import ldbc.free.*
+import ldbc.logging.{ LogEvent, LogHandler }
 
 object Connector:
 
   private def noopLogger[F[_]: Applicative]: LogHandler[F] = (logEvent: LogEvent) => Applicative[F].unit
 
-  private case class Ldbc[F[_] : Sync](
-                                        logHandler: LogHandler[F],
-                                        connection: Connection[F]
-                                      ) extends Connector[F]:
+  private case class Ldbc[F[_]: Sync](
+    logHandler: LogHandler[F],
+    connection: Connection[F]
+  ) extends Connector[F]:
 
     private val interpreter: Interpreter[F] = new KleisliInterpreter[F](logHandler)
 
     override def run[A](dbio: DBIO[A]): F[A] = dbio.foldMap(interpreter.ConnectionInterpreter).run(connection)
 
   private case class Impl[F[_]](
-                                 dataSource: DataSource,
-                                 connectEC:  ExecutionContext,
-                                 logHandler: Option[LogHandler[F]]
-                               )(using ev: Async[F])
+    dataSource: DataSource,
+    connectEC:  ExecutionContext,
+    logHandler: Option[LogHandler[F]]
+  )(using ev: Async[F])
     extends Connector[F]:
 
     private val interpreter: Interpreter[F] = new KleisliInterpreter[F](logHandler.getOrElse(noopLogger[F]))
@@ -48,15 +48,15 @@ object Connector:
       Resource
         .fromAutoCloseable(ev.evalOn(ev.delay(dataSource.getConnection()), connectEC))
         .map(conn => ConnectionImpl(conn))
-    
+
     override def run[A](dbio: DBIO[A]): F[A] = connection.use { conn =>
       dbio.foldMap(interpreter.ConnectionInterpreter).run(conn)
     }
 
   private case class JavaConnection[F[_]: Sync](
-                                                 connection: java.sql.Connection,
-                                                 logHandler: Option[LogHandler[F]]
-                                               ) extends Connector[F]:
+    connection: java.sql.Connection,
+    logHandler: Option[LogHandler[F]]
+  ) extends Connector[F]:
     private val interpreter: Interpreter[F] = new KleisliInterpreter[F](logHandler.getOrElse(noopLogger[F]))
 
     private val connectionF: Resource[F, Connection[F]] =
@@ -69,10 +69,10 @@ object Connector:
   class Driver[F[_]](using ev: Async[F]):
 
     private def create(
-                        driver: String,
-                        conn:   () => java.sql.Connection,
-                        logHandler: Option[LogHandler[F]]
-                      ): Connector[F] =
+      driver:     String,
+      conn:       () => java.sql.Connection,
+      logHandler: Option[LogHandler[F]]
+    ): Connector[F] =
       new Connector[F]:
         private val interpreter: Interpreter[F] = new KleisliInterpreter[F](logHandler.getOrElse(noopLogger[F]))
 
@@ -96,10 +96,10 @@ object Connector:
      *   a connection URL, specific to your driver
      */
     def apply(
-               driver: String,
-               url:    String,
-               logHandler: Option[LogHandler[F]]
-             ): Connector[F] =
+      driver:     String,
+      url:        String,
+      logHandler: Option[LogHandler[F]]
+    ): Connector[F] =
       create(driver, () => DriverManager.getConnection(url), logHandler)
 
     /** Construct a new `Connector` that uses the JDBC `DriverManager` to allocate connections.
@@ -114,12 +114,12 @@ object Connector:
      *   database password
      */
     def apply(
-               driver:     String,
-               url:        String,
-               user:       String,
-               password:   String,
-               logHandler: Option[LogHandler[F]]
-             ): Connector[F] =
+      driver:     String,
+      url:        String,
+      user:       String,
+      password:   String,
+      logHandler: Option[LogHandler[F]]
+    ): Connector[F] =
       create(driver, () => DriverManager.getConnection(url, user, password), logHandler)
 
     /** Construct a new `Connector` that uses the JDBC `DriverManager` to allocate connections.
@@ -132,11 +132,11 @@ object Connector:
      *   a `Properties` containing connection information (see `DriverManager.getConnection`)
      */
     def apply(
-               driver:     String,
-               url:        String,
-               info:       java.util.Properties,
-               logHandler: Option[LogHandler[F]]
-             ): Connector[F] =
+      driver:     String,
+      url:        String,
+      info:       java.util.Properties,
+      logHandler: Option[LogHandler[F]]
+    ): Connector[F] =
       create(driver, () => DriverManager.getConnection(url, info), logHandler)
 
   /**
@@ -149,10 +149,10 @@ object Connector:
    *   Execution context dedicated to database connection.
    */
   def fromDataSource[F[_]: Async](
-                                   dataSource: DataSource,
-                                   connectEC:  ExecutionContext,
-                                   logHandler: Option[LogHandler[F]] = None
-                                 ): Connector[F] = Impl[F](dataSource, connectEC, logHandler)
+    dataSource: DataSource,
+    connectEC:  ExecutionContext,
+    logHandler: Option[LogHandler[F]] = None
+  ): Connector[F] = Impl[F](dataSource, connectEC, logHandler)
 
   /**
    * Construct a `DataSource` that wraps an existing `Connection`. Closing the connection is the responsibility of
@@ -162,9 +162,9 @@ object Connector:
    *   a raw JDBC `Connection` to wrap
    */
   def fromConnection[F[_]: Sync](
-                                  connection: java.sql.Connection | Connection[F],
-                                  logHandler: Option[LogHandler[F]] = None
-                                ): Connector[F] =
+    connection: java.sql.Connection | Connection[F],
+    logHandler: Option[LogHandler[F]] = None
+  ): Connector[F] =
     connection match
       case conn: java.sql.Connection =>
         JavaConnection[F](conn, logHandler)
