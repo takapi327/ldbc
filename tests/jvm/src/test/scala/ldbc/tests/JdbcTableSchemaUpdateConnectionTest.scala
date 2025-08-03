@@ -26,4 +26,4 @@ class JdbcTableSchemaUpdateConnectionTest extends TableSchemaUpdateConnectionTes
   override def prefix: "jdbc" | "ldbc" = "jdbc"
 
   override def connector: Connector[IO] =
-    Connector.fromDataSource(MySQLDataSource.fromDataSource(ds, ExecutionContexts.synchronous))
+    Connector.fromDataSource[IO](ds, ExecutionContexts.synchronous)

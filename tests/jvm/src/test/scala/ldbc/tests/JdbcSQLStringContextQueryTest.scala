@@ -29,7 +29,7 @@ class JdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
   ds.setPassword("password")
 
   override def connector: Connector[IO] =
-    Connector.fromDataSource(MySQLDataSource.fromDataSource(ds, ExecutionContexts.synchronous))
+    Connector.fromDataSource[IO](ds, ExecutionContexts.synchronous)
 
   test(
     "Attempting to decode something that does not match the value of Enum raises a SQLException."

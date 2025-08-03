@@ -14,7 +14,7 @@ import munit.catseffect.ResourceFixture.FixtureNotInstantiatedException
 
 import ldbc.connector.MySQLDataSource
 
-import ldbc.Connector
+import ldbc.connector.*
 
 trait ConnectionFixture:
   def name: String

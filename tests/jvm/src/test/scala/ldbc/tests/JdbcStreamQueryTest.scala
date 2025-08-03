@@ -25,4 +25,4 @@ class JdbcStreamQueryTest extends StreamQueryTest:
   ds.setUseCursorFetch(true)
 
   override def connector: Connector[IO] =
-    Connector.fromDataSource(MySQLDataSource.fromDataSource(ds, ExecutionContexts.synchronous))
+    Connector.fromDataSource[IO](ds, ExecutionContexts.synchronous)
