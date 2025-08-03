@@ -6,15 +6,6 @@
 
 package ldbc
 
-import cats.Applicative
-
-import cats.effect.*
-
-import ldbc.sql.*
-
-import ldbc.free.*
-import ldbc.logging.{ LogEvent, LogHandler }
-
 /**
  * Connector trait for managing database connections and executing DBIO actions.
  *
@@ -26,35 +17,3 @@ trait Connector[F[_]]:
    * Runs a DBIO action using the provided connection.
    */
   def run[A](dbio: DBIO[A]): F[A]
-
-object Connector:
-
-  private def noopLogger[F[_]: Applicative]: LogHandler[F] = (logEvent: LogEvent) => Applicative[F].unit
-
-  private case class Impl[F[_]: Sync](
-    logHandler: LogHandler[F],
-    connection: Connection[F]
-  ) extends Connector[F]:
-
-    private val interpreter: Interpreter[F] = new KleisliInterpreter[F](logHandler)
-
-    override def run[A](dbio: DBIO[A]): F[A] = dbio.foldMap(interpreter.ConnectionInterpreter).run(connection)
-
-  def fromConnection[F[_]: Sync](connection: Connection[F]): Connector[F] =
-    Impl[F](
-      logHandler = noopLogger[F],
-      connection = connection
-    )
-
-  def fromConnection[F[_]: Sync](connection: Connection[F], logHandler: Option[LogHandler[F]] = None): Connector[F] =
-    Impl[F](
-      logHandler = logHandler.getOrElse(noopLogger),
-      connection = connection
-    )
-
-  def fromDataSource[F[_]: Sync](dataSource: DataSource[F], logHandler: Option[LogHandler[F]] = None): Connector[F] =
-    new Connector[F]:
-      private val interpreter:            Interpreter[F] = new KleisliInterpreter[F](logHandler.getOrElse(noopLogger))
-      override def run[A](dbio: DBIO[A]): F[A]           = dataSource.createConnection().use { connection =>
-        dbio.foldMap(interpreter.ConnectionInterpreter).run(connection)
-      }

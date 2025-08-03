@@ -13,8 +13,6 @@ import ldbc.dsl.*
 
 import ldbc.connector.*
 
-import ldbc.Connector
-
 @main def setup(): Unit =
 
   // #setupDatabase

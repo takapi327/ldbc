@@ -13,8 +13,6 @@ import ldbc.dsl.codec.Codec
 
 import jdbc.connector.*
 
-import ldbc.Connector
-
 case class City(
   id:          Int,
   name:        String,
@@ -42,7 +40,7 @@ object Main extends ResourceApp.Simple:
     (for
       hikari    <- Resource.fromAutoCloseable(IO(ds))
       execution <- ExecutionContexts.fixedThreadPool[IO](hikari.getMaximumPoolSize)
-    yield Connector.fromDataSource(MySQLDataSource.fromDataSource[IO](hikari, execution))).evalMap { conn =>
+    yield Connector.fromDataSource[IO](hikari, execution)).evalMap { conn =>
       for
         city <- sql"SELECT * FROM `city` WHERE ID = ${ 1 }".query[City].to[Option].readOnly(conn)
         // トランザクションの例

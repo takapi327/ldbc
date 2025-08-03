@@ -43,7 +43,7 @@ class Select:
     ds.setUser("ldbc")
     ds.setPassword("password")
 
-    connector = Connector.fromDataSource(MySQLDataSource.fromDataSource(ds, ExecutionContexts.synchronous))
+    connector = Connector.fromDataSource[IO](ds, ExecutionContexts.synchronous)
 
     query = TableQuery[City]
 

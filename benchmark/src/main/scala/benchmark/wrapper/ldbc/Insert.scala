@@ -52,7 +52,7 @@ class Insert:
     ds.setUser("ldbc")
     ds.setPassword("password")
 
-    connector = Connector.fromDataSource(MySQLDataSource.fromDataSource(ds, ExecutionContexts.synchronous))
+    connector = Connector.fromDataSource[IO](ds, ExecutionContexts.synchronous)
 
     records = NonEmptyList.fromListUnsafe((1 to len).map(num => (num, s"record$num")).toList)
 
