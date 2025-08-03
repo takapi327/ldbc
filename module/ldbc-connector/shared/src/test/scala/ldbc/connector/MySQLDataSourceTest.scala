@@ -26,7 +26,7 @@ class MySQLDataSourceTest extends FTestPlatform:
       port = 3306,
       user = "root"
     )
-    
+
     assertEquals(dataSource.host, "localhost")
     assertEquals(dataSource.port, 3306)
     assertEquals(dataSource.user, "root")
@@ -47,8 +47,8 @@ class MySQLDataSourceTest extends FTestPlatform:
 
   test("setHost should update host value") {
     val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
-    val updated = dataSource.setHost("127.0.0.1")
-    
+    val updated    = dataSource.setHost("127.0.0.1")
+
     assertEquals(updated.host, "127.0.0.1")
     assertEquals(updated.port, dataSource.port)
     assertEquals(updated.user, dataSource.user)
@@ -56,97 +56,97 @@ class MySQLDataSourceTest extends FTestPlatform:
 
   test("setPort should update port value") {
     val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
-    val updated = dataSource.setPort(3307)
-    
+    val updated    = dataSource.setPort(3307)
+
     assertEquals(updated.port, 3307)
     assertEquals(updated.host, dataSource.host)
   }
 
   test("setUser should update user value") {
     val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
-    val updated = dataSource.setUser("testuser")
-    
+    val updated    = dataSource.setUser("testuser")
+
     assertEquals(updated.user, "testuser")
     assertEquals(updated.host, dataSource.host)
   }
 
   test("setPassword should update password to Some value") {
     val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
-    val updated = dataSource.setPassword("secret")
-    
+    val updated    = dataSource.setPassword("secret")
+
     assertEquals(updated.password, Some("secret"))
   }
 
   test("setDatabase should update database to Some value") {
     val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
-    val updated = dataSource.setDatabase("testdb")
-    
+    val updated    = dataSource.setDatabase("testdb")
+
     assertEquals(updated.database, Some("testdb"))
   }
 
   test("setDebug should update debug value") {
     val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
-    val updated = dataSource.setDebug(true)
-    
+    val updated    = dataSource.setDebug(true)
+
     assertEquals(updated.debug, true)
   }
 
   test("setSSL should update SSL configuration") {
     val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
-    val updated = dataSource.setSSL(SSL.Trusted)
-    
+    val updated    = dataSource.setSSL(SSL.Trusted)
+
     assertEquals(updated.ssl, SSL.Trusted)
   }
 
   test("setSocketOptions should update socket options") {
     val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
     val newOptions = List(SocketOption.noDelay(false), SocketOption.keepAlive(true))
-    val updated = dataSource.setSocketOptions(newOptions)
-    
+    val updated    = dataSource.setSocketOptions(newOptions)
+
     assertEquals(updated.socketOptions, newOptions)
   }
 
   test("setReadTimeout should update read timeout") {
     val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
-    val timeout = Duration("30s")
-    val updated = dataSource.setReadTimeout(timeout)
-    
+    val timeout    = Duration("30s")
+    val updated    = dataSource.setReadTimeout(timeout)
+
     assertEquals(updated.readTimeout, timeout)
   }
 
   test("setAllowPublicKeyRetrieval should update allowPublicKeyRetrieval value") {
     val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
-    val updated = dataSource.setAllowPublicKeyRetrieval(true)
-    
+    val updated    = dataSource.setAllowPublicKeyRetrieval(true)
+
     assertEquals(updated.allowPublicKeyRetrieval, true)
   }
 
   test("setDatabaseTerm should update databaseTerm to Some value") {
     val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
-    val updated = dataSource.setDatabaseTerm(DatabaseMetaData.DatabaseTerm.SCHEMA)
-    
+    val updated    = dataSource.setDatabaseTerm(DatabaseMetaData.DatabaseTerm.SCHEMA)
+
     assertEquals(updated.databaseTerm, Some(DatabaseMetaData.DatabaseTerm.SCHEMA))
   }
 
   test("setTracer should update tracer to Some value") {
     val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
-    val tracer = Tracer.noop[IO]
-    val updated = dataSource.setTracer(tracer)
-    
+    val tracer     = Tracer.noop[IO]
+    val updated    = dataSource.setTracer(tracer)
+
     assertEquals(updated.tracer, Some(tracer))
   }
 
   test("setUseCursorFetch should update useCursorFetch value") {
     val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
-    val updated = dataSource.setUseCursorFetch(true)
-    
+    val updated    = dataSource.setUseCursorFetch(true)
+
     assertEquals(updated.useCursorFetch, true)
   }
 
   test("setUseServerPrepStmts should update useServerPrepStmts value") {
     val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
-    val updated = dataSource.setUseServerPrepStmts(true)
-    
+    val updated    = dataSource.setUseServerPrepStmts(true)
+
     assertEquals(updated.useServerPrepStmts, true)
   }
 
@@ -154,7 +154,7 @@ class MySQLDataSourceTest extends FTestPlatform:
     val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
     val beforeHook: Connection[IO] => IO[String] = _ => IO.pure("before result")
     val updated = dataSource.withBefore(beforeHook)
-    
+
     assert(updated.before.isDefined)
     // Type parameter changes from Unit to String
     val _: MySQLDataSource[IO, String] = updated
@@ -164,16 +164,16 @@ class MySQLDataSourceTest extends FTestPlatform:
     val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
     val afterHook: (Unit, Connection[IO]) => IO[Unit] = (_, _) => IO.unit
     val updated = dataSource.withAfter(afterHook)
-    
+
     assert(updated.after.isDefined)
   }
 
   test("withBeforeAfter should add both before and after hooks") {
     val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
-    val beforeHook: Connection[IO] => IO[String] = _ => IO.pure("before result")
-    val afterHook: (String, Connection[IO]) => IO[Unit] = (_, _) => IO.unit
+    val beforeHook: Connection[IO] => IO[String]         = _ => IO.pure("before result")
+    val afterHook:  (String, Connection[IO]) => IO[Unit] = (_, _) => IO.unit
     val updated = dataSource.withBeforeAfter(beforeHook, afterHook)
-    
+
     assert(updated.before.isDefined)
     assert(updated.after.isDefined)
     // Type parameter changes from Unit to String
@@ -192,7 +192,7 @@ class MySQLDataSourceTest extends FTestPlatform:
       .setAllowPublicKeyRetrieval(true)
       .setUseCursorFetch(true)
       .setUseServerPrepStmts(true)
-    
+
     assertEquals(dataSource.host, "127.0.0.1")
     assertEquals(dataSource.port, 3307)
     assertEquals(dataSource.user, "testuser")
@@ -213,9 +213,9 @@ class MySQLDataSourceTest extends FTestPlatform:
       .setPassword("configpass")
       .setDatabase("configdb")
       .setDebug(true)
-    
+
     val dataSource = MySQLDataSource.fromConfig[IO](config)
-    
+
     assertEquals(dataSource.host, "confighost")
     assertEquals(dataSource.port, 3308)
     assertEquals(dataSource.user, "configuser")
@@ -226,7 +226,7 @@ class MySQLDataSourceTest extends FTestPlatform:
 
   test("MySQLDataSource.default should create DataSource with default config") {
     val dataSource = MySQLDataSource.default[IO]
-    
+
     assertEquals(dataSource.host, "127.0.0.1")
     assertEquals(dataSource.port, 3306)
     assertEquals(dataSource.user, "root")
@@ -241,7 +241,7 @@ class MySQLDataSourceTest extends FTestPlatform:
       port = 3309,
       user = "builduser"
     )
-    
+
     assertEquals(dataSource.host, "buildhost")
     assertEquals(dataSource.port, 3309)
     assertEquals(dataSource.user, "builduser")
@@ -252,23 +252,23 @@ class MySQLDataSourceTest extends FTestPlatform:
   }
 
   test("MySQLDataSource should be immutable - original should not change") {
-    val original = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
+    val original     = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
     val originalHost = original.host
     val originalPort = original.port
-    
+
     // Make multiple changes
     val updated = original
       .setHost("newhost")
       .setPort(3308)
       .setUser("newuser")
       .setPassword("newpass")
-    
+
     // Original should remain unchanged
     assertEquals(original.host, originalHost)
     assertEquals(original.port, originalPort)
     assertEquals(original.user, "root")
     assertEquals(original.password, None)
-    
+
     // Updated should have new values
     assertEquals(updated.host, "newhost")
     assertEquals(updated.port, 3308)
@@ -282,19 +282,19 @@ class MySQLDataSourceTest extends FTestPlatform:
       SocketOption.keepAlive(true),
       SocketOption.receiveBufferSize(8192)
     )
-    
+
     val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
       .setSocketOptions(customOptions)
-    
+
     assertEquals(dataSource.socketOptions.length, 3)
     assertEquals(dataSource.socketOptions, customOptions)
   }
 
   test("MySQLDataSource with different SSL configurations") {
-    val dataSourceNone = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
+    val dataSourceNone    = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
     val dataSourceTrusted = MySQLDataSource[IO, Unit]("localhost", 3306, "root").setSSL(SSL.Trusted)
-    val dataSourceSystem = MySQLDataSource[IO, Unit]("localhost", 3306, "root").setSSL(SSL.System)
-    
+    val dataSourceSystem  = MySQLDataSource[IO, Unit]("localhost", 3306, "root").setSSL(SSL.System)
+
     assertEquals(dataSourceNone.ssl, SSL.None)
     assertEquals(dataSourceTrusted.ssl, SSL.Trusted)
     assertEquals(dataSourceSystem.ssl, SSL.System)
@@ -305,7 +305,7 @@ class MySQLDataSourceTest extends FTestPlatform:
       .setDatabaseTerm(DatabaseMetaData.DatabaseTerm.CATALOG)
     val dataSourceSchema = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
       .setDatabaseTerm(DatabaseMetaData.DatabaseTerm.SCHEMA)
-    
+
     assertEquals(dataSourceCatalog.databaseTerm, Some(DatabaseMetaData.DatabaseTerm.CATALOG))
     assertEquals(dataSourceSchema.databaseTerm, Some(DatabaseMetaData.DatabaseTerm.SCHEMA))
   }
