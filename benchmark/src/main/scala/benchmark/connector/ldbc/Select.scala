@@ -63,8 +63,7 @@ class Select:
 
   @Benchmark
   def statement: List[BenchmarkType] =
-    datasource
-      .createConnection()
+    datasource.getConnection
       .use { conn =>
         for
           statement <- conn.createStatement()
@@ -76,8 +75,7 @@ class Select:
 
   @Benchmark
   def prepareStatement: List[BenchmarkType] =
-    datasource
-      .createConnection()
+    datasource.getConnection
       .use { conn =>
         for
           statement <- conn.prepareStatement("SELECT * FROM jdbc_prepare_statement_test LIMIT ?")

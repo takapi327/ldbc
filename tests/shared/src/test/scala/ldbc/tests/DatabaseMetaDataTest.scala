@@ -43,7 +43,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: allTablesAreSelectable") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.allTablesAreSelectable()
       },
@@ -53,7 +53,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getURL") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getURL()
       },
@@ -63,7 +63,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getUserName") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData <- conn.getMetaData()
           value    <- metaData.getUserName()
@@ -75,7 +75,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: isReadOnly") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.isReadOnly()
       },
@@ -85,7 +85,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: nullsAreSortedHigh") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.nullsAreSortedHigh()
       },
@@ -95,7 +95,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: nullsAreSortedLow") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.nullsAreSortedLow()
       },
@@ -105,7 +105,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: nullsAreSortedAtStart") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.nullsAreSortedAtStart()
       },
@@ -115,7 +115,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: nullsAreSortedAtEnd") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.nullsAreSortedAtEnd()
       },
@@ -125,7 +125,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getDatabaseProductName") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getDatabaseProductName()
       },
@@ -135,7 +135,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getDatabaseProductVersion") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getDatabaseProductVersion()
       },
@@ -145,7 +145,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getDriverName") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getDriverName()
       },
@@ -155,7 +155,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getDriverVersion") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getDriverVersion()
       },
@@ -166,7 +166,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getDriverMajorVersion") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getDriverMajorVersion()
       },
@@ -176,7 +176,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getDriverMinorVersion") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getDriverMinorVersion()
       },
@@ -186,7 +186,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: usesLocalFiles") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.usesLocalFiles()
       },
@@ -196,7 +196,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: usesLocalFilePerTable") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.usesLocalFilePerTable()
       },
@@ -206,7 +206,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsMixedCaseIdentifiers") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsMixedCaseIdentifiers()
       },
@@ -216,7 +216,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: storesUpperCaseIdentifiers") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.storesUpperCaseIdentifiers()
       },
@@ -226,7 +226,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: storesLowerCaseIdentifiers") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.storesLowerCaseIdentifiers()
       },
@@ -236,7 +236,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: storesMixedCaseIdentifiers") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.storesMixedCaseIdentifiers()
       },
@@ -246,7 +246,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsMixedCaseQuotedIdentifiers") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsMixedCaseQuotedIdentifiers()
       },
@@ -256,7 +256,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: storesUpperCaseQuotedIdentifiers") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.storesUpperCaseQuotedIdentifiers()
       },
@@ -266,7 +266,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: storesLowerCaseQuotedIdentifiers") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.storesLowerCaseQuotedIdentifiers()
       },
@@ -276,7 +276,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: storesMixedCaseQuotedIdentifiers") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.storesMixedCaseQuotedIdentifiers()
       },
@@ -286,7 +286,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getIdentifierQuoteString") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getIdentifierQuoteString()
       },
@@ -296,7 +296,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getSQLKeywords") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData <- conn.getMetaData()
           value    <- metaData.getSQLKeywords()
@@ -308,7 +308,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getNumericFunctions") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getNumericFunctions()
       },
@@ -318,7 +318,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getStringFunctions") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getStringFunctions()
       },
@@ -328,7 +328,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getSystemFunctions") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getSystemFunctions()
       },
@@ -338,7 +338,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getTimeDateFunctions") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getTimeDateFunctions()
       },
@@ -348,7 +348,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getSearchStringEscape") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getSearchStringEscape()
       },
@@ -358,7 +358,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getExtraNameCharacters") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getExtraNameCharacters()
       },
@@ -368,7 +368,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsAlterTableWithAddColumn") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsAlterTableWithAddColumn()
       },
@@ -378,7 +378,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsAlterTableWithDropColumn") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsAlterTableWithDropColumn()
       },
@@ -388,7 +388,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsColumnAliasing") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsColumnAliasing()
       },
@@ -398,7 +398,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: nullPlusNonNullIsNull") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.nullPlusNonNullIsNull()
       },
@@ -408,7 +408,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsConvert") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsConvert()
       },
@@ -418,7 +418,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsTableCorrelationNames") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsTableCorrelationNames()
       },
@@ -428,7 +428,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsDifferentTableCorrelationNames") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsDifferentTableCorrelationNames()
       },
@@ -438,7 +438,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsExpressionsInOrderBy") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsExpressionsInOrderBy()
       },
@@ -448,7 +448,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsOrderByUnrelated") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsOrderByUnrelated()
       },
@@ -458,7 +458,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsGroupBy") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsGroupBy()
       },
@@ -468,7 +468,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsGroupByUnrelated") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsGroupByUnrelated()
       },
@@ -478,7 +478,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsGroupByBeyondSelect") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsGroupByBeyondSelect()
       },
@@ -488,7 +488,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsLikeEscapeClause") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsLikeEscapeClause()
       },
@@ -498,7 +498,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsMultipleResultSets") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsMultipleResultSets()
       },
@@ -508,7 +508,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsMultipleTransactions") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsMultipleTransactions()
       },
@@ -518,7 +518,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsNonNullableColumns") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsNonNullableColumns()
       },
@@ -528,7 +528,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsMinimumSQLGrammar") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsMinimumSQLGrammar()
       },
@@ -538,7 +538,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsCoreSQLGrammar") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsCoreSQLGrammar()
       },
@@ -548,7 +548,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsExtendedSQLGrammar") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsExtendedSQLGrammar()
       },
@@ -558,7 +558,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsANSI92EntryLevelSQL") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsANSI92EntryLevelSQL()
       },
@@ -568,7 +568,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsANSI92IntermediateSQL") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsANSI92IntermediateSQL()
       },
@@ -578,7 +578,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsANSI92FullSQL") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsANSI92FullSQL()
       },
@@ -588,7 +588,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsIntegrityEnhancementFacility") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsIntegrityEnhancementFacility()
       },
@@ -598,7 +598,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsOuterJoins") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsOuterJoins()
       },
@@ -608,7 +608,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsLimitedOuterJoins") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsLimitedOuterJoins()
       },
@@ -618,7 +618,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getSchemaTerm") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getSchemaTerm()
       },
@@ -628,7 +628,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getProcedureTerm") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getProcedureTerm()
       },
@@ -638,7 +638,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getCatalogTerm") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getCatalogTerm()
       },
@@ -648,7 +648,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: isCatalogAtStart") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.isCatalogAtStart()
       },
@@ -658,7 +658,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getCatalogSeparator") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getCatalogSeparator()
       },
@@ -668,7 +668,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsSchemasInDataManipulation") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsSchemasInDataManipulation()
       },
@@ -678,7 +678,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsSchemasInProcedureCalls") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsSchemasInProcedureCalls()
       },
@@ -688,7 +688,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsSchemasInTableDefinitions") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsSchemasInTableDefinitions()
       },
@@ -698,7 +698,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsSchemasInIndexDefinitions") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsSchemasInIndexDefinitions()
       },
@@ -708,7 +708,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsSchemasInPrivilegeDefinitions") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsSchemasInPrivilegeDefinitions()
       },
@@ -718,7 +718,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsCatalogsInDataManipulation") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsCatalogsInDataManipulation()
       },
@@ -728,7 +728,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsCatalogsInProcedureCalls") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsCatalogsInProcedureCalls()
       },
@@ -738,7 +738,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsCatalogsInTableDefinitions") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsCatalogsInTableDefinitions()
       },
@@ -748,7 +748,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsCatalogsInIndexDefinitions") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsCatalogsInIndexDefinitions()
       },
@@ -758,7 +758,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsCatalogsInPrivilegeDefinitions") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsCatalogsInPrivilegeDefinitions()
       },
@@ -768,7 +768,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsPositionedDelete") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsPositionedDelete()
       },
@@ -778,7 +778,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsPositionedUpdate") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsPositionedUpdate()
       },
@@ -788,7 +788,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsSelectForUpdate") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsSelectForUpdate()
       },
@@ -798,7 +798,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsStoredProcedures") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsStoredProcedures()
       },
@@ -808,7 +808,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsSubqueriesInComparisons") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsSubqueriesInComparisons()
       },
@@ -818,7 +818,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsSubqueriesInExists") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsSubqueriesInExists()
       },
@@ -828,7 +828,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsSubqueriesInIns") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsSubqueriesInIns()
       },
@@ -838,7 +838,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsSubqueriesInQuantifieds") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsSubqueriesInQuantifieds()
       },
@@ -848,7 +848,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsCorrelatedSubqueries") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsCorrelatedSubqueries()
       },
@@ -858,7 +858,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsUnion") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsUnion()
       },
@@ -868,7 +868,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsUnionAll") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsUnionAll()
       },
@@ -878,7 +878,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsOpenCursorsAcrossCommit") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsOpenCursorsAcrossCommit()
       },
@@ -888,7 +888,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsOpenCursorsAcrossRollback") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsOpenCursorsAcrossRollback()
       },
@@ -898,7 +898,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsOpenStatementsAcrossCommit") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsOpenStatementsAcrossCommit()
       },
@@ -908,7 +908,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsOpenStatementsAcrossRollback") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsOpenStatementsAcrossRollback()
       },
@@ -918,7 +918,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxBinaryLiteralLength") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxBinaryLiteralLength()
       },
@@ -928,7 +928,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxCharLiteralLength") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxCharLiteralLength()
       },
@@ -938,7 +938,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxColumnNameLength") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxColumnNameLength()
       },
@@ -948,7 +948,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxColumnsInGroupBy") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxColumnsInGroupBy()
       },
@@ -958,7 +958,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxColumnsInIndex") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxColumnsInIndex()
       },
@@ -968,7 +968,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxColumnsInOrderBy") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxColumnsInOrderBy()
       },
@@ -978,7 +978,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxColumnsInSelect") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxColumnsInSelect()
       },
@@ -988,7 +988,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxColumnsInTable") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxColumnsInTable()
       },
@@ -998,7 +998,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxConnections") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxConnections()
       },
@@ -1008,7 +1008,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxCursorNameLength") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxCursorNameLength()
       },
@@ -1018,7 +1018,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxIndexLength") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxIndexLength()
       },
@@ -1028,7 +1028,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxSchemaNameLength") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxSchemaNameLength()
       },
@@ -1038,7 +1038,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxProcedureNameLength") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxProcedureNameLength()
       },
@@ -1048,7 +1048,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxCatalogNameLength") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxCatalogNameLength()
       },
@@ -1058,7 +1058,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxRowSize") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxRowSize()
       },
@@ -1068,7 +1068,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: doesMaxRowSizeIncludeBlobs") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.doesMaxRowSizeIncludeBlobs()
       },
@@ -1078,7 +1078,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxStatementLength") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxStatementLength()
       },
@@ -1088,7 +1088,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxStatements") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxStatements()
       },
@@ -1098,7 +1098,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxTableNameLength") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxTableNameLength()
       },
@@ -1108,7 +1108,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxTablesInSelect") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxTablesInSelect()
       },
@@ -1118,7 +1118,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxUserNameLength") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxUserNameLength()
       },
@@ -1128,7 +1128,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getDefaultTransactionIsolation") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getDefaultTransactionIsolation()
       },
@@ -1138,7 +1138,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsTransactions") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsTransactions()
       },
@@ -1148,7 +1148,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsTransactionIsolationLevel") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsTransactionIsolationLevel(2)
       },
@@ -1158,7 +1158,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsDataDefinitionAndDataManipulationTransactions") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsDataDefinitionAndDataManipulationTransactions()
       },
@@ -1168,7 +1168,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsDataManipulationTransactionsOnly") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsDataManipulationTransactionsOnly()
       },
@@ -1178,7 +1178,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: dataDefinitionCausesTransactionCommit") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.dataDefinitionCausesTransactionCommit()
       },
@@ -1188,7 +1188,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: dataDefinitionIgnoredInTransactions") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.dataDefinitionIgnoredInTransactions()
       },
@@ -1198,7 +1198,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getProcedures") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getProcedures(None, None, None)
@@ -1276,7 +1276,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getProcedureColumns") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getProcedureColumns(None, None, None, None)
@@ -1407,7 +1407,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getTables") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getTables(Some("world"), None, None, Array.empty[String])
@@ -1439,7 +1439,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getSchemas") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getSchemas()
@@ -1455,7 +1455,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
   test(s"$prefix: getCatalogs") {
     // Waiting for Schema values to increase or decrease in other tests.
     IO.sleep(5.seconds) *> assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getCatalogs()
@@ -1480,7 +1480,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getTableTypes") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getTableTypes()
@@ -1501,7 +1501,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getColumns") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getColumns(None, None, Some("tax"), None)
@@ -1545,7 +1545,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getColumnPrivileges") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getColumnPrivileges(Some("connector_test"), None, Some("tax"), Some("id"))
@@ -1570,7 +1570,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getTablePrivileges") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getTablePrivileges(None, None, Some("tax"))
@@ -1593,7 +1593,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getBestRowIdentifier") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getBestRowIdentifier(None, None, "tax", Some(1), Some(true))
@@ -1618,7 +1618,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getVersionColumns") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getVersionColumns(None, None, "tax")
@@ -1643,7 +1643,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getPrimaryKeys") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getPrimaryKeys(None, None, "tax")
@@ -1665,7 +1665,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getImportedKeys") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getImportedKeys(None, None, "tax")
@@ -1696,7 +1696,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getExportedKeys") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getExportedKeys(None, None, "tax")
@@ -1727,7 +1727,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getCrossReference") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getCrossReference(None, None, "tax", None, None, Some("film"))
@@ -1758,7 +1758,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getIndexInfo") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getIndexInfo(None, None, Some("tax"), false, false)
@@ -1789,7 +1789,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsResultSetType") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsResultSetType(ResultSet.TYPE_FORWARD_ONLY)
       },
@@ -1799,7 +1799,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsResultSetConcurrency") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsResultSetConcurrency(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
       },
@@ -1809,7 +1809,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: ownUpdatesAreVisible") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.ownUpdatesAreVisible(ResultSet.TYPE_FORWARD_ONLY)
       },
@@ -1819,7 +1819,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: ownDeletesAreVisible") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.ownDeletesAreVisible(ResultSet.TYPE_FORWARD_ONLY)
       },
@@ -1829,7 +1829,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: ownInsertsAreVisible") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.ownInsertsAreVisible(ResultSet.TYPE_FORWARD_ONLY)
       },
@@ -1839,7 +1839,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: othersUpdatesAreVisible") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.othersUpdatesAreVisible(ResultSet.TYPE_FORWARD_ONLY)
       },
@@ -1849,7 +1849,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: othersDeletesAreVisible") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.othersDeletesAreVisible(ResultSet.TYPE_FORWARD_ONLY)
       },
@@ -1859,7 +1859,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: othersInsertsAreVisible") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.othersInsertsAreVisible(ResultSet.TYPE_FORWARD_ONLY)
       },
@@ -1869,7 +1869,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: updatesAreDetected") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.updatesAreDetected(ResultSet.TYPE_FORWARD_ONLY)
       },
@@ -1879,7 +1879,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: deletesAreDetected") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.deletesAreDetected(ResultSet.TYPE_FORWARD_ONLY)
       },
@@ -1889,7 +1889,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: insertsAreDetected") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.insertsAreDetected(ResultSet.TYPE_FORWARD_ONLY)
       },
@@ -1899,7 +1899,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsBatchUpdates") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsBatchUpdates()
       },
@@ -1909,7 +1909,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getUDTs") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getUDTs(None, None, None, Array.empty[Int])
@@ -1932,7 +1932,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsSavepoints") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsSavepoints()
       },
@@ -1942,7 +1942,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsNamedParameters") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsNamedParameters()
       },
@@ -1952,7 +1952,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsMultipleOpenResults") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsMultipleOpenResults()
       },
@@ -1962,7 +1962,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsGetGeneratedKeys") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsGetGeneratedKeys()
       },
@@ -1972,7 +1972,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getSuperTypes") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getSuperTypes(None, None, None)
@@ -1994,7 +1994,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getSuperTables") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getSuperTables(None, None, None)
@@ -2014,7 +2014,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getAttributes") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getAttributes(None, None, None, None)
@@ -2046,7 +2046,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsResultSetHoldability") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsResultSetHoldability(ResultSet.HOLD_CURSORS_OVER_COMMIT)
       },
@@ -2056,7 +2056,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getResultSetHoldability") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getResultSetHoldability()
       },
@@ -2066,7 +2066,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getDatabaseMajorVersion") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getDatabaseMajorVersion()
       },
@@ -2076,7 +2076,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getDatabaseMinorVersion") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getDatabaseMinorVersion()
       },
@@ -2086,7 +2086,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getJDBCMajorVersion") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getJDBCMajorVersion()
       },
@@ -2096,7 +2096,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getJDBCMinorVersion") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getJDBCMinorVersion()
       },
@@ -2106,7 +2106,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getSQLStateType") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getSQLStateType()
       },
@@ -2116,7 +2116,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: locatorsUpdateCopy") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.locatorsUpdateCopy()
       },
@@ -2126,7 +2126,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsStatementPooling") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsStatementPooling()
       },
@@ -2136,7 +2136,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getRowIdLifetime") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getRowIdLifetime()
       },
@@ -2146,7 +2146,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getSchemas") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getSchemas(None, None)
@@ -2164,7 +2164,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsStoredFunctionsUsingCallSyntax") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsStoredFunctionsUsingCallSyntax()
       },
@@ -2174,7 +2174,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: autoCommitFailureClosesAllResultSets") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.autoCommitFailureClosesAllResultSets()
       },
@@ -2184,7 +2184,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getClientInfoProperties") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getClientInfoProperties()
@@ -2204,7 +2204,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getFunctions") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getFunctions(None, None, None)
@@ -2251,7 +2251,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getFunctionColumns") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getFunctionColumns(None, None, None, None)
@@ -2335,7 +2335,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getPseudoColumns") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getPseudoColumns(None, None, None, None)
@@ -2363,7 +2363,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: generatedKeyAlwaysReturned") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.generatedKeyAlwaysReturned()
       },
@@ -2373,7 +2373,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxLogicalLobSize") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxLogicalLobSize()
       },
@@ -2383,7 +2383,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsRefCursors") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsRefCursors()
       },
@@ -2393,7 +2393,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsSharding") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsSharding()
       },

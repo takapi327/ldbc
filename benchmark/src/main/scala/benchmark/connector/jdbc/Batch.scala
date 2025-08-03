@@ -56,8 +56,7 @@ class Batch:
 
   @Benchmark
   def statement(): Unit =
-    datasource
-      .createConnection()
+    datasource.getConnection
       .use { conn =>
         for
           statement <- conn.createStatement()
@@ -75,8 +74,7 @@ class Batch:
 
   @Benchmark
   def prepareStatement(): Unit =
-    datasource
-      .createConnection()
+    datasource.getConnection
       .use { conn =>
         for
           statement <- conn.prepareStatement(s"INSERT INTO jdbc_prepare_statement_test (c1, c2) VALUES (?, ?)")

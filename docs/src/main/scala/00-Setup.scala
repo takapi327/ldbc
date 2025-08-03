@@ -115,7 +115,7 @@ import ldbc.connector.*
 
   // #run
   (createDatabase.commit(connector) *>
-    datasource.createConnection().use { connection =>
+    datasource.getConnection.use { connection =>
       connection.setCatalog("sandbox_db")
     } *>
     (setUpTables *> insertData)

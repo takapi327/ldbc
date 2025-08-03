@@ -45,7 +45,7 @@ private case class JdbcConnectionFixture(
         case None    => throw new FixtureNotInstantiatedException(name)
 
       override def beforeAll(): IO[Unit] =
-        datasource.createConnection().map(Connector.fromConnection).allocated.flatMap {
+        datasource.getConnection.map(Connector.fromConnection).allocated.flatMap {
           case (conn, close) =>
             connectBeforeAll(conn) *> IO(this.value = Some((conn, close)))
         }

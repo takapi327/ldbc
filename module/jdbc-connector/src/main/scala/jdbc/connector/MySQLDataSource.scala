@@ -26,7 +26,7 @@ object MySQLDataSource:
     connectEC:  ExecutionContext
   )(using ev: Async[F])
     extends LdbcDataSource[F]:
-    override def createConnection(): Resource[F, Connection[F]] =
+    override def getConnection: Resource[F, Connection[F]] =
       Resource
         .fromAutoCloseable(ev.evalOn(ev.delay(dataSource.getConnection()), connectEC))
         .map(conn => ConnectionImpl(conn))
@@ -34,7 +34,7 @@ object MySQLDataSource:
   private case class JavaConnection[F[_]: Sync](
     connection: java.sql.Connection
   ) extends LdbcDataSource[F]:
-    override def createConnection(): Resource[F, Connection[F]] =
+    override def getConnection: Resource[F, Connection[F]] =
       Resource.pure(ConnectionImpl(connection))
 
   class Driver[F[_]](using ev: Async[F]):
@@ -42,8 +42,8 @@ object MySQLDataSource:
     private def create(
       driver: String,
       conn:   () => java.sql.Connection
-    ): LdbcDataSource[F] =
-      () =>
+    ): LdbcDataSource[F] = new LdbcDataSource[F]:
+      override def getConnection: Resource[F, Connection[F]] =
         Resource
           .fromAutoCloseable(ev.blocking {
             Class.forName(driver)

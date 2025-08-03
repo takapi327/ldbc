@@ -95,8 +95,7 @@ class Insert:
 
   @Benchmark
   def statement(): Unit =
-    datasource
-      .createConnection()
+    datasource.getConnection
       .use { conn =>
         for
           statement <- conn.createStatement()
@@ -118,8 +117,7 @@ class Insert:
 
   @Benchmark
   def prepareStatement(): Unit =
-    datasource
-      .createConnection()
+    datasource.getConnection
       .use { conn =>
         for
           statement <-

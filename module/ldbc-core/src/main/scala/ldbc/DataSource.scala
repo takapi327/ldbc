@@ -12,4 +12,4 @@ import ldbc.sql.Connection
 
 trait DataSource[F[_]]:
 
-  def createConnection(): Resource[F, Connection[F]]
+  def getConnection: Resource[F, Connection[F]]

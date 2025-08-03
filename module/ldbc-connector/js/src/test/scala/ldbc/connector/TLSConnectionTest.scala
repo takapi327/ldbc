@@ -34,7 +34,7 @@ class TLSConnectionTest extends FTestPlatform:
                     .setPassword("securepassword")
                     .setDatabase("world")
                     .setSSL(SSL.fromSecureContext(secureContext))
-                    .createConnection()
+                    .getConnection
                     .use { conn =>
                       for
                         statement <- conn.createStatement()

@@ -34,7 +34,7 @@ class ServerCursorFetchTest extends FTestPlatform:
 
   test("Statement: Query result retrieval using server cursor matches the specified number of results.") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for
           statement <- conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
           _         <- statement.setFetchSize(1)
@@ -50,7 +50,7 @@ class ServerCursorFetchTest extends FTestPlatform:
 
   test("Statement: Query result retrieval using server cursor matches the specified number of results.") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for
           statement <- conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
           _         <- statement.setFetchSize(5)
@@ -66,7 +66,7 @@ class ServerCursorFetchTest extends FTestPlatform:
 
   test("PreparedStatement: Query result retrieval using server cursor matches the specified number of results.") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for
           statement <- conn.prepareStatement("SELECT * FROM `city`")
           _         <- statement.setFetchSize(1)
@@ -82,7 +82,7 @@ class ServerCursorFetchTest extends FTestPlatform:
 
   test("PreparedStatement: Query result retrieval using server cursor matches the specified number of results.") {
     assertIO(
-      datasource.createConnection().use { conn =>
+      datasource.getConnection.use { conn =>
         for
           statement <- conn.prepareStatement("SELECT * FROM `city`")
           _         <- statement.setFetchSize(5)

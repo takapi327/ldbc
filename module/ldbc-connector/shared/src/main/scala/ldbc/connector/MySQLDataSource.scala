@@ -96,7 +96,7 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
    * 
    * @return a Resource that manages a MySQL connection
    */
-  override def createConnection(): Resource[F, Connection[F]] =
+  override def getConnection: Resource[F, Connection[F]] =
     (before, after) match
       case (Some(b), Some(a)) =>
         Connection.withBeforeAfter(
