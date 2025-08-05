@@ -22,16 +22,16 @@ import scala.concurrent.duration.*
  * @param totalRemovals total number of connections removed
  */
 case class PoolMetrics(
-                        acquisitionTime:    FiniteDuration,
-                        usageTime:          FiniteDuration,
-                        creationTime:       FiniteDuration,
-                        timeouts:           Long,
-                        leaks:              Long,
-                        totalAcquisitions:  Long,
-                        totalReleases:      Long,
-                        totalCreations:     Long,
-                        totalRemovals:      Long
-                      )
+  acquisitionTime:   FiniteDuration,
+  usageTime:         FiniteDuration,
+  creationTime:      FiniteDuration,
+  timeouts:          Long,
+  leaks:             Long,
+  totalAcquisitions: Long,
+  totalReleases:     Long,
+  totalCreations:    Long,
+  totalRemovals:     Long
+)
 
 object PoolMetrics:
   def empty: PoolMetrics = PoolMetrics(

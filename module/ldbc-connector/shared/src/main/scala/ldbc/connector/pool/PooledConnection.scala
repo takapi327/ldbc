@@ -24,12 +24,12 @@ import ldbc.connector.Connection
  * @tparam F the effect type
  */
 case class PooledConnection[F[_]](
-  id:               String,
-  connection:       Connection[F],
-  state:            Ref[F, ConnectionState],
-  createdAt:        Long,
-  lastUsedAt:       Ref[F, Long],
-  useCount:         Ref[F, Long],
-  lastValidatedAt:  Ref[F, Long],
-  leakDetection:    Ref[F, Option[Fiber[F, Throwable, Unit]]]
+  id:              String,
+  connection:      Connection[F],
+  state:           Ref[F, ConnectionState],
+  createdAt:       Long,
+  lastUsedAt:      Ref[F, Long],
+  useCount:        Ref[F, Long],
+  lastValidatedAt: Ref[F, Long],
+  leakDetection:   Ref[F, Option[Fiber[F, Throwable, Unit]]]
 )

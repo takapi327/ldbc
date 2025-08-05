@@ -15,8 +15,8 @@ package ldbc.connector.pool
  * @param waiting the number of waiting requests
  */
 case class PoolStatus(
-                       total:   Int,
-                       active:  Int,
-                       idle:    Int,
-                       waiting: Int
-                     )
+  total:   Int,
+  active:  Int,
+  idle:    Int,
+  waiting: Int
+)

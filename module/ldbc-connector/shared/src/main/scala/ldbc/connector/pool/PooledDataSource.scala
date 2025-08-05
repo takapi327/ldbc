@@ -10,8 +10,9 @@ import scala.concurrent.duration.*
 
 import cats.effect.*
 
-import ldbc.DataSource
 import ldbc.sql.Connection
+
+import ldbc.DataSource
 
 /**
  * A DataSource implementation that manages a pool of reusable database connections.
@@ -37,63 +38,63 @@ import ldbc.sql.Connection
  * @tparam F the effect type (e.g., IO) that wraps asynchronous operations
  */
 trait PooledDataSource[F[_]] extends DataSource[F]:
-  
+
   /** The minimum number of connections to maintain in the pool. */
   def minConnections: Int
-  
+
   /** The maximum number of connections allowed in the pool. */
   def maxConnections: Int
-  
+
   /** The maximum time to wait for a connection to become available. */
   def connectionTimeout: FiniteDuration
-  
+
   /** The maximum time a connection can remain idle before being closed. */
   def idleTimeout: FiniteDuration
-  
+
   /** The maximum lifetime of a connection in the pool. */
   def maxLifetime: FiniteDuration
-  
+
   /** The maximum time to wait for connection validation. */
   def validationTimeout: FiniteDuration
-  
+
   /** Optional threshold for detecting connection leaks. */
   def leakDetectionThreshold: Option[FiniteDuration]
-  
+
   /** Whether adaptive pool sizing is enabled. */
   def adaptiveSizing: Boolean
-  
+
   /** The interval at which the adaptive sizing algorithm runs. */
   def adaptiveInterval: FiniteDuration
-  
+
   /** The metrics tracker for monitoring pool performance. */
   def metricsTracker: PoolMetricsTracker[F]
-  
+
   /** Internal state of the connection pool. */
   def poolState: Ref[F, PoolState[F]]
-  
+
   /** Generates unique identifiers for connections. */
   def idGenerator: F[String]
-  
+
   /** Background fiber performing pool maintenance tasks. */
   def houseKeeper: Option[Fiber[F, Throwable, Unit]]
-  
+
   /** Background fiber performing adaptive pool sizing. */
   def adaptiveSizer: Option[Fiber[F, Throwable, Unit]]
-  
+
   /**
    * Returns the current status of the pool.
    * 
    * @return a PoolStatus containing information about available, in-use, and total connections
    */
   def status: F[PoolStatus]
-  
+
   /**
    * Returns comprehensive metrics about pool performance.
    * 
    * @return a PoolMetrics object with detailed statistics
    */
   def metrics: F[PoolMetrics]
-  
+
   /**
    * Gracefully shuts down the pool, closing all connections.
    * 
@@ -104,28 +105,28 @@ trait PooledDataSource[F[_]] extends DataSource[F]:
    * - Cancel background maintenance tasks
    */
   def close: F[Unit]
-  
+
   /**
    * Creates a new pooled connection.
    * 
    * @return a new PooledConnection wrapped in the effect type
    */
   def createNewConnection(): F[PooledConnection[F]]
-  
+
   /**
    * Returns a connection to the pool for reuse.
    * 
    * @param pooled the connection to return to the pool
    */
   def returnToPool(pooled: PooledConnection[F]): F[Unit]
-  
+
   /**
    * Removes a connection from the pool permanently.
    * 
    * @param pooled the connection to remove
    */
   def removeConnection(pooled: PooledConnection[F]): F[Unit]
-  
+
   /**
    * Validates that a connection is still healthy and usable.
    * 

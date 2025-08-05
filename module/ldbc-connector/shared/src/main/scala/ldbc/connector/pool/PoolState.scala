@@ -21,12 +21,12 @@ import ldbc.connector.Connection
  * @tparam F the effect type
  */
 case class PoolState[F[_]](
-                            connections:     Vector[PooledConnection[F]],
-                            idleConnections: Set[String], // Track idle connection IDs
-                            waitQueue:       Vector[Deferred[F, Either[Throwable, Connection[F]]]],
-                            metrics:         PoolMetrics,
-                            closed:          Boolean = false
-                          )
+  connections:     Vector[PooledConnection[F]],
+  idleConnections: Set[String], // Track idle connection IDs
+  waitQueue:       Vector[Deferred[F, Either[Throwable, Connection[F]]]],
+  metrics:         PoolMetrics,
+  closed:          Boolean = false
+)
 
 object PoolState:
   def empty[F[_]]: PoolState[F] = PoolState(
