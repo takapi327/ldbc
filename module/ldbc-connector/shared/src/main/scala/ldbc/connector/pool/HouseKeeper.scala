@@ -71,7 +71,7 @@ object HouseKeeper:
      * Run a single maintenance cycle.
      */
     private def runMaintenance(
-      pool:           PooledDataSource[F],
+      pool: PooledDataSource[F]
     ): F[Unit] = for
       now <- Clock[F].realTime.map(_.toMillis)
       _   <- removeExpiredConnections(pool, now)
@@ -85,8 +85,8 @@ object HouseKeeper:
      * Remove connections that have exceeded max lifetime.
      */
     private def removeExpiredConnections(
-      pool:   PooledDataSource[F],
-      now:    Long
+      pool: PooledDataSource[F],
+      now:  Long
     ): F[Unit] =
       pool.poolState.get.flatMap { state =>
         val expired = state.connections.filter { pooled =>
@@ -111,7 +111,7 @@ object HouseKeeper:
      * Remove idle connections that have exceeded idle timeout.
      */
     private def removeIdleConnections(
-      pool:   PooledDataSource[F],
+      pool: PooledDataSource[F]
     ): F[Unit] =
       pool.poolState.get.flatMap { state =>
         // Count idle connections - simplified for compilation
@@ -151,7 +151,7 @@ object HouseKeeper:
      * Ensure minimum connections are maintained.
      */
     private def ensureMinimumConnections(
-      pool:   PooledDataSource[F],
+      pool: PooledDataSource[F]
     ): F[Unit] =
       pool.poolState.get.flatMap { state =>
         val currentTotal = state.connections.size
@@ -174,7 +174,7 @@ object HouseKeeper:
      * Update pool metrics.
      */
     private def updateMetrics(
-      pool:           PooledDataSource[F],
+      pool: PooledDataSource[F]
     ): F[Unit] = for
       status <- pool.status
       _      <- metricsTracker.updateGauge("pool.total", status.total.toLong)
