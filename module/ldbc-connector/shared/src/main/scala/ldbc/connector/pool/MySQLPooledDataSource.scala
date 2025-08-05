@@ -423,8 +423,8 @@ object MySQLPooledDataSource:
     idGenerator:    F[String]
   ): Resource[F, MySQLPooledDataSource[F, Unit]] =
 
-    val tracker     = metricsTracker.getOrElse(PoolMetricsTracker.noop[F])
-    val houseKeeper = HouseKeeper.fromAsync[F](config, tracker)
+    val tracker           = metricsTracker.getOrElse(PoolMetricsTracker.noop[F])
+    val houseKeeper       = HouseKeeper.fromAsync[F](config, tracker)
     val adaptivePoolSizer = AdaptivePoolSizer.fromAsync[F](config, tracker)
 
     def pool = for

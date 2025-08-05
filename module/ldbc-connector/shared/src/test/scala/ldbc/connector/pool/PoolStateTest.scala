@@ -63,14 +63,14 @@ class PoolStateTest extends FTestPlatform:
         pooledConn1 <- createPooledConnection("conn-1", conn)
         pooledConn2 <- createPooledConnection("conn-2", conn)
         pooledConn3 <- createPooledConnection("conn-3", conn)
-        
+
         state = PoolState[IO](
-          connections     = Vector(pooledConn1, pooledConn2, pooledConn3),
-          idleConnections = Set("conn-1", "conn-2", "conn-3"),
-          waitQueue       = Vector.empty,
-          metrics         = PoolMetrics.empty,
-          closed          = false
-        )
+                  connections     = Vector(pooledConn1, pooledConn2, pooledConn3),
+                  idleConnections = Set("conn-1", "conn-2", "conn-3"),
+                  waitQueue       = Vector.empty,
+                  metrics         = PoolMetrics.empty,
+                  closed          = false
+                )
       yield
         assertEquals(state.connections.size, 3)
         assertEquals(state.idleConnections.size, 3)
@@ -87,14 +87,14 @@ class PoolStateTest extends FTestPlatform:
         pooledConn2 <- createPooledConnection("conn-2", conn)
         pooledConn3 <- createPooledConnection("conn-3", conn)
         _           <- pooledConn2.state.set(ConnectionState.InUse)
-        
+
         state = PoolState[IO](
-          connections     = Vector(pooledConn1, pooledConn2, pooledConn3),
-          idleConnections = Set("conn-1", "conn-3"), // Only idle connections
-          waitQueue       = Vector.empty,
-          metrics         = PoolMetrics.empty,
-          closed          = false
-        )
+                  connections     = Vector(pooledConn1, pooledConn2, pooledConn3),
+                  idleConnections = Set("conn-1", "conn-3"), // Only idle connections
+                  waitQueue       = Vector.empty,
+                  metrics         = PoolMetrics.empty,
+                  closed          = false
+                )
       yield
         assertEquals(state.connections.size, 3)
         assertEquals(state.idleConnections.size, 2)
@@ -109,14 +109,14 @@ class PoolStateTest extends FTestPlatform:
       deferred1 <- Deferred[IO, Either[Throwable, Connection[IO]]]
       deferred2 <- Deferred[IO, Either[Throwable, Connection[IO]]]
       deferred3 <- Deferred[IO, Either[Throwable, Connection[IO]]]
-      
+
       state = PoolState[IO](
-        connections     = Vector.empty,
-        idleConnections = Set.empty,
-        waitQueue       = Vector(deferred1, deferred2, deferred3),
-        metrics         = PoolMetrics.empty,
-        closed          = false
-      )
+                connections     = Vector.empty,
+                idleConnections = Set.empty,
+                waitQueue       = Vector(deferred1, deferred2, deferred3),
+                metrics         = PoolMetrics.empty,
+                closed          = false
+              )
     yield
       assertEquals(state.waitQueue.size, 3)
       assertEquals(state.connections.size, 0)
@@ -134,7 +134,7 @@ class PoolStateTest extends FTestPlatform:
       totalCreations    = 100,
       totalRemovals     = 10
     )
-    
+
     val state = PoolState[IO](
       connections     = Vector.empty,
       idleConnections = Set.empty,
@@ -142,7 +142,7 @@ class PoolStateTest extends FTestPlatform:
       metrics         = metrics,
       closed          = false
     )
-    
+
     assertEquals(state.metrics, metrics)
   }
 
@@ -154,9 +154,9 @@ class PoolStateTest extends FTestPlatform:
       metrics         = PoolMetrics.empty,
       closed          = false
     )
-    
+
     val closedState = openState.copy(closed = true)
-    
+
     assertEquals(openState.closed, false)
     assertEquals(closedState.closed, true)
   }
@@ -167,20 +167,20 @@ class PoolStateTest extends FTestPlatform:
         pooledConn1 <- createPooledConnection("conn-1", conn)
         pooledConn2 <- createPooledConnection("conn-2", conn)
         pooledConn3 <- createPooledConnection("conn-3", conn)
-        
+
         // Set different states
-        _           <- pooledConn1.state.set(ConnectionState.Idle)
-        _           <- pooledConn2.state.set(ConnectionState.InUse)
-        _           <- pooledConn3.state.set(ConnectionState.Idle)
-        
+        _ <- pooledConn1.state.set(ConnectionState.Idle)
+        _ <- pooledConn2.state.set(ConnectionState.InUse)
+        _ <- pooledConn3.state.set(ConnectionState.Idle)
+
         state = PoolState[IO](
-          connections     = Vector(pooledConn1, pooledConn2, pooledConn3),
-          idleConnections = Set("conn-1", "conn-3"),
-          waitQueue       = Vector.empty,
-          metrics         = PoolMetrics.empty,
-          closed          = false
-        )
-        
+                  connections     = Vector(pooledConn1, pooledConn2, pooledConn3),
+                  idleConnections = Set("conn-1", "conn-3"),
+                  waitQueue       = Vector.empty,
+                  metrics         = PoolMetrics.empty,
+                  closed          = false
+                )
+
         // Verify connection states
         conn1State <- pooledConn1.state.get
         conn2State <- pooledConn2.state.get
@@ -189,11 +189,11 @@ class PoolStateTest extends FTestPlatform:
         // Idle connections should be in idleConnections set
         assertEquals(conn1State, ConnectionState.Idle)
         assert(state.idleConnections.contains("conn-1"))
-        
+
         // In-use connections should not be in idleConnections set
         assertEquals(conn2State, ConnectionState.InUse)
         assert(!state.idleConnections.contains("conn-2"))
-        
+
         assertEquals(conn3State, ConnectionState.Idle)
         assert(state.idleConnections.contains("conn-3"))
     }
@@ -204,32 +204,32 @@ class PoolStateTest extends FTestPlatform:
       for
         pooledConn <- createPooledConnection("conn-1", conn)
         deferred   <- Deferred[IO, Either[Throwable, Connection[IO]]]
-        
+
         originalState = PoolState[IO](
-          connections     = Vector(pooledConn),
-          idleConnections = Set("conn-1"),
-          waitQueue       = Vector(deferred),
-          metrics         = PoolMetrics.empty,
-          closed          = false
-        )
-        
+                          connections     = Vector(pooledConn),
+                          idleConnections = Set("conn-1"),
+                          waitQueue       = Vector(deferred),
+                          metrics         = PoolMetrics.empty,
+                          closed          = false
+                        )
+
         // Test various copy operations
-        closedState = originalState.copy(closed = true)
+        closedState     = originalState.copy(closed = true)
         emptyQueueState = originalState.copy(waitQueue = Vector.empty)
-        updatedMetrics = originalState.copy(metrics = PoolMetrics.empty.copy(timeouts = 10))
+        updatedMetrics  = originalState.copy(metrics = PoolMetrics.empty.copy(timeouts = 10))
       yield
         // Original state should remain unchanged
         assertEquals(originalState.closed, false)
         assertEquals(originalState.waitQueue.size, 1)
         assertEquals(originalState.metrics.timeouts, 0L)
-        
+
         // Copied states should have updated values
         assertEquals(closedState.closed, true)
         assertEquals(closedState.connections, originalState.connections)
-        
+
         assertEquals(emptyQueueState.waitQueue.size, 0)
         assertEquals(emptyQueueState.connections, originalState.connections)
-        
+
         assertEquals(updatedMetrics.metrics.timeouts, 10L)
         assertEquals(updatedMetrics.connections, originalState.connections)
     }
@@ -240,22 +240,22 @@ class PoolStateTest extends FTestPlatform:
       for
         pooledConn1 <- createPooledConnection("conn-1", conn)
         pooledConn2 <- createPooledConnection("conn-2", conn)
-        
+
         emptyState = PoolState.empty[IO]
-        
+
         nonEmptyState = PoolState[IO](
-          connections     = Vector(pooledConn1, pooledConn2),
-          idleConnections = Set("conn-1", "conn-2"),
-          waitQueue       = Vector.empty,
-          metrics         = PoolMetrics.empty,
-          closed          = false
-        )
+                          connections     = Vector(pooledConn1, pooledConn2),
+                          idleConnections = Set("conn-1", "conn-2"),
+                          waitQueue       = Vector.empty,
+                          metrics         = PoolMetrics.empty,
+                          closed          = false
+                        )
       yield
         // Empty state checks
         assert(emptyState.connections.isEmpty)
         assert(emptyState.idleConnections.isEmpty)
         assert(emptyState.waitQueue.isEmpty)
-        
+
         // Non-empty state checks
         assert(nonEmptyState.connections.nonEmpty)
         assertEquals(nonEmptyState.connections.size, 2)
@@ -270,15 +270,15 @@ class PoolStateTest extends FTestPlatform:
         pooledConn1 <- createPooledConnection("conn-1", conn)
         pooledConn2 <- createPooledConnection("conn-2", conn)
         pooledConn3 <- createPooledConnection("conn-3", conn)
-        
+
         state = PoolState[IO](
-          connections     = Vector(pooledConn1, pooledConn2, pooledConn3),
-          idleConnections = Set("conn-1", "conn-2", "conn-3"),
-          waitQueue       = Vector.empty,
-          metrics         = PoolMetrics.empty,
-          closed          = false
-        )
-        
+                  connections     = Vector(pooledConn1, pooledConn2, pooledConn3),
+                  idleConnections = Set("conn-1", "conn-2", "conn-3"),
+                  waitQueue       = Vector.empty,
+                  metrics         = PoolMetrics.empty,
+                  closed          = false
+                )
+
         // Find connections by ID
         foundConn1 = state.connections.find(_.id == "conn-1")
         foundConn2 = state.connections.find(_.id == "conn-2")
@@ -286,10 +286,10 @@ class PoolStateTest extends FTestPlatform:
       yield
         assert(foundConn1.isDefined)
         assertEquals(foundConn1.get.id, "conn-1")
-        
+
         assert(foundConn2.isDefined)
         assertEquals(foundConn2.get.id, "conn-2")
-        
+
         assert(foundConn4.isEmpty) // Non-existent connection
     }
   }
