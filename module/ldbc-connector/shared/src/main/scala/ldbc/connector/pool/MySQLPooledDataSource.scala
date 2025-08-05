@@ -22,7 +22,6 @@ import fs2.hashing.Hashing
 
 import org.typelevel.otel4s.trace.Tracer
 
-import ldbc.DataSource
 import ldbc.logging.LogHandler
 import ldbc.sql.DatabaseMetaData
 import ldbc.connector.*
