@@ -425,6 +425,7 @@ object MySQLPooledDataSource:
 
     val tracker     = metricsTracker.getOrElse(PoolMetricsTracker.noop[F])
     val houseKeeper = HouseKeeper.fromAsync[F](config, tracker)
+    val adaptivePoolSizer = AdaptivePoolSizer.fromAsync[F](config, tracker)
 
     def pool = for
       poolState <- Ref[F].of(PoolState.empty[F])
@@ -475,7 +476,7 @@ object MySQLPooledDataSource:
         // Start background tasks
         val backgroundTasks = List(
           houseKeeper.start(pool),
-          if config.adaptiveSizing then AdaptivePoolSizer.start(pool, config, tracker)
+          if config.adaptiveSizing then adaptivePoolSizer.start(pool)
           else Resource.pure[F, Unit](())
         )
 
