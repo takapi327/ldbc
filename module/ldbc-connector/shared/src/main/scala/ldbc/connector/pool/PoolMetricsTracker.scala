@@ -110,23 +110,23 @@ object PoolMetricsTracker:
       if times.isEmpty then Duration.Zero
       else times.foldLeft(Duration.Zero)(_ + _) / times.size
 
-    def recordAcquisition(duration: FiniteDuration): F[Unit] =
+    override def recordAcquisition(duration: FiniteDuration): F[Unit] =
       recordDuration(acquisitionTimes, duration) *> acquisitions.update(_ + 1)
 
-    def recordUsage(duration: FiniteDuration): F[Unit] =
+    override def recordUsage(duration: FiniteDuration): F[Unit] =
       recordDuration(usageTimes, duration) *> releases.update(_ + 1)
 
-    def recordCreation(duration: FiniteDuration): F[Unit] =
+    override def recordCreation(duration: FiniteDuration): F[Unit] =
       recordDuration(creationTimes, duration) *> creations.update(_ + 1)
 
-    def recordTimeout(): F[Unit] = timeouts.update(_ + 1)
+    override def recordTimeout(): F[Unit] = timeouts.update(_ + 1)
 
-    def recordLeak(): F[Unit] = leaks.update(_ + 1)
+    override def recordLeak(): F[Unit] = leaks.update(_ + 1)
 
-    def updateGauge(name: String, value: Long): F[Unit] =
+    override def updateGauge(name: String, value: Long): F[Unit] =
       gauges.update(_.updated(name, value))
 
-    def getMetrics: F[PoolMetrics] = for
+    override def getMetrics: F[PoolMetrics] = for
       acqTimes <- acquisitionTimes.get
       useTimes <- usageTimes.get
       creTimes <- creationTimes.get
