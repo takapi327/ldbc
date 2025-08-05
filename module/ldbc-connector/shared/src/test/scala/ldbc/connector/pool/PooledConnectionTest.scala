@@ -30,10 +30,10 @@ class PooledConnectionTest extends FTestPlatform:
   // Helper to create a pooled connection
   def createPooledConnection(id: String, conn: Connection[IO]): IO[PooledConnection[IO]] =
     for
-      currentTime <- IO.realTime.map(_.toMillis)
-      stateRef    <- Ref[IO].of[ConnectionState](ConnectionState.Idle)
-      lastUsedRef <- Ref[IO].of(currentTime)
-      useCountRef <- Ref[IO].of(0L)
+      currentTime      <- IO.realTime.map(_.toMillis)
+      stateRef         <- Ref[IO].of[ConnectionState](ConnectionState.Idle)
+      lastUsedRef      <- Ref[IO].of(currentTime)
+      useCountRef      <- Ref[IO].of(0L)
       lastValidatedRef <- Ref[IO].of(currentTime)
       leakDetectionRef <- Ref[IO].of(Option.empty[Fiber[IO, Throwable, Unit]])
     yield PooledConnection[IO](
@@ -68,8 +68,7 @@ class PooledConnectionTest extends FTestPlatform:
         pooledConn <- createPooledConnection("test-1", conn)
         _          <- pooledConn.state.set(ConnectionState.InUse)
         newState   <- pooledConn.state.get
-      yield
-        assertEquals(newState, ConnectionState.InUse)
+      yield assertEquals(newState, ConnectionState.InUse)
     }
   }
 
@@ -80,8 +79,7 @@ class PooledConnectionTest extends FTestPlatform:
         _          <- pooledConn.useCount.update(_ + 1)
         _          <- pooledConn.useCount.update(_ + 1)
         count      <- pooledConn.useCount.get
-      yield
-        assertEquals(count, 2L)
+      yield assertEquals(count, 2L)
     }
   }
 
@@ -90,10 +88,9 @@ class PooledConnectionTest extends FTestPlatform:
       for
         pooledConn <- createPooledConnection("test-1", conn)
         newTime = System.currentTimeMillis() + 1000
-        _          <- pooledConn.lastUsedAt.set(newTime)
+        _           <- pooledConn.lastUsedAt.set(newTime)
         updatedTime <- pooledConn.lastUsedAt.get
-      yield
-        assertEquals(updatedTime, newTime)
+      yield assertEquals(updatedTime, newTime)
     }
   }
 
@@ -102,10 +99,9 @@ class PooledConnectionTest extends FTestPlatform:
       for
         pooledConn <- createPooledConnection("test-1", conn)
         newTime = System.currentTimeMillis() + 2000
-        _          <- pooledConn.lastValidatedAt.set(newTime)
+        _           <- pooledConn.lastValidatedAt.set(newTime)
         updatedTime <- pooledConn.lastValidatedAt.get
-      yield
-        assertEquals(updatedTime, newTime)
+      yield assertEquals(updatedTime, newTime)
     }
   }
 
@@ -117,8 +113,7 @@ class PooledConnectionTest extends FTestPlatform:
         _          <- pooledConn.leakDetection.set(Some(fiber))
         leak       <- pooledConn.leakDetection.get
         _          <- fiber.cancel // Clean up
-      yield
-        assert(leak.isDefined, "Leak detection fiber should be set")
+      yield assert(leak.isDefined, "Leak detection fiber should be set")
     }
   }
 
@@ -139,22 +134,22 @@ class PooledConnectionTest extends FTestPlatform:
     connection.use { conn =>
       for
         pooledConn <- createPooledConnection("test-1", conn)
-        
+
         // Idle -> Reserved
-        _          <- pooledConn.state.set(ConnectionState.Reserved)
-        reserved   <- pooledConn.state.get
-        
+        _        <- pooledConn.state.set(ConnectionState.Reserved)
+        reserved <- pooledConn.state.get
+
         // Reserved -> InUse
-        _          <- pooledConn.state.set(ConnectionState.InUse)
-        inUse      <- pooledConn.state.get
-        
+        _     <- pooledConn.state.set(ConnectionState.InUse)
+        inUse <- pooledConn.state.get
+
         // InUse -> Idle
-        _          <- pooledConn.state.set(ConnectionState.Idle)
-        idle       <- pooledConn.state.get
-        
+        _    <- pooledConn.state.set(ConnectionState.Idle)
+        idle <- pooledConn.state.get
+
         // Idle -> Removed
-        _          <- pooledConn.state.set(ConnectionState.Removed)
-        removed    <- pooledConn.state.get
+        _       <- pooledConn.state.set(ConnectionState.Removed)
+        removed <- pooledConn.state.get
       yield
         assertEquals(reserved, ConnectionState.Reserved)
         assertEquals(inUse, ConnectionState.InUse)
@@ -181,10 +176,10 @@ class PooledConnectionTest extends FTestPlatform:
       for
         pooledConn <- createPooledConnection("test-1", conn)
         // Simulate concurrent state changes
-        _          <- IO.parTraverseN(10)((1 to 100).toList) { i =>
-                        if i % 2 == 0 then pooledConn.state.set(ConnectionState.InUse)
-                        else pooledConn.state.set(ConnectionState.Idle)
-                      }
+        _ <- IO.parTraverseN(10)((1 to 100).toList) { i =>
+               if i % 2 == 0 then pooledConn.state.set(ConnectionState.InUse)
+               else pooledConn.state.set(ConnectionState.Idle)
+             }
         finalState <- pooledConn.state.get
       yield
         // Final state should be one of the two states we set
@@ -200,12 +195,11 @@ class PooledConnectionTest extends FTestPlatform:
       for
         pooledConn <- createPooledConnection("test-1", conn)
         // Increment use count concurrently
-        _          <- IO.parTraverseN(10)((1 to 100).toList) { _ =>
-                        pooledConn.useCount.update(_ + 1)
-                      }
+        _ <- IO.parTraverseN(10)((1 to 100).toList) { _ =>
+               pooledConn.useCount.update(_ + 1)
+             }
         finalCount <- pooledConn.useCount.get
-      yield
-        assertEquals(finalCount, 100L)
+      yield assertEquals(finalCount, 100L)
     }
   }
 
@@ -231,7 +225,6 @@ class PooledConnectionTest extends FTestPlatform:
         _          <- resultSet.next()
         result     <- resultSet.getInt("num")
         _          <- pooledConn.state.set(ConnectionState.Idle)
-      yield
-        assertEquals(result, 1)
+      yield assertEquals(result, 1)
     }
   }

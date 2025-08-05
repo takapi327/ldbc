@@ -25,8 +25,7 @@ class PoolMetricsTrackerTest extends FTestPlatform:
       _       <- tracker.recordLeak()
       _       <- tracker.updateGauge("active", 10)
       metrics <- tracker.getMetrics
-    yield
-      assertEquals(metrics, PoolMetrics.empty)
+    yield assertEquals(metrics, PoolMetrics.empty)
   }
 
   test("in-memory tracker should record acquisition times and calculate average") {
@@ -72,8 +71,7 @@ class PoolMetricsTrackerTest extends FTestPlatform:
       _       <- tracker.recordTimeout()
       _       <- tracker.recordTimeout()
       metrics <- tracker.getMetrics
-    yield
-      assertEquals(metrics.timeouts, 3L)
+    yield assertEquals(metrics.timeouts, 3L)
   }
 
   test("in-memory tracker should count leaks correctly") {
@@ -82,8 +80,7 @@ class PoolMetricsTrackerTest extends FTestPlatform:
       _       <- tracker.recordLeak()
       _       <- tracker.recordLeak()
       metrics <- tracker.getMetrics
-    yield
-      assertEquals(metrics.leaks, 2L)
+    yield assertEquals(metrics.leaks, 2L)
   }
 
   test("in-memory tracker should handle gauge updates") {
@@ -103,9 +100,9 @@ class PoolMetricsTrackerTest extends FTestPlatform:
     for
       tracker <- PoolMetricsTracker.inMemory[IO]
       // Record more than maxSize (100) samples
-      _       <- IO.parTraverseN(10)((1 to 110).toList) { i =>
-                   tracker.recordAcquisition(i.millis)
-                 }
+      _ <- IO.parTraverseN(10)((1 to 110).toList) { i =>
+             tracker.recordAcquisition(i.millis)
+           }
       metrics <- tracker.getMetrics
     yield
       // Should keep only the last 100 samples (11-110)
@@ -158,11 +155,11 @@ class PoolMetricsTrackerTest extends FTestPlatform:
     for
       tracker <- PoolMetricsTracker.inMemory[IO]
       // Parallel operations
-      _       <- IO.parTraverseN(10)((1 to 100).toList) { _ =>
-                   tracker.recordAcquisition(100.millis) *>
-                   tracker.recordTimeout() *>
-                   tracker.recordLeak()
-                 }
+      _ <- IO.parTraverseN(10)((1 to 100).toList) { _ =>
+             tracker.recordAcquisition(100.millis) *>
+               tracker.recordTimeout() *>
+               tracker.recordLeak()
+           }
       metrics <- tracker.getMetrics
     yield
       assertEquals(metrics.acquisitionTime, 100.millis)
