@@ -256,10 +256,10 @@ final case class MySQLPooledDataSource[F[_]: Async: Network: Console: Hashing: U
                }
 
       // If we couldn't add it, close the connection and fail
-      _ <- if !added then
+      _ <- if (!added) {
              conn.close().attempt.void *>
                Temporal[F].raiseError[Unit](new Exception("Pool reached maximum size"))
-           else Temporal[F].unit
+      } else Temporal[F].unit
 
       endTime <- Clock[F].monotonic
       _       <- metricsTracker.recordCreation(endTime - startTime)

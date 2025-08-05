@@ -59,7 +59,7 @@ object HouseKeeper:
 
       val task = Stream
         .fixedDelay[F](config.maintenanceInterval)
-        .evalMap { _ => runMaintenance(pool, config, metricsTracker) }
+        .evalMap { _ => runMaintenance(pool) }
         .compile
         .drain
 
@@ -70,25 +70,22 @@ object HouseKeeper:
     /**
      * Run a single maintenance cycle.
      */
-    private def runMaintenance[F[_]: Async](
+    private def runMaintenance(
       pool:           PooledDataSource[F],
-      config:         MySQLConfig,
-      metricsTracker: PoolMetricsTracker[F]
     ): F[Unit] = for
       now <- Clock[F].realTime.map(_.toMillis)
-      _   <- removeExpiredConnections(pool, config, now)
-      _   <- removeIdleConnections(pool, config)
+      _   <- removeExpiredConnections(pool, now)
+      _   <- removeIdleConnections(pool)
       _   <- validateIdleConnections(pool, now)
-      _   <- ensureMinimumConnections(pool, config)
-      _   <- updateMetrics(pool, metricsTracker)
+      _   <- ensureMinimumConnections(pool)
+      _   <- updateMetrics(pool)
     yield ()
 
     /**
      * Remove connections that have exceeded max lifetime.
      */
-    private def removeExpiredConnections[F[_]: Async](
+    private def removeExpiredConnections(
       pool:   PooledDataSource[F],
-      config: MySQLConfig,
       now:    Long
     ): F[Unit] =
       pool.poolState.get.flatMap { state =>
@@ -113,9 +110,8 @@ object HouseKeeper:
     /**
      * Remove idle connections that have exceeded idle timeout.
      */
-    private def removeIdleConnections[F[_]: Async](
+    private def removeIdleConnections(
       pool:   PooledDataSource[F],
-      config: MySQLConfig
     ): F[Unit] =
       pool.poolState.get.flatMap { state =>
         // Count idle connections - simplified for compilation
@@ -135,7 +131,7 @@ object HouseKeeper:
     /**
      * Validate idle connections periodically.
      */
-    private def validateIdleConnections[F[_]: Async](
+    private def validateIdleConnections(
       pool: PooledDataSource[F],
       now:  Long
     ): F[Unit] =
@@ -154,9 +150,8 @@ object HouseKeeper:
     /**
      * Ensure minimum connections are maintained.
      */
-    private def ensureMinimumConnections[F[_]: Async](
+    private def ensureMinimumConnections(
       pool:   PooledDataSource[F],
-      config: MySQLConfig
     ): F[Unit] =
       pool.poolState.get.flatMap { state =>
         val currentTotal = state.connections.size
@@ -178,9 +173,8 @@ object HouseKeeper:
     /**
      * Update pool metrics.
      */
-    private def updateMetrics[F[_]: Async](
+    private def updateMetrics(
       pool:           PooledDataSource[F],
-      metricsTracker: PoolMetricsTracker[F]
     ): F[Unit] = for
       status <- pool.status
       _      <- metricsTracker.updateGauge("pool.total", status.total.toLong)
