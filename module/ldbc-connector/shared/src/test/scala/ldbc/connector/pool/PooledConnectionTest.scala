@@ -39,7 +39,7 @@ class PooledConnectionTest extends FTestPlatform:
     yield PooledConnection[IO](
       id              = id,
       connection      = conn,
-      finalizer       = IO.unit,  // For testing, use a no-op finalizer
+      finalizer       = IO.unit, // For testing, use a no-op finalizer
       state           = stateRef,
       createdAt       = currentTime,
       lastUsedAt      = lastUsedRef,

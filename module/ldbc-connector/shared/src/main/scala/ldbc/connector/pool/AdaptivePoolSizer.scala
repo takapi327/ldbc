@@ -76,7 +76,7 @@ object AdaptivePoolSizer:
     private def adjustPoolSize(
       pool:  PooledDataSource[F],
       state: AdaptiveState
-    ): F[(AdaptiveState, Unit)] = 
+    ): F[(AdaptiveState, Unit)] =
       pool.poolState.get.flatMap { poolState =>
         if poolState.closed then
           // Pool is closed, return unchanged state

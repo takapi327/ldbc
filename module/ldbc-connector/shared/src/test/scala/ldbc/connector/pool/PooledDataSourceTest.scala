@@ -25,8 +25,7 @@ class PooledDataSourceTest extends FTestPlatform:
     val resource = PooledDataSource.fromConfig[IO](config)
 
     resource.use { datasource =>
-      for
-        status <- datasource.status
+      for status <- datasource.status
       yield
         assertEquals(status.total, config.minConnections)
         assertEquals(status.idle, config.minConnections)
@@ -42,11 +41,11 @@ class PooledDataSourceTest extends FTestPlatform:
       datasource.getConnection.use { conn =>
         for
           statusAfterAcquire <- datasource.status
-          
+
           // Use the connection
-          stmt <- conn.createStatement()
-          rs <- stmt.executeQuery("SELECT 1")
-          _ <- rs.next()
+          stmt   <- conn.createStatement()
+          rs     <- stmt.executeQuery("SELECT 1")
+          _      <- rs.next()
           result <- rs.getInt(1)
         yield
           assertEquals(result, 1)
@@ -67,16 +66,16 @@ class PooledDataSourceTest extends FTestPlatform:
       val results = IO.parTraverseN(5)((1 to 5).toList) { i =>
         datasource.getConnection.use { conn =>
           for
-            stmt <- conn.createStatement()
-            rs <- stmt.executeQuery(s"SELECT $i")
-            _ <- rs.next()
+            stmt   <- conn.createStatement()
+            rs     <- stmt.executeQuery(s"SELECT $i")
+            _      <- rs.next()
             result <- rs.getInt(1)
           yield result
         }
       }
 
       for
-        res <- results
+        res         <- results
         finalStatus <- datasource.status
       yield
         assertEquals(res, List(1, 2, 3, 4, 5))
@@ -91,16 +90,16 @@ class PooledDataSourceTest extends FTestPlatform:
     resource.use { datasource =>
       for
         initialStatus <- datasource.status
-        _ <- datasource.getConnection.use { _ =>
-          datasource.getConnection.use { _ =>
-            datasource.getConnection.use { _ =>
-              datasource.status.map { statusAfterGrowth =>
-                assert(statusAfterGrowth.total >= 3)
-                assertEquals(statusAfterGrowth.active, 3)
-              }
-            }
-          }
-        }
+        _             <- datasource.getConnection.use { _ =>
+               datasource.getConnection.use { _ =>
+                 datasource.getConnection.use { _ =>
+                   datasource.status.map { statusAfterGrowth =>
+                     assert(statusAfterGrowth.total >= 3)
+                     assertEquals(statusAfterGrowth.active, 3)
+                   }
+                 }
+               }
+             }
         finalStatus <- datasource.status
       yield
         assertEquals(initialStatus.total, 2)
@@ -127,7 +126,7 @@ class PooledDataSourceTest extends FTestPlatform:
         datasource.getConnection.use { conn2 =>
           // Try to acquire one more (should timeout)
           val acquireThird = datasource.getConnection.use(_ => IO.unit)
-          
+
           // This should timeout because all connections are in use
           acquireThird.timeout(600.millis).attempt.map { result =>
             assert(result.isLeft, "Third connection acquisition should timeout")
@@ -135,7 +134,7 @@ class PooledDataSourceTest extends FTestPlatform:
         }
       }
     }
-    
+
     // Ensure cleanup is complete before test ends
     testResult >> IO.sleep(100.millis)
   }
@@ -165,19 +164,20 @@ class PooledDataSourceTest extends FTestPlatform:
   test("PooledDataSource should track metrics") {
     val resource = for
       tracker <- Resource.eval(PoolMetricsTracker.inMemory[IO])
-      ds      <- PooledDataSource.fromConfig[IO](config.setMinConnections(2).setMaxConnections(5), metricsTracker = Some(tracker))
+      ds      <- PooledDataSource
+              .fromConfig[IO](config.setMinConnections(2).setMaxConnections(5), metricsTracker = Some(tracker))
     yield ds
 
     resource.use { datasource =>
       for
         // Perform some operations
         _ <- datasource.getConnection.use { _ =>
-          IO.sleep(100.millis)
-        }
+               IO.sleep(100.millis)
+             }
 
         _ <- datasource.getConnection.use { _ =>
-          IO.sleep(50.millis)
-        }
+               IO.sleep(50.millis)
+             }
 
         // Get metrics
         metrics <- datasource.metrics
@@ -200,21 +200,20 @@ class PooledDataSourceTest extends FTestPlatform:
 
           // Execute some operations
           stmt <- conn.createStatement()
-          _ <- stmt.executeUpdate("CREATE TEMPORARY TABLE test_pool (id INT)")
-          _ <- stmt.executeUpdate("INSERT INTO test_pool VALUES (1)")
+          _    <- stmt.executeUpdate("CREATE TEMPORARY TABLE test_pool (id INT)")
+          _    <- stmt.executeUpdate("INSERT INTO test_pool VALUES (1)")
 
           // Commit
           _ <- conn.commit()
 
           // Verify
-          rs <- stmt.executeQuery("SELECT COUNT(*) FROM test_pool")
-          _ <- rs.next()
+          rs    <- stmt.executeQuery("SELECT COUNT(*) FROM test_pool")
+          _     <- rs.next()
           count <- rs.getInt(1)
 
           // Clean up
           _ <- conn.setAutoCommit(true)
-        yield
-          assertEquals(count, 1)
+        yield assertEquals(count, 1)
       }
     }
   }
@@ -227,15 +226,14 @@ class PooledDataSourceTest extends FTestPlatform:
         for
           // Create prepared statement
           pstmt <- conn.prepareStatement("SELECT ? + ?")
-          _ <- pstmt.setInt(1, 10)
-          _ <- pstmt.setInt(2, 20)
+          _     <- pstmt.setInt(1, 10)
+          _     <- pstmt.setInt(2, 20)
 
           // Execute
-          rs <- pstmt.executeQuery()
-          _ <- rs.next()
+          rs     <- pstmt.executeQuery()
+          _      <- rs.next()
           result <- rs.getInt(1)
-        yield
-          assertEquals(result, 30)
+        yield assertEquals(result, 30)
       }
     }
   }
@@ -243,14 +241,13 @@ class PooledDataSourceTest extends FTestPlatform:
   test("PooledDataSource should clean up on shutdown") {
     val resource = PooledDataSource.fromConfig[IO](config.setMinConnections(3).setMaxConnections(5))
 
-    for
-      finalStatus <- resource.use { datasource =>
-        datasource.getConnection.use { _ =>
-          datasource.getConnection.use { _ =>
-            datasource.status
-          }
-        }
-      }
+    for finalStatus <- resource.use { datasource =>
+                         datasource.getConnection.use { _ =>
+                           datasource.getConnection.use { _ =>
+                             datasource.status
+                           }
+                         }
+                       }
     yield
       // After resource is released, all connections should be closed
       assert(finalStatus.total >= 2)
@@ -259,26 +256,27 @@ class PooledDataSourceTest extends FTestPlatform:
   test("PooledDataSource should handle concurrent acquisition and release") {
     val resource = for
       tracker <- Resource.eval(PoolMetricsTracker.inMemory[IO])
-      ds      <- PooledDataSource.fromConfig[IO](config.setMinConnections(5).setMaxConnections(10), metricsTracker = Some(tracker))
+      ds      <- PooledDataSource
+              .fromConfig[IO](config.setMinConnections(5).setMaxConnections(10), metricsTracker = Some(tracker))
     yield ds
 
     resource.use { datasource =>
       for
         // Simulate concurrent load
         _ <- IO.parTraverseN(10)((1 to 100).toList) { i =>
-          datasource.getConnection.use { conn =>
-            for
-              stmt <- conn.createStatement()
-              rs <- stmt.executeQuery(s"SELECT ${i % 10}")
-              _ <- rs.next()
-              _ <- rs.getInt(1)
-              _ <- IO.sleep((i % 10).millis) // Vary usage time
-            yield ()
-          }
-        }
+               datasource.getConnection.use { conn =>
+                 for
+                   stmt <- conn.createStatement()
+                   rs   <- stmt.executeQuery(s"SELECT ${ i % 10 }")
+                   _    <- rs.next()
+                   _    <- rs.getInt(1)
+                   _    <- IO.sleep((i % 10).millis) // Vary usage time
+                 yield ()
+               }
+             }
 
         finalStatus <- datasource.status
-        metrics <- datasource.metrics
+        metrics     <- datasource.metrics
       yield
         assertEquals(finalStatus.active, 0)
         assert(metrics.totalAcquisitions >= 100L)

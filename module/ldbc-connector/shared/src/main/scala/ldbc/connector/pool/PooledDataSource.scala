@@ -25,9 +25,9 @@ import org.typelevel.otel4s.trace.Tracer
 import ldbc.sql.DatabaseMetaData
 
 import ldbc.connector.*
-import ldbc.DataSource
 
 import ldbc.logging.LogHandler
+import ldbc.DataSource
 
 /**
  * A DataSource implementation that manages a pool of reusable database connections.
@@ -215,7 +215,7 @@ object PooledDataSource:
     override def close: F[Unit] = poolState.modify { state =>
       val newState = state.copy(closed = true)
       val closeAll = state.connections.traverse_ { pooled =>
-        pooled.finalizer.attempt.void  // Use the finalizer to properly clean up
+        pooled.finalizer.attempt.void // Use the finalizer to properly clean up
       }
       val failWaiters = state.waitQueue.traverse_ { deferred =>
         deferred.complete(Left(new Exception("Pool closed"))).attempt.void
@@ -273,35 +273,40 @@ object PooledDataSource:
               val deferred = Deferred.unsafe[F, Either[Throwable, Connection[F]]]
               poolState.update { state =>
                 state.copy(waitQueue = state.waitQueue :+ deferred)
-              } >> deferred.get.rethrow.flatMap { conn =>
-                for
-                  endTime <- Clock[F].monotonic
-                  _       <- metricsTracker.recordAcquisition(endTime - startTime)
-                yield conn
-              }.onCancel {
-                // Remove from wait queue on cancellation
-                poolState.update { state =>
-                  state.copy(waitQueue = state.waitQueue.filterNot(_ eq deferred))
+              } >> deferred.get.rethrow
+                .flatMap { conn =>
+                  for
+                    endTime <- Clock[F].monotonic
+                    _       <- metricsTracker.recordAcquisition(endTime - startTime)
+                  yield conn
                 }
-              }
+                .onCancel {
+                  // Remove from wait queue on cancellation
+                  poolState.update { state =>
+                    state.copy(waitQueue = state.waitQueue.filterNot(_ eq deferred))
+                  }
+                }
             }
         case AcquireResult.Waiting(deferred) =>
-          deferred.get.rethrow.flatMap { conn =>
-            for
-              endTime <- Clock[F].monotonic
-              _       <- metricsTracker.recordAcquisition(endTime - startTime)
-            yield conn
-          }.onCancel {
-            // Remove from wait queue on cancellation
-            poolState.update { state =>
-              state.copy(waitQueue = state.waitQueue.filterNot(_ eq deferred))
+          deferred.get.rethrow
+            .flatMap { conn =>
+              for
+                endTime <- Clock[F].monotonic
+                _       <- metricsTracker.recordAcquisition(endTime - startTime)
+              yield conn
             }
-          }
+            .onCancel {
+              // Remove from wait queue on cancellation
+              poolState.update { state =>
+                state.copy(waitQueue = state.waitQueue.filterNot(_ eq deferred))
+              }
+            }
       }
 
       acquireResult.timeout(connectionTimeout).handleErrorWith { _ =>
         poolState.get.flatMap { state =>
-          val errorMessage = s"Connection acquisition timeout after $connectionTimeout (host: $host:$port, db: ${database.getOrElse("none")}, pool closed: ${state.closed}, total: ${state.connections.size}, waiting: ${state.waitQueue.size})"
+          val errorMessage =
+            s"Connection acquisition timeout after $connectionTimeout (host: $host:$port, db: ${ database.getOrElse("none") }, pool closed: ${ state.closed }, total: ${ state.connections.size }, waiting: ${ state.waitQueue.size })"
           metricsTracker.recordTimeout() *>
             Temporal[F].raiseError(new Exception(errorMessage))
         }
@@ -316,7 +321,7 @@ object PooledDataSource:
       // Extract the pooled connection from proxy if wrapped
       val pooledF: F[Option[PooledConnection[F]]] = conn match {
         case proxy: ConnectionProxy[F] => Temporal[F].pure(Some(proxy.pooled))
-        case _ =>
+        case _                         =>
           // Fallback: search by unwrapped connection
           poolState.get.map { state =>
             state.connections.find(p => p.connection == unwrapConnection(conn))
@@ -333,10 +338,11 @@ object PooledDataSource:
                     Clock[F].monotonic.flatMap { endTime =>
                       metricsTracker.recordUsage(endTime - startTime)
                     }
-                else removeConnection(pooled) *>
-                  Clock[F].monotonic.flatMap { endTime =>
-                    metricsTracker.recordUsage(endTime - startTime)
-                  }
+                else
+                  removeConnection(pooled) *>
+                    Clock[F].monotonic.flatMap { endTime =>
+                      metricsTracker.recordUsage(endTime - startTime)
+                    }
               }
             case Left(_) =>
               removeConnection(pooled) *>
@@ -376,10 +382,14 @@ object PooledDataSource:
       result    <- createNewConnectionWithState(startTime, ConnectionState.Idle, 0L)
     yield result
 
-    private def createNewConnectionWithState(startTime: FiniteDuration, initialState: ConnectionState, initialUseCount: Long): F[PooledConnection[F]] =
+    private def createNewConnectionWithState(
+      startTime:       FiniteDuration,
+      initialState:    ConnectionState,
+      initialUseCount: Long
+    ): F[PooledConnection[F]] =
       for
-        id <- idGenerator
-        allocated        <- connection.allocated
+        id        <- idGenerator
+        allocated <- connection.allocated
         (conn, finalizer) = allocated
         now              <- Clock[F].realTime.map(_.toMillis)
         stateRef         <- Ref.of[F, ConnectionState](initialState)
@@ -468,7 +478,7 @@ object PooledDataSource:
 
     override def removeConnection(pooled: PooledConnection[F]): F[Unit] = for
       _ <- pooled.state.set(ConnectionState.Removed)
-      _ <- pooled.finalizer.attempt.void  // Use the finalizer instead of close()
+      _ <- pooled.finalizer.attempt.void // Use the finalizer instead of close()
       _ <- pooled.leakDetection.get.flatMap(_.traverse_(_.cancel))
       _ <- poolState.update { state =>
              state.copy(
@@ -580,8 +590,7 @@ object PooledDataSource:
     val houseKeeper       = HouseKeeper.fromAsync[F](config, tracker)
     val adaptivePoolSizer = AdaptivePoolSizer.fromAsync[F](config, tracker)
 
-    def createPool = for
-      poolState <- Ref[F].of(PoolState.empty[F])
+    def createPool = for poolState <- Ref[F].of(PoolState.empty[F])
     yield Impl[F, A](
       host                    = config.host,
       port                    = config.port,

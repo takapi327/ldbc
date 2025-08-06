@@ -72,10 +72,9 @@ object HouseKeeper:
      */
     private def runMaintenance(
       pool: PooledDataSource[F]
-    ): F[Unit] = 
+    ): F[Unit] =
       pool.poolState.get.flatMap { state =>
-        if state.closed then
-          Temporal[F].unit  // Pool is closed, skip maintenance
+        if state.closed then Temporal[F].unit // Pool is closed, skip maintenance
         else
           for
             now <- Clock[F].realTime.map(_.toMillis)
@@ -160,8 +159,7 @@ object HouseKeeper:
       pool: PooledDataSource[F]
     ): F[Unit] =
       pool.poolState.get.flatMap { state =>
-        if state.closed then
-          Temporal[F].unit  // Pool is closed, don't create new connections
+        if state.closed then Temporal[F].unit // Pool is closed, don't create new connections
         else
           val currentTotal = state.connections.size
           val toCreate     = Math.max(0, config.minConnections - currentTotal)
