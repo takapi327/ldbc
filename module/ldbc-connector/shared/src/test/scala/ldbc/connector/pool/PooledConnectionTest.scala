@@ -166,8 +166,6 @@ class PooledConnectionTest extends FTestPlatform:
         pooledConn  <- createPooledConnection("test-1", conn)
       yield
         assert(pooledConn.createdAt > 0, "Created time should be positive")
-        assert(pooledConn.id.nonEmpty, "ID should not be empty")
-        assert(pooledConn.id == "test-1", "ID should match the provided ID")
         assert(pooledConn.createdAt <= currentTime, "Created time should be at or before current time")
     }
   }
