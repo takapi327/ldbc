@@ -15,6 +15,7 @@ import ldbc.connector.Connection
  *
  * @param id unique identifier for the connection
  * @param connection the actual database connection
+ * @param finalizer the cleanup action for the connection resource
  * @param state current state of the connection
  * @param createdAt timestamp when the connection was created
  * @param lastUsedAt timestamp when the connection was last used
@@ -26,6 +27,7 @@ import ldbc.connector.Connection
 case class PooledConnection[F[_]](
   id:              String,
   connection:      Connection[F],
+  finalizer:       F[Unit],
   state:           Ref[F, ConnectionState],
   createdAt:       Long,
   lastUsedAt:      Ref[F, Long],
