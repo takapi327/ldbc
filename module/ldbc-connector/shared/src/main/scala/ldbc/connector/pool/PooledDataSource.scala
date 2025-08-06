@@ -653,7 +653,7 @@ object PooledDataSource:
     logHandler:     Option[LogHandler[F]] = None,
     metricsTracker: Option[PoolMetricsTracker[F]] = None
   ): Resource[F, PooledDataSource[F]] =
-    create(config, metricsTracker, Sync[F].delay(java.util.UUID.randomUUID().toString))
+    create(config, metricsTracker, UUIDGen[F].randomUUID.map(_.toString))
 
   def fromConfigWithBeforeAfter[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
     config:         MySQLConfig,
@@ -662,4 +662,4 @@ object PooledDataSource:
     before:         Option[Connection[F] => F[A]] = None,
     after:          Option[(A, Connection[F]) => F[Unit]] = None
   ): Resource[F, PooledDataSource[F]] =
-    create(config, metricsTracker, Sync[F].delay(java.util.UUID.randomUUID().toString), before, after)
+    create(config, metricsTracker, UUIDGen[F].randomUUID.map(_.toString), before, after)
