@@ -164,8 +164,7 @@ class PooledConnectionTest extends FTestPlatform:
       for
         currentTime <- IO.realTime.map(_.toMillis)
         pooledConn  <- createPooledConnection("test-1", conn)
-      yield
-        assert(pooledConn.createdAt > 0, "Created time should be positive")
+      yield assert(pooledConn.createdAt > 0, "Created time should be positive")
     }
   }
 
