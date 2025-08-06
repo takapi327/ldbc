@@ -76,28 +76,35 @@ object AdaptivePoolSizer:
     private def adjustPoolSize(
       pool:  PooledDataSource[F],
       state: AdaptiveState
-    ): F[(AdaptiveState, Unit)] = for
-      now     <- Clock[F].realTime.map(_.toMillis)
-      status  <- pool.status
-      metrics <- metricsTracker.getMetrics
+    ): F[(AdaptiveState, Unit)] = 
+      pool.poolState.get.flatMap { poolState =>
+        if poolState.closed then
+          // Pool is closed, return unchanged state
+          Temporal[F].pure((state, ()))
+        else
+          for
+            now     <- Clock[F].realTime.map(_.toMillis)
+            status  <- pool.status
+            metrics <- metricsTracker.getMetrics
 
-      snapshot = PoolSnapshot(
-                   timestamp       = now,
-                   utilizationRate = if status.total > 0 then status.active.toDouble / status.total else 0.0,
-                   waitQueueLength = status.waiting,
-                   timeouts        = metrics.timeouts,
-                   avgAcquireTime  = metrics.acquisitionTime
-                 )
+            snapshot = PoolSnapshot(
+                         timestamp       = now,
+                         utilizationRate = if status.total > 0 then status.active.toDouble / status.total else 0.0,
+                         waitQueueLength = status.waiting,
+                         timeouts        = metrics.timeouts,
+                         avgAcquireTime  = metrics.acquisitionTime
+                       )
 
-      // Add to history (keep last 10 snapshots)
-      newHistory = (state.history :+ snapshot).takeRight(10)
+            // Add to history (keep last 10 snapshots)
+            newHistory = (state.history :+ snapshot).takeRight(10)
 
-      // Calculate adjustment
-      adjustment = calculateAdjustment(status, snapshot, newHistory)
+            // Calculate adjustment
+            adjustment = calculateAdjustment(status, snapshot, newHistory)
 
-      // Apply adjustment if needed
-      newState <- applyAdjustment(pool, state, adjustment, now)
-    yield (newState.copy(history = newHistory), ())
+            // Apply adjustment if needed
+            newState <- applyAdjustment(pool, state, adjustment, now)
+          yield (newState.copy(history = newHistory), ())
+      }
 
     /**
      * Calculate the pool adjustment based on metrics.

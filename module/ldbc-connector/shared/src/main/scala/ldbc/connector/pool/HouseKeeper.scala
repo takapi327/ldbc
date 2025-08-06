@@ -72,14 +72,20 @@ object HouseKeeper:
      */
     private def runMaintenance(
       pool: PooledDataSource[F]
-    ): F[Unit] = for
-      now <- Clock[F].realTime.map(_.toMillis)
-      _   <- removeExpiredConnections(pool, now)
-      _   <- removeIdleConnections(pool)
-      _   <- validateIdleConnections(pool, now)
-      _   <- ensureMinimumConnections(pool)
-      _   <- updateMetrics(pool)
-    yield ()
+    ): F[Unit] = 
+      pool.poolState.get.flatMap { state =>
+        if state.closed then
+          Temporal[F].unit  // Pool is closed, skip maintenance
+        else
+          for
+            now <- Clock[F].realTime.map(_.toMillis)
+            _   <- removeExpiredConnections(pool, now)
+            _   <- removeIdleConnections(pool)
+            _   <- validateIdleConnections(pool, now)
+            _   <- ensureMinimumConnections(pool)
+            _   <- updateMetrics(pool)
+          yield ()
+      }
 
     /**
      * Remove connections that have exceeded max lifetime.
@@ -154,20 +160,23 @@ object HouseKeeper:
       pool: PooledDataSource[F]
     ): F[Unit] =
       pool.poolState.get.flatMap { state =>
-        val currentTotal = state.connections.size
-        val toCreate     = Math.max(0, config.minConnections - currentTotal)
+        if state.closed then
+          Temporal[F].unit  // Pool is closed, don't create new connections
+        else
+          val currentTotal = state.connections.size
+          val toCreate     = Math.max(0, config.minConnections - currentTotal)
 
-        if toCreate > 0 then
-          (1 to toCreate).toList.traverse_ { _ =>
-            pool
-              .createNewConnection()
-              .flatMap { pooled =>
-                pooled.state.set(ConnectionState.Idle) *> pool.returnToPool(pooled)
-              }
-              .attempt
-              .void
-          }
-        else Temporal[F].unit
+          if toCreate > 0 then
+            (1 to toCreate).toList.traverse_ { _ =>
+              pool
+                .createNewConnection()
+                .flatMap { pooled =>
+                  pooled.state.set(ConnectionState.Idle) *> pool.returnToPool(pooled)
+                }
+                .attempt
+                .void
+            }
+          else Temporal[F].unit
       }
 
     /**

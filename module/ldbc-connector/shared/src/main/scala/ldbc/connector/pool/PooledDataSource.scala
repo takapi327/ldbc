@@ -25,6 +25,7 @@ import org.typelevel.otel4s.trace.Tracer
 import ldbc.sql.DatabaseMetaData
 
 import ldbc.connector.*
+import ldbc.DataSource
 
 import ldbc.logging.LogHandler
 
@@ -214,7 +215,7 @@ object PooledDataSource:
     override def close: F[Unit] = poolState.modify { state =>
       val newState = state.copy(closed = true)
       val closeAll = state.connections.traverse_ { pooled =>
-        pooled.connection.close().attempt.void
+        pooled.finalizer.attempt.void  // Use the finalizer to properly clean up
       }
       val failWaiters = state.waitQueue.traverse_ { deferred =>
         deferred.complete(Left(new Exception("Pool closed"))).attempt.void
@@ -277,6 +278,11 @@ object PooledDataSource:
                   endTime <- Clock[F].monotonic
                   _       <- metricsTracker.recordAcquisition(endTime - startTime)
                 yield conn
+              }.onCancel {
+                // Remove from wait queue on cancellation
+                poolState.update { state =>
+                  state.copy(waitQueue = state.waitQueue.filterNot(_ eq deferred))
+                }
               }
             }
         case AcquireResult.Waiting(deferred) =>
@@ -285,12 +291,20 @@ object PooledDataSource:
               endTime <- Clock[F].monotonic
               _       <- metricsTracker.recordAcquisition(endTime - startTime)
             yield conn
+          }.onCancel {
+            // Remove from wait queue on cancellation
+            poolState.update { state =>
+              state.copy(waitQueue = state.waitQueue.filterNot(_ eq deferred))
+            }
           }
       }
 
       acquireResult.timeout(connectionTimeout).handleErrorWith { _ =>
-        metricsTracker.recordTimeout() *>
-          Temporal[F].raiseError(new Exception(s"Connection acquisition timeout after ${ connectionTimeout }"))
+        poolState.get.flatMap { state =>
+          val errorMessage = s"Connection acquisition timeout after $connectionTimeout (host: $host:$port, db: ${database.getOrElse("none")}, pool closed: ${state.closed}, total: ${state.connections.size}, waiting: ${state.waitQueue.size})"
+          metricsTracker.recordTimeout() *>
+            Temporal[F].raiseError(new Exception(errorMessage))
+        }
       }
 
     private def release(conn: Connection[F]): F[Unit] = for
@@ -299,30 +313,43 @@ object PooledDataSource:
     yield ()
 
     private def releaseConnectionWithStartTime(conn: Connection[F], startTime: FiniteDuration): F[Unit] =
-
-      poolState.get
-        .flatMap { state =>
-          state.connections.find(p => p.connection == unwrapConnection(conn)) match {
-            case Some(pooled) =>
-              resetConnection(pooled.connection).attempt.flatMap {
-                case Right(_) =>
-                  validateConnection(pooled.connection).flatMap { valid =>
-                    if valid && !isExpired(pooled) then returnToPool(pooled) *> processWaitQueue()
-                    else removeConnection(pooled)
-                  }
-                case Left(_) =>
-                  removeConnection(pooled)
-              }
-            case None =>
-              Temporal[F].unit
+      // Extract the pooled connection from proxy if wrapped
+      val pooledF: F[Option[PooledConnection[F]]] = conn match {
+        case proxy: ConnectionProxy[F] => Temporal[F].pure(Some(proxy.pooled))
+        case _ =>
+          // Fallback: search by unwrapped connection
+          poolState.get.map { state =>
+            state.connections.find(p => p.connection == unwrapConnection(conn))
           }
-        }
-        .flatMap { _ =>
-          for
-            endTime <- Clock[F].monotonic
-            _       <- metricsTracker.recordUsage(endTime - startTime)
-          yield ()
-        }
+      }
+
+      pooledF.flatMap {
+        case Some(pooled) =>
+          resetConnection(pooled.connection).attempt.flatMap {
+            case Right(_) =>
+              validateConnection(pooled.connection).flatMap { valid =>
+                if valid && !isExpired(pooled) then
+                  returnToPool(pooled) *> processWaitQueue() *>
+                    Clock[F].monotonic.flatMap { endTime =>
+                      metricsTracker.recordUsage(endTime - startTime)
+                    }
+                else removeConnection(pooled) *>
+                  Clock[F].monotonic.flatMap { endTime =>
+                    metricsTracker.recordUsage(endTime - startTime)
+                  }
+              }
+            case Left(_) =>
+              removeConnection(pooled) *>
+                Clock[F].monotonic.flatMap { endTime =>
+                  metricsTracker.recordUsage(endTime - startTime)
+                }
+          }
+        case None =>
+          // Connection not found - still record the usage time
+          Clock[F].monotonic.flatMap { endTime =>
+            metricsTracker.recordUsage(endTime - startTime)
+          }
+      }
 
     /**
      * Find an idle connection in the pool.
@@ -342,21 +369,29 @@ object PooledDataSource:
     yield result
 
     private def createNewConnectionWithStartTime(startTime: FiniteDuration): F[PooledConnection[F]] =
+      createNewConnectionWithState(startTime, ConnectionState.InUse, 1L)
 
+    def createNewConnectionForPool(): F[PooledConnection[F]] = for
+      startTime <- Clock[F].monotonic
+      result    <- createNewConnectionWithState(startTime, ConnectionState.Idle, 0L)
+    yield result
+
+    private def createNewConnectionWithState(startTime: FiniteDuration, initialState: ConnectionState, initialUseCount: Long): F[PooledConnection[F]] =
       for
         id <- idGenerator
-        connResource = connection
-        conn             <- connResource.allocated.map(_._1)
+        allocated        <- connection.allocated
+        (conn, finalizer) = allocated
         now              <- Clock[F].realTime.map(_.toMillis)
-        stateRef         <- Ref.of[F, ConnectionState](ConnectionState.InUse)
+        stateRef         <- Ref.of[F, ConnectionState](initialState)
         lastUsedRef      <- Ref[F].of(now)
-        useCountRef      <- Ref[F].of(1L)
+        useCountRef      <- Ref[F].of(initialUseCount)
         lastValidatedRef <- Ref[F].of(now)
         leakDetectionRef <- Ref.of[F, Option[Fiber[F, Throwable, Unit]]](None)
 
         pooled = PooledConnection(
                    id              = id,
                    connection      = conn,
+                   finalizer       = finalizer,
                    state           = stateRef,
                    createdAt       = now,
                    lastUsedAt      = lastUsedRef,
@@ -433,7 +468,7 @@ object PooledDataSource:
 
     override def removeConnection(pooled: PooledConnection[F]): F[Unit] = for
       _ <- pooled.state.set(ConnectionState.Removed)
-      _ <- pooled.connection.close().attempt.void
+      _ <- pooled.finalizer.attempt.void  // Use the finalizer instead of close()
       _ <- pooled.leakDetection.get.flatMap(_.traverse_(_.cancel))
       _ <- poolState.update { state =>
              state.copy(
@@ -468,13 +503,15 @@ object PooledDataSource:
      * Wrap a pooled connection for leak detection.
      */
     private def wrapConnection(pooled: PooledConnection[F]): Connection[F] =
-      pooled.connection // In a real implementation, this would be a proxy
+      new ConnectionProxy[F](pooled, release)
 
     /**
      * Unwrap a connection to get the original.
      */
     private def unwrapConnection(conn: Connection[F]): Connection[F] =
-      conn // In a real implementation, this would unwrap the proxy
+      conn match
+        case proxy: ConnectionProxy[F] => proxy.pooled.connection
+        case _                         => conn
 
     private def connection: Resource[F, Connection[F]] =
       (before, after) match
@@ -543,50 +580,53 @@ object PooledDataSource:
     val houseKeeper       = HouseKeeper.fromAsync[F](config, tracker)
     val adaptivePoolSizer = AdaptivePoolSizer.fromAsync[F](config, tracker)
 
-    def pool = for
+    def createPool = for
       poolState <- Ref[F].of(PoolState.empty[F])
-      pool = Impl[F, A](
-               host                    = config.host,
-               port                    = config.port,
-               user                    = config.user,
-               password                = config.password,
-               database                = config.database,
-               debug                   = config.debug,
-               ssl                     = config.ssl,
-               socketOptions           = config.socketOptions,
-               readTimeout             = config.readTimeout,
-               allowPublicKeyRetrieval = config.allowPublicKeyRetrieval,
-               databaseTerm            = config.databaseTerm,
-               useCursorFetch          = config.useCursorFetch,
-               useServerPrepStmts      = config.useServerPrepStmts,
-               minConnections          = config.minConnections,
-               maxConnections          = config.maxConnections,
-               connectionTimeout       = config.connectionTimeout,
-               idleTimeout             = config.idleTimeout,
-               maxLifetime             = config.maxLifetime,
-               validationTimeout       = config.validationTimeout,
-               leakDetectionThreshold  = config.leakDetectionThreshold,
-               adaptiveSizing          = config.adaptiveSizing,
-               adaptiveInterval        = config.adaptiveInterval,
-               metricsTracker          = tracker,
-               poolState               = poolState,
-               idGenerator             = idGenerator,
-               houseKeeper             = None,
-               adaptiveSizer           = None
-             )
-
-      // Initialize minimum connections
-      _ <- (1 to config.minConnections).toList.traverse_ { _ =>
-             pool.createNewConnection().flatMap { pooled =>
-               // First set to Idle state before returning to pool
-               pooled.state.set(ConnectionState.Idle) *> pool.returnToPool(pooled)
-             }
-           }
-    yield pool
+    yield Impl[F, A](
+      host                    = config.host,
+      port                    = config.port,
+      user                    = config.user,
+      password                = config.password,
+      database                = config.database,
+      debug                   = config.debug,
+      ssl                     = config.ssl,
+      socketOptions           = config.socketOptions,
+      readTimeout             = config.readTimeout,
+      allowPublicKeyRetrieval = config.allowPublicKeyRetrieval,
+      databaseTerm            = config.databaseTerm,
+      useCursorFetch          = config.useCursorFetch,
+      useServerPrepStmts      = config.useServerPrepStmts,
+      minConnections          = config.minConnections,
+      maxConnections          = config.maxConnections,
+      connectionTimeout       = config.connectionTimeout,
+      idleTimeout             = config.idleTimeout,
+      maxLifetime             = config.maxLifetime,
+      validationTimeout       = config.validationTimeout,
+      leakDetectionThreshold  = config.leakDetectionThreshold,
+      adaptiveSizing          = config.adaptiveSizing,
+      adaptiveInterval        = config.adaptiveInterval,
+      metricsTracker          = tracker,
+      poolState               = poolState,
+      idGenerator             = idGenerator,
+      houseKeeper             = None,
+      adaptiveSizer           = None
+    )
 
     Resource
-      .make(pool) { p =>
-        p.close
+      .eval(createPool)
+      .flatMap { pool =>
+        Resource.make {
+          // Initialize minimum connections within the resource scope
+          val init = (1 to config.minConnections).toList.traverse_ { _ =>
+            pool.createNewConnectionForPool().flatMap { pooled =>
+              pool.returnToPool(pooled)
+            }
+          }
+          init.as(pool)
+        } { pool =>
+          // Ensure background tasks are stopped before closing the pool
+          pool.close
+        }
       }
       .flatMap { pool =>
         // Start background tasks
