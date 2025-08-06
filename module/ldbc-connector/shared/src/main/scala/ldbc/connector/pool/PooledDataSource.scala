@@ -152,38 +152,38 @@ trait PooledDataSource[F[_]] extends DataSource[F]:
 object PooledDataSource:
 
   private case class Impl[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
-                                                                               host:                    String,
-                                                                               port:                    Int,
-                                                                               user:                    String,
-                                                                               logHandler:              Option[LogHandler[F]]                 = None,
-                                                                               password:                Option[String]                        = None,
-                                                                               database:                Option[String]                        = None,
-                                                                               debug:                   Boolean                               = false,
-                                                                               ssl:                     SSL                                   = SSL.None,
-                                                                               socketOptions:           List[SocketOption]                    = MySQLConfig.defaultSocketOptions,
-                                                                               readTimeout:             Duration                              = Duration.Inf,
-                                                                               allowPublicKeyRetrieval: Boolean                               = false,
-                                                                               databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
-                                                                               tracer:                  Option[Tracer[F]]                     = None,
-                                                                               useCursorFetch:          Boolean                               = false,
-                                                                               useServerPrepStmts:      Boolean                               = false,
-                                                                               before:                  Option[Connection[F] => F[A]]         = None,
-                                                                               after:                   Option[(A, Connection[F]) => F[Unit]] = None,
-                                                                               minConnections:          Int                                   = 5,
-                                                                               maxConnections:          Int                                   = 20,
-                                                                               connectionTimeout:       FiniteDuration                        = 30.seconds,
-                                                                               idleTimeout:             FiniteDuration                        = 10.minutes,
-                                                                               maxLifetime:             FiniteDuration                        = 30.minutes,
-                                                                               validationTimeout:       FiniteDuration                        = 5.seconds,
-                                                                               leakDetectionThreshold:  Option[FiniteDuration]                = None,
-                                                                               adaptiveSizing:          Boolean                               = true,
-                                                                               adaptiveInterval:        FiniteDuration                        = 30.seconds,
-                                                                               metricsTracker:          PoolMetricsTracker[F],
-                                                                               poolState:               Ref[F, PoolState[F]],
-                                                                               idGenerator:             F[String],
-                                                                               houseKeeper:             Option[Fiber[F, Throwable, Unit]],
-                                                                               adaptiveSizer:           Option[Fiber[F, Throwable, Unit]]
-                                                                             ) extends PooledDataSource[F]:
+    host:                    String,
+    port:                    Int,
+    user:                    String,
+    logHandler:              Option[LogHandler[F]]                 = None,
+    password:                Option[String]                        = None,
+    database:                Option[String]                        = None,
+    debug:                   Boolean                               = false,
+    ssl:                     SSL                                   = SSL.None,
+    socketOptions:           List[SocketOption]                    = MySQLConfig.defaultSocketOptions,
+    readTimeout:             Duration                              = Duration.Inf,
+    allowPublicKeyRetrieval: Boolean                               = false,
+    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
+    tracer:                  Option[Tracer[F]]                     = None,
+    useCursorFetch:          Boolean                               = false,
+    useServerPrepStmts:      Boolean                               = false,
+    before:                  Option[Connection[F] => F[A]]         = None,
+    after:                   Option[(A, Connection[F]) => F[Unit]] = None,
+    minConnections:          Int                                   = 5,
+    maxConnections:          Int                                   = 20,
+    connectionTimeout:       FiniteDuration                        = 30.seconds,
+    idleTimeout:             FiniteDuration                        = 10.minutes,
+    maxLifetime:             FiniteDuration                        = 30.minutes,
+    validationTimeout:       FiniteDuration                        = 5.seconds,
+    leakDetectionThreshold:  Option[FiniteDuration]                = None,
+    adaptiveSizing:          Boolean                               = true,
+    adaptiveInterval:        FiniteDuration                        = 30.seconds,
+    metricsTracker:          PoolMetricsTracker[F],
+    poolState:               Ref[F, PoolState[F]],
+    idGenerator:             F[String],
+    houseKeeper:             Option[Fiber[F, Throwable, Unit]],
+    adaptiveSizer:           Option[Fiber[F, Throwable, Unit]]
+  ) extends PooledDataSource[F]:
     given Tracer[F] = tracer.getOrElse(Tracer.noop[F])
 
     private enum AcquireResult:
@@ -198,14 +198,14 @@ object PooledDataSource:
       connections = state.connections
       // Count states by checking each connection
       stateChecks <- connections.traverse { c =>
-        c.state.get.map(s => (c, s))
-      }
+                       c.state.get.map(s => (c, s))
+                     }
       active = stateChecks.count(_._2 == ConnectionState.InUse)
-      idle = stateChecks.count(_._2 == ConnectionState.Idle)
+      idle   = stateChecks.count(_._2 == ConnectionState.Idle)
     } yield PoolStatus(
-      total = connections.size,
-      active = active,
-      idle = idle,
+      total   = connections.size,
+      active  = active,
+      idle    = idle,
       waiting = state.waitQueue.size
     )
 
@@ -224,7 +224,7 @@ object PooledDataSource:
 
     private def acquire: F[Connection[F]] = for
       startTime <- Clock[F].monotonic
-      result <- acquireConnectionWithStartTime(startTime)
+      result    <- acquireConnectionWithStartTime(startTime)
     yield result
 
     private def acquireConnectionWithStartTime(startTime: FiniteDuration): F[Connection[F]] =
@@ -236,10 +236,10 @@ object PooledDataSource:
             findIdleConnection(state) match
               case Some((pooled, newState)) =>
                 val markInUse: F[AcquireResult] = for
-                  _ <- pooled.state.set(ConnectionState.InUse)
+                  _   <- pooled.state.set(ConnectionState.InUse)
                   now <- Clock[F].realTime.map(_.toMillis)
-                  _ <- pooled.lastUsedAt.set(now)
-                  _ <- pooled.useCount.update(_ + 1)
+                  _   <- pooled.lastUsedAt.set(now)
+                  _   <- pooled.useCount.update(_ + 1)
                 yield AcquireResult.Acquired(wrapConnection(pooled))
                 (newState, markInUse)
 
@@ -257,14 +257,14 @@ object PooledDataSource:
         case AcquireResult.Acquired(conn) =>
           for
             endTime <- Clock[F].monotonic
-            _ <- metricsTracker.recordAcquisition(endTime - startTime)
+            _       <- metricsTracker.recordAcquisition(endTime - startTime)
           yield conn
         case AcquireResult.CreateNew =>
           createNewConnection()
             .flatMap { pooled =>
               for
                 endTime <- Clock[F].monotonic
-                _ <- metricsTracker.recordAcquisition(endTime - startTime)
+                _       <- metricsTracker.recordAcquisition(endTime - startTime)
               yield wrapConnection(pooled)
             }
             .handleErrorWith { error =>
@@ -275,7 +275,7 @@ object PooledDataSource:
               } >> deferred.get.rethrow.flatMap { conn =>
                 for
                   endTime <- Clock[F].monotonic
-                  _ <- metricsTracker.recordAcquisition(endTime - startTime)
+                  _       <- metricsTracker.recordAcquisition(endTime - startTime)
                 yield conn
               }
             }
@@ -283,19 +283,19 @@ object PooledDataSource:
           deferred.get.rethrow.flatMap { conn =>
             for
               endTime <- Clock[F].monotonic
-              _ <- metricsTracker.recordAcquisition(endTime - startTime)
+              _       <- metricsTracker.recordAcquisition(endTime - startTime)
             yield conn
           }
       }
 
       acquireResult.timeout(connectionTimeout).handleErrorWith { _ =>
         metricsTracker.recordTimeout() *>
-          Temporal[F].raiseError(new Exception(s"Connection acquisition timeout after ${connectionTimeout}"))
+          Temporal[F].raiseError(new Exception(s"Connection acquisition timeout after ${ connectionTimeout }"))
       }
 
     private def release(conn: Connection[F]): F[Unit] = for
       startTime <- Clock[F].monotonic
-      _ <- releaseConnectionWithStartTime(conn, startTime)
+      _         <- releaseConnectionWithStartTime(conn, startTime)
     yield ()
 
     private def releaseConnectionWithStartTime(conn: Connection[F], startTime: FiniteDuration): F[Unit] =
@@ -320,7 +320,7 @@ object PooledDataSource:
         .flatMap { _ =>
           for
             endTime <- Clock[F].monotonic
-            _ <- metricsTracker.recordUsage(endTime - startTime)
+            _       <- metricsTracker.recordUsage(endTime - startTime)
           yield ()
         }
 
@@ -331,14 +331,14 @@ object PooledDataSource:
       state.idleConnections.headOption.flatMap { id =>
         state.connections.find(_.id == id).map { pooled =>
           val newIdleConnections = state.idleConnections - id
-          val newState = state.copy(idleConnections = newIdleConnections)
+          val newState           = state.copy(idleConnections = newIdleConnections)
           (pooled, newState)
         }
       }
 
     override def createNewConnection(): F[PooledConnection[F]] = for
       startTime <- Clock[F].monotonic
-      result <- createNewConnectionWithStartTime(startTime)
+      result    <- createNewConnectionWithStartTime(startTime)
     yield result
 
     private def createNewConnectionWithStartTime(startTime: FiniteDuration): F[PooledConnection[F]] =
@@ -346,61 +346,61 @@ object PooledDataSource:
       for
         id <- idGenerator
         connResource = connection
-        conn <- connResource.allocated.map(_._1)
-        now <- Clock[F].realTime.map(_.toMillis)
-        stateRef <- Ref.of[F, ConnectionState](ConnectionState.InUse)
-        lastUsedRef <- Ref[F].of(now)
-        useCountRef <- Ref[F].of(1L)
+        conn             <- connResource.allocated.map(_._1)
+        now              <- Clock[F].realTime.map(_.toMillis)
+        stateRef         <- Ref.of[F, ConnectionState](ConnectionState.InUse)
+        lastUsedRef      <- Ref[F].of(now)
+        useCountRef      <- Ref[F].of(1L)
         lastValidatedRef <- Ref[F].of(now)
         leakDetectionRef <- Ref.of[F, Option[Fiber[F, Throwable, Unit]]](None)
 
         pooled = PooledConnection(
-          id = id,
-          connection = conn,
-          state = stateRef,
-          createdAt = now,
-          lastUsedAt = lastUsedRef,
-          useCount = useCountRef,
-          lastValidatedAt = lastValidatedRef,
-          leakDetection = leakDetectionRef
-        )
+                   id              = id,
+                   connection      = conn,
+                   state           = stateRef,
+                   createdAt       = now,
+                   lastUsedAt      = lastUsedRef,
+                   useCount        = useCountRef,
+                   lastValidatedAt = lastValidatedRef,
+                   leakDetection   = leakDetectionRef
+                 )
 
         // Double-check the limit before adding to prevent race conditions
         added <- poolState.modify { poolState =>
-          if poolState.connections.size >= maxConnections then
-            // Over limit, don't add
-            (poolState, false)
-          else
-            val newState = poolState.copy(
-              connections = poolState.connections :+ pooled,
-              idleConnections = poolState.idleConnections // Don't add to idle - it's InUse
-            )
-            (newState, true)
-        }
+                   if poolState.connections.size >= maxConnections then
+                     // Over limit, don't add
+                     (poolState, false)
+                   else
+                     val newState = poolState.copy(
+                       connections     = poolState.connections :+ pooled,
+                       idleConnections = poolState.idleConnections // Don't add to idle - it's InUse
+                     )
+                     (newState, true)
+                 }
 
         // If we couldn't add it, close the connection and fail
         _ <- if !added then {
-          conn.close().attempt.void *>
-            Temporal[F].raiseError[Unit](new Exception("Pool reached maximum size"))
-        } else Temporal[F].unit
+               conn.close().attempt.void *>
+                 Temporal[F].raiseError[Unit](new Exception("Pool reached maximum size"))
+             } else Temporal[F].unit
 
         endTime <- Clock[F].monotonic
-        _ <- metricsTracker.recordCreation(endTime - startTime)
+        _       <- metricsTracker.recordCreation(endTime - startTime)
 
         // Start leak detection if configured
         _ <- leakDetectionThreshold.traverse_ { threshold =>
-          val leakFiber = Temporal[F]
-            .sleep(threshold)
-            .flatMap { _ =>
-              pooled.state.get.flatMap {
-                case ConnectionState.InUse => metricsTracker.recordLeak()
-                case _ => Temporal[F].unit
-              }
-            }
-            .start
+               val leakFiber = Temporal[F]
+                 .sleep(threshold)
+                 .flatMap { _ =>
+                   pooled.state.get.flatMap {
+                     case ConnectionState.InUse => metricsTracker.recordLeak()
+                     case _                     => Temporal[F].unit
+                   }
+                 }
+                 .start
 
-          leakFiber.flatMap(fiber => pooled.leakDetection.set(Some(fiber)))
-        }
+               leakFiber.flatMap(fiber => pooled.leakDetection.set(Some(fiber)))
+             }
       yield pooled
 
     private def resetConnection(conn: Connection[F]): F[Unit] = for
@@ -427,8 +427,8 @@ object PooledDataSource:
       _ <- pooled.leakDetection.get.flatMap(_.traverse_(_.cancel))
       _ <- pooled.leakDetection.set(None)
       _ <- poolState.update { state =>
-        state.copy(idleConnections = state.idleConnections + pooled.id)
-      }
+             state.copy(idleConnections = state.idleConnections + pooled.id)
+           }
     yield ()
 
     override def removeConnection(pooled: PooledConnection[F]): F[Unit] = for
@@ -436,11 +436,11 @@ object PooledDataSource:
       _ <- pooled.connection.close().attempt.void
       _ <- pooled.leakDetection.get.flatMap(_.traverse_(_.cancel))
       _ <- poolState.update { state =>
-        state.copy(
-          connections = state.connections.filterNot(_ == pooled),
-          idleConnections = state.idleConnections - pooled.id
-        )
-      }
+             state.copy(
+               connections     = state.connections.filterNot(_ == pooled),
+               idleConnections = state.idleConnections - pooled.id
+             )
+           }
     yield ()
 
     private def processWaitQueue(): F[Unit] = poolState.modify { state =>
@@ -450,11 +450,11 @@ object PooledDataSource:
             case Some((pooled, newStateAfterFind)) =>
               val newState = newStateAfterFind.copy(waitQueue = newStateAfterFind.waitQueue.tail)
               val complete = for
-                _ <- pooled.state.set(ConnectionState.InUse)
+                _   <- pooled.state.set(ConnectionState.InUse)
                 now <- Clock[F].realTime.map(_.toMillis)
-                _ <- pooled.lastUsedAt.set(now)
-                _ <- pooled.useCount.update(_ + 1)
-                _ <- deferred.complete(Right(wrapConnection(pooled)))
+                _   <- pooled.lastUsedAt.set(now)
+                _   <- pooled.useCount.update(_ + 1)
+                _   <- deferred.complete(Right(wrapConnection(pooled)))
               yield ()
               (newState, complete)
             case None =>
@@ -480,64 +480,64 @@ object PooledDataSource:
       (before, after) match
         case (Some(b), Some(a)) =>
           Connection.withBeforeAfter(
-            host = host,
-            port = port,
-            user = user,
-            before = b,
-            after = a,
-            password = password,
-            database = database,
-            debug = debug,
-            ssl = ssl,
-            socketOptions = socketOptions,
-            readTimeout = readTimeout,
+            host                    = host,
+            port                    = port,
+            user                    = user,
+            before                  = b,
+            after                   = a,
+            password                = password,
+            database                = database,
+            debug                   = debug,
+            ssl                     = ssl,
+            socketOptions           = socketOptions,
+            readTimeout             = readTimeout,
             allowPublicKeyRetrieval = allowPublicKeyRetrieval,
-            useCursorFetch = useCursorFetch,
-            useServerPrepStmts = useServerPrepStmts,
-            databaseTerm = databaseTerm
+            useCursorFetch          = useCursorFetch,
+            useServerPrepStmts      = useServerPrepStmts,
+            databaseTerm            = databaseTerm
           )
         case (Some(b), None) =>
           Connection.withBeforeAfter(
-            host = host,
-            port = port,
-            user = user,
-            before = b,
-            after = (_, _) => Async[F].unit,
-            password = password,
-            database = database,
-            debug = debug,
-            ssl = ssl,
-            socketOptions = socketOptions,
-            readTimeout = readTimeout,
+            host                    = host,
+            port                    = port,
+            user                    = user,
+            before                  = b,
+            after                   = (_, _) => Async[F].unit,
+            password                = password,
+            database                = database,
+            debug                   = debug,
+            ssl                     = ssl,
+            socketOptions           = socketOptions,
+            readTimeout             = readTimeout,
             allowPublicKeyRetrieval = allowPublicKeyRetrieval,
-            useCursorFetch = useCursorFetch,
-            useServerPrepStmts = useServerPrepStmts,
-            databaseTerm = databaseTerm
+            useCursorFetch          = useCursorFetch,
+            useServerPrepStmts      = useServerPrepStmts,
+            databaseTerm            = databaseTerm
           )
         case (None, _) =>
           Connection(
-            host = host,
-            port = port,
-            user = user,
-            password = password,
-            database = database,
-            debug = debug,
-            ssl = ssl,
-            socketOptions = socketOptions,
-            readTimeout = readTimeout,
+            host                    = host,
+            port                    = port,
+            user                    = user,
+            password                = password,
+            database                = database,
+            debug                   = debug,
+            ssl                     = ssl,
+            socketOptions           = socketOptions,
+            readTimeout             = readTimeout,
             allowPublicKeyRetrieval = allowPublicKeyRetrieval,
-            useCursorFetch = useCursorFetch,
-            useServerPrepStmts = useServerPrepStmts,
-            databaseTerm = databaseTerm
+            useCursorFetch          = useCursorFetch,
+            useServerPrepStmts      = useServerPrepStmts,
+            databaseTerm            = databaseTerm
           )
 
   private[connector] def create[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
-                                                                                     config:         MySQLConfig,
-                                                                                     metricsTracker: Option[PoolMetricsTracker[F]],
-                                                                                     idGenerator:    F[String],
-                                                                                     before:         Option[Connection[F] => F[A]] = None,
-                                                                                     after:          Option[(A, Connection[F]) => F[Unit]] = None
-                                                                                   ): Resource[F, PooledDataSource[F]] =
+    config:         MySQLConfig,
+    metricsTracker: Option[PoolMetricsTracker[F]],
+    idGenerator:    F[String],
+    before:         Option[Connection[F] => F[A]] = None,
+    after:          Option[(A, Connection[F]) => F[Unit]] = None
+  ): Resource[F, PooledDataSource[F]] =
 
     val tracker           = metricsTracker.getOrElse(PoolMetricsTracker.noop[F])
     val houseKeeper       = HouseKeeper.fromAsync[F](config, tracker)
@@ -546,42 +546,42 @@ object PooledDataSource:
     def pool = for
       poolState <- Ref[F].of(PoolState.empty[F])
       pool = Impl[F, A](
-        host                    = config.host,
-        port                    = config.port,
-        user                    = config.user,
-        password                = config.password,
-        database                = config.database,
-        debug                   = config.debug,
-        ssl                     = config.ssl,
-        socketOptions           = config.socketOptions,
-        readTimeout             = config.readTimeout,
-        allowPublicKeyRetrieval = config.allowPublicKeyRetrieval,
-        databaseTerm            = config.databaseTerm,
-        useCursorFetch          = config.useCursorFetch,
-        useServerPrepStmts      = config.useServerPrepStmts,
-        minConnections          = config.minConnections,
-        maxConnections          = config.maxConnections,
-        connectionTimeout       = config.connectionTimeout,
-        idleTimeout             = config.idleTimeout,
-        maxLifetime             = config.maxLifetime,
-        validationTimeout       = config.validationTimeout,
-        leakDetectionThreshold  = config.leakDetectionThreshold,
-        adaptiveSizing          = config.adaptiveSizing,
-        adaptiveInterval        = config.adaptiveInterval,
-        metricsTracker          = tracker,
-        poolState               = poolState,
-        idGenerator             = idGenerator,
-        houseKeeper             = None,
-        adaptiveSizer           = None
-      )
+               host                    = config.host,
+               port                    = config.port,
+               user                    = config.user,
+               password                = config.password,
+               database                = config.database,
+               debug                   = config.debug,
+               ssl                     = config.ssl,
+               socketOptions           = config.socketOptions,
+               readTimeout             = config.readTimeout,
+               allowPublicKeyRetrieval = config.allowPublicKeyRetrieval,
+               databaseTerm            = config.databaseTerm,
+               useCursorFetch          = config.useCursorFetch,
+               useServerPrepStmts      = config.useServerPrepStmts,
+               minConnections          = config.minConnections,
+               maxConnections          = config.maxConnections,
+               connectionTimeout       = config.connectionTimeout,
+               idleTimeout             = config.idleTimeout,
+               maxLifetime             = config.maxLifetime,
+               validationTimeout       = config.validationTimeout,
+               leakDetectionThreshold  = config.leakDetectionThreshold,
+               adaptiveSizing          = config.adaptiveSizing,
+               adaptiveInterval        = config.adaptiveInterval,
+               metricsTracker          = tracker,
+               poolState               = poolState,
+               idGenerator             = idGenerator,
+               houseKeeper             = None,
+               adaptiveSizer           = None
+             )
 
       // Initialize minimum connections
       _ <- (1 to config.minConnections).toList.traverse_ { _ =>
-        pool.createNewConnection().flatMap { pooled =>
-          // First set to Idle state before returning to pool
-          pooled.state.set(ConnectionState.Idle) *> pool.returnToPool(pooled)
-        }
-      }
+             pool.createNewConnection().flatMap { pooled =>
+               // First set to Idle state before returning to pool
+               pooled.state.set(ConnectionState.Idle) *> pool.returnToPool(pooled)
+             }
+           }
     yield pool
 
     Resource
@@ -600,17 +600,17 @@ object PooledDataSource:
       }
 
   def fromConfig[F[_]: Async: Network: Console: Hashing: UUIDGen](
-                                                                   config:         MySQLConfig,
-                                                                   logHandler:     Option[LogHandler[F]] = None,
-                                                                   metricsTracker: Option[PoolMetricsTracker[F]] = None
-                                                                 ): Resource[F, PooledDataSource[F]] =
+    config:         MySQLConfig,
+    logHandler:     Option[LogHandler[F]] = None,
+    metricsTracker: Option[PoolMetricsTracker[F]] = None
+  ): Resource[F, PooledDataSource[F]] =
     create(config, metricsTracker, Sync[F].delay(java.util.UUID.randomUUID().toString))
 
   def fromConfigWithBeforeAfter[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
-                                                                   config:         MySQLConfig,
-                                                                   logHandler:     Option[LogHandler[F]] = None,
-                                                                   metricsTracker: Option[PoolMetricsTracker[F]] = None,
-                                                                   before:         Option[Connection[F] => F[A]] = None,
-                                                                    after:          Option[(A, Connection[F]) => F[Unit]] = None
-                                                                 ): Resource[F, PooledDataSource[F]] =
+    config:         MySQLConfig,
+    logHandler:     Option[LogHandler[F]] = None,
+    metricsTracker: Option[PoolMetricsTracker[F]] = None,
+    before:         Option[Connection[F] => F[A]] = None,
+    after:          Option[(A, Connection[F]) => F[Unit]] = None
+  ): Resource[F, PooledDataSource[F]] =
     create(config, metricsTracker, Sync[F].delay(java.util.UUID.randomUUID().toString), before, after)
