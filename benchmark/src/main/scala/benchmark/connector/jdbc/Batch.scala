@@ -19,13 +19,15 @@ import cats.effect.unsafe.implicits.global
 
 import jdbc.connector.*
 
+import ldbc.DataSource
+
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
 @State(Scope.Benchmark)
 class Batch:
 
   @volatile
-  var provider: Provider[IO] = uninitialized
+  var datasource: DataSource[IO] = uninitialized
 
   @volatile
   var values: String = uninitialized
@@ -43,7 +45,7 @@ class Batch:
     ds.setPassword("password")
     ds.setRewriteBatchedStatements(true)
 
-    provider = ConnectionProvider.fromDataSource(ds, ExecutionContexts.synchronous)
+    datasource = MySQLDataSource.fromDataSource(ds, ExecutionContexts.synchronous)
 
     values = (1 to len).map(_ => "(?, ?)").mkString(",")
 
@@ -54,8 +56,7 @@ class Batch:
 
   @Benchmark
   def statement(): Unit =
-    provider
-      .createConnection()
+    datasource.getConnection
       .use { conn =>
         for
           statement <- conn.createStatement()
@@ -73,8 +74,7 @@ class Batch:
 
   @Benchmark
   def prepareStatement(): Unit =
-    provider
-      .createConnection()
+    datasource.getConnection
       .use { conn =>
         for
           statement <- conn.prepareStatement(s"INSERT INTO jdbc_prepare_statement_test (c1, c2) VALUES (?, ?)")

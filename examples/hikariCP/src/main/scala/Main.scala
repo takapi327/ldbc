@@ -38,13 +38,11 @@ object Main extends ResourceApp.Simple:
 
   override def run: Resource[IO, Unit] =
     (for
-      hikari     <- Resource.fromAutoCloseable(IO(ds))
-      execution  <- ExecutionContexts.fixedThreadPool[IO](hikari.getMaximumPoolSize)
-      connection <- ConnectionProvider.fromDataSource[IO](hikari, execution).createConnector()
-    yield connection).evalMap { conn =>
+      hikari    <- Resource.fromAutoCloseable(IO(ds))
+      execution <- ExecutionContexts.fixedThreadPool[IO](hikari.getMaximumPoolSize)
+    yield Connector.fromDataSource[IO](hikari, execution)).evalMap { conn =>
       for
         city <- sql"SELECT * FROM `city` WHERE ID = ${ 1 }".query[City].to[Option].readOnly(conn)
-        _    <- IO.println(s"Found city: $city")
         // トランザクションの例
         _ <- sql"UPDATE `city` SET population = ${ city.map(_.population + 1000) }".update.transaction(conn)
       yield ()

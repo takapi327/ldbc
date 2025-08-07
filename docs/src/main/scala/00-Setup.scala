@@ -95,11 +95,13 @@ import ldbc.connector.*
     """.update
   // #insertOrder
 
-  // #connection
-  def connection = ConnectionProvider
-    .default[IO]("127.0.0.1", 13306, "ldbc")
+  val datasource = MySQLDataSource
+    .build[IO]("127.0.0.1", 13306, "ldbc")
     .setPassword("password")
-  // #connection
+
+  // #connector
+  def connector = Connector.fromDataSource(datasource)
+  // #connector
 
   // #setupTable
   val setUpTables =
@@ -112,13 +114,12 @@ import ldbc.connector.*
   // #insertData
 
   // #run
-  connection
-    .use { conn =>
-      createDatabase.commit(conn) *>
-        conn.connection.setCatalog("sandbox_db") *>
-        (setUpTables *> insertData)
-          .transaction(conn)
-          .as(println("Database setup completed"))
-    }
+  (createDatabase.commit(connector) *>
+    datasource.getConnection.use { connection =>
+      connection.setCatalog("sandbox_db")
+    } *>
+    (setUpTables *> insertData)
+      .transaction(connector)
+      .as(println("Database setup completed")))
     .unsafeRunSync()
   // #run

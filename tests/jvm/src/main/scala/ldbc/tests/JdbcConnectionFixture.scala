@@ -12,11 +12,13 @@ import munit.*
 import munit.catseffect.IOFixture
 import munit.catseffect.ResourceFixture.FixtureNotInstantiatedException
 
-import ldbc.{ Connector, Provider }
+import jdbc.connector.Connector
+
+import ldbc.{ Connector, DataSource }
 
 private case class JdbcConnectionFixture(
   name:              String,
-  provider:          Provider[IO],
+  datasource:        DataSource[IO],
   connectBeforeAll:  Connector[IO] => IO[Unit],
   connectAfterAll:   Connector[IO] => IO[Unit],
   connectBeforeEach: Connector[IO] => IO[Unit],
@@ -43,7 +45,7 @@ private case class JdbcConnectionFixture(
         case None    => throw new FixtureNotInstantiatedException(name)
 
       override def beforeAll(): IO[Unit] =
-        provider.createConnection().map(Connector.fromConnection).allocated.flatMap {
+        datasource.getConnection.map(Connector.fromConnection).allocated.flatMap {
           case (conn, close) =>
             connectBeforeAll(conn) *> IO(this.value = Some((conn, close)))
         }
@@ -65,5 +67,5 @@ private case class JdbcConnectionFixture(
         }
 
 object JdbcConnectionFixture:
-  def apply(name: String, provider: Provider[IO]): ConnectionFixture =
-    JdbcConnectionFixture(name, provider, _ => IO.unit, _ => IO.unit, _ => IO.unit, _ => IO.unit)
+  def apply(name: String, datasource: DataSource[IO]): ConnectionFixture =
+    JdbcConnectionFixture(name, datasource, _ => IO.unit, _ => IO.unit, _ => IO.unit, _ => IO.unit)

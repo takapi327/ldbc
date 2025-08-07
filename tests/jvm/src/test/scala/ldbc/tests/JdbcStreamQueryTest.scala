@@ -12,6 +12,8 @@ import cats.effect.*
 
 import jdbc.connector.*
 
+import ldbc.Connector
+
 class JdbcStreamQueryTest extends StreamQueryTest:
 
   val ds = new MysqlDataSource()
@@ -22,5 +24,5 @@ class JdbcStreamQueryTest extends StreamQueryTest:
   ds.setPassword(password)
   ds.setUseCursorFetch(true)
 
-  override def provider: Provider[IO] =
-    ConnectionProvider.fromDataSource(ds, ExecutionContexts.synchronous)
+  override def connector: Connector[IO] =
+    Connector.fromDataSource[IO](ds, ExecutionContexts.synchronous)

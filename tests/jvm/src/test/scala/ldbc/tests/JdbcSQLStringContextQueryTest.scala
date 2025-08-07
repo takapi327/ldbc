@@ -17,6 +17,8 @@ import ldbc.dsl.codec.Codec
 
 import jdbc.connector.*
 
+import ldbc.Connector
+
 class JdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
 
   val ds = new MysqlDataSource()
@@ -26,8 +28,8 @@ class JdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
   ds.setUser("ldbc")
   ds.setPassword("password")
 
-  override def connection: Provider[IO] =
-    ConnectionProvider.fromDataSource(ds, ExecutionContexts.synchronous)
+  override def connector: Connector[IO] =
+    Connector.fromDataSource[IO](ds, ExecutionContexts.synchronous)
 
   test(
     "Attempting to decode something that does not match the value of Enum raises a SQLException."
@@ -38,12 +40,10 @@ class JdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
     given Codec[MyEnum] = Codec.derivedEnum[MyEnum]
 
     interceptIO[SQLSyntaxErrorException](
-      connection.use { conn =>
-        sql"SELECT D"
-          .query[MyEnum]
-          .to[Option]
-          .readOnly(conn)
-      }
+      sql"SELECT D"
+        .query[MyEnum]
+        .to[Option]
+        .readOnly(connector)
     )
   }
 
@@ -53,11 +53,9 @@ class JdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
     case class City(id: Int, name: String, age: Int)
 
     interceptIO[SQLException](
-      connection.use { conn =>
-        sql"SELECT Id, Name FROM city LIMIT 1"
-          .query[City]
-          .to[Option]
-          .readOnly(conn)
-      }
+      sql"SELECT Id, Name FROM city LIMIT 1"
+        .query[City]
+        .to[Option]
+        .readOnly(connector)
     )
   }

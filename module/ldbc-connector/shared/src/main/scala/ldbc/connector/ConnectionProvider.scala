@@ -22,6 +22,10 @@ import ldbc.sql.DatabaseMetaData
 import ldbc.{ Connector, Provider }
 import ldbc.logging.LogHandler
 
+@deprecated(
+  "Connection creation using ConnectionProvider is now deprecated. Please use ldbc.connector.MySQLDataSource from now on. ConnectionProvider will be removed in version 0.5.x.",
+  "ldbc 0.4.0"
+)
 trait ConnectionProvider[F[_], A] extends Provider[F]:
 
   /**
@@ -320,6 +324,7 @@ object ConnectionProvider:
   val defaultSocketOptions: List[SocketOption] =
     List(SocketOption.noDelay(true))
 
+  @annotation.nowarn
   private case class Impl[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
     host:                    String,
     port:                    Int,
@@ -497,12 +502,14 @@ object ConnectionProvider:
     override def createConnector(): Resource[F, Connector[F]] =
       createConnection().map(conn => Connector.fromConnection(conn, logHandler))
 
+  @annotation.nowarn
   def default[F[_]: Async: Network: Console: Hashing: UUIDGen](
     host: String,
     port: Int,
     user: String
   ): ConnectionProvider[F, Unit] = Impl[F, Unit](host, port, user)
 
+  @annotation.nowarn
   def default[F[_]: Async: Network: Console: Hashing: UUIDGen](
     host:     String,
     port:     Int,

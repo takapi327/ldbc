@@ -48,12 +48,14 @@ class Select:
   )
 
   @volatile
-  var provider: Provider[IO] = uninitialized
+  var datasource: DataSource[IO] = uninitialized
 
   @Setup
   def setupDataSource(): Unit =
-    provider = ConnectionProvider
-      .default[IO]("127.0.0.1", 13306, "ldbc", "password", "benchmark")
+    datasource = MySQLDataSource
+      .build[IO]("127.0.0.1", 13306, "ldbc")
+      .setPassword("password")
+      .setDatabase("benchmark")
       .setSSL(SSL.Trusted)
 
   @Param(Array("1000", "2000", "4000"))
@@ -61,8 +63,7 @@ class Select:
 
   @Benchmark
   def statement: List[BenchmarkType] =
-    provider
-      .createConnection()
+    datasource.getConnection
       .use { conn =>
         for
           statement <- conn.createStatement()
@@ -74,8 +75,7 @@ class Select:
 
   @Benchmark
   def prepareStatement: List[BenchmarkType] =
-    provider
-      .createConnection()
+    datasource.getConnection
       .use { conn =>
         for
           statement <- conn.prepareStatement("SELECT * FROM jdbc_prepare_statement_test LIMIT ?")

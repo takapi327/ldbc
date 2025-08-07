@@ -16,16 +16,21 @@ import ldbc.schema.*
 
 import ldbc.connector.*
 
+import ldbc.Connector
+
 class LdbcDDLTest extends DDLTest:
 
-  override def connection: Provider[IO] =
-    ConnectionProvider
-      .default[IO]("127.0.0.1", 13306, "ldbc", "password", "connector_test")
-      .setSSL(SSL.Trusted)
+  private val datasource = MySQLDataSource
+    .build[IO]("127.0.0.1", 13306, "ldbc")
+    .setPassword("password")
+    .setDatabase("connector_test")
+    .setSSL(SSL.Trusted)
+
+  override def connector: Connector[IO] = Connector.fromDataSource(datasource)
 
 trait DDLTest extends CatsEffectSuite:
 
-  def connection: Provider[IO]
+  def connector: Connector[IO]
 
   final case class User(
     id:   Long,
@@ -48,49 +53,38 @@ trait DDLTest extends CatsEffectSuite:
     ResourceSuiteLocalFixture(
       "Database Setup",
       Resource.make[IO, Unit](
-        connection
-          .use { conn =>
-            // The following implementation is used to test the possibility of multiple executions.
-            DBIO
-              .sequence(
-                userTable.schema.create,
-                userTable.schema.createIfNotExists,
-                userTable.schema.dropIfExists,
-                userTable.schema.create
-              )
-              .commit(conn) *> IO.unit
-          }
+        DBIO
+          .sequence(
+            userTable.schema.create,
+            userTable.schema.createIfNotExists,
+            userTable.schema.dropIfExists,
+            userTable.schema.create
+          )
+          .commit(connector) *> IO.unit
       ) { _ =>
-        connection
-          .use { conn =>
-            DBIO.sequence(userTable.schema.drop).commit(conn) *> IO.unit
-          }
+        DBIO.sequence(userTable.schema.drop).commit(connector) *> IO.unit
       }
     )
   )
 
   test("When the table is created, the number of records is 0.") {
     assertIO(
-      connection.use { conn =>
-        userTable.select(_.id.count).query.unsafe.readOnly(conn)
-      },
+      userTable.select(_.id.count).query.unsafe.readOnly(connector),
       0
     )
   }
 
   test("Records can be inserted into tables created before the test begins.") {
     assertIO(
-      connection.use { conn =>
-        userTable
-          .insertInto(user => user.name *: user.age)
-          .values(
-            ("Alice", Some(20)),
-            ("Bob", Some(25)),
-            ("Charlie", None)
-          )
-          .update
-          .commit(conn)
-      },
+      userTable
+        .insertInto(user => user.name *: user.age)
+        .values(
+          ("Alice", Some(20)),
+          ("Bob", Some(25)),
+          ("Charlie", None)
+        )
+        .update
+        .commit(connector),
       3
     )
   }

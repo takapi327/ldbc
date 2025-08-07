@@ -26,6 +26,8 @@ import ldbc.connector.syntax.*
 
 import jdbc.connector.*
 
+import ldbc.DataSource
+
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
 @State(Scope.Benchmark)
@@ -51,7 +53,7 @@ class Select:
   )
 
   @volatile
-  var provider: Provider[IO] = uninitialized
+  var datasource: DataSource[IO] = uninitialized
 
   @Setup
   def setupDataSource(): Unit =
@@ -63,15 +65,14 @@ class Select:
     ds.setPassword("password")
     ds.setUseSSL(true)
 
-    provider = ConnectionProvider.fromDataSource(ds, ExecutionContexts.synchronous)
+    datasource = MySQLDataSource.fromDataSource[IO](ds, ExecutionContexts.synchronous)
 
   @Param(Array("100", "1000", "2000", "4000"))
   var len: Int = uninitialized
 
   @Benchmark
   def statement: List[BenchmarkType] =
-    provider
-      .createConnection()
+    datasource.getConnection
       .use { conn =>
         for
           statement <- conn.createStatement()
@@ -83,8 +84,7 @@ class Select:
 
   @Benchmark
   def prepareStatement: List[BenchmarkType] =
-    provider
-      .createConnection()
+    datasource.getConnection
       .use { conn =>
         for
           statement <- conn.prepareStatement("SELECT * FROM jdbc_prepare_statement_test LIMIT ?")

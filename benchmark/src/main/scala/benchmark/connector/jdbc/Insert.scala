@@ -20,13 +20,15 @@ import cats.effect.unsafe.implicits.global
 
 import jdbc.connector.*
 
+import ldbc.DataSource
+
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
 @State(Scope.Benchmark)
 class Insert:
 
   @volatile
-  var provider: Provider[IO] = uninitialized
+  var datasource: DataSource[IO] = uninitialized
 
   @volatile
   var values: String = uninitialized
@@ -62,7 +64,7 @@ class Insert:
     ds.setPassword("password")
     ds.setUseSSL(true)
 
-    provider = ConnectionProvider.fromDataSource(ds, ExecutionContexts.synchronous)
+    datasource = MySQLDataSource.fromDataSource(ds, ExecutionContexts.synchronous)
 
     values = (1 to len).map(_ => "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").mkString(",")
 
@@ -93,8 +95,7 @@ class Insert:
 
   @Benchmark
   def statement(): Unit =
-    provider
-      .createConnection()
+    datasource.getConnection
       .use { conn =>
         for
           statement <- conn.createStatement()
@@ -116,8 +117,7 @@ class Insert:
 
   @Benchmark
   def prepareStatement(): Unit =
-    provider
-      .createConnection()
+    datasource.getConnection
       .use { conn =>
         for
           statement <-

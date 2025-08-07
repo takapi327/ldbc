@@ -18,14 +18,16 @@ import ldbc.sql.*
 
 import ldbc.connector.*
 
-import ldbc.Provider
+import ldbc.DataSource
 
 class LdbcConnectionTest extends ConnectionTest:
   override def prefix: "ldbc" = "ldbc"
 
-  override def connection(databaseTerm: "SCHEMA" | "CATALOG" = "CATALOG"): Provider[IO] =
-    ConnectionProvider
-      .default[IO](host, port, user, password, database)
+  override def datasource(databaseTerm: "SCHEMA" | "CATALOG" = "CATALOG"): DataSource[IO] =
+    MySQLDataSource
+      .build[IO](host, port, user)
+      .setPassword(password)
+      .setDatabase(database)
       .setSSL(SSL.Trusted)
       .setDatabaseTerm(
         databaseTerm match
@@ -42,156 +44,162 @@ trait ConnectionTest extends CatsEffectSuite:
   protected val database: String = "connector_test"
 
   def prefix:                                                     "jdbc" | "ldbc"
-  def connection(databaseTerm: "SCHEMA" | "CATALOG" = "CATALOG"): Provider[IO]
+  def datasource(databaseTerm: "SCHEMA" | "CATALOG" = "CATALOG"): DataSource[IO]
 
   test("Catalog change will change the currently connected Catalog.") {
     assertIO(
-      connection().use { conn =>
-        conn.connection.setCatalog("world") *> conn.connection.getCatalog()
+      datasource().getConnection.use { conn =>
+        conn.setCatalog("world") *> conn.getCatalog()
       },
       "world"
     )
   }
 
   test("The connection is valid.") {
-    assertIOBoolean(connection().use(_.connection.isValid(0)))
+    assertIOBoolean(datasource().getConnection.use(_.isValid(0)))
   }
 
   test("The allProceduresAreCallable method of DatabaseMetaData is always false.") {
-    assertIOBoolean(connection().use(_.connection.getMetaData().map(meta => !meta.allProceduresAreCallable())))
+    assertIOBoolean(datasource().getConnection.use(_.getMetaData().map(meta => !meta.allProceduresAreCallable())))
   }
 
   test("The allTablesAreSelectable method of DatabaseMetaData is always false.") {
-    assertIOBoolean(connection().use(_.connection.getMetaData().map(meta => !meta.allTablesAreSelectable())))
+    assertIOBoolean(datasource().getConnection.use(_.getMetaData().map(meta => !meta.allTablesAreSelectable())))
   }
 
   test("The URL retrieved from DatabaseMetaData matches the specified value.") {
     assertIO(
-      connection().use(_.connection.getMetaData().map(_.getURL())),
+      datasource().getConnection.use(_.getMetaData().map(_.getURL())),
       "jdbc:mysql://127.0.0.1:13306/connector_test"
     )
   }
 
   test("The User name retrieved from DatabaseMetaData matches the specified value.") {
     assertIO(
-      connection().use(_.connection.getMetaData().flatMap(_.getUserName())),
+      datasource().getConnection.use(_.getMetaData().flatMap(_.getUserName())),
       "ldbc@172.18.0.1"
     )
   }
 
   test("The isReadOnly method of DatabaseMetaData is always false.") {
-    assertIOBoolean(connection().use(_.connection.getMetaData().map(meta => !meta.isReadOnly())))
+    assertIOBoolean(datasource().getConnection.use(_.getMetaData().map(meta => !meta.isReadOnly())))
   }
 
   test("The nullsAreSortedHigh method of DatabaseMetaData is always false.") {
-    assertIOBoolean(connection().use(_.connection.getMetaData().map(meta => !meta.nullsAreSortedHigh())))
+    assertIOBoolean(datasource().getConnection.use(_.getMetaData().map(meta => !meta.nullsAreSortedHigh())))
   }
 
   test("The nullsAreSortedLow method of DatabaseMetaData is always true.") {
-    assertIOBoolean(connection().use(_.connection.getMetaData().map(meta => meta.nullsAreSortedLow())))
+    assertIOBoolean(datasource().getConnection.use(_.getMetaData().map(meta => meta.nullsAreSortedLow())))
   }
 
   test("The nullsAreSortedAtStart method of DatabaseMetaData is always false.") {
-    assertIOBoolean(connection().use(_.connection.getMetaData().map(meta => !meta.nullsAreSortedAtStart())))
+    assertIOBoolean(datasource().getConnection.use(_.getMetaData().map(meta => !meta.nullsAreSortedAtStart())))
   }
 
   test("The nullsAreSortedAtEnd method of DatabaseMetaData is always false.") {
-    assertIOBoolean(connection().use(_.connection.getMetaData().map(meta => !meta.nullsAreSortedAtEnd())))
+    assertIOBoolean(datasource().getConnection.use(_.getMetaData().map(meta => !meta.nullsAreSortedAtEnd())))
   }
 
   test("The getDatabaseProductName method of DatabaseMetaData is always MySQL.") {
     assertIO(
-      connection().use(_.connection.getMetaData().map(_.getDatabaseProductName())),
+      datasource().getConnection.use(_.getMetaData().map(_.getDatabaseProductName())),
       "MySQL"
     )
   }
 
   test("The Server version retrieved from DatabaseMetaData matches the specified value.") {
     assertIO(
-      connection().use(_.connection.getMetaData().map(_.getDatabaseProductVersion())),
+      datasource().getConnection.use(_.getMetaData().map(_.getDatabaseProductVersion())),
       "8.4.0"
     )
   }
 
   test("The getDriverName method of DatabaseMetaData is always MySQL Connector/L.") {
     assertIO(
-      connection().use(_.connection.getMetaData().map(_.getDriverName())),
+      datasource().getConnection.use(_.getMetaData().map(_.getDriverName())),
       if prefix == "jdbc" then "MySQL Connector/J" else "MySQL Connector/L"
     )
   }
 
   test("The Driver version retrieved from DatabaseMetaData matches the specified value.") {
     assertIO(
-      connection().use(_.connection.getMetaData().map(_.getDriverVersion())),
+      datasource().getConnection.use(_.getMetaData().map(_.getDriverVersion())),
       if prefix == "jdbc" then "mysql-connector-j-8.4.0 (Revision: 1c3f5c149e0bfe31c7fbeb24e2d260cd890972c4)"
       else "ldbc-connector-0.3.2"
     )
   }
 
   test("The usesLocalFiles method of DatabaseMetaData is always false.") {
-    assertIOBoolean(connection().use(_.connection.getMetaData().map(meta => !meta.usesLocalFiles())))
+    assertIOBoolean(datasource().getConnection.use(_.getMetaData().map(meta => !meta.usesLocalFiles())))
   }
 
   test("The usesLocalFilePerTable method of DatabaseMetaData is always false.") {
-    assertIOBoolean(connection().use(_.connection.getMetaData().map(meta => !meta.usesLocalFilePerTable())))
+    assertIOBoolean(datasource().getConnection.use(_.getMetaData().map(meta => !meta.usesLocalFilePerTable())))
   }
 
   test("The supports Mixed Case Identifiers retrieved from DatabaseMetaData matches the specified value.") {
-    assertIOBoolean(connection().use(_.connection.getMetaData().map(_.supportsMixedCaseIdentifiers())))
+    assertIOBoolean(datasource().getConnection.use(_.getMetaData().map(_.supportsMixedCaseIdentifiers())))
   }
 
   test("The storesUpperCaseIdentifiers method of DatabaseMetaData is always false.") {
-    assertIOBoolean(connection().use(_.connection.getMetaData().map(meta => !meta.storesUpperCaseIdentifiers())))
+    assertIOBoolean(
+      datasource().getConnection.use(_.getMetaData().map(meta => !meta.storesUpperCaseIdentifiers()))
+    )
   }
 
   test("The stores Lower Case Identifiers retrieved from DatabaseMetaData matches the specified value.") {
-    assertIOBoolean(connection().use(_.connection.getMetaData().map(meta => !meta.storesLowerCaseIdentifiers())))
+    assertIOBoolean(
+      datasource().getConnection.use(_.getMetaData().map(meta => !meta.storesLowerCaseIdentifiers()))
+    )
   }
 
   test("The stores Mixed Case Identifiers retrieved from DatabaseMetaData matches the specified value.") {
-    assertIOBoolean(connection().use(_.connection.getMetaData().map(_.storesMixedCaseIdentifiers())))
+    assertIOBoolean(datasource().getConnection.use(_.getMetaData().map(_.storesMixedCaseIdentifiers())))
   }
 
   test("The supports Mixed Case Quoted Identifiers retrieved from DatabaseMetaData matches the specified value.") {
-    assertIOBoolean(connection().use(_.connection.getMetaData().map(_.supportsMixedCaseQuotedIdentifiers())))
+    assertIOBoolean(datasource().getConnection.use(_.getMetaData().map(_.supportsMixedCaseQuotedIdentifiers())))
   }
 
   test("The storesUpperCaseQuotedIdentifiers method of DatabaseMetaData is always true.") {
-    assertIOBoolean(connection().use(_.connection.getMetaData().map(_.storesUpperCaseQuotedIdentifiers())))
+    assertIOBoolean(datasource().getConnection.use(_.getMetaData().map(_.storesUpperCaseQuotedIdentifiers())))
   }
 
   test("The stores Lower Case Quoted Identifiers retrieved from DatabaseMetaData matches the specified value.") {
-    assertIOBoolean(connection().use(_.connection.getMetaData().map(meta => !meta.storesLowerCaseQuotedIdentifiers())))
+    assertIOBoolean(
+      datasource().getConnection.use(_.getMetaData().map(meta => !meta.storesLowerCaseQuotedIdentifiers()))
+    )
   }
 
   test("The stores Mixed Case Quoted Identifiers retrieved from DatabaseMetaData matches the specified value.") {
-    assertIOBoolean(connection().use(_.connection.getMetaData().map(_.storesMixedCaseQuotedIdentifiers())))
+    assertIOBoolean(datasource().getConnection.use(_.getMetaData().map(_.storesMixedCaseQuotedIdentifiers())))
   }
 
   test("The Identifier Quote String retrieved from DatabaseMetaData matches the specified value.") {
     assertIO(
-      connection().use(_.connection.getMetaData().map(_.getIdentifierQuoteString())),
+      datasource().getConnection.use(_.getMetaData().map(_.getIdentifierQuoteString())),
       "`"
     )
   }
 
   test("The SQL Keywords retrieved from DatabaseMetaData matches the specified value.") {
     assertIO(
-      connection().use(_.connection.getMetaData().flatMap(_.getSQLKeywords())),
+      datasource().getConnection.use(_.getMetaData().flatMap(_.getSQLKeywords())),
       "ACCESSIBLE,ADD,ANALYZE,ASC,BEFORE,CASCADE,CHANGE,CONTINUE,DATABASE,DATABASES,DAY_HOUR,DAY_MICROSECOND,DAY_MINUTE,DAY_SECOND,DELAYED,DESC,DISTINCTROW,DIV,DUAL,ELSEIF,EMPTY,ENCLOSED,ESCAPED,EXIT,EXPLAIN,FIRST_VALUE,FLOAT4,FLOAT8,FORCE,FULLTEXT,GENERATED,GROUPS,HIGH_PRIORITY,HOUR_MICROSECOND,HOUR_MINUTE,HOUR_SECOND,IF,IGNORE,INDEX,INFILE,INT1,INT2,INT3,INT4,INT8,IO_AFTER_GTIDS,IO_BEFORE_GTIDS,ITERATE,JSON_TABLE,KEY,KEYS,KILL,LAG,LAST_VALUE,LEAD,LEAVE,LIMIT,LINEAR,LINES,LOAD,LOCK,LONG,LONGBLOB,LONGTEXT,LOOP,LOW_PRIORITY,MAXVALUE,MEDIUMBLOB,MEDIUMINT,MEDIUMTEXT,MIDDLEINT,MINUTE_MICROSECOND,MINUTE_SECOND,NO_WRITE_TO_BINLOG,NTH_VALUE,NTILE,OPTIMIZE,OPTIMIZER_COSTS,OPTION,OPTIONALLY,OUTFILE,PURGE,READ,READ_WRITE,REGEXP,RENAME,REPEAT,REPLACE,REQUIRE,RESIGNAL,RESTRICT,RLIKE,SCHEMA,SCHEMAS,SECOND_MICROSECOND,SEPARATOR,SHOW,SIGNAL,SPATIAL,SQL_BIG_RESULT,SQL_CALC_FOUND_ROWS,SQL_SMALL_RESULT,SSL,STARTING,STORED,STRAIGHT_JOIN,TERMINATED,TINYBLOB,TINYINT,TINYTEXT,UNDO,UNLOCK,UNSIGNED,USAGE,USE,UTC_DATE,UTC_TIME,UTC_TIMESTAMP,VARBINARY,VARCHARACTER,VIRTUAL,WHILE,WRITE,XOR,YEAR_MONTH,ZEROFILL"
     )
   }
 
   test("The Numeric Functions retrieved from DatabaseMetaData matches the specified value.") {
     assertIO(
-      connection().use(_.connection.getMetaData().map(_.getNumericFunctions())),
+      datasource().getConnection.use(_.getMetaData().map(_.getNumericFunctions())),
       "ABS,ACOS,ASIN,ATAN,ATAN2,BIT_COUNT,CEILING,COS,COT,DEGREES,EXP,FLOOR,LOG,LOG10,MAX,MIN,MOD,PI,POW,POWER,RADIANS,RAND,ROUND,SIN,SQRT,TAN,TRUNCATE"
     )
   }
 
   test("The String Functions retrieved from DatabaseMetaData matches the specified value.") {
     assertIO(
-      connection().use(_.connection.getMetaData().map(_.getStringFunctions())),
+      datasource().getConnection.use(_.getMetaData().map(_.getStringFunctions())),
       "ASCII,BIN,BIT_LENGTH,CHAR,CHARACTER_LENGTH,CHAR_LENGTH,CONCAT,CONCAT_WS,CONV,ELT,EXPORT_SET,FIELD,FIND_IN_SET,HEX,INSERT,"
         + "INSTR,LCASE,LEFT,LENGTH,LOAD_FILE,LOCATE,LOCATE,LOWER,LPAD,LTRIM,MAKE_SET,MATCH,MID,OCT,OCTET_LENGTH,ORD,POSITION,"
         + "QUOTE,REPEAT,REPLACE,REVERSE,RIGHT,RPAD,RTRIM,SOUNDEX,SPACE,STRCMP,SUBSTRING,SUBSTRING,SUBSTRING,SUBSTRING,"
@@ -201,14 +209,14 @@ trait ConnectionTest extends CatsEffectSuite:
 
   test("The System Functions retrieved from DatabaseMetaData matches the specified value.") {
     assertIO(
-      connection().use(_.connection.getMetaData().map(_.getSystemFunctions())),
+      datasource().getConnection.use(_.getMetaData().map(_.getSystemFunctions())),
       "DATABASE,USER,SYSTEM_USER,SESSION_USER,PASSWORD,ENCRYPT,LAST_INSERT_ID,VERSION"
     )
   }
 
   test("The Time Date Functions retrieved from DatabaseMetaData matches the specified value.") {
     assertIO(
-      connection().use(_.connection.getMetaData().map(_.getTimeDateFunctions())),
+      datasource().getConnection.use(_.getMetaData().map(_.getTimeDateFunctions())),
       "DAYOFWEEK,WEEKDAY,DAYOFMONTH,DAYOFYEAR,MONTH,DAYNAME,MONTHNAME,QUARTER,WEEK,YEAR,HOUR,MINUTE,SECOND,PERIOD_ADD,"
         + "PERIOD_DIFF,TO_DAYS,FROM_DAYS,DATE_FORMAT,TIME_FORMAT,CURDATE,CURRENT_DATE,CURTIME,CURRENT_TIME,NOW,SYSDATE,"
         + "CURRENT_TIMESTAMP,UNIX_TIMESTAMP,FROM_UNIXTIME,SEC_TO_TIME,TIME_TO_SEC"
@@ -217,23 +225,23 @@ trait ConnectionTest extends CatsEffectSuite:
 
   test("The Search String Escape retrieved from DatabaseMetaData matches the specified value.") {
     assertIO(
-      connection().use(_.connection.getMetaData().map(_.getSearchStringEscape())),
+      datasource().getConnection.use(_.getMetaData().map(_.getSearchStringEscape())),
       "\\"
     )
   }
 
   test("The Extra Name Characters retrieved from DatabaseMetaData matches the specified value.") {
     assertIO(
-      connection().use(_.connection.getMetaData().map(_.getExtraNameCharacters())),
+      datasource().getConnection.use(_.getMetaData().map(_.getExtraNameCharacters())),
       "$"
     )
   }
 
   test("The result of retrieving procedure information matches the specified value.") {
     assertIO(
-      connection().use { conn =>
+      datasource().getConnection.use { conn =>
         for
-          metaData  <- conn.connection.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <- metaData.getProcedures(Some("connector_test"), None, Some("demoSp"))
           result    <-
             Monad[IO].whileM[Vector, String](resultSet.next()) {
@@ -255,9 +263,9 @@ trait ConnectionTest extends CatsEffectSuite:
 
   test("The result of retrieving procedure columns information matches the specified value.") {
     assertIO(
-      connection().use { conn =>
+      datasource().getConnection.use { conn =>
         for
-          metaData  <- conn.connection.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <- metaData.getProcedureColumns(Some("connector_test"), None, Some("demoSp"), None)
           result    <-
             Monad[IO].whileM[Vector, String](resultSet.next()) {
@@ -280,9 +288,9 @@ trait ConnectionTest extends CatsEffectSuite:
 
   test("The result of retrieving tables information matches the specified value.") {
     assertIO(
-      connection().use { conn =>
+      datasource().getConnection.use { conn =>
         for
-          metaData  <- conn.connection.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <- metaData.getTables(Some("connector_test"), None, Some("all_types"), Array.empty[String])
           result    <-
             Monad[IO].whileM[Vector, String](resultSet.next()) {
@@ -310,9 +318,9 @@ trait ConnectionTest extends CatsEffectSuite:
   test("The result of retrieving schemas information matches the specified value.") {
     assertIO(
       // Waiting for Schema values to increase or decrease in other tests.
-      IO.sleep(5.seconds) *> connection("SCHEMA").use { conn =>
+      IO.sleep(5.seconds) *> datasource("SCHEMA").getConnection.use { conn =>
         for
-          metaData  <- conn.connection.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <- metaData.getSchemas()
           result    <- Monad[IO].whileM[Vector, String](resultSet.next()) {
                       for
@@ -338,9 +346,9 @@ trait ConnectionTest extends CatsEffectSuite:
 
   test("The result of retrieving catalogs information matches the specified value.") {
     assertIO(
-      connection().use { conn =>
+      datasource().getConnection.use { conn =>
         for
-          metaData  <- conn.connection.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <- metaData.getCatalogs()
           result    <- Monad[IO].whileM[Vector, String](resultSet.next()) {
                       for tableCatalog <- resultSet.getString("TABLE_CAT")
@@ -364,9 +372,9 @@ trait ConnectionTest extends CatsEffectSuite:
 
   test("The result of retrieving tableTypes information matches the specified value.") {
     assertIO(
-      connection().use { conn =>
+      datasource().getConnection.use { conn =>
         for
-          metaData  <- conn.connection.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <- metaData.getTableTypes()
           result    <- Monad[IO].whileM[Vector, String](resultSet.next()) {
                       for tableType <- resultSet.getString("TABLE_TYPE")
@@ -386,9 +394,9 @@ trait ConnectionTest extends CatsEffectSuite:
 
   test("The result of retrieving column privileges information matches the specified value.") {
     assertIO(
-      connection().use { conn =>
+      datasource().getConnection.use { conn =>
         for
-          metaData  <- conn.connection.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <- metaData.getColumnPrivileges(Some("connector_test"), None, Some("privileges_table"), None)
           result    <-
             Monad[IO].whileM[Vector, String](resultSet.next()) {
@@ -416,9 +424,9 @@ trait ConnectionTest extends CatsEffectSuite:
 
   test("The result of retrieving table privileges information matches the specified value.") {
     assertIO(
-      connection().use { conn =>
+      datasource().getConnection.use { conn =>
         for
-          metaData  <- conn.connection.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <- metaData.getTablePrivileges(None, None, Some("privileges_table"))
           result    <-
             Monad[IO].whileM[Vector, String](resultSet.next()) {
@@ -447,9 +455,9 @@ trait ConnectionTest extends CatsEffectSuite:
 
   test("The result of retrieving best row identifier information matches the specified value.") {
     assertIO(
-      connection().use { conn =>
+      datasource().getConnection.use { conn =>
         for
-          metaData  <- conn.connection.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <- metaData.getBestRowIdentifier(None, Some("connector_test"), "privileges_table", None, None)
           result    <-
             Monad[IO].whileM[Vector, String](resultSet.next()) {
@@ -474,9 +482,9 @@ trait ConnectionTest extends CatsEffectSuite:
 
   test("The result of retrieving version columns information matches the specified value.") {
     assertIO(
-      connection().use { conn =>
+      datasource().getConnection.use { conn =>
         for
-          metaData  <- conn.connection.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <- metaData.getVersionColumns(None, Some("connector_test"), "privileges_table")
           result    <-
             Monad[IO].whileM[Vector, String](resultSet.next()) {
@@ -501,9 +509,9 @@ trait ConnectionTest extends CatsEffectSuite:
 
   test("The result of retrieving primary key information matches the specified value.") {
     assertIO(
-      connection().use { conn =>
+      datasource().getConnection.use { conn =>
         for
-          metaData  <- conn.connection.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <- metaData.getPrimaryKeys(Some("connector_test"), None, "privileges_table")
           result    <-
             Monad[IO].whileM[Vector, String](resultSet.next()) {
@@ -526,9 +534,9 @@ trait ConnectionTest extends CatsEffectSuite:
 
   test("The result of retrieving imported key information matches the specified value.") {
     assertIO(
-      connection().use { conn =>
+      datasource().getConnection.use { conn =>
         for
-          metaData  <- conn.connection.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <- metaData.getImportedKeys(Some("world"), None, "city")
           result    <-
             Monad[IO].whileM[Vector, String](resultSet.next()) {
@@ -559,9 +567,9 @@ trait ConnectionTest extends CatsEffectSuite:
 
   test("The result of retrieving exported key information matches the specified value.") {
     assertIO(
-      connection().use { conn =>
+      datasource().getConnection.use { conn =>
         for
-          metaData  <- conn.connection.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <- metaData.getExportedKeys(Some("world"), None, "city")
           result    <-
             Monad[IO].whileM[Vector, String](resultSet.next()) {
@@ -592,9 +600,9 @@ trait ConnectionTest extends CatsEffectSuite:
 
   test("The result of retrieving cross reference information matches the specified value.") {
     assertIO(
-      connection().use { conn =>
+      datasource().getConnection.use { conn =>
         for
-          metaData  <- conn.connection.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <-
             metaData.getCrossReference(Some("world"), None, "city", Some("world"), None, Some("government_office"))
           result <-
@@ -626,9 +634,9 @@ trait ConnectionTest extends CatsEffectSuite:
 
   test("The result of retrieving type information matches the specified value.") {
     assertIO(
-      connection().use { conn =>
+      datasource().getConnection.use { conn =>
         for
-          metaData  <- conn.connection.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <- metaData.getTypeInfo()
           result    <-
             Monad[IO].whileM[Vector, String](
@@ -708,9 +716,9 @@ trait ConnectionTest extends CatsEffectSuite:
 
   test("The result of retrieving index information matches the specified value.") {
     assertIO(
-      connection().use { conn =>
+      datasource().getConnection.use { conn =>
         for
-          metaData  <- conn.connection.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <-
             metaData.getIndexInfo(Some("world"), None, Some("city"), true, true)
           result <-
@@ -740,9 +748,9 @@ trait ConnectionTest extends CatsEffectSuite:
 
   test("The result of retrieving function information matches the specified value.") {
     assertIO(
-      connection().use { conn =>
+      datasource().getConnection.use { conn =>
         for
-          metaData  <- conn.connection.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <- metaData.getFunctions(Some("sys"), None, None)
           result    <-
             Monad[IO].whileM[Vector, String](resultSet.next()) {
@@ -785,9 +793,9 @@ trait ConnectionTest extends CatsEffectSuite:
 
   test("The result of retrieving function column information matches the specified value.") {
     assertIO(
-      connection().use { conn =>
+      datasource().getConnection.use { conn =>
         for
-          metaData  <- conn.connection.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <- metaData.getFunctionColumns(Some("sys"), None, None, Some("in_host"))
           result    <-
             Monad[IO].whileM[Vector, String](resultSet.next()) {
@@ -843,9 +851,9 @@ trait ConnectionTest extends CatsEffectSuite:
 
   test("The result of retrieving columns information matches the specified value.") {
     assertIO(
-      connection("SCHEMA").use { conn =>
+      datasource("SCHEMA").getConnection.use { conn =>
         for
-          metaData  <- conn.connection.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <- metaData.getColumns(None, None, Some("privileges_table"), None)
           result    <-
             Monad[IO].whileM[Vector, String](resultSet.next()) {
