@@ -21,6 +21,7 @@ import ldbc.sql.DatabaseMetaData
 
 import ldbc.logging.LogHandler
 import ldbc.DataSource
+import ldbc.connector.pool.*
 
 /**
  * A DataSource implementation for MySQL connections using the pure Scala MySQL wire protocol.
@@ -409,3 +410,108 @@ object MySQLDataSource:
       port = port,
       user = user
     )
+
+  /**
+   * Creates a pooled DataSource from a MySQL configuration.
+   * 
+   * This factory method creates a connection pool that manages multiple MySQL connections,
+   * providing efficient connection reuse and automatic connection lifecycle management.
+   * The pool implements various optimization strategies including:
+   * 
+   * - Connection pooling with configurable min/max sizes
+   * - Automatic connection validation and health checks
+   * - Connection timeout and idle timeout management
+   * - Leak detection for connections not properly returned
+   * - Background maintenance tasks for pool health
+   * - Optional adaptive sizing based on load patterns
+   * - Comprehensive metrics tracking
+   * 
+   * The returned Resource ensures proper pool initialization and shutdown. When the
+   * resource is released, all connections are closed and background tasks are cancelled.
+   * 
+   * @param config the MySQL configuration containing pool settings
+   * @param logHandler optional handler for logging database operations
+   * @param metricsTracker optional tracker for pool metrics (defaults to in-memory)
+   * @tparam F the effect type with required type class instances
+   * @return a Resource managing the pooled data source lifecycle
+   * 
+   * @example {{{
+   * val poolConfig = MySQLConfig.default
+   *   .setHost("localhost")
+   *   .setPort(3306)
+   *   .setUser("myuser")
+   *   .setPassword("mypassword")
+   *   .setDatabase("mydb")
+   *   .setMinConnections(5)
+   *   .setMaxConnections(20)
+   *   .setConnectionTimeout(30.seconds)
+   * 
+   * MySQLDataSource.pooling[IO](poolConfig).use { pool =>
+   *   pool.getConnection.use { conn =>
+   *     // Use connection
+   *   }
+   * }
+   * }}}
+   */
+  def pooling[F[_]: Async: Network: Console: Hashing: UUIDGen](
+                                                                config:         MySQLConfig,
+                                                                logHandler:     Option[LogHandler[F]] = None,
+                                                                metricsTracker: Option[PoolMetricsTracker[F]] = None
+                                                              ): Resource[F, PooledDataSource[F]] = PooledDataSource.fromConfig(config, logHandler, metricsTracker)
+
+  /**
+   * Creates a pooled DataSource with connection lifecycle hooks.
+   * 
+   * This variant of the pooling factory method allows you to specify callbacks that
+   * will be executed before and after each connection is acquired from the pool.
+   * This is particularly useful for:
+   * 
+   * - Setting session-specific variables or configuration
+   * - Implementing connection-level auditing or logging
+   * - Preparing the connection state before use
+   * - Cleaning up resources after connection use
+   * - Implementing custom connection validation logic
+   * 
+   * The before hook is called after a connection is acquired from the pool but before
+   * it's returned to the client. The after hook is called when the connection is
+   * returned to the pool. These hooks are executed for every connection acquisition,
+   * not just when new connections are created.
+   * 
+   * @param config the MySQL configuration containing pool settings
+   * @param logHandler optional handler for logging database operations
+   * @param metricsTracker optional tracker for pool metrics (defaults to in-memory)
+   * @param before optional callback executed when acquiring a connection from the pool
+   * @param after optional callback executed when returning a connection to the pool
+   * @tparam F the effect type with required type class instances
+   * @tparam A the type returned by the before callback and passed to after
+   * @return a Resource managing the pooled data source lifecycle
+   * @example {{{
+   * case class SessionContext(userId: String, startTime: Long)
+   *
+   * val beforeHook: Connection[IO] => IO[SessionContext] = conn =>
+   *   for {
+   *     _ <- conn.createStatement().flatMap(_.executeUpdate("SET SESSION sql_mode = 'STRICT_ALL_TABLES'"))
+   *     startTime = System.currentTimeMillis
+   *   } yield SessionContext("user123", startTime)
+   *
+   * val afterHook: (SessionContext, Connection[IO]) => IO[Unit] = (ctx, conn) =>
+   *   IO.println(s"Connection used by ${ctx.userId} for ${System.currentTimeMillis - ctx.startTime}ms")
+   *
+   * MySQLDataSource.poolingWithBeforeAfter[IO, SessionContext](
+   *   config = poolConfig,
+   *   before = Some(beforeHook),
+   *   after = Some(afterHook)
+   * ).use { pool =>
+   *   pool.getConnection.use { conn =>
+   *     // Connection has session variables set and usage will be logged
+   *   }
+   * }
+   * }}}
+   */
+  def poolingWithBeforeAfter[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
+                                                                config:         MySQLConfig,
+                                                                logHandler:     Option[LogHandler[F]] = None,
+                                                                metricsTracker: Option[PoolMetricsTracker[F]] = None,
+                                                                before:         Option[Connection[F] => F[A]] = None,
+                                                                after:          Option[(A, Connection[F]) => F[Unit]] = None
+                                                              ): Resource[F, PooledDataSource[F]] = PooledDataSource.fromConfigWithBeforeAfter(config, logHandler, metricsTracker, before, after)
