@@ -18,13 +18,25 @@ import fs2.Stream
 import ldbc.connector.MySQLConfig
 
 /**
- * Adaptive pool sizing algorithm that adjusts pool size based on usage patterns.
+ * Adaptive pool sizing algorithm that dynamically adjusts the connection pool size
+ * based on real-time usage patterns and performance metrics.
  *
- * The algorithm monitors:
- * - Connection utilization rate
- * - Wait queue length
- * - Acquisition timeouts
- * - Historical usage patterns
+ * The algorithm continuously monitors pool health and makes intelligent decisions
+ * about when to grow or shrink the pool. It aims to balance resource efficiency
+ * with performance by:
+ *
+ * - Growing the pool when high utilization or wait queues are detected
+ * - Shrinking the pool when connections are consistently idle
+ * - Preventing thrashing through cooldown periods between adjustments
+ * - Requiring multiple consecutive observations before making changes
+ *
+ * Key metrics monitored:
+ * - Connection utilization rate (active/total connections)
+ * - Wait queue length (number of pending acquisition requests)
+ * - Acquisition timeouts (failed acquisition attempts)
+ * - Historical usage patterns (sliding window of observations)
+ *
+ * @tparam F the effect type
  */
 trait AdaptivePoolSizer[F[_]]:
 
@@ -38,6 +50,18 @@ trait AdaptivePoolSizer[F[_]]:
 
 object AdaptivePoolSizer:
 
+  /**
+   * Creates an AdaptivePoolSizer instance for asynchronous effect types.
+   * 
+   * The created sizer will periodically check pool metrics at intervals specified
+   * by `config.adaptiveInterval` and make sizing decisions based on the thresholds
+   * and policies defined in the implementation.
+   * 
+   * @param config the MySQL configuration containing adaptive sizing parameters
+   * @param metricsTracker the metrics tracker for monitoring pool performance
+   * @tparam F the effect type (must have an Async instance)
+   * @return a new AdaptivePoolSizer instance
+   */
   def fromAsync[F[_]: Async](
     config:         MySQLConfig,
     metricsTracker: PoolMetricsTracker[F]

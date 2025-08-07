@@ -648,6 +648,22 @@ object PooledDataSource:
         backgroundTasks.sequence_.as(pool)
       }
 
+  /**
+   * Creates a PooledDataSource from a MySQL configuration.
+   * 
+   * This is the primary way to create a connection pool. The pool will be initialized
+   * with the settings specified in the configuration, including minimum and maximum
+   * connection counts, timeouts, and maintenance intervals.
+   * 
+   * The returned Resource ensures proper lifecycle management - the pool will be
+   * properly initialized when acquired and cleanly shut down when released.
+   * 
+   * @param config the MySQL configuration containing all pool settings
+   * @param logHandler optional handler for logging database operations
+   * @param metricsTracker optional tracker for collecting pool metrics (defaults to in-memory tracker)
+   * @tparam F the effect type with required type class instances
+   * @return a Resource that manages the pooled data source lifecycle
+   */
   def fromConfig[F[_]: Async: Network: Console: Hashing: UUIDGen](
     config:         MySQLConfig,
     logHandler:     Option[LogHandler[F]] = None,
@@ -655,6 +671,27 @@ object PooledDataSource:
   ): Resource[F, PooledDataSource[F]] =
     create(config, metricsTracker, UUIDGen[F].randomUUID.map(_.toString))
 
+  /**
+   * Creates a PooledDataSource with before/after hooks for each connection use.
+   * 
+   * This variant allows you to specify callbacks that will be executed before
+   * and after each connection is used. This is useful for:
+   * - Setting up connection-specific state (e.g., session variables)
+   * - Logging or auditing connection usage
+   * - Cleaning up after connection use
+   * 
+   * The before hook is called after acquiring a connection but before returning it
+   * to the client. The after hook is called when the connection is returned to the pool.
+   * 
+   * @param config the MySQL configuration containing all pool settings
+   * @param logHandler optional handler for logging database operations
+   * @param metricsTracker optional tracker for collecting pool metrics (defaults to in-memory tracker)
+   * @param before optional callback executed before connection use
+   * @param after optional callback executed after connection use
+   * @tparam F the effect type with required type class instances
+   * @tparam A the type returned by the before callback and passed to the after callback
+   * @return a Resource that manages the pooled data source lifecycle
+   */
   def fromConfigWithBeforeAfter[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
     config:         MySQLConfig,
     logHandler:     Option[LogHandler[F]] = None,

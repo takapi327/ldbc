@@ -16,14 +16,23 @@ import fs2.Stream
 import ldbc.connector.MySQLConfig
 
 /**
- * Background task that performs pool maintenance.
+ * Background maintenance task that ensures the health and efficiency of the connection pool.
  *
- * Responsibilities:
- * - Remove expired connections
- * - Remove idle connections exceeding idle timeout
- * - Validate idle connections periodically
- * - Ensure minimum connections are maintained
- * - Update pool metrics
+ * The HouseKeeper runs periodically to perform essential maintenance operations that
+ * keep the pool in optimal condition. It acts as a guardian of pool health by
+ * proactively managing connections and preventing resource leaks or stale connections.
+ *
+ * Key responsibilities:
+ * - **Connection lifecycle management**: Removes connections that exceed their maximum lifetime
+ * - **Idle connection cleanup**: Removes connections that have been idle beyond the timeout
+ * - **Connection validation**: Periodically validates idle connections to ensure they're still alive
+ * - **Minimum pool size maintenance**: Creates new connections when pool falls below minimum threshold
+ * - **Metrics updates**: Keeps pool metrics current for monitoring and adaptive sizing
+ *
+ * The HouseKeeper operates independently of normal pool operations and ensures the pool
+ * remains healthy even during periods of low activity.
+ *
+ * @tparam F the effect type
  */
 trait HouseKeeper[F[_]]:
 
@@ -37,6 +46,18 @@ trait HouseKeeper[F[_]]:
 
 object HouseKeeper:
 
+  /**
+   * Creates a HouseKeeper instance for asynchronous effect types.
+   * 
+   * The created housekeeper will run maintenance tasks at intervals specified
+   * by `config.maintenanceInterval`. It will check for expired connections,
+   * validate idle connections, and ensure the pool maintains its minimum size.
+   * 
+   * @param config the MySQL configuration containing maintenance parameters
+   * @param metricsTracker the metrics tracker for updating pool metrics
+   * @tparam F the effect type (must have an Async instance)
+   * @return a new HouseKeeper instance
+   */
   def fromAsync[F[_]: Async](
     config:         MySQLConfig,
     metricsTracker: PoolMetricsTracker[F]

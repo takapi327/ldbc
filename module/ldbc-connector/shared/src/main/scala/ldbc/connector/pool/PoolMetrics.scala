@@ -34,6 +34,14 @@ case class PoolMetrics(
 )
 
 object PoolMetrics:
+  /**
+   * Creates an empty PoolMetrics instance with all values initialized to zero.
+   * 
+   * This is typically used as the initial state for metrics tracking before
+   * any pool operations have occurred.
+   * 
+   * @return a new PoolMetrics instance with all metrics set to zero
+   */
   def empty: PoolMetrics = PoolMetrics(
     acquisitionTime   = Duration.Zero,
     usageTime         = Duration.Zero,

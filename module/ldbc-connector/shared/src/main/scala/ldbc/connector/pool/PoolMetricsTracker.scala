@@ -69,7 +69,14 @@ trait PoolMetricsTracker[F[_]]:
 object PoolMetricsTracker:
 
   /**
-   * A no-op metrics tracker.
+   * Creates a no-operation metrics tracker that discards all metrics.
+   * 
+   * This implementation is useful for testing or when metrics collection
+   * is not needed. All recording methods return immediately without
+   * performing any operations, and `getMetrics` always returns empty metrics.
+   * 
+   * @tparam F the effect type (must have an Applicative instance)
+   * @return a PoolMetricsTracker that performs no operations
    */
   def noop[F[_]: Applicative]: PoolMetricsTracker[F] = new PoolMetricsTracker[F]:
     def recordAcquisition(duration: FiniteDuration):      F[Unit]        = Applicative[F].unit
@@ -81,7 +88,21 @@ object PoolMetricsTracker:
     def getMetrics:                                       F[PoolMetrics] = Applicative[F].pure(PoolMetrics.empty)
 
   /**
-   * Default in-memory metrics tracker.
+   * Creates an in-memory metrics tracker that stores metrics in memory.
+   * 
+   * This implementation maintains a sliding window of recent duration measurements
+   * (up to 100 samples) and counters for various pool events. The metrics are
+   * stored using thread-safe references and can be retrieved at any time via
+   * the `getMetrics` method.
+   * 
+   * Features:
+   * - Tracks acquisition, usage, and creation times with sliding windows
+   * - Maintains counters for timeouts, leaks, and pool operations
+   * - Stores gauge values for current pool state metrics
+   * - Thread-safe for concurrent access
+   * 
+   * @tparam F the effect type (must have a Sync instance)
+   * @return an effect that creates a new in-memory PoolMetricsTracker
    */
   def inMemory[F[_]: Sync]: F[PoolMetricsTracker[F]] = for
     acquisitionTimes <- Ref[F].of(Vector.empty[FiniteDuration])

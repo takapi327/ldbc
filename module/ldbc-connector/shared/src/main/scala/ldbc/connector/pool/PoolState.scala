@@ -29,6 +29,16 @@ case class PoolState[F[_]](
 )
 
 object PoolState:
+  /**
+   * Creates an empty PoolState instance with no connections and empty wait queue.
+   * 
+   * This represents the initial state of a connection pool before any connections
+   * have been created. The pool is marked as open (not closed) and all collections
+   * are empty.
+   * 
+   * @tparam F the effect type
+   * @return a new PoolState instance with empty collections and initial metrics
+   */
   def empty[F[_]]: PoolState[F] = PoolState(
     connections     = Vector.empty,
     idleConnections = Set.empty,
