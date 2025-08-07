@@ -10,13 +10,9 @@ import scala.concurrent.duration.*
 
 import cats.effect.*
 
-import org.typelevel.otel4s.trace.Tracer
-
 import ldbc.connector.*
 
 class HouseKeeperTest extends FTestPlatform:
-
-  given Tracer[IO] = Tracer.noop[IO]
 
   private val config = MySQLConfig.default
     .setPort(13306)
