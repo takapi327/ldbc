@@ -20,13 +20,13 @@ package object pool:
   enum ConnectionState:
     /** Connection is available in the pool and ready to be acquired. */
     case Idle
-    
+
     /** Connection is currently being used by a client. */
     case InUse
-    
+
     /** Connection has been marked for removal and will be closed. */
     case Removed
-    
+
     /** Intermediate state when a connection is being acquired but not yet in use. */
     case Reserved
 
@@ -44,13 +44,13 @@ package object pool:
      * @param by the number of connections to add to the pool
      */
     case Grow(by: Int)
-    
+
     /**
      * Decrease the pool size by the specified number of connections.
      * 
      * @param by the number of connections to remove from the pool
      */
     case Shrink(by: Int)
-    
+
     /** No adjustment needed - pool size remains unchanged. */
     case NoChange

@@ -19,9 +19,10 @@ import org.typelevel.otel4s.trace.Tracer
 
 import ldbc.sql.DatabaseMetaData
 
+import ldbc.connector.pool.*
+
 import ldbc.logging.LogHandler
 import ldbc.DataSource
-import ldbc.connector.pool.*
 
 /**
  * A DataSource implementation for MySQL connections using the pure Scala MySQL wire protocol.
@@ -454,10 +455,10 @@ object MySQLDataSource:
    * }}}
    */
   def pooling[F[_]: Async: Network: Console: Hashing: UUIDGen](
-                                                                config:         MySQLConfig,
-                                                                logHandler:     Option[LogHandler[F]] = None,
-                                                                metricsTracker: Option[PoolMetricsTracker[F]] = None
-                                                              ): Resource[F, PooledDataSource[F]] = PooledDataSource.fromConfig(config, logHandler, metricsTracker)
+    config:         MySQLConfig,
+    logHandler:     Option[LogHandler[F]] = None,
+    metricsTracker: Option[PoolMetricsTracker[F]] = None
+  ): Resource[F, PooledDataSource[F]] = PooledDataSource.fromConfig(config, logHandler, metricsTracker)
 
   /**
    * Creates a pooled DataSource with connection lifecycle hooks.
@@ -509,9 +510,10 @@ object MySQLDataSource:
    * }}}
    */
   def poolingWithBeforeAfter[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
-                                                                config:         MySQLConfig,
-                                                                logHandler:     Option[LogHandler[F]] = None,
-                                                                metricsTracker: Option[PoolMetricsTracker[F]] = None,
-                                                                before:         Option[Connection[F] => F[A]] = None,
-                                                                after:          Option[(A, Connection[F]) => F[Unit]] = None
-                                                              ): Resource[F, PooledDataSource[F]] = PooledDataSource.fromConfigWithBeforeAfter(config, logHandler, metricsTracker, before, after)
+    config:         MySQLConfig,
+    logHandler:     Option[LogHandler[F]] = None,
+    metricsTracker: Option[PoolMetricsTracker[F]] = None,
+    before:         Option[Connection[F] => F[A]] = None,
+    after:          Option[(A, Connection[F]) => F[Unit]] = None
+  ): Resource[F, PooledDataSource[F]] =
+    PooledDataSource.fromConfigWithBeforeAfter(config, logHandler, metricsTracker, before, after)
