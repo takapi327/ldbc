@@ -103,7 +103,7 @@ class AdaptivePoolSizerTest extends FTestPlatform:
       .setMaxConnections(20)
       .setAdaptiveSizing(true)
       .setAdaptiveInterval(50.millis)
-      .setConnectionTimeout(800.millis)  // Increased significantly for JS compatibility
+      .setConnectionTimeout(800.millis) // Increased significantly for JS compatibility
 
     val resource = for
       tracker <- Resource.eval(PoolMetricsTracker.inMemory[IO])
