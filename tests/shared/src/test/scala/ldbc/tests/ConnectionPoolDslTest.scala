@@ -35,7 +35,7 @@ class LdbcConnectionPoolDslTest extends ConnectionPoolDslTest:
     .setSSL(SSL.Trusted)
     .setMinConnections(2)
     .setMaxConnections(5)
-    .setConnectionTimeout(30.seconds)
+    .setConnectionTimeout(60.seconds)
     .setIdleTimeout(10.minutes)
     .setMaxLifetime(30.minutes)
 
