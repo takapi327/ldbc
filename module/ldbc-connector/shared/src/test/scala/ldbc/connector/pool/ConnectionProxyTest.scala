@@ -51,15 +51,15 @@ class ConnectionProxyTest extends FTestPlatform:
   test("ConnectionProxy should delegate close() to release callback") {
     connection.use { conn =>
       for
-        pooledConn <- createPooledConnection("test-1", conn)
+        pooledConn      <- createPooledConnection("test-1", conn)
         callbackInvoked <- Ref[IO].of(false)
-        
+
         proxy = new ConnectionProxy[IO](
-          pooledConn,
-          _ => callbackInvoked.set(true)
-        )
-        
-        _ <- proxy.close()
+                  pooledConn,
+                  _ => callbackInvoked.set(true)
+                )
+
+        _          <- proxy.close()
         wasInvoked <- callbackInvoked.get
       yield assert(wasInvoked, "Release callback should have been invoked")
     }
@@ -69,16 +69,16 @@ class ConnectionProxyTest extends FTestPlatform:
     connection.use { conn =>
       for
         pooledConn <- createPooledConnection("test-1", conn)
-        
+
         proxy = new ConnectionProxy[IO](
-          pooledConn,
-          _ => IO.unit  // No-op callback
-        )
-        
+                  pooledConn,
+                  _ => IO.unit // No-op callback
+                )
+
         _ <- proxy.close()
-        
+
         // Verify underlying connection is still valid
-        isValid <- pooledConn.connection.isValid(5)
+        isValid  <- pooledConn.connection.isValid(5)
         isClosed <- pooledConn.connection.isClosed()
       yield
         assert(isValid, "Underlying connection should still be valid")
@@ -90,16 +90,16 @@ class ConnectionProxyTest extends FTestPlatform:
     connection.use { conn =>
       for
         pooledConn <- createPooledConnection("test-1", conn)
-        
+
         proxy = new ConnectionProxy[IO](
-          pooledConn,
-          _ => IO.unit
-        )
-        
+                  pooledConn,
+                  _ => IO.unit
+                )
+
         // Test statement creation and query execution
-        stmt <- proxy.createStatement()
-        rs <- stmt.executeQuery("SELECT 1 as num")
-        _ <- rs.next()
+        stmt   <- proxy.createStatement()
+        rs     <- stmt.executeQuery("SELECT 1 as num")
+        _      <- rs.next()
         result <- rs.getInt("num")
       yield assertEquals(result, 1)
     }
@@ -109,26 +109,26 @@ class ConnectionProxyTest extends FTestPlatform:
     connection.use { conn =>
       for
         pooledConn <- createPooledConnection("test-1", conn)
-        
+
         proxy = new ConnectionProxy[IO](
-          pooledConn,
-          _ => IO.unit
-        )
-        
+                  pooledConn,
+                  _ => IO.unit
+                )
+
         // Test transaction operations
-        _ <- proxy.setAutoCommit(false)
+        _          <- proxy.setAutoCommit(false)
         autoCommit <- proxy.getAutoCommit()
-        
+
         stmt <- proxy.createStatement()
-        _ <- stmt.executeUpdate("CREATE TEMPORARY TABLE test_proxy (id INT)")
-        _ <- stmt.executeUpdate("INSERT INTO test_proxy VALUES (1)")
-        
+        _    <- stmt.executeUpdate("CREATE TEMPORARY TABLE test_proxy (id INT)")
+        _    <- stmt.executeUpdate("INSERT INTO test_proxy VALUES (1)")
+
         _ <- proxy.commit()
-        
-        rs <- stmt.executeQuery("SELECT COUNT(*) FROM test_proxy")
-        _ <- rs.next()
+
+        rs    <- stmt.executeQuery("SELECT COUNT(*) FROM test_proxy")
+        _     <- rs.next()
         count <- rs.getInt(1)
-        
+
         _ <- proxy.setAutoCommit(true)
       yield
         assert(!autoCommit, "Auto-commit should be false")
@@ -140,17 +140,17 @@ class ConnectionProxyTest extends FTestPlatform:
     connection.use { conn =>
       for
         pooledConn <- createPooledConnection("test-1", conn)
-        
+
         proxy = new ConnectionProxy[IO](
-          pooledConn,
-          _ => IO.unit
-        )
-        
+                  pooledConn,
+                  _ => IO.unit
+                )
+
         // Test metadata operations
         metadata <- proxy.getMetaData()
-        catalog <- proxy.getCatalog()
-        schema <- proxy.getSchema()
-        isValid <- proxy.isValid(5)
+        catalog  <- proxy.getCatalog()
+        schema   <- proxy.getSchema()
+        isValid  <- proxy.isValid(5)
         isClosed <- proxy.isClosed()
       yield
         assert(metadata != null, "Metadata should not be null")
@@ -163,19 +163,19 @@ class ConnectionProxyTest extends FTestPlatform:
     connection.use { conn =>
       for
         pooledConn <- createPooledConnection("test-1", conn)
-        
+
         proxy = new ConnectionProxy[IO](
-          pooledConn,
-          _ => IO.unit
-        )
-        
+                  pooledConn,
+                  _ => IO.unit
+                )
+
         // Test prepared statements
         pstmt <- proxy.prepareStatement("SELECT ? + ? as sum")
-        _ <- pstmt.setInt(1, 10)
-        _ <- pstmt.setInt(2, 20)
-        
-        rs <- pstmt.executeQuery()
-        _ <- rs.next()
+        _     <- pstmt.setInt(1, 10)
+        _     <- pstmt.setInt(2, 20)
+
+        rs     <- pstmt.executeQuery()
+        _      <- rs.next()
         result <- rs.getInt("sum")
       yield assertEquals(result, 30)
     }
@@ -184,17 +184,17 @@ class ConnectionProxyTest extends FTestPlatform:
   test("ConnectionProxy should track release callback with connection state") {
     connection.use { conn =>
       for
-        pooledConn <- createPooledConnection("test-1", conn)
+        pooledConn      <- createPooledConnection("test-1", conn)
         releasedConnRef <- Ref[IO].of(Option.empty[Connection[IO]])
-        
+
         proxy = new ConnectionProxy[IO](
-          pooledConn,
-          conn => releasedConnRef.set(Some(conn))
-        )
-        
+                  pooledConn,
+                  conn => releasedConnRef.set(Some(conn))
+                )
+
         _ <- pooledConn.state.set(ConnectionState.InUse)
         _ <- proxy.close()
-        
+
         releasedConn <- releasedConnRef.get
       yield assert(releasedConn.isDefined, "Released connection should be captured")
     }
@@ -205,17 +205,17 @@ class ConnectionProxyTest extends FTestPlatform:
       for
         pooledConn <- createPooledConnection("test-1", conn)
         closeCount <- Ref[IO].of(0)
-        
+
         proxy = new ConnectionProxy[IO](
-          pooledConn,
-          _ => closeCount.update(_ + 1)
-        )
-        
+                  pooledConn,
+                  _ => closeCount.update(_ + 1)
+                )
+
         // Call close multiple times
         _ <- proxy.close()
         _ <- proxy.close()
         _ <- proxy.close()
-        
+
         count <- closeCount.get
       yield assertEquals(count, 3, "Close should be called 3 times")
     }
@@ -225,27 +225,27 @@ class ConnectionProxyTest extends FTestPlatform:
     connection.use { conn =>
       for
         pooledConn <- createPooledConnection("test-1", conn)
-        
+
         proxy = new ConnectionProxy[IO](
-          pooledConn,
-          _ => IO.unit
-        )
-        
+                  pooledConn,
+                  _ => IO.unit
+                )
+
         _ <- proxy.setAutoCommit(false)
-        
+
         // Create savepoint
         savepoint <- proxy.setSavepoint("test_savepoint")
-        
+
         stmt <- proxy.createStatement()
-        _ <- stmt.executeUpdate("CREATE TEMPORARY TABLE test_savepoint (id INT)")
-        _ <- stmt.executeUpdate("INSERT INTO test_savepoint VALUES (1)")
-        
+        _    <- stmt.executeUpdate("CREATE TEMPORARY TABLE test_savepoint (id INT)")
+        _    <- stmt.executeUpdate("INSERT INTO test_savepoint VALUES (1)")
+
         // Rollback to savepoint
         _ <- proxy.rollback(savepoint)
-        
+
         // Release savepoint
         _ <- proxy.releaseSavepoint(savepoint)
-        
+
         _ <- proxy.commit()
         _ <- proxy.setAutoCommit(true)
       yield assert(true, "Savepoint operations should complete successfully")
@@ -256,19 +256,19 @@ class ConnectionProxyTest extends FTestPlatform:
     connection.use { conn =>
       for
         pooledConn <- createPooledConnection("test-1", conn)
-        
+
         proxy = new ConnectionProxy[IO](
-          pooledConn,
-          _ => IO.unit
-        )
-        
+                  pooledConn,
+                  _ => IO.unit
+                )
+
         originalLevel <- proxy.getTransactionIsolation()
-        
+
         // Try different isolation levels
-        _ <- proxy.setTransactionIsolation(java.sql.Connection.TRANSACTION_READ_COMMITTED)
+        _             <- proxy.setTransactionIsolation(java.sql.Connection.TRANSACTION_READ_COMMITTED)
         readCommitted <- proxy.getTransactionIsolation()
-        
-        _ <- proxy.setTransactionIsolation(originalLevel)
+
+        _        <- proxy.setTransactionIsolation(originalLevel)
         restored <- proxy.getTransactionIsolation()
       yield
         assertEquals(readCommitted, java.sql.Connection.TRANSACTION_READ_COMMITTED)
@@ -280,18 +280,18 @@ class ConnectionProxyTest extends FTestPlatform:
     connection.use { conn =>
       for
         pooledConn <- createPooledConnection("test-1", conn)
-        
+
         proxy = new ConnectionProxy[IO](
-          pooledConn,
-          _ => IO.unit
-        )
-        
+                  pooledConn,
+                  _ => IO.unit
+                )
+
         originalReadOnly <- proxy.isReadOnly
-        
-        _ <- proxy.setReadOnly(true)
+
+        _            <- proxy.setReadOnly(true)
         afterSetTrue <- proxy.isReadOnly
-        
-        _ <- proxy.setReadOnly(false)
+
+        _             <- proxy.setReadOnly(false)
         afterSetFalse <- proxy.isReadOnly
       yield
         assert(!originalReadOnly, "Connection should not be read-only by default")
@@ -304,12 +304,12 @@ class ConnectionProxyTest extends FTestPlatform:
     connection.use { conn =>
       for
         pooledConn <- createPooledConnection("test-1", conn)
-        
+
         proxy = new ConnectionProxy[IO](
-          pooledConn,
-          _ => IO.raiseError(new RuntimeException("Release failed"))
-        )
-        
+                  pooledConn,
+                  _ => IO.raiseError(new RuntimeException("Release failed"))
+                )
+
         // Close should propagate the error
         result <- proxy.close().attempt
       yield assert(result.isLeft, "Close should fail with callback error")
@@ -319,30 +319,30 @@ class ConnectionProxyTest extends FTestPlatform:
   test("ConnectionProxy should work with actual pool-like behavior") {
     connection.use { conn =>
       for
-        pooledConn <- createPooledConnection("test-1", conn)
+        pooledConn         <- createPooledConnection("test-1", conn)
         connectionReturned <- Ref[IO].of(false)
-        
+
         // Simulate pool behavior
-        releaseCallback = (_: Connection[IO]) => 
-          for
-            _ <- pooledConn.state.set(ConnectionState.Idle)
-            _ <- connectionReturned.set(true)
-          yield ()
-        
+        releaseCallback = (_: Connection[IO]) =>
+                            for
+                              _ <- pooledConn.state.set(ConnectionState.Idle)
+                              _ <- connectionReturned.set(true)
+                            yield ()
+
         proxy = new ConnectionProxy[IO](pooledConn, releaseCallback)
-        
+
         // Simulate usage
         _ <- pooledConn.state.set(ConnectionState.InUse)
-        
+
         // Do some work
         stmt <- proxy.createStatement()
-        rs <- stmt.executeQuery("SELECT 1")
-        _ <- rs.next()
-        
+        rs   <- stmt.executeQuery("SELECT 1")
+        _    <- rs.next()
+
         // Return to pool
         _ <- proxy.close()
-        
-        finalState <- pooledConn.state.get
+
+        finalState  <- pooledConn.state.get
         wasReturned <- connectionReturned.get
       yield
         assertEquals(finalState, ConnectionState.Idle)
@@ -354,11 +354,11 @@ class ConnectionProxyTest extends FTestPlatform:
     connection.use { conn =>
       for
         pooledConn <- createPooledConnection("test-1", conn)
-        
+
         proxy = new ConnectionProxy[IO](
-          pooledConn,
-          _ => IO.unit
-        )
+                  pooledConn,
+                  _ => IO.unit
+                )
       yield
         assertEquals(proxy.pooled.id, "test-1")
         assertEquals(proxy.pooled, pooledConn)
