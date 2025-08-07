@@ -25,9 +25,9 @@ class HouseKeeperTest extends FTestPlatform:
     val testConfig = config
       .setMinConnections(2)
       .setMaxConnections(5)
-      .setMaxLifetime(200.millis)  // Short lifetime for testing
-      .setMaintenanceInterval(50.millis)  // Run maintenance frequently
-      .setIdleTimeout(10.minutes)  // Long idle timeout to test only expiration
+      .setMaxLifetime(200.millis)        // Short lifetime for testing
+      .setMaintenanceInterval(50.millis) // Run maintenance frequently
+      .setIdleTimeout(10.minutes)        // Long idle timeout to test only expiration
 
     val resource = for
       tracker <- Resource.eval(PoolMetricsTracker.inMemory[IO])
@@ -40,12 +40,12 @@ class HouseKeeperTest extends FTestPlatform:
         // Wait for connections to expire
         _ <- IO.sleep(250.millis)
         // Wait for maintenance to run multiple times
-        _ <- IO.sleep(150.millis)
+        _           <- IO.sleep(150.millis)
         finalStatus <- datasource.status
       yield
         assertEquals(initialStatus.total, 2)
         // HouseKeeper should ensure minimum connections are maintained
-        assert(finalStatus.total >= 1, s"Expected at least 1 connection, got ${finalStatus.total}")
+        assert(finalStatus.total >= 1, s"Expected at least 1 connection, got ${ finalStatus.total }")
     }
   }
 
@@ -63,8 +63,8 @@ class HouseKeeperTest extends FTestPlatform:
     resource.use { datasource =>
       for
         initialStatus <- datasource.status
-        _ <- IO.sleep(150.millis)  // Wait for maintenance to run
-        finalStatus <- datasource.status
+        _             <- IO.sleep(150.millis) // Wait for maintenance to run
+        finalStatus   <- datasource.status
       yield
         assertEquals(initialStatus.total, 3)
         assertEquals(finalStatus.total, 3)
@@ -88,11 +88,11 @@ class HouseKeeperTest extends FTestPlatform:
       for
         // Use and release a connection to ensure it needs validation
         _ <- datasource.getConnection.use { conn =>
-          conn.createStatement().flatMap(_.executeQuery("SELECT 1")).void
-        }
+               conn.createStatement().flatMap(_.executeQuery("SELECT 1")).void
+             }
         statusBefore <- datasource.status
-        _ <- IO.sleep(150.millis)  // Wait for maintenance to run
-        statusAfter <- datasource.status
+        _            <- IO.sleep(150.millis) // Wait for maintenance to run
+        statusAfter  <- datasource.status
       yield
         // Connection count should remain stable after validation
         assertEquals(statusAfter.total, statusBefore.total)
@@ -110,19 +110,20 @@ class HouseKeeperTest extends FTestPlatform:
       ds      <- PooledDataSource.fromConfig[IO](testConfig, metricsTracker = Some(tracker))
     yield (ds, tracker)
 
-    resource.use { case (datasource, tracker) =>
-      for
-        // Wait for initial metrics
-        _ <- IO.sleep(100.millis)
-        // Acquire a connection to change pool state
-        _ <- datasource.getConnection.use(_ => IO.sleep(50.millis))
-        // Wait for maintenance to update metrics
-        _ <- IO.sleep(100.millis)
-        metrics <- tracker.getMetrics
-      yield
-        // Metrics should have been updated
-        assert(metrics.totalAcquisitions >= 1L)
-        assert(metrics.totalReleases >= 1L)
+    resource.use {
+      case (datasource, tracker) =>
+        for
+          // Wait for initial metrics
+          _ <- IO.sleep(100.millis)
+          // Acquire a connection to change pool state
+          _ <- datasource.getConnection.use(_ => IO.sleep(50.millis))
+          // Wait for maintenance to update metrics
+          _       <- IO.sleep(100.millis)
+          metrics <- tracker.getMetrics
+        yield
+          // Metrics should have been updated
+          assert(metrics.totalAcquisitions >= 1L)
+          assert(metrics.totalReleases >= 1L)
     }
   }
 
@@ -143,7 +144,7 @@ class HouseKeeperTest extends FTestPlatform:
       .use { datasource =>
         for
           initialStatus <- datasource.status
-          _ <- IO.sleep(100.millis)  // Let maintenance run
+          _             <- IO.sleep(100.millis) // Let maintenance run
           runningStatus <- datasource.status
         yield
           assertEquals(initialStatus.total, 1)
@@ -160,7 +161,7 @@ class HouseKeeperTest extends FTestPlatform:
     // Use an invalid config that will fail to create connections
     val testConfig = MySQLConfig.default
       .setHost("invalid-host")
-      .setPort(9999)  // Invalid port
+      .setPort(9999) // Invalid port
       .setMinConnections(3)
       .setMaxConnections(5)
       .setMaintenanceInterval(50.millis)
