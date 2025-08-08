@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -60,7 +60,7 @@ case class TableBuilder(db: SchemaspyDatabase, table: Table[?]) extends TableVal
       case _: PrimaryKey  => Some(("PRIMARY", true))
       case key: UniqueKey => Some((key.indexName.getOrElse(column.label), true))
       case key: IndexKey  => Some((key.indexName.getOrElse(column.label), false))
-      case v: Constraint =>
+      case v: Constraint  =>
         v.key match
           case _: PrimaryKey  => Some(("PRIMARY", true))
           case key: UniqueKey => Some((key.indexName.getOrElse(column.label), true))
@@ -79,14 +79,14 @@ case class TableBuilder(db: SchemaspyDatabase, table: Table[?]) extends TableVal
   private def buildIndexFromKeyDefinitions(column: Column[?], keyDefinitions: Seq[Key]): Seq[(String, Boolean)] =
     keyDefinitions.flatMap {
       case key: (PrimaryKey & Index) if key.keyPart.contains(column) => Some(("PRIMARY", true))
-      case key: (UniqueKey & Index) if key.keyPart.contains(column) =>
+      case key: (UniqueKey & Index) if key.keyPart.contains(column)  =>
         Some((key.indexName.getOrElse(column.label), true))
       case key: IndexKey if key.keyPart.contains(column) =>
         Some((key.indexName.getOrElse(column.label), false))
       case constraint: Constraint =>
         constraint.key match
           case key: (PrimaryKey & Index) if key.keyPart.contains(column) => Some(("PRIMARY", true))
-          case key: (UniqueKey & Index) if key.keyPart.contains(column) =>
+          case key: (UniqueKey & Index) if key.keyPart.contains(column)  =>
             Some((key.indexName.getOrElse(column.label), true))
           case _ => List.empty
       case _ => List.empty

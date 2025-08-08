@@ -1,0 +1,39 @@
+# Configuration file version
+apiVersion: 1
+
+# List of data sources to insert/update depending on what's
+# available in the database.
+datasources:
+  # <string, required> Sets the name you use to refer to
+  # the data source in panels and queries.
+  - id: 1
+    uid: f13f44c8-69b1-48ae-a55c-90f49179283c
+    orgId: 1
+    name: prometheus
+    type: prometheus
+    typeName: Prometheus
+    typeLogoUrl: "/public/app/plugins/datasource/prometheus/img/prometheus_logo.svg"
+    access: proxy
+    url: http://prometheus:9090
+    user: ''
+    database: ''
+    basicAuth: false
+    isDefault: false
+    jsonData:
+      httpMethod: POST
+    readOnly: false
+  - id: 2
+    uid: d4cbeedf-98f0-4d71-accc-2eef0a37506a
+    orgId: 1
+    type: jaeger
+    name: Jaeger
+    typeName: Jaeger
+    typeLogoUrl: "/public/app/plugins/datasource/jaeger/img/jaeger_logo.svg"
+    access: proxy
+    url: http://jaeger:16686
+    user: ''
+    database: ''
+    basicAuth: false
+    isDefault: false
+    jsonData: {}
+    readOnly: false

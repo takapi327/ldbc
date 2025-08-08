@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -9,8 +9,8 @@ package ldbc.connector
 import ldbc.sql.Connection
 
 import ldbc.connector.net.*
-import ldbc.connector.net.protocol.*
 import ldbc.connector.net.packet.response.*
+import ldbc.connector.net.protocol.*
 
 /**
  * A connection (session) with a specific database. SQL statements are executed and results are returned within the context of a connection.

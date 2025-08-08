@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -20,4 +20,6 @@ case class CommentOut(message: String)
  * @param message
  *   Comments to be set on columns and tables
  */
-case class CommentSet(message: String)
+case class CommentSet(message: String):
+
+  override def toString: String = s"Comment(\"$message\")"

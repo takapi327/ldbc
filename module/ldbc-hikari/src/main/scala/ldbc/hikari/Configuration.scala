@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -8,8 +8,8 @@ package ldbc.hikari
 
 import java.time.Duration as JavaDuration
 
-import scala.jdk.CollectionConverters.*
 import scala.concurrent.duration.{ Duration, FiniteDuration, * }
+import scala.jdk.CollectionConverters.*
 
 import com.typesafe.config.*
 
@@ -51,7 +51,7 @@ object ConfigLoader:
   given ConfigLoader[ConfigMemorySize] = ConfigLoader(_.getMemorySize)
   given ConfigLoader[FiniteDuration]   = ConfigLoader(_.getDuration).map(_.toNanos.nanos)
   given ConfigLoader[JavaDuration]     = ConfigLoader(_.getDuration)
-  given ConfigLoader[Duration] = ConfigLoader(config =>
+  given ConfigLoader[Duration]         = ConfigLoader(config =>
     path =>
       if config.getIsNull(path) then Duration.Inf
       else config.getDuration(path).toNanos.nanos

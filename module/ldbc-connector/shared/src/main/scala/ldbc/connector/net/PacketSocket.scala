@@ -1,24 +1,24 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
 package ldbc.connector.net
 
-import scala.io.AnsiColor
 import scala.concurrent.duration.Duration
+import scala.io.AnsiColor
+
+import scodec.bits.BitVector
+import scodec.Decoder
 
 import cats.syntax.all.*
 
 import cats.effect.*
 import cats.effect.std.*
 
-import fs2.Chunk
 import fs2.io.net.Socket
-
-import scodec.Decoder
-import scodec.bits.BitVector
+import fs2.Chunk
 
 import ldbc.connector.data.CapabilitiesFlags
 import ldbc.connector.net.packet.*
@@ -48,8 +48,9 @@ object PacketSocket:
   ): PacketSocket[F] = new PacketSocket[F]:
 
     private def debug(msg: => String): F[Unit] =
-      sequenceIdRef.get
-        .flatMap(id => if debugEnabled then Console[F].println(s"[$id] $msg") else Concurrent[F].unit)
+      Concurrent[F].whenA(debugEnabled) {
+        sequenceIdRef.get.flatMap(id => Console[F].println(s"[$id] $msg"))
+      }
 
     override def receive[P <: ResponsePacket](decoder: Decoder[P]): F[P] =
       (for
@@ -73,7 +74,7 @@ object PacketSocket:
       sequenceIdRef.get.map(sequenceId =>
         val bits        = request.encode
         val payloadSize = bits.toByteArray.length
-        val header = Chunk(
+        val header      = Chunk(
           payloadSize.toByte,
           ((payloadSize >> 8) & 0xff).toByte,
           ((payloadSize >> 16) & 0xff).toByte,
@@ -85,7 +86,7 @@ object PacketSocket:
     override def send(request: RequestPacket): F[Unit] =
       for
         bits <- buildRequest(request)
-        _ <-
+        _    <-
           debug(
             s"Client ${ AnsiColor.BLUE }→${ AnsiColor.RESET } Server: ${ AnsiColor.YELLOW }$request${ AnsiColor.RESET }"
           )

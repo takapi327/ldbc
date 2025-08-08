@@ -1,19 +1,19 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
 package ldbc.connector.data
 
-import java.util.Arrays.copyOf
 import java.time.*
-
-import cats.syntax.all.*
+import java.util.Arrays.copyOf
 
 import scodec.bits.BitVector
 import scodec.codecs.*
 import scodec.interop.cats.*
+
+import cats.syntax.all.*
 
 import ldbc.connector.data.Formatter.*
 
@@ -37,7 +37,7 @@ trait Parameter:
    */
   def encode: BitVector
 
-  override def toString: String = new String(sql)
+  override def toString: String = sql
 
 object Parameter:
 
@@ -54,7 +54,7 @@ object Parameter:
   def byte(value: Byte): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_TINY
     override def sql:            String         = value.toString
-    override def encode:         BitVector      = uint8L.encode(value).require
+    override def encode:         BitVector      = BitVector.fromByte(value)
 
   def short(value: Short): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_SHORT
@@ -74,7 +74,7 @@ object Parameter:
   def bigInt(value: BigInt): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_STRING
     override def sql:            String         = value.toString
-    override def encode: BitVector =
+    override def encode:         BitVector      =
       val bytes = value.toString.getBytes
       BitVector(bytes.length) |+| BitVector(copyOf(bytes, bytes.length))
 
@@ -91,26 +91,26 @@ object Parameter:
   def bigDecimal(value: BigDecimal): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_NEWDECIMAL
     override def sql:            String         = value.toString
-    override def encode: BitVector =
+    override def encode:         BitVector      =
       val bytes = value.toString.getBytes
       BitVector(bytes.length) |+| BitVector(copyOf(bytes, bytes.length))
 
   def string(value: String): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_STRING
     override def sql:            String         = ("'" + value + "'")
-    override def encode: BitVector =
+    override def encode:         BitVector      =
       val bytes = value.getBytes
       BitVector(bytes.length) |+| BitVector(copyOf(bytes, bytes.length))
 
   def bytes(value: Array[Byte]): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VAR_STRING
     override def sql:            String         = ("0x" + BitVector.view(value).toHex)
-    override def encode: BitVector =
+    override def encode:         BitVector      =
       BitVector(value.length) |+| BitVector(copyOf(value, value.length))
 
   def time(value: LocalTime): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_TIME
-    override def sql: String =
+    override def sql:            String         =
       ("'" + timeFormatter((value.getNano / 1000).toString.length).format(value) + "'")
     override def encode: BitVector =
       val hour   = value.getHour
@@ -142,13 +142,13 @@ object Parameter:
   def date(value: LocalDate): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_DATE
     override def sql:            String         = ("'" + localDateFormatter.format(value) + "'")
-    override def encode: BitVector =
+    override def encode:         BitVector      =
       val year  = value.getYear
       val month = value.getMonthValue
       val day   = value.getDayOfMonth
       (year, month, day) match
         case (0, 0, 0) => BitVector(0)
-        case _ =>
+        case _         =>
           (for
             length <- uint8L.encode(4)
             year   <- uint16L.encode(year)
@@ -158,7 +158,7 @@ object Parameter:
 
   def datetime(value: LocalDateTime): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_TIMESTAMP
-    override def sql: String =
+    override def sql:            String         =
       ("'" + localDateTimeFormatter((value.getNano / 1000).toString.length).format(value) + "'")
     override def encode: BitVector =
       val year   = value.getYear
@@ -207,6 +207,6 @@ object Parameter:
   def parameter(value: String): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_STRING
     override def sql:            String         = value
-    override def encode: BitVector =
+    override def encode:         BitVector      =
       val bytes = value.getBytes
       BitVector(bytes.length) |+| BitVector(copyOf(bytes, bytes.length))

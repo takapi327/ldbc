@@ -1,24 +1,20 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
 package ldbc.connector
 
-import cats.Monad
-
 import cats.effect.*
 
 import org.typelevel.otel4s.trace.Tracer
-
-import munit.CatsEffectSuite
 
 import ldbc.sql.Connection as SQLConnection
 
 import ldbc.connector.exception.*
 
-class TransactionTest extends CatsEffectSuite:
+class TransactionTest extends FTestPlatform:
 
   given Tracer[IO] = Tracer.noop[IO]
 
@@ -237,8 +233,10 @@ class TransactionTest extends CatsEffectSuite:
         query     <- conn.clientPreparedStatement("SELECT * FROM `transaction_test` WHERE `c1` = ?")
         _         <- query.setLong(1, 1L)
         resultSet <- query.executeQuery()
-        decoded   <- Monad[IO].whileM[List, Long](resultSet.next())(resultSet.getLong(1))
-      yield decoded.contains(1L)
+      yield
+        val builder = List.newBuilder[Long]
+        while resultSet.next() do builder += resultSet.getLong(1)
+        builder.result().contains(1L)
     })
   }
 
@@ -261,7 +259,9 @@ class TransactionTest extends CatsEffectSuite:
         query     <- conn.clientPreparedStatement("SELECT * FROM `transaction_test` WHERE `c1` = ?")
         _         <- query.setLong(1, 2L)
         resultSet <- query.executeQuery()
-        decoded   <- Monad[IO].whileM[List, Long](resultSet.next())(resultSet.getLong(1))
-      yield decoded.isEmpty
+      yield
+        val builder = List.newBuilder[Long]
+        while resultSet.next() do builder += resultSet.getLong(1)
+        builder.result().isEmpty
     })
   }

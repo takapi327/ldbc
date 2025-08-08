@@ -1,20 +1,20 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
 package ldbc.hikari
 
-import java.util.Properties
 import java.util.concurrent.{ ScheduledExecutorService, ThreadFactory, TimeUnit }
+import java.util.Properties
+
 import javax.sql.DataSource as JDataSource
 
 import scala.concurrent.duration.Duration
-import scala.jdk.CollectionConverters.*
 
-import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.metrics.MetricsTrackerFactory
+import com.zaxxer.hikari.HikariConfig
 
 /**
  * Build the Configuration of HikariCP.
@@ -174,16 +174,16 @@ trait HikariConfigBuilder:
     }
 
   /** List of variables predefined as default settings. */
-  val connectionTimeout:      Long    = getConnectionTimeout.getOrElse(Duration(30, TimeUnit.SECONDS)).toMillis
-  val idleTimeout:            Long    = getIdleTimeout.getOrElse(Duration(10, TimeUnit.MINUTES)).toMillis
-  val leakDetectionThreshold: Long    = getLeakDetectionThreshold.getOrElse(Duration.Zero).toMillis
-  val maximumPoolSize:        Int     = getMaximumPoolSize.getOrElse(maxCore * 2)
-  val maxLifetime:            Long    = getMaxLifetime.getOrElse(Duration(30, TimeUnit.MINUTES)).toMillis
-  val minimumIdle:            Int     = getMinimumIdle.getOrElse(10)
-  val validationTimeout:      Long    = getValidationTimeout.getOrElse(Duration(5, TimeUnit.SECONDS)).toMillis
-  val allowPoolSuspension:    Boolean = getAllowPoolSuspension.getOrElse(false)
-  val autoCommit:             Boolean = getAutoCommit.getOrElse(true)
-  val initializationFailTimeout: Long =
+  val connectionTimeout:         Long    = getConnectionTimeout.getOrElse(Duration(30, TimeUnit.SECONDS)).toMillis
+  val idleTimeout:               Long    = getIdleTimeout.getOrElse(Duration(10, TimeUnit.MINUTES)).toMillis
+  val leakDetectionThreshold:    Long    = getLeakDetectionThreshold.getOrElse(Duration.Zero).toMillis
+  val maximumPoolSize:           Int     = getMaximumPoolSize.getOrElse(maxCore * 2)
+  val maxLifetime:               Long    = getMaxLifetime.getOrElse(Duration(30, TimeUnit.MINUTES)).toMillis
+  val minimumIdle:               Int     = getMinimumIdle.getOrElse(10)
+  val validationTimeout:         Long    = getValidationTimeout.getOrElse(Duration(5, TimeUnit.SECONDS)).toMillis
+  val allowPoolSuspension:       Boolean = getAllowPoolSuspension.getOrElse(false)
+  val autoCommit:                Boolean = getAutoCommit.getOrElse(true)
+  val initializationFailTimeout: Long    =
     getInitializationFailTimeout.getOrElse(Duration(1, TimeUnit.MILLISECONDS)).toMillis
   val isolateInternalQueries: Boolean = getIsolateInternalQueries.getOrElse(false)
   val readonly:               Boolean = getReadonly.getOrElse(false)
@@ -263,7 +263,7 @@ trait HikariConfigBuilder:
 object HikariConfigBuilder:
 
   /**
-   * Methods for retrieving data from the LDBC default specified path.
+   * Methods for retrieving data from the ldbc default specified path.
    *
    * {{{
    *   ldbc.hikari {

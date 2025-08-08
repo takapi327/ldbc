@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -10,9 +10,9 @@ import cats.effect.*
 
 import org.typelevel.otel4s.trace.Tracer
 
-import munit.{ AnyFixture, CatsEffectSuite }
+import munit.AnyFixture
 
-class SavepointTest extends CatsEffectSuite:
+class SavepointTest extends FTestPlatform:
 
   given Tracer[IO] = Tracer.noop[IO]
 
@@ -79,8 +79,7 @@ class SavepointTest extends CatsEffectSuite:
           _          <- statement3.setLong(2, 2L)
           resultSet  <- statement3.executeQuery()
           _          <- conn.setAutoCommit(true)
-          decoded    <- resultSet.getInt(1)
-        yield decoded
+        yield resultSet.getInt(1)
       },
       1
     )
@@ -105,8 +104,7 @@ class SavepointTest extends CatsEffectSuite:
           _          <- statement3.setLong(2, 2L)
           resultSet  <- statement3.executeQuery()
           _          <- conn.setAutoCommit(true)
-          decoded    <- resultSet.getInt(1)
-        yield decoded
+        yield resultSet.getInt(1)
       },
       2
     )

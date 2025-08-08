@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -37,7 +37,7 @@ object BinaryProtocolResultSetRowPacket:
         case MYSQL_TYPE_TINY                    => uint8L.map(_.toString.some)
         case MYSQL_TYPE_DOUBLE                  => doubleL.map(_.toString.some)
         case MYSQL_TYPE_FLOAT                   => floatL.map(_.toString.some)
-        case MYSQL_TYPE_DATE =>
+        case MYSQL_TYPE_DATE                    =>
           timestamp.map(_.map(localDateTime => localDateFormatter.format(localDateTime.toLocalDate)))
         case MYSQL_TYPE_DATETIME | MYSQL_TYPE_TIMESTAMP => timestamp.map(_.map(localDateTimeFormatter(0).format(_)))
         case MYSQL_TYPE_TIME                            => time.map(_.map(timeFormatter(0).format(_)))
@@ -52,10 +52,10 @@ object BinaryProtocolResultSetRowPacket:
     uint8L.flatMap {
       case EOFPacket.STATUS => EOFPacket.decoder(capabilityFlags)
       case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags)
-      case OKPacket.STATUS =>
+      case OKPacket.STATUS  =>
         for
           nullBitmapBytes <- bytes((columns.length + 7 + 2) / 8)
-          values <- columns.zipWithIndex.traverse {
+          values          <- columns.zipWithIndex.traverse {
                       case (column, index) =>
                         val isColumnNull = (nullBitmapBytes((index + 2) / 8) & (1 << ((index + 2) % 8))) != 0
                         decodeValue(column, isColumnNull)

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -28,6 +28,9 @@ trait ColumnDefinitionPacket extends ResponsePacket:
 
   /** ColumnDefinitionFlags is a bitset of column definition flags. */
   def flags: Seq[ColumnDefinitionFlags]
+
+  /** Full name with table and column names connected by dots */
+  def fullName: String = table + "." + name
 
 object ColumnDefinitionPacket:
 

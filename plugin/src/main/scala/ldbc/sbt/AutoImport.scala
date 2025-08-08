@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -13,7 +13,6 @@ object AutoImport extends Dependencies {
   val CAMEL  = Format.CAMEL
   val PASCAL = Format.PASCAL
   val SNAKE  = Format.SNAKE
-  val KEBAB  = Format.KEBAB
 
   val parseFiles = SettingKey[List[File]](
     label       = "parseFiles",

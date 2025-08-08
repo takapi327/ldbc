@@ -13,9 +13,11 @@ import sbtcrossproject.{ CrossPlugin, CrossProject }
 
 import de.heikoseeberger.sbtheader.AutomateHeaderPlugin
 
+import org.typelevel.sbt.NoPublishPlugin
+
 import BuildSettings.*
-import ScalaVersions.*
 import ProjectKeys.*
+import ScalaVersions.*
 
 object Implicits {
 
@@ -38,6 +40,16 @@ object Implicits {
           description := projectDescription
         )
         .defaultSettings
+
+    def example(_name: String, projectDescription: String): CrossProject =
+      project
+        .in(file(s"examples/${ _name }"))
+        .settings(
+          name        := _name,
+          description := projectDescription
+        )
+        .defaultSettings
+        .enablePlugins(NoPublishPlugin)
 
     def defaultSettings: CrossProject =
       project

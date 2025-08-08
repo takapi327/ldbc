@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -12,8 +12,8 @@ import java.time.LocalDateTime
 
 import scala.io.Codec
 
-import ldbc.core.Database
 import ldbc.core.syntax.given
+import ldbc.core.Database
 
 /**
  * Object to generate sql files that write out Create statements for databases and tables.
@@ -56,6 +56,6 @@ object SqlFileBuilder:
 
     Files.write(outputFile.toPath, queryString.getBytes(summon[Codec].name))
 
-  def build(output: String, database: Database): Unit = build(output, None, database)
+  def build(output: String, database: Database):                   Unit = build(output, None, database)
   def build(output: String, fileName: String, database: Database): Unit =
     build(output, Some(fileName), database)

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -17,6 +17,6 @@ object Pretty:
     else
       s.lastIndexWhere(_ == ' ', w) match
         case -1 => wrap(w + 1, s, delim)
-        case n =>
+        case n  =>
           val (s1, s2) = s.splitAt(n)
           s1 + delim + wrap(w, s2.trim, delim)

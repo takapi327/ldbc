@@ -1,16 +1,16 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
 package ldbc.schemaspy.builder
 
-import org.schemaspy.model.TableColumn
 import org.schemaspy.model.Table as SchemaspyTable
+import org.schemaspy.model.TableColumn
 
-import ldbc.core.Column
 import ldbc.core.attribute.Comment
+import ldbc.core.Column
 
 /**
  * Object to generate a TableColumn model for SchemaSpy.

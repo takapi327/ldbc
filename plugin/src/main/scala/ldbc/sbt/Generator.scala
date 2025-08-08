@@ -1,22 +1,22 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
 package ldbc.sbt
 
-import java.nio.file.Files
-import java.nio.file.attribute.FileTime
 import java.io.FilenameFilter
+import java.nio.file.attribute.FileTime
+import java.nio.file.Files
 
 import scala.language.reflectiveCalls
 
 import sbt._
 import sbt.Keys._
 
-import ldbc.sbt.CustomKeys._
 import ldbc.sbt.AutoImport._
+import ldbc.sbt.CustomKeys._
 
 object Generator {
 

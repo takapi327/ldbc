@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -50,13 +50,13 @@ object ComStmtPrepareOkPacket:
     uint8L.flatMap { status =>
       (status: @switch) match
         case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags)
-        case OKPacket.STATUS =>
+        case OKPacket.STATUS  =>
           for
-            statementId  <- int32L
-            numColumns   <- int16L
-            numParams    <- int16L
-            reserved1    <- int8L
-            warningCount <- int16L
+            statementId     <- int32L
+            numColumns      <- int16L
+            numParams       <- int16L
+            reserved1       <- int8L
+            warningCount    <- int16L
             metadataFollows <-
               (if capabilityFlags.contains(CapabilitiesFlags.CLIENT_OPTIONAL_RESULTSET_METADATA) then provide(None)
                else int8L.map(Some(_)))

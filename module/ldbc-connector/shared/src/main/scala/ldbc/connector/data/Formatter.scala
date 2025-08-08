@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -7,9 +7,9 @@
 package ldbc.connector.data
 
 import java.time.format.DateTimeFormatter
-import java.time.temporal.ChronoField.*
 import java.time.format.DateTimeFormatterBuilder
 import java.time.format.SignStyle
+import java.time.temporal.ChronoField.*
 import java.util.Locale
 
 object Formatter:

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -10,21 +10,22 @@ import java.io.{ File, IOException }
 import java.sql.SQLException
 
 import org.schemaspy.{ LayoutFolder, SchemaAnalyzer }
-import org.schemaspy.model.{ EmptySchemaException, InvalidConfigurationException }
-import org.schemaspy.input.dbms.MissingParameterException
-import org.schemaspy.input.dbms.service.{ DatabaseServiceFactory, SqlService }
-import org.schemaspy.input.dbms.exceptions.ConnectionFailure
-import org.schemaspy.output.xml.dom.XmlProducerUsingDOM
 import org.schemaspy.cli.{
   CommandLineArgumentParser,
   CommandLineArguments,
   ConfigFileArgumentParser,
   DefaultProviderFactory
 }
+import org.schemaspy.input.dbms.exceptions.ConnectionFailure
+import org.schemaspy.input.dbms.service.{ DatabaseServiceFactory, SqlService }
+import org.schemaspy.input.dbms.MissingParameterException
+import org.schemaspy.model.{ EmptySchemaException, InvalidConfigurationException }
+import org.schemaspy.output.xml.dom.XmlProducerUsingDOM
 
 import ldbc.core.*
-import ldbc.schemaspy.result.Status
+
 import ldbc.schemaspy.builder.DbmsMetaBuilder
+import ldbc.schemaspy.result.Status
 
 /**
  * Class for generating SchemaSpy documents.
@@ -118,7 +119,7 @@ object SchemaSpyGenerator:
     val sqlService = new SqlService()
 
     val databaseArguments: Seq[String] = buildDatabaseArguments(database)
-    val userArguments: Seq[String] = Seq(
+    val userArguments:     Seq[String] = Seq(
       "-u",
       user,
       "-o",

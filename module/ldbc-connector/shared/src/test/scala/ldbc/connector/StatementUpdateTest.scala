@@ -1,20 +1,18 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
 package ldbc.connector
 
-import org.typelevel.otel4s.trace.Tracer
-
 import cats.effect.*
 
-import munit.CatsEffectSuite
+import org.typelevel.otel4s.trace.Tracer
 
 import ldbc.sql.Statement
 
-class StatementUpdateTest extends CatsEffectSuite:
+class StatementUpdateTest extends FTestPlatform:
 
   given Tracer[IO] = Tracer.noop[IO]
 
@@ -60,19 +58,20 @@ class StatementUpdateTest extends CatsEffectSuite:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          _ <-
+          _         <-
             statement
               .executeUpdate(
                 "CREATE TABLE `auto_inc_table`(`id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, `c1` VARCHAR(255) NOT NULL)"
               )
-          _ <- statement.executeUpdate("INSERT INTO `auto_inc_table`(`id`, `c1`) VALUES (null, 'column 1')")
+          _         <- statement.executeUpdate("INSERT INTO `auto_inc_table`(`id`, `c1`) VALUES (null, 'column 1')")
           resultSet <-
             statement.executeUpdate(
               "INSERT INTO `auto_inc_table`(`id`, `c1`) VALUES (null, 'column 2')",
               Statement.RETURN_GENERATED_KEYS
             ) *> statement.getGeneratedKeys()
-          generated <- resultSet.next() *> resultSet.getLong(1)
-          _         <- statement.executeUpdate("DROP TABLE `auto_inc_table`")
+          _         = resultSet.next()
+          generated = resultSet.getLong(1)
+          _ <- statement.executeUpdate("DROP TABLE `auto_inc_table`")
         yield generated
       },
       2L

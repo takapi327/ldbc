@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -10,8 +10,8 @@ import java.time.{ LocalDate, LocalDateTime, LocalTime, Year as JYear }
 
 import org.specs2.mutable.Specification
 
-import ldbc.core.DataType.*
 import ldbc.core.model.EnumDataType
+import ldbc.core.DataType.*
 
 object DataTypeTest extends Specification:
 

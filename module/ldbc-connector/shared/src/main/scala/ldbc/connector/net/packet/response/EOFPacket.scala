@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -8,7 +8,7 @@ package ldbc.connector.net.packet
 package response
 
 import scodec.*
-import scodec.codecs.*
+import scodec.bits.*
 
 import cats.syntax.option.*
 
@@ -34,8 +34,8 @@ import ldbc.connector.data.CapabilitiesFlags
  */
 case class EOFPacket(
   status:      Int,
-  warnings:    Option[Int],
-  statusFlags: Option[Int]
+  warnings:    Int,
+  statusFlags: Int
 ) extends GenericResponsePackets:
 
   override def toString: String = "EOF_Packet"
@@ -44,10 +44,24 @@ object EOFPacket:
 
   val STATUS = 0xfe
 
+  /**
+   * Decoder of EOF
+   *
+   * A foolproof implementation using splitAt is faster than the helper functions provided by scodec.
+   *
+   * @param capabilityFlags
+   *   Values for the capabilities flag bitmask used by the MySQL protocol.
+   */
   def decoder(capabilityFlags: Set[CapabilitiesFlags]): Decoder[EOFPacket] =
-    val hasClientProtocol41Flag = capabilityFlags.contains(CapabilitiesFlags.CLIENT_PROTOCOL_41)
-    for
-      status      <- uint4
-      warnings    <- if hasClientProtocol41Flag then uint4.map(_.some) else provide(None)
-      statusFlags <- if hasClientProtocol41Flag then uint4.map(_.some) else provide(None)
-    yield EOFPacket(status, warnings, statusFlags)
+    (bits: BitVector) =>
+      val hasClientProtocol41Flag      = capabilityFlags.contains(CapabilitiesFlags.CLIENT_PROTOCOL_41)
+      val (statusBits, postStatusBits) = bits.splitAt(4)
+      val status                       = statusBits.toInt(false)
+      val packet                       = if hasClientProtocol41Flag then
+        val (warningsBits, postWarningsBits) = postStatusBits.splitAt(4)
+        val statusFlagsBits                  = postWarningsBits.take(4)
+        val warnings                         = warningsBits.toInt(false)
+        val statusFlags                      = statusFlagsBits.toInt(false)
+        EOFPacket(status, warnings, statusFlags)
+      else EOFPacket(status, 0, 0)
+      Attempt.successful(DecodeResult(packet, bits))

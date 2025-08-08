@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -10,13 +10,11 @@ import java.time.*
 
 import cats.effect.*
 
-import munit.CatsEffectSuite
-
 import org.typelevel.otel4s.trace.Tracer
 
 import ldbc.connector.data.MysqlType
 
-class ClientPreparedStatementUpdateTest extends CatsEffectSuite:
+class ClientPreparedStatementUpdateTest extends FTestPlatform:
 
   given Tracer[IO] = Tracer.noop[IO]
 
@@ -34,7 +32,7 @@ class ClientPreparedStatementUpdateTest extends CatsEffectSuite:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          _ <- statement.executeUpdate(
+          _         <- statement.executeUpdate(
                  "CREATE TABLE `client_statement_boolean_table`(`c1` BOOLEAN NOT NULL, `c2` BOOLEAN NULL)"
                )
           preparedStatement <-
@@ -72,7 +70,7 @@ class ClientPreparedStatementUpdateTest extends CatsEffectSuite:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          _ <- statement.executeUpdate(
+          _         <- statement.executeUpdate(
                  "CREATE TABLE `client_statement_short_table`(`c1` TINYINT NOT NULL, `c2` TINYINT NULL)"
                )
           preparedStatement <-
@@ -92,7 +90,7 @@ class ClientPreparedStatementUpdateTest extends CatsEffectSuite:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          _ <- statement.executeUpdate(
+          _         <- statement.executeUpdate(
                  "CREATE TABLE `client_statement_int_table`(`c1` SMALLINT NOT NULL, `c2` SMALLINT NULL)"
                )
           preparedStatement <-
@@ -114,7 +112,7 @@ class ClientPreparedStatementUpdateTest extends CatsEffectSuite:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          _ <- statement.executeUpdate(
+          _         <- statement.executeUpdate(
                  "CREATE TABLE `client_statement_long_table`(`c1` BIGINT NOT NULL, `c2` BIGINT NULL)"
                )
           preparedStatement <-
@@ -135,7 +133,7 @@ class ClientPreparedStatementUpdateTest extends CatsEffectSuite:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          _ <-
+          _         <-
             statement.executeUpdate(
               "CREATE TABLE `client_statement_bigint_table`(`c1` BIGINT unsigned NOT NULL, `c2` BIGINT unsigned NULL)"
             )
@@ -156,7 +154,7 @@ class ClientPreparedStatementUpdateTest extends CatsEffectSuite:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          _ <-
+          _         <-
             statement.executeUpdate("CREATE TABLE `client_statement_float_table`(`c1` FLOAT NOT NULL, `c2` FLOAT NULL)")
           preparedStatement <-
             conn.clientPreparedStatement("INSERT INTO `client_statement_float_table`(`c1`, `c2`) VALUES (?, ?)")
@@ -175,7 +173,7 @@ class ClientPreparedStatementUpdateTest extends CatsEffectSuite:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          _ <- statement.executeUpdate(
+          _         <- statement.executeUpdate(
                  "CREATE TABLE `client_statement_double_table`(`c1` DOUBLE NOT NULL, `c2` DOUBLE NULL)"
                )
           preparedStatement <-
@@ -195,7 +193,7 @@ class ClientPreparedStatementUpdateTest extends CatsEffectSuite:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          _ <- statement.executeUpdate(
+          _         <- statement.executeUpdate(
                  "CREATE TABLE `client_statement_bigdecimal_table`(`c1` DECIMAL NOT NULL, `c2` DECIMAL NULL)"
                )
           preparedStatement <-
@@ -215,7 +213,7 @@ class ClientPreparedStatementUpdateTest extends CatsEffectSuite:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          _ <- statement.executeUpdate(
+          _         <- statement.executeUpdate(
                  "CREATE TABLE `client_statement_string_table`(`c1` VARCHAR(255) NOT NULL, `c2` VARCHAR(255) NULL)"
                )
           preparedStatement <-
@@ -235,7 +233,7 @@ class ClientPreparedStatementUpdateTest extends CatsEffectSuite:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          _ <- statement.executeUpdate(
+          _         <- statement.executeUpdate(
                  "CREATE TABLE `client_statement_bytes_table`(`c1` BINARY(10) NOT NULL, `c2` BINARY NULL)"
                )
           preparedStatement <-
@@ -296,7 +294,7 @@ class ClientPreparedStatementUpdateTest extends CatsEffectSuite:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          _ <- statement.executeUpdate(
+          _         <- statement.executeUpdate(
                  "CREATE TABLE `client_statement_datetime_table`(`c1` TIMESTAMP NOT NULL, `c2` TIMESTAMP NULL)"
                )
           preparedStatement <-

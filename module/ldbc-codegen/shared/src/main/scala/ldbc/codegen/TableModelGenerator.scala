@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -11,10 +11,11 @@ import java.nio.file.Files
 
 import scala.io.Codec
 
-import ldbc.query.builder.formatter.Naming
+import ldbc.statement.formatter.Naming
+
+import ldbc.codegen.builder.ColumnCodeBuilder
 import ldbc.codegen.model.*
 import ldbc.codegen.parser.yml.Parser
-import ldbc.codegen.builder.ColumnCodeBuilder
 
 /**
  * An object for generating a model about Table.
@@ -53,7 +54,7 @@ private[ldbc] object TableModelGenerator:
 
     val custom = customParser.flatMap(_.find(_.name == statement.tableName))
 
-    val className = classNameFormatter.format(statement.tableName)
+    val className  = classNameFormatter.format(statement.tableName)
     val properties = statement.columnDefinitions.map(column =>
       propertyGenerator(
         className,
@@ -74,7 +75,7 @@ private[ldbc] object TableModelGenerator:
       )
 
     val directory = sourceManaged.toPath.resolve(database)
-    val output = if !directory.toFile.exists() then
+    val output    = if !directory.toFile.exists() then
       directory.toFile.getParentFile.mkdirs()
       Files.createDirectory(directory)
     else directory
@@ -85,14 +86,6 @@ private[ldbc] object TableModelGenerator:
       outputFile.getParentFile.mkdirs()
       outputFile.createNewFile()
 
-    val keyDefinitions = statement.keyDefinitions.map(key =>
-      s".keySet(table => ${ key.toCode("table", classNameFormatter, propertyNameFormatter) })"
-    )
-
-    val tableOptions = statement.options.fold("")(
-      _.map(option => s".setOption(${ Table.buildTableOptionCode(option) })").mkString("\n  ")
-    )
-
     val builder = ColumnCodeBuilder(classNameFormatter)
 
     val columns =
@@ -101,6 +94,8 @@ private[ldbc] object TableModelGenerator:
     val classExtends = custom.flatMap(_.`class`.map(_.`extends`.mkString(", "))).fold("")(str => s" extends $str")
 
     val objectExtends = custom.flatMap(_.`object`.map(_.`extends`.mkString(", "))).fold("")(str => s" extends $str")
+
+    val allColumns = statement.columnDefinitions.map(column => Naming.toCamel(column.name))
 
     val scalaSource =
       s"""
@@ -115,11 +110,12 @@ private[ldbc] object TableModelGenerator:
          |object $className$objectExtends:
          |
          |  ${ objects.mkString("\n  ") }
-         |  val table: Table[$className] = Table[$className]("${ statement.tableName }")(
-         |    ${ columns.mkString(",\n    ") }
-         |  )
-         |  ${ keyDefinitions.mkString("\n  ") }
-         |  $tableOptions
+         |  val table = TableQuery[${ className }Table]
+         |
+         |  class ${ className }Table extends Table[$className]("${ statement.tableName }"):
+         |    ${ columns.mkString("\n    ") }
+         |
+         |    override def * : Column[$className] = (${ allColumns.mkString(" *: ") }).to[$className]
          |""".stripMargin
 
     Files.write(outputFile.toPath, scalaSource.getBytes(summon[Codec].name))
@@ -150,8 +146,9 @@ private[ldbc] object TableModelGenerator:
     column.dataType.scalaType match
       case ScalaType.Enum(types) =>
         val enumName = formatter.format(column.name)
-        Some(s"""enum $enumName extends model.Enum:
+        Some(s"""enum $enumName:
            |    case ${ types.mkString(", ") }
-           |  object $enumName extends model.EnumDataType[$enumName]
+           |  object $enumName:
+           |    given ldbc.dsl.codec.Codec[$enumName] = ldbc.dsl.codec.Codec.derivedEnum[$enumName]
            |""".stripMargin)
       case _ => None

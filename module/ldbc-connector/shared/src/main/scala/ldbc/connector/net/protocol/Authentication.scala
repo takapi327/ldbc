@@ -1,14 +1,18 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
 package ldbc.connector.net.protocol
 
+import cats.effect.kernel.Sync
+
+import fs2.hashing.Hashing
+
 import ldbc.connector.authenticator.*
-import ldbc.connector.util.Version
 import ldbc.connector.exception.*
+import ldbc.connector.util.Version
 
 /**
  * Protocol to handle the Authentication Phase
@@ -24,7 +28,7 @@ import ldbc.connector.exception.*
  * @tparam F
  *   The effect type
  */
-trait Authentication[F[_]]:
+trait Authentication[F[_]: Hashing: Sync]:
 
   /**
    * Determine the authentication plugin.
@@ -34,12 +38,12 @@ trait Authentication[F[_]]:
    * @param version
    *   MySQL Server version
    */
-  protected def determinatePlugin(pluginName: String, version: Version): Either[SQLException, AuthenticationPlugin] =
+  protected def determinatePlugin(pluginName: String, version: Version): Either[SQLException, AuthenticationPlugin[F]] =
     pluginName match
-      case "mysql_native_password" => Right(MysqlNativePasswordPlugin())
-      case "sha256_password"       => Right(Sha256PasswordPlugin())
-      case "caching_sha2_password" => Right(CachingSha2PasswordPlugin(version))
-      case unknown =>
+      case "mysql_native_password" => Right(MysqlNativePasswordPlugin[F]())
+      case "sha256_password"       => Right(Sha256PasswordPlugin[F]())
+      case "caching_sha2_password" => Right(CachingSha2PasswordPlugin[F](version))
+      case unknown                 =>
         Left(
           new SQLInvalidAuthorizationSpecException(
             s"Unknown authentication plugin: $pluginName",

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -46,7 +46,7 @@ trait ColumnParser extends DataTypeParser:
       failureMessage("default null", "DEFAULT NULL")
     )
 
-  private def bitValue: Parser[Int] = opt("b") ~> "'" ~> digit <~ "'"
+  private def bitValue:  Parser[Int]     = opt("b") ~> "'" ~> digit <~ "'"
   private def boolValue: Parser[Boolean] = (caseSensitivity("true") | caseSensitivity("false")) ^^ {
     case str if "(?i)true".r.matches(str)  => true
     case str if "(?i)false".r.matches(str) => false

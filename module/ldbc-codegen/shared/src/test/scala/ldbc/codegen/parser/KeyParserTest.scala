@@ -1,18 +1,18 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
 package ldbc.codegen.parser
 
-import org.scalatest.flatspec.AnyFlatSpec
+import munit.CatsEffectSuite
 
-class KeyParserTest extends AnyFlatSpec, KeyParser:
+class KeyParserTest extends CatsEffectSuite, KeyParser:
 
   override def fileName: String = "test.sql"
 
-  it should "Key definitions parsing test succeeds." in {
+  test("Key definitions parsing test succeeds.") {
     assert(parseAll(keyDefinitions, "INDEX (`column`)").successful)
     assert(parseAll(keyDefinitions, "KEY (`column`)").successful)
     assert(parseAll(keyDefinitions, "INDEX `index` (`column1`, `column2`)").successful)
@@ -53,7 +53,7 @@ class KeyParserTest extends AnyFlatSpec, KeyParser:
     )
   }
 
-  it should "Key definitions parsing test fails." in {
+  test("Key definitions parsing test fails.") {
     assert(!parseAll(keyDefinitions, "failed").successful)
     assert(!parseAll(keyDefinitions, "INDEX USING failed (`column`)").successful)
     assert(!parseAll(keyDefinitions, "INDEX (`column` failed)").successful)

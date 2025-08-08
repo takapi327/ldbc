@@ -1,18 +1,26 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
 package ldbc.core
 
-import java.time.{ Instant, LocalTime, LocalDate, LocalDateTime, OffsetTime, OffsetDateTime, ZonedDateTime }
-import java.time.Year as JYear
+import java.time.{
+  Instant,
+  LocalDate,
+  LocalDateTime,
+  LocalTime,
+  OffsetDateTime,
+  OffsetTime,
+  Year as JYear,
+  ZonedDateTime
+}
 
-import scala.compiletime.{ error, erasedValue }
+import scala.compiletime.{ erasedValue, error }
 
-import ldbc.core.DataType.*
 import ldbc.core.model.{ Enum as EnumModel, EnumDataType }
+import ldbc.core.DataType.*
 
 /**
  * A set of methods for constructing DataType
@@ -128,7 +136,7 @@ trait DataTypes:
 
   inline def TINYBLOB[T <: Array[Byte] | Option[Array[Byte]]](): Tinyblob[T] = Tinyblob(isOptional[T])
 
-  inline def BLOB[T <: Array[Byte] | Option[Array[Byte]]](): Blob[T] = Blob(None, isOptional[T])
+  inline def BLOB[T <: Array[Byte] | Option[Array[Byte]]]():                    Blob[T] = Blob(None, isOptional[T])
   inline def BLOB[T <: Array[Byte] | Option[Array[Byte]]](inline length: Long): Blob[T] =
     inline if length < 0 || length > 4294967295L then
       error("The length of the BLOB must be in the range 0 to 4294967295.")

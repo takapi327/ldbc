@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -49,9 +49,9 @@ object BinaryProtocolValuePacket:
             case (MYSQL_TYPE_FLOAT, value: Float)                   => acc ++ float.encode(value).require
             case (MYSQL_TYPE_DOUBLE, value: Double)                 => acc ++ double.encode(value).require
             case (
-                MYSQL_TYPE_STRING | MYSQL_TYPE_VARCHAR | MYSQL_TYPE_ENUM | MYSQL_TYPE_SET |
-                MYSQL_TYPE_LONG_BLOB | MYSQL_TYPE_MEDIUM_BLOB | MYSQL_TYPE_BLOB | MYSQL_TYPE_TINY_BLOB |
-                MYSQL_TYPE_GEOMETRY | MYSQL_TYPE_BIT | MYSQL_TYPE_DECIMAL | MYSQL_TYPE_NEWDECIMAL,
+                MYSQL_TYPE_STRING | MYSQL_TYPE_VARCHAR | MYSQL_TYPE_ENUM | MYSQL_TYPE_SET | MYSQL_TYPE_LONG_BLOB |
+                MYSQL_TYPE_MEDIUM_BLOB | MYSQL_TYPE_BLOB | MYSQL_TYPE_TINY_BLOB | MYSQL_TYPE_GEOMETRY | MYSQL_TYPE_BIT |
+                MYSQL_TYPE_DECIMAL | MYSQL_TYPE_NEWDECIMAL,
                 value: String
               ) =>
               val bytes = value.getBytes("UTF-8")

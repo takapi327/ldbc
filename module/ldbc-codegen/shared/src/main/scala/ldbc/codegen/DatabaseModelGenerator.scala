@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -11,7 +11,8 @@ import java.nio.file.Files
 
 import scala.io.Codec
 
-import ldbc.query.builder.formatter.Naming
+import ldbc.statement.formatter.Naming
+
 import ldbc.codegen.model.*
 
 private[ldbc] object DatabaseModelGenerator:
@@ -43,7 +44,7 @@ private[ldbc] object DatabaseModelGenerator:
     val className = classNameFormatter.format(statement.name)
 
     val directory = sourceManaged.toPath.resolve(statement.name)
-    val output = if !directory.toFile.exists() then
+    val output    = if !directory.toFile.exists() then
       directory.toFile.getParentFile.mkdirs()
       Files.createDirectory(directory)
     else directory

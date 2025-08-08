@@ -1,13 +1,14 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
 package ldbc.codegen.builder
 
+import ldbc.statement.formatter.Naming
+
 import ldbc.codegen.model.DataType
-import ldbc.query.builder.formatter.Naming
 
 /**
  * DataType model for constructing code strings.
@@ -40,8 +41,8 @@ case class DataTypeCodeBuilder(scalaType: String, formatter: Naming):
       case data: DataType.VARBINARY => s"${ data.name }[$scalaType](${ data.length })"
       case data: DataType.TINYBLOB  => s"${ data.name }[$scalaType]()"
       case data: DataType.TINYTEXT  => s"${ data.name }[$scalaType]()" + buildCharacterSet(data.character, data.collate)
-      case data: DataType.ENUM =>
-        s"${ data.name }[$scalaType](using ${ scalaType.replace("Option[", "").replace("]", "") })" + buildCharacterSet(
+      case data: DataType.ENUM      =>
+        s"${ data.name }[$scalaType]" + buildCharacterSet(
           data.character,
           data.collate
         )

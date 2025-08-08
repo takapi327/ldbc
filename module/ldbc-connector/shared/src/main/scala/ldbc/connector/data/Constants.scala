@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -14,4 +14,4 @@ import ldbc.connector.util.Version
 object Constants:
 
   val DRIVER_NAME:    String  = "MySQL Connector/L"
-  val DRIVER_VERSION: Version = Version(0, 3, 0)
+  val DRIVER_VERSION: Version = Version(0, 3, 2)

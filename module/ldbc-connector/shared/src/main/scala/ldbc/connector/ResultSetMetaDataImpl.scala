@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -9,9 +9,9 @@ package ldbc.connector
 import ldbc.sql.ResultSetMetaData
 
 import ldbc.connector.data.*
-import ldbc.connector.util.Version
 import ldbc.connector.exception.SQLException
 import ldbc.connector.net.packet.response.*
+import ldbc.connector.util.Version
 
 private[ldbc] class ResultSetMetaDataImpl(
   columns:         Vector[ColumnDefinitionPacket],
@@ -122,7 +122,7 @@ private[ldbc] class ResultSetMetaDataImpl(
   private def getMaxBytesPerChar(charsetIndex: Int, javaCharsetName: String): Int =
     CharsetMapping.getStaticMysqlCharsetNameForCollationIndex(charsetIndex) match
       case Some(charsetName) => CharsetMapping.getStaticMblen(charsetName)
-      case None =>
+      case None              =>
         CharsetMapping.getStaticMysqlCharsetForJavaEncoding(javaCharsetName, Some(version)) match
           case Some(charsetName) => CharsetMapping.getStaticMblen(charsetName)
           case None              => 1

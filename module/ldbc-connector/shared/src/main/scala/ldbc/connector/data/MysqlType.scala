@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -611,6 +611,15 @@ enum MysqlType(
   case GEOMETRY extends MysqlType("GEOMETRY", Types.BINARY, 0, MysqlTypeVariables.IS_NOT_DECIMAL, 65535L, "")
 
   /**
+   * VECTOR[(M)]
+   * A VECTOR column with a maximum length of 65,532 (16383 x 4) bytes. An optional length M can be given for this type to indicate the maximum number of
+   * entries in a VECTOR. M cannot exceed 16383. Each entry is a 4 Byte (single-precision) floating-point value.
+   *
+   * Protocol: FIELD_TYPE_VECTOR = 242
+   */
+  case VECTOR extends MysqlType("VECTOR", Types.LONGVARBINARY, 0, MysqlTypeVariables.IS_NOT_DECIMAL, 65532L, "[(M)]")
+
+  /**
    * Fall-back type for those MySQL data types which c/J can't recognize.
    * Handled the same as BLOB.
    *
@@ -641,8 +650,8 @@ object MysqlType:
       case name
         if name.contains("DECIMAL") | name.contains("DEC") | name.contains("NUMERIC") | name.contains("FIXED") =>
         if fullMysqlTypeName.contains("UNSIGNED") then MysqlType.DECIMAL_UNSIGNED else MysqlType.DECIMAL
-      case name if name.contains("TINYBLOB") => MysqlType.TINYBLOB
-      case name if name.contains("TINYTEXT") => MysqlType.TINYTEXT
+      case name if name.contains("TINYBLOB")                                                => MysqlType.TINYBLOB
+      case name if name.contains("TINYTEXT")                                                => MysqlType.TINYTEXT
       case name if name.contains("TINYINT") | name.contains("TINY") | name.contains("INT1") =>
         if fullMysqlTypeName.contains("UNSIGNED") then MysqlType.TINYINT_UNSIGNED else MysqlType.TINYINT
       case name
@@ -652,7 +661,7 @@ object MysqlType:
         if fullMysqlTypeName.contains("UNSIGNED") then MysqlType.SMALLINT_UNSIGNED else MysqlType.SMALLINT
       case name if name.contains("BIGINT") | name.contains("SERIAL") | name.contains("INT8") =>
         if fullMysqlTypeName.contains("UNSIGNED") then MysqlType.BIGINT_UNSIGNED else MysqlType.BIGINT
-      case name if name.contains("POINT") => MysqlType.GEOMETRY
+      case name if name.contains("POINT")                                                  => MysqlType.GEOMETRY
       case name if name.contains("INT") | name.contains("INTEGER") | name.contains("INT4") =>
         if fullMysqlTypeName.contains("UNSIGNED") then MysqlType.INT_UNSIGNED else MysqlType.INT
       case name if name.contains("DOUBLE") | name.contains("REAL") | name.contains("FLOAT8") =>
@@ -689,6 +698,7 @@ object MysqlType:
       case name if name.contains("BLOB")                                                     => MysqlType.BLOB
       case name if name.contains("TEXT")                                                     => MysqlType.TEXT
       case name if name.contains("GEOM") | name.contains("POINT") | name.contains("POLYGON") => MysqlType.GEOMETRY
+      case name if name.contains("VECTOR")                                                   => MysqlType.VECTOR
       case _                                                                                 => MysqlType.UNKNOWN
 
 /**

@@ -5,20 +5,19 @@
 </div>
 
 [![Continuous Integration](https://github.com/takapi327/ldbc/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/takapi327/ldbc/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/takapi327/ldbc/graph/badge.svg?token=GFI6HQ98QO)](https://codecov.io/gh/takapi327/ldbc)
 [![MIT License](https://img.shields.io/badge/license-MIT-green)](https://en.wikipedia.org/wiki/MIT_License)
 [![Scala Version](https://img.shields.io/badge/scala-v3.3.x-red)](https://github.com/lampepfl/dotty)
 [![Typelevel Affiliate Project](https://img.shields.io/badge/typelevel-affiliate%20project-FF6169.svg)](https://typelevel.org/projects/affiliate/)
-[![javadoc](https://javadoc.io/badge2/io.github.takapi327/ldbc-dsl_3/javadoc.svg)](https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3)
-[![Maven Central Version](https://maven-badges.herokuapp.com/maven-central/io.github.takapi327/ldbc-dsl_3/badge.svg?color=blue)](https://search.maven.org/artifact/io.github.takapi327/ldbc-dsl_3/0.3.0-beta5/jar)
+[![javadoc](https://img.shields.io/badge/javadoc-0.3.2-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3)
+[![Maven Central Version](https://maven-badges.herokuapp.com/maven-central/io.github.takapi327/ldbc-dsl_3/badge.svg?color=blue)](https://search.maven.org/artifact/io.github.takapi327/ldbc-dsl_3/0.3.2/jar)
 [![scaladex](https://index.scala-lang.org/takapi327/ldbc/ldbc-dsl/latest-by-scala-version.svg?color=blue)](https://index.scala-lang.org/takapi327/ldbc)
 [![scaladex](https://index.scala-lang.org/takapi327/ldbc/ldbc-dsl/latest-by-scala-version.svg?color=blue&targetType=js)](https://index.scala-lang.org/takapi327/ldbc)
 [![scaladex](https://index.scala-lang.org/takapi327/ldbc/ldbc-dsl/latest-by-scala-version.svg?color=blue&targetType=native)](https://index.scala-lang.org/takapi327/ldbc)
 
 ldbc (Lepus Database Connectivity) is Pure functional JDBC layer with Cats Effect 3 and Scala 3.
 
-ldbc is Created under the influence of [tapir](https://github.com/softwaremill/tapir), a declarative, type-safe web endpoint library. Using tapir, you can build type-safe endpoints and also generate OpenAPI documentation from the endpoints you build.
-
-ldbc allows the same type-safe construction with Scala at the database layer and document generation using the constructed one.
+ldbc is a [Typelevel](http://typelevel.org/) project. This means we embrace pure, typeful, functional programming, and provide a safe and friendly environment for teaching, learning, and contributing as described in the Scala [Code of Conduct](http://scala-lang.org/conduct.html).
 
 > [!NOTE]
 > **ldbc** is pre-1.0 software and is still undergoing active development. New versions are **not** binary compatible with prior versions, although in most cases user code will be source compatible.
@@ -29,19 +28,28 @@ Please drop a :star: if this project interests you. I need encouragement.
 
 ldbc is available on the JVM, Scala.js, and ScalaNative
 
-| Module / Platform    | JVM | Scala Native | Scala.js |  
-|----------------------|:---:|:------------:|:--------:|
-| `ldbc-core`          |  ✅  |      ✅       |    ✅     |
-| `ldbc-sql`           |  ✅  |      ✅       |    ✅     |
-| `ldbc-connector`     |  ✅  |      ✅       |    ✅     | 
-| `jdbc-connector`     |  ✅  |      ❌       |    ❌     | 
-| `ldbc-dsl`           |  ✅  |      ✅       |    ✅     |
-| `ldbc-query-builder` |  ✅  |      ✅       |    ✅     |
-| `ldbc-schema`        |  ✅  |      ✅       |    ✅     |
-| `ldbc-schemaSpy`     |  ✅  |      ❌       |    ❌     | 
-| `ldbc-codegen`       |  ✅  |      ✅       |    ✅     |
-| `ldbc-hikari`        |  ✅  |      ❌       |    ❌     | 
-| `ldbc-plugin`        |  ✅  |      ❌       |    ❌     |
+| Module / Platform    | JVM | Scala Native | Scala.js | Scaladoc                                                                                                                                                  |
+|----------------------|:---:|:------------:|:--------:|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ldbc-core`          |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.2-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-core_3)          |
+| `ldbc-sql`           |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.2-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-sql_3)           |
+| `ldbc-connector`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.2-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-connector_3)     |
+| `jdbc-connector`     |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.2-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/jdbc-connector_3)     |
+| `ldbc-dsl`           |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.2-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3)           |
+| `ldbc-statement`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.2-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-statement_3)     |
+| `ldbc-query-builder` |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.2-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-query-builder_3) |
+| `ldbc-schema`        |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.2-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-schema_3)        |
+| `ldbc-schemaSpy`     |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.2-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-schemaspy_3)     |
+| `ldbc-codegen`       |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.2-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-codegen_3)       |
+| `ldbc-hikari`        |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.2-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-hikari_3)        |
+| `ldbc-plugin`        |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.2-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-plugin_2.12_1.0) |
+
+## Performance
+
+ldbc is designed to be fast and efficient. It uses the latest features of Scala 3 and Cats Effect 3 to provide a high-performance database connectivity layer.
+
+| Reading                                                                | Writing                                                                |
+|------------------------------------------------------------------------|------------------------------------------------------------------------|
+| <img alt="ldbc" src="./docs/src/main/mdoc/img/connector/Select21.svg"> | <img alt="ldbc" src="./docs/src/main/mdoc/img/connector/Insert21.svg"> |
 
 ## Quick Start
 
@@ -50,13 +58,13 @@ For people that want to skip the explanations and see it action, this is the pla
 ### Dependency Configuration
 
 ```scala
-libraryDependencies += "io.github.takapi327" %% "ldbc-dsl" % "${version}"
+libraryDependencies += "io.github.takapi327" %% "ldbc-dsl" % "latest"
 ```
 
 For Cross-Platform projects (JVM, JS, and/or Native):
 
 ```scala
-libraryDependencies += "io.github.takapi327" %%% "ldbc-dsl" % "${version}"
+libraryDependencies += "io.github.takapi327" %%% "ldbc-dsl" % "latest"
 ```
 
 The dependency package used depends on whether the database connection is made via a connector using the Java API or a connector provided by ldbc.
@@ -64,19 +72,19 @@ The dependency package used depends on whether the database connection is made v
 **Use jdbc connector**
 
 ```scala
-libraryDependencies += "io.github.takapi327" %% "jdbc-connector" % "${version}"
+libraryDependencies += "io.github.takapi327" %% "jdbc-connector" % "latest"
 ```
 
 **Use ldbc connector**
 
 ```scala
-libraryDependencies += "io.github.takapi327" %% "ldbc-connector" % "${version}"
+libraryDependencies += "io.github.takapi327" %% "ldbc-connector" % "latest"
 ```
 
 For Cross-Platform projects (JVM, JS, and/or Native)
 
 ```scala
-libraryDependencies += "io.github.takapi327" %%% "ldbc-connector" % "${version}"
+libraryDependencies += "io.github.takapi327" %%% "ldbc-connector" % "latest"
 ```
 
 ### Usage
@@ -89,6 +97,8 @@ The difference in usage is that there are differences in the way connections are
 **jdbc connector**
 
 ```scala
+import jdbc.connector.*
+
 val ds = new com.mysql.cj.jdbc.MysqlDataSource()
 ds.setServerName("127.0.0.1")
 ds.setPortNumber(13306)
@@ -96,30 +106,24 @@ ds.setDatabaseName("world")
 ds.setUser("ldbc")
 ds.setPassword("password")
 
-val datasource = jdbc.connector.MysqlDataSource[IO](ds)
-
-val connection: Resource[IO, Connection[IO]] =
-  Resource.make(datasource.getConnection)(_.close())
+val provider = ConnectionProvider.fromDataSource(ex, ExecutionContexts.synchronous)
 ```
 
 **ldbc connector**
 
 ```scala
-val connection: Resource[IO, Connection[IO]] =
-  ldbc.connector.Connection[IO](
-    host     = "127.0.0.1",
-    port     = 3306,
-    user     = "ldbc",
-    password = Some("password"),
-    database = Some("ldbc"),
-    ssl      = SSL.Trusted
-  )
+import ldbc.connector.*
+
+val provider =
+  ConnectionProvider
+    .default[IO]("127.0.0.1", 3306, "ldbc", "password", "ldbc")
+    .setSSL(SSL.Trusted)
 ```
 
-The connection process to the database can be carried out using the connections established by each of these methods.
+The connection process to the database can be carried out using the provider established by each of these methods.
 
-```scala
-val result: IO[(List[Int], Option[Int], Int)] = connection.use { conn =>
+```scala 3
+val result: IO[(List[Int], Option[Int], Int)] = provider.use { conn =>
   (for
     result1 <- sql"SELECT 1".query[Int].to[List]
     result2 <- sql"SELECT 2".query[Int].to[Option]
@@ -135,18 +139,19 @@ ldbc provides not only plain queries but also type-safe database connections usi
 The first step is to set up dependencies.
 
 ```scala
-libraryDependencies += "io.github.takapi327" %% "ldbc-query-builder" % "${version}"
+libraryDependencies += "io.github.takapi327" %% "ldbc-query-builder" % "latest"
 ```
 
 For Cross-Platform projects (JVM, JS, and/or Native):
 
 ```scala
-libraryDependencies += "io.github.takapi327" %%% "ldbc-query-builder" % "${version}"
+libraryDependencies += "io.github.takapi327" %%% "ldbc-query-builder" % "latest"
 ```
 
 ldbc uses classes to construct queries.
 
-```scala
+```scala 3
+import ldbc.dsl.codec.*
 import ldbc.query.builder.Table
 
 case class User(
@@ -154,21 +159,24 @@ case class User(
   name: String,
   age: Option[Int],
 ) derives Table
+
+object User:
+  given Codec[User] = Codec.derived[User]
 ```
 
 The next step is to create a Table using the classes you have created.
 
 ```scala
-import ldbc.query.builder.Table
+import ldbc.query.builder.TableQuery
 
-val userTable = Table[User]
+val userTable = TableQuery[User]
 ```
 
 Finally, you can use the query builder to create a query.
 
 ```scala
-val result: IO[List[User]] = connection.use { conn =>
-  userTable.selectAll.query[User].to[List].readOnly(conn)
+val result: IO[List[User]] = provider.use { conn =>
+  userTable.selectAll.query.to[List].readOnly(conn)
   // "SELECT `id`, `name`, `age` FROM user"
 }
 ```
@@ -180,20 +188,21 @@ ldbc also allows type-safe construction of schema information for tables.
 The first step is to set up dependencies.
 
 ```scala
-libraryDependencies += "io.github.takapi327" %% "ldbc-schema" % "${version}"
+libraryDependencies += "io.github.takapi327" %% "ldbc-schema" % "latest"
 ```
 
 For Cross-Platform projects (JVM, JS, and/or Native):
 
 ```scala
-libraryDependencies += "io.github.takapi327" %%% "ldbc-schema" % "${version}"
+libraryDependencies += "io.github.takapi327" %%% "ldbc-schema" % "latest"
 ```
 
 The next step is to create a schema for use by the query builder.
 
-ldbc maintains a one-to-one mapping between Scala models and database table definitions. The mapping between the properties held by the model and the columns held by the table is done in definition order. Table definitions are very similar to the structure of Create statements. This makes the construction of table definitions intuitive for the user.
+ldbc maintains a one-to-one mapping between Scala models and database table definitions.
+Implementers simply define columns and write mappings to the model, similar to Slick.
 
-```scala
+```scala 3
 import ldbc.schema.*
 
 case class User(
@@ -202,28 +211,127 @@ case class User(
   age: Option[Int],
 )
 
-val userTable = Table[User]("user")(                 // CREATE TABLE `user` (
-  column("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY), //   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  column("name", VARCHAR(255)),                      //   `name` VARCHAR(255) NOT NULL,
-  column("age", INT.UNSIGNED.DEFAULT(None)),         //   `age` INT unsigned DEFAULT NULL
-)                                                    // )
+class UserTable extends Table[User]("user"):
+  def id: Column[Long] = column[Long]("id")
+  def name: Column[String] = column[String]("name")
+  def age: Column[Option[Int]] = column[Option[Int]]("age")
+
+  override def * : Column[User] = (id *: name *: age).to[User]
 ```
 
 Finally, you can use the query builder to create a query.
 
 ```scala
-val result: IO[List[User]] = connection.use { conn =>
-  userTable.selectAll.query[User].to[List].readOnly(conn)
+val userTable: TableQuery[UserTable] = TableQuery[UserTable]
+val result: IO[List[User]] = provider.use { conn =>
+  userTable.selectAll.query.to[List].readOnly(conn)
   // "SELECT `id`, `name`, `age` FROM user"
 }
 ```
+
+## How to use with ZIO
+
+Although ldbc was created to run on the Cats Effect, can also be used in conjunction with ZIO by using [ZIO Interop Cats](https://github.com/zio/interop-cats).
+
+> [!CAUTION]
+> Although ldbc supports three platforms, Note that ZIO Interop Cats does not currently support Scala Native.
+
+```scala
+libraryDependencies += "dev.zio" %% "zio-interop-cats" % "<latest-version>"
+```
+
+The following is sample code for using ldbc with ZIO.
+
+```scala 3
+import zio.*
+import zio.interop.catz.*
+
+object Main extends ZIOAppDefault:
+
+  given cats.effect.std.Console[Task] = cats.effect.std.Console.make[Task]
+  given cats.effect.std.UUIDGen[Task] with
+    override def randomUUID: Task[UUID] = ZIO.attempt(UUID.randomUUID())
+  given fs2.hashing.Hashing[Task] = fs2.hashing.Hashing.forSync[Task]
+  given fs2.io.net.Network[Task] = fs2.io.net.Network.forAsync[Task]
+
+  private def provider =
+    ConnectionProvider
+      .default[Task]("127.0.0.1", 13306, "ldbc", "password", "world")
+      .setSSL(SSL.Trusted)
+
+  override def run =
+    provider.use { conn =>
+      sql"SELECT Name FROM city"
+        .query[String]
+        .to[List]
+        .readOnly(conn)
+        .flatMap { cities =>
+          Console.printLine(cities)
+        }
+    }
+```
+
+### パフォーマンス
+
+Performance results from the Cats Effect to ZIO conversion are shown below.
+
+<div align="center">
+  <img alt="ldbc" src="./docs/src/main/mdoc/img/connector/Select_effect.svg">
+</div>
 
 ## Documentation
 
 Full documentation can be found at Currently available in English and Japanese.
 
-- [English](https://takapi327.github.io/ldbc/en/index.html)
-- [Japanese](https://takapi327.github.io/ldbc/ja/index.html)
+- [English](https://takapi327.github.io/ldbc/latest/en/)
+- [Japanese](https://takapi327.github.io/ldbc/latest/ja/)
+
+## Documentation for LLMs
+
+If you’re an artificial intelligence, or trying to teach one how to use ldbc, we offer the documentation in plaintext format. Beep boop.
+
+We support the [llms.txt](https://llmstxt.org/) convention for making documentation available to large language models and the applications that make use of them.
+
+Currently, we have the following root-level files...
+
+- [/llms.txt](https://takapi327.github.io/ldbc/llms.txt) — a listing of the available files
+- [/llms-full.txt](https://takapi327.github.io/ldbc/llms-full.txt) — complete documentation for ldbc
+- [/llms-small.txt](https://takapi327.github.io/ldbc/llms-small.txt) — compressed documentation for use with smaller context windows
+
+## Documentation for MCP
+
+[![npm version](https://badge.fury.io/js/@ldbc%2Fmcp-document-server.svg)](https://badge.fury.io/js/@ldbc%2Fmcp-document-server)
+
+Document MCP server for ldbc for use with Agent is now available.
+
+You can use the documentation server to ask questions about ldbc, run tutorials, etc.
+It can be used with Visual Studio Code, Claude Desktop, etc.
+
+> [!NOTE]
+> This server is an experimental feature, but should help you. This server is developed using tools made in Scala. It is still under development and therefore contains many missing features. Please report feature requests or problems [here](https://github.com/takapi327/mcp-scala/issues).
+
+```json
+{
+  "mcp": {
+    "servers": {
+      "mcp-ldbc-document-server": {
+        "command": "npx",
+        "args": [
+          "@ldbc/mcp-document-server"
+        ]
+      }
+    }
+  }
+}
+```
+
+> [!NOTE]
+> The video is processed in Japanese, but it works fine in English.
+> 「ldbcのチュートリアルを始めたい」is I'd like to start a tutorial on ldbc.”
+
+https://github.com/user-attachments/assets/a0c2a7a4-d5e7-4f91-bf69-833716d3efe5
+
+Please refer to the [README](https://github.com/takapi327/ldbc/blob/master/mcp/document-server/.js/README.md) for usage instructions.
 
 ## Features/Roadmap
 
@@ -246,12 +354,6 @@ We will continue to develop features and improve the stability of the ldbc conne
 #### Connection pooling implementation
 
 - [ ] Failover Countermeasures
-
-#### Performance Verification
-
-- [ ] Comparison with JDBC
-- [ ] Comparison with other MySQL Scala libraries
-- [ ] Verification of operation in AWS and other infrastructure environments
 
 #### Other
 
@@ -283,4 +385,4 @@ If you have any questions about why or how it works, feel free to ask on github.
 
 ### Testing locally
 
-If you want to build and run the tests for yourself, you'll need a local MySQL database. The easiest way to do this is to run `docker-compose up` from the project root.
+If you want to build and run the tests for yourself, you'll need a local MySQL database. The easiest way to do this is to run `docker compose up` from the project root.

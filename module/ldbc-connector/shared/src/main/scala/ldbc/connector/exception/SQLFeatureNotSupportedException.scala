@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -32,7 +32,7 @@ object SQLFeatureNotSupportedException:
     new SQLFeatureNotSupportedException(
       message,
       detail = detail,
-      hint = Some(
+      hint   = Some(
         "Report Issues here: https://github.com/takapi327/ldbc/issues/new?assignees=&labels=&projects=&template=bug_report.md&title="
       )
     )

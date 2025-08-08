@@ -1,18 +1,18 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
 package ldbc.codegen.parser
 
-import org.scalatest.flatspec.AnyFlatSpec
+import munit.CatsEffectSuite
 
-class SetParserTest extends AnyFlatSpec, SetParser:
+class SetParserTest extends CatsEffectSuite, SetParser:
 
   override def fileName: String = "test.sql"
 
-  it should "SET statement parsing test succeeds." in {
+  test("SET statement parsing test succeeds.") {
     assert(
       parseAll(
         setStatements,

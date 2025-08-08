@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -18,16 +18,16 @@ case class Parser(fileName: String) extends DatabaseStatementParser, SetParser:
     Seq[Parser[Product | List[Product]]](comment <~ opt(";"), databaseStatements, tableStatements, setStatements)
       .reduceLeft(_ | _)
 
-  private type Statements = Table.CreateStatement | Database.CreateStatement
+  private type Statements = Table.CreateStatement
 
   private def parser: Parser[List[(String, List[Statements])]] =
     var currentDatabase: String = ""
     phrase(rep(sentence) <~ end) ^^ { statements =>
       statements.flatMap {
-        case statement: Table.CreateStatement => Some(currentDatabase -> List(statement))
+        case statement: Table.CreateStatement    => Some(currentDatabase -> List(statement))
         case statement: Database.CreateStatement =>
           currentDatabase = statement.name
-          Some(currentDatabase -> List(statement))
+          None
         case _ => None
       }
     }

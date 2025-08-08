@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -7,12 +7,12 @@
 package ldbc.connector.net.packet
 package request
 
-import cats.syntax.all.*
-
 import scodec.*
 import scodec.bits.*
 import scodec.codecs.uint32L
 import scodec.interop.cats.*
+
+import cats.syntax.all.*
 
 import ldbc.connector.data.*
 
@@ -39,7 +39,7 @@ object SSLRequestPacket:
   val encoder: Encoder[SSLRequestPacket] = Encoder { (packet: SSLRequestPacket) =>
     val hasClientProtocol41 = packet.capabilityFlags.contains(CapabilitiesFlags.CLIENT_PROTOCOL_41)
     val clientFlag          = uint32L.encode(CapabilitiesFlags.toBitset(packet.capabilityFlags)).require
-    val maxPacketSize =
+    val maxPacketSize       =
       if hasClientProtocol41 then BitVector(0xff) |+| BitVector(0xff) |+| BitVector(0xff) |+| BitVector(0x0)
       else BitVector(0xff) |+| BitVector(0xff) |+| BitVector(0xff)
     val payload =

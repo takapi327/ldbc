@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -9,6 +9,8 @@ package ldbc.connector.net
 import scala.concurrent.duration.Duration
 import scala.concurrent.duration.FiniteDuration
 
+import scodec.bits.BitVector
+
 import cats.*
 import cats.syntax.all.*
 
@@ -16,10 +18,8 @@ import cats.effect.*
 import cats.effect.std.Console
 import cats.effect.syntax.temporal.*
 
-import fs2.Chunk
 import fs2.io.net.Socket
-
-import scodec.bits.BitVector
+import fs2.Chunk
 
 import ldbc.connector.data.CapabilitiesFlags
 import ldbc.connector.exception.*
@@ -88,7 +88,7 @@ object BitVectorSocket:
       socket        <- sockets
       initialPacket <- Resource.eval(Initial[F](socket).start)
       _             <- Resource.eval(initialPacketRef.set(Some(initialPacket)))
-      socket$ <- sslOptions.fold(socket.pure[Resource[F, *]])(option =>
+      socket$       <- sslOptions.fold(socket.pure[Resource[F, *]])(option =>
                    SSLNegotiation.negotiateSSL(socket, capabilitiesFlags, option, sequenceIdRef)
                  )
       carryRef <- Resource.eval(Ref[F].of(Chunk.empty[Byte]))

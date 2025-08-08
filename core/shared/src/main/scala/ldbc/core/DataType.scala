@@ -1,21 +1,20 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
 package ldbc.core
 
-import java.time.*
-import java.time.Year as JYear
+import java.time.{ Year as JYear, * }
 
-import scala.compiletime.{ error, constValue, erasedValue }
-import scala.compiletime.ops.string.*
+import scala.compiletime.{ constValue, erasedValue, error }
 import scala.compiletime.ops.int.*
+import scala.compiletime.ops.string.*
 
-import ldbc.core.model.{ Enum as EnumModel, EnumDataType }
 import ldbc.core.attribute.Attribute
 import ldbc.core.interpreter.ExtractOption
+import ldbc.core.model.{ Enum as EnumModel, EnumDataType }
 
 /**
  * Trait for representing SQL DataType

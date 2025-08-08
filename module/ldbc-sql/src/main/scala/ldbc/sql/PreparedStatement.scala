@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -24,7 +24,7 @@ import java.time.*
 trait PreparedStatement[F[_]] extends Statement[F]:
 
   @deprecated("This method cannot be called on a PreparedStatement.", "0.3.0")
-  override def executeQuery(sql: String): F[ResultSet[F]] = throw new UnsupportedOperationException(
+  override def executeQuery(sql: String): F[ResultSet] = throw new UnsupportedOperationException(
     "This method cannot be called on a PreparedStatement."
   )
 
@@ -211,7 +211,7 @@ trait PreparedStatement[F[_]] extends Statement[F]:
   /**
    * Executes the specified SQL statement and returns one or more ResultSet objects.
    */
-  def executeQuery(): F[ResultSet[F]]
+  def executeQuery(): F[ResultSet]
 
   /**
    * Executes the given SQL statement, which may be an INSERT, UPDATE, or DELETE statement or an SQL statement that

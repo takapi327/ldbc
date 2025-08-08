@@ -1,22 +1,20 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
 package ldbc.schema
 
-import java.time.*
-import java.time.Year as JYear
+import java.time.{ Year as JYear, * }
 
-import scala.compiletime.{ error, constValue, erasedValue }
-import scala.compiletime.ops.string.*
+import scala.compiletime.{ constValue, erasedValue, error }
 import scala.compiletime.ops.int.*
+import scala.compiletime.ops.string.*
+import scala.reflect.Enum as ScalaEnum
 
 import ldbc.sql.Types
 
-import ldbc.schema.model.{ Enum as EnumModel, EnumDataType }
-import ldbc.schema.attribute.Attribute
 import ldbc.schema.interpreter.ExtractOption
 
 /**
@@ -76,34 +74,13 @@ sealed trait DataType[T]:
   /** Methods for overriding the DataType type with the Option type. */
   def toOption: DataType[Option[ExtractOption[T]]] =
     new DataType[Option[ExtractOption[T]]]:
-      override def typeName:    String          = self.typeName
-      override def sqlType:     Int             = self.sqlType
-      override def queryString: String          = self.queryString
-      override def isOptional:  Boolean         = true
-      override def default:     Option[Default] = self.default
+      override def typeName:    String  = self.typeName
+      override def sqlType:     Int     = self.sqlType
+      override def queryString: String  = s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      override def isOptional:  Boolean = true
+      override def default: Option[Default] = self.default
 
 object DataType:
-
-  /**
-   * Methods for mapping specific types to DataType.
-   *
-   * @tparam D
-   *   Trait for representing SQL DataType
-   * @tparam T
-   *   Scala types that match SQL DataType
-   */
-  def mapping[D <: DataType[?], T]: Conversion[D, DataType[T]] =
-    v =>
-      new DataType[T]:
-        override def typeName: String = v.typeName
-
-        override def sqlType: Int = v.sqlType
-
-        override def queryString: String = v.queryString
-
-        override def isOptional: Boolean = v.isOptional
-
-        override def default: Option[Default] = v.default
 
   /**
    * Trait for representing numeric data types in SQL DataType
@@ -136,10 +113,22 @@ object DataType:
    *   Scala types that match SQL DataType
    */
   sealed trait StringType[T <: Byte | Array[Byte] | String | Option[Byte | Array[Byte] | String]] extends DataType[T]:
+    self =>
 
     def character: Option[Character]
 
     def collate: Option[Collate[T]]
+
+    override def toOption: DataType[Option[ExtractOption[T]]] =
+      new DataType[Option[ExtractOption[T]]]:
+        override def typeName:    String = self.typeName
+        override def sqlType:     Int    = self.sqlType
+        override def queryString: String =
+          typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ collate.fold("")(v =>
+            s" ${ v.queryString }"
+          ) ++ s" $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+        override def isOptional: Boolean         = true
+        override def default:    Option[Default] = self.default
 
   /**
    * SQL DataType to represent BLOB type of string data trait.
@@ -247,7 +236,7 @@ object DataType:
         |Consider using an alternative method to produce the effect of this attribute.
         |For example, an application could use the LPAD() function to zero-fill a number to the required width or to store a formatted number in a CHAR column.
         |""".stripMargin,
-      "Ldbc-Core 0.1.0"
+      "ldbc 0.1.0"
     )
     def ZEROFILL: Tinyint[T] = this.copy(isZerofill = true)
 
@@ -311,7 +300,7 @@ object DataType:
         |Consider using an alternative method to produce the effect of this attribute.
         |For example, an application could use the LPAD() function to zero-fill a number to the required width or to store a formatted number in a CHAR column.
         |""".stripMargin,
-      "Ldbc-Core 0.1.0"
+      "ldbc 0.1.0"
     )
     def ZEROFILL: Smallint[T] = this.copy(isZerofill = true)
 
@@ -375,7 +364,7 @@ object DataType:
         |Consider using an alternative method to produce the effect of this attribute.
         |For example, an application could use the LPAD() function to zero-fill a number to the required width or to store a formatted number in a CHAR column.
         |""".stripMargin,
-      "Ldbc-Core 0.1.0"
+      "ldbc 0.1.0"
     )
     def ZEROFILL: Mediumint[T] = this.copy(isZerofill = true)
 
@@ -439,7 +428,7 @@ object DataType:
         |Consider using an alternative method to produce the effect of this attribute.
         |For example, an application could use the LPAD() function to zero-fill a number to the required width or to store a formatted number in a CHAR column.
         |""".stripMargin,
-      "Ldbc-Core 0.1.0"
+      "ldbc 0.1.0"
     )
     def ZEROFILL: Integer[T] = this.copy(isZerofill = true)
 
@@ -503,7 +492,7 @@ object DataType:
         |Consider using an alternative method to produce the effect of this attribute.
         |For example, an application could use the LPAD() function to zero-fill a number to the required width or to store a formatted number in a CHAR column.
         |""".stripMargin,
-      "Ldbc-Core 0.1.0"
+      "ldbc 0.1.0"
     )
     def ZEROFILL: Bigint[T] = this.copy(isZerofill = true)
 
@@ -570,7 +559,7 @@ object DataType:
         |Consider using an alternative method to produce the effect of this attribute.
         |For example, an application could use the LPAD() function to zero-fill a number to the required width or to store a formatted number in a CHAR column.
         |""".stripMargin,
-      "Ldbc-Core 0.1.0"
+      "ldbc 0.1.0"
     )
     def ZEROFILL: Decimal[T] = this.copy(isZerofill = true)
 
@@ -634,7 +623,7 @@ object DataType:
         |Consider using an alternative method to produce the effect of this attribute.
         |For example, an application could use the LPAD() function to zero-fill a number to the required width or to store a formatted number in a CHAR column.
         |""".stripMargin,
-      "Ldbc-Core 0.1.0"
+      "ldbc 0.1.0"
     )
     def ZEROFILL: CFloat[T] = this.copy(isZerofill = true)
 
@@ -1245,15 +1234,15 @@ object DataType:
    * @tparam T
    *   Scala types that match SQL DataType
    */
-  private[ldbc] case class Enum[T <: EnumModel | Option[EnumModel]](
+  private[ldbc] case class Enum[T <: ScalaEnum | Option[ScalaEnum]](
+    labels:     List[String],
     isOptional: Boolean,
     character:  Option[Character]  = None,
     collate:    Option[Collate[T]] = None,
     default:    Option[Default]    = None
-  )(using enumDataType: EnumDataType[?])
-    extends DataType[T]:
+  ) extends DataType[T]:
 
-    override def typeName: String = s"ENUM(${ enumDataType.values.map(v => s"'$v'").mkString(",") })"
+    override def typeName: String = s"ENUM(${ labels.map(label => s"'$label'").mkString(",") })"
 
     override def sqlType: Int = Types.CHAR
 
@@ -1562,19 +1551,6 @@ object DataType:
           else error("Only values in the range 0 or 1901 to 2155 can be passed to the YEAR type.")
         case _ => this.copy(default = Some(Default.Value(value)))
 
-  /**
-   * Alias for DataType
-   *
-   * @tparam T
-   *   Scala types that match SQL DataType
-   */
-  private[ldbc] trait Alias[T] extends DataType[T]:
-
-    /**
-     * Extra attribute of column
-     */
-    def attributes: List[Attribute[T]]
-
   private[ldbc] object Alias:
 
     /**
@@ -1583,22 +1559,20 @@ object DataType:
      * @tparam T
      *   Scala types that match SQL DataType
      */
-    case class Serial[T <: BigInt]() extends Alias[T]:
+    case class Serial[T <: BigInt]() extends DataType[T]:
 
-      override def typeName: String = "BIGINT"
+      override def typeName: String = "SERIAL"
 
       override def sqlType: Int = Types.BIGINT
 
       override def isOptional: Boolean = false
 
-      override val queryString: String =
-        s"$typeName UNSIGNED $nullType"
+      override val queryString: String = typeName
 
       override def default: Option[Default] = None
 
-      override def attributes: List[Attribute[T]] = List(
-        AUTO_INCREMENT,
-        UNIQUE_KEY
+      override def toOption: DataType[Option[ExtractOption[T]]] = throw new UnsupportedOperationException(
+        "Serial type cannot be converted to Option"
       )
 
     /**
@@ -1614,15 +1588,13 @@ object DataType:
     case class Bool[T <: Boolean | Option[Boolean]](
       isOptional: Boolean,
       default:    Option[Default] = None
-    ) extends Alias[T]:
+    ) extends DataType[T]:
 
       override def typeName: String = "BOOLEAN"
 
       override def sqlType: Int = Types.BOOLEAN
 
       override def queryString: String = s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
-
-      override def attributes: List[Attribute[T]] = List.empty
 
       /**
        * Method for setting Default value to DataType in SQL.

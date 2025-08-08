@@ -1,47 +1,48 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
 package ldbc.schemaspy
 
-import java.io.{ File, IOException, FileFilter }
-import java.nio.file.{ Files, Path, StandardOpenOption }
-import java.nio.charset.StandardCharsets
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
+import java.io.{ File, FileFilter, IOException }
 import java.lang.invoke.MethodHandles
+import java.nio.charset.StandardCharsets
+import java.nio.file.{ Files, Path, StandardOpenOption }
+import java.time.format.DateTimeFormatter
+import java.time.ZonedDateTime
 
 import scala.util.Using
 
-import org.slf4j.LoggerFactory
-
 import org.apache.commons.io.filefilter.FileFilterUtils
 
-import org.schemaspy.{ DbAnalyzer, SimpleRuntimeDotConfig, LayoutFolder, InsertionOrdered, OrderingReport }
-import org.schemaspy.model.Database as SchemaspyDatabase
-import org.schemaspy.model.Table as SchemaspyTable
-import org.schemaspy.model.{ ProgressListener, Tracked, Console, ForeignKeyConstraint }
-import org.schemaspy.util.{ Markdown, ManifestUtils, DataTableConfig, DefaultPrintWriter }
-import org.schemaspy.util.naming.FileNameGenerator
-import org.schemaspy.util.copy.CopyFromUrl
-import org.schemaspy.view.*
-import org.schemaspy.output.OutputProducer
-import org.schemaspy.output.dot.schemaspy.{ DefaultFontConfig, DotFormatter, OrphanGraph }
-import org.schemaspy.output.diagram.{ SummaryDiagram, TableDiagram }
-import org.schemaspy.output.diagram.vizjs.VizJSDot
-import org.schemaspy.output.html.mustache.diagrams.{
-  MustacheSummaryDiagramFactory,
-  OrphanDiagram,
-  MustacheTableDiagramFactory
-}
+import org.slf4j.LoggerFactory
+
+import org.schemaspy.{ DbAnalyzer, InsertionOrdered, LayoutFolder, OrderingReport, SimpleRuntimeDotConfig }
 import org.schemaspy.analyzer.ImpliedConstraintsFinder
 import org.schemaspy.cli.CommandLineArguments
+import org.schemaspy.model.{ Console, ForeignKeyConstraint, ProgressListener, Tracked }
+import org.schemaspy.model.Database as SchemaspyDatabase
+import org.schemaspy.model.Table as SchemaspyTable
+import org.schemaspy.output.diagram.{ SummaryDiagram, TableDiagram }
+import org.schemaspy.output.diagram.vizjs.VizJSDot
+import org.schemaspy.output.dot.schemaspy.{ DefaultFontConfig, DotFormatter, OrphanGraph }
+import org.schemaspy.output.html.mustache.diagrams.{
+  MustacheSummaryDiagramFactory,
+  MustacheTableDiagramFactory,
+  OrphanDiagram
+}
+import org.schemaspy.output.OutputProducer
+import org.schemaspy.util.{ DataTableConfig, DefaultPrintWriter, ManifestUtils, Markdown }
+import org.schemaspy.util.copy.CopyFromUrl
+import org.schemaspy.util.naming.FileNameGenerator
+import org.schemaspy.view.*
 
 import ldbc.core.*
 import ldbc.core.syntax.given
-import ldbc.schemaspy.builder.{ DbmsMetaBuilder, TableBuilder, ImportForeignKeyBuilder }
+
+import ldbc.schemaspy.builder.{ DbmsMetaBuilder, ImportForeignKeyBuilder, TableBuilder }
 
 class LdbcSchemaAnalyzer(
   database:             Database,
@@ -135,7 +136,7 @@ class LdbcSchemaAnalyzer(
     val results = mustacheSummaryDiagramFactory.generateSummaryDiagrams(db, tables, progressListener)
     results.getOutputExceptions.stream().forEachOrdered(_.printStackTrace())
 
-    val dataTableConfig = new DataTableConfig(commandLineArguments)
+    val dataTableConfig  = new DataTableConfig(commandLineArguments)
     val mustacheCompiler = new MustacheCompiler(
       db.getName,
       db.getSchema.getName,

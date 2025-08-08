@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -7,13 +7,13 @@
 package ldbc.codegen
 
 import java.io.File
-import java.nio.file.Files
 import java.nio.charset.Charset
+import java.nio.file.Files
 
-import ldbc.query.builder.formatter.Naming
-import ldbc.codegen.parser.Parser
+import ldbc.statement.formatter.Naming
+
 import ldbc.codegen.parser.yml.Parser as YmlParser
-import ldbc.codegen.model.{ Database, Table }
+import ldbc.codegen.parser.Parser
 
 private[ldbc] object LdbcGenerator:
 
@@ -58,33 +58,17 @@ private[ldbc] object LdbcGenerator:
       .groupBy(_._1)
       .flatMap { (name, list) =>
         val statements = list.flatMap(_._2).toSet
-        statements.map {
-          case statement: Table.CreateStatement =>
-            val customTables = custom.find(_.database.name == name).map(_.database.tables)
-            TableModelGenerator.generate(
-              name,
-              statement,
-              classNameFormatter,
-              propertyNameFormatter,
-              sourceManaged,
-              customTables,
-              packageName
-            )
-          case statement: Database.CreateStatement =>
-            val tableStatements = statements.flatMap {
-              case statement: Table.CreateStatement =>
-                Some(s"${ classNameFormatter.format(statement.tableName) }.table")
-              case _: Database.CreateStatement => None
-            }.toList
-
-            DatabaseModelGenerator.generate(
-              statement,
-              tableStatements,
-              classNameFormatter,
-              propertyNameFormatter,
-              sourceManaged,
-              packageName
-            )
+        statements.map { statement =>
+          val customTables = custom.find(_.database.name == name).map(_.database.tables)
+          TableModelGenerator.generate(
+            name,
+            statement,
+            classNameFormatter,
+            propertyNameFormatter,
+            sourceManaged,
+            customTables,
+            packageName
+          )
         }
       }
       .toArray
