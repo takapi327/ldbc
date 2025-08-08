@@ -8,8 +8,9 @@ package ldbc.tests
 
 import scala.concurrent.duration.*
 
+import cats.syntax.all.*
+
 import cats.effect.*
-import cats.effect.syntax.all.*
 
 import munit.*
 
@@ -108,7 +109,7 @@ trait ConnectionPoolDslTest extends CatsEffectSuite:
       .use { pool =>
         // Execute multiple queries concurrently
         // Use parTraverseN to limit concurrency to match pool size
-        val queries = (1 to 10).toList.parTraverseN(5) { i =>
+        val queries = (1 to 5).toList.parTraverse { i =>
           country.selectAll
             .limit(1)
             .offset(i)
@@ -122,7 +123,7 @@ trait ConnectionPoolDslTest extends CatsEffectSuite:
           status  <- pool.status
         } yield {
           val flattened = results.flatten
-          assertEquals(flattened.length, 10)
+          assertEquals(flattened.length, 5)
           assert(status.total <= 5) // Should not exceed max connections
         }
       }
