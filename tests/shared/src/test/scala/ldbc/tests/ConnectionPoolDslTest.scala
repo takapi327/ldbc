@@ -11,6 +11,7 @@ import scala.concurrent.duration.*
 import cats.syntax.all.*
 
 import cats.effect.*
+import cats.effect.syntax.all.*
 
 import munit.*
 
@@ -40,7 +41,6 @@ class LdbcConnectionPoolDslTest extends ConnectionPoolDslTest:
     .setMaxLifetime(30.minutes)
 
 trait ConnectionPoolDslTest extends CatsEffectSuite:
-  override def munitIOTimeout: Duration = 80.seconds
 
   def prefix: "jdbc" | "ldbc"
   def config: MySQLConfig
@@ -109,7 +109,8 @@ trait ConnectionPoolDslTest extends CatsEffectSuite:
       .fromConfig[IO](config.setMinConnections(2).setMaxConnections(5))
       .use { pool =>
         // Execute multiple queries concurrently
-        val queries = (1 to 10).toList.parTraverse { i =>
+        // Use parTraverseN to limit concurrency to match pool size
+        val queries = (1 to 10).toList.parTraverseN(5) { i =>
           country.selectAll
             .limit(1)
             .offset(i)
