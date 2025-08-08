@@ -81,7 +81,7 @@ lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "cats-core"   % "2.12.0",
       "org.scalatest" %%% "scalatest"   % "3.2.18" % Test,
-      "org.specs2"    %%% "specs2-core" % "5.5.3"  % Test
+      "org.specs2"    %%% "specs2-core" % "4.21.0"  % Test
     ),
     Test / scalacOptions -= "-Werror"
   )
@@ -106,7 +106,7 @@ lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "twiddles-core"     % "0.9.0",
-      "org.typelevel" %%% "cats-free"         % "2.10.0",
+      "org.typelevel" %%% "cats-free"         % "2.13.0",
       "org.typelevel" %%% "cats-effect"       % "3.7.0-RC1",
       "org.typelevel" %%% "munit-cats-effect" % "2.1.0" % Test
     )
@@ -186,8 +186,8 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     scalacOptions += "-Ykind-projector:underscores",
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "cats-effect"       % "3.7.0-RC1",
-      "co.fs2"        %%% "fs2-core"          % "3.12.0",
-      "co.fs2"        %%% "fs2-io"            % "3.12.0",
+      "co.fs2"        %%% "fs2-core"          % "3.13.0-M6",
+      "co.fs2"        %%% "fs2-io"            % "3.13.0-M6",
       "org.scodec"    %%% "scodec-bits"       % "1.2.0",
       "org.scodec"    %%% "scodec-core"       % "2.3.1",
       "org.scodec"    %%% "scodec-cats"       % "1.2.0",
