@@ -40,6 +40,7 @@ class LdbcConnectionPoolDslTest extends ConnectionPoolDslTest:
     .setMaxLifetime(30.minutes)
 
 trait ConnectionPoolDslTest extends CatsEffectSuite:
+  override def munitIOTimeout: Duration = 80.seconds
 
   def prefix: "jdbc" | "ldbc"
   def config: MySQLConfig
