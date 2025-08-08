@@ -8,8 +8,6 @@ package ldbc.tests
 
 import scala.concurrent.duration.*
 
-import cats.syntax.all.*
-
 import cats.effect.*
 import cats.effect.syntax.all.*
 
