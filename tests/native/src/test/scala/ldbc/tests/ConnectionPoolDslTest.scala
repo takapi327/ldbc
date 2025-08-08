@@ -39,8 +39,8 @@ class LdbcConnectionPoolDslTest extends ConnectionPoolDslTest:
     .setMaxLifetime(30.minutes)
     .setConnectionTimeout(120.seconds) // Longer timeout for Native
     .setMaintenanceInterval(5.seconds) // Less frequent maintenance
-    .setAdaptiveInterval(10.seconds) // Less frequent adaptive sizing
-    .setAdaptiveSizing(false) // Disable adaptive sizing on Native
+    .setAdaptiveInterval(10.seconds)   // Less frequent adaptive sizing
+    .setAdaptiveSizing(false)          // Disable adaptive sizing on Native
 
 trait ConnectionPoolDslTest extends CatsEffectSuite:
 

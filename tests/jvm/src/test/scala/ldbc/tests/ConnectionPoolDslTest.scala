@@ -6,16 +6,22 @@
 
 package ldbc.tests
 
-import cats.effect.*
+import scala.concurrent.duration.*
+
 import cats.syntax.all.*
-import ldbc.connector.*
-import ldbc.connector.pool.*
-import ldbc.dsl.codec.*
-import ldbc.schema.*
-import ldbc.tests.model.*
+
+import cats.effect.*
+
 import munit.*
 
-import scala.concurrent.duration.*
+import ldbc.dsl.codec.*
+
+import ldbc.schema.*
+
+import ldbc.connector.*
+import ldbc.connector.pool.*
+
+import ldbc.tests.model.*
 
 class LdbcConnectionPoolDslTest extends ConnectionPoolDslTest:
 
@@ -155,10 +161,10 @@ trait ConnectionPoolDslTest extends CatsEffectSuite:
 
     for
       tracker <- metricsTracker
-      pool <- PooledDataSource
-        .fromConfig[IO](config.setMinConnections(1).setMaxConnections(3), None, Some(tracker))
-        .allocated
-        .map(_._1)
+      pool    <- PooledDataSource
+                .fromConfig[IO](config.setMinConnections(1).setMaxConnections(3), None, Some(tracker))
+                .allocated
+                .map(_._1)
 
       connector = Connector.fromDataSource(pool)
 
@@ -169,7 +175,7 @@ trait ConnectionPoolDslTest extends CatsEffectSuite:
 
       // Get metrics
       metrics <- pool.metrics
-      _ <- pool.close
+      _       <- pool.close
     yield
       assertEquals(metrics.totalAcquisitions, 2L)
       assertEquals(metrics.totalReleases, 2L)
