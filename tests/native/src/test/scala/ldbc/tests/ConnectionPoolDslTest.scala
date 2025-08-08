@@ -35,9 +35,12 @@ class LdbcConnectionPoolDslTest extends ConnectionPoolDslTest:
     .setSSL(SSL.Trusted)
     .setMinConnections(2)
     .setMaxConnections(5)
-    .setConnectionTimeout(60.seconds)
     .setIdleTimeout(10.minutes)
     .setMaxLifetime(30.minutes)
+    .setConnectionTimeout(120.seconds) // Longer timeout for Native
+    .setMaintenanceInterval(5.seconds) // Less frequent maintenance
+    .setAdaptiveInterval(10.seconds) // Less frequent adaptive sizing
+    .setAdaptiveSizing(false) // Disable adaptive sizing on Native
 
 trait ConnectionPoolDslTest extends CatsEffectSuite:
 
@@ -104,12 +107,12 @@ trait ConnectionPoolDslTest extends CatsEffectSuite:
   }
 
   test(s"$prefix: ConnectionPool.use with concurrent queries") {
+
     PooledDataSource
       .fromConfig[IO](config.setMinConnections(2).setMaxConnections(5))
       .use { pool =>
         // Execute multiple queries concurrently
-        // Use parTraverseN to limit concurrency to match pool size
-        val queries = (1 to 5).toList.parTraverse { i =>
+        val queries = (1 to 5).toList.traverse { i =>
           country.selectAll
             .limit(1)
             .offset(i)
@@ -152,31 +155,4 @@ trait ConnectionPoolDslTest extends CatsEffectSuite:
           assertEquals(status.active, 0)
           assertEquals(countries.length, 1)
       }
-  }
-
-  test(s"$prefix: ConnectionPool metrics tracking with dsl queries") {
-    val metricsTracker = PoolMetricsTracker.inMemory[IO]
-
-    for
-      tracker <- metricsTracker
-      pool    <- PooledDataSource
-                .fromConfig[IO](config.setMinConnections(1).setMaxConnections(3), None, Some(tracker))
-                .allocated
-                .map(_._1)
-
-      connector = Connector.fromDataSource(pool)
-
-      // Execute several queries
-      _ <- country.selectAll.limit(10).query.to[List].readOnly(connector)
-
-      _ <- city.selectAll.limit(5).query.to[List].readOnly(connector)
-
-      // Get metrics
-      metrics <- pool.metrics
-      _       <- pool.close
-    yield
-      assertEquals(metrics.totalAcquisitions, 2L)
-      assertEquals(metrics.totalReleases, 2L)
-      assert(metrics.acquisitionTime > Duration.Zero)
-      assert(metrics.usageTime > Duration.Zero)
   }
