@@ -81,7 +81,7 @@ lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "cats-core"   % "2.12.0",
       "org.scalatest" %%% "scalatest"   % "3.2.18" % Test,
-      "org.specs2"    %%% "specs2-core" % "4.21.0"  % Test
+      "org.specs2"    %%% "specs2-core" % "4.21.0" % Test
     ),
     Test / scalacOptions -= "-Werror"
   )
