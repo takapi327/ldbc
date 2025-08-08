@@ -79,15 +79,15 @@ lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
          |
          |""".stripMargin,
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-core"   % "2.10.0",
+      "org.typelevel" %%% "cats-core"   % "2.12.0",
       "org.scalatest" %%% "scalatest"   % "3.2.18" % Test,
-      "org.specs2"    %%% "specs2-core" % "4.20.5" % Test
+      "org.specs2"    %%% "specs2-core" % "4.21.0" % Test
     ),
     Test / scalacOptions -= "-Werror"
   )
   .platformsSettings(JSPlatform, NativePlatform)(
     libraryDependencies ++= Seq(
-      "io.github.cquiroz" %%% "scala-java-time" % "2.5.0"
+      "io.github.cquiroz" %%% "scala-java-time" % "2.6.0"
     )
   )
 
@@ -96,7 +96,7 @@ lazy val sql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .module("sql", "JDBC API wrapped project with Effect System")
   .platformsSettings(JSPlatform, NativePlatform)(
     libraryDependencies ++= Seq(
-      "io.github.cquiroz" %%% "scala-java-time" % "2.5.0"
+      "io.github.cquiroz" %%% "scala-java-time" % "2.6.0"
     )
   )
 
@@ -105,9 +105,9 @@ lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .module("dsl", "Projects that provide a way to connect to the database")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "twiddles-core"     % "0.8.0",
-      "org.typelevel" %%% "cats-free"         % "2.10.0",
-      "org.typelevel" %%% "cats-effect"       % "3.6.3",
+      "org.typelevel" %%% "twiddles-core"     % "0.9.0",
+      "org.typelevel" %%% "cats-free"         % "2.13.0",
+      "org.typelevel" %%% "cats-effect"       % "3.7.0-RC1",
       "org.typelevel" %%% "munit-cats-effect" % "2.1.0" % Test
     )
   )
@@ -185,14 +185,14 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     scalacOptions += "-Ykind-projector:underscores",
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-effect"       % "3.6.3",
-      "co.fs2"        %%% "fs2-core"          % "3.12.0",
-      "co.fs2"        %%% "fs2-io"            % "3.12.0",
-      "org.scodec"    %%% "scodec-bits"       % "1.1.38",
-      "org.scodec"    %%% "scodec-core"       % "2.2.2",
+      "org.typelevel" %%% "cats-effect"       % "3.7.0-RC1",
+      "co.fs2"        %%% "fs2-core"          % "3.13.0-M6",
+      "co.fs2"        %%% "fs2-io"            % "3.13.0-M6",
+      "org.scodec"    %%% "scodec-bits"       % "1.2.0",
+      "org.scodec"    %%% "scodec-core"       % "2.3.1",
       "org.scodec"    %%% "scodec-cats"       % "1.2.0",
       "org.typelevel" %%% "otel4s-core-trace" % "0.13.1",
-      "org.typelevel" %%% "twiddles-core"     % "0.8.0",
+      "org.typelevel" %%% "twiddles-core"     % "0.9.0",
       "org.typelevel" %%% "munit-cats-effect" % "2.1.0" % Test
     )
   )
