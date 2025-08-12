@@ -12,7 +12,6 @@ import cats.*
 import cats.syntax.all.*
 
 import cats.effect.*
-import cats.effect.kernel.Deferred
 import cats.effect.std.Console
 import cats.effect.std.UUIDGen
 import cats.effect.syntax.all.*
@@ -127,6 +126,14 @@ trait PooledDataSource[F[_]] extends DataSource[F]:
    * @return a new PooledConnection wrapped in the effect type
    */
   def createNewConnection(): F[PooledConnection[F]]
+  
+  /**
+   * Creates a new connection specifically for pool initialization.
+   * Unlike createNewConnection, this creates connections in idle state.
+   * 
+   * @return a new PooledConnection in idle state
+   */
+  def createNewConnectionForPool(): F[PooledConnection[F]]
 
   /**
    * Returns a connection to the pool for reuse.
@@ -183,14 +190,10 @@ object PooledDataSource:
     poolState:               Ref[F, PoolState[F]],
     idGenerator:             F[String],
     houseKeeper:             Option[Fiber[F, Throwable, Unit]],
-    adaptiveSizer:           Option[Fiber[F, Throwable, Unit]]
+    adaptiveSizer:           Option[Fiber[F, Throwable, Unit]],
+    connectionBag:           ConcurrentBag[F, PooledConnection[F]]
   ) extends PooledDataSource[F]:
     given Tracer[F] = tracer.getOrElse(Tracer.noop[F])
-
-    private enum AcquireResult:
-      case Acquired(connection: Connection[F])
-      case CreateNew extends AcquireResult
-      case Waiting(deferred: Deferred[F, Either[Throwable, Connection[F]]])
 
     override def getConnection: Resource[F, Connection[F]] = Resource.make(acquire)(release)
 
@@ -229,87 +232,54 @@ object PooledDataSource:
     yield result
 
     private def acquireConnectionWithStartTime(startTime: FiniteDuration): F[Connection[F]] =
-
-      def tryAcquire: F[AcquireResult] = poolState
-        .modify { state =>
-          if state.closed then (state, Temporal[F].raiseError[AcquireResult](new Exception("Pool is closed")))
-          else
-            findIdleConnection(state) match
-              case Some((pooled, newState)) =>
-                val markInUse: F[AcquireResult] = for
-                  _   <- pooled.state.set(ConnectionState.InUse)
-                  now <- Clock[F].realTime.map(_.toMillis)
-                  _   <- pooled.lastUsedAt.set(now)
-                  _   <- pooled.useCount.update(_ + 1)
-                yield AcquireResult.Acquired(wrapConnection(pooled))
-                (newState, markInUse)
-
-              case None if state.connections.size < maxConnections =>
-                (state, Temporal[F].pure(AcquireResult.CreateNew: AcquireResult))
-
-              case None =>
-                val deferred = Deferred.unsafe[F, Either[Throwable, Connection[F]]]
-                val newState = state.copy(waitQueue = state.waitQueue :+ deferred)
-                (newState, Temporal[F].pure(AcquireResult.Waiting(deferred): AcquireResult))
-        }
-        .flatMap(identity)
-
-      val acquireResult: F[Connection[F]] = tryAcquire.flatMap {
-        case AcquireResult.Acquired(conn) =>
-          for
-            endTime <- Clock[F].monotonic
-            _       <- metricsTracker.recordAcquisition(endTime - startTime)
-          yield conn
-        case AcquireResult.CreateNew =>
-          createNewConnection()
-            .flatMap { pooled =>
+      poolState.get.flatMap { state =>
+        if state.closed then
+          Temporal[F].raiseError(new Exception("Pool is closed"))
+        else
+          connectionBag.borrow(connectionTimeout).flatMap {
+            case Some(pooled) =>
+              // Successfully borrowed from bag
               for
+                _       <- pooled.state.set(ConnectionState.InUse)
+                now     <- Clock[F].realTime.map(_.toMillis)
+                _       <- pooled.lastUsedAt.set(now)
+                _       <- pooled.useCount.update(_ + 1)
                 endTime <- Clock[F].monotonic
                 _       <- metricsTracker.recordAcquisition(endTime - startTime)
+                // Start leak detection if configured
+                _ <- leakDetectionThreshold.traverse_ { threshold =>
+                       val leakFiber = Temporal[F]
+                         .sleep(threshold)
+                         .flatMap { _ =>
+                           pooled.state.get.flatMap {
+                             case ConnectionState.InUse => metricsTracker.recordLeak()
+                             case _                     => Temporal[F].unit
+                           }
+                         }
+                         .start
+
+                       leakFiber.flatMap(fiber => pooled.leakDetection.set(Some(fiber)))
+                     }
               yield wrapConnection(pooled)
-            }
-            .handleErrorWith { error =>
-              // If creation failed (e.g., over limit), try waiting instead
-              val deferred = Deferred.unsafe[F, Either[Throwable, Connection[F]]]
-              poolState.update { state =>
-                state.copy(waitQueue = state.waitQueue :+ deferred)
-              } >> deferred.get.rethrow
-                .flatMap { conn =>
-                  for
-                    endTime <- Clock[F].monotonic
-                    _       <- metricsTracker.recordAcquisition(endTime - startTime)
-                  yield conn
-                }
-                .onCancel {
-                  // Remove from wait queue on cancellation
-                  poolState.update { state =>
-                    state.copy(waitQueue = state.waitQueue.filterNot(_ eq deferred))
+              
+            case None =>
+              // Timeout or no connections available
+              // Check if we can create a new connection
+              poolState.get.flatMap { currentState =>
+                if currentState.connections.size < maxConnections then
+                  createNewConnection().flatMap { pooled =>
+                    for
+                      endTime <- Clock[F].monotonic
+                      _       <- metricsTracker.recordAcquisition(endTime - startTime)
+                    yield wrapConnection(pooled)
                   }
-                }
-            }
-        case AcquireResult.Waiting(deferred) =>
-          deferred.get.rethrow
-            .flatMap { conn =>
-              for
-                endTime <- Clock[F].monotonic
-                _       <- metricsTracker.recordAcquisition(endTime - startTime)
-              yield conn
-            }
-            .onCancel {
-              // Remove from wait queue on cancellation
-              poolState.update { state =>
-                state.copy(waitQueue = state.waitQueue.filterNot(_ eq deferred))
+                else
+                  val errorMessage =
+                    s"Connection acquisition timeout after $connectionTimeout (host: $host:$port, db: ${ database.getOrElse("none") }, pool at max size: ${ currentState.connections.size })"
+                  metricsTracker.recordTimeout() *>
+                    Temporal[F].raiseError(new Exception(errorMessage))
               }
-            }
-      }
-
-      acquireResult.timeout(connectionTimeout).handleErrorWith { _ =>
-        poolState.get.flatMap { state =>
-          val errorMessage =
-            s"Connection acquisition timeout after $connectionTimeout (host: $host:$port, db: ${ database.getOrElse("none") }, pool closed: ${ state.closed }, total: ${ state.connections.size }, waiting: ${ state.waitQueue.size })"
-          metricsTracker.recordTimeout() *>
-            Temporal[F].raiseError(new Exception(errorMessage))
-        }
+          }
       }
 
     private def release(conn: Connection[F]): F[Unit] = for
@@ -323,33 +293,40 @@ object PooledDataSource:
         case proxy: ConnectionProxy[F] => Temporal[F].pure(Some(proxy.pooled))
         case _                         =>
           // Fallback: search by unwrapped connection
-          poolState.get.map { state =>
-            state.connections.find(p => p.connection == unwrapConnection(conn))
+          connectionBag.values.map { connections =>
+            connections.find(p => p.connection == unwrapConnection(conn))
           }
       }
 
       pooledF.flatMap {
         case Some(pooled) =>
-          resetConnection(pooled.connection).attempt.flatMap {
-            case Right(_) =>
-              validateConnection(pooled.connection).flatMap { valid =>
-                if valid && !isExpired(pooled) then
-                  returnToPool(pooled) *> processWaitQueue() *>
-                    Clock[F].monotonic.flatMap { endTime =>
-                      metricsTracker.recordUsage(endTime - startTime)
-                    }
-                else
-                  removeConnection(pooled) *>
-                    Clock[F].monotonic.flatMap { endTime =>
-                      metricsTracker.recordUsage(endTime - startTime)
-                    }
-              }
-            case Left(_) =>
-              removeConnection(pooled) *>
-                Clock[F].monotonic.flatMap { endTime =>
-                  metricsTracker.recordUsage(endTime - startTime)
+          // Cancel leak detection
+          pooled.leakDetection.get.flatMap(_.traverse_(_.cancel)) >>
+            pooled.leakDetection.set(None) >>
+            pooled.state.set(ConnectionState.Idle) >>
+            resetConnection(pooled.connection).attempt.flatMap {
+              case Right(_) =>
+                validateConnection(pooled.connection).flatMap { valid =>
+                  if valid && !isExpired(pooled) then
+                    // Return to bag for reuse
+                    connectionBag.requite(pooled) *>
+                      Clock[F].monotonic.flatMap { endTime =>
+                        metricsTracker.recordUsage(endTime - startTime)
+                      }
+                  else
+                    // Invalid or expired, remove from pool
+                    removeConnection(pooled) *>
+                      Clock[F].monotonic.flatMap { endTime =>
+                        metricsTracker.recordUsage(endTime - startTime)
+                      }
                 }
-          }
+              case Left(_) =>
+                // Reset failed, remove from pool
+                removeConnection(pooled) *>
+                  Clock[F].monotonic.flatMap { endTime =>
+                    metricsTracker.recordUsage(endTime - startTime)
+                  }
+            }
         case None =>
           // Connection not found - still record the usage time
           Clock[F].monotonic.flatMap { endTime =>
@@ -357,17 +334,7 @@ object PooledDataSource:
           }
       }
 
-    /**
-     * Find an idle connection in the pool.
-     */
-    private def findIdleConnection(state: PoolState[F]): Option[(PooledConnection[F], PoolState[F])] =
-      state.idleConnections.headOption.flatMap { id =>
-        state.connections.find(_.id == id).map { pooled =>
-          val newIdleConnections = state.idleConnections - id
-          val newState           = state.copy(idleConnections = newIdleConnections)
-          (pooled, newState)
-        }
-      }
+    // findIdleConnection is no longer needed - ConcurrentBag handles this
 
     override def createNewConnection(): F[PooledConnection[F]] = for
       startTime <- Clock[F].monotonic
@@ -377,7 +344,7 @@ object PooledDataSource:
     private def createNewConnectionWithStartTime(startTime: FiniteDuration): F[PooledConnection[F]] =
       createNewConnectionWithState(startTime, ConnectionState.InUse, 1L)
 
-    def createNewConnectionForPool(): F[PooledConnection[F]] = for
+    override def createNewConnectionForPool(): F[PooledConnection[F]] = for
       startTime <- Clock[F].monotonic
       result    <- createNewConnectionWithState(startTime, ConnectionState.Idle, 0L)
     yield result
@@ -397,6 +364,7 @@ object PooledDataSource:
         useCountRef      <- Ref[F].of(initialUseCount)
         lastValidatedRef <- Ref[F].of(now)
         leakDetectionRef <- Ref.of[F, Option[Fiber[F, Throwable, Unit]]](None)
+        bagStateRef      <- Ref.of[F, Int](if initialState == ConnectionState.InUse then BagEntry.STATE_IN_USE else BagEntry.STATE_NOT_IN_USE)
 
         pooled = PooledConnection(
                    id              = id,
@@ -407,7 +375,8 @@ object PooledDataSource:
                    lastUsedAt      = lastUsedRef,
                    useCount        = useCountRef,
                    lastValidatedAt = lastValidatedRef,
-                   leakDetection   = leakDetectionRef
+                   leakDetection   = leakDetectionRef,
+                   bagState        = bagStateRef
                  )
 
         // Double-check the limit before adding to prevent race conditions
@@ -429,23 +398,11 @@ object PooledDataSource:
                  Temporal[F].raiseError[Unit](new Exception("Pool reached maximum size"))
              } else Temporal[F].unit
 
+        // Add to concurrent bag
+        _ <- connectionBag.add(pooled)
+
         endTime <- Clock[F].monotonic
         _       <- metricsTracker.recordCreation(endTime - startTime)
-
-        // Start leak detection if configured
-        _ <- leakDetectionThreshold.traverse_ { threshold =>
-               val leakFiber = Temporal[F]
-                 .sleep(threshold)
-                 .flatMap { _ =>
-                   pooled.state.get.flatMap {
-                     case ConnectionState.InUse => metricsTracker.recordLeak()
-                     case _                     => Temporal[F].unit
-                   }
-                 }
-                 .start
-
-               leakFiber.flatMap(fiber => pooled.leakDetection.set(Some(fiber)))
-             }
       yield pooled
 
     private def resetConnection(conn: Connection[F]): F[Unit] = for
@@ -464,20 +421,18 @@ object PooledDataSource:
         .handleError(_ => false)
 
     private def isExpired(pooled: PooledConnection[F]): Boolean =
-      // Simplified check - will calculate age properly later
-      false
+      val now = System.currentTimeMillis()
+      val age = now - pooled.createdAt
+      age > maxLifetime.toMillis
 
-    override def returnToPool(pooled: PooledConnection[F]): F[Unit] = for
-      _ <- pooled.state.set(ConnectionState.Idle)
-      _ <- pooled.leakDetection.get.flatMap(_.traverse_(_.cancel))
-      _ <- pooled.leakDetection.set(None)
-      _ <- poolState.update { state =>
-             state.copy(idleConnections = state.idleConnections + pooled.id)
-           }
-    yield ()
+    override def returnToPool(pooled: PooledConnection[F]): F[Unit] =
+      // This is now handled by ConcurrentBag.requite
+      // Just update the connection state
+      pooled.state.set(ConnectionState.Idle)
 
     override def removeConnection(pooled: PooledConnection[F]): F[Unit] = for
       _ <- pooled.state.set(ConnectionState.Removed)
+      _ <- connectionBag.remove(pooled)
       _ <- pooled.finalizer.attempt.void // Use the finalizer instead of close()
       _ <- pooled.leakDetection.get.flatMap(_.traverse_(_.cancel))
       _ <- poolState.update { state =>
@@ -487,27 +442,6 @@ object PooledDataSource:
              )
            }
     yield ()
-
-    private def processWaitQueue(): F[Unit] = poolState.modify { state =>
-      state.waitQueue.headOption match
-        case Some(deferred) =>
-          findIdleConnection(state) match
-            case Some((pooled, newStateAfterFind)) =>
-              val newState = newStateAfterFind.copy(waitQueue = newStateAfterFind.waitQueue.tail)
-              val complete = for
-                _   <- pooled.state.set(ConnectionState.InUse)
-                now <- Clock[F].realTime.map(_.toMillis)
-                _   <- pooled.lastUsedAt.set(now)
-                _   <- pooled.useCount.update(_ + 1)
-                _   <- deferred.complete(Right(wrapConnection(pooled)))
-              yield ()
-              (newState, complete)
-            case None =>
-              (state, Temporal[F].unit)
-
-        case None =>
-          (state, Temporal[F].unit)
-    }.flatten
 
     /**
      * Wrap a pooled connection for leak detection.
@@ -590,7 +524,9 @@ object PooledDataSource:
     val houseKeeper       = HouseKeeper.fromAsync[F](config, tracker)
     val adaptivePoolSizer = AdaptivePoolSizer.fromAsync[F](config, tracker)
 
-    def createPool = for poolState <- Ref[F].of(PoolState.empty[F])
+    def createPool = for
+      poolState     <- Ref[F].of(PoolState.empty[F])
+      connectionBag <- ConcurrentBag[F, PooledConnection[F]]()
     yield Impl[F, A](
       host                    = config.host,
       port                    = config.port,
@@ -618,7 +554,10 @@ object PooledDataSource:
       poolState               = poolState,
       idGenerator             = idGenerator,
       houseKeeper             = None,
-      adaptiveSizer           = None
+      adaptiveSizer           = None,
+      connectionBag           = connectionBag,
+      before                  = before,
+      after                   = after
     )
 
     Resource
@@ -627,9 +566,7 @@ object PooledDataSource:
         Resource.make {
           // Initialize minimum connections within the resource scope
           val init = (1 to config.minConnections).toList.traverse_ { _ =>
-            pool.createNewConnectionForPool().flatMap { pooled =>
-              pool.returnToPool(pooled)
-            }
+            pool.createNewConnectionForPool()
           }
           init.as(pool)
         } { pool =>

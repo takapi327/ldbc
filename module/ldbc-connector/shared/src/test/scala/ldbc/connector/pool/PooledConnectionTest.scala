@@ -36,6 +36,7 @@ class PooledConnectionTest extends FTestPlatform:
       useCountRef      <- Ref[IO].of(0L)
       lastValidatedRef <- Ref[IO].of(currentTime)
       leakDetectionRef <- Ref[IO].of(Option.empty[Fiber[IO, Throwable, Unit]])
+      bagStateRef      <- Ref[IO].of(BagEntry.STATE_NOT_IN_USE)
     yield PooledConnection[IO](
       id              = id,
       connection      = conn,
@@ -45,7 +46,8 @@ class PooledConnectionTest extends FTestPlatform:
       lastUsedAt      = lastUsedRef,
       useCount        = useCountRef,
       lastValidatedAt = lastValidatedRef,
-      leakDetection   = leakDetectionRef
+      leakDetection   = leakDetectionRef,
+      bagState        = bagStateRef
     )
 
   test("PooledConnection should be created with correct initial values") {
@@ -223,5 +225,58 @@ class PooledConnectionTest extends FTestPlatform:
         result     <- resultSet.getInt("num")
         _          <- pooledConn.state.set(ConnectionState.Idle)
       yield assertEquals(result, 1)
+    }
+  }
+
+  test("PooledConnection should implement BagEntry correctly") {
+    connection.use { conn =>
+      for
+        pooledConn <- createPooledConnection("test-bag", conn)
+        // Test initial state
+        initialState <- pooledConn.getState
+        _            = assertEquals(initialState, BagEntry.STATE_NOT_IN_USE)
+        
+        // Test setState
+        _ <- pooledConn.setState(BagEntry.STATE_IN_USE)
+        newState <- pooledConn.getState
+        _        = assertEquals(newState, BagEntry.STATE_IN_USE)
+        
+        // Test compareAndSet - successful case
+        success <- pooledConn.compareAndSet(BagEntry.STATE_IN_USE, BagEntry.STATE_NOT_IN_USE)
+        _       = assertEquals(success, true)
+        state1  <- pooledConn.getState
+        _       = assertEquals(state1, BagEntry.STATE_NOT_IN_USE)
+        
+        // Test compareAndSet - failure case
+        failure <- pooledConn.compareAndSet(BagEntry.STATE_IN_USE, BagEntry.STATE_REMOVED)
+        _       = assertEquals(failure, false)
+        state2  <- pooledConn.getState
+        _       = assertEquals(state2, BagEntry.STATE_NOT_IN_USE) // Should remain unchanged
+      yield ()
+    }
+  }
+
+  test("PooledConnection BagEntry state should be independent from ConnectionState") {
+    connection.use { conn =>
+      for
+        pooledConn <- createPooledConnection("test-states", conn)
+        
+        // Set different states
+        _ <- pooledConn.state.set(ConnectionState.InUse)
+        _ <- pooledConn.setState(BagEntry.STATE_IN_USE)
+        
+        // Verify they are independent
+        connState <- pooledConn.state.get
+        bagState  <- pooledConn.getState
+        _         = assertEquals(connState, ConnectionState.InUse)
+        _         = assertEquals(bagState, BagEntry.STATE_IN_USE)
+        
+        // Change one without affecting the other
+        _ <- pooledConn.state.set(ConnectionState.Idle)
+        connState2 <- pooledConn.state.get
+        bagState2  <- pooledConn.getState
+        _          = assertEquals(connState2, ConnectionState.Idle)
+        _          = assertEquals(bagState2, BagEntry.STATE_IN_USE) // Should remain unchanged
+      yield ()
     }
   }

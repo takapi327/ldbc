@@ -22,6 +22,7 @@ import ldbc.connector.Connection
  * @param useCount number of times the connection has been used
  * @param lastValidatedAt timestamp when the connection was last validated
  * @param leakDetection optional leak detection handle
+ * @param bagState atomic state for ConcurrentBag (separate from ConnectionState)
  * @tparam F the effect type
  */
 case class PooledConnection[F[_]](
@@ -33,5 +34,16 @@ case class PooledConnection[F[_]](
   lastUsedAt:      Ref[F, Long],
   useCount:        Ref[F, Long],
   lastValidatedAt: Ref[F, Long],
-  leakDetection:   Ref[F, Option[Fiber[F, Throwable, Unit]]]
-)
+  leakDetection:   Ref[F, Option[Fiber[F, Throwable, Unit]]],
+  bagState:        Ref[F, Int]
+) extends BagEntry[F]:
+
+  override def getState: F[Int] = bagState.get
+
+  override def setState(state: Int): F[Unit] = bagState.set(state)
+
+  override def compareAndSet(expect: Int, update: Int): F[Boolean] =
+    bagState.modify { current =>
+      if current == expect then (update, true)
+      else (current, false)
+    }

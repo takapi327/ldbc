@@ -267,10 +267,8 @@ object AdaptivePoolSizer:
     ): F[Unit] =
       (1 to by).toList.traverse_ { _ =>
         pool
-          .createNewConnection()
-          .flatMap { pooled =>
-            pooled.state.set(ConnectionState.Idle) *> pool.returnToPool(pooled)
-          }
+          .createNewConnectionForPool()
+          .void // Convert to F[Unit]
           .handleErrorWith(_ => Temporal[F].unit) // Ignore creation failures
       }
 

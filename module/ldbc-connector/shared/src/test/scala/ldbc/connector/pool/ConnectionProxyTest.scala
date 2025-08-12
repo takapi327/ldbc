@@ -36,6 +36,7 @@ class ConnectionProxyTest extends FTestPlatform:
       useCountRef      <- Ref[IO].of(0L)
       lastValidatedRef <- Ref[IO].of(currentTime)
       leakDetectionRef <- Ref[IO].of(Option.empty[Fiber[IO, Throwable, Unit]])
+      bagStateRef      <- Ref[IO].of(BagEntry.STATE_NOT_IN_USE)
     yield PooledConnection[IO](
       id              = id,
       connection      = conn,
@@ -45,7 +46,8 @@ class ConnectionProxyTest extends FTestPlatform:
       lastUsedAt      = lastUsedRef,
       useCount        = useCountRef,
       lastValidatedAt = lastValidatedRef,
-      leakDetection   = leakDetectionRef
+      leakDetection   = leakDetectionRef,
+      bagState        = bagStateRef
     )
 
   test("ConnectionProxy should delegate close() to release callback") {
