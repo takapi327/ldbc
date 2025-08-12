@@ -117,9 +117,9 @@ trait BagEntry[F[_]]:
 
 object BagEntry:
   val STATE_NOT_IN_USE: Int = 0
-  val STATE_IN_USE: Int     = 1
-  val STATE_REMOVED: Int    = -1
-  val STATE_RESERVED: Int   = -2
+  val STATE_IN_USE:     Int = 1
+  val STATE_REMOVED:    Int = -1
+  val STATE_RESERVED:   Int = -2
 
 object ConcurrentBag:
 
@@ -139,9 +139,9 @@ object ConcurrentBag:
       handoffQueue <- Queue.unbounded[F, T]
       waiters      <- Ref[F].of(0)
       closed       <- Ref[F].of(false)
-      // Note: In Cats Effect, we don't have FiberLocal like ThreadLocal
-      // For now, we'll skip fiber-local storage and rely on the shared list
-      // This is a simplification that may impact performance slightly
+    // Note: In Cats Effect, we don't have FiberLocal like ThreadLocal
+    // For now, we'll skip fiber-local storage and rely on the shared list
+    // This is a simplification that may impact performance slightly
     yield new ConcurrentBagImpl[F, T](
       sharedList,
       handoffQueue,
@@ -160,40 +160,44 @@ object ConcurrentBag:
 
     override def borrow(timeout: FiniteDuration): F[Option[T]] =
       closed.get.flatMap {
-        case true => Temporal[F].pure(None)
+        case true  => Temporal[F].pure(None)
         case false =>
           // Track that we're waiting
           waiters.update(_ + 1) >>
-            borrowInternal(timeout).flatMap {
-              case Some(item) =>
-                // Successfully borrowed, decrement waiters
-                waiters.update(_ - 1).as(Some(item))
-              case None =>
-                // Timed out, decrement waiters
-                waiters.update(_ - 1).as(None)
-            }.onCancel {
-              // Ensure waiters is decremented on cancellation
-              waiters.update(_ - 1)
-            }
+            borrowInternal(timeout)
+              .flatMap {
+                case Some(item) =>
+                  // Successfully borrowed, decrement waiters
+                  waiters.update(_ - 1).as(Some(item))
+                case None =>
+                  // Timed out, decrement waiters
+                  waiters.update(_ - 1).as(None)
+              }
+              .onCancel {
+                // Ensure waiters is decremented on cancellation
+                waiters.update(_ - 1)
+              }
       }
 
     private def borrowInternal(timeout: FiniteDuration): F[Option[T]] =
       // Since we don't have fiber-local storage, go directly to shared list
       tryBorrowFromShared.flatMap {
-        case Some(item) => 
+        case Some(item) =>
           checkAndNotifyWaiters.as(Some(item))
         case None =>
           // Wait on handoff queue with timeout
           handoffQueue.tryTake.flatMap {
             case Some(item) => Temporal[F].pure(Some(item))
-            case None       => 
-              Temporal[F].race(
-                handoffQueue.take,
-                Temporal[F].sleep(timeout)
-              ).map {
-                case Left(item) => Some(item)
-                case Right(_)   => None
-              }
+            case None       =>
+              Temporal[F]
+                .race(
+                  handoffQueue.take,
+                  Temporal[F].sleep(timeout)
+                )
+                .map {
+                  case Left(item) => Some(item)
+                  case Right(_)   => None
+                }
           }
       }
 
@@ -206,7 +210,7 @@ object ConcurrentBag:
 
     private def tryBorrowFromListShared(list: List[T]): F[Option[T]] =
       list match
-        case Nil => Temporal[F].pure(None)
+        case Nil          => Temporal[F].pure(None)
         case head :: tail =>
           head.compareAndSet(BagEntry.STATE_NOT_IN_USE, BagEntry.STATE_IN_USE).flatMap {
             case true  => Temporal[F].pure(Some(head))
@@ -219,13 +223,12 @@ object ConcurrentBag:
           // Signal that we may have stolen another waiter's connection
           // In the real implementation, this would trigger connection creation
           Temporal[F].unit
-        else
-          Temporal[F].unit
+        else Temporal[F].unit
       }
 
     override def requite(item: T): F[Unit] =
       closed.get.flatMap {
-        case true => Temporal[F].unit
+        case true  => Temporal[F].unit
         case false =>
           // Reset state to not in use
           item.setState(BagEntry.STATE_NOT_IN_USE) >>
@@ -251,7 +254,7 @@ object ConcurrentBag:
 
     override def add(item: T): F[Unit] =
       closed.get.flatMap {
-        case true => Temporal[F].unit
+        case true  => Temporal[F].unit
         case false =>
           // Add to shared list
           sharedList.update(item :: _) >>
@@ -262,8 +265,7 @@ object ConcurrentBag:
                   case true  => handoffQueue.tryOffer(item).void
                   case false => Temporal[F].unit
                 }
-              else
-                Temporal[F].unit
+              else Temporal[F].unit
             }
       }
 

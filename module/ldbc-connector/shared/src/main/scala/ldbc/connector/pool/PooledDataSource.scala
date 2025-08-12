@@ -126,7 +126,7 @@ trait PooledDataSource[F[_]] extends DataSource[F]:
    * @return a new PooledConnection wrapped in the effect type
    */
   def createNewConnection(): F[PooledConnection[F]]
-  
+
   /**
    * Creates a new connection specifically for pool initialization.
    * Unlike createNewConnection, this creates connections in idle state.
@@ -233,8 +233,7 @@ object PooledDataSource:
 
     private def acquireConnectionWithStartTime(startTime: FiniteDuration): F[Connection[F]] =
       poolState.get.flatMap { state =>
-        if state.closed then
-          Temporal[F].raiseError(new Exception("Pool is closed"))
+        if state.closed then Temporal[F].raiseError(new Exception("Pool is closed"))
         else
           connectionBag.borrow(connectionTimeout).flatMap {
             case Some(pooled) =>
@@ -261,7 +260,7 @@ object PooledDataSource:
                        leakFiber.flatMap(fiber => pooled.leakDetection.set(Some(fiber)))
                      }
               yield wrapConnection(pooled)
-              
+
             case None =>
               // Timeout or no connections available
               // Check if we can create a new connection
@@ -364,7 +363,10 @@ object PooledDataSource:
         useCountRef      <- Ref[F].of(initialUseCount)
         lastValidatedRef <- Ref[F].of(now)
         leakDetectionRef <- Ref.of[F, Option[Fiber[F, Throwable, Unit]]](None)
-        bagStateRef      <- Ref.of[F, Int](if initialState == ConnectionState.InUse then BagEntry.STATE_IN_USE else BagEntry.STATE_NOT_IN_USE)
+        bagStateRef      <- Ref.of[F, Int](
+                         if initialState == ConnectionState.InUse then BagEntry.STATE_IN_USE
+                         else BagEntry.STATE_NOT_IN_USE
+                       )
 
         pooled = PooledConnection(
                    id              = id,

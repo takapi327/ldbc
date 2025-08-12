@@ -268,7 +268,7 @@ object AdaptivePoolSizer:
       (1 to by).toList.traverse_ { _ =>
         pool
           .createNewConnectionForPool()
-          .void // Convert to F[Unit]
+          .void                                   // Convert to F[Unit]
           .handleErrorWith(_ => Temporal[F].unit) // Ignore creation failures
       }
 
