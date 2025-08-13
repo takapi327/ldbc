@@ -14,6 +14,8 @@ import ldbc.connector.*
 
 class PooledDataSourceTest extends FTestPlatform:
 
+  override def munitIOTimeout: Duration = 60.seconds
+
   private val config = MySQLConfig.default
     .setPort(13306)
     .setUser("ldbc")
