@@ -230,19 +230,42 @@ object ConcurrentBag:
       closed.get.flatMap {
         case true  => Temporal[F].unit
         case false =>
-          // Reset state to not in use
-          item.setState(BagEntry.STATE_NOT_IN_USE) >>
-            waiters.get.flatMap { waiting =>
-              if waiting > 0 then
-                // Try to hand off directly to a waiter
-                handoffQueue.tryOffer(item).flatMap {
-                  case true  => Temporal[F].unit
-                  case false => addToFiberLocal(item)
+          // First check if item is removed
+          item.getState.flatMap { state =>
+            if state == BagEntry.STATE_REMOVED then
+              Temporal[F].unit
+            else
+              // Reset state to not in use
+              item.setState(BagEntry.STATE_NOT_IN_USE) >>
+                // Check if item is in the shared list
+                sharedList.get.flatMap { list =>
+                  if list.exists(_ eq item) then
+                    // Item is already in the list, handle waiters
+                    waiters.get.flatMap { waiting =>
+                      if waiting > 0 then
+                        // Try to hand off directly to a waiter
+                        handoffQueue.tryOffer(item).flatMap {
+                          case true  => Temporal[F].unit
+                          case false => addToFiberLocal(item)
+                        }
+                      else
+                        // No waiters, add to fiber-local storage
+                        addToFiberLocal(item)
+                    }
+                  else
+                    // Item not in list, add it now
+                    sharedList.update(item :: _) >>
+                      waiters.get.flatMap { waiting =>
+                        if waiting > 0 then
+                          // Try to hand off directly to a waiter
+                          handoffQueue.tryOffer(item).flatMap {
+                            case true  => Temporal[F].unit
+                            case false => Temporal[F].unit
+                          }
+                        else Temporal[F].unit
+                      }
                 }
-              else
-                // No waiters, add to fiber-local storage
-                addToFiberLocal(item)
-            }
+          }
       }
 
     private def addToFiberLocal(item: T): F[Unit] =
