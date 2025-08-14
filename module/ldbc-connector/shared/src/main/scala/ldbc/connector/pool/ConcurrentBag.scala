@@ -232,8 +232,7 @@ object ConcurrentBag:
         case false =>
           // First check if item is removed
           item.getState.flatMap { state =>
-            if state == BagEntry.STATE_REMOVED then
-              Temporal[F].unit
+            if state == BagEntry.STATE_REMOVED then Temporal[F].unit
             else
               // Reset state to not in use
               item.setState(BagEntry.STATE_NOT_IN_USE) >>
