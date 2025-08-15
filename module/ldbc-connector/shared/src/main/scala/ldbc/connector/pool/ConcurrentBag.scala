@@ -153,11 +153,11 @@ object ConcurrentBag:
     )
 
   private class ConcurrentBagImpl[F[_]: Temporal, T <: BagEntry[F]](
-    sharedList:        Ref[F, List[T]],
-    handoffQueue:      Queue[F, T],
-    waiters:           Ref[F, Int],
-    closed:            Ref[F, Boolean],
-    borrowCounter:     Ref[F, Long],
+    sharedList:                Ref[F, List[T]],
+    handoffQueue:              Queue[F, T],
+    waiters:                   Ref[F, Int],
+    closed:                    Ref[F, Boolean],
+    borrowCounter:             Ref[F, Long],
     @nowarn maxFiberLocalSize: Int // Keep for API compatibility
   ) extends ConcurrentBag[F, T]:
 
@@ -214,7 +214,7 @@ object ConcurrentBag:
           else
             // Start from different positions to reduce contention
             val startIdx = (counter % list.length).toInt
-            val rotated = list.drop(startIdx) ++ list.take(startIdx)
+            val rotated  = list.drop(startIdx) ++ list.take(startIdx)
             tryBorrowFromListShared(rotated)
         }
       }

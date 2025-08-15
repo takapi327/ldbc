@@ -126,7 +126,7 @@ trait PooledDataSource[F[_]] extends DataSource[F]:
    * @return a new PooledConnection wrapped in the effect type
    */
   def createNewConnection(): F[PooledConnection[F]]
-  
+
   /**
    * Circuit breaker for connection creation.
    */
@@ -312,15 +312,15 @@ object PooledDataSource:
             resetConnection(pooled.connection).attempt.flatMap {
               case Right(_) =>
                 for
-                  valid <- validateConnection(pooled.connection)
+                  valid   <- validateConnection(pooled.connection)
                   expired <- isExpired(pooled)
-                  _ <- if (valid && !expired) {
-                    // Return to bag for reuse
-                    connectionBag.requite(pooled) *>
-                      Clock[F].monotonic.flatMap { endTime =>
-                        metricsTracker.recordUsage(endTime - startTime)
-                      }
-                  } else
+                  _       <- if valid && !expired then {
+                         // Return to bag for reuse
+                         connectionBag.requite(pooled) *>
+                           Clock[F].monotonic.flatMap { endTime =>
+                             metricsTracker.recordUsage(endTime - startTime)
+                           }
+                       } else
                          // Invalid or expired, remove from pool
                          removeConnection(pooled) *>
                            Clock[F].monotonic.flatMap { endTime =>
@@ -373,42 +373,41 @@ object PooledDataSource:
           lastValidatedRef <- Ref[F].of(now)
           leakDetectionRef <- Ref.of[F, Option[Fiber[F, Throwable, Unit]]](None)
           bagStateRef      <- Ref.of[F, Int](
-                         if initialState == ConnectionState.InUse then BagEntry.STATE_IN_USE
-                         else BagEntry.STATE_NOT_IN_USE
-                       )
+                           if initialState == ConnectionState.InUse then BagEntry.STATE_IN_USE
+                           else BagEntry.STATE_NOT_IN_USE
+                         )
 
           pooled = PooledConnection(
-                   id              = id,
-                   connection      = conn,
-                   finalizer       = finalizer,
-                   state           = stateRef,
-                   createdAt       = now,
-                   lastUsedAt      = lastUsedRef,
-                   useCount        = useCountRef,
-                   lastValidatedAt = lastValidatedRef,
-                   leakDetection   = leakDetectionRef,
-                   bagState        = bagStateRef
-                 )
+                     id              = id,
+                     connection      = conn,
+                     finalizer       = finalizer,
+                     state           = stateRef,
+                     createdAt       = now,
+                     lastUsedAt      = lastUsedRef,
+                     useCount        = useCountRef,
+                     lastValidatedAt = lastValidatedRef,
+                     leakDetection   = leakDetectionRef,
+                     bagState        = bagStateRef
+                   )
 
           // Double-check the limit before adding to prevent race conditions
           added <- poolState.modify { poolState =>
-                   if poolState.connections.size >= maxConnections then
-                     // Over limit, don't add
-                     (poolState, false)
-                   else
-                     val newState = poolState.copy(
-                       connections     = poolState.connections :+ pooled,
-                       idleConnections = poolState.idleConnections // Don't add to idle - it's InUse
-                     )
-                     (newState, true)
-                 }
+                     if poolState.connections.size >= maxConnections then
+                       // Over limit, don't add
+                       (poolState, false)
+                     else
+                       val newState = poolState.copy(
+                         connections     = poolState.connections :+ pooled,
+                         idleConnections = poolState.idleConnections // Don't add to idle - it's InUse
+                       )
+                       (newState, true)
+                   }
 
           // If we couldn't add it, close the connection and fail
-          _ <- if (!added) {
-            conn.close().attempt.void *>
-              Temporal[F].raiseError[Unit](new Exception("Pool reached maximum size"))
-          } else
-                 Temporal[F].unit
+          _ <- if !added then {
+                 conn.close().attempt.void *>
+                   Temporal[F].raiseError[Unit](new Exception("Pool reached maximum size"))
+               } else Temporal[F].unit
 
           // Add to concurrent bag only if we're not creating for immediate use
           _ <- if initialState != ConnectionState.InUse then connectionBag.add(pooled)
@@ -430,13 +429,12 @@ object PooledDataSource:
       // Comprehensive validation with multiple checks
       val validation = for
         closed <- conn.isClosed()
-        valid  <- if (!closed) {
-          // Additional validation: execute a simple query
-          conn.isValid(validationTimeout.toSeconds.toInt.max(1))
-        } else
-                    Temporal[F].pure(false)
+        valid  <- if !closed then {
+                   // Additional validation: execute a simple query
+                   conn.isValid(validationTimeout.toSeconds.toInt.max(1))
+                 } else Temporal[F].pure(false)
       yield !closed && valid
-      
+
       validation
         .timeout(validationTimeout)
         .handleError(_ => false)
@@ -547,12 +545,14 @@ object PooledDataSource:
     val adaptivePoolSizer = AdaptivePoolSizer.fromAsync[F](config, tracker)
 
     def createPool = for
-      poolState     <- Ref[F].of(PoolState.empty[F])
-      connectionBag <- ConcurrentBag[F, PooledConnection[F]]()
-      circuitBreaker <- CircuitBreaker[F](CircuitBreaker.Config(
-        maxFailures = 5,
-        resetTimeout = 30.seconds
-      ))
+      poolState      <- Ref[F].of(PoolState.empty[F])
+      connectionBag  <- ConcurrentBag[F, PooledConnection[F]]()
+      circuitBreaker <- CircuitBreaker[F](
+                          CircuitBreaker.Config(
+                            maxFailures  = 5,
+                            resetTimeout = 30.seconds
+                          )
+                        )
     yield Impl[F, A](
       host                    = config.host,
       port                    = config.port,

@@ -7,6 +7,7 @@
 package ldbc.connector.pool
 
 import java.util.concurrent.TimeUnit
+
 import scala.concurrent.duration.*
 
 import cats.*
@@ -26,7 +27,7 @@ import cats.effect.*
  * - HalfOpen: Testing if service recovered
  */
 trait CircuitBreaker[F[_]]:
-  
+
   /**
    * Execute an action through the circuit breaker.
    * 
@@ -34,31 +35,31 @@ trait CircuitBreaker[F[_]]:
    * @return the result or failure if circuit is open
    */
   def protect[A](action: F[A]): F[A]
-  
+
   /**
    * Get the current state of the circuit breaker.
    */
   def state: F[CircuitBreaker.State]
-  
+
   /**
    * Reset the circuit breaker to closed state.
    */
   def reset: F[Unit]
 
 object CircuitBreaker:
-  
+
   sealed trait State
-  case object Closed extends State
-  case object Open extends State
+  case object Closed   extends State
+  case object Open     extends State
   case object HalfOpen extends State
-  
+
   case class Config(
-    maxFailures: Int = 5,
-    resetTimeout: FiniteDuration = 60.seconds,
-    exponentialBackoffFactor: Double = 2.0,
-    maxResetTimeout: FiniteDuration = 5.minutes
+    maxFailures:              Int            = 5,
+    resetTimeout:             FiniteDuration = 60.seconds,
+    exponentialBackoffFactor: Double         = 2.0,
+    maxResetTimeout:          FiniteDuration = 5.minutes
   )
-  
+
   /**
    * Create a new circuit breaker.
    * 
@@ -70,9 +71,9 @@ object CircuitBreaker:
     config: Config = Config()
   ): F[CircuitBreaker[F]] =
     for
-      stateRef <- Ref[F].of[State](Closed)
-      failures <- Ref[F].of(0)
-      lastFailureTime <- Ref[F].of(0L)
+      stateRef            <- Ref[F].of[State](Closed)
+      failures            <- Ref[F].of(0)
+      lastFailureTime     <- Ref[F].of(0L)
       currentResetTimeout <- Ref[F].of(config.resetTimeout)
     yield new CircuitBreakerImpl[F](
       config,
@@ -81,22 +82,22 @@ object CircuitBreaker:
       lastFailureTime,
       currentResetTimeout
     )
-  
+
   private class CircuitBreakerImpl[F[_]: Temporal](
-    config: Config,
-    stateRef: Ref[F, State],
-    failuresRef: Ref[F, Int],
-    lastFailureTimeRef: Ref[F, Long],
+    config:                 Config,
+    stateRef:               Ref[F, State],
+    failuresRef:            Ref[F, Int],
+    lastFailureTimeRef:     Ref[F, Long],
     currentResetTimeoutRef: Ref[F, FiniteDuration]
   ) extends CircuitBreaker[F]:
-    
+
     override def protect[A](action: F[A]): F[A] =
       stateRef.get.flatMap {
         case Closed =>
           action.handleErrorWith { error =>
             recordFailure >> Temporal[F].raiseError(error)
           }
-          
+
         case Open =>
           checkIfShouldTransitionToHalfOpen.flatMap { shouldTransition =>
             if shouldTransition then
@@ -108,56 +109,53 @@ object CircuitBreaker:
                 new Exception("Circuit breaker is open")
               )
           }
-          
+
         case HalfOpen =>
           // Single test request
-          action.handleErrorWith { error =>
-            // Failed again, back to open with increased timeout
-            for
-              _ <- stateRef.set(Open)
-              _ <- failuresRef.set(0)
-              currentTimeout <- currentResetTimeoutRef.get
-              newTimeout = FiniteDuration(
-                (currentTimeout.toNanos * config.exponentialBackoffFactor).toLong
-                  .min(config.maxResetTimeout.toNanos),
-                TimeUnit.NANOSECONDS
-              )
-              _ <- currentResetTimeoutRef.set(newTimeout)
-              _ <- Clock[F].realTime.flatMap(now => 
-                lastFailureTimeRef.set(now.toMillis)
-              )
-              _ <- Temporal[F].raiseError[A](error)
-            yield ???  // Never reached due to raiseError
-          }.flatMap { result =>
-            // Success, close the circuit
-            reset.as(result)
-          }
+          action
+            .handleErrorWith { error =>
+              // Failed again, back to open with increased timeout
+              for
+                _              <- stateRef.set(Open)
+                _              <- failuresRef.set(0)
+                currentTimeout <- currentResetTimeoutRef.get
+                newTimeout = FiniteDuration(
+                               (currentTimeout.toNanos * config.exponentialBackoffFactor).toLong
+                                 .min(config.maxResetTimeout.toNanos),
+                               TimeUnit.NANOSECONDS
+                             )
+                _ <- currentResetTimeoutRef.set(newTimeout)
+                _ <- Clock[F].realTime.flatMap(now => lastFailureTimeRef.set(now.toMillis))
+                _ <- Temporal[F].raiseError[A](error)
+              yield ??? // Never reached due to raiseError
+            }
+            .flatMap { result =>
+              // Success, close the circuit
+              reset.as(result)
+            }
       }
-    
+
     private def recordFailure: F[Unit] =
       failuresRef.updateAndGet(_ + 1).flatMap { failures =>
         if failures >= config.maxFailures then
           for
             _ <- stateRef.set(Open)
-            _ <- Clock[F].realTime.flatMap(now => 
-              lastFailureTimeRef.set(now.toMillis)
-            )
+            _ <- Clock[F].realTime.flatMap(now => lastFailureTimeRef.set(now.toMillis))
           yield ()
-        else
-          Temporal[F].unit
+        else Temporal[F].unit
       }
-    
+
     private def checkIfShouldTransitionToHalfOpen: F[Boolean] =
       for
-        lastFailure <- lastFailureTimeRef.get
-        now <- Clock[F].realTime.map(_.toMillis)
+        lastFailure  <- lastFailureTimeRef.get
+        now          <- Clock[F].realTime.map(_.toMillis)
         resetTimeout <- currentResetTimeoutRef.get
         elapsed = now - lastFailure
       yield elapsed >= resetTimeout.toMillis
-    
+
     override def state: F[State] = stateRef.get
-    
+
     override def reset: F[Unit] =
       stateRef.set(Closed) >>
-      failuresRef.set(0) >>
-      currentResetTimeoutRef.set(config.resetTimeout)
+        failuresRef.set(0) >>
+        currentResetTimeoutRef.set(config.resetTimeout)
