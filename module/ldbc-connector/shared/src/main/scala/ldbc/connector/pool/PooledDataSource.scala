@@ -126,6 +126,11 @@ trait PooledDataSource[F[_]] extends DataSource[F]:
    * @return a new PooledConnection wrapped in the effect type
    */
   def createNewConnection(): F[PooledConnection[F]]
+  
+  /**
+   * Circuit breaker for connection creation.
+   */
+  def circuitBreaker: CircuitBreaker[F]
 
   /**
    * Creates a new connection specifically for pool initialization.
@@ -191,7 +196,8 @@ object PooledDataSource:
     idGenerator:             F[String],
     houseKeeper:             Option[Fiber[F, Throwable, Unit]],
     adaptiveSizer:           Option[Fiber[F, Throwable, Unit]],
-    connectionBag:           ConcurrentBag[F, PooledConnection[F]]
+    connectionBag:           ConcurrentBag[F, PooledConnection[F]],
+    circuitBreaker:          CircuitBreaker[F]
   ) extends PooledDataSource[F]:
     given Tracer[F] = tracer.getOrElse(Tracer.noop[F])
 
@@ -305,20 +311,22 @@ object PooledDataSource:
             pooled.state.set(ConnectionState.Idle) >>
             resetConnection(pooled.connection).attempt.flatMap {
               case Right(_) =>
-                validateConnection(pooled.connection).flatMap { valid =>
-                  if valid && !isExpired(pooled) then
+                for
+                  valid <- validateConnection(pooled.connection)
+                  expired <- isExpired(pooled)
+                  _ <- if (valid && !expired) {
                     // Return to bag for reuse
                     connectionBag.requite(pooled) *>
                       Clock[F].monotonic.flatMap { endTime =>
                         metricsTracker.recordUsage(endTime - startTime)
                       }
-                  else
-                    // Invalid or expired, remove from pool
-                    removeConnection(pooled) *>
-                      Clock[F].monotonic.flatMap { endTime =>
-                        metricsTracker.recordUsage(endTime - startTime)
-                      }
-                }
+                  } else
+                         // Invalid or expired, remove from pool
+                         removeConnection(pooled) *>
+                           Clock[F].monotonic.flatMap { endTime =>
+                             metricsTracker.recordUsage(endTime - startTime)
+                           }
+                yield ()
               case Left(_) =>
                 // Reset failed, remove from pool
                 removeConnection(pooled) *>
@@ -353,22 +361,23 @@ object PooledDataSource:
       initialState:    ConnectionState,
       initialUseCount: Long
     ): F[PooledConnection[F]] =
-      for
-        id        <- idGenerator
-        allocated <- connection.allocated
-        (conn, finalizer) = allocated
-        now              <- Clock[F].realTime.map(_.toMillis)
-        stateRef         <- Ref.of[F, ConnectionState](initialState)
-        lastUsedRef      <- Ref[F].of(now)
-        useCountRef      <- Ref[F].of(initialUseCount)
-        lastValidatedRef <- Ref[F].of(now)
-        leakDetectionRef <- Ref.of[F, Option[Fiber[F, Throwable, Unit]]](None)
-        bagStateRef      <- Ref.of[F, Int](
+      circuitBreaker.protect {
+        for
+          id        <- idGenerator
+          allocated <- connection.allocated
+          (conn, finalizer) = allocated
+          now              <- Clock[F].realTime.map(_.toMillis)
+          stateRef         <- Ref.of[F, ConnectionState](initialState)
+          lastUsedRef      <- Ref[F].of(now)
+          useCountRef      <- Ref[F].of(initialUseCount)
+          lastValidatedRef <- Ref[F].of(now)
+          leakDetectionRef <- Ref.of[F, Option[Fiber[F, Throwable, Unit]]](None)
+          bagStateRef      <- Ref.of[F, Int](
                          if initialState == ConnectionState.InUse then BagEntry.STATE_IN_USE
                          else BagEntry.STATE_NOT_IN_USE
                        )
 
-        pooled = PooledConnection(
+          pooled = PooledConnection(
                    id              = id,
                    connection      = conn,
                    finalizer       = finalizer,
@@ -381,8 +390,8 @@ object PooledDataSource:
                    bagState        = bagStateRef
                  )
 
-        // Double-check the limit before adding to prevent race conditions
-        added <- poolState.modify { poolState =>
+          // Double-check the limit before adding to prevent race conditions
+          added <- poolState.modify { poolState =>
                    if poolState.connections.size >= maxConnections then
                      // Over limit, don't add
                      (poolState, false)
@@ -394,18 +403,21 @@ object PooledDataSource:
                      (newState, true)
                  }
 
-        // If we couldn't add it, close the connection and fail
-        _ <- if !added then {
-               conn.close().attempt.void *>
-                 Temporal[F].raiseError[Unit](new Exception("Pool reached maximum size"))
-             } else Temporal[F].unit
+          // If we couldn't add it, close the connection and fail
+          _ <- if (!added) {
+            conn.close().attempt.void *>
+              Temporal[F].raiseError[Unit](new Exception("Pool reached maximum size"))
+          } else
+                 Temporal[F].unit
 
-        // Add to concurrent bag
-        _ <- connectionBag.add(pooled)
+          // Add to concurrent bag only if we're not creating for immediate use
+          _ <- if initialState != ConnectionState.InUse then connectionBag.add(pooled)
+               else Temporal[F].unit
 
-        endTime <- Clock[F].monotonic
-        _       <- metricsTracker.recordCreation(endTime - startTime)
-      yield pooled
+          endTime <- Clock[F].monotonic
+          _       <- metricsTracker.recordCreation(endTime - startTime)
+        yield pooled
+      }
 
     private def resetConnection(conn: Connection[F]): F[Unit] = for
       _ <- conn.setAutoCommit(true).attempt.void
@@ -415,17 +427,25 @@ object PooledDataSource:
     yield ()
 
     override def validateConnection(conn: Connection[F]): F[Boolean] =
-      // Use isClosed as a basic validation
-      conn
-        .isClosed()
+      // Comprehensive validation with multiple checks
+      val validation = for
+        closed <- conn.isClosed()
+        valid  <- if (!closed) {
+          // Additional validation: execute a simple query
+          conn.isValid(validationTimeout.toSeconds.toInt.max(1))
+        } else
+                    Temporal[F].pure(false)
+      yield !closed && valid
+      
+      validation
         .timeout(validationTimeout)
-        .map(!_) // valid if not closed
         .handleError(_ => false)
 
-    private def isExpired(pooled: PooledConnection[F]): Boolean =
-      val now = System.currentTimeMillis()
-      val age = now - pooled.createdAt
-      age > maxLifetime.toMillis
+    private def isExpired(pooled: PooledConnection[F]): F[Boolean] =
+      Clock[F].realTime.map { now =>
+        val age = now.toMillis - pooled.createdAt
+        age > maxLifetime.toMillis
+      }
 
     override def returnToPool(pooled: PooledConnection[F]): F[Unit] =
       // This is now handled by ConcurrentBag.requite
@@ -529,6 +549,10 @@ object PooledDataSource:
     def createPool = for
       poolState     <- Ref[F].of(PoolState.empty[F])
       connectionBag <- ConcurrentBag[F, PooledConnection[F]]()
+      circuitBreaker <- CircuitBreaker[F](CircuitBreaker.Config(
+        maxFailures = 5,
+        resetTimeout = 30.seconds
+      ))
     yield Impl[F, A](
       host                    = config.host,
       port                    = config.port,
@@ -558,6 +582,7 @@ object PooledDataSource:
       houseKeeper             = None,
       adaptiveSizer           = None,
       connectionBag           = connectionBag,
+      circuitBreaker          = circuitBreaker,
       before                  = before,
       after                   = after
     )

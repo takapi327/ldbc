@@ -6,6 +6,7 @@
 
 package ldbc.connector.pool
 
+import scala.annotation.nowarn
 import scala.concurrent.duration.*
 
 import cats.*
@@ -21,13 +22,14 @@ import cats.effect.syntax.all.*
  * Inspired by HikariCP's ConcurrentBag, this implementation is adapted for 
  * Cats Effect's fiber-based concurrency model. It provides:
  * 
- * - Fast connection acquisition through fiber-local storage
+ * - Fast connection acquisition through optimized data structures
  * - Lock-free operations using Ref and atomic operations
  * - Connection stealing across fibers for better utilization
  * - Direct handoff between fibers to minimize latency
  * 
- * The key difference from HikariCP is that we use fiber-local storage instead
- * of ThreadLocal, and leverage Cats Effect's concurrency primitives.
+ * Note: Unlike HikariCP which uses ThreadLocal for per-thread caching,
+ * this implementation focuses on lock-free shared structures as Cats Effect
+ * fibers can migrate between threads, making ThreadLocal unsuitable.
  * 
  * @tparam F the effect type
  */
@@ -139,14 +141,14 @@ object ConcurrentBag:
       handoffQueue <- Queue.unbounded[F, T]
       waiters      <- Ref[F].of(0)
       closed       <- Ref[F].of(false)
-    // Note: In Cats Effect, we don't have FiberLocal like ThreadLocal
-    // For now, we'll skip fiber-local storage and rely on the shared list
-    // This is a simplification that may impact performance slightly
+      // Use a simple counter for round-robin distribution instead of fiber-local storage
+      borrowCounter <- Ref[F].of(0L)
     yield new ConcurrentBagImpl[F, T](
       sharedList,
       handoffQueue,
       waiters,
       closed,
+      borrowCounter,
       maxFiberLocalSize
     )
 
@@ -155,7 +157,8 @@ object ConcurrentBag:
     handoffQueue:      Queue[F, T],
     waiters:           Ref[F, Int],
     closed:            Ref[F, Boolean],
-    maxFiberLocalSize: Int // Keep for future use when we add fiber-local storage
+    borrowCounter:     Ref[F, Long],
+    @nowarn maxFiberLocalSize: Int // Keep for API compatibility
   ) extends ConcurrentBag[F, T]:
 
     override def borrow(timeout: FiniteDuration): F[Option[T]] =
@@ -180,7 +183,7 @@ object ConcurrentBag:
       }
 
     private def borrowInternal(timeout: FiniteDuration): F[Option[T]] =
-      // Since we don't have fiber-local storage, go directly to shared list
+      // Try shared list with optimized scanning
       tryBorrowFromShared.flatMap {
         case Some(item) =>
           checkAndNotifyWaiters.as(Some(item))
@@ -201,11 +204,19 @@ object ConcurrentBag:
           }
       }
 
-    // Removed tryBorrowFromList - no longer needed without fiber-local storage
+    // Removed tryBorrowFromFiberLocal as we're not using fiber-local storage
 
     private def tryBorrowFromShared: F[Option[T]] =
-      sharedList.get.flatMap { list =>
-        tryBorrowFromListShared(list)
+      // Use round-robin to distribute load evenly
+      borrowCounter.getAndUpdate(_ + 1).flatMap { counter =>
+        sharedList.get.flatMap { list =>
+          if list.isEmpty then Temporal[F].pure(None)
+          else
+            // Start from different positions to reduce contention
+            val startIdx = (counter % list.length).toInt
+            val rotated = list.drop(startIdx) ++ list.take(startIdx)
+            tryBorrowFromListShared(rotated)
+        }
       }
 
     private def tryBorrowFromListShared(list: List[T]): F[Option[T]] =
@@ -248,8 +259,8 @@ object ConcurrentBag:
                           case false => addToFiberLocal(item)
                         }
                       else
-                        // No waiters, add to fiber-local storage
-                        addToFiberLocal(item)
+                        // No waiters, item stays in shared list
+                        Temporal[F].unit
                     }
                   else
                     // Item not in list, add it now
@@ -267,11 +278,9 @@ object ConcurrentBag:
           }
       }
 
-    private def addToFiberLocal(item: T): F[Unit] =
-      // Without fiber-local storage, items remain in the shared list
-      // The item is already marked as NOT_IN_USE, so it's available for borrowing
-      // For now, we just check the max size to mark it as used
-      val _ = (item, maxFiberLocalSize) // Mark params as used
+    // Removed addToFiberLocal as we're not using fiber-local storage
+    @nowarn private def addToFiberLocal(item: T): F[Unit] =
+      // No-op, keep in shared list
       Temporal[F].unit
 
     override def add(item: T): F[Unit] =
