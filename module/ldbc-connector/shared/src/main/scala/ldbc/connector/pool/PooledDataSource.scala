@@ -295,7 +295,7 @@ object PooledDataSource:
     private def releaseConnectionWithStartTime(conn: Connection[F], startTime: FiniteDuration): F[Unit] =
       // Extract the pooled connection from proxy if wrapped
       val pooledF: F[Option[PooledConnection[F]]] = conn match {
-        case proxy: ConnectionProxy[F] => Temporal[F].pure(Some(proxy.pooled))
+        case proxy: ProxyConnection[F] => Temporal[F].pure(Some(proxy.pooled))
         case _                         =>
           // Fallback: search by unwrapped connection
           connectionBag.values.map { connections =>
@@ -464,17 +464,17 @@ object PooledDataSource:
     yield ()
 
     /**
-     * Wrap a pooled connection for leak detection.
+     * Wrap a pooled connection for leak detection and statement tracking.
      */
     private def wrapConnection(pooled: PooledConnection[F]): Connection[F] =
-      new ConnectionProxy[F](pooled, release)
+      new ProxyConnection[F](pooled, release)
 
     /**
      * Unwrap a connection to get the original.
      */
     private def unwrapConnection(conn: Connection[F]): Connection[F] =
       conn match
-        case proxy: ConnectionProxy[F] => proxy.pooled.connection
+        case proxy: ProxyConnection[F] => proxy.pooled.connection
         case _                         => conn
 
     private def connection: Resource[F, Connection[F]] =
