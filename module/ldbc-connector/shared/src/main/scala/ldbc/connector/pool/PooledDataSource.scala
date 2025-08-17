@@ -540,6 +540,21 @@ object PooledDataSource:
     after:          Option[(A, Connection[F]) => F[Unit]] = None
   ): Resource[F, PooledDataSource[F]] =
 
+    // Validate configuration before creating the pool (similar to HikariDataSource)
+    Resource.eval(PoolConfigValidator.validate(config)).flatMap { _ =>
+      createValidatedPool(config, metricsTracker, idGenerator, before, after)
+    }.handleErrorWith { error =>
+      Resource.eval(Async[F].raiseError(error))
+    }
+  
+  private def createValidatedPool[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
+    config:         MySQLConfig,
+    metricsTracker: Option[PoolMetricsTracker[F]],
+    idGenerator:    F[String],
+    before:         Option[Connection[F] => F[A]],
+    after:          Option[(A, Connection[F]) => F[Unit]]
+  ): Resource[F, PooledDataSource[F]] =
+
     val tracker           = metricsTracker.getOrElse(PoolMetricsTracker.noop[F])
     val houseKeeper       = HouseKeeper.fromAsync[F](config, tracker)
     val adaptivePoolSizer = AdaptivePoolSizer.fromAsync[F](config, tracker)
