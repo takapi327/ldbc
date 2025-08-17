@@ -262,7 +262,7 @@ class PooledDataSourceTest extends FTestPlatform:
               .fromConfig[IO](
                 config
                   .setMinConnections(5)
-                  .setMaxConnections(20)  // Increased to handle concurrent load better
+                  .setMaxConnections(20)            // Increased to handle concurrent load better
                   .setConnectionTimeout(5.seconds), // Longer timeout for concurrent operations
                 metricsTracker = Some(tracker)
               )
