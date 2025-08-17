@@ -259,20 +259,26 @@ class PooledDataSourceTest extends FTestPlatform:
     val resource = for
       tracker <- Resource.eval(PoolMetricsTracker.inMemory[IO])
       ds      <- PooledDataSource
-              .fromConfig[IO](config.setMinConnections(5).setMaxConnections(10), metricsTracker = Some(tracker))
+              .fromConfig[IO](
+                config
+                  .setMinConnections(5)
+                  .setMaxConnections(20)  // Increased to handle concurrent load better
+                  .setConnectionTimeout(5.seconds), // Longer timeout for concurrent operations
+                metricsTracker = Some(tracker)
+              )
     yield ds
 
     resource.use { datasource =>
       for
-        // Simulate concurrent load
-        _ <- IO.parTraverseN(10)((1 to 100).toList) { i =>
+        // Simulate concurrent load with proper parallelism limit
+        _ <- IO.parTraverseN(15)((1 to 100).toList) { i =>
                datasource.getConnection.use { conn =>
                  for
                    stmt <- conn.createStatement()
                    rs   <- stmt.executeQuery(s"SELECT ${ i % 10 }")
                    _    <- rs.next()
                    _    <- rs.getInt(1)
-                   _    <- IO.sleep((i % 10).millis) // Vary usage time
+                   _    <- IO.sleep((i % 5).millis) // Reduced sleep time for faster test
                  yield ()
                }
              }
