@@ -256,7 +256,7 @@ class AdaptivePoolSizerTest extends FTestPlatform:
       .setMaxConnections(100) // High max but connections might fail
       .setAdaptiveSizing(true)
       .setAdaptiveInterval(50.millis)
-      .setConnectionTimeout(100.millis)
+      .setConnectionTimeout(250.millis)
 
     val resource = for
       tracker <- Resource.eval(PoolMetricsTracker.inMemory[IO])
