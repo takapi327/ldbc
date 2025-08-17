@@ -374,16 +374,17 @@ object MySQLConfig:
     override def setUseCursorFetch(useCursorFetch: Boolean):         MySQLConfig = copy(useCursorFetch = useCursorFetch)
     override def setUseServerPrepStmts(useServerPrepStmts: Boolean): MySQLConfig =
       copy(useServerPrepStmts = useServerPrepStmts)
-    override def setMinConnections(min: Int): MySQLConfig = copy(minConnections = min)
-    override def setMaxConnections(max: Int): MySQLConfig = copy(maxConnections = max)
-    override def setConnectionTimeout(timeout: FiniteDuration): MySQLConfig = copy(connectionTimeout = timeout)
-    override def setIdleTimeout(timeout: FiniteDuration): MySQLConfig = copy(idleTimeout = timeout)
-    override def setMaxLifetime(maxLifetime: FiniteDuration): MySQLConfig = copy(maxLifetime = maxLifetime)
-    override def setValidationTimeout(timeout: FiniteDuration): MySQLConfig = copy(validationTimeout = timeout)
-    override def setLeakDetectionThreshold(threshold: FiniteDuration): MySQLConfig = copy(leakDetectionThreshold = Some(threshold))
+    override def setMinConnections(min:        Int):                   MySQLConfig = copy(minConnections = min)
+    override def setMaxConnections(max:        Int):                   MySQLConfig = copy(maxConnections = max)
+    override def setConnectionTimeout(timeout: FiniteDuration):        MySQLConfig = copy(connectionTimeout = timeout)
+    override def setIdleTimeout(timeout:       FiniteDuration):        MySQLConfig = copy(idleTimeout = timeout)
+    override def setMaxLifetime(maxLifetime:   FiniteDuration):        MySQLConfig = copy(maxLifetime = maxLifetime)
+    override def setValidationTimeout(timeout: FiniteDuration):        MySQLConfig = copy(validationTimeout = timeout)
+    override def setLeakDetectionThreshold(threshold: FiniteDuration): MySQLConfig =
+      copy(leakDetectionThreshold = Some(threshold))
     override def setMaintenanceInterval(interval: FiniteDuration): MySQLConfig = copy(maintenanceInterval = interval)
-    override def setAdaptiveSizing(enabled: Boolean):           MySQLConfig = copy(adaptiveSizing = enabled)
-    override def setAdaptiveInterval(interval: FiniteDuration): MySQLConfig = copy(adaptiveInterval = interval)
+    override def setAdaptiveSizing(enabled:       Boolean):        MySQLConfig = copy(adaptiveSizing = enabled)
+    override def setAdaptiveInterval(interval:    FiniteDuration): MySQLConfig = copy(adaptiveInterval = interval)
 
   /**
    * Creates a default MySQLConfig with standard connection parameters.

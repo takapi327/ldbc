@@ -28,7 +28,7 @@ import scala.reflect.ClassTag
  */
 final class FastList[T: ClassTag](initialCapacity: Int = 32):
   private var elementData: Array[T] = new Array[T](initialCapacity)
-  private var size: Int = 0
+  private var size:        Int      = 0
 
   /**
    * Get an element at the specified index without bounds checking.
@@ -51,7 +51,7 @@ final class FastList[T: ClassTag](initialCapacity: Int = 32):
    * @param element the element to add
    * @return true (always succeeds)
    */
-  def add(element: T): Boolean = 
+  def add(element: T): Boolean =
     try {
       elementData(size) = element
       size += 1
@@ -59,8 +59,8 @@ final class FastList[T: ClassTag](initialCapacity: Int = 32):
     } catch {
       case _: ArrayIndexOutOfBoundsException =>
         // Overflow-conscious code: double the capacity
-        val oldCapacity = elementData.length
-        val newCapacity = oldCapacity << 1
+        val oldCapacity    = elementData.length
+        val newCapacity    = oldCapacity << 1
         val newElementData = new Array[T](newCapacity)
         System.arraycopy(elementData, 0, newElementData, 0, oldCapacity)
         newElementData(size) = element
@@ -80,10 +80,10 @@ final class FastList[T: ClassTag](initialCapacity: Int = 32):
    */
   def remove(element: T): Boolean =
     var index = size - 1
-    while (index >= 0) {
-      if (elementData(index).asInstanceOf[AnyRef] eq element.asInstanceOf[AnyRef]) {
+    while index >= 0 do {
+      if elementData(index).asInstanceOf[AnyRef] eq element.asInstanceOf[AnyRef] then {
         val numMoved = size - index - 1
-        if (numMoved > 0) {
+        if numMoved > 0 then {
           System.arraycopy(elementData, index + 1, elementData, index, numMoved)
         }
         size -= 1
@@ -101,7 +101,7 @@ final class FastList[T: ClassTag](initialCapacity: Int = 32):
    * @throws NoSuchElementException if the list is empty
    */
   def removeLast(): T =
-    if (size == 0) throw new NoSuchElementException("FastList is empty")
+    if size == 0 then throw new NoSuchElementException("FastList is empty")
     size -= 1
     val element = elementData(size)
     elementData(size) = null.asInstanceOf[T] // Help GC
@@ -114,9 +114,9 @@ final class FastList[T: ClassTag](initialCapacity: Int = 32):
    * @return the removed element
    */
   def removeAt(index: Int): T =
-    val element = elementData(index)
+    val element  = elementData(index)
     val numMoved = size - index - 1
-    if (numMoved > 0) {
+    if numMoved > 0 then {
       System.arraycopy(elementData, index + 1, elementData, index, numMoved)
     }
     size -= 1
@@ -129,7 +129,7 @@ final class FastList[T: ClassTag](initialCapacity: Int = 32):
   def clear(): Unit =
     // Help GC by nulling references
     var i = 0
-    while (i < size) {
+    while i < size do {
       elementData(i) = null.asInstanceOf[T]
       i += 1
     }
@@ -163,7 +163,7 @@ final class FastList[T: ClassTag](initialCapacity: Int = 32):
    */
   def foreach(f: T => Unit): Unit =
     var i = 0
-    while (i < size) {
+    while i < size do {
       f(elementData(i))
       i += 1
     }
@@ -176,11 +176,11 @@ final class FastList[T: ClassTag](initialCapacity: Int = 32):
    */
   def iterator: Iterator[T] = new Iterator[T] {
     private var index = 0
-    
+
     def hasNext: Boolean = index < FastList.this.size
-    
+
     def next(): T = {
-      if (!hasNext) throw new NoSuchElementException
+      if !hasNext then throw new NoSuchElementException
       val element = elementData(index)
       index += 1
       element
@@ -195,8 +195,8 @@ final class FastList[T: ClassTag](initialCapacity: Int = 32):
    */
   def toList: List[T] = {
     var result = List.empty[T]
-    var i = size - 1
-    while (i >= 0) {
+    var i      = size - 1
+    while i >= 0 do {
       result = elementData(i) :: result
       i -= 1
     }
@@ -209,11 +209,11 @@ final class FastList[T: ClassTag](initialCapacity: Int = 32):
    * @return a string representation
    */
   override def toString: String = {
-    if (size == 0) return "FastList()"
-    
+    if size == 0 then return "FastList()"
+
     val sb = new StringBuilder("FastList(")
-    var i = 0
-    while (i < size - 1) {
+    var i  = 0
+    while i < size - 1 do {
       sb.append(elementData(i)).append(", ")
       i += 1
     }

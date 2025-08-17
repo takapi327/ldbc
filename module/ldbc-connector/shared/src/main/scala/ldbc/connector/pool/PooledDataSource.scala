@@ -541,12 +541,15 @@ object PooledDataSource:
   ): Resource[F, PooledDataSource[F]] =
 
     // Validate configuration before creating the pool (similar to HikariDataSource)
-    Resource.eval(PoolConfigValidator.validate(config)).flatMap { _ =>
-      createValidatedPool(config, metricsTracker, idGenerator, before, after)
-    }.handleErrorWith { error =>
-      Resource.eval(Async[F].raiseError(error))
-    }
-  
+    Resource
+      .eval(PoolConfigValidator.validate(config))
+      .flatMap { _ =>
+        createValidatedPool(config, metricsTracker, idGenerator, before, after)
+      }
+      .handleErrorWith { error =>
+        Resource.eval(Async[F].raiseError(error))
+      }
+
   private def createValidatedPool[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
     config:         MySQLConfig,
     metricsTracker: Option[PoolMetricsTracker[F]],

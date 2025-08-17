@@ -6,10 +6,12 @@
 
 package ldbc.connector.pool
 
-import cats.effect.*
 import cats.syntax.all.*
 
+import cats.effect.*
+
 import ldbc.sql.*
+
 import ldbc.connector.Connection
 
 /**
@@ -25,21 +27,21 @@ import ldbc.connector.Connection
  * @tparam F the effect type
  */
 private[pool] class ProxyConnection[F[_]: Temporal](
-  val pooled:           PooledConnection[F],
-  releaseCallback:      Connection[F] => F[Unit],
-  closeAllStatements:   Boolean = true
+  val pooled:         PooledConnection[F],
+  releaseCallback:    Connection[F] => F[Unit],
+  closeAllStatements: Boolean = true
 ) extends Connection[F]:
 
   private val openStatements = new FastList[Statement[F]]()
   private val delegate: Connection[F] = pooled.connection
 
   // Override close to return to pool instead of closing
-  override def close(): F[Unit] = 
+  override def close(): F[Unit] =
     val cleanup = if closeAllStatements then closeTrackedStatements() else Temporal[F].unit
     cleanup >> releaseCallback(this)
 
   // Track statement creation
-  override def createStatement(): F[Statement[F]] = 
+  override def createStatement(): F[Statement[F]] =
     delegate.createStatement().map { stmt =>
       openStatements.add(stmt)
       stmt
@@ -51,7 +53,7 @@ private[pool] class ProxyConnection[F[_]: Temporal](
       stmt
     }
 
-  override def prepareStatement(sql: String): F[PreparedStatement[F]] = 
+  override def prepareStatement(sql: String): F[PreparedStatement[F]] =
     delegate.prepareStatement(sql).map { stmt =>
       openStatements.add(stmt)
       stmt
@@ -69,7 +71,7 @@ private[pool] class ProxyConnection[F[_]: Temporal](
       stmt
     }
 
-  override def prepareCall(sql: String): F[CallableStatement[F]] = 
+  override def prepareCall(sql: String): F[CallableStatement[F]] =
     delegate.prepareCall(sql).map { stmt =>
       openStatements.add(stmt)
       stmt
@@ -90,32 +92,32 @@ private[pool] class ProxyConnection[F[_]: Temporal](
     val stmts = List.newBuilder[Statement[F]]
     openStatements.foreach(stmts += _)
     val allStatements = stmts.result()
-    
+
     // Clear the list first to avoid concurrent modification
     openStatements.clear()
-    
+
     // Close all statements, ignoring errors
     allStatements.traverse_(_.close().attempt.void)
   }
 
   // Delegate all other methods without modification
-  override def nativeSQL(sql: String): F[String] = delegate.nativeSQL(sql)
-  override def getAutoCommit(): F[Boolean] = delegate.getAutoCommit()
-  override def setAutoCommit(autoCommit: Boolean): F[Unit] = delegate.setAutoCommit(autoCommit)
-  override def commit(): F[Unit] = delegate.commit()
-  override def rollback(): F[Unit] = delegate.rollback()
-  override def getTransactionIsolation(): F[Int] = delegate.getTransactionIsolation()
-  override def setTransactionIsolation(level: Int): F[Unit] = delegate.setTransactionIsolation(level)
-  override def isReadOnly: F[Boolean] = delegate.isReadOnly
-  override def setReadOnly(readOnly: Boolean): F[Unit] = delegate.setReadOnly(readOnly)
-  override def getCatalog(): F[String] = delegate.getCatalog()
-  override def setCatalog(catalog: String): F[Unit] = delegate.setCatalog(catalog)
-  override def isClosed(): F[Boolean] = delegate.isClosed()
-  override def isValid(timeout: Int): F[Boolean] = delegate.isValid(timeout)
-  override def getMetaData(): F[DatabaseMetaData[F]] = delegate.getMetaData()
-  override def setSavepoint(): F[Savepoint] = delegate.setSavepoint()
-  override def setSavepoint(name: String): F[Savepoint] = delegate.setSavepoint(name)
-  override def releaseSavepoint(savepoint: Savepoint): F[Unit] = delegate.releaseSavepoint(savepoint)
-  override def rollback(savepoint: Savepoint): F[Unit] = delegate.rollback(savepoint)
-  override def setSchema(schema: String): F[Unit] = delegate.setSchema(schema)
-  override def getSchema(): F[String] = delegate.getSchema()
+  override def nativeSQL(sql:                 String):  F[String]              = delegate.nativeSQL(sql)
+  override def getAutoCommit():                         F[Boolean]             = delegate.getAutoCommit()
+  override def setAutoCommit(autoCommit:      Boolean): F[Unit]                = delegate.setAutoCommit(autoCommit)
+  override def commit():                                F[Unit]                = delegate.commit()
+  override def rollback():                              F[Unit]                = delegate.rollback()
+  override def getTransactionIsolation():               F[Int]                 = delegate.getTransactionIsolation()
+  override def setTransactionIsolation(level: Int):     F[Unit]                = delegate.setTransactionIsolation(level)
+  override def isReadOnly:                              F[Boolean]             = delegate.isReadOnly
+  override def setReadOnly(readOnly:          Boolean): F[Unit]                = delegate.setReadOnly(readOnly)
+  override def getCatalog():                            F[String]              = delegate.getCatalog()
+  override def setCatalog(catalog:            String):  F[Unit]                = delegate.setCatalog(catalog)
+  override def isClosed():                              F[Boolean]             = delegate.isClosed()
+  override def isValid(timeout:               Int):     F[Boolean]             = delegate.isValid(timeout)
+  override def getMetaData():                           F[DatabaseMetaData[F]] = delegate.getMetaData()
+  override def setSavepoint():                          F[Savepoint]           = delegate.setSavepoint()
+  override def setSavepoint(name:             String):  F[Savepoint]           = delegate.setSavepoint(name)
+  override def releaseSavepoint(savepoint: Savepoint): F[Unit]   = delegate.releaseSavepoint(savepoint)
+  override def rollback(savepoint:         Savepoint): F[Unit]   = delegate.rollback(savepoint)
+  override def setSchema(schema:           String):    F[Unit]   = delegate.setSchema(schema)
+  override def getSchema():                            F[String] = delegate.getSchema()
