@@ -25,9 +25,9 @@ class HouseKeeperTest extends FTestPlatform:
     val testConfig = config
       .setMinConnections(2)
       .setMaxConnections(5)
-      .setMaxLifetime(30.seconds)        // Minimum allowed lifetime
-      .setMaintenanceInterval(1.second)  // Minimum allowed interval
-      .setIdleTimeout(20.seconds)        // Must be less than maxLifetime
+      .setMaxLifetime(30.seconds)       // Minimum allowed lifetime
+      .setMaintenanceInterval(1.second) // Minimum allowed interval
+      .setIdleTimeout(20.seconds)       // Must be less than maxLifetime
 
     val resource = for
       tracker <- Resource.eval(PoolMetricsTracker.inMemory[IO])
@@ -39,7 +39,7 @@ class HouseKeeperTest extends FTestPlatform:
         initialStatus <- datasource.status
         // Note: Can't test expiration easily with 30s minimum lifetime
         // Instead, verify maintenance is maintaining connections
-        _ <- IO.sleep(2.seconds)
+        _           <- IO.sleep(2.seconds)
         finalStatus <- datasource.status
       yield
         assertEquals(initialStatus.total, 2)
