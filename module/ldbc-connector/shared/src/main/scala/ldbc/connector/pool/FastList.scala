@@ -44,30 +44,24 @@ final class FastList[T: ClassTag](initialCapacity: Int = 32):
   /**
    * Add an element to the end of the list.
    * 
-   * Uses exception-based control flow for performance:
-   * - In the common case (array has space), this is a simple array write
-   * - Only when the array is full do we pay the cost of exception handling
+   * Checks capacity before adding to ensure compatibility with Scala.js
+   * where exception-based control flow may not work reliably.
    * 
    * @param element the element to add
    * @return true (always succeeds)
    */
   def add(element: T): Boolean =
-    try {
-      elementData(size) = element
-      size += 1
-      true
-    } catch {
-      case _: ArrayIndexOutOfBoundsException =>
-        // Overflow-conscious code: double the capacity
-        val oldCapacity    = elementData.length
-        val newCapacity    = oldCapacity << 1
-        val newElementData = new Array[T](newCapacity)
-        System.arraycopy(elementData, 0, newElementData, 0, oldCapacity)
-        newElementData(size) = element
-        size += 1
-        elementData = newElementData
-        true
+    if size >= elementData.length then {
+      // Need to grow the array
+      val oldCapacity    = elementData.length
+      val newCapacity    = oldCapacity << 1
+      val newElementData = new Array[T](newCapacity)
+      System.arraycopy(elementData, 0, newElementData, 0, oldCapacity)
+      elementData = newElementData
     }
+    elementData(size) = element
+    size += 1
+    true
 
   /**
    * Remove an element using identity comparison (eq).
