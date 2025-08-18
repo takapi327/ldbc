@@ -262,9 +262,9 @@ class PooledDataSourceTest extends FTestPlatform:
               .fromConfig[IO](
                 config
                   .setMinConnections(3)
-                  .setMaxConnections(10)             // Reduced for lower spec environments
-                  .setConnectionTimeout(30.seconds)  // Much longer timeout for GitHub Actions
-                  .setReadTimeout(30.seconds),       // Increased read timeout to prevent socket timeouts
+                  .setMaxConnections(10)            // Reduced for lower spec environments
+                  .setConnectionTimeout(30.seconds) // Much longer timeout for GitHub Actions
+                  .setReadTimeout(30.seconds),      // Increased read timeout to prevent socket timeouts
                 metricsTracker = Some(tracker)
               )
     yield ds
@@ -272,7 +272,7 @@ class PooledDataSourceTest extends FTestPlatform:
     resource.use { datasource =>
       for
         // Reduced concurrent load for GitHub Actions
-        _ <- IO.parTraverseN(5)((1 to 50).toList) { i =>  // Reduced from 15 concurrent to 5, and 100 operations to 50
+        _ <- IO.parTraverseN(5)((1 to 50).toList) { i => // Reduced from 15 concurrent to 5, and 100 operations to 50
                datasource.getConnection.use { conn =>
                  for
                    stmt <- conn.createStatement()
@@ -288,7 +288,7 @@ class PooledDataSourceTest extends FTestPlatform:
         metrics     <- datasource.metrics
       yield
         assertEquals(finalStatus.active, 0)
-        assert(metrics.totalAcquisitions >= 50L)  // Adjusted expectation
+        assert(metrics.totalAcquisitions >= 50L) // Adjusted expectation
         assert(metrics.totalReleases >= 50L)     // Adjusted expectation
     }
   }
