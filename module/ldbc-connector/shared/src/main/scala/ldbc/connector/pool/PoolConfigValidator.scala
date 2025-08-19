@@ -143,6 +143,29 @@ object PoolConfigValidator:
       Async[F].raiseError(new IllegalArgumentException(s"port must be between 1 and 65535, value: ${ config.port }"))
     else Async[F].unit
 
+  private[pool] def validateAliveBypassWindow[F[_]: Async](config: MySQLConfig): F[Unit] =
+    if config.aliveBypassWindow < Duration.Zero then
+      Async[F].raiseError(
+        new IllegalArgumentException(s"aliveBypassWindow cannot be negative, value: ${ config.aliveBypassWindow }")
+      )
+    else Async[F].unit
+
+  private[pool] def validateKeepaliveTime[F[_]: Async](config: MySQLConfig): F[Unit] =
+    config.keepaliveTime match
+      case Some(keepalive) =>
+        if keepalive < 30.seconds then
+          Async[F].raiseError(
+            new IllegalArgumentException(s"keepaliveTime cannot be less than 30 seconds, value: $keepalive")
+          )
+        else if keepalive >= config.maxLifetime then
+          Async[F].raiseError(
+            new IllegalArgumentException(
+              s"keepaliveTime ($keepalive) must be less than maxLifetime (${ config.maxLifetime })"
+            )
+          )
+        else Async[F].unit
+      case None => Async[F].unit
+
   def validate[F[_]: Async: Console](config: MySQLConfig): F[Unit] =
     for
       _ <- validateMinConnections(config)
@@ -158,4 +181,6 @@ object PoolConfigValidator:
       _ <- validateUser(config)
       _ <- validateHost(config)
       _ <- validatePort(config)
+      _ <- validateAliveBypassWindow(config)
+      _ <- validateKeepaliveTime(config)
     yield ()

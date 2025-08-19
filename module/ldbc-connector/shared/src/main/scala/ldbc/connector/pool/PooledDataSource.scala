@@ -95,6 +95,18 @@ trait PooledDataSource[F[_]] extends DataSource[F]:
   /** Background fiber performing adaptive pool sizing. */
   def adaptiveSizer: Option[Fiber[F, Throwable, Unit]]
 
+  /** Background fiber performing keepalive validation. */
+  def keepaliveExecutor: Option[Fiber[F, Throwable, Unit]]
+
+  /** The alive bypass window for validation optimization. */
+  def aliveBypassWindow: FiniteDuration
+
+  /** The keepalive time for idle connections. */
+  def keepaliveTime: Option[FiniteDuration]
+
+  /** The connection test query. */
+  def connectionTestQuery: Option[String]
+
   /**
    * Returns the current status of the pool.
    * 
@@ -196,8 +208,12 @@ object PooledDataSource:
     idGenerator:             F[String],
     houseKeeper:             Option[Fiber[F, Throwable, Unit]],
     adaptiveSizer:           Option[Fiber[F, Throwable, Unit]],
+    keepaliveExecutor:       Option[Fiber[F, Throwable, Unit]],
     connectionBag:           ConcurrentBag[F, PooledConnection[F]],
-    circuitBreaker:          CircuitBreaker[F]
+    circuitBreaker:          CircuitBreaker[F],
+    aliveBypassWindow:       FiniteDuration,
+    keepaliveTime:           Option[FiniteDuration],
+    connectionTestQuery:     Option[String]
   ) extends PooledDataSource[F]:
     given Tracer[F] = tracer.getOrElse(Tracer.noop[F])
 
@@ -245,27 +261,37 @@ object PooledDataSource:
             case Some(pooled) =>
               // Successfully borrowed from bag
               for
-                _       <- pooled.state.set(ConnectionState.InUse)
-                now     <- Clock[F].realTime.map(_.toMillis)
-                _       <- pooled.lastUsedAt.set(now)
-                _       <- pooled.useCount.update(_ + 1)
-                endTime <- Clock[F].monotonic
-                _       <- metricsTracker.recordAcquisition(endTime - startTime)
-                // Start leak detection if configured
-                _ <- leakDetectionThreshold.traverse_ { threshold =>
-                       val leakFiber = Temporal[F]
-                         .sleep(threshold)
-                         .flatMap { _ =>
-                           pooled.state.get.flatMap {
-                             case ConnectionState.InUse => metricsTracker.recordLeak()
-                             case _                     => Temporal[F].unit
-                           }
-                         }
-                         .start
+                // Check if validation is needed
+                shouldValidate <- needsValidation(pooled)
+                valid          <- if shouldValidate then validateConnection(pooled.connection)
+                         else Temporal[F].pure(true)
+                result <- if !valid then {
+                            // Connection is invalid, remove it and try again
+                            removeConnection(pooled) >> acquireConnectionWithStartTime(startTime)
+                          } else
+                            for
+                              _       <- pooled.state.set(ConnectionState.InUse)
+                              now     <- Clock[F].realTime.map(_.toMillis)
+                              _       <- pooled.lastUsedAt.set(now)
+                              _       <- pooled.useCount.update(_ + 1)
+                              endTime <- Clock[F].monotonic
+                              _       <- metricsTracker.recordAcquisition(endTime - startTime)
+                              // Start leak detection if configured
+                              _ <- leakDetectionThreshold.traverse_ { threshold =>
+                                     val leakFiber = Temporal[F]
+                                       .sleep(threshold)
+                                       .flatMap { _ =>
+                                         pooled.state.get.flatMap {
+                                           case ConnectionState.InUse => metricsTracker.recordLeak()
+                                           case _                     => Temporal[F].unit
+                                         }
+                                       }
+                                       .start
 
-                       leakFiber.flatMap(fiber => pooled.leakDetection.set(Some(fiber)))
-                     }
-              yield wrapConnection(pooled)
+                                     leakFiber.flatMap(fiber => pooled.leakDetection.set(Some(fiber)))
+                                   }
+                            yield wrapConnection(pooled)
+              yield result
 
             case None =>
               // Timeout or no connections available
@@ -312,7 +338,10 @@ object PooledDataSource:
             resetConnection(pooled.connection).attempt.flatMap {
               case Right(_) =>
                 for
-                  valid   <- validateConnection(pooled.connection)
+                  // Skip validation if connection was recently validated
+                  shouldValidate <- needsValidation(pooled)
+                  valid          <- if shouldValidate then validateConnection(pooled.connection)
+                           else Temporal[F].pure(true)
                   expired <- isExpired(pooled)
                   _       <- if valid && !expired then {
                          // Return to bag for reuse
@@ -426,18 +455,51 @@ object PooledDataSource:
     yield ()
 
     override def validateConnection(conn: Connection[F]): F[Boolean] =
-      // Comprehensive validation with multiple checks
-      val validation = for
-        closed <- conn.isClosed()
-        valid  <- if !closed then {
-                   // Additional validation: execute a simple query
-                   conn.isValid(validationTimeout.toSeconds.toInt.max(1))
-                 } else Temporal[F].pure(false)
-      yield !closed && valid
+      connectionTestQuery match
+        case Some(query) =>
+          // Use custom test query
+          val validation = for
+            closed <- conn.isClosed()
+            valid  <- if !closed then executeTestQuery(conn, query)
+                     else Temporal[F].pure(false)
+          yield !closed && valid
 
-      validation
-        .timeout(validationTimeout)
+          validation
+            .timeout(validationTimeout)
+            .handleError(_ => false)
+
+        case None =>
+          // Use JDBC4 isValid() method (preferred)
+          val validation = for
+            closed <- conn.isClosed()
+            valid  <- if !closed then {
+                       // Ensure minimum timeout of 1 second as per JDBC spec
+                       conn.isValid(validationTimeout.toSeconds.toInt.max(1))
+                     } else Temporal[F].pure(false)
+          yield !closed && valid
+
+          validation
+            .timeout(validationTimeout)
+            .handleError(_ => false)
+
+    private def executeTestQuery(conn: Connection[F], query: String): F[Boolean] =
+      conn
+        .createStatement()
+        .flatMap { stmt =>
+          stmt.execute(query).as(true).guarantee(stmt.close())
+        }
         .handleError(_ => false)
+
+    private def needsValidation(pooled: PooledConnection[F]): F[Boolean] =
+      if aliveBypassWindow.toMillis == 0 then
+        // Bypass disabled, always validate
+        Temporal[F].pure(true)
+      else
+        for
+          now      <- Clock[F].realTime.map(_.toMillis)
+          lastUsed <- pooled.lastUsedAt.get
+          elapsed = now - lastUsed
+        yield elapsed > aliveBypassWindow.toMillis
 
     private def isExpired(pooled: PooledConnection[F]): F[Boolean] =
       Clock[F].realTime.map { now =>
@@ -561,6 +623,7 @@ object PooledDataSource:
     val tracker           = metricsTracker.getOrElse(PoolMetricsTracker.noop[F])
     val houseKeeper       = HouseKeeper.fromAsync[F](config, tracker)
     val adaptivePoolSizer = AdaptivePoolSizer.fromAsync[F](config, tracker)
+    val keepaliveExecutor = config.keepaliveTime.map(KeepaliveExecutor.fromAsync[F](_, tracker))
 
     def createPool = for
       poolState      <- Ref[F].of(PoolState.empty[F])
@@ -599,8 +662,12 @@ object PooledDataSource:
       idGenerator             = idGenerator,
       houseKeeper             = None,
       adaptiveSizer           = None,
+      keepaliveExecutor       = None,
       connectionBag           = connectionBag,
       circuitBreaker          = circuitBreaker,
+      aliveBypassWindow       = config.aliveBypassWindow,
+      keepaliveTime           = config.keepaliveTime,
+      connectionTestQuery     = config.connectionTestQuery,
       before                  = before,
       after                   = after
     )
@@ -622,10 +689,11 @@ object PooledDataSource:
       .flatMap { pool =>
         // Start background tasks
         val backgroundTasks = List(
-          houseKeeper.start(pool),
-          if config.adaptiveSizing then adaptivePoolSizer.start(pool)
-          else Resource.pure[F, Unit](())
-        )
+          Some(houseKeeper.start(pool)),
+          if config.adaptiveSizing then Some(adaptivePoolSizer.start(pool))
+          else None,
+          keepaliveExecutor.map(_.start(pool))
+        ).flatten
 
         backgroundTasks.sequence_.as(pool)
       }

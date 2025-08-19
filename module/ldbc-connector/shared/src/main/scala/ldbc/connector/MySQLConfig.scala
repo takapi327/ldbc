@@ -322,6 +322,54 @@ trait MySQLConfig:
    */
   def setAdaptiveInterval(interval: FiniteDuration): MySQLConfig
 
+  /** 
+   * Gets the alive bypass window for connection validation optimization.
+   * Connections used within this window will skip validation checks.
+   * @return the alive bypass window duration
+   */
+  def aliveBypassWindow: FiniteDuration
+
+  /** 
+   * Sets the window during which recently used connections skip validation.
+   * This optimization reduces unnecessary database round-trips for frequently used connections.
+   * Set to 0 to disable this optimization and always validate connections.
+   * @param window the bypass window duration (must be >= 0)
+   * @return a new MySQLConfig with the updated setting
+   * @throws IllegalArgumentException if window < 0
+   */
+  def setAliveBypassWindow(window: FiniteDuration): MySQLConfig
+
+  /** 
+   * Gets the keepalive time for idle connections.
+   * @return the keepalive time duration, or None if disabled
+   */
+  def keepaliveTime: Option[FiniteDuration]
+
+  /** 
+   * Sets the interval at which idle connections are validated.
+   * This helps prevent connection timeouts due to firewalls or idle timeouts.
+   * The actual keepalive time will vary by up to 20% to avoid synchronized validations.
+   * @param time the keepalive interval (must be >= 30 seconds)
+   * @return a new MySQLConfig with the updated setting
+   * @throws IllegalArgumentException if time < 30 seconds
+   */
+  def setKeepaliveTime(time: FiniteDuration): MySQLConfig
+
+  /** 
+   * Gets the connection test query used for validation.
+   * @return the test query, or None to use JDBC4 isValid()
+   */
+  def connectionTestQuery: Option[String]
+
+  /** 
+   * Sets a custom query for connection validation.
+   * If not set, JDBC4's isValid() method will be used (recommended).
+   * Only set this if your driver doesn't support isValid() properly.
+   * @param query the test query (e.g., "SELECT 1")
+   * @return a new MySQLConfig with the updated setting
+   */
+  def setConnectionTestQuery(query: String): MySQLConfig
+
 /**
  * Companion object for MySQLConfig providing factory methods.
  */
@@ -355,7 +403,10 @@ object MySQLConfig:
     leakDetectionThreshold:  Option[FiniteDuration]                = None,
     maintenanceInterval:     FiniteDuration                        = 30.seconds,
     adaptiveSizing:          Boolean                               = false,
-    adaptiveInterval:        FiniteDuration                        = 1.minute
+    adaptiveInterval:        FiniteDuration                        = 1.minute,
+    aliveBypassWindow:       FiniteDuration                        = 500.milliseconds,
+    keepaliveTime:           Option[FiniteDuration]                = Some(2.minutes),
+    connectionTestQuery:     Option[String]                        = None
   ) extends MySQLConfig:
 
     override def setHost(host:                   String):             MySQLConfig = copy(host = host)
@@ -385,6 +436,9 @@ object MySQLConfig:
     override def setMaintenanceInterval(interval: FiniteDuration): MySQLConfig = copy(maintenanceInterval = interval)
     override def setAdaptiveSizing(enabled:       Boolean):        MySQLConfig = copy(adaptiveSizing = enabled)
     override def setAdaptiveInterval(interval:    FiniteDuration): MySQLConfig = copy(adaptiveInterval = interval)
+    override def setAliveBypassWindow(window:     FiniteDuration): MySQLConfig = copy(aliveBypassWindow = window)
+    override def setKeepaliveTime(time:           FiniteDuration): MySQLConfig = copy(keepaliveTime = Some(time))
+    override def setConnectionTestQuery(query:    String):         MySQLConfig = copy(connectionTestQuery = Some(query))
 
   /**
    * Creates a default MySQLConfig with standard connection parameters.
