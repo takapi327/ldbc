@@ -274,7 +274,7 @@ class KeepaliveExecutorTest extends FTestPlatform:
                private val delegate = createMockConnection[IO](Ref.unsafe[IO, Int](0))
                export delegate.{ isValid as _, * }
 
-        // Create pooled connection
+      // Create pooled connection
       pooledConn <- createPooledConnection[IO]("conn-1", conn, now, now)
 
       // Create pool state
