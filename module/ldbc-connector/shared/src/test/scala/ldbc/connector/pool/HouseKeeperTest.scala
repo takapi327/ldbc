@@ -25,9 +25,10 @@ class HouseKeeperTest extends FTestPlatform:
     val testConfig = config
       .setMinConnections(2)
       .setMaxConnections(5)
-      .setMaxLifetime(30.seconds)       // Minimum allowed lifetime
+      .setMaxLifetime(40.seconds)       // Minimum allowed lifetime
       .setMaintenanceInterval(1.second) // Minimum allowed interval
       .setIdleTimeout(20.seconds)       // Must be less than maxLifetime
+      .setKeepaliveTime(30.seconds) // Must be less than maxLifetime
 
     val resource = for
       tracker <- Resource.eval(PoolMetricsTracker.inMemory[IO])
