@@ -58,9 +58,9 @@ object KeepaliveExecutor:
 
     override def start(pool: PooledDataSource[F]): Resource[F, Unit] =
       // Calculate interval with up to 20% variance
-      val variance         = (keepaliveTime.toMillis * 0.2).toLong
-      val randomizedDelay  = keepaliveTime.toMillis + Random.nextLong(variance) - (variance / 2)
-      val effectiveDelay   = FiniteDuration(randomizedDelay.max(keepaliveTime.toMillis / 2), MILLISECONDS)
+      val variance        = (keepaliveTime.toMillis * 0.2).toLong
+      val randomizedDelay = keepaliveTime.toMillis + Random.nextLong(variance) - (variance / 2)
+      val effectiveDelay  = FiniteDuration(randomizedDelay.max(keepaliveTime.toMillis / 2), MILLISECONDS)
 
       val task = Stream
         .fixedDelay[F](effectiveDelay)
@@ -99,14 +99,14 @@ object KeepaliveExecutor:
             case true =>
               // Successfully reserved for validation
               for
-                now        <- Clock[F].realTime.map(_.toMillis)
-                valid      <- pool.validateConnection(pooled.connection)
-                _          <- if (valid) {
-                          pooled.lastValidatedAt.set(now) >>
-                            pooled.state.set(ConnectionState.Idle)
-                } else
-                          // Connection is invalid, remove it
-                          pool.removeConnection(pooled)
+                now   <- Clock[F].realTime.map(_.toMillis)
+                valid <- pool.validateConnection(pooled.connection)
+                _     <- if valid then {
+                       pooled.lastValidatedAt.set(now) >>
+                         pooled.state.set(ConnectionState.Idle)
+                     } else
+                       // Connection is invalid, remove it
+                       pool.removeConnection(pooled)
               yield ()
             case false =>
               // Connection state changed, skip validation
@@ -118,7 +118,7 @@ object KeepaliveExecutor:
       }
 
     private def compareAndSetConnectionState(
-      ref: Ref[F, ConnectionState],
+      ref:    Ref[F, ConnectionState],
       expect: ConnectionState,
       update: ConnectionState
     ): F[Boolean] =
