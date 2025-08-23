@@ -19,7 +19,7 @@ object Dependencies {
 
   val typesafeConfig = "com.typesafe" % "config" % "1.4.4"
 
-  val hikariCP = "com.zaxxer" % "HikariCP" % "7.0.1"
+  val hikariCP = "com.zaxxer" % "HikariCP" % "7.0.2"
 
   val scala3Compiler = "org.scala-lang" %% "scala3-compiler" % scala3
 
