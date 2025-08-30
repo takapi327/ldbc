@@ -6,7 +6,6 @@
 
 package ldbc.connector.pool
 
-import scala.annotation.nowarn
 import scala.concurrent.duration.*
 
 import cats.*
@@ -133,9 +132,7 @@ object ConcurrentBag:
    * @tparam T the type of items stored in the bag
    * @return a new ConcurrentBag instance
    */
-  def apply[F[_]: Async, T <: BagEntry[F]](
-    maxFiberLocalSize: Int = 16
-  ): F[ConcurrentBag[F, T]] =
+  def apply[F[_]: Async, T <: BagEntry[F]](): F[ConcurrentBag[F, T]] =
     for
       sharedList   <- Ref[F].of(List.empty[T])
       handoffQueue <- Queue.unbounded[F, T]
@@ -148,8 +145,7 @@ object ConcurrentBag:
       handoffQueue,
       waiters,
       closed,
-      borrowCounter,
-      maxFiberLocalSize
+      borrowCounter
     )
 
   private class ConcurrentBagImpl[F[_]: Temporal, T <: BagEntry[F]](
@@ -158,7 +154,6 @@ object ConcurrentBag:
     waiters:                   Ref[F, Int],
     closed:                    Ref[F, Boolean],
     borrowCounter:             Ref[F, Long],
-    @nowarn maxFiberLocalSize: Int // Keep for API compatibility
   ) extends ConcurrentBag[F, T]:
 
     override def borrow(timeout: FiniteDuration): F[Option[T]] =
@@ -254,10 +249,7 @@ object ConcurrentBag:
                     waiters.get.flatMap { waiting =>
                       if waiting > 0 then
                         // Try to hand off directly to a waiter
-                        handoffQueue.tryOffer(item).flatMap {
-                          case true  => Temporal[F].unit
-                          case false => addToFiberLocal(item)
-                        }
+                        handoffQueue.tryOffer(item).void
                       else
                         // No waiters, item stays in shared list
                         Temporal[F].unit
@@ -277,11 +269,6 @@ object ConcurrentBag:
                 }
           }
       }
-
-    // Removed addToFiberLocal as we're not using fiber-local storage
-    @nowarn private def addToFiberLocal(item: T): F[Unit] =
-      // No-op, keep in shared list
-      Temporal[F].unit
 
     override def add(item: T): F[Unit] =
       closed.get.flatMap {
