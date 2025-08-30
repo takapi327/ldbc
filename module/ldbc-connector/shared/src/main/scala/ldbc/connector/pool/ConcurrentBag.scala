@@ -149,11 +149,11 @@ object ConcurrentBag:
     )
 
   private class ConcurrentBagImpl[F[_]: Temporal, T <: BagEntry[F]](
-    sharedList:                Ref[F, List[T]],
-    handoffQueue:              Queue[F, T],
-    waiters:                   Ref[F, Int],
-    closed:                    Ref[F, Boolean],
-    borrowCounter:             Ref[F, Long],
+    sharedList:    Ref[F, List[T]],
+    handoffQueue:  Queue[F, T],
+    waiters:       Ref[F, Int],
+    closed:        Ref[F, Boolean],
+    borrowCounter: Ref[F, Long]
   ) extends ConcurrentBag[F, T]:
 
     override def borrow(timeout: FiniteDuration): F[Option[T]] =
