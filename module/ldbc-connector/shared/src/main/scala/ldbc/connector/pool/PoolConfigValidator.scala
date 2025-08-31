@@ -9,6 +9,7 @@ package ldbc.connector.pool
 import scala.concurrent.duration.*
 import scala.io.AnsiColor
 
+import cats.data.{ Validated, ValidatedNel }
 import cats.syntax.all.*
 
 import cats.effect.std.Console
@@ -18,169 +19,122 @@ import ldbc.connector.MySQLConfig
 
 object PoolConfigValidator:
 
-  private[pool] def validateMinConnections[F[_]: Async](config: MySQLConfig): F[Unit] =
+  private[pool] def validateMinConnections(config: MySQLConfig): ValidatedNel[String, Unit] =
     if config.minConnections < 0 then
-      Async[F].raiseError(
-        new IllegalArgumentException(s"minConnections cannot be less than 0, value: ${ config.minConnections }")
-      )
-    else Async[F].unit
+      s"minConnections cannot be less than 0, value: ${ config.minConnections }".invalidNel
+    else ().validNel
 
-  private[pool] def validateMaxConnections[F[_]: Async: Console](config: MySQLConfig): F[Unit] =
+  private[pool] def validateMaxConnections(config: MySQLConfig): ValidatedNel[String, Unit] =
     if config.maxConnections <= 0 then
-      Async[F].raiseError(
-        new IllegalArgumentException(s"maxConnections cannot be less than 1, value: ${ config.maxConnections }")
-      )
-    else if config.maxConnections > 100 && config.debug then
-      Console[F].println(
-        s"${ AnsiColor.YELLOW } [WARN] ${ AnsiColor.RESET } maxConnections (${ config.maxConnections }) is unusually high, consider reducing it for better performance."
-      )
-    else Async[F].unit
+      s"maxConnections cannot be less than 1, value: ${ config.maxConnections }".invalidNel
+    else ().validNel
 
-  private[pool] def validateMinMaxConnections[F[_]: Async](config: MySQLConfig): F[Unit] =
+  private[pool] def validateMinMaxConnections(config: MySQLConfig): ValidatedNel[String, Unit] =
     if config.minConnections > config.maxConnections then
-      Async[F].raiseError(
-        new IllegalArgumentException(
-          s"minConnections (${ config.minConnections }) cannot be greater than maxConnections (${ config.maxConnections })"
-        )
-      )
-    else Async[F].unit
+      s"minConnections (${ config.minConnections }) cannot be greater than maxConnections (${ config.maxConnections })".invalidNel
+    else ().validNel
 
-  private[pool] def validateConnectionTimeout[F[_]: Async](config: MySQLConfig): F[Unit] =
+  private[pool] def validateConnectionTimeout(config: MySQLConfig): ValidatedNel[String, Unit] =
     if config.connectionTimeout <= Duration.Zero then
-      Async[F].raiseError(
-        new IllegalArgumentException(
-          s"connectionTimeout cannot be less than 250ms, value: ${ config.connectionTimeout }"
-        )
-      )
+      s"connectionTimeout cannot be less than 250ms, value: ${ config.connectionTimeout }".invalidNel
     // Minimum recommended values (similar to HikariConfig's SOFT_TIMEOUT_FLOOR)
     else if config.connectionTimeout < 250.milliseconds then
-      Async[F].raiseError(
-        new IllegalArgumentException(
-          s"connectionTimeout cannot be less than 250ms, value: ${ config.connectionTimeout }"
-        )
-      )
-    else Async[F].unit
+      s"connectionTimeout cannot be less than 250ms, value: ${ config.connectionTimeout }".invalidNel
+    else ().validNel
 
-  private[pool] def validateValidationTimeout[F[_]: Async](config: MySQLConfig): F[Unit] =
+  private[pool] def validateValidationTimeout(config: MySQLConfig): ValidatedNel[String, Unit] =
     if config.validationTimeout <= Duration.Zero then
-      Async[F].raiseError(
-        new IllegalArgumentException(
-          s"validationTimeout cannot be less than 250ms, value: ${ config.validationTimeout }"
-        )
-      )
+      s"validationTimeout cannot be less than 250ms, value: ${ config.validationTimeout }".invalidNel
     else if config.validationTimeout < 250.milliseconds then
-      Async[F].raiseError(
-        new IllegalArgumentException(
-          s"validationTimeout cannot be less than 250ms, value: ${ config.validationTimeout }"
-        )
-      )
-    else Async[F].unit
+      s"validationTimeout cannot be less than 250ms, value: ${ config.validationTimeout }".invalidNel
+    else ().validNel
 
-  private[pool] def validateIdleTimeout[F[_]: Async](config: MySQLConfig): F[Unit] =
+  private[pool] def validateIdleTimeout(config: MySQLConfig): ValidatedNel[String, Unit] =
     if config.idleTimeout < Duration.Zero then
-      Async[F].raiseError(
-        new IllegalArgumentException(s"idleTimeout cannot be negative, value: ${ config.idleTimeout }")
-      )
-    else Async[F].unit
+      s"idleTimeout cannot be negative, value: ${ config.idleTimeout }".invalidNel
+    else ().validNel
 
-  private[pool] def validateMaxLifetime[F[_]: Async](config: MySQLConfig): F[Unit] =
+  private[pool] def validateMaxLifetime(config: MySQLConfig): ValidatedNel[String, Unit] =
     if config.maxLifetime <= Duration.Zero then
-      Async[F].raiseError(
-        new IllegalArgumentException(s"maxLifetime cannot be less than 30 seconds, value: ${ config.maxLifetime }")
-      )
+      s"maxLifetime cannot be less than 30 seconds, value: ${ config.maxLifetime }".invalidNel
     else if config.maxLifetime < 30.seconds then
-      Async[F].raiseError(
-        new IllegalArgumentException(s"maxLifetime cannot be less than 30 seconds, value: ${ config.maxLifetime }")
-      )
-    else Async[F].unit
+      s"maxLifetime cannot be less than 30 seconds, value: ${ config.maxLifetime }".invalidNel
+    else ().validNel
 
-  private[pool] def validateMaintenanceInterval[F[_]: Async](config: MySQLConfig): F[Unit] =
+  private[pool] def validateMaintenanceInterval(config: MySQLConfig): ValidatedNel[String, Unit] =
     if config.maintenanceInterval <= Duration.Zero then
-      Async[F].raiseError(
-        new IllegalArgumentException(
-          s"maintenanceInterval cannot be less than 1 second, value: ${ config.maintenanceInterval }"
-        )
-      )
-    else Async[F].unit
+      s"maintenanceInterval cannot be less than 1 second, value: ${ config.maintenanceInterval }".invalidNel
+    else ().validNel
 
-  private[pool] def validateLeakDetectionThreshold[F[_]: Async](config: MySQLConfig): F[Unit] =
+  private[pool] def validateLeakDetectionThreshold(config: MySQLConfig): ValidatedNel[String, Unit] =
     config.leakDetectionThreshold match
       case Some(threshold) =>
         if threshold < 2.seconds then
-          Async[F].raiseError(
-            new IllegalArgumentException(s"leakDetectionThreshold cannot be less than 2 seconds, value: $threshold")
-          )
+          s"leakDetectionThreshold cannot be less than 2 seconds, value: $threshold".invalidNel
         else if threshold > config.maxLifetime then
-          Async[F].raiseError(
-            new IllegalArgumentException(
-              s"leakDetectionThreshold ($threshold) cannot be greater than maxLifetime (${ config.maxLifetime })"
-            )
-          )
-        else Async[F].unit
-      case None => Async[F].unit
+          s"leakDetectionThreshold ($threshold) cannot be greater than maxLifetime (${ config.maxLifetime })".invalidNel
+        else ().validNel
+      case None => ().validNel
 
-  private[pool] def validateLogicalRelationship[F[_]: Async](config: MySQLConfig): F[Unit] =
+  private[pool] def validateLogicalRelationship(config: MySQLConfig): ValidatedNel[String, Unit] =
     if config.idleTimeout > Duration.Zero && config.idleTimeout > config.maxLifetime then
-      Async[F].raiseError(
-        new IllegalArgumentException(
-          s"idleTimeout (${ config.idleTimeout }) cannot be greater than maxLifetime (${ config.maxLifetime })"
-        )
-      )
-    else Async[F].unit
+      s"idleTimeout (${ config.idleTimeout }) cannot be greater than maxLifetime (${ config.maxLifetime })".invalidNel
+    else ().validNel
 
-  private[pool] def validateUser[F[_]: Async](config: MySQLConfig): F[Unit] =
-    if config.user == null || config.user.isEmpty then
-      Async[F].raiseError(new IllegalArgumentException("user cannot be null or empty"))
-    else Async[F].unit
+  private[pool] def validateUser(config: MySQLConfig): ValidatedNel[String, Unit] =
+    if config.user == null || config.user.isEmpty then "user cannot be null or empty".invalidNel
+    else ().validNel
 
-  private[pool] def validateHost[F[_]: Async](config: MySQLConfig): F[Unit] =
-    if config.host == null || config.host.isEmpty then
-      Async[F].raiseError(new IllegalArgumentException("host cannot be null or empty"))
-    else Async[F].unit
+  private[pool] def validateHost(config: MySQLConfig): ValidatedNel[String, Unit] =
+    if config.host == null || config.host.isEmpty then "host cannot be null or empty".invalidNel
+    else ().validNel
 
-  private[pool] def validatePort[F[_]: Async](config: MySQLConfig): F[Unit] =
+  private[pool] def validatePort(config: MySQLConfig): ValidatedNel[String, Unit] =
     if config.port <= 0 || config.port > 65535 then
-      Async[F].raiseError(new IllegalArgumentException(s"port must be between 1 and 65535, value: ${ config.port }"))
-    else Async[F].unit
+      s"port must be between 1 and 65535, value: ${ config.port }".invalidNel
+    else ().validNel
 
-  private[pool] def validateAliveBypassWindow[F[_]: Async](config: MySQLConfig): F[Unit] =
+  private[pool] def validateAliveBypassWindow(config: MySQLConfig): ValidatedNel[String, Unit] =
     if config.aliveBypassWindow < Duration.Zero then
-      Async[F].raiseError(
-        new IllegalArgumentException(s"aliveBypassWindow cannot be negative, value: ${ config.aliveBypassWindow }")
-      )
-    else Async[F].unit
+      s"aliveBypassWindow cannot be negative, value: ${ config.aliveBypassWindow }".invalidNel
+    else ().validNel
 
-  private[pool] def validateKeepaliveTime[F[_]: Async](config: MySQLConfig): F[Unit] =
+  private[pool] def validateKeepaliveTime(config: MySQLConfig): ValidatedNel[String, Unit] =
     config.keepaliveTime match
       case Some(keepalive) =>
-        if keepalive < 30.seconds then
-          Async[F].raiseError(
-            new IllegalArgumentException(s"keepaliveTime cannot be less than 30 seconds, value: $keepalive")
-          )
+        if keepalive < 30.seconds then s"keepaliveTime cannot be less than 30 seconds, value: $keepalive".invalidNel
         else if keepalive >= config.maxLifetime then
-          Async[F].raiseError(
-            new IllegalArgumentException(
-              s"keepaliveTime ($keepalive) must be less than maxLifetime (${ config.maxLifetime })"
-            )
-          )
-        else Async[F].unit
-      case None => Async[F].unit
+          s"keepaliveTime ($keepalive) must be less than maxLifetime (${ config.maxLifetime })".invalidNel
+        else ().validNel
+      case None => ().validNel
 
   def validate[F[_]: Async: Console](config: MySQLConfig): F[Unit] =
-    for
-      _ <- validateMinConnections(config)
-      _ <- validateMaxConnections(config)
-      _ <- validateMinMaxConnections(config)
-      _ <- validateConnectionTimeout(config)
-      _ <- validateValidationTimeout(config)
-      _ <- validateIdleTimeout(config)
-      _ <- validateMaxLifetime(config)
-      _ <- validateMaintenanceInterval(config)
-      _ <- validateLeakDetectionThreshold(config)
-      _ <- validateLogicalRelationship(config)
-      _ <- validateUser(config)
-      _ <- validateHost(config)
-      _ <- validatePort(config)
-      _ <- validateAliveBypassWindow(config)
-      _ <- validateKeepaliveTime(config)
-    yield ()
+    val validations = (
+      validateMinConnections(config),
+      validateMaxConnections(config),
+      validateMinMaxConnections(config),
+      validateConnectionTimeout(config),
+      validateValidationTimeout(config),
+      validateIdleTimeout(config),
+      validateMaxLifetime(config),
+      validateMaintenanceInterval(config),
+      validateLeakDetectionThreshold(config),
+      validateLogicalRelationship(config),
+      validateUser(config),
+      validateHost(config),
+      validatePort(config),
+      validateAliveBypassWindow(config),
+      validateKeepaliveTime(config)
+    ).mapN((_, _, _, _, _, _, _, _, _, _, _, _, _, _, _) => ())
+
+    validations match
+      case Validated.Valid(_) =>
+        if config.maxConnections > 100 && config.debug then
+          Console[F].println(
+            s"${ AnsiColor.YELLOW } [WARN] ${ AnsiColor.RESET } maxConnections (${ config.maxConnections }) is unusually high, consider reducing it for better performance."
+          )
+        else Async[F].unit
+      case Validated.Invalid(errors) =>
+        Async[F].raiseError(
+          new IllegalArgumentException(s"Configuration validation failed:\n${ errors.toList.mkString("\n") }")
+        )

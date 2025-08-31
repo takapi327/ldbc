@@ -39,6 +39,7 @@ class PoolConfigValidatorTest extends CatsEffectSuite:
     interceptIO[IllegalArgumentException] {
       PoolConfigValidator.validate[IO](config)
     }.map { error =>
+      assert(error.getMessage.contains("Configuration validation failed:"))
       assert(error.getMessage.contains("minConnections cannot be less than 0"))
     }
   }
@@ -51,6 +52,7 @@ class PoolConfigValidatorTest extends CatsEffectSuite:
     interceptIO[IllegalArgumentException] {
       PoolConfigValidator.validate[IO](config)
     }.map { error =>
+      assert(error.getMessage.contains("Configuration validation failed:"))
       assert(error.getMessage.contains("maxConnections cannot be less than 1"))
     }
   }
@@ -63,6 +65,7 @@ class PoolConfigValidatorTest extends CatsEffectSuite:
     interceptIO[IllegalArgumentException] {
       PoolConfigValidator.validate[IO](config)
     }.map { error =>
+      assert(error.getMessage.contains("Configuration validation failed:"))
       assert(error.getMessage.contains("cannot be greater than maxConnections"))
     }
   }
@@ -74,6 +77,7 @@ class PoolConfigValidatorTest extends CatsEffectSuite:
     interceptIO[IllegalArgumentException] {
       PoolConfigValidator.validate[IO](config)
     }.map { error =>
+      assert(error.getMessage.contains("Configuration validation failed:"))
       assert(error.getMessage.contains("connectionTimeout cannot be less than 250ms"))
     }
   }
@@ -85,6 +89,7 @@ class PoolConfigValidatorTest extends CatsEffectSuite:
     interceptIO[IllegalArgumentException] {
       PoolConfigValidator.validate[IO](config)
     }.map { error =>
+      assert(error.getMessage.contains("Configuration validation failed:"))
       assert(error.getMessage.contains("connectionTimeout cannot be less than 250ms"))
     }
   }
@@ -96,6 +101,7 @@ class PoolConfigValidatorTest extends CatsEffectSuite:
     interceptIO[IllegalArgumentException] {
       PoolConfigValidator.validate[IO](config)
     }.map { error =>
+      assert(error.getMessage.contains("Configuration validation failed:"))
       assert(error.getMessage.contains("validationTimeout cannot be less than 250ms"))
     }
   }
@@ -107,6 +113,7 @@ class PoolConfigValidatorTest extends CatsEffectSuite:
     interceptIO[IllegalArgumentException] {
       PoolConfigValidator.validate[IO](config)
     }.map { error =>
+      assert(error.getMessage.contains("Configuration validation failed:"))
       assert(error.getMessage.contains("idleTimeout cannot be negative"))
     }
   }
@@ -125,6 +132,7 @@ class PoolConfigValidatorTest extends CatsEffectSuite:
     interceptIO[IllegalArgumentException] {
       PoolConfigValidator.validate[IO](config)
     }.map { error =>
+      assert(error.getMessage.contains("Configuration validation failed:"))
       assert(error.getMessage.contains("maxLifetime cannot be less than 30 seconds"))
     }
   }
@@ -137,6 +145,7 @@ class PoolConfigValidatorTest extends CatsEffectSuite:
     interceptIO[IllegalArgumentException] {
       PoolConfigValidator.validate[IO](config)
     }.map { error =>
+      assert(error.getMessage.contains("Configuration validation failed:"))
       assert(error.getMessage.contains("cannot be greater than maxLifetime"))
     }
   }
@@ -148,6 +157,7 @@ class PoolConfigValidatorTest extends CatsEffectSuite:
     interceptIO[IllegalArgumentException] {
       PoolConfigValidator.validate[IO](config)
     }.map { error =>
+      assert(error.getMessage.contains("Configuration validation failed:"))
       assert(error.getMessage.contains("leakDetectionThreshold cannot be less than 2 seconds"))
     }
   }
@@ -160,6 +170,7 @@ class PoolConfigValidatorTest extends CatsEffectSuite:
     interceptIO[IllegalArgumentException] {
       PoolConfigValidator.validate[IO](config)
     }.map { error =>
+      assert(error.getMessage.contains("Configuration validation failed:"))
       assert(error.getMessage.contains("cannot be greater than maxLifetime"))
     }
   }
@@ -171,6 +182,7 @@ class PoolConfigValidatorTest extends CatsEffectSuite:
     interceptIO[IllegalArgumentException] {
       PoolConfigValidator.validate[IO](config)
     }.map { error =>
+      assert(error.getMessage.contains("Configuration validation failed:"))
       assert(error.getMessage.contains("user cannot be null or empty"))
     }
   }
@@ -182,6 +194,7 @@ class PoolConfigValidatorTest extends CatsEffectSuite:
     interceptIO[IllegalArgumentException] {
       PoolConfigValidator.validate[IO](config)
     }.map { error =>
+      assert(error.getMessage.contains("Configuration validation failed:"))
       assert(error.getMessage.contains("host cannot be null or empty"))
     }
   }
@@ -192,6 +205,7 @@ class PoolConfigValidatorTest extends CatsEffectSuite:
     interceptIO[IllegalArgumentException] {
       PoolConfigValidator.validate[IO](config)
     }.map { error =>
+      assert(error.getMessage.contains("Configuration validation failed:"))
       assert(error.getMessage.contains("port must be between 1 and 65535"))
     }
   }
@@ -202,6 +216,7 @@ class PoolConfigValidatorTest extends CatsEffectSuite:
     interceptIO[IllegalArgumentException] {
       PoolConfigValidator.validate[IO](config)
     }.map { error =>
+      assert(error.getMessage.contains("Configuration validation failed:"))
       assert(error.getMessage.contains("port must be between 1 and 65535"))
     }
   }
@@ -213,6 +228,7 @@ class PoolConfigValidatorTest extends CatsEffectSuite:
     interceptIO[IllegalArgumentException] {
       PoolConfigValidator.validate[IO](config)
     }.map { error =>
+      assert(error.getMessage.contains("Configuration validation failed:"))
       assert(error.getMessage.contains("maintenanceInterval cannot be less than 1 second"))
     }
   }
@@ -243,41 +259,24 @@ class PoolConfigValidatorTest extends CatsEffectSuite:
     }
   }
 
-  test("validation should fail fast on first error") {
+  test("validation should collect all errors") {
     val config = MySQLConfig.default
-      .setMinConnections(-1)            // This will fail first
-      .setMaxConnections(0)             // This would also fail
-      .setConnectionTimeout(-1.seconds) // This would also fail
+      .setMinConnections(-1)                 // This will fail
+      .setMaxConnections(0)                  // This will also fail
+      .setConnectionTimeout(-1.seconds)      // This will also fail
+      .setValidationTimeout(50.milliseconds) // This will also fail
+      .setPort(0)                            // This will also fail
 
     interceptIO[IllegalArgumentException] {
       PoolConfigValidator.validate[IO](config)
     }.map { error =>
+      assert(error.getMessage.contains("Configuration validation failed:"))
       assert(error.getMessage.contains("minConnections cannot be less than 0"))
+      assert(error.getMessage.contains("maxConnections cannot be less than 1"))
+      assert(error.getMessage.contains("connectionTimeout cannot be less than 250ms"))
+      assert(error.getMessage.contains("validationTimeout cannot be less than 250ms"))
+      assert(error.getMessage.contains("port must be between 1 and 65535"))
     }
-  }
-
-  test("individual validation methods should work correctly") {
-    val config = MySQLConfig.default.setMinConnections(-1)
-
-    interceptIO[IllegalArgumentException] {
-      PoolConfigValidator.validateMinConnections[IO](config)
-    }.map { error =>
-      assert(error.getMessage.contains("minConnections cannot be less than 0"))
-    }
-  }
-
-  test("validateMaxConnections should pass for normal values") {
-    val config = MySQLConfig.default.setMaxConnections(50)
-
-    given Console[IO] = new TestConsole
-
-    PoolConfigValidator.validateMaxConnections[IO](config).map(_ => assert(true))
-  }
-
-  test("validateLeakDetectionThreshold should pass when not set") {
-    val config = MySQLConfig.default // leakDetectionThreshold is None by default
-
-    PoolConfigValidator.validateLeakDetectionThreshold[IO](config).map(_ => assert(true))
   }
 
   // Helper class to capture console output for testing
