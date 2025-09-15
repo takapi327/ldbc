@@ -26,6 +26,10 @@ import ldbc.connector.syntax.*
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
 @State(Scope.Benchmark)
+@Fork(value = 1, jvmArgs = Array("-Xms4G", "-Xmx4G", "-XX:+UseG1GC", "-XX:MaxGCPauseMillis=200"))
+@Warmup(iterations = 5)
+@Measurement(iterations = 10)
+@Threads(1)
 class Select:
 
   type BenchmarkType = (
@@ -48,43 +52,43 @@ class Select:
   )
 
   @volatile
-  var datasource: DataSource[IO] = uninitialized
+  var connection: Connection[IO] = uninitialized
 
   @Setup
   def setupDataSource(): Unit =
-    datasource = MySQLDataSource
+    val datasource = MySQLDataSource
       .build[IO]("127.0.0.1", 13306, "ldbc")
       .setPassword("password")
       .setDatabase("benchmark")
       .setSSL(SSL.Trusted)
 
-  @Param(Array("1000", "2000", "4000"))
+    connection = datasource.getConnection.allocated.unsafeRunSync()._1
+
+  @TearDown(Level.Trial)
+  def tearDown(): Unit =
+    connection.close().unsafeRunSync()
+
+  @Param(Array("500", "1000", "1500", "2000"))
   var len: Int = uninitialized
 
   @Benchmark
   def statement: List[BenchmarkType] =
-    datasource.getConnection
-      .use { conn =>
-        for
-          statement <- conn.createStatement()
-          resultSet <- statement.executeQuery(s"SELECT * FROM jdbc_prepare_statement_test LIMIT $len")
-          decoded   <- consume(resultSet)
-        yield decoded
-      }
-      .unsafeRunSync()
+    (for
+      statement <- connection.createStatement()
+      resultSet <- statement.executeQuery(s"SELECT * FROM jdbc_prepare_statement_test LIMIT $len")
+      decoded   <- consume(resultSet)
+      _ <- statement.close()
+    yield decoded).unsafeRunSync()
 
   @Benchmark
   def prepareStatement: List[BenchmarkType] =
-    datasource.getConnection
-      .use { conn =>
-        for
-          statement <- conn.prepareStatement("SELECT * FROM jdbc_prepare_statement_test LIMIT ?")
-          _         <- statement.setInt(1, len)
-          resultSet <- statement.executeQuery()
-          decoded   <- consume(resultSet)
-        yield decoded
-      }
-      .unsafeRunSync()
+    (for
+      statement  <- connection.prepareStatement("SELECT * FROM jdbc_prepare_statement_test LIMIT ?")
+      _         <- statement.setInt(1, len)
+      resultSet <- statement.executeQuery()
+      decoded   <- consume(resultSet)
+      _ <- statement.close()
+    yield decoded).unsafeRunSync()
 
   private def consume(resultSet: ResultSet[IO]): IO[List[BenchmarkType]] =
     resultSet.whileM[List, BenchmarkType] {
