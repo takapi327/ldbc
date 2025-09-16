@@ -178,8 +178,8 @@ object ConcurrentBag:
       }
 
     private def borrowInternal(timeout: FiniteDuration): F[Option[T]] =
-      // Try shared list with optimized scanning
-      tryBorrowFromShared.flatMap {
+      // Try shared list with backoff strategy
+      borrowWithBackoff(0).flatMap {
         case Some(item) =>
           checkAndNotifyWaiters.as(Some(item))
         case None =>
@@ -199,6 +199,16 @@ object ConcurrentBag:
           }
       }
 
+    private def borrowWithBackoff(retries: Int): F[Option[T]] =
+      tryBorrowFromShared.flatMap {
+        case Some(item) => Temporal[F].pure(Some(item))
+        case None if retries < 3 =>
+          // Exponential backoff: 1ms, 2ms, 4ms
+          val backoffTime = (1 << retries).millis
+          Temporal[F].sleep(backoffTime) >> borrowWithBackoff(retries + 1)
+        case None => Temporal[F].pure(None)
+      }
+
     // Removed tryBorrowFromFiberLocal as we're not using fiber-local storage
 
     private def tryBorrowFromShared: F[Option[T]] =
@@ -209,19 +219,19 @@ object ConcurrentBag:
           else
             // Start from different positions to reduce contention
             val startIdx = (counter % list.length).toInt
-            val rotated  = list.drop(startIdx) ++ list.take(startIdx)
-            tryBorrowFromListShared(rotated)
+            tryBorrowFromListShared(list, startIdx, 0, list.length)
         }
       }
 
-    private def tryBorrowFromListShared(list: List[T]): F[Option[T]] =
-      list match
-        case Nil          => Temporal[F].pure(None)
-        case head :: tail =>
-          head.compareAndSet(BagEntry.STATE_NOT_IN_USE, BagEntry.STATE_IN_USE).flatMap {
-            case true  => Temporal[F].pure(Some(head))
-            case false => tryBorrowFromListShared(tail)
-          }
+    private def tryBorrowFromListShared(list: List[T], startIdx: Int, offset: Int, size: Int): F[Option[T]] =
+      if offset >= size then Temporal[F].pure(None)
+      else
+        val idx = (startIdx + offset) % size
+        val item = list(idx)
+        item.compareAndSet(BagEntry.STATE_NOT_IN_USE, BagEntry.STATE_IN_USE).flatMap {
+          case true  => Temporal[F].pure(Some(item))
+          case false => tryBorrowFromListShared(list, startIdx, offset + 1, size)
+        }
 
     private def checkAndNotifyWaiters: F[Unit] =
       waiters.get.flatMap { waiting =>
@@ -255,8 +265,11 @@ object ConcurrentBag:
                         Temporal[F].unit
                     }
                   else
-                    // Item not in list, add it now
-                    sharedList.update(item :: _) >>
+                    // Item not in list, add it with distribution
+                    sharedList.modify { list =>
+                      val newList = distributeItem(item, list)
+                      (newList, ())
+                    } >>
                       waiters.get.flatMap { waiting =>
                         if waiting > 0 then
                           // Try to hand off directly to a waiter
@@ -274,8 +287,11 @@ object ConcurrentBag:
       closed.get.flatMap {
         case true  => Temporal[F].unit
         case false =>
-          // Add to shared list
-          sharedList.update(item :: _) >>
+          // Add to shared list with distribution
+          sharedList.modify { list =>
+            val newList = distributeItem(item, list)
+            (newList, ())
+          } >>
             // Try to satisfy a waiter immediately
             waiters.get.flatMap { waiting =>
               if waiting > 0 then
@@ -309,3 +325,14 @@ object ConcurrentBag:
     override def values: F[List[T]] = sharedList.get
 
     override def close: F[Unit] = closed.set(true)
+
+    // Helper method to distribute items across the list to reduce contention
+    private def distributeItem(item: T, list: List[T]): List[T] =
+      if list.isEmpty then item :: list
+      else
+        // Use a simple hash of the item to determine position
+        val idx = Math.abs(item.hashCode()) % (list.length + 1)
+        if idx == 0 then item :: list
+        else
+          val (front, back) = list.splitAt(idx - 1)
+          front ++ (item :: back)
