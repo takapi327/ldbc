@@ -43,10 +43,10 @@ plot_config = {
     'Select': {
         'xlabel': 'Record size',
         'ylabel': 'Throughput (ops/s)',
-        'xmin': 0,
-        'ymin': 20,
-        'xstep': 1000,
-        'ystep': 10,
+        'xmin': 500,
+        'ymin': 100,
+        'xstep': 500,
+        'ystep': 50,
     },
 }
 

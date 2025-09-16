@@ -7,9 +7,11 @@
 package benchmark.connector.jdbc
 
 import java.time.*
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 import scala.compiletime.uninitialized
+import scala.concurrent.ExecutionContext
 
 import org.openjdk.jmh.annotations.*
 
@@ -26,11 +28,13 @@ import ldbc.connector.syntax.*
 
 import jdbc.connector.*
 
-import ldbc.DataSource
-
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
 @State(Scope.Benchmark)
+@Fork(value = 1, jvmArgs = Array("-Xms4G", "-Xmx4G", "-XX:+UseG1GC", "-XX:MaxGCPauseMillis=200"))
+@Warmup(iterations = 5)
+@Measurement(iterations = 10)
+@Threads(1)
 class Select:
 
   type BenchmarkType = (
@@ -52,8 +56,12 @@ class Select:
     LocalDateTime
   )
 
+  private val threadPoolSize  = Math.max(4, Runtime.getRuntime.availableProcessors())
+  private val executorService = Executors.newFixedThreadPool(threadPoolSize)
+  private val ex              = ExecutionContext.fromExecutor(executorService)
+
   @volatile
-  var datasource: DataSource[IO] = uninitialized
+  var connection: Connection[IO] = uninitialized
 
   @Setup
   def setupDataSource(): Unit =
@@ -65,35 +73,37 @@ class Select:
     ds.setPassword("password")
     ds.setUseSSL(true)
 
-    datasource = MySQLDataSource.fromDataSource[IO](ds, ExecutionContexts.synchronous)
+    val datasource = MySQLDataSource.fromDataSource[IO](ds, ex)
 
-  @Param(Array("100", "1000", "2000", "4000"))
+    connection = datasource.getConnection.allocated.unsafeRunSync()._1
+
+  @TearDown(Level.Trial)
+  def tearDown(): Unit =
+    connection.close().unsafeRunSync()
+    executorService.shutdown()
+    executorService.awaitTermination(10, TimeUnit.SECONDS)
+
+  @Param(Array("500", "1000", "1500", "2000"))
   var len: Int = uninitialized
 
   @Benchmark
   def statement: List[BenchmarkType] =
-    datasource.getConnection
-      .use { conn =>
-        for
-          statement <- conn.createStatement()
-          resultSet <- statement.executeQuery(s"SELECT * FROM jdbc_statement_test LIMIT $len")
-          decoded   <- consume(resultSet)
-        yield decoded
-      }
-      .unsafeRunSync()
+    (for
+      statement <- connection.createStatement()
+      resultSet <- statement.executeQuery(s"SELECT * FROM jdbc_prepare_statement_test LIMIT $len")
+      decoded   <- consume(resultSet)
+      _         <- statement.close()
+    yield decoded).unsafeRunSync()
 
   @Benchmark
   def prepareStatement: List[BenchmarkType] =
-    datasource.getConnection
-      .use { conn =>
-        for
-          statement <- conn.prepareStatement("SELECT * FROM jdbc_prepare_statement_test LIMIT ?")
-          _         <- statement.setInt(1, len)
-          resultSet <- statement.executeQuery()
-          decoded   <- consume(resultSet)
-        yield decoded
-      }
-      .unsafeRunSync()
+    (for
+      statement <- connection.prepareStatement("SELECT * FROM jdbc_prepare_statement_test LIMIT ?")
+      _         <- statement.setInt(1, len)
+      resultSet <- statement.executeQuery()
+      decoded   <- consume(resultSet)
+      _         <- statement.close()
+    yield decoded).unsafeRunSync()
 
   private def consume(resultSet: ResultSet[IO]): IO[List[BenchmarkType]] =
     resultSet.whileM[List, BenchmarkType] {
