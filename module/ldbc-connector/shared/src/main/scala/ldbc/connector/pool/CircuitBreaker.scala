@@ -48,10 +48,10 @@ trait CircuitBreaker[F[_]]:
 
 object CircuitBreaker:
 
-  sealed trait State
-  case object Closed   extends State
-  case object Open     extends State
-  case object HalfOpen extends State
+  enum State:
+    case Closed
+    case Open
+    case HalfOpen
 
   case class Config(
     maxFailures:              Int            = 5,
@@ -71,7 +71,7 @@ object CircuitBreaker:
     config: Config = Config()
   ): F[CircuitBreaker[F]] =
     for
-      stateRef            <- Ref[F].of[State](Closed)
+      stateRef            <- Ref[F].of[State](State.Closed)
       failures            <- Ref[F].of(0)
       lastFailureTime     <- Ref[F].of(0L)
       currentResetTimeout <- Ref[F].of(config.resetTimeout)
@@ -93,16 +93,16 @@ object CircuitBreaker:
 
     override def protect[A](action: F[A]): F[A] =
       stateRef.get.flatMap {
-        case Closed =>
+        case State.Closed =>
           action.handleErrorWith { error =>
             recordFailure >> Temporal[F].raiseError(error)
           }
 
-        case Open =>
+        case State.Open =>
           checkIfShouldTransitionToHalfOpen.flatMap { shouldTransition =>
             if shouldTransition then
               // Transition to half-open and try
-              stateRef.set(HalfOpen) >> protect(action)
+              stateRef.set(State.HalfOpen) >> protect(action)
             else
               // Still open, fail fast
               Temporal[F].raiseError(
@@ -110,24 +110,23 @@ object CircuitBreaker:
               )
           }
 
-        case HalfOpen =>
+        case State.HalfOpen =>
           // Single test request
           action
             .handleErrorWith { error =>
               // Failed again, back to open with increased timeout
-              for
-                _              <- stateRef.set(Open)
-                _              <- failuresRef.set(0)
-                currentTimeout <- currentResetTimeoutRef.get
-                newTimeout = FiniteDuration(
-                               (currentTimeout.toNanos * config.exponentialBackoffFactor).toLong
-                                 .min(config.maxResetTimeout.toNanos),
-                               TimeUnit.NANOSECONDS
-                             )
-                _ <- currentResetTimeoutRef.set(newTimeout)
-                _ <- Clock[F].realTime.flatMap(now => lastFailureTimeRef.set(now.toMillis))
-                _ <- Temporal[F].raiseError[A](error)
-              yield ??? // Never reached due to raiseError
+              stateRef.set(State.Open) *>
+                failuresRef.set(0) *>
+                currentResetTimeoutRef.get.flatMap { currentTimeout =>
+                  val newTimeout = FiniteDuration(
+                    (currentTimeout.toNanos * config.exponentialBackoffFactor).toLong
+                      .min(config.maxResetTimeout.toNanos),
+                    TimeUnit.NANOSECONDS
+                  )
+                  currentResetTimeoutRef.set(newTimeout)
+                } *>
+                Clock[F].realTime.flatMap(now => lastFailureTimeRef.set(now.toMillis)) *>
+                Temporal[F].raiseError[A](error)
             }
             .flatMap { result =>
               // Success, close the circuit
@@ -139,7 +138,7 @@ object CircuitBreaker:
       failuresRef.updateAndGet(_ + 1).flatMap { failures =>
         if failures >= config.maxFailures then
           for
-            _ <- stateRef.set(Open)
+            _ <- stateRef.set(State.Open)
             _ <- Clock[F].realTime.flatMap(now => lastFailureTimeRef.set(now.toMillis))
           yield ()
         else Temporal[F].unit
@@ -156,6 +155,6 @@ object CircuitBreaker:
     override def state: F[State] = stateRef.get
 
     override def reset: F[Unit] =
-      stateRef.set(Closed) >>
+      stateRef.set(State.Closed) >>
         failuresRef.set(0) >>
         currentResetTimeoutRef.set(config.resetTimeout)
