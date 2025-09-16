@@ -6,20 +6,28 @@
 
 package benchmark.pooling.jdbc
 
-import cats.*
-import cats.effect.*
-import cats.effect.unsafe.implicits.global
-import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
-import jdbc.connector.*
-import ldbc.DataSource
-import ldbc.connector.syntax.*
-import ldbc.sql.*
-import org.openjdk.jmh.annotations.*
-
 import java.time.*
-import java.util.concurrent.{Executors, TimeUnit}
+import java.util.concurrent.{ Executors, TimeUnit }
+
 import scala.compiletime.uninitialized
 import scala.concurrent.ExecutionContext
+
+import org.openjdk.jmh.annotations.*
+
+import com.zaxxer.hikari.{ HikariConfig, HikariDataSource }
+
+import cats.*
+
+import cats.effect.*
+import cats.effect.unsafe.implicits.global
+
+import ldbc.sql.*
+
+import ldbc.connector.syntax.*
+
+import jdbc.connector.*
+
+import ldbc.DataSource
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
@@ -49,9 +57,9 @@ class Select:
     LocalDateTime
   )
 
-  private val threadPoolSize = Math.max(4, Runtime.getRuntime.availableProcessors())
+  private val threadPoolSize  = Math.max(4, Runtime.getRuntime.availableProcessors())
   private val executorService = Executors.newFixedThreadPool(threadPoolSize)
-  private val ex = ExecutionContext.fromExecutor(executorService)
+  private val ex              = ExecutionContext.fromExecutor(executorService)
 
   @volatile
   var datasource: (DataSource[IO], IO[Unit]) = uninitialized
@@ -73,16 +81,15 @@ class Select:
     config.setValidationTimeout(10000)
     config.setConnectionTestQuery("SELECT 1")
     config.setLeakDetectionThreshold(0)
-    
+
     // プール作成前に少し待機して、初期化の安定性を向上
     Thread.sleep(1000)
 
     val ds = new HikariDataSource(config)
 
-    datasource = (for
-      hikari     <- Resource.fromAutoCloseable(IO(ds))
+    datasource = (for hikari <- Resource.fromAutoCloseable(IO(ds))
     yield MySQLDataSource.fromDataSource[IO](hikari, ex)).allocated.unsafeRunSync()
-    
+
     // プール初期化後も少し待機して、全ての接続が確立されるのを待つ
     Thread.sleep(2000)
 
@@ -103,7 +110,7 @@ class Select:
           statement <- conn.createStatement()
           resultSet <- statement.executeQuery(s"SELECT * FROM jdbc_prepare_statement_test LIMIT $len")
           decoded   <- consume(resultSet)
-          _ <- statement.close()
+          _         <- statement.close()
         yield decoded
       }
       .unsafeRunSync()
@@ -113,11 +120,11 @@ class Select:
     datasource._1.getConnection
       .use { conn =>
         for
-          statement  <- conn.prepareStatement("SELECT * FROM jdbc_prepare_statement_test LIMIT ?")
+          statement <- conn.prepareStatement("SELECT * FROM jdbc_prepare_statement_test LIMIT ?")
           _         <- statement.setInt(1, len)
           resultSet <- statement.executeQuery()
           decoded   <- consume(resultSet)
-          _ <- statement.close()
+          _         <- statement.close()
         yield decoded
       }
       .unsafeRunSync()

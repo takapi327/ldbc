@@ -6,18 +6,23 @@
 
 package benchmark.pooling.ldbc
 
-import cats.*
-import cats.effect.*
-import cats.effect.unsafe.implicits.global
-import ldbc.connector.*
-import ldbc.connector.syntax.*
-import ldbc.sql.ResultSet
-import org.openjdk.jmh.annotations.*
-
 import java.time.*
 import java.util.concurrent.TimeUnit
+
 import scala.compiletime.uninitialized
 import scala.concurrent.duration.*
+
+import org.openjdk.jmh.annotations.*
+
+import cats.*
+
+import cats.effect.*
+import cats.effect.unsafe.implicits.global
+
+import ldbc.sql.ResultSet
+
+import ldbc.connector.*
+import ldbc.connector.syntax.*
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
@@ -76,9 +81,9 @@ class Select:
 
     // プール作成前に少し待機して、初期化の安定性を向上
     Thread.sleep(1000)
-    
+
     datasource = MySQLDataSource.pooling[IO](poolConfig).allocated.unsafeRunSync()
-    
+
     // プール初期化後も少し待機して、全ての接続が確立されるのを待つ
     Thread.sleep(2000)
 
@@ -97,7 +102,7 @@ class Select:
           statement <- conn.createStatement()
           resultSet <- statement.executeQuery(s"SELECT * FROM jdbc_prepare_statement_test LIMIT $len")
           decoded   <- consume(resultSet)
-          _ <- statement.close()
+          _         <- statement.close()
         yield decoded
       }
       .unsafeRunSync()
@@ -107,11 +112,11 @@ class Select:
     datasource._1.getConnection
       .use { conn =>
         for
-          statement  <- conn.prepareStatement("SELECT * FROM jdbc_prepare_statement_test LIMIT ?")
+          statement <- conn.prepareStatement("SELECT * FROM jdbc_prepare_statement_test LIMIT ?")
           _         <- statement.setInt(1, len)
           resultSet <- statement.executeQuery()
           decoded   <- consume(resultSet)
-          _ <- statement.close()
+          _         <- statement.close()
         yield decoded
       }
       .unsafeRunSync()

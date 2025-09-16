@@ -201,14 +201,13 @@ object ConcurrentBag:
 
     private def borrowWithBackoff(retries: Int): F[Option[T]] =
       tryBorrowFromShared.flatMap {
-        case Some(item) => Temporal[F].pure(Some(item))
+        case Some(item)          => Temporal[F].pure(Some(item))
         case None if retries < 3 =>
           // Exponential backoff: 1ms, 2ms, 4ms
           val backoffTime = (1 << retries).millis
           Temporal[F].sleep(backoffTime) >> borrowWithBackoff(retries + 1)
         case None => Temporal[F].pure(None)
       }
-
 
     private def tryBorrowFromShared: F[Option[T]] =
       // Use round-robin to distribute load evenly
@@ -225,7 +224,7 @@ object ConcurrentBag:
     private def tryBorrowFromListShared(list: List[T], startIdx: Int, offset: Int, size: Int): F[Option[T]] =
       if offset >= size then Temporal[F].pure(None)
       else
-        val idx = (startIdx + offset) % size
+        val idx  = (startIdx + offset) % size
         val item = list(idx)
         item.compareAndSet(BagEntry.STATE_NOT_IN_USE, BagEntry.STATE_IN_USE).flatMap {
           case true  => Temporal[F].pure(Some(item))
