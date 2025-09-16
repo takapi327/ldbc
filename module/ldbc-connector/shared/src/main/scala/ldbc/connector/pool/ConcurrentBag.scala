@@ -138,7 +138,7 @@ object ConcurrentBag:
       handoffQueue <- Queue.unbounded[F, T]
       waiters      <- Ref[F].of(0)
       closed       <- Ref[F].of(false)
-      // Use a simple counter for round-robin distribution instead of fiber-local storage
+      // Use a simple counter for round-robin distribution
       borrowCounter <- Ref[F].of(0L)
     yield new ConcurrentBagImpl[F, T](
       sharedList,
@@ -209,7 +209,6 @@ object ConcurrentBag:
         case None => Temporal[F].pure(None)
       }
 
-    // Removed tryBorrowFromFiberLocal as we're not using fiber-local storage
 
     private def tryBorrowFromShared: F[Option[T]] =
       // Use round-robin to distribute load evenly
