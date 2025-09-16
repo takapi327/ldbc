@@ -7,8 +7,8 @@
 package benchmark.connector.jdbc
 
 import java.time.*
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 import scala.compiletime.uninitialized
 import scala.concurrent.ExecutionContext
@@ -56,9 +56,9 @@ class Select:
     LocalDateTime
   )
 
-  private val threadPoolSize = Math.max(4, Runtime.getRuntime.availableProcessors())
+  private val threadPoolSize  = Math.max(4, Runtime.getRuntime.availableProcessors())
   private val executorService = Executors.newFixedThreadPool(threadPoolSize)
-  private val ex = ExecutionContext.fromExecutor(executorService)
+  private val ex              = ExecutionContext.fromExecutor(executorService)
 
   @volatile
   var connection: Connection[IO] = uninitialized
@@ -72,7 +72,7 @@ class Select:
     ds.setUser("ldbc")
     ds.setPassword("password")
     ds.setUseSSL(true)
-    
+
     val datasource = MySQLDataSource.fromDataSource[IO](ds, ex)
 
     connection = datasource.getConnection.allocated.unsafeRunSync()._1
@@ -92,17 +92,17 @@ class Select:
       statement <- connection.createStatement()
       resultSet <- statement.executeQuery(s"SELECT * FROM jdbc_prepare_statement_test LIMIT $len")
       decoded   <- consume(resultSet)
-      _ <- statement.close()
+      _         <- statement.close()
     yield decoded).unsafeRunSync()
 
   @Benchmark
   def prepareStatement: List[BenchmarkType] =
     (for
-      statement  <- connection.prepareStatement("SELECT * FROM jdbc_prepare_statement_test LIMIT ?")
+      statement <- connection.prepareStatement("SELECT * FROM jdbc_prepare_statement_test LIMIT ?")
       _         <- statement.setInt(1, len)
       resultSet <- statement.executeQuery()
       decoded   <- consume(resultSet)
-      _ <- statement.close()
+      _         <- statement.close()
     yield decoded).unsafeRunSync()
 
   private def consume(resultSet: ResultSet[IO]): IO[List[BenchmarkType]] =

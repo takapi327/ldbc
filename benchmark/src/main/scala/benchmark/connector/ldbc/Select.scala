@@ -77,17 +77,17 @@ class Select:
       statement <- connection.createStatement()
       resultSet <- statement.executeQuery(s"SELECT * FROM jdbc_prepare_statement_test LIMIT $len")
       decoded   <- consume(resultSet)
-      _ <- statement.close()
+      _         <- statement.close()
     yield decoded).unsafeRunSync()
 
   @Benchmark
   def prepareStatement: List[BenchmarkType] =
     (for
-      statement  <- connection.prepareStatement("SELECT * FROM jdbc_prepare_statement_test LIMIT ?")
+      statement <- connection.prepareStatement("SELECT * FROM jdbc_prepare_statement_test LIMIT ?")
       _         <- statement.setInt(1, len)
       resultSet <- statement.executeQuery()
       decoded   <- consume(resultSet)
-      _ <- statement.close()
+      _         <- statement.close()
     yield decoded).unsafeRunSync()
 
   private def consume(resultSet: ResultSet[IO]): IO[List[BenchmarkType]] =
