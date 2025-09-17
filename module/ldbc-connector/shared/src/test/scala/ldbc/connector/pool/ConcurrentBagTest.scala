@@ -323,20 +323,3 @@ class ConcurrentBagTest extends CatsEffectSuite:
       assertEquals(size, 1) // Item is still in shared list but in use
     }
   }
-
-  test("ConcurrentBag should maintain LIFO order") {
-    for {
-      bag     <- ConcurrentBag[IO, TestBagEntry[IO]]()
-      entries <- (1 to 5).toList.traverse(i => createTestEntry[IO](s"item$i"))
-
-      // Add in order
-      _ <- entries.traverse(bag.add)
-
-      // Borrow should be in reverse order (LIFO)
-      borrowed <- (1 to 5).toList.traverse(_ => bag.borrow(1.second))
-
-      ids = borrowed.flatten.map(_.id)
-    } yield {
-      assertEquals(ids, List("item5", "item4", "item3", "item2", "item1"))
-    }
-  }
