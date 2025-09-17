@@ -17,8 +17,8 @@ import ldbc.connector.*
 def before: Connection[IO] => IO[Unit] = _ => IO.println("Connecting to...")
 def after: (Unit, Connection[IO]) => IO[Unit] = (_, _) => IO.println("Connection Closed")
 
-val provider =
-  ConnectionProvider
+val datasource =
+  MySQLDataSource
     ...
     .withBeforeAfter(before, after)
 ```

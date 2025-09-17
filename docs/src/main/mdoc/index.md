@@ -104,7 +104,7 @@ ds.setDatabaseName("world")
 ds.setUser("ldbc")
 ds.setPassword("password")
 
-val provider = ConnectionProvider.fromDataSource(ex, ExecutionContexts.synchronous)
+val connector = Connector.fromDataSource[IO](ds, ExecutionContexts.synchronous)
 ```
 
 **ldbc connector**
@@ -112,22 +112,24 @@ val provider = ConnectionProvider.fromDataSource(ex, ExecutionContexts.synchrono
 ```scala
 import ldbc.connector.*
 
-val provider =
-  ConnectionProvider
-    .default[IO]("127.0.0.1", 3306, "ldbc", "password", "ldbc")
+val datasource =
+  MySQLDataSource
+    .build[IO]("127.0.0.1", 3306, "ldbc")
+    .setPassword("password")
+    .setDatabase("ldbc")
     .setSSL(SSL.Trusted)
+
+val connector = Connector.fromDataSource(datasource)
 ```
 
 The connection process to the database can be carried out using the provider established by each of these methods.
 
 ```scala 3
-val result: IO[(List[Int], Option[Int], Int)] = provider.use { conn =>
-  (for
-    result1 <- sql"SELECT 1".toList[Int]
-    result2 <- sql"SELECT 2".headOption[Int]
-    result3 <- sql"SELECT 3".unsafe[Int]
-  yield (result1, result2, result3)).readOnly(conn)
-}
+val result: IO[(List[Int], Option[Int], Int)] = (for
+  result1 <- sql"SELECT 1".query[Int].to[List]
+  result2 <- sql"SELECT 2".query[Int].to[Option]
+  result3 <- sql"SELECT 3".query[Int].unsafe
+yield (result1, result2, result3)).readOnly(connector)
 ```
 
 #### Using the query builder
@@ -169,10 +171,9 @@ val userTable = TableQuery[User]
 Finally, you can use the query builder to create a query.
 
 ```scala
-val result: IO[List[User]] = provider.use { conn =>
-  userTable.selectAll.query.to[List].readOnly(conn)
+val result: IO[List[User]] =
+  userTable.selectAll.query.to[List].readOnly(connector)
   // "SELECT `id`, `name`, `age` FROM user"
-}
 ```
 
 #### Using the schema
@@ -217,10 +218,9 @@ Finally, you can use the query builder to create a query.
 
 ```scala
 val userTable: TableQuery[UserTable] = TableQuery[UserTable]
-val result: IO[List[User]] = provider.use { conn =>
-  userTable.selectAll.query.to[List].readOnly(conn)
+val result: IO[List[User]] =
+  userTable.selectAll.query.to[List].readOnly(connector)
   // "SELECT `id`, `name`, `age` FROM user"
-}
 ```
 
 ## Documentation

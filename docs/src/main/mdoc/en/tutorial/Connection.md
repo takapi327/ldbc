@@ -57,12 +57,12 @@ ds.setDatabaseName("world")
 ds.setUser("ldbc")
 ds.setPassword("password")
 
-// Create a connection provider
-val provider = ConnectionProvider
+// Create a datasource
+val datasource = MySQLDataSource
   .fromDataSource[IO](ds, ExecutionContexts.synchronous)
 
 // Use the connection
-val program = provider.use { connection =>
+val program = datasource.getConnection.use { connection =>
   connection.execute("SELECT 1")
 }
 ```
@@ -77,7 +77,7 @@ import cats.effect.IO
 import jdbc.connector.*
 
 // Create a provider from DriverManager
-val provider = ConnectionProvider
+val datasource = MySQLDataSource
   .fromDriverManager[IO]
   .apply(
     "com.mysql.cj.jdbc.Driver",
@@ -88,7 +88,7 @@ val provider = ConnectionProvider
   )
 
 // Use the connection
-val program = provider.use { connection =>
+val program = datasource.getConnection.use { connection =>
   connection.execute("SELECT 1")
 }
 ```
@@ -102,10 +102,10 @@ If you already have an established `java.sql.Connection` object, you can wrap an
 val jdbcConnection: java.sql.Connection = ???
 
 // Convert to ldbc connection
-val provider = ConnectionProvider.fromConnection[IO](jdbcConnection)
+val datasource = MySQLDataSource.fromConnection[IO](jdbcConnection)
 
 // Use the connection
-val program = provider.use { connection =>
+val program = datasource.getConnection.use { connection =>
   connection.execute("SELECT 1")
 }
 ```
@@ -131,13 +131,13 @@ import cats.effect.IO
 import ldbc.connector.*
 
 // Create a provider with basic configuration
-val provider = ConnectionProvider
-  .default[IO]("localhost", 3306, "ldbc")
+val datasource = MySQLDataSource
+  .build[IO]("localhost", 3306, "ldbc")
   .setPassword("password")
   .setDatabase("world")
 
 // Use the connection
-val program = provider.use { connection =>
+val program = datasource.getConnection.use { connection =>
   connection.execute("SELECT 1")
 }
 ```
@@ -152,12 +152,12 @@ You can add SSL configuration to establish a secure connection:
 import cats.effect.IO
 import ldbc.connector.*
 
-val provider = ConnectionProvider
+val datasource = MySQLDataSource
   .default[IO]("localhost", 3306, "ldbc", "password", "world")
   .setSSL(SSL.Trusted) // Enable SSL connection
 
 // Use the connection
-val program = provider.use { connection =>
+val program = datasource.getConnection.use { connection =>
   connection.execute("SELECT 1")
 }
 ```
@@ -186,8 +186,8 @@ import cats.effect.IO
 import fs2.io.net.SocketOption
 import ldbc.connector.*
 
-val provider = ConnectionProvider
-  .default[IO]("localhost", 3306, "ldbc")
+val datasource = MySQLDataSource
+  .build[IO]("localhost", 3306, "ldbc")
   .setPassword("password")
   .setDatabase("world")
   .setDebug(true)
@@ -198,7 +198,7 @@ val provider = ConnectionProvider
   .setLogHandler(customLogHandler) // Set custom log handler
 
 // Use the connection
-val program = provider.use { connection =>
+val program = datasource.getConnection.use { connection =>
   connection.execute("SELECT 1")
 }
 ```
@@ -211,8 +211,10 @@ If you want to execute specific processing after establishing a connection or be
 import cats.effect.IO
 import ldbc.connector.*
 
-val provider = ConnectionProvider
-  .default[IO]("localhost", 3306, "ldbc", "password", "world")
+val datasource = MySQLDataSource
+  .build[IO]("localhost", 3306, "ldbc")
+  .setPassword("password")
+  .setDatabase("world")
   .withBefore { connection =>
     // Processing executed after connection establishment
     connection.execute("SET time_zone = '+09:00'")
@@ -223,7 +225,7 @@ val provider = ConnectionProvider
   }
 
 // Use the connection
-val program = provider.use { connection =>
+val program = datasource.getConnection.use { connection =>
   connection.execute("SELECT NOW()")
 }
 ```
@@ -258,19 +260,19 @@ ldbc manages connection lifecycles using cats-effect's Resource. You can use con
 The `use` method is convenient for simple usage:
 
 ```scala
-val result = provider.use { connection =>
+val result = datasource.getConnection.use { connection =>
   // Processing using the connection
   connection.execute("SELECT * FROM users")
 }
 ```
 
-### createConnection Method
+### getConnection Method
 
-For more detailed resource management, use the `createConnection` method:
+For more detailed resource management, use the `getConnection` method:
 
 ```scala 3
 val program = for
-  result <- provider.createConnection().use { connection =>
+  result <- provider.getConnection().use { connection =>
     // Processing using the connection
     connection.execute("SELECT * FROM users")
   }

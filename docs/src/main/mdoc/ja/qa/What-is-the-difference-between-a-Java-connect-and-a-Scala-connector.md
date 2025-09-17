@@ -25,13 +25,9 @@ ds.setDatabaseName("world")
 ds.setUser("ldbc")
 ds.setPassword("password")
 
-val provider = ConnectionProvider.fromDataSource[IO](ex, ExecutionContexts.synchronous)
+val connector = Connector.fromDataSource[IO](ds, ExecutionContexts.synchronous)
 
-// JavaのJDBC APIに基づく接続の利用例
-provider.use { conn =>
-  // PreparedStatementなどを利用してSQLを実行
-  DBIO.pure(()).commit(conn)
-}
+DBIO.pure(()).commit(connector)
 ```
 
 ### A: Scalaのコネクタ（ldbc-connector）
@@ -46,17 +42,16 @@ import cats.effect.IO
 import ldbc.connector.*
 import ldbc.dsl.DBIO
 
-// ldbc-connectorを利用してコネクションを作成する例（JVM, Scala.js, Scala Native対応）
-val provider =
-  ConnectionProvider
-    .default[IO]("127.0.0.1", 3306, "ldbc", "password", "ldbc")
-    .setSSL(SSL.Trusted)
+// ldbc-connectorを利用してデータソースを作成する例（JVM, Scala.js, Scala Native対応）
+val datasource = MySQLDataSource
+  .build[IO]("127.0.0.1", 3306, "ldbc")
+  .setPassword("password")
+  .setDatabase("ldbc")
+  .setSSL(SSL.Trusted)
 
-// Scalaコネクタの利用例：内部でResourceを使って接続後に自動でクローズを保証
-provider.use { conn =>
-  // ldbc DSLやDBIOを使ってSQLを実行できる
-  DBIO.pure(()).commit(conn)
-}
+val connector = Connector.fromDataSource(datasource)
+
+DBIO.pure(()).commit(connector)
 ```
 
 ### A: 主な違い

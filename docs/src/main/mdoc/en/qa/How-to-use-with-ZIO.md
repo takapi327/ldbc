@@ -32,21 +32,23 @@ object Main extends ZIOAppDefault:
   given Hashing[Task] = Hashing.forSync[Task]
   given Network[Task] = Network.forAsync[Task]
 
-  private def provider =
-    ConnectionProvider
-      .default[Task]("127.0.0.1", 13306, "ldbc", "password", "world")
+  private def datasource =
+    MySQLDataSource
+      .build[Task]("127.0.0.1", 13306, "ldbc")
+      .setPassword("password")
+      .setDatabase("world")
       .setSSL(SSL.Trusted)
 
+  private val connector = Connector.fromDataSource(datasource)
+
   override def run =
-    provider.use { conn =>
-      sql"SELECT Name FROM city"
-        .query[String]
-        .to[List]
-        .readOnly(conn)
-        .flatMap { cities =>
-          Console.printLine(cities)
-        }
-    }
+    sql"SELECT Name FROM city"
+      .query[String]
+      .to[List]
+      .readOnly(connector)
+      .flatMap { cities =>
+        Console.printLine(cities)
+      }
 ```
 
 ### パフォーマンス
