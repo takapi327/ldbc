@@ -225,5 +225,4 @@ val ldbcConfig = MySQLConfig.default
 
 ## 参考資料
 - [コネクションプーリングアーキテクチャ](/ja/reference/Pooling.md)
-- [プール設定API](/ja/reference/MySQLConfig.md)
 - [パフォーマンスベンチマーク](/ja/reference/Pooling.md#ベンチマーク結果)
