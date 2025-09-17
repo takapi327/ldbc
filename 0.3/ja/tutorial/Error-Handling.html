@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="Typelevel Laika + Helium Theme" />
+  <title>エラーハンドリング</title>
+  
+  <meta name="author" content="ldbc contributors"/>
+  
+  <meta name="author" content="Takahiko Tominaga"/>
+  
+  
+  <meta name="description" content="Documentation for ldbc"/>
+  
+  
+  
+  <link rel="icon" sizes="32x32" type="image/png" href="https://typelevel.org/img/favicon.png"/>
+  
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700">
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Mono:500">
+  
+  <link rel="stylesheet" type="text/css" href="../../helium/site/icofont.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../helium/site/laika-helium.css" />
+    <link rel="stylesheet" type="text/css" href="../../css/site.css" />
+  <script src="../../helium/site/laika-helium.js"></script>
+    <script src="../../helium/site/laika-versions.js"></script>
+  <script>initVersions("../../../", "/ja/tutorial/Error-Handling.html", "0.3", null);</script>
+  
+  <script> /* for avoiding page load transitions */ </script>
+</head>
+
+<body>
+
+<header id="top-bar" class="light-default dark-default">
+
+  <div class="row">
+    <a id="nav-icon">
+      <i class="icofont-laika navigationMenu" title="Navigation">&#xefa2;</i>
+    </a>
+    
+    <div class="menu-container version-menu">
+      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <nav class="menu-content">
+        <ul class="nav-list">
+          <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <a class="image-link" href="https://typelevel.org"><img src="https://typelevel.org/img/logo.svg"></a>
+
+  <div class="row links">
+    
+    <a class="icon-link svg-link" href="https://github.com/takapi327/ldbc"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>  
+
+</header>
+
+<nav id="sidebar">
+
+  <div class="row">
+    
+    <a class="icon-link svg-link" href="https://github.com/takapi327/ldbc"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>
+
+  
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="../">ldbc</a></li>
+    <li class="level1 nav-leaf"><a href="../migration-notes.html">マイグレーションノート</a></li>
+    <li class="level1 nav-header">チュートリアル</li>
+    <li class="level2 nav-leaf"><a href="index.html">はじめに</a></li>
+    <li class="level2 nav-leaf"><a href="Setup.html">セットアップ</a></li>
+    <li class="level2 nav-leaf"><a href="Connection.html">コネクション</a></li>
+    <li class="level2 nav-leaf"><a href="Simple-Program.html">シンプルプログラム</a></li>
+    <li class="level2 nav-leaf"><a href="Database-Operations.html">データベース操作</a></li>
+    <li class="level2 nav-leaf"><a href="Parameterized-Queries.html">パラメータ</a></li>
+    <li class="level2 nav-leaf"><a href="Selecting-Data.html">データ選択</a></li>
+    <li class="level2 nav-leaf"><a href="Updating-Data.html">データ更新</a></li>
+    <li class="level2 active nav-leaf"><a href="#">エラーハンドリング</a></li>
+    <li class="level2 nav-leaf"><a href="Logging.html">ロギング</a></li>
+    <li class="level2 nav-leaf"><a href="Custom-Data-Type.html">カスタム データ型</a></li>
+    <li class="level2 nav-leaf"><a href="Query-Builder.html">クエリビルダー</a></li>
+    <li class="level2 nav-leaf"><a href="Schema.html">スキーマ</a></li>
+    <li class="level2 nav-leaf"><a href="Schema-Code-Generation.html">スキーマコード生成</a></li>
+    <li class="level1 nav-header">Examples</li>
+    <li class="level2 nav-leaf"><a href="../examples/">はじめに</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/Http4s.html">Http4s</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/HikariCP.html">HikariCP</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/Otel.html">OpenTelemetry</a></li>
+    <li class="level1 nav-header">QA</li>
+    <li class="level2 nav-leaf"><a href="../qa/">はじめに</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/What-is-ldbc.html">Q: ldbcとは何ですか？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Which-dependencies-should-I-set.html">Q: どの依存関係を設定すればよいですか？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/What-is-the-difference-between-a-Java-connect-and-a-Scala-connector.html">Q: JavaのコネクトとScalaのコネクタの違いは何ですか？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-define-complex-queries-with-plain-queries.html">Q: プレーンクエリで複雑なクエリを定義する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-my-own-type.html">Q: 独自の型を使うにはどうすればいいですか？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-nested-models.html">Q: ネストしたモデルを使うにはどうすればいいですか？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-perform-DDL-with-schema.html">Q: スキーマを使用したDDLを実行する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-change-column-names-in-Query-Builder.html">Q: クエリビルダーでカラム名を変更する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-change-the-format-of-column-names-using-the-schema.html">Q: スキーマを使用したカラム名のフォーマットを変更する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-add-processing-before-and-after-the-connection-is-established.html">Q: コネクション確立の前後に処理を追加する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Implicit-search-problem-too-large.html">Q: `Implicit search problem too large.`が発生する場合の対処方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-use-scala-connector-connection-pool.html">Q: Scalaコネクタでコネクションプールを使用する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Is-there-a-way-to-stream-query-results-asynchronously.html">Q: クエリの結果を非同期でストリーミングする方法はありますか？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Is-there-a-function-to-limit-the-number-of-concurrent-queries.html">Q: 同時実行のクエリ数を制限する機能はありますか？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-handle-multiple-databases.html">Q: 複数のデータベース（マルチテナント環境）を扱う方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-use-with-ZIO.html">Q: ZIOで使用する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-the-Enum-type.html">Q: Enum型の使い方は？</a></li>
+    <li class="level1 nav-header">Reference</li>
+    <li class="level2 nav-leaf"><a href="../reference/">はじめに</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Connector.html">コネクタ</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Performance.html">パフォーマンス</a></li>
+  </ul>
+  
+
+</nav>
+
+<div id="container">
+
+  
+<nav id="page-nav">
+  <p class="header"><a href="#">エラーハンドリング</a></p>
+
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="#エラーハンドリングの基本">エラーハンドリングの基本</a></li>
+    <li class="level1 nav-leaf"><a href="#データベース操作での例外の種類">データベース操作での例外の種類</a></li>
+    <li class="level1 nav-node"><a href="#エラー処理の基本的な使い方">エラー処理の基本的な使い方</a></li>
+    <li class="level2 nav-leaf"><a href="#例外の発生-raiseerror">例外の発生（raiseError）</a></li>
+    <li class="level2 nav-leaf"><a href="#エラーの処理-handleerrorwith">エラーの処理（handleErrorWith）</a></li>
+    <li class="level2 nav-leaf"><a href="#例外の捕捉-attempt">例外の捕捉（attempt）</a></li>
+    <li class="level1 nav-node"><a href="#実践的なエラー処理パターン">実践的なエラー処理パターン</a></li>
+    <li class="level2 nav-leaf"><a href="#リトライ機能の実装">リトライ機能の実装</a></li>
+    <li class="level2 nav-leaf"><a href="#ユーザー定義エラー型と-eithert-を使用したエラー処理">ユーザー定義エラー型と EitherT を使用したエラー処理</a></li>
+    <li class="level2 nav-leaf"><a href="#トランザクションとエラー処理の組み合わせ">トランザクションとエラー処理の組み合わせ</a></li>
+    <li class="level1 nav-leaf"><a href="#まとめ">まとめ</a></li>
+    <li class="level1 nav-leaf"><a href="#次のステップ">次のステップ</a></li>
+  </ul>
+
+  <p class="footer"></p>
+</nav>
+
+
+  <main class="content">
+
+    <h1 id="エラーハンドリング" class="title">エラーハンドリング</h1>
+    <p><a href="Database-Operations.html">データベース操作</a>で基本的なトランザクション管理を学びました。しかし、実際のアプリケーションでは、データベース接続の問題、SQL構文エラー、一意制約違反など、様々な理由でエラーが発生する可能性があります。このページでは、ldbcでエラーを適切に処理する方法を説明します。</p>
+    
+    <h2 id="エラーハンドリングの基本" class="section"><a class="anchor-link left" href="#エラーハンドリングの基本"><i class="icofont-laika link">&#xef71;</i></a>エラーハンドリングの基本</h2>
+    <p>ldbcは関数型プログラミングの原則に従っており、Cats Effectのエラー処理機能と統合されています。<code>DBIO</code> モナドは <code>MonadThrow</code> のインスタンスを持っているため、例外の発生や処理のための標準的な関数型インターフェースを提供します。</p>
+    <p>主に使用する3つの基本的なエラー処理メソッドは次のとおりです：</p>
+    <ul>
+      <li><code>raiseError</code>: 例外を発生させる - <code>Throwable</code>を<code>DBIO[A]</code>に変換します</li>
+      <li><code>handleErrorWith</code>: 例外を処理する - エラー処理関数を使って<code>DBIO[A]</code>を別の<code>DBIO[A]</code>に変換します</li>
+      <li><code>attempt</code>: 例外を捕捉する - <code>DBIO[A]</code>を<code>DBIO[Either[Throwable, A]]</code>に変換します</li>
+    </ul>
+    
+    <h2 id="データベース操作での例外の種類" class="section"><a class="anchor-link left" href="#データベース操作での例外の種類"><i class="icofont-laika link">&#xef71;</i></a>データベース操作での例外の種類</h2>
+    <p>ldbcを使用する際に遭遇する可能性のある主な例外の種類は次のとおりです：</p>
+    <ol class="arabic">
+      <li><strong>接続エラー</strong>: データベースサーバーに接続できない場合に発生します（例：<code>ConnectException</code>）</li>
+      <li>
+        <strong>SQL例外</strong>: SQLの実行中に発生するエラー（例：<code>SQLException</code>）
+        <ul>
+          <li>構文エラー</li>
+          <li>一意キー制約違反</li>
+          <li>外部キー制約違反</li>
+          <li>タイムアウト</li>
+        </ul>
+      </li>
+      <li><strong>型変換エラー</strong>: データベースの結果を期待する型に変換できない場合（例：<code>ldbc.dsl.exception.DecodeFailureException</code>）</li>
+    </ol>
+    
+    <h2 id="エラー処理の基本的な使い方" class="section"><a class="anchor-link left" href="#エラー処理の基本的な使い方"><i class="icofont-laika link">&#xef71;</i></a>エラー処理の基本的な使い方</h2>
+    
+    <h3 id="例外の発生-raiseerror" class="section"><a class="anchor-link left" href="#例外の発生-raiseerror"><i class="icofont-laika link">&#xef71;</i></a>例外の発生（raiseError）</h3>
+    <p>特定の条件で明示的に例外を発生させる場合は、<code>raiseError</code>を使用します：</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">syntax</span><span>.</span><span class="identifier">all</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.*
+
+</span><span class="comment">// 特定の条件でエラーを発生させる例
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">validateUserId</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Int</span><span>): </span><span class="type-name">DBIO</span><span>[</span><span class="type-name">Int</span><span>] = 
+  </span><span class="keyword">if</span><span> </span><span class="identifier">id</span><span> &lt;= </span><span class="number-literal">0</span><span> </span><span class="keyword">then</span><span> 
+    </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">raiseError</span><span>[</span><span class="type-name">Int</span><span>](</span><span class="keyword">new</span><span> </span><span class="type-name">IllegalArgumentException</span><span>(</span><span class="string-literal">&quot;IDは正の値である必要があります&quot;</span><span>))
+  </span><span class="keyword">else</span><span> 
+    </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">pure</span><span>(</span><span class="identifier">id</span><span>)
+
+</span><span class="comment">// 使用例
+</span><span class="keyword">val</span><span> </span><span class="identifier">program</span><span>: </span><span class="type-name">DBIO</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="keyword">for</span><span>
+  </span><span class="identifier">id</span><span> &lt;- </span><span class="identifier">validateUserId</span><span>(</span><span class="number-literal">0</span><span>)
+  </span><span class="identifier">result</span><span> &lt;- </span><span class="string-literal">sql&quot;SELECT name FROM users WHERE id = </span><span class="substitution">$id</span><span class="string-literal">&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>].</span><span class="identifier">unsafe</span><span>
+</span><span class="keyword">yield</span><span> </span><span class="identifier">result</span><span>
+
+</span><span class="comment">// この例では、idが0のためエラーが発生し、後続のSQLは実行されません</span></code></pre>
+    
+    <h3 id="エラーの処理-handleerrorwith" class="section"><a class="anchor-link left" href="#エラーの処理-handleerrorwith"><i class="icofont-laika link">&#xef71;</i></a>エラーの処理（handleErrorWith）</h3>
+    <p>発生したエラーを処理するには、<code>handleErrorWith</code>メソッドを使用します：</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">sql</span><span>.</span><span class="type-name">SQLException</span><span>
+
+</span><span class="comment">// エラー処理の例
+</span><span class="keyword">val</span><span> </span><span class="identifier">findUserById</span><span>: </span><span class="type-name">DBIO</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="keyword">for</span><span>
+  </span><span class="identifier">userId</span><span> &lt;- </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">pure</span><span>(</span><span class="number-literal">123</span><span>)
+  </span><span class="identifier">result</span><span> &lt;- </span><span class="string-literal">sql&quot;SELECT name FROM users WHERE id = </span><span class="substitution">$userId</span><span class="string-literal">&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>].</span><span class="identifier">unsafe</span><span>.</span><span class="identifier">handleErrorWith</span><span> {
+    </span><span class="keyword">case</span><span> </span><span class="identifier">e</span><span>: </span><span class="type-name">SQLException</span><span> </span><span class="keyword">if</span><span> </span><span class="identifier">e</span><span>.</span><span class="identifier">getMessage</span><span>.</span><span class="identifier">contains</span><span>(</span><span class="string-literal">&quot;table &#39;users&#39; doesn&#39;t exist&quot;</span><span>) =&gt;
+      </span><span class="comment">// テーブルが存在しない場合のフォールバック
+</span><span>      </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">pure</span><span>(</span><span class="string-literal">&quot;ユーザーテーブルがまだ作成されていません&quot;</span><span>)
+    </span><span class="keyword">case</span><span> </span><span class="identifier">e</span><span>: </span><span class="type-name">SQLException</span><span> =&gt;
+      </span><span class="comment">// その他のSQLエラーの処理
+</span><span>      </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">pure</span><span>(</span><span class="string-literal">s&quot;データベースエラー: </span><span class="substitution">${e.getMessage}</span><span class="string-literal">&quot;</span><span>)
+    </span><span class="keyword">case</span><span> </span><span class="identifier">e</span><span>: </span><span class="type-name">Throwable</span><span> =&gt;
+      </span><span class="comment">// その他のエラーの処理
+</span><span>      </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">pure</span><span>(</span><span class="string-literal">s&quot;予期しないエラー: </span><span class="substitution">${e.getMessage}</span><span class="string-literal">&quot;</span><span>)
+  }
+</span><span class="keyword">yield</span><span> </span><span class="identifier">result</span></code></pre>
+    
+    <h3 id="例外の捕捉-attempt" class="section"><a class="anchor-link left" href="#例外の捕捉-attempt"><i class="icofont-laika link">&#xef71;</i></a>例外の捕捉（attempt）</h3>
+    <p>エラーを<code>Either</code>型で捕捉するには、<code>attempt</code>メソッドを使用します：</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">syntax</span><span>.</span><span class="identifier">all</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.*
+
+</span><span class="comment">// attempt を使って例外を捕捉する例
+</span><span class="keyword">val</span><span> </span><span class="identifier">safeOperation</span><span>: </span><span class="type-name">DBIO</span><span>[</span><span class="type-name">String</span><span>] = {
+  </span><span class="keyword">val</span><span> </span><span class="identifier">riskyOperation</span><span> = </span><span class="string-literal">sql&quot;SELECT * FROM potentially_missing_table&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>].</span><span class="identifier">unsafe</span><span>
+  
+  </span><span class="identifier">riskyOperation</span><span>.</span><span class="identifier">attempt</span><span>.</span><span class="identifier">flatMap</span><span> {
+    </span><span class="keyword">case</span><span> </span><span class="type-name">Right</span><span>(</span><span class="identifier">result</span><span>) =&gt; 
+      </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">pure</span><span>(</span><span class="string-literal">s&quot;操作成功: </span><span class="substitution">$result</span><span class="string-literal">&quot;</span><span>)
+    </span><span class="keyword">case</span><span> </span><span class="type-name">Left</span><span>(</span><span class="identifier">error</span><span>) =&gt; 
+      </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">pure</span><span>(</span><span class="string-literal">s&quot;エラーが発生しました: </span><span class="substitution">${error.getMessage}</span><span class="string-literal">&quot;</span><span>)
+  }
+}</span></code></pre>
+    
+    <h2 id="実践的なエラー処理パターン" class="section"><a class="anchor-link left" href="#実践的なエラー処理パターン"><i class="icofont-laika link">&#xef71;</i></a>実践的なエラー処理パターン</h2>
+    <p>実際のアプリケーションで役立つエラー処理パターンをいくつか紹介します。</p>
+    
+    <h3 id="リトライ機能の実装" class="section"><a class="anchor-link left" href="#リトライ機能の実装"><i class="icofont-laika link">&#xef71;</i></a>リトライ機能の実装</h3>
+    <p>一時的なデータベース接続エラーに対して自動的にリトライを行う例：</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">scala</span><span>.</span><span class="identifier">concurrent</span><span>.</span><span class="identifier">duration</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.{</span><span class="type-name">IO</span><span>, </span><span class="type-name">Sync</span><span>}
+</span><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="identifier">syntax</span><span>.</span><span class="identifier">all</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">syntax</span><span>.</span><span class="identifier">all</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.*
+
+</span><span class="comment">// リトライ処理の実装例 - IOとDBIOを組み合わせた場合
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">retryWithBackoff</span><span>[</span><span class="type-name">F</span><span>[</span><span class="identifier">_</span><span>]: </span><span class="type-name">Sync</span><span>, </span><span class="type-name">A</span><span>](
+  </span><span class="identifier">dbioOperation</span><span>: </span><span class="type-name">DBIO</span><span>[</span><span class="type-name">A</span><span>], 
+  </span><span class="identifier">connection</span><span>: </span><span class="type-name">Connection</span><span>[</span><span class="type-name">F</span><span>],
+  </span><span class="identifier">maxRetries</span><span>: </span><span class="type-name">Int</span><span> = </span><span class="number-literal">3</span><span>, 
+  </span><span class="identifier">initialDelay</span><span>: </span><span class="type-name">FiniteDuration</span><span> = </span><span class="number-literal">100</span><span>.</span><span class="identifier">millis</span><span>,
+  </span><span class="identifier">maxDelay</span><span>: </span><span class="type-name">FiniteDuration</span><span> = </span><span class="number-literal">2</span><span>.</span><span class="identifier">seconds</span><span>
+): </span><span class="type-name">F</span><span>[</span><span class="type-name">A</span><span>] =
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">retryLoop</span><span>(</span><span class="identifier">remainingRetries</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">delay</span><span>: </span><span class="type-name">FiniteDuration</span><span>): </span><span class="type-name">F</span><span>[</span><span class="type-name">A</span><span>] =
+    </span><span class="comment">// DBIOをF型（例：IO）に変換して実行
+</span><span>    </span><span class="identifier">dbioOperation</span><span>.</span><span class="identifier">run</span><span>(</span><span class="identifier">connection</span><span>).</span><span class="identifier">handleErrorWith</span><span> { </span><span class="identifier">error</span><span> =&gt;
+      </span><span class="keyword">if</span><span> </span><span class="identifier">remainingRetries</span><span> &gt; </span><span class="number-literal">0</span><span> &amp;&amp; </span><span class="identifier">isTransientError</span><span>(</span><span class="identifier">error</span><span>) </span><span class="keyword">then</span><span>
+        </span><span class="comment">// 一時的なエラーの場合は遅延してリトライ
+</span><span>        </span><span class="keyword">val</span><span> </span><span class="identifier">nextDelay</span><span> = (</span><span class="identifier">delay</span><span> * </span><span class="number-literal">2</span><span>).</span><span class="identifier">min</span><span>(</span><span class="identifier">maxDelay</span><span>)
+        </span><span class="type-name">Sync</span><span>[</span><span class="type-name">F</span><span>].</span><span class="identifier">sleep</span><span>(</span><span class="identifier">delay</span><span>) &gt;&gt; </span><span class="identifier">retryLoop</span><span>(</span><span class="identifier">remainingRetries</span><span> - </span><span class="number-literal">1</span><span>, </span><span class="identifier">nextDelay</span><span>)
+      </span><span class="keyword">else</span><span>
+        </span><span class="comment">// リトライ回数を超えた場合や永続的なエラーの場合は例外を再スロー
+</span><span>        </span><span class="type-name">Sync</span><span>[</span><span class="type-name">F</span><span>].</span><span class="identifier">raiseError</span><span>[</span><span class="type-name">A</span><span>](</span><span class="identifier">error</span><span>)
+    }
+  
+  </span><span class="identifier">retryLoop</span><span>(</span><span class="identifier">maxRetries</span><span>, </span><span class="identifier">initialDelay</span><span>)
+
+</span><span class="comment">// 具体的なIO型での使用例
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">retryDatabaseOperation</span><span>[</span><span class="type-name">A</span><span>](
+  </span><span class="identifier">operation</span><span>: </span><span class="type-name">DBIO</span><span>[</span><span class="type-name">A</span><span>],
+  </span><span class="identifier">connection</span><span>: </span><span class="type-name">Connection</span><span>[</span><span class="type-name">IO</span><span>],
+  </span><span class="identifier">maxRetries</span><span>: </span><span class="type-name">Int</span><span> = </span><span class="number-literal">3</span><span>
+): </span><span class="type-name">IO</span><span>[</span><span class="type-name">A</span><span>] =
+  </span><span class="identifier">retryWithBackoff</span><span>(</span><span class="identifier">operation</span><span>, </span><span class="identifier">connection</span><span>, </span><span class="identifier">maxRetries</span><span>)
+
+</span><span class="comment">// 一時的なエラーかどうかを判断するヘルパーメソッド
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">isTransientError</span><span>(</span><span class="identifier">error</span><span>: </span><span class="type-name">Throwable</span><span>): </span><span class="type-name">Boolean</span><span> =
+  </span><span class="identifier">error</span><span> </span><span class="keyword">match</span><span>
+    </span><span class="keyword">case</span><span> </span><span class="identifier">e</span><span>: </span><span class="type-name">SQLException</span><span> </span><span class="keyword">if</span><span> </span><span class="identifier">e</span><span>.</span><span class="identifier">getSQLState</span><span> == </span><span class="string-literal">&quot;40001&quot;</span><span> =&gt; </span><span class="boolean-literal">true</span><span> </span><span class="comment">// デッドロックの場合
+</span><span>    </span><span class="keyword">case</span><span> </span><span class="identifier">e</span><span>: </span><span class="type-name">SQLException</span><span> </span><span class="keyword">if</span><span> </span><span class="identifier">e</span><span>.</span><span class="identifier">getSQLState</span><span> == </span><span class="string-literal">&quot;08006&quot;</span><span> =&gt; </span><span class="boolean-literal">true</span><span> </span><span class="comment">// 接続喪失の場合
+</span><span>    </span><span class="keyword">case</span><span> </span><span class="identifier">e</span><span>: </span><span class="type-name">Exception</span><span> </span><span class="keyword">if</span><span> </span><span class="identifier">e</span><span>.</span><span class="identifier">getMessage</span><span>.</span><span class="identifier">contains</span><span>(</span><span class="string-literal">&quot;connection reset&quot;</span><span>) =&gt; </span><span class="boolean-literal">true</span><span>
+    </span><span class="keyword">case</span><span> </span><span class="identifier">_</span><span> =&gt; </span><span class="boolean-literal">false</span><span>
+
+</span><span class="comment">// 使用例
+</span><span class="keyword">val</span><span> </span><span class="identifier">query</span><span> = </span><span class="string-literal">sql&quot;SELECT * FROM users&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>].</span><span class="identifier">unsafe</span><span>
+</span><span class="keyword">val</span><span> </span><span class="identifier">result</span><span> = </span><span class="identifier">retryDatabaseOperation</span><span>(</span><span class="identifier">query</span><span>, </span><span class="identifier">myConnection</span><span>)</span></code></pre>
+    
+    <h3 id="ユーザー定義エラー型と-eithert-を使用したエラー処理" class="section"><a class="anchor-link left" href="#ユーザー定義エラー型と-eithert-を使用したエラー処理"><i class="icofont-laika link">&#xef71;</i></a>ユーザー定義エラー型と EitherT を使用したエラー処理</h3>
+    <p>より詳細なエラー処理のために、アプリケーション固有のエラー型を定義する例：</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">data</span><span>.</span><span class="type-name">EitherT</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">syntax</span><span>.</span><span class="identifier">all</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.*
+
+</span><span class="comment">// アプリケーション固有のエラー型
+</span><span class="keyword">sealed</span><span> </span><span class="keyword">trait</span><span> </span><span class="type-name">AppDatabaseError</span><span>
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">UserNotFoundError</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Int</span><span>) </span><span class="keyword">extends</span><span> </span><span class="type-name">AppDatabaseError</span><span>
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">DuplicateUserError</span><span>(</span><span class="identifier">email</span><span>: </span><span class="type-name">String</span><span>) </span><span class="keyword">extends</span><span> </span><span class="type-name">AppDatabaseError</span><span>
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">DatabaseConnectionError</span><span>(</span><span class="identifier">cause</span><span>: </span><span class="type-name">Throwable</span><span>) </span><span class="keyword">extends</span><span> </span><span class="type-name">AppDatabaseError</span><span>
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">UnexpectedDatabaseError</span><span>(</span><span class="identifier">message</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">cause</span><span>: </span><span class="type-name">Throwable</span><span>) </span><span class="keyword">extends</span><span> </span><span class="type-name">AppDatabaseError</span><span>
+
+</span><span class="comment">// ユーザーモデル
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">User</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">email</span><span>: </span><span class="type-name">String</span><span>)
+
+</span><span class="comment">// EitherTを使ったエラー処理の例
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">findUserById</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Int</span><span>): </span><span class="type-name">EitherT</span><span>[</span><span class="type-name">DBIO</span><span>, </span><span class="type-name">AppDatabaseError</span><span>, </span><span class="type-name">User</span><span>] =
+  </span><span class="keyword">val</span><span> </span><span class="identifier">query</span><span> = </span><span class="string-literal">sql&quot;SELECT id, name, email FROM users WHERE id = </span><span class="substitution">$id</span><span class="string-literal">&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">Option</span><span>]
+
+  </span><span class="type-name">EitherT</span><span>(
+    </span><span class="identifier">query</span><span>.</span><span class="identifier">attempt</span><span>.</span><span class="identifier">map</span><span> {
+      </span><span class="keyword">case</span><span> </span><span class="type-name">Right</span><span>(</span><span class="identifier">user</span><span>) =&gt; </span><span class="identifier">user</span><span>.</span><span class="identifier">toRight</span><span>(</span><span class="type-name">UserNotFoundError</span><span>(</span><span class="identifier">id</span><span>))
+      </span><span class="keyword">case</span><span> </span><span class="type-name">Left</span><span>(</span><span class="identifier">e</span><span>: </span><span class="type-name">SQLException</span><span>) </span><span class="keyword">if</span><span> </span><span class="identifier">e</span><span>.</span><span class="identifier">getMessage</span><span>.</span><span class="identifier">contains</span><span>(</span><span class="string-literal">&quot;Connection refused&quot;</span><span>) =&gt;
+        </span><span class="type-name">Left</span><span>(</span><span class="type-name">DatabaseConnectionError</span><span>(</span><span class="identifier">e</span><span>))
+      </span><span class="keyword">case</span><span> </span><span class="type-name">Left</span><span>(</span><span class="identifier">e</span><span>) =&gt;
+        </span><span class="type-name">Left</span><span>(</span><span class="type-name">UnexpectedDatabaseError</span><span>(</span><span class="identifier">e</span><span>.</span><span class="identifier">getMessage</span><span>, </span><span class="identifier">e</span><span>))
+    }
+  )
+
+</span><span class="comment">// 使用例
+</span><span class="keyword">val</span><span> </span><span class="identifier">program</span><span> = </span><span class="keyword">for</span><span>
+  </span><span class="identifier">user</span><span> &lt;- </span><span class="identifier">findUserById</span><span>(</span><span class="number-literal">123</span><span>)
+  </span><span class="comment">// 他の操作...
+</span><span class="keyword">yield</span><span> </span><span class="identifier">user</span><span>
+
+</span><span class="comment">// 結果の処理
+</span><span class="keyword">val</span><span> </span><span class="identifier">result</span><span>: </span><span class="type-name">DBIO</span><span>[</span><span class="type-name">Either</span><span>[</span><span class="type-name">AppDatabaseError</span><span>, </span><span class="type-name">User</span><span>]] = </span><span class="identifier">program</span><span>.</span><span class="identifier">value</span><span>
+
+</span><span class="comment">// 最終的な処理
+</span><span class="keyword">val</span><span> </span><span class="identifier">finalResult</span><span>: </span><span class="type-name">DBIO</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">result</span><span>.</span><span class="identifier">flatMap</span><span> {
+  </span><span class="keyword">case</span><span> </span><span class="type-name">Right</span><span>(</span><span class="identifier">user</span><span>) =&gt; </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">pure</span><span>(</span><span class="string-literal">s&quot;ユーザーが見つかりました: </span><span class="substitution">${user.name}</span><span class="string-literal">&quot;</span><span>)
+  </span><span class="keyword">case</span><span> </span><span class="type-name">Left</span><span>(</span><span class="type-name">UserNotFoundError</span><span>(</span><span class="identifier">id</span><span>)) =&gt; </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">pure</span><span>(</span><span class="string-literal">s&quot;ID </span><span class="substitution">${id}</span><span class="string-literal"> のユーザーは存在しません&quot;</span><span>)
+  </span><span class="keyword">case</span><span> </span><span class="type-name">Left</span><span>(</span><span class="type-name">DatabaseConnectionError</span><span>(</span><span class="identifier">_</span><span>)) =&gt; </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">pure</span><span>(</span><span class="string-literal">&quot;データベース接続エラーが発生しました&quot;</span><span>)
+  </span><span class="keyword">case</span><span> </span><span class="type-name">Left</span><span>(</span><span class="identifier">error</span><span>) =&gt; </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">pure</span><span>(</span><span class="string-literal">s&quot;エラー: </span><span class="substitution">$error</span><span class="string-literal">&quot;</span><span>)
+}</span></code></pre>
+    
+    <h3 id="トランザクションとエラー処理の組み合わせ" class="section"><a class="anchor-link left" href="#トランザクションとエラー処理の組み合わせ"><i class="icofont-laika link">&#xef71;</i></a>トランザクションとエラー処理の組み合わせ</h3>
+    <p>トランザクション内でのエラー処理の例：</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="type-name">IO</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">syntax</span><span>.</span><span class="identifier">all</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">sql</span><span>.</span><span class="type-name">Connection</span><span>
+
+</span><span class="comment">// トランザクション内でのエラー処理
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">transferMoney</span><span>(</span><span class="identifier">fromAccount</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">toAccount</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">amount</span><span>: </span><span class="type-name">BigDecimal</span><span>): </span><span class="type-name">DBIO</span><span>[</span><span class="type-name">String</span><span>] =
+  </span><span class="keyword">val</span><span> </span><span class="identifier">operation</span><span> = </span><span class="keyword">for</span><span>
+    </span><span class="comment">// 送金元の残高を確認
+</span><span>    </span><span class="identifier">balance</span><span> &lt;- </span><span class="string-literal">sql&quot;SELECT balance FROM accounts WHERE id = </span><span class="substitution">$fromAccount</span><span class="string-literal">&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">BigDecimal</span><span>].</span><span class="identifier">unsafe</span><span>
+    
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="keyword">if</span><span> </span><span class="identifier">balance</span><span> &lt; </span><span class="identifier">amount</span><span> </span><span class="keyword">then</span><span>
+           </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">raiseError</span><span>[</span><span class="type-name">Unit</span><span>](</span><span class="keyword">new</span><span> </span><span class="type-name">IllegalStateException</span><span>(</span><span class="string-literal">s&quot;口座残高が不足しています: </span><span class="substitution">$balance</span><span class="string-literal"> &lt; </span><span class="substitution">$amount</span><span class="string-literal">&quot;</span><span>))
+         </span><span class="keyword">else</span><span>
+           </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">pure</span><span>(())
+           
+    </span><span class="comment">// 送金元から引き落とし
+</span><span>    </span><span class="identifier">_</span><span> &lt;- </span><span class="string-literal">sql&quot;UPDATE accounts SET balance = balance - </span><span class="substitution">$amount</span><span class="string-literal"> WHERE id = </span><span class="substitution">$fromAccount</span><span class="string-literal">&quot;</span><span>.</span><span class="identifier">update</span><span>.</span><span class="identifier">unsafe</span><span>
+    
+    </span><span class="comment">// 送金先に入金
+</span><span>    </span><span class="identifier">_</span><span> &lt;- </span><span class="string-literal">sql&quot;UPDATE accounts SET balance = balance + </span><span class="substitution">$amount</span><span class="string-literal"> WHERE id = </span><span class="substitution">$toAccount</span><span class="string-literal">&quot;</span><span>.</span><span class="identifier">update</span><span>.</span><span class="identifier">unsafe</span><span>
+    
+    </span><span class="comment">// 取引記録を作成
+</span><span>    </span><span class="identifier">_</span><span> &lt;- </span><span class="string-literal">sql&quot;&quot;&quot;INSERT INTO transactions (from_account, to_account, amount, timestamp) 
+         VALUES (</span><span class="substitution">$fromAccount</span><span class="string-literal">, </span><span class="substitution">$toAccount</span><span class="string-literal">, </span><span class="substitution">$amount</span><span class="string-literal">, NOW())&quot;&quot;&quot;</span><span>.</span><span class="identifier">update</span><span>.</span><span class="identifier">unsafe</span><span>
+  </span><span class="keyword">yield</span><span> </span><span class="string-literal">&quot;送金が完了しました&quot;</span><span>
+  
+  </span><span class="comment">// トランザクションとしてラップ（エラー発生時は自動的にロールバック）
+</span><span>  </span><span class="identifier">operation</span><span>.</span><span class="identifier">handleErrorWith</span><span> { </span><span class="identifier">error</span><span> =&gt;
+    </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">pure</span><span>(</span><span class="string-literal">s&quot;送金エラー: </span><span class="substitution">${error.getMessage}</span><span class="string-literal">&quot;</span><span>)
+  }
+
+</span><span class="comment">// 使用例
+</span><span class="keyword">val</span><span> </span><span class="identifier">fromAccount</span><span>: </span><span class="type-name">Int</span><span> = ???
+</span><span class="keyword">val</span><span> </span><span class="identifier">toAccount</span><span>: </span><span class="type-name">Int</span><span> = ???
+</span><span class="keyword">val</span><span> </span><span class="identifier">amount</span><span>: </span><span class="type-name">BigDecimal</span><span> = ???
+
+</span><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="identifier">transferMoney</span><span>(</span><span class="identifier">fromAccount</span><span>, </span><span class="identifier">toAccount</span><span>, </span><span class="identifier">amount</span><span>).</span><span class="identifier">transaction</span><span>(</span><span class="identifier">conn</span><span>)
+}</span></code></pre>
+    
+    <h2 id="まとめ" class="section"><a class="anchor-link left" href="#まとめ"><i class="icofont-laika link">&#xef71;</i></a>まとめ</h2>
+    <p>エラー処理は堅牢なデータベースアプリケーションの重要な側面です。ldbcでは、関数型プログラミングの原則に基づいた明示的なエラー処理が可能です。主なポイントは次のとおりです：</p>
+    <ul>
+      <li><code>raiseError</code>で例外を発生させる</li>
+      <li><code>handleErrorWith</code>で例外を処理する</li>
+      <li><code>attempt</code>で例外を<code>Either</code>として捕捉する</li>
+      <li>適切なエラー型を定義してアプリケーション固有のエラー処理を行う</li>
+      <li>トランザクションとエラー処理を組み合わせて、データの整合性を保つ</li>
+    </ul>
+    <p>これらのテクニックを活用することで、予期せぬエラーに強い、メンテナンスしやすいデータベース操作を実装できます。</p>
+    
+    <h2 id="次のステップ" class="section"><a class="anchor-link left" href="#次のステップ"><i class="icofont-laika link">&#xef71;</i></a>次のステップ</h2>
+    <p>エラー処理について理解したら、次は<a href="Logging.html">ロギング</a>に進み、クエリの実行やエラーをログに記録する方法を学びましょう。ロギングはデバッグやモニタリングのために重要です。</p>
+
+    
+<hr class="footer-rule"/>
+<footer>
+  ldbc is a <a href="https://typelevel.org/">Typelevel</a> project distributed under the <a href="https://img.shields.io/badge/license-MIT-green">MIT</a> license.
+</footer>
+
+
+  </main>
+
+</div>
+
+</body>
+
+</html>

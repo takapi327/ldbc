@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="Typelevel Laika + Helium Theme" />
+  <title>Connector</title>
+  
+  <meta name="author" content="ldbc contributors"/>
+  
+  <meta name="author" content="Takahiko Tominaga"/>
+  
+  
+  <meta name="description" content="Documentation for ldbc"/>
+  
+  
+  
+  <link rel="icon" sizes="32x32" type="image/png" href="https://typelevel.org/img/favicon.png"/>
+  
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700">
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Mono:500">
+  
+  <link rel="stylesheet" type="text/css" href="../../helium/site/icofont.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../helium/site/laika-helium.css" />
+    <link rel="stylesheet" type="text/css" href="../../css/site.css" />
+  <script src="../../helium/site/laika-helium.js"></script>
+    <script src="../../helium/site/laika-versions.js"></script>
+  <script>initVersions("../../../", "/en/reference/Connector.html", "0.3", null);</script>
+  
+  <script> /* for avoiding page load transitions */ </script>
+</head>
+
+<body>
+
+<header id="top-bar" class="light-default dark-default">
+
+  <div class="row">
+    <a id="nav-icon">
+      <i class="icofont-laika navigationMenu" title="Navigation">&#xefa2;</i>
+    </a>
+    
+    <div class="menu-container version-menu">
+      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <nav class="menu-content">
+        <ul class="nav-list">
+          <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <a class="image-link" href="https://typelevel.org"><img src="https://typelevel.org/img/logo.svg"></a>
+
+  <div class="row links">
+    
+    <a class="icon-link svg-link" href="https://github.com/takapi327/ldbc"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>  
+
+</header>
+
+<nav id="sidebar">
+
+  <div class="row">
+    
+    <a class="icon-link svg-link" href="https://github.com/takapi327/ldbc"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>
+
+  
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="../">ldbc</a></li>
+    <li class="level1 nav-leaf"><a href="../migration-notes.html">Migration Note</a></li>
+    <li class="level1 nav-header">Tutorial</li>
+    <li class="level2 nav-leaf"><a href="../tutorial/">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Setup.html">Setup</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Connection.html">Connection</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Simple-Program.html">Simple Programs</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Database-Operations.html">Database Operations</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Parameterized-Queries.html">Parameterized Queries</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Selecting-Data.html">Selecting Data</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Updating-Data.html">Updating Data</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Error-Handling.html">Error Handling</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Logging.html">logging</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Custom-Data-Type.html">Custom Data Types</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Query-Builder.html">Query Builder</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Schema.html">Schema</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Schema-Code-Generation.html">Schema Code Generation</a></li>
+    <li class="level1 nav-header">Examples</li>
+    <li class="level2 nav-leaf"><a href="../examples/">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/Http4s.html">Http4s</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/HikariCP.html">HikariCP</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/Otel.html">OpenTelemetry</a></li>
+    <li class="level1 nav-header">QA</li>
+    <li class="level2 nav-leaf"><a href="../qa/">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/What-is-ldbc.html">Q: What is ldbc?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Which-dependencies-should-I-set.html">Q: Which dependencies should I set?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/What-is-the-difference-between-a-Java-connect-and-a-Scala-connector.html">Q: What is the difference between a Java connector and a Scala connector?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-define-complex-queries-with-plain-queries.html">Q: How to define complex queries with plain queries?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-my-own-type.html">Q: How do I use my own type?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-nested-models.html">Q: How do I use nested models?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-perform-DDL-with-schema.html">Q: How to perform DDL with schema?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-change-column-names-in-Query-Builder.html">Q: How to change column names in Query Builder?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-change-the-format-of-column-names-using-the-schema.html">Q: How to change the format of column names using the schema?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-add-processing-before-and-after-the-connection-is-established.html">Q: How do I add processing before and after the connection is established?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Implicit-search-problem-too-large.html">Q: How to handle the `Implicit search problem too large.` error?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-use-scala-connector-connection-pool.html">Q: How to use connection pool with Scala connector?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Is-there-a-way-to-stream-query-results-asynchronously.html">Q: Is there a way to stream query results asynchronously?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Is-there-a-function-to-limit-the-number-of-concurrent-queries.html">Q: Is there a function to limit the number of concurrent queries?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-handle-multiple-databases.html">Q: How to handle multiple databases (multi-tenant environment)?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-use-with-ZIO.html">Q: How to use with ZIO?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-the-Enum-type.html">Q: How to use the Enum type?</a></li>
+    <li class="level1 nav-header">Reference</li>
+    <li class="level2 nav-leaf"><a href="index.html">Introduction</a></li>
+    <li class="level2 active nav-leaf"><a href="#">Connector</a></li>
+    <li class="level2 nav-leaf"><a href="Performance.html">Performance</a></li>
+  </ul>
+  
+
+</nav>
+
+<div id="container">
+
+  
+<nav id="page-nav">
+  <p class="header"><a href="#">Connector</a></p>
+
+  <ul class="nav-list">
+    <li class="level1 nav-node"><a href="#connection">Connection</a></li>
+    <li class="level2 nav-leaf"><a href="#authentication">Authentication</a></li>
+    <li class="level1 nav-node"><a href="#execution">Execution</a></li>
+    <li class="level2 nav-leaf"><a href="#statement">Statement</a></li>
+    <li class="level2 nav-leaf"><a href="#client-server-preparedstatement">Client/Server PreparedStatement</a></li>
+    <li class="level2 nav-leaf"><a href="#resultset">ResultSet</a></li>
+    <li class="level1 nav-node"><a href="#transaction">Transaction</a></li>
+    <li class="level2 nav-leaf"><a href="#transaction-isolation-level">Transaction Isolation Level</a></li>
+    <li class="level2 nav-leaf"><a href="#savepoints">Savepoints</a></li>
+    <li class="level1 nav-node"><a href="#utility-commands">Utility Commands</a></li>
+    <li class="level2 nav-leaf"><a href="#com-quit">COM QUIT</a></li>
+    <li class="level2 nav-leaf"><a href="#com-init-db">COM INIT DB</a></li>
+    <li class="level2 nav-leaf"><a href="#com-statistics">COM STATISTICS</a></li>
+    <li class="level2 nav-leaf"><a href="#com-ping">COM PING</a></li>
+    <li class="level2 nav-leaf"><a href="#com-change-user">COM CHANGE USER</a></li>
+    <li class="level2 nav-leaf"><a href="#com-reset-connection">COM RESET CONNECTION</a></li>
+    <li class="level2 nav-leaf"><a href="#com-set-option">COM SET OPTION</a></li>
+    <li class="level1 nav-node"><a href="#batch-commands">Batch Commands</a></li>
+    <li class="level2 nav-leaf"><a href="#difference-between-statement-and-preparedstatement">Difference Between Statement and PreparedStatement</a></li>
+    <li class="level1 nav-leaf"><a href="#executing-stored-procedures">Executing Stored Procedures</a></li>
+    <li class="level1 nav-leaf"><a href="#unsupported-features">Unsupported Features</a></li>
+  </ul>
+
+  <p class="footer"></p>
+</nav>
+
+
+  <main class="content">
+
+    <h1 id="connector" class="title">Connector</h1>
+    <p>This chapter describes database connections using ldbc&#39;s own MySQL connector.</p>
+    <p>To connect to MySQL databases in Scala, you need to use JDBC. JDBC is a standard Java API that can also be used in Scala.
+    Since JDBC is implemented in Java, when using it in Scala, it can only operate in the JVM environment.</p>
+    <p>In recent years, the Scala ecosystem has seen active development of plugins to enable operation in environments like JS and Native.
+    Scala continues to evolve from a language that only operates in JVM environments using Java assets to one that can operate in multi-platform environments.</p>
+    <p>However, JDBC is a standard Java API and does not support operation in Scala&#39;s multi-platform environments.</p>
+    <p>Therefore, even if you create a Scala application to run in JS, Native, etc., you cannot connect to databases like MySQL because JDBC cannot be used.</p>
+    <p>The Typelevel Project includes a Scala library for <a href="https://www.postgresql.org/">PostgreSQL</a> called <a href="https://github.com/typelevel/skunk">Skunk</a>.
+    This project does not use JDBC and achieves PostgreSQL connections using pure Scala. As a result, you can connect to PostgreSQL regardless of whether you&#39;re in JVM, JS, or Native environments when using Skunk.</p>
+    <p>The ldbc connector is a project being developed to enable MySQL connections regardless of whether you&#39;re in JVM, JS, or Native environments, inspired by Skunk.</p>
+    <p>The ldbc connector is the lowest layer API.
+    We plan to provide higher-layer APIs using this connector in the future. We also plan to maintain compatibility with existing higher-layer APIs.</p>
+    <p>To use it, you need to set up the following dependency in your project:</p>
+    <p><strong>JVM</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.3.3&quot;</span></code></pre>
+    <p><strong>JS/Native</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %%% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.3.3&quot;</span></code></pre>
+    <p><strong>Supported Versions</strong></p>
+    <p>The current version supports the following versions of MySQL:</p>
+    <ul>
+      <li>MySQL 5.7.x</li>
+      <li>MySQL 8.x</li>
+    </ul>
+    <p>The main support is for MySQL 8.x. MySQL 5.7.x is sub-supported. Therefore, caution is required when operating with MySQL 5.7.x.
+    In the future, support for MySQL 5.7.x is planned to be discontinued.</p>
+    
+    <h2 id="connection" class="section"><a class="anchor-link left" href="#connection"><i class="icofont-laika link">&#xef71;</i></a>Connection</h2>
+    <p>To connect to MySQL using the ldbc connector, use <code>ConnectionProvider</code>.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="type-name">IO</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.</span><span class="type-name">ConnectionProvider</span><span>
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">provider</span><span> = </span><span class="type-name">ConnectionProvider</span><span>
+  .</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>](
+    </span><span class="identifier">host</span><span> = </span><span class="string-literal">&quot;127.0.0.1&quot;</span><span>,
+    </span><span class="identifier">port</span><span> = </span><span class="number-literal">3306</span><span>,
+    </span><span class="identifier">user</span><span> = </span><span class="string-literal">&quot;root&quot;</span><span>,
+  )</span></code></pre>
+    <p>Below is a list of properties that can be set when constructing a <code>Connection</code>.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Property</th>
+          <th>Details</th>
+          <th>Required</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>host</code></td>
+          <td><code>Database host information</code></td>
+          <td>✅</td>
+        </tr>
+        <tr>
+          <td><code>port</code></td>
+          <td><code>Database port information</code></td>
+          <td>✅</td>
+        </tr>
+        <tr>
+          <td><code>user</code></td>
+          <td><code>Database user information</code></td>
+          <td>✅</td>
+        </tr>
+        <tr>
+          <td><code>password</code></td>
+          <td><code>Database password information (default: None)</code></td>
+          <td>❌</td>
+        </tr>
+        <tr>
+          <td><code>database</code></td>
+          <td><code>Database name information (default: None)</code></td>
+          <td>❌</td>
+        </tr>
+        <tr>
+          <td><code>debug</code></td>
+          <td><code>Whether to display debug information (default: false)</code></td>
+          <td>❌</td>
+        </tr>
+        <tr>
+          <td><code>ssl</code></td>
+          <td><code>SSL settings (default: SSL.None)</code></td>
+          <td>❌</td>
+        </tr>
+        <tr>
+          <td><code>socketOptions</code></td>
+          <td><code>Specify socket options for TCP/UDP sockets (default: defaultSocketOptions)</code></td>
+          <td>❌</td>
+        </tr>
+        <tr>
+          <td><code>readTimeout</code></td>
+          <td><code>Specify timeout duration (default: Duration.Inf)</code></td>
+          <td>❌</td>
+        </tr>
+        <tr>
+          <td><code>allowPublicKeyRetrieval</code></td>
+          <td><code>Whether to retrieve public key (default: false)</code></td>
+          <td>❌</td>
+        </tr>
+        <tr>
+          <td><code>logHandler</code></td>
+          <td><code>Log output settings</code></td>
+          <td>❌</td>
+        </tr>
+        <tr>
+          <td><code>before</code></td>
+          <td><code>Processing to be executed after connection is established</code></td>
+          <td>❌</td>
+        </tr>
+        <tr>
+          <td><code>after</code></td>
+          <td><code>Processing to be executed before disconnecting</code></td>
+          <td>❌</td>
+        </tr>
+        <tr>
+          <td><code>tracer</code></td>
+          <td><code>Tracer settings for metrics output (default: Tracer.noop)</code></td>
+          <td>❌</td>
+        </tr>
+      </tbody>
+    </table>
+    <p><code>ConnectionProvider</code> uses <code>Resource</code> for resource management. Therefore, when using connection information, use the <code>use</code> method to manage resources.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="comment">// Write code
+</span><span>}</span></code></pre>
+    
+    <h3 id="authentication" class="section"><a class="anchor-link left" href="#authentication"><i class="icofont-laika link">&#xef71;</i></a>Authentication</h3>
+    <p>In MySQL, authentication occurs when the client connects to the MySQL server and sends user information during the LoginRequest phase. The server then searches for the sent user in the <code>mysql.user</code> table and determines which authentication plugin to use. After determining the authentication plugin, the server calls the plugin to start user authentication and sends the result to the client. Thus, authentication in MySQL is pluggable (various types of plugins can be attached and detached).</p>
+    <p>The authentication plugins supported by MySQL are listed on the <a href="https://dev.mysql.com/doc/refman/8.0/en/authentication-plugins.html">official page</a>.</p>
+    <p>ldbc currently supports the following authentication plugins:</p>
+    <ul>
+      <li>Native Pluggable Authentication</li>
+      <li>SHA-256 Pluggable Authentication</li>
+      <li>SHA-2 Pluggable Authentication Cache</li>
+    </ul>
+    <p><em>Note: Native Pluggable Authentication and SHA-256 Pluggable Authentication are deprecated plugins from MySQL 8.x. It is recommended to use the SHA-2 Pluggable Authentication Cache unless there is a specific reason.</em></p>
+    <p>You do not need to be aware of authentication plugins in the ldbc application code. Users should create users with the desired authentication plugin on the MySQL database and use those users to attempt connections to MySQL in the ldbc application code.
+    ldbc internally determines the authentication plugin and connects to MySQL using the appropriate authentication plugin.</p>
+    
+    <h2 id="execution" class="section"><a class="anchor-link left" href="#execution"><i class="icofont-laika link">&#xef71;</i></a>Execution</h2>
+    <p>The following table is assumed to be used in subsequent processes.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">CREATE</span><span> </span><span class="keyword">TABLE</span><span> </span><span class="identifier">users</span><span> (
+  </span><span class="identifier">id</span><span> </span><span class="type-name">BIGINT</span><span> </span><span class="identifier">AUTO_INCREMENT</span><span> </span><span class="keyword">PRIMARY</span><span> </span><span class="keyword">KEY</span><span>,
+  </span><span class="identifier">name</span><span> </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">255</span><span>) </span><span class="keyword">NOT</span><span> </span><span class="literal-value">NULL</span><span>,
+  </span><span class="identifier">age</span><span> </span><span class="type-name">INT</span><span> </span><span class="literal-value">NULL</span><span>
+);</span></code></pre>
+    
+    <h3 id="statement" class="section"><a class="anchor-link left" href="#statement"><i class="icofont-laika link">&#xef71;</i></a>Statement</h3>
+    <p><code>Statement</code> is an API for executing SQL without dynamic parameters.</p>
+    <p><em>Note: Since <code>Statement</code> does not use dynamic parameters, there is a risk of SQL injection depending on how it is used. Therefore, it is recommended to use <code>PreparedStatement</code> when using dynamic parameters.</em></p>
+    <p>Use the <code>createStatement</code> method of <code>Connection</code> to construct a <code>Statement</code>.</p>
+    
+    <h4 id="read-query-1" class="section"><a class="anchor-link left" href="#read-query-1"><i class="icofont-laika link">&#xef71;</i></a>Read Query</h4>
+    <p>To execute read-only SQL, use the <code>executeQuery</code> method.</p>
+    <p>The values returned from the MySQL server as a result of executing the query are stored in <code>ResultSet</code> and returned as the return value.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="keyword">for</span><span>
+    </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">createStatement</span><span>()
+    </span><span class="identifier">result</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">executeQuery</span><span>(</span><span class="string-literal">&quot;SELECT * FROM users&quot;</span><span>)
+  </span><span class="keyword">yield</span><span>
+    </span><span class="comment">// Processing using ResultSet
+</span><span>}</span></code></pre>
+    
+    <h4 id="write-query-1" class="section"><a class="anchor-link left" href="#write-query-1"><i class="icofont-laika link">&#xef71;</i></a>Write Query</h4>
+    <p>To execute SQL for writing, use the <code>executeUpdate</code> method.</p>
+    <p>The values returned from the MySQL server as a result of executing the query are the number of affected rows returned as the return value.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="keyword">for</span><span>
+    </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">createStatement</span><span>()
+    </span><span class="identifier">result</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">executeUpdate</span><span>(</span><span class="string-literal">&quot;INSERT INTO users (name, age) VALUES (&#39;Alice&#39;, 20)&quot;</span><span>)
+  </span><span class="keyword">yield</span><span>
+}</span></code></pre>
+    
+    <h4 id="retrieve-auto_increment-value-1" class="section"><a class="anchor-link left" href="#retrieve-auto_increment-value-1"><i class="icofont-laika link">&#xef71;</i></a>Retrieve AUTO_INCREMENT Value</h4>
+    <p>To retrieve the AUTO_INCREMENT value after executing a query using <code>Statement</code>, use the <code>getGeneratedKeys</code> method.</p>
+    <p>The values returned from the MySQL server as a result of executing the query are the values generated by AUTO_INCREMENT returned as the return value.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="keyword">for</span><span>
+    </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">createStatement</span><span>()
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">executeUpdate</span><span>(</span><span class="string-literal">&quot;INSERT INTO users (name, age) VALUES (&#39;Alice&#39;, 20)&quot;</span><span>, </span><span class="type-name">Statement</span><span>.</span><span class="type-name">RETURN_GENERATED_KEYS</span><span>)
+    </span><span class="identifier">generatedKeys</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">getGeneratedKeys</span><span>()
+  </span><span class="keyword">yield</span><span>
+}</span></code></pre>
+    
+    <h3 id="client-server-preparedstatement" class="section"><a class="anchor-link left" href="#client-server-preparedstatement"><i class="icofont-laika link">&#xef71;</i></a>Client/Server PreparedStatement</h3>
+    <p>ldbc provides <code>PreparedStatement</code> divided into <code>Client PreparedStatement</code> and <code>Server PreparedStatement</code>.</p>
+    <p><code>Client PreparedStatement</code> is an API for constructing SQL with dynamic parameters on the application and sending it to the MySQL server.
+    Therefore, the query sending method to the MySQL server is the same as <code>Statement</code>.</p>
+    <p>This API corresponds to JDBC&#39;s <code>PreparedStatement</code>.</p>
+    <p>For a safer way to construct queries within the MySQL server, use <code>Server PreparedStatement</code>.</p>
+    <p><code>Server PreparedStatement</code> is an API for preparing queries to be executed within the MySQL server in advance and setting parameters on the application for execution.</p>
+    <p>With <code>Server PreparedStatement</code>, the query sending and parameter sending are separated, allowing query reuse.</p>
+    <p>When using <code>Server PreparedStatement</code>, prepare the query in advance on the MySQL server. The MySQL server uses memory to store it, but query reuse is possible, leading to performance improvements.</p>
+    <p>However, the prepared query continues to use memory until it is released, posing a risk of memory leaks.</p>
+    <p>When using <code>Server PreparedStatement</code>, use the <code>close</code> method to properly release the query.</p>
+    
+    <h4 id="client-preparedstatement" class="section"><a class="anchor-link left" href="#client-preparedstatement"><i class="icofont-laika link">&#xef71;</i></a>Client PreparedStatement</h4>
+    <p>Use the <code>clientPreparedStatement</code> method of <code>Connection</code> to construct a <code>Client PreparedStatement</code>.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="keyword">for</span><span> 
+    </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">clientPreparedStatement</span><span>(</span><span class="string-literal">&quot;SELECT * FROM users WHERE id = ?&quot;</span><span>)
+    ...
+  </span><span class="keyword">yield</span><span> ...
+}</span></code></pre>
+    
+    <h4 id="server-preparedstatement" class="section"><a class="anchor-link left" href="#server-preparedstatement"><i class="icofont-laika link">&#xef71;</i></a>Server PreparedStatement</h4>
+    <p>Use the <code>serverPreparedStatement</code> method of <code>Connection</code> to construct a <code>Server PreparedStatement</code>.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="keyword">for</span><span> 
+    </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">serverPreparedStatement</span><span>(</span><span class="string-literal">&quot;SELECT * FROM users WHERE id = ?&quot;</span><span>)
+    ...
+  </span><span class="keyword">yield</span><span> ...
+}</span></code></pre>
+    
+    <h4 id="read-query-2" class="section"><a class="anchor-link left" href="#read-query-2"><i class="icofont-laika link">&#xef71;</i></a>Read Query</h4>
+    <p>To execute read-only SQL, use the <code>executeQuery</code> method.</p>
+    <p>The values returned from the MySQL server as a result of executing the query are stored in <code>ResultSet</code> and returned as the return value.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="keyword">for</span><span> 
+    </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">clientPreparedStatement</span><span>(</span><span class="string-literal">&quot;SELECT * FROM users WHERE id = ?&quot;</span><span>) </span><span class="comment">// or conn.serverPreparedStatement(&quot;SELECT * FROM users WHERE id = ?&quot;)
+</span><span>    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">setLong</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="number-literal">1</span><span>)
+    </span><span class="identifier">result</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">executeQuery</span><span>()
+  </span><span class="keyword">yield</span><span>
+    </span><span class="comment">// Processing using ResultSet
+</span><span>}</span></code></pre>
+    <p>When using dynamic parameters, use the <code>setXXX</code> method to set the parameters.
+    The <code>setXXX</code> method can also use the <code>Option</code> type. If <code>None</code> is passed, NULL is set as the parameter.</p>
+    <p>The <code>setXXX</code> method specifies the parameter index and the parameter value.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">statement</span><span>.</span><span class="identifier">setLong</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="number-literal">1</span><span>)</span></code></pre>
+    <p>The following methods are currently supported.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Method</th>
+          <th>Type</th>
+          <th>Remarks</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>setNull</code></td>
+          <td></td>
+          <td>Sets NULL as the parameter</td>
+        </tr>
+        <tr>
+          <td><code>setBoolean</code></td>
+          <td><code>Boolean/Option[Boolean]</code></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td><code>setByte</code></td>
+          <td><code>Byte/Option[Byte]</code></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td><code>setShort</code></td>
+          <td><code>Short/Option[Short]</code></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td><code>setInt</code></td>
+          <td><code>Int/Option[Int]</code></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td><code>setLong</code></td>
+          <td><code>Long/Option[Long]</code></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td><code>setBigInt</code></td>
+          <td><code>BigInt/Option[BigInt]</code></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td><code>setFloat</code></td>
+          <td><code>Float/Option[Float]</code></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td><code>setDouble</code></td>
+          <td><code>Double/Option[Double]</code></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td><code>setBigDecimal</code></td>
+          <td><code>BigDecimal/Option[BigDecimal]</code></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td><code>setString</code></td>
+          <td><code>String/Option[String]</code></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td><code>setBytes</code></td>
+          <td><code>Array[Byte]/Option[Array[Byte]]</code></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td><code>setDate</code></td>
+          <td><code>LocalDate/Option[LocalDate]</code></td>
+          <td>Directly handles <code>java.time</code> instead of <code>java.sql</code>.</td>
+        </tr>
+        <tr>
+          <td><code>setTime</code></td>
+          <td><code>LocalTime/Option[LocalTime]</code></td>
+          <td>Directly handles <code>java.time</code> instead of <code>java.sql</code>.</td>
+        </tr>
+        <tr>
+          <td><code>setTimestamp</code></td>
+          <td><code>LocalDateTime/Option[LocalDateTime]</code></td>
+          <td>Directly handles <code>java.time</code> instead of <code>java.sql</code>.</td>
+        </tr>
+        <tr>
+          <td><code>setYear</code></td>
+          <td><code>Year/Option[Year]</code></td>
+          <td>Directly handles <code>java.time</code> instead of <code>java.sql</code>.</td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <h4 id="write-query-2" class="section"><a class="anchor-link left" href="#write-query-2"><i class="icofont-laika link">&#xef71;</i></a>Write Query</h4>
+    <p>To execute SQL for writing, use the <code>executeUpdate</code> method.</p>
+    <p>The values returned from the MySQL server as a result of executing the query are the number of affected rows returned as the return value.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="keyword">for</span><span> 
+    </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">clientPreparedStatement</span><span>(</span><span class="string-literal">&quot;INSERT INTO users (name, age) VALUES (?, ?)&quot;</span><span>) </span><span class="comment">// or conn.serverPreparedStatement(&quot;INSERT INTO users (name, age) VALUES (?, ?)&quot;)
+</span><span>    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">setString</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;Alice&quot;</span><span>)
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">setInt</span><span>(</span><span class="number-literal">2</span><span>, </span><span class="number-literal">20</span><span>)
+    </span><span class="identifier">result</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">executeUpdate</span><span>()
+  </span><span class="keyword">yield</span><span> </span><span class="identifier">result</span><span>
+}</span></code></pre>
+    
+    <h4 id="retrieve-auto_increment-value-2" class="section"><a class="anchor-link left" href="#retrieve-auto_increment-value-2"><i class="icofont-laika link">&#xef71;</i></a>Retrieve AUTO_INCREMENT Value</h4>
+    <p>To retrieve the AUTO_INCREMENT value after executing a query, use the <code>getGeneratedKeys</code> method.</p>
+    <p>The values returned from the MySQL server as a result of executing the query are the values generated by AUTO_INCREMENT returned as the return value.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="keyword">for</span><span> 
+    </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">clientPreparedStatement</span><span>(</span><span class="string-literal">&quot;INSERT INTO users (name, age) VALUES (?, ?)&quot;</span><span>, </span><span class="type-name">Statement</span><span>.</span><span class="type-name">RETURN_GENERATED_KEYS</span><span>) </span><span class="comment">// or conn.serverPreparedStatement(&quot;INSERT INTO users (name, age) VALUES (?, ?)&quot;, Statement.RETURN_GENERATED_KEYS)
+</span><span>    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">setString</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;Alice&quot;</span><span>)
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">setInt</span><span>(</span><span class="number-literal">2</span><span>, </span><span class="number-literal">20</span><span>)
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">executeUpdate</span><span>()
+    </span><span class="identifier">getGeneratedKeys</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">getGeneratedKeys</span><span>()
+  </span><span class="keyword">yield</span><span> </span><span class="identifier">getGeneratedKeys</span><span>
+}</span></code></pre>
+    
+    <h3 id="resultset" class="section"><a class="anchor-link left" href="#resultset"><i class="icofont-laika link">&#xef71;</i></a>ResultSet</h3>
+    <p><code>ResultSet</code> is an API for storing the values returned from the MySQL server after executing a query.</p>
+    <p>To retrieve records obtained by executing SQL from <code>ResultSet</code>, you can use the <code>next</code> method and <code>getXXX</code> methods similar to JDBC, or use the ldbc-specific <code>decode</code> method.</p>
+    
+    <h4 id="next-getxxx" class="section"><a class="anchor-link left" href="#next-getxxx"><i class="icofont-laika link">&#xef71;</i></a>next/getXXX</h4>
+    <p>The <code>next</code> method returns <code>true</code> if the next record exists, and <code>false</code> if the next record does not exist.</p>
+    <p>The <code>getXXX</code> method is an API for retrieving values from records.</p>
+    <p>The <code>getXXX</code> method can specify the column index or the column name to retrieve.</p>
+    <pre><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="keyword">for</span><span> 
+    </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">clientPreparedStatement</span><span>(</span><span class="string-literal">&quot;SELECT `id`, `name`, `age` FROM users WHERE id = ?&quot;</span><span>)
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">setLong</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="number-literal">1</span><span>)
+    </span><span class="identifier">result</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">executeQuery</span><span>()
+  </span><span class="keyword">yield</span><span>
+    </span><span class="keyword">val</span><span> </span><span class="identifier">builder</span><span> = </span><span class="type-name">List</span><span>.</span><span class="identifier">newBuilder</span><span>[(</span><span class="type-name">Long</span><span>, </span><span class="type-name">String</span><span>, </span><span class="type-name">Int</span><span>)]
+    </span><span class="keyword">while</span><span> </span><span class="identifier">resultSet</span><span>.</span><span class="identifier">next</span><span>() </span><span class="keyword">do</span><span>
+      </span><span class="keyword">val</span><span> </span><span class="identifier">id</span><span> = </span><span class="identifier">resultSet</span><span>.</span><span class="identifier">getLong</span><span>(</span><span class="number-literal">1</span><span>)
+      </span><span class="keyword">val</span><span> </span><span class="identifier">name</span><span> = </span><span class="identifier">resultSet</span><span>.</span><span class="identifier">getString</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>)
+      </span><span class="keyword">val</span><span> </span><span class="identifier">age</span><span> = </span><span class="identifier">resultSet</span><span>.</span><span class="identifier">getInt</span><span>(</span><span class="number-literal">3</span><span>)
+      </span><span class="identifier">builder</span><span> += (</span><span class="identifier">id</span><span>, </span><span class="identifier">name</span><span>, </span><span class="identifier">age</span><span>)
+    </span><span class="identifier">builder</span><span>.</span><span class="identifier">result</span><span>()
+}</span></code></pre>
+    
+    <h2 id="transaction" class="section"><a class="anchor-link left" href="#transaction"><i class="icofont-laika link">&#xef71;</i></a>Transaction</h2>
+    <p>To execute transactions using <code>Connection</code>, combine the <code>setAutoCommit</code> method, <code>commit</code> method, and <code>rollback</code> method.</p>
+    <p>First, use the <code>setAutoCommit</code> method to disable automatic transaction commit.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">conn</span><span>.</span><span class="identifier">setAutoCommit</span><span>(</span><span class="boolean-literal">false</span><span>)</span></code></pre>
+    <p>After performing some processing, use the <code>commit</code> method to commit the transaction.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">for</span><span>
+  </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">clientPreparedStatement</span><span>(</span><span class="string-literal">&quot;INSERT INTO users (name, age) VALUES (?, ?)&quot;</span><span>)
+  </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">setString</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;Alice&quot;</span><span>)
+  </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">setInt</span><span>(</span><span class="number-literal">2</span><span>, </span><span class="number-literal">20</span><span>)
+  </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">setAutoCommit</span><span>(</span><span class="boolean-literal">false</span><span>)
+  </span><span class="identifier">result</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">executeUpdate</span><span>()
+  </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">commit</span><span>()
+</span><span class="keyword">yield</span></code></pre>
+    <p>Alternatively, use the <code>rollback</code> method to roll back the transaction.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">for</span><span>
+  </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">clientPreparedStatement</span><span>(</span><span class="string-literal">&quot;INSERT INTO users (name, age) VALUES (?, ?)&quot;</span><span>)
+  </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">setString</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;Alice&quot;</span><span>)
+  </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">setInt</span><span>(</span><span class="number-literal">2</span><span>, </span><span class="number-literal">20</span><span>)
+  </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">setAutoCommit</span><span>(</span><span class="boolean-literal">false</span><span>)
+  </span><span class="identifier">result</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">executeUpdate</span><span>()
+  </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">rollback</span><span>()
+</span><span class="keyword">yield</span></code></pre>
+    <p>When the <code>setAutoCommit</code> method is used to disable automatic transaction commit, the connection is automatically rolled back when the Resource is released.</p>
+    
+    <h3 id="transaction-isolation-level" class="section"><a class="anchor-link left" href="#transaction-isolation-level"><i class="icofont-laika link">&#xef71;</i></a>Transaction Isolation Level</h3>
+    <p>ldbc allows you to set the transaction isolation level.</p>
+    <p>The transaction isolation level is set using the <code>setTransactionIsolation</code> method.</p>
+    <p>MySQL supports the following transaction isolation levels:</p>
+    <ul>
+      <li>READ UNCOMMITTED</li>
+      <li>READ COMMITTED</li>
+      <li>REPEATABLE READ</li>
+      <li>SERIALIZABLE</li>
+    </ul>
+    <p>For more information on MySQL transaction isolation levels, refer to the <a href="https://dev.mysql.com/doc/refman/8.0/en/innodb-transaction-isolation-levels.html">official documentation</a>.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.</span><span class="type-name">Connection</span><span>.</span><span class="type-name">TransactionIsolationLevel</span><span>
+
+</span><span class="identifier">conn</span><span>.</span><span class="identifier">setTransactionIsolation</span><span>(</span><span class="type-name">TransactionIsolationLevel</span><span>.</span><span class="type-name">REPEATABLE_READ</span><span>)</span></code></pre>
+    <p>To retrieve the currently set transaction isolation level, use the <code>getTransactionIsolation</code> method.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">for</span><span>
+  </span><span class="identifier">isolationLevel</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">getTransactionIsolation</span><span>()
+</span><span class="keyword">yield</span></code></pre>
+    
+    <h3 id="savepoints" class="section"><a class="anchor-link left" href="#savepoints"><i class="icofont-laika link">&#xef71;</i></a>Savepoints</h3>
+    <p>For more advanced transaction management, you can use the &quot;Savepoint&quot; feature. This allows you to mark specific points during database operations, enabling you to roll back to those points if something goes wrong. This is particularly useful for complex database operations or when you need to set safe points during long transactions.</p>
+    <p><strong>Features:</strong></p>
+    <ul>
+      <li>Flexible Transaction Management: Use savepoints to create &quot;checkpoints&quot; at any point within a transaction. If needed, you can roll back to that point, saving time and improving efficiency.</li>
+      <li>Error Recovery: Instead of redoing everything from the beginning when an error occurs, you can roll back to the last safe savepoint, saving time and improving efficiency.</li>
+      <li>Advanced Control: By setting multiple savepoints, you can achieve more precise transaction control. Developers can easily implement more complex logic and error handling.</li>
+    </ul>
+    <p>By leveraging this feature, your application can achieve more robust and reliable database operations.</p>
+    <p><strong>Setting Savepoints</strong></p>
+    <p>To set a savepoint, use the <code>setSavepoint</code> method. You can specify the name of the savepoint with this method.
+    If you do not specify a name for the savepoint, a default name generated by UUID will be set.</p>
+    <p>You can retrieve the name of the set savepoint using the <code>getSavepointName</code> method.</p>
+    <p><em>Note: In MySQL, auto-commit is enabled by default. To use savepoints, you need to disable auto-commit. Otherwise, all operations will be committed each time, and you will not be able to roll back transactions using savepoints.</em></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">for</span><span>
+  </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">setAutoCommit</span><span>(</span><span class="boolean-literal">false</span><span>)
+  </span><span class="identifier">savepoint</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">setSavepoint</span><span>(</span><span class="string-literal">&quot;savepoint1&quot;</span><span>)
+</span><span class="keyword">yield</span><span> </span><span class="identifier">savepoint</span><span>.</span><span class="identifier">getSavepointName</span></code></pre>
+    <p><strong>Rolling Back to Savepoints</strong></p>
+    <p>To roll back a part of a transaction using a savepoint, pass the savepoint to the <code>rollback</code> method.
+    After partially rolling back using a savepoint, if you commit the entire transaction, the transaction after that savepoint will not be committed.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">for</span><span>
+  </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">setAutoCommit</span><span>(</span><span class="boolean-literal">false</span><span>)
+  </span><span class="identifier">savepoint</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">setSavepoint</span><span>(</span><span class="string-literal">&quot;savepoint1&quot;</span><span>)
+  </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">rollback</span><span>(</span><span class="identifier">savepoint</span><span>)
+  </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">commit</span><span>()
+</span><span class="keyword">yield</span></code></pre>
+    <p><strong>Releasing Savepoints</strong></p>
+    <p>To release a savepoint, pass the savepoint to the <code>releaseSavepoint</code> method.
+    After releasing a savepoint, if you commit the entire transaction, the transaction after that savepoint will be committed.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">for</span><span>
+  </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">setAutoCommit</span><span>(</span><span class="boolean-literal">false</span><span>)
+  </span><span class="identifier">savepoint</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">setSavepoint</span><span>(</span><span class="string-literal">&quot;savepoint1&quot;</span><span>)
+  </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">releaseSavepoint</span><span>(</span><span class="identifier">savepoint</span><span>)
+  </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">commit</span><span>()
+</span><span class="keyword">yield</span></code></pre>
+    
+    <h2 id="utility-commands" class="section"><a class="anchor-link left" href="#utility-commands"><i class="icofont-laika link">&#xef71;</i></a>Utility Commands</h2>
+    <p>MySQL has several utility commands. (<a href="https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_command_phase_utility.html">Reference</a>)</p>
+    <p>ldbc provides APIs to use these commands.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Command</th>
+          <th>Purpose</th>
+          <th>Supported</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>COM_QUIT</code></td>
+          <td><code>Informs the server that the client is requesting to close the connection.</code></td>
+          <td>✅</td>
+        </tr>
+        <tr>
+          <td><code>COM_INIT_DB</code></td>
+          <td><code>Changes the default schema of the connection.</code></td>
+          <td>✅</td>
+        </tr>
+        <tr>
+          <td><code>COM_STATISTICS</code></td>
+          <td><code>Retrieves internal status string in a readable format.</code></td>
+          <td>✅</td>
+        </tr>
+        <tr>
+          <td><code>COM_DEBUG</code></td>
+          <td><code>Dumps debug information to the server&#39;s standard output.</code></td>
+          <td>❌</td>
+        </tr>
+        <tr>
+          <td><code>COM_PING</code></td>
+          <td><code>Checks if the server is alive.</code></td>
+          <td>✅</td>
+        </tr>
+        <tr>
+          <td><code>COM_CHANGE_USER</code></td>
+          <td><code>Changes the user of the current connection.</code></td>
+          <td>✅</td>
+        </tr>
+        <tr>
+          <td><code>COM_RESET_CONNECTION</code></td>
+          <td><code>Resets the session state.</code></td>
+          <td>✅</td>
+        </tr>
+        <tr>
+          <td><code>COM_SET_OPTION</code></td>
+          <td><code>Sets options for the current connection.</code></td>
+          <td>✅</td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <h3 id="com-quit" class="section"><a class="anchor-link left" href="#com-quit"><i class="icofont-laika link">&#xef71;</i></a>COM QUIT</h3>
+    <p><code>COM_QUIT</code> is a command to inform the server that the client is requesting to close the connection.</p>
+    <p>In ldbc, you can close the connection using the <code>close</code> method of <code>Connection</code>.
+    When you use the <code>close</code> method, the connection is closed, and you cannot use the connection in subsequent processing.</p>
+    <p><em>Note: <code>Connection</code> uses <code>Resource</code> for resource management. Therefore, you do not need to use the <code>close</code> method to release resources.</em></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="identifier">conn</span><span>.</span><span class="identifier">close</span><span>()
+}</span></code></pre>
+    
+    <h3 id="com-init-db" class="section"><a class="anchor-link left" href="#com-init-db"><i class="icofont-laika link">&#xef71;</i></a>COM INIT DB</h3>
+    <p><code>COM_INIT_DB</code> is a command to change the default schema of the connection.</p>
+    <p>In ldbc, you can change the default schema using the <code>setSchema</code> method of <code>Connection</code>.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="identifier">conn</span><span>.</span><span class="identifier">setSchema</span><span>(</span><span class="string-literal">&quot;test&quot;</span><span>)
+}</span></code></pre>
+    
+    <h3 id="com-statistics" class="section"><a class="anchor-link left" href="#com-statistics"><i class="icofont-laika link">&#xef71;</i></a>COM STATISTICS</h3>
+    <p><code>COM_STATISTICS</code> is a command to retrieve internal status string in a readable format.</p>
+    <p>In ldbc, you can retrieve the internal status string using the <code>getStatistics</code> method of <code>Connection</code>.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="identifier">conn</span><span>.</span><span class="identifier">getStatistics</span><span>
+}</span></code></pre>
+    <p>The status that can be retrieved is as follows:</p>
+    <ul>
+      <li><code>uptime</code> : Time since the server started</li>
+      <li><code>threads</code> : Number of currently connected clients</li>
+      <li><code>questions</code> : Number of queries since the server started</li>
+      <li><code>slowQueries</code> : Number of slow queries</li>
+      <li><code>opens</code> : Number of table opens since the server started</li>
+      <li><code>flushTables</code> : Number of table flushes since the server started</li>
+      <li><code>openTables</code> : Number of currently open tables</li>
+      <li><code>queriesPerSecondAvg</code> : Average number of queries per second</li>
+    </ul>
+    
+    <h3 id="com-ping" class="section"><a class="anchor-link left" href="#com-ping"><i class="icofont-laika link">&#xef71;</i></a>COM PING</h3>
+    <p><code>COM_PING</code> is a command to check if the server is alive.</p>
+    <p>In ldbc, you can check if the server is alive using the <code>isValid</code> method of <code>Connection</code>.
+    If the server is alive, it returns <code>true</code>, and if it is not alive, it returns <code>false</code>.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="identifier">conn</span><span>.</span><span class="identifier">isValid</span><span>
+}</span></code></pre>
+    
+    <h3 id="com-change-user" class="section"><a class="anchor-link left" href="#com-change-user"><i class="icofont-laika link">&#xef71;</i></a>COM CHANGE USER</h3>
+    <p><code>COM_CHANGE_USER</code> is a command to change the user of the current connection.
+    It also resets the following connection states:</p>
+    <ul>
+      <li>User variables </li>
+      <li>Temporary tables </li>
+      <li>Prepared statements </li>
+      <li>etc...</li>
+    </ul>
+    <p>In ldbc, you can change the user using the <code>changeUser</code> method of <code>Connection</code>.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="identifier">conn</span><span>.</span><span class="identifier">changeUser</span><span>(</span><span class="string-literal">&quot;root&quot;</span><span>, </span><span class="string-literal">&quot;password&quot;</span><span>)
+}</span></code></pre>
+    
+    <h3 id="com-reset-connection" class="section"><a class="anchor-link left" href="#com-reset-connection"><i class="icofont-laika link">&#xef71;</i></a>COM RESET CONNECTION</h3>
+    <p><code>COM_RESET_CONNECTION</code> is a command to reset the session state.</p>
+    <p><code>COM_RESET_CONNECTION</code> is a lighter version of <code>COM_CHANGE_USER</code>, with almost the same functionality to clean up the session state, but with the following features:</p>
+    <ul>
+      <li>Does not re-authenticate (thus avoiding extra client/server exchanges).</li>
+      <li>Does not close the connection.</li>
+    </ul>
+    <p>In ldbc, you can reset the session state using the <code>resetServerState</code> method of <code>Connection</code>.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="identifier">conn</span><span>.</span><span class="identifier">resetServerState</span><span>
+}</span></code></pre>
+    
+    <h3 id="com-set-option" class="section"><a class="anchor-link left" href="#com-set-option"><i class="icofont-laika link">&#xef71;</i></a>COM SET OPTION</h3>
+    <p><code>COM_SET_OPTION</code> is a command to set options for the current connection.</p>
+    <p>In ldbc, you can set options using the <code>enableMultiQueries</code> method and <code>disableMultiQueries</code> method of <code>Connection</code>.</p>
+    <p>Using the <code>enableMultiQueries</code> method allows you to execute multiple queries at once.
+    Using the <code>disableMultiQueries</code> method prevents you from executing multiple queries at once.</p>
+    <p><em>Note: This can only be used for batch processing with Insert, Update, and Delete statements. If used with Select statements, only the result of the first query will be returned.</em></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="identifier">conn</span><span>.</span><span class="identifier">enableMultiQueries</span><span> *&gt; </span><span class="identifier">conn</span><span>.</span><span class="identifier">disableMultiQueries</span><span>
+}</span></code></pre>
+    
+    <h2 id="batch-commands" class="section"><a class="anchor-link left" href="#batch-commands"><i class="icofont-laika link">&#xef71;</i></a>Batch Commands</h2>
+    <p>ldbc allows you to execute multiple queries at once using batch commands.
+    By using batch commands, you can execute multiple queries at once, reducing the number of network round trips.</p>
+    <p>To use batch commands, use the <code>addBatch</code> method of <code>Statement</code> or <code>PreparedStatement</code> to add queries, and use the <code>executeBatch</code> method to execute the queries.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="keyword">for</span><span>
+    </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">createStatement</span><span>()
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">addBatch</span><span>(</span><span class="string-literal">&quot;INSERT INTO users (name, age) VALUES (&#39;Alice&#39;, 20)&quot;</span><span>)
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">addBatch</span><span>(</span><span class="string-literal">&quot;INSERT INTO users (name, age) VALUES (&#39;Bob&#39;, 30)&quot;</span><span>)
+    </span><span class="identifier">result</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">executeBatch</span><span>()
+  </span><span class="keyword">yield</span><span> </span><span class="identifier">result</span><span>
+}</span></code></pre>
+    <p>In the above example, you can add the data of <code>Alice</code> and <code>Bob</code> at once.
+    The executed query will be as follows:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">INSERT</span><span> </span><span class="keyword">INTO</span><span> </span><span class="identifier">users</span><span> (</span><span class="identifier">name</span><span>, </span><span class="identifier">age</span><span>) </span><span class="keyword">VALUES</span><span> (</span><span class="string-literal">&#39;Alice&#39;</span><span>, </span><span class="number-literal">20</span><span>);</span><span class="keyword">INSERT</span><span> </span><span class="keyword">INTO</span><span> </span><span class="identifier">users</span><span> (</span><span class="identifier">name</span><span>, </span><span class="identifier">age</span><span>) </span><span class="keyword">VALUES</span><span> (</span><span class="string-literal">&#39;Bob&#39;</span><span>, </span><span class="number-literal">30</span><span>);</span></code></pre>
+    <p>The return value after executing the batch command is an array of the number of affected rows for each executed query.</p>
+    <p>In the above example, the data of <code>Alice</code> is added as 1 row, and the data of <code>Bob</code> is also added as 1 row, so the return value will be <code>List(1, 1)</code>.</p>
+    <p>After executing the batch command, the queries added with the <code>addBatch</code> method so far are cleared.</p>
+    <p>To manually clear the queries, use the <code>clearBatch</code> method to clear them.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="keyword">for</span><span>
+    </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">createStatement</span><span>()
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">addBatch</span><span>(</span><span class="string-literal">&quot;INSERT INTO users (name, age) VALUES (&#39;Alice&#39;, 20)&quot;</span><span>)
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">clearBatch</span><span>()
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">addBatch</span><span>(</span><span class="string-literal">&quot;INSERT INTO users (name, age) VALUES (&#39;Bob&#39;, 30)&quot;</span><span>)
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">executeBatch</span><span>()
+  </span><span class="keyword">yield</span><span>
+}</span></code></pre>
+    <p>In the above example, the data of <code>Alice</code> is not added, but the data of <code>Bob</code> is added.</p>
+    
+    <h3 id="difference-between-statement-and-preparedstatement" class="section"><a class="anchor-link left" href="#difference-between-statement-and-preparedstatement"><i class="icofont-laika link">&#xef71;</i></a>Difference Between Statement and PreparedStatement</h3>
+    <p>There may be differences in the queries executed by batch commands when using <code>Statement</code> and <code>PreparedStatement</code>.</p>
+    <p>When executing an INSERT statement with batch commands using <code>Statement</code>, multiple queries are executed at once.
+    However, when executing an INSERT statement with batch commands using <code>PreparedStatement</code>, one query is executed.</p>
+    <p>For example, when executing the following query with batch commands, multiple queries are executed at once because <code>Statement</code> is used.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="keyword">for</span><span>
+    </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">createStatement</span><span>()
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">addBatch</span><span>(</span><span class="string-literal">&quot;INSERT INTO users (name, age) VALUES (&#39;Alice&#39;, 20)&quot;</span><span>)
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">addBatch</span><span>(</span><span class="string-literal">&quot;INSERT INTO users (name, age) VALUES (&#39;Bob&#39;, 30)&quot;</span><span>)
+    </span><span class="identifier">result</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">executeBatch</span><span>()
+  </span><span class="keyword">yield</span><span> </span><span class="identifier">result</span><span>
+}
+
+</span><span class="comment">// Executed query
+// INSERT INTO users (name, age) VALUES (&#39;Alice&#39;, 20);INSERT INTO users (name, age) VALUES (&#39;Bob&#39;, 30);</span></code></pre>
+    <p>However, when executing the following query with batch commands, one query is executed because <code>PreparedStatement</code> is used.</p>
+    <pre><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="keyword">for</span><span>
+    </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">clientPreparedStatement</span><span>(</span><span class="string-literal">&quot;INSERT INTO users (name, age) VALUES (?, ?)&quot;</span><span>)
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">setString</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;Alice&quot;</span><span>)
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">setInt</span><span>(</span><span class="number-literal">2</span><span>, </span><span class="number-literal">20</span><span>)
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">addBatch</span><span>()
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">setString</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;Bob&quot;</span><span>)
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">setInt</span><span>(</span><span class="number-literal">2</span><span>, </span><span class="number-literal">30</span><span>)
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">addBatch</span><span>()
+    </span><span class="identifier">result</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">executeBatch</span><span>()
+  </span><span class="keyword">yield</span><span> </span><span class="identifier">result</span><span>
+}
+
+</span><span class="comment">// Executed query
+// INSERT INTO users (name, age) VALUES (&#39;Alice&#39;, 20), (&#39;Bob&#39;, 30);</span></code></pre>
+    <p>This is because when using <code>PreparedStatement</code>, you can set multiple parameters in one query by using the <code>addBatch</code> method after setting the query parameters.</p>
+    
+    <h2 id="executing-stored-procedures" class="section"><a class="anchor-link left" href="#executing-stored-procedures"><i class="icofont-laika link">&#xef71;</i></a>Executing Stored Procedures</h2>
+    <p>ldbc provides an API for executing stored procedures.</p>
+    <p>To execute a stored procedure, use the <code>prepareCall</code> method of <code>Connection</code> to construct a <code>CallableStatement</code>.</p>
+    <p><em>Note: The stored procedure used is from the <a href="https://dev.mysql.com/doc/connector-j/en/connector-j-usagenotes-statements-callable.html">official</a> documentation.</em></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">CREATE</span><span> </span><span class="keyword">PROCEDURE</span><span> </span><span class="identifier">demoSp</span><span>(</span><span class="keyword">IN</span><span> </span><span class="identifier">inputParam</span><span> </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">255</span><span>), </span><span class="identifier">INOUT</span><span> </span><span class="identifier">inOutParam</span><span> </span><span class="type-name">INT</span><span>)
+</span><span class="keyword">BEGIN</span><span>
+    </span><span class="keyword">DECLARE</span><span> </span><span class="identifier">z</span><span> </span><span class="type-name">INT</span><span>;
+    </span><span class="keyword">SET</span><span> </span><span class="identifier">z</span><span> = </span><span class="identifier">inOutParam</span><span> + </span><span class="number-literal">1</span><span>;
+    </span><span class="keyword">SET</span><span> </span><span class="identifier">inOutParam</span><span> = </span><span class="identifier">z</span><span>;
+
+    </span><span class="keyword">SELECT</span><span> </span><span class="identifier">inputParam</span><span>;
+
+    </span><span class="keyword">SELECT</span><span> </span><span class="identifier">CONCAT</span><span>(</span><span class="string-literal">&#39;zyxw&#39;</span><span>, </span><span class="identifier">inputParam</span><span>);
+</span><span class="keyword">END</span></code></pre>
+    <p>To execute the above stored procedure, it will be as follows.</p>
+    <pre><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="keyword">for</span><span>
+    </span><span class="identifier">callableStatement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">prepareCall</span><span>(</span><span class="string-literal">&quot;CALL demoSp(?, ?)&quot;</span><span>)
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">callableStatement</span><span>.</span><span class="identifier">setString</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;abcdefg&quot;</span><span>)
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">callableStatement</span><span>.</span><span class="identifier">setInt</span><span>(</span><span class="number-literal">2</span><span>, </span><span class="number-literal">1</span><span>)
+    </span><span class="identifier">hasResult</span><span> &lt;- </span><span class="identifier">callableStatement</span><span>.</span><span class="identifier">execute</span><span>()
+    </span><span class="identifier">values</span><span> &lt;- </span><span class="type-name">Monad</span><span>[</span><span class="type-name">IO</span><span>].</span><span class="identifier">whileM</span><span>[</span><span class="type-name">List</span><span>, </span><span class="type-name">Option</span><span>[</span><span class="type-name">String</span><span>]](</span><span class="identifier">callableStatement</span><span>.</span><span class="identifier">getMoreResults</span><span>()) {
+      </span><span class="keyword">for</span><span>
+        </span><span class="identifier">resultSet</span><span> &lt;- </span><span class="identifier">callableStatement</span><span>.</span><span class="identifier">getResultSet</span><span>().</span><span class="identifier">flatMap</span><span> {
+          </span><span class="keyword">case</span><span> </span><span class="type-name">Some</span><span>(</span><span class="identifier">rs</span><span>) =&gt; </span><span class="type-name">IO</span><span>.</span><span class="identifier">pure</span><span>(</span><span class="identifier">rs</span><span>)
+          </span><span class="keyword">case</span><span> </span><span class="type-name">None</span><span>     =&gt; </span><span class="type-name">IO</span><span>.</span><span class="identifier">raiseError</span><span>(</span><span class="keyword">new</span><span> </span><span class="type-name">Exception</span><span>(</span><span class="string-literal">&quot;No result set&quot;</span><span>))
+        }
+      </span><span class="keyword">yield</span><span> </span><span class="identifier">resultSet</span><span>.</span><span class="identifier">getString</span><span>(</span><span class="number-literal">1</span><span>)
+    }
+  </span><span class="keyword">yield</span><span> </span><span class="identifier">values</span><span> </span><span class="comment">// List(Some(&quot;abcdefg&quot;), Some(&quot;zyxwabcdefg&quot;))
+</span><span>}</span></code></pre>
+    <p>To retrieve the value of an output parameter (a parameter specified as OUT or INOUT when creating the stored procedure), in JDBC, you need to specify the parameter before executing the statement using various <code>registerOutputParameter()</code> methods of the CallableStatement interface. However, in ldbc, you only need to set the parameter using the <code>setXXX</code> method, and the parameter will be set when executing the query.</p>
+    <p>However, you can also specify the parameter using the <code>registerOutputParameter()</code> method in ldbc.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="keyword">for</span><span>
+    </span><span class="identifier">callableStatement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">prepareCall</span><span>(</span><span class="string-literal">&quot;CALL demoSp(?, ?)&quot;</span><span>)
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">callableStatement</span><span>.</span><span class="identifier">setString</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;abcdefg&quot;</span><span>)
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">callableStatement</span><span>.</span><span class="identifier">setInt</span><span>(</span><span class="number-literal">2</span><span>, </span><span class="number-literal">1</span><span>)
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">callableStatement</span><span>.</span><span class="identifier">registerOutParameter</span><span>(</span><span class="number-literal">2</span><span>, </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.</span><span class="identifier">data</span><span>.</span><span class="type-name">Types</span><span>.</span><span class="type-name">INTEGER</span><span>)
+    </span><span class="identifier">hasResult</span><span> &lt;- </span><span class="identifier">callableStatement</span><span>.</span><span class="identifier">execute</span><span>()
+    </span><span class="identifier">value</span><span> &lt;- </span><span class="identifier">callableStatement</span><span>.</span><span class="identifier">getInt</span><span>(</span><span class="number-literal">2</span><span>)
+  </span><span class="keyword">yield</span><span> </span><span class="identifier">value</span><span> </span><span class="comment">// 2
+</span><span>}</span></code></pre>
+    <p><em>Note: When specifying an Out parameter with <code>registerOutParameter</code>, if the same index value is not used to set the parameter with the <code>setXXX</code> method, the value will be set to <code>Null</code> on the server.</em></p>
+    
+    <h2 id="unsupported-features" class="section"><a class="anchor-link left" href="#unsupported-features"><i class="icofont-laika link">&#xef71;</i></a>Unsupported Features</h2>
+    <p>The ldbc connector is currently an experimental feature. Therefore, the following features are not supported.
+    Feature provision will be carried out sequentially.</p>
+    <ul>
+      <li>Connection pooling</li>
+      <li>Failover measures</li>
+      <li>etc...</li>
+    </ul>
+
+    
+<hr class="footer-rule"/>
+<footer>
+  ldbc is a <a href="https://typelevel.org/">Typelevel</a> project distributed under the <a href="https://img.shields.io/badge/license-MIT-green">MIT</a> license.
+</footer>
+
+
+  </main>
+
+</div>
+
+</body>
+
+</html>

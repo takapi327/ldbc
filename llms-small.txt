@@ -638,21 +638,21 @@ That said, if you find yourself confused or frustrated by this documentation or 
 
 ## Quick Start
 
-The current version is **0.3.2**, compatible with **Scala 3.3.6**.
+The current version is **0.3.3**, compatible with **Scala 3.3.6**.
 
 ```scala
 libraryDependencies ++= Seq(
 
   // Start with this one
-  "io.github.takapi327" %% "ldbc-dsl" % "0.3.2",
+  "io.github.takapi327" %% "ldbc-dsl" % "0.3.3",
   
   // Choose the connector you want to use
-  "io.github.takapi327" %% "jdbc-connector" % "0.3.2", // Java connector (supported platform: JVM)
-  "io.github.takapi327" %% "ldbc-connector" % "0.3.2", // Scala connector (supported platforms: JVM, JS, Native)
+  "io.github.takapi327" %% "jdbc-connector" % "0.3.3", // Java connector (supported platform: JVM)
+  "io.github.takapi327" %% "ldbc-connector" % "0.3.3", // Scala connector (supported platforms: JVM, JS, Native)
 
   // And add these as needed
-  "io.github.takapi327" %% "ldbc-query-builder" % "0.3.2", // Type-safe query building
-  "io.github.takapi327" %% "ldbc-schema"        % "0.3.2", // Database schema construction
+  "io.github.takapi327" %% "ldbc-query-builder" % "0.3.3", // Type-safe query building
+  "io.github.takapi327" %% "ldbc-schema"        % "0.3.3", // Database schema construction
 )
 ```
 
@@ -719,13 +719,13 @@ This change gives developers the flexibility to choose database connections usin
 First, common dependencies are set up.
 
 ```scala 3
-libraryDependencies += "io.github.takapi327" %% "ldbc-dsl" % "0.3.2"
+libraryDependencies += "io.github.takapi327" %% "ldbc-dsl" % "0.3.3"
 ```
 
 In cross-platform projects (JVM, JS, native)
 
 ```scala 3
-libraryDependencies += "io.github.takapi327" %%% "ldbc-dsl" % "0.3.2"
+libraryDependencies += "io.github.takapi327" %%% "ldbc-dsl" % "0.3.3"
 ```
 
 The dependency package used depends on whether the database connection is made through a connector using the Java API or through a connector provided by ldbc.
@@ -733,19 +733,19 @@ The dependency package used depends on whether the database connection is made t
 **Use of JDBC connectors**
 
 ```scala 3
-libraryDependencies += "io.github.takapi327" %% "jdbc-connector" % "0.3.2"
+libraryDependencies += "io.github.takapi327" %% "jdbc-connector" % "0.3.3"
 ```
 
 **Using the ldbc connector**
 
 ```scala 3
-libraryDependencies += "io.github.takapi327" %% "ldbc-connector" % "0.3.2"
+libraryDependencies += "io.github.takapi327" %% "ldbc-connector" % "0.3.3"
 ```
 
 In cross-platform projects (JVM, JS, native)
 
 ```scala 3
-libraryDependencies += "io.github.takapi327" %%% "ldbc-connector" % "0.3.2"
+libraryDependencies += "io.github.takapi327" %%% "ldbc-connector" % "0.3.3"
 ```
 
 #### Usage rules
@@ -1295,7 +1295,7 @@ val provider =
 This feature is only available when using `ldbc-connector`.
 
 ```scala 3
-libraryDependencies += "io.github.takapi327" %% "ldbc-connector" % "0.3.2"
+libraryDependencies += "io.github.takapi327" %% "ldbc-connector" % "0.3.3"
 ```
 
 @:@
@@ -1938,7 +1938,7 @@ If you want to use the traditional connector written in Java, set the following 
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "io.github.takapi327" %% "jdbc-connector" % "0.3.2",
+  "io.github.takapi327" %% "jdbc-connector" % "0.3.3",
   "com.mysql" % "mysql-connector-j" % "8.4.0"
 )
 ```
@@ -1949,7 +1949,7 @@ If you want to use the new connector written in Scala, set the following depende
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "io.github.takapi327" %% "ldbc-connector" % "0.3.2"
+  "io.github.takapi327" %% "ldbc-connector" % "0.3.3"
 )
 ```
 
@@ -1959,7 +1959,7 @@ To use ldbc with Scala.js or Scala Native, set the dependencies as follows:
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "com.example" %%% "ldbc-connector" % "0.3.2"
+  "com.example" %%% "ldbc-connector" % "0.3.3"
 )
 ```
 
@@ -1969,7 +1969,7 @@ To use the plain DSL, set the following dependencies:
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "io.github.takapi327" %% "ldbc-dsl" % "0.3.2"
+  "io.github.takapi327" %% "ldbc-dsl" % "0.3.3"
 )
 ```
 
@@ -1991,7 +1991,7 @@ To use the query builder, set the following dependencies:
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "io.github.takapi327" %% "ldbc-query-builder" % "0.3.2"
+  "io.github.takapi327" %% "ldbc-query-builder" % "0.3.3"
 )
 ```
 
@@ -2018,7 +2018,7 @@ To use schema definition and model mapping, set the following dependencies:
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "io.github.takapi327" %% "ldbc-schema" % "0.3.2"
+  "io.github.takapi327" %% "ldbc-schema" % "0.3.3"
 )
 ```
 
@@ -2091,13 +2091,13 @@ To use it, you need to set up the following dependency in your project:
 **JVM**
 
 ```scala 3
-libraryDependencies += "io.github.takapi327" %% "ldbc-connector" % "0.3.2"
+libraryDependencies += "io.github.takapi327" %% "ldbc-connector" % "0.3.3"
 ```
 
 **JS/Native**
 
 ```scala 3
-libraryDependencies += "io.github.takapi327" %%% "ldbc-connector" % "0.3.2"
+libraryDependencies += "io.github.takapi327" %%% "ldbc-connector" % "0.3.3"
 ```
 
 **Supported Versions**
@@ -2967,7 +2967,7 @@ The JDBC connector establishes connections using standard JDBC drivers. It's rec
 First, add the necessary dependencies. When using the jdbc connector, you need to add the MySQL connector as well.
 
 ```scala
-//> dep "io.github.takapi327::jdbc-connector:0.3.2"
+//> dep "io.github.takapi327::jdbc-connector:0.3.3"
 //> dep "com.mysql":"mysql-connector-j":"8.4.0"
 ```
 
@@ -3050,7 +3050,7 @@ The ldbc connector is an optimized connector developed by ldbc, offering more co
 First, add the necessary dependency.
 
 ```scala
-//> dep "io.github.takapi327::ldbc-connector:0.3.2"
+//> dep "io.github.takapi327::ldbc-connector:0.3.3"
 ```
 
 ### Connection with Basic Configuration
@@ -4099,7 +4099,7 @@ In this chapter, we'll explain methods for building type-safe queries.
 You need to set up the following dependency in your project:
 
 ```scala
-//> using dep "io.github.takapi327::ldbc-query-builder:0.3.2"
+//> using dep "io.github.takapi327::ldbc-query-builder:0.3.3"
 ```
 
 ## Basic Usage
@@ -4677,7 +4677,7 @@ Code generation is a powerful tool for automating repetitive tasks and reducing 
 You need to set up the following dependency in your project. Add it to `project/plugins.sbt`.
 
 ```scala
-addSbtPlugin("io.github.takapi327" % "ldbc-plugin" % "0.3.2")
+addSbtPlugin("io.github.takapi327" % "ldbc-plugin" % "0.3.3")
 ```
 
 ### Enabling the Plugin
@@ -5121,7 +5121,7 @@ This chapter explains how to handle database schemas in Scala code, particularly
 You need to set up the following dependency in your project:
 
 ```scala
-//> using dep "io.github.takapi327::ldbc-schema:0.3.2"
+//> using dep "io.github.takapi327::ldbc-schema:0.3.3"
 ```
 
 The following code examples assume these imports:
@@ -5963,8 +5963,8 @@ Add the following code to `FirstSteps.scala`:
 
 ```scala
 //> using scala "3.3.6"
-//> using dep "io.github.takapi327::ldbc-dsl:0.3.2"
-//> using dep "io.github.takapi327::ldbc-connector:0.3.2"
+//> using dep "io.github.takapi327::ldbc-dsl:0.3.3"
+//> using dep "io.github.takapi327::ldbc-connector:0.3.3"
 
 import cats.effect.*
 import cats.syntax.all.*
@@ -6004,7 +6004,7 @@ If you see "Value retrieved from database: 42", you've succeeded! This doesn't a
 We also provide a Scala CLI script that automatically handles all the setup:
 
 ```bash
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/00-Setup.scala --dependency io.github.takapi327::ldbc-dsl:0.3.2 --dependency io.github.takapi327::ldbc-connector:0.3.2
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/00-Setup.scala --dependency io.github.takapi327::ldbc-dsl:0.3.3 --dependency io.github.takapi327::ldbc-connector:0.3.3
 ```
 
 ## Next Steps
@@ -6073,7 +6073,7 @@ When you run this program, it will return the result `Some(2)` from the database
 This program can be easily executed using Scala CLI:
 
 ```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/02-Program.scala --dependency io.github.takapi327::ldbc-dsl:0.3.2 --dependency io.github.takapi327::ldbc-connector:0.3.2
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/02-Program.scala --dependency io.github.takapi327::ldbc-dsl:0.3.3 --dependency io.github.takapi327::ldbc-connector:0.3.3
 ```
 
 ## Second Program: Combining Multiple Queries
@@ -6108,7 +6108,7 @@ The execution result will look like `(List(1), Some(2), 3)`. This is a tuple con
 **Execute with Scala CLI**
 
 ```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/03-Program.scala --dependency io.github.takapi327::ldbc-dsl:0.3.2 --dependency io.github.takapi327::ldbc-connector:0.3.2
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/03-Program.scala --dependency io.github.takapi327::ldbc-dsl:0.3.3 --dependency io.github.takapi327::ldbc-connector:0.3.3
 ```
 
 ## Third Program: Data Update Operations
@@ -6139,7 +6139,7 @@ The `commit` method automatically enables `AutoCommit` and commits the transacti
 **Execute with Scala CLI**
 
 ```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/04-Program.scala --dependency io.github.takapi327::ldbc-dsl:0.3.2 --dependency io.github.takapi327::ldbc-connector:0.3.2
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/04-Program.scala --dependency io.github.takapi327::ldbc-dsl:0.3.3 --dependency io.github.takapi327::ldbc-connector:0.3.3
 ```
 
 ## Transaction Control

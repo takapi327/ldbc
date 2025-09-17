@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="Typelevel Laika + Helium Theme" />
+  <title>スキーマ</title>
+  
+  <meta name="author" content="ldbc contributors"/>
+  
+  <meta name="author" content="Takahiko Tominaga"/>
+  
+  
+  <meta name="description" content="Documentation for ldbc"/>
+  
+  
+  
+  <link rel="icon" sizes="32x32" type="image/png" href="https://typelevel.org/img/favicon.png"/>
+  
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700">
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Mono:500">
+  
+  <link rel="stylesheet" type="text/css" href="../../helium/site/icofont.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../helium/site/laika-helium.css" />
+    <link rel="stylesheet" type="text/css" href="../../css/site.css" />
+  <script src="../../helium/site/laika-helium.js"></script>
+    <script src="../../helium/site/laika-versions.js"></script>
+  <script>initVersions("../../../", "/ja/tutorial/Schema.html", "0.3", null);</script>
+  
+  <script> /* for avoiding page load transitions */ </script>
+</head>
+
+<body>
+
+<header id="top-bar" class="light-default dark-default">
+
+  <div class="row">
+    <a id="nav-icon">
+      <i class="icofont-laika navigationMenu" title="Navigation">&#xefa2;</i>
+    </a>
+    
+    <div class="menu-container version-menu">
+      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <nav class="menu-content">
+        <ul class="nav-list">
+          <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <a class="image-link" href="https://typelevel.org"><img src="https://typelevel.org/img/logo.svg"></a>
+
+  <div class="row links">
+    
+    <a class="icon-link svg-link" href="https://github.com/takapi327/ldbc"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>  
+
+</header>
+
+<nav id="sidebar">
+
+  <div class="row">
+    
+    <a class="icon-link svg-link" href="https://github.com/takapi327/ldbc"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>
+
+  
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="../">ldbc</a></li>
+    <li class="level1 nav-leaf"><a href="../migration-notes.html">マイグレーションノート</a></li>
+    <li class="level1 nav-header">チュートリアル</li>
+    <li class="level2 nav-leaf"><a href="index.html">はじめに</a></li>
+    <li class="level2 nav-leaf"><a href="Setup.html">セットアップ</a></li>
+    <li class="level2 nav-leaf"><a href="Connection.html">コネクション</a></li>
+    <li class="level2 nav-leaf"><a href="Simple-Program.html">シンプルプログラム</a></li>
+    <li class="level2 nav-leaf"><a href="Database-Operations.html">データベース操作</a></li>
+    <li class="level2 nav-leaf"><a href="Parameterized-Queries.html">パラメータ</a></li>
+    <li class="level2 nav-leaf"><a href="Selecting-Data.html">データ選択</a></li>
+    <li class="level2 nav-leaf"><a href="Updating-Data.html">データ更新</a></li>
+    <li class="level2 nav-leaf"><a href="Error-Handling.html">エラーハンドリング</a></li>
+    <li class="level2 nav-leaf"><a href="Logging.html">ロギング</a></li>
+    <li class="level2 nav-leaf"><a href="Custom-Data-Type.html">カスタム データ型</a></li>
+    <li class="level2 nav-leaf"><a href="Query-Builder.html">クエリビルダー</a></li>
+    <li class="level2 active nav-leaf"><a href="#">スキーマ</a></li>
+    <li class="level2 nav-leaf"><a href="Schema-Code-Generation.html">スキーマコード生成</a></li>
+    <li class="level1 nav-header">Examples</li>
+    <li class="level2 nav-leaf"><a href="../examples/">はじめに</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/Http4s.html">Http4s</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/HikariCP.html">HikariCP</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/Otel.html">OpenTelemetry</a></li>
+    <li class="level1 nav-header">QA</li>
+    <li class="level2 nav-leaf"><a href="../qa/">はじめに</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/What-is-ldbc.html">Q: ldbcとは何ですか？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Which-dependencies-should-I-set.html">Q: どの依存関係を設定すればよいですか？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/What-is-the-difference-between-a-Java-connect-and-a-Scala-connector.html">Q: JavaのコネクトとScalaのコネクタの違いは何ですか？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-define-complex-queries-with-plain-queries.html">Q: プレーンクエリで複雑なクエリを定義する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-my-own-type.html">Q: 独自の型を使うにはどうすればいいですか？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-nested-models.html">Q: ネストしたモデルを使うにはどうすればいいですか？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-perform-DDL-with-schema.html">Q: スキーマを使用したDDLを実行する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-change-column-names-in-Query-Builder.html">Q: クエリビルダーでカラム名を変更する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-change-the-format-of-column-names-using-the-schema.html">Q: スキーマを使用したカラム名のフォーマットを変更する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-add-processing-before-and-after-the-connection-is-established.html">Q: コネクション確立の前後に処理を追加する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Implicit-search-problem-too-large.html">Q: `Implicit search problem too large.`が発生する場合の対処方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-use-scala-connector-connection-pool.html">Q: Scalaコネクタでコネクションプールを使用する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Is-there-a-way-to-stream-query-results-asynchronously.html">Q: クエリの結果を非同期でストリーミングする方法はありますか？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Is-there-a-function-to-limit-the-number-of-concurrent-queries.html">Q: 同時実行のクエリ数を制限する機能はありますか？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-handle-multiple-databases.html">Q: 複数のデータベース（マルチテナント環境）を扱う方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-use-with-ZIO.html">Q: ZIOで使用する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-the-Enum-type.html">Q: Enum型の使い方は？</a></li>
+    <li class="level1 nav-header">Reference</li>
+    <li class="level2 nav-leaf"><a href="../reference/">はじめに</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Connector.html">コネクタ</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Performance.html">パフォーマンス</a></li>
+  </ul>
+  
+
+</nav>
+
+<div id="container">
+
+  
+<nav id="page-nav">
+  <p class="header"><a href="#">スキーマ</a></p>
+
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="#準備">準備</a></li>
+    <li class="level1 nav-node"><a href="#テーブル定義の基本">テーブル定義の基本</a></li>
+    <li class="level2 nav-leaf"><a href="#基本的なテーブル定義">基本的なテーブル定義</a></li>
+    <li class="level2 nav-leaf"><a href="#データ型を指定したテーブル定義">データ型を指定したテーブル定義</a></li>
+    <li class="level1 nav-node"><a href="#専用カラム定義メソッドを使用する方法">専用カラム定義メソッドを使用する方法</a></li>
+    <li class="level2 nav-leaf"><a href="#カラム名を明示的に指定">カラム名を明示的に指定</a></li>
+    <li class="level2 nav-leaf"><a href="#カラム命名規則の設定">カラム命名規則の設定</a></li>
+    <li class="level1 nav-node"><a href="#数値型カラムの定義">数値型カラムの定義</a></li>
+    <li class="level2 nav-leaf"><a href="#整数型">整数型</a></li>
+    <li class="level2 nav-leaf"><a href="#小数点型">小数点型</a></li>
+    <li class="level1 nav-leaf"><a href="#文字列型カラムの定義">文字列型カラムの定義</a></li>
+    <li class="level1 nav-leaf"><a href="#バイナリ型カラムの定義">バイナリ型カラムの定義</a></li>
+    <li class="level1 nav-leaf"><a href="#日付-時間型カラムの定義">日付・時間型カラムの定義</a></li>
+    <li class="level1 nav-leaf"><a href="#enum型と特殊データ型">ENUM型と特殊データ型</a></li>
+    <li class="level1 nav-leaf"><a href="#デフォルト値の設定">デフォルト値の設定</a></li>
+    <li class="level1 nav-node"><a href="#主キー-外部キー-インデックス">主キー・外部キー・インデックス</a></li>
+    <li class="level2 nav-leaf"><a href="#単一カラムの主キー">単一カラムの主キー</a></li>
+    <li class="level2 nav-leaf"><a href="#複合主キーの定義">複合主キーの定義</a></li>
+    <li class="level2 nav-leaf"><a href="#インデックスの定義">インデックスの定義</a></li>
+    <li class="level2 nav-leaf"><a href="#外部キーの定義">外部キーの定義</a></li>
+    <li class="level1 nav-leaf"><a href="#制約の設定">制約の設定</a></li>
+    <li class="level1 nav-node"><a href="#モデルとの複雑なマッピング">モデルとの複雑なマッピング</a></li>
+    <li class="level2 nav-leaf"><a href="#ネストしたモデルのマッピング">ネストしたモデルのマッピング</a></li>
+    <li class="level1 nav-node"><a href="#スキーマ生成とddlの実行">スキーマ生成とDDLの実行</a></li>
+    <li class="level2 nav-leaf"><a href="#tablequeryの生成">TableQueryの生成</a></li>
+    <li class="level2 nav-leaf"><a href="#スキーマの生成と実行">スキーマの生成と実行</a></li>
+    <li class="level2 nav-leaf"><a href="#ddl操作">DDL操作</a></li>
+    <li class="level2 nav-leaf"><a href="#ddlステートメントの確認">DDLステートメントの確認</a></li>
+    <li class="level1 nav-leaf"><a href="#カラム属性の設定">カラム属性の設定</a></li>
+    <li class="level1 nav-leaf"><a href="#まとめ">まとめ</a></li>
+    <li class="level1 nav-leaf"><a href="#次のステップ">次のステップ</a></li>
+  </ul>
+
+  <p class="footer"></p>
+</nav>
+
+
+  <main class="content">
+
+    <h1 id="スキーマ" class="title">スキーマ</h1>
+    <p><a href="Query-Builder.html">クエリビルダー</a>で型安全にクエリを構築する方法を学びました。このページでは、Scalaコードでデータベーススキーマを定義し、テーブルとモデルのマッピングを行う方法を説明します。</p>
+    <p>スキーマ定義は、アプリケーションとデータベースの間の境界を明確にする重要な要素です。ldbcは、Scalaコードでスキーマを定義し、強力な型システムを活用してデータベースの構造を表現するための機能を提供しています。</p>
+    <p>この章では、Scala コードでデータベーススキーマを扱う方法、特に既存のデータベースなしでアプリケーションを書き始めるときに便利な、手動でスキーマを記述する方法について説明します。すでにデータベースにスキーマがある場合は、Code Generatorを使ってこの作業を省略することもできます。</p>
+    
+    <h2 id="準備" class="section"><a class="anchor-link left" href="#準備"><i class="icofont-laika link">&#xef71;</i></a>準備</h2>
+    <p>プロジェクトに以下の依存関係を設定する必要があります。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">//&gt; using dep &quot;io.github.takapi327::ldbc-schema:0.3.3&quot;</span></code></pre>
+    <p>以下のコード例では、以下のimportを想定しています。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">schema</span><span>.*</span></code></pre>
+    
+    <h2 id="テーブル定義の基本" class="section"><a class="anchor-link left" href="#テーブル定義の基本"><i class="icofont-laika link">&#xef71;</i></a>テーブル定義の基本</h2>
+    <p>ldbcでは、<code>Table</code>クラスを継承してテーブル定義を作成します。これにより、Scalaのモデル（ケースクラスなど）とデータベースのテーブルを関連付けることができます。</p>
+    
+    <h3 id="基本的なテーブル定義" class="section"><a class="anchor-link left" href="#基本的なテーブル定義"><i class="icofont-laika link">&#xef71;</i></a>基本的なテーブル定義</h3>
+    <pre><code class="nohighlight"><span class="comment">// モデル定義
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">User</span><span>(
+  </span><span class="identifier">id</span><span>:   </span><span class="type-name">Long</span><span>,
+  </span><span class="identifier">name</span><span>:  </span><span class="type-name">String</span><span>,
+  </span><span class="identifier">age</span><span>:   </span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>] </span><span class="comment">// NULLを許容するカラムの場合はOptionを使用
+</span><span>)
+
+</span><span class="comment">// テーブル定義
+</span><span class="keyword">class</span><span> </span><span class="type-name">UserTable</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>): </span><span class="comment">// &quot;user&quot;はテーブル名
+</span><span>  </span><span class="comment">// カラム定義
+</span><span>  </span><span class="keyword">def</span><span> </span><span class="declaration-name">id</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="identifier">column</span><span>[</span><span class="type-name">Long</span><span>](</span><span class="string-literal">&quot;id&quot;</span><span>)
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">name</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">column</span><span>[</span><span class="type-name">String</span><span>](</span><span class="string-literal">&quot;name&quot;</span><span>)
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">age</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>]] = </span><span class="identifier">column</span><span>[</span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>]](</span><span class="string-literal">&quot;age&quot;</span><span>)
+
+  </span><span class="comment">// モデルとのマッピング
+</span><span>  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> * : </span><span class="type-name">Column</span><span>[</span><span class="type-name">User</span><span>] = (</span><span class="identifier">id</span><span> *: </span><span class="identifier">name</span><span> *: </span><span class="identifier">age</span><span>).</span><span class="identifier">to</span><span>[</span><span class="type-name">User</span><span>]</span></code></pre>
+    <p>上記の例では：</p>
+    <ul>
+      <li><code>Table[User]</code>はこのテーブルがUserモデルと関連付けられることを示します</li>
+      <li><code>&quot;user&quot;</code>はデータベース上のテーブル名です</li>
+      <li>各カラムは<code>column</code>メソッドで定義します</li>
+      <li><code>*</code>メソッドはテーブルの全カラムとモデルのマッピング方法を定義します</li>
+    </ul>
+    
+    <h3 id="データ型を指定したテーブル定義" class="section"><a class="anchor-link left" href="#データ型を指定したテーブル定義"><i class="icofont-laika link">&#xef71;</i></a>データ型を指定したテーブル定義</h3>
+    <p>カラムにはMySQLのデータ型や属性を指定できます：</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">class</span><span> </span><span class="type-name">UserTable</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>):
+  </span><span class="comment">// データ型や属性を指定したカラム定義
+</span><span>  </span><span class="keyword">def</span><span> </span><span class="declaration-name">id</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="identifier">column</span><span>[</span><span class="type-name">Long</span><span>](</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="type-name">BIGINT</span><span>, </span><span class="type-name">AUTO_INCREMENT</span><span>, </span><span class="type-name">PRIMARY_KEY</span><span>)
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">name</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">column</span><span>[</span><span class="type-name">String</span><span>](</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">255</span><span>))
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">age</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>]] = </span><span class="identifier">column</span><span>[</span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>]](</span><span class="string-literal">&quot;age&quot;</span><span>, </span><span class="type-name">INT</span><span>)
+
+  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> * : </span><span class="type-name">Column</span><span>[</span><span class="type-name">User</span><span>] = (</span><span class="identifier">id</span><span> *: </span><span class="identifier">name</span><span> *: </span><span class="identifier">age</span><span>).</span><span class="identifier">to</span><span>[</span><span class="type-name">User</span><span>]</span></code></pre>
+    
+    <h2 id="専用カラム定義メソッドを使用する方法" class="section"><a class="anchor-link left" href="#専用カラム定義メソッドを使用する方法"><i class="icofont-laika link">&#xef71;</i></a>専用カラム定義メソッドを使用する方法</h2>
+    <p>ldbcは、各データ型に特化したカラム定義メソッドも提供しています。変数名がそのままカラム名として使用されるため、よりシンプルにコードを書くことができます。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">class</span><span> </span><span class="type-name">UserTable</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>):
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">id</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="identifier">bigint</span><span>().</span><span class="identifier">autoIncrement</span><span>.</span><span class="identifier">primaryKey</span><span>
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">name</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">varchar</span><span>(</span><span class="number-literal">255</span><span>)
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">age</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>]] = </span><span class="identifier">int</span><span>().</span><span class="identifier">defaultNull</span><span>
+
+  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> * : </span><span class="type-name">Column</span><span>[</span><span class="type-name">User</span><span>] = (</span><span class="identifier">id</span><span> *: </span><span class="identifier">name</span><span> *: </span><span class="identifier">age</span><span>).</span><span class="identifier">to</span><span>[</span><span class="type-name">User</span><span>]</span></code></pre>
+    <p>専用のカラム定義メソッドを使うと、そのデータ型に適した属性を設定できるようになり、よりタイプセーフなコードを書くことができます。</p>
+    
+    <h3 id="カラム名を明示的に指定" class="section"><a class="anchor-link left" href="#カラム名を明示的に指定"><i class="icofont-laika link">&#xef71;</i></a>カラム名を明示的に指定</h3>
+    <p>カラム名を明示的に指定したい場合は以下のようにします：</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">class</span><span> </span><span class="type-name">UserTable</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>):
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">id</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="identifier">bigint</span><span>(</span><span class="string-literal">&quot;user_id&quot;</span><span>).</span><span class="identifier">autoIncrement</span><span>.</span><span class="identifier">primaryKey</span><span>
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">name</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">varchar</span><span>(</span><span class="string-literal">&quot;user_name&quot;</span><span>, </span><span class="number-literal">255</span><span>)
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">age</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>]] = </span><span class="identifier">int</span><span>(</span><span class="string-literal">&quot;user_age&quot;</span><span>).</span><span class="identifier">defaultNull</span><span>
+
+  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> * : </span><span class="type-name">Column</span><span>[</span><span class="type-name">User</span><span>] = (</span><span class="identifier">id</span><span> *: </span><span class="identifier">name</span><span> *: </span><span class="identifier">age</span><span>).</span><span class="identifier">to</span><span>[</span><span class="type-name">User</span><span>]</span></code></pre>
+    
+    <h3 id="カラム命名規則の設定" class="section"><a class="anchor-link left" href="#カラム命名規則の設定"><i class="icofont-laika link">&#xef71;</i></a>カラム命名規則の設定</h3>
+    <p><code>Naming</code>を使用して、カラムの命名規則を変更できます：</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">class</span><span> </span><span class="type-name">UserTable</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>):
+  </span><span class="comment">// パスカルケースのカラム名に変換（例：userId → UserId）
+</span><span>  </span><span class="keyword">given</span><span> </span><span class="type-name">Naming</span><span> = </span><span class="type-name">Naming</span><span>.</span><span class="type-name">PASCAL</span><span>
+  
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">userId</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="identifier">bigint</span><span>().</span><span class="identifier">autoIncrement</span><span>.</span><span class="identifier">primaryKey</span><span>
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">userName</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">varchar</span><span>(</span><span class="number-literal">255</span><span>)
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">userAge</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>]] = </span><span class="identifier">int</span><span>().</span><span class="identifier">defaultNull</span><span>
+
+  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> * : </span><span class="type-name">Column</span><span>[</span><span class="type-name">User</span><span>] = (</span><span class="identifier">userId</span><span> *: </span><span class="identifier">userName</span><span> *: </span><span class="identifier">userAge</span><span>).</span><span class="identifier">to</span><span>[</span><span class="type-name">User</span><span>]</span></code></pre>
+    <p>利用可能な命名規則：</p>
+    <ul>
+      <li><code>Naming.SNAKE</code>（デフォルト）: スネークケース（例：user_id）</li>
+      <li><code>Naming.CAMEL</code>: キャメルケース（例：userId）</li>
+      <li><code>Naming.PASCAL</code>: パスカルケース（例：UserId）</li>
+    </ul>
+    
+    <h2 id="数値型カラムの定義" class="section"><a class="anchor-link left" href="#数値型カラムの定義"><i class="icofont-laika link">&#xef71;</i></a>数値型カラムの定義</h2>
+    <p>数値型カラムでは、以下のような操作が可能です：</p>
+    
+    <h3 id="整数型" class="section"><a class="anchor-link left" href="#整数型"><i class="icofont-laika link">&#xef71;</i></a>整数型</h3>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">def</span><span> </span><span class="declaration-name">id</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="identifier">bigint</span><span>().</span><span class="identifier">autoIncrement</span><span>.</span><span class="identifier">primaryKey</span><span>
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">count</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Int</span><span>] = </span><span class="identifier">int</span><span>().</span><span class="identifier">unsigned</span><span>.</span><span class="identifier">default</span><span>(</span><span class="number-literal">0</span><span>) </span><span class="comment">// 符号なしに設定、デフォルト値0
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">smallValue</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Short</span><span>] = </span><span class="identifier">smallint</span><span>().</span><span class="identifier">unsigned</span></code></pre>
+    
+    <h3 id="小数点型" class="section"><a class="anchor-link left" href="#小数点型"><i class="icofont-laika link">&#xef71;</i></a>小数点型</h3>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">def</span><span> </span><span class="declaration-name">price</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">BigDecimal</span><span>] = </span><span class="identifier">decimal</span><span>(</span><span class="number-literal">10</span><span>, </span><span class="number-literal">2</span><span>) </span><span class="comment">// 合計10桁、小数点以下2桁
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">rating</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Double</span><span>] = </span><span class="identifier">double</span><span>(</span><span class="number-literal">5</span><span>) </span><span class="comment">// 倍精度浮動小数点数
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">score</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Float</span><span>] = </span><span class="identifier">float</span><span>(</span><span class="number-literal">4</span><span>) </span><span class="comment">// 単精度浮動小数点数</span></code></pre>
+    
+    <h2 id="文字列型カラムの定義" class="section"><a class="anchor-link left" href="#文字列型カラムの定義"><i class="icofont-laika link">&#xef71;</i></a>文字列型カラムの定義</h2>
+    <p>文字列型カラムでは、以下のような操作が可能です：</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">def</span><span> </span><span class="declaration-name">name</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">varchar</span><span>(</span><span class="number-literal">255</span><span>) </span><span class="comment">// 可変長文字列（最大255文字）
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">code</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">char</span><span>(</span><span class="number-literal">5</span><span>) </span><span class="comment">// 固定長文字列（5文字）
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">description</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">text</span><span>() </span><span class="comment">// テキスト型
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">content</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">longtext</span><span>() </span><span class="comment">// 長いテキスト型
+</span><span>
+</span><span class="comment">// 文字セット（キャラクターセット）の指定
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">japaneseText</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">text</span><span>().</span><span class="identifier">charset</span><span>(</span><span class="type-name">Character</span><span>.</span><span class="identifier">utf8mb4</span><span>)
+
+</span><span class="comment">// 照合順序（コレーション）の指定
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">sortableText</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">varchar</span><span>(</span><span class="number-literal">255</span><span>)
+  .</span><span class="identifier">charset</span><span>(</span><span class="type-name">Character</span><span>.</span><span class="identifier">utf8mb4</span><span>)
+  .</span><span class="identifier">collate</span><span>(</span><span class="type-name">Collate</span><span>.</span><span class="identifier">utf8mb4_unicode_ci</span><span>)</span></code></pre>
+    
+    <h2 id="バイナリ型カラムの定義" class="section"><a class="anchor-link left" href="#バイナリ型カラムの定義"><i class="icofont-laika link">&#xef71;</i></a>バイナリ型カラムの定義</h2>
+    <p>バイナリデータを扱うカラムの定義：</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">def</span><span> </span><span class="declaration-name">data</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Array</span><span>[</span><span class="type-name">Byte</span><span>]] = </span><span class="identifier">binary</span><span>(</span><span class="number-literal">255</span><span>) </span><span class="comment">// 固定長バイナリ
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">flexData</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Array</span><span>[</span><span class="type-name">Byte</span><span>]] = </span><span class="identifier">varbinary</span><span>(</span><span class="number-literal">1000</span><span>) </span><span class="comment">// 可変長バイナリ
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">largeData</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Array</span><span>[</span><span class="type-name">Byte</span><span>]] = </span><span class="identifier">blob</span><span>() </span><span class="comment">// バイナリラージオブジェクト</span></code></pre>
+    
+    <h2 id="日付-時間型カラムの定義" class="section"><a class="anchor-link left" href="#日付-時間型カラムの定義"><i class="icofont-laika link">&#xef71;</i></a>日付・時間型カラムの定義</h2>
+    <p>日付・時間を扱うカラムの定義：</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">def</span><span> </span><span class="declaration-name">birthDate</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">LocalDate</span><span>] = </span><span class="identifier">date</span><span>() </span><span class="comment">// 日付のみ
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">createdAt</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">LocalDateTime</span><span>] = </span><span class="identifier">datetime</span><span>() </span><span class="comment">// 日付と時間
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">updatedAt</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">LocalDateTime</span><span>] = </span><span class="identifier">timestamp</span><span>()
+  .</span><span class="identifier">defaultCurrentTimestamp</span><span>(</span><span class="identifier">onUpdate</span><span> = </span><span class="boolean-literal">true</span><span>) </span><span class="comment">// 作成・更新時に自動更新
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">startTime</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">LocalTime</span><span>] = </span><span class="identifier">time</span><span>() </span><span class="comment">// 時間のみ
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">fiscalYear</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Int</span><span>] = </span><span class="identifier">year</span><span>() </span><span class="comment">// 年のみ</span></code></pre>
+    
+    <h2 id="enum型と特殊データ型" class="section"><a class="anchor-link left" href="#enum型と特殊データ型"><i class="icofont-laika link">&#xef71;</i></a>ENUM型と特殊データ型</h2>
+    <p>ENUM型の使用例：</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// ENUMの定義
+</span><span class="keyword">enum</span><span> </span><span class="type-name">UserStatus</span><span>:
+  </span><span class="keyword">case</span><span> </span><span class="type-name">Active</span><span>, </span><span class="type-name">Inactive</span><span>, </span><span class="type-name">Suspended</span><span>
+
+</span><span class="comment">// テーブル定義でENUMを使用
+</span><span class="keyword">class</span><span> </span><span class="type-name">UserTable</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>):
+  </span><span class="comment">// ...
+</span><span>  </span><span class="keyword">def</span><span> </span><span class="declaration-name">status</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">UserStatus</span><span>] = </span><span class="identifier">`enum`</span><span>[</span><span class="type-name">UserStatus</span><span>](</span><span class="string-literal">&quot;status&quot;</span><span>)</span></code></pre>
+    <p>その他の特殊データ型：</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">def</span><span> </span><span class="declaration-name">isActive</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Boolean</span><span>] = </span><span class="identifier">boolean</span><span>() </span><span class="comment">// BOOLEAN型
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">uniqueId</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">BigInt</span><span>] = </span><span class="identifier">serial</span><span>() </span><span class="comment">// SERIAL型（自動増分のBIGINT UNSIGNED）</span></code></pre>
+    
+    <h2 id="デフォルト値の設定" class="section"><a class="anchor-link left" href="#デフォルト値の設定"><i class="icofont-laika link">&#xef71;</i></a>デフォルト値の設定</h2>
+    <p>カラムにデフォルト値を設定する方法：</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">def</span><span> </span><span class="declaration-name">score</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Int</span><span>] = </span><span class="identifier">int</span><span>().</span><span class="identifier">default</span><span>(</span><span class="number-literal">100</span><span>) </span><span class="comment">// 固定値
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">updatedAt</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">LocalDateTime</span><span>] = </span><span class="identifier">timestamp</span><span>()
+  .</span><span class="identifier">defaultCurrentTimestamp</span><span>() </span><span class="comment">// 現在のタイムスタンプ
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">createdDate</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">LocalDate</span><span>] = </span><span class="identifier">date</span><span>()
+  .</span><span class="identifier">defaultCurrentDate</span><span> </span><span class="comment">// 現在の日付
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">nullableField</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Option</span><span>[</span><span class="type-name">String</span><span>]] = </span><span class="identifier">varchar</span><span>(</span><span class="number-literal">255</span><span>)
+  .</span><span class="identifier">defaultNull</span><span> </span><span class="comment">// NULL値</span></code></pre>
+    
+    <h2 id="主キー-外部キー-インデックス" class="section"><a class="anchor-link left" href="#主キー-外部キー-インデックス"><i class="icofont-laika link">&#xef71;</i></a>主キー・外部キー・インデックス</h2>
+    
+    <h3 id="単一カラムの主キー" class="section"><a class="anchor-link left" href="#単一カラムの主キー"><i class="icofont-laika link">&#xef71;</i></a>単一カラムの主キー</h3>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">def</span><span> </span><span class="declaration-name">id</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="identifier">bigint</span><span>().</span><span class="identifier">autoIncrement</span><span>.</span><span class="identifier">primaryKey</span></code></pre>
+    
+    <h3 id="複合主キーの定義" class="section"><a class="anchor-link left" href="#複合主キーの定義"><i class="icofont-laika link">&#xef71;</i></a>複合主キーの定義</h3>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">class</span><span> </span><span class="type-name">OrderItemTable</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">OrderItem</span><span>](</span><span class="string-literal">&quot;order_item&quot;</span><span>):
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">orderId</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Int</span><span>] = </span><span class="identifier">int</span><span>()
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">itemId</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Int</span><span>] = </span><span class="identifier">int</span><span>()
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">quantity</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Int</span><span>] = </span><span class="identifier">int</span><span>().</span><span class="identifier">default</span><span>(</span><span class="number-literal">1</span><span>)
+  
+  </span><span class="comment">// 複合主キーの定義
+</span><span>  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">keys</span><span> = </span><span class="type-name">List</span><span>(
+    </span><span class="type-name">PRIMARY_KEY</span><span>(</span><span class="identifier">orderId</span><span> *: </span><span class="identifier">itemId</span><span>)
+  )
+
+  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> * : </span><span class="type-name">Column</span><span>[</span><span class="type-name">OrderItem</span><span>] = (</span><span class="identifier">orderId</span><span> *: </span><span class="identifier">itemId</span><span> *: </span><span class="identifier">quantity</span><span>).</span><span class="identifier">to</span><span>[</span><span class="type-name">OrderItem</span><span>]</span></code></pre>
+    
+    <h3 id="インデックスの定義" class="section"><a class="anchor-link left" href="#インデックスの定義"><i class="icofont-laika link">&#xef71;</i></a>インデックスの定義</h3>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">class</span><span> </span><span class="type-name">UserTable</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>):
+  </span><span class="comment">// ...カラム定義...
+</span><span>  
+  </span><span class="comment">// インデックスの定義
+</span><span>  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">keys</span><span> = </span><span class="type-name">List</span><span>(
+    </span><span class="type-name">INDEX_KEY</span><span>(</span><span class="string-literal">&quot;idx_user_name&quot;</span><span>, </span><span class="identifier">name</span><span>), </span><span class="comment">// 名前付きインデックス
+</span><span>    </span><span class="type-name">UNIQUE_KEY</span><span>(</span><span class="string-literal">&quot;idx_user_email&quot;</span><span>, </span><span class="identifier">email</span><span>) </span><span class="comment">// ユニークインデックス
+</span><span>  )</span></code></pre>
+    <p>インデックスタイプの指定も可能です：</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">keys</span><span> = </span><span class="type-name">List</span><span>(
+  </span><span class="type-name">INDEX_KEY</span><span>(
+    </span><span class="type-name">Some</span><span>(</span><span class="string-literal">&quot;idx_name&quot;</span><span>), 
+    </span><span class="type-name">Some</span><span>(</span><span class="type-name">Index</span><span>.</span><span class="type-name">Type</span><span>.</span><span class="type-name">BTREE</span><span>), </span><span class="comment">// BツリーまたはHASHのインデックスタイプを指定可能
+</span><span>    </span><span class="type-name">None</span><span>, 
+    </span><span class="identifier">name</span><span>
+  )
+)</span></code></pre>
+    
+    <h3 id="外部キーの定義" class="section"><a class="anchor-link left" href="#外部キーの定義"><i class="icofont-laika link">&#xef71;</i></a>外部キーの定義</h3>
+    <p>外部キーを定義するには、まず参照先のテーブルのTableQueryを作成します：</p>
+    <pre><code class="nohighlight"><span class="comment">// 参照先のテーブル
+</span><span class="keyword">val</span><span> </span><span class="identifier">userTable</span><span> = </span><span class="type-name">TableQuery</span><span>[</span><span class="type-name">UserTable</span><span>]
+
+</span><span class="comment">// 参照元のテーブル
+</span><span class="keyword">class</span><span> </span><span class="type-name">ProfileTable</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">Profile</span><span>](</span><span class="string-literal">&quot;profile&quot;</span><span>):
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">id</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="identifier">bigint</span><span>().</span><span class="identifier">autoIncrement</span><span>.</span><span class="identifier">primaryKey</span><span>
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">userId</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="identifier">bigint</span><span>()
+  </span><span class="comment">// ...他のカラム...
+</span><span>  
+  </span><span class="comment">// 外部キー定義
+</span><span>  </span><span class="keyword">def</span><span> </span><span class="declaration-name">fkUser</span><span> = </span><span class="type-name">FOREIGN_KEY</span><span>(
+    </span><span class="string-literal">&quot;fk_profile_user&quot;</span><span>, </span><span class="comment">// 外部キーの名前
+</span><span>    </span><span class="identifier">userId</span><span>, </span><span class="comment">// 参照元のカラム
+</span><span>    </span><span class="type-name">REFERENCE</span><span>(</span><span class="identifier">userTable</span><span>)(</span><span class="identifier">_</span><span>.</span><span class="identifier">id</span><span>) </span><span class="comment">// 参照先のテーブルとカラム
+</span><span>      .</span><span class="identifier">onDelete</span><span>(</span><span class="type-name">Reference</span><span>.</span><span class="type-name">ReferenceOption</span><span>.</span><span class="type-name">CASCADE</span><span>) </span><span class="comment">// 削除時の動作
+</span><span>      .</span><span class="identifier">onUpdate</span><span>(</span><span class="type-name">Reference</span><span>.</span><span class="type-name">ReferenceOption</span><span>.</span><span class="type-name">RESTRICT</span><span>) </span><span class="comment">// 更新時の動作
+</span><span>  )
+  
+  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">keys</span><span> = </span><span class="type-name">List</span><span>(
+    </span><span class="type-name">PRIMARY_KEY</span><span>(</span><span class="identifier">id</span><span>),
+    </span><span class="identifier">fkUser</span><span> </span><span class="comment">// 外部キーを追加
+</span><span>  )</span></code></pre>
+    <p>参照制約オプション（<code>ReferenceOption</code>）:</p>
+    <ul>
+      <li><code>RESTRICT</code>: 子レコードが存在する限り親レコードの変更を許可しない</li>
+      <li><code>CASCADE</code>: 親レコードの変更に合わせて子レコードも変更する</li>
+      <li><code>SET_NULL</code>: 親レコードが変更されたとき子レコードの該当カラムをNULLに設定</li>
+      <li><code>NO_ACTION</code>: 制約チェックを遅延させる（基本的にはRESTRICTと同じ）</li>
+      <li><code>SET_DEFAULT</code>: 親レコードが変更されたとき子レコードの該当カラムをデフォルト値に設定</li>
+    </ul>
+    
+    <h2 id="制約の設定" class="section"><a class="anchor-link left" href="#制約の設定"><i class="icofont-laika link">&#xef71;</i></a>制約の設定</h2>
+    <p>特定の命名規則で制約を定義したい場合は<code>CONSTRAINT</code>を使用できます：</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">keys</span><span> = </span><span class="type-name">List</span><span>(
+  </span><span class="type-name">CONSTRAINT</span><span>(
+    </span><span class="string-literal">&quot;pk_user&quot;</span><span>, </span><span class="comment">// 制約名
+</span><span>    </span><span class="type-name">PRIMARY_KEY</span><span>(</span><span class="identifier">id</span><span>) </span><span class="comment">// 制約タイプ
+</span><span>  ),
+  </span><span class="type-name">CONSTRAINT</span><span>(
+    </span><span class="string-literal">&quot;fk_user_department&quot;</span><span>,
+    </span><span class="type-name">FOREIGN_KEY</span><span>(</span><span class="identifier">departmentId</span><span>, </span><span class="type-name">REFERENCE</span><span>(</span><span class="identifier">departmentTable</span><span>)(</span><span class="identifier">_</span><span>.</span><span class="identifier">id</span><span>))
+  )
+)</span></code></pre>
+    
+    <h2 id="モデルとの複雑なマッピング" class="section"><a class="anchor-link left" href="#モデルとの複雑なマッピング"><i class="icofont-laika link">&#xef71;</i></a>モデルとの複雑なマッピング</h2>
+    
+    <h3 id="ネストしたモデルのマッピング" class="section"><a class="anchor-link left" href="#ネストしたモデルのマッピング"><i class="icofont-laika link">&#xef71;</i></a>ネストしたモデルのマッピング</h3>
+    <pre><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">User</span><span>(
+  </span><span class="identifier">id</span><span>: </span><span class="type-name">Long</span><span>, 
+  </span><span class="identifier">name</span><span>: </span><span class="type-name">UserName</span><span>, </span><span class="comment">// ネストした型
+</span><span>  </span><span class="identifier">contact</span><span>: </span><span class="type-name">Contact</span><span> </span><span class="comment">// ネストした型
+</span><span>)
+
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">UserName</span><span>(</span><span class="identifier">first</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">last</span><span>: </span><span class="type-name">String</span><span>)
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Contact</span><span>(</span><span class="identifier">email</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">phone</span><span>: </span><span class="type-name">Option</span><span>[</span><span class="type-name">String</span><span>])
+
+</span><span class="keyword">class</span><span> </span><span class="type-name">UserTable</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>):
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">id</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="identifier">bigint</span><span>().</span><span class="identifier">autoIncrement</span><span>.</span><span class="identifier">primaryKey</span><span>
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">firstName</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">varchar</span><span>(</span><span class="number-literal">50</span><span>)
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">lastName</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">varchar</span><span>(</span><span class="number-literal">50</span><span>)
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">email</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">varchar</span><span>(</span><span class="number-literal">100</span><span>)
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">phone</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Option</span><span>[</span><span class="type-name">String</span><span>]] = </span><span class="identifier">varchar</span><span>(</span><span class="number-literal">20</span><span>).</span><span class="identifier">defaultNull</span><span>
+  
+  </span><span class="comment">// ネストした値のマッピング
+</span><span>  </span><span class="keyword">def</span><span> </span><span class="declaration-name">userName</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">UserName</span><span>] = (</span><span class="identifier">firstName</span><span> *: </span><span class="identifier">lastName</span><span>).</span><span class="identifier">to</span><span>[</span><span class="type-name">UserName</span><span>]
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">contact</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Contact</span><span>] = (</span><span class="identifier">email</span><span> *: </span><span class="identifier">phone</span><span>).</span><span class="identifier">to</span><span>[</span><span class="type-name">Contact</span><span>]
+  
+  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> * : </span><span class="type-name">Column</span><span>[</span><span class="type-name">User</span><span>] = (</span><span class="identifier">id</span><span> *: </span><span class="identifier">userName</span><span> *: </span><span class="identifier">contact</span><span>).</span><span class="identifier">to</span><span>[</span><span class="type-name">User</span><span>]</span></code></pre>
+    <p>この設定により、次のようなSQLが生成されます：</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">CREATE</span><span> </span><span class="keyword">TABLE</span><span> </span><span class="identifier">`user`</span><span> (
+  </span><span class="identifier">`id`</span><span> </span><span class="type-name">BIGINT</span><span> </span><span class="keyword">NOT</span><span> </span><span class="literal-value">NULL</span><span> </span><span class="identifier">AUTO_INCREMENT</span><span>,
+  </span><span class="identifier">`firstName`</span><span> </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">50</span><span>) </span><span class="keyword">NOT</span><span> </span><span class="literal-value">NULL</span><span>,
+  </span><span class="identifier">`lastName`</span><span> </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">50</span><span>) </span><span class="keyword">NOT</span><span> </span><span class="literal-value">NULL</span><span>,
+  </span><span class="identifier">`email`</span><span> </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">100</span><span>) </span><span class="keyword">NOT</span><span> </span><span class="literal-value">NULL</span><span>,
+  </span><span class="identifier">`phone`</span><span> </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">20</span><span>) </span><span class="literal-value">NULL</span><span>,
+  </span><span class="keyword">PRIMARY</span><span> </span><span class="keyword">KEY</span><span> (</span><span class="identifier">`id`</span><span>)
+)</span></code></pre>
+    
+    <h2 id="スキーマ生成とddlの実行" class="section"><a class="anchor-link left" href="#スキーマ生成とddlの実行"><i class="icofont-laika link">&#xef71;</i></a>スキーマ生成とDDLの実行</h2>
+    <p>テーブル定義からDDL（Data Definition Language）を生成し、データベースにスキーマを作成します。</p>
+    
+    <h3 id="tablequeryの生成" class="section"><a class="anchor-link left" href="#tablequeryの生成"><i class="icofont-laika link">&#xef71;</i></a>TableQueryの生成</h3>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">users</span><span> = </span><span class="type-name">TableQuery</span><span>[</span><span class="type-name">UserTable</span><span>]
+</span><span class="keyword">val</span><span> </span><span class="identifier">profiles</span><span> = </span><span class="type-name">TableQuery</span><span>[</span><span class="type-name">ProfileTable</span><span>]
+</span><span class="keyword">val</span><span> </span><span class="identifier">orders</span><span> = </span><span class="type-name">TableQuery</span><span>[</span><span class="type-name">OrderTable</span><span>]</span></code></pre>
+    
+    <h3 id="スキーマの生成と実行" class="section"><a class="anchor-link left" href="#スキーマの生成と実行"><i class="icofont-laika link">&#xef71;</i></a>スキーマの生成と実行</h3>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.*
+
+</span><span class="comment">// スキーマの組み合わせ
+</span><span class="keyword">val</span><span> </span><span class="identifier">schema</span><span> = </span><span class="identifier">users</span><span>.</span><span class="identifier">schema</span><span> ++ </span><span class="identifier">profiles</span><span>.</span><span class="identifier">schema</span><span> ++ </span><span class="identifier">orders</span><span>.</span><span class="identifier">schema</span><span>
+
+</span><span class="comment">// データベース接続を使ってスキーマを適用
+</span><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">sequence</span><span>(
+    </span><span class="comment">// テーブル作成（存在しない場合のみ）
+</span><span>    </span><span class="identifier">schema</span><span>.</span><span class="identifier">createIfNotExists</span><span>,
+    </span><span class="comment">// データ投入など他の操作...
+</span><span>  ).</span><span class="identifier">commit</span><span>(</span><span class="identifier">conn</span><span>)
+}</span></code></pre>
+    
+    <h3 id="ddl操作" class="section"><a class="anchor-link left" href="#ddl操作"><i class="icofont-laika link">&#xef71;</i></a>DDL操作</h3>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">userSchema</span><span> = </span><span class="identifier">users</span><span>.</span><span class="identifier">schema</span><span>
+
+</span><span class="comment">// 各種DDL操作
+</span><span class="identifier">userSchema</span><span>.</span><span class="identifier">create</span><span>            </span><span class="comment">// テーブル作成
+</span><span class="identifier">userSchema</span><span>.</span><span class="identifier">createIfNotExists</span><span> </span><span class="comment">// テーブルが存在しない場合のみ作成
+</span><span class="identifier">userSchema</span><span>.</span><span class="identifier">drop</span><span>              </span><span class="comment">// テーブル削除
+</span><span class="identifier">userSchema</span><span>.</span><span class="identifier">dropIfExists</span><span>      </span><span class="comment">// テーブルが存在する場合のみ削除
+</span><span class="identifier">userSchema</span><span>.</span><span class="identifier">truncate</span><span>          </span><span class="comment">// テーブル内のすべてのデータを削除</span></code></pre>
+    
+    <h3 id="ddlステートメントの確認" class="section"><a class="anchor-link left" href="#ddlステートメントの確認"><i class="icofont-laika link">&#xef71;</i></a>DDLステートメントの確認</h3>
+    <p>実際に実行されるSQLを確認する方法：</p>
+    <pre><code class="nohighlight"><span class="comment">// 作成クエリの確認
+</span><span class="identifier">userSchema</span><span>.</span><span class="identifier">create</span><span>.</span><span class="identifier">statements</span><span>.</span><span class="identifier">foreach</span><span>(</span><span class="identifier">println</span><span>)
+
+</span><span class="comment">// 条件付き作成クエリの確認
+</span><span class="identifier">userSchema</span><span>.</span><span class="identifier">createIfNotExists</span><span>.</span><span class="identifier">statements</span><span>.</span><span class="identifier">foreach</span><span>(</span><span class="identifier">println</span><span>)
+
+</span><span class="comment">// 削除クエリの確認
+</span><span class="identifier">userSchema</span><span>.</span><span class="identifier">drop</span><span>.</span><span class="identifier">statements</span><span>.</span><span class="identifier">foreach</span><span>(</span><span class="identifier">println</span><span>)
+
+</span><span class="comment">// 条件付き削除クエリの確認
+</span><span class="identifier">userSchema</span><span>.</span><span class="identifier">dropIfExists</span><span>.</span><span class="identifier">statements</span><span>.</span><span class="identifier">foreach</span><span>(</span><span class="identifier">println</span><span>)
+
+</span><span class="comment">// truncateクエリの確認
+</span><span class="identifier">userSchema</span><span>.</span><span class="identifier">truncate</span><span>.</span><span class="identifier">statements</span><span>.</span><span class="identifier">foreach</span><span>(</span><span class="identifier">println</span><span>)</span></code></pre>
+    
+    <h2 id="カラム属性の設定" class="section"><a class="anchor-link left" href="#カラム属性の設定"><i class="icofont-laika link">&#xef71;</i></a>カラム属性の設定</h2>
+    <p>カラムには様々な属性を設定できます：</p>
+    <pre><code class="nohighlight"><span class="keyword">def</span><span> </span><span class="declaration-name">id</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="identifier">bigint</span><span>()
+  .</span><span class="identifier">autoIncrement</span><span>    </span><span class="comment">// 自動増分
+</span><span>  .</span><span class="identifier">primaryKey</span><span>       </span><span class="comment">// 主キー
+</span><span>  .</span><span class="identifier">comment</span><span>(</span><span class="string-literal">&quot;ユーザーID&quot;</span><span>) </span><span class="comment">// コメント
+</span><span>
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">email</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">varchar</span><span>(</span><span class="number-literal">255</span><span>)
+  .</span><span class="identifier">unique</span><span>           </span><span class="comment">// ユニーク制約
+</span><span>  .</span><span class="identifier">comment</span><span>(</span><span class="string-literal">&quot;メールアドレス&quot;</span><span>)
+
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">status</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">varchar</span><span>(</span><span class="number-literal">20</span><span>)
+  .</span><span class="identifier">charset</span><span>(</span><span class="type-name">Character</span><span>.</span><span class="identifier">utf8mb4</span><span>)  </span><span class="comment">// 文字セット
+</span><span>  .</span><span class="identifier">collate</span><span>(</span><span class="type-name">Collate</span><span>.</span><span class="identifier">utf8mb4_unicode_ci</span><span>)  </span><span class="comment">// 照合順序
+</span><span>
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">hiddenField</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">varchar</span><span>(</span><span class="number-literal">100</span><span>)
+  .</span><span class="identifier">invisible</span><span>        </span><span class="comment">// 不可視属性（SELECT *では取得されない）
+</span><span>
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">formatField</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">varchar</span><span>(</span><span class="number-literal">100</span><span>)
+  .</span><span class="identifier">setAttributes</span><span>(</span><span class="type-name">COLUMN_FORMAT</span><span>.</span><span class="type-name">DYNAMIC</span><span>[</span><span class="type-name">String</span><span>]) </span><span class="comment">// カラム格納フォーマット
+</span><span>
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">storageField</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Array</span><span>[</span><span class="type-name">Byte</span><span>]] = </span><span class="identifier">blob</span><span>()
+  .</span><span class="identifier">setAttributes</span><span>(</span><span class="type-name">STORAGE</span><span>.</span><span class="type-name">DISK</span><span>[</span><span class="type-name">Array</span><span>[</span><span class="type-name">Byte</span><span>]]) </span><span class="comment">// ストレージタイプ</span></code></pre>
+    
+    <h2 id="まとめ" class="section"><a class="anchor-link left" href="#まとめ"><i class="icofont-laika link">&#xef71;</i></a>まとめ</h2>
+    <p>ldbcのスキーマモジュールを使用することで、Scalaの型システムを活用して安全かつ表現力豊かなデータベーススキーマを定義することができます。</p>
+    <p>主な特長：</p>
+    <ul>
+      <li>強力な型安全性：コンパイル時にスキーマの問題を検出</li>
+      <li>豊富なデータ型サポート：MySQLの全データ型をサポート</li>
+      <li>柔軟なモデルマッピング：単純なケースクラスからネストした複雑なモデルまで対応</li>
+      <li>DDL生成：テーブル定義から直接SQLを生成</li>
+      <li>拡張性：カスタムデータ型やマッピング機能をサポート</li>
+    </ul>
+    
+    <h2 id="次のステップ" class="section"><a class="anchor-link left" href="#次のステップ"><i class="icofont-laika link">&#xef71;</i></a>次のステップ</h2>
+    <p>これでScalaコードでスキーマを定義する方法がわかりました。手動でスキーマを定義することで、アプリケーションとデータベースの構造を密接に連携させることができます。</p>
+    <p>次は<a href="Schema-Code-Generation.html">スキーマコード生成</a>に進み、既存のSQLファイルからスキーマコードを自動生成する方法を学びましょう。</p>
+
+    
+<hr class="footer-rule"/>
+<footer>
+  ldbc is a <a href="https://typelevel.org/">Typelevel</a> project distributed under the <a href="https://img.shields.io/badge/license-MIT-green">MIT</a> license.
+</footer>
+
+
+  </main>
+
+</div>
+
+</body>
+
+</html>
