@@ -11,6 +11,7 @@ import scala.concurrent.duration.*
 import cats.syntax.all.*
 
 import cats.effect.*
+import cats.effect.std.Console
 import cats.effect.syntax.spawn.*
 
 import fs2.Stream
@@ -62,12 +63,12 @@ object AdaptivePoolSizer:
    * @tparam F the effect type (must have an Async instance)
    * @return a new AdaptivePoolSizer instance
    */
-  def fromAsync[F[_]: Async](
+  def fromAsync[F[_]: Async: Console](
     config:         MySQLConfig,
     metricsTracker: PoolMetricsTracker[F]
   ): AdaptivePoolSizer[F] = Impl[F](config, metricsTracker)
 
-  private case class Impl[F[_]: Async](
+  private case class Impl[F[_]: Async: Console](
     config:         MySQLConfig,
     metricsTracker: PoolMetricsTracker[F]
   ) extends AdaptivePoolSizer[F]:
@@ -265,11 +266,16 @@ object AdaptivePoolSizer:
       pool: PooledDataSource[F],
       by:   Int
     ): F[Unit] =
-      (1 to by).toList.traverse_ { _ =>
+      (1 to by).toList.traverse_ { index =>
         pool
           .createNewConnectionForPool()
-          .void                                   // Convert to F[Unit]
-          .handleErrorWith(_ => Temporal[F].unit) // Ignore creation failures
+          .void
+          .handleErrorWith { error =>
+            // Log the error with context for debugging
+            Console[F].errorln(
+              s"[AdaptivePoolSizer] Failed to create connection $index/$by during pool growth: ${error.getMessage}"
+            )
+          }
       }
 
     /**
