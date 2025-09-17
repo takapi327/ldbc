@@ -225,5 +225,4 @@ val ldbcConfig = MySQLConfig.default
 
 ## References
 - [Connection Pooling Architecture](/en/reference/Pooling.md)
-- [Pool Configuration API](/en/reference/MySQLConfig.md)
 - [Performance Benchmarks](/en/reference/Pooling.md#benchmark-results)
