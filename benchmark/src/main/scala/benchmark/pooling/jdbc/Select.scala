@@ -7,10 +7,9 @@
 package benchmark.pooling.jdbc
 
 import java.time.*
-import java.util.concurrent.{ Executors, TimeUnit }
+import java.util.concurrent.TimeUnit
 
 import scala.compiletime.uninitialized
-import scala.concurrent.ExecutionContext
 
 import org.openjdk.jmh.annotations.*
 
@@ -58,8 +57,6 @@ class Select:
   )
 
   private val threadPoolSize  = Math.max(4, Runtime.getRuntime.availableProcessors())
-  private val executorService = Executors.newFixedThreadPool(threadPoolSize)
-  private val ex              = ExecutionContext.fromExecutor(executorService)
 
   @volatile
   var datasource: (DataSource[IO], IO[Unit]) = uninitialized
@@ -87,7 +84,9 @@ class Select:
 
     val ds = new HikariDataSource(config)
 
-    datasource = (for hikari <- Resource.fromAutoCloseable(IO(ds))
+    datasource = (for
+      hikari <- Resource.fromAutoCloseable(IO(ds))
+      ex <- ExecutionContexts.fixedThreadPool[IO](threadPoolSize)
     yield MySQLDataSource.fromDataSource[IO](hikari, ex)).allocated.unsafeRunSync()
 
     // プール初期化後も少し待機して、全ての接続が確立されるのを待つ
@@ -96,8 +95,6 @@ class Select:
   @TearDown(Level.Trial)
   def tearDown(): Unit =
     datasource._2.unsafeRunSync()
-    executorService.shutdown()
-    executorService.awaitTermination(10, TimeUnit.SECONDS)
 
   @Param(Array("500", "1000", "1500", "2000"))
   var len: Int = uninitialized

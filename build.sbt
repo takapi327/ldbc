@@ -216,7 +216,7 @@ lazy val benchmark = (project in file("benchmark"))
       slick
     )
   )
-  .dependsOn(jdbcConnector.jvm, connector.jvm, queryBuilder.jvm)
+  .dependsOn(jdbcConnector.jvm, connector.jvm, queryBuilder.jvm, hikari)
   .enablePlugins(JmhPlugin, AutomateHeaderPlugin, NoPublishPlugin)
 
 lazy val http4sExample = crossProject(JVMPlatform)
