@@ -27,15 +27,12 @@ dropDDL.foreach(println)      // DROP TABLE文が出力される
 truncateDDL.foreach(println)  // TRUNCATE TABLE文が出力される
 
 // DDL操作の実行例
-provider
-  .use { conn =>
-    DBIO.sequence(
-        userSchema.createIfNotExists,
-        userSchema.truncate,
-        userSchema.dropIfExists
-      )
-      .commit(conn)
-  }
+DBIO.sequence(
+    userSchema.createIfNotExists,
+    userSchema.truncate,
+    userSchema.dropIfExists
+  )
+  .commit(connector)
 // ...existing code...
 ```
 

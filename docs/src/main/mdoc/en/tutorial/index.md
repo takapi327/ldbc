@@ -26,9 +26,11 @@ import ldbc.connector.*
 import ldbc.dsl.*
 
 // Database connection configuration
-val provider =
-  ConnectionProvider
-    .default[IO]("127.0.0.1", 3306, "ldbc", "password", "ldbc")
+val datasource =
+  MySQLDataSource
+    .build[IO]("127.0.0.1", 3306, "ldbc")
+    .setPassword("password")
+    .setDatabase("ldbc")
     .setSSL(SSL.Trusted)
 
 // Executing queries
@@ -43,10 +45,11 @@ val program = for
   count <- sql"SELECT COUNT(*) FROM user".query[Int].unsafe
 yield (users, count)
 
+// Create Connector
+val connector = Connector.fromDataSource(datasource)
+
 // Executing the program
-provider.use { conn =>
-  program.transaction(conn)
-}
+program.transaction(connector)
 ```
 
 ## How to Proceed with this Tutorial

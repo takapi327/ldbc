@@ -25,13 +25,9 @@ ds.setDatabaseName("world")
 ds.setUser("ldbc")
 ds.setPassword("password")
 
-val provider = ConnectionProvider.fromDataSource[IO](ex, ExecutionContexts.synchronous)
+val connector = Connector.fromDataSource[IO](ds, ExecutionContexts.synchronous)
 
-// Example of using Java JDBC API-based connection
-provider.use { conn =>
-  // Execute SQL using PreparedStatement etc.
-  DBIO.pure(()).commit(conn)
-}
+DBIO.pure(()).commit(connector)
 ```
 
 ### A: Scala Connector (ldbc-connector)
@@ -47,16 +43,15 @@ import ldbc.connector.*
 import ldbc.dsl.DBIO
 
 // Example of creating a connection using ldbc-connector (JVM, Scala.js, Scala Native compatible)
-val provider =
-  ConnectionProvider
-    .default[IO]("127.0.0.1", 3306, "ldbc", "password", "ldbc")
-    .setSSL(SSL.Trusted)
+val datasource = MySQLDataSource
+  .build[IO]("127.0.0.1", 3306, "ldbc")
+  .setPassword("password")
+  .setDatabase("ldbc")
+  .setSSL(SSL.Trusted)
 
-// Example of using Scala connector: automatically ensures connection closure using Resource internally
-provider.use { conn =>
-  // Can execute SQL using ldbc DSL and DBIO
-  DBIO.pure(()).commit(conn)
-}
+val connector = Connector.fromDataSource(datasource)
+
+DBIO.pure(()).commit(connector)
 ```
 
 ### A: Key Differences

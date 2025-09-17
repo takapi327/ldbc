@@ -57,12 +57,12 @@ ds.setDatabaseName("world")
 ds.setUser("ldbc")
 ds.setPassword("password")
 
-// コネクションプロバイダーを作成
-val provider = ConnectionProvider
+// データソースを作成
+val datasource = MySQLDataSource
   .fromDataSource[IO](ds, ExecutionContexts.synchronous)
 
 // コネクションを使用する
-val program = provider.use { connection =>
+val program = datasource.getConnection.use { connection =>
   connection.execute("SELECT 1")
 }
 ```
@@ -76,19 +76,17 @@ val program = provider.use { connection =>
 import cats.effect.IO
 import jdbc.connector.*
 
-// DriverManagerからプロバイダーを作成
-val provider = ConnectionProvider
-  .fromDriverManager[IO]
-  .apply(
+// DriverManagerからデータソースを作成
+val datasource = MySQLDataSource
+  .fromDriverManager[IO](
     "com.mysql.cj.jdbc.Driver",
     "jdbc:mysql://127.0.0.1:13306/world",
     "ldbc",
-    "password",
-    None // ログハンドラーは省略可能
+    "password"
   )
 
 // コネクションを使用する
-val program = provider.use { connection =>
+val program = datasource.getConnection.use { connection =>
   connection.execute("SELECT 1")
 }
 ```
@@ -101,11 +99,11 @@ val program = provider.use { connection =>
 // 既存のjava.sql.Connection
 val jdbcConnection: java.sql.Connection = ???
 
-// ldbcのコネクションに変換
-val provider = ConnectionProvider.fromConnection[IO](jdbcConnection)
+// ldbcのデータソースに変換
+val datasource = MySQLDataSource.fromConnection[IO](jdbcConnection)
 
 // コネクションを使用する
-val program = provider.use { connection =>
+val program = datasource.getConnection.use { connection =>
   connection.execute("SELECT 1")
 }
 ```
@@ -130,14 +128,14 @@ ldbcコネクタはldbcが独自に開発した最適化されたコネクタで
 import cats.effect.IO
 import ldbc.connector.*
 
-// 基本的な設定でプロバイダーを作成
-val provider = ConnectionProvider
-  .default[IO]("localhost", 3306, "ldbc")
+// 基本的な設定でデータソースを作成
+val datasource = MySQLDataSource
+  .build[IO]("localhost", 3306, "ldbc")
   .setPassword("password")
   .setDatabase("world")
 
 // コネクションを使用する
-val program = provider.use { connection =>
+val program = datasource.getConnection.use { connection =>
   connection.execute("SELECT 1")
 }
 ```
@@ -152,12 +150,14 @@ val program = provider.use { connection =>
 import cats.effect.IO
 import ldbc.connector.*
 
-val provider = ConnectionProvider
-  .default[IO]("localhost", 3306, "ldbc", "password", "world")
+val datasource = MySQLDataSource
+  .build[IO]("localhost", 3306, "ldbc")
+  .setPassword("password")
+  .setDatabase("world")
   .setSSL(SSL.Trusted) // SSL接続を有効化
 
 // コネクションを使用する
-val program = provider.use { connection =>
+val program = datasource.getConnection.use { connection =>
   connection.execute("SELECT 1")
 }
 ```
@@ -186,8 +186,8 @@ import cats.effect.IO
 import fs2.io.net.SocketOption
 import ldbc.connector.*
 
-val provider = ConnectionProvider
-  .default[IO]("localhost", 3306, "ldbc")
+val datasource = MySQLDataSource
+  .build[IO]("localhost", 3306, "ldbc")
   .setPassword("password")
   .setDatabase("world")
   .setDebug(true)
@@ -198,7 +198,7 @@ val provider = ConnectionProvider
   .setLogHandler(customLogHandler) // 独自のログハンドラを設定
 
 // コネクションを使用する
-val program = provider.use { connection =>
+val program = datasource.getConnection.use { connection =>
   connection.execute("SELECT 1")
 }
 ```
@@ -211,8 +211,10 @@ val program = provider.use { connection =>
 import cats.effect.IO
 import ldbc.connector.*
 
-val provider = ConnectionProvider
-  .default[IO]("localhost", 3306, "ldbc", "password", "world")
+val datasource = MySQLDataSource
+  .build[IO]("localhost", 3306, "ldbc")
+  .setPassword("password")
+  .setDatabase("world")
   .withBefore { connection =>
     // コネクション確立後に実行される処理
     connection.execute("SET time_zone = '+09:00'")
@@ -223,7 +225,7 @@ val provider = ConnectionProvider
   }
 
 // コネクションを使用する
-val program = provider.use { connection =>
+val program = datasource.getConnection.use { connection =>
   connection.execute("SELECT NOW()")
 }
 ```
@@ -258,19 +260,19 @@ ldbcではcats-effectのResourceを使用してコネクションのライフサ
 シンプルに使う場合は`use`メソッドが便利です：
 
 ```scala
-val result = provider.use { connection =>
+val result = datasource.getConnection.use { connection =>
   // コネクションを利用した処理
   connection.execute("SELECT * FROM users")
 }
 ```
 
-### createConnectionメソッド
+### getConnectionメソッド
 
-より細かいリソース管理が必要な場合は`createConnection`メソッドを使用します：
+より細かいリソース管理が必要な場合は`getConnection`メソッドを使用します：
 
 ```scala 3
 val program = for
-  result <- provider.createConnection().use { connection =>
+  result <- datasource.getConnection.use { connection =>
     // コネクションを利用した処理
     connection.execute("SELECT * FROM users")
   }

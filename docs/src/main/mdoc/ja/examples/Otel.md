@@ -37,13 +37,13 @@ libraryDependencies ++= Seq(
 
 ## ldbcでのOpenTelemetry設定
 
-ldbcは、ConnectionProviderに`setTracer`メソッドを提供しており、ここにOpenTelemetryのTracerを設定することができます。
+ldbcは、MySQLDataSourceに`setTracer`メソッドを提供しており、ここにOpenTelemetryのTracerを設定することができます。
 
 基本的な設定手順は次のとおりです：
 
 1. OpenTelemetryを初期化する
 2. TracerProviderを取得する
-3. ConnectionProviderに設定する
+3. MySQLDataSourceに設定する
 
 以下に、基本的な設定例を示します：
 
@@ -58,7 +58,7 @@ import ldbc.dsl.*
 val serviceName = "my-ldbc-app"
 
 // リソースの設定
-val resource: Resource[IO, Connection[IO]] =
+val resource: Resource[IO, Connector[IO]] =
   for
     // GlobalOpenTelemetryからotel4s用のインスタンスを作成
     otel <- Resource
@@ -69,16 +69,16 @@ val resource: Resource[IO, Connection[IO]] =
     tracer <- Resource.eval(otel.tracerProvider.get(serviceName))
     
     // データベース接続を設定し、TracerProviderを設定
-    connection <- ConnectionProvider
-      .default[IO]("localhost", 3306, "user", "password", "database")
+    datasource = MySQLDataSource
+      .build[IO]("localhost", 3306, "user")
+      .setPassword("password")
+      .setDatabase("database")
       .setSSL(SSL.Trusted)
       .setTracer(tracer)  // OpenTelemetryのTracerを設定
-      .createConnection()
-  yield connection
+  yield Connector.fromDataSource(datasource)
 
-// リソースを使用してクエリを実行
-val program = resource.use { conn =>
-  sql"SELECT * FROM users".query[String].to[List].readOnly(conn)
+val program = resource.use { connector =>
+  sql"SELECT * FROM users".query[String].to[List].readOnly(connector)
 }
 ```
 
@@ -147,22 +147,24 @@ object Main extends IOApp.Simple:
 
   private val serviceName = "ldbc-otel-example"
 
-  private def resource: Resource[IO, Connection[IO]] =
+  private val base = MySQLDataSource
+    .build[IO]("127.0.0.1", 13307, "ldbc")
+    .setPassword("password")
+    .setDatabase("world")
+    .setSSL(SSL.Trusted)
+
+  private def setupTracing: Resource[IO, Connector[IO]] =
     for
       otel <- Resource
         .eval(IO.delay(GlobalOpenTelemetry.get))
         .evalMap(OtelJava.forAsync[IO])
       tracer <- Resource.eval(otel.tracerProvider.get(serviceName))
-      connection <- ConnectionProvider
-        .default[IO]("127.0.0.1", 13307, "ldbc", "password", "world")
-        .setSSL(SSL.Trusted)
-        .setTracer(tracer)
-        .createConnection()
-    yield connection
+      datasource <- Resource.eval(IO.delay(base.setTracer(tracer)))
+    yield Connector.fromDataSource(datasource)
 
   override def run: IO[Unit] =
-    resource.use { conn =>
-      sql"SELECT name FROM city".query[String].to[List].readOnly(conn).flatMap { cities =>
+    setupTracing.use { connector =>
+      sql"SELECT name FROM city".query[String].to[List].readOnly(connector).flatMap { cities =>
         IO.println(cities)
       }
     }
@@ -273,26 +275,6 @@ ldbcのOpenTelemetry統合によって、以下のような情報がトレース
 - **クエリパラメータ**: クエリに渡されたパラメータ値（安全に記録）
 - **接続情報**: サーバーやデータベース名などの接続情報
 - **エラー情報**: エラーが発生した場合の詳細情報
-
-## カスタムスパンの追加
-
-より詳細な追跡を行いたい場合は、カスタムスパンを追加できます。以下は、クエリ実行をカスタムスパンで囲む例です：
-
-```scala
-resource.use { conn =>
-  tracer.span("custom-database-operation").use { span =>
-    // スパンに属性を追加
-    span.setAttribute("db.operation", "select-cities")
-    
-    // クエリ実行
-    sql"SELECT name FROM city".query[String].to[List].readOnly(conn).flatMap { cities =>
-      // 結果データに関する属性を追加
-      span.setAttribute("result.count", cities.size)
-      IO.println(cities)
-    }
-  }
-}
-```
 
 ## トレースのカスタマイズオプション
 
