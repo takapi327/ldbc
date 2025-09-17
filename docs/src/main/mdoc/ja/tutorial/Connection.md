@@ -281,3 +281,244 @@ yield result
 ```
 
 これらの方法を用いることで、コネクションのオープン/クローズを安全に管理しながらデータベース操作を行うことができます。
+
+## コネクションプーリング
+
+バージョン0.4.0から、ldbc-connectorは組み込みのコネクションプーリング機能を提供しています。コネクションプーリングは、リクエストごとに新しいデータベース接続を作成する代わりに、既存のデータベース接続を再利用することで、パフォーマンスを大幅に向上させるため、本番アプリケーションには不可欠です。
+
+### なぜコネクションプーリングを使うのか？
+
+新しいデータベース接続の作成は、以下のような高コストな操作です：
+- TCPハンドシェイクのためのネットワーク往復
+- MySQL認証プロトコルの交換
+- SSL/TLSネゴシエーション（有効な場合）
+- サーバーリソースの割り当て
+
+コネクションプーリングはこのオーバーヘッドを排除し、再利用可能な接続のプールを維持することで、以下の効果をもたらします：
+- **パフォーマンスの向上**: 接続が再利用され、接続確立のオーバーヘッドが排除される
+- **リソース管理の改善**: データベースへの同時接続数を制限
+- **信頼性の向上**: 組み込みのヘルスチェックにより、健全な接続のみが使用される
+- **自動リカバリー**: 障害が発生した接続は自動的に置き換えられる
+
+### コネクションプールの作成
+
+ldbc connectorでプールされたデータソースを作成する方法：
+
+```scala
+import cats.effect.IO
+import ldbc.connector.*
+import scala.concurrent.duration.*
+
+// 基本的なプール設定
+val poolConfig = MySQLConfig.default
+  .setHost("localhost")
+  .setPort(3306)
+  .setUser("myuser")
+  .setPassword("mypassword")
+  .setDatabase("mydb")
+  // プール固有の設定
+  .setMinConnections(5)          // 最低5つの接続を準備
+  .setMaxConnections(20)         // 最大20接続まで
+  .setConnectionTimeout(30.seconds)  // 接続取得を最大30秒待機
+
+// プールされたデータソースを作成
+MySQLDataSource.pooling[IO](poolConfig).use { pool =>
+  // プールから接続を使用
+  pool.getConnection.use { connection =>
+    connection.execute("SELECT 1")
+  }
+}
+```
+
+### プール設定オプション
+
+ldbcコネクションプールは豊富な設定オプションを提供します：
+
+#### プールサイズ設定
+- **minConnections**: 維持する最小アイドル接続数（デフォルト: 5）
+- **maxConnections**: 許可される最大総接続数（デフォルト: 20）
+
+#### タイムアウト設定
+- **connectionTimeout**: プールから接続を待つ最大時間（デフォルト: 30秒）
+- **idleTimeout**: アイドル接続が閉じられるまでの時間（デフォルト: 10分）
+- **maxLifetime**: 接続の最大生存時間（デフォルト: 30分）
+- **validationTimeout**: 接続検証クエリのタイムアウト（デフォルト: 5秒）
+
+#### ヘルスチェックと検証
+- **keepaliveTime**: アイドル接続の検証間隔（オプション）
+- **connectionTestQuery**: 接続検証用のカスタムクエリ（オプション、デフォルトはMySQLのisValidを使用）
+- **aliveBypassWindow**: 最近使用された接続の検証をスキップ（デフォルト: 500ms）
+
+#### 高度な機能
+- **leakDetectionThreshold**: プールに返されない接続について警告（オプション）
+- **adaptiveSizing**: 負荷に基づく動的プールサイジングを有効化（デフォルト: true）
+- **adaptiveInterval**: プールサイズをチェック・調整する頻度（デフォルト: 30秒）
+
+### 高度な設定例
+
+```scala
+import cats.effect.IO
+import ldbc.connector.*
+import scala.concurrent.duration.*
+
+val advancedConfig = MySQLConfig.default
+  .setHost("production-db.example.com")
+  .setPort(3306)
+  .setUser("app_user")
+  .setPassword("secure_password")
+  .setDatabase("production_db")
+  
+  // プールサイズ管理
+  .setMinConnections(10)          // 10接続を準備
+  .setMaxConnections(50)          // 最大50接続までスケール
+  
+  // タイムアウト設定
+  .setConnectionTimeout(30.seconds)   // 接続取得の最大待機時間
+  .setIdleTimeout(10.minutes)        // アイドル接続の削除時間
+  .setMaxLifetime(30.minutes)        // 接続の置き換え時間
+  .setValidationTimeout(5.seconds)   // 接続検証のタイムアウト
+  
+  // ヘルスチェック
+  .setKeepaliveTime(2.minutes)       // 2分ごとにアイドル接続を検証
+  .setConnectionTestQuery("SELECT 1") // カスタム検証クエリ
+  
+  // 高度な機能
+  .setLeakDetectionThreshold(2.minutes)  // リークされた接続について警告
+  .setAdaptiveSizing(true)              // 動的プールサイジングを有効化
+  .setAdaptiveInterval(1.minute)        // 1分ごとにプールサイズをチェック
+
+// プールを作成して使用
+MySQLDataSource.pooling[IO](advancedConfig).use { pool =>
+  // アプリケーションコード
+}
+```
+
+### プーリングでの接続ライフサイクルフック
+
+接続がプールから取得されたり返却されたりする際に実行されるカスタムロジックを追加できます：
+
+```scala
+case class RequestContext(requestId: String, userId: String)
+
+// フックを定義
+val beforeHook: Connection[IO] => IO[RequestContext] = conn =>
+  for {
+    context <- IO(RequestContext("req-123", "user-456"))
+    _ <- conn.createStatement()
+          .flatMap(_.executeUpdate(s"SET @request_id = '${context.requestId}'"))
+  } yield context
+
+val afterHook: (RequestContext, Connection[IO]) => IO[Unit] = (context, conn) =>
+  IO.println(s"リクエスト ${context.requestId} の接続を解放しました")
+
+// フック付きプールを作成
+MySQLDataSource.poolingWithBeforeAfter[IO, RequestContext](
+  config = poolConfig,
+  before = Some(beforeHook),
+  after = Some(afterHook)
+).use { pool =>
+  pool.getConnection.use { conn =>
+    // 接続にはセッション変数が設定されている
+    conn.execute("SELECT @request_id")
+  }
+}
+```
+
+### プールヘルスの監視
+
+組み込みのメトリクスでプールのパフォーマンスを追跡：
+
+```scala
+import ldbc.connector.pool.*
+
+// メトリクス追跡付きプールを作成
+val monitoredPool = for {
+  tracker <- Resource.eval(PoolMetricsTracker.inMemory[IO])
+  pool    <- MySQLDataSource.pooling[IO](
+    config,
+    metricsTracker = Some(tracker)
+  )
+} yield (pool, tracker)
+
+monitoredPool.use { (pool, tracker) =>
+  for {
+    // プールを使用
+    _ <- pool.getConnection.use { conn =>
+      conn.execute("SELECT * FROM users")
+    }
+    
+    // メトリクスを確認
+    metrics <- tracker.getMetrics
+    _ <- IO.println(s"""
+      |プールメトリクス:
+      |  作成された総接続数: ${metrics.totalCreated}
+      |  アクティブ接続数: ${metrics.activeConnections}
+      |  アイドル接続数: ${metrics.idleConnections}
+      |  待機中リクエスト: ${metrics.waitingRequests}
+      |  平均待機時間: ${metrics.averageAcquisitionTime}ms
+    """.stripMargin)
+  } yield ()
+}
+```
+
+### プールアーキテクチャの機能
+
+ldbcコネクションプールには、いくつかの高度な機能が含まれています：
+
+#### サーキットブレーカー保護
+データベース障害時の接続ストームを防ぎます：
+- 連続した障害後に自動的にオープン
+- リトライ試行に指数バックオフを使用
+- アプリケーションとデータベースの両方を保護
+
+#### ロックフリー設計
+高パフォーマンスのためのConcurrentBagデータ構造を使用：
+- 高並行性下での最小限の競合
+- 接続再利用のためのスレッドローカル最適化
+- 優れたスケーラビリティ特性
+
+#### アダプティブプールサイジング
+負荷に基づいてプールサイズを動的に調整：
+- 高需要時にプールを拡大
+- 低使用期間中に縮小
+- リソースの無駄を防ぐ
+
+### ベストプラクティス
+
+1. **保守的な設定から始める**: デフォルト値から始めて、監視に基づいて調整
+2. **プールメトリクスを監視**: メトリクスを使用して実際の使用パターンを理解
+3. **適切なタイムアウトを設定**: ユーザー体験とリソース保護のバランスを取る
+4. **開発環境でリーク検出を有効化**: 接続リークを早期に発見
+5. **接続テストクエリは控えめに使用**: オーバーヘッドが発生するため、可能な限りMySQLのisValidを使用
+6. **ワークロードを考慮**: 
+   - 高スループットアプリケーション: より大きなプールサイズ
+   - バースト的なワークロード: アダプティブサイジングを有効化
+   - 長時間実行クエリ: 接続タイムアウトを増やす
+
+### 非プール接続からの移行
+
+プール接続への移行は簡単です：
+
+```scala
+// 移行前: 直接接続
+val dataSource = MySQLDataSource
+  .build[IO]("localhost", 3306, "user")
+  .setPassword("password")
+  .setDatabase("mydb")
+
+// 移行後: プール接続
+val dataSource = MySQLDataSource.pooling[IO](
+  MySQLConfig.default
+    .setHost("localhost")
+    .setPort(3306)
+    .setUser("user")
+    .setPassword("password")
+    .setDatabase("mydb")
+    .setMinConnections(5)
+    .setMaxConnections(20)
+)
+```
+
+APIは同じままです - 引き続き`getConnection`を使用して接続を取得します。プールは裏側ですべての複雑さを処理します。
+
+コネクションプーリングアーキテクチャと実装の詳細については、[コネクションプーリングアーキテクチャ](/ja/reference/Pooling.md)のリファレンスドキュメントを参照してください。

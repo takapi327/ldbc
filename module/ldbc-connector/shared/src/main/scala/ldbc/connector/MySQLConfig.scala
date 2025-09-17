@@ -6,7 +6,7 @@
 
 package ldbc.connector
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.*
 
 import fs2.io.net.*
 
@@ -151,6 +151,225 @@ trait MySQLConfig:
     */
   def setUseServerPrepStmts(useServerPrepStmts: Boolean): MySQLConfig
 
+  /** 
+   * Gets the minimum number of connections to maintain in the connection pool.
+   * Only used when creating a pooled DataSource.
+   * @return the minimum number of connections
+   */
+  def minConnections: Int
+
+  /** 
+   * Sets the minimum number of connections to maintain in the connection pool.
+   * This ensures that at least this many connections are always available for use.
+   * Only applicable when using connection pooling.
+   * @param min the minimum number of connections (must be >= 0)
+   * @return a new MySQLConfig with the updated setting
+   * @throws IllegalArgumentException if min < 0
+   */
+  def setMinConnections(min: Int): MySQLConfig
+
+  /** 
+   * Gets the maximum number of connections allowed in the connection pool.
+   * Only used when creating a pooled DataSource.
+   * @return the maximum number of connections
+   */
+  def maxConnections: Int
+
+  /** 
+   * Sets the maximum number of connections allowed in the connection pool.
+   * The pool will not create more connections than this limit.
+   * Only applicable when using connection pooling.
+   * @param max the maximum number of connections (must be >= minConnections)
+   * @return a new MySQLConfig with the updated setting
+   * @throws IllegalArgumentException if max < minConnections
+   */
+  def setMaxConnections(max: Int): MySQLConfig
+
+  /** 
+   * Gets the maximum time to wait for a connection from the pool.
+   * Only used when creating a pooled DataSource.
+   * @return the connection timeout duration
+   */
+  def connectionTimeout: FiniteDuration
+
+  /** 
+   * Sets the maximum time to wait for a connection to become available from the pool.
+   * If no connection is available within this timeout, an error will be returned.
+   * Only applicable when using connection pooling.
+   * @param timeout the connection timeout (must be > 0)
+   * @return a new MySQLConfig with the updated setting
+   * @throws IllegalArgumentException if timeout <= 0
+   */
+  def setConnectionTimeout(timeout: FiniteDuration): MySQLConfig
+
+  /** 
+   * Gets the maximum time a connection can remain idle in the pool.
+   * Only used when creating a pooled DataSource.
+   * @return the idle timeout duration
+   */
+  def idleTimeout: FiniteDuration
+
+  /** 
+   * Sets the maximum time a connection can remain idle in the pool before being closed.
+   * Idle connections exceeding this timeout will be removed to free resources.
+   * Only applicable when using connection pooling.
+   * @param timeout the idle timeout (must be > 0)
+   * @return a new MySQLConfig with the updated setting
+   * @throws IllegalArgumentException if timeout <= 0
+   */
+  def setIdleTimeout(timeout: FiniteDuration): MySQLConfig
+
+  /** 
+   * Gets the maximum lifetime of a connection in the pool.
+   * Only used when creating a pooled DataSource.
+   * @return the maximum lifetime duration
+   */
+  def maxLifetime: FiniteDuration
+
+  /** 
+   * Sets the maximum lifetime of a connection in the pool.
+   * Connections older than this will be retired and replaced with fresh connections.
+   * This helps prevent issues with long-lived connections.
+   * Only applicable when using connection pooling.
+   * @param maxLifetime the maximum lifetime (must be > 0)
+   * @return a new MySQLConfig with the updated setting
+   * @throws IllegalArgumentException if maxLifetime <= 0
+   */
+  def setMaxLifetime(maxLifetime: FiniteDuration): MySQLConfig
+
+  /** 
+   * Gets the maximum time to wait for connection validation.
+   * Only used when creating a pooled DataSource.
+   * @return the validation timeout duration
+   */
+  def validationTimeout: FiniteDuration
+
+  /** 
+   * Sets the maximum time to wait for connection validation to complete.
+   * Connections are validated before being handed out from the pool.
+   * Only applicable when using connection pooling.
+   * @param timeout the validation timeout (must be > 0)
+   * @return a new MySQLConfig with the updated setting
+   * @throws IllegalArgumentException if timeout <= 0
+   */
+  def setValidationTimeout(timeout: FiniteDuration): MySQLConfig
+
+  /** 
+   * Gets the threshold for connection leak detection.
+   * Only used when creating a pooled DataSource.
+   * @return the leak detection threshold, or None if disabled
+   */
+  def leakDetectionThreshold: Option[FiniteDuration]
+
+  /** 
+   * Sets the threshold for connection leak detection.
+   * If a connection is not returned to the pool within this time, it's considered leaked.
+   * A warning will be logged to help identify connection leaks in the application.
+   * Only applicable when using connection pooling.
+   * @param threshold the leak detection threshold
+   * @return a new MySQLConfig with the updated setting
+   */
+  def setLeakDetectionThreshold(threshold: FiniteDuration): MySQLConfig
+
+  /** 
+   * Gets the interval for pool maintenance tasks.
+   * Only used when creating a pooled DataSource.
+   * @return the maintenance interval duration
+   */
+  def maintenanceInterval: FiniteDuration
+
+  /** 
+   * Sets the interval at which pool maintenance tasks are performed.
+   * Maintenance includes removing idle connections, validating connections, etc.
+   * Only applicable when using connection pooling.
+   * @param interval the maintenance interval (must be > 0)
+   * @return a new MySQLConfig with the updated setting
+   * @throws IllegalArgumentException if interval <= 0
+   */
+  def setMaintenanceInterval(interval: FiniteDuration): MySQLConfig
+
+  /** 
+   * Gets whether adaptive pool sizing is enabled.
+   * Only used when creating a pooled DataSource.
+   * @return true if adaptive sizing is enabled
+   */
+  def adaptiveSizing: Boolean
+
+  /** 
+   * Sets whether to enable adaptive pool sizing.
+   * When enabled, the pool size will be dynamically adjusted based on load patterns.
+   * This can help optimize resource usage under varying workloads.
+   * Only applicable when using connection pooling.
+   * @param enabled true to enable adaptive sizing
+   * @return a new MySQLConfig with the updated setting
+   */
+  def setAdaptiveSizing(enabled: Boolean): MySQLConfig
+
+  /** 
+   * Gets the interval for adaptive pool sizing calculations.
+   * Only used when creating a pooled DataSource.
+   * @return the adaptive sizing interval duration
+   */
+  def adaptiveInterval: FiniteDuration
+
+  /** 
+   * Sets the interval at which the adaptive sizing algorithm runs.
+   * The algorithm analyzes pool usage patterns and adjusts the pool size accordingly.
+   * Only applicable when using connection pooling with adaptive sizing enabled.
+   * @param interval the adaptive sizing interval (must be > 0)
+   * @return a new MySQLConfig with the updated setting
+   * @throws IllegalArgumentException if interval <= 0
+   */
+  def setAdaptiveInterval(interval: FiniteDuration): MySQLConfig
+
+  /** 
+   * Gets the alive bypass window for connection validation optimization.
+   * Connections used within this window will skip validation checks.
+   * @return the alive bypass window duration
+   */
+  def aliveBypassWindow: FiniteDuration
+
+  /** 
+   * Sets the window during which recently used connections skip validation.
+   * This optimization reduces unnecessary database round-trips for frequently used connections.
+   * Set to 0 to disable this optimization and always validate connections.
+   * @param window the bypass window duration (must be >= 0)
+   * @return a new MySQLConfig with the updated setting
+   * @throws IllegalArgumentException if window < 0
+   */
+  def setAliveBypassWindow(window: FiniteDuration): MySQLConfig
+
+  /** 
+   * Gets the keepalive time for idle connections.
+   * @return the keepalive time duration, or None if disabled
+   */
+  def keepaliveTime: Option[FiniteDuration]
+
+  /** 
+   * Sets the interval at which idle connections are validated.
+   * This helps prevent connection timeouts due to firewalls or idle timeouts.
+   * The actual keepalive time will vary by up to 20% to avoid synchronized validations.
+   * @param time the keepalive interval (must be >= 30 seconds)
+   * @return a new MySQLConfig with the updated setting
+   * @throws IllegalArgumentException if time < 30 seconds
+   */
+  def setKeepaliveTime(time: FiniteDuration): MySQLConfig
+
+  /** 
+   * Gets the connection test query used for validation.
+   * @return the test query, or None to use JDBC4 isValid()
+   */
+  def connectionTestQuery: Option[String]
+
+  /** 
+   * Sets a custom query for connection validation.
+   * If not set, JDBC4's isValid() method will be used (recommended).
+   * Only set this if your driver doesn't support isValid() properly.
+   * @param query the test query (e.g., "SELECT 1")
+   * @return a new MySQLConfig with the updated setting
+   */
+  def setConnectionTestQuery(query: String): MySQLConfig
+
 /**
  * Companion object for MySQLConfig providing factory methods.
  */
@@ -174,7 +393,20 @@ object MySQLConfig:
     allowPublicKeyRetrieval: Boolean                               = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
     useCursorFetch:          Boolean                               = false,
-    useServerPrepStmts:      Boolean                               = false
+    useServerPrepStmts:      Boolean                               = false,
+    minConnections:          Int                                   = 5,
+    maxConnections:          Int                                   = 10,
+    connectionTimeout:       FiniteDuration                        = 30.seconds,
+    idleTimeout:             FiniteDuration                        = 10.minutes,
+    maxLifetime:             FiniteDuration                        = 30.minutes,
+    validationTimeout:       FiniteDuration                        = 5.seconds,
+    leakDetectionThreshold:  Option[FiniteDuration]                = None,
+    maintenanceInterval:     FiniteDuration                        = 30.seconds,
+    adaptiveSizing:          Boolean                               = false,
+    adaptiveInterval:        FiniteDuration                        = 1.minute,
+    aliveBypassWindow:       FiniteDuration                        = 500.milliseconds,
+    keepaliveTime:           Option[FiniteDuration]                = Some(2.minutes),
+    connectionTestQuery:     Option[String]                        = None
   ) extends MySQLConfig:
 
     override def setHost(host:                   String):             MySQLConfig = copy(host = host)
@@ -193,6 +425,20 @@ object MySQLConfig:
     override def setUseCursorFetch(useCursorFetch: Boolean):         MySQLConfig = copy(useCursorFetch = useCursorFetch)
     override def setUseServerPrepStmts(useServerPrepStmts: Boolean): MySQLConfig =
       copy(useServerPrepStmts = useServerPrepStmts)
+    override def setMinConnections(min:        Int):                   MySQLConfig = copy(minConnections = min)
+    override def setMaxConnections(max:        Int):                   MySQLConfig = copy(maxConnections = max)
+    override def setConnectionTimeout(timeout: FiniteDuration):        MySQLConfig = copy(connectionTimeout = timeout)
+    override def setIdleTimeout(timeout:       FiniteDuration):        MySQLConfig = copy(idleTimeout = timeout)
+    override def setMaxLifetime(maxLifetime:   FiniteDuration):        MySQLConfig = copy(maxLifetime = maxLifetime)
+    override def setValidationTimeout(timeout: FiniteDuration):        MySQLConfig = copy(validationTimeout = timeout)
+    override def setLeakDetectionThreshold(threshold: FiniteDuration): MySQLConfig =
+      copy(leakDetectionThreshold = Some(threshold))
+    override def setMaintenanceInterval(interval: FiniteDuration): MySQLConfig = copy(maintenanceInterval = interval)
+    override def setAdaptiveSizing(enabled:       Boolean):        MySQLConfig = copy(adaptiveSizing = enabled)
+    override def setAdaptiveInterval(interval:    FiniteDuration): MySQLConfig = copy(adaptiveInterval = interval)
+    override def setAliveBypassWindow(window:     FiniteDuration): MySQLConfig = copy(aliveBypassWindow = window)
+    override def setKeepaliveTime(time:           FiniteDuration): MySQLConfig = copy(keepaliveTime = Some(time))
+    override def setConnectionTestQuery(query:    String):         MySQLConfig = copy(connectionTestQuery = Some(query))
 
   /**
    * Creates a default MySQLConfig with standard connection parameters.
