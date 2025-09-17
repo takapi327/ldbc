@@ -127,8 +127,8 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     scalacOptions += "-Ykind-projector:underscores",
     libraryDependencies ++= Seq(
-      "co.fs2"        %%% "fs2-core"          % "3.12.0",
-      "co.fs2"        %%% "fs2-io"            % "3.12.0",
+      "co.fs2"        %%% "fs2-core"          % "3.12.2",
+      "co.fs2"        %%% "fs2-io"            % "3.12.2",
       "org.scodec"    %%% "scodec-bits"       % "1.1.38",
       "org.scodec"    %%% "scodec-core"       % "2.2.2",
       "org.scodec"    %%% "scodec-cats"       % "1.2.0",
@@ -253,8 +253,8 @@ lazy val otelExample = crossProject(JVMPlatform)
   .settings(
     libraryDependencies ++= Seq(
       "org.typelevel"   %% "otel4s-oteljava"                           % "0.13.1",
-      "io.opentelemetry" % "opentelemetry-exporter-otlp"               % "1.52.0" % Runtime,
-      "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.52.0" % Runtime
+      "io.opentelemetry" % "opentelemetry-exporter-otlp"               % "1.54.0" % Runtime,
+      "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.54.0" % Runtime
     )
   )
   .settings(
