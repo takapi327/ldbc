@@ -103,8 +103,8 @@ private[pool] class ProxyConnection[F[_]: Temporal: Console](
         // Log at debug level as these errors are typically not critical
         // but may be useful for troubleshooting resource leaks
         Console[F].errorln(
-          s"[ProxyConnection] Error closing statement: ${error.getMessage}. " +
-          s"This may indicate a resource leak or connection issue."
+          s"[ProxyConnection] Error closing statement: ${ error.getMessage }. " +
+            s"This may indicate a resource leak or connection issue."
         )
       }
     }

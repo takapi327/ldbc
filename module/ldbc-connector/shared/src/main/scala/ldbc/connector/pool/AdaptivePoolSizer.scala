@@ -273,7 +273,7 @@ object AdaptivePoolSizer:
           .handleErrorWith { error =>
             // Log the error with context for debugging
             Console[F].errorln(
-              s"[AdaptivePoolSizer] Failed to create connection $index/$by during pool growth: ${error.getMessage}"
+              s"[AdaptivePoolSizer] Failed to create connection $index/$by during pool growth: ${ error.getMessage }"
             )
           }
       }
