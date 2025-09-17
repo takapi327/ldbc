@@ -111,6 +111,7 @@ trait ConnectionPoolDslTest extends CatsEffectSuite:
       .use { pool =>
         // Execute multiple queries concurrently
         // TODO: Scala Native 0.5.x will support multi-threading, so we will verify again at that time.
+        // See: https://github.com/takapi327/ldbc/issues/536
         val queries = (1 to 5).toList.parTraverse { i =>
           country.selectAll
             .limit(1)
