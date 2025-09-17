@@ -9,6 +9,15 @@
 
 ldbcの最も強力な機能の1つは、データベースの結果をScalaの型に簡単にマッピングできることです。単純なプリミティブ型から複雑なケースクラスまで、さまざまなデータ形式を扱えます。
 
+※ このチュートリアルでは、データベース操作を実行するために`Connector`を使用します。以下のように作成します：
+
+```scala
+import ldbc.connector.*
+
+// Connectorを作成
+val connector = Connector.fromDataSource(datasource)
+```
+
 ## データ取得の基本ワークフロー
 
 ldbcでデータを取得する基本的な流れは以下の通りです：
@@ -16,7 +25,7 @@ ldbcでデータを取得する基本的な流れは以下の通りです：
 1. SQLクエリを`sql`補間子で作成
 2. `.query[T]`で結果の型を指定
 3. `.to[Collection]`で結果をコレクションに変換（オプション）
-4. `.readOnly()`/`.commit()`/`.transaction()`などでクエリを実行
+4. `.readOnly(connector)`/`.commit(connector)`/`.transaction(connector)`などでクエリを実行
 5. 結果を処理
 
 この流れをコード上の型の変化と共に見ていきましょう。
@@ -29,7 +38,7 @@ ldbcでデータを取得する基本的な流れは以下の通りです：
 sql"SELECT name FROM user"
   .query[String]                 // Query[String]
   .to[List]                      // DBIO[List[String]]
-  .readOnly(conn)                // IO[List[String]]
+  .readOnly(connector)           // IO[List[String]]
   .unsafeRunSync()               // List[String]
   .foreach(println)              // Unit
 ```
@@ -42,7 +51,7 @@ sql"SELECT name FROM user"
     - `.unsafe`は単一の値を返し、正確に1行でない場合は例外を発生させる。
     - `.option`は単一の値をOptionに包んで返し、返される行が複数ある場合は例外を発生させる。
     - `.nel`は複数の値をNonEmptyListに包んで返し、返される行がない場合は例外を発生させます。
-- `.readOnly(conn)` - コネクションを読み取り専用モードで使用してクエリを実行します。戻り値は`IO[List[String]]`です。
+- `.readOnly(connector)` - コネクションを読み取り専用モードで使用してクエリを実行します。戻り値は`IO[List[String]]`です。
 - `.unsafeRunSync()` - IOモナドを実行して実際の結果（`List[String]`）を取得します。
 - `.foreach(println)` - 結果の各要素を出力します。
 
@@ -54,7 +63,7 @@ sql"SELECT name FROM user"
 sql"SELECT name, email FROM user"
   .query[(String, String)]       // Query[(String, String)]
   .to[List]                      // DBIO[List[(String, String)]]
-  .readOnly(conn)                // IO[List[(String, String)]]
+  .readOnly(connector)                // IO[List[(String, String)]]
   .unsafeRunSync()               // List[(String, String)]
   .foreach { case (name, email) => println(s"Name: $name, Email: $email") }
 ```
@@ -73,7 +82,7 @@ case class User(id: Long, name: String, email: String)
 sql"SELECT id, name, email FROM user"
   .query[User]                   // Query[User]
   .to[List]                      // DBIO[List[User]]
-  .readOnly(conn)                // IO[List[User]]
+  .readOnly(connector)                // IO[List[User]]
   .unsafeRunSync()               // List[User]
   .foreach(user => println(s"ID: ${user.id}, Name: ${user.name}, Email: ${user.email}"))
 ```
@@ -109,7 +118,7 @@ sql"""
 """
   .query[CityWithCountry]        // Query[CityWithCountry]
   .to[List]                      // DBIO[List[CityWithCountry]]
-  .readOnly(conn)                // IO[List[CityWithCountry]]
+  .readOnly(connector)                // IO[List[CityWithCountry]]
   .unsafeRunSync()               // List[CityWithCountry]
   .foreach(cityWithCountry => println(
     s"City: ${cityWithCountry.city.name}, Country: ${cityWithCountry.country.name}"
@@ -146,7 +155,7 @@ sql"""
 """
   .query[(City, Country)]        // Query[(City, Country)]
   .to[List]                      // DBIO[List[(City, Country)]]
-  .readOnly(conn)                // IO[List[(City, Country)]]
+  .readOnly(connector)                // IO[List[(City, Country)]]
   .unsafeRunSync()               // List[(City, Country)]
   .foreach { case (city, country) => 
     println(s"City: ${city.name}, Country: ${country.name}")
@@ -176,7 +185,7 @@ sql"""
 """
   .query[(C, CT)]                // Query[(C, CT)]
   .to[List]                      // DBIO[List[(C, CT)]]
-  .readOnly(conn)                // IO[List[(C, CT)]]
+  .readOnly(connector)                // IO[List[(C, CT)]]
   .unsafeRunSync()               // List[(C, CT)]
   .foreach { case (city, country) => 
     println(s"City: ${city.name}, Country: ${country.name}")
@@ -194,7 +203,7 @@ case class User(id: Long, name: String, email: String)
 sql"SELECT id, name, email FROM user WHERE id = ${userId}"
   .query[User]                   // Query[User]
   .to[Option]                    // DBIO[Option[User]]
-  .readOnly(conn)                // IO[Option[User]]
+  .readOnly(connector)                // IO[Option[User]]
   .unsafeRunSync()               // Option[User]
   .foreach(user => println(s"Found user: ${user.name}"))
 ```
@@ -205,28 +214,28 @@ sql"SELECT id, name, email FROM user WHERE id = ${userId}"
 
 ldbcでは、用途に応じて異なるクエリ実行メソッドが用意されています：
 
-- `.readOnly(conn)` - 読み取り専用操作に使用します（SELECT文など）
-- `.commit(conn)` - 自動コミットモードで書き込み操作を実行します
-- `.rollback(conn)` - 書き込み操作を実行し、必ずロールバックします（テスト用）
-- `.transaction(conn)` - トランザクション内で操作を実行し、成功時のみコミットします
+- `.readOnly(connector)` - 読み取り専用操作に使用します（SELECT文など）
+- `.commit(connector)` - 自動コミットモードで書き込み操作を実行します
+- `.rollback(connector)` - 書き込み操作を実行し、必ずロールバックします（テスト用）
+- `.transaction(connector)` - トランザクション内で操作を実行し、成功時のみコミットします
 
 ```scala
 // 読み取り専用操作の例
 sql"SELECT * FROM users"
   .query[User]
   .to[List]
-  .readOnly(conn)
+  .readOnly(connector)
 
 // 書き込み操作の例（自動コミット）
 sql"UPDATE users SET name = ${newName} WHERE id = ${userId}"
   .update
-  .commit(conn)
+  .commit(connector)
 
 // トランザクション内での複数操作
 (for {
   userId <- sql"INSERT INTO users (name, email) VALUES (${name}, ${email})".returning[Long]
   _      <- sql"INSERT INTO user_roles (user_id, role_id) VALUES (${userId}, ${roleId})".update
-} yield userId).transaction(conn)
+} yield userId).transaction(connector)
 ```
 
 ## コレクション操作とクエリの組み合わせ
@@ -238,7 +247,7 @@ sql"UPDATE users SET name = ${newName} WHERE id = ${userId}"
 sql"SELECT id, name, department FROM employees"
   .query[(Long, String, String)] // ID, 名前, 部署
   .to[List]
-  .readOnly(conn)
+  .readOnly(connector)
   .unsafeRunSync()
   .groupBy(_._3) // 部署ごとにグループ化
   .map { case (department, employees) => 
@@ -268,11 +277,11 @@ val cityStream: Stream[DBIO, String] =
     .stream                    // Stream[DBIO, String]
 
 // 最初の5件のみを取得して処理
-val firstFiveCities: IO[List[String]] = provider.use { conn =>
+val firstFiveCities: IO[List[String]] = datasource.getConnection.use { conn =>
   cityStream
     .take(5)                   // 最初の5件のみ
     .compile.toList            // StreamをListに変換
-    .readOnly(conn)            // IO[List[String]]
+    .readOnly(connector)            // IO[List[String]]
 }
 ```
 
@@ -288,16 +297,15 @@ val efficientStream: Stream[DBIO, String] =
     .stream(10)                // fetchSize = 10
 
 // 大量データを効率的に処理
-val processLargeData: IO[Int] = provider.use { conn =>
+val processLargeData: IO[Int] = 
   sql"SELECT id, name, population FROM city"
     .query[(Long, String, Int)]
     .stream(100)               // 100行ずつ取得
     .filter(_._3 > 1000000)    // 人口100万人以上
     .map(_._2)                 // 都市名のみ取得
     .compile.toList
-    .readOnly(conn)
+    .readOnly(connector)
     .map(_.size)
-}
 ```
 
 ### ストリーミングでの実用的なデータ処理
@@ -306,7 +314,7 @@ val processLargeData: IO[Int] = provider.use { conn =>
 
 ```scala
 // 大量のユーザーデータを段階的に処理
-val processUsers: IO[Unit] = provider.use { conn =>
+val processUsers: IO[Unit] = 
   sql"SELECT id, name, email, created_at FROM users"
     .query[(Long, String, String, java.time.LocalDateTime)]
     .stream(50)                // 50行ずつ取得
@@ -316,7 +324,7 @@ val processUsers: IO[Unit] = provider.use { conn =>
     }
     .evalMap(IO.println)       // 結果を順次出力
     .compile.drain             // ストリームを実行
-    .readOnly(conn)
+    .readOnly(connector)
 }
 ```
 
@@ -326,13 +334,13 @@ MySQLでは`UseCursorFetch`の設定によってストリーミングの効率�
 
 ```scala
 // UseCursorFetch=true（推奨）- 真のストリーミング
-val efficientProvider = ConnectionProvider
+val efficientDatasource = MySQLDataSource
   .default[IO](host, port, user, password, database)
   .setUseCursorFetch(true)    // サーバーサイドカーソルを有効化
   .setSSL(SSL.None)
 
 // UseCursorFetch=false（デフォルト）- 制限されたストリーミング
-val standardProvider = ConnectionProvider
+val standardDatasource = MySQLDataSource
   .default[IO](host, port, user, password, database)
   .setSSL(SSL.None)
 ```
@@ -353,20 +361,25 @@ val standardProvider = ConnectionProvider
 
 ```scala
 // 効率的な大量データ処理
+// サーバーサイドカーソルを有効化したDataSourceを作成
+val cursorDatasource = MySQLDataSource
+  .build[IO](host, port, user)
+  .setPassword(password)
+  .setDatabase(database)
+  .setUseCursorFetch(true)   // 重要：サーバーサイドカーソルを有効化
+
+// Connectorを作成
+val cursorConnector = Connector.fromDataSource(cursorDatasource)
+
 val processMillionRecords: IO[Long] = 
-  ConnectionProvider
-    .default[IO](host, port, user, password, database)
-    .setUseCursorFetch(true)   // 重要：サーバーサイドカーソルを有効化
-    .use { conn =>
-      sql"SELECT id, amount FROM transactions WHERE year = 2024"
-        .query[(Long, BigDecimal)]
-        .stream(1000)          // 1000行ずつ処理
-        .filter(_._2 > 100)    // 100円以上の取引のみ
-        .map(_._2)             // 金額のみ抽出
-        .fold(BigDecimal(0))(_ + _)  // 合計を計算
-        .compile.lastOrError   // 最終結果を取得
-        .readOnly(conn)
-    }
+  sql"SELECT id, amount FROM transactions WHERE year = 2024"
+    .query[(Long, BigDecimal)]
+    .stream(1000)          // 1000行ずつ処理
+    .filter(_._2 > 100)    // 100円以上の取引のみ
+    .map(_._2)             // 金額のみ抽出
+    .fold(BigDecimal(0))(_ + _)  // 合計を計算
+    .compile.lastOrError   // 最終結果を取得
+    .readOnly(cursorConnector)
 ```
 
 ### ストリーミングのメリット
@@ -378,15 +391,14 @@ val processMillionRecords: IO[Long] =
 
 ```scala
 // 条件に応じた早期終了の例
-val findFirstLargeCity: IO[Option[String]] = provider.use { conn =>
+val findFirstLargeCity: IO[Option[String]] = 
   sql"SELECT name, population FROM city ORDER BY population DESC"
     .query[(String, Int)]
     .stream(10)
     .find(_._2 > 5000000)      // 人口500万人以上の最初の都市
     .map(_.map(_._1))          // 都市名のみ取得
     .compile.last
-    .readOnly(conn)
-}
+    .readOnly(connector)
 ```
 
 ## まとめ

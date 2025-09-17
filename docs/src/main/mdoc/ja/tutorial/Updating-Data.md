@@ -11,11 +11,20 @@
 
 データベースへの書き込み操作は、データベースの状態を変更するため、読み取り操作とは少し異なる動作をします。ldbcでは、これらの操作を安全に行うための適切な抽象化を提供しています。
 
+※ このチュートリアルでは、データベース操作を実行するために`Connector`を使用します：
+
+```scala
+import ldbc.connector.*
+
+// Connectorを作成
+val connector = Connector.fromDataSource(datasource)
+```
+
 書き込み操作を行う基本的な流れは以下の通りです：
 
 1. SQLクエリを`sql`補間子で作成
 2. 適切なメソッド（`.update`、`.returning`など）を呼び出してクエリの種類を指定
-3. `.commit()`または`.transaction()`でクエリを実行
+3. `.commit(connector)`または`.transaction(connector)`でクエリを実行
 4. 結果を処理
 
 ## データの挿入（INSERT）
@@ -35,14 +44,14 @@ def insertUser(name: String, email: String): DBIO[Int] =
 
 ```scala
 // 挿入操作の実行
-insertUser("dave", "dave@example.com").commit(conn).unsafeRunSync()
+insertUser("dave", "dave@example.com").commit(connector).unsafeRunSync()
 // 戻り値は影響を受けた行数（この場合は1）
 
 // 挿入したデータの確認
 sql"SELECT id, name, email FROM user WHERE name = 'dave'"
   .query[(Int, String, String)]
   .to[Option]
-  .readOnly(conn)
+  .readOnly(connector)
   .unsafeRunSync()
   .foreach { case (id, name, email) =>
     println(s"ID: $id, Name: $name, Email: $email")
@@ -67,7 +76,7 @@ def insertUserAndGetId(name: String, email: String): DBIO[Long] =
 ```scala
 // 挿入して自動生成されたIDを取得
 val newUserId = insertUserAndGetId("frank", "frank@example.com")
-  .commit(conn)
+  .commit(connector)
   .unsafeRunSync()
 
 println(s"新しいユーザーのID: $newUserId")
@@ -96,7 +105,7 @@ def insertAndRetrieveUser(name: String, email: String): DBIO[Option[User]] =
 ```scala
 // ユーザーを挿入し、挿入したユーザーの情報を取得
 insertAndRetrieveUser("grace", "grace@example.com")
-  .commit(conn)
+  .commit(connector)
   .unsafeRunSync()
   .foreach { user =>
     println(s"挿入されたユーザー: ID=${user.id}, Name=${user.name}, Email=${user.email}")
@@ -119,14 +128,14 @@ def updateUserEmail(id: Long, newEmail: String): DBIO[Int] =
 ```scala
 // ユーザーのメールアドレスを更新
 updateUserEmail(1, "alice+updated@example.com")
-  .commit(conn)
+  .commit(connector)
   .unsafeRunSync()
 
 // 更新されたデータの確認
 sql"SELECT id, name, email FROM user WHERE id = 1"
   .query[User]
   .to[Option]
-  .readOnly(conn)
+  .readOnly(connector)
   .unsafeRunSync()
   .foreach { user => 
     println(s"更新されたユーザー: ID=${user.id}, Name=${user.name}, Email=${user.email}")
@@ -165,14 +174,14 @@ def deleteUser(id: Long): DBIO[Int] =
 ```scala
 // ユーザーを削除
 deleteUser(5)
-  .commit(conn)
+  .commit(connector)
   .unsafeRunSync()
 
 // 削除の確認
 sql"SELECT COUNT(*) FROM user WHERE id = 5"
   .query[Int]
   .unsafe
-  .readOnly(conn)
+  .readOnly(connector)
   .unsafeRunSync() match {
     case 0 => println("ユーザーIDが5のデータは削除されました")
     case n => println(s"ユーザーIDが5のデータはまだ存在しています (数: $n)")
@@ -216,7 +225,7 @@ val newUsers = NonEmptyList.of(
 )
 
 // 一括挿入の実行
-val insertedCount = insertManyUsers(newUsers).commit(conn).unsafeRunSync()
+val insertedCount = insertManyUsers(newUsers).commit(connector).unsafeRunSync()
 println(s"挿入された行数: $insertedCount") // "挿入された行数: 3" が出力されるはず
 ```
 
@@ -238,7 +247,7 @@ def createUserWithProfile(name: String, email: String, bio: String): DBIO[Long] 
 ```scala
 // トランザクション内で実行する
 val userId = createUserWithProfile("julia", "julia@example.com", "プログラマー")
-  .transaction(conn)
+  .transaction(connector)
   .unsafeRunSync()
 
 println(s"作成されたユーザーID: $userId")
@@ -250,22 +259,22 @@ println(s"作成されたユーザーID: $userId")
 
 ldbcでは、データ更新操作用に以下のクエリ実行メソッドが用意されています：
 
-- `.commit(conn)` - 自動コミットモードで書き込み操作を実行します（単一のシンプルな更新操作に適しています）
-- `.rollback(conn)` - 書き込み操作を実行し、必ずロールバックします（テストや動作確認用）
-- `.transaction(conn)` - トランザクション内で操作を実行し、成功時のみコミットします（複数の操作を一つの単位として扱いたい場合に適しています）
+- `.commit(connector)` - 自動コミットモードで書き込み操作を実行します（単一のシンプルな更新操作に適しています）
+- `.rollback(connector)` - 書き込み操作を実行し、必ずロールバックします（テストや動作確認用）
+- `.transaction(connector)` - トランザクション内で操作を実行し、成功時のみコミットします（複数の操作を一つの単位として扱いたい場合に適しています）
 
 ```scala
 // 自動コミットモードでの実行（シンプルな単一操作）
-updateUserEmail(1, "new@example.com").commit(conn)
+updateUserEmail(1, "new@example.com").commit(connector)
 
 // テスト用の実行（変更は保存されない）
-insertUser("test", "test@example.com").rollback(conn)
+insertUser("test", "test@example.com").rollback(connector)
 
 // トランザクション内での複数操作（すべて成功するか、すべて失敗するか）
 (for {
   userId <- insertUser("kate", "kate@example.com").returning[Long]
   _      <- sql"INSERT INTO user_roles (user_id, role_id) VALUES ($userId, 2)".update
-} yield userId).transaction(conn)
+} yield userId).transaction(connector)
 ```
 
 ## エラー処理
@@ -281,7 +290,7 @@ implicit val runtime: IORuntime = IORuntime.global
 // エラー処理の例
 def safeUpdateUser(id: Long, newEmail: String): Unit = {
   val result = updateUserEmail(id, newEmail)
-    .commit(conn)
+    .commit(connector)
     .attempt // IOの結果をEither[Throwable, Int]に変換
     .unsafeRunSync()
     
