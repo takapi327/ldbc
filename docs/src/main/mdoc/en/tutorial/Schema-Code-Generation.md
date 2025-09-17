@@ -377,7 +377,7 @@ Generated code can be used like any other ldbc code.
 import ldbc.dsl.*
 import ldbc.generated.shop.Product
 
-val datasource = MySQLMySQLDataSource(...)
+val datasource = MySQLDataSource(...)
 
 // Referencing table queries
 val products = Product.table
