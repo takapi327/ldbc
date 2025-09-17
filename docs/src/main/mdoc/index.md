@@ -112,10 +112,12 @@ val connector = Connector.fromDataSource[IO](ds, ExecutionContexts.synchronous)
 ```scala
 import ldbc.connector.*
 
-.build[IO]("127.0.0.1", 3306, "ldbc")
-  .setPassword("password")
-  .setDatabase("world")
-  .setSSL(SSL.Trusted)
+val datasource =
+  MySQLDataSource
+    .build[IO]("127.0.0.1", 3306, "ldbc")
+    .setPassword("password")
+    .setDatabase("ldbc")
+    .setSSL(SSL.Trusted)
 
 val connector = Connector.fromDataSource(datasource)
 ```
