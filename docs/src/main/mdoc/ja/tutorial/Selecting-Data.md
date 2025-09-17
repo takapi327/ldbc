@@ -277,12 +277,11 @@ val cityStream: Stream[DBIO, String] =
     .stream                    // Stream[DBIO, String]
 
 // 最初の5件のみを取得して処理
-val firstFiveCities: IO[List[String]] = datasource.getConnection.use { conn =>
+val firstFiveCities: IO[List[String]] =
   cityStream
     .take(5)                   // 最初の5件のみ
     .compile.toList            // StreamをListに変換
     .readOnly(connector)            // IO[List[String]]
-}
 ```
 
 ### フェッチサイズの指定

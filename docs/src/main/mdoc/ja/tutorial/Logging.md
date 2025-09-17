@@ -57,7 +57,9 @@ def console[F[_]: Console: Sync]: LogHandler[F] =
 import ldbc.connector.*
 val datasource =
   MySQLDataSource
-    .default[IO]("127.0.0.1", 3306, "ldbc", "password", "ldbc")
+    .build[IO]("127.0.0.1", 3306, "ldbc")
+    .setPassword("password")
+    .setDatabase("ldbc")
     .setSSL(SSL.Trusted)
     .setLogHandler(console[IO])
 ```
