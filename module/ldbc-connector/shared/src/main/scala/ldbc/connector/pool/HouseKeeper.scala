@@ -6,6 +6,8 @@
 
 package ldbc.connector.pool
 
+import scala.concurrent.duration.*
+
 import cats.syntax.all.*
 
 import cats.effect.*
@@ -139,20 +141,33 @@ object HouseKeeper:
     private def removeIdleConnections(
       pool: PooledDataSource[F]
     ): F[Unit] =
-      pool.poolState.get.flatMap { state =>
-        // Count idle connections - simplified for compilation
-        val idleCount = state.connections.size // Will properly check state later
+      for
+        now   <- Clock[F].realTime.map(_.toMillis)
+        state <- pool.poolState.get
+
+        // Get idle connections using the idleConnections set
+        idleConnections = state.connections.filter(conn =>
+          state.idleConnections.contains(conn.id)
+        )
+
+        // Check which idle connections have exceeded the timeout
+        timedOutConnections <- idleConnections.filterA { conn =>
+          conn.lastUsedAt.get.map { lastUsed =>
+            (now - lastUsed) > config.idleTimeout.toMillis
+          }
+        }
 
         // Keep at least minConnections
-        val removableCount = Math.max(0, idleCount - config.minConnections)
+        currentTotal = state.connections.size
+        removableCount = Math.min(
+          timedOutConnections.size,
+          Math.max(0, currentTotal - config.minConnections)
+        )
 
-        if removableCount > 0 then
-          // Simplified for compilation - will check state properly later
-          val toRemove = state.connections.take(removableCount)
-
-          toRemove.traverse_(pool.removeConnection)
-        else Temporal[F].unit
-      }
+        _ <- if (removableCount > 0) {
+          timedOutConnections.take(removableCount).traverse_(pool.removeConnection)
+        } else Temporal[F].unit
+      yield ()
 
     /**
      * Validate idle connections periodically.
@@ -162,13 +177,23 @@ object HouseKeeper:
       now:  Long
     ): F[Unit] =
       pool.poolState.get.flatMap { state =>
-        // Simplified for compilation - will check state properly later
-        val needsValidation = state.connections.take(1)
+        // Get idle connections using the idleConnections set
+        val idleConnections = state.connections.filter(conn =>
+          state.idleConnections.contains(conn.id)
+        )
 
-        needsValidation.traverse_ { pooled =>
-          pool.validateConnection(pooled.connection).flatMap { valid =>
-            if valid then pooled.lastValidatedAt.set(now)
-            else pool.removeConnection(pooled)
+        // Validate connections that haven't been validated recently
+        // Validate at most 5 connections per cycle to avoid overloading the database
+        idleConnections.filterA { conn =>
+          conn.lastValidatedAt.get.map { lastValidated =>
+            (now - lastValidated) > config.keepaliveTime.getOrElse(2.minutes).toMillis
+          }
+        }.flatMap { needsValidation =>
+          needsValidation.take(5).traverse_ { pooled =>
+            pool.validateConnection(pooled.connection).flatMap { valid =>
+              if valid then pooled.lastValidatedAt.set(now)
+              else pool.removeConnection(pooled)
+            }
           }
         }
       }
