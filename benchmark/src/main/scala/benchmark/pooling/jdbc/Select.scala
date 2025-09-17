@@ -56,7 +56,7 @@ class Select:
     LocalDateTime
   )
 
-  private val threadPoolSize  = Math.max(4, Runtime.getRuntime.availableProcessors())
+  private val threadPoolSize = Math.max(4, Runtime.getRuntime.availableProcessors())
 
   @volatile
   var datasource: (DataSource[IO], IO[Unit]) = uninitialized
@@ -86,7 +86,7 @@ class Select:
 
     datasource = (for
       hikari <- Resource.fromAutoCloseable(IO(ds))
-      ex <- ExecutionContexts.fixedThreadPool[IO](threadPoolSize)
+      ex     <- ExecutionContexts.fixedThreadPool[IO](threadPoolSize)
     yield MySQLDataSource.fromDataSource[IO](hikari, ex)).allocated.unsafeRunSync()
 
     // プール初期化後も少し待機して、全ての接続が確立されるのを待つ
