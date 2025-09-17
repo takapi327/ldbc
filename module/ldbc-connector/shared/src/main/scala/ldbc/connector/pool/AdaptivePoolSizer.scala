@@ -279,15 +279,25 @@ object AdaptivePoolSizer:
       pool: PooledDataSource[F],
       by:   Int
     ): F[Unit] =
-      pool.poolState.get.flatMap { state =>
-        // Simplified for compilation - will check state properly later
-        val idleConnections = state.connections
+      pool.poolState.get.flatMap { poolState =>
+        // Get idle connections using the idleConnections set
+        val idleConnections = poolState.connections.filter(conn =>
+          poolState.idleConnections.contains(conn.id)
+        )
 
-        // Sort by last used time (oldest first)
-        // Simplified for compilation - will sort properly later
-        val toRemove = idleConnections.take(by)
+        // Sort by last used time and remove oldest connections
+        for
+          connectionsWithTime <- idleConnections.traverse { conn =>
+            conn.lastUsedAt.get.map(time => (conn, time))
+          }
 
-        toRemove.traverse_(pool.removeConnection)
+          // Sort by last used time (oldest first)
+          sortedConnections = connectionsWithTime.sortBy(_._2).map(_._1)
+          toRemove = sortedConnections.take(by)
+
+          // Remove connections
+          _ <- toRemove.traverse_(pool.removeConnection)
+        yield ()
       }
 
   /**
