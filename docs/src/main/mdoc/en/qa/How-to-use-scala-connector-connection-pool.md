@@ -224,5 +224,6 @@ val ldbcConfig = MySQLConfig.default
 5. **Use lifecycle hooks**: For request tracing or session configuration
 
 ## References
+- [Connection Pooling](/en/tutorial/Connection.md#connection-pooling)
 - [Connection Pooling Architecture](/en/reference/Pooling.md)
 - [Performance Benchmarks](/en/reference/Pooling.md#benchmark-results)

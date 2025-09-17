@@ -224,5 +224,6 @@ val ldbcConfig = MySQLConfig.default
 5. **ライフサイクルフックを活用**: リクエスト追跡やセッション設定に
 
 ## 参考資料
+- [コネクションプーリング](/ja/tutorial/Connection.md#コネクションプーリング)
 - [コネクションプーリングアーキテクチャ](/ja/reference/Pooling.md)
 - [パフォーマンスベンチマーク](/ja/reference/Pooling.md#ベンチマーク結果)
