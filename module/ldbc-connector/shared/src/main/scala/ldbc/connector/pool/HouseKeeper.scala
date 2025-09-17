@@ -146,27 +146,25 @@ object HouseKeeper:
         state <- pool.poolState.get
 
         // Get idle connections using the idleConnections set
-        idleConnections = state.connections.filter(conn =>
-          state.idleConnections.contains(conn.id)
-        )
+        idleConnections = state.connections.filter(conn => state.idleConnections.contains(conn.id))
 
         // Check which idle connections have exceeded the timeout
         timedOutConnections <- idleConnections.filterA { conn =>
-          conn.lastUsedAt.get.map { lastUsed =>
-            (now - lastUsed) > config.idleTimeout.toMillis
-          }
-        }
+                                 conn.lastUsedAt.get.map { lastUsed =>
+                                   (now - lastUsed) > config.idleTimeout.toMillis
+                                 }
+                               }
 
         // Keep at least minConnections
-        currentTotal = state.connections.size
+        currentTotal   = state.connections.size
         removableCount = Math.min(
-          timedOutConnections.size,
-          Math.max(0, currentTotal - config.minConnections)
-        )
+                           timedOutConnections.size,
+                           Math.max(0, currentTotal - config.minConnections)
+                         )
 
-        _ <- if (removableCount > 0) {
-          timedOutConnections.take(removableCount).traverse_(pool.removeConnection)
-        } else Temporal[F].unit
+        _ <- if removableCount > 0 then {
+               timedOutConnections.take(removableCount).traverse_(pool.removeConnection)
+             } else Temporal[F].unit
       yield ()
 
     /**
@@ -178,24 +176,24 @@ object HouseKeeper:
     ): F[Unit] =
       pool.poolState.get.flatMap { state =>
         // Get idle connections using the idleConnections set
-        val idleConnections = state.connections.filter(conn =>
-          state.idleConnections.contains(conn.id)
-        )
+        val idleConnections = state.connections.filter(conn => state.idleConnections.contains(conn.id))
 
         // Validate connections that haven't been validated recently
         // Validate at most 5 connections per cycle to avoid overloading the database
-        idleConnections.filterA { conn =>
-          conn.lastValidatedAt.get.map { lastValidated =>
-            (now - lastValidated) > config.keepaliveTime.getOrElse(2.minutes).toMillis
-          }
-        }.flatMap { needsValidation =>
-          needsValidation.take(5).traverse_ { pooled =>
-            pool.validateConnection(pooled.connection).flatMap { valid =>
-              if valid then pooled.lastValidatedAt.set(now)
-              else pool.removeConnection(pooled)
+        idleConnections
+          .filterA { conn =>
+            conn.lastValidatedAt.get.map { lastValidated =>
+              (now - lastValidated) > config.keepaliveTime.getOrElse(2.minutes).toMillis
             }
           }
-        }
+          .flatMap { needsValidation =>
+            needsValidation.take(5).traverse_ { pooled =>
+              pool.validateConnection(pooled.connection).flatMap { valid =>
+                if valid then pooled.lastValidatedAt.set(now)
+                else pool.removeConnection(pooled)
+              }
+            }
+          }
       }
 
     /**
