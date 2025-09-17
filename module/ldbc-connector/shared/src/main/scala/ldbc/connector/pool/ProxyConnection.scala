@@ -9,6 +9,7 @@ package ldbc.connector.pool
 import cats.syntax.all.*
 
 import cats.effect.*
+import cats.effect.std.Console
 
 import ldbc.sql.*
 
@@ -26,7 +27,7 @@ import ldbc.connector.Connection
  * @param closeAllStatements whether to close all statements when the connection is released
  * @tparam F the effect type
  */
-private[pool] class ProxyConnection[F[_]: Temporal](
+private[pool] class ProxyConnection[F[_]: Temporal: Console](
   val pooled:         PooledConnection[F],
   releaseCallback:    Connection[F] => F[Unit],
   closeAllStatements: Boolean = true
@@ -96,8 +97,17 @@ private[pool] class ProxyConnection[F[_]: Temporal](
     // Clear the list first to avoid concurrent modification
     openStatements.clear()
 
-    // Close all statements, ignoring errors
-    allStatements.traverse_(_.close().attempt.void)
+    // Close all statements, logging any errors at debug level
+    allStatements.traverse_ { stmt =>
+      stmt.close().handleErrorWith { error =>
+        // Log at debug level as these errors are typically not critical
+        // but may be useful for troubleshooting resource leaks
+        Console[F].errorln(
+          s"[ProxyConnection] Error closing statement: ${error.getMessage}. " +
+          s"This may indicate a resource leak or connection issue."
+        )
+      }
+    }
   }
 
   // Delegate all other methods without modification
