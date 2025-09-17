@@ -13,7 +13,7 @@ import ProjectKeys.*
 import ScalaVersions.*
 import Workflows.*
 
-ThisBuild / tlBaseVersion              := LdbcVersions.v03
+ThisBuild / tlBaseVersion              := LdbcVersions.latest
 ThisBuild / tlFatalWarnings            := true
 ThisBuild / projectName                := "ldbc"
 ThisBuild / scalaVersion               := scala3
