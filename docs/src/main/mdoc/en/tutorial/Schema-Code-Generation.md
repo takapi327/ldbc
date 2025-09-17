@@ -377,13 +377,13 @@ Generated code can be used like any other ldbc code.
 import ldbc.dsl.*
 import ldbc.generated.shop.Product
 
-val provider = MySQLConnectionProvider(...)
+val datasource = MySQLMySQLDataSource(...)
 
 // Referencing table queries
 val products = Product.table
 
 // Executing queries
-val allProducts = provider.use { conn =>
+val allProducts = datasource.getConnection.use { conn =>
   products.filter(_.price > 100).all.run(conn)
 }
 ```
