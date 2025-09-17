@@ -217,27 +217,110 @@ ldbc-connectorは、プールの健全性を維持するために複数のバッ
 
 ## 設定例
 
-```scala
-import ldbc.connector.ConnectionPoolConfig
+### 基本的な使用方法
 
-val config = ConnectionPoolConfig(
-  maxPoolSize = 10,
-  minIdle = 2,
-  connectionTimeout = 30.seconds,
-  idleTimeout = 10.minutes,
-  maxLifetime = 30.minutes,
-  validationTimeout = 5.seconds,
-  leakDetectionThreshold = Some(2.minutes),
-  
-  // CircuitBreaker設定
-  circuitBreakerConfig = CircuitBreaker.Config(
-    maxFailures = 5,
-    resetTimeout = 60.seconds,
-    exponentialBackoffFactor = 2.0,
-    maxResetTimeout = 5.minutes
+```scala 3
+import cats.effect.IO
+import ldbc.connector.*
+import scala.concurrent.duration.*
+
+// プール設定
+val config = MySQLConfig.default
+  .setHost("localhost")
+  .setPort(3306)
+  .setUser("myuser")
+  .setPassword("mypassword")
+  .setDatabase("mydb")
+  // プールサイズ設定
+  .setMinConnections(5)           // 最小接続数（デフォルト: 5）
+  .setMaxConnections(20)          // 最大接続数（デフォルト: 10）
+  // タイムアウト設定
+  .setConnectionTimeout(30.seconds)    // 接続取得タイムアウト（デフォルト: 30秒）
+  .setIdleTimeout(10.minutes)         // アイドルタイムアウト（デフォルト: 10分）
+  .setMaxLifetime(30.minutes)         // 最大生存時間（デフォルト: 30分）
+  .setValidationTimeout(5.seconds)    // 検証タイムアウト（デフォルト: 5秒）
+  // 検証とヘルスチェック
+  .setAliveBypassWindow(500.millis)   // 最近使用時の検証スキップ（デフォルト: 500ms）
+  .setKeepaliveTime(2.minutes)        // アイドル検証間隔（デフォルト: 2分）
+  .setConnectionTestQuery("SELECT 1") // カスタムテストクエリ（オプション）
+  // リーク検出
+  .setLeakDetectionThreshold(2.minutes) // 接続リーク検出（デフォルト: なし）
+  // メンテナンス
+  .setMaintenanceInterval(30.seconds)  // バックグラウンドクリーンアップ間隔（デフォルト: 30秒）
+  // アダプティブサイジング
+  .setAdaptiveSizing(true)            // 動的プールサイズ調整（デフォルト: false）
+  .setAdaptiveInterval(1.minute)      // アダプティブサイジング確認間隔（デフォルト: 1分）
+
+// プールデータソースの作成
+val poolResource = MySQLDataSource.pooling[IO](config)
+
+// プールの使用
+poolResource.use { pool =>
+  pool.getConnection.use { conn =>
+    // コネクションの使用
+    for
+      stmt <- conn.createStatement()
+      rs   <- stmt.executeQuery("SELECT 1")
+      _    <- rs.next()
+      result <- rs.getInt(1)
+    yield result
+  }
+}
+```
+
+### メトリクス追跡付きプール
+
+```scala 3
+import ldbc.connector.pool.*
+
+val metricsResource = for
+  tracker <- Resource.eval(PoolMetricsTracker.inMemory[IO])
+  pool    <- MySQLDataSource.pooling[IO](
+    config,
+    metricsTracker = Some(tracker)
   )
+yield (pool, tracker)
+
+metricsResource.use { case (pool, tracker) =>
+  // プールの使用とメトリクス監視
+  for
+    _       <- pool.getConnection.use(conn => /* コネクション使用 */ IO.unit)
+    metrics <- tracker.getMetrics
+    _       <- IO.println(s"総取得数: ${metrics.totalAcquisitions}")
+    _       <- IO.println(s"平均取得時間: ${metrics.acquisitionTime}")
+  yield ()
+}
+```
+
+### ライフサイクルフック付きプール
+
+```scala 3
+case class SessionContext(userId: String, startTime: Long)
+
+val beforeHook: Connection[IO] => IO[SessionContext] = conn =>
+  for
+    _ <- conn.createStatement().flatMap(_.executeUpdate("SET SESSION sql_mode = 'STRICT_ALL_TABLES'"))
+    startTime = System.currentTimeMillis
+  yield SessionContext("user123", startTime)
+
+val afterHook: (SessionContext, Connection[IO]) => IO[Unit] = (ctx, conn) =>
+  IO.println(s"ユーザー ${ctx.userId} が接続を ${System.currentTimeMillis - ctx.startTime}ms 使用")
+
+val poolWithHooks = MySQLDataSource.poolingWithBeforeAfter[IO, SessionContext](
+  config = config,
+  before = Some(beforeHook),
+  after = Some(afterHook)
 )
 ```
+
+### CircuitBreakerの設定
+
+CircuitBreakerは内部で自動的に設定されますが、現在の実装では以下のデフォルト値が使用されます：
+
+- `maxFailures`: 5回（Open状態への移行閾値）
+- `resetTimeout`: 30秒（Half-Open状態への移行時間）
+- `exponentialBackoffFactor`: 2.0（バックオフ係数）
+- `maxResetTimeout`: 5分（最大リセットタイムアウト）
 
 ## まとめ
 
