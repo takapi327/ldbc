@@ -118,7 +118,7 @@ class HelperFunctionsSyntaxTest extends CatsEffectSuite with HelperFunctionsSynt
 
   test("or function with varargs should create OR clause") {
     val sql = or(sql"x = 1", sql"y = 2", sql"z = 3")
-    assertEquals(sql.statement, "((x = 1) OR ((y = 2) OR (z = 3)))")
+    assertEquals(sql.statement, "((x = 1) OR (y = 2) OR (z = 3))")
   }
 
   test("orOpt with all None values should return None") {
@@ -207,7 +207,7 @@ class HelperFunctionsSyntaxTest extends CatsEffectSuite with HelperFunctionsSynt
       None
     )
 
-    val query = sql"SELECT * FROM $table" ++
+    val query = sql"SELECT * FROM $table " ++
       whereAndOpt(conditions.flatten) ++
       sql" " ++
       orderBy(sql"created_at DESC")
