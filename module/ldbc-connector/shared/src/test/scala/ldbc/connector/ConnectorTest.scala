@@ -109,7 +109,7 @@ class ConnectorTest extends FTestPlatform:
 
     // Test simple DBIO action
     val action: DBIO[Int] = ConnectionIO.pure(42)
-    
+
     assertIO(
       connector.run(action),
       42
@@ -123,7 +123,7 @@ class ConnectorTest extends FTestPlatform:
 
     // Execute a simple action
     val action: DBIO[String] = ConnectionIO.pure("test")
-    
+
     assertIO(
       connector.run(action),
       "test"
@@ -136,7 +136,7 @@ class ConnectorTest extends FTestPlatform:
 
     // This should not throw any exceptions
     val action: DBIO[String] = ConnectionIO.pure("test")
-    
+
     assertIO(
       connector.run(action),
       "test"
@@ -149,7 +149,7 @@ class ConnectorTest extends FTestPlatform:
 
     // Execute action - should create and close connection
     val action: DBIO[Int] = ConnectionIO.pure(100)
-    
+
     for {
       result <- connector.run(action)
     } yield {
@@ -165,7 +165,7 @@ class ConnectorTest extends FTestPlatform:
     val connector  = Connector.fromDataSource(dataSource, Some(logHandler))
 
     val action: DBIO[Int] = ConnectionIO.pure(200)
-    
+
     for {
       result <- connector.run(action)
     } yield {
@@ -219,7 +219,7 @@ class ConnectorTest extends FTestPlatform:
 
     // Test set auto-commit operation
     val setAutoCommitAction: DBIO[Unit] = ConnectionIO.setAutoCommit(false)
-    
+
     for {
       _ <- connector.run(setAutoCommitAction)
     } yield {
@@ -233,11 +233,11 @@ class ConnectorTest extends FTestPlatform:
 
     // Test Commit operation
     val commitAction: DBIO[Unit] = ConnectionIO.commit()
-    
+
     for {
       _ <- connector.run(commitAction)
       _ <- IO(assert(connection.commitCalled))
-      
+
       // Test Rollback operation
       rollbackAction = ConnectionIO.rollback()
       _ <- connector.run(rollbackAction)
@@ -252,7 +252,7 @@ class ConnectorTest extends FTestPlatform:
 
     // Test close operation
     val closeAction: DBIO[Unit] = ConnectionIO.close()
-    
+
     for {
       _ <- connector.run(closeAction)
     } yield {
@@ -266,7 +266,7 @@ class ConnectorTest extends FTestPlatform:
 
     // Test set read-only operation
     val setReadOnlyAction: DBIO[Unit] = ConnectionIO.setReadOnly(true)
-    
+
     for {
       _ <- connector.run(setReadOnlyAction)
     } yield {
@@ -280,16 +280,16 @@ class ConnectorTest extends FTestPlatform:
 
     // Test createStatement operation
     val createStatementAction: DBIO[Statement[?]] = ConnectionIO.createStatement()
-    
+
     for {
       createResult <- connector.run(createStatementAction).attempt
-      _ <- IO {
-        assert(createResult.isLeft)
-        createResult.left.foreach { error =>
-          assert(error.isInstanceOf[UnsupportedOperationException])
-        }
-      }
-      
+      _            <- IO {
+             assert(createResult.isLeft)
+             createResult.left.foreach { error =>
+               assert(error.isInstanceOf[UnsupportedOperationException])
+             }
+           }
+
       // Test prepareStatement operation
       prepareStatementAction = ConnectionIO.prepareStatement("SELECT 1")
       prepareResult <- connector.run(prepareStatementAction).attempt
@@ -307,16 +307,16 @@ class ConnectorTest extends FTestPlatform:
 
     // Test setSavepoint operation
     val setSavepointAction: DBIO[Savepoint] = ConnectionIO.setSavepoint()
-    
+
     for {
       savepointResult <- connector.run(setSavepointAction).attempt
-      _ <- IO {
-        assert(savepointResult.isLeft)
-        savepointResult.left.foreach { error =>
-          assert(error.isInstanceOf[UnsupportedOperationException])
-        }
-      }
-      
+      _               <- IO {
+             assert(savepointResult.isLeft)
+             savepointResult.left.foreach { error =>
+               assert(error.isInstanceOf[UnsupportedOperationException])
+             }
+           }
+
       // Test setSavepoint with name operation
       setSavepointWithNameAction = ConnectionIO.setSavepoint("test_savepoint")
       savepointWithNameResult <- connector.run(setSavepointWithNameAction).attempt
