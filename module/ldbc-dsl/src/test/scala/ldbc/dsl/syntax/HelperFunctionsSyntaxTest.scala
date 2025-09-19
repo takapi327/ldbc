@@ -12,7 +12,7 @@ import cats.syntax.all.*
 import munit.CatsEffectSuite
 
 import ldbc.dsl.*
-import ldbc.dsl.codec.{ Encoder, Codec }
+import ldbc.dsl.codec.{ Codec, Encoder }
 
 class HelperFunctionsSyntaxTest extends CatsEffectSuite with HelperFunctionsSyntax:
 
@@ -23,7 +23,7 @@ class HelperFunctionsSyntaxTest extends CatsEffectSuite with HelperFunctionsSynt
 
   test("sc function should be usable in SQL interpolation") {
     val table = sc("users")
-    val sql = sql"SELECT * FROM $table WHERE id = ${1L}"
+    val sql   = sql"SELECT * FROM $table WHERE id = ${ 1L }"
     assertEquals(sql.statement, "SELECT * FROM users WHERE id = ?")
     assertEquals(sql.params.size, 1)
   }
@@ -200,20 +200,20 @@ class HelperFunctionsSyntaxTest extends CatsEffectSuite with HelperFunctionsSynt
   }
 
   test("Complex query composition using multiple helper functions") {
-    val table = sc("users")
+    val table      = sc("users")
     val conditions = List(
-      Some(sql"active = ${true}"),
-      Some(sql"age >= ${18}"),
+      Some(sql"active = ${ true }"),
+      Some(sql"age >= ${ 18 }"),
       None
     )
-    
-    val query = sql"SELECT * FROM $table" ++ 
+
+    val query = sql"SELECT * FROM $table" ++
       whereAndOpt(conditions.flatten) ++
       sql" " ++
       orderBy(sql"created_at DESC")
-    
+
     assertEquals(
-      query.statement, 
+      query.statement,
       "SELECT * FROM users WHERE (active = ?) AND (age >= ?) ORDER BY created_at DESC"
     )
     assertEquals(query.params.size, 2)
@@ -222,12 +222,12 @@ class HelperFunctionsSyntaxTest extends CatsEffectSuite with HelperFunctionsSynt
   test("values function with custom case class using Codec") {
     case class User(id: Int, name: String, email: String)
     given Codec[User] = Codec.derived[User]
-    
+
     val users = NonEmptyList.of(
       User(1, "Alice", "alice@example.com"),
       User(2, "Bob", "bob@example.com")
     )
-    
+
     val sql = sql"INSERT INTO users (id, name, email) " ++ values(users)
     assertEquals(sql.statement, "INSERT INTO users (id, name, email) VALUES(?,?,?),(?,?,?)")
     assertEquals(sql.params.size, 6)
@@ -236,29 +236,29 @@ class HelperFunctionsSyntaxTest extends CatsEffectSuite with HelperFunctionsSynt
   test("in function with custom type using Encoder") {
     case class UserId(value: Long)
     given Encoder[UserId] = Encoder[Long].contramap(_.value)
-    
+
     val userIds = NonEmptyList.of(UserId(1), UserId(2), UserId(3))
-    val sql = in(sql"`user_id`", userIds)
+    val sql     = in(sql"`user_id`", userIds)
     assertEquals(sql.statement, "(`user_id` IN (?,?,?))")
     assertEquals(sql.params.size, 3)
   }
 
   test("DBIO operations should be available through implicit conversion") {
-    val dbio: DBIO[Int] = DBIO.pure(42)
-    val ops: DBIO.Ops[Int] = dbio // implicit conversion should work
-    
+    val dbio: DBIO[Int]     = DBIO.pure(42)
+    val ops:  DBIO.Ops[Int] = dbio // implicit conversion should work
+
     // Verify the conversion works by checking instance type
     assert(ops.isInstanceOf[DBIO.Ops[_]])
   }
 
   test("syncDBIO should be available as implicit Sync instance") {
     val sync = syncDBIO
-    
+
     // Test basic Sync operations
-    val pureDBIO = sync.pure(42)
-    val mappedDBIO = sync.map(pureDBIO)(_ + 1)
+    val pureDBIO       = sync.pure(42)
+    val mappedDBIO     = sync.map(pureDBIO)(_ + 1)
     val flatMappedDBIO = sync.flatMap(pureDBIO)(x => sync.pure(x * 2))
-    
+
     // Just verify the operations compile and return DBIO instances
     assert(pureDBIO.isInstanceOf[DBIO[_]])
     assert(mappedDBIO.isInstanceOf[DBIO[_]])
@@ -266,15 +266,15 @@ class HelperFunctionsSyntaxTest extends CatsEffectSuite with HelperFunctionsSynt
   }
 
   test("Complex WHERE clause with nested AND/OR conditions") {
-    val statusCondition = in(sql"`status`", "active", "pending")
-    val ageCondition = sql"`age` >= ${18}"
-    val countryCondition = sql"`country` = ${"US"}"
-    
+    val statusCondition  = in(sql"`status`", "active", "pending")
+    val ageCondition     = sql"`age` >= ${ 18 }"
+    val countryCondition = sql"`country` = ${ "US" }"
+
     val whereClause = whereAndOpt(
       Some(statusCondition),
       Some(or(ageCondition, countryCondition))
     )
-    
+
     assertEquals(
       whereClause.statement,
       "WHERE ((`status` IN (?,?))) AND (((`age` >= ?) OR (`country` = ?)))"
@@ -283,11 +283,11 @@ class HelperFunctionsSyntaxTest extends CatsEffectSuite with HelperFunctionsSynt
 
   test("SET clause with conditional updates") {
     val updates = List(
-      Some(sql"`name` = ${"John"}"),
+      Some(sql"`name` = ${ "John" }"),
       None, // Skip null update
       Some(sql"`updated_at` = NOW()")
     )
-    
+
     updates.flatten.toNel match
       case Some(nel) =>
         val sql = sql"UPDATE users " ++ set(nel)
@@ -302,7 +302,7 @@ class HelperFunctionsSyntaxTest extends CatsEffectSuite with HelperFunctionsSynt
       parentheses(sql"3, 4"),
       parentheses(sql"5, 6")
     )
-    
+
     val sql = comma(values)
     assertEquals(sql.statement, "(1, 2),(3, 4),(5, 6)")
   }
