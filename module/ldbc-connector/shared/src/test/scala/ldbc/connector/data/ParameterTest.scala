@@ -171,10 +171,11 @@ class ParameterTest extends FTestPlatform:
     assertEquals(Parameter.short(0).toString, "0")
     assertEquals(Parameter.int(0).toString, "0")
     assertEquals(Parameter.long(0L).toString, "0")
+    // In JavaScript, 0.0 is treated as 0.
     assert(
       Parameter.float(0.0f).toString == "0.0" || Parameter.float(0.0f).toString == "0"
-    ) // In JavaScript, 0.0 is treated as 0.
-    assertEquals(Parameter.double(0.0).toString, "0.0")
+    )
+    assert(Parameter.double(0.0).toString == "0.0" || Parameter.double(0.0).toString == "0")
 
     // Test negative values
     assertEquals(Parameter.short(-32768).toString, "-32768")
