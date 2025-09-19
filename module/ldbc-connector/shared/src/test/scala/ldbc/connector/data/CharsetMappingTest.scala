@@ -40,13 +40,14 @@ class CharsetMappingTest extends FTestPlatform:
     assertEquals(charset.mblen, 4)
     assertEquals(charset.priority, 0)
     // GB18030 encoding may not be available in Scala.js
-    val isGB18030Available = try {
-      java.nio.charset.Charset.forName("GB18030")
-      true
-    } catch {
-      case _: Exception => false
-    }
-    if (isGB18030Available) {
+    val isGB18030Available =
+      try {
+        java.nio.charset.Charset.forName("GB18030")
+        true
+      } catch {
+        case _: Exception => false
+      }
+    if isGB18030Available then {
       assert(charset.javaEncodingsUc.contains("GB18030"))
     } else {
       // In Scala.js, if GB18030 is not supported, the encoding list might be empty or contain UTF-8 as fallback
@@ -188,14 +189,15 @@ class CharsetMappingTest extends FTestPlatform:
     // minimumVersion(5.7.4) > version(5.6.0) returns 1, isOkayForVersion returns true
     // Note: GB18030 charset may not be available in Scala.js environment
     // Check if GB18030 charset is supported in the current runtime
-    val isGB18030Supported = try {
-      java.nio.charset.Charset.forName("GB18030")
-      true
-    } catch {
-      case _: Exception => false
-    }
-    
-    if (isGB18030Supported) {
+    val isGB18030Supported =
+      try {
+        java.nio.charset.Charset.forName("GB18030")
+        true
+      } catch {
+        case _: Exception => false
+      }
+
+    if isGB18030Supported then {
       assertEquals(gb18030WithOldVersion, Some("gb18030"))
     } else {
       // In environments where GB18030 is not supported (like some Scala.js runtimes)
@@ -212,13 +214,14 @@ class CharsetMappingTest extends FTestPlatform:
 
     val shiftJis = CharsetMapping.getStaticMysqlCharsetForJavaEncoding("SHIFT_JIS", None)
     // SHIFT_JIS may not be supported in Scala.js environment
-    val isShiftJISSupported = try {
-      java.nio.charset.Charset.forName("SHIFT_JIS")
-      true
-    } catch {
-      case _: Exception => false
-    }
-    if (isShiftJISSupported) {
+    val isShiftJISSupported =
+      try {
+        java.nio.charset.Charset.forName("SHIFT_JIS")
+        true
+      } catch {
+        case _: Exception => false
+      }
+    if isShiftJISSupported then {
       assert(shiftJis.isDefined, "Should find a charset for SHIFT_JIS")
     } else {
       // In environments where SHIFT_JIS is not supported (like some Scala.js runtimes)
