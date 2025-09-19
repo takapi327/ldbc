@@ -21,7 +21,8 @@ ThisBuild / crossScalaVersions         := Seq(scala3, scala37)
 ThisBuild / githubWorkflowJavaVersions := Seq(
   JavaSpec.corretto(java11),
   JavaSpec.corretto(java17),
-  JavaSpec.corretto(java21)
+  JavaSpec.corretto(java21),
+  JavaSpec.corretto(java25)
 )
 ThisBuild / githubWorkflowBuildPreamble ++= List(dockerRun) ++ nativeBrewInstallWorkflowSteps.value
 ThisBuild / nativeBrewInstallCond := Some("matrix.project == 'ldbcNative'")
