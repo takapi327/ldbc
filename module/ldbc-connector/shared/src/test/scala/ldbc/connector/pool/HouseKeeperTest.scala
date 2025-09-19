@@ -200,17 +200,17 @@ class HouseKeeperTest extends FTestPlatform:
         _ <- datasource.getConnection.use { conn =>
                conn.createStatement().flatMap(_.executeQuery("SELECT 1")).void
              }
-        
+
         initialStatus <- datasource.status
-        
+
         // HouseKeeper will maintain the pool based on configuration
         // The test verifies that HouseKeeper is working
         _ <- IO.sleep(1.second)
-        
+
         finalStatus <- datasource.status
       yield
         // Pool should maintain at least minimum connections
-        assert(finalStatus.total >= 1, s"Should maintain minimum connections, got ${finalStatus.total}")
+        assert(finalStatus.total >= 1, s"Should maintain minimum connections, got ${ finalStatus.total }")
         // HouseKeeper should be managing the pool
         assert(initialStatus.total > 0, "Should have created connections")
     }
@@ -220,7 +220,7 @@ class HouseKeeperTest extends FTestPlatform:
     val testConfig = config
       .setMinConnections(1)
       .setMaxConnections(3)
-      .setMaxLifetime(30.minutes)       // Use default value
+      .setMaxLifetime(30.minutes) // Use default value
       .setMaintenanceInterval(500.millis)
 
     val resource = for
@@ -259,14 +259,14 @@ class HouseKeeperTest extends FTestPlatform:
         for
           // Create and use connections
           _ <- datasource.getConnection.use(_.createStatement())
-          
+
           initialStatus <- datasource.status
-          
+
           // Wait for validation cycle
           _ <- IO.sleep(2.seconds)
-          
+
           // Get metrics to see if validations occurred
-          metrics <- tracker.getMetrics
+          metrics     <- tracker.getMetrics
           finalStatus <- datasource.status
         yield
           // Connections should be validated and maintained
@@ -293,17 +293,17 @@ class HouseKeeperTest extends FTestPlatform:
           conn.createStatement().flatMap(_.executeQuery(s"SELECT $i")).void
         }
       }
-      
+
       for
         fiber <- operations.start
-        
+
         // Let maintenance run during operations
         _ <- IO.sleep(500.millis)
-        
+
         statusDuringOps <- datasource.status
-        
+
         _ <- fiber.join
-        
+
         finalStatus <- datasource.status
       yield
         assert(statusDuringOps.total >= 2, "Should maintain minimum connections during operations")
@@ -316,7 +316,7 @@ class HouseKeeperTest extends FTestPlatform:
       .setMinConnections(2)
       .setMaxConnections(4)
       .setMaintenanceInterval(500.millis)
-      .setKeepaliveTime(30.seconds)     // Minimum allowed
+      .setKeepaliveTime(30.seconds) // Minimum allowed
 
     val resource = for
       tracker <- Resource.eval(PoolMetricsTracker.inMemory[IO])
@@ -328,13 +328,13 @@ class HouseKeeperTest extends FTestPlatform:
         for
           // Use connections
           _ <- datasource.getConnection.use(_.createStatement())
-          
+
           // Wait for initial state
-          _ <- IO.sleep(1.second)
+          _        <- IO.sleep(1.second)
           metrics1 <- tracker.getMetrics
-          
+
           // Wait for some operations
-          _ <- IO.sleep(2.seconds)
+          _        <- IO.sleep(2.seconds)
           metrics2 <- tracker.getMetrics
         yield
           // After keepalive time, validations should have occurred
@@ -361,28 +361,27 @@ class HouseKeeperTest extends FTestPlatform:
     resource.use { datasource =>
       for
         initialStatus <- datasource.status
-        
+
         // Create a fiber that will close the pool after a delay
         closeFiber <- IO.sleep(500.millis).flatMap(_ => datasource.close).start
-        
+
         // Wait for close to complete
         _ <- closeFiber.join
-        
+
         // Verify pool is closed
         finalState <- datasource.poolState.get
-        
+
         // The pool should be closed but might still have some connections
         // being cleaned up asynchronously
         _ = assert(finalState.closed, "Pool should be closed")
-        
+
         // Wait a bit more for cleanup
         _ <- IO.sleep(500.millis)
-        
+
         // Check state again
         finalState2 <- datasource.poolState.get
-      yield
-        assert(finalState2.closed, "Pool should remain closed")
-        // Note: connections might not be 0 immediately due to async cleanup
+      yield assert(finalState2.closed, "Pool should remain closed")
+      // Note: connections might not be 0 immediately due to async cleanup
     }
   }
 
@@ -402,19 +401,19 @@ class HouseKeeperTest extends FTestPlatform:
         for
           // Initial state
           _ <- IO.sleep(300.millis) // Wait for initial maintenance
-          
+
           // Get a connection to change state
           connFiber <- datasource.getConnection.use { _ =>
                          IO.sleep(500.millis)
                        }.start
-          
+
           // Wait for state change
           _ <- IO.sleep(100.millis)
-          
+
           // Check gauge values during connection use
           metrics <- tracker.getMetrics
-          status <- datasource.status
-          
+          status  <- datasource.status
+
           _ <- connFiber.join
         yield
           // Verify metrics are being updated
@@ -430,7 +429,7 @@ class HouseKeeperTest extends FTestPlatform:
       .setMinConnections(10)
       .setMaxConnections(15)
       .setMaintenanceInterval(500.millis)
-      .setKeepaliveTime(30.seconds)     // Minimum allowed
+      .setKeepaliveTime(30.seconds) // Minimum allowed
 
     val resource = for
       tracker <- Resource.eval(PoolMetricsTracker.inMemory[IO])
@@ -442,14 +441,14 @@ class HouseKeeperTest extends FTestPlatform:
         for
           // Wait for connections to be created
           _ <- IO.sleep(500.millis)
-          
+
           initialMetrics <- tracker.getMetrics
-          
+
           // Wait for one maintenance cycle
           _ <- IO.sleep(300.millis)
-          
+
           metricsAfterOneCycle <- tracker.getMetrics
-          
+
           // Check that maintenance occurred by looking at pool state
           // Since validations aren't tracked in metrics, we'll verify pool is healthy
           poolHealthy = metricsAfterOneCycle.totalAcquisitions >= initialMetrics.totalAcquisitions
