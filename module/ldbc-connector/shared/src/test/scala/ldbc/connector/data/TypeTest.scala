@@ -23,7 +23,7 @@ class TypeTest extends FTestPlatform:
     assertEquals(Type.tinyint.name, "tinyint")
     assertEquals(Type.tinyint(3).name, "tinyint(3)")
     assertEquals(Type.tinyint(5).name, "tinyint(5)")
-    
+
     assertEquals(Type.utinyint.name, "tinyint unsigned")
     assertEquals(Type.utinyint(3).name, "tinyint(3) unsigned")
     assertEquals(Type.utinyint(5).name, "tinyint(5) unsigned")
@@ -33,7 +33,7 @@ class TypeTest extends FTestPlatform:
     assertEquals(Type.smallint.name, "smallint")
     assertEquals(Type.smallint(5).name, "smallint(5)")
     assertEquals(Type.smallint(10).name, "smallint(10)")
-    
+
     assertEquals(Type.usmallint.name, "smallint unsigned")
     assertEquals(Type.usmallint(5).name, "smallint(5) unsigned")
     assertEquals(Type.usmallint(10).name, "smallint(10) unsigned")
@@ -43,7 +43,7 @@ class TypeTest extends FTestPlatform:
     assertEquals(Type.mediumint.name, "mediumint")
     assertEquals(Type.mediumint(7).name, "mediumint(7)")
     assertEquals(Type.mediumint(9).name, "mediumint(9)")
-    
+
     assertEquals(Type.umediumint.name, "mediumint unsigned")
     assertEquals(Type.umediumint(7).name, "mediumint(7) unsigned")
     assertEquals(Type.umediumint(9).name, "mediumint(9) unsigned")
@@ -53,7 +53,7 @@ class TypeTest extends FTestPlatform:
     assertEquals(Type.int.name, "int")
     assertEquals(Type.int(10).name, "int(10)")
     assertEquals(Type.int(11).name, "int(11)")
-    
+
     assertEquals(Type.uint.name, "int unsigned")
     assertEquals(Type.uint(10).name, "int(10) unsigned")
     assertEquals(Type.uint(11).name, "int(11) unsigned")
@@ -63,7 +63,7 @@ class TypeTest extends FTestPlatform:
     assertEquals(Type.bigint.name, "bigint")
     assertEquals(Type.bigint(19).name, "bigint(19)")
     assertEquals(Type.bigint(20).name, "bigint(20)")
-    
+
     assertEquals(Type.ubigint.name, "bigint unsigned")
     assertEquals(Type.ubigint(19).name, "bigint(19) unsigned")
     assertEquals(Type.ubigint(20).name, "bigint(20) unsigned")
@@ -85,7 +85,7 @@ class TypeTest extends FTestPlatform:
     assertEquals(Type.char(1).name, "char(1)")
     assertEquals(Type.char(10).name, "char(10)")
     assertEquals(Type.char(255).name, "char(255)")
-    
+
     assertEquals(Type.varchar(1).name, "varchar(1)")
     assertEquals(Type.varchar(100).name, "varchar(100)")
     assertEquals(Type.varchar(65535).name, "varchar(65535)")
@@ -95,7 +95,7 @@ class TypeTest extends FTestPlatform:
     assertEquals(Type.binary(1).name, "binary(1)")
     assertEquals(Type.binary(10).name, "binary(10)")
     assertEquals(Type.binary(255).name, "binary(255)")
-    
+
     assertEquals(Type.varbinary(1).name, "varbinary(1)")
     assertEquals(Type.varbinary(100).name, "varbinary(100)")
     assertEquals(Type.varbinary(65535).name, "varbinary(65535)")
@@ -182,7 +182,7 @@ class TypeTest extends FTestPlatform:
   test("Type case class basic functionality") {
     val customType = Type("custom_type")
     assertEquals(customType.name, "custom_type")
-    
+
     // Test toString
     assertEquals(customType.toString, "Type(custom_type)")
   }
@@ -191,17 +191,17 @@ class TypeTest extends FTestPlatform:
     val type1 = Type("int")
     val type2 = Type("int")
     val type3 = Type("varchar(255)")
-    
+
     // Test Eq instance
     assert(type1 === type2)
     assert(type1 =!= type3)
-    
+
     // Test with factory methods
     assert(Type.int === Type.int)
     assert(Type.int =!= Type.uint)
     assert(Type.varchar(10) === Type.varchar(10))
     assert(Type.varchar(10) =!= Type.varchar(20))
-    
+
     // Test equality with same parameters
     assert(Type.decimal(10, 2) === Type.decimal(10, 2))
     assert(Type.decimal(10, 2) =!= Type.decimal(10, 3))
@@ -211,7 +211,7 @@ class TypeTest extends FTestPlatform:
     // Test with quotes in enum/set
     val enumType = Type.`enum`(List("'option1'", "'option 2'", "'option-3'"))
     assertEquals(enumType.name, "enum('option1','option 2','option-3')")
-    
+
     val setType = Type.set(List("'flag_1'", "'flag 2'", "'flag-3'"))
     assertEquals(setType.name, "set('flag_1','flag 2','flag-3')")
   }
@@ -220,14 +220,14 @@ class TypeTest extends FTestPlatform:
     // Large display width
     assertEquals(Type.int(255).name, "int(255)")
     assertEquals(Type.bigint(255).name, "bigint(255)")
-    
+
     // Maximum decimal precision
     assertEquals(Type.decimal(65, 30).name, "decimal(65, 30)")
-    
+
     // Empty collections
     assertEquals(Type.`enum`(Nil).name, "enum()")
     assertEquals(Type.set(Nil).name, "set()")
-    
+
     // Single element collections
     assertEquals(Type.`enum`(List("'only'")).name, "enum('only')")
     assertEquals(Type.set(List("'only'")).name, "set('only')")
@@ -235,13 +235,13 @@ class TypeTest extends FTestPlatform:
 
   test("Type composition and complex scenarios") {
     // Creating types that might be used in real scenarios
-    val idType = Type.bigint(20)
-    val nameType = Type.varchar(100)
-    val statusType = Type.`enum`(List("'active'", "'inactive'", "'pending'"))
+    val idType          = Type.bigint(20)
+    val nameType        = Type.varchar(100)
+    val statusType      = Type.`enum`(List("'active'", "'inactive'", "'pending'"))
     val permissionsType = Type.set(List("'read'", "'write'", "'delete'"))
-    val createdAtType = Type.timestamp(6)
-    val metadataType = Type.json
-    
+    val createdAtType   = Type.timestamp(6)
+    val metadataType    = Type.json
+
     assertEquals(idType.name, "bigint(20)")
     assertEquals(nameType.name, "varchar(100)")
     assertEquals(statusType.name, "enum('active','inactive','pending')")

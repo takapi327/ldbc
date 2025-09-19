@@ -103,7 +103,7 @@ class ParameterTest extends FTestPlatform:
     val byteParam = Parameter.byte(byteVal)
     assertEquals(byteParam.toString, "123")
     assertEquals(byteParam.columnDataType, ColumnDataType.MYSQL_TYPE_TINY)
-    
+
     // Test negative byte
     val negByteVal: Byte = -123
     val negByteParam = Parameter.byte(negByteVal)
@@ -115,7 +115,7 @@ class ParameterTest extends FTestPlatform:
     val rawParam = Parameter.parameter("CURRENT_TIMESTAMP")
     assertEquals(rawParam.toString, "CURRENT_TIMESTAMP")
     assertEquals(rawParam.columnDataType, ColumnDataType.MYSQL_TYPE_STRING)
-    
+
     // Test with SQL function
     val funcParam = Parameter.parameter("NOW()")
     assertEquals(funcParam.toString, "NOW()")
@@ -152,7 +152,7 @@ class ParameterTest extends FTestPlatform:
     assert(Parameter.double(1.0).encode.nonEmpty)
     assert(Parameter.string("test").encode.nonEmpty)
     assert(Parameter.bytes(Array[Byte](1, 2, 3)).encode.nonEmpty)
-    
+
     // Test that none returns empty BitVector
     assert(Parameter.none.encode.isEmpty)
   }
@@ -161,11 +161,11 @@ class ParameterTest extends FTestPlatform:
     // Test empty string
     val emptyStringParam = Parameter.string("")
     assertEquals(emptyStringParam.toString, "''")
-    
+
     // Test string with quotes
     val quotedStringParam = Parameter.string("test'quotes")
     assertEquals(quotedStringParam.toString, "'test'quotes'")
-    
+
     // Test zero values
     assertEquals(Parameter.byte(0).toString, "0")
     assertEquals(Parameter.short(0).toString, "0")
@@ -173,7 +173,7 @@ class ParameterTest extends FTestPlatform:
     assertEquals(Parameter.long(0L).toString, "0")
     assertEquals(Parameter.float(0.0f).toString, "0.0")
     assertEquals(Parameter.double(0.0).toString, "0.0")
-    
+
     // Test negative values
     assertEquals(Parameter.short(-32768).toString, "-32768")
     assertEquals(Parameter.int(-2147483648).toString, "-2147483648")
@@ -181,9 +181,9 @@ class ParameterTest extends FTestPlatform:
   }
 
   test("Boolean parameter encode") {
-    val trueParam = Parameter.boolean(true)
+    val trueParam  = Parameter.boolean(true)
     val falseParam = Parameter.boolean(false)
-    
+
     // Verify encoded values (true = 1, false = 0)
     assert(trueParam.encode.nonEmpty)
     assert(falseParam.encode.nonEmpty)
@@ -196,34 +196,34 @@ class ParameterTest extends FTestPlatform:
     val maxDate = LocalDate.of(9999, 12, 31)
     assertEquals(Parameter.date(minDate).toString, s"'$minDate'")
     assertEquals(Parameter.date(maxDate).toString, s"'$maxDate'")
-    
+
     // Test LocalTime edge cases
     val minTime = LocalTime.of(0, 0, 0)
     val maxTime = LocalTime.of(23, 59, 59)
     assertEquals(Parameter.time(minTime).toString, "'00:00:00'")
     assertEquals(Parameter.time(maxTime).toString, "'23:59:59'")
-    
+
     // Test LocalTime with microseconds
     val timeWithMicros = LocalTime.of(12, 30, 45, 123456000)
-    val timeParam = Parameter.time(timeWithMicros)
+    val timeParam      = Parameter.time(timeWithMicros)
     assert(timeParam.toString.contains("12:30:45"))
-    
+
     // Test LocalDateTime edge cases
     val minDateTime = LocalDateTime.of(1, 1, 1, 0, 0, 0)
     val maxDateTime = LocalDateTime.of(9999, 12, 31, 23, 59, 59)
     assert(Parameter.datetime(minDateTime).toString.contains("0001-01-01"))
     assert(Parameter.datetime(maxDateTime).toString.contains("9999-12-31"))
-    
+
     // Test LocalDateTime with microseconds
     val dateTimeWithMicros = LocalDateTime.of(2023, 5, 15, 14, 30, 25, 123456000)
-    val dateTimeParam = Parameter.datetime(dateTimeWithMicros)
+    val dateTimeParam      = Parameter.datetime(dateTimeWithMicros)
     assert(dateTimeParam.toString.contains("2023-05-15"))
   }
 
   test("Year parameter edge cases") {
     val minYear = Year.of(1)
     val maxYear = Year.of(9999)
-    
+
     assertEquals(Parameter.year(minYear).toString, "'1'")
     assertEquals(Parameter.year(maxYear).toString, "'9999'")
   }
@@ -232,11 +232,11 @@ class ParameterTest extends FTestPlatform:
     // Empty array
     val emptyBytes = Array.empty[Byte]
     assertEquals(Parameter.bytes(emptyBytes).toString, "0x")
-    
+
     // Single byte
     val singleByte = Array[Byte](0xff.toByte)
     assertEquals(Parameter.bytes(singleByte).toString, "0xff")
-    
+
     // Multiple bytes with various values
     val multiBytes = Array[Byte](0x00, 0x01, 0x7f, 0x80.toByte, 0xff.toByte)
     assertEquals(Parameter.bytes(multiBytes).toString, "0x00017f80ff")
@@ -246,11 +246,11 @@ class ParameterTest extends FTestPlatform:
     // Multiline string
     val multilineString = "line1\nline2\nline3"
     assertEquals(Parameter.string(multilineString).toString, s"'$multilineString'")
-    
+
     // String with special characters
     val specialChars = "\t\r\n\b"
     assertEquals(Parameter.string(specialChars).toString, s"'$specialChars'")
-    
+
     // Unicode string
     val unicodeString = "Hello 世界 🌍"
     assertEquals(Parameter.string(unicodeString).toString, s"'$unicodeString'")
@@ -261,16 +261,16 @@ class ParameterTest extends FTestPlatform:
     assertEquals(Parameter.float(Float.PositiveInfinity).toString, "Infinity")
     assertEquals(Parameter.float(Float.NegativeInfinity).toString, "-Infinity")
     assertEquals(Parameter.float(Float.NaN).toString, "NaN")
-    
+
     // Double special values
     assertEquals(Parameter.double(Double.PositiveInfinity).toString, "Infinity")
     assertEquals(Parameter.double(Double.NegativeInfinity).toString, "-Infinity")
     assertEquals(Parameter.double(Double.NaN).toString, "NaN")
-    
+
     // BigDecimal precision
     val preciseBigDecimal = BigDecimal("123.456789012345678901234567890")
     assertEquals(Parameter.bigDecimal(preciseBigDecimal).toString, preciseBigDecimal.toString)
-    
+
     // BigInt edge cases
     val negativeBigInt = BigInt("-123456789012345678901234567890")
     assertEquals(Parameter.bigInt(negativeBigInt).toString, negativeBigInt.toString)

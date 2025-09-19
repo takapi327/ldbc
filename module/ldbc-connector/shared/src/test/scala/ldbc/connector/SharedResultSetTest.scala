@@ -13,8 +13,8 @@ import cats.effect.*
 import ldbc.sql.ResultSet
 
 import ldbc.connector.data.*
-import ldbc.connector.net.Protocol
 import ldbc.connector.net.packet.response.*
+import ldbc.connector.net.Protocol
 import ldbc.connector.util.Version
 
 class SharedResultSetTest extends FTestPlatform:
@@ -28,96 +28,96 @@ class SharedResultSetTest extends FTestPlatform:
     val version:              Version,
     val isClosed:             Ref[F, Boolean],
     val fetchSize:            Ref[F, Int],
-    val useCursorFetch:       Boolean = false,
-    val useServerPrepStmts:   Boolean = false,
-    val resultSetType:        Int = ResultSet.TYPE_FORWARD_ONLY,
-    val resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY,
+    val useCursorFetch:       Boolean        = false,
+    val useServerPrepStmts:   Boolean        = false,
+    val resultSetType:        Int            = ResultSet.TYPE_FORWARD_ONLY,
+    val resultSetConcurrency: Int            = ResultSet.CONCUR_READ_ONLY,
     val statement:            Option[String] = None
-  )(using F: Async[F]) extends SharedResultSet[F]:
+  )(using F: Async[F])
+    extends SharedResultSet[F]:
     // Mock protocol for testing
     val protocol: Protocol[F] = mockProtocol
-    
+
     // Implement the missing abstract method
     override def next(): F[Boolean] = F.delay {
       if currentCursor < records.length then
         currentCursor = currentCursor + 1
-        currentRow = records.lift(currentCursor - 1)
+        currentRow    = records.lift(currentCursor - 1)
         true
-      else
-        false
+      else false
     }
 
   // Helper to create test data
   def createTestColumns: Vector[ColumnDefinitionPacket] = Vector(
     ColumnDefinition41Packet(
-      catalog = "def",
-      schema = "test_db",
-      table = "test_table",
-      orgTable = "test_table",
-      name = "id",
-      orgName = "id",
-      length = 12,
+      catalog      = "def",
+      schema       = "test_db",
+      table        = "test_table",
+      orgTable     = "test_table",
+      name         = "id",
+      orgName      = "id",
+      length       = 12,
       characterSet = 33,
       columnLength = 11,
-      columnType = ColumnDataType.MYSQL_TYPE_LONG,
-      flags = Seq.empty,
-      decimals = 0
+      columnType   = ColumnDataType.MYSQL_TYPE_LONG,
+      flags        = Seq.empty,
+      decimals     = 0
     ),
     ColumnDefinition41Packet(
-      catalog = "def",
-      schema = "test_db",
-      table = "test_table",
-      orgTable = "test_table",
-      name = "name",
-      orgName = "name",
-      length = 12,
+      catalog      = "def",
+      schema       = "test_db",
+      table        = "test_table",
+      orgTable     = "test_table",
+      name         = "name",
+      orgName      = "name",
+      length       = 12,
       characterSet = 33,
       columnLength = 255,
-      columnType = ColumnDataType.MYSQL_TYPE_VARCHAR,
-      flags = Seq.empty,
-      decimals = 0
+      columnType   = ColumnDataType.MYSQL_TYPE_VARCHAR,
+      flags        = Seq.empty,
+      decimals     = 0
     ),
     ColumnDefinition41Packet(
-      catalog = "def",
-      schema = "test_db",
-      table = "test_table",
-      orgTable = "test_table",
-      name = "age",
-      orgName = "age",
-      length = 12,
+      catalog      = "def",
+      schema       = "test_db",
+      table        = "test_table",
+      orgTable     = "test_table",
+      name         = "age",
+      orgName      = "age",
+      length       = 12,
       characterSet = 33,
       columnLength = 11,
-      columnType = ColumnDataType.MYSQL_TYPE_LONG,
-      flags = Seq.empty,
-      decimals = 0
+      columnType   = ColumnDataType.MYSQL_TYPE_LONG,
+      flags        = Seq.empty,
+      decimals     = 0
     ),
     ColumnDefinition41Packet(
-      catalog = "def",
-      schema = "test_db",
-      table = "test_table",
-      orgTable = "test_table",
-      name = "active",
-      orgName = "active",
-      length = 12,
+      catalog      = "def",
+      schema       = "test_db",
+      table        = "test_table",
+      orgTable     = "test_table",
+      name         = "active",
+      orgName      = "active",
+      length       = 12,
       characterSet = 33,
       columnLength = 1,
-      columnType = ColumnDataType.MYSQL_TYPE_TINY,
-      flags = Seq.empty,
-      decimals = 0
+      columnType   = ColumnDataType.MYSQL_TYPE_TINY,
+      flags        = Seq.empty,
+      decimals     = 0
     ),
     ColumnDefinition41Packet(
-      catalog = "def",
-      schema = "test_db",
-      table = "test_table",
-      orgTable = "test_table",
-      name = "created_at",
-      orgName = "created_at",
-      length = 12,
+      catalog      = "def",
+      schema       = "test_db",
+      table        = "test_table",
+      orgTable     = "test_table",
+      name         = "created_at",
+      orgName      = "created_at",
+      length       = 12,
       characterSet = 33,
       columnLength = 19,
-      columnType = ColumnDataType.MYSQL_TYPE_TIMESTAMP,
-      flags = Seq.empty,
-      decimals = 0
+      columnType   = ColumnDataType.MYSQL_TYPE_TIMESTAMP,
+      flags        = Seq.empty,
+      decimals     = 0
     )
   )
 
@@ -135,64 +135,64 @@ class SharedResultSetTest extends FTestPlatform:
 
   test("getString retrieves string value by index") {
     for
-      protocol <- IO(createMockProtocol[IO])
-      isClosed <- Ref.of[IO, Boolean](false)
+      protocol  <- IO(createMockProtocol[IO])
+      isClosed  <- Ref.of[IO, Boolean](false)
       fetchSize <- Ref.of[IO, Int](0)
       rs = new TestSharedResultSet[IO](
-        protocol,
-        createTestColumns,
-        createTestRecords,
-        Map.empty,
-        Version(8, 0, 0),
-        isClosed,
-        fetchSize
-      )
-      _ <- rs.next()
+             protocol,
+             createTestColumns,
+             createTestRecords,
+             Map.empty,
+             Version(8, 0, 0),
+             isClosed,
+             fetchSize
+           )
+      _     <- rs.next()
       value <- rs.getString(2)
     yield assertEquals(value, "Alice")
   }
 
   test("getInt retrieves integer value by index") {
     for
-      protocol <- IO(createMockProtocol[IO])
-      isClosed <- Ref.of[IO, Boolean](false)
+      protocol  <- IO(createMockProtocol[IO])
+      isClosed  <- Ref.of[IO, Boolean](false)
       fetchSize <- Ref.of[IO, Int](0)
       rs = new TestSharedResultSet[IO](
-        protocol,
-        createTestColumns,
-        createTestRecords,
-        Map.empty,
-        Version(8, 0, 0),
-        isClosed,
-        fetchSize
-      )
-      _ <- rs.next()
+             protocol,
+             createTestColumns,
+             createTestRecords,
+             Map.empty,
+             Version(8, 0, 0),
+             isClosed,
+             fetchSize
+           )
+      _     <- rs.next()
       value <- rs.getInt(1)
     yield assertEquals(value, 1)
   }
 
   test("getBoolean handles various boolean representations") {
     for
-      protocol <- IO(createMockProtocol[IO])
-      isClosed <- Ref.of[IO, Boolean](false)
+      protocol  <- IO(createMockProtocol[IO])
+      isClosed  <- Ref.of[IO, Boolean](false)
       fetchSize <- Ref.of[IO, Int](0)
       rs = new TestSharedResultSet[IO](
-        protocol,
-        createTestColumns,
-        createTestRecords,
-        Map.empty,
-        Version(8, 0, 0),
-        isClosed,
-        fetchSize
-      )
+             protocol,
+             createTestColumns,
+             createTestRecords,
+             Map.empty,
+             Version(8, 0, 0),
+             isClosed,
+             fetchSize
+           )
       // First row - "1" should be true
-      _ <- rs.next()
+      _     <- rs.next()
       bool1 <- rs.getBoolean(4)
       // Second row - "0" should be false
-      _ <- rs.next()
+      _     <- rs.next()
       bool2 <- rs.getBoolean(4)
       // Third row - "true" should be true
-      _ <- rs.next()
+      _     <- rs.next()
       bool3 <- rs.getBoolean(4)
     yield {
       assertEquals(bool1, true)
@@ -203,40 +203,40 @@ class SharedResultSetTest extends FTestPlatform:
 
   test("getTimestamp parses datetime correctly") {
     for
-      protocol <- IO(createMockProtocol[IO])
-      isClosed <- Ref.of[IO, Boolean](false)
+      protocol  <- IO(createMockProtocol[IO])
+      isClosed  <- Ref.of[IO, Boolean](false)
       fetchSize <- Ref.of[IO, Int](0)
       rs = new TestSharedResultSet[IO](
-        protocol,
-        createTestColumns,
-        createTestRecords,
-        Map.empty,
-        Version(8, 0, 0),
-        isClosed,
-        fetchSize
-      )
-      _ <- rs.next()
+             protocol,
+             createTestColumns,
+             createTestRecords,
+             Map.empty,
+             Version(8, 0, 0),
+             isClosed,
+             fetchSize
+           )
+      _         <- rs.next()
       timestamp <- rs.getTimestamp(5)
     yield assertEquals(timestamp, LocalDateTime.of(2023, 1, 1, 10, 0, 0))
   }
 
   test("wasNull returns true after reading null value") {
     for
-      protocol <- IO(createMockProtocol[IO])
-      isClosed <- Ref.of[IO, Boolean](false)
+      protocol  <- IO(createMockProtocol[IO])
+      isClosed  <- Ref.of[IO, Boolean](false)
       fetchSize <- Ref.of[IO, Int](0)
       rs = new TestSharedResultSet[IO](
-        protocol,
-        createTestColumns,
-        createTestRecords,
-        Map.empty,
-        Version(8, 0, 0),
-        isClosed,
-        fetchSize
-      )
-      _ <- rs.next()
-      _ <- rs.next() // Move to second row which has null age
-      age <- rs.getInt(3)
+             protocol,
+             createTestColumns,
+             createTestRecords,
+             Map.empty,
+             Version(8, 0, 0),
+             isClosed,
+             fetchSize
+           )
+      _       <- rs.next()
+      _       <- rs.next() // Move to second row which has null age
+      age     <- rs.getInt(3)
       wasNull <- rs.wasNull()
     yield {
       assertEquals(age, 0) // Default value for null
@@ -246,38 +246,38 @@ class SharedResultSetTest extends FTestPlatform:
 
   test("getString by column name") {
     for
-      protocol <- IO(createMockProtocol[IO])
-      isClosed <- Ref.of[IO, Boolean](false)
+      protocol  <- IO(createMockProtocol[IO])
+      isClosed  <- Ref.of[IO, Boolean](false)
       fetchSize <- Ref.of[IO, Int](0)
       rs = new TestSharedResultSet[IO](
-        protocol,
-        createTestColumns,
-        createTestRecords,
-        Map.empty,
-        Version(8, 0, 0),
-        isClosed,
-        fetchSize
-      )
-      _ <- rs.next()
+             protocol,
+             createTestColumns,
+             createTestRecords,
+             Map.empty,
+             Version(8, 0, 0),
+             isClosed,
+             fetchSize
+           )
+      _     <- rs.next()
       value <- rs.getString("name")
     yield assertEquals(value, "Alice")
   }
 
   test("getInt by column name with case-insensitive matching") {
     for
-      protocol <- IO(createMockProtocol[IO])
-      isClosed <- Ref.of[IO, Boolean](false)
+      protocol  <- IO(createMockProtocol[IO])
+      isClosed  <- Ref.of[IO, Boolean](false)
       fetchSize <- Ref.of[IO, Int](0)
       rs = new TestSharedResultSet[IO](
-        protocol,
-        createTestColumns,
-        createTestRecords,
-        Map.empty,
-        Version(8, 0, 0),
-        isClosed,
-        fetchSize
-      )
-      _ <- rs.next()
+             protocol,
+             createTestColumns,
+             createTestRecords,
+             Map.empty,
+             Version(8, 0, 0),
+             isClosed,
+             fetchSize
+           )
+      _      <- rs.next()
       value1 <- rs.getInt("ID")
       value2 <- rs.getInt("id")
       value3 <- rs.getInt("Id")
@@ -290,46 +290,46 @@ class SharedResultSetTest extends FTestPlatform:
 
   test("findByName fails for non-existent column") {
     for
-      protocol <- IO(createMockProtocol[IO])
-      isClosed <- Ref.of[IO, Boolean](false)
+      protocol  <- IO(createMockProtocol[IO])
+      isClosed  <- Ref.of[IO, Boolean](false)
       fetchSize <- Ref.of[IO, Int](0)
       rs = new TestSharedResultSet[IO](
-        protocol,
-        createTestColumns,
-        createTestRecords,
-        Map.empty,
-        Version(8, 0, 0),
-        isClosed,
-        fetchSize
-      )
-      _ <- rs.next()
+             protocol,
+             createTestColumns,
+             createTestRecords,
+             Map.empty,
+             Version(8, 0, 0),
+             isClosed,
+             fetchSize
+           )
+      _      <- rs.next()
       result <- rs.getString("nonexistent").attempt
     yield assert(result.isLeft)
   }
 
   test("navigation methods for TYPE_FORWARD_ONLY") {
     for
-      protocol <- IO(createMockProtocol[IO])
-      isClosed <- Ref.of[IO, Boolean](false)
+      protocol  <- IO(createMockProtocol[IO])
+      isClosed  <- Ref.of[IO, Boolean](false)
       fetchSize <- Ref.of[IO, Int](0)
       rs = new TestSharedResultSet[IO](
-        protocol,
-        createTestColumns,
-        createTestRecords,
-        Map.empty,
-        Version(8, 0, 0),
-        isClosed,
-        fetchSize,
-        resultSetType = ResultSet.TYPE_FORWARD_ONLY
-      )
+             protocol,
+             createTestColumns,
+             createTestRecords,
+             Map.empty,
+             Version(8, 0, 0),
+             isClosed,
+             fetchSize,
+             resultSetType = ResultSet.TYPE_FORWARD_ONLY
+           )
       // These should fail for TYPE_FORWARD_ONLY
-      firstResult <- rs.first().attempt
-      lastResult <- rs.last().attempt
-      absoluteResult <- rs.absolute(2).attempt
-      relativeResult <- rs.relative(1).attempt
-      previousResult <- rs.previous().attempt
+      firstResult       <- rs.first().attempt
+      lastResult        <- rs.last().attempt
+      absoluteResult    <- rs.absolute(2).attempt
+      relativeResult    <- rs.relative(1).attempt
+      previousResult    <- rs.previous().attempt
       beforeFirstResult <- rs.beforeFirst().attempt
-      afterLastResult <- rs.afterLast().attempt
+      afterLastResult   <- rs.afterLast().attempt
     yield {
       assert(firstResult.isLeft)
       assert(lastResult.isLeft)
@@ -343,31 +343,31 @@ class SharedResultSetTest extends FTestPlatform:
 
   test("navigation methods for TYPE_SCROLL_INSENSITIVE") {
     for
-      protocol <- IO(createMockProtocol[IO])
-      isClosed <- Ref.of[IO, Boolean](false)
+      protocol  <- IO(createMockProtocol[IO])
+      isClosed  <- Ref.of[IO, Boolean](false)
       fetchSize <- Ref.of[IO, Int](0)
       rs = new TestSharedResultSet[IO](
-        protocol,
-        createTestColumns,
-        createTestRecords,
-        Map.empty,
-        Version(8, 0, 0),
-        isClosed,
-        fetchSize,
-        resultSetType = ResultSet.TYPE_SCROLL_INSENSITIVE
-      )
+             protocol,
+             createTestColumns,
+             createTestRecords,
+             Map.empty,
+             Version(8, 0, 0),
+             isClosed,
+             fetchSize,
+             resultSetType = ResultSet.TYPE_SCROLL_INSENSITIVE
+           )
       // Test first()
       firstResult <- rs.first()
-      firstValue <- rs.getString(2)
+      firstValue  <- rs.getString(2)
       // Test last()
       lastResult <- rs.last()
-      lastValue <- rs.getString(2)
+      lastValue  <- rs.getString(2)
       // Test absolute positioning
       absoluteResult <- rs.absolute(2)
-      absoluteValue <- rs.getString(2)
+      absoluteValue  <- rs.getString(2)
       // Test relative positioning
       relativeResult <- rs.relative(-1)
-      relativeValue <- rs.getString(2)
+      relativeValue  <- rs.getString(2)
       // Test previous()
       previousResult <- rs.previous()
       // Test getRow()
@@ -388,32 +388,32 @@ class SharedResultSetTest extends FTestPlatform:
 
   test("isBeforeFirst, isFirst, isLast, isAfterLast") {
     for
-      protocol <- IO(createMockProtocol[IO])
-      isClosed <- Ref.of[IO, Boolean](false)
+      protocol  <- IO(createMockProtocol[IO])
+      isClosed  <- Ref.of[IO, Boolean](false)
       fetchSize <- Ref.of[IO, Int](0)
       rs = new TestSharedResultSet[IO](
-        protocol,
-        createTestColumns,
-        createTestRecords,
-        Map.empty,
-        Version(8, 0, 0),
-        isClosed,
-        fetchSize
-      )
+             protocol,
+             createTestColumns,
+             createTestRecords,
+             Map.empty,
+             Version(8, 0, 0),
+             isClosed,
+             fetchSize
+           )
       beforeFirst1 <- rs.isBeforeFirst()
-      isFirst1 <- rs.isFirst()
+      isFirst1     <- rs.isFirst()
       // Move to first row
-      _ <- rs.next()
+      _            <- rs.next()
       beforeFirst2 <- rs.isBeforeFirst()
-      isFirst2 <- rs.isFirst()
-      isLast1 <- rs.isLast()
+      isFirst2     <- rs.isFirst()
+      isLast1      <- rs.isLast()
       // Move to last row
-      _ <- rs.next()
-      _ <- rs.next()
-      isLast2 <- rs.isLast()
+      _            <- rs.next()
+      _            <- rs.next()
+      isLast2      <- rs.isLast()
       isAfterLast1 <- rs.isAfterLast()
       // Move past last row
-      _ <- rs.next()
+      _            <- rs.next()
       isAfterLast2 <- rs.isAfterLast()
     yield {
       assertEquals(beforeFirst1, true)
@@ -429,25 +429,25 @@ class SharedResultSetTest extends FTestPlatform:
 
   test("absolute with positive and negative positions") {
     for
-      protocol <- IO(createMockProtocol[IO])
-      isClosed <- Ref.of[IO, Boolean](false)
+      protocol  <- IO(createMockProtocol[IO])
+      isClosed  <- Ref.of[IO, Boolean](false)
       fetchSize <- Ref.of[IO, Int](0)
       rs = new TestSharedResultSet[IO](
-        protocol,
-        createTestColumns,
-        createTestRecords,
-        Map.empty,
-        Version(8, 0, 0),
-        isClosed,
-        fetchSize,
-        resultSetType = ResultSet.TYPE_SCROLL_INSENSITIVE
-      )
+             protocol,
+             createTestColumns,
+             createTestRecords,
+             Map.empty,
+             Version(8, 0, 0),
+             isClosed,
+             fetchSize,
+             resultSetType = ResultSet.TYPE_SCROLL_INSENSITIVE
+           )
       // Positive position
       result1 <- rs.absolute(2)
-      value1 <- rs.getString(2)
+      value1  <- rs.getString(2)
       // Negative position (from end)
       result2 <- rs.absolute(-1)
-      value2 <- rs.getString(2)
+      value2  <- rs.getString(2)
       // Out of bounds
       result3 <- rs.absolute(10)
       // Zero position
@@ -464,21 +464,21 @@ class SharedResultSetTest extends FTestPlatform:
 
   test("close and isClosed behavior") {
     for
-      protocol <- IO(createMockProtocol[IO])
-      isClosed <- Ref.of[IO, Boolean](false)
+      protocol  <- IO(createMockProtocol[IO])
+      isClosed  <- Ref.of[IO, Boolean](false)
       fetchSize <- Ref.of[IO, Int](0)
       rs = new TestSharedResultSet[IO](
-        protocol,
-        createTestColumns,
-        createTestRecords,
-        Map.empty,
-        Version(8, 0, 0),
-        isClosed,
-        fetchSize
-      )
+             protocol,
+             createTestColumns,
+             createTestRecords,
+             Map.empty,
+             Version(8, 0, 0),
+             isClosed,
+             fetchSize
+           )
       closedBefore <- isClosed.get
-      _ <- rs.close()
-      closedAfter <- isClosed.get
+      _            <- rs.close()
+      closedAfter  <- isClosed.get
       // Try to use after closing - checkClosed is called in getMetaData
       result <- rs.getMetaData().attempt
     yield {
@@ -490,18 +490,18 @@ class SharedResultSetTest extends FTestPlatform:
 
   test("getMetaData returns correct metadata") {
     for
-      protocol <- IO(createMockProtocol[IO])
-      isClosed <- Ref.of[IO, Boolean](false)
+      protocol  <- IO(createMockProtocol[IO])
+      isClosed  <- Ref.of[IO, Boolean](false)
       fetchSize <- Ref.of[IO, Int](0)
       rs = new TestSharedResultSet[IO](
-        protocol,
-        createTestColumns,
-        createTestRecords,
-        Map.empty,
-        Version(8, 0, 0),
-        isClosed,
-        fetchSize
-      )
+             protocol,
+             createTestColumns,
+             createTestRecords,
+             Map.empty,
+             Version(8, 0, 0),
+             isClosed,
+             fetchSize
+           )
       metadata <- rs.getMetaData()
       columnCount = metadata.getColumnCount()
       columnName1 = metadata.getColumnName(1)
@@ -515,21 +515,21 @@ class SharedResultSetTest extends FTestPlatform:
 
   test("getType and getConcurrency return correct values") {
     for
-      protocol <- IO(createMockProtocol[IO])
-      isClosed <- Ref.of[IO, Boolean](false)
+      protocol  <- IO(createMockProtocol[IO])
+      isClosed  <- Ref.of[IO, Boolean](false)
       fetchSize <- Ref.of[IO, Int](0)
       rs = new TestSharedResultSet[IO](
-        protocol,
-        createTestColumns,
-        createTestRecords,
-        Map.empty,
-        Version(8, 0, 0),
-        isClosed,
-        fetchSize,
-        resultSetType = ResultSet.TYPE_SCROLL_SENSITIVE,
-        resultSetConcurrency = ResultSet.CONCUR_UPDATABLE
-      )
-      rsType <- rs.getType()
+             protocol,
+             createTestColumns,
+             createTestRecords,
+             Map.empty,
+             Version(8, 0, 0),
+             isClosed,
+             fetchSize,
+             resultSetType        = ResultSet.TYPE_SCROLL_SENSITIVE,
+             resultSetConcurrency = ResultSet.CONCUR_UPDATABLE
+           )
+      rsType        <- rs.getType()
       rsConcurrency <- rs.getConcurrency()
     yield {
       assertEquals(rsType, ResultSet.TYPE_SCROLL_SENSITIVE)
@@ -539,31 +539,31 @@ class SharedResultSetTest extends FTestPlatform:
 
   test("hasRows and rowLength") {
     for
-      protocol <- IO(createMockProtocol[IO])
+      protocol  <- IO(createMockProtocol[IO])
       isClosed1 <- Ref.of[IO, Boolean](false)
       isClosed2 <- Ref.of[IO, Boolean](false)
       fetchSize <- Ref.of[IO, Int](0)
       rs1 = new TestSharedResultSet[IO](
-        protocol,
-        createTestColumns,
-        createTestRecords,
-        Map.empty,
-        Version(8, 0, 0),
-        isClosed1,
-        fetchSize
-      )
+              protocol,
+              createTestColumns,
+              createTestRecords,
+              Map.empty,
+              Version(8, 0, 0),
+              isClosed1,
+              fetchSize
+            )
       rs2 = new TestSharedResultSet[IO](
-        protocol,
-        createTestColumns,
-        createEmptyRecords,
-        Map.empty,
-        Version(8, 0, 0),
-        isClosed2,
-        fetchSize
-      )
-      hasRows1 <- rs1.hasRows()
+              protocol,
+              createTestColumns,
+              createEmptyRecords,
+              Map.empty,
+              Version(8, 0, 0),
+              isClosed2,
+              fetchSize
+            )
+      hasRows1   <- rs1.hasRows()
       rowLength1 <- rs1.rowLength()
-      hasRows2 <- rs2.hasRows()
+      hasRows2   <- rs2.hasRows()
       rowLength2 <- rs2.rowLength()
     yield {
       assertEquals(hasRows1, true)
@@ -575,85 +575,85 @@ class SharedResultSetTest extends FTestPlatform:
 
   test("getByte handles character and numeric values") {
     for
-      protocol <- IO(createMockProtocol[IO])
-      isClosed <- Ref.of[IO, Boolean](false)
+      protocol  <- IO(createMockProtocol[IO])
+      isClosed  <- Ref.of[IO, Boolean](false)
       fetchSize <- Ref.of[IO, Int](0)
       // Create custom records with byte values
       byteRecords = Vector(
-        ResultSetRowPacket(Array(Some("65"), Some("A"), Some("-128"), Some("127")))
-      )
+                      ResultSetRowPacket(Array(Some("65"), Some("A"), Some("-128"), Some("127")))
+                    )
       byteColumns = Vector(
-        ColumnDefinition41Packet(
-          catalog = "def",
-          schema = "test_db",
-          table = "test_table",
-          orgTable = "test_table",
-          name = "numeric_byte",
-          orgName = "numeric_byte",
-      length = 12,
-          characterSet = 33,
-          columnLength = 4,
-          columnType = ColumnDataType.MYSQL_TYPE_TINY,
-          flags = Seq.empty,
-          decimals = 0
-        ),
-        ColumnDefinition41Packet(
-          catalog = "def",
-          schema = "test_db",
-          table = "test_table",
-          orgTable = "test_table",
-          name = "char_byte",
-          orgName = "char_byte",
-      length = 12,
-          characterSet = 33,
-          columnLength = 1,
-          columnType = ColumnDataType.MYSQL_TYPE_STRING,
-          flags = Seq.empty,
-          decimals = 0
-        ),
-        ColumnDefinition41Packet(
-          catalog = "def",
-          schema = "test_db",
-          table = "test_table",
-          orgTable = "test_table",
-          name = "min_byte",
-          orgName = "min_byte",
-      length = 12,
-          characterSet = 33,
-          columnLength = 4,
-          columnType = ColumnDataType.MYSQL_TYPE_TINY,
-          flags = Seq.empty,
-          decimals = 0
-        ),
-        ColumnDefinition41Packet(
-          catalog = "def",
-          schema = "test_db",
-          table = "test_table",
-          orgTable = "test_table",
-          name = "max_byte",
-          orgName = "max_byte",
-      length = 12,
-          characterSet = 33,
-          columnLength = 4,
-          columnType = ColumnDataType.MYSQL_TYPE_TINY,
-          flags = Seq.empty,
-          decimals = 0
-        )
-      )
+                      ColumnDefinition41Packet(
+                        catalog      = "def",
+                        schema       = "test_db",
+                        table        = "test_table",
+                        orgTable     = "test_table",
+                        name         = "numeric_byte",
+                        orgName      = "numeric_byte",
+                        length       = 12,
+                        characterSet = 33,
+                        columnLength = 4,
+                        columnType   = ColumnDataType.MYSQL_TYPE_TINY,
+                        flags        = Seq.empty,
+                        decimals     = 0
+                      ),
+                      ColumnDefinition41Packet(
+                        catalog      = "def",
+                        schema       = "test_db",
+                        table        = "test_table",
+                        orgTable     = "test_table",
+                        name         = "char_byte",
+                        orgName      = "char_byte",
+                        length       = 12,
+                        characterSet = 33,
+                        columnLength = 1,
+                        columnType   = ColumnDataType.MYSQL_TYPE_STRING,
+                        flags        = Seq.empty,
+                        decimals     = 0
+                      ),
+                      ColumnDefinition41Packet(
+                        catalog      = "def",
+                        schema       = "test_db",
+                        table        = "test_table",
+                        orgTable     = "test_table",
+                        name         = "min_byte",
+                        orgName      = "min_byte",
+                        length       = 12,
+                        characterSet = 33,
+                        columnLength = 4,
+                        columnType   = ColumnDataType.MYSQL_TYPE_TINY,
+                        flags        = Seq.empty,
+                        decimals     = 0
+                      ),
+                      ColumnDefinition41Packet(
+                        catalog      = "def",
+                        schema       = "test_db",
+                        table        = "test_table",
+                        orgTable     = "test_table",
+                        name         = "max_byte",
+                        orgName      = "max_byte",
+                        length       = 12,
+                        characterSet = 33,
+                        columnLength = 4,
+                        columnType   = ColumnDataType.MYSQL_TYPE_TINY,
+                        flags        = Seq.empty,
+                        decimals     = 0
+                      )
+                    )
       rs = new TestSharedResultSet[IO](
-        protocol,
-        byteColumns,
-        byteRecords,
-        Map.empty,
-        Version(8, 0, 0),
-        isClosed,
-        fetchSize
-      )
-      _ <- rs.next()
+             protocol,
+             byteColumns,
+             byteRecords,
+             Map.empty,
+             Version(8, 0, 0),
+             isClosed,
+             fetchSize
+           )
+      _           <- rs.next()
       numericByte <- rs.getByte(1)
-      charByte <- rs.getByte(2)
-      minByte <- rs.getByte(3)
-      maxByte <- rs.getByte(4)
+      charByte    <- rs.getByte(2)
+      minByte     <- rs.getByte(3)
+      maxByte     <- rs.getByte(4)
     yield {
       assertEquals(numericByte, 65.toByte)
       assertEquals(charByte, 65.toByte) // 'A' as byte
@@ -664,19 +664,19 @@ class SharedResultSetTest extends FTestPlatform:
 
   test("error when column index out of bounds") {
     for
-      protocol <- IO(createMockProtocol[IO])
-      isClosed <- Ref.of[IO, Boolean](false)
+      protocol  <- IO(createMockProtocol[IO])
+      isClosed  <- Ref.of[IO, Boolean](false)
       fetchSize <- Ref.of[IO, Int](0)
       rs = new TestSharedResultSet[IO](
-        protocol,
-        createTestColumns,
-        createTestRecords,
-        Map.empty,
-        Version(8, 0, 0),
-        isClosed,
-        fetchSize
-      )
-      _ <- rs.next()
+             protocol,
+             createTestColumns,
+             createTestRecords,
+             Map.empty,
+             Version(8, 0, 0),
+             isClosed,
+             fetchSize
+           )
+      _       <- rs.next()
       result1 <- rs.getString(0).attempt
       result2 <- rs.getString(10).attempt
     yield {
@@ -687,153 +687,155 @@ class SharedResultSetTest extends FTestPlatform:
 
   test("all data type getters with column names") {
     for
-      protocol <- IO(createMockProtocol[IO])
-      isClosed <- Ref.of[IO, Boolean](false)
+      protocol  <- IO(createMockProtocol[IO])
+      isClosed  <- Ref.of[IO, Boolean](false)
       fetchSize <- Ref.of[IO, Int](0)
       // Create records with various data types
       dataRecords = Vector(
-        ResultSetRowPacket(Array(
-          Some("123"),           // short
-          Some("456789"),        // long
-          Some("3.14"),          // float
-          Some("2.71828"),       // double
-          Some("Hello"),         // bytes
-          Some("2023-05-15"),    // date
-          Some("14:30:25"),      // time
-          Some("1234.5678")      // bigdecimal
-        ))
-      )
+                      ResultSetRowPacket(
+                        Array(
+                          Some("123"),        // short
+                          Some("456789"),     // long
+                          Some("3.14"),       // float
+                          Some("2.71828"),    // double
+                          Some("Hello"),      // bytes
+                          Some("2023-05-15"), // date
+                          Some("14:30:25"),   // time
+                          Some("1234.5678")   // bigdecimal
+                        )
+                      )
+                    )
       dataColumns = Vector(
-        ColumnDefinition41Packet(
-          catalog = "def",
-          schema = "test_db",
-          table = "test_table",
-          orgTable = "test_table",
-          name = "short_col",
-          orgName = "short_col",
-      length = 12,
-          characterSet = 33,
-          columnLength = 6,
-          columnType = ColumnDataType.MYSQL_TYPE_SHORT,
-          flags = Seq.empty,
-          decimals = 0
-        ),
-        ColumnDefinition41Packet(
-          catalog = "def",
-          schema = "test_db",
-          table = "test_table",
-          orgTable = "test_table",
-          name = "long_col",
-          orgName = "long_col",
-      length = 12,
-          characterSet = 33,
-          columnLength = 20,
-          columnType = ColumnDataType.MYSQL_TYPE_LONGLONG,
-          flags = Seq.empty,
-          decimals = 0
-        ),
-        ColumnDefinition41Packet(
-          catalog = "def",
-          schema = "test_db",
-          table = "test_table",
-          orgTable = "test_table",
-          name = "float_col",
-          orgName = "float_col",
-      length = 12,
-          characterSet = 33,
-          columnLength = 12,
-          columnType = ColumnDataType.MYSQL_TYPE_FLOAT,
-          flags = Seq.empty,
-          decimals = 2
-        ),
-        ColumnDefinition41Packet(
-          catalog = "def",
-          schema = "test_db",
-          table = "test_table",
-          orgTable = "test_table",
-          name = "double_col",
-          orgName = "double_col",
-      length = 12,
-          characterSet = 33,
-          columnLength = 22,
-          columnType = ColumnDataType.MYSQL_TYPE_DOUBLE,
-          flags = Seq.empty,
-          decimals = 5
-        ),
-        ColumnDefinition41Packet(
-          catalog = "def",
-          schema = "test_db",
-          table = "test_table",
-          orgTable = "test_table",
-          name = "bytes_col",
-          orgName = "bytes_col",
-      length = 12,
-          characterSet = 33,
-          columnLength = 255,
-          columnType = ColumnDataType.MYSQL_TYPE_VAR_STRING,
-          flags = Seq.empty,
-          decimals = 0
-        ),
-        ColumnDefinition41Packet(
-          catalog = "def",
-          schema = "test_db",
-          table = "test_table",
-          orgTable = "test_table",
-          name = "date_col",
-          orgName = "date_col",
-      length = 12,
-          characterSet = 33,
-          columnLength = 10,
-          columnType = ColumnDataType.MYSQL_TYPE_DATE,
-          flags = Seq.empty,
-          decimals = 0
-        ),
-        ColumnDefinition41Packet(
-          catalog = "def",
-          schema = "test_db",
-          table = "test_table",
-          orgTable = "test_table",
-          name = "time_col",
-          orgName = "time_col",
-      length = 12,
-          characterSet = 33,
-          columnLength = 8,
-          columnType = ColumnDataType.MYSQL_TYPE_TIME,
-          flags = Seq.empty,
-          decimals = 0
-        ),
-        ColumnDefinition41Packet(
-          catalog = "def",
-          schema = "test_db",
-          table = "test_table",
-          orgTable = "test_table",
-          name = "bigdecimal_col",
-          orgName = "bigdecimal_col",
-      length = 12,
-          characterSet = 33,
-          columnLength = 10,
-          columnType = ColumnDataType.MYSQL_TYPE_NEWDECIMAL,
-          flags = Seq.empty,
-          decimals = 4
-        )
-      )
+                      ColumnDefinition41Packet(
+                        catalog      = "def",
+                        schema       = "test_db",
+                        table        = "test_table",
+                        orgTable     = "test_table",
+                        name         = "short_col",
+                        orgName      = "short_col",
+                        length       = 12,
+                        characterSet = 33,
+                        columnLength = 6,
+                        columnType   = ColumnDataType.MYSQL_TYPE_SHORT,
+                        flags        = Seq.empty,
+                        decimals     = 0
+                      ),
+                      ColumnDefinition41Packet(
+                        catalog      = "def",
+                        schema       = "test_db",
+                        table        = "test_table",
+                        orgTable     = "test_table",
+                        name         = "long_col",
+                        orgName      = "long_col",
+                        length       = 12,
+                        characterSet = 33,
+                        columnLength = 20,
+                        columnType   = ColumnDataType.MYSQL_TYPE_LONGLONG,
+                        flags        = Seq.empty,
+                        decimals     = 0
+                      ),
+                      ColumnDefinition41Packet(
+                        catalog      = "def",
+                        schema       = "test_db",
+                        table        = "test_table",
+                        orgTable     = "test_table",
+                        name         = "float_col",
+                        orgName      = "float_col",
+                        length       = 12,
+                        characterSet = 33,
+                        columnLength = 12,
+                        columnType   = ColumnDataType.MYSQL_TYPE_FLOAT,
+                        flags        = Seq.empty,
+                        decimals     = 2
+                      ),
+                      ColumnDefinition41Packet(
+                        catalog      = "def",
+                        schema       = "test_db",
+                        table        = "test_table",
+                        orgTable     = "test_table",
+                        name         = "double_col",
+                        orgName      = "double_col",
+                        length       = 12,
+                        characterSet = 33,
+                        columnLength = 22,
+                        columnType   = ColumnDataType.MYSQL_TYPE_DOUBLE,
+                        flags        = Seq.empty,
+                        decimals     = 5
+                      ),
+                      ColumnDefinition41Packet(
+                        catalog      = "def",
+                        schema       = "test_db",
+                        table        = "test_table",
+                        orgTable     = "test_table",
+                        name         = "bytes_col",
+                        orgName      = "bytes_col",
+                        length       = 12,
+                        characterSet = 33,
+                        columnLength = 255,
+                        columnType   = ColumnDataType.MYSQL_TYPE_VAR_STRING,
+                        flags        = Seq.empty,
+                        decimals     = 0
+                      ),
+                      ColumnDefinition41Packet(
+                        catalog      = "def",
+                        schema       = "test_db",
+                        table        = "test_table",
+                        orgTable     = "test_table",
+                        name         = "date_col",
+                        orgName      = "date_col",
+                        length       = 12,
+                        characterSet = 33,
+                        columnLength = 10,
+                        columnType   = ColumnDataType.MYSQL_TYPE_DATE,
+                        flags        = Seq.empty,
+                        decimals     = 0
+                      ),
+                      ColumnDefinition41Packet(
+                        catalog      = "def",
+                        schema       = "test_db",
+                        table        = "test_table",
+                        orgTable     = "test_table",
+                        name         = "time_col",
+                        orgName      = "time_col",
+                        length       = 12,
+                        characterSet = 33,
+                        columnLength = 8,
+                        columnType   = ColumnDataType.MYSQL_TYPE_TIME,
+                        flags        = Seq.empty,
+                        decimals     = 0
+                      ),
+                      ColumnDefinition41Packet(
+                        catalog      = "def",
+                        schema       = "test_db",
+                        table        = "test_table",
+                        orgTable     = "test_table",
+                        name         = "bigdecimal_col",
+                        orgName      = "bigdecimal_col",
+                        length       = 12,
+                        characterSet = 33,
+                        columnLength = 10,
+                        columnType   = ColumnDataType.MYSQL_TYPE_NEWDECIMAL,
+                        flags        = Seq.empty,
+                        decimals     = 4
+                      )
+                    )
       rs = new TestSharedResultSet[IO](
-        protocol,
-        dataColumns,
-        dataRecords,
-        Map.empty,
-        Version(8, 0, 0),
-        isClosed,
-        fetchSize
-      )
-      _ <- rs.next()
-      shortVal <- rs.getShort("short_col")
-      longVal <- rs.getLong("long_col")
-      floatVal <- rs.getFloat("float_col")
-      doubleVal <- rs.getDouble("double_col")
-      bytesVal <- rs.getBytes("bytes_col")
-      dateVal <- rs.getDate("date_col")
-      timeVal <- rs.getTime("time_col")
+             protocol,
+             dataColumns,
+             dataRecords,
+             Map.empty,
+             Version(8, 0, 0),
+             isClosed,
+             fetchSize
+           )
+      _             <- rs.next()
+      shortVal      <- rs.getShort("short_col")
+      longVal       <- rs.getLong("long_col")
+      floatVal      <- rs.getFloat("float_col")
+      doubleVal     <- rs.getDouble("double_col")
+      bytesVal      <- rs.getBytes("bytes_col")
+      dateVal       <- rs.getDate("date_col")
+      timeVal       <- rs.getTime("time_col")
       bigDecimalVal <- rs.getBigDecimal("bigdecimal_col")
     yield {
       assertEquals(shortVal, 123.toShort)

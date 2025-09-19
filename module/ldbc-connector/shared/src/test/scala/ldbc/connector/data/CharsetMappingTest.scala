@@ -13,7 +13,7 @@ class CharsetMappingTest extends FTestPlatform:
 
   test("MysqlCharset.apply with charsetName, mblen, priority, and javaEncodings should create correct instance") {
     val charset = MysqlCharset("utf8mb4", 4, 1, List("UTF-8"))
-    
+
     assertEquals(charset.charsetName, "utf8mb4")
     assertEquals(charset.mblen, 4)
     assertEquals(charset.priority, 1)
@@ -24,7 +24,7 @@ class CharsetMappingTest extends FTestPlatform:
 
   test("MysqlCharset.apply with aliases should create correct instance") {
     val charset = MysqlCharset("utf8mb3", 3, 0, List("UTF-8"), List("utf8"))
-    
+
     assertEquals(charset.charsetName, "utf8mb3")
     assertEquals(charset.mblen, 3)
     assertEquals(charset.priority, 0)
@@ -35,7 +35,7 @@ class CharsetMappingTest extends FTestPlatform:
 
   test("MysqlCharset.apply with minimumVersion should create correct instance") {
     val charset = MysqlCharset("gb18030", 4, 0, List("GB18030"), Version(5, 7, 4))
-    
+
     assertEquals(charset.charsetName, "gb18030")
     assertEquals(charset.mblen, 4)
     assertEquals(charset.priority, 0)
@@ -46,12 +46,15 @@ class CharsetMappingTest extends FTestPlatform:
 
   test("MysqlCharset.isOkayForVersion should correctly check version compatibility") {
     val charset = MysqlCharset("test", 1, 0, List.empty, Version(5, 0, 0))
-    
+
     // Version.compare has a bug: it returns -1 for equal versions instead of 0
     // So Version(5,0,0).compare(Version(5,0,0)) returns -1
     // isOkayForVersion returns false for -1, true for 0 and 1
     // This means equal versions are treated as "not okay"
-    assert(!charset.isOkayForVersion(Version(5, 0, 0)), "Should not be okay for same version due to Version.compare bug")
+    assert(
+      !charset.isOkayForVersion(Version(5, 0, 0)),
+      "Should not be okay for same version due to Version.compare bug"
+    )
     assert(!charset.isOkayForVersion(Version(5, 1, 0)), "Should not be okay for newer version")
     assert(!charset.isOkayForVersion(Version(6, 0, 0)), "Should not be okay for major newer version")
     assert(charset.isOkayForVersion(Version(4, 9, 0)), "Should be okay for older version")
@@ -65,14 +68,14 @@ class CharsetMappingTest extends FTestPlatform:
   test("MysqlCharset with empty javaEncodings should use default encoding based on mblen") {
     val charsetSingleByte = MysqlCharset("test1", 1, 0, List.empty, List.empty, Version(0, 0, 0))
     assert(charsetSingleByte.javaEncodingsUc.exists(_.contains("1252")), "Should contain Cp1252 or similar")
-    
+
     val charsetMultiByte = MysqlCharset("test2", 2, 0, List.empty, List.empty, Version(0, 0, 0))
     assert(charsetMultiByte.javaEncodingsUc.contains("UTF-8"))
   }
 
   test("Collation.apply with single collationName should create correct instance") {
     val collation = Collation(45, "utf8mb4_general_ci", 0, "utf8mb4")
-    
+
     assertEquals(collation.index, 45)
     assertEquals(collation.collationNames, List("utf8mb4_general_ci"))
     assertEquals(collation.priority, 0)
@@ -81,7 +84,7 @@ class CharsetMappingTest extends FTestPlatform:
 
   test("Collation.apply with multiple collationNames should create correct instance") {
     val collation = Collation(33, List("utf8mb3_general_ci", "utf8_general_ci"), 1, "utf8mb3")
-    
+
     assertEquals(collation.index, 33)
     assertEquals(collation.collationNames, List("utf8mb3_general_ci", "utf8_general_ci"))
     assertEquals(collation.priority, 1)
@@ -115,12 +118,12 @@ class CharsetMappingTest extends FTestPlatform:
     assert(utf8mb4.isDefined)
     assertEquals(utf8mb4.get.charsetName, "utf8mb4")
     assertEquals(utf8mb4.get.mblen, 4)
-    
+
     val latin1 = CharsetMapping.getStaticMysqlCharsetByName("latin1")
     assert(latin1.isDefined)
     assertEquals(latin1.get.charsetName, "latin1")
     assertEquals(latin1.get.mblen, 1)
-    
+
     val unknown = CharsetMapping.getStaticMysqlCharsetByName("unknown")
     assertEquals(unknown, None)
   }
@@ -129,17 +132,17 @@ class CharsetMappingTest extends FTestPlatform:
     // COLLATION_INDEX_TO_COLLATION_NAME is a List indexed by position, not collation index
     // The actual implementation returns charset names from the list at the given index
     val collationNames = CharsetMapping.COLLATION_INDEX_TO_COLLATION_NAME
-    
+
     // Check within bounds
     assert(collationNames.lift(1).isDefined)
     assert(collationNames.lift(8).isDefined)
     assert(collationNames.lift(45).isDefined)
-    
+
     // Check that the method returns the charset name at the list index
     assertEquals(CharsetMapping.getStaticCollationNameForCollationIndex(1), collationNames.lift(1))
     assertEquals(CharsetMapping.getStaticCollationNameForCollationIndex(8), collationNames.lift(8))
     assertEquals(CharsetMapping.getStaticCollationNameForCollationIndex(45), collationNames.lift(45))
-    
+
     // Out of bounds test
     assertEquals(CharsetMapping.getStaticCollationNameForCollationIndex(0), None)
     assertEquals(CharsetMapping.getStaticCollationNameForCollationIndex(-1), None)
@@ -160,34 +163,34 @@ class CharsetMappingTest extends FTestPlatform:
     // - Equal versions return false (Version.compare returns -1 for equal)
     // - Newer versions return false (correct)
     // - Older versions return true (inverted logic)
-    
+
     // Test with version
     val utf8WithVersion = CharsetMapping.getStaticMysqlCharsetForJavaEncoding("UTF-8", Some(Version(5, 7, 0)))
     // Will only find charsets with minimumVersion < 5.7.0 due to bugs
-    if (utf8WithVersion.isDefined) {
+    if utf8WithVersion.isDefined then {
       assert(CharsetMapping.getStaticMysqlCharsetByName(utf8WithVersion.get).isDefined)
     }
-    
+
     val gb18030WithOldVersion = CharsetMapping.getStaticMysqlCharsetForJavaEncoding("GB18030", Some(Version(5, 6, 0)))
     // gb18030 requires version 5.7.4
     // minimumVersion(5.7.4) > version(5.6.0) returns 1, isOkayForVersion returns true
     assertEquals(gb18030WithOldVersion, Some("gb18030"))
-    
+
     val gb18030WithNewVersion = CharsetMapping.getStaticMysqlCharsetForJavaEncoding("GB18030", Some(Version(5, 7, 4)))
     // Version 5.7.4 equals minimum version, but Version.compare returns -1, so isOkayForVersion returns false
     assertEquals(gb18030WithNewVersion, None)
-    
+
     // Test without version - should work correctly
     val utf8NoVersion = CharsetMapping.getStaticMysqlCharsetForJavaEncoding("UTF-8", None)
     assert(utf8NoVersion.isDefined)
-    
+
     val shiftJis = CharsetMapping.getStaticMysqlCharsetForJavaEncoding("SHIFT_JIS", None)
     assert(shiftJis.isDefined, "Should find a charset for SHIFT_JIS")
-    
+
     // Test case insensitive
     val lowerCase = CharsetMapping.getStaticMysqlCharsetForJavaEncoding("utf-8", None)
     assert(lowerCase.isDefined)
-    
+
     // Test unknown encoding
     val unknown = CharsetMapping.getStaticMysqlCharsetForJavaEncoding("UNKNOWN_ENCODING", None)
     assertEquals(unknown, None)
@@ -198,15 +201,15 @@ class CharsetMappingTest extends FTestPlatform:
     val utf8mb4Index = CharsetMapping.CHARSET_NAME_TO_COLLATION_INDEX.get("utf8mb4")
     assert(utf8mb4Index.isDefined)
     assertEquals(CharsetMapping.getStaticCollationIndexForMysqlCharsetName(Some("utf8mb4")), utf8mb4Index.get)
-    
+
     val latin1Index = CharsetMapping.CHARSET_NAME_TO_COLLATION_INDEX.get("latin1")
     assert(latin1Index.isDefined)
     assertEquals(CharsetMapping.getStaticCollationIndexForMysqlCharsetName(Some("latin1")), latin1Index.get)
-    
+
     val binaryIndex = CharsetMapping.CHARSET_NAME_TO_COLLATION_INDEX.get("binary")
     assert(binaryIndex.isDefined)
     assertEquals(CharsetMapping.getStaticCollationIndexForMysqlCharsetName(Some("binary")), binaryIndex.get)
-    
+
     assertEquals(CharsetMapping.getStaticCollationIndexForMysqlCharsetName(Some("unknown")), 0)
     assertEquals(CharsetMapping.getStaticCollationIndexForMysqlCharsetName(None), 0)
   }
@@ -219,7 +222,7 @@ class CharsetMappingTest extends FTestPlatform:
     assertEquals(CharsetMapping.MYSQL_CHARSET_NAME_latin1, "latin1")
     assertEquals(CharsetMapping.MYSQL_CHARSET_NAME_gbk, "gbk")
     assertEquals(CharsetMapping.MYSQL_CHARSET_NAME_sjis, "sjis")
-    
+
     assertEquals(CharsetMapping.MYSQL_COLLATION_INDEX_utf8mb4_general_ci, 45)
     assertEquals(CharsetMapping.MYSQL_COLLATION_INDEX_utf8mb4_0900_ai_ci, 255)
     assertEquals(CharsetMapping.MYSQL_COLLATION_INDEX_binary, 63)
@@ -227,7 +230,7 @@ class CharsetMappingTest extends FTestPlatform:
 
   test("CharsetMapping.charsets should contain expected charsets") {
     val charsetNames = CharsetMapping.CHARSET_NAME_TO_CHARSET.keySet
-    
+
     assert(charsetNames.contains("utf8mb4"))
     assert(charsetNames.contains("utf8mb3"))
     assert(charsetNames.contains("latin1"))
@@ -239,13 +242,13 @@ class CharsetMappingTest extends FTestPlatform:
 
   test("CharsetMapping.collations should contain expected collations") {
     val collationIndexes = CharsetMapping.COLLATION_INDEX_TO_CHARSET.keySet
-    
-    assert(collationIndexes.contains(1))    // big5_chinese_ci
-    assert(collationIndexes.contains(8))    // latin1_swedish_ci
-    assert(collationIndexes.contains(33))   // utf8mb3_general_ci
-    assert(collationIndexes.contains(45))   // utf8mb4_general_ci
-    assert(collationIndexes.contains(63))   // binary
-    assert(collationIndexes.contains(255))  // utf8mb4_0900_ai_ci
+
+    assert(collationIndexes.contains(1))   // big5_chinese_ci
+    assert(collationIndexes.contains(8))   // latin1_swedish_ci
+    assert(collationIndexes.contains(33))  // utf8mb3_general_ci
+    assert(collationIndexes.contains(45))  // utf8mb4_general_ci
+    assert(collationIndexes.contains(63))  // binary
+    assert(collationIndexes.contains(255)) // utf8mb4_0900_ai_ci
   }
 
   test("CharsetMapping should handle charset aliases correctly") {
@@ -259,16 +262,16 @@ class CharsetMappingTest extends FTestPlatform:
     // Check collations with multiple names
     val collation33Names = CharsetMapping.collations.find(_.index == 33).get.collationNames
     assertEquals(collation33Names, List("utf8mb3_general_ci", "utf8_general_ci"))
-    
+
     val collation192Names = CharsetMapping.collations.find(_.index == 192).get.collationNames
     assertEquals(collation192Names, List("utf8mb3_unicode_ci", "utf8_unicode_ci"))
   }
 
   test("CharsetMapping should handle Java encoding aliases correctly") {
     // Test that different aliases map to the same charset
-    val cp1252 = CharsetMapping.getStaticMysqlCharsetForJavaEncoding("Cp1252", None)
+    val cp1252   = CharsetMapping.getStaticMysqlCharsetForJavaEncoding("Cp1252", None)
     val iso88591 = CharsetMapping.getStaticMysqlCharsetForJavaEncoding("ISO8859_1", None)
-    
+
     // Both should map to latin1
     assertEquals(cp1252, Some("latin1"))
     assertEquals(iso88591, Some("latin1"))

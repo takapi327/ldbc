@@ -8,8 +8,9 @@ package ldbc.connector
 
 import cats.effect.*
 
-import ldbc.*
 import ldbc.sql.*
+
+import ldbc.*
 import ldbc.free.*
 import ldbc.logging.{ LogEvent, LogHandler }
 
@@ -17,75 +18,75 @@ class ConnectorTest extends FTestPlatform:
 
   // Mock Connection implementation
   class MockConnection[F[_]: Sync] extends Connection[F]:
-    var closeCalled = false
-    var commitCalled = false
-    var rollbackCalled = false
-    var autoCommitValue = true
-    var readOnlyValue = false
+    var closeCalled               = false
+    var commitCalled              = false
+    var rollbackCalled            = false
+    var autoCommitValue           = true
+    var readOnlyValue             = false
     var transactionIsolationValue = Connection.TRANSACTION_READ_COMMITTED
-    var catalogValue = "test"
-    var schemaValue = Some("public")
-    
-    override def close(): F[Unit] = Sync[F].delay { closeCalled = true }
-    override def isClosed(): F[Boolean] = Sync[F].pure(closeCalled)
-    override def createStatement(): F[Statement[F]] = 
+    var catalogValue              = "test"
+    var schemaValue               = Some("public")
+
+    override def close():           F[Unit]         = Sync[F].delay { closeCalled = true }
+    override def isClosed():        F[Boolean]      = Sync[F].pure(closeCalled)
+    override def createStatement(): F[Statement[F]] =
       Sync[F].raiseError(new UnsupportedOperationException("createStatement not implemented"))
-    override def prepareStatement(sql: String): F[PreparedStatement[F]] = 
+    override def prepareStatement(sql: String): F[PreparedStatement[F]] =
       Sync[F].raiseError(new UnsupportedOperationException("prepareStatement not implemented"))
-    override def prepareCall(sql: String): F[CallableStatement[F]] = 
+    override def prepareCall(sql: String): F[CallableStatement[F]] =
       Sync[F].raiseError(new UnsupportedOperationException("prepareCall not implemented"))
-    override def nativeSQL(sql: String): F[String] = Sync[F].pure(sql)
-    override def setAutoCommit(autoCommit: Boolean): F[Unit] = 
+    override def nativeSQL(sql: String):             F[String] = Sync[F].pure(sql)
+    override def setAutoCommit(autoCommit: Boolean): F[Unit]   =
       Sync[F].delay { autoCommitValue = autoCommit }
-    override def getAutoCommit(): F[Boolean] = Sync[F].pure(autoCommitValue)
-    override def commit(): F[Unit] = Sync[F].delay { commitCalled = true }
-    override def rollback(): F[Unit] = Sync[F].delay { rollbackCalled = true }
-    override def getMetaData(): F[DatabaseMetaData[F]] = 
+    override def getAutoCommit(): F[Boolean]             = Sync[F].pure(autoCommitValue)
+    override def commit():        F[Unit]                = Sync[F].delay { commitCalled = true }
+    override def rollback():      F[Unit]                = Sync[F].delay { rollbackCalled = true }
+    override def getMetaData():   F[DatabaseMetaData[F]] =
       Sync[F].raiseError(new UnsupportedOperationException("getMetaData not implemented"))
-    override def setReadOnly(readOnly: Boolean): F[Unit] = 
+    override def setReadOnly(readOnly: Boolean): F[Unit] =
       Sync[F].delay { readOnlyValue = readOnly }
-    override def isReadOnly: F[Boolean] = Sync[F].pure(readOnlyValue)
-    override def setCatalog(catalog: String): F[Unit] = 
+    override def isReadOnly:                  F[Boolean] = Sync[F].pure(readOnlyValue)
+    override def setCatalog(catalog: String): F[Unit]    =
       Sync[F].delay { catalogValue = catalog }
-    override def getCatalog(): F[String] = Sync[F].pure(catalogValue)
-    override def setTransactionIsolation(level: Int): F[Unit] = 
+    override def getCatalog():                        F[String] = Sync[F].pure(catalogValue)
+    override def setTransactionIsolation(level: Int): F[Unit]   =
       Sync[F].delay { transactionIsolationValue = level }
     override def getTransactionIsolation(): F[Int] = Sync[F].pure(transactionIsolationValue)
-    override def createStatement(resultSetType: Int, resultSetConcurrency: Int): F[Statement[F]] = 
+    override def createStatement(resultSetType: Int, resultSetConcurrency: Int): F[Statement[F]] =
       Sync[F].raiseError(new UnsupportedOperationException("createStatement not implemented"))
     override def prepareStatement(
-      sql: String,
-      resultSetType: Int,
+      sql:                  String,
+      resultSetType:        Int,
       resultSetConcurrency: Int
-    ): F[PreparedStatement[F]] = 
+    ): F[PreparedStatement[F]] =
       Sync[F].raiseError(new UnsupportedOperationException("prepareStatement not implemented"))
     override def prepareCall(
-      sql: String,
-      resultSetType: Int,
+      sql:                  String,
+      resultSetType:        Int,
       resultSetConcurrency: Int
-    ): F[CallableStatement[F]] = 
+    ): F[CallableStatement[F]] =
       Sync[F].raiseError(new UnsupportedOperationException("prepareCall not implemented"))
-    override def setSavepoint(): F[Savepoint] = 
+    override def setSavepoint(): F[Savepoint] =
       Sync[F].raiseError(new UnsupportedOperationException("setSavepoint not implemented"))
-    override def setSavepoint(name: String): F[Savepoint] = 
+    override def setSavepoint(name: String): F[Savepoint] =
       Sync[F].raiseError(new UnsupportedOperationException("setSavepoint not implemented"))
-    override def rollback(savepoint: Savepoint): F[Unit] = 
+    override def rollback(savepoint: Savepoint): F[Unit] =
       Sync[F].raiseError(new UnsupportedOperationException("rollback not implemented"))
-    override def releaseSavepoint(savepoint: Savepoint): F[Unit] = 
+    override def releaseSavepoint(savepoint: Savepoint): F[Unit] =
       Sync[F].raiseError(new UnsupportedOperationException("releaseSavepoint not implemented"))
-    override def prepareStatement(sql: String, autoGeneratedKeys: Int): F[PreparedStatement[F]] = 
+    override def prepareStatement(sql: String, autoGeneratedKeys: Int): F[PreparedStatement[F]] =
       Sync[F].raiseError(new UnsupportedOperationException("prepareStatement not implemented"))
-    override def setSchema(schema: String): F[Unit] = 
+    override def setSchema(schema: String): F[Unit] =
       Sync[F].delay { schemaValue = Some(schema) }
-    override def getSchema(): F[String] = 
+    override def getSchema(): F[String] =
       schemaValue.fold(Sync[F].pure(""))(Sync[F].pure)
     override def isValid(timeout: Int): F[Boolean] = Sync[F].pure(!closeCalled)
-  
+
   // Mock DataSource implementation
   class MockDataSource[F[_]: Sync] extends DataSource[F]:
     var connections: List[MockConnection[F]] = List.empty
-    
-    override def getConnection: Resource[F, Connection[F]] = 
+
+    override def getConnection: Resource[F, Connection[F]] =
       Resource.make(
         Sync[F].delay {
           val conn = new MockConnection[F]
@@ -93,201 +94,200 @@ class ConnectorTest extends FTestPlatform:
           conn: Connection[F]
         }
       )(_.close())
-    
-  
+
   // Mock LogHandler to capture log events
   class MockLogHandler[F[_]: Sync] extends LogHandler[F]:
     var logEvents: List[LogEvent] = List.empty
-    
+
     override def run(logEvent: LogEvent): F[Unit] = Sync[F].delay {
       logEvents = logEvents :+ logEvent
     }
-  
+
   test("Connector.fromConnection should execute DBIO actions") {
     val connection = new MockConnection[IO]
-    val connector = Connector.fromConnection(connection)
-    
+    val connector  = Connector.fromConnection(connection)
+
     // Test simple DBIO action
     val action: DBIO[Int] = ConnectionIO.pure(42)
     val result = connector.run(action).unsafeRunSync()
-    
+
     assertEquals(result, 42)
   }
-  
+
   test("Connector.fromConnection with logHandler should create connector with logger") {
     val connection = new MockConnection[IO]
     val logHandler = new MockLogHandler[IO]
-    val connector = Connector.fromConnection(connection, Some(logHandler))
-    
+    val connector  = Connector.fromConnection(connection, Some(logHandler))
+
     // Execute a simple action
     val action: DBIO[String] = ConnectionIO.pure("test")
     val result = connector.run(action).unsafeRunSync()
-    
+
     assertEquals(result, "test")
   }
-  
+
   test("Connector.fromConnection with None logHandler should use noop logger") {
     val connection = new MockConnection[IO]
-    val connector = Connector.fromConnection(connection, None)
-    
+    val connector  = Connector.fromConnection(connection, None)
+
     // This should not throw any exceptions
     val action: DBIO[String] = ConnectionIO.pure("test")
     val result = connector.run(action).unsafeRunSync()
-    
+
     assertEquals(result, "test")
   }
-  
+
   test("Connector.fromDataSource should manage connection lifecycle") {
     val dataSource = new MockDataSource[IO]
-    val connector = Connector.fromDataSource(dataSource)
-    
+    val connector  = Connector.fromDataSource(dataSource)
+
     // Execute action - should create and close connection
     val action: DBIO[Int] = ConnectionIO.pure(100)
     val result = connector.run(action).unsafeRunSync()
-    
+
     assertEquals(result, 100)
     assertEquals(dataSource.connections.length, 1)
     assert(dataSource.connections.head.closeCalled)
   }
-  
+
   test("Connector.fromDataSource with logHandler") {
     val dataSource = new MockDataSource[IO]
     val logHandler = new MockLogHandler[IO]
-    val connector = Connector.fromDataSource(dataSource, Some(logHandler))
-    
+    val connector  = Connector.fromDataSource(dataSource, Some(logHandler))
+
     val action: DBIO[Int] = ConnectionIO.pure(200)
     val result = connector.run(action).unsafeRunSync()
-    
+
     assertEquals(result, 200)
     assertEquals(dataSource.connections.length, 1)
     assert(dataSource.connections.head.closeCalled)
   }
-  
+
   test("Connector should propagate errors from DBIO actions") {
     val connection = new MockConnection[IO]
-    val connector = Connector.fromConnection(connection)
-    
+    val connector  = Connector.fromConnection(connection)
+
     // Create an action that fails
     val action: DBIO[String] = ConnectionIO.raiseError(new RuntimeException("Test error"))
-    
+
     val result = connector.run(action).attempt.unsafeRunSync()
-    
+
     assert(result.isLeft)
     result.left.foreach { error =>
       assert(error.isInstanceOf[RuntimeException])
       assertEquals(error.getMessage, "Test error")
     }
   }
-  
+
   test("Multiple Connectors from same DataSource") {
     val dataSource = new MockDataSource[IO]
     val connector1 = Connector.fromDataSource(dataSource)
     val connector2 = Connector.fromDataSource(dataSource)
-    
+
     // Execute actions on both connectors
     val action1: DBIO[String] = ConnectionIO.pure("from connector1")
     val action2: DBIO[String] = ConnectionIO.pure("from connector2")
-    
+
     val result1 = connector1.run(action1).unsafeRunSync()
     val result2 = connector2.run(action2).unsafeRunSync()
-    
+
     assertEquals(result1, "from connector1")
     assertEquals(result2, "from connector2")
     assertEquals(dataSource.connections.length, 2)
     assert(dataSource.connections.forall(_.closeCalled))
   }
-  
+
   test("Connector with connection operations") {
     val connection = new MockConnection[IO]
-    val connector = Connector.fromConnection(connection)
-    
+    val connector  = Connector.fromConnection(connection)
+
     // Test set auto-commit operation
     val setAutoCommitAction: DBIO[Unit] = ConnectionIO.setAutoCommit(false)
     connector.run(setAutoCommitAction).unsafeRunSync()
     assertEquals(connection.autoCommitValue, false)
   }
-  
+
   test("Connector with transaction operations") {
     val connection = new MockConnection[IO]
-    val connector = Connector.fromConnection(connection)
-    
+    val connector  = Connector.fromConnection(connection)
+
     // Test Commit operation
     val commitAction: DBIO[Unit] = ConnectionIO.commit()
     connector.run(commitAction).unsafeRunSync()
     assert(connection.commitCalled)
-    
+
     // Test Rollback operation
     val rollbackAction: DBIO[Unit] = ConnectionIO.rollback()
     connector.run(rollbackAction).unsafeRunSync()
     assert(connection.rollbackCalled)
   }
-  
+
   test("Connector with close operation") {
     val connection = new MockConnection[IO]
-    val connector = Connector.fromConnection(connection)
-    
+    val connector  = Connector.fromConnection(connection)
+
     // Test close operation
     val closeAction: DBIO[Unit] = ConnectionIO.close()
     connector.run(closeAction).unsafeRunSync()
     assert(connection.closeCalled)
   }
-  
+
   test("Connector with read-only operations") {
     val connection = new MockConnection[IO]
-    val connector = Connector.fromConnection(connection)
-    
+    val connector  = Connector.fromConnection(connection)
+
     // Test set read-only operation
     val setReadOnlyAction: DBIO[Unit] = ConnectionIO.setReadOnly(true)
     connector.run(setReadOnlyAction).unsafeRunSync()
     assertEquals(connection.readOnlyValue, true)
   }
-  
+
   test("Connector with statement operations") {
     val connection = new MockConnection[IO]
-    val connector = Connector.fromConnection(connection)
-    
+    val connector  = Connector.fromConnection(connection)
+
     // Test createStatement operation
     val createStatementAction: DBIO[Statement[?]] = ConnectionIO.createStatement()
     intercept[UnsupportedOperationException] {
       connector.run(createStatementAction).unsafeRunSync()
     }
-    
+
     // Test prepareStatement operation
     val prepareStatementAction: DBIO[PreparedStatement[?]] = ConnectionIO.prepareStatement("SELECT 1")
     intercept[UnsupportedOperationException] {
       connector.run(prepareStatementAction).unsafeRunSync()
     }
   }
-  
+
   test("Connector with savepoint operations") {
     val connection = new MockConnection[IO]
-    val connector = Connector.fromConnection(connection)
-    
+    val connector  = Connector.fromConnection(connection)
+
     // Test setSavepoint operation
     val setSavepointAction: DBIO[Savepoint] = ConnectionIO.setSavepoint()
     intercept[UnsupportedOperationException] {
       connector.run(setSavepointAction).unsafeRunSync()
     }
-    
+
     // Test setSavepoint with name operation
     val setSavepointWithNameAction: DBIO[Savepoint] = ConnectionIO.setSavepoint("test_savepoint")
     intercept[UnsupportedOperationException] {
       connector.run(setSavepointWithNameAction).unsafeRunSync()
     }
   }
-  
+
   test("DataSource should properly release resources on error") {
     val dataSource = new MockDataSource[IO]
-    val connector = Connector.fromDataSource(dataSource)
-    
+    val connector  = Connector.fromDataSource(dataSource)
+
     // Create an action that fails after some operations
     val action: DBIO[Unit] = for {
       _ <- ConnectionIO.setAutoCommit(false)
       _ <- ConnectionIO.raiseError[Unit](new RuntimeException("Error during operation"))
     } yield ()
-    
+
     val result = connector.run(action).attempt.unsafeRunSync()
-    
+
     assert(result.isLeft)
     assertEquals(dataSource.connections.length, 1)
     // Connection should still be closed even on error
