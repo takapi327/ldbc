@@ -109,9 +109,11 @@ class ConnectorTest extends FTestPlatform:
 
     // Test simple DBIO action
     val action: DBIO[Int] = ConnectionIO.pure(42)
-    val result = connector.run(action).unsafeRunSync()
-
-    assertEquals(result, 42)
+    
+    assertIO(
+      connector.run(action),
+      42
+    )
   }
 
   test("Connector.fromConnection with logHandler should create connector with logger") {
@@ -121,9 +123,11 @@ class ConnectorTest extends FTestPlatform:
 
     // Execute a simple action
     val action: DBIO[String] = ConnectionIO.pure("test")
-    val result = connector.run(action).unsafeRunSync()
-
-    assertEquals(result, "test")
+    
+    assertIO(
+      connector.run(action),
+      "test"
+    )
   }
 
   test("Connector.fromConnection with None logHandler should use noop logger") {
@@ -132,9 +136,11 @@ class ConnectorTest extends FTestPlatform:
 
     // This should not throw any exceptions
     val action: DBIO[String] = ConnectionIO.pure("test")
-    val result = connector.run(action).unsafeRunSync()
-
-    assertEquals(result, "test")
+    
+    assertIO(
+      connector.run(action),
+      "test"
+    )
   }
 
   test("Connector.fromDataSource should manage connection lifecycle") {
@@ -143,11 +149,14 @@ class ConnectorTest extends FTestPlatform:
 
     // Execute action - should create and close connection
     val action: DBIO[Int] = ConnectionIO.pure(100)
-    val result = connector.run(action).unsafeRunSync()
-
-    assertEquals(result, 100)
-    assertEquals(dataSource.connections.length, 1)
-    assert(dataSource.connections.head.closeCalled)
+    
+    for {
+      result <- connector.run(action)
+    } yield {
+      assertEquals(result, 100)
+      assertEquals(dataSource.connections.length, 1)
+      assert(dataSource.connections.head.closeCalled)
+    }
   }
 
   test("Connector.fromDataSource with logHandler") {
@@ -156,11 +165,14 @@ class ConnectorTest extends FTestPlatform:
     val connector  = Connector.fromDataSource(dataSource, Some(logHandler))
 
     val action: DBIO[Int] = ConnectionIO.pure(200)
-    val result = connector.run(action).unsafeRunSync()
-
-    assertEquals(result, 200)
-    assertEquals(dataSource.connections.length, 1)
-    assert(dataSource.connections.head.closeCalled)
+    
+    for {
+      result <- connector.run(action)
+    } yield {
+      assertEquals(result, 200)
+      assertEquals(dataSource.connections.length, 1)
+      assert(dataSource.connections.head.closeCalled)
+    }
   }
 
   test("Connector should propagate errors from DBIO actions") {
@@ -170,12 +182,14 @@ class ConnectorTest extends FTestPlatform:
     // Create an action that fails
     val action: DBIO[String] = ConnectionIO.raiseError(new RuntimeException("Test error"))
 
-    val result = connector.run(action).attempt.unsafeRunSync()
-
-    assert(result.isLeft)
-    result.left.foreach { error =>
-      assert(error.isInstanceOf[RuntimeException])
-      assertEquals(error.getMessage, "Test error")
+    connector.run(action).attempt.flatMap { result =>
+      IO {
+        assert(result.isLeft)
+        result.left.foreach { error =>
+          assert(error.isInstanceOf[RuntimeException])
+          assertEquals(error.getMessage, "Test error")
+        }
+      }
     }
   }
 
@@ -188,13 +202,15 @@ class ConnectorTest extends FTestPlatform:
     val action1: DBIO[String] = ConnectionIO.pure("from connector1")
     val action2: DBIO[String] = ConnectionIO.pure("from connector2")
 
-    val result1 = connector1.run(action1).unsafeRunSync()
-    val result2 = connector2.run(action2).unsafeRunSync()
-
-    assertEquals(result1, "from connector1")
-    assertEquals(result2, "from connector2")
-    assertEquals(dataSource.connections.length, 2)
-    assert(dataSource.connections.forall(_.closeCalled))
+    for {
+      result1 <- connector1.run(action1)
+      result2 <- connector2.run(action2)
+    } yield {
+      assertEquals(result1, "from connector1")
+      assertEquals(result2, "from connector2")
+      assertEquals(dataSource.connections.length, 2)
+      assert(dataSource.connections.forall(_.closeCalled))
+    }
   }
 
   test("Connector with connection operations") {
@@ -203,8 +219,12 @@ class ConnectorTest extends FTestPlatform:
 
     // Test set auto-commit operation
     val setAutoCommitAction: DBIO[Unit] = ConnectionIO.setAutoCommit(false)
-    connector.run(setAutoCommitAction).unsafeRunSync()
-    assertEquals(connection.autoCommitValue, false)
+    
+    for {
+      _ <- connector.run(setAutoCommitAction)
+    } yield {
+      assertEquals(connection.autoCommitValue, false)
+    }
   }
 
   test("Connector with transaction operations") {
@@ -213,13 +233,17 @@ class ConnectorTest extends FTestPlatform:
 
     // Test Commit operation
     val commitAction: DBIO[Unit] = ConnectionIO.commit()
-    connector.run(commitAction).unsafeRunSync()
-    assert(connection.commitCalled)
-
-    // Test Rollback operation
-    val rollbackAction: DBIO[Unit] = ConnectionIO.rollback()
-    connector.run(rollbackAction).unsafeRunSync()
-    assert(connection.rollbackCalled)
+    
+    for {
+      _ <- connector.run(commitAction)
+      _ <- IO(assert(connection.commitCalled))
+      
+      // Test Rollback operation
+      rollbackAction = ConnectionIO.rollback()
+      _ <- connector.run(rollbackAction)
+    } yield {
+      assert(connection.rollbackCalled)
+    }
   }
 
   test("Connector with close operation") {
@@ -228,8 +252,12 @@ class ConnectorTest extends FTestPlatform:
 
     // Test close operation
     val closeAction: DBIO[Unit] = ConnectionIO.close()
-    connector.run(closeAction).unsafeRunSync()
-    assert(connection.closeCalled)
+    
+    for {
+      _ <- connector.run(closeAction)
+    } yield {
+      assert(connection.closeCalled)
+    }
   }
 
   test("Connector with read-only operations") {
@@ -238,8 +266,12 @@ class ConnectorTest extends FTestPlatform:
 
     // Test set read-only operation
     val setReadOnlyAction: DBIO[Unit] = ConnectionIO.setReadOnly(true)
-    connector.run(setReadOnlyAction).unsafeRunSync()
-    assertEquals(connection.readOnlyValue, true)
+    
+    for {
+      _ <- connector.run(setReadOnlyAction)
+    } yield {
+      assertEquals(connection.readOnlyValue, true)
+    }
   }
 
   test("Connector with statement operations") {
@@ -248,14 +280,24 @@ class ConnectorTest extends FTestPlatform:
 
     // Test createStatement operation
     val createStatementAction: DBIO[Statement[?]] = ConnectionIO.createStatement()
-    intercept[UnsupportedOperationException] {
-      connector.run(createStatementAction).unsafeRunSync()
-    }
-
-    // Test prepareStatement operation
-    val prepareStatementAction: DBIO[PreparedStatement[?]] = ConnectionIO.prepareStatement("SELECT 1")
-    intercept[UnsupportedOperationException] {
-      connector.run(prepareStatementAction).unsafeRunSync()
+    
+    for {
+      createResult <- connector.run(createStatementAction).attempt
+      _ <- IO {
+        assert(createResult.isLeft)
+        createResult.left.foreach { error =>
+          assert(error.isInstanceOf[UnsupportedOperationException])
+        }
+      }
+      
+      // Test prepareStatement operation
+      prepareStatementAction = ConnectionIO.prepareStatement("SELECT 1")
+      prepareResult <- connector.run(prepareStatementAction).attempt
+    } yield {
+      assert(prepareResult.isLeft)
+      prepareResult.left.foreach { error =>
+        assert(error.isInstanceOf[UnsupportedOperationException])
+      }
     }
   }
 
@@ -265,14 +307,24 @@ class ConnectorTest extends FTestPlatform:
 
     // Test setSavepoint operation
     val setSavepointAction: DBIO[Savepoint] = ConnectionIO.setSavepoint()
-    intercept[UnsupportedOperationException] {
-      connector.run(setSavepointAction).unsafeRunSync()
-    }
-
-    // Test setSavepoint with name operation
-    val setSavepointWithNameAction: DBIO[Savepoint] = ConnectionIO.setSavepoint("test_savepoint")
-    intercept[UnsupportedOperationException] {
-      connector.run(setSavepointWithNameAction).unsafeRunSync()
+    
+    for {
+      savepointResult <- connector.run(setSavepointAction).attempt
+      _ <- IO {
+        assert(savepointResult.isLeft)
+        savepointResult.left.foreach { error =>
+          assert(error.isInstanceOf[UnsupportedOperationException])
+        }
+      }
+      
+      // Test setSavepoint with name operation
+      setSavepointWithNameAction = ConnectionIO.setSavepoint("test_savepoint")
+      savepointWithNameResult <- connector.run(setSavepointWithNameAction).attempt
+    } yield {
+      assert(savepointWithNameResult.isLeft)
+      savepointWithNameResult.left.foreach { error =>
+        assert(error.isInstanceOf[UnsupportedOperationException])
+      }
     }
   }
 
@@ -286,10 +338,12 @@ class ConnectorTest extends FTestPlatform:
       _ <- ConnectionIO.raiseError[Unit](new RuntimeException("Error during operation"))
     } yield ()
 
-    val result = connector.run(action).attempt.unsafeRunSync()
-
-    assert(result.isLeft)
-    assertEquals(dataSource.connections.length, 1)
-    // Connection should still be closed even on error
-    assert(dataSource.connections.head.closeCalled)
+    connector.run(action).attempt.flatMap { result =>
+      IO {
+        assert(result.isLeft)
+        assertEquals(dataSource.connections.length, 1)
+        // Connection should still be closed even on error
+        assert(dataSource.connections.head.closeCalled)
+      }
+    }
   }
