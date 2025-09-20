@@ -139,17 +139,19 @@ object FirstSteps extends IOApp.Simple:
   val simpleProgram: DBIO[Int] = DBIO.pure(0)
   
   // データベース接続設定
-  val provider =
-    ConnectionProvider
-      .default[IO]("127.0.0.1", 13306, "ldbc", "password", "sandbox_db")
-      .setSSL(SSL.Trusted)
+  val datasource = MySQLDataSource
+    .build[IO]("127.0.0.1", 13306, "ldbc")
+    .setPassword("password")
+    .setDatabase("sandbox_db")
+    .setSSL(SSL.Trusted)
+  
+  // Connectorを作成
+  val connector = Connector.fromDataSource(datasource)
   
   def run: IO[Unit] =
     // プログラムの実行
-    provider.use { conn =>
-      simpleProgram.readOnly(conn).flatMap { result =>
-        IO.println(s"データベースから取得した値: $result")
-      }
+    simpleProgram.readOnly(connector).flatMap { result =>
+      IO.println(s"データベースから取得した値: $result")
     }
 ```
 

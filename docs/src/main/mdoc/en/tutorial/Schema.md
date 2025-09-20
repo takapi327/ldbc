@@ -382,12 +382,12 @@ import ldbc.dsl.*
 val schema = users.schema ++ profiles.schema ++ orders.schema
 
 // Apply schema using database connection
-provider.use { conn =>
+datasource.getConnection.use { conn =>
   DBIO.sequence(
     // Create tables (only if they don't exist)
     schema.createIfNotExists,
     // Other operations such as data insertion...
-  ).commit(conn)
+  ).commit(connector)
 }
 ```
 

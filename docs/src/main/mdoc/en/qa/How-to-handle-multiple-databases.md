@@ -10,13 +10,17 @@ laika.metadata.language = en
 When handling multiple databases, create separate `ConnectionProvider` instances for each database. For example, you can create different providers for different databases as shown below, and switch between providers as needed.
 
 ```scala 3
-val provider1 = ConnectionProvider
-  .default[IO]("host", 3306, "user", "password", "database1")
+val datasource1 = MySQLDataSource
+  .build[IO]("host", 3306, "user")
+  .setPassword("password")
+  .setDatabase("database1")
 
-val provider2 = ConnectionProvider
-  .default[IO]("host", 3306, "user", "password", "database2")
+val datasource2 = MySQLDataSource
+  .build[IO]("host", 3306, "user")
+  .setPassword("password")
+  .setDatabase("database2")
 
-// Switch between providers as needed
-val program1 = provider1.use { conn => /* operations on database1 */ }
-val program2 = provider2.use { conn => /* operations on database2 */ }
+// Switch between datasources as needed
+val program1 = datasource1.getConnection.use { conn => /* operations on database1 */ }
+val program2 = datasource2.getConnection.use { conn => /* operations on database2 */ }
 ```

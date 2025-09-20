@@ -69,9 +69,11 @@ val cityTable = TableQuery[CityTable]
 Configure the database connection:
 
 ```scala
-private def provider =
-  ConnectionProvider
-    .default[IO]("127.0.0.1", 13306, "ldbc", "password", "world")
+private def datasource =
+  MySQLDataSource
+    .build[IO]("127.0.0.1", 13306, "ldbc")
+    .setPassword("password")
+    .setDatabase("world")
     .setSSL(SSL.Trusted)
 ```
 
@@ -88,10 +90,10 @@ Main options available in connection configuration:
 Define Http4s routes and incorporate ldbc queries:
 
 ```scala
-private def routes(conn: Connection[IO]): HttpRoutes[IO] = HttpRoutes.of[IO] {
+private def routes(connector: Connector[IO]): HttpRoutes[IO] = HttpRoutes.of[IO] {
   case GET -> Root / "cities" =>
     for
-      cities <- cityTable.selectAll.query.to[List].readOnly(conn)
+      cities <- cityTable.selectAll.query.to[List].readOnly(connector)
       result <- Ok(cities.asJson)
     yield result
 }
@@ -104,13 +106,14 @@ Finally, start the Http4s server:
 ```scala
 object Main extends ResourceApp.Forever:
   override def run(args: List[String]): Resource[IO, Unit] =
-    for
-      conn <- provider.createConnection()
-      _ <- EmberServerBuilder
-             .default[IO]
-             .withHttpApp(routes(conn).orNotFound)
-             .build
-    yield ()
+    // Create Connector
+    val connector = Connector.fromDataSource(datasource)
+    
+    EmberServerBuilder
+      .default[IO]
+      .withHttpApp(routes(connector).orNotFound)
+      .build
+      .void
 ```
 
 ## Advanced Examples
@@ -120,16 +123,16 @@ object Main extends ResourceApp.Forever:
 Example of implementing searches with specific conditions or complex queries:
 
 ```scala
-private def routes(conn: Connection[IO]): HttpRoutes[IO] = HttpRoutes.of[IO] {
+private def routes(connector: Connector[IO]): HttpRoutes[IO] = HttpRoutes.of[IO] {
   case GET -> Root / "cities" / "search" / name =>
     for
-      cities <- cityTable.filter(_.name === name).query.to[List].readOnly(conn)
+      cities <- cityTable.filter(_.name === name).query.to[List].readOnly(connector)
       result <- Ok(cities.asJson)
     yield result
       
   case GET -> Root / "cities" / "population" / IntVar(minPopulation) =>
     for
-      cities <- cityTable.filter(_.population >= minPopulation).query.to[List].readOnly(conn)
+      cities <- cityTable.filter(_.population >= minPopulation).query.to[List].readOnly(connector)
       result <- Ok(cities.asJson)
     yield result
 }
@@ -147,10 +150,10 @@ private def handleDatabaseError[A](action: IO[A]): IO[Response[IO]] =
       InternalServerError(s"Database error: ${error.getMessage}")
   }
 
-private def routes(conn: Connection[IO]): HttpRoutes[IO] = HttpRoutes.of[IO] {
+private def routes(connector: Connector[IO]): HttpRoutes[IO] = HttpRoutes.of[IO] {
   case GET -> Root / "cities" =>
     handleDatabaseError {
-      cityTable.selectAll.query.to[List].readOnly(conn)
+      cityTable.selectAll.query.to[List].readOnly(connector)
     }
 }
 ```

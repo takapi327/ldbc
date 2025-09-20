@@ -1,0 +1,106 @@
+/**
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
+
+package ldbc.tests
+
+import scala.concurrent.duration.*
+
+import cats.effect.*
+
+import munit.*
+
+import ldbc.sql.*
+
+import ldbc.connector.*
+import ldbc.connector.syntax.*
+
+import ldbc.DataSource
+
+class LdbcServerCursorFetchTest extends ServerCursorFetchTest:
+
+  // In case of Scala.js, timeout occurs when FetchSize: 1, so it is necessary to extend the time.
+  override def munitIOTimeout: Duration = 80.seconds
+
+  override def datasource: DataSource[IO] = MySQLDataSource
+    .build[IO]("127.0.0.1", 13306, "ldbc")
+    .setPassword("password")
+    .setDatabase("world")
+    .setSSL(SSL.Trusted)
+    .setUseCursorFetch(true)
+
+trait ServerCursorFetchTest extends CatsEffectSuite:
+
+  protected val host:     String = "127.0.0.1"
+  protected val port:     Int    = 13306
+  protected val user:     String = "ldbc"
+  protected val password: String = "password"
+  protected val database: String = "world"
+
+  def datasource: DataSource[IO]
+
+  test("Statement: Query result retrieval using server cursor matches the specified number of results.") {
+    assertIO(
+      datasource.getConnection.use { conn =>
+        for
+          statement <- conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
+          _         <- statement.setFetchSize(1)
+          resultSet <- statement.executeQuery("SELECT * FROM `city`")
+          result    <- resultSet.whileM[List, String](
+                      resultSet.getString("Name")
+                    )
+        yield result.length
+      },
+      4079
+    )
+  }
+
+  test("Statement: Query result retrieval using server cursor matches the specified number of results.") {
+    assertIO(
+      datasource.getConnection.use { conn =>
+        for
+          statement <- conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
+          _         <- statement.setFetchSize(5)
+          resultSet <- statement.executeQuery("SELECT * FROM `city`")
+          result    <- resultSet.whileM[List, String](
+                      resultSet.getString("Name")
+                    )
+        yield result.length
+      },
+      4079
+    )
+  }
+
+  test("PreparedStatement: Query result retrieval using server cursor matches the specified number of results.") {
+    assertIO(
+      datasource.getConnection.use { conn =>
+        for
+          statement <- conn.prepareStatement("SELECT * FROM `city`")
+          _         <- statement.setFetchSize(1)
+          resultSet <- statement.executeQuery()
+          result    <- resultSet.whileM[List, String](
+                      resultSet.getString("Name")
+                    )
+        yield result.length
+      },
+      4079
+    )
+  }
+
+  test("PreparedStatement: Query result retrieval using server cursor matches the specified number of results.") {
+    assertIO(
+      datasource.getConnection.use { conn =>
+        for
+          statement <- conn.prepareStatement("SELECT * FROM `city`")
+          _         <- statement.setFetchSize(5)
+          resultSet <- statement.executeQuery()
+          result    <- resultSet.whileM[List, String](
+                      resultSet.getString("Name")
+                    )
+        yield result.length
+      },
+      4079
+    )
+  }

@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="900" height="700" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#333"/>
+    </marker>
+    <filter id="dropShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+      <feOffset dx="2" dy="2" result="offsetblur"/>
+      <feFlood flood-color="#000000" flood-opacity="0.1"/>
+      <feComposite in2="offsetblur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <style>
+    .component { fill: white; stroke: #333; stroke-width: 2; filter: url(#dropShadow); }
+    .client { fill: #2196F3; }
+    .pool { fill: #4CAF50; }
+    .circuit { fill: #ff9800; }
+    .database { fill: #9C27B0; }
+    .bag { fill: #607D8B; }
+    .text { fill: white; font-family: Arial, sans-serif; font-size: 14px; text-anchor: middle; }
+    .label { fill: #333; font-family: Arial, sans-serif; font-size: 12px; text-anchor: middle; }
+    .arrow { stroke: #333; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+    .dashed { stroke-dasharray: 5, 5; }
+    .title { fill: #333; font-family: Arial, sans-serif; font-size: 24px; font-weight: bold; text-anchor: middle; }
+  </style>
+  
+  <!-- Title -->
+  <text x="450" y="30" class="title">Connection Pool Architecture with Circuit Breaker</text>
+  
+  <!-- Client Application -->
+  <rect x="50" y="80" width="150" height="60" rx="10" class="component client"/>
+  <text x="125" y="115" class="text">Client Application</text>
+  
+  <!-- PooledDataSource -->
+  <rect x="300" y="80" width="180" height="60" rx="10" class="component pool"/>
+  <text x="390" y="115" class="text">PooledDataSource</text>
+  
+  <!-- ConcurrentBag -->
+  <rect x="300" y="200" width="180" height="60" rx="10" class="component bag"/>
+  <text x="390" y="235" class="text">ConcurrentBag</text>
+  
+  <!-- Circuit Breaker -->
+  <rect x="550" y="200" width="150" height="60" rx="10" class="component circuit"/>
+  <text x="625" y="235" class="text">Circuit Breaker</text>
+  
+  <!-- Database -->
+  <rect x="700" y="350" width="150" height="60" rx="10" class="component database"/>
+  <text x="775" y="385" class="text">Database</text>
+  
+  <!-- Connection States in Bag -->
+  <g transform="translate(100, 320)">
+    <rect x="0" y="0" width="300" height="180" rx="5" fill="#f5f5f5" stroke="#ddd"/>
+    <text x="150" y="20" style="font-family: Arial; font-size: 14px; font-weight: bold; text-anchor: middle;">Connection States</text>
+    
+    <!-- Idle connections -->
+    <rect x="20" y="40" width="80" height="30" rx="5" fill="#4CAF50" stroke="#333"/>
+    <text x="60" y="60" style="font-family: Arial; font-size: 12px; text-anchor: middle; fill: white;">Idle</text>
+    
+    <!-- In-Use connections -->
+    <rect x="110" y="40" width="80" height="30" rx="5" fill="#2196F3" stroke="#333"/>
+    <text x="150" y="60" style="font-family: Arial; font-size: 12px; text-anchor: middle; fill: white;">In Use</text>
+    
+    <!-- Reserved connections -->
+    <rect x="200" y="40" width="80" height="30" rx="5" fill="#ff9800" stroke="#333"/>
+    <text x="240" y="60" style="font-family: Arial; font-size: 12px; text-anchor: middle; fill: white;">Reserved</text>
+    
+    <text x="20" y="90" style="font-family: Arial; font-size: 11px;">• Idle: Available for borrowing</text>
+    <text x="20" y="110" style="font-family: Arial; font-size: 11px;">• In Use: Currently borrowed</text>
+    <text x="20" y="130" style="font-family: Arial; font-size: 11px;">• Reserved: Being acquired</text>
+    <text x="20" y="150" style="font-family: Arial; font-size: 11px;">• Removed: Marked for disposal</text>
+  </g>
+  
+  <!-- Background Tasks -->
+  <g transform="translate(450, 450)">
+    <rect x="0" y="0" width="400" height="120" rx="5" fill="#f5f5f5" stroke="#ddd"/>
+    <text x="200" y="20" style="font-family: Arial; font-size: 14px; font-weight: bold; text-anchor: middle;">Background Tasks</text>
+    
+    <rect x="20" y="35" width="110" height="30" rx="5" fill="#607D8B" stroke="#333"/>
+    <text x="75" y="55" style="font-family: Arial; font-size: 12px; text-anchor: middle; fill: white;">HouseKeeper</text>
+    
+    <rect x="145" y="35" width="110" height="30" rx="5" fill="#607D8B" stroke="#333"/>
+    <text x="200" y="55" style="font-family: Arial; font-size: 12px; text-anchor: middle; fill: white;">AdaptiveSizer</text>
+    
+    <rect x="270" y="35" width="110" height="30" rx="5" fill="#607D8B" stroke="#333"/>
+    <text x="325" y="55" style="font-family: Arial; font-size: 12px; text-anchor: middle; fill: white;">KeepAlive</text>
+    
+    <text x="20" y="85" style="font-family: Arial; font-size: 11px;">• Removes expired/idle connections</text>
+    <text x="20" y="100" style="font-family: Arial; font-size: 11px;">• Adjusts pool size based on metrics</text>
+    <text x="220" y="85" style="font-family: Arial; font-size: 11px;">• Validates idle connections</text>
+    <text x="220" y="100" style="font-family: Arial; font-size: 11px;">• Maintains min connections</text>
+  </g>
+  
+  <!-- Arrows -->
+  <!-- Client to Pool -->
+  <path d="M 200 110 L 300 110" class="arrow"/>
+  <text x="250" y="100" class="label">getConnection()</text>
+  
+  <!-- Pool to Bag -->
+  <path d="M 390 140 L 390 200" class="arrow"/>
+  <text x="410" y="170" class="label">borrow()</text>
+  
+  <!-- Pool to Circuit Breaker -->
+  <path d="M 480 110 Q 550 110 625 200" class="arrow"/>
+  <text x="550" y="140" class="label">if empty</text>
+  
+  <!-- Circuit Breaker to Database -->
+  <path d="M 625 260 L 750 350" class="arrow"/>
+  <text x="690" y="300" class="label">createConnection()</text>
+  <text x="690" y="315" class="label" style="font-size: 10px;">(when Closed/HalfOpen)</text>
+  
+  <!-- Database back to Pool -->
+  <path d="M 700 380 Q 550 380 480 140" class="arrow dashed"/>
+  <text x="550" y="395" class="label">new connection</text>
+  
+  <!-- Return path -->
+  <path d="M 300 130 L 200 130" class="arrow dashed"/>
+  <text x="250" y="145" class="label">ProxyConnection</text>
+  
+  <!-- Background tasks to Bag -->
+  <path d="M 450 480 Q 390 350 390 260" class="arrow dashed"/>
+  
+  <!-- Circuit Breaker fail fast -->
+  <path d="M 550 230 Q 480 170 480 130" class="arrow" style="stroke: #f44336;"/>
+  <text x="500" y="180" class="label" style="fill: #f44336;">fail fast</text>
+  <text x="500" y="195" class="label" style="fill: #f44336; font-size: 10px;">(when Open)</text>
+</svg>

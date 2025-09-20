@@ -12,6 +12,8 @@ import cats.effect.*
 
 import jdbc.connector.*
 
+import ldbc.Connector
+
 class JdbcDDLTest extends DDLTest:
 
   val ds = new MysqlDataSource()
@@ -21,5 +23,5 @@ class JdbcDDLTest extends DDLTest:
   ds.setUser("ldbc")
   ds.setPassword("password")
 
-  override def connection: Provider[IO] =
-    ConnectionProvider.fromDataSource(ds, ExecutionContexts.synchronous)
+  override def connector: Connector[IO] =
+    Connector.fromDataSource[IO](ds, ExecutionContexts.synchronous)

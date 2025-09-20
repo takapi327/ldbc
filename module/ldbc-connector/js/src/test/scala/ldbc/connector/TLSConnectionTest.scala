@@ -25,20 +25,22 @@ class TLSConnectionTest extends FTestPlatform:
                           cert = None,
                           key  = None
                         )
-        result <- ConnectionProvider
-                    .default[IO](
+        result <- MySQLDataSource
+                    .build[IO](
                       "127.0.0.1",
                       13306,
-                      "ldbc_ssl_user",
-                      "securepassword",
-                      "world"
+                      "ldbc_ssl_user"
                     )
+                    .setPassword("securepassword")
+                    .setDatabase("world")
                     .setSSL(SSL.fromSecureContext(secureContext))
+                    .getConnection
                     .use { conn =>
                       for
                         statement <- conn.createStatement()
                         result    <- statement.executeQuery("SELECT 1")
-                      yield result.getInt(1)
+                        value     <- result.getInt(1)
+                      yield value
                     }
       yield result,
       1

@@ -248,13 +248,16 @@ def transferMoney(fromAccount: Int, toAccount: Int, amount: BigDecimal): DBIO[St
   }
 
 // 使用例
+import ldbc.connector.*
+
 val fromAccount: Int = ???
 val toAccount: Int = ???
 val amount: BigDecimal = ???
 
-provider.use { conn =>
-  transferMoney(fromAccount, toAccount, amount).transaction(conn)
-}
+// Connectorを作成
+val connector = Connector.fromDataSource(datasource)
+
+transferMoney(fromAccount, toAccount, amount).transaction(connector)
 ```
 
 ## まとめ

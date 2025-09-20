@@ -26,10 +26,11 @@ import ldbc.connector.*
 import ldbc.dsl.*
 
 // データベース接続の設定
-val provider =
-  ConnectionProvider
-    .default[IO]("127.0.0.1", 3306, "ldbc", "password", "ldbc")
-    .setSSL(SSL.Trusted)
+val datasource = MySQLDataSource
+  .build[IO]("127.0.0.1", 3306, "ldbc")
+  .setPassword("password")
+  .setDatabase("ldbc")
+  .setSSL(SSL.Trusted)
 
 // クエリの実行
 val program = for
@@ -43,10 +44,11 @@ val program = for
   count <- sql"SELECT COUNT(*) FROM user".query[Int].unsafe
 yield (users, count)
 
+// Connectorを作成
+val connector = Connector.fromDataSource(datasource)
+
 // プログラムの実行
-provider.use { conn =>
-  program.transaction(conn)
-}
+program.transaction(connector)
 ```
 
 ## チュートリアルの進め方

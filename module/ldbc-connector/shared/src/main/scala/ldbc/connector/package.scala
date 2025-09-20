@@ -7,4 +7,6 @@
 package ldbc
 
 package object connector:
-  export ldbc.sql.Provider
+  export ldbc.Connector
+  export ldbc.DataSource
+  export ldbc.Provider
