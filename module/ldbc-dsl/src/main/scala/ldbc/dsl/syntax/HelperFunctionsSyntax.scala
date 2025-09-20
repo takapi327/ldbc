@@ -87,7 +87,7 @@ trait HelperFunctionsSyntax extends StringContextSyntax:
     if grouping then parentheses(expr) else expr
 
   /** Returns `(s1 OR s2 OR ... sn)`. */
-  def or(s1: SQL, s2: SQL, ss: SQL*): SQL =
+  def or(s1: SQL, s2: SQL, ss: SQL*): Mysql =
     or(NonEmptyList(s1, s2 :: ss.toList))
 
   /** Returns `(s1 OR s2 OR ... sn)` for all defined sql, returning Empty SQL if there are no defined sql */
@@ -159,7 +159,7 @@ trait HelperFunctionsSyntax extends StringContextSyntax:
     ss.reduceLeftTo(s => sql"" ++ s)((s1, s2) => s1 ++ sql"," ++ s2)
 
   /** Returns `ORDER BY s1, s2, ... sn`. */
-  def orderBy(s1: SQL, ss: SQL*): SQL =
+  def orderBy(s1: SQL, ss: SQL*): Mysql =
     orderBy(NonEmptyList(s1, ss.toList))
 
   def orderBy[M[_]: Reducible](ss: M[SQL]): Mysql =
