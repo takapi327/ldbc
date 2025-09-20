@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <a class="text-link menu-toggle" href="#">Version 0.4</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="../reference/">はじめに</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Connector.html">コネクタ</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Performance.html">パフォーマンス</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Pooling.html">コネクションプーリング</a></li>
   </ul>
   
 
@@ -201,13 +202,9 @@
 </span><span class="identifier">ds</span><span>.</span><span class="identifier">setUser</span><span>(</span><span class="string-literal">&quot;ldbc&quot;</span><span>)
 </span><span class="identifier">ds</span><span>.</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
 
-</span><span class="keyword">val</span><span> </span><span class="identifier">provider</span><span> = </span><span class="type-name">ConnectionProvider</span><span>.</span><span class="identifier">fromDataSource</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">ex</span><span>, </span><span class="type-name">ExecutionContexts</span><span>.</span><span class="identifier">synchronous</span><span>)
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">ds</span><span>, </span><span class="type-name">ExecutionContexts</span><span>.</span><span class="identifier">synchronous</span><span>)
 
-</span><span class="comment">// JavaのJDBC APIに基づく接続の利用例
-</span><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
-  </span><span class="comment">// PreparedStatementなどを利用してSQLを実行
-</span><span>  </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">pure</span><span>(()).</span><span class="identifier">commit</span><span>(</span><span class="identifier">conn</span><span>)
-}</span></code></pre>
+</span><span class="type-name">DBIO</span><span>.</span><span class="identifier">pure</span><span>(()).</span><span class="identifier">commit</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
     
     <h3 id="a-scalaのコネクタ-ldbc-connector" class="section"><a class="anchor-link left" href="#a-scalaのコネクタ-ldbc-connector"><i class="icofont-laika link">&#xef71;</i></a>A: Scalaのコネクタ（ldbc-connector）</h3>
     <p>Scalaのコネクタは、型安全性と関数型プログラミングを活かしてデータベース接続を管理します。<br></p>
@@ -221,17 +218,16 @@
 </span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
 </span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.</span><span class="type-name">DBIO</span><span>
 
-</span><span class="comment">// ldbc-connectorを利用してコネクションを作成する例（JVM, Scala.js, Scala Native対応）
-</span><span class="keyword">val</span><span> </span><span class="identifier">provider</span><span> =
-  </span><span class="type-name">ConnectionProvider</span><span>
-    .</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;127.0.0.1&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;ldbc&quot;</span><span>, </span><span class="string-literal">&quot;password&quot;</span><span>, </span><span class="string-literal">&quot;ldbc&quot;</span><span>)
-    .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)
+</span><span class="comment">// ldbc-connectorを利用してデータソースを作成する例（JVM, Scala.js, Scala Native対応）
+</span><span class="keyword">val</span><span> </span><span class="identifier">datasource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;127.0.0.1&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;ldbc&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;ldbc&quot;</span><span>)
+  .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)
 
-</span><span class="comment">// Scalaコネクタの利用例：内部でResourceを使って接続後に自動でクローズを保証
-</span><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
-  </span><span class="comment">// ldbc DSLやDBIOを使ってSQLを実行できる
-</span><span>  </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">pure</span><span>(()).</span><span class="identifier">commit</span><span>(</span><span class="identifier">conn</span><span>)
-}</span></code></pre>
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
+
+</span><span class="type-name">DBIO</span><span>.</span><span class="identifier">pure</span><span>(()).</span><span class="identifier">commit</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
     
     <h3 id="a-主な違い" class="section"><a class="anchor-link left" href="#a-主な違い"><i class="icofont-laika link">&#xef71;</i></a>A: 主な違い</h3>
     <ul>

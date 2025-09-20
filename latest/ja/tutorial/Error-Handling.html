@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <a class="text-link menu-toggle" href="#">Version 0.4</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="../reference/">はじめに</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Connector.html">コネクタ</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Performance.html">パフォーマンス</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Pooling.html">コネクションプーリング</a></li>
   </ul>
   
 
@@ -409,13 +410,16 @@
   }
 
 </span><span class="comment">// 使用例
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+
 </span><span class="keyword">val</span><span> </span><span class="identifier">fromAccount</span><span>: </span><span class="type-name">Int</span><span> = ???
 </span><span class="keyword">val</span><span> </span><span class="identifier">toAccount</span><span>: </span><span class="type-name">Int</span><span> = ???
 </span><span class="keyword">val</span><span> </span><span class="identifier">amount</span><span>: </span><span class="type-name">BigDecimal</span><span> = ???
 
-</span><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
-  </span><span class="identifier">transferMoney</span><span>(</span><span class="identifier">fromAccount</span><span>, </span><span class="identifier">toAccount</span><span>, </span><span class="identifier">amount</span><span>).</span><span class="identifier">transaction</span><span>(</span><span class="identifier">conn</span><span>)
-}</span></code></pre>
+</span><span class="comment">// Connectorを作成
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
+
+</span><span class="identifier">transferMoney</span><span>(</span><span class="identifier">fromAccount</span><span>, </span><span class="identifier">toAccount</span><span>, </span><span class="identifier">amount</span><span>).</span><span class="identifier">transaction</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
     
     <h2 id="まとめ" class="section"><a class="anchor-link left" href="#まとめ"><i class="icofont-laika link">&#xef71;</i></a>まとめ</h2>
     <p>エラー処理は堅牢なデータベースアプリケーションの重要な側面です。ldbcでは、関数型プログラミングの原則に基づいた明示的なエラー処理が可能です。主なポイントは次のとおりです：</p>

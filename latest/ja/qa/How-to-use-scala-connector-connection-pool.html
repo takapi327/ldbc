@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <a class="text-link menu-toggle" href="#">Version 0.4</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="../reference/">はじめに</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Connector.html">コネクタ</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Performance.html">パフォーマンス</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Pooling.html">コネクションプーリング</a></li>
   </ul>
   
 
@@ -166,7 +167,18 @@
   <p class="header"><a href="#">Q: Scalaコネクタでコネクションプールを使用する方法は？</a></p>
 
   <ul class="nav-list">
-    <li class="level1 nav-leaf"><a href="#a-現在-scalaコネクタはコネクションプールをサポートしていません">A: 現在、Scalaコネクタはコネクションプールをサポートしていません。</a></li>
+    <li class="level1 nav-leaf"><a href="#a-ldbc-connectorがコネクションプーリング機能を内蔵するようになりました">A: ldbc-connectorがコネクションプーリング機能を内蔵するようになりました！</a></li>
+    <li class="level1 nav-leaf"><a href="#クイックスタート">クイックスタート</a></li>
+    <li class="level1 nav-leaf"><a href="#プール設定の詳細">プール設定の詳細</a></li>
+    <li class="level1 nav-leaf"><a href="#リソース安全性の確保">リソース安全性の確保</a></li>
+    <li class="level1 nav-leaf"><a href="#プールの健全性監視">プールの健全性監視</a></li>
+    <li class="level1 nav-leaf"><a href="#接続ライフサイクルフック">接続ライフサイクルフック</a></li>
+    <li class="level1 nav-node"><a href="#主な機能">主な機能</a></li>
+    <li class="level2 nav-leaf"><a href="#組み込みcircuit-breaker">組み込みCircuit Breaker</a></li>
+    <li class="level2 nav-leaf"><a href="#ファイバー最適化">ファイバー最適化</a></li>
+    <li class="level2 nav-leaf"><a href="#包括的な検証">包括的な検証</a></li>
+    <li class="level1 nav-leaf"><a href="#jdbc-hikaricpからの移行">JDBC/HikariCPからの移行</a></li>
+    <li class="level1 nav-leaf"><a href="#ベストプラクティス">ベストプラクティス</a></li>
     <li class="level1 nav-leaf"><a href="#参考資料">参考資料</a></li>
   </ul>
 
@@ -178,13 +190,211 @@
 
     <h1 id="q-scalaコネクタでコネクションプールを使用する方法は" class="title">Q: Scalaコネクタでコネクションプールを使用する方法は？</h1>
     
-    <h2 id="a-現在-scalaコネクタはコネクションプールをサポートしていません" class="section"><a class="anchor-link left" href="#a-現在-scalaコネクタはコネクションプールをサポートしていません"><i class="icofont-laika link">&#xef71;</i></a>A: 現在、Scalaコネクタはコネクションプールをサポートしていません。</h2>
-    <p>Scalaコネクタではまだコネクションプールをサポートできていません。コネクションプールを使用したい場合は、Javaのコネクタを使用して<a href="https://github.com/brettwooldridge/HikariCP">HikariCP</a>などのコネクションプールライブラリを使用してください。</p>
+    <h2 id="a-ldbc-connectorがコネクションプーリング機能を内蔵するようになりました" class="section"><a class="anchor-link left" href="#a-ldbc-connectorがコネクションプーリング機能を内蔵するようになりました"><i class="icofont-laika link">&#xef71;</i></a>A: ldbc-connectorがコネクションプーリング機能を内蔵するようになりました！</h2>
+    <p>バージョン0.4.0から、ldbc-connectorは包括的なコネクションプーリング機能を搭載しています。このプーリングシステムは、Cats Effectのファイバーベースの並行性モデル専用に設計されており、高いパフォーマンスと優れたリソース効率を提供します。</p>
+    
+    <h2 id="クイックスタート" class="section"><a class="anchor-link left" href="#クイックスタート"><i class="icofont-laika link">&#xef71;</i></a>クイックスタート</h2>
+    <p>ldbc-connectorでプール化された接続を作成・使用する方法は以下の通りです：</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">scala</span><span>.</span><span class="identifier">concurrent</span><span>.</span><span class="identifier">duration</span><span>.*
+
+</span><span class="keyword">object</span><span> </span><span class="type-name">ConnectionPoolExample</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">IOApp</span><span>.</span><span class="type-name">Simple</span><span>:
+
+  </span><span class="keyword">val</span><span> </span><span class="identifier">run</span><span> = 
+    </span><span class="comment">// コネクションプールの設定
+</span><span>    </span><span class="keyword">val</span><span> </span><span class="identifier">poolConfig</span><span> = </span><span class="type-name">MySQLConfig</span><span>.</span><span class="identifier">default</span><span>
+      .</span><span class="identifier">setHost</span><span>(</span><span class="string-literal">&quot;localhost&quot;</span><span>)
+      .</span><span class="identifier">setPort</span><span>(</span><span class="number-literal">3306</span><span>)
+      .</span><span class="identifier">setUser</span><span>(</span><span class="string-literal">&quot;root&quot;</span><span>)
+      .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+      .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;testdb&quot;</span><span>)
+      </span><span class="comment">// プール固有の設定
+</span><span>      .</span><span class="identifier">setMinConnections</span><span>(</span><span class="number-literal">5</span><span>)         </span><span class="comment">// 最低5つの接続を維持
+</span><span>      .</span><span class="identifier">setMaxConnections</span><span>(</span><span class="number-literal">20</span><span>)        </span><span class="comment">// 最大20接続まで
+</span><span>      .</span><span class="identifier">setConnectionTimeout</span><span>(</span><span class="number-literal">30</span><span>.</span><span class="identifier">seconds</span><span>)  </span><span class="comment">// 接続取得を最大30秒待機
+</span><span>      
+    </span><span class="comment">// プールデータソースの作成
+</span><span>    </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">poolConfig</span><span>).</span><span class="identifier">use</span><span> { </span><span class="identifier">pool</span><span> =&gt;
+      </span><span class="comment">// プールから接続を使用
+</span><span>      </span><span class="identifier">pool</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">connection</span><span> =&gt;
+        </span><span class="keyword">for</span><span>
+          </span><span class="identifier">stmt</span><span>   &lt;- </span><span class="identifier">connection</span><span>.</span><span class="identifier">createStatement</span><span>()
+          </span><span class="identifier">rs</span><span>     &lt;- </span><span class="identifier">stmt</span><span>.</span><span class="identifier">executeQuery</span><span>(</span><span class="string-literal">&quot;SELECT &#39;プール接続からこんにちは！&#39;&quot;</span><span>)
+          </span><span class="identifier">_</span><span>      &lt;- </span><span class="identifier">rs</span><span>.</span><span class="identifier">next</span><span>()
+          </span><span class="identifier">result</span><span> &lt;- </span><span class="identifier">rs</span><span>.</span><span class="identifier">getString</span><span>(</span><span class="number-literal">1</span><span>)
+          </span><span class="identifier">_</span><span>      &lt;- </span><span class="type-name">IO</span><span>.</span><span class="identifier">println</span><span>(</span><span class="identifier">result</span><span>)
+        </span><span class="keyword">yield</span><span> ()
+      }
+    }</span></code></pre>
+    
+    <h2 id="プール設定の詳細" class="section"><a class="anchor-link left" href="#プール設定の詳細"><i class="icofont-laika link">&#xef71;</i></a>プール設定の詳細</h2>
+    <p>ldbc-connectorは、コネクションプールを細かく調整するための豊富な設定オプションを提供します：</p>
+    <pre><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">advancedConfig</span><span> = </span><span class="type-name">MySQLConfig</span><span>.</span><span class="identifier">default</span><span>
+  .</span><span class="identifier">setHost</span><span>(</span><span class="string-literal">&quot;localhost&quot;</span><span>)
+  .</span><span class="identifier">setPort</span><span>(</span><span class="number-literal">3306</span><span>)
+  .</span><span class="identifier">setUser</span><span>(</span><span class="string-literal">&quot;myapp&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;secret&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;production&quot;</span><span>)
+  
+  </span><span class="comment">// プールサイズ管理
+</span><span>  .</span><span class="identifier">setMinConnections</span><span>(</span><span class="number-literal">10</span><span>)          </span><span class="comment">// 最小アイドル接続数
+</span><span>  .</span><span class="identifier">setMaxConnections</span><span>(</span><span class="number-literal">50</span><span>)          </span><span class="comment">// 最大総接続数
+</span><span>  
+  </span><span class="comment">// タイムアウト設定
+</span><span>  .</span><span class="identifier">setConnectionTimeout</span><span>(</span><span class="number-literal">30</span><span>.</span><span class="identifier">seconds</span><span>)   </span><span class="comment">// 接続取得の最大待機時間
+</span><span>  .</span><span class="identifier">setIdleTimeout</span><span>(</span><span class="number-literal">10</span><span>.</span><span class="identifier">minutes</span><span>)        </span><span class="comment">// アイドル接続の削除時間
+</span><span>  .</span><span class="identifier">setMaxLifetime</span><span>(</span><span class="number-literal">30</span><span>.</span><span class="identifier">minutes</span><span>)        </span><span class="comment">// 接続の最大生存時間
+</span><span>  .</span><span class="identifier">setValidationTimeout</span><span>(</span><span class="number-literal">5</span><span>.</span><span class="identifier">seconds</span><span>)   </span><span class="comment">// 接続検証のタイムアウト
+</span><span>  
+  </span><span class="comment">// ヘルスチェック
+</span><span>  .</span><span class="identifier">setKeepaliveTime</span><span>(</span><span class="number-literal">2</span><span>.</span><span class="identifier">minutes</span><span>)       </span><span class="comment">// アイドル接続の検証間隔
+</span><span>  .</span><span class="identifier">setConnectionTestQuery</span><span>(</span><span class="string-literal">&quot;SELECT 1&quot;</span><span>) </span><span class="comment">// カスタム検証クエリ（オプション）
+</span><span>  
+  </span><span class="comment">// 高度な機能
+</span><span>  .</span><span class="identifier">setLeakDetectionThreshold</span><span>(</span><span class="number-literal">2</span><span>.</span><span class="identifier">minutes</span><span>)  </span><span class="comment">// 接続リークの警告
+</span><span>  .</span><span class="identifier">setAdaptiveSizing</span><span>(</span><span class="boolean-literal">true</span><span>)              </span><span class="comment">// 動的プールサイジング
+</span><span>  .</span><span class="identifier">setAdaptiveInterval</span><span>(</span><span class="number-literal">1</span><span>.</span><span class="identifier">minute</span><span>)        </span><span class="comment">// プールサイズチェック間隔</span></code></pre>
+    
+    <h2 id="リソース安全性の確保" class="section"><a class="anchor-link left" href="#リソース安全性の確保"><i class="icofont-laika link">&#xef71;</i></a>リソース安全性の確保</h2>
+    <p>プールデータソースは<code>Resource</code>として管理され、適切なクリーンアップが保証されます：</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">implicits</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">processUsers</span><span>[</span><span class="type-name">F</span><span>[</span><span class="identifier">_</span><span>]: </span><span class="type-name">Async</span><span>: </span><span class="type-name">Network</span><span>: </span><span class="type-name">Console</span><span>](
+  </span><span class="identifier">pool</span><span>: </span><span class="type-name">PooledDataSource</span><span>[</span><span class="type-name">F</span><span>]
+): </span><span class="type-name">F</span><span>[</span><span class="type-name">List</span><span>[</span><span class="type-name">String</span><span>]] =
+  </span><span class="identifier">pool</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    </span><span class="identifier">conn</span><span>.</span><span class="identifier">prepareStatement</span><span>(</span><span class="string-literal">&quot;SELECT name FROM users&quot;</span><span>).</span><span class="identifier">use</span><span> { </span><span class="identifier">stmt</span><span> =&gt;
+      </span><span class="identifier">stmt</span><span>.</span><span class="identifier">executeQuery</span><span>().</span><span class="identifier">flatMap</span><span> { </span><span class="identifier">rs</span><span> =&gt;
+        </span><span class="comment">// 結果を安全に反復処理
+</span><span>        </span><span class="type-name">LazyList</span><span>.</span><span class="identifier">unfold</span><span>(())(</span><span class="identifier">_</span><span> =&gt; 
+          </span><span class="identifier">rs</span><span>.</span><span class="identifier">next</span><span>().</span><span class="identifier">map</span><span>(</span><span class="identifier">hasNext</span><span> =&gt; 
+            </span><span class="keyword">if</span><span> </span><span class="identifier">hasNext</span><span> </span><span class="keyword">then</span><span> </span><span class="type-name">Some</span><span>((</span><span class="identifier">rs</span><span>.</span><span class="identifier">getString</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>), ())) </span><span class="keyword">else</span><span> </span><span class="type-name">None</span><span>
+          ).</span><span class="identifier">toOption</span><span>.</span><span class="identifier">flatten</span><span>
+        ).</span><span class="identifier">compile</span><span>.</span><span class="identifier">toList</span><span>
+      }
+    }
+  }
+
+</span><span class="comment">// 使用方法
+</span><span class="keyword">val</span><span> </span><span class="identifier">result</span><span> = </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">config</span><span>).</span><span class="identifier">use</span><span> { </span><span class="identifier">pool</span><span> =&gt;
+  </span><span class="identifier">processUsers</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">pool</span><span>)
+}</span></code></pre>
+    
+    <h2 id="プールの健全性監視" class="section"><a class="anchor-link left" href="#プールの健全性監視"><i class="icofont-laika link">&#xef71;</i></a>プールの健全性監視</h2>
+    <p>組み込みメトリクスでプールのパフォーマンスを追跡：</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.</span><span class="identifier">pool</span><span>.*
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">monitoredPool</span><span> = </span><span class="keyword">for</span><span>
+  </span><span class="identifier">tracker</span><span> &lt;- </span><span class="type-name">Resource</span><span>.</span><span class="identifier">eval</span><span>(</span><span class="type-name">PoolMetricsTracker</span><span>.</span><span class="identifier">inMemory</span><span>[</span><span class="type-name">IO</span><span>])
+  </span><span class="identifier">pool</span><span>    &lt;- </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](
+    </span><span class="identifier">config</span><span>,
+    </span><span class="identifier">metricsTracker</span><span> = </span><span class="type-name">Some</span><span>(</span><span class="identifier">tracker</span><span>)
+  )
+</span><span class="keyword">yield</span><span> (</span><span class="identifier">pool</span><span>, </span><span class="identifier">tracker</span><span>)
+
+</span><span class="identifier">monitoredPool</span><span>.</span><span class="identifier">use</span><span> { (</span><span class="identifier">pool</span><span>, </span><span class="identifier">tracker</span><span>) =&gt;
+  </span><span class="keyword">for</span><span>
+    </span><span class="comment">// プールを使用
+</span><span>    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">pool</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span>(</span><span class="identifier">conn</span><span> =&gt; </span><span class="comment">/* クエリ実行 */</span><span> </span><span class="type-name">IO</span><span>.</span><span class="identifier">unit</span><span>)
+    
+    </span><span class="comment">// メトリクスを確認
+</span><span>    </span><span class="identifier">metrics</span><span> &lt;- </span><span class="identifier">tracker</span><span>.</span><span class="identifier">getMetrics</span><span>
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="type-name">IO</span><span>.</span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;&quot;&quot;
+      |プールメトリクス:
+      |  作成された総接続数: </span><span class="substitution">${metrics.totalCreated}</span><span class="string-literal">
+      |  アクティブ接続数: </span><span class="substitution">${metrics.activeConnections}</span><span class="string-literal">
+      |  アイドル接続数: </span><span class="substitution">${metrics.idleConnections}</span><span class="string-literal">
+      |  待機中リクエスト: </span><span class="substitution">${metrics.waitingRequests}</span><span class="string-literal">
+      |  総取得回数: </span><span class="substitution">${metrics.totalAcquisitions}</span><span class="string-literal">
+      |  平均待機時間: </span><span class="substitution">${metrics.averageAcquisitionTime}</span><span class="string-literal">ms
+    &quot;&quot;&quot;</span><span>.</span><span class="identifier">stripMargin</span><span>)
+  </span><span class="keyword">yield</span><span> ()
+}</span></code></pre>
+    
+    <h2 id="接続ライフサイクルフック" class="section"><a class="anchor-link left" href="#接続ライフサイクルフック"><i class="icofont-laika link">&#xef71;</i></a>接続ライフサイクルフック</h2>
+    <p>接続の取得・解放時にカスタム処理を追加：</p>
+    <pre><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">RequestContext</span><span>(</span><span class="identifier">requestId</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">userId</span><span>: </span><span class="type-name">String</span><span>)
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">poolWithHooks</span><span> = </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">poolingWithBeforeAfter</span><span>[</span><span class="type-name">IO</span><span>, </span><span class="type-name">RequestContext</span><span>](
+  </span><span class="identifier">config</span><span> = </span><span class="identifier">config</span><span>,
+  </span><span class="identifier">before</span><span> = </span><span class="type-name">Some</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    </span><span class="comment">// セッション変数の設定や接続の準備
+</span><span>    </span><span class="keyword">val</span><span> </span><span class="identifier">context</span><span> = </span><span class="type-name">RequestContext</span><span>(</span><span class="string-literal">&quot;req-123&quot;</span><span>, </span><span class="string-literal">&quot;user-456&quot;</span><span>)
+    </span><span class="identifier">conn</span><span>.</span><span class="identifier">createStatement</span><span>()
+      .</span><span class="identifier">flatMap</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">executeUpdate</span><span>(</span><span class="string-literal">s&quot;SET @request_id = &#39;</span><span class="substitution">${context.requestId}</span><span class="string-literal">&#39;&quot;</span><span>))
+      .</span><span class="identifier">as</span><span>(</span><span class="identifier">context</span><span>)
+  },
+  </span><span class="identifier">after</span><span> = </span><span class="type-name">Some</span><span> { (</span><span class="identifier">context</span><span>, </span><span class="identifier">conn</span><span>) =&gt;
+    </span><span class="comment">// 接続使用後のログ記録やクリーンアップ
+</span><span>    </span><span class="type-name">IO</span><span>.</span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;リクエスト </span><span class="substitution">${context.requestId}</span><span class="string-literal"> の接続を解放しました&quot;</span><span>)
+  }
+)</span></code></pre>
+    
+    <h2 id="主な機能" class="section"><a class="anchor-link left" href="#主な機能"><i class="icofont-laika link">&#xef71;</i></a>主な機能</h2>
+    
+    <h3 id="組み込みcircuit-breaker" class="section"><a class="anchor-link left" href="#組み込みcircuit-breaker"><i class="icofont-laika link">&#xef71;</i></a>組み込みCircuit Breaker</h3>
+    <p>データベース障害から保護し、データベースがダウンしている場合は高速に失敗：</p>
+    <ul>
+      <li>5回連続で失敗後、自動的にオープン状態に</li>
+      <li>再接続試行まで30秒待機</li>
+      <li>繰り返し失敗時は指数バックオフを使用</li>
+    </ul>
+    
+    <h3 id="ファイバー最適化" class="section"><a class="anchor-link left" href="#ファイバー最適化"><i class="icofont-laika link">&#xef71;</i></a>ファイバー最適化</h3>
+    <p>Cats Effectの軽量ファイバー向けに設計：</p>
+    <ul>
+      <li>最小限のメモリオーバーヘッド（ファイバーあたり約150バイト vs スレッドあたり1-2MB）</li>
+      <li>非ブロッキングな接続取得</li>
+      <li>高並行性下での優れたパフォーマンス</li>
+    </ul>
+    
+    <h3 id="包括的な検証" class="section"><a class="anchor-link left" href="#包括的な検証"><i class="icofont-laika link">&#xef71;</i></a>包括的な検証</h3>
+    <ul>
+      <li>自動接続ヘルスチェック</li>
+      <li>設定可能な検証クエリ</li>
+      <li>アイドル接続のキープアライブ</li>
+      <li>接続リーク検出</li>
+    </ul>
+    
+    <h2 id="jdbc-hikaricpからの移行" class="section"><a class="anchor-link left" href="#jdbc-hikaricpからの移行"><i class="icofont-laika link">&#xef71;</i></a>JDBC/HikariCPからの移行</h2>
+    <p>HikariCPから移行する場合の比較：</p>
+    <pre><code class="nohighlight"><span class="comment">// HikariCPの設定
+</span><span class="keyword">val</span><span> </span><span class="identifier">hikariConfig</span><span> = </span><span class="keyword">new</span><span> </span><span class="type-name">HikariConfig</span><span>()
+</span><span class="identifier">hikariConfig</span><span>.</span><span class="identifier">setJdbcUrl</span><span>(</span><span class="string-literal">&quot;jdbc:mysql://localhost:3306/testdb&quot;</span><span>)
+</span><span class="identifier">hikariConfig</span><span>.</span><span class="identifier">setUsername</span><span>(</span><span class="string-literal">&quot;root&quot;</span><span>)
+</span><span class="identifier">hikariConfig</span><span>.</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+</span><span class="identifier">hikariConfig</span><span>.</span><span class="identifier">setMaximumPoolSize</span><span>(</span><span class="number-literal">20</span><span>)
+</span><span class="identifier">hikariConfig</span><span>.</span><span class="identifier">setMinimumIdle</span><span>(</span><span class="number-literal">5</span><span>)
+</span><span class="identifier">hikariConfig</span><span>.</span><span class="identifier">setConnectionTimeout</span><span>(</span><span class="number-literal">30000</span><span>)
+
+</span><span class="comment">// 同等のldbc-connector設定
+</span><span class="keyword">val</span><span> </span><span class="identifier">ldbcConfig</span><span> = </span><span class="type-name">MySQLConfig</span><span>.</span><span class="identifier">default</span><span>
+  .</span><span class="identifier">setHost</span><span>(</span><span class="string-literal">&quot;localhost&quot;</span><span>)
+  .</span><span class="identifier">setPort</span><span>(</span><span class="number-literal">3306</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;testdb&quot;</span><span>)
+  .</span><span class="identifier">setUser</span><span>(</span><span class="string-literal">&quot;root&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+  .</span><span class="identifier">setMaxConnections</span><span>(</span><span class="number-literal">20</span><span>)
+  .</span><span class="identifier">setMinConnections</span><span>(</span><span class="number-literal">5</span><span>)
+  .</span><span class="identifier">setConnectionTimeout</span><span>(</span><span class="number-literal">30</span><span>.</span><span class="identifier">seconds</span><span>)</span></code></pre>
+    
+    <h2 id="ベストプラクティス" class="section"><a class="anchor-link left" href="#ベストプラクティス"><i class="icofont-laika link">&#xef71;</i></a>ベストプラクティス</h2>
+    <ol class="arabic">
+      <li><strong>デフォルト設定から開始</strong>: デフォルト設定はほとんどのアプリケーションで良好に動作します</li>
+      <li><strong>プールを監視</strong>: メトリクス追跡で実際の使用パターンを理解</li>
+      <li><strong>適切なタイムアウト設定</strong>: アプリケーションのSLA要件に基づいて設定</li>
+      <li><strong>リーク検出を有効化</strong>: 開発/ステージング環境で接続リークを早期発見</li>
+      <li><strong>ライフサイクルフックを活用</strong>: リクエスト追跡やセッション設定に</li>
+    </ol>
     
     <h2 id="参考資料" class="section"><a class="anchor-link left" href="#参考資料"><i class="icofont-laika link">&#xef71;</i></a>参考資料</h2>
     <ul>
-      <li><a href="../examples/HikariCP.html">HikariCP</a></li>
-      <li><a href="../tutorial/Connection.html#jdbcコネクタの使用">jdbcコネクタの使用</a></li>
+      <li><a href="../tutorial/Connection.html#コネクションプーリング">コネクションプーリング</a></li>
+      <li><a href="../reference/Pooling.html">コネクションプーリングアーキテクチャ</a></li>
+      <li><a href="../reference/Pooling.html#ベンチマーク結果">パフォーマンスベンチマーク</a></li>
     </ul>
 
     

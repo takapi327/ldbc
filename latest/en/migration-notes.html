@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <a class="text-link menu-toggle" href="#">Version 0.4</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../older-versions.html">Older Versions</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="reference/">Introduction</a></li>
     <li class="level2 nav-leaf"><a href="reference/Connector.html">Connector</a></li>
     <li class="level2 nav-leaf"><a href="reference/Performance.html">Performance</a></li>
+    <li class="level2 nav-leaf"><a href="reference/Pooling.html">Connection pooling</a></li>
   </ul>
   
 
@@ -166,19 +167,17 @@
   <p class="header"><a href="#">Migration Note</a></p>
 
   <ul class="nav-list">
-    <li class="level1 nav-leaf"><a href="#package">Package</a></li>
-    <li class="level1 nav-node"><a href="#functional-change">Functional change</a></li>
-    <li class="level2 nav-leaf"><a href="#connector-switching-function">Connector switching function</a></li>
-    <li class="level1 nav-node"><a href="#destructive-change">Destructive change</a></li>
-    <li class="level2 nav-leaf"><a href="#extension-of-plain-query-construction">Extension of plain query construction</a></li>
-    <li class="level2 nav-leaf"><a href="#auto-increment-value-acquisition-method-renaming">AUTO INCREMENT value acquisition method renaming</a></li>
-    <li class="level2 nav-leaf"><a href="#how-to-build-a-query-builder">How to build a query builder</a></li>
-    <li class="level2 nav-leaf"><a href="#support-for-custom-data-types">Support for custom data types</a></li>
-    <li class="level2 nav-leaf"><a href="#introducing-codec">Introducing Codec</a></li>
-    <li class="level2 nav-leaf"><a href="#change-column-refinement-method">Change column refinement method</a></li>
-    <li class="level2 nav-leaf"><a href="#change-from-table-to-tablequery">Change from Table to TableQuery</a></li>
-    <li class="level2 nav-leaf"><a href="#change-in-the-way-the-update-statement-is-constructed">Change in the way the update statement is constructed</a></li>
-    <li class="level2 nav-leaf"><a href="#change-the-way-table-joins-are-constructed">Change the way table joins are constructed</a></li>
+    <li class="level1 nav-leaf"><a href="#packages">Packages</a></li>
+    <li class="level1 nav-node"><a href="#major-changes">🎯 Major Changes</a></li>
+    <li class="level2 nav-leaf"><a href="#_1-built-in-connection-pooling">1. Built-in Connection Pooling</a></li>
+    <li class="level2 nav-leaf"><a href="#_2-api-changes">2. API Changes</a></li>
+    <li class="level2 nav-leaf"><a href="#_3-configuration-changes">3. Configuration Changes</a></li>
+    <li class="level2 nav-leaf"><a href="#_4-connection-pooling-usage">4. Connection Pooling Usage</a></li>
+    <li class="level2 nav-leaf"><a href="#_5-migration-considerations">5. Migration Considerations</a></li>
+    <li class="level2 nav-leaf"><a href="#_6-breaking-changes">6. Breaking Changes</a></li>
+    <li class="level2 nav-leaf"><a href="#_7-dbio-execution-pattern-changes">7. DBIO Execution Pattern Changes</a></li>
+    <li class="level2 nav-leaf"><a href="#_8-new-features">8. New Features</a></li>
+    <li class="level1 nav-leaf"><a href="#summary">Summary</a></li>
   </ul>
 
   <p class="footer"></p>
@@ -187,26 +186,10 @@
 
   <main class="content">
 
-    <h1 id="migration-notes-from-0-2-x-to-0-3-x" class="title">Migration Notes (from 0.2.x to 0.3.x)</h1>
+    <h1 id="migration-notes-from-0-3-x-to-0-4-x" class="title">Migration Notes (from 0.3.x to 0.4.x)</h1>
     
-    <h2 id="package" class="section"><a class="anchor-link left" href="#package"><i class="icofont-laika link">&#xef71;</i></a>Package</h2>
-    <p><strong>Change package name</strong></p>
-    <table>
-      <thead>
-        <tr>
-          <th>0.2.x</th>
-          <th>0.3.x</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>ldbc-core</td>
-          <td>ldbc-schema</td>
-        </tr>
-      </tbody>
-    </table>
-    <p><strong>New Packages</strong></p>
-    <p>Three new packages have been added.</p>
+    <h2 id="packages" class="section"><a class="anchor-link left" href="#packages"><i class="icofont-laika link">&#xef71;</i></a>Packages</h2>
+    <p><strong>Removed Packages</strong></p>
     <table>
       <thead>
         <tr>
@@ -218,22 +201,31 @@
       </thead>
       <tbody>
         <tr>
-          <td><code>ldbc-connector</code></td>
-          <td>✅</td>
-          <td>✅</td>
-          <td>✅</td>
-        </tr>
-        <tr>
-          <td><code>jdbc-connector</code></td>
+          <td><code>ldbc-schemaSpy</code></td>
           <td>✅</td>
           <td>❌</td>
           <td>❌</td>
         </tr>
+      </tbody>
+    </table>
+    <p><strong>Packages renewed as different features</strong></p>
+    <table>
+      <thead>
         <tr>
-          <td><code>ldbc-statement</code></td>
+          <th>Module / Platform</th>
+          <th>JVM</th>
+          <th>Scala Native</th>
+          <th>Scala.js</th>
+          <th>Scaladoc</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>ldbc-core</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-core_3"><img src="https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
       </tbody>
     </table>
@@ -245,6 +237,7 @@
           <th>JVM</th>
           <th>Scala Native</th>
           <th>Scala.js</th>
+          <th>Scaladoc</th>
         </tr>
       </thead>
       <tbody>
@@ -253,445 +246,428 @@
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-sql_3"><img src="https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+        <tr>
+          <td><code>ldbc-core</code></td>
+          <td>✅</td>
+          <td>✅</td>
+          <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-core_3"><img src="https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-connector</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-connector_3"><img src="https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>jdbc-connector</code></td>
           <td>✅</td>
           <td>❌</td>
           <td>❌</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/jdbc-connector_3"><img src="https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-dsl</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3"><img src="https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-statement</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-statement_3"><img src="https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-query-builder</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-query-builder_3"><img src="https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-schema</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-        </tr>
-        <tr>
-          <td><code>ldbc-schemaSpy</code></td>
-          <td>✅</td>
-          <td>❌</td>
-          <td>❌</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-schema_3"><img src="https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-codegen</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-codegen_3"><img src="https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-hikari</code></td>
           <td>✅</td>
           <td>❌</td>
           <td>❌</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-hikari_3"><img src="https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-plugin</code></td>
           <td>✅</td>
           <td>❌</td>
           <td>❌</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-plugin_2.12_1.0"><img src="https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
       </tbody>
     </table>
     
-    <h2 id="functional-change" class="section"><a class="anchor-link left" href="#functional-change"><i class="icofont-laika link">&#xef71;</i></a>Functional change</h2>
+    <h2 id="major-changes" class="section"><a class="anchor-link left" href="#major-changes"><i class="icofont-laika link">&#xef71;</i></a>🎯 Major Changes</h2>
     
-    <h3 id="connector-switching-function" class="section"><a class="anchor-link left" href="#connector-switching-function"><i class="icofont-laika link">&#xef71;</i></a>Connector switching function</h3>
-    <p>Support for jdbc and ldbc connection switching has been added to the Scala MySQL connector.</p>
-    <p>This change gives developers the flexibility to choose database connections using either the jdbc or ldbc libraries depending on their project requirements. This allows developers to take advantage of the features of the different libraries, increasing flexibility in connection setup and operation.</p>
+    <h3 id="_1-built-in-connection-pooling" class="section"><a class="anchor-link left" href="#_1-built-in-connection-pooling"><i class="icofont-laika link">&#xef71;</i></a>1. Built-in Connection Pooling</h3>
+    <p>Starting from version 0.4.0, ldbc-connector includes a high-performance connection pooling feature. This enables efficient connection management without using external libraries like HikariCP.</p>
+    <p><strong>Benefits:</strong></p>
+    <ul>
+      <li>Optimized for Cats Effect&#39;s fiber-based concurrency model</li>
+      <li>Circuit breaker protection during failures</li>
+      <li>Dynamic pool sizing</li>
+      <li>Detailed metrics tracking</li>
+    </ul>
     
-    <h4 id="how-to-change" class="section"><a class="anchor-link left" href="#how-to-change"><i class="icofont-laika link">&#xef71;</i></a>How to change</h4>
-    <p>First, common dependencies are set up.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-dsl&quot;</span><span> % </span><span class="string-literal">&quot;0.3.3&quot;</span></code></pre>
-    <p>In cross-platform projects (JVM, JS, native)</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %%% </span><span class="string-literal">&quot;ldbc-dsl&quot;</span><span> % </span><span class="string-literal">&quot;0.3.3&quot;</span></code></pre>
-    <p>The dependency package used depends on whether the database connection is made through a connector using the Java API or through a connector provided by ldbc.</p>
-    <p><strong>Use of JDBC connectors</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;jdbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.3.3&quot;</span></code></pre>
-    <p><strong>Using the ldbc connector</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.3.3&quot;</span></code></pre>
-    <p>In cross-platform projects (JVM, JS, native)</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %%% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.3.3&quot;</span></code></pre>
+    <h3 id="_2-api-changes" class="section"><a class="anchor-link left" href="#_2-api-changes"><i class="icofont-laika link">&#xef71;</i></a>2. API Changes</h3>
     
-    <h4 id="usage-rules" class="section"><a class="anchor-link left" href="#usage-rules"><i class="icofont-laika link">&#xef71;</i></a>Usage rules</h4>
-    <p><strong>Use of JDBC connectors</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">jdbc</span><span>.</span><span class="identifier">connector</span><span>.*
-
-</span><span class="keyword">val</span><span> </span><span class="identifier">ds</span><span> = </span><span class="keyword">new</span><span> </span><span class="identifier">com</span><span>.</span><span class="identifier">mysql</span><span>.</span><span class="identifier">cj</span><span>.</span><span class="identifier">jdbc</span><span>.</span><span class="type-name">MysqlDataSource</span><span>()
-</span><span class="identifier">ds</span><span>.</span><span class="identifier">setServerName</span><span>(</span><span class="string-literal">&quot;127.0.0.1&quot;</span><span>)
-</span><span class="identifier">ds</span><span>.</span><span class="identifier">setPortNumber</span><span>(</span><span class="number-literal">13306</span><span>)
-</span><span class="identifier">ds</span><span>.</span><span class="identifier">setDatabaseName</span><span>(</span><span class="string-literal">&quot;world&quot;</span><span>)
-</span><span class="identifier">ds</span><span>.</span><span class="identifier">setUser</span><span>(</span><span class="string-literal">&quot;ldbc&quot;</span><span>)
-</span><span class="identifier">ds</span><span>.</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
-
-</span><span class="keyword">val</span><span> </span><span class="identifier">provider</span><span> = </span><span class="type-name">ConnectionProvider</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">ex</span><span>, </span><span class="type-name">ExecutionContexts</span><span>.</span><span class="identifier">synchronous</span><span>)</span></code></pre>
-    <p><strong>Using the ldbc connector</strong></p>
+    <h4 id="migration-from-connectionprovider-to-mysqldatasource-and-connector-usage" class="section"><a class="anchor-link left" href="#migration-from-connectionprovider-to-mysqldatasource-and-connector-usage"><i class="icofont-laika link">&#xef71;</i></a>Migration from ConnectionProvider to MySQLDataSource and Connector Usage</h4>
+    <p>ConnectionProvider is now deprecated and replaced with the new MySQLDataSource and Connector APIs.</p>
+    <p><strong>Old API (0.3.x):</strong></p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
 
-</span><span class="keyword">val</span><span> </span><span class="identifier">provider</span><span> =
-  </span><span class="type-name">ConnectionProvider</span><span>
-    .</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;127.0.0.1&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;ldbc&quot;</span><span>, </span><span class="string-literal">&quot;password&quot;</span><span>, </span><span class="string-literal">&quot;ldbc&quot;</span><span>)
-    .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)</span></code></pre>
-    <p>The process of connecting to the database can be done using connections established by each method.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">result</span><span>: </span><span class="type-name">IO</span><span>[(</span><span class="type-name">List</span><span>[</span><span class="type-name">Int</span><span>], </span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>], </span><span class="type-name">Int</span><span>)] = </span><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+</span><span class="comment">// Using ConnectionProvider
+</span><span class="keyword">val</span><span> </span><span class="identifier">provider</span><span> = </span><span class="type-name">ConnectionProvider</span><span>
+  .</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;root&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;test&quot;</span><span>)
+
+</span><span class="comment">// Direct usage
+</span><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">connection</span><span> =&gt;
+  </span><span class="comment">// SQL execution
+</span><span>}</span></code></pre>
+    <p><strong>New API (0.4.x):</strong></p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">core</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.*
+
+</span><span class="comment">// Using MySQLDataSource
+</span><span class="keyword">val</span><span> </span><span class="identifier">dataSource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;root&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;test&quot;</span><span>)
+
+</span><span class="comment">// Create Connector and execute DBIO
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">dataSource</span><span>)
+
+</span><span class="comment">// Execute SQL queries
+</span><span class="keyword">val</span><span> </span><span class="identifier">result</span><span> = </span><span class="string-literal">sql&quot;SELECT * FROM users&quot;</span><span>
+  .</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>]
+  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
+  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
+
+</span><span class="comment">// Or create Connector from Connection
+</span><span class="identifier">dataSource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">connection</span><span> =&gt;
+  </span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromConnection</span><span>(</span><span class="identifier">connection</span><span>)
+  </span><span class="comment">// Execute DBIO
+</span><span>  </span><span class="string-literal">sql&quot;INSERT INTO users (name) VALUES (</span><span class="substitution">$name</span><span class="string-literal">)&quot;</span><span>
+    .</span><span class="identifier">update</span><span>
+    .</span><span class="identifier">commit</span><span>(</span><span class="identifier">connector</span><span>)
+}
+
+</span><span class="comment">// Connection pooling
+</span><span class="keyword">val</span><span> </span><span class="identifier">pooledDataSource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](
+  </span><span class="type-name">MySQLConfig</span><span>.</span><span class="identifier">default</span><span>
+    .</span><span class="identifier">setHost</span><span>(</span><span class="string-literal">&quot;localhost&quot;</span><span>)
+    .</span><span class="identifier">setPort</span><span>(</span><span class="number-literal">3306</span><span>)
+    .</span><span class="identifier">setUser</span><span>(</span><span class="string-literal">&quot;root&quot;</span><span>)
+    .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+    .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;test&quot;</span><span>)
+    .</span><span class="identifier">setMinConnections</span><span>(</span><span class="number-literal">5</span><span>)
+    .</span><span class="identifier">setMaxConnections</span><span>(</span><span class="number-literal">20</span><span>)
+)
+
+</span><span class="identifier">pooledDataSource</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">pool</span><span> =&gt;
+  </span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">pool</span><span>)
+  </span><span class="comment">// Execute DBIO
+</span><span>  </span><span class="string-literal">sql&quot;SELECT * FROM users WHERE id = </span><span class="substitution">$id</span><span class="string-literal">&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>]
+    .</span><span class="identifier">option</span><span>
+    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
+}</span></code></pre>
+    
+    <h3 id="_3-configuration-changes" class="section"><a class="anchor-link left" href="#_3-configuration-changes"><i class="icofont-laika link">&#xef71;</i></a>3. Configuration Changes</h3>
+    
+    <h4 id="ldbc-connector-configuration" class="section"><a class="anchor-link left" href="#ldbc-connector-configuration"><i class="icofont-laika link">&#xef71;</i></a>ldbc-connector Configuration</h4>
+    <p><strong>Old Method (0.3.x):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">provider</span><span> = </span><span class="type-name">ConnectionProvider</span><span>
+  .</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;root&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;test&quot;</span><span>)
+  .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)
+  .</span><span class="identifier">addSocketOption</span><span>(</span><span class="type-name">SocketOption</span><span>.</span><span class="identifier">receiveBufferSize</span><span>(</span><span class="number-literal">4096</span><span>))
+  .</span><span class="identifier">setReadTimeout</span><span>(</span><span class="number-literal">30</span><span>.</span><span class="identifier">seconds</span><span>)</span></code></pre>
+    <p><strong>New Method (0.4.x):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">dataSource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;root&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;test&quot;</span><span>)
+  .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)
+  .</span><span class="identifier">addSocketOption</span><span>(</span><span class="type-name">SocketOption</span><span>.</span><span class="identifier">receiveBufferSize</span><span>(</span><span class="number-literal">4096</span><span>))
+  .</span><span class="identifier">setReadTimeout</span><span>(</span><span class="number-literal">30</span><span>.</span><span class="identifier">seconds</span><span>)
+  .</span><span class="identifier">setDebug</span><span>(</span><span class="boolean-literal">true</span><span>)
+  .</span><span class="identifier">setAllowPublicKeyRetrieval</span><span>(</span><span class="boolean-literal">true</span><span>)</span></code></pre>
+    
+    <h4 id="jdbc-connector-configuration" class="section"><a class="anchor-link left" href="#jdbc-connector-configuration"><i class="icofont-laika link">&#xef71;</i></a>jdbc-connector Configuration</h4>
+    <p><strong>Old Method (0.3.x):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">jdbc</span><span>.</span><span class="identifier">connector</span><span>.*
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">dataSource</span><span> = </span><span class="keyword">new</span><span> </span><span class="identifier">com</span><span>.</span><span class="identifier">mysql</span><span>.</span><span class="identifier">cj</span><span>.</span><span class="identifier">jdbc</span><span>.</span><span class="type-name">MysqlDataSource</span><span>()
+</span><span class="comment">// Manual configuration
+</span><span>
+</span><span class="keyword">val</span><span> </span><span class="identifier">provider</span><span> = </span><span class="type-name">ConnectionProvider</span><span>
+  .</span><span class="identifier">fromDataSource</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">dataSource</span><span>, </span><span class="identifier">ec</span><span>)</span></code></pre>
+    <p><strong>New Method (0.4.x):</strong></p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">jdbc</span><span>.</span><span class="identifier">connector</span><span>.*
+
+</span><span class="comment">// Create Connector from DataSource
+</span><span class="keyword">val</span><span> </span><span class="identifier">ds</span><span> = </span><span class="keyword">new</span><span> </span><span class="identifier">com</span><span>.</span><span class="identifier">mysql</span><span>.</span><span class="identifier">cj</span><span>.</span><span class="identifier">jdbc</span><span>.</span><span class="type-name">MysqlDataSource</span><span>()
+</span><span class="identifier">ds</span><span>.</span><span class="identifier">setServerName</span><span>(</span><span class="string-literal">&quot;localhost&quot;</span><span>)
+</span><span class="identifier">ds</span><span>.</span><span class="identifier">setPortNumber</span><span>(</span><span class="number-literal">3306</span><span>)
+</span><span class="identifier">ds</span><span>.</span><span class="identifier">setDatabaseName</span><span>(</span><span class="string-literal">&quot;test&quot;</span><span>)
+</span><span class="identifier">ds</span><span>.</span><span class="identifier">setUser</span><span>(</span><span class="string-literal">&quot;root&quot;</span><span>)
+</span><span class="identifier">ds</span><span>.</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">ds</span><span>, </span><span class="type-name">ExecutionContexts</span><span>.</span><span class="identifier">synchronous</span><span>)
+
+</span><span class="comment">// Create Connector from DriverManager
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDriverManager</span><span>[</span><span class="type-name">IO</span><span>].</span><span class="identifier">apply</span><span>(
+  </span><span class="identifier">driver</span><span> = </span><span class="string-literal">&quot;com.mysql.cj.jdbc.Driver&quot;</span><span>,
+  </span><span class="identifier">url</span><span> = </span><span class="string-literal">&quot;jdbc:mysql://localhost:3306/test&quot;</span><span>,
+  </span><span class="identifier">user</span><span> = </span><span class="string-literal">&quot;root&quot;</span><span>,
+  </span><span class="identifier">password</span><span> = </span><span class="string-literal">&quot;password&quot;</span><span>,
+  </span><span class="identifier">logHandler</span><span> = </span><span class="type-name">None</span><span>
+)
+
+</span><span class="comment">// Via MySQLDataSource (ldbc-connector)
+</span><span class="keyword">val</span><span> </span><span class="identifier">dataSource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">fromDataSource</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">ds</span><span>, </span><span class="type-name">ExecutionContexts</span><span>.</span><span class="identifier">synchronous</span><span>)</span></code></pre>
+    
+    <h3 id="_4-connection-pooling-usage" class="section"><a class="anchor-link left" href="#_4-connection-pooling-usage"><i class="icofont-laika link">&#xef71;</i></a>4. Connection Pooling Usage</h3>
+    
+    <h4 id="basic-usage" class="section"><a class="anchor-link left" href="#basic-usage"><i class="icofont-laika link">&#xef71;</i></a>Basic Usage</h4>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">core</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">scala</span><span>.</span><span class="identifier">concurrent</span><span>.</span><span class="identifier">duration</span><span>.*
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">config</span><span> = </span><span class="type-name">MySQLConfig</span><span>.</span><span class="identifier">default</span><span>
+  .</span><span class="identifier">setHost</span><span>(</span><span class="string-literal">&quot;localhost&quot;</span><span>)
+  .</span><span class="identifier">setPort</span><span>(</span><span class="number-literal">3306</span><span>)
+  .</span><span class="identifier">setUser</span><span>(</span><span class="string-literal">&quot;myuser&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;mypassword&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;mydb&quot;</span><span>)
+  </span><span class="comment">// Pool configuration
+</span><span>  .</span><span class="identifier">setMinConnections</span><span>(</span><span class="number-literal">5</span><span>)              </span><span class="comment">// Minimum connections
+</span><span>  .</span><span class="identifier">setMaxConnections</span><span>(</span><span class="number-literal">20</span><span>)             </span><span class="comment">// Maximum connections
+</span><span>  .</span><span class="identifier">setConnectionTimeout</span><span>(</span><span class="number-literal">30</span><span>.</span><span class="identifier">seconds</span><span>)  </span><span class="comment">// Connection timeout
+</span><span>  .</span><span class="identifier">setIdleTimeout</span><span>(</span><span class="number-literal">10</span><span>.</span><span class="identifier">minutes</span><span>)        </span><span class="comment">// Idle timeout
+</span><span>  .</span><span class="identifier">setMaxLifetime</span><span>(</span><span class="number-literal">30</span><span>.</span><span class="identifier">minutes</span><span>)        </span><span class="comment">// Maximum lifetime
+</span><span>
+</span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">config</span><span>).</span><span class="identifier">use</span><span> { </span><span class="identifier">pool</span><span> =&gt;
+  </span><span class="comment">// Create and use Connector
+</span><span>  </span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">pool</span><span>)
+
+  </span><span class="comment">// Execute SQL queries
+</span><span>  </span><span class="string-literal">sql&quot;SELECT COUNT(*) FROM users&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[</span><span class="type-name">Long</span><span>]
+    .</span><span class="identifier">unique</span><span>
+    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
+}</span></code></pre>
+    
+    <h4 id="pool-with-metrics" class="section"><a class="anchor-link left" href="#pool-with-metrics"><i class="icofont-laika link">&#xef71;</i></a>Pool with Metrics</h4>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.</span><span class="identifier">pool</span><span>.*
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">metricsResource</span><span> = </span><span class="keyword">for</span><span> {
+  </span><span class="identifier">tracker</span><span> &lt;- </span><span class="type-name">Resource</span><span>.</span><span class="identifier">eval</span><span>(</span><span class="type-name">PoolMetricsTracker</span><span>.</span><span class="identifier">inMemory</span><span>[</span><span class="type-name">IO</span><span>])
+  </span><span class="identifier">pool</span><span>    &lt;- </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](
+    </span><span class="identifier">config</span><span>,
+    </span><span class="identifier">metricsTracker</span><span> = </span><span class="type-name">Some</span><span>(</span><span class="identifier">tracker</span><span>)
+  )
+} </span><span class="keyword">yield</span><span> (</span><span class="identifier">pool</span><span>, </span><span class="identifier">tracker</span><span>)
+
+</span><span class="identifier">metricsResource</span><span>.</span><span class="identifier">use</span><span> { </span><span class="keyword">case</span><span> (</span><span class="identifier">pool</span><span>, </span><span class="identifier">tracker</span><span>) =&gt;
+  </span><span class="keyword">for</span><span> {
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">pool</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">execute</span><span>(</span><span class="string-literal">&quot;SELECT 1&quot;</span><span>))
+    </span><span class="identifier">metrics</span><span> &lt;- </span><span class="identifier">tracker</span><span>.</span><span class="identifier">getMetrics</span><span>
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="type-name">IO</span><span>.</span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;&quot;&quot;
+      |Pool Metrics:
+      |  Total connections: </span><span class="substitution">${metrics.totalCreated}</span><span class="string-literal">
+      |  Active: </span><span class="substitution">${metrics.activeConnections}</span><span class="string-literal">
+      |  Idle: </span><span class="substitution">${metrics.idleConnections}</span><span class="string-literal">
+    &quot;&quot;&quot;</span><span>.</span><span class="identifier">stripMargin</span><span>)
+  } </span><span class="keyword">yield</span><span> ()
+}</span></code></pre>
+    
+    <h4 id="before-after-hooks" class="section"><a class="anchor-link left" href="#before-after-hooks"><i class="icofont-laika link">&#xef71;</i></a>Before/After Hooks</h4>
+    <pre><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">RequestContext</span><span>(</span><span class="identifier">requestId</span><span>: </span><span class="type-name">String</span><span>)
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">poolWithHooks</span><span> = </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">poolingWithBeforeAfter</span><span>[</span><span class="type-name">IO</span><span>, </span><span class="type-name">RequestContext</span><span>](
+  </span><span class="identifier">config</span><span> = </span><span class="identifier">config</span><span>,
+  </span><span class="identifier">before</span><span> = </span><span class="type-name">Some</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    </span><span class="keyword">for</span><span> {
+      </span><span class="identifier">id</span><span> &lt;- </span><span class="type-name">IO</span><span>.</span><span class="identifier">randomUUID</span><span>.</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">toString</span><span>)
+      </span><span class="identifier">_</span><span>  &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">execute</span><span>(</span><span class="string-literal">s&quot;SET @request_id = &#39;</span><span class="substitution">$id</span><span class="string-literal">&#39;&quot;</span><span>)
+    } </span><span class="keyword">yield</span><span> </span><span class="type-name">RequestContext</span><span>(</span><span class="identifier">id</span><span>)
+  },
+  </span><span class="identifier">after</span><span> = </span><span class="type-name">Some</span><span> { (</span><span class="identifier">ctx</span><span>, </span><span class="identifier">conn</span><span>) =&gt;
+    </span><span class="type-name">IO</span><span>.</span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;Request </span><span class="substitution">${ctx.requestId}</span><span class="string-literal"> completed&quot;</span><span>)
+  }
+)</span></code></pre>
+    
+    <h3 id="_5-migration-considerations" class="section"><a class="anchor-link left" href="#_5-migration-considerations"><i class="icofont-laika link">&#xef71;</i></a>5. Migration Considerations</h3>
+    
+    <h4 id="scala-native-limitations" class="section"><a class="anchor-link left" href="#scala-native-limitations"><i class="icofont-laika link">&#xef71;</i></a>Scala Native Limitations</h4>
+    <div class="callout warning">
+      <i class="icofont-laika warning">&#xf026;</i>
+      <p><strong>Important</strong>: Scala Native 0.4.x only supports single-threaded execution. Therefore, using connection pooling with Scala Native is not recommended. Instead, create a new connection for each operation:</p>
+      <pre><code class="nohighlight"><span class="comment">// Recommended usage for Scala Native
+</span><span class="keyword">val</span><span> </span><span class="identifier">dataSource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;user&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;mydb&quot;</span><span>)
+
+</span><span class="comment">// Don&#39;t use pooling
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">dataSource</span><span>)
+
+</span><span class="comment">// Execute DBIO
+</span><span class="string-literal">sql&quot;SELECT * FROM products WHERE price &gt; </span><span class="substitution">$minPrice</span><span class="string-literal">&quot;</span><span>
+  .</span><span class="identifier">query</span><span>[</span><span class="type-name">Product</span><span>]
+  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
+  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
+    </div>
+    
+    <h3 id="_6-breaking-changes" class="section"><a class="anchor-link left" href="#_6-breaking-changes"><i class="icofont-laika link">&#xef71;</i></a>6. Breaking Changes</h3>
+    <p>The following APIs have been removed or changed:</p>
+    <ol class="arabic">
+      <li><strong>ConnectionProvider</strong>: Deprecated and replaced with <code>MySQLDataSource</code> (will be removed in 0.5.x)</li>
+      <li><strong>Provider trait</strong>: Deprecated and replaced with <code>DataSource</code> trait</li>
+      <li><strong>ldbc.sql.Provider</strong>: Removed</li>
+      <li><strong>Direct connection usage</strong>: Must now use the new <code>Connector</code> API</li>
+    </ol>
+    
+    <h3 id="_7-dbio-execution-pattern-changes" class="section"><a class="anchor-link left" href="#_7-dbio-execution-pattern-changes"><i class="icofont-laika link">&#xef71;</i></a>7. DBIO Execution Pattern Changes</h3>
+    <p>The DBIO execution method has been changed to be clearer and more flexible.</p>
+    <p><strong>Old Method (0.3.x):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">connection</span><span> =&gt;
   (</span><span class="keyword">for</span><span>
     </span><span class="identifier">result1</span><span> &lt;- </span><span class="string-literal">sql&quot;SELECT 1&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">Int</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
     </span><span class="identifier">result2</span><span> &lt;- </span><span class="string-literal">sql&quot;SELECT 2&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">Int</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">Option</span><span>]
-    </span><span class="identifier">result3</span><span> &lt;- </span><span class="string-literal">sql&quot;SELECT 3&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">Int</span><span>].</span><span class="identifier">unsafe</span><span>
-  </span><span class="keyword">yield</span><span> (</span><span class="identifier">result1</span><span>, </span><span class="identifier">result2</span><span>, </span><span class="identifier">result3</span><span>)).</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)
+  </span><span class="keyword">yield</span><span> (</span><span class="identifier">result1</span><span>, </span><span class="identifier">result2</span><span>)).</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connection</span><span>)
 }</span></code></pre>
+    <p><strong>New Method (0.4.x):</strong></p>
+    <pre><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">dataSource</span><span>)
+
+</span><span class="comment">// Various execution modes
+</span><span class="string-literal">sql&quot;SELECT * FROM users&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)    </span><span class="comment">// Read-only
+</span><span class="string-literal">sql&quot;INSERT INTO users ...&quot;</span><span>.</span><span class="identifier">update</span><span>.</span><span class="identifier">commit</span><span>(</span><span class="identifier">connector</span><span>)                 </span><span class="comment">// With commit
+</span><span class="string-literal">sql&quot;UPDATE users ...&quot;</span><span>.</span><span class="identifier">update</span><span>.</span><span class="identifier">transaction</span><span>(</span><span class="identifier">connector</span><span>)                 </span><span class="comment">// Transaction
+</span><span class="string-literal">sql&quot;DELETE FROM users ...&quot;</span><span>.</span><span class="identifier">update</span><span>.</span><span class="identifier">rollback</span><span>(</span><span class="identifier">connector</span><span>)              </span><span class="comment">// Rollback
+</span><span>
+</span><span class="comment">// Combining multiple queries
+</span><span>(</span><span class="keyword">for</span><span>
+  </span><span class="identifier">users</span><span> &lt;- </span><span class="string-literal">sql&quot;SELECT * FROM users&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
+  </span><span class="identifier">count</span><span> &lt;- </span><span class="string-literal">sql&quot;SELECT COUNT(*) FROM users&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">Long</span><span>].</span><span class="identifier">unique</span><span>
+</span><span class="keyword">yield</span><span> (</span><span class="identifier">users</span><span>, </span><span class="identifier">count</span><span>)).</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
     
-    <h2 id="destructive-change" class="section"><a class="anchor-link left" href="#destructive-change"><i class="icofont-laika link">&#xef71;</i></a>Destructive change</h2>
+    <h3 id="_8-new-features" class="section"><a class="anchor-link left" href="#_8-new-features"><i class="icofont-laika link">&#xef71;</i></a>8. New Features</h3>
     
-    <h3 id="extension-of-plain-query-construction" class="section"><a class="anchor-link left" href="#extension-of-plain-query-construction"><i class="icofont-laika link">&#xef71;</i></a>Extension of plain query construction</h3>
-    <p>The determination of the type to be retrieved by the database connection method using plain query had been specifying the type to be retrieved and its format (list or option) all at once.</p>
-    <p>This modification changes this and makes the internal logic common by separating the specification of the type to be retrieved and its format. This makes the plain query syntax more similar to doobie, and should allow doobie users to use it without confusion.</p>
-    <p><strong>before</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="string-literal">sql&quot;SELECT id, name, age FROM user&quot;</span><span>.</span><span class="identifier">toList</span><span>[(</span><span class="type-name">Long</span><span>, </span><span class="type-name">String</span><span>, </span><span class="type-name">Int</span><span>)].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connection</span><span>)
-</span><span class="string-literal">sql&quot;SELECT id, name, age FROM user WHERE id = </span><span class="substitution">${1L}</span><span class="string-literal">&quot;</span><span>.</span><span class="identifier">headOption</span><span>[</span><span class="type-name">User</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connection</span><span>)</span></code></pre>
-    <p><strong>after</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="string-literal">sql&quot;SELECT id, name, age FROM user&quot;</span><span>.</span><span class="identifier">query</span><span>[(</span><span class="type-name">Long</span><span>, </span><span class="type-name">String</span><span>, </span><span class="type-name">Int</span><span>)].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connection</span><span>)
-</span><span class="string-literal">sql&quot;SELECT id, name, age FROM user WHERE id = </span><span class="substitution">${1L}</span><span class="string-literal">&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">Option</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connection</span><span>)</span></code></pre>
+    <h4 id="circuitbreaker" class="section"><a class="anchor-link left" href="#circuitbreaker"><i class="icofont-laika link">&#xef71;</i></a>CircuitBreaker</h4>
+    <p>The connection pool includes a built-in CircuitBreaker for protection during database failures:</p>
+    <ul>
+      <li>Automatically stops connection attempts after consecutive failures</li>
+      <li>Gradual recovery through exponential backoff</li>
+      <li>Protects both the application and database</li>
+    </ul>
     
-    <h3 id="auto-increment-value-acquisition-method-renaming" class="section"><a class="anchor-link left" href="#auto-increment-value-acquisition-method-renaming"><i class="icofont-laika link">&#xef71;</i></a>AUTO INCREMENT value acquisition method renaming</h3>
-    <p>The API <code>updateReturningAutoGeneratedKey</code>, which converts values generated by an AUTO INCREMENT column in the update API, has been renamed to <code>returning</code>.</p>
-    <p>This is a feature of MySQL, which returns the value generated by AUTO INCREMENT when inserting data, but other RDBs behave differently and may return values other than those generated by AUTO INCREMENT.
-    API names were changed early on to make the limited API names more extensible for future extensions.</p>
-    <p><strong>before</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="string-literal">sql&quot;INSERT INTO `table`(`id`, `c1`) VALUES (</span><span class="substitution">$None</span><span class="string-literal">, </span><span class="substitution">${ &quot;column 1&quot; }</span><span class="string-literal">)&quot;</span><span>.</span><span class="identifier">updateReturningAutoGeneratedKey</span><span>[</span><span class="type-name">Long</span><span>]</span></code></pre>
-    <p><strong>after</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="string-literal">sql&quot;INSERT INTO `table`(`id`, `c1`) VALUES (</span><span class="substitution">$None</span><span class="string-literal">, </span><span class="substitution">${ &quot;column 1&quot; }</span><span class="string-literal">)&quot;</span><span>.</span><span class="identifier">returning</span><span>[</span><span class="type-name">Long</span><span>]</span></code></pre>
+    <h4 id="adaptive-pool-sizing" class="section"><a class="anchor-link left" href="#adaptive-pool-sizing"><i class="icofont-laika link">&#xef71;</i></a>Adaptive Pool Sizing</h4>
+    <p>Dynamically adjusts pool size based on load:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">config</span><span> = </span><span class="type-name">MySQLConfig</span><span>.</span><span class="identifier">default</span><span>
+  </span><span class="comment">// ... other configuration
+</span><span>  .</span><span class="identifier">setAdaptiveSizing</span><span>(</span><span class="boolean-literal">true</span><span>)
+  .</span><span class="identifier">setAdaptiveInterval</span><span>(</span><span class="number-literal">1</span><span>.</span><span class="identifier">minute</span><span>)</span></code></pre>
     
-    <h3 id="how-to-build-a-query-builder" class="section"><a class="anchor-link left" href="#how-to-build-a-query-builder"><i class="icofont-laika link">&#xef71;</i></a>How to build a query builder</h3>
-    <p>Previously, the query builder could not be used without building the table schema.</p>
-    <p>In this update, changes have been made to allow the Query Builder to be used in a simpler manner.</p>
-    <p><strong>before</strong></p>
-    <p>First, create a table schema corresponding to the model,</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">User</span><span>(
-  </span><span class="identifier">id</span><span>: </span><span class="type-name">Long</span><span>,
-  </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>,
-  </span><span class="identifier">age</span><span>: </span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>],
-)
-
-</span><span class="keyword">val</span><span> </span><span class="identifier">userTable</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>)(                 </span><span class="comment">// CREATE TABLE `user` (
-</span><span>  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="type-name">BIGINT</span><span>, </span><span class="type-name">AUTO_INCREMENT</span><span>, </span><span class="type-name">PRIMARY_KEY</span><span>), </span><span class="comment">//   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-</span><span>  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">255</span><span>)),                      </span><span class="comment">//   `name` VARCHAR(255) NOT NULL,
-</span><span>  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;age&quot;</span><span>, </span><span class="type-name">INT</span><span>.</span><span class="type-name">UNSIGNED</span><span>.</span><span class="type-name">DEFAULT</span><span>(</span><span class="type-name">None</span><span>)),         </span><span class="comment">//   `age` INT unsigned DEFAULT NULL
-</span><span>)</span></code></pre>
-    <p>Next, use the table schema to build the <code>TableQuery</code>.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">tableQuery</span><span> = </span><span class="type-name">TableQuery</span><span>[</span><span class="type-name">IO</span><span>, </span><span class="type-name">User</span><span>](</span><span class="identifier">userTable</span><span>)</span></code></pre>
-    <p>The last step was query construction.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">result</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">List</span><span>[</span><span class="type-name">User</span><span>]] = </span><span class="identifier">connection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
-  </span><span class="identifier">tableQuery</span><span>.</span><span class="identifier">selectAll</span><span>.</span><span class="identifier">toList</span><span>[</span><span class="type-name">User</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)
-  </span><span class="comment">// &quot;SELECT `id`, `name`, `age` FROM user&quot;
-</span><span>}</span></code></pre>
-    <p><strong>after</strong></p>
-    <p>This change will allow the model to be built and</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.</span><span class="identifier">codec</span><span>.</span><span class="type-name">Codec</span><span>
-</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">query</span><span>.</span><span class="identifier">builder</span><span>.</span><span class="type-name">Table</span><span>
-
-</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">User</span><span>(
-  </span><span class="identifier">id</span><span>: </span><span class="type-name">Long</span><span>,
-  </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>,
-  </span><span class="identifier">age</span><span>: </span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>],
-) </span><span class="keyword">derives</span><span> </span><span class="type-name">Table</span><span>
-</span><span class="keyword">object</span><span> </span><span class="type-name">User</span><span>:
-  </span><span class="keyword">given</span><span> </span><span class="type-name">Codec</span><span>[</span><span class="type-name">User</span><span>] = </span><span class="type-name">Codec</span><span>.</span><span class="identifier">derived</span><span>[</span><span class="type-name">User</span><span>]</span></code></pre>
-    <p>Next, initialize the <code>Table</code>.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">query</span><span>.</span><span class="identifier">builder</span><span>.</span><span class="type-name">Table</span><span>
-
-</span><span class="keyword">val</span><span> </span><span class="identifier">userTable</span><span> = </span><span class="type-name">TableQuery</span><span>[</span><span class="type-name">User</span><span>]</span></code></pre>
-    <p>Finally, query construction is performed to make it available.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">result</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">List</span><span>[</span><span class="type-name">User</span><span>]] = </span><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
-  </span><span class="identifier">userTable</span><span>.</span><span class="identifier">selectAll</span><span>.</span><span class="identifier">query</span><span>.</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)
-  </span><span class="comment">// &quot;SELECT `id`, `name`, `age` FROM user&quot;
-</span><span>}</span></code></pre>
+    <h4 id="leak-detection" class="section"><a class="anchor-link left" href="#leak-detection"><i class="icofont-laika link">&#xef71;</i></a>Leak Detection</h4>
+    <p>Detects connection leaks in development:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">config</span><span> = </span><span class="type-name">MySQLConfig</span><span>.</span><span class="identifier">default</span><span>
+  </span><span class="comment">// ... other configuration
+</span><span>  .</span><span class="identifier">setLeakDetectionThreshold</span><span>(</span><span class="number-literal">2</span><span>.</span><span class="identifier">minutes</span><span>)</span></code></pre>
     
-    <h4 id="building-a-query-builder-using-schema" class="section"><a class="anchor-link left" href="#building-a-query-builder-using-schema"><i class="icofont-laika link">&#xef71;</i></a>Building a query builder using Schema</h4>
-    <p>The previous method of building a Table that mimics a schema has been replaced by building a Table type using the Schema project.
-    In the following, we will look at the construction of a Table type corresponding to the User model.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">User</span><span>(
-  </span><span class="identifier">id</span><span>: </span><span class="type-name">Long</span><span>,
-  </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>,
-  </span><span class="identifier">age</span><span>: </span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>],
-)</span></code></pre>
-    <p><strong>Before</strong></p>
-    <p>Previously, it was necessary to create an instance of Table directly; it was mandatory to pass as arguments of Table the corresponding columns in the same order as the properties possessed by the User class, and to set the data types of the columns as well.</p>
-    <p>TableQuery with this table type was implemented using Dynamic, which allows type-safe access, but could not be complemented by the development tools.</p>
-    <p>In addition, this construction method was a bit slower in compile time than class generation.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">userTable</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>)(
-  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="type-name">BIGINT</span><span>, </span><span class="type-name">AUTO_INCREMENT</span><span>, </span><span class="type-name">PRIMARY_KEY</span><span>),
-  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">255</span><span>)),
-  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;age&quot;</span><span>, </span><span class="type-name">INT</span><span>.</span><span class="type-name">UNSIGNED</span><span>.</span><span class="type-name">DEFAULT</span><span>(</span><span class="type-name">None</span><span>)),
-)</span></code></pre>
-    <p><strong>After</strong></p>
-    <p>In this modification, the creation of the Table type has been changed to a method of creating a class that inherits from Table. In addition, the data type of a column is no longer mandatory and can be set arbitrarily by the implementer.</p>
-    <p>This change to a construction method similar to Slick makes it more familiar to implementors.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">class</span><span> </span><span class="type-name">UserTable</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>):
-  </span><span class="keyword">def</span><span> </span><span class="declaration-name">id</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="identifier">column</span><span>[</span><span class="type-name">Long</span><span>](</span><span class="string-literal">&quot;id&quot;</span><span>)
-  </span><span class="keyword">def</span><span> </span><span class="declaration-name">name</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">column</span><span>[</span><span class="type-name">String</span><span>](</span><span class="string-literal">&quot;name&quot;</span><span>)
-  </span><span class="keyword">def</span><span> </span><span class="declaration-name">age</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>]] = </span><span class="identifier">column</span><span>[</span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>]](</span><span class="string-literal">&quot;age&quot;</span><span>)
+    <h4 id="streaming-query-support" class="section"><a class="anchor-link left" href="#streaming-query-support"><i class="icofont-laika link">&#xef71;</i></a>Streaming Query Support</h4>
+    <p>ldbc supports efficient streaming queries using <code>fs2.Stream</code>. This allows handling large amounts of data with controlled memory usage.</p>
+    <p><strong>Basic Usage:</strong></p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">fs2</span><span>.</span><span class="type-name">Stream</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.*
 
-  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> * : </span><span class="type-name">Column</span><span>[</span><span class="type-name">User</span><span>] = (</span><span class="identifier">id</span><span> *: </span><span class="identifier">name</span><span> *: </span><span class="identifier">age</span><span>).</span><span class="identifier">to</span><span>[</span><span class="type-name">User</span><span>]</span></code></pre>
-    <p>The data type of a column can still be set. This setting is used, for example, when generating a schema using this table class.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">class</span><span> </span><span class="type-name">UserTable</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>):
-  </span><span class="keyword">def</span><span> </span><span class="declaration-name">id</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="identifier">column</span><span>[</span><span class="type-name">Long</span><span>](</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="type-name">BIGINT</span><span>, </span><span class="type-name">AUTO_INCREMENT</span><span>, </span><span class="type-name">PRIMARY_KEY</span><span>)
-  </span><span class="keyword">def</span><span> </span><span class="declaration-name">name</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">column</span><span>[</span><span class="type-name">String</span><span>](</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">255</span><span>))
-  </span><span class="keyword">def</span><span> </span><span class="declaration-name">age</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>]] = </span><span class="identifier">column</span><span>[</span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>]](</span><span class="string-literal">&quot;age&quot;</span><span>, </span><span class="type-name">INT</span><span>.</span><span class="type-name">UNSIGNED</span><span>.</span><span class="type-name">DEFAULT</span><span>(</span><span class="type-name">None</span><span>))
+</span><span class="comment">// Streaming with default fetchSize (1)
+</span><span class="keyword">val</span><span> </span><span class="identifier">stream</span><span>: </span><span class="type-name">Stream</span><span>[</span><span class="type-name">DBIO</span><span>, </span><span class="type-name">String</span><span>] = 
+  </span><span class="string-literal">sql&quot;SELECT name FROM city&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>]
+    .</span><span class="identifier">stream</span><span>
 
-  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> * : </span><span class="type-name">Column</span><span>[</span><span class="type-name">User</span><span>] = (</span><span class="identifier">id</span><span> *: </span><span class="identifier">name</span><span> *: </span><span class="identifier">age</span><span>).</span><span class="identifier">to</span><span>[</span><span class="type-name">User</span><span>]</span></code></pre>
-    <p>There is also a column definition method that expresses the data type. The above definition method can be rewritten as follows
-    In this definition method, the column name can be used as a variable name, so there is no need to pass the column name as an argument.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span>class UserTable extends Table[User](&quot;user&quot;):
-</span><span class="diff-removed">-  def id: Column[Long] = column[Long](&quot;id&quot;, BIGINT, AUTO_INCREMENT, PRIMARY_KEY)</span><span>
-</span><span class="diff-removed">-  def name: Column[String] = column[String](&quot;name&quot;, VARCHAR(255))</span><span>
-</span><span class="diff-removed">-  def age: Column[Option[Int]] = column[Option[Int]](&quot;age&quot;, INT.UNSIGNED.DEFAULT(None))</span><span>
-</span><span class="diff-added">+  def id: Column[Long] = bigint().autoIncrement.primaryKey</span><span>
-</span><span class="diff-added">+  def name: Column[String] = varchar(255)</span><span>
-</span><span class="diff-added">+  def age: Column[Option[Int]] = int().unsigned.defaultNull</span><span>
+</span><span class="comment">// Streaming with specified fetchSize
+</span><span class="keyword">val</span><span> </span><span class="identifier">streamWithFetchSize</span><span>: </span><span class="type-name">Stream</span><span>[</span><span class="type-name">DBIO</span><span>, </span><span class="type-name">City</span><span>] = 
+  </span><span class="string-literal">sql&quot;SELECT * FROM city&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[</span><span class="type-name">City</span><span>]
+    .</span><span class="identifier">stream</span><span>(</span><span class="identifier">fetchSize</span><span> = </span><span class="number-literal">100</span><span>)</span></code></pre>
+    <p><strong>Practical Examples:</strong></p>
+    <pre><code class="nohighlight"><span class="comment">// Efficiently process large datasets
+</span><span class="keyword">val</span><span> </span><span class="identifier">processLargeCities</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">List</span><span>[</span><span class="type-name">String</span><span>]] = 
+  </span><span class="string-literal">sql&quot;SELECT name, population FROM city&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[(</span><span class="type-name">String</span><span>, </span><span class="type-name">Int</span><span>)]
+    .</span><span class="identifier">stream</span><span>(</span><span class="number-literal">1000</span><span>)                    </span><span class="comment">// Fetch 1000 rows at a time
+</span><span>    .</span><span class="identifier">filter</span><span>(</span><span class="identifier">_</span><span class="number-literal">._2</span><span> &gt; </span><span class="number-literal">1000000</span><span>)          </span><span class="comment">// Cities with &gt; 1M population
+</span><span>    .</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span class="number-literal">._1</span><span>)                       </span><span class="comment">// Extract city names
+</span><span>    .</span><span class="identifier">take</span><span>(</span><span class="number-literal">50</span><span>)                        </span><span class="comment">// Take first 50
+</span><span>    .</span><span class="identifier">compile</span><span>.</span><span class="identifier">toList</span><span>
+    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
 
-  override def * : Column[User] = (id *: name *: age).to[User]</span></code></pre>
-    <p>Column names can be formatted by passing Naming implicitly.
-    The default is CamelCase, but to change it to PascalCase, do the following</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">class</span><span> </span><span class="type-name">UserTable</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>):
-  </span><span class="keyword">given</span><span> </span><span class="type-name">Naming</span><span> = </span><span class="type-name">Naming</span><span>.</span><span class="type-name">PASCAL</span><span>
-
-  </span><span class="keyword">def</span><span> </span><span class="declaration-name">id</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="identifier">bigint</span><span>().</span><span class="identifier">autoIncrement</span><span>.</span><span class="identifier">primaryKey</span><span>
-  </span><span class="keyword">def</span><span> </span><span class="declaration-name">name</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">varchar</span><span>(</span><span class="number-literal">255</span><span>)
-  </span><span class="keyword">def</span><span> </span><span class="declaration-name">age</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>]] = </span><span class="identifier">int</span><span>().</span><span class="identifier">unsigned</span><span>.</span><span class="identifier">defaultNull</span><span>
-
-  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> * : </span><span class="type-name">Column</span><span>[</span><span class="type-name">User</span><span>] = (</span><span class="identifier">id</span><span> *: </span><span class="identifier">name</span><span> *: </span><span class="identifier">age</span><span>).</span><span class="identifier">to</span><span>[</span><span class="type-name">User</span><span>]</span></code></pre>
-    <p>If you want to change the format of a specific column, you can define it by passing the column name as an argument.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">class</span><span> </span><span class="type-name">UserTable</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>):
-  </span><span class="keyword">def</span><span> </span><span class="declaration-name">id</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="identifier">bigint</span><span>(</span><span class="string-literal">&quot;ID&quot;</span><span>).</span><span class="identifier">autoIncrement</span><span>.</span><span class="identifier">primaryKey</span><span>
-  </span><span class="keyword">def</span><span> </span><span class="declaration-name">name</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">varchar</span><span>(</span><span class="string-literal">&quot;NAME&quot;</span><span>, </span><span class="number-literal">255</span><span>)
-  </span><span class="keyword">def</span><span> </span><span class="declaration-name">age</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>]] = </span><span class="identifier">int</span><span>(</span><span class="string-literal">&quot;AGE&quot;</span><span>).</span><span class="identifier">unsigned</span><span>.</span><span class="identifier">defaultNull</span><span>
-
-  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> * : </span><span class="type-name">Column</span><span>[</span><span class="type-name">User</span><span>] = (</span><span class="identifier">id</span><span> *: </span><span class="identifier">name</span><span> *: </span><span class="identifier">age</span><span>).</span><span class="identifier">to</span><span>[</span><span class="type-name">User</span><span>]</span></code></pre>
+</span><span class="comment">// Aggregation processing
+</span><span class="keyword">val</span><span> </span><span class="identifier">calculateTotal</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">BigDecimal</span><span>] = 
+  </span><span class="string-literal">sql&quot;SELECT amount FROM transactions WHERE year = 2024&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[</span><span class="type-name">BigDecimal</span><span>]
+    .</span><span class="identifier">stream</span><span>(</span><span class="number-literal">5000</span><span>)                    </span><span class="comment">// Process 5000 rows at a time
+</span><span>    .</span><span class="identifier">filter</span><span>(</span><span class="identifier">_</span><span> &gt; </span><span class="number-literal">100</span><span>)                 </span><span class="comment">// Transactions &gt; 100
+</span><span>    .</span><span class="identifier">fold</span><span>(</span><span class="type-name">BigDecimal</span><span>(</span><span class="number-literal">0</span><span>))(</span><span class="identifier">_</span><span> + </span><span class="identifier">_</span><span>)      </span><span class="comment">// Calculate total
+</span><span>    .</span><span class="identifier">compile</span><span>.</span><span class="identifier">lastOrError</span><span>
+    .</span><span class="identifier">transaction</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
+    <p><strong>MySQL Optimization Settings:</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Enable server-side cursors for better memory efficiency
+</span><span class="keyword">val</span><span> </span><span class="identifier">datasource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">host</span><span>, </span><span class="identifier">port</span><span>, </span><span class="identifier">user</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="identifier">password</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="identifier">database</span><span>)
+  .</span><span class="identifier">setUseCursorFetch</span><span>(</span><span class="boolean-literal">true</span><span>)  </span><span class="comment">// Enable true streaming</span></code></pre>
+    <p><strong>Streaming Benefits:</strong></p>
+    <ul>
+      <li><strong>Memory Efficiency</strong>: Constant memory usage even with large datasets</li>
+      <li><strong>Early Processing</strong>: Process data while receiving it</li>
+      <li><strong>Cancellable</strong>: Stop processing based on conditions</li>
+      <li><strong>Rich fs2 Operations</strong>: Use functional operations like <code>filter</code>, <code>map</code>, <code>take</code>, <code>fold</code></li>
+    </ul>
     
-    <h3 id="support-for-custom-data-types" class="section"><a class="anchor-link left" href="#support-for-custom-data-types"><i class="icofont-laika link">&#xef71;</i></a>Support for custom data types</h3>
-    <p>When using user-defined data types, custom data types were supported using <code>ResultSetReader</code> and <code>Parameter</code>.</p>
-    <p>With this update, the method of supporting custom data types using <code>ResultSetReader</code> and <code>Parameter</code> has changed.</p>
-    
-    <h4 id="encoder" class="section"><a class="anchor-link left" href="#encoder"><i class="icofont-laika link">&#xef71;</i></a>Encoder</h4>
-    <p>Changed from <code>Parameter</code> to <code>Encoder</code> to dynamically embed in the query string.</p>
-    <p>This eliminates the need for users to write redundant processing to receive the Effect Type, allowing for simpler implementation and use as a parameter for custom data types.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">enum</span><span> </span><span class="type-name">Status</span><span>(</span><span class="keyword">val</span><span> </span><span class="identifier">code</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="keyword">val</span><span> </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>):
-  </span><span class="keyword">case</span><span> </span><span class="type-name">Active</span><span>   </span><span class="keyword">extends</span><span> </span><span class="type-name">Status</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;Active&quot;</span><span>)
-  </span><span class="keyword">case</span><span> </span><span class="type-name">InActive</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Status</span><span>(</span><span class="number-literal">2</span><span>, </span><span class="string-literal">&quot;InActive&quot;</span><span>)</span></code></pre>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="diff-removed">-given Parameter[Status] with</span><span>
-</span><span class="diff-removed">-  override def bind[F[_]](</span><span>
-</span><span class="diff-removed">-    statement: PreparedStatement[F],</span><span>
-</span><span class="diff-removed">-    index: Int,</span><span>
-</span><span class="diff-removed">-    status: Status</span><span>
-</span><span class="diff-removed">-  ): F[Unit] = statement.setInt(index, status.code)</span><span>
-
-</span><span class="diff-added">+given Encoder[Status] = Encoder[Int].contramap(_.code)</span></code></pre>
-    <p>The <code>Encoder</code> encoding process can only return Scala types that can be handled by <code>PreparedStatement</code>.</p>
-    <p>Currently, the following types are supported</p>
-    <table>
-      <thead>
-        <tr>
-          <th>Scala Type</th>
-          <th>Methods called in PreparedStatement</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><code>Boolean</code></td>
-          <td><code>setBoolean</code></td>
-        </tr>
-        <tr>
-          <td><code>Byte</code></td>
-          <td><code>setByte</code></td>
-        </tr>
-        <tr>
-          <td><code>Short</code></td>
-          <td><code>setShort</code></td>
-        </tr>
-        <tr>
-          <td><code>Int</code></td>
-          <td><code>setInt</code></td>
-        </tr>
-        <tr>
-          <td><code>Long</code></td>
-          <td><code>setLong</code></td>
-        </tr>
-        <tr>
-          <td><code>Float</code></td>
-          <td><code>setFloat</code></td>
-        </tr>
-        <tr>
-          <td><code>Double</code></td>
-          <td><code>setDouble</code></td>
-        </tr>
-        <tr>
-          <td><code>BigDecimal</code></td>
-          <td><code>setBigDecimal</code></td>
-        </tr>
-        <tr>
-          <td><code>String</code></td>
-          <td><code>setString</code></td>
-        </tr>
-        <tr>
-          <td><code>Array[Byte]</code></td>
-          <td><code>setBytes</code></td>
-        </tr>
-        <tr>
-          <td><code>java.time.LocalDate</code></td>
-          <td><code>setDate</code></td>
-        </tr>
-        <tr>
-          <td><code>java.time.LocalTime</code></td>
-          <td><code>setTime</code></td>
-        </tr>
-        <tr>
-          <td><code>java.time.LocalDateTime</code></td>
-          <td><code>setTimestamp</code></td>
-        </tr>
-        <tr>
-          <td><code>None</code></td>
-          <td><code>setNull</code></td>
-        </tr>
-      </tbody>
-    </table>
-    <p>Encoder can also compose multiple types to create a new type.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">encoder</span><span>: </span><span class="type-name">Encoder</span><span>[(</span><span class="type-name">Int</span><span>, </span><span class="type-name">String</span><span>)] = </span><span class="type-name">Encoder</span><span>[</span><span class="type-name">Int</span><span>] *: </span><span class="type-name">Encoder</span><span>[</span><span class="type-name">String</span><span>]</span></code></pre>
-    <p>Composite types can also be converted to arbitrary classes.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Status</span><span>(</span><span class="identifier">code</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>)
-</span><span class="keyword">given</span><span> </span><span class="type-name">Encoder</span><span>[</span><span class="type-name">Status</span><span>] = (</span><span class="type-name">Encoder</span><span>[</span><span class="type-name">Int</span><span>] *: </span><span class="type-name">Encoder</span><span>[</span><span class="type-name">String</span><span>]).</span><span class="identifier">to</span><span>[</span><span class="type-name">Status</span><span>]</span></code></pre>
-    
-    <h4 id="decoder" class="section"><a class="anchor-link left" href="#decoder"><i class="icofont-laika link">&#xef71;</i></a>Decoder</h4>
-    <p>Changed the process of getting data from a <code>ResultSet</code> from a <code>ResultSetReader</code> to a <code>Decoder</code>.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="diff-removed">-given ResultSetReader[IO, Status] =</span><span>
-</span><span class="diff-removed">-  ResultSetReader.mapping[IO, Int, Status](code =&gt; Status.fromCode(code))</span><span>
-</span><span class="diff-added">+given Decoder[Status] = Decoder[Int].map(code =&gt; Status.fromCode(code))</span></code></pre>
-    <p>Decoder can also composite multiple types to create a new type.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">decoder</span><span>: </span><span class="type-name">Decoder</span><span>[(</span><span class="type-name">Int</span><span>, </span><span class="type-name">String</span><span>)] = </span><span class="type-name">Decoder</span><span>[</span><span class="type-name">Int</span><span>] *: </span><span class="type-name">Decoder</span><span>[</span><span class="type-name">String</span><span>]</span></code></pre>
-    <p>Composite types can also be converted to arbitrary classes.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Status</span><span>(</span><span class="identifier">code</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>)
-</span><span class="keyword">given</span><span> </span><span class="type-name">Decoder</span><span>[</span><span class="type-name">Status</span><span>] = (</span><span class="type-name">Decoder</span><span>[</span><span class="type-name">Int</span><span>] *: </span><span class="type-name">Decoder</span><span>[</span><span class="type-name">String</span><span>]).</span><span class="identifier">to</span><span>[</span><span class="type-name">Status</span><span>]</span></code></pre>
-    
-    <h3 id="introducing-codec" class="section"><a class="anchor-link left" href="#introducing-codec"><i class="icofont-laika link">&#xef71;</i></a>Introducing Codec</h3>
-    <p><code>Codec</code> is a combination of <code>Encoder</code> and <code>Decoder</code>.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">enum</span><span> </span><span class="type-name">Status</span><span>(</span><span class="keyword">val</span><span> </span><span class="identifier">code</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="keyword">val</span><span> </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>):
-  </span><span class="keyword">case</span><span> </span><span class="type-name">Active</span><span>   </span><span class="keyword">extends</span><span> </span><span class="type-name">Status</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;Active&quot;</span><span>)
-  </span><span class="keyword">case</span><span> </span><span class="type-name">InActive</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Status</span><span>(</span><span class="number-literal">2</span><span>, </span><span class="string-literal">&quot;InActive&quot;</span><span>)
-
-</span><span class="keyword">given</span><span> </span><span class="type-name">Codec</span><span>[</span><span class="type-name">Status</span><span>] = </span><span class="type-name">Codec</span><span>[</span><span class="type-name">Int</span><span>].</span><span class="identifier">imap</span><span>(</span><span class="type-name">Status</span><span>.</span><span class="identifier">fromCode</span><span>)(</span><span class="identifier">_</span><span>.</span><span class="identifier">code</span><span>)</span></code></pre>
-    <p>Codec can also composite multiple types to create a new type.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">codec</span><span>: </span><span class="type-name">Codec</span><span>[(</span><span class="type-name">Int</span><span>, </span><span class="type-name">String</span><span>)] = </span><span class="type-name">Codec</span><span>[</span><span class="type-name">Int</span><span>] *: </span><span class="type-name">Codec</span><span>[</span><span class="type-name">String</span><span>]</span></code></pre>
-    <p>Composite types can also be converted to arbitrary classes.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Status</span><span>(</span><span class="identifier">code</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>)
-</span><span class="keyword">given</span><span> </span><span class="type-name">Codec</span><span>[</span><span class="type-name">Status</span><span>] = (</span><span class="type-name">Codec</span><span>[</span><span class="type-name">Int</span><span>] *: </span><span class="type-name">Codec</span><span>[</span><span class="type-name">String</span><span>]).</span><span class="identifier">to</span><span>[</span><span class="type-name">Status</span><span>]</span></code></pre>
-    <p>Codec is a combination of <code>Encoder</code> and <code>Decoder</code>, so it can perform the conversion process to each type.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">encoder</span><span>: </span><span class="type-name">Encoder</span><span>[</span><span class="type-name">Status</span><span>] = </span><span class="type-name">Codec</span><span>[</span><span class="type-name">Status</span><span>].</span><span class="identifier">asEncoder</span><span>
-</span><span class="keyword">val</span><span> </span><span class="identifier">decoder</span><span>: </span><span class="type-name">Decoder</span><span>[</span><span class="type-name">Status</span><span>] = </span><span class="type-name">Codec</span><span>[</span><span class="type-name">Status</span><span>].</span><span class="identifier">asDecoder</span></code></pre>
-    <p>This change allows users to use <code>Codec</code> to combine <code>Encoder</code> and <code>Decoder</code>.</p>
-    <p>This allows users to convert retrieved records into nested hierarchical data.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">City</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">countryCode</span><span>: </span><span class="type-name">String</span><span>)
-</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Country</span><span>(</span><span class="identifier">code</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>)
-</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">CityWithCountry</span><span>(</span><span class="identifier">city</span><span>: </span><span class="type-name">City</span><span>, </span><span class="identifier">country</span><span>: </span><span class="type-name">Country</span><span>)
-
-</span><span class="string-literal">sql&quot;SELECT city.Id, city.Name, city.CountryCode, country.Code, country.Name FROM city JOIN country ON city.CountryCode = country.Code&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">CityWithCountry</span><span>]</span></code></pre>
-    <p>Starting with Codec, <code>Encoder</code> and <code>Decoder</code> are resolved implicitly, so users do not need to specify these types explicitly.</p>
-    <p>However, if there are many properties in the model, implicit lookups may fail.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span>[error]    |Implicit search problem too large.
-[error]    |an implicit search was terminated with failure after trying </span><span class="number-literal">100000</span><span> expressions.
-[error]    |The root candidate </span><span class="keyword">for</span><span> the search was:
-[error]    |
-[error]    |  given instance given_Decoder_P </span><span class="keyword">in</span><span> object Decoder  </span><span class="keyword">for</span><span>  ldbc.dsl.codec.Decoder[City]}</span></code></pre>
-    <p>In such cases, raising the search limit in the compile options may solve the problem.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">scalacOptions</span><span> += </span><span class="string-literal">&quot;-Ximplicit-search-limit:100000&quot;</span></code></pre>
-    <p>However, optional limit extensions may lead to amplification of compile time. In that case, the solution may be to manually construct an arbitrary type as follows.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">given</span><span> </span><span class="type-name">Decoder</span><span>[</span><span class="type-name">City</span><span>] = </span><span class="type-name">Decoder</span><span>.</span><span class="identifier">derived</span><span>[</span><span class="type-name">City</span><span>]
-</span><span class="comment">// Or given Decoder[City] = (Decoder[Int] *: Decoder[String] *: Decoder[Int] *: ....).to[City]
-</span><span class="keyword">given</span><span> </span><span class="type-name">Encoder</span><span>[</span><span class="type-name">City</span><span>] = </span><span class="type-name">Encoder</span><span>.</span><span class="identifier">derived</span><span>[</span><span class="type-name">City</span><span>]
-</span><span class="comment">// Or given Encoder[City] = (Encoder[Int] *: Encoder[String] *: Encoder[Int] *: ....).to[City]</span></code></pre>
-    <p>Alternatively, you can use <code>Codec</code> to solve this problem by combining <code>Encoder</code> and <code>Decoder</code>.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">given</span><span> </span><span class="type-name">Codec</span><span>[</span><span class="type-name">City</span><span>] = </span><span class="type-name">Codec</span><span>.</span><span class="identifier">derived</span><span>[</span><span class="type-name">City</span><span>]
-</span><span class="comment">// Or given Codec[City] = (Codec[Int] *: Codec[String] *: Codec[Int] *: ....).to[City]</span></code></pre>
-    
-    <h3 id="change-column-refinement-method" class="section"><a class="anchor-link left" href="#change-column-refinement-method"><i class="icofont-laika link">&#xef71;</i></a>Change column refinement method</h3>
-    <p>Until now, column refinement has simply grouped columns to be used as tuples.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">cityTable</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">city</span><span> =&gt; (</span><span class="identifier">city</span><span>.</span><span class="identifier">id</span><span>, </span><span class="identifier">city</span><span>.</span><span class="identifier">name</span><span>))</span></code></pre>
-    <p>However, there was a problem with this. Columns are types with a single type parameter, and since Scala2 had a limit on the number of Tuples, it was necessary to create a boilerplate or something that could handle the full number of Tuples.
-    In this case, the dynamic Tuple was treated as a Tuple or Tuple.Map, so if you wanted to access a Column type, you had to cast the type using asInstanceOf, since that type could only be treated as a Tuple.
-    Casting the type, of course, would have made the code more complex, since type safety would have been lost.</p>
-    <p>To solve this problem, we decided to adopt one of the same TypeLevel projects, <a href="https://github.com/typelevel/twiddles">twiddles</a>.</p>
-    <p>With twiddles, we will be able to compose columns more easily.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">cityTable</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">city</span><span> =&gt; </span><span class="identifier">city</span><span>.</span><span class="identifier">id</span><span> *: </span><span class="identifier">city</span><span>.</span><span class="identifier">name</span><span>)</span></code></pre>
-    <p>It also eliminates the need for unsafe typecasting, since the internal code can just use <code>Column[T]</code> instead of Tuple.</p>
-    <p>Twiddles also make it easier to convert the composite result to another type.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">City</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Long</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>)
-
-</span><span class="keyword">def</span><span> </span><span class="declaration-name">id</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Int</span><span>] = </span><span class="identifier">column</span><span>[</span><span class="type-name">Int</span><span>](</span><span class="string-literal">&quot;ID&quot;</span><span>)
-</span><span class="keyword">def</span><span> </span><span class="declaration-name">name</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">column</span><span>[</span><span class="type-name">String</span><span>](</span><span class="string-literal">&quot;Name&quot;</span><span>)
-
-</span><span class="keyword">def</span><span> </span><span class="declaration-name">city</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">City</span><span>] = (</span><span class="identifier">id</span><span> *: </span><span class="identifier">name</span><span>).</span><span class="identifier">to</span><span>[</span><span class="type-name">City</span><span>]</span></code></pre>
-    
-    <h3 id="change-from-table-to-tablequery" class="section"><a class="anchor-link left" href="#change-from-table-to-tablequery"><i class="icofont-laika link">&#xef71;</i></a>Change from Table to TableQuery</h3>
-    <p>Previously, the same Table type was used to construct queries from the model using the table type and table information.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">City</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Long</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>) </span><span class="keyword">derives</span><span> </span><span class="type-name">Table</span><span>
-</span><span class="keyword">val</span><span> </span><span class="identifier">cityTable</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">City</span><span>]</span></code></pre>
-    <p>However, this implementation was easy to get wrong because the same type could be used to represent two things.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">cityTable</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">city</span><span> =&gt; </span><span class="identifier">city</span><span>.</span><span class="identifier">insert</span><span>(???))</span></code></pre>
-    <p>Development tools such as IDEs can cause no small amount of confusion to implementers because they complement all available APIs.</p>
-    <p>To solve this problem, we have separated the Table and TableQuery types.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">City</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Long</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>) </span><span class="keyword">derives</span><span> </span><span class="type-name">Table</span><span>
-</span><span class="keyword">val</span><span> </span><span class="identifier">cityTable</span><span> = </span><span class="type-name">TableQuery</span><span>[</span><span class="type-name">City</span><span>]</span></code></pre>
-    <p><strong>Table name customization can be done in Table&#39;s derived</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">City</span><span>(
-  </span><span class="identifier">id</span><span>: </span><span class="type-name">Int</span><span>,
-  </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>,
-  </span><span class="identifier">countryCode</span><span>: </span><span class="type-name">String</span><span>,
-  </span><span class="identifier">district</span><span>: </span><span class="type-name">String</span><span>,
-  </span><span class="identifier">population</span><span>: </span><span class="type-name">Int</span><span>
-)
-
-</span><span class="keyword">object</span><span> </span><span class="type-name">City</span><span>:
-  </span><span class="keyword">given</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">City</span><span>] = </span><span class="type-name">Table</span><span>.</span><span class="identifier">derived</span><span>[</span><span class="type-name">City</span><span>](</span><span class="string-literal">&quot;city&quot;</span><span>)</span></code></pre>
-    
-    <h3 id="change-in-the-way-the-update-statement-is-constructed" class="section"><a class="anchor-link left" href="#change-in-the-way-the-update-statement-is-constructed"><i class="icofont-laika link">&#xef71;</i></a>Change in the way the update statement is constructed</h3>
-    <p>Previously, Update Statements had to be set one for each column to be updated. This implementation is convenient if you want to update several columns individually, but it is very tedious to write a set for each additional column you want to update.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">cityTable</span><span>
-  .</span><span class="identifier">update</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="number-literal">1L</span><span>)
-  .</span><span class="identifier">set</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="string-literal">&quot;Tokyo&quot;</span><span>)
-  .</span><span class="identifier">set</span><span>(</span><span class="string-literal">&quot;population&quot;</span><span>, </span><span class="number-literal">1</span><span>, </span><span class="boolean-literal">false</span><span>)</span></code></pre>
-    <p>With this update, columns can now be combined, allowing multiple columns to be specified together for update processing.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">cityTable</span><span>
-  .</span><span class="identifier">update</span><span>(</span><span class="identifier">city</span><span> =&gt; </span><span class="identifier">city</span><span>.</span><span class="identifier">id</span><span> *: </span><span class="identifier">city</span><span>.</span><span class="identifier">name</span><span>)((</span><span class="number-literal">1L</span><span>, </span><span class="string-literal">&quot;Tokyo&quot;</span><span>))
-  .</span><span class="identifier">set</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">population</span><span>, </span><span class="number-literal">1</span><span>, </span><span class="boolean-literal">false</span><span>)</span></code></pre>
-    <p>With this update, columns can now be combined and multiple columns can be specified together for the update process. set can be used to update only certain columns. It is also possible to use set to set update conditions so that a query can be created that updates additional columns only if the condition is positive.</p>
-    
-    <h3 id="change-the-way-table-joins-are-constructed" class="section"><a class="anchor-link left" href="#change-the-way-table-joins-are-constructed"><i class="icofont-laika link">&#xef71;</i></a>Change the way table joins are constructed</h3>
-    <p>Previously, table joins were constructed by setting the join condition as the second argument.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">cityTable</span><span>.</span><span class="identifier">join</span><span>(</span><span class="identifier">countryTable</span><span>)((</span><span class="identifier">c</span><span>, </span><span class="identifier">co</span><span>) =&gt; </span><span class="identifier">c</span><span>.</span><span class="identifier">countryCode</span><span> === </span><span class="identifier">co</span><span>.</span><span class="identifier">code</span><span>)</span></code></pre>
-    <p>With this change, table join conditions must be set with the <code>on</code> API. This change is the result of an internal implementation change.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">cityTable</span><span>.</span><span class="identifier">join</span><span>(</span><span class="identifier">countryTable</span><span>).</span><span class="identifier">on</span><span>((</span><span class="identifier">c</span><span>, </span><span class="identifier">co</span><span>) =&gt; </span><span class="identifier">c</span><span>.</span><span class="identifier">countryCode</span><span> === </span><span class="identifier">co</span><span>.</span><span class="identifier">code</span><span>)</span></code></pre>
+    <h2 id="summary" class="section"><a class="anchor-link left" href="#summary"><i class="icofont-laika link">&#xef71;</i></a>Summary</h2>
+    <p>Migrating to 0.4.x provides the following benefits:</p>
+    <ol class="arabic">
+      <li><strong>Performance Improvements</strong>: Efficient connection management through built-in pooling</li>
+      <li><strong>More Intuitive API</strong>: Simplified configuration with builder pattern</li>
+      <li><strong>Advanced Features</strong>: CircuitBreaker, adaptive sizing, metrics tracking</li>
+      <li><strong>Reduced External Dependencies</strong>: No need for HikariCP</li>
+    </ol>
+    <p>The migration work mainly involves API updates, and since functional backward compatibility is maintained, gradual migration is possible.</p>
 
     
 <hr class="footer-rule"/>

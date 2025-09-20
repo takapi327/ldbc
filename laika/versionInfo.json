@@ -1,6 +1,7 @@
 {
   "versions": [
-    { "displayValue": "0.3", "pathSegment": "latest", "fallbackLink": "/index.html", "label": "Stable", "canonical": true },
+    { "displayValue": "0.4", "pathSegment": "latest", "fallbackLink": "/index.html", "label": "Dev", "canonical": true },
+    { "displayValue": "0.3", "pathSegment": "0.3", "fallbackLink": "/index.html", "label": "Stable", "canonical": false },
     { "displayValue": "0.2", "pathSegment": "0.2", "fallbackLink": "/index.html", "label": "EOL", "canonical": false }
   ],
   "linkTargets": [
@@ -30,6 +31,7 @@
     { "path": "/en/qa/index.html", "versions": ["latest"] },
     { "path": "/en/reference/Connector.html", "versions": ["latest"] },
     { "path": "/en/reference/Performance.html", "versions": ["latest"] },
+    { "path": "/en/reference/Pooling.html", "versions": ["latest"] },
     { "path": "/en/reference/index.html", "versions": ["latest"] },
     { "path": "/en/tutorial/Connection.html", "versions": ["latest"] },
     { "path": "/en/tutorial/Custom-Data-Type.html", "versions": ["latest"] },
@@ -72,6 +74,7 @@
     { "path": "/ja/qa/index.html", "versions": ["latest"] },
     { "path": "/ja/reference/Connector.html", "versions": ["latest"] },
     { "path": "/ja/reference/Performance.html", "versions": ["latest"] },
+    { "path": "/ja/reference/Pooling.html", "versions": ["latest"] },
     { "path": "/ja/reference/index.html", "versions": ["latest"] },
     { "path": "/ja/tutorial/Connection.html", "versions": ["latest"] },
     { "path": "/ja/tutorial/Custom-Data-Type.html", "versions": ["latest"] },

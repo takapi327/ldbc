@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <a class="text-link menu-toggle" href="#">Version 0.4</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="../reference/">Introduction</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Connector.html">Connector</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Performance.html">Performance</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Pooling.html">Connection pooling</a></li>
   </ul>
   
 
@@ -166,7 +167,18 @@
   <p class="header"><a href="#">Q: How to use connection pool with Scala connector?</a></p>
 
   <ul class="nav-list">
-    <li class="level1 nav-leaf"><a href="#a-currently-the-scala-connector-does-not-support-connection-pooling">A: Currently, the Scala connector does not support connection pooling.</a></li>
+    <li class="level1 nav-leaf"><a href="#a-ldbc-connector-now-provides-built-in-connection-pooling-support">A: ldbc-connector now provides built-in connection pooling support!</a></li>
+    <li class="level1 nav-leaf"><a href="#quick-start">Quick Start</a></li>
+    <li class="level1 nav-leaf"><a href="#configuring-pool-settings">Configuring Pool Settings</a></li>
+    <li class="level1 nav-leaf"><a href="#using-with-resource-safety">Using with Resource Safety</a></li>
+    <li class="level1 nav-leaf"><a href="#monitoring-pool-health">Monitoring Pool Health</a></li>
+    <li class="level1 nav-leaf"><a href="#connection-lifecycle-hooks">Connection Lifecycle Hooks</a></li>
+    <li class="level1 nav-node"><a href="#key-features">Key Features</a></li>
+    <li class="level2 nav-leaf"><a href="#built-in-circuit-breaker">Built-in Circuit Breaker</a></li>
+    <li class="level2 nav-leaf"><a href="#fiber-optimized">Fiber-Optimized</a></li>
+    <li class="level2 nav-leaf"><a href="#comprehensive-validation">Comprehensive Validation</a></li>
+    <li class="level1 nav-leaf"><a href="#migration-from-jdbc-hikaricp">Migration from JDBC/HikariCP</a></li>
+    <li class="level1 nav-leaf"><a href="#best-practices">Best Practices</a></li>
     <li class="level1 nav-leaf"><a href="#references">References</a></li>
   </ul>
 
@@ -178,13 +190,211 @@
 
     <h1 id="q-how-to-use-connection-pool-with-scala-connector" class="title">Q: How to use connection pool with Scala connector?</h1>
     
-    <h2 id="a-currently-the-scala-connector-does-not-support-connection-pooling" class="section"><a class="anchor-link left" href="#a-currently-the-scala-connector-does-not-support-connection-pooling"><i class="icofont-laika link">&#xef71;</i></a>A: Currently, the Scala connector does not support connection pooling.</h2>
-    <p>The Scala connector does not yet support connection pooling. If you want to use a connection pool, please use the Java connector with connection pool libraries like <a href="https://github.com/brettwooldridge/HikariCP">HikariCP</a>.</p>
+    <h2 id="a-ldbc-connector-now-provides-built-in-connection-pooling-support" class="section"><a class="anchor-link left" href="#a-ldbc-connector-now-provides-built-in-connection-pooling-support"><i class="icofont-laika link">&#xef71;</i></a>A: ldbc-connector now provides built-in connection pooling support!</h2>
+    <p>Starting from version 0.4.0, ldbc-connector includes comprehensive connection pooling functionality. The pooling system is designed specifically for Cats Effect&#39;s fiber-based concurrency model, offering high performance and excellent resource efficiency.</p>
+    
+    <h2 id="quick-start" class="section"><a class="anchor-link left" href="#quick-start"><i class="icofont-laika link">&#xef71;</i></a>Quick Start</h2>
+    <p>Here&#39;s how to create and use a pooled connection with ldbc-connector:</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">scala</span><span>.</span><span class="identifier">concurrent</span><span>.</span><span class="identifier">duration</span><span>.*
+
+</span><span class="keyword">object</span><span> </span><span class="type-name">ConnectionPoolExample</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">IOApp</span><span>.</span><span class="type-name">Simple</span><span>:
+
+  </span><span class="keyword">val</span><span> </span><span class="identifier">run</span><span> = 
+    </span><span class="comment">// Configure your connection pool
+</span><span>    </span><span class="keyword">val</span><span> </span><span class="identifier">poolConfig</span><span> = </span><span class="type-name">MySQLConfig</span><span>.</span><span class="identifier">default</span><span>
+      .</span><span class="identifier">setHost</span><span>(</span><span class="string-literal">&quot;localhost&quot;</span><span>)
+      .</span><span class="identifier">setPort</span><span>(</span><span class="number-literal">3306</span><span>)
+      .</span><span class="identifier">setUser</span><span>(</span><span class="string-literal">&quot;root&quot;</span><span>)
+      .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+      .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;testdb&quot;</span><span>)
+      </span><span class="comment">// Pool-specific settings
+</span><span>      .</span><span class="identifier">setMinConnections</span><span>(</span><span class="number-literal">5</span><span>)         </span><span class="comment">// Keep at least 5 connections ready
+</span><span>      .</span><span class="identifier">setMaxConnections</span><span>(</span><span class="number-literal">20</span><span>)        </span><span class="comment">// Maximum 20 connections
+</span><span>      .</span><span class="identifier">setConnectionTimeout</span><span>(</span><span class="number-literal">30</span><span>.</span><span class="identifier">seconds</span><span>)  </span><span class="comment">// Wait up to 30 seconds for a connection
+</span><span>      
+    </span><span class="comment">// Create the pooled data source
+</span><span>    </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">poolConfig</span><span>).</span><span class="identifier">use</span><span> { </span><span class="identifier">pool</span><span> =&gt;
+      </span><span class="comment">// Use connections from the pool
+</span><span>      </span><span class="identifier">pool</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">connection</span><span> =&gt;
+        </span><span class="keyword">for</span><span>
+          </span><span class="identifier">stmt</span><span>   &lt;- </span><span class="identifier">connection</span><span>.</span><span class="identifier">createStatement</span><span>()
+          </span><span class="identifier">rs</span><span>     &lt;- </span><span class="identifier">stmt</span><span>.</span><span class="identifier">executeQuery</span><span>(</span><span class="string-literal">&quot;SELECT &#39;Hello from pooled connection!&#39;&quot;</span><span>)
+          </span><span class="identifier">_</span><span>      &lt;- </span><span class="identifier">rs</span><span>.</span><span class="identifier">next</span><span>()
+          </span><span class="identifier">result</span><span> &lt;- </span><span class="identifier">rs</span><span>.</span><span class="identifier">getString</span><span>(</span><span class="number-literal">1</span><span>)
+          </span><span class="identifier">_</span><span>      &lt;- </span><span class="type-name">IO</span><span>.</span><span class="identifier">println</span><span>(</span><span class="identifier">result</span><span>)
+        </span><span class="keyword">yield</span><span> ()
+      }
+    }</span></code></pre>
+    
+    <h2 id="configuring-pool-settings" class="section"><a class="anchor-link left" href="#configuring-pool-settings"><i class="icofont-laika link">&#xef71;</i></a>Configuring Pool Settings</h2>
+    <p>ldbc-connector offers extensive configuration options for fine-tuning your connection pool:</p>
+    <pre><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">advancedConfig</span><span> = </span><span class="type-name">MySQLConfig</span><span>.</span><span class="identifier">default</span><span>
+  .</span><span class="identifier">setHost</span><span>(</span><span class="string-literal">&quot;localhost&quot;</span><span>)
+  .</span><span class="identifier">setPort</span><span>(</span><span class="number-literal">3306</span><span>)
+  .</span><span class="identifier">setUser</span><span>(</span><span class="string-literal">&quot;myapp&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;secret&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;production&quot;</span><span>)
+  
+  </span><span class="comment">// Pool Size Management
+</span><span>  .</span><span class="identifier">setMinConnections</span><span>(</span><span class="number-literal">10</span><span>)          </span><span class="comment">// Minimum idle connections
+</span><span>  .</span><span class="identifier">setMaxConnections</span><span>(</span><span class="number-literal">50</span><span>)          </span><span class="comment">// Maximum total connections
+</span><span>  
+  </span><span class="comment">// Timeout Configuration
+</span><span>  .</span><span class="identifier">setConnectionTimeout</span><span>(</span><span class="number-literal">30</span><span>.</span><span class="identifier">seconds</span><span>)   </span><span class="comment">// Max wait for connection
+</span><span>  .</span><span class="identifier">setIdleTimeout</span><span>(</span><span class="number-literal">10</span><span>.</span><span class="identifier">minutes</span><span>)        </span><span class="comment">// Remove idle connections after
+</span><span>  .</span><span class="identifier">setMaxLifetime</span><span>(</span><span class="number-literal">30</span><span>.</span><span class="identifier">minutes</span><span>)        </span><span class="comment">// Replace connections after
+</span><span>  .</span><span class="identifier">setValidationTimeout</span><span>(</span><span class="number-literal">5</span><span>.</span><span class="identifier">seconds</span><span>)   </span><span class="comment">// Connection validation timeout
+</span><span>  
+  </span><span class="comment">// Health Checks
+</span><span>  .</span><span class="identifier">setKeepaliveTime</span><span>(</span><span class="number-literal">2</span><span>.</span><span class="identifier">minutes</span><span>)       </span><span class="comment">// Validate idle connections every
+</span><span>  .</span><span class="identifier">setConnectionTestQuery</span><span>(</span><span class="string-literal">&quot;SELECT 1&quot;</span><span>) </span><span class="comment">// Custom validation query (optional)
+</span><span>  
+  </span><span class="comment">// Advanced Features
+</span><span>  .</span><span class="identifier">setLeakDetectionThreshold</span><span>(</span><span class="number-literal">2</span><span>.</span><span class="identifier">minutes</span><span>)  </span><span class="comment">// Warn about leaked connections
+</span><span>  .</span><span class="identifier">setAdaptiveSizing</span><span>(</span><span class="boolean-literal">true</span><span>)              </span><span class="comment">// Dynamic pool sizing
+</span><span>  .</span><span class="identifier">setAdaptiveInterval</span><span>(</span><span class="number-literal">1</span><span>.</span><span class="identifier">minute</span><span>)        </span><span class="comment">// Check pool size every</span></code></pre>
+    
+    <h2 id="using-with-resource-safety" class="section"><a class="anchor-link left" href="#using-with-resource-safety"><i class="icofont-laika link">&#xef71;</i></a>Using with Resource Safety</h2>
+    <p>The pooled data source is managed as a <code>Resource</code>, ensuring proper cleanup:</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">implicits</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">processUsers</span><span>[</span><span class="type-name">F</span><span>[</span><span class="identifier">_</span><span>]: </span><span class="type-name">Async</span><span>: </span><span class="type-name">Network</span><span>: </span><span class="type-name">Console</span><span>](
+  </span><span class="identifier">pool</span><span>: </span><span class="type-name">PooledDataSource</span><span>[</span><span class="type-name">F</span><span>]
+): </span><span class="type-name">F</span><span>[</span><span class="type-name">List</span><span>[</span><span class="type-name">String</span><span>]] =
+  </span><span class="identifier">pool</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    </span><span class="identifier">conn</span><span>.</span><span class="identifier">prepareStatement</span><span>(</span><span class="string-literal">&quot;SELECT name FROM users&quot;</span><span>).</span><span class="identifier">use</span><span> { </span><span class="identifier">stmt</span><span> =&gt;
+      </span><span class="identifier">stmt</span><span>.</span><span class="identifier">executeQuery</span><span>().</span><span class="identifier">flatMap</span><span> { </span><span class="identifier">rs</span><span> =&gt;
+        </span><span class="comment">// Safely iterate through results
+</span><span>        </span><span class="type-name">LazyList</span><span>.</span><span class="identifier">unfold</span><span>(())(</span><span class="identifier">_</span><span> =&gt; 
+          </span><span class="identifier">rs</span><span>.</span><span class="identifier">next</span><span>().</span><span class="identifier">map</span><span>(</span><span class="identifier">hasNext</span><span> =&gt; 
+            </span><span class="keyword">if</span><span> </span><span class="identifier">hasNext</span><span> </span><span class="keyword">then</span><span> </span><span class="type-name">Some</span><span>((</span><span class="identifier">rs</span><span>.</span><span class="identifier">getString</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>), ())) </span><span class="keyword">else</span><span> </span><span class="type-name">None</span><span>
+          ).</span><span class="identifier">toOption</span><span>.</span><span class="identifier">flatten</span><span>
+        ).</span><span class="identifier">compile</span><span>.</span><span class="identifier">toList</span><span>
+      }
+    }
+  }
+
+</span><span class="comment">// Usage
+</span><span class="keyword">val</span><span> </span><span class="identifier">result</span><span> = </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">config</span><span>).</span><span class="identifier">use</span><span> { </span><span class="identifier">pool</span><span> =&gt;
+  </span><span class="identifier">processUsers</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">pool</span><span>)
+}</span></code></pre>
+    
+    <h2 id="monitoring-pool-health" class="section"><a class="anchor-link left" href="#monitoring-pool-health"><i class="icofont-laika link">&#xef71;</i></a>Monitoring Pool Health</h2>
+    <p>Track your pool&#39;s performance with built-in metrics:</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.</span><span class="identifier">pool</span><span>.*
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">monitoredPool</span><span> = </span><span class="keyword">for</span><span>
+  </span><span class="identifier">tracker</span><span> &lt;- </span><span class="type-name">Resource</span><span>.</span><span class="identifier">eval</span><span>(</span><span class="type-name">PoolMetricsTracker</span><span>.</span><span class="identifier">inMemory</span><span>[</span><span class="type-name">IO</span><span>])
+  </span><span class="identifier">pool</span><span>    &lt;- </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](
+    </span><span class="identifier">config</span><span>,
+    </span><span class="identifier">metricsTracker</span><span> = </span><span class="type-name">Some</span><span>(</span><span class="identifier">tracker</span><span>)
+  )
+</span><span class="keyword">yield</span><span> (</span><span class="identifier">pool</span><span>, </span><span class="identifier">tracker</span><span>)
+
+</span><span class="identifier">monitoredPool</span><span>.</span><span class="identifier">use</span><span> { (</span><span class="identifier">pool</span><span>, </span><span class="identifier">tracker</span><span>) =&gt;
+  </span><span class="keyword">for</span><span>
+    </span><span class="comment">// Use the pool
+</span><span>    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">pool</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span>(</span><span class="identifier">conn</span><span> =&gt; </span><span class="comment">/* your queries */</span><span> </span><span class="type-name">IO</span><span>.</span><span class="identifier">unit</span><span>)
+    
+    </span><span class="comment">// Check metrics
+</span><span>    </span><span class="identifier">metrics</span><span> &lt;- </span><span class="identifier">tracker</span><span>.</span><span class="identifier">getMetrics</span><span>
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="type-name">IO</span><span>.</span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;&quot;&quot;
+      |Pool Metrics:
+      |  Total connections created: </span><span class="substitution">${metrics.totalCreated}</span><span class="string-literal">
+      |  Active connections: </span><span class="substitution">${metrics.activeConnections}</span><span class="string-literal">
+      |  Idle connections: </span><span class="substitution">${metrics.idleConnections}</span><span class="string-literal">
+      |  Waiting requests: </span><span class="substitution">${metrics.waitingRequests}</span><span class="string-literal">
+      |  Total acquisitions: </span><span class="substitution">${metrics.totalAcquisitions}</span><span class="string-literal">
+      |  Average wait time: </span><span class="substitution">${metrics.averageAcquisitionTime}</span><span class="string-literal">ms
+    &quot;&quot;&quot;</span><span>.</span><span class="identifier">stripMargin</span><span>)
+  </span><span class="keyword">yield</span><span> ()
+}</span></code></pre>
+    
+    <h2 id="connection-lifecycle-hooks" class="section"><a class="anchor-link left" href="#connection-lifecycle-hooks"><i class="icofont-laika link">&#xef71;</i></a>Connection Lifecycle Hooks</h2>
+    <p>Add custom behavior when connections are acquired or released:</p>
+    <pre><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">RequestContext</span><span>(</span><span class="identifier">requestId</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">userId</span><span>: </span><span class="type-name">String</span><span>)
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">poolWithHooks</span><span> = </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">poolingWithBeforeAfter</span><span>[</span><span class="type-name">IO</span><span>, </span><span class="type-name">RequestContext</span><span>](
+  </span><span class="identifier">config</span><span> = </span><span class="identifier">config</span><span>,
+  </span><span class="identifier">before</span><span> = </span><span class="type-name">Some</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    </span><span class="comment">// Set session variables or prepare connection
+</span><span>    </span><span class="keyword">val</span><span> </span><span class="identifier">context</span><span> = </span><span class="type-name">RequestContext</span><span>(</span><span class="string-literal">&quot;req-123&quot;</span><span>, </span><span class="string-literal">&quot;user-456&quot;</span><span>)
+    </span><span class="identifier">conn</span><span>.</span><span class="identifier">createStatement</span><span>()
+      .</span><span class="identifier">flatMap</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">executeUpdate</span><span>(</span><span class="string-literal">s&quot;SET @request_id = &#39;</span><span class="substitution">${context.requestId}</span><span class="string-literal">&#39;&quot;</span><span>))
+      .</span><span class="identifier">as</span><span>(</span><span class="identifier">context</span><span>)
+  },
+  </span><span class="identifier">after</span><span> = </span><span class="type-name">Some</span><span> { (</span><span class="identifier">context</span><span>, </span><span class="identifier">conn</span><span>) =&gt;
+    </span><span class="comment">// Log or cleanup after connection use
+</span><span>    </span><span class="type-name">IO</span><span>.</span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;Connection released for request: </span><span class="substitution">${context.requestId}</span><span class="string-literal">&quot;</span><span>)
+  }
+)</span></code></pre>
+    
+    <h2 id="key-features" class="section"><a class="anchor-link left" href="#key-features"><i class="icofont-laika link">&#xef71;</i></a>Key Features</h2>
+    
+    <h3 id="built-in-circuit-breaker" class="section"><a class="anchor-link left" href="#built-in-circuit-breaker"><i class="icofont-laika link">&#xef71;</i></a>Built-in Circuit Breaker</h3>
+    <p>Protects against database failures by failing fast when the database is down:</p>
+    <ul>
+      <li>Automatically opens after 5 consecutive failures</li>
+      <li>Waits 30 seconds before attempting reconnection</li>
+      <li>Uses exponential backoff for repeated failures</li>
+    </ul>
+    
+    <h3 id="fiber-optimized" class="section"><a class="anchor-link left" href="#fiber-optimized"><i class="icofont-laika link">&#xef71;</i></a>Fiber-Optimized</h3>
+    <p>Designed for Cats Effect&#39;s lightweight fibers:</p>
+    <ul>
+      <li>Minimal memory overhead (~150 bytes per fiber vs 1-2MB per thread)</li>
+      <li>Non-blocking connection acquisition</li>
+      <li>Excellent performance under high concurrency</li>
+    </ul>
+    
+    <h3 id="comprehensive-validation" class="section"><a class="anchor-link left" href="#comprehensive-validation"><i class="icofont-laika link">&#xef71;</i></a>Comprehensive Validation</h3>
+    <ul>
+      <li>Automatic connection health checks</li>
+      <li>Configurable validation queries</li>
+      <li>Idle connection keepalive</li>
+      <li>Connection leak detection</li>
+    </ul>
+    
+    <h2 id="migration-from-jdbc-hikaricp" class="section"><a class="anchor-link left" href="#migration-from-jdbc-hikaricp"><i class="icofont-laika link">&#xef71;</i></a>Migration from JDBC/HikariCP</h2>
+    <p>If you&#39;re migrating from HikariCP, here&#39;s a comparison:</p>
+    <pre><code class="nohighlight"><span class="comment">// HikariCP configuration
+</span><span class="keyword">val</span><span> </span><span class="identifier">hikariConfig</span><span> = </span><span class="keyword">new</span><span> </span><span class="type-name">HikariConfig</span><span>()
+</span><span class="identifier">hikariConfig</span><span>.</span><span class="identifier">setJdbcUrl</span><span>(</span><span class="string-literal">&quot;jdbc:mysql://localhost:3306/testdb&quot;</span><span>)
+</span><span class="identifier">hikariConfig</span><span>.</span><span class="identifier">setUsername</span><span>(</span><span class="string-literal">&quot;root&quot;</span><span>)
+</span><span class="identifier">hikariConfig</span><span>.</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+</span><span class="identifier">hikariConfig</span><span>.</span><span class="identifier">setMaximumPoolSize</span><span>(</span><span class="number-literal">20</span><span>)
+</span><span class="identifier">hikariConfig</span><span>.</span><span class="identifier">setMinimumIdle</span><span>(</span><span class="number-literal">5</span><span>)
+</span><span class="identifier">hikariConfig</span><span>.</span><span class="identifier">setConnectionTimeout</span><span>(</span><span class="number-literal">30000</span><span>)
+
+</span><span class="comment">// Equivalent ldbc-connector configuration
+</span><span class="keyword">val</span><span> </span><span class="identifier">ldbcConfig</span><span> = </span><span class="type-name">MySQLConfig</span><span>.</span><span class="identifier">default</span><span>
+  .</span><span class="identifier">setHost</span><span>(</span><span class="string-literal">&quot;localhost&quot;</span><span>)
+  .</span><span class="identifier">setPort</span><span>(</span><span class="number-literal">3306</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;testdb&quot;</span><span>)
+  .</span><span class="identifier">setUser</span><span>(</span><span class="string-literal">&quot;root&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+  .</span><span class="identifier">setMaxConnections</span><span>(</span><span class="number-literal">20</span><span>)
+  .</span><span class="identifier">setMinConnections</span><span>(</span><span class="number-literal">5</span><span>)
+  .</span><span class="identifier">setConnectionTimeout</span><span>(</span><span class="number-literal">30</span><span>.</span><span class="identifier">seconds</span><span>)</span></code></pre>
+    
+    <h2 id="best-practices" class="section"><a class="anchor-link left" href="#best-practices"><i class="icofont-laika link">&#xef71;</i></a>Best Practices</h2>
+    <ol class="arabic">
+      <li><strong>Start with defaults</strong>: The default configuration works well for most applications</li>
+      <li><strong>Monitor your pool</strong>: Use metrics tracking to understand your actual usage patterns</li>
+      <li><strong>Set appropriate timeouts</strong>: Configure based on your application&#39;s SLA requirements</li>
+      <li><strong>Enable leak detection</strong>: In development/staging to catch connection leaks early</li>
+      <li><strong>Use lifecycle hooks</strong>: For request tracing or session configuration</li>
+    </ol>
     
     <h2 id="references" class="section"><a class="anchor-link left" href="#references"><i class="icofont-laika link">&#xef71;</i></a>References</h2>
     <ul>
-      <li><a href="../examples/HikariCP.html">HikariCP</a></li>
-      <li><a href="../tutorial/Connection.html#using-the-jdbc-connector">Using JDBC connector</a></li>
+      <li><a href="../tutorial/Connection.html#connection-pooling">Connection Pooling</a></li>
+      <li><a href="../reference/Pooling.html">Connection Pooling Architecture</a></li>
+      <li><a href="../reference/Pooling.html#benchmark-results">Performance Benchmarks</a></li>
     </ul>
 
     

@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <a class="text-link menu-toggle" href="#">Version 0.4</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="../reference/">はじめに</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Connector.html">コネクタ</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Performance.html">パフォーマンス</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Pooling.html">コネクションプーリング</a></li>
   </ul>
   
 
@@ -198,15 +199,12 @@
 </span><span class="identifier">truncateDDL</span><span>.</span><span class="identifier">foreach</span><span>(</span><span class="identifier">println</span><span>)  </span><span class="comment">// TRUNCATE TABLE文が出力される
 </span><span>
 </span><span class="comment">// DDL操作の実行例
-</span><span class="identifier">provider</span><span>
-  .</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
-    </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">sequence</span><span>(
-        </span><span class="identifier">userSchema</span><span>.</span><span class="identifier">createIfNotExists</span><span>,
-        </span><span class="identifier">userSchema</span><span>.</span><span class="identifier">truncate</span><span>,
-        </span><span class="identifier">userSchema</span><span>.</span><span class="identifier">dropIfExists</span><span>
-      )
-      .</span><span class="identifier">commit</span><span>(</span><span class="identifier">conn</span><span>)
-  }
+</span><span class="type-name">DBIO</span><span>.</span><span class="identifier">sequence</span><span>(
+    </span><span class="identifier">userSchema</span><span>.</span><span class="identifier">createIfNotExists</span><span>,
+    </span><span class="identifier">userSchema</span><span>.</span><span class="identifier">truncate</span><span>,
+    </span><span class="identifier">userSchema</span><span>.</span><span class="identifier">dropIfExists</span><span>
+  )
+  .</span><span class="identifier">commit</span><span>(</span><span class="identifier">connector</span><span>)
 </span><span class="comment">// ...existing code...</span></code></pre>
     <p>上記のコードは、テーブルの存在確認を行いながら作成し、必要に応じてテーブル内のデータをリセットし、その後テーブル自体を削除する操作を実現します。</p>
     

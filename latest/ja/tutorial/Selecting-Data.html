@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <a class="text-link menu-toggle" href="#">Version 0.4</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="../reference/">はじめに</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Connector.html">コネクタ</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Performance.html">パフォーマンス</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Pooling.html">コネクションプーリング</a></li>
   </ul>
   
 
@@ -176,6 +177,13 @@
     <li class="level1 nav-leaf"><a href="#単一結果の取得-option型">単一結果の取得（Option型）</a></li>
     <li class="level1 nav-leaf"><a href="#クエリ実行メソッドの選択">クエリ実行メソッドの選択</a></li>
     <li class="level1 nav-leaf"><a href="#コレクション操作とクエリの組み合わせ">コレクション操作とクエリの組み合わせ</a></li>
+    <li class="level1 nav-node"><a href="#ストリーミングによる大量データの効率的な処理">ストリーミングによる大量データの効率的な処理</a></li>
+    <li class="level2 nav-leaf"><a href="#ストリーミングの基本的な使い方">ストリーミングの基本的な使い方</a></li>
+    <li class="level2 nav-leaf"><a href="#フェッチサイズの指定">フェッチサイズの指定</a></li>
+    <li class="level2 nav-leaf"><a href="#ストリーミングでの実用的なデータ処理">ストリーミングでの実用的なデータ処理</a></li>
+    <li class="level2 nav-leaf"><a href="#usecursorfetchによる動作の最適化">UseCursorFetchによる動作の最適化</a></li>
+    <li class="level2 nav-leaf"><a href="#大量データ処理の実例">大量データ処理の実例</a></li>
+    <li class="level2 nav-leaf"><a href="#ストリーミングのメリット">ストリーミングのメリット</a></li>
     <li class="level1 nav-leaf"><a href="#まとめ">まとめ</a></li>
     <li class="level1 nav-leaf"><a href="#次のステップ">次のステップ</a></li>
   </ul>
@@ -189,6 +197,11 @@
     <h1 id="データ選択" class="title">データ選択</h1>
     <p><a href="Parameterized-Queries.html">パラメータ化クエリ</a>の使い方を学んだところで、今度はさまざまな形式でデータを取得する方法を見ていきましょう。このページでは、SELECTクエリを使ってデータを効率的に取得し、Scalaの型にマッピングする方法を説明します。</p>
     <p>ldbcの最も強力な機能の1つは、データベースの結果をScalaの型に簡単にマッピングできることです。単純なプリミティブ型から複雑なケースクラスまで、さまざまなデータ形式を扱えます。</p>
+    <p>※ このチュートリアルでは、データベース操作を実行するために<code>Connector</code>を使用します。以下のように作成します：</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+
+</span><span class="comment">// Connectorを作成
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)</span></code></pre>
     
     <h2 id="データ取得の基本ワークフロー" class="section"><a class="anchor-link left" href="#データ取得の基本ワークフロー"><i class="icofont-laika link">&#xef71;</i></a>データ取得の基本ワークフロー</h2>
     <p>ldbcでデータを取得する基本的な流れは以下の通りです：</p>
@@ -196,7 +209,7 @@
       <li>SQLクエリを<code>sql</code>補間子で作成</li>
       <li><code>.query[T]</code>で結果の型を指定</li>
       <li><code>.to[Collection]</code>で結果をコレクションに変換（オプション）</li>
-      <li><code>.readOnly()</code>/<code>.commit()</code>/<code>.transaction()</code>などでクエリを実行</li>
+      <li><code>.readOnly(connector)</code>/<code>.commit(connector)</code>/<code>.transaction(connector)</code>などでクエリを実行</li>
       <li>結果を処理</li>
     </ol>
     <p>この流れをコード上の型の変化と共に見ていきましょう。</p>
@@ -206,15 +219,22 @@
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="string-literal">sql&quot;SELECT name FROM user&quot;</span><span>
   .</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>]                 </span><span class="comment">// Query[String]
 </span><span>  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]                      </span><span class="comment">// DBIO[List[String]]
-</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)                </span><span class="comment">// IO[List[String]]
+</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)           </span><span class="comment">// IO[List[String]]
 </span><span>  .</span><span class="identifier">unsafeRunSync</span><span>()               </span><span class="comment">// List[String]
 </span><span>  .</span><span class="identifier">foreach</span><span>(</span><span class="identifier">println</span><span>)              </span><span class="comment">// Unit</span></code></pre>
     <p>このコードを詳しく説明すると：</p>
     <ul>
       <li><code>sql&quot;SELECT name FROM user&quot;</code> - SQLクエリを定義します。</li>
       <li><code>.query[String]</code> - 各行の結果を<code>String</code>型にマッピングします。これにより<code>Query[String]</code>型が生成されます。</li>
-      <li><code>.to[List]</code> - 結果を<code>List</code>に集約します。<code>DBIO[List[String]]</code>型が生成されます。このメソッドは<code>FactoryCompat</code>を実装する任意のコレクション型（<code>List</code>、<code>Vector</code>、<code>Set</code>など）で使用できます。</li>
-      <li><code>.readOnly(conn)</code> - コネクションを読み取り専用モードで使用してクエリを実行します。戻り値は<code>IO[List[String]]</code>です。</li>
+      <li>
+        <code>.to[List]</code> - 結果を<code>List</code>に集約します。<code>DBIO[List[String]]</code>型が生成されます。このメソッドは<code>FactoryCompat</code>を実装する任意のコレクション型（<code>List</code>、<code>Vector</code>、<code>Set</code>など）で使用できます。似たような方法として以下があります。
+        <ul>
+          <li><code>.unsafe</code>は単一の値を返し、正確に1行でない場合は例外を発生させる。</li>
+          <li><code>.option</code>は単一の値をOptionに包んで返し、返される行が複数ある場合は例外を発生させる。</li>
+          <li><code>.nel</code>は複数の値をNonEmptyListに包んで返し、返される行がない場合は例外を発生させます。</li>
+        </ul>
+      </li>
+      <li><code>.readOnly(connector)</code> - コネクションを読み取り専用モードで使用してクエリを実行します。戻り値は<code>IO[List[String]]</code>です。</li>
       <li><code>.unsafeRunSync()</code> - IOモナドを実行して実際の結果（<code>List[String]</code>）を取得します。</li>
       <li><code>.foreach(println)</code> - 結果の各要素を出力します。</li>
     </ul>
@@ -224,7 +244,7 @@
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="string-literal">sql&quot;SELECT name, email FROM user&quot;</span><span>
   .</span><span class="identifier">query</span><span>[(</span><span class="type-name">String</span><span>, </span><span class="type-name">String</span><span>)]       </span><span class="comment">// Query[(String, String)]
 </span><span>  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]                      </span><span class="comment">// DBIO[List[(String, String)]]
-</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)                </span><span class="comment">// IO[List[(String, String)]]
+</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)                </span><span class="comment">// IO[List[(String, String)]]
 </span><span>  .</span><span class="identifier">unsafeRunSync</span><span>()               </span><span class="comment">// List[(String, String)]
 </span><span>  .</span><span class="identifier">foreach</span><span> { </span><span class="keyword">case</span><span> (</span><span class="identifier">name</span><span>, </span><span class="identifier">email</span><span>) =&gt; </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;Name: </span><span class="substitution">$name</span><span class="string-literal">, Email: </span><span class="substitution">$email</span><span class="string-literal">&quot;</span><span>) }</span></code></pre>
     <p>複数列クエリでは、選択したカラムの順序とタプルの型パラメータの順序が一致していることが重要です。上記の例では、<code>name</code>が1番目のカラム（タプルの<code>_1</code>）、<code>email</code>が2番目のカラム（タプルの<code>_2</code>）に対応します。</p>
@@ -238,7 +258,7 @@
 </span><span class="string-literal">sql&quot;SELECT id, name, email FROM user&quot;</span><span>
   .</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>]                   </span><span class="comment">// Query[User]
 </span><span>  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]                      </span><span class="comment">// DBIO[List[User]]
-</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)                </span><span class="comment">// IO[List[User]]
+</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)                </span><span class="comment">// IO[List[User]]
 </span><span>  .</span><span class="identifier">unsafeRunSync</span><span>()               </span><span class="comment">// List[User]
 </span><span>  .</span><span class="identifier">foreach</span><span>(</span><span class="identifier">user</span><span> =&gt; </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;ID: </span><span class="substitution">${user.id}</span><span class="string-literal">, Name: </span><span class="substitution">${user.name}</span><span class="string-literal">, Email: </span><span class="substitution">${user.email}</span><span class="string-literal">&quot;</span><span>))</span></code></pre>
     <p><strong>重要</strong>: ケースクラスのフィールド名とSQLクエリで選択するカラム名が一致している必要があります。順序も一致している必要がありますが、名前が正確に一致していれば、ldbcが適切にマッピングします。</p>
@@ -268,7 +288,7 @@
 &quot;&quot;&quot;</span><span>
   .</span><span class="identifier">query</span><span>[</span><span class="type-name">CityWithCountry</span><span>]        </span><span class="comment">// Query[CityWithCountry]
 </span><span>  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]                      </span><span class="comment">// DBIO[List[CityWithCountry]]
-</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)                </span><span class="comment">// IO[List[CityWithCountry]]
+</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)                </span><span class="comment">// IO[List[CityWithCountry]]
 </span><span>  .</span><span class="identifier">unsafeRunSync</span><span>()               </span><span class="comment">// List[CityWithCountry]
 </span><span>  .</span><span class="identifier">foreach</span><span>(</span><span class="identifier">cityWithCountry</span><span> =&gt; </span><span class="identifier">println</span><span>(
     </span><span class="string-literal">s&quot;City: </span><span class="substitution">${cityWithCountry.city.name}</span><span class="string-literal">, Country: </span><span class="substitution">${cityWithCountry.country.name}</span><span class="string-literal">&quot;</span><span>
@@ -300,7 +320,7 @@
 &quot;&quot;&quot;</span><span>
   .</span><span class="identifier">query</span><span>[(</span><span class="type-name">City</span><span>, </span><span class="type-name">Country</span><span>)]        </span><span class="comment">// Query[(City, Country)]
 </span><span>  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]                      </span><span class="comment">// DBIO[List[(City, Country)]]
-</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)                </span><span class="comment">// IO[List[(City, Country)]]
+</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)                </span><span class="comment">// IO[List[(City, Country)]]
 </span><span>  .</span><span class="identifier">unsafeRunSync</span><span>()               </span><span class="comment">// List[(City, Country)]
 </span><span>  .</span><span class="identifier">foreach</span><span> { </span><span class="keyword">case</span><span> (</span><span class="identifier">city</span><span>, </span><span class="identifier">country</span><span>) =&gt; 
     </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;City: </span><span class="substitution">${city.name}</span><span class="string-literal">, Country: </span><span class="substitution">${country.name}</span><span class="string-literal">&quot;</span><span>)
@@ -325,7 +345,7 @@
 &quot;&quot;&quot;</span><span>
   .</span><span class="identifier">query</span><span>[(</span><span class="type-name">C</span><span>, </span><span class="type-name">CT</span><span>)]                </span><span class="comment">// Query[(C, CT)]
 </span><span>  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]                      </span><span class="comment">// DBIO[List[(C, CT)]]
-</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)                </span><span class="comment">// IO[List[(C, CT)]]
+</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)                </span><span class="comment">// IO[List[(C, CT)]]
 </span><span>  .</span><span class="identifier">unsafeRunSync</span><span>()               </span><span class="comment">// List[(C, CT)]
 </span><span>  .</span><span class="identifier">foreach</span><span> { </span><span class="keyword">case</span><span> (</span><span class="identifier">city</span><span>, </span><span class="identifier">country</span><span>) =&gt; 
     </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;City: </span><span class="substitution">${city.name}</span><span class="string-literal">, Country: </span><span class="substitution">${country.name}</span><span class="string-literal">&quot;</span><span>)
@@ -339,7 +359,7 @@
 </span><span class="string-literal">sql&quot;SELECT id, name, email FROM user WHERE id = </span><span class="substitution">${userId}</span><span class="string-literal">&quot;</span><span>
   .</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>]                   </span><span class="comment">// Query[User]
 </span><span>  .</span><span class="identifier">to</span><span>[</span><span class="type-name">Option</span><span>]                    </span><span class="comment">// DBIO[Option[User]]
-</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)                </span><span class="comment">// IO[Option[User]]
+</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)                </span><span class="comment">// IO[Option[User]]
 </span><span>  .</span><span class="identifier">unsafeRunSync</span><span>()               </span><span class="comment">// Option[User]
 </span><span>  .</span><span class="identifier">foreach</span><span>(</span><span class="identifier">user</span><span> =&gt; </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;Found user: </span><span class="substitution">${user.name}</span><span class="string-literal">&quot;</span><span>))</span></code></pre>
     <p>結果が見つからない場合は<code>None</code>が返され、1件見つかった場合は<code>Some(User(...))</code>が返されます。</p>
@@ -347,27 +367,27 @@
     <h2 id="クエリ実行メソッドの選択" class="section"><a class="anchor-link left" href="#クエリ実行メソッドの選択"><i class="icofont-laika link">&#xef71;</i></a>クエリ実行メソッドの選択</h2>
     <p>ldbcでは、用途に応じて異なるクエリ実行メソッドが用意されています：</p>
     <ul>
-      <li><code>.readOnly(conn)</code> - 読み取り専用操作に使用します（SELECT文など）</li>
-      <li><code>.commit(conn)</code> - 自動コミットモードで書き込み操作を実行します</li>
-      <li><code>.rollback(conn)</code> - 書き込み操作を実行し、必ずロールバックします（テスト用）</li>
-      <li><code>.transaction(conn)</code> - トランザクション内で操作を実行し、成功時のみコミットします</li>
+      <li><code>.readOnly(connector)</code> - 読み取り専用操作に使用します（SELECT文など）</li>
+      <li><code>.commit(connector)</code> - 自動コミットモードで書き込み操作を実行します</li>
+      <li><code>.rollback(connector)</code> - 書き込み操作を実行し、必ずロールバックします（テスト用）</li>
+      <li><code>.transaction(connector)</code> - トランザクション内で操作を実行し、成功時のみコミットします</li>
     </ul>
     <pre><code class="nohighlight"><span class="comment">// 読み取り専用操作の例
 </span><span class="string-literal">sql&quot;SELECT * FROM users&quot;</span><span>
   .</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>]
   .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
-  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)
+  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
 
 </span><span class="comment">// 書き込み操作の例（自動コミット）
 </span><span class="string-literal">sql&quot;UPDATE users SET name = </span><span class="substitution">${newName}</span><span class="string-literal"> WHERE id = </span><span class="substitution">${userId}</span><span class="string-literal">&quot;</span><span>
   .</span><span class="identifier">update</span><span>
-  .</span><span class="identifier">commit</span><span>(</span><span class="identifier">conn</span><span>)
+  .</span><span class="identifier">commit</span><span>(</span><span class="identifier">connector</span><span>)
 
 </span><span class="comment">// トランザクション内での複数操作
 </span><span>(</span><span class="keyword">for</span><span> {
   </span><span class="identifier">userId</span><span> &lt;- </span><span class="string-literal">sql&quot;INSERT INTO users (name, email) VALUES (</span><span class="substitution">${name}</span><span class="string-literal">, </span><span class="substitution">${email}</span><span class="string-literal">)&quot;</span><span>.</span><span class="identifier">returning</span><span>[</span><span class="type-name">Long</span><span>]
   </span><span class="identifier">_</span><span>      &lt;- </span><span class="string-literal">sql&quot;INSERT INTO user_roles (user_id, role_id) VALUES (</span><span class="substitution">${userId}</span><span class="string-literal">, </span><span class="substitution">${roleId}</span><span class="string-literal">)&quot;</span><span>.</span><span class="identifier">update</span><span>
-} </span><span class="keyword">yield</span><span> </span><span class="identifier">userId</span><span>).</span><span class="identifier">transaction</span><span>(</span><span class="identifier">conn</span><span>)</span></code></pre>
+} </span><span class="keyword">yield</span><span> </span><span class="identifier">userId</span><span>).</span><span class="identifier">transaction</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
     
     <h2 id="コレクション操作とクエリの組み合わせ" class="section"><a class="anchor-link left" href="#コレクション操作とクエリの組み合わせ"><i class="icofont-laika link">&#xef71;</i></a>コレクション操作とクエリの組み合わせ</h2>
     <p>取得したデータに対して、Scalaのコレクション操作を適用することで、より複雑なデータ処理を簡潔に記述できます：</p>
@@ -375,7 +395,7 @@
 </span><span class="string-literal">sql&quot;SELECT id, name, department FROM employees&quot;</span><span>
   .</span><span class="identifier">query</span><span>[(</span><span class="type-name">Long</span><span>, </span><span class="type-name">String</span><span>, </span><span class="type-name">String</span><span>)] </span><span class="comment">// ID, 名前, 部署
 </span><span>  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
-  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)
+  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
   .</span><span class="identifier">unsafeRunSync</span><span>()
   .</span><span class="identifier">groupBy</span><span>(</span><span class="identifier">_</span><span class="number-literal">._3</span><span>) </span><span class="comment">// 部署ごとにグループ化
 </span><span>  .</span><span class="identifier">map</span><span> { </span><span class="keyword">case</span><span> (</span><span class="identifier">department</span><span>, </span><span class="identifier">employees</span><span>) =&gt; 
@@ -385,6 +405,127 @@
     </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;Department: </span><span class="substitution">$department</span><span class="string-literal">, Employees: </span><span class="substitution">${names.mkString(&quot;, &quot;)}</span><span class="string-literal">&quot;</span><span>)
   }</span></code></pre>
     
+    <h2 id="ストリーミングによる大量データの効率的な処理" class="section"><a class="anchor-link left" href="#ストリーミングによる大量データの効率的な処理"><i class="icofont-laika link">&#xef71;</i></a>ストリーミングによる大量データの効率的な処理</h2>
+    <p>大量のデータを処理する場合、すべてのデータを一度にメモリに読み込むとメモリ不足になる可能性があります。ldbcでは、<strong>ストリーミング</strong>を使ってデータを効率的に処理できます。</p>
+    
+    <h3 id="ストリーミングの基本的な使い方" class="section"><a class="anchor-link left" href="#ストリーミングの基本的な使い方"><i class="icofont-laika link">&#xef71;</i></a>ストリーミングの基本的な使い方</h3>
+    <p>ストリーミングを使用すると、データを少しずつ取得して処理できるため、メモリ使用量を大幅に削減できます：</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">fs2</span><span>.</span><span class="type-name">Stream</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.*
+
+</span><span class="comment">// 基本的なストリーミング
+</span><span class="keyword">val</span><span> </span><span class="identifier">cityStream</span><span>: </span><span class="type-name">Stream</span><span>[</span><span class="type-name">DBIO</span><span>, </span><span class="type-name">String</span><span>] = 
+  </span><span class="string-literal">sql&quot;SELECT name FROM city&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>]
+    .</span><span class="identifier">stream</span><span>                    </span><span class="comment">// Stream[DBIO, String]
+</span><span>
+</span><span class="comment">// 最初の5件のみを取得して処理
+</span><span class="keyword">val</span><span> </span><span class="identifier">firstFiveCities</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">List</span><span>[</span><span class="type-name">String</span><span>]] =
+  </span><span class="identifier">cityStream</span><span>
+    .</span><span class="identifier">take</span><span>(</span><span class="number-literal">5</span><span>)                   </span><span class="comment">// 最初の5件のみ
+</span><span>    .</span><span class="identifier">compile</span><span>.</span><span class="identifier">toList</span><span>            </span><span class="comment">// StreamをListに変換
+</span><span>    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)            </span><span class="comment">// IO[List[String]]</span></code></pre>
+    
+    <h3 id="フェッチサイズの指定" class="section"><a class="anchor-link left" href="#フェッチサイズの指定"><i class="icofont-laika link">&#xef71;</i></a>フェッチサイズの指定</h3>
+    <p><code>stream(fetchSize: Int)</code>メソッドを使用して、一度に取得する行数を制御できます：</p>
+    <pre><code class="nohighlight"><span class="comment">// 一度に10行ずつ取得
+</span><span class="keyword">val</span><span> </span><span class="identifier">efficientStream</span><span>: </span><span class="type-name">Stream</span><span>[</span><span class="type-name">DBIO</span><span>, </span><span class="type-name">String</span><span>] = 
+  </span><span class="string-literal">sql&quot;SELECT name FROM city&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>]
+    .</span><span class="identifier">stream</span><span>(</span><span class="number-literal">10</span><span>)                </span><span class="comment">// fetchSize = 10
+</span><span>
+</span><span class="comment">// 大量データを効率的に処理
+</span><span class="keyword">val</span><span> </span><span class="identifier">processLargeData</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">Int</span><span>] = 
+  </span><span class="string-literal">sql&quot;SELECT id, name, population FROM city&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[(</span><span class="type-name">Long</span><span>, </span><span class="type-name">String</span><span>, </span><span class="type-name">Int</span><span>)]
+    .</span><span class="identifier">stream</span><span>(</span><span class="number-literal">100</span><span>)               </span><span class="comment">// 100行ずつ取得
+</span><span>    .</span><span class="identifier">filter</span><span>(</span><span class="identifier">_</span><span class="number-literal">._3</span><span> &gt; </span><span class="number-literal">1000000</span><span>)    </span><span class="comment">// 人口100万人以上
+</span><span>    .</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span class="number-literal">._2</span><span>)                 </span><span class="comment">// 都市名のみ取得
+</span><span>    .</span><span class="identifier">compile</span><span>.</span><span class="identifier">toList</span><span>
+    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
+    .</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">size</span><span>)</span></code></pre>
+    
+    <h3 id="ストリーミングでの実用的なデータ処理" class="section"><a class="anchor-link left" href="#ストリーミングでの実用的なデータ処理"><i class="icofont-laika link">&#xef71;</i></a>ストリーミングでの実用的なデータ処理</h3>
+    <p>ストリーミングはFs2の<code>Stream</code>を返すため、豊富な関数型操作が利用できます：</p>
+    <pre><code class="nohighlight"><span class="comment">// 大量のユーザーデータを段階的に処理
+</span><span class="keyword">val</span><span> </span><span class="identifier">processUsers</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">Unit</span><span>] = 
+  </span><span class="string-literal">sql&quot;SELECT id, name, email, created_at FROM users&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[(</span><span class="type-name">Long</span><span>, </span><span class="type-name">String</span><span>, </span><span class="type-name">String</span><span>, </span><span class="identifier">java</span><span>.</span><span class="identifier">time</span><span>.</span><span class="type-name">LocalDateTime</span><span>)]
+    .</span><span class="identifier">stream</span><span>(</span><span class="number-literal">50</span><span>)                </span><span class="comment">// 50行ずつ取得
+</span><span>    .</span><span class="identifier">filter</span><span>(</span><span class="identifier">_</span><span class="number-literal">._4</span><span>.</span><span class="identifier">isAfter</span><span>(</span><span class="identifier">lastWeek</span><span>))  </span><span class="comment">// 先週以降に作成されたユーザー
+</span><span>    .</span><span class="identifier">map</span><span> { </span><span class="keyword">case</span><span> (</span><span class="identifier">id</span><span>, </span><span class="identifier">name</span><span>, </span><span class="identifier">email</span><span>, </span><span class="identifier">_</span><span>) =&gt; 
+      </span><span class="string-literal">s&quot;新規ユーザー: </span><span class="substitution">$name</span><span class="string-literal"> (</span><span class="substitution">$email</span><span class="string-literal">)&quot;</span><span>
+    }
+    .</span><span class="identifier">evalMap</span><span>(</span><span class="type-name">IO</span><span>.</span><span class="identifier">println</span><span>)       </span><span class="comment">// 結果を順次出力
+</span><span>    .</span><span class="identifier">compile</span><span>.</span><span class="identifier">drain</span><span>             </span><span class="comment">// ストリームを実行
+</span><span>    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
+}</span></code></pre>
+    
+    <h3 id="usecursorfetchによる動作の最適化" class="section"><a class="anchor-link left" href="#usecursorfetchによる動作の最適化"><i class="icofont-laika link">&#xef71;</i></a>UseCursorFetchによる動作の最適化</h3>
+    <p>MySQLでは<code>UseCursorFetch</code>の設定によってストリーミングの効率が大きく変わります：</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// UseCursorFetch=true（推奨）- 真のストリーミング
+</span><span class="keyword">val</span><span> </span><span class="identifier">efficientDatasource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">host</span><span>, </span><span class="identifier">port</span><span>, </span><span class="identifier">user</span><span>, </span><span class="identifier">password</span><span>, </span><span class="identifier">database</span><span>)
+  .</span><span class="identifier">setUseCursorFetch</span><span>(</span><span class="boolean-literal">true</span><span>)    </span><span class="comment">// サーバーサイドカーソルを有効化
+</span><span>  .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">None</span><span>)
+
+</span><span class="comment">// UseCursorFetch=false（デフォルト）- 制限されたストリーミング
+</span><span class="keyword">val</span><span> </span><span class="identifier">standardDatasource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">host</span><span>, </span><span class="identifier">port</span><span>, </span><span class="identifier">user</span><span>, </span><span class="identifier">password</span><span>, </span><span class="identifier">database</span><span>)
+  .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">None</span><span>)</span></code></pre>
+    <p><strong>UseCursorFetch=trueの場合：</strong></p>
+    <ul>
+      <li>サーバーサイドカーソルを使用して、必要な分だけデータを段階的に取得</li>
+      <li>メモリ使用量を大幅に削減（数百万行でも安全）</li>
+      <li>真の意味でのストリーミング処理が可能</li>
+    </ul>
+    <p><strong>UseCursorFetch=falseの場合：</strong></p>
+    <ul>
+      <li>クエリ実行時にすべての結果をメモリに読み込み</li>
+      <li>小さなデータセットでは高速だが、大量データではリスク</li>
+      <li>ストリーミングの効果が限定的</li>
+    </ul>
+    
+    <h3 id="大量データ処理の実例" class="section"><a class="anchor-link left" href="#大量データ処理の実例"><i class="icofont-laika link">&#xef71;</i></a>大量データ処理の実例</h3>
+    <p>以下は100万行のデータを安全に処理する例です：</p>
+    <pre><code class="nohighlight"><span class="comment">// 効率的な大量データ処理
+// サーバーサイドカーソルを有効化したDataSourceを作成
+</span><span class="keyword">val</span><span> </span><span class="identifier">cursorDatasource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">host</span><span>, </span><span class="identifier">port</span><span>, </span><span class="identifier">user</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="identifier">password</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="identifier">database</span><span>)
+  .</span><span class="identifier">setUseCursorFetch</span><span>(</span><span class="boolean-literal">true</span><span>)   </span><span class="comment">// 重要：サーバーサイドカーソルを有効化
+</span><span>
+</span><span class="comment">// Connectorを作成
+</span><span class="keyword">val</span><span> </span><span class="identifier">cursorConnector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">cursorDatasource</span><span>)
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">processMillionRecords</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">Long</span><span>] = 
+  </span><span class="string-literal">sql&quot;SELECT id, amount FROM transactions WHERE year = 2024&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[(</span><span class="type-name">Long</span><span>, </span><span class="type-name">BigDecimal</span><span>)]
+    .</span><span class="identifier">stream</span><span>(</span><span class="number-literal">1000</span><span>)          </span><span class="comment">// 1000行ずつ処理
+</span><span>    .</span><span class="identifier">filter</span><span>(</span><span class="identifier">_</span><span class="number-literal">._2</span><span> &gt; </span><span class="number-literal">100</span><span>)    </span><span class="comment">// 100円以上の取引のみ
+</span><span>    .</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span class="number-literal">._2</span><span>)             </span><span class="comment">// 金額のみ抽出
+</span><span>    .</span><span class="identifier">fold</span><span>(</span><span class="type-name">BigDecimal</span><span>(</span><span class="number-literal">0</span><span>))(</span><span class="identifier">_</span><span> + </span><span class="identifier">_</span><span>)  </span><span class="comment">// 合計を計算
+</span><span>    .</span><span class="identifier">compile</span><span>.</span><span class="identifier">lastOrError</span><span>   </span><span class="comment">// 最終結果を取得
+</span><span>    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">cursorConnector</span><span>)</span></code></pre>
+    
+    <h3 id="ストリーミングのメリット" class="section"><a class="anchor-link left" href="#ストリーミングのメリット"><i class="icofont-laika link">&#xef71;</i></a>ストリーミングのメリット</h3>
+    <ol class="arabic">
+      <li><strong>メモリ効率</strong>: 大量データでもメモリ使用量を一定に保てる</li>
+      <li><strong>早期処理</strong>: データを受信しながら同時に処理できる</li>
+      <li><strong>中断可能</strong>: 条件に応じて処理を途中で止められる</li>
+      <li><strong>関数型操作</strong>: <code>filter</code>、<code>map</code>、<code>take</code>などの豊富な操作</li>
+    </ol>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// 条件に応じた早期終了の例
+</span><span class="keyword">val</span><span> </span><span class="identifier">findFirstLargeCity</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">Option</span><span>[</span><span class="type-name">String</span><span>]] = 
+  </span><span class="string-literal">sql&quot;SELECT name, population FROM city ORDER BY population DESC&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[(</span><span class="type-name">String</span><span>, </span><span class="type-name">Int</span><span>)]
+    .</span><span class="identifier">stream</span><span>(</span><span class="number-literal">10</span><span>)
+    .</span><span class="identifier">find</span><span>(</span><span class="identifier">_</span><span class="number-literal">._2</span><span> &gt; </span><span class="number-literal">5000000</span><span>)      </span><span class="comment">// 人口500万人以上の最初の都市
+</span><span>    .</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span class="number-literal">._1</span><span>))          </span><span class="comment">// 都市名のみ取得
+</span><span>    .</span><span class="identifier">compile</span><span>.</span><span class="identifier">last</span><span>
+    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
+    
     <h2 id="まとめ" class="section"><a class="anchor-link left" href="#まとめ"><i class="icofont-laika link">&#xef71;</i></a>まとめ</h2>
     <p>ldbcは、データベースからのデータ取得を型安全かつ直感的に行うための機能を提供しています。このチュートリアルでは、以下の内容を説明しました：</p>
     <ul>
@@ -393,9 +534,10 @@
       <li>ケースクラスへのマッピング</li>
       <li>複数テーブルの結合とネストしたデータ構造</li>
       <li>単一結果と複数結果の取得</li>
+      <li><strong>ストリーミングによる大量データの効率的な処理</strong></li>
       <li>さまざまな実行メソッド</li>
     </ul>
-    <p>これらの知識を活用して、アプリケーション内でデータベースから効率的にデータを取得し、Scalaの型システムの利点を最大限に活用してください。</p>
+    <p>特にストリーミング機能を活用することで、大量のデータでもメモリ効率的に処理できるようになります。大量データを扱う場合は<code>UseCursorFetch=true</code>の設定を検討してください。</p>
     
     <h2 id="次のステップ" class="section"><a class="anchor-link left" href="#次のステップ"><i class="icofont-laika link">&#xef71;</i></a>次のステップ</h2>
     <p>これでデータベースからさまざまな形式でデータを取得する方法が理解できました。型安全なマッピングにより、データベースの結果を直接Scalaのデータ構造にマッピングできることがわかりました。</p>

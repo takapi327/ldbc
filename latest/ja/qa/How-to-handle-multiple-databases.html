@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <a class="text-link menu-toggle" href="#">Version 0.4</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="../reference/">はじめに</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Connector.html">コネクタ</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Performance.html">パフォーマンス</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Pooling.html">コネクションプーリング</a></li>
   </ul>
   
 
@@ -166,7 +167,7 @@
   <p class="header"><a href="#">Q: 複数のデータベース（マルチテナント環境）を扱う方法は？</a></p>
 
   <ul class="nav-list">
-    <li class="level1 nav-leaf"><a href="#a-複数のデータベースを扱う場合は-それぞれのデータベースに対して別々のconnectionproviderを作成します">A: 複数のデータベースを扱う場合は、それぞれのデータベースに対して別々のConnectionProviderを作成します。</a></li>
+    <li class="level1 nav-leaf"><a href="#a-複数のデータベースを扱う場合は-それぞれのデータベースに対して別々のdatasourceを作成します">A: 複数のデータベースを扱う場合は、それぞれのデータベースに対して別々のDataSourceを作成します。</a></li>
   </ul>
 
   <p class="footer"></p>
@@ -177,17 +178,21 @@
 
     <h1 id="q-複数のデータベース-マルチテナント環境-を扱う方法は" class="title">Q: 複数のデータベース（マルチテナント環境）を扱う方法は？</h1>
     
-    <h2 id="a-複数のデータベースを扱う場合は-それぞれのデータベースに対して別々のconnectionproviderを作成します" class="section"><a class="anchor-link left" href="#a-複数のデータベースを扱う場合は-それぞれのデータベースに対して別々のconnectionproviderを作成します"><i class="icofont-laika link">&#xef71;</i></a>A: 複数のデータベースを扱う場合は、それぞれのデータベースに対して別々のConnectionProviderを作成します。</h2>
-    <p>複数のデータベースを扱う場合は、それぞれのデータベースに対して別々の<code>ConnectionProvider</code>を作成します。例えば、次のように異なるデータベースに対して異なるプロバイダーを作成し、必要に応じてプロバイダーを切り替えて使用します。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">provider1</span><span> = </span><span class="type-name">ConnectionProvider</span><span>
-  .</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;host&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;user&quot;</span><span>, </span><span class="string-literal">&quot;password&quot;</span><span>, </span><span class="string-literal">&quot;database1&quot;</span><span>)
+    <h2 id="a-複数のデータベースを扱う場合は-それぞれのデータベースに対して別々のdatasourceを作成します" class="section"><a class="anchor-link left" href="#a-複数のデータベースを扱う場合は-それぞれのデータベースに対して別々のdatasourceを作成します"><i class="icofont-laika link">&#xef71;</i></a>A: 複数のデータベースを扱う場合は、それぞれのデータベースに対して別々のDataSourceを作成します。</h2>
+    <p>複数のデータベースを扱う場合は、それぞれのデータベースに対して別々の<code>DataSource</code>を作成します。例えば、次のように異なるデータベースに対して異なるデータソースを作成し、必要に応じてデータソースを切り替えて使用します。</p>
+    <pre><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">datasource1</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;host&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;user&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;database1&quot;</span><span>)
 
-</span><span class="keyword">val</span><span> </span><span class="identifier">provider2</span><span> = </span><span class="type-name">ConnectionProvider</span><span>
-  .</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;host&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;user&quot;</span><span>, </span><span class="string-literal">&quot;password&quot;</span><span>, </span><span class="string-literal">&quot;database2&quot;</span><span>)
+</span><span class="keyword">val</span><span> </span><span class="identifier">datasource2</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;host&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;user&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;database2&quot;</span><span>)
 
-</span><span class="comment">// 必要に応じてプロバイダーを切り替えて使用
-</span><span class="keyword">val</span><span> </span><span class="identifier">program1</span><span> = </span><span class="identifier">provider1</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt; </span><span class="comment">/* database1に対する操作 */</span><span> }
-</span><span class="keyword">val</span><span> </span><span class="identifier">program2</span><span> = </span><span class="identifier">provider2</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt; </span><span class="comment">/* database2に対する操作 */</span><span> }</span></code></pre>
+</span><span class="comment">// 必要に応じてデータソースを切り替えて使用
+</span><span class="keyword">val</span><span> </span><span class="identifier">program1</span><span> = </span><span class="identifier">datasource1</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt; </span><span class="comment">/* database1に対する操作 */</span><span> }
+</span><span class="keyword">val</span><span> </span><span class="identifier">program2</span><span> = </span><span class="identifier">datasource2</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt; </span><span class="comment">/* database2に対する操作 */</span><span> }</span></code></pre>
 
     
 <hr class="footer-rule"/>

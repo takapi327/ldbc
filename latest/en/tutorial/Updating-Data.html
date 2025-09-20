@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <a class="text-link menu-toggle" href="#">Version 0.4</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="../reference/">Introduction</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Connector.html">Connector</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Performance.html">Performance</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Pooling.html">Connection pooling</a></li>
   </ul>
   
 
@@ -212,15 +213,18 @@
   </span><span class="string-literal">sql&quot;INSERT INTO user (name, email) VALUES (</span><span class="substitution">$name</span><span class="string-literal">, </span><span class="substitution">$email</span><span class="string-literal">)&quot;</span><span>
     .</span><span class="identifier">update</span></code></pre>
     <p>Let&#39;s use this method to actually insert data and check the result:</p>
-    <pre><code class="nohighlight"><span class="comment">// Execute the insert operation
-</span><span class="identifier">insertUser</span><span>(</span><span class="string-literal">&quot;dave&quot;</span><span>, </span><span class="string-literal">&quot;dave@example.com&quot;</span><span>).</span><span class="identifier">commit</span><span>(</span><span class="identifier">conn</span><span>).</span><span class="identifier">unsafeRunSync</span><span>()
+    <pre><code class="nohighlight"><span class="comment">// Create Connector
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
+
+</span><span class="comment">// Execute the insert operation
+</span><span class="identifier">insertUser</span><span>(</span><span class="string-literal">&quot;dave&quot;</span><span>, </span><span class="string-literal">&quot;dave@example.com&quot;</span><span>).</span><span class="identifier">commit</span><span>(</span><span class="identifier">connector</span><span>).</span><span class="identifier">unsafeRunSync</span><span>()
 </span><span class="comment">// The return value is the number of affected rows (in this case, 1)
 </span><span>
 </span><span class="comment">// Check the inserted data
 </span><span class="string-literal">sql&quot;SELECT id, name, email FROM user WHERE name = &#39;dave&#39;&quot;</span><span>
   .</span><span class="identifier">query</span><span>[(</span><span class="type-name">Int</span><span>, </span><span class="type-name">String</span><span>, </span><span class="type-name">String</span><span>)]
   .</span><span class="identifier">to</span><span>[</span><span class="type-name">Option</span><span>]
-  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)
+  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
   .</span><span class="identifier">unsafeRunSync</span><span>()
   .</span><span class="identifier">foreach</span><span> { </span><span class="keyword">case</span><span> (</span><span class="identifier">id</span><span>, </span><span class="identifier">name</span><span>, </span><span class="identifier">email</span><span>) =&gt;
     </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;ID: </span><span class="substitution">$id</span><span class="string-literal">, Name: </span><span class="substitution">$name</span><span class="string-literal">, Email: </span><span class="substitution">$email</span><span class="string-literal">&quot;</span><span>)
@@ -234,9 +238,12 @@
   </span><span class="string-literal">sql&quot;INSERT INTO user (name, email) VALUES (</span><span class="substitution">$name</span><span class="string-literal">, </span><span class="substitution">$email</span><span class="string-literal">)&quot;</span><span>
     .</span><span class="identifier">returning</span><span>[</span><span class="type-name">Long</span><span>]</span></code></pre>
     <p>Let&#39;s use this method to insert a new user and get the auto-generated ID:</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Insert and get the auto-generated ID
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Create Connector
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
+
+</span><span class="comment">// Insert and get the auto-generated ID
 </span><span class="keyword">val</span><span> </span><span class="identifier">newUserId</span><span> = </span><span class="identifier">insertUserAndGetId</span><span>(</span><span class="string-literal">&quot;frank&quot;</span><span>, </span><span class="string-literal">&quot;frank@example.com&quot;</span><span>)
-  .</span><span class="identifier">commit</span><span>(</span><span class="identifier">conn</span><span>)
+  .</span><span class="identifier">commit</span><span>(</span><span class="identifier">connector</span><span>)
   .</span><span class="identifier">unsafeRunSync</span><span>()
 
 </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;New user ID: </span><span class="substitution">$newUserId</span><span class="string-literal">&quot;</span><span>)</span></code></pre>
@@ -254,9 +261,12 @@
     </span><span class="identifier">user</span><span> &lt;- </span><span class="string-literal">sql&quot;SELECT id, name, email FROM user WHERE id = </span><span class="substitution">$id</span><span class="string-literal">&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">Option</span><span>]
   </span><span class="keyword">yield</span><span> </span><span class="identifier">user</span></code></pre>
     <p>Usage example:</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Insert a user and get the inserted user&#39;s information
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Create Connector
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
+
+</span><span class="comment">// Insert a user and get the inserted user&#39;s information
 </span><span class="identifier">insertAndRetrieveUser</span><span>(</span><span class="string-literal">&quot;grace&quot;</span><span>, </span><span class="string-literal">&quot;grace@example.com&quot;</span><span>)
-  .</span><span class="identifier">commit</span><span>(</span><span class="identifier">conn</span><span>)
+  .</span><span class="identifier">commit</span><span>(</span><span class="identifier">connector</span><span>)
   .</span><span class="identifier">unsafeRunSync</span><span>()
   .</span><span class="identifier">foreach</span><span> { </span><span class="identifier">user</span><span> =&gt;
     </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;Inserted user: ID=</span><span class="substitution">${user.id}</span><span class="string-literal">, Name=</span><span class="substitution">${user.name}</span><span class="string-literal">, Email=</span><span class="substitution">${user.email}</span><span class="string-literal">&quot;</span><span>)
@@ -269,16 +279,19 @@
   </span><span class="string-literal">sql&quot;UPDATE user SET email = </span><span class="substitution">$newEmail</span><span class="string-literal"> WHERE id = </span><span class="substitution">$id</span><span class="string-literal">&quot;</span><span>
     .</span><span class="identifier">update</span></code></pre>
     <p>Usage example:</p>
-    <pre><code class="nohighlight"><span class="comment">// Update a user&#39;s email address
+    <pre><code class="nohighlight"><span class="comment">// Create Connector
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
+
+</span><span class="comment">// Update a user&#39;s email address
 </span><span class="identifier">updateUserEmail</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;alice+updated@example.com&quot;</span><span>)
-  .</span><span class="identifier">commit</span><span>(</span><span class="identifier">conn</span><span>)
+  .</span><span class="identifier">commit</span><span>(</span><span class="identifier">connector</span><span>)
   .</span><span class="identifier">unsafeRunSync</span><span>()
 
 </span><span class="comment">// Check the updated data
 </span><span class="string-literal">sql&quot;SELECT id, name, email FROM user WHERE id = 1&quot;</span><span>
   .</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>]
   .</span><span class="identifier">to</span><span>[</span><span class="type-name">Option</span><span>]
-  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)
+  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
   .</span><span class="identifier">unsafeRunSync</span><span>()
   .</span><span class="identifier">foreach</span><span> { </span><span class="identifier">user</span><span> =&gt; 
     </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;Updated user: ID=</span><span class="substitution">${user.id}</span><span class="string-literal">, Name=</span><span class="substitution">${user.name}</span><span class="string-literal">, Email=</span><span class="substitution">${user.email}</span><span class="string-literal">&quot;</span><span>)
@@ -302,16 +315,19 @@
   </span><span class="string-literal">sql&quot;DELETE FROM user WHERE id = </span><span class="substitution">$id</span><span class="string-literal">&quot;</span><span>
     .</span><span class="identifier">update</span></code></pre>
     <p>Usage example:</p>
-    <pre><code class="nohighlight"><span class="comment">// Delete a user
+    <pre><code class="nohighlight"><span class="comment">// Create Connector
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
+
+</span><span class="comment">// Delete a user
 </span><span class="identifier">deleteUser</span><span>(</span><span class="number-literal">5</span><span>)
-  .</span><span class="identifier">commit</span><span>(</span><span class="identifier">conn</span><span>)
+  .</span><span class="identifier">commit</span><span>(</span><span class="identifier">connector</span><span>)
   .</span><span class="identifier">unsafeRunSync</span><span>()
 
 </span><span class="comment">// Confirm deletion
 </span><span class="string-literal">sql&quot;SELECT COUNT(*) FROM user WHERE id = 5&quot;</span><span>
   .</span><span class="identifier">query</span><span>[</span><span class="type-name">Int</span><span>]
   .</span><span class="identifier">unsafe</span><span>
-  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)
+  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
   .</span><span class="identifier">unsafeRunSync</span><span>() </span><span class="keyword">match</span><span> {
     </span><span class="keyword">case</span><span> </span><span class="number-literal">0</span><span> =&gt; </span><span class="identifier">println</span><span>(</span><span class="string-literal">&quot;User with ID 5 has been deleted&quot;</span><span>)
     </span><span class="keyword">case</span><span> </span><span class="identifier">n</span><span> =&gt; </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;User with ID 5 still exists (count: </span><span class="substitution">$n</span><span class="string-literal">)&quot;</span><span>)
@@ -335,15 +351,18 @@
   </span><span class="keyword">val</span><span> </span><span class="identifier">values</span><span> = </span><span class="identifier">users</span><span>.</span><span class="identifier">map</span><span> { </span><span class="keyword">case</span><span> (</span><span class="identifier">name</span><span>, </span><span class="identifier">email</span><span>) =&gt; </span><span class="string-literal">sql&quot;(</span><span class="substitution">$name</span><span class="string-literal">, </span><span class="substitution">$email</span><span class="string-literal">)&quot;</span><span> }
   (</span><span class="string-literal">sql&quot;INSERT INTO user (name, email) VALUES &quot;</span><span> ++ </span><span class="type-name">Fragments</span><span>.</span><span class="identifier">values</span><span>(</span><span class="identifier">values</span><span>)).</span><span class="identifier">update</span></code></pre>
     <p>Usage example:</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Define multiple users
+    <pre><code class="nohighlight"><span class="comment">// Define multiple users
 </span><span class="keyword">val</span><span> </span><span class="identifier">newUsers</span><span> = </span><span class="type-name">NonEmptyList</span><span>.</span><span class="identifier">of</span><span>(
   (</span><span class="string-literal">&quot;greg&quot;</span><span>, </span><span class="string-literal">&quot;greg@example.com&quot;</span><span>),
   (</span><span class="string-literal">&quot;henry&quot;</span><span>, </span><span class="string-literal">&quot;henry@example.com&quot;</span><span>),
   (</span><span class="string-literal">&quot;irene&quot;</span><span>, </span><span class="string-literal">&quot;irene@example.com&quot;</span><span>)
 )
 
+</span><span class="comment">// Create Connector
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
+
 </span><span class="comment">// Execute bulk insertion
-</span><span class="keyword">val</span><span> </span><span class="identifier">insertedCount</span><span> = </span><span class="identifier">insertManyUsers</span><span>(</span><span class="identifier">newUsers</span><span>).</span><span class="identifier">commit</span><span>(</span><span class="identifier">conn</span><span>).</span><span class="identifier">unsafeRunSync</span><span>()
+</span><span class="keyword">val</span><span> </span><span class="identifier">insertedCount</span><span> = </span><span class="identifier">insertManyUsers</span><span>(</span><span class="identifier">newUsers</span><span>).</span><span class="identifier">commit</span><span>(</span><span class="identifier">connector</span><span>).</span><span class="identifier">unsafeRunSync</span><span>()
 </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;Number of rows inserted: </span><span class="substitution">$insertedCount</span><span class="string-literal">&quot;</span><span>) </span><span class="comment">// Should output &quot;Number of rows inserted: 3&quot;</span></code></pre>
     
     <h3 id="transactions-for-multiple-operations" class="section"><a class="anchor-link left" href="#transactions-for-multiple-operations"><i class="icofont-laika link">&#xef71;</i></a>Transactions for Multiple Operations</h3>
@@ -355,9 +374,12 @@
     </span><span class="identifier">profileId</span><span> &lt;- </span><span class="string-literal">sql&quot;INSERT INTO user_profile (user_id, bio) VALUES (</span><span class="substitution">$userId</span><span class="string-literal">, </span><span class="substitution">$bio</span><span class="string-literal">)&quot;</span><span>.</span><span class="identifier">returning</span><span>[</span><span class="type-name">Long</span><span>]
   </span><span class="keyword">yield</span><span> </span><span class="identifier">userId</span></code></pre>
     <p>By executing this method using <code>.transaction</code>, both user insertion and profile insertion are processed as a single transaction:</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Execute within a transaction
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Create Connector
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
+
+</span><span class="comment">// Execute within a transaction
 </span><span class="keyword">val</span><span> </span><span class="identifier">userId</span><span> = </span><span class="identifier">createUserWithProfile</span><span>(</span><span class="string-literal">&quot;julia&quot;</span><span>, </span><span class="string-literal">&quot;julia@example.com&quot;</span><span>, </span><span class="string-literal">&quot;Programmer&quot;</span><span>)
-  .</span><span class="identifier">transaction</span><span>(</span><span class="identifier">conn</span><span>)
+  .</span><span class="identifier">transaction</span><span>(</span><span class="identifier">connector</span><span>)
   .</span><span class="identifier">unsafeRunSync</span><span>()
 
 </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;Created user ID: </span><span class="substitution">$userId</span><span class="string-literal">&quot;</span><span>)</span></code></pre>
@@ -366,21 +388,21 @@
     <h2 id="selecting-query-execution-methods" class="section"><a class="anchor-link left" href="#selecting-query-execution-methods"><i class="icofont-laika link">&#xef71;</i></a>Selecting Query Execution Methods</h2>
     <p>ldbc provides the following query execution methods for data update operations:</p>
     <ul>
-      <li><code>.commit(conn)</code> - Executes a write operation in auto-commit mode (suitable for simple, single update operations)</li>
-      <li><code>.rollback(conn)</code> - Executes a write operation and always rolls back (for testing and verification)</li>
-      <li><code>.transaction(conn)</code> - Executes operations within a transaction, committing only upon success (suitable when you want to treat multiple operations as a single unit)</li>
+      <li><code>.commit(connector)</code> - Executes a write operation in auto-commit mode (suitable for simple, single update operations)</li>
+      <li><code>.rollback(connector)</code> - Executes a write operation and always rolls back (for testing and verification)</li>
+      <li><code>.transaction(connector)</code> - Executes operations within a transaction, committing only upon success (suitable when you want to treat multiple operations as a single unit)</li>
     </ul>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Execution in auto-commit mode (simple single operation)
-</span><span class="identifier">updateUserEmail</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;new@example.com&quot;</span><span>).</span><span class="identifier">commit</span><span>(</span><span class="identifier">conn</span><span>)
+</span><span class="identifier">updateUserEmail</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;new@example.com&quot;</span><span>).</span><span class="identifier">commit</span><span>(</span><span class="identifier">connector</span><span>)
 
 </span><span class="comment">// Execution for testing (changes are not saved)
-</span><span class="identifier">insertUser</span><span>(</span><span class="string-literal">&quot;test&quot;</span><span>, </span><span class="string-literal">&quot;test@example.com&quot;</span><span>).</span><span class="identifier">rollback</span><span>(</span><span class="identifier">conn</span><span>)
+</span><span class="identifier">insertUser</span><span>(</span><span class="string-literal">&quot;test&quot;</span><span>, </span><span class="string-literal">&quot;test@example.com&quot;</span><span>).</span><span class="identifier">rollback</span><span>(</span><span class="identifier">connector</span><span>)
 
 </span><span class="comment">// Multiple operations within a transaction (all succeed or all fail)
 </span><span>(</span><span class="keyword">for</span><span> {
   </span><span class="identifier">userId</span><span> &lt;- </span><span class="identifier">insertUser</span><span>(</span><span class="string-literal">&quot;kate&quot;</span><span>, </span><span class="string-literal">&quot;kate@example.com&quot;</span><span>).</span><span class="identifier">returning</span><span>[</span><span class="type-name">Long</span><span>]
   </span><span class="identifier">_</span><span>      &lt;- </span><span class="string-literal">sql&quot;INSERT INTO user_roles (user_id, role_id) VALUES (</span><span class="substitution">$userId</span><span class="string-literal">, 2)&quot;</span><span>.</span><span class="identifier">update</span><span>
-} </span><span class="keyword">yield</span><span> </span><span class="identifier">userId</span><span>).</span><span class="identifier">transaction</span><span>(</span><span class="identifier">conn</span><span>)</span></code></pre>
+} </span><span class="keyword">yield</span><span> </span><span class="identifier">userId</span><span>).</span><span class="identifier">transaction</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
     
     <h2 id="error-handling" class="section"><a class="anchor-link left" href="#error-handling"><i class="icofont-laika link">&#xef71;</i></a>Error Handling</h2>
     <p>It&#39;s also important to handle errors that may occur during data update operations. In ldbc, you can use the <code>IO</code> monad from <code>cats-effect</code> to process errors:</p>
@@ -392,7 +414,7 @@
 </span><span class="comment">// Example of error handling
 </span><span class="keyword">def</span><span> </span><span class="declaration-name">safeUpdateUser</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Long</span><span>, </span><span class="identifier">newEmail</span><span>: </span><span class="type-name">String</span><span>): </span><span class="type-name">Unit</span><span> = {
   </span><span class="keyword">val</span><span> </span><span class="identifier">result</span><span> = </span><span class="identifier">updateUserEmail</span><span>(</span><span class="identifier">id</span><span>, </span><span class="identifier">newEmail</span><span>)
-    .</span><span class="identifier">commit</span><span>(</span><span class="identifier">conn</span><span>)
+    .</span><span class="identifier">commit</span><span>(</span><span class="identifier">connector</span><span>)
     .</span><span class="identifier">attempt</span><span> </span><span class="comment">// Convert IO result to Either[Throwable, Int]
 </span><span>    .</span><span class="identifier">unsafeRunSync</span><span>()
     

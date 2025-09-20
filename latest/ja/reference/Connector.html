@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <a class="text-link menu-toggle" href="#">Version 0.4</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="index.html">はじめに</a></li>
     <li class="level2 active nav-leaf"><a href="#">コネクタ</a></li>
     <li class="level2 nav-leaf"><a href="Performance.html">パフォーマンス</a></li>
+    <li class="level2 nav-leaf"><a href="Pooling.html">コネクションプーリング</a></li>
   </ul>
   
 
@@ -210,9 +211,9 @@
     今後このコネクタを使用してより高レイヤーのAPIを提供する予定です。また既存の高レイヤーのAPIとの互換性を持たせることも予定しています。</p>
     <p>使用するにはプロジェクトに以下の依存関係を設定する必要があります。</p>
     <p><strong>JVM</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.3.3&quot;</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.4.0-RC1&quot;</span></code></pre>
     <p><strong>JS/Native</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %%% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.3.3&quot;</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %%% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.4.0-RC1&quot;</span></code></pre>
     <p><strong>サポートバージョン</strong></p>
     <p>現在のバージョンは以下のバージョンのMySQLをサポートしています。</p>
     <ul>
@@ -223,12 +224,12 @@
     将来的にはMySQL 5.7.xのサポートは終了する予定です。</p>
     
     <h2 id="接続" class="section"><a class="anchor-link left" href="#接続"><i class="icofont-laika link">&#xef71;</i></a>接続</h2>
-    <p>ldbcコネクタを使用してMySQLへの接続を行うためには、<code>ConnectionProvider</code>を使用します。</p>
+    <p>ldbcコネクタを使用してMySQLへの接続を行うためには、<code>MySQLDataSource</code>を使用します。</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="type-name">IO</span><span>
-</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.</span><span class="type-name">ConnectionProvider</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.</span><span class="type-name">MySQLDataSource</span><span>
 
-</span><span class="keyword">val</span><span> </span><span class="identifier">provider</span><span> = </span><span class="type-name">ConnectionProvider</span><span>
-  .</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>](
+</span><span class="keyword">val</span><span> </span><span class="identifier">datasource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](
     </span><span class="identifier">host</span><span> = </span><span class="string-literal">&quot;127.0.0.1&quot;</span><span>,
     </span><span class="identifier">port</span><span> = </span><span class="number-literal">3306</span><span>,
     </span><span class="identifier">user</span><span> = </span><span class="string-literal">&quot;root&quot;</span><span>,
@@ -315,9 +316,17 @@
         </tr>
       </tbody>
     </table>
-    <p><code>ConnectionProvider</code>は<code>Resource</code>を使用してリソース管理を行います。そのためコネクション情報を使用する場合は<code>use</code>メソッドを使用してリソースの管理を行います。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
-  </span><span class="comment">// コードを記述
+    <p><code>MySQLDataSource</code>から<code>Connector</code>を作成してデータベース操作を実行します。<code>Connector</code>は<code>DBIO</code>モナドを実際のデータベース操作に変換するインターフェースです。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+
+</span><span class="comment">// Connectorを作成
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
+
+</span><span class="comment">// DBIOを実行
+</span><span class="string-literal">sql&quot;SELECT 1&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">Int</span><span>].</span><span class="identifier">unsafe</span><span>.</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
+    <p>また、低レベルのConnection APIを使用する必要がある場合は、<code>getConnection</code>を使用して<code>Resource</code>を取得できます：</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="comment">// Connection APIを直接使用
 </span><span>}</span></code></pre>
     
     <h3 id="認証" class="section"><a class="anchor-link left" href="#認証"><i class="icofont-laika link">&#xef71;</i></a>認証</h3>
@@ -349,7 +358,7 @@
     <h4 id="読み取りクエリ-1" class="section"><a class="anchor-link left" href="#読み取りクエリ-1"><i class="icofont-laika link">&#xef71;</i></a>読み取りクエリ</h4>
     <p>読み取り専用のSQLを実行する場合は<code>executeQuery</code>メソッドを使用します。</p>
     <p>クエリを実行した結果MySQLサーバーから返される値は<code>ResultSet</code>に格納されて戻り値として返却されます。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="keyword">for</span><span>
     </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">createStatement</span><span>()
     </span><span class="identifier">result</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">executeQuery</span><span>(</span><span class="string-literal">&quot;SELECT * FROM users&quot;</span><span>)
@@ -360,7 +369,7 @@
     <h4 id="書き込みクエリ-1" class="section"><a class="anchor-link left" href="#書き込みクエリ-1"><i class="icofont-laika link">&#xef71;</i></a>書き込みクエリ</h4>
     <p>書き込みを行うSQLを実行する場合は<code>executeUpdate</code>メソッドを使用します。</p>
     <p>クエリを実行した結果MySQLサーバーから返される値は影響を受けた行数が戻り値として返却されます。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="keyword">for</span><span>
     </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">createStatement</span><span>()
     </span><span class="identifier">result</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">executeUpdate</span><span>(</span><span class="string-literal">&quot;INSERT INTO users (name, age) VALUES (&#39;Alice&#39;, 20)&quot;</span><span>)
@@ -370,7 +379,7 @@
     <h4 id="auto_incrementの値を取得-1" class="section"><a class="anchor-link left" href="#auto_incrementの値を取得-1"><i class="icofont-laika link">&#xef71;</i></a>AUTO_INCREMENTの値を取得</h4>
     <p><code>Statement</code>を使用してクエリ実行後にAUTO_INCREMENTの値を取得する場合は<code>getGeneratedKeys</code>メソッドを使用します。</p>
     <p>クエリを実行した結果MySQLサーバーから返される値はAUTO_INCREMENTに生成された値が戻り値として返却されます。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="keyword">for</span><span>
     </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">createStatement</span><span>()
     </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">executeUpdate</span><span>(</span><span class="string-literal">&quot;INSERT INTO users (name, age) VALUES (&#39;Alice&#39;, 20)&quot;</span><span>, </span><span class="type-name">Statement</span><span>.</span><span class="type-name">RETURN_GENERATED_KEYS</span><span>)
@@ -392,7 +401,7 @@
     
     <h4 id="client-preparedstatement" class="section"><a class="anchor-link left" href="#client-preparedstatement"><i class="icofont-laika link">&#xef71;</i></a>Client PreparedStatement</h4>
     <p><code>Connection</code>の<code>clientPreparedStatement</code>メソッドを使用して<code>Client PreparedStatement</code>を構築します。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="keyword">for</span><span> 
     </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">clientPreparedStatement</span><span>(</span><span class="string-literal">&quot;SELECT * FROM users WHERE id = ?&quot;</span><span>)
     ...
@@ -401,7 +410,7 @@
     
     <h4 id="server-preparedstatement" class="section"><a class="anchor-link left" href="#server-preparedstatement"><i class="icofont-laika link">&#xef71;</i></a>Server PreparedStatement</h4>
     <p><code>Connection</code>の<code>serverPreparedStatement</code>メソッドを使用して<code>Server PreparedStatement</code>を構築します。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="keyword">for</span><span> 
     </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">serverPreparedStatement</span><span>(</span><span class="string-literal">&quot;SELECT * FROM users WHERE id = ?&quot;</span><span>)
     ...
@@ -411,7 +420,7 @@
     <h4 id="読み取りクエリ-2" class="section"><a class="anchor-link left" href="#読み取りクエリ-2"><i class="icofont-laika link">&#xef71;</i></a>読み取りクエリ</h4>
     <p>読み取り専用のSQLを実行する場合は<code>executeQuery</code>メソッドを使用します。</p>
     <p>クエリを実行した結果MySQLサーバーから返される値は<code>ResultSet</code>に格納されて戻り値として返却されます。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="keyword">for</span><span> 
     </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">clientPreparedStatement</span><span>(</span><span class="string-literal">&quot;SELECT * FROM users WHERE id = ?&quot;</span><span>) </span><span class="comment">// or conn.serverPreparedStatement(&quot;SELECT * FROM users WHERE id = ?&quot;)
 </span><span>    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">setLong</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="number-literal">1</span><span>)
@@ -519,7 +528,7 @@
     <h4 id="書き込みクエリ-2" class="section"><a class="anchor-link left" href="#書き込みクエリ-2"><i class="icofont-laika link">&#xef71;</i></a>書き込みクエリ</h4>
     <p>書き込みを行うSQLを実行する場合は<code>executeUpdate</code>メソッドを使用します。</p>
     <p>クエリを実行した結果MySQLサーバーから返される値は影響を受けた行数が戻り値として返却されます。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="keyword">for</span><span> 
     </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">clientPreparedStatement</span><span>(</span><span class="string-literal">&quot;INSERT INTO users (name, age) VALUES (?, ?)&quot;</span><span>) </span><span class="comment">// or conn.serverPreparedStatement(&quot;INSERT INTO users (name, age) VALUES (?, ?)&quot;)
 </span><span>    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">setString</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;Alice&quot;</span><span>)
@@ -531,7 +540,7 @@
     <h4 id="auto_incrementの値を取得-2" class="section"><a class="anchor-link left" href="#auto_incrementの値を取得-2"><i class="icofont-laika link">&#xef71;</i></a>AUTO_INCREMENTの値を取得</h4>
     <p>クエリ実行後にAUTO_INCREMENTの値を取得する場合は<code>getGeneratedKeys</code>メソッドを使用します。</p>
     <p>クエリを実行した結果MySQLサーバーから返される値はAUTO_INCREMENTに生成された値が戻り値として返却されます。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="keyword">for</span><span> 
     </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">clientPreparedStatement</span><span>(</span><span class="string-literal">&quot;INSERT INTO users (name, age) VALUES (?, ?)&quot;</span><span>, </span><span class="type-name">Statement</span><span>.</span><span class="type-name">RETURN_GENERATED_KEYS</span><span>) </span><span class="comment">// or conn.serverPreparedStatement(&quot;INSERT INTO users (name, age) VALUES (?, ?)&quot;, Statement.RETURN_GENERATED_KEYS)
 </span><span>    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">setString</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;Alice&quot;</span><span>)
@@ -549,19 +558,21 @@
     <p><code>next</code>メソッドは次のレコードが存在する場合は<code>true</code>を返却し、次のレコードが存在しない場合は<code>false</code>を返却します。</p>
     <p><code>getXXX</code>メソッドはレコードから値を取得するためのAPIです。</p>
     <p><code>getXXX</code>メソッドは取得するカラムのインデックスを指定する方法とカラム名を指定する方法があります。</p>
-    <pre><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.</span><span class="identifier">syntax</span><span>.*  </span><span class="comment">// whileM拡張メソッドを有効化
+</span><span>
+</span><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="keyword">for</span><span> 
     </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">clientPreparedStatement</span><span>(</span><span class="string-literal">&quot;SELECT `id`, `name`, `age` FROM users WHERE id = ?&quot;</span><span>)
     </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">setLong</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="number-literal">1</span><span>)
-    </span><span class="identifier">result</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">executeQuery</span><span>()
-  </span><span class="keyword">yield</span><span>
-    </span><span class="keyword">val</span><span> </span><span class="identifier">builder</span><span> = </span><span class="type-name">List</span><span>.</span><span class="identifier">newBuilder</span><span>[(</span><span class="type-name">Long</span><span>, </span><span class="type-name">String</span><span>, </span><span class="type-name">Int</span><span>)]
-    </span><span class="keyword">while</span><span> </span><span class="identifier">resultSet</span><span>.</span><span class="identifier">next</span><span>() </span><span class="keyword">do</span><span>
-      </span><span class="keyword">val</span><span> </span><span class="identifier">id</span><span> = </span><span class="identifier">resultSet</span><span>.</span><span class="identifier">getLong</span><span>(</span><span class="number-literal">1</span><span>)
-      </span><span class="keyword">val</span><span> </span><span class="identifier">name</span><span> = </span><span class="identifier">resultSet</span><span>.</span><span class="identifier">getString</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>)
-      </span><span class="keyword">val</span><span> </span><span class="identifier">age</span><span> = </span><span class="identifier">resultSet</span><span>.</span><span class="identifier">getInt</span><span>(</span><span class="number-literal">3</span><span>)
-      </span><span class="identifier">builder</span><span> += (</span><span class="identifier">id</span><span>, </span><span class="identifier">name</span><span>, </span><span class="identifier">age</span><span>)
-    </span><span class="identifier">builder</span><span>.</span><span class="identifier">result</span><span>()
+    </span><span class="identifier">resultSet</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">executeQuery</span><span>()
+    </span><span class="identifier">users</span><span> &lt;- </span><span class="identifier">resultSet</span><span>.</span><span class="identifier">whileM</span><span>[</span><span class="type-name">List</span><span>, (</span><span class="type-name">Long</span><span>, </span><span class="type-name">String</span><span>, </span><span class="type-name">Int</span><span>)] {
+      </span><span class="keyword">for</span><span>
+        </span><span class="identifier">id</span><span>   &lt;- </span><span class="identifier">resultSet</span><span>.</span><span class="identifier">getLong</span><span>(</span><span class="number-literal">1</span><span>)
+        </span><span class="identifier">name</span><span> &lt;- </span><span class="identifier">resultSet</span><span>.</span><span class="identifier">getString</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>)
+        </span><span class="identifier">age</span><span>  &lt;- </span><span class="identifier">resultSet</span><span>.</span><span class="identifier">getInt</span><span>(</span><span class="number-literal">3</span><span>)
+      </span><span class="keyword">yield</span><span> (</span><span class="identifier">id</span><span>, </span><span class="identifier">name</span><span>, </span><span class="identifier">age</span><span>)
+    }
+  </span><span class="keyword">yield</span><span> </span><span class="identifier">users</span><span>
 }</span></code></pre>
     
     <h2 id="トランザクション" class="section"><a class="anchor-link left" href="#トランザクション"><i class="icofont-laika link">&#xef71;</i></a>トランザクション</h2>
@@ -704,21 +715,21 @@
     <p>ldbcでは<code>Connection</code>の<code>close</code>メソッドを使用して接続を閉じることができます。
     <code>close</code>メソッドを使用すると接続が閉じられるため、その後の処理で接続を使用することはできません。</p>
     <p>※ <code>Connection</code>は<code>Resource</code>を使用してリソース管理を行います。そのため<code>close</code>メソッドを使用してリソースの解放を行う必要はありません。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="identifier">conn</span><span>.</span><span class="identifier">close</span><span>()
 }</span></code></pre>
     
     <h3 id="com-init-db" class="section"><a class="anchor-link left" href="#com-init-db"><i class="icofont-laika link">&#xef71;</i></a>COM INIT DB</h3>
     <p><code>COM_INIT_DB</code>は接続のデフォルト・スキーマを変更するためのコマンドです。</p>
     <p>ldbcでは<code>Connection</code>の<code>setSchema</code>メソッドを使用してデフォルト・スキーマを変更することができます。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="identifier">conn</span><span>.</span><span class="identifier">setSchema</span><span>(</span><span class="string-literal">&quot;test&quot;</span><span>)
 }</span></code></pre>
     
     <h3 id="com-statistics" class="section"><a class="anchor-link left" href="#com-statistics"><i class="icofont-laika link">&#xef71;</i></a>COM STATISTICS</h3>
     <p><code>COM_STATISTICS</code>は内部ステータスの文字列を可読形式で取得するためのコマンドです。</p>
     <p>ldbcでは<code>Connection</code>の<code>getStatistics</code>メソッドを使用して内部ステータスの文字列を取得することができます。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="identifier">conn</span><span>.</span><span class="identifier">getStatistics</span><span>
 }</span></code></pre>
     <p>取得できるステータスは以下のようになります。</p>
@@ -737,7 +748,7 @@
     <p><code>COM_PING</code>はサーバーが生きているかチェックするためのコマンドです。</p>
     <p>ldbcでは<code>Connection</code>の<code>isValid</code>メソッドを使用してサーバーが生きているかチェックすることができます。
     サーバーが生きている場合は<code>true</code>を返却し、生きていない場合は<code>false</code>を返却します。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="identifier">conn</span><span>.</span><span class="identifier">isValid</span><span>
 }</span></code></pre>
     
@@ -751,7 +762,7 @@
       <li>etc...</li>
     </ul>
     <p>ldbcでは<code>Connection</code>の<code>changeUser</code>メソッドを使用してユーザーを変更することができます。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="identifier">conn</span><span>.</span><span class="identifier">changeUser</span><span>(</span><span class="string-literal">&quot;root&quot;</span><span>, </span><span class="string-literal">&quot;password&quot;</span><span>)
 }</span></code></pre>
     
@@ -763,7 +774,7 @@
       <li>接続を閉じない。</li>
     </ul>
     <p>ldbcでは<code>Connection</code>の<code>resetServerState</code>メソッドを使用してセッションの状態をリセットすることができます。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="identifier">conn</span><span>.</span><span class="identifier">resetServerState</span><span>
 }</span></code></pre>
     
@@ -773,7 +784,7 @@
     <p><code>enableMultiQueries</code>メソッドを使用すると、複数のクエリを一度に実行することができます。
     <code>disableMultiQueries</code>メソッドを使用すると、複数のクエリを一度に実行することができなくなります。</p>
     <p>※ これは、Insert、Update、および Delete ステートメントによるバッチ処理にのみ使用できます。Selectステートメントで使用を行なったとしても、最初のクエリの結果のみが返されます。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="identifier">conn</span><span>.</span><span class="identifier">enableMultiQueries</span><span> *&gt; </span><span class="identifier">conn</span><span>.</span><span class="identifier">disableMultiQueries</span><span>
 }</span></code></pre>
     
@@ -781,7 +792,7 @@
     <p>ldbcではバッチコマンドを使用して複数のクエリを一度に実行することができます。
     バッチコマンドを使用することで、複数のクエリを一度に実行することができるため、ネットワークラウンドトリップの回数を減らすことができます。</p>
     <p>バッチコマンドを使用するには<code>Statement</code>または<code>PreparedStatement</code>の<code>addBatch</code>メソッドを使用してクエリを追加し、<code>executeBatch</code>メソッドを使用してクエリを実行します。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="keyword">for</span><span>
     </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">createStatement</span><span>()
     </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">addBatch</span><span>(</span><span class="string-literal">&quot;INSERT INTO users (name, age) VALUES (&#39;Alice&#39;, 20)&quot;</span><span>)
@@ -796,7 +807,7 @@
     <p>上記の例では、<code>Alice</code>のデータは1行追加され、<code>Bob</code>のデータも1行追加されるため、戻り値は<code>List(1, 1)</code>となります。</p>
     <p>バッチコマンドを実行した後は、今まで<code>addBatch</code>メソッドで追加したクエリがクリアされます。</p>
     <p>手動でクリアする場合は<code>clearBatch</code>メソッドを使用してクリアを行います。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="keyword">for</span><span>
     </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">createStatement</span><span>()
     </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">addBatch</span><span>(</span><span class="string-literal">&quot;INSERT INTO users (name, age) VALUES (&#39;Alice&#39;, 20)&quot;</span><span>)
@@ -812,7 +823,7 @@
     <p><code>Statement</code>を使用してINSERT文をバッチコマンドで実行した場合、複数のクエリが一度に実行されます。
     しかし、<code>PreparedStatement</code>を使用してINSERT文をバッチコマンドで実行した場合、1つのクエリが実行されます。</p>
     <p>例えば、以下のクエリをバッチコマンドで実行した場合、<code>Statement</code>を使用しているため、複数のクエリが一度に実行されます。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="keyword">for</span><span>
     </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">createStatement</span><span>()
     </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">addBatch</span><span>(</span><span class="string-literal">&quot;INSERT INTO users (name, age) VALUES (&#39;Alice&#39;, 20)&quot;</span><span>)
@@ -824,7 +835,7 @@
 </span><span class="comment">// 実行されるクエリ
 // INSERT INTO users (name, age) VALUES (&#39;Alice&#39;, 20);INSERT INTO users (name, age) VALUES (&#39;Bob&#39;, 30);</span></code></pre>
     <p>しかし、以下のクエリをバッチコマンドで実行した場合、<code>PreparedStatement</code>を使用しているため、1つのクエリが実行されます。</p>
-    <pre><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="keyword">for</span><span>
     </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">clientPreparedStatement</span><span>(</span><span class="string-literal">&quot;INSERT INTO users (name, age) VALUES (?, ?)&quot;</span><span>)
     </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">setString</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;Alice&quot;</span><span>)
@@ -856,7 +867,7 @@
     </span><span class="keyword">SELECT</span><span> </span><span class="identifier">CONCAT</span><span>(</span><span class="string-literal">&#39;zyxw&#39;</span><span>, </span><span class="identifier">inputParam</span><span>);
 </span><span class="keyword">END</span></code></pre>
     <p>上記のストアドプロシージャを実行する場合は以下のようになります。</p>
-    <pre><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="keyword">for</span><span>
     </span><span class="identifier">callableStatement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">prepareCall</span><span>(</span><span class="string-literal">&quot;CALL demoSp(?, ?)&quot;</span><span>)
     </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">callableStatement</span><span>.</span><span class="identifier">setString</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;abcdefg&quot;</span><span>)
@@ -874,7 +885,7 @@
 </span><span>}</span></code></pre>
     <p>出力パラメータ（ストアド・プロシージャを作成したときにOUTまたはINOUTとして指定したパラメータ）の値を取得するには、JDBCでは、CallableStatementインターフェイスのさまざまな<code>registerOutputParameter()</code>メソッドを使用して、ステートメント実行前にパラメータを指定する必要がありますが、ldbcでは<code>setXXX</code>メソッドを使用してパラメータを設定することだけクエリ実行時にパラメーターの設定も行なってくれます。</p>
     <p>ただし、ldbcでも<code>registerOutputParameter()</code>メソッドを使用してパラメータを指定することもできます。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="keyword">for</span><span>
     </span><span class="identifier">callableStatement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">prepareCall</span><span>(</span><span class="string-literal">&quot;CALL demoSp(?, ?)&quot;</span><span>)
     </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">callableStatement</span><span>.</span><span class="identifier">setString</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;abcdefg&quot;</span><span>)

@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <a class="text-link menu-toggle" href="#">Version 0.4</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="../reference/">はじめに</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Connector.html">コネクタ</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Performance.html">パフォーマンス</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Pooling.html">コネクションプーリング</a></li>
   </ul>
   
 
@@ -218,6 +219,7 @@
 </span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.*
 </span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.</span><span class="identifier">codec</span><span>.</span><span class="type-name">Codec</span><span>
 </span><span class="keyword">import</span><span> </span><span class="identifier">jdbc</span><span>.</span><span class="identifier">connector</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.</span><span class="type-name">Connector</span><span>
 
 </span><span class="comment">// データモデルの定義
 </span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">User</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">email</span><span>: </span><span class="type-name">String</span><span>)
@@ -232,17 +234,17 @@
     </span><span class="identifier">ds</span><span>.</span><span class="identifier">setUsername</span><span>(</span><span class="string-literal">&quot;user&quot;</span><span>)
     </span><span class="identifier">ds</span><span>.</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
     
-    </span><span class="comment">// コネクションの確立
+    </span><span class="comment">// DataSourceとConnectorの設定
 </span><span>    </span><span class="keyword">val</span><span> </span><span class="identifier">program</span><span> = </span><span class="keyword">for</span><span>
       </span><span class="identifier">hikari</span><span>     &lt;- </span><span class="type-name">Resource</span><span>.</span><span class="identifier">fromAutoCloseable</span><span>(</span><span class="type-name">IO</span><span>(</span><span class="identifier">ds</span><span>))
       </span><span class="identifier">execution</span><span>  &lt;- </span><span class="type-name">ExecutionContexts</span><span>.</span><span class="identifier">fixedThreadPool</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="number-literal">10</span><span>)
-      </span><span class="identifier">connection</span><span> &lt;- </span><span class="type-name">ConnectionProvider</span><span>.</span><span class="identifier">fromDataSource</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">hikari</span><span>, </span><span class="identifier">execution</span><span>).</span><span class="identifier">createConnection</span><span>()
-    </span><span class="keyword">yield</span><span> </span><span class="identifier">connection</span><span>
+      </span><span class="identifier">datasource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">fromDataSource</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">hikari</span><span>, </span><span class="identifier">execution</span><span>)
+    </span><span class="keyword">yield</span><span> </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
     
     </span><span class="comment">// クエリの実行
-</span><span>    </span><span class="identifier">program</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+</span><span>    </span><span class="identifier">program</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">connector</span><span> =&gt;
       </span><span class="keyword">for</span><span>
-        </span><span class="identifier">users</span><span> &lt;- </span><span class="string-literal">sql&quot;SELECT * FROM users&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)
+        </span><span class="identifier">users</span><span> &lt;- </span><span class="string-literal">sql&quot;SELECT * FROM users&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
         </span><span class="identifier">_</span><span>     &lt;- </span><span class="type-name">IO</span><span>.</span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;Found users: </span><span class="substitution">$users</span><span class="string-literal">&quot;</span><span>)
       </span><span class="keyword">yield</span><span> ()
     }</span></code></pre>

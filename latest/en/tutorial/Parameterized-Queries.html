@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <a class="text-link menu-toggle" href="#">Version 0.4</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="../reference/">Introduction</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Connector.html">Connector</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Performance.html">Performance</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Pooling.html">Connection pooling</a></li>
   </ul>
   
 
@@ -203,12 +204,13 @@
 
 </span><span class="string-literal">sql&quot;SELECT name, email FROM user WHERE id = </span><span class="substitution">$id</span><span class="string-literal">&quot;</span><span>.</span><span class="identifier">query</span><span>[(</span><span class="type-name">String</span><span>, </span><span class="type-name">String</span><span>)].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]</span></code></pre>
     <p>When we execute the query using a connection, it works without issues.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
-  </span><span class="string-literal">sql&quot;SELECT name, email FROM user WHERE id = </span><span class="substitution">$id</span><span class="string-literal">&quot;</span><span>
-    .</span><span class="identifier">query</span><span>[(</span><span class="type-name">String</span><span>, </span><span class="type-name">String</span><span>)]
-    .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
-    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)
-}</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Create Connector
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
+
+</span><span class="string-literal">sql&quot;SELECT name, email FROM user WHERE id = </span><span class="substitution">$id</span><span class="string-literal">&quot;</span><span>
+  .</span><span class="identifier">query</span><span>[(</span><span class="type-name">String</span><span>, </span><span class="type-name">String</span><span>)]
+  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
+  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
     <p>What&#39;s happening here? It looks like we&#39;re just dropping string literals into an SQL string, but we&#39;re actually building a <code>PreparedStatement</code>, and the <code>id</code> value is ultimately set by a call to <code>setInt</code>. This protects our application from SQL injection attacks.</p>
     <p>You can use parameters of various types:</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">id</span><span>: </span><span class="type-name">Int</span><span> = </span><span class="number-literal">1</span><span>
@@ -224,12 +226,13 @@
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">id</span><span> = </span><span class="number-literal">1</span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">email</span><span> = </span><span class="string-literal">&quot;alice@example.com&quot;</span><span>
 
-</span><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
-  </span><span class="string-literal">sql&quot;SELECT name, email FROM user WHERE id = </span><span class="substitution">$id</span><span class="string-literal"> AND email &gt; </span><span class="substitution">$email</span><span class="string-literal">&quot;</span><span>
-    .</span><span class="identifier">query</span><span>[(</span><span class="type-name">String</span><span>, </span><span class="type-name">String</span><span>)]
-    .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
-    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)
-}</span></code></pre>
+</span><span class="comment">// Create Connector
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
+
+</span><span class="string-literal">sql&quot;SELECT name, email FROM user WHERE id = </span><span class="substitution">$id</span><span class="string-literal"> AND email &gt; </span><span class="substitution">$email</span><span class="string-literal">&quot;</span><span>
+  .</span><span class="identifier">query</span><span>[(</span><span class="type-name">String</span><span>, </span><span class="type-name">String</span><span>)]
+  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
+  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
     
     <h2 id="combining-queries" class="section"><a class="anchor-link left" href="#combining-queries"><i class="icofont-laika link">&#xef71;</i></a>Combining Queries</h2>
     <p>When building large queries, you can combine multiple SQL fragments.</p>
@@ -246,12 +249,13 @@
     <p>A common challenge in SQL is using a series of values in an IN clause. In ldbc, this can be easily implemented using the <code>in</code> function.</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">ids</span><span> = </span><span class="type-name">NonEmptyList</span><span>.</span><span class="identifier">of</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="number-literal">2</span><span>, </span><span class="number-literal">3</span><span>)
 
-</span><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
-  (</span><span class="string-literal">sql&quot;SELECT name, email FROM user WHERE &quot;</span><span> ++ </span><span class="identifier">in</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="identifier">ids</span><span>))
-    .</span><span class="identifier">query</span><span>[(</span><span class="type-name">String</span><span>, </span><span class="type-name">String</span><span>)]
-    .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
-    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)
-}</span></code></pre>
+</span><span class="comment">// Create Connector
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
+
+(</span><span class="string-literal">sql&quot;SELECT name, email FROM user WHERE &quot;</span><span> ++ </span><span class="identifier">in</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="identifier">ids</span><span>))
+  .</span><span class="identifier">query</span><span>[(</span><span class="type-name">String</span><span>, </span><span class="type-name">String</span><span>)]
+  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
+  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
     <p>This is equivalent to the following SQL:</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">SELECT</span><span> </span><span class="identifier">name</span><span>, </span><span class="identifier">email</span><span> </span><span class="keyword">FROM</span><span> </span><span class="keyword">user</span><span> </span><span class="keyword">WHERE</span><span> (</span><span class="identifier">id</span><span> </span><span class="keyword">IN</span><span> (?, ?, ?))</span></code></pre>
     <p>Note that <code>ids</code> must be a <code>NonEmptyList</code> because an IN clause cannot be empty.</p>

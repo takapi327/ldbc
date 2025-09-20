@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <a class="text-link menu-toggle" href="#">Version 0.4</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="../reference/">Introduction</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Connector.html">Connector</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Performance.html">Performance</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Pooling.html">Connection pooling</a></li>
   </ul>
   
 
@@ -223,24 +224,22 @@
         </tr>
       </tbody>
     </table>
-    <p>Next, we execute this program. We acquire a database connection, run the query, and display the results:</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Acquire a database connection and execute the program
-</span><span class="identifier">provider</span><span>
-  .</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
-    </span><span class="identifier">program</span><span>.</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>).</span><span class="identifier">map</span><span>(</span><span class="identifier">println</span><span>(</span><span class="identifier">_</span><span>))
-  }
-  .</span><span class="identifier">unsafeRunSync</span><span>()</span></code></pre>
+    <p>Next, we execute this program. We create a Connector, run the query, and display the results:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Create Connector and execute the program
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
+
+</span><span class="identifier">program</span><span>.</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>).</span><span class="identifier">map</span><span>(</span><span class="identifier">println</span><span>(</span><span class="identifier">_</span><span>)).</span><span class="identifier">unsafeRunSync</span><span>()</span></code></pre>
     <p>In the above code:</p>
     <ol class="arabic">
-      <li><code>provider.use</code>: Acquires a connection from the database connection provider</li>
-      <li><code>program.readOnly(conn)</code>: Executes the created query in read-only mode</li>
+      <li><code>val connector = Connector.fromDataSource(datasource)</code>: Creates a Connector from the datasource</li>
+      <li><code>program.readOnly(connector)</code>: Executes the created query in read-only mode using the Connector</li>
       <li><code>.map(println(_))</code>: Displays the result to standard output</li>
       <li><code>.unsafeRunSync()</code>: Executes the IO effect</li>
     </ol>
     <p>When you run this program, it will return the result <code>Some(2)</code> from the database.</p>
     <p><strong>Execute with Scala CLI</strong></p>
     <p>This program can be easily executed using Scala CLI:</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span>scala-cli https://github.com/takapi</span><span class="number-literal">327</span><span>/ldbc/tree/master/docs/src/main/scala/</span><span class="number-literal">02</span><span>-Program.scala --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-dsl:</span><span class="number-literal">0.3.3</span><span> --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-connector:</span><span class="number-literal">0.3.3</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span>scala-cli https://github.com/takapi</span><span class="number-literal">327</span><span>/ldbc/tree/master/docs/src/main/scala/</span><span class="number-literal">02</span><span>-Program.scala --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-dsl:</span><span class="number-literal">0.4.0</span><span>-RC</span><span class="number-literal">1</span><span> --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-connector:</span><span class="number-literal">0.4.0</span><span>-RC</span><span class="number-literal">1</span></code></pre>
     
     <h2 id="second-program-combining-multiple-queries" class="section"><a class="anchor-link left" href="#second-program-combining-multiple-queries"><i class="icofont-laika link">&#xef71;</i></a>Second Program: Combining Multiple Queries</h2>
     <p>In real-world applications, you often want to execute multiple queries in a single transaction. The <code>DBIO</code> monad makes this easy. You can use for-comprehension to combine multiple queries into one larger program:</p>
@@ -253,15 +252,13 @@
 </span><span>  </span><span class="keyword">yield</span><span> (</span><span class="identifier">result1</span><span>, </span><span class="identifier">result2</span><span>, </span><span class="identifier">result3</span><span>)</span></code></pre>
     <p>In the above for-comprehension, we execute three different queries in sequence and bind each result to a variable. Finally, we return the three results as a tuple.</p>
     <p>The execution method is the same as before:</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Acquire a database connection and execute the program
-</span><span class="identifier">provider</span><span>
-  .</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
-    </span><span class="identifier">program</span><span>.</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>).</span><span class="identifier">map</span><span>(</span><span class="identifier">println</span><span>(</span><span class="identifier">_</span><span>))
-  }
-  .</span><span class="identifier">unsafeRunSync</span><span>()</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Create Connector and execute the program
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
+
+</span><span class="identifier">program</span><span>.</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>).</span><span class="identifier">map</span><span>(</span><span class="identifier">println</span><span>(</span><span class="identifier">_</span><span>)).</span><span class="identifier">unsafeRunSync</span><span>()</span></code></pre>
     <p>The execution result will look like <code>(List(1), Some(2), 3)</code>. This is a tuple containing the results of the three queries.</p>
     <p><strong>Execute with Scala CLI</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span>scala-cli https://github.com/takapi</span><span class="number-literal">327</span><span>/ldbc/tree/master/docs/src/main/scala/</span><span class="number-literal">03</span><span>-Program.scala --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-dsl:</span><span class="number-literal">0.3.3</span><span> --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-connector:</span><span class="number-literal">0.3.3</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span>scala-cli https://github.com/takapi</span><span class="number-literal">327</span><span>/ldbc/tree/master/docs/src/main/scala/</span><span class="number-literal">03</span><span>-Program.scala --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-dsl:</span><span class="number-literal">0.4.0</span><span>-RC</span><span class="number-literal">1</span><span> --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-connector:</span><span class="number-literal">0.4.0</span><span>-RC</span><span class="number-literal">1</span></code></pre>
     
     <h2 id="third-program-data-update-operations" class="section"><a class="anchor-link left" href="#third-program-data-update-operations"><i class="icofont-laika link">&#xef71;</i></a>Third Program: Data Update Operations</h2>
     <p>In addition to reading, you can also create programs that write to the database. Here&#39;s an example of inserting a new record into a user table:</p>
@@ -270,15 +267,13 @@
   </span><span class="string-literal">sql&quot;INSERT INTO user (name, email) VALUES (&#39;Carol&#39;, &#39;carol@example.com&#39;)&quot;</span><span>.</span><span class="identifier">update</span></code></pre>
     <p>Using the <code>update</code> method, you can execute update queries such as INSERT, UPDATE, DELETE, etc. The return value is the number of affected rows (in this case, 1).</p>
     <p>When executing update queries, you need to use the <code>commit</code> method instead of <code>readOnly</code> to commit the transaction:</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Acquire a database connection, execute the update program, and commit
-</span><span class="identifier">provider</span><span>
-  .</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
-    </span><span class="identifier">program</span><span>.</span><span class="identifier">commit</span><span>(</span><span class="identifier">conn</span><span>).</span><span class="identifier">map</span><span>(</span><span class="identifier">println</span><span>(</span><span class="identifier">_</span><span>))
-  }
-  .</span><span class="identifier">unsafeRunSync</span><span>()</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Create Connector, execute the update program, and commit
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
+
+</span><span class="identifier">program</span><span>.</span><span class="identifier">commit</span><span>(</span><span class="identifier">connector</span><span>).</span><span class="identifier">map</span><span>(</span><span class="identifier">println</span><span>(</span><span class="identifier">_</span><span>)).</span><span class="identifier">unsafeRunSync</span><span>()</span></code></pre>
     <p>The <code>commit</code> method automatically enables <code>AutoCommit</code> and commits the transaction after the query execution. This ensures that changes are persisted to the database.</p>
     <p><strong>Execute with Scala CLI</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span>scala-cli https://github.com/takapi</span><span class="number-literal">327</span><span>/ldbc/tree/master/docs/src/main/scala/</span><span class="number-literal">04</span><span>-Program.scala --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-dsl:</span><span class="number-literal">0.3.3</span><span> --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-connector:</span><span class="number-literal">0.3.3</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span>scala-cli https://github.com/takapi</span><span class="number-literal">327</span><span>/ldbc/tree/master/docs/src/main/scala/</span><span class="number-literal">04</span><span>-Program.scala --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-dsl:</span><span class="number-literal">0.4.0</span><span>-RC</span><span class="number-literal">1</span><span> --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-connector:</span><span class="number-literal">0.4.0</span><span>-RC</span><span class="number-literal">1</span></code></pre>
     
     <h2 id="transaction-control" class="section"><a class="anchor-link left" href="#transaction-control"><i class="icofont-laika link">&#xef71;</i></a>Transaction Control</h2>
     <p>ldbc provides the following main transaction control methods:</p>
@@ -295,11 +290,10 @@
   </span><span class="identifier">count</span><span> &lt;- </span><span class="string-literal">sql&quot;SELECT COUNT(*) FROM accounts&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">Int</span><span>].</span><span class="identifier">unsafe</span><span>
 </span><span class="keyword">yield</span><span> </span><span class="identifier">count</span><span>
 
-</span><span class="identifier">provider</span><span>
-  .</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
-    </span><span class="identifier">complexProgram</span><span>.</span><span class="identifier">transaction</span><span>(</span><span class="identifier">conn</span><span>).</span><span class="identifier">map</span><span>(</span><span class="identifier">println</span><span>(</span><span class="identifier">_</span><span>))
-  }
-  .</span><span class="identifier">unsafeRunSync</span><span>()</span></code></pre>
+</span><span class="comment">// Create Connector and execute the complex program
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
+
+</span><span class="identifier">complexProgram</span><span>.</span><span class="identifier">transaction</span><span>(</span><span class="identifier">connector</span><span>).</span><span class="identifier">map</span><span>(</span><span class="identifier">println</span><span>(</span><span class="identifier">_</span><span>)).</span><span class="identifier">unsafeRunSync</span><span>()</span></code></pre>
     <p>In this program, if either INSERT fails, both changes are rolled back. Only when both succeed are the changes committed.</p>
     
     <h2 id="next-steps" class="section"><a class="anchor-link left" href="#next-steps"><i class="icofont-laika link">&#xef71;</i></a>Next Steps</h2>

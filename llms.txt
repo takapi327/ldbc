@@ -56,4 +56,5 @@
 ### Reference
 - [Connector](https://takapi327.github.io/ldbc/latest/en/reference/Connector.html)
 - [Performance](https://takapi327.github.io/ldbc/latest/en/reference/Performance.html)
+- [Pooling](https://takapi327.github.io/ldbc/latest/en/reference/Pooling.html)
 - [Index](https://takapi327.github.io/ldbc/latest/en/reference/index.html)

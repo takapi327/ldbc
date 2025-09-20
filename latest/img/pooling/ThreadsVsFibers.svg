@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1000" height="800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#333"/>
+    </marker>
+    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e0e0e0" stroke-width="1"/>
+    </pattern>
+  </defs>
+  
+  <style>
+    .title { fill: #333; font-family: Arial, sans-serif; font-size: 24px; font-weight: bold; text-anchor: middle; }
+    .subtitle { fill: #666; font-family: Arial, sans-serif; font-size: 18px; font-weight: bold; }
+    .label { fill: #333; font-family: Arial, sans-serif; font-size: 14px; }
+    .small-label { fill: #666; font-family: Arial, sans-serif; font-size: 12px; }
+    .thread-box { fill: #2196F3; stroke: #1976D2; stroke-width: 2; }
+    .fiber-box { fill: #4CAF50; stroke: #388E3C; stroke-width: 2; }
+    .os-box { fill: #ff9800; stroke: #F57C00; stroke-width: 2; }
+    .runtime-box { fill: #9C27B0; stroke: #7B1FA2; stroke-width: 2; }
+    .arrow { stroke: #333; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+  </style>
+  
+  <!-- Title -->
+  <text x="500" y="30" class="title">JVM Threads vs Cats Effect Fibers</text>
+  
+  <!-- JVM Threads Side -->
+  <g transform="translate(50, 80)">
+    <text x="200" y="0" class="subtitle">JVM Threads</text>
+    
+    <!-- OS Level -->
+    <rect x="0" y="20" width="400" height="100" fill="#fff5e6" stroke="#ff9800" stroke-width="2" rx="5"/>
+    <text x="10" y="40" class="label">Operating System</text>
+    
+    <!-- OS Threads -->
+    <rect x="20" y="60" width="80" height="40" class="os-box" rx="5"/>
+    <text x="60" y="85" style="fill: white; text-anchor: middle; font-size: 12px;">OS Thread</text>
+    
+    <rect x="110" y="60" width="80" height="40" class="os-box" rx="5"/>
+    <text x="150" y="85" style="fill: white; text-anchor: middle; font-size: 12px;">OS Thread</text>
+    
+    <rect x="200" y="60" width="80" height="40" class="os-box" rx="5"/>
+    <text x="240" y="85" style="fill: white; text-anchor: middle; font-size: 12px;">OS Thread</text>
+    
+    <text x="300" y="85" class="small-label">1:1 mapping</text>
+    
+    <!-- JVM Level -->
+    <rect x="0" y="140" width="400" height="100" fill="#e3f2fd" stroke="#2196F3" stroke-width="2" rx="5"/>
+    <text x="10" y="160" class="label">JVM</text>
+    
+    <!-- JVM Threads -->
+    <rect x="20" y="180" width="80" height="40" class="thread-box" rx="5"/>
+    <text x="60" y="205" style="fill: white; text-anchor: middle; font-size: 12px;">Thread 1</text>
+    
+    <rect x="110" y="180" width="80" height="40" class="thread-box" rx="5"/>
+    <text x="150" y="205" style="fill: white; text-anchor: middle; font-size: 12px;">Thread 2</text>
+    
+    <rect x="200" y="180" width="80" height="40" class="thread-box" rx="5"/>
+    <text x="240" y="205" style="fill: white; text-anchor: middle; font-size: 12px;">Thread 3</text>
+    
+    <!-- Arrows showing 1:1 mapping -->
+    <path d="M 60 180 L 60 100" class="arrow" style="stroke-width: 1;"/>
+    <path d="M 150 180 L 150 100" class="arrow" style="stroke-width: 1;"/>
+    <path d="M 240 180 L 240 100" class="arrow" style="stroke-width: 1;"/>
+    
+    <!-- Characteristics -->
+    <g transform="translate(0, 260)">
+      <rect x="0" y="0" width="400" height="200" fill="#f5f5f5" stroke="#ddd" rx="5"/>
+      <text x="10" y="20" class="label" style="font-weight: bold;">Characteristics:</text>
+      <text x="20" y="45" class="small-label">• Memory: ~1-2 MB per thread</text>
+      <text x="20" y="65" class="small-label">• Context Switch: Expensive (kernel level)</text>
+      <text x="20" y="85" class="small-label">• Scheduling: OS kernel scheduler</text>
+      <text x="20" y="105" class="small-label">• Blocking: Thread blocks, wastes resources</text>
+      <text x="20" y="125" class="small-label">• Scalability: Limited (thousands max)</text>
+      <text x="20" y="145" class="small-label">• Creation Cost: High</text>
+      <text x="20" y="165" class="small-label">• Preemptive: OS can interrupt anytime</text>
+      <text x="20" y="185" class="small-label">• Resource: Scarce, need thread pools</text>
+    </g>
+  </g>
+  
+  <!-- Cats Effect Fibers Side -->
+  <g transform="translate(550, 80)">
+    <text x="200" y="0" class="subtitle">Cats Effect Fibers</text>
+    
+    <!-- OS Level -->
+    <rect x="0" y="20" width="400" height="100" fill="#fff5e6" stroke="#ff9800" stroke-width="2" rx="5"/>
+    <text x="10" y="40" class="label">Operating System</text>
+    
+    <!-- Fewer OS Threads -->
+    <rect x="80" y="60" width="100" height="40" class="os-box" rx="5"/>
+    <text x="130" y="85" style="fill: white; text-anchor: middle; font-size: 12px;">Worker Thread</text>
+    
+    <rect x="220" y="60" width="100" height="40" class="os-box" rx="5"/>
+    <text x="270" y="85" style="fill: white; text-anchor: middle; font-size: 12px;">Worker Thread</text>
+    
+    <!-- CE Runtime Level -->
+    <rect x="0" y="140" width="400" height="100" fill="#f3e5f5" stroke="#9C27B0" stroke-width="2" rx="5"/>
+    <text x="10" y="160" class="label">Cats Effect Runtime (Work-Stealing Pool)</text>
+    
+    <!-- Many Fibers -->
+    <g transform="translate(20, 180)">
+      <!-- Row 1 -->
+      <rect x="0" y="0" width="35" height="20" class="fiber-box" rx="3"/>
+      <text x="17" y="14" style="fill: white; text-anchor: middle; font-size: 10px;">F1</text>
+      
+      <rect x="40" y="0" width="35" height="20" class="fiber-box" rx="3"/>
+      <text x="57" y="14" style="fill: white; text-anchor: middle; font-size: 10px;">F2</text>
+      
+      <rect x="80" y="0" width="35" height="20" class="fiber-box" rx="3"/>
+      <text x="97" y="14" style="fill: white; text-anchor: middle; font-size: 10px;">F3</text>
+      
+      <rect x="120" y="0" width="35" height="20" class="fiber-box" rx="3"/>
+      <text x="137" y="14" style="fill: white; text-anchor: middle; font-size: 10px;">F4</text>
+      
+      <rect x="160" y="0" width="35" height="20" class="fiber-box" rx="3"/>
+      <text x="177" y="14" style="fill: white; text-anchor: middle; font-size: 10px;">F5</text>
+      
+      <rect x="200" y="0" width="35" height="20" class="fiber-box" rx="3"/>
+      <text x="217" y="14" style="fill: white; text-anchor: middle; font-size: 10px;">F6</text>
+      
+      <rect x="240" y="0" width="35" height="20" class="fiber-box" rx="3"/>
+      <text x="257" y="14" style="fill: white; text-anchor: middle; font-size: 10px;">F7</text>
+      
+      <rect x="280" y="0" width="35" height="20" class="fiber-box" rx="3"/>
+      <text x="297" y="14" style="fill: white; text-anchor: middle; font-size: 10px;">F8</text>
+      
+      <rect x="320" y="0" width="35" height="20" class="fiber-box" rx="3"/>
+      <text x="337" y="14" style="fill: white; text-anchor: middle; font-size: 10px;">F9</text>
+      
+      <!-- Row 2 -->
+      <rect x="0" y="25" width="35" height="20" class="fiber-box" rx="3"/>
+      <text x="17" y="39" style="fill: white; text-anchor: middle; font-size: 10px;">F10</text>
+      
+      <text x="40" y="39" class="small-label">... thousands more</text>
+    </g>
+    
+    <!-- Multiplexing arrows -->
+    <path d="M 130 180 Q 130 150 130 100" class="arrow" style="stroke-width: 1; stroke-dasharray: 3,3;"/>
+    <path d="M 270 180 Q 270 150 270 100" class="arrow" style="stroke-width: 1; stroke-dasharray: 3,3;"/>
+    <text x="330" y="150" class="small-label">M:N mapping</text>
+    
+    <!-- Characteristics -->
+    <g transform="translate(0, 260)">
+      <rect x="0" y="0" width="400" height="200" fill="#f5f5f5" stroke="#ddd" rx="5"/>
+      <text x="10" y="20" class="label" style="font-weight: bold;">Characteristics:</text>
+      <text x="20" y="45" class="small-label">• Memory: ~150 bytes per fiber</text>
+      <text x="20" y="65" class="small-label">• Context Switch: Near-zero cost</text>
+      <text x="20" y="85" class="small-label">• Scheduling: Work-stealing runtime scheduler</text>
+      <text x="20" y="105" class="small-label">• Blocking: Semantic blocking, thread freed</text>
+      <text x="20" y="125" class="small-label">• Scalability: Extreme (millions possible)</text>
+      <text x="20" y="145" class="small-label">• Creation Cost: Negligible</text>
+      <text x="20" y="165" class="small-label">• Cooperative: Yields at safe points</text>
+      <text x="20" y="185" class="small-label">• Resource: Abundant, spawn as needed</text>
+    </g>
+  </g>
+  
+  <!-- Performance Comparison -->
+  <g transform="translate(50, 580)">
+    <rect x="0" y="0" width="900" height="180" fill="#e8f5e9" stroke="#4CAF50" stroke-width="2" rx="5"/>
+    <text x="450" y="25" class="subtitle" style="text-anchor: middle;">Performance Impact on Connection Pooling</text>
+    
+    <g transform="translate(20, 50)">
+      <text x="0" y="0" class="label" style="font-weight: bold;">JVM Thread-based Pool (HikariCP style):</text>
+      <text x="10" y="25" class="small-label">• Limited pool size due to thread overhead</text>
+      <text x="10" y="45" class="small-label">• Blocking waits consume threads</text>
+      <text x="10" y="65" class="small-label">• Context switches impact throughput</text>
+      <text x="10" y="85" class="small-label">• Thread pool exhaustion under load</text>
+    </g>
+    
+    <g transform="translate(470, 50)">
+      <text x="0" y="0" class="label" style="font-weight: bold;">Fiber-based Pool (ldbc-connector):</text>
+      <text x="10" y="25" class="small-label">• Can handle thousands of concurrent requests</text>
+      <text x="10" y="45" class="small-label">• Semantic blocking releases worker threads</text>
+      <text x="10" y="65" class="small-label">• Efficient multiplexing of connections</text>
+      <text x="10" y="85" class="small-label">• CircuitBreaker prevents fiber explosion</text>
+    </g>
+  </g>
+</svg>

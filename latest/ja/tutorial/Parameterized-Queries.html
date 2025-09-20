@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <a class="text-link menu-toggle" href="#">Version 0.4</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="../reference/">はじめに</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Connector.html">コネクタ</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Performance.html">パフォーマンス</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Pooling.html">コネクションプーリング</a></li>
   </ul>
   
 
@@ -202,13 +203,16 @@
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">id</span><span> = </span><span class="number-literal">1</span><span>
 
 </span><span class="string-literal">sql&quot;SELECT name, email FROM user WHERE id = </span><span class="substitution">$id</span><span class="string-literal">&quot;</span><span>.</span><span class="identifier">query</span><span>[(</span><span class="type-name">String</span><span>, </span><span class="type-name">String</span><span>)].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]</span></code></pre>
-    <p>コネクションを使用してクエリを実行すると問題なく動作します。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
-  </span><span class="string-literal">sql&quot;SELECT name, email FROM user WHERE id = </span><span class="substitution">$id</span><span class="string-literal">&quot;</span><span>
-    .</span><span class="identifier">query</span><span>[(</span><span class="type-name">String</span><span>, </span><span class="type-name">String</span><span>)]
-    .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
-    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)
-}</span></code></pre>
+    <p>Connectorを使用してクエリを実行すると問題なく動作します。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+
+</span><span class="comment">// Connectorを作成
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
+
+</span><span class="string-literal">sql&quot;SELECT name, email FROM user WHERE id = </span><span class="substitution">$id</span><span class="string-literal">&quot;</span><span>
+  .</span><span class="identifier">query</span><span>[(</span><span class="type-name">String</span><span>, </span><span class="type-name">String</span><span>)]
+  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
+  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
     <p>ここでは何が起こっているのでしょうか？文字列リテラルをSQL文字列にドロップしているだけのように見えますが、実際には<code>PreparedStatement</code>を構築しており、<code>id</code>値は最終的に<code>setInt</code>の呼び出しによって設定されます。これにより、SQLインジェクション攻撃からアプリケーションを守ることができます。</p>
     <p>さまざまな型のパラメータを使用できます：</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">id</span><span>: </span><span class="type-name">Int</span><span> = </span><span class="number-literal">1</span><span>
@@ -224,12 +228,11 @@
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">id</span><span> = </span><span class="number-literal">1</span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">email</span><span> = </span><span class="string-literal">&quot;alice@example.com&quot;</span><span>
 
-</span><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
-  </span><span class="string-literal">sql&quot;SELECT name, email FROM user WHERE id = </span><span class="substitution">$id</span><span class="string-literal"> AND email &gt; </span><span class="substitution">$email</span><span class="string-literal">&quot;</span><span>
+</span><span class="comment">// Connectorを使用して実行
+</span><span>  </span><span class="string-literal">sql&quot;SELECT name, email FROM user WHERE id = </span><span class="substitution">$id</span><span class="string-literal"> AND email &gt; </span><span class="substitution">$email</span><span class="string-literal">&quot;</span><span>
     .</span><span class="identifier">query</span><span>[(</span><span class="type-name">String</span><span>, </span><span class="type-name">String</span><span>)]
     .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
-    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)
-}</span></code></pre>
+    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
     
     <h2 id="クエリーの結合" class="section"><a class="anchor-link left" href="#クエリーの結合"><i class="icofont-laika link">&#xef71;</i></a>クエリーの結合</h2>
     <p>大きなクエリを構築する場合は、複数のSQLフラグメントを結合することができます。</p>
@@ -246,12 +249,11 @@
     <p>SQLでよくある課題は、一連の値をIN句で使用したい場合です。ldbcでは<code>in</code>関数を使って簡単に実装できます。</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">ids</span><span> = </span><span class="type-name">NonEmptyList</span><span>.</span><span class="identifier">of</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="number-literal">2</span><span>, </span><span class="number-literal">3</span><span>)
 
-</span><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
-  (</span><span class="string-literal">sql&quot;SELECT name, email FROM user WHERE &quot;</span><span> ++ </span><span class="identifier">in</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="identifier">ids</span><span>))
+</span><span class="comment">// Connectorを使用して実行
+</span><span>  (</span><span class="string-literal">sql&quot;SELECT name, email FROM user WHERE &quot;</span><span> ++ </span><span class="identifier">in</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="identifier">ids</span><span>))
     .</span><span class="identifier">query</span><span>[(</span><span class="type-name">String</span><span>, </span><span class="type-name">String</span><span>)]
     .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
-    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)
-}</span></code></pre>
+    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
     <p>これは以下のSQLに相当します：</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">SELECT</span><span> </span><span class="identifier">name</span><span>, </span><span class="identifier">email</span><span> </span><span class="keyword">FROM</span><span> </span><span class="keyword">user</span><span> </span><span class="keyword">WHERE</span><span> (</span><span class="identifier">id</span><span> </span><span class="keyword">IN</span><span> (?, ?, ?))</span></code></pre>
     <p><code>ids</code>は<code>NonEmptyList</code>である必要があることに注意してください。これはIN句が空であってはならないためです。</p>

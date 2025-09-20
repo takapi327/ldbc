@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <a class="text-link menu-toggle" href="#">Version 0.4</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="index.html">Introduction</a></li>
     <li class="level2 active nav-leaf"><a href="#">Connector</a></li>
     <li class="level2 nav-leaf"><a href="Performance.html">Performance</a></li>
+    <li class="level2 nav-leaf"><a href="Pooling.html">Connection pooling</a></li>
   </ul>
   
 
@@ -210,9 +211,9 @@
     We plan to provide higher-layer APIs using this connector in the future. We also plan to maintain compatibility with existing higher-layer APIs.</p>
     <p>To use it, you need to set up the following dependency in your project:</p>
     <p><strong>JVM</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.3.3&quot;</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.4.0-RC1&quot;</span></code></pre>
     <p><strong>JS/Native</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %%% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.3.3&quot;</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %%% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.4.0-RC1&quot;</span></code></pre>
     <p><strong>Supported Versions</strong></p>
     <p>The current version supports the following versions of MySQL:</p>
     <ul>
@@ -223,12 +224,12 @@
     In the future, support for MySQL 5.7.x is planned to be discontinued.</p>
     
     <h2 id="connection" class="section"><a class="anchor-link left" href="#connection"><i class="icofont-laika link">&#xef71;</i></a>Connection</h2>
-    <p>To connect to MySQL using the ldbc connector, use <code>ConnectionProvider</code>.</p>
+    <p>To connect to MySQL using the ldbc connector, use <code>MySQLDataSource</code>.</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="type-name">IO</span><span>
-</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.</span><span class="type-name">ConnectionProvider</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.</span><span class="type-name">MySQLDataSource</span><span>
 
-</span><span class="keyword">val</span><span> </span><span class="identifier">provider</span><span> = </span><span class="type-name">ConnectionProvider</span><span>
-  .</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>](
+</span><span class="keyword">val</span><span> </span><span class="identifier">datasource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](
     </span><span class="identifier">host</span><span> = </span><span class="string-literal">&quot;127.0.0.1&quot;</span><span>,
     </span><span class="identifier">port</span><span> = </span><span class="number-literal">3306</span><span>,
     </span><span class="identifier">user</span><span> = </span><span class="string-literal">&quot;root&quot;</span><span>,
@@ -315,9 +316,17 @@
         </tr>
       </tbody>
     </table>
-    <p><code>ConnectionProvider</code> uses <code>Resource</code> for resource management. Therefore, when using connection information, use the <code>use</code> method to manage resources.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
-  </span><span class="comment">// Write code
+    <p>Create a <code>Connector</code> from <code>MySQLDataSource</code> to perform database operations. The <code>Connector</code> is an interface that translates the <code>DBIO</code> monad into actual database operations.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+
+</span><span class="comment">// Connectorを作成
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
+
+</span><span class="comment">// DBIOを実行
+</span><span class="string-literal">sql&quot;SELECT 1&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">Int</span><span>].</span><span class="identifier">unsafe</span><span>.</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
+    <p>Additionally, if you need to use the low-level Connection API, you can use <code>getConnection</code> to obtain a <code>Resource</code>:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="comment">// Connection APIを直接使用
 </span><span>}</span></code></pre>
     
     <h3 id="authentication" class="section"><a class="anchor-link left" href="#authentication"><i class="icofont-laika link">&#xef71;</i></a>Authentication</h3>
@@ -349,7 +358,7 @@
     <h4 id="read-query-1" class="section"><a class="anchor-link left" href="#read-query-1"><i class="icofont-laika link">&#xef71;</i></a>Read Query</h4>
     <p>To execute read-only SQL, use the <code>executeQuery</code> method.</p>
     <p>The values returned from the MySQL server as a result of executing the query are stored in <code>ResultSet</code> and returned as the return value.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="keyword">for</span><span>
     </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">createStatement</span><span>()
     </span><span class="identifier">result</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">executeQuery</span><span>(</span><span class="string-literal">&quot;SELECT * FROM users&quot;</span><span>)
@@ -360,7 +369,7 @@
     <h4 id="write-query-1" class="section"><a class="anchor-link left" href="#write-query-1"><i class="icofont-laika link">&#xef71;</i></a>Write Query</h4>
     <p>To execute SQL for writing, use the <code>executeUpdate</code> method.</p>
     <p>The values returned from the MySQL server as a result of executing the query are the number of affected rows returned as the return value.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="keyword">for</span><span>
     </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">createStatement</span><span>()
     </span><span class="identifier">result</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">executeUpdate</span><span>(</span><span class="string-literal">&quot;INSERT INTO users (name, age) VALUES (&#39;Alice&#39;, 20)&quot;</span><span>)
@@ -370,7 +379,7 @@
     <h4 id="retrieve-auto_increment-value-1" class="section"><a class="anchor-link left" href="#retrieve-auto_increment-value-1"><i class="icofont-laika link">&#xef71;</i></a>Retrieve AUTO_INCREMENT Value</h4>
     <p>To retrieve the AUTO_INCREMENT value after executing a query using <code>Statement</code>, use the <code>getGeneratedKeys</code> method.</p>
     <p>The values returned from the MySQL server as a result of executing the query are the values generated by AUTO_INCREMENT returned as the return value.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="keyword">for</span><span>
     </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">createStatement</span><span>()
     </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">executeUpdate</span><span>(</span><span class="string-literal">&quot;INSERT INTO users (name, age) VALUES (&#39;Alice&#39;, 20)&quot;</span><span>, </span><span class="type-name">Statement</span><span>.</span><span class="type-name">RETURN_GENERATED_KEYS</span><span>)
@@ -392,7 +401,7 @@
     
     <h4 id="client-preparedstatement" class="section"><a class="anchor-link left" href="#client-preparedstatement"><i class="icofont-laika link">&#xef71;</i></a>Client PreparedStatement</h4>
     <p>Use the <code>clientPreparedStatement</code> method of <code>Connection</code> to construct a <code>Client PreparedStatement</code>.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="keyword">for</span><span> 
     </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">clientPreparedStatement</span><span>(</span><span class="string-literal">&quot;SELECT * FROM users WHERE id = ?&quot;</span><span>)
     ...
@@ -401,7 +410,7 @@
     
     <h4 id="server-preparedstatement" class="section"><a class="anchor-link left" href="#server-preparedstatement"><i class="icofont-laika link">&#xef71;</i></a>Server PreparedStatement</h4>
     <p>Use the <code>serverPreparedStatement</code> method of <code>Connection</code> to construct a <code>Server PreparedStatement</code>.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="keyword">for</span><span> 
     </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">serverPreparedStatement</span><span>(</span><span class="string-literal">&quot;SELECT * FROM users WHERE id = ?&quot;</span><span>)
     ...
@@ -411,7 +420,7 @@
     <h4 id="read-query-2" class="section"><a class="anchor-link left" href="#read-query-2"><i class="icofont-laika link">&#xef71;</i></a>Read Query</h4>
     <p>To execute read-only SQL, use the <code>executeQuery</code> method.</p>
     <p>The values returned from the MySQL server as a result of executing the query are stored in <code>ResultSet</code> and returned as the return value.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="keyword">for</span><span> 
     </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">clientPreparedStatement</span><span>(</span><span class="string-literal">&quot;SELECT * FROM users WHERE id = ?&quot;</span><span>) </span><span class="comment">// or conn.serverPreparedStatement(&quot;SELECT * FROM users WHERE id = ?&quot;)
 </span><span>    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">setLong</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="number-literal">1</span><span>)
@@ -519,7 +528,7 @@
     <h4 id="write-query-2" class="section"><a class="anchor-link left" href="#write-query-2"><i class="icofont-laika link">&#xef71;</i></a>Write Query</h4>
     <p>To execute SQL for writing, use the <code>executeUpdate</code> method.</p>
     <p>The values returned from the MySQL server as a result of executing the query are the number of affected rows returned as the return value.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="keyword">for</span><span> 
     </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">clientPreparedStatement</span><span>(</span><span class="string-literal">&quot;INSERT INTO users (name, age) VALUES (?, ?)&quot;</span><span>) </span><span class="comment">// or conn.serverPreparedStatement(&quot;INSERT INTO users (name, age) VALUES (?, ?)&quot;)
 </span><span>    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">setString</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;Alice&quot;</span><span>)
@@ -531,7 +540,7 @@
     <h4 id="retrieve-auto_increment-value-2" class="section"><a class="anchor-link left" href="#retrieve-auto_increment-value-2"><i class="icofont-laika link">&#xef71;</i></a>Retrieve AUTO_INCREMENT Value</h4>
     <p>To retrieve the AUTO_INCREMENT value after executing a query, use the <code>getGeneratedKeys</code> method.</p>
     <p>The values returned from the MySQL server as a result of executing the query are the values generated by AUTO_INCREMENT returned as the return value.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="keyword">for</span><span> 
     </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">clientPreparedStatement</span><span>(</span><span class="string-literal">&quot;INSERT INTO users (name, age) VALUES (?, ?)&quot;</span><span>, </span><span class="type-name">Statement</span><span>.</span><span class="type-name">RETURN_GENERATED_KEYS</span><span>) </span><span class="comment">// or conn.serverPreparedStatement(&quot;INSERT INTO users (name, age) VALUES (?, ?)&quot;, Statement.RETURN_GENERATED_KEYS)
 </span><span>    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">setString</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;Alice&quot;</span><span>)
@@ -549,7 +558,7 @@
     <p>The <code>next</code> method returns <code>true</code> if the next record exists, and <code>false</code> if the next record does not exist.</p>
     <p>The <code>getXXX</code> method is an API for retrieving values from records.</p>
     <p>The <code>getXXX</code> method can specify the column index or the column name to retrieve.</p>
-    <pre><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="keyword">for</span><span> 
     </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">clientPreparedStatement</span><span>(</span><span class="string-literal">&quot;SELECT `id`, `name`, `age` FROM users WHERE id = ?&quot;</span><span>)
     </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">setLong</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="number-literal">1</span><span>)
@@ -704,21 +713,21 @@
     <p>In ldbc, you can close the connection using the <code>close</code> method of <code>Connection</code>.
     When you use the <code>close</code> method, the connection is closed, and you cannot use the connection in subsequent processing.</p>
     <p><em>Note: <code>Connection</code> uses <code>Resource</code> for resource management. Therefore, you do not need to use the <code>close</code> method to release resources.</em></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="identifier">conn</span><span>.</span><span class="identifier">close</span><span>()
 }</span></code></pre>
     
     <h3 id="com-init-db" class="section"><a class="anchor-link left" href="#com-init-db"><i class="icofont-laika link">&#xef71;</i></a>COM INIT DB</h3>
     <p><code>COM_INIT_DB</code> is a command to change the default schema of the connection.</p>
     <p>In ldbc, you can change the default schema using the <code>setSchema</code> method of <code>Connection</code>.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="identifier">conn</span><span>.</span><span class="identifier">setSchema</span><span>(</span><span class="string-literal">&quot;test&quot;</span><span>)
 }</span></code></pre>
     
     <h3 id="com-statistics" class="section"><a class="anchor-link left" href="#com-statistics"><i class="icofont-laika link">&#xef71;</i></a>COM STATISTICS</h3>
     <p><code>COM_STATISTICS</code> is a command to retrieve internal status string in a readable format.</p>
     <p>In ldbc, you can retrieve the internal status string using the <code>getStatistics</code> method of <code>Connection</code>.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="identifier">conn</span><span>.</span><span class="identifier">getStatistics</span><span>
 }</span></code></pre>
     <p>The status that can be retrieved is as follows:</p>
@@ -737,7 +746,7 @@
     <p><code>COM_PING</code> is a command to check if the server is alive.</p>
     <p>In ldbc, you can check if the server is alive using the <code>isValid</code> method of <code>Connection</code>.
     If the server is alive, it returns <code>true</code>, and if it is not alive, it returns <code>false</code>.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="identifier">conn</span><span>.</span><span class="identifier">isValid</span><span>
 }</span></code></pre>
     
@@ -751,7 +760,7 @@
       <li>etc...</li>
     </ul>
     <p>In ldbc, you can change the user using the <code>changeUser</code> method of <code>Connection</code>.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="identifier">conn</span><span>.</span><span class="identifier">changeUser</span><span>(</span><span class="string-literal">&quot;root&quot;</span><span>, </span><span class="string-literal">&quot;password&quot;</span><span>)
 }</span></code></pre>
     
@@ -763,7 +772,7 @@
       <li>Does not close the connection.</li>
     </ul>
     <p>In ldbc, you can reset the session state using the <code>resetServerState</code> method of <code>Connection</code>.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="identifier">conn</span><span>.</span><span class="identifier">resetServerState</span><span>
 }</span></code></pre>
     
@@ -773,7 +782,7 @@
     <p>Using the <code>enableMultiQueries</code> method allows you to execute multiple queries at once.
     Using the <code>disableMultiQueries</code> method prevents you from executing multiple queries at once.</p>
     <p><em>Note: This can only be used for batch processing with Insert, Update, and Delete statements. If used with Select statements, only the result of the first query will be returned.</em></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="identifier">conn</span><span>.</span><span class="identifier">enableMultiQueries</span><span> *&gt; </span><span class="identifier">conn</span><span>.</span><span class="identifier">disableMultiQueries</span><span>
 }</span></code></pre>
     
@@ -781,7 +790,7 @@
     <p>ldbc allows you to execute multiple queries at once using batch commands.
     By using batch commands, you can execute multiple queries at once, reducing the number of network round trips.</p>
     <p>To use batch commands, use the <code>addBatch</code> method of <code>Statement</code> or <code>PreparedStatement</code> to add queries, and use the <code>executeBatch</code> method to execute the queries.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="keyword">for</span><span>
     </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">createStatement</span><span>()
     </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">addBatch</span><span>(</span><span class="string-literal">&quot;INSERT INTO users (name, age) VALUES (&#39;Alice&#39;, 20)&quot;</span><span>)
@@ -796,7 +805,7 @@
     <p>In the above example, the data of <code>Alice</code> is added as 1 row, and the data of <code>Bob</code> is also added as 1 row, so the return value will be <code>List(1, 1)</code>.</p>
     <p>After executing the batch command, the queries added with the <code>addBatch</code> method so far are cleared.</p>
     <p>To manually clear the queries, use the <code>clearBatch</code> method to clear them.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="keyword">for</span><span>
     </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">createStatement</span><span>()
     </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">addBatch</span><span>(</span><span class="string-literal">&quot;INSERT INTO users (name, age) VALUES (&#39;Alice&#39;, 20)&quot;</span><span>)
@@ -812,7 +821,7 @@
     <p>When executing an INSERT statement with batch commands using <code>Statement</code>, multiple queries are executed at once.
     However, when executing an INSERT statement with batch commands using <code>PreparedStatement</code>, one query is executed.</p>
     <p>For example, when executing the following query with batch commands, multiple queries are executed at once because <code>Statement</code> is used.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="keyword">for</span><span>
     </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">createStatement</span><span>()
     </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">addBatch</span><span>(</span><span class="string-literal">&quot;INSERT INTO users (name, age) VALUES (&#39;Alice&#39;, 20)&quot;</span><span>)
@@ -824,7 +833,7 @@
 </span><span class="comment">// Executed query
 // INSERT INTO users (name, age) VALUES (&#39;Alice&#39;, 20);INSERT INTO users (name, age) VALUES (&#39;Bob&#39;, 30);</span></code></pre>
     <p>However, when executing the following query with batch commands, one query is executed because <code>PreparedStatement</code> is used.</p>
-    <pre><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="keyword">for</span><span>
     </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">clientPreparedStatement</span><span>(</span><span class="string-literal">&quot;INSERT INTO users (name, age) VALUES (?, ?)&quot;</span><span>)
     </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">setString</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;Alice&quot;</span><span>)
@@ -856,7 +865,7 @@
     </span><span class="keyword">SELECT</span><span> </span><span class="identifier">CONCAT</span><span>(</span><span class="string-literal">&#39;zyxw&#39;</span><span>, </span><span class="identifier">inputParam</span><span>);
 </span><span class="keyword">END</span></code></pre>
     <p>To execute the above stored procedure, it will be as follows.</p>
-    <pre><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="keyword">for</span><span>
     </span><span class="identifier">callableStatement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">prepareCall</span><span>(</span><span class="string-literal">&quot;CALL demoSp(?, ?)&quot;</span><span>)
     </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">callableStatement</span><span>.</span><span class="identifier">setString</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;abcdefg&quot;</span><span>)
@@ -874,7 +883,7 @@
 </span><span>}</span></code></pre>
     <p>To retrieve the value of an output parameter (a parameter specified as OUT or INOUT when creating the stored procedure), in JDBC, you need to specify the parameter before executing the statement using various <code>registerOutputParameter()</code> methods of the CallableStatement interface. However, in ldbc, you only need to set the parameter using the <code>setXXX</code> method, and the parameter will be set when executing the query.</p>
     <p>However, you can also specify the parameter using the <code>registerOutputParameter()</code> method in ldbc.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
   </span><span class="keyword">for</span><span>
     </span><span class="identifier">callableStatement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">prepareCall</span><span>(</span><span class="string-literal">&quot;CALL demoSp(?, ?)&quot;</span><span>)
     </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">callableStatement</span><span>.</span><span class="identifier">setString</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;abcdefg&quot;</span><span>)

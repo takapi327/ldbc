@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <a class="text-link menu-toggle" href="#">Version 0.4</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="../reference/">はじめに</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Connector.html">コネクタ</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Performance.html">パフォーマンス</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Pooling.html">コネクションプーリング</a></li>
   </ul>
   
 
@@ -183,9 +184,9 @@
 </span><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="identifier">syntax</span><span>.</span><span class="identifier">all</span><span>.*
 </span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.*
 
-</span><span class="keyword">def</span><span> </span><span class="declaration-name">limitedConcurrency</span><span>[</span><span class="type-name">A</span><span>](</span><span class="identifier">program</span><span>: </span><span class="type-name">DBIO</span><span>[</span><span class="type-name">A</span><span>], </span><span class="identifier">conn</span><span>: </span><span class="type-name">Connection</span><span>[</span><span class="type-name">IO</span><span>], </span><span class="identifier">maxConcurrent</span><span>: </span><span class="type-name">Int</span><span>): </span><span class="type-name">IO</span><span>[</span><span class="type-name">A</span><span>] =
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">limitedConcurrency</span><span>[</span><span class="type-name">A</span><span>](</span><span class="identifier">program</span><span>: </span><span class="type-name">DBIO</span><span>[</span><span class="type-name">A</span><span>], </span><span class="identifier">connector</span><span>: </span><span class="type-name">Connector</span><span>[</span><span class="type-name">IO</span><span>], </span><span class="identifier">maxConcurrent</span><span>: </span><span class="type-name">Int</span><span>): </span><span class="type-name">IO</span><span>[</span><span class="type-name">A</span><span>] =
   </span><span class="type-name">Semaphore</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">maxConcurrent</span><span>).</span><span class="identifier">flatMap</span><span> { </span><span class="identifier">sem</span><span> =&gt;
-    </span><span class="identifier">sem</span><span>.</span><span class="identifier">permit</span><span>.</span><span class="identifier">use</span><span>(</span><span class="identifier">_</span><span> =&gt; </span><span class="identifier">program</span><span>.</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>))
+    </span><span class="identifier">sem</span><span>.</span><span class="identifier">permit</span><span>.</span><span class="identifier">use</span><span>(</span><span class="identifier">_</span><span> =&gt; </span><span class="identifier">program</span><span>.</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>))
   }</span></code></pre>
 
     

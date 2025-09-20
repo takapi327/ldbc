@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <a class="text-link menu-toggle" href="#">Version 0.4</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="../reference/">Introduction</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Connector.html">Connector</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Performance.html">Performance</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Pooling.html">Connection pooling</a></li>
   </ul>
   
 
@@ -413,9 +414,10 @@
 </span><span class="keyword">val</span><span> </span><span class="identifier">toAccount</span><span>: </span><span class="type-name">Int</span><span> = ???
 </span><span class="keyword">val</span><span> </span><span class="identifier">amount</span><span>: </span><span class="type-name">BigDecimal</span><span> = ???
 
-</span><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
-  </span><span class="identifier">transferMoney</span><span>(</span><span class="identifier">fromAccount</span><span>, </span><span class="identifier">toAccount</span><span>, </span><span class="identifier">amount</span><span>).</span><span class="identifier">transaction</span><span>(</span><span class="identifier">conn</span><span>)
-}</span></code></pre>
+</span><span class="comment">// Create Connector
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
+
+</span><span class="identifier">transferMoney</span><span>(</span><span class="identifier">fromAccount</span><span>, </span><span class="identifier">toAccount</span><span>, </span><span class="identifier">amount</span><span>).</span><span class="identifier">transaction</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
     
     <h2 id="summary" class="section"><a class="anchor-link left" href="#summary"><i class="icofont-laika link">&#xef71;</i></a>Summary</h2>
     <p>Error handling is an important aspect of robust database applications. In ldbc, you can handle errors explicitly based on functional programming principles. The main points are:</p>

@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="Typelevel Laika + Helium Theme" />
+  <title>Connection pooling</title>
+  
+  <meta name="author" content="ldbc contributors"/>
+  
+  <meta name="author" content="Takahiko Tominaga"/>
+  
+  
+  <meta name="description" content="Documentation for ldbc"/>
+  
+  
+  
+  <link rel="icon" sizes="32x32" type="image/png" href="https://typelevel.org/img/favicon.png"/>
+  
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700">
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Mono:500">
+  
+  <link rel="stylesheet" type="text/css" href="../../helium/site/icofont.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../helium/site/laika-helium.css" />
+    <link rel="stylesheet" type="text/css" href="../../css/site.css" />
+  <script src="../../helium/site/laika-helium.js"></script>
+    <script src="../../helium/site/laika-versions.js"></script>
+  <script>initVersions("../../../", "/en/reference/Pooling.html", "latest", null);</script>
+  
+  <script> /* for avoiding page load transitions */ </script>
+</head>
+
+<body>
+
+<header id="top-bar" class="light-default dark-default">
+
+  <div class="row">
+    <a id="nav-icon">
+      <i class="icofont-laika navigationMenu" title="Navigation">&#xefa2;</i>
+    </a>
+    
+    <div class="menu-container version-menu">
+      <a class="text-link menu-toggle" href="#">Version 0.4</a>
+      <nav class="menu-content">
+        <ul class="nav-list">
+          <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <a class="image-link" href="https://typelevel.org"><img src="https://typelevel.org/img/logo.svg"></a>
+
+  <div class="row links">
+    
+    <a class="icon-link svg-link" href="https://github.com/takapi327/ldbc"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>  
+
+</header>
+
+<nav id="sidebar">
+
+  <div class="row">
+    
+    <a class="icon-link svg-link" href="https://github.com/takapi327/ldbc"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>
+
+  
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="../">ldbc</a></li>
+    <li class="level1 nav-leaf"><a href="../migration-notes.html">Migration Note</a></li>
+    <li class="level1 nav-header">Tutorial</li>
+    <li class="level2 nav-leaf"><a href="../tutorial/">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Setup.html">Setup</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Connection.html">Connection</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Simple-Program.html">Simple Programs</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Database-Operations.html">Database Operations</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Parameterized-Queries.html">Parameterized Queries</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Selecting-Data.html">Selecting Data</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Updating-Data.html">Updating Data</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Error-Handling.html">Error Handling</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Logging.html">logging</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Custom-Data-Type.html">Custom Data Types</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Query-Builder.html">Query Builder</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Schema.html">Schema</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Schema-Code-Generation.html">Schema Code Generation</a></li>
+    <li class="level1 nav-header">Examples</li>
+    <li class="level2 nav-leaf"><a href="../examples/">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/Http4s.html">Http4s</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/HikariCP.html">HikariCP</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/Otel.html">OpenTelemetry</a></li>
+    <li class="level1 nav-header">QA</li>
+    <li class="level2 nav-leaf"><a href="../qa/">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/What-is-ldbc.html">Q: What is ldbc?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Which-dependencies-should-I-set.html">Q: Which dependencies should I set?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/What-is-the-difference-between-a-Java-connect-and-a-Scala-connector.html">Q: What is the difference between a Java connector and a Scala connector?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-define-complex-queries-with-plain-queries.html">Q: How to define complex queries with plain queries?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-my-own-type.html">Q: How do I use my own type?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-nested-models.html">Q: How do I use nested models?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-perform-DDL-with-schema.html">Q: How to perform DDL with schema?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-change-column-names-in-Query-Builder.html">Q: How to change column names in Query Builder?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-change-the-format-of-column-names-using-the-schema.html">Q: How to change the format of column names using the schema?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-add-processing-before-and-after-the-connection-is-established.html">Q: How do I add processing before and after the connection is established?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Implicit-search-problem-too-large.html">Q: How to handle the `Implicit search problem too large.` error?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-use-scala-connector-connection-pool.html">Q: How to use connection pool with Scala connector?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Is-there-a-way-to-stream-query-results-asynchronously.html">Q: Is there a way to stream query results asynchronously?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Is-there-a-function-to-limit-the-number-of-concurrent-queries.html">Q: Is there a function to limit the number of concurrent queries?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-handle-multiple-databases.html">Q: How to handle multiple databases (multi-tenant environment)?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-use-with-ZIO.html">Q: How to use with ZIO?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-the-Enum-type.html">Q: How to use the Enum type?</a></li>
+    <li class="level1 nav-header">Reference</li>
+    <li class="level2 nav-leaf"><a href="index.html">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="Connector.html">Connector</a></li>
+    <li class="level2 nav-leaf"><a href="Performance.html">Performance</a></li>
+    <li class="level2 active nav-leaf"><a href="#">Connection pooling</a></li>
+  </ul>
+  
+
+</nav>
+
+<div id="container">
+
+  
+<nav id="page-nav">
+  <p class="header"><a href="#">Connection pooling</a></p>
+
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="#overview">Overview</a></li>
+    <li class="level1 nav-node"><a href="#architecture-overview">Architecture Overview</a></li>
+    <li class="level2 nav-leaf"><a href="#_1-pooleddatasource">1. PooledDataSource</a></li>
+    <li class="level2 nav-leaf"><a href="#_2-concurrentbag">2. ConcurrentBag</a></li>
+    <li class="level2 nav-leaf"><a href="#_3-circuitbreaker">3. CircuitBreaker</a></li>
+    <li class="level1 nav-node"><a href="#circuitbreaker-details">CircuitBreaker Details</a></li>
+    <li class="level2 nav-leaf"><a href="#state-transition-diagram">State Transition Diagram</a></li>
+    <li class="level2 nav-leaf"><a href="#purpose-of-circuitbreaker">Purpose of CircuitBreaker</a></li>
+    <li class="level2 nav-leaf"><a href="#implementation-details">Implementation Details</a></li>
+    <li class="level2 nav-leaf"><a href="#operation-flow">Operation Flow</a></li>
+    <li class="level1 nav-node"><a href="#jvm-threads-vs-cats-effect-fibers">JVM Threads vs Cats Effect Fibers</a></li>
+    <li class="level2 nav-leaf"><a href="#differences-and-characteristics-of-concurrency-models">Differences and Characteristics of Concurrency Models</a></li>
+    <li class="level2 nav-leaf"><a href="#impact-on-pooling-design">Impact on Pooling Design</a></li>
+    <li class="level1 nav-node"><a href="#comparison-with-hikaricp">Comparison with HikariCP</a></li>
+    <li class="level2 nav-leaf"><a href="#similarities">Similarities</a></li>
+    <li class="level2 nav-leaf"><a href="#differences">Differences</a></li>
+    <li class="level2 nav-leaf"><a href="#usage-scenarios-and-selection-criteria">Usage Scenarios and Selection Criteria</a></li>
+    <li class="level1 nav-node"><a href="#background-tasks">Background Tasks</a></li>
+    <li class="level2 nav-leaf"><a href="#housekeeper">HouseKeeper</a></li>
+    <li class="level2 nav-leaf"><a href="#adaptivepoolsizer">AdaptivePoolSizer</a></li>
+    <li class="level2 nav-leaf"><a href="#keepaliveexecutor">KeepaliveExecutor</a></li>
+    <li class="level1 nav-node"><a href="#configuration-examples">Configuration Examples</a></li>
+    <li class="level2 nav-leaf"><a href="#basic-usage">Basic Usage</a></li>
+    <li class="level2 nav-leaf"><a href="#pool-with-metrics-tracking">Pool with Metrics Tracking</a></li>
+    <li class="level2 nav-leaf"><a href="#pool-with-lifecycle-hooks">Pool with Lifecycle Hooks</a></li>
+    <li class="level2 nav-leaf"><a href="#circuitbreaker-configuration">CircuitBreaker Configuration</a></li>
+    <li class="level1 nav-node"><a href="#benchmark-results">Benchmark Results</a></li>
+    <li class="level2 nav-leaf"><a href="#test-environment">Test Environment</a></li>
+    <li class="level2 nav-leaf"><a href="#result-graphs">Result Graphs</a></li>
+    <li class="level2 nav-leaf"><a href="#analysis-of-benchmark-results">Analysis of Benchmark Results</a></li>
+    <li class="level2 nav-leaf"><a href="#performance-characteristics-discussion">Performance Characteristics Discussion</a></li>
+    <li class="level2 nav-leaf"><a href="#recommendations-by-use-case">Recommendations by Use Case</a></li>
+    <li class="level1 nav-leaf"><a href="#summary">Summary</a></li>
+  </ul>
+
+  <p class="footer"></p>
+</nav>
+
+
+  <main class="content">
+
+    <h1 id="connection-pooling" class="title">Connection Pooling</h1>
+    
+    <h2 id="overview" class="section"><a class="anchor-link left" href="#overview"><i class="icofont-laika link">&#xef71;</i></a>Overview</h2>
+    <p>ldbc-connector is a library designed for Cats Effect that provides high-performance and safe database connection pooling. Unlike traditional JVM thread-based pooling (such as HikariCP), it is designed to fully utilize Cats Effect&#39;s fiber-based concurrency model.</p>
+    <div class="callout warning">
+      <i class="icofont-laika warning">&#xf026;</i>
+      <p><strong>Limitations with Scala Native 0.4.x</strong></p>
+      <p>The current Scala Native 0.4.x only supports single-threaded execution. Since the connection pooling functionality in ldbc-connector is designed with multi-threading in mind, when using it with Scala Native 0.4.x, the following issues may occur:</p>
+      <ul>
+        <li>Concurrent connection management does not work correctly</li>
+        <li>Background tasks (HouseKeeper, AdaptivePoolSizer, etc.) may not execute as expected</li>
+        <li>Concurrent connections are effectively limited to 1</li>
+        <li>Deadlocks or unexpected behavior may occur</li>
+      </ul>
+      <p>Scala Native 0.5.x is planned to support multi-threading, but until then, using connection pooling with Scala Native is not recommended. Instead, we recommend creating and using a new connection for each database operation.</p>
+    </div>
+    
+    <h2 id="architecture-overview" class="section"><a class="anchor-link left" href="#architecture-overview"><i class="icofont-laika link">&#xef71;</i></a>Architecture Overview</h2>
+    <p><img src="../../img/pooling/ConnectionPoolWithCircuitBreaker.svg" alt="Connection Pool Architecture"></p>
+    <p>The ldbc-connector pooling system consists of the following main components:</p>
+    
+    <h3 id="_1-pooleddatasource" class="section"><a class="anchor-link left" href="#_1-pooleddatasource"><i class="icofont-laika link">&#xef71;</i></a>1. PooledDataSource</h3>
+    <p>The core component of the pool that manages the entire connection lifecycle.</p>
+    <p>Main responsibilities:</p>
+    <ul>
+      <li>Coordinating connection acquisition and release</li>
+      <li>Managing pool size</li>
+      <li>Collecting metrics</li>
+      <li>Coordinating background tasks</li>
+    </ul>
+    
+    <h3 id="_2-concurrentbag" class="section"><a class="anchor-link left" href="#_2-concurrentbag"><i class="icofont-laika link">&#xef71;</i></a>2. ConcurrentBag</h3>
+    <p>A high-performance concurrent data structure inspired by HikariCP&#39;s ConcurrentBag, but optimized for Cats Effect fibers rather than JVM threads.</p>
+    <p>Features:</p>
+    <ul>
+      <li>Lock-free operations</li>
+      <li>Direct handoff between fibers</li>
+      <li>Efficient wait queue management</li>
+      <li>Atomic state management using <code>Ref[F]</code></li>
+    </ul>
+    
+    <h3 id="_3-circuitbreaker" class="section"><a class="anchor-link left" href="#_3-circuitbreaker"><i class="icofont-laika link">&#xef71;</i></a>3. CircuitBreaker</h3>
+    <p>A critical component for preventing the &quot;Thundering Herd&quot; problem when the database is down.</p>
+    
+    <h2 id="circuitbreaker-details" class="section"><a class="anchor-link left" href="#circuitbreaker-details"><i class="icofont-laika link">&#xef71;</i></a>CircuitBreaker Details</h2>
+    
+    <h3 id="state-transition-diagram" class="section"><a class="anchor-link left" href="#state-transition-diagram"><i class="icofont-laika link">&#xef71;</i></a>State Transition Diagram</h3>
+    <p><img src="../../img/pooling/CircuitBreakerStateTransition.svg" alt="Circuit Breaker State Transitions"></p>
+    
+    <h3 id="purpose-of-circuitbreaker" class="section"><a class="anchor-link left" href="#purpose-of-circuitbreaker"><i class="icofont-laika link">&#xef71;</i></a>Purpose of CircuitBreaker</h3>
+    <p>The CircuitBreaker pattern is implemented to solve the following problems:</p>
+    <ol class="arabic">
+      <li>
+        <p><strong>Thundering Herd Problem Prevention</strong></p>
+        <ul>
+          <li>Prevents situations where a large number of clients attempt to reconnect simultaneously after the database becomes temporarily unavailable</li>
+          <li>This avoids further increasing the load on an already struggling database</li>
+        </ul>
+      </li>
+      <li>
+        <p><strong>Fail Fast</strong></p>
+        <ul>
+          <li>When the database is unresponsive, new connection attempts fail immediately</li>
+          <li>This prevents clients from waiting for long timeouts</li>
+        </ul>
+      </li>
+      <li>
+        <p><strong>Gradual Recovery</strong></p>
+        <ul>
+          <li>Carefully tests whether the service has recovered through the Half-Open state</li>
+          <li>Exponential backoff gradually increases retry intervals for repeated failures</li>
+        </ul>
+      </li>
+    </ol>
+    
+    <h3 id="implementation-details" class="section"><a class="anchor-link left" href="#implementation-details"><i class="icofont-laika link">&#xef71;</i></a>Implementation Details</h3>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">trait</span><span> </span><span class="type-name">CircuitBreaker</span><span>[</span><span class="type-name">F</span><span>[</span><span class="identifier">_</span><span>]]:
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">protect</span><span>[</span><span class="type-name">A</span><span>](</span><span class="identifier">action</span><span>: </span><span class="type-name">F</span><span>[</span><span class="type-name">A</span><span>]): </span><span class="type-name">F</span><span>[</span><span class="type-name">A</span><span>]
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">state</span><span>: </span><span class="type-name">F</span><span>[</span><span class="type-name">CircuitBreaker</span><span>.</span><span class="type-name">State</span><span>]
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">reset</span><span>: </span><span class="type-name">F</span><span>[</span><span class="type-name">Unit</span><span>]</span></code></pre>
+    <p>Configuration parameters:</p>
+    <ul>
+      <li><code>maxFailures</code>: Number of failures before transitioning to Open state (default: 5)</li>
+      <li><code>resetTimeout</code>: Time before transitioning from Open to Half-Open state (default: 60 seconds)</li>
+      <li><code>exponentialBackoffFactor</code>: Timeout increase factor on failure (default: 2.0)</li>
+      <li><code>maxResetTimeout</code>: Maximum reset timeout (default: 5 minutes)</li>
+    </ul>
+    
+    <h3 id="operation-flow" class="section"><a class="anchor-link left" href="#operation-flow"><i class="icofont-laika link">&#xef71;</i></a>Operation Flow</h3>
+    <ol class="arabic">
+      <li>
+        <p><strong>Closed State</strong></p>
+        <ul>
+          <li>All requests are processed normally</li>
+          <li>Failures are counted, and the state transitions to Open when threshold is reached</li>
+        </ul>
+      </li>
+      <li>
+        <p><strong>Open State</strong></p>
+        <ul>
+          <li>All requests fail immediately (fail fast)</li>
+          <li>After reset timeout elapses, attempts to transition to Half-Open state</li>
+        </ul>
+      </li>
+      <li>
+        <p><strong>Half-Open State</strong></p>
+        <ul>
+          <li>Allows a single test request</li>
+          <li>On success: Returns to Closed state</li>
+          <li>On failure: Returns to Open state with exponentially increased timeout</li>
+        </ul>
+      </li>
+    </ol>
+    
+    <h2 id="jvm-threads-vs-cats-effect-fibers" class="section"><a class="anchor-link left" href="#jvm-threads-vs-cats-effect-fibers"><i class="icofont-laika link">&#xef71;</i></a>JVM Threads vs Cats Effect Fibers</h2>
+    
+    <h3 id="differences-and-characteristics-of-concurrency-models" class="section"><a class="anchor-link left" href="#differences-and-characteristics-of-concurrency-models"><i class="icofont-laika link">&#xef71;</i></a>Differences and Characteristics of Concurrency Models</h3>
+    <p><img src="../../img/pooling/ThreadsVsFibers.svg" alt="Threads vs Fibers Comparison"></p>
+    
+    <h4 id="jvm-thread-characteristics-hikaricp-etc" class="section"><a class="anchor-link left" href="#jvm-thread-characteristics-hikaricp-etc"><i class="icofont-laika link">&#xef71;</i></a>JVM Thread Characteristics (HikariCP, etc.)</h4>
+    <p><strong>Advantages:</strong></p>
+    <ul>
+      <li><strong>OS-level support</strong>: Preemptive scheduling</li>
+      <li><strong>Existing ecosystem</strong>: Many libraries and tools support</li>
+      <li><strong>Debug tools</strong>: Mature profiling and monitoring tools</li>
+      <li><strong>Simple execution model</strong>: Easy-to-understand execution flow</li>
+    </ul>
+    <p><strong>Limitations:</strong></p>
+    <ul>
+      <li><strong>Memory usage</strong>: 1-2MB per thread</li>
+      <li><strong>Context switching</strong>: High cost at kernel level</li>
+      <li><strong>Scalability</strong>: Practical limit of thousands of threads</li>
+      <li><strong>Blocking</strong>: Threads actually block</li>
+    </ul>
+    
+    <h4 id="cats-effect-fiber-characteristics-ldbc-connector" class="section"><a class="anchor-link left" href="#cats-effect-fiber-characteristics-ldbc-connector"><i class="icofont-laika link">&#xef71;</i></a>Cats Effect Fiber Characteristics (ldbc-connector)</h4>
+    <p><strong>Advantages:</strong></p>
+    <ul>
+      <li><strong>Memory efficiency</strong>: ~150 bytes per fiber</li>
+      <li><strong>Lightweight context switching</strong>: User-space switching</li>
+      <li><strong>High scalability</strong>: Millions of fibers possible</li>
+      <li><strong>Semantic blocking</strong>: Worker threads are released</li>
+    </ul>
+    <p><strong>Limitations:</strong></p>
+    <ul>
+      <li><strong>Cooperative scheduling</strong>: Requires explicit yield points</li>
+      <li><strong>Learning curve</strong>: Requires functional programming knowledge</li>
+      <li><strong>Ecosystem</strong>: Limited supporting libraries</li>
+      <li><strong>Debug complexity</strong>: Difficult to trace asynchronous execution flow</li>
+    </ul>
+    
+    <h3 id="impact-on-pooling-design" class="section"><a class="anchor-link left" href="#impact-on-pooling-design"><i class="icofont-laika link">&#xef71;</i></a>Impact on Pooling Design</h3>
+    <p>The characteristics of each concurrency model lead to different pooling implementation approaches:</p>
+    
+    <h4 id="thread-based-pool-hikaricp-style" class="section"><a class="anchor-link left" href="#thread-based-pool-hikaricp-style"><i class="icofont-laika link">&#xef71;</i></a>Thread-based Pool (HikariCP style)</h4>
+    <ul>
+      <li><strong>Pool size</strong>: Requires careful configuration due to OS resource constraints</li>
+      <li><strong>Wait strategy</strong>: Blocking wait, utilizing dedicated thread pools</li>
+      <li><strong>Use cases</strong>: CPU-intensive tasks, integration with legacy systems</li>
+      <li><strong>Operations</strong>: Easy management with existing monitoring tools</li>
+    </ul>
+    
+    <h4 id="fiber-based-pool-ldbc-connector" class="section"><a class="anchor-link left" href="#fiber-based-pool-ldbc-connector"><i class="icofont-laika link">&#xef71;</i></a>Fiber-based Pool (ldbc-connector)</h4>
+    <ul>
+      <li><strong>Pool size</strong>: Larger pool sizes possible</li>
+      <li><strong>Wait strategy</strong>: Non-blocking wait, efficient resource sharing</li>
+      <li><strong>Use cases</strong>: I/O-intensive tasks, environments requiring high concurrency</li>
+      <li><strong>Operations</strong>: Requires Cats Effect-compatible monitoring and management</li>
+    </ul>
+    
+    <h2 id="comparison-with-hikaricp" class="section"><a class="anchor-link left" href="#comparison-with-hikaricp"><i class="icofont-laika link">&#xef71;</i></a>Comparison with HikariCP</h2>
+    
+    <h3 id="similarities" class="section"><a class="anchor-link left" href="#similarities"><i class="icofont-laika link">&#xef71;</i></a>Similarities</h3>
+    <ul>
+      <li>Performance-focused design</li>
+      <li>Lock-free data structures like ConcurrentBag</li>
+      <li>Connection management using proxy pattern</li>
+      <li>Automatic pool size adjustment</li>
+    </ul>
+    
+    <h3 id="differences" class="section"><a class="anchor-link left" href="#differences"><i class="icofont-laika link">&#xef71;</i></a>Differences</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>HikariCP</th>
+          <th>ldbc-connector</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Concurrency Model</td>
+          <td>JVM Threads</td>
+          <td>Cats Effect Fibers</td>
+        </tr>
+        <tr>
+          <td>Blocking Handling</td>
+          <td>Blocks threads</td>
+          <td>Semantic blocking</td>
+        </tr>
+        <tr>
+          <td>Scalability</td>
+          <td>Limited by thread count</td>
+          <td>Virtually unlimited fibers</td>
+        </tr>
+        <tr>
+          <td>CircuitBreaker</td>
+          <td>Requires external library</td>
+          <td>Built-in</td>
+        </tr>
+        <tr>
+          <td>Error Handling</td>
+          <td>Exception-based</td>
+          <td>Functional</td>
+        </tr>
+        <tr>
+          <td>Resource Management</td>
+          <td>try-with-resources</td>
+          <td>Resource</td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <h3 id="usage-scenarios-and-selection-criteria" class="section"><a class="anchor-link left" href="#usage-scenarios-and-selection-criteria"><i class="icofont-laika link">&#xef71;</i></a>Usage Scenarios and Selection Criteria</h3>
+    
+    <h4 id="when-ldbc-connector-is-suitable" class="section"><a class="anchor-link left" href="#when-ldbc-connector-is-suitable"><i class="icofont-laika link">&#xef71;</i></a>When ldbc-connector is suitable:</h4>
+    <ol class="arabic">
+      <li>
+        <p><strong>High Concurrency Environments</strong></p>
+        <ul>
+          <li>Thousands of concurrent connection requests</li>
+          <li>Microservice architectures</li>
+          <li>Reactive applications</li>
+        </ul>
+      </li>
+      <li>
+        <p><strong>I/O-Bound Workloads</strong></p>
+        <ul>
+          <li>Long-running queries</li>
+          <li>Simultaneous access to multiple databases</li>
+          <li>Asynchronous processing pipelines</li>
+        </ul>
+      </li>
+      <li>
+        <p><strong>Cats Effect Ecosystem</strong></p>
+        <ul>
+          <li>Already using Cats Effect</li>
+          <li>Adopting functional programming approach</li>
+          <li>Type safety-focused environments</li>
+        </ul>
+      </li>
+    </ol>
+    
+    <h4 id="when-thread-based-pools-like-hikaricp-are-suitable" class="section"><a class="anchor-link left" href="#when-thread-based-pools-like-hikaricp-are-suitable"><i class="icofont-laika link">&#xef71;</i></a>When thread-based pools like HikariCP are suitable:</h4>
+    <ol class="arabic">
+      <li>
+        <p><strong>Integration with Existing Systems</strong></p>
+        <ul>
+          <li>Legacy applications</li>
+          <li>Traditional frameworks like Spring Framework</li>
+          <li>Compatibility with JDBC-compliant tools</li>
+        </ul>
+      </li>
+      <li>
+        <p><strong>Operational Considerations</strong></p>
+        <ul>
+          <li>Utilizing existing monitoring and management tools</li>
+          <li>Leveraging existing team knowledge</li>
+          <li>Proven, stable implementation</li>
+        </ul>
+      </li>
+      <li>
+        <p><strong>Simple Concurrency Requirements</strong></p>
+        <ul>
+          <li>Moderate concurrent connection counts</li>
+          <li>Predictable workloads</li>
+          <li>CPU-intensive processing</li>
+        </ul>
+      </li>
+    </ol>
+    
+    <h2 id="background-tasks" class="section"><a class="anchor-link left" href="#background-tasks"><i class="icofont-laika link">&#xef71;</i></a>Background Tasks</h2>
+    <p>ldbc-connector runs multiple background tasks to maintain pool health:</p>
+    
+    <h3 id="housekeeper" class="section"><a class="anchor-link left" href="#housekeeper"><i class="icofont-laika link">&#xef71;</i></a>HouseKeeper</h3>
+    <ul>
+      <li>Removes expired connections</li>
+      <li>Handles idle timeout</li>
+      <li>Maintains minimum connection count</li>
+    </ul>
+    
+    <h3 id="adaptivepoolsizer" class="section"><a class="anchor-link left" href="#adaptivepoolsizer"><i class="icofont-laika link">&#xef71;</i></a>AdaptivePoolSizer</h3>
+    <ul>
+      <li>Dynamically adjusts pool size based on utilization metrics</li>
+      <li>Scales up and down based on load</li>
+      <li>Stabilization through cooldown periods</li>
+    </ul>
+    
+    <h3 id="keepaliveexecutor" class="section"><a class="anchor-link left" href="#keepaliveexecutor"><i class="icofont-laika link">&#xef71;</i></a>KeepaliveExecutor</h3>
+    <ul>
+      <li>Periodically validates idle connections</li>
+      <li>Maintains connections and prevents timeouts</li>
+    </ul>
+    
+    <h2 id="configuration-examples" class="section"><a class="anchor-link left" href="#configuration-examples"><i class="icofont-laika link">&#xef71;</i></a>Configuration Examples</h2>
+    
+    <h3 id="basic-usage" class="section"><a class="anchor-link left" href="#basic-usage"><i class="icofont-laika link">&#xef71;</i></a>Basic Usage</h3>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="type-name">IO</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">scala</span><span>.</span><span class="identifier">concurrent</span><span>.</span><span class="identifier">duration</span><span>.*
+
+</span><span class="comment">// Pool configuration
+</span><span class="keyword">val</span><span> </span><span class="identifier">config</span><span> = </span><span class="type-name">MySQLConfig</span><span>.</span><span class="identifier">default</span><span>
+  .</span><span class="identifier">setHost</span><span>(</span><span class="string-literal">&quot;localhost&quot;</span><span>)
+  .</span><span class="identifier">setPort</span><span>(</span><span class="number-literal">3306</span><span>)
+  .</span><span class="identifier">setUser</span><span>(</span><span class="string-literal">&quot;myuser&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;mypassword&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;mydb&quot;</span><span>)
+  </span><span class="comment">// Pool size settings
+</span><span>  .</span><span class="identifier">setMinConnections</span><span>(</span><span class="number-literal">5</span><span>)           </span><span class="comment">// Minimum connections (default: 5)
+</span><span>  .</span><span class="identifier">setMaxConnections</span><span>(</span><span class="number-literal">20</span><span>)          </span><span class="comment">// Maximum connections (default: 10)
+</span><span>  </span><span class="comment">// Timeout settings
+</span><span>  .</span><span class="identifier">setConnectionTimeout</span><span>(</span><span class="number-literal">30</span><span>.</span><span class="identifier">seconds</span><span>)    </span><span class="comment">// Connection acquisition timeout (default: 30s)
+</span><span>  .</span><span class="identifier">setIdleTimeout</span><span>(</span><span class="number-literal">10</span><span>.</span><span class="identifier">minutes</span><span>)         </span><span class="comment">// Idle timeout (default: 10min)
+</span><span>  .</span><span class="identifier">setMaxLifetime</span><span>(</span><span class="number-literal">30</span><span>.</span><span class="identifier">minutes</span><span>)         </span><span class="comment">// Maximum lifetime (default: 30min)
+</span><span>  .</span><span class="identifier">setValidationTimeout</span><span>(</span><span class="number-literal">5</span><span>.</span><span class="identifier">seconds</span><span>)    </span><span class="comment">// Validation timeout (default: 5s)
+</span><span>  </span><span class="comment">// Validation &amp; Health checks
+</span><span>  .</span><span class="identifier">setAliveBypassWindow</span><span>(</span><span class="number-literal">500</span><span>.</span><span class="identifier">millis</span><span>)   </span><span class="comment">// Skip validation if used recently (default: 500ms)
+</span><span>  .</span><span class="identifier">setKeepaliveTime</span><span>(</span><span class="number-literal">2</span><span>.</span><span class="identifier">minutes</span><span>)        </span><span class="comment">// Idle validation interval (default: 2min)
+</span><span>  .</span><span class="identifier">setConnectionTestQuery</span><span>(</span><span class="string-literal">&quot;SELECT 1&quot;</span><span>) </span><span class="comment">// Custom test query (optional)
+</span><span>  </span><span class="comment">// Leak detection
+</span><span>  .</span><span class="identifier">setLeakDetectionThreshold</span><span>(</span><span class="number-literal">2</span><span>.</span><span class="identifier">minutes</span><span>) </span><span class="comment">// Connection leak detection (default: none)
+</span><span>  </span><span class="comment">// Maintenance
+</span><span>  .</span><span class="identifier">setMaintenanceInterval</span><span>(</span><span class="number-literal">30</span><span>.</span><span class="identifier">seconds</span><span>)  </span><span class="comment">// Background cleanup interval (default: 30s)
+</span><span>  </span><span class="comment">// Adaptive sizing
+</span><span>  .</span><span class="identifier">setAdaptiveSizing</span><span>(</span><span class="boolean-literal">true</span><span>)            </span><span class="comment">// Dynamic pool size adjustment (default: false)
+</span><span>  .</span><span class="identifier">setAdaptiveInterval</span><span>(</span><span class="number-literal">1</span><span>.</span><span class="identifier">minute</span><span>)      </span><span class="comment">// Adaptive sizing check interval (default: 1min)
+</span><span>
+</span><span class="comment">// Create pooled datasource
+</span><span class="keyword">val</span><span> </span><span class="identifier">poolResource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">config</span><span>)
+
+</span><span class="comment">// Use the pool
+</span><span class="identifier">poolResource</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">pool</span><span> =&gt;
+  </span><span class="identifier">pool</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    </span><span class="comment">// Use connection
+</span><span>    </span><span class="keyword">for</span><span>
+      </span><span class="identifier">stmt</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">createStatement</span><span>()
+      </span><span class="identifier">rs</span><span>   &lt;- </span><span class="identifier">stmt</span><span>.</span><span class="identifier">executeQuery</span><span>(</span><span class="string-literal">&quot;SELECT 1&quot;</span><span>)
+      </span><span class="identifier">_</span><span>    &lt;- </span><span class="identifier">rs</span><span>.</span><span class="identifier">next</span><span>()
+      </span><span class="identifier">result</span><span> &lt;- </span><span class="identifier">rs</span><span>.</span><span class="identifier">getInt</span><span>(</span><span class="number-literal">1</span><span>)
+    </span><span class="keyword">yield</span><span> </span><span class="identifier">result</span><span>
+  }
+}</span></code></pre>
+    
+    <h3 id="pool-with-metrics-tracking" class="section"><a class="anchor-link left" href="#pool-with-metrics-tracking"><i class="icofont-laika link">&#xef71;</i></a>Pool with Metrics Tracking</h3>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.</span><span class="identifier">pool</span><span>.*
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">metricsResource</span><span> = </span><span class="keyword">for</span><span>
+  </span><span class="identifier">tracker</span><span> &lt;- </span><span class="type-name">Resource</span><span>.</span><span class="identifier">eval</span><span>(</span><span class="type-name">PoolMetricsTracker</span><span>.</span><span class="identifier">inMemory</span><span>[</span><span class="type-name">IO</span><span>])
+  </span><span class="identifier">pool</span><span>    &lt;- </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](
+    </span><span class="identifier">config</span><span>,
+    </span><span class="identifier">metricsTracker</span><span> = </span><span class="type-name">Some</span><span>(</span><span class="identifier">tracker</span><span>)
+  )
+</span><span class="keyword">yield</span><span> (</span><span class="identifier">pool</span><span>, </span><span class="identifier">tracker</span><span>)
+
+</span><span class="identifier">metricsResource</span><span>.</span><span class="identifier">use</span><span> { </span><span class="keyword">case</span><span> (</span><span class="identifier">pool</span><span>, </span><span class="identifier">tracker</span><span>) =&gt;
+  </span><span class="comment">// Use pool and monitor metrics
+</span><span>  </span><span class="keyword">for</span><span>
+    </span><span class="identifier">_</span><span>       &lt;- </span><span class="identifier">pool</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span>(</span><span class="identifier">conn</span><span> =&gt; </span><span class="comment">/* use connection */</span><span> </span><span class="type-name">IO</span><span>.</span><span class="identifier">unit</span><span>)
+    </span><span class="identifier">metrics</span><span> &lt;- </span><span class="identifier">tracker</span><span>.</span><span class="identifier">getMetrics</span><span>
+    </span><span class="identifier">_</span><span>       &lt;- </span><span class="type-name">IO</span><span>.</span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;Total acquisitions: </span><span class="substitution">${metrics.totalAcquisitions}</span><span class="string-literal">&quot;</span><span>)
+    </span><span class="identifier">_</span><span>       &lt;- </span><span class="type-name">IO</span><span>.</span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;Average acquisition time: </span><span class="substitution">${metrics.acquisitionTime}</span><span class="string-literal">&quot;</span><span>)
+  </span><span class="keyword">yield</span><span> ()
+}</span></code></pre>
+    
+    <h3 id="pool-with-lifecycle-hooks" class="section"><a class="anchor-link left" href="#pool-with-lifecycle-hooks"><i class="icofont-laika link">&#xef71;</i></a>Pool with Lifecycle Hooks</h3>
+    <pre><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">SessionContext</span><span>(</span><span class="identifier">userId</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">startTime</span><span>: </span><span class="type-name">Long</span><span>)
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">beforeHook</span><span>: </span><span class="type-name">Connection</span><span>[</span><span class="type-name">IO</span><span>] =&gt; </span><span class="type-name">IO</span><span>[</span><span class="type-name">SessionContext</span><span>] = </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="keyword">for</span><span>
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">createStatement</span><span>().</span><span class="identifier">flatMap</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">executeUpdate</span><span>(</span><span class="string-literal">&quot;SET SESSION sql_mode = &#39;STRICT_ALL_TABLES&#39;&quot;</span><span>))
+    </span><span class="identifier">startTime</span><span> = </span><span class="type-name">System</span><span>.</span><span class="identifier">currentTimeMillis</span><span>
+  </span><span class="keyword">yield</span><span> </span><span class="type-name">SessionContext</span><span>(</span><span class="string-literal">&quot;user123&quot;</span><span>, </span><span class="identifier">startTime</span><span>)
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">afterHook</span><span>: (</span><span class="type-name">SessionContext</span><span>, </span><span class="type-name">Connection</span><span>[</span><span class="type-name">IO</span><span>]) =&gt; </span><span class="type-name">IO</span><span>[</span><span class="type-name">Unit</span><span>] = (</span><span class="identifier">ctx</span><span>, </span><span class="identifier">conn</span><span>) =&gt;
+  </span><span class="type-name">IO</span><span>.</span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;Connection used by </span><span class="substitution">${ctx.userId}</span><span class="string-literal"> for </span><span class="substitution">${System.currentTimeMillis - ctx.startTime}</span><span class="string-literal">ms&quot;</span><span>)
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">poolWithHooks</span><span> = </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">poolingWithBeforeAfter</span><span>[</span><span class="type-name">IO</span><span>, </span><span class="type-name">SessionContext</span><span>](
+  </span><span class="identifier">config</span><span> = </span><span class="identifier">config</span><span>,
+  </span><span class="identifier">before</span><span> = </span><span class="type-name">Some</span><span>(</span><span class="identifier">beforeHook</span><span>),
+  </span><span class="identifier">after</span><span> = </span><span class="type-name">Some</span><span>(</span><span class="identifier">afterHook</span><span>)
+)</span></code></pre>
+    
+    <h3 id="circuitbreaker-configuration" class="section"><a class="anchor-link left" href="#circuitbreaker-configuration"><i class="icofont-laika link">&#xef71;</i></a>CircuitBreaker Configuration</h3>
+    <p>CircuitBreaker is configured automatically internally, with the following default values in the current implementation:</p>
+    <ul>
+      <li><code>maxFailures</code>: 5 (threshold for transitioning to Open state)</li>
+      <li><code>resetTimeout</code>: 30 seconds (time before transitioning to Half-Open state)</li>
+      <li><code>exponentialBackoffFactor</code>: 2.0 (backoff factor)</li>
+      <li><code>maxResetTimeout</code>: 5 minutes (maximum reset timeout)</li>
+    </ul>
+    
+    <h2 id="benchmark-results" class="section"><a class="anchor-link left" href="#benchmark-results"><i class="icofont-laika link">&#xef71;</i></a>Benchmark Results</h2>
+    <p>The following shows benchmark results comparing the performance of ldbc-connector and HikariCP with different thread counts. The benchmark measures concurrent performance in executing SELECT statements.</p>
+    
+    <h3 id="test-environment" class="section"><a class="anchor-link left" href="#test-environment"><i class="icofont-laika link">&#xef71;</i></a>Test Environment</h3>
+    <ul>
+      <li>Benchmark content: Concurrent execution of SELECT statements</li>
+      <li>Test targets: ldbc-connector vs HikariCP</li>
+      <li>Thread counts: 1, 2, 4, 8, 16</li>
+    </ul>
+    
+    <h3 id="result-graphs" class="section"><a class="anchor-link left" href="#result-graphs"><i class="icofont-laika link">&#xef71;</i></a>Result Graphs</h3>
+    
+    <h4 id="thread-count-1" class="section"><a class="anchor-link left" href="#thread-count-1"><i class="icofont-laika link">&#xef71;</i></a>Thread Count: 1</h4>
+    <p><img src="../../img/pooling/Select_Thread1.svg" alt="Benchmark Result - Thread 1"></p>
+    
+    <h4 id="thread-count-2" class="section"><a class="anchor-link left" href="#thread-count-2"><i class="icofont-laika link">&#xef71;</i></a>Thread Count: 2</h4>
+    <p><img src="../../img/pooling/Select_Thread2.svg" alt="Benchmark Result - Thread 2"></p>
+    
+    <h4 id="thread-count-4" class="section"><a class="anchor-link left" href="#thread-count-4"><i class="icofont-laika link">&#xef71;</i></a>Thread Count: 4</h4>
+    <p><img src="../../img/pooling/Select_Thread4.svg" alt="Benchmark Result - Thread 4"></p>
+    
+    <h4 id="thread-count-8" class="section"><a class="anchor-link left" href="#thread-count-8"><i class="icofont-laika link">&#xef71;</i></a>Thread Count: 8</h4>
+    <p><img src="../../img/pooling/Select_Thread8.svg" alt="Benchmark Result - Thread 8"></p>
+    
+    <h4 id="thread-count-16" class="section"><a class="anchor-link left" href="#thread-count-16"><i class="icofont-laika link">&#xef71;</i></a>Thread Count: 16</h4>
+    <p><img src="../../img/pooling/Select_Thread16.svg" alt="Benchmark Result - Thread 16"></p>
+    
+    <h3 id="analysis-of-benchmark-results" class="section"><a class="anchor-link left" href="#analysis-of-benchmark-results"><i class="icofont-laika link">&#xef71;</i></a>Analysis of Benchmark Results</h3>
+    <p>The following trends can be observed from these benchmark results:</p>
+    <ol class="arabic">
+      <li>
+        <p><strong>Low Concurrency Environment (1-2 threads)</strong></p>
+        <ul>
+          <li>Performance of both implementations shows relatively close values</li>
+          <li>The difference in overhead is small for simple workloads</li>
+        </ul>
+      </li>
+      <li>
+        <p><strong>Medium Concurrency Environment (4-8 threads)</strong></p>
+        <ul>
+          <li>As concurrency increases, the characteristics of each implementation begin to emerge</li>
+          <li>The impact of the fiber-based lightweight concurrency model can be observed</li>
+        </ul>
+      </li>
+      <li>
+        <p><strong>High Concurrency Environment (16 threads)</strong></p>
+        <ul>
+          <li>The behavioral differences between the two implementations become clear under high concurrency</li>
+          <li>Resource efficiency and scalability characteristics become prominent</li>
+        </ul>
+      </li>
+    </ol>
+    
+    <h3 id="performance-characteristics-discussion" class="section"><a class="anchor-link left" href="#performance-characteristics-discussion"><i class="icofont-laika link">&#xef71;</i></a>Performance Characteristics Discussion</h3>
+    <p>The benchmark results reflect the inherent characteristics of each approach:</p>
+    <p><strong>ldbc-connector (Fiber-based)</strong></p>
+    <ul>
+      <li>Efficient resource utilization through lightweight concurrency primitives</li>
+      <li>CPU usage optimization through semantic blocking</li>
+      <li>Scalability under high concurrency</li>
+    </ul>
+    <p><strong>HikariCP (Thread-based)</strong></p>
+    <ul>
+      <li>Stable performance from mature implementation</li>
+      <li>Fairness through OS-level scheduling</li>
+      <li>High compatibility with existing JVM toolchains</li>
+    </ul>
+    
+    <h3 id="recommendations-by-use-case" class="section"><a class="anchor-link left" href="#recommendations-by-use-case"><i class="icofont-laika link">&#xef71;</i></a>Recommendations by Use Case</h3>
+    <p>Recommendations based on benchmark results for different use cases:</p>
+    <ol class="arabic">
+      <li>
+        <p><strong>When low to moderate concurrency is required</strong></p>
+        <ul>
+          <li>Both implementations provide sufficient performance</li>
+          <li>Choose based on existing infrastructure and team experience</li>
+        </ul>
+      </li>
+      <li>
+        <p><strong>When high concurrency is required</strong></p>
+        <ul>
+          <li>Consider application characteristics (I/O-centric vs CPU-centric)</li>
+          <li>Also consider operational requirements (monitoring, debugging, troubleshooting)</li>
+        </ul>
+      </li>
+      <li>
+        <p><strong>For dynamic workloads</strong></p>
+        <ul>
+          <li>Consider utilizing adaptive pool sizing</li>
+          <li>CircuitBreaker behavior during failures is also an important selection criterion</li>
+        </ul>
+      </li>
+    </ol>
+    <p>It&#39;s important to note that benchmark results are measurements under specific conditions, and actual application performance is influenced by many factors including workload characteristics, database configuration, and network environment. Testing with actual workloads is recommended before production deployment.</p>
+    
+    <h2 id="summary" class="section"><a class="anchor-link left" href="#summary"><i class="icofont-laika link">&#xef71;</i></a>Summary</h2>
+    <p>The ldbc-connector pooling system is an implementation that leverages Cats Effect&#39;s concurrency model. By incorporating the CircuitBreaker pattern, it enhances resilience during database failures.</p>
+    <p>Fiber-based and thread-based approaches each have their strengths and weaknesses. It&#39;s important to make appropriate choices by comprehensively evaluating application requirements, existing infrastructure, team skill sets, and operational considerations.</p>
+    <p>ldbc-connector is a choice that can maximize its characteristics particularly in environments requiring high concurrency or when adopting the Cats Effect ecosystem.</p>
+
+    
+<hr class="footer-rule"/>
+<footer>
+  ldbc is a <a href="https://typelevel.org/">Typelevel</a> project distributed under the <a href="https://img.shields.io/badge/license-MIT-green">MIT</a> license.
+</footer>
+
+
+  </main>
+
+</div>
+
+</body>
+
+</html>

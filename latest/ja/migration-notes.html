@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <a class="text-link menu-toggle" href="#">Version 0.4</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../older-versions.html">Older Versions</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="reference/">はじめに</a></li>
     <li class="level2 nav-leaf"><a href="reference/Connector.html">コネクタ</a></li>
     <li class="level2 nav-leaf"><a href="reference/Performance.html">パフォーマンス</a></li>
+    <li class="level2 nav-leaf"><a href="reference/Pooling.html">コネクションプーリング</a></li>
   </ul>
   
 
@@ -167,18 +168,16 @@
 
   <ul class="nav-list">
     <li class="level1 nav-leaf"><a href="#パッケージ">パッケージ</a></li>
-    <li class="level1 nav-node"><a href="#機能変更">機能変更</a></li>
-    <li class="level2 nav-leaf"><a href="#コネクタ切り替え機能">コネクタ切り替え機能</a></li>
-    <li class="level1 nav-node"><a href="#破壊的変更">破壊的変更</a></li>
-    <li class="level2 nav-leaf"><a href="#プレーン-クエリ構築の拡張">プレーン・クエリ構築の拡張</a></li>
-    <li class="level2 nav-leaf"><a href="#auto-increment値取得メソッド命名変更">AUTO INCREMENT値取得メソッド命名変更</a></li>
-    <li class="level2 nav-leaf"><a href="#クエリビルダーの構築方法">クエリビルダーの構築方法</a></li>
-    <li class="level2 nav-leaf"><a href="#カスタムデータ型のサポート">カスタムデータ型のサポート</a></li>
-    <li class="level2 nav-leaf"><a href="#codecの導入">Codecの導入</a></li>
-    <li class="level2 nav-leaf"><a href="#列の絞り込み方法の変更">列の絞り込み方法の変更</a></li>
-    <li class="level2 nav-leaf"><a href="#tableからtablequeryへの変更">TableからTableQueryへの変更</a></li>
-    <li class="level2 nav-leaf"><a href="#アップデート文の構築方法変更">アップデート文の構築方法変更</a></li>
-    <li class="level2 nav-leaf"><a href="#テーブル結合の構築方法の変更">テーブル結合の構築方法の変更</a></li>
+    <li class="level1 nav-node"><a href="#主要な変更点">🎯 主要な変更点</a></li>
+    <li class="level2 nav-leaf"><a href="#_1-組み込みコネクションプーリング機能の追加">1. 組み込みコネクションプーリング機能の追加</a></li>
+    <li class="level2 nav-leaf"><a href="#_2-api-の変更">2. API の変更</a></li>
+    <li class="level2 nav-leaf"><a href="#_3-設定方法の変更">3. 設定方法の変更</a></li>
+    <li class="level2 nav-leaf"><a href="#_4-コネクションプーリングの使用">4. コネクションプーリングの使用</a></li>
+    <li class="level2 nav-leaf"><a href="#_5-移行時の注意点">5. 移行時の注意点</a></li>
+    <li class="level2 nav-leaf"><a href="#_6-破壊的変更">6. 破壊的変更</a></li>
+    <li class="level2 nav-leaf"><a href="#_7-dbio-実行パターンの変更">7. DBIO 実行パターンの変更</a></li>
+    <li class="level2 nav-leaf"><a href="#_8-新機能">8. 新機能</a></li>
+    <li class="level1 nav-leaf"><a href="#まとめ">まとめ</a></li>
   </ul>
 
   <p class="footer"></p>
@@ -187,26 +186,10 @@
 
   <main class="content">
 
-    <h1 id="マイグレーションノート-0-2-xから0-3-xへの移行" class="title">マイグレーションノート (0.2.xから0.3.xへの移行)</h1>
+    <h1 id="マイグレーションノート-0-3-xから0-4-xへの移行" class="title">マイグレーションノート (0.3.xから0.4.xへの移行)</h1>
     
     <h2 id="パッケージ" class="section"><a class="anchor-link left" href="#パッケージ"><i class="icofont-laika link">&#xef71;</i></a>パッケージ</h2>
-    <p><strong>パッケージ名の変更</strong></p>
-    <table>
-      <thead>
-        <tr>
-          <th>0.2.x</th>
-          <th>0.3.x</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>ldbc-core</td>
-          <td>ldbc-schema</td>
-        </tr>
-      </tbody>
-    </table>
-    <p><strong>新たなパッケージ</strong></p>
-    <p>新たに3種類のパッケージが追加されました。</p>
+    <p><strong>削除されたパッケージ</strong></p>
     <table>
       <thead>
         <tr>
@@ -218,22 +201,31 @@
       </thead>
       <tbody>
         <tr>
-          <td><code>ldbc-connector</code></td>
-          <td>✅</td>
-          <td>✅</td>
-          <td>✅</td>
-        </tr>
-        <tr>
-          <td><code>jdbc-connector</code></td>
+          <td><code>ldbc-schemaSpy</code></td>
           <td>✅</td>
           <td>❌</td>
           <td>❌</td>
         </tr>
+      </tbody>
+    </table>
+    <p><strong>別の機能としてリニューアルされたパッケージ</strong></p>
+    <table>
+      <thead>
         <tr>
-          <td><code>ldbc-statement</code></td>
+          <th>Module / Platform</th>
+          <th>JVM</th>
+          <th>Scala Native</th>
+          <th>Scala.js</th>
+          <th>Scaladoc</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>ldbc-core</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-core_3"><img src="https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
       </tbody>
     </table>
@@ -245,6 +237,7 @@
           <th>JVM</th>
           <th>Scala Native</th>
           <th>Scala.js</th>
+          <th>Scaladoc</th>
         </tr>
       </thead>
       <tbody>
@@ -253,445 +246,428 @@
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-sql_3"><img src="https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+        <tr>
+          <td><code>ldbc-core</code></td>
+          <td>✅</td>
+          <td>✅</td>
+          <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-core_3"><img src="https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-connector</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-connector_3"><img src="https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>jdbc-connector</code></td>
           <td>✅</td>
           <td>❌</td>
           <td>❌</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/jdbc-connector_3"><img src="https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-dsl</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3"><img src="https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-statement</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-statement_3"><img src="https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-query-builder</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-query-builder_3"><img src="https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-schema</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-        </tr>
-        <tr>
-          <td><code>ldbc-schemaSpy</code></td>
-          <td>✅</td>
-          <td>❌</td>
-          <td>❌</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-schema_3"><img src="https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-codegen</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-codegen_3"><img src="https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-hikari</code></td>
           <td>✅</td>
           <td>❌</td>
           <td>❌</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-hikari_3"><img src="https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-plugin</code></td>
           <td>✅</td>
           <td>❌</td>
           <td>❌</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-plugin_2.12_1.0"><img src="https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
       </tbody>
     </table>
     
-    <h2 id="機能変更" class="section"><a class="anchor-link left" href="#機能変更"><i class="icofont-laika link">&#xef71;</i></a>機能変更</h2>
+    <h2 id="主要な変更点" class="section"><a class="anchor-link left" href="#主要な変更点"><i class="icofont-laika link">&#xef71;</i></a>🎯 主要な変更点</h2>
     
-    <h3 id="コネクタ切り替え機能" class="section"><a class="anchor-link left" href="#コネクタ切り替え機能"><i class="icofont-laika link">&#xef71;</i></a>コネクタ切り替え機能</h3>
-    <p>Scala MySQL コネクタに、jdbc と ldbc の接続切り替えのサポートが追加されました。</p>
-    <p>この変更により、開発者はプロジェクトの要件に応じて jdbc または ldbc ライブラリを使用したデータベース接続を柔軟に選択できるようになりました。これにより、開発者は異なるライブラリの機能を利用できるようになり、接続の設定や操作の柔軟性が向上します。</p>
+    <h3 id="_1-組み込みコネクションプーリング機能の追加" class="section"><a class="anchor-link left" href="#_1-組み込みコネクションプーリング機能の追加"><i class="icofont-laika link">&#xef71;</i></a>1. 組み込みコネクションプーリング機能の追加</h3>
+    <p>0.4.0 から、ldbc-connector に高性能なコネクションプーリング機能が組み込まれました。これにより、HikariCP などの外部ライブラリを使用せずに、効率的なコネクション管理が可能になりました。</p>
+    <p><strong>メリット:</strong></p>
+    <ul>
+      <li>Cats Effect のファイバーベース並行性モデルに最適化</li>
+      <li>CircuitBreaker による障害時の保護</li>
+      <li>動的プールサイジング</li>
+      <li>詳細なメトリクス追跡</li>
+    </ul>
     
-    <h4 id="変更方法" class="section"><a class="anchor-link left" href="#変更方法"><i class="icofont-laika link">&#xef71;</i></a>変更方法</h4>
-    <p>まず、共通の依存関係を設定する。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-dsl&quot;</span><span> % </span><span class="string-literal">&quot;0.3.3&quot;</span></code></pre>
-    <p>クロスプラットフォームプロジェクトでは（JVM、JS、ネイティブ）</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %%% </span><span class="string-literal">&quot;ldbc-dsl&quot;</span><span> % </span><span class="string-literal">&quot;0.3.3&quot;</span></code></pre>
-    <p>使用される依存パッケージは、データベース接続が Java API を使用するコネクタを介して行われるか、または ldbc によって提供されるコネクタを介して行われるかによって異なります。</p>
-    <p><strong>jdbcコネクタの使用</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;jdbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.3.3&quot;</span></code></pre>
-    <p><strong>ldbcコネクタの使用</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.3.3&quot;</span></code></pre>
-    <p>クロスプラットフォームプロジェクトでは（JVM、JS、ネイティブ）</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %%% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.3.3&quot;</span></code></pre>
+    <h3 id="_2-api-の変更" class="section"><a class="anchor-link left" href="#_2-api-の変更"><i class="icofont-laika link">&#xef71;</i></a>2. API の変更</h3>
     
-    <h4 id="使用方法" class="section"><a class="anchor-link left" href="#使用方法"><i class="icofont-laika link">&#xef71;</i></a>使用方法</h4>
-    <p><strong>jdbcコネクタの使用</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">jdbc</span><span>.</span><span class="identifier">connector</span><span>.*
-
-</span><span class="keyword">val</span><span> </span><span class="identifier">ds</span><span> = </span><span class="keyword">new</span><span> </span><span class="identifier">com</span><span>.</span><span class="identifier">mysql</span><span>.</span><span class="identifier">cj</span><span>.</span><span class="identifier">jdbc</span><span>.</span><span class="type-name">MysqlDataSource</span><span>()
-</span><span class="identifier">ds</span><span>.</span><span class="identifier">setServerName</span><span>(</span><span class="string-literal">&quot;127.0.0.1&quot;</span><span>)
-</span><span class="identifier">ds</span><span>.</span><span class="identifier">setPortNumber</span><span>(</span><span class="number-literal">13306</span><span>)
-</span><span class="identifier">ds</span><span>.</span><span class="identifier">setDatabaseName</span><span>(</span><span class="string-literal">&quot;world&quot;</span><span>)
-</span><span class="identifier">ds</span><span>.</span><span class="identifier">setUser</span><span>(</span><span class="string-literal">&quot;ldbc&quot;</span><span>)
-</span><span class="identifier">ds</span><span>.</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
-
-</span><span class="keyword">val</span><span> </span><span class="identifier">provider</span><span> = </span><span class="type-name">ConnectionProvider</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">ex</span><span>, </span><span class="type-name">ExecutionContexts</span><span>.</span><span class="identifier">synchronous</span><span>)</span></code></pre>
-    <p><strong>ldbcコネクタの使用</strong></p>
+    <h4 id="connectionprovider-から-mysqldatasource-への移行と-connector-の使用" class="section"><a class="anchor-link left" href="#connectionprovider-から-mysqldatasource-への移行と-connector-の使用"><i class="icofont-laika link">&#xef71;</i></a>ConnectionProvider から MySQLDataSource への移行と Connector の使用</h4>
+    <p>ConnectionProvider は非推奨となり、新しい MySQLDataSource と Connector API を使用します。</p>
+    <p><strong>旧 API (0.3.x):</strong></p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
 
-</span><span class="keyword">val</span><span> </span><span class="identifier">provider</span><span> =
-  </span><span class="type-name">ConnectionProvider</span><span>
-    .</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;127.0.0.1&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;ldbc&quot;</span><span>, </span><span class="string-literal">&quot;password&quot;</span><span>, </span><span class="string-literal">&quot;ldbc&quot;</span><span>)
-    .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)</span></code></pre>
-    <p>データベースへの接続処理は、それぞれの方法で確立されたコネクションを使って行うことができる。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">result</span><span>: </span><span class="type-name">IO</span><span>[(</span><span class="type-name">List</span><span>[</span><span class="type-name">Int</span><span>], </span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>], </span><span class="type-name">Int</span><span>)] = </span><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+</span><span class="comment">// ConnectionProvider を使用
+</span><span class="keyword">val</span><span> </span><span class="identifier">provider</span><span> = </span><span class="type-name">ConnectionProvider</span><span>
+  .</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;root&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;test&quot;</span><span>)
+
+</span><span class="comment">// 直接使用
+</span><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">connection</span><span> =&gt;
+  </span><span class="comment">// SQL実行
+</span><span>}</span></code></pre>
+    <p><strong>新 API (0.4.x):</strong></p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">core</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.*
+
+</span><span class="comment">// MySQLDataSource を使用
+</span><span class="keyword">val</span><span> </span><span class="identifier">dataSource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;root&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;test&quot;</span><span>)
+
+</span><span class="comment">// Connector を作成して DBIO を実行
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">dataSource</span><span>)
+
+</span><span class="comment">// SQLクエリの実行
+</span><span class="keyword">val</span><span> </span><span class="identifier">result</span><span> = </span><span class="string-literal">sql&quot;SELECT * FROM users&quot;</span><span>
+  .</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>]
+  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
+  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
+
+</span><span class="comment">// または Connection から Connector を作成
+</span><span class="identifier">dataSource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">connection</span><span> =&gt;
+  </span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromConnection</span><span>(</span><span class="identifier">connection</span><span>)
+  </span><span class="comment">// DBIO を実行
+</span><span>  </span><span class="string-literal">sql&quot;INSERT INTO users (name) VALUES (</span><span class="substitution">$name</span><span class="string-literal">)&quot;</span><span>
+    .</span><span class="identifier">update</span><span>
+    .</span><span class="identifier">commit</span><span>(</span><span class="identifier">connector</span><span>)
+}
+
+</span><span class="comment">// コネクションプーリング
+</span><span class="keyword">val</span><span> </span><span class="identifier">pooledDataSource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](
+  </span><span class="type-name">MySQLConfig</span><span>.</span><span class="identifier">default</span><span>
+    .</span><span class="identifier">setHost</span><span>(</span><span class="string-literal">&quot;localhost&quot;</span><span>)
+    .</span><span class="identifier">setPort</span><span>(</span><span class="number-literal">3306</span><span>)
+    .</span><span class="identifier">setUser</span><span>(</span><span class="string-literal">&quot;root&quot;</span><span>)
+    .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+    .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;test&quot;</span><span>)
+    .</span><span class="identifier">setMinConnections</span><span>(</span><span class="number-literal">5</span><span>)
+    .</span><span class="identifier">setMaxConnections</span><span>(</span><span class="number-literal">20</span><span>)
+)
+
+</span><span class="identifier">pooledDataSource</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">pool</span><span> =&gt;
+  </span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">pool</span><span>)
+  </span><span class="comment">// DBIO を実行
+</span><span>  </span><span class="string-literal">sql&quot;SELECT * FROM users WHERE id = </span><span class="substitution">$id</span><span class="string-literal">&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>]
+    .</span><span class="identifier">option</span><span>
+    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
+}</span></code></pre>
+    
+    <h3 id="_3-設定方法の変更" class="section"><a class="anchor-link left" href="#_3-設定方法の変更"><i class="icofont-laika link">&#xef71;</i></a>3. 設定方法の変更</h3>
+    
+    <h4 id="ldbc-connector-の設定" class="section"><a class="anchor-link left" href="#ldbc-connector-の設定"><i class="icofont-laika link">&#xef71;</i></a>ldbc-connector の設定</h4>
+    <p><strong>旧方式 (0.3.x):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">provider</span><span> = </span><span class="type-name">ConnectionProvider</span><span>
+  .</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;root&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;test&quot;</span><span>)
+  .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)
+  .</span><span class="identifier">addSocketOption</span><span>(</span><span class="type-name">SocketOption</span><span>.</span><span class="identifier">receiveBufferSize</span><span>(</span><span class="number-literal">4096</span><span>))
+  .</span><span class="identifier">setReadTimeout</span><span>(</span><span class="number-literal">30</span><span>.</span><span class="identifier">seconds</span><span>)</span></code></pre>
+    <p><strong>新方式 (0.4.x):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">dataSource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;root&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;test&quot;</span><span>)
+  .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)
+  .</span><span class="identifier">addSocketOption</span><span>(</span><span class="type-name">SocketOption</span><span>.</span><span class="identifier">receiveBufferSize</span><span>(</span><span class="number-literal">4096</span><span>))
+  .</span><span class="identifier">setReadTimeout</span><span>(</span><span class="number-literal">30</span><span>.</span><span class="identifier">seconds</span><span>)
+  .</span><span class="identifier">setDebug</span><span>(</span><span class="boolean-literal">true</span><span>)
+  .</span><span class="identifier">setAllowPublicKeyRetrieval</span><span>(</span><span class="boolean-literal">true</span><span>)</span></code></pre>
+    
+    <h4 id="jdbc-connector-の設定" class="section"><a class="anchor-link left" href="#jdbc-connector-の設定"><i class="icofont-laika link">&#xef71;</i></a>jdbc-connector の設定</h4>
+    <p><strong>旧方式 (0.3.x):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">jdbc</span><span>.</span><span class="identifier">connector</span><span>.*
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">dataSource</span><span> = </span><span class="keyword">new</span><span> </span><span class="identifier">com</span><span>.</span><span class="identifier">mysql</span><span>.</span><span class="identifier">cj</span><span>.</span><span class="identifier">jdbc</span><span>.</span><span class="type-name">MysqlDataSource</span><span>()
+</span><span class="comment">// 手動設定
+</span><span>
+</span><span class="keyword">val</span><span> </span><span class="identifier">provider</span><span> = </span><span class="type-name">ConnectionProvider</span><span>
+  .</span><span class="identifier">fromDataSource</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">dataSource</span><span>, </span><span class="identifier">ec</span><span>)</span></code></pre>
+    <p><strong>新方式 (0.4.x):</strong></p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">jdbc</span><span>.</span><span class="identifier">connector</span><span>.*
+
+</span><span class="comment">// DataSource から Connector を作成
+</span><span class="keyword">val</span><span> </span><span class="identifier">ds</span><span> = </span><span class="keyword">new</span><span> </span><span class="identifier">com</span><span>.</span><span class="identifier">mysql</span><span>.</span><span class="identifier">cj</span><span>.</span><span class="identifier">jdbc</span><span>.</span><span class="type-name">MysqlDataSource</span><span>()
+</span><span class="identifier">ds</span><span>.</span><span class="identifier">setServerName</span><span>(</span><span class="string-literal">&quot;localhost&quot;</span><span>)
+</span><span class="identifier">ds</span><span>.</span><span class="identifier">setPortNumber</span><span>(</span><span class="number-literal">3306</span><span>)
+</span><span class="identifier">ds</span><span>.</span><span class="identifier">setDatabaseName</span><span>(</span><span class="string-literal">&quot;test&quot;</span><span>)
+</span><span class="identifier">ds</span><span>.</span><span class="identifier">setUser</span><span>(</span><span class="string-literal">&quot;root&quot;</span><span>)
+</span><span class="identifier">ds</span><span>.</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">ds</span><span>, </span><span class="type-name">ExecutionContexts</span><span>.</span><span class="identifier">synchronous</span><span>)
+
+</span><span class="comment">// DriverManager から Connector を作成
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDriverManager</span><span>[</span><span class="type-name">IO</span><span>].</span><span class="identifier">apply</span><span>(
+  </span><span class="identifier">driver</span><span> = </span><span class="string-literal">&quot;com.mysql.cj.jdbc.Driver&quot;</span><span>,
+  </span><span class="identifier">url</span><span> = </span><span class="string-literal">&quot;jdbc:mysql://localhost:3306/test&quot;</span><span>,
+  </span><span class="identifier">user</span><span> = </span><span class="string-literal">&quot;root&quot;</span><span>,
+  </span><span class="identifier">password</span><span> = </span><span class="string-literal">&quot;password&quot;</span><span>,
+  </span><span class="identifier">logHandler</span><span> = </span><span class="type-name">None</span><span>
+)
+
+</span><span class="comment">// MySQLDataSource 経由（ldbc-connector）
+</span><span class="keyword">val</span><span> </span><span class="identifier">dataSource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">fromDataSource</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">ds</span><span>, </span><span class="type-name">ExecutionContexts</span><span>.</span><span class="identifier">synchronous</span><span>)</span></code></pre>
+    
+    <h3 id="_4-コネクションプーリングの使用" class="section"><a class="anchor-link left" href="#_4-コネクションプーリングの使用"><i class="icofont-laika link">&#xef71;</i></a>4. コネクションプーリングの使用</h3>
+    
+    <h4 id="基本的な使用方法" class="section"><a class="anchor-link left" href="#基本的な使用方法"><i class="icofont-laika link">&#xef71;</i></a>基本的な使用方法</h4>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">core</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">scala</span><span>.</span><span class="identifier">concurrent</span><span>.</span><span class="identifier">duration</span><span>.*
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">config</span><span> = </span><span class="type-name">MySQLConfig</span><span>.</span><span class="identifier">default</span><span>
+  .</span><span class="identifier">setHost</span><span>(</span><span class="string-literal">&quot;localhost&quot;</span><span>)
+  .</span><span class="identifier">setPort</span><span>(</span><span class="number-literal">3306</span><span>)
+  .</span><span class="identifier">setUser</span><span>(</span><span class="string-literal">&quot;myuser&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;mypassword&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;mydb&quot;</span><span>)
+  </span><span class="comment">// プール設定
+</span><span>  .</span><span class="identifier">setMinConnections</span><span>(</span><span class="number-literal">5</span><span>)          </span><span class="comment">// 最小接続数
+</span><span>  .</span><span class="identifier">setMaxConnections</span><span>(</span><span class="number-literal">20</span><span>)         </span><span class="comment">// 最大接続数
+</span><span>  .</span><span class="identifier">setConnectionTimeout</span><span>(</span><span class="number-literal">30</span><span>.</span><span class="identifier">seconds</span><span>)  </span><span class="comment">// 接続タイムアウト
+</span><span>  .</span><span class="identifier">setIdleTimeout</span><span>(</span><span class="number-literal">10</span><span>.</span><span class="identifier">minutes</span><span>)        </span><span class="comment">// アイドルタイムアウト
+</span><span>  .</span><span class="identifier">setMaxLifetime</span><span>(</span><span class="number-literal">30</span><span>.</span><span class="identifier">minutes</span><span>)        </span><span class="comment">// 最大生存時間
+</span><span>
+</span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">config</span><span>).</span><span class="identifier">use</span><span> { </span><span class="identifier">pool</span><span> =&gt;
+  </span><span class="comment">// Connector を作成して使用
+</span><span>  </span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">pool</span><span>)
+
+  </span><span class="comment">// SQLクエリの実行
+</span><span>  </span><span class="string-literal">sql&quot;SELECT COUNT(*) FROM users&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[</span><span class="type-name">Long</span><span>]
+    .</span><span class="identifier">unique</span><span>
+    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
+}</span></code></pre>
+    
+    <h4 id="メトリクス付きプール" class="section"><a class="anchor-link left" href="#メトリクス付きプール"><i class="icofont-laika link">&#xef71;</i></a>メトリクス付きプール</h4>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.</span><span class="identifier">pool</span><span>.*
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">metricsResource</span><span> = </span><span class="keyword">for</span><span> {
+  </span><span class="identifier">tracker</span><span> &lt;- </span><span class="type-name">Resource</span><span>.</span><span class="identifier">eval</span><span>(</span><span class="type-name">PoolMetricsTracker</span><span>.</span><span class="identifier">inMemory</span><span>[</span><span class="type-name">IO</span><span>])
+  </span><span class="identifier">pool</span><span>    &lt;- </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](
+    </span><span class="identifier">config</span><span>,
+    </span><span class="identifier">metricsTracker</span><span> = </span><span class="type-name">Some</span><span>(</span><span class="identifier">tracker</span><span>)
+  )
+} </span><span class="keyword">yield</span><span> (</span><span class="identifier">pool</span><span>, </span><span class="identifier">tracker</span><span>)
+
+</span><span class="identifier">metricsResource</span><span>.</span><span class="identifier">use</span><span> { </span><span class="keyword">case</span><span> (</span><span class="identifier">pool</span><span>, </span><span class="identifier">tracker</span><span>) =&gt;
+  </span><span class="keyword">for</span><span> {
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">pool</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">execute</span><span>(</span><span class="string-literal">&quot;SELECT 1&quot;</span><span>))
+    </span><span class="identifier">metrics</span><span> &lt;- </span><span class="identifier">tracker</span><span>.</span><span class="identifier">getMetrics</span><span>
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="type-name">IO</span><span>.</span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;&quot;&quot;
+      |プールメトリクス:
+      |  総接続数: </span><span class="substitution">${metrics.totalCreated}</span><span class="string-literal">
+      |  アクティブ: </span><span class="substitution">${metrics.activeConnections}</span><span class="string-literal">
+      |  アイドル: </span><span class="substitution">${metrics.idleConnections}</span><span class="string-literal">
+    &quot;&quot;&quot;</span><span>.</span><span class="identifier">stripMargin</span><span>)
+  } </span><span class="keyword">yield</span><span> ()
+}</span></code></pre>
+    
+    <h4 id="before-after-フック" class="section"><a class="anchor-link left" href="#before-after-フック"><i class="icofont-laika link">&#xef71;</i></a>Before/After フック</h4>
+    <pre><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">RequestContext</span><span>(</span><span class="identifier">requestId</span><span>: </span><span class="type-name">String</span><span>)
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">poolWithHooks</span><span> = </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">poolingWithBeforeAfter</span><span>[</span><span class="type-name">IO</span><span>, </span><span class="type-name">RequestContext</span><span>](
+  </span><span class="identifier">config</span><span> = </span><span class="identifier">config</span><span>,
+  </span><span class="identifier">before</span><span> = </span><span class="type-name">Some</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    </span><span class="keyword">for</span><span> {
+      </span><span class="identifier">id</span><span> &lt;- </span><span class="type-name">IO</span><span>.</span><span class="identifier">randomUUID</span><span>.</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">toString</span><span>)
+      </span><span class="identifier">_</span><span>  &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">execute</span><span>(</span><span class="string-literal">s&quot;SET @request_id = &#39;</span><span class="substitution">$id</span><span class="string-literal">&#39;&quot;</span><span>)
+    } </span><span class="keyword">yield</span><span> </span><span class="type-name">RequestContext</span><span>(</span><span class="identifier">id</span><span>)
+  },
+  </span><span class="identifier">after</span><span> = </span><span class="type-name">Some</span><span> { (</span><span class="identifier">ctx</span><span>, </span><span class="identifier">conn</span><span>) =&gt;
+    </span><span class="type-name">IO</span><span>.</span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;Request </span><span class="substitution">${ctx.requestId}</span><span class="string-literal"> completed&quot;</span><span>)
+  }
+)</span></code></pre>
+    
+    <h3 id="_5-移行時の注意点" class="section"><a class="anchor-link left" href="#_5-移行時の注意点"><i class="icofont-laika link">&#xef71;</i></a>5. 移行時の注意点</h3>
+    
+    <h4 id="scala-native-での制限事項" class="section"><a class="anchor-link left" href="#scala-native-での制限事項"><i class="icofont-laika link">&#xef71;</i></a>Scala Native での制限事項</h4>
+    <div class="callout warning">
+      <i class="icofont-laika warning">&#xf026;</i>
+      <p><strong>重要</strong>: Scala Native 0.4.x はシングルスレッド実行のみをサポートしています。そのため、Scala Native でコネクションプーリングを使用することは推奨されません。代わりに、各操作で新しいコネクションを作成してください：</p>
+      <pre><code class="nohighlight"><span class="comment">// Scala Native での推奨使用方法
+</span><span class="keyword">val</span><span> </span><span class="identifier">dataSource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;user&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;mydb&quot;</span><span>)
+
+</span><span class="comment">// プーリングは使用しない
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">dataSource</span><span>)
+
+</span><span class="comment">// DBIO の実行
+</span><span class="string-literal">sql&quot;SELECT * FROM products WHERE price &gt; </span><span class="substitution">$minPrice</span><span class="string-literal">&quot;</span><span>
+  .</span><span class="identifier">query</span><span>[</span><span class="type-name">Product</span><span>]
+  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
+  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
+    </div>
+    
+    <h3 id="_6-破壊的変更" class="section"><a class="anchor-link left" href="#_6-破壊的変更"><i class="icofont-laika link">&#xef71;</i></a>6. 破壊的変更</h3>
+    <p>以下の API は削除または変更されています：</p>
+    <ol class="arabic">
+      <li><strong>ConnectionProvider</strong>: 非推奨となり、<code>MySQLDataSource</code> に置き換えられました（0.5.xで削除予定）</li>
+      <li><strong>Provider トレイト</strong>: 非推奨となり、<code>DataSource</code> トレイトに置き換えられました</li>
+      <li><strong>ldbc.sql.Provider</strong>: 削除されました</li>
+      <li><strong>接続の直接使用</strong>: 新しい <code>Connector</code> API を経由して使用する必要があります</li>
+    </ol>
+    
+    <h3 id="_7-dbio-実行パターンの変更" class="section"><a class="anchor-link left" href="#_7-dbio-実行パターンの変更"><i class="icofont-laika link">&#xef71;</i></a>7. DBIO 実行パターンの変更</h3>
+    <p>DBIO の実行方法が変更され、より明確で柔軟になりました。</p>
+    <p><strong>旧方式 (0.3.x):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">connection</span><span> =&gt;
   (</span><span class="keyword">for</span><span>
     </span><span class="identifier">result1</span><span> &lt;- </span><span class="string-literal">sql&quot;SELECT 1&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">Int</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
     </span><span class="identifier">result2</span><span> &lt;- </span><span class="string-literal">sql&quot;SELECT 2&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">Int</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">Option</span><span>]
-    </span><span class="identifier">result3</span><span> &lt;- </span><span class="string-literal">sql&quot;SELECT 3&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">Int</span><span>].</span><span class="identifier">unsafe</span><span>
-  </span><span class="keyword">yield</span><span> (</span><span class="identifier">result1</span><span>, </span><span class="identifier">result2</span><span>, </span><span class="identifier">result3</span><span>)).</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)
+  </span><span class="keyword">yield</span><span> (</span><span class="identifier">result1</span><span>, </span><span class="identifier">result2</span><span>)).</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connection</span><span>)
 }</span></code></pre>
+    <p><strong>新方式 (0.4.x):</strong></p>
+    <pre><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">dataSource</span><span>)
+
+</span><span class="comment">// 各種実行モード
+</span><span class="string-literal">sql&quot;SELECT * FROM users&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)    </span><span class="comment">// 読み取り専用
+</span><span class="string-literal">sql&quot;INSERT INTO users ...&quot;</span><span>.</span><span class="identifier">update</span><span>.</span><span class="identifier">commit</span><span>(</span><span class="identifier">connector</span><span>)                 </span><span class="comment">// コミット付き
+</span><span class="string-literal">sql&quot;UPDATE users ...&quot;</span><span>.</span><span class="identifier">update</span><span>.</span><span class="identifier">transaction</span><span>(</span><span class="identifier">connector</span><span>)                 </span><span class="comment">// トランザクション
+</span><span class="string-literal">sql&quot;DELETE FROM users ...&quot;</span><span>.</span><span class="identifier">update</span><span>.</span><span class="identifier">rollback</span><span>(</span><span class="identifier">connector</span><span>)              </span><span class="comment">// ロールバック
+</span><span>
+</span><span class="comment">// 複数のクエリを組み合わせる
+</span><span>(</span><span class="keyword">for</span><span>
+  </span><span class="identifier">users</span><span> &lt;- </span><span class="string-literal">sql&quot;SELECT * FROM users&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
+  </span><span class="identifier">count</span><span> &lt;- </span><span class="string-literal">sql&quot;SELECT COUNT(*) FROM users&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">Long</span><span>].</span><span class="identifier">unique</span><span>
+</span><span class="keyword">yield</span><span> (</span><span class="identifier">users</span><span>, </span><span class="identifier">count</span><span>)).</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
     
-    <h2 id="破壊的変更" class="section"><a class="anchor-link left" href="#破壊的変更"><i class="icofont-laika link">&#xef71;</i></a>破壊的変更</h2>
+    <h3 id="_8-新機能" class="section"><a class="anchor-link left" href="#_8-新機能"><i class="icofont-laika link">&#xef71;</i></a>8. 新機能</h3>
     
-    <h3 id="プレーン-クエリ構築の拡張" class="section"><a class="anchor-link left" href="#プレーン-クエリ構築の拡張"><i class="icofont-laika link">&#xef71;</i></a>プレーン・クエリ構築の拡張</h3>
-    <p>プレーン・クエリを用いたデータベース接続メソッドによる検索対象の型の決定は、検索対象の型とそのフォーマット（リストまたはオプション）を一括して指定していた。</p>
-    <p>今回の修正ではこれを変更し、取得する型とその形式の指定を分離することで内部ロジックを共通化した。これにより、プレーン・クエリの構文はよりdoobieに近くなり、doobieのユーザは混乱することなく使用できるはずである。</p>
-    <p><strong>before</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="string-literal">sql&quot;SELECT id, name, age FROM user&quot;</span><span>.</span><span class="identifier">toList</span><span>[(</span><span class="type-name">Long</span><span>, </span><span class="type-name">String</span><span>, </span><span class="type-name">Int</span><span>)].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connection</span><span>)
-</span><span class="string-literal">sql&quot;SELECT id, name, age FROM user WHERE id = </span><span class="substitution">${1L}</span><span class="string-literal">&quot;</span><span>.</span><span class="identifier">headOption</span><span>[</span><span class="type-name">User</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connection</span><span>)</span></code></pre>
-    <p><strong>after</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="string-literal">sql&quot;SELECT id, name, age FROM user&quot;</span><span>.</span><span class="identifier">query</span><span>[(</span><span class="type-name">Long</span><span>, </span><span class="type-name">String</span><span>, </span><span class="type-name">Int</span><span>)].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connection</span><span>)
-</span><span class="string-literal">sql&quot;SELECT id, name, age FROM user WHERE id = </span><span class="substitution">${1L}</span><span class="string-literal">&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">Option</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connection</span><span>)</span></code></pre>
+    <h4 id="circuitbreaker" class="section"><a class="anchor-link left" href="#circuitbreaker"><i class="icofont-laika link">&#xef71;</i></a>CircuitBreaker</h4>
+    <p>コネクションプールには、データベース障害時の保護のための CircuitBreaker が組み込まれています：</p>
+    <ul>
+      <li>連続した失敗後に自動的に接続試行を停止</li>
+      <li>指数バックオフによる段階的な回復</li>
+      <li>アプリケーションとデータベースの両方を保護</li>
+    </ul>
     
-    <h3 id="auto-increment値取得メソッド命名変更" class="section"><a class="anchor-link left" href="#auto-increment値取得メソッド命名変更"><i class="icofont-laika link">&#xef71;</i></a>AUTO INCREMENT値取得メソッド命名変更</h3>
-    <p>更新 API で AUTO INCREMENT 列によって生成された値を変換する API <code>updateReturningAutoGeneratedKey</code> の名前が <code>returning</code> に変更されました。</p>
-    <p>これはMySQLの特徴で、MySQLはデータ挿入時にAUTO INCREMENTで生成された値を返しますが、他のRDBは動作が異なり、AUTO INCREMENTで生成された値以外の値を返すことがあります。
-    API 名は、将来の拡張を考慮して、限定的な API 名をより拡張しやすくするために早い段階で変更されました。</p>
-    <p><strong>before</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="string-literal">sql&quot;INSERT INTO `table`(`id`, `c1`) VALUES (</span><span class="substitution">$None</span><span class="string-literal">, </span><span class="substitution">${ &quot;column 1&quot; }</span><span class="string-literal">)&quot;</span><span>.</span><span class="identifier">updateReturningAutoGeneratedKey</span><span>[</span><span class="type-name">Long</span><span>]</span></code></pre>
-    <p><strong>after</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="string-literal">sql&quot;INSERT INTO `table`(`id`, `c1`) VALUES (</span><span class="substitution">$None</span><span class="string-literal">, </span><span class="substitution">${ &quot;column 1&quot; }</span><span class="string-literal">)&quot;</span><span>.</span><span class="identifier">returning</span><span>[</span><span class="type-name">Long</span><span>]</span></code></pre>
+    <h4 id="アダプティブプールサイジング" class="section"><a class="anchor-link left" href="#アダプティブプールサイジング"><i class="icofont-laika link">&#xef71;</i></a>アダプティブプールサイジング</h4>
+    <p>負荷に基づいてプールサイズを動的に調整：</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">config</span><span> = </span><span class="type-name">MySQLConfig</span><span>.</span><span class="identifier">default</span><span>
+  </span><span class="comment">// ... 他の設定
+</span><span>  .</span><span class="identifier">setAdaptiveSizing</span><span>(</span><span class="boolean-literal">true</span><span>)
+  .</span><span class="identifier">setAdaptiveInterval</span><span>(</span><span class="number-literal">1</span><span>.</span><span class="identifier">minute</span><span>)</span></code></pre>
     
-    <h3 id="クエリビルダーの構築方法" class="section"><a class="anchor-link left" href="#クエリビルダーの構築方法"><i class="icofont-laika link">&#xef71;</i></a>クエリビルダーの構築方法</h3>
-    <p>以前まではクエリビルダーはテーブルスキーマを構築しなければ使用することができませんでした。</p>
-    <p>今回の更新で、より簡易的にクエリビルダーを使用できるように変更を行いました。</p>
-    <p><strong>before</strong></p>
-    <p>まずモデルに対応したテーブルスキーマを作成し、</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">User</span><span>(
-  </span><span class="identifier">id</span><span>: </span><span class="type-name">Long</span><span>,
-  </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>,
-  </span><span class="identifier">age</span><span>: </span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>],
-)
-
-</span><span class="keyword">val</span><span> </span><span class="identifier">userTable</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>)(                 </span><span class="comment">// CREATE TABLE `user` (
-</span><span>  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="type-name">BIGINT</span><span>, </span><span class="type-name">AUTO_INCREMENT</span><span>, </span><span class="type-name">PRIMARY_KEY</span><span>), </span><span class="comment">//   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-</span><span>  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">255</span><span>)),                      </span><span class="comment">//   `name` VARCHAR(255) NOT NULL,
-</span><span>  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;age&quot;</span><span>, </span><span class="type-name">INT</span><span>.</span><span class="type-name">UNSIGNED</span><span>.</span><span class="type-name">DEFAULT</span><span>(</span><span class="type-name">None</span><span>)),         </span><span class="comment">//   `age` INT unsigned DEFAULT NULL
-</span><span>)</span></code></pre>
-    <p>次にテーブルスキーマを使用して<code>TableQuery</code>の構築を行います。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">tableQuery</span><span> = </span><span class="type-name">TableQuery</span><span>[</span><span class="type-name">IO</span><span>, </span><span class="type-name">User</span><span>](</span><span class="identifier">userTable</span><span>)</span></code></pre>
-    <p>最後にクエリ構築を行っていました。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">result</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">List</span><span>[</span><span class="type-name">User</span><span>]] = </span><span class="identifier">connection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
-  </span><span class="identifier">tableQuery</span><span>.</span><span class="identifier">selectAll</span><span>.</span><span class="identifier">toList</span><span>[</span><span class="type-name">User</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)
-  </span><span class="comment">// &quot;SELECT `id`, `name`, `age` FROM user&quot;
-</span><span>}</span></code></pre>
-    <p><strong>after</strong></p>
-    <p>今回の変更によって、モデルを構築し</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.</span><span class="identifier">codec</span><span>.</span><span class="type-name">Codec</span><span>
-</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">query</span><span>.</span><span class="identifier">builder</span><span>.</span><span class="type-name">Table</span><span>
-
-</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">User</span><span>(
-  </span><span class="identifier">id</span><span>: </span><span class="type-name">Long</span><span>,
-  </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>,
-  </span><span class="identifier">age</span><span>: </span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>],
-) </span><span class="keyword">derives</span><span> </span><span class="type-name">Table</span><span>
-</span><span class="keyword">object</span><span> </span><span class="type-name">User</span><span>:
-  </span><span class="keyword">given</span><span> </span><span class="type-name">Codec</span><span>[</span><span class="type-name">User</span><span>] = </span><span class="type-name">Codec</span><span>.</span><span class="identifier">derived</span><span>[</span><span class="type-name">User</span><span>]</span></code></pre>
-    <p>次に<code>Table</code>を初期化を行います。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">query</span><span>.</span><span class="identifier">builder</span><span>.</span><span class="type-name">Table</span><span>
-
-</span><span class="keyword">val</span><span> </span><span class="identifier">userTable</span><span> = </span><span class="type-name">TableQuery</span><span>[</span><span class="type-name">User</span><span>]</span></code></pre>
-    <p>最後にクエリ構築を行うことで利用可能となります。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">result</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">List</span><span>[</span><span class="type-name">User</span><span>]] = </span><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
-  </span><span class="identifier">userTable</span><span>.</span><span class="identifier">selectAll</span><span>.</span><span class="identifier">query</span><span>.</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)
-  </span><span class="comment">// &quot;SELECT `id`, `name`, `age` FROM user&quot;
-</span><span>}</span></code></pre>
+    <h4 id="リーク検出" class="section"><a class="anchor-link left" href="#リーク検出"><i class="icofont-laika link">&#xef71;</i></a>リーク検出</h4>
+    <p>開発環境でのコネクションリークを検出：</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">config</span><span> = </span><span class="type-name">MySQLConfig</span><span>.</span><span class="identifier">default</span><span>
+  </span><span class="comment">// ... 他の設定
+</span><span>  .</span><span class="identifier">setLeakDetectionThreshold</span><span>(</span><span class="number-literal">2</span><span>.</span><span class="identifier">minutes</span><span>)</span></code></pre>
     
-    <h4 id="schemaを使用したクエリビルダーの構築" class="section"><a class="anchor-link left" href="#schemaを使用したクエリビルダーの構築"><i class="icofont-laika link">&#xef71;</i></a>Schemaを使用したクエリビルダーの構築</h4>
-    <p>以前までのスキーマを模したTableの構築方法は、Schemaプロジェクトを使用してテーブル型を構築する方法に変わります。
-    以下では、Userモデルに対応するTable型の構築について見ていきます。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">User</span><span>(
-  </span><span class="identifier">id</span><span>: </span><span class="type-name">Long</span><span>,
-  </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>,
-  </span><span class="identifier">age</span><span>: </span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>],
-)</span></code></pre>
-    <p><strong>Before</strong></p>
-    <p>これまでは、Tableのインスタンスを直接作成する必要があった。Tableの引数には、Userクラスが持つプロパティと同じ順序で対応するカラムを渡す必要があり、カラムのデータ型も設定することが必須だった。</p>
-    <p>このテーブル型を使ったTableQueryは、型安全なアクセスが可能なDynamicを使って実装したが、開発ツールでは補完ができなかった。</p>
-    <p>また、この構築方法は、クラス生成に比べてコンパイル時間が少し遅かった。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">userTable</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>)(
-  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="type-name">BIGINT</span><span>, </span><span class="type-name">AUTO_INCREMENT</span><span>, </span><span class="type-name">PRIMARY_KEY</span><span>),
-  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">255</span><span>)),
-  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;age&quot;</span><span>, </span><span class="type-name">INT</span><span>.</span><span class="type-name">UNSIGNED</span><span>.</span><span class="type-name">DEFAULT</span><span>(</span><span class="type-name">None</span><span>)),
-)</span></code></pre>
-    <p><strong>After</strong></p>
-    <p>今回の修正では、Table型の生成は、Tableを継承してクラスを作成する方法に変更された。また、カラムのデータ型は必須ではなくなり、実装者が任意に設定できるようになりました。</p>
-    <p>このようにSlickと同様の構築方法に変更することで、実装者にとってより馴染みやすいものになっています。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">class</span><span> </span><span class="type-name">UserTable</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>):
-  </span><span class="keyword">def</span><span> </span><span class="declaration-name">id</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="identifier">column</span><span>[</span><span class="type-name">Long</span><span>](</span><span class="string-literal">&quot;id&quot;</span><span>)
-  </span><span class="keyword">def</span><span> </span><span class="declaration-name">name</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">column</span><span>[</span><span class="type-name">String</span><span>](</span><span class="string-literal">&quot;name&quot;</span><span>)
-  </span><span class="keyword">def</span><span> </span><span class="declaration-name">age</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>]] = </span><span class="identifier">column</span><span>[</span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>]](</span><span class="string-literal">&quot;age&quot;</span><span>)
+    <h4 id="ストリーミングクエリのサポート" class="section"><a class="anchor-link left" href="#ストリーミングクエリのサポート"><i class="icofont-laika link">&#xef71;</i></a>ストリーミングクエリのサポート</h4>
+    <p>ldbcは<code>fs2.Stream</code>を使用した効率的なストリーミングクエリをサポートします。これにより、大量のデータを扱う際のメモリ使用量を抑えることができます。</p>
+    <p><strong>基本的な使用方法:</strong></p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">fs2</span><span>.</span><span class="type-name">Stream</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.*
 
-  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> * : </span><span class="type-name">Column</span><span>[</span><span class="type-name">User</span><span>] = (</span><span class="identifier">id</span><span> *: </span><span class="identifier">name</span><span> *: </span><span class="identifier">age</span><span>).</span><span class="identifier">to</span><span>[</span><span class="type-name">User</span><span>]</span></code></pre>
-    <p>カラムのデータ型はまだ設定できます。この設定は、たとえば、このテーブル・クラスを使ってスキーマを生成するときに使われます。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">class</span><span> </span><span class="type-name">UserTable</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>):
-  </span><span class="keyword">def</span><span> </span><span class="declaration-name">id</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="identifier">column</span><span>[</span><span class="type-name">Long</span><span>](</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="type-name">BIGINT</span><span>, </span><span class="type-name">AUTO_INCREMENT</span><span>, </span><span class="type-name">PRIMARY_KEY</span><span>)
-  </span><span class="keyword">def</span><span> </span><span class="declaration-name">name</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">column</span><span>[</span><span class="type-name">String</span><span>](</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">255</span><span>))
-  </span><span class="keyword">def</span><span> </span><span class="declaration-name">age</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>]] = </span><span class="identifier">column</span><span>[</span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>]](</span><span class="string-literal">&quot;age&quot;</span><span>, </span><span class="type-name">INT</span><span>.</span><span class="type-name">UNSIGNED</span><span>.</span><span class="type-name">DEFAULT</span><span>(</span><span class="type-name">None</span><span>))
+</span><span class="comment">// デフォルトのfetchSize（1）でストリーミング
+</span><span class="keyword">val</span><span> </span><span class="identifier">stream</span><span>: </span><span class="type-name">Stream</span><span>[</span><span class="type-name">DBIO</span><span>, </span><span class="type-name">String</span><span>] = 
+  </span><span class="string-literal">sql&quot;SELECT name FROM city&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>]
+    .</span><span class="identifier">stream</span><span>
 
-  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> * : </span><span class="type-name">Column</span><span>[</span><span class="type-name">User</span><span>] = (</span><span class="identifier">id</span><span> *: </span><span class="identifier">name</span><span> *: </span><span class="identifier">age</span><span>).</span><span class="identifier">to</span><span>[</span><span class="type-name">User</span><span>]</span></code></pre>
-    <p>また、データ型を表現したカラム定義方法も存在します。上記の定義方法は以下のように書き換えることが可能です。
-    この定義方法では、カラム名を変数名として使用できるためカラム名を引数として渡す必要はありません。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span>class UserTable extends Table[User](&quot;user&quot;):
-</span><span class="diff-removed">-  def id: Column[Long] = column[Long](&quot;id&quot;, BIGINT, AUTO_INCREMENT, PRIMARY_KEY)</span><span>
-</span><span class="diff-removed">-  def name: Column[String] = column[String](&quot;name&quot;, VARCHAR(255))</span><span>
-</span><span class="diff-removed">-  def age: Column[Option[Int]] = column[Option[Int]](&quot;age&quot;, INT.UNSIGNED.DEFAULT(None))</span><span>
-</span><span class="diff-added">+  def id: Column[Long] = bigint().autoIncrement.primaryKey</span><span>
-</span><span class="diff-added">+  def name: Column[String] = varchar(255)</span><span>
-</span><span class="diff-added">+  def age: Column[Option[Int]] = int().unsigned.defaultNull</span><span>
+</span><span class="comment">// fetchSizeを指定したストリーミング
+</span><span class="keyword">val</span><span> </span><span class="identifier">streamWithFetchSize</span><span>: </span><span class="type-name">Stream</span><span>[</span><span class="type-name">DBIO</span><span>, </span><span class="type-name">City</span><span>] = 
+  </span><span class="string-literal">sql&quot;SELECT * FROM city&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[</span><span class="type-name">City</span><span>]
+    .</span><span class="identifier">stream</span><span>(</span><span class="identifier">fetchSize</span><span> = </span><span class="number-literal">100</span><span>)</span></code></pre>
+    <p><strong>実践的な使用例:</strong></p>
+    <pre><code class="nohighlight"><span class="comment">// 大量データの効率的な処理
+</span><span class="keyword">val</span><span> </span><span class="identifier">processLargeCities</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">List</span><span>[</span><span class="type-name">String</span><span>]] = 
+  </span><span class="string-literal">sql&quot;SELECT name, population FROM city&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[(</span><span class="type-name">String</span><span>, </span><span class="type-name">Int</span><span>)]
+    .</span><span class="identifier">stream</span><span>(</span><span class="number-literal">1000</span><span>)                    </span><span class="comment">// 1000行ずつ取得
+</span><span>    .</span><span class="identifier">filter</span><span>(</span><span class="identifier">_</span><span class="number-literal">._2</span><span> &gt; </span><span class="number-literal">1000000</span><span>)          </span><span class="comment">// 人口100万人以上
+</span><span>    .</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span class="number-literal">._1</span><span>)                       </span><span class="comment">// 都市名のみ取得
+</span><span>    .</span><span class="identifier">take</span><span>(</span><span class="number-literal">50</span><span>)                        </span><span class="comment">// 最初の50件まで
+</span><span>    .</span><span class="identifier">compile</span><span>.</span><span class="identifier">toList</span><span>
+    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
 
-  override def * : Column[User] = (id *: name *: age).to[User]</span></code></pre>
-    <p>カラム名はNamingを暗黙的に渡すことで書式を変更することができます。
-    デフォルトはキャメルケースですが、パスカルケースに変更するには以下のようにします。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">class</span><span> </span><span class="type-name">UserTable</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>):
-  </span><span class="keyword">given</span><span> </span><span class="type-name">Naming</span><span> = </span><span class="type-name">Naming</span><span>.</span><span class="type-name">PASCAL</span><span>
-
-  </span><span class="keyword">def</span><span> </span><span class="declaration-name">id</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="identifier">bigint</span><span>().</span><span class="identifier">autoIncrement</span><span>.</span><span class="identifier">primaryKey</span><span>
-  </span><span class="keyword">def</span><span> </span><span class="declaration-name">name</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">varchar</span><span>(</span><span class="number-literal">255</span><span>)
-  </span><span class="keyword">def</span><span> </span><span class="declaration-name">age</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>]] = </span><span class="identifier">int</span><span>().</span><span class="identifier">unsigned</span><span>.</span><span class="identifier">defaultNull</span><span>
-
-  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> * : </span><span class="type-name">Column</span><span>[</span><span class="type-name">User</span><span>] = (</span><span class="identifier">id</span><span> *: </span><span class="identifier">name</span><span> *: </span><span class="identifier">age</span><span>).</span><span class="identifier">to</span><span>[</span><span class="type-name">User</span><span>]</span></code></pre>
-    <p>特定のカラムの書式を変更したい場合は、カラム名を引数として渡すことで定義できます。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">class</span><span> </span><span class="type-name">UserTable</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>):
-  </span><span class="keyword">def</span><span> </span><span class="declaration-name">id</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="identifier">bigint</span><span>(</span><span class="string-literal">&quot;ID&quot;</span><span>).</span><span class="identifier">autoIncrement</span><span>.</span><span class="identifier">primaryKey</span><span>
-  </span><span class="keyword">def</span><span> </span><span class="declaration-name">name</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">varchar</span><span>(</span><span class="string-literal">&quot;NAME&quot;</span><span>, </span><span class="number-literal">255</span><span>)
-  </span><span class="keyword">def</span><span> </span><span class="declaration-name">age</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>]] = </span><span class="identifier">int</span><span>(</span><span class="string-literal">&quot;AGE&quot;</span><span>).</span><span class="identifier">unsigned</span><span>.</span><span class="identifier">defaultNull</span><span>
-
-  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> * : </span><span class="type-name">Column</span><span>[</span><span class="type-name">User</span><span>] = (</span><span class="identifier">id</span><span> *: </span><span class="identifier">name</span><span> *: </span><span class="identifier">age</span><span>).</span><span class="identifier">to</span><span>[</span><span class="type-name">User</span><span>]</span></code></pre>
+</span><span class="comment">// 集計処理
+</span><span class="keyword">val</span><span> </span><span class="identifier">calculateTotal</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">BigDecimal</span><span>] = 
+  </span><span class="string-literal">sql&quot;SELECT amount FROM transactions WHERE year = 2024&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[</span><span class="type-name">BigDecimal</span><span>]
+    .</span><span class="identifier">stream</span><span>(</span><span class="number-literal">5000</span><span>)                    </span><span class="comment">// 5000行ずつ処理
+</span><span>    .</span><span class="identifier">filter</span><span>(</span><span class="identifier">_</span><span> &gt; </span><span class="number-literal">100</span><span>)                 </span><span class="comment">// 100円以上の取引
+</span><span>    .</span><span class="identifier">fold</span><span>(</span><span class="type-name">BigDecimal</span><span>(</span><span class="number-literal">0</span><span>))(</span><span class="identifier">_</span><span> + </span><span class="identifier">_</span><span>)      </span><span class="comment">// 合計を計算
+</span><span>    .</span><span class="identifier">compile</span><span>.</span><span class="identifier">lastOrError</span><span>
+    .</span><span class="identifier">transaction</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
+    <p><strong>MySQLでの最適化設定:</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// サーバーサイドカーソルを有効化してメモリ効率を向上
+</span><span class="keyword">val</span><span> </span><span class="identifier">datasource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">host</span><span>, </span><span class="identifier">port</span><span>, </span><span class="identifier">user</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="identifier">password</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="identifier">database</span><span>)
+  .</span><span class="identifier">setUseCursorFetch</span><span>(</span><span class="boolean-literal">true</span><span>)  </span><span class="comment">// 真のストリーミング処理を実現</span></code></pre>
+    <p><strong>ストリーミングのメリット:</strong></p>
+    <ul>
+      <li><strong>メモリ効率</strong>: 大量データでもメモリ使用量を一定に保てる</li>
+      <li><strong>早期処理</strong>: データを受信しながら同時に処理できる</li>
+      <li><strong>中断可能</strong>: 条件に応じて処理を途中で止められる</li>
+      <li><strong>fs2の豊富な操作</strong>: <code>filter</code>、<code>map</code>、<code>take</code>、<code>fold</code>などの関数型操作が利用可能</li>
+    </ul>
     
-    <h3 id="カスタムデータ型のサポート" class="section"><a class="anchor-link left" href="#カスタムデータ型のサポート"><i class="icofont-laika link">&#xef71;</i></a>カスタムデータ型のサポート</h3>
-    <p>ユーザー定義のデータ型を使用する際は、<code>ResultSetReader</code>と<code>Parameter</code>を使用してカスタムデータ型をサポートしていました。</p>
-    <p>今回の更新で、<code>ResultSetReader</code>と<code>Parameter</code>を使用してカスタムデータ型をサポートする方法が変更されました。</p>
-    
-    <h4 id="encoder" class="section"><a class="anchor-link left" href="#encoder"><i class="icofont-laika link">&#xef71;</i></a>Encoder</h4>
-    <p>クエリ文字列に動的に埋め込むために、<code>Parameter</code>から<code>Encoder</code>に変更。</p>
-    <p>これにより、ユーザはEffect Typeを受け取るための冗長な処理を記述する必要がなくなり、よりシンプルな実装とカスタムデータ型のパラメータとしての使用が可能になります。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">enum</span><span> </span><span class="type-name">Status</span><span>(</span><span class="keyword">val</span><span> </span><span class="identifier">code</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="keyword">val</span><span> </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>):
-  </span><span class="keyword">case</span><span> </span><span class="type-name">Active</span><span>   </span><span class="keyword">extends</span><span> </span><span class="type-name">Status</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;Active&quot;</span><span>)
-  </span><span class="keyword">case</span><span> </span><span class="type-name">InActive</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Status</span><span>(</span><span class="number-literal">2</span><span>, </span><span class="string-literal">&quot;InActive&quot;</span><span>)</span></code></pre>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="diff-removed">-given Parameter[Status] with</span><span>
-</span><span class="diff-removed">-  override def bind[F[_]](</span><span>
-</span><span class="diff-removed">-    statement: PreparedStatement[F],</span><span>
-</span><span class="diff-removed">-    index: Int,</span><span>
-</span><span class="diff-removed">-    status: Status</span><span>
-</span><span class="diff-removed">-  ): F[Unit] = statement.setInt(index, status.code)</span><span>
-
-</span><span class="diff-added">+given Encoder[Status] = Encoder[Int].contramap(_.code)</span></code></pre>
-    <p><code>Encoder</code>のエンコード処理では、<code>PreparedStatement</code>で扱えるScala型しか返すことができません。</p>
-    <p>現在、以下のタイプがサポートされている。</p>
-    <table>
-      <thead>
-        <tr>
-          <th>Scala Type</th>
-          <th>Methods called in PreparedStatement</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><code>Boolean</code></td>
-          <td><code>setBoolean</code></td>
-        </tr>
-        <tr>
-          <td><code>Byte</code></td>
-          <td><code>setByte</code></td>
-        </tr>
-        <tr>
-          <td><code>Short</code></td>
-          <td><code>setShort</code></td>
-        </tr>
-        <tr>
-          <td><code>Int</code></td>
-          <td><code>setInt</code></td>
-        </tr>
-        <tr>
-          <td><code>Long</code></td>
-          <td><code>setLong</code></td>
-        </tr>
-        <tr>
-          <td><code>Float</code></td>
-          <td><code>setFloat</code></td>
-        </tr>
-        <tr>
-          <td><code>Double</code></td>
-          <td><code>setDouble</code></td>
-        </tr>
-        <tr>
-          <td><code>BigDecimal</code></td>
-          <td><code>setBigDecimal</code></td>
-        </tr>
-        <tr>
-          <td><code>String</code></td>
-          <td><code>setString</code></td>
-        </tr>
-        <tr>
-          <td><code>Array[Byte]</code></td>
-          <td><code>setBytes</code></td>
-        </tr>
-        <tr>
-          <td><code>java.time.LocalDate</code></td>
-          <td><code>setDate</code></td>
-        </tr>
-        <tr>
-          <td><code>java.time.LocalTime</code></td>
-          <td><code>setTime</code></td>
-        </tr>
-        <tr>
-          <td><code>java.time.LocalDateTime</code></td>
-          <td><code>setTimestamp</code></td>
-        </tr>
-        <tr>
-          <td><code>None</code></td>
-          <td><code>setNull</code></td>
-        </tr>
-      </tbody>
-    </table>
-    <p>また、Encoderは複数の型を合成して新しい型を作成することができます。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">encoder</span><span>: </span><span class="type-name">Encoder</span><span>[(</span><span class="type-name">Int</span><span>, </span><span class="type-name">String</span><span>)] = </span><span class="type-name">Encoder</span><span>[</span><span class="type-name">Int</span><span>] *: </span><span class="type-name">Encoder</span><span>[</span><span class="type-name">String</span><span>]</span></code></pre>
-    <p>合成した型は任意のクラスに変換することもできます。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Status</span><span>(</span><span class="identifier">code</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>)
-</span><span class="keyword">given</span><span> </span><span class="type-name">Encoder</span><span>[</span><span class="type-name">Status</span><span>] = (</span><span class="type-name">Encoder</span><span>[</span><span class="type-name">Int</span><span>] *: </span><span class="type-name">Encoder</span><span>[</span><span class="type-name">String</span><span>]).</span><span class="identifier">to</span><span>[</span><span class="type-name">Status</span><span>]</span></code></pre>
-    
-    <h4 id="decoder" class="section"><a class="anchor-link left" href="#decoder"><i class="icofont-laika link">&#xef71;</i></a>Decoder</h4>
-    <p><code>ResultSet</code>からデータを取得する処理を<code>ResultSetReader</code>から<code>Decoder</code>に変更。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="diff-removed">-given ResultSetReader[IO, Status] =</span><span>
-</span><span class="diff-removed">-  ResultSetReader.mapping[IO, Int, Status](code =&gt; Status.fromCode(code))</span><span>
-</span><span class="diff-added">+given Decoder[Status] = Decoder[Int].map(code =&gt; Status.fromCode(code))</span></code></pre>
-    <p>Decoderも複数の型を合成して新しい型を作成することができます。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">decoder</span><span>: </span><span class="type-name">Decoder</span><span>[(</span><span class="type-name">Int</span><span>, </span><span class="type-name">String</span><span>)] = </span><span class="type-name">Decoder</span><span>[</span><span class="type-name">Int</span><span>] *: </span><span class="type-name">Decoder</span><span>[</span><span class="type-name">String</span><span>]</span></code></pre>
-    <p>合成した型は任意のクラスに変換することもできます。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Status</span><span>(</span><span class="identifier">code</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>)
-</span><span class="keyword">given</span><span> </span><span class="type-name">Decoder</span><span>[</span><span class="type-name">Status</span><span>] = (</span><span class="type-name">Decoder</span><span>[</span><span class="type-name">Int</span><span>] *: </span><span class="type-name">Decoder</span><span>[</span><span class="type-name">String</span><span>]).</span><span class="identifier">to</span><span>[</span><span class="type-name">Status</span><span>]</span></code></pre>
-    
-    <h3 id="codecの導入" class="section"><a class="anchor-link left" href="#codecの導入"><i class="icofont-laika link">&#xef71;</i></a>Codecの導入</h3>
-    <p><code>Codec</code>は、<code>Encoder</code>と<code>Decoder</code>を組み合わせたもので、<code>Codec</code>を使用することで、<code>Encoder</code>と<code>Decoder</code>を組み合わせることができます。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">enum</span><span> </span><span class="type-name">Status</span><span>(</span><span class="keyword">val</span><span> </span><span class="identifier">code</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="keyword">val</span><span> </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>):
-  </span><span class="keyword">case</span><span> </span><span class="type-name">Active</span><span>   </span><span class="keyword">extends</span><span> </span><span class="type-name">Status</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;Active&quot;</span><span>)
-  </span><span class="keyword">case</span><span> </span><span class="type-name">InActive</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Status</span><span>(</span><span class="number-literal">2</span><span>, </span><span class="string-literal">&quot;InActive&quot;</span><span>)
-
-</span><span class="keyword">given</span><span> </span><span class="type-name">Codec</span><span>[</span><span class="type-name">Status</span><span>] = </span><span class="type-name">Codec</span><span>[</span><span class="type-name">Int</span><span>].</span><span class="identifier">imap</span><span>(</span><span class="type-name">Status</span><span>.</span><span class="identifier">fromCode</span><span>)(</span><span class="identifier">_</span><span>.</span><span class="identifier">code</span><span>)</span></code></pre>
-    <p>Codecも複数の型を合成して新しい型を作成することができます。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">codec</span><span>: </span><span class="type-name">Codec</span><span>[(</span><span class="type-name">Int</span><span>, </span><span class="type-name">String</span><span>)] = </span><span class="type-name">Codec</span><span>[</span><span class="type-name">Int</span><span>] *: </span><span class="type-name">Codec</span><span>[</span><span class="type-name">String</span><span>]</span></code></pre>
-    <p>合成した型は任意のクラスに変換することもできます。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Status</span><span>(</span><span class="identifier">code</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>)
-</span><span class="keyword">given</span><span> </span><span class="type-name">Codec</span><span>[</span><span class="type-name">Status</span><span>] = (</span><span class="type-name">Codec</span><span>[</span><span class="type-name">Int</span><span>] *: </span><span class="type-name">Codec</span><span>[</span><span class="type-name">String</span><span>]).</span><span class="identifier">to</span><span>[</span><span class="type-name">Status</span><span>]</span></code></pre>
-    <p>Codecは、<code>Encoder</code>と<code>Decoder</code>を組み合わせたものであるため、それぞれの型への変換処理を行うことができます。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">encoder</span><span>: </span><span class="type-name">Encoder</span><span>[</span><span class="type-name">Status</span><span>] = </span><span class="type-name">Codec</span><span>[</span><span class="type-name">Status</span><span>].</span><span class="identifier">asEncoder</span><span>
-</span><span class="keyword">val</span><span> </span><span class="identifier">decoder</span><span>: </span><span class="type-name">Decoder</span><span>[</span><span class="type-name">Status</span><span>] = </span><span class="type-name">Codec</span><span>[</span><span class="type-name">Status</span><span>].</span><span class="identifier">asDecoder</span></code></pre>
-    <p>今回の変更により、ユーザーは<code>Codec</code>を使用して、<code>Encoder</code>と<code>Decoder</code>を組み合わせることができるようになりました。</p>
-    <p>これにより、ユーザーは取得したレコードをネストした階層データに変換できます。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">City</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">countryCode</span><span>: </span><span class="type-name">String</span><span>)
-</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Country</span><span>(</span><span class="identifier">code</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>)
-</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">CityWithCountry</span><span>(</span><span class="identifier">city</span><span>: </span><span class="type-name">City</span><span>, </span><span class="identifier">country</span><span>: </span><span class="type-name">Country</span><span>)
-
-</span><span class="string-literal">sql&quot;SELECT city.Id, city.Name, city.CountryCode, country.Code, country.Name FROM city JOIN country ON city.CountryCode = country.Code&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">CityWithCountry</span><span>]</span></code></pre>
-    <p>Codecを始め<code>Encoder</code>と<code>Decoder</code>は暗黙的に解決されるため、ユーザーはこれらの型を明示的に指定する必要はありません。</p>
-    <p>しかし、モデル内に多くのプロパティがある場合、暗黙的な検索は失敗する可能性があります。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span>[error]    |Implicit search problem too large.
-[error]    |an implicit search was terminated with failure after trying </span><span class="number-literal">100000</span><span> expressions.
-[error]    |The root candidate </span><span class="keyword">for</span><span> the search was:
-[error]    |
-[error]    |  given instance given_Decoder_P </span><span class="keyword">in</span><span> object Decoder  </span><span class="keyword">for</span><span>  ldbc.dsl.codec.Decoder[City]}</span></code></pre>
-    <p>このような場合は、コンパイルオプションの検索制限を上げると問題が解決することがあります。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">scalacOptions</span><span> += </span><span class="string-literal">&quot;-Ximplicit-search-limit:100000&quot;</span></code></pre>
-    <p>しかし、オプションでの制限拡張はコンパイル時間の増幅につながる可能性があります。その場合は、以下のように手動で任意の型を構築することで解決することもできます。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">given</span><span> </span><span class="type-name">Decoder</span><span>[</span><span class="type-name">City</span><span>] = </span><span class="type-name">Decoder</span><span>.</span><span class="identifier">derived</span><span>[</span><span class="type-name">City</span><span>]
-</span><span class="comment">// Or given Decoder[City] = (Decoder[Int] *: Decoder[String] *: Decoder[Int] *: ....).to[City]
-</span><span class="keyword">given</span><span> </span><span class="type-name">Encoder</span><span>[</span><span class="type-name">City</span><span>] = </span><span class="type-name">Encoder</span><span>.</span><span class="identifier">derived</span><span>[</span><span class="type-name">City</span><span>]
-</span><span class="comment">// Or given Encoder[City] = (Encoder[Int] *: Encoder[String] *: Encoder[Int] *: ....).to[City]</span></code></pre>
-    <p>もしくは、<code>Codec</code>を使用して<code>Encoder</code>と<code>Decoder</code>を組み合わせることで解決することもできます。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">given</span><span> </span><span class="type-name">Codec</span><span>[</span><span class="type-name">City</span><span>] = </span><span class="type-name">Codec</span><span>.</span><span class="identifier">derived</span><span>[</span><span class="type-name">City</span><span>]
-</span><span class="comment">// Or given Codec[City] = (Codec[Int] *: Codec[String] *: Codec[Int] *: ....).to[City]</span></code></pre>
-    
-    <h3 id="列の絞り込み方法の変更" class="section"><a class="anchor-link left" href="#列の絞り込み方法の変更"><i class="icofont-laika link">&#xef71;</i></a>列の絞り込み方法の変更</h3>
-    <p>これまで、列の絞り込みは単にタプルとして使用される列をグループ化してきました。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">cityTable</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">city</span><span> =&gt; (</span><span class="identifier">city</span><span>.</span><span class="identifier">id</span><span>, </span><span class="identifier">city</span><span>.</span><span class="identifier">name</span><span>))</span></code></pre>
-    <p>しかし、これには問題がありました。カラムは1つの型パラメータを持つ型です。Scala2ではTupleの数に制限があったため、ボイラープレートか何かでTupleの数をすべて扱えるものを作る必要がありました。
-    この場合、動的TupleはTupleまたはTuple.Mapとして扱われるため、Column型にアクセスしたい場合、その型はTupleとしてしか扱えないため、asInstanceOfを使って型をキャストする必要がありました。
-    型をキャストすると、もちろん型の安全性が失われコードが複雑になってしまいます。</p>
-    <p>この問題を解決するために、同じTypeLevelプロジェクトの一つである<a href="https://github.com/typelevel/twiddles">twiddles</a>を採用することにしました。</p>
-    <p>twiddlesを使うことで、カラムをより簡単に合成することができるようになります。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">cityTable</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">city</span><span> =&gt; </span><span class="identifier">city</span><span>.</span><span class="identifier">id</span><span> *: </span><span class="identifier">city</span><span>.</span><span class="identifier">name</span><span>)</span></code></pre>
-    <p>また、内部コードではTupleの代わりに<code>Column[T]</code>を使用すればよいので、安全でない型キャストは必要なくなります。</p>
-    <p>Twiddlesはまた、合成結果を別の型に変換することを容易にします。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">City</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Long</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>)
-
-</span><span class="keyword">def</span><span> </span><span class="declaration-name">id</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Int</span><span>] = </span><span class="identifier">column</span><span>[</span><span class="type-name">Int</span><span>](</span><span class="string-literal">&quot;ID&quot;</span><span>)
-</span><span class="keyword">def</span><span> </span><span class="declaration-name">name</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">column</span><span>[</span><span class="type-name">String</span><span>](</span><span class="string-literal">&quot;Name&quot;</span><span>)
-
-</span><span class="keyword">def</span><span> </span><span class="declaration-name">city</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">City</span><span>] = (</span><span class="identifier">id</span><span> *: </span><span class="identifier">name</span><span>).</span><span class="identifier">to</span><span>[</span><span class="type-name">City</span><span>]</span></code></pre>
-    
-    <h3 id="tableからtablequeryへの変更" class="section"><a class="anchor-link left" href="#tableからtablequeryへの変更"><i class="icofont-laika link">&#xef71;</i></a>TableからTableQueryへの変更</h3>
-    <p>これまでは、同じTable型を使って、モデルからテーブル型とテーブル情報を使ってクエリを構築していました。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">City</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Long</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>) </span><span class="keyword">derives</span><span> </span><span class="type-name">Table</span><span>
-</span><span class="keyword">val</span><span> </span><span class="identifier">cityTable</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">City</span><span>]</span></code></pre>
-    <p>しかしこの実装は、同じ型が2つのものを表すのに使われるため間違った実装をするのは簡単でした。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">cityTable</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">city</span><span> =&gt; </span><span class="identifier">city</span><span>.</span><span class="identifier">insert</span><span>(???))</span></code></pre>
-    <p>IDEのような開発ツールは、利用可能なすべてのAPIを補完するため実装者に少なからぬ混乱を引き起こす可能性があります。</p>
-    <p>この問題を解決するために、Table型とTableQuery型を分離しました。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">City</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Long</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>) </span><span class="keyword">derives</span><span> </span><span class="type-name">Table</span><span>
-</span><span class="keyword">val</span><span> </span><span class="identifier">cityTable</span><span> = </span><span class="type-name">TableQuery</span><span>[</span><span class="type-name">City</span><span>]</span></code></pre>
-    <p><strong>テーブル名のカスタマイズはTableのderivedで行うことができます</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">City</span><span>(
-  </span><span class="identifier">id</span><span>: </span><span class="type-name">Int</span><span>,
-  </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>,
-  </span><span class="identifier">countryCode</span><span>: </span><span class="type-name">String</span><span>,
-  </span><span class="identifier">district</span><span>: </span><span class="type-name">String</span><span>,
-  </span><span class="identifier">population</span><span>: </span><span class="type-name">Int</span><span>
-)
-
-</span><span class="keyword">object</span><span> </span><span class="type-name">City</span><span>:
-  </span><span class="keyword">given</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">City</span><span>] = </span><span class="type-name">Table</span><span>.</span><span class="identifier">derived</span><span>[</span><span class="type-name">City</span><span>](</span><span class="string-literal">&quot;city&quot;</span><span>)</span></code></pre>
-    
-    <h3 id="アップデート文の構築方法変更" class="section"><a class="anchor-link left" href="#アップデート文の構築方法変更"><i class="icofont-laika link">&#xef71;</i></a>アップデート文の構築方法変更</h3>
-    <p>以前は、Update Statementは更新するカラムごとに1つずつ設定する必要がありました。この実装は、いくつかのカラムを個別に更新したい場合には便利ですが、更新したいカラムが追加されるたびにセットを記述するのは非常に面倒です。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">cityTable</span><span>
-  .</span><span class="identifier">update</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="number-literal">1L</span><span>)
-  .</span><span class="identifier">set</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="string-literal">&quot;Tokyo&quot;</span><span>)
-  .</span><span class="identifier">set</span><span>(</span><span class="string-literal">&quot;population&quot;</span><span>, </span><span class="number-literal">1</span><span>, </span><span class="boolean-literal">false</span><span>)</span></code></pre>
-    <p>今回のアップデートにより、カラムを組み合わせることができるようになり、複数のカラムを一緒に指定して更新処理を行うことができるようになりました。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">cityTable</span><span>
-  .</span><span class="identifier">update</span><span>(</span><span class="identifier">city</span><span> =&gt; </span><span class="identifier">city</span><span>.</span><span class="identifier">id</span><span> *: </span><span class="identifier">city</span><span>.</span><span class="identifier">name</span><span>)((</span><span class="number-literal">1L</span><span>, </span><span class="string-literal">&quot;Tokyo&quot;</span><span>))
-  .</span><span class="identifier">set</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">population</span><span>, </span><span class="number-literal">1</span><span>, </span><span class="boolean-literal">false</span><span>)</span></code></pre>
-    <p>今回のアップデートにより、カラムを組み合わせることができるようになり、複数のカラムを一緒に指定して更新処理を行うことができるようになった。setを使用して特定の列のみを更新することは可能です。また、set を使用して更新条件を設定できるため、条件が正の場合にのみ追加カラムを更新するクエリを作成できます。</p>
-    
-    <h3 id="テーブル結合の構築方法の変更" class="section"><a class="anchor-link left" href="#テーブル結合の構築方法の変更"><i class="icofont-laika link">&#xef71;</i></a>テーブル結合の構築方法の変更</h3>
-    <p>以前は、テーブル結合は第2引数に結合条件を設定することで構築されていました。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">cityTable</span><span>.</span><span class="identifier">join</span><span>(</span><span class="identifier">countryTable</span><span>)((</span><span class="identifier">c</span><span>, </span><span class="identifier">co</span><span>) =&gt; </span><span class="identifier">c</span><span>.</span><span class="identifier">countryCode</span><span> === </span><span class="identifier">co</span><span>.</span><span class="identifier">code</span><span>)</span></code></pre>
-    <p>この変更により、テーブルの結合条件は<code>on</code>APIで設定する必要があります。この変更は内部的な実装変更の結果です。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">cityTable</span><span>.</span><span class="identifier">join</span><span>(</span><span class="identifier">countryTable</span><span>).</span><span class="identifier">on</span><span>((</span><span class="identifier">c</span><span>, </span><span class="identifier">co</span><span>) =&gt; </span><span class="identifier">c</span><span>.</span><span class="identifier">countryCode</span><span> === </span><span class="identifier">co</span><span>.</span><span class="identifier">code</span><span>)</span></code></pre>
+    <h2 id="まとめ" class="section"><a class="anchor-link left" href="#まとめ"><i class="icofont-laika link">&#xef71;</i></a>まとめ</h2>
+    <p>0.4.x への移行により、以下のメリットが得られます：</p>
+    <ol class="arabic">
+      <li><strong>パフォーマンスの向上</strong>: 組み込みプーリングによる効率的なコネクション管理</li>
+      <li><strong>より直感的な API</strong>: ビルダーパターンによる設定の簡素化</li>
+      <li><strong>高度な機能</strong>: CircuitBreaker、アダプティブサイジング、メトリクス追跡</li>
+      <li><strong>外部依存の削減</strong>: HikariCP が不要に</li>
+    </ol>
+    <p>移行作業は主に API の更新で、機能的には後方互換性が保たれているため、段階的な移行が可能です。</p>
 
     
 <hr class="footer-rule"/>

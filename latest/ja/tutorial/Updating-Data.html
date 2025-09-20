@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <a class="text-link menu-toggle" href="#">Version 0.4</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="../reference/">はじめに</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Connector.html">コネクタ</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Performance.html">パフォーマンス</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Pooling.html">コネクションプーリング</a></li>
   </ul>
   
 
@@ -195,11 +196,16 @@
     
     <h2 id="データ更新の基本" class="section"><a class="anchor-link left" href="#データ更新の基本"><i class="icofont-laika link">&#xef71;</i></a>データ更新の基本</h2>
     <p>データベースへの書き込み操作は、データベースの状態を変更するため、読み取り操作とは少し異なる動作をします。ldbcでは、これらの操作を安全に行うための適切な抽象化を提供しています。</p>
+    <p>※ このチュートリアルでは、データベース操作を実行するために<code>Connector</code>を使用します：</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+
+</span><span class="comment">// Connectorを作成
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)</span></code></pre>
     <p>書き込み操作を行う基本的な流れは以下の通りです：</p>
     <ol class="arabic">
       <li>SQLクエリを<code>sql</code>補間子で作成</li>
       <li>適切なメソッド（<code>.update</code>、<code>.returning</code>など）を呼び出してクエリの種類を指定</li>
-      <li><code>.commit()</code>または<code>.transaction()</code>でクエリを実行</li>
+      <li><code>.commit(connector)</code>または<code>.transaction(connector)</code>でクエリを実行</li>
       <li>結果を処理</li>
     </ol>
     
@@ -213,14 +219,14 @@
     .</span><span class="identifier">update</span></code></pre>
     <p>このメソッドを使って実際にデータを挿入し、結果を確認してみましょう：</p>
     <pre><code class="nohighlight"><span class="comment">// 挿入操作の実行
-</span><span class="identifier">insertUser</span><span>(</span><span class="string-literal">&quot;dave&quot;</span><span>, </span><span class="string-literal">&quot;dave@example.com&quot;</span><span>).</span><span class="identifier">commit</span><span>(</span><span class="identifier">conn</span><span>).</span><span class="identifier">unsafeRunSync</span><span>()
+</span><span class="identifier">insertUser</span><span>(</span><span class="string-literal">&quot;dave&quot;</span><span>, </span><span class="string-literal">&quot;dave@example.com&quot;</span><span>).</span><span class="identifier">commit</span><span>(</span><span class="identifier">connector</span><span>).</span><span class="identifier">unsafeRunSync</span><span>()
 </span><span class="comment">// 戻り値は影響を受けた行数（この場合は1）
 </span><span>
 </span><span class="comment">// 挿入したデータの確認
 </span><span class="string-literal">sql&quot;SELECT id, name, email FROM user WHERE name = &#39;dave&#39;&quot;</span><span>
   .</span><span class="identifier">query</span><span>[(</span><span class="type-name">Int</span><span>, </span><span class="type-name">String</span><span>, </span><span class="type-name">String</span><span>)]
   .</span><span class="identifier">to</span><span>[</span><span class="type-name">Option</span><span>]
-  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)
+  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
   .</span><span class="identifier">unsafeRunSync</span><span>()
   .</span><span class="identifier">foreach</span><span> { </span><span class="keyword">case</span><span> (</span><span class="identifier">id</span><span>, </span><span class="identifier">name</span><span>, </span><span class="identifier">email</span><span>) =&gt;
     </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;ID: </span><span class="substitution">$id</span><span class="string-literal">, Name: </span><span class="substitution">$name</span><span class="string-literal">, Email: </span><span class="substitution">$email</span><span class="string-literal">&quot;</span><span>)
@@ -236,7 +242,7 @@
     <p>このメソッドを使って新しいユーザーを挿入し、自動生成されたIDを取得します：</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// 挿入して自動生成されたIDを取得
 </span><span class="keyword">val</span><span> </span><span class="identifier">newUserId</span><span> = </span><span class="identifier">insertUserAndGetId</span><span>(</span><span class="string-literal">&quot;frank&quot;</span><span>, </span><span class="string-literal">&quot;frank@example.com&quot;</span><span>)
-  .</span><span class="identifier">commit</span><span>(</span><span class="identifier">conn</span><span>)
+  .</span><span class="identifier">commit</span><span>(</span><span class="identifier">connector</span><span>)
   .</span><span class="identifier">unsafeRunSync</span><span>()
 
 </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;新しいユーザーのID: </span><span class="substitution">$newUserId</span><span class="string-literal">&quot;</span><span>)</span></code></pre>
@@ -256,7 +262,7 @@
     <p>使用例：</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// ユーザーを挿入し、挿入したユーザーの情報を取得
 </span><span class="identifier">insertAndRetrieveUser</span><span>(</span><span class="string-literal">&quot;grace&quot;</span><span>, </span><span class="string-literal">&quot;grace@example.com&quot;</span><span>)
-  .</span><span class="identifier">commit</span><span>(</span><span class="identifier">conn</span><span>)
+  .</span><span class="identifier">commit</span><span>(</span><span class="identifier">connector</span><span>)
   .</span><span class="identifier">unsafeRunSync</span><span>()
   .</span><span class="identifier">foreach</span><span> { </span><span class="identifier">user</span><span> =&gt;
     </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;挿入されたユーザー: ID=</span><span class="substitution">${user.id}</span><span class="string-literal">, Name=</span><span class="substitution">${user.name}</span><span class="string-literal">, Email=</span><span class="substitution">${user.email}</span><span class="string-literal">&quot;</span><span>)
@@ -271,14 +277,14 @@
     <p>使用例：</p>
     <pre><code class="nohighlight"><span class="comment">// ユーザーのメールアドレスを更新
 </span><span class="identifier">updateUserEmail</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;alice+updated@example.com&quot;</span><span>)
-  .</span><span class="identifier">commit</span><span>(</span><span class="identifier">conn</span><span>)
+  .</span><span class="identifier">commit</span><span>(</span><span class="identifier">connector</span><span>)
   .</span><span class="identifier">unsafeRunSync</span><span>()
 
 </span><span class="comment">// 更新されたデータの確認
 </span><span class="string-literal">sql&quot;SELECT id, name, email FROM user WHERE id = 1&quot;</span><span>
   .</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>]
   .</span><span class="identifier">to</span><span>[</span><span class="type-name">Option</span><span>]
-  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)
+  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
   .</span><span class="identifier">unsafeRunSync</span><span>()
   .</span><span class="identifier">foreach</span><span> { </span><span class="identifier">user</span><span> =&gt; 
     </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;更新されたユーザー: ID=</span><span class="substitution">${user.id}</span><span class="string-literal">, Name=</span><span class="substitution">${user.name}</span><span class="string-literal">, Email=</span><span class="substitution">${user.email}</span><span class="string-literal">&quot;</span><span>)
@@ -304,14 +310,14 @@
     <p>使用例：</p>
     <pre><code class="nohighlight"><span class="comment">// ユーザーを削除
 </span><span class="identifier">deleteUser</span><span>(</span><span class="number-literal">5</span><span>)
-  .</span><span class="identifier">commit</span><span>(</span><span class="identifier">conn</span><span>)
+  .</span><span class="identifier">commit</span><span>(</span><span class="identifier">connector</span><span>)
   .</span><span class="identifier">unsafeRunSync</span><span>()
 
 </span><span class="comment">// 削除の確認
 </span><span class="string-literal">sql&quot;SELECT COUNT(*) FROM user WHERE id = 5&quot;</span><span>
   .</span><span class="identifier">query</span><span>[</span><span class="type-name">Int</span><span>]
   .</span><span class="identifier">unsafe</span><span>
-  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)
+  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
   .</span><span class="identifier">unsafeRunSync</span><span>() </span><span class="keyword">match</span><span> {
     </span><span class="keyword">case</span><span> </span><span class="number-literal">0</span><span> =&gt; </span><span class="identifier">println</span><span>(</span><span class="string-literal">&quot;ユーザーIDが5のデータは削除されました&quot;</span><span>)
     </span><span class="keyword">case</span><span> </span><span class="identifier">n</span><span> =&gt; </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;ユーザーIDが5のデータはまだ存在しています (数: </span><span class="substitution">$n</span><span class="string-literal">)&quot;</span><span>)
@@ -343,7 +349,7 @@
 )
 
 </span><span class="comment">// 一括挿入の実行
-</span><span class="keyword">val</span><span> </span><span class="identifier">insertedCount</span><span> = </span><span class="identifier">insertManyUsers</span><span>(</span><span class="identifier">newUsers</span><span>).</span><span class="identifier">commit</span><span>(</span><span class="identifier">conn</span><span>).</span><span class="identifier">unsafeRunSync</span><span>()
+</span><span class="keyword">val</span><span> </span><span class="identifier">insertedCount</span><span> = </span><span class="identifier">insertManyUsers</span><span>(</span><span class="identifier">newUsers</span><span>).</span><span class="identifier">commit</span><span>(</span><span class="identifier">connector</span><span>).</span><span class="identifier">unsafeRunSync</span><span>()
 </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;挿入された行数: </span><span class="substitution">$insertedCount</span><span class="string-literal">&quot;</span><span>) </span><span class="comment">// &quot;挿入された行数: 3&quot; が出力されるはず</span></code></pre>
     
     <h3 id="複数操作のトランザクション" class="section"><a class="anchor-link left" href="#複数操作のトランザクション"><i class="icofont-laika link">&#xef71;</i></a>複数操作のトランザクション</h3>
@@ -357,7 +363,7 @@
     <p>このメソッドを<code>.transaction</code>を使って実行することで、ユーザーの挿入とプロフィールの挿入が一つのトランザクションとして処理されます：</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// トランザクション内で実行する
 </span><span class="keyword">val</span><span> </span><span class="identifier">userId</span><span> = </span><span class="identifier">createUserWithProfile</span><span>(</span><span class="string-literal">&quot;julia&quot;</span><span>, </span><span class="string-literal">&quot;julia@example.com&quot;</span><span>, </span><span class="string-literal">&quot;プログラマー&quot;</span><span>)
-  .</span><span class="identifier">transaction</span><span>(</span><span class="identifier">conn</span><span>)
+  .</span><span class="identifier">transaction</span><span>(</span><span class="identifier">connector</span><span>)
   .</span><span class="identifier">unsafeRunSync</span><span>()
 
 </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;作成されたユーザーID: </span><span class="substitution">$userId</span><span class="string-literal">&quot;</span><span>)</span></code></pre>
@@ -366,21 +372,21 @@
     <h2 id="クエリ実行メソッドの選択" class="section"><a class="anchor-link left" href="#クエリ実行メソッドの選択"><i class="icofont-laika link">&#xef71;</i></a>クエリ実行メソッドの選択</h2>
     <p>ldbcでは、データ更新操作用に以下のクエリ実行メソッドが用意されています：</p>
     <ul>
-      <li><code>.commit(conn)</code> - 自動コミットモードで書き込み操作を実行します（単一のシンプルな更新操作に適しています）</li>
-      <li><code>.rollback(conn)</code> - 書き込み操作を実行し、必ずロールバックします（テストや動作確認用）</li>
-      <li><code>.transaction(conn)</code> - トランザクション内で操作を実行し、成功時のみコミットします（複数の操作を一つの単位として扱いたい場合に適しています）</li>
+      <li><code>.commit(connector)</code> - 自動コミットモードで書き込み操作を実行します（単一のシンプルな更新操作に適しています）</li>
+      <li><code>.rollback(connector)</code> - 書き込み操作を実行し、必ずロールバックします（テストや動作確認用）</li>
+      <li><code>.transaction(connector)</code> - トランザクション内で操作を実行し、成功時のみコミットします（複数の操作を一つの単位として扱いたい場合に適しています）</li>
     </ul>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// 自動コミットモードでの実行（シンプルな単一操作）
-</span><span class="identifier">updateUserEmail</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;new@example.com&quot;</span><span>).</span><span class="identifier">commit</span><span>(</span><span class="identifier">conn</span><span>)
+</span><span class="identifier">updateUserEmail</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;new@example.com&quot;</span><span>).</span><span class="identifier">commit</span><span>(</span><span class="identifier">connector</span><span>)
 
 </span><span class="comment">// テスト用の実行（変更は保存されない）
-</span><span class="identifier">insertUser</span><span>(</span><span class="string-literal">&quot;test&quot;</span><span>, </span><span class="string-literal">&quot;test@example.com&quot;</span><span>).</span><span class="identifier">rollback</span><span>(</span><span class="identifier">conn</span><span>)
+</span><span class="identifier">insertUser</span><span>(</span><span class="string-literal">&quot;test&quot;</span><span>, </span><span class="string-literal">&quot;test@example.com&quot;</span><span>).</span><span class="identifier">rollback</span><span>(</span><span class="identifier">connector</span><span>)
 
 </span><span class="comment">// トランザクション内での複数操作（すべて成功するか、すべて失敗するか）
 </span><span>(</span><span class="keyword">for</span><span> {
   </span><span class="identifier">userId</span><span> &lt;- </span><span class="identifier">insertUser</span><span>(</span><span class="string-literal">&quot;kate&quot;</span><span>, </span><span class="string-literal">&quot;kate@example.com&quot;</span><span>).</span><span class="identifier">returning</span><span>[</span><span class="type-name">Long</span><span>]
   </span><span class="identifier">_</span><span>      &lt;- </span><span class="string-literal">sql&quot;INSERT INTO user_roles (user_id, role_id) VALUES (</span><span class="substitution">$userId</span><span class="string-literal">, 2)&quot;</span><span>.</span><span class="identifier">update</span><span>
-} </span><span class="keyword">yield</span><span> </span><span class="identifier">userId</span><span>).</span><span class="identifier">transaction</span><span>(</span><span class="identifier">conn</span><span>)</span></code></pre>
+} </span><span class="keyword">yield</span><span> </span><span class="identifier">userId</span><span>).</span><span class="identifier">transaction</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
     
     <h2 id="エラー処理" class="section"><a class="anchor-link left" href="#エラー処理"><i class="icofont-laika link">&#xef71;</i></a>エラー処理</h2>
     <p>データ更新操作中にエラーが発生した場合の処理も重要です。ldbcでは<code>cats-effect</code>の<code>IO</code>モナドを使用してエラーを処理できます：</p>
@@ -392,7 +398,7 @@
 </span><span class="comment">// エラー処理の例
 </span><span class="keyword">def</span><span> </span><span class="declaration-name">safeUpdateUser</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Long</span><span>, </span><span class="identifier">newEmail</span><span>: </span><span class="type-name">String</span><span>): </span><span class="type-name">Unit</span><span> = {
   </span><span class="keyword">val</span><span> </span><span class="identifier">result</span><span> = </span><span class="identifier">updateUserEmail</span><span>(</span><span class="identifier">id</span><span>, </span><span class="identifier">newEmail</span><span>)
-    .</span><span class="identifier">commit</span><span>(</span><span class="identifier">conn</span><span>)
+    .</span><span class="identifier">commit</span><span>(</span><span class="identifier">connector</span><span>)
     .</span><span class="identifier">attempt</span><span> </span><span class="comment">// IOの結果をEither[Throwable, Int]に変換
 </span><span>    .</span><span class="identifier">unsafeRunSync</span><span>()
     

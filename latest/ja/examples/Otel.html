@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <a class="text-link menu-toggle" href="#">Version 0.4</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="../reference/">はじめに</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Connector.html">コネクタ</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Performance.html">パフォーマンス</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Pooling.html">コネクションプーリング</a></li>
   </ul>
   
 
@@ -176,7 +177,6 @@
     <li class="level2 nav-leaf"><a href="#docker-compose-yaml">docker-compose.yaml</a></li>
     <li class="level2 nav-leaf"><a href="#実行方法">実行方法</a></li>
     <li class="level1 nav-leaf"><a href="#トレースの詳細">トレースの詳細</a></li>
-    <li class="level1 nav-leaf"><a href="#カスタムスパンの追加">カスタムスパンの追加</a></li>
     <li class="level1 nav-leaf"><a href="#トレースのカスタマイズオプション">トレースのカスタマイズオプション</a></li>
     <li class="level1 nav-leaf"><a href="#まとめ">まとめ</a></li>
   </ul>
@@ -214,12 +214,12 @@
 )</span></code></pre>
     
     <h2 id="ldbcでのopentelemetry設定" class="section"><a class="anchor-link left" href="#ldbcでのopentelemetry設定"><i class="icofont-laika link">&#xef71;</i></a>ldbcでのOpenTelemetry設定</h2>
-    <p>ldbcは、ConnectionProviderに<code>setTracer</code>メソッドを提供しており、ここにOpenTelemetryのTracerを設定することができます。</p>
+    <p>ldbcは、MySQLDataSourceに<code>setTracer</code>メソッドを提供しており、ここにOpenTelemetryのTracerを設定することができます。</p>
     <p>基本的な設定手順は次のとおりです：</p>
     <ol class="arabic">
       <li>OpenTelemetryを初期化する</li>
       <li>TracerProviderを取得する</li>
-      <li>ConnectionProviderに設定する</li>
+      <li>MySQLDataSourceに設定する</li>
     </ol>
     <p>以下に、基本的な設定例を示します：</p>
     <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.*
@@ -232,7 +232,7 @@
 </span><span class="keyword">val</span><span> </span><span class="identifier">serviceName</span><span> = </span><span class="string-literal">&quot;my-ldbc-app&quot;</span><span>
 
 </span><span class="comment">// リソースの設定
-</span><span class="keyword">val</span><span> </span><span class="identifier">resource</span><span>: </span><span class="type-name">Resource</span><span>[</span><span class="type-name">IO</span><span>, </span><span class="type-name">Connection</span><span>[</span><span class="type-name">IO</span><span>]] =
+</span><span class="keyword">val</span><span> </span><span class="identifier">resource</span><span>: </span><span class="type-name">Resource</span><span>[</span><span class="type-name">IO</span><span>, </span><span class="type-name">Connector</span><span>[</span><span class="type-name">IO</span><span>]] =
   </span><span class="keyword">for</span><span>
     </span><span class="comment">// GlobalOpenTelemetryからotel4s用のインスタンスを作成
 </span><span>    </span><span class="identifier">otel</span><span> &lt;- </span><span class="type-name">Resource</span><span>
@@ -243,16 +243,16 @@
 </span><span>    </span><span class="identifier">tracer</span><span> &lt;- </span><span class="type-name">Resource</span><span>.</span><span class="identifier">eval</span><span>(</span><span class="identifier">otel</span><span>.</span><span class="identifier">tracerProvider</span><span>.</span><span class="identifier">get</span><span>(</span><span class="identifier">serviceName</span><span>))
     
     </span><span class="comment">// データベース接続を設定し、TracerProviderを設定
-</span><span>    </span><span class="identifier">connection</span><span> &lt;- </span><span class="type-name">ConnectionProvider</span><span>
-      .</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;user&quot;</span><span>, </span><span class="string-literal">&quot;password&quot;</span><span>, </span><span class="string-literal">&quot;database&quot;</span><span>)
+</span><span>    </span><span class="identifier">datasource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+      .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;user&quot;</span><span>)
+      .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+      .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;database&quot;</span><span>)
       .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)
       .</span><span class="identifier">setTracer</span><span>(</span><span class="identifier">tracer</span><span>)  </span><span class="comment">// OpenTelemetryのTracerを設定
-</span><span>      .</span><span class="identifier">createConnection</span><span>()
-  </span><span class="keyword">yield</span><span> </span><span class="identifier">connection</span><span>
+</span><span>  </span><span class="keyword">yield</span><span> </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
 
-</span><span class="comment">// リソースを使用してクエリを実行
-</span><span class="keyword">val</span><span> </span><span class="identifier">program</span><span> = </span><span class="identifier">resource</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
-  </span><span class="string-literal">sql&quot;SELECT * FROM users&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)
+</span><span class="keyword">val</span><span> </span><span class="identifier">program</span><span> = </span><span class="identifier">resource</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">connector</span><span> =&gt;
+  </span><span class="string-literal">sql&quot;SELECT * FROM users&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
 }</span></code></pre>
     
     <h2 id="環境変数による設定" class="section"><a class="anchor-link left" href="#環境変数による設定"><i class="icofont-laika link">&#xef71;</i></a>環境変数による設定</h2>
@@ -304,22 +304,24 @@
 
   </span><span class="keyword">private</span><span> </span><span class="keyword">val</span><span> </span><span class="identifier">serviceName</span><span> = </span><span class="string-literal">&quot;ldbc-otel-example&quot;</span><span>
 
-  </span><span class="keyword">private</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">resource</span><span>: </span><span class="type-name">Resource</span><span>[</span><span class="type-name">IO</span><span>, </span><span class="type-name">Connection</span><span>[</span><span class="type-name">IO</span><span>]] =
+  </span><span class="keyword">private</span><span> </span><span class="keyword">val</span><span> </span><span class="identifier">base</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+    .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;127.0.0.1&quot;</span><span>, </span><span class="number-literal">13307</span><span>, </span><span class="string-literal">&quot;ldbc&quot;</span><span>)
+    .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+    .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;world&quot;</span><span>)
+    .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)
+
+  </span><span class="keyword">private</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">setupTracing</span><span>: </span><span class="type-name">Resource</span><span>[</span><span class="type-name">IO</span><span>, </span><span class="type-name">Connector</span><span>[</span><span class="type-name">IO</span><span>]] =
     </span><span class="keyword">for</span><span>
       </span><span class="identifier">otel</span><span> &lt;- </span><span class="type-name">Resource</span><span>
         .</span><span class="identifier">eval</span><span>(</span><span class="type-name">IO</span><span>.</span><span class="identifier">delay</span><span>(</span><span class="type-name">GlobalOpenTelemetry</span><span>.</span><span class="identifier">get</span><span>))
         .</span><span class="identifier">evalMap</span><span>(</span><span class="type-name">OtelJava</span><span>.</span><span class="identifier">forAsync</span><span>[</span><span class="type-name">IO</span><span>])
       </span><span class="identifier">tracer</span><span> &lt;- </span><span class="type-name">Resource</span><span>.</span><span class="identifier">eval</span><span>(</span><span class="identifier">otel</span><span>.</span><span class="identifier">tracerProvider</span><span>.</span><span class="identifier">get</span><span>(</span><span class="identifier">serviceName</span><span>))
-      </span><span class="identifier">connection</span><span> &lt;- </span><span class="type-name">ConnectionProvider</span><span>
-        .</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;127.0.0.1&quot;</span><span>, </span><span class="number-literal">13307</span><span>, </span><span class="string-literal">&quot;ldbc&quot;</span><span>, </span><span class="string-literal">&quot;password&quot;</span><span>, </span><span class="string-literal">&quot;world&quot;</span><span>)
-        .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)
-        .</span><span class="identifier">setTracer</span><span>(</span><span class="identifier">tracer</span><span>)
-        .</span><span class="identifier">createConnection</span><span>()
-    </span><span class="keyword">yield</span><span> </span><span class="identifier">connection</span><span>
+      </span><span class="identifier">datasource</span><span> &lt;- </span><span class="type-name">Resource</span><span>.</span><span class="identifier">eval</span><span>(</span><span class="type-name">IO</span><span>.</span><span class="identifier">delay</span><span>(</span><span class="identifier">base</span><span>.</span><span class="identifier">setTracer</span><span>(</span><span class="identifier">tracer</span><span>)))
+    </span><span class="keyword">yield</span><span> </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
 
   </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">run</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">Unit</span><span>] =
-    </span><span class="identifier">resource</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
-      </span><span class="string-literal">sql&quot;SELECT name FROM city&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>).</span><span class="identifier">flatMap</span><span> { </span><span class="identifier">cities</span><span> =&gt;
+    </span><span class="identifier">setupTracing</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">connector</span><span> =&gt;
+      </span><span class="string-literal">sql&quot;SELECT name FROM city&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>).</span><span class="identifier">flatMap</span><span> { </span><span class="identifier">cities</span><span> =&gt;
         </span><span class="type-name">IO</span><span>.</span><span class="identifier">println</span><span>(</span><span class="identifier">cities</span><span>)
       }
     }</span></code></pre>
@@ -419,22 +421,6 @@ docker-compose up -d</span></code></pre>
       <li><strong>接続情報</strong>: サーバーやデータベース名などの接続情報</li>
       <li><strong>エラー情報</strong>: エラーが発生した場合の詳細情報</li>
     </ul>
-    
-    <h2 id="カスタムスパンの追加" class="section"><a class="anchor-link left" href="#カスタムスパンの追加"><i class="icofont-laika link">&#xef71;</i></a>カスタムスパンの追加</h2>
-    <p>より詳細な追跡を行いたい場合は、カスタムスパンを追加できます。以下は、クエリ実行をカスタムスパンで囲む例です：</p>
-    <pre><code class="nohighlight"><span class="identifier">resource</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
-  </span><span class="identifier">tracer</span><span>.</span><span class="identifier">span</span><span>(</span><span class="string-literal">&quot;custom-database-operation&quot;</span><span>).</span><span class="identifier">use</span><span> { </span><span class="identifier">span</span><span> =&gt;
-    </span><span class="comment">// スパンに属性を追加
-</span><span>    </span><span class="identifier">span</span><span>.</span><span class="identifier">setAttribute</span><span>(</span><span class="string-literal">&quot;db.operation&quot;</span><span>, </span><span class="string-literal">&quot;select-cities&quot;</span><span>)
-    
-    </span><span class="comment">// クエリ実行
-</span><span>    </span><span class="string-literal">sql&quot;SELECT name FROM city&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>).</span><span class="identifier">flatMap</span><span> { </span><span class="identifier">cities</span><span> =&gt;
-      </span><span class="comment">// 結果データに関する属性を追加
-</span><span>      </span><span class="identifier">span</span><span>.</span><span class="identifier">setAttribute</span><span>(</span><span class="string-literal">&quot;result.count&quot;</span><span>, </span><span class="identifier">cities</span><span>.</span><span class="identifier">size</span><span>)
-      </span><span class="type-name">IO</span><span>.</span><span class="identifier">println</span><span>(</span><span class="identifier">cities</span><span>)
-    }
-  }
-}</span></code></pre>
     
     <h2 id="トレースのカスタマイズオプション" class="section"><a class="anchor-link left" href="#トレースのカスタマイズオプション"><i class="icofont-laika link">&#xef71;</i></a>トレースのカスタマイズオプション</h2>
     <p>ldbcのOpenTelemetry統合では、以下のような追加のカスタマイズが可能です：</p>

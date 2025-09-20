@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <a class="text-link menu-toggle" href="#">Version 0.4</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="../reference/">Introduction</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Connector.html">Connector</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Performance.html">Performance</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Pooling.html">Connection pooling</a></li>
   </ul>
   
 
@@ -166,7 +167,8 @@
   <p class="header"><a href="#">Q: Is there a way to stream query results asynchronously?</a></p>
 
   <ul class="nav-list">
-    <li class="level1 nav-leaf"><a href="#a-currently-streaming-api-is-not-supported">A: Currently, streaming API is not supported.</a></li>
+    <li class="level1 nav-leaf"><a href="#a-streaming-api-is-supported">A: Streaming API is supported.</a></li>
+    <li class="level1 nav-leaf"><a href="#reference">Reference</a></li>
   </ul>
 
   <p class="footer"></p>
@@ -177,8 +179,20 @@
 
     <h1 id="q-is-there-a-way-to-stream-query-results-asynchronously" class="title">Q: Is there a way to stream query results asynchronously?</h1>
     
-    <h2 id="a-currently-streaming-api-is-not-supported" class="section"><a class="anchor-link left" href="#a-currently-streaming-api-is-not-supported"><i class="icofont-laika link">&#xef71;</i></a>A: Currently, streaming API is not supported.</h2>
-    <p>Streaming is not currently supported, but it is planned for future versions. For now, please use the method to retrieve query results all at once.</p>
+    <h2 id="a-streaming-api-is-supported" class="section"><a class="anchor-link left" href="#a-streaming-api-is-supported"><i class="icofont-laika link">&#xef71;</i></a>A: Streaming API is supported.</h2>
+    <p>Streaming processing can be done using the <code>stream</code> method. This returns an Fs2 <code>Stream</code>.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">stream</span><span>: </span><span class="identifier">fs2</span><span>.</span><span class="type-name">Stream</span><span>[</span><span class="type-name">DBIO</span><span>, </span><span class="type-name">String</span><span>] = </span><span class="string-literal">sql&quot;SELECT * FROM `table`&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>].</span><span class="identifier">stream</span></code></pre>
+    <p>In MySQL, the behavior of streaming changes significantly depending on the <code>UseCursorFetch</code> setting:</p>
+    <ul>
+      <li><strong>UseCursorFetch=true</strong>: True streaming processing using server-side cursors</li>
+      <li><strong>UseCursorFetch=false</strong>: Limited streaming processing (with memory constraints)</li>
+    </ul>
+    <p>For handling large datasets, we recommend setting <code>UseCursorFetch=true</code>.</p>
+    
+    <h2 id="reference" class="section"><a class="anchor-link left" href="#reference"><i class="icofont-laika link">&#xef71;</i></a>Reference</h2>
+    <ul>
+      <li><a href="../tutorial/Selecting-Data.html#efficient-processing-of-large-data-with-streaming">Selecting Data - Efficient Processing of Large Data with Streaming</a></li>
+    </ul>
 
     
 <hr class="footer-rule"/>

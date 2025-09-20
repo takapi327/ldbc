@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <a class="text-link menu-toggle" href="#">Version 0.4</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="../reference/">Introduction</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Connector.html">Connector</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Performance.html">Performance</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Pooling.html">Connection pooling</a></li>
   </ul>
   
 
@@ -176,6 +177,13 @@
     <li class="level1 nav-leaf"><a href="#getting-a-single-result-option-type">Getting a Single Result (Option Type)</a></li>
     <li class="level1 nav-leaf"><a href="#choosing-query-execution-methods">Choosing Query Execution Methods</a></li>
     <li class="level1 nav-leaf"><a href="#combining-collection-operations-with-queries">Combining Collection Operations with Queries</a></li>
+    <li class="level1 nav-node"><a href="#efficient-processing-of-large-data-with-streaming">Efficient Processing of Large Data with Streaming</a></li>
+    <li class="level2 nav-leaf"><a href="#basic-usage-of-streaming">Basic Usage of Streaming</a></li>
+    <li class="level2 nav-leaf"><a href="#specifying-fetch-size">Specifying Fetch Size</a></li>
+    <li class="level2 nav-leaf"><a href="#practical-data-processing-with-streaming">Practical Data Processing with Streaming</a></li>
+    <li class="level2 nav-leaf"><a href="#optimizing-behavior-with-usecursorfetch">Optimizing Behavior with UseCursorFetch</a></li>
+    <li class="level2 nav-leaf"><a href="#example-of-large-data-processing">Example of Large Data Processing</a></li>
+    <li class="level2 nav-leaf"><a href="#benefits-of-streaming">Benefits of Streaming</a></li>
     <li class="level1 nav-leaf"><a href="#summary">Summary</a></li>
     <li class="level1 nav-leaf"><a href="#next-steps">Next Steps</a></li>
   </ul>
@@ -189,6 +197,11 @@
     <h1 id="selecting-data" class="title">Selecting Data</h1>
     <p>Now that we&#39;ve learned about <a href="Parameterized-Queries.html">Parameterized Queries</a>, let&#39;s look at how to retrieve data in various formats. This page explains how to efficiently fetch data using SELECT queries and map them to Scala types.</p>
     <p>One of ldbc&#39;s most powerful features is its ability to easily map database results to Scala types. It can handle various data formats, from simple primitive types to complex case classes.</p>
+    <p><em>Note: In this tutorial, we use a <code>Connector</code> to execute database operations. Create it as follows:</em></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+
+</span><span class="comment">// Create Connector
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)</span></code></pre>
     
     <h2 id="basic-data-retrieval-workflow" class="section"><a class="anchor-link left" href="#basic-data-retrieval-workflow"><i class="icofont-laika link">&#xef71;</i></a>Basic Data Retrieval Workflow</h2>
     <p>The basic flow for retrieving data with ldbc is as follows:</p>
@@ -196,7 +209,7 @@
       <li>Create an SQL query with the <code>sql</code> interpolator</li>
       <li>Specify the result type with <code>.query[T]</code></li>
       <li>Convert results to a collection with <code>.to[Collection]</code> (optional)</li>
-      <li>Execute the query using <code>.readOnly()</code>/<code>.commit()</code>/<code>.transaction()</code>, etc.</li>
+      <li>Execute the query using <code>.readOnly(connector)</code>/<code>.commit(connector)</code>/<code>.transaction(connector)</code>, etc.</li>
       <li>Process the results</li>
     </ol>
     <p>Let&#39;s look at this flow along with the type transformations in code.</p>
@@ -206,15 +219,22 @@
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="string-literal">sql&quot;SELECT name FROM user&quot;</span><span>
   .</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>]                 </span><span class="comment">// Query[String]
 </span><span>  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]                      </span><span class="comment">// DBIO[List[String]]
-</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)                </span><span class="comment">// IO[List[String]]
+</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)                </span><span class="comment">// IO[List[String]]
 </span><span>  .</span><span class="identifier">unsafeRunSync</span><span>()               </span><span class="comment">// List[String]
 </span><span>  .</span><span class="identifier">foreach</span><span>(</span><span class="identifier">println</span><span>)              </span><span class="comment">// Unit</span></code></pre>
     <p>Let&#39;s explain this code in detail:</p>
     <ul>
       <li><code>sql&quot;SELECT name FROM user&quot;</code> - Defines the SQL query.</li>
       <li><code>.query[String]</code> - Maps each row result to a <code>String</code> type. This generates a <code>Query[String]</code> type.</li>
-      <li><code>.to[List]</code> - Aggregates the results into a <code>List</code>. This generates a <code>DBIO[List[String]]</code> type. This method can be used with any collection type that implements <code>FactoryCompat</code> (such as <code>List</code>, <code>Vector</code>, <code>Set</code>, etc.).</li>
-      <li><code>.readOnly(conn)</code> - Executes the query using the connection in read-only mode. The return value is <code>IO[List[String]]</code>.</li>
+      <li>
+        <code>.to[List]</code> - Aggregates the results into a <code>List</code>. This generates a <code>DBIO[List[String]]</code> type. This method can be used with any collection type that implements <code>FactoryCompat</code> (such as <code>List</code>, <code>Vector</code>, <code>Set</code>, etc.). Similar methods are:
+        <ul>
+          <li><code>.unsafe</code> which returns a single value, raising an exception if there is not exactly one row returned.</li>
+          <li><code>.option</code> which returns an Option, raising an exception if there is more than one row returned.</li>
+          <li><code>.nel</code> which returns an NonEmptyList, raising an exception if there are no rows returned.</li>
+        </ul>
+      </li>
+      <li><code>.readOnly(connector)</code> - Executes the query using the connection in read-only mode. The return value is <code>IO[List[String]]</code>.</li>
       <li><code>.unsafeRunSync()</code> - Executes the IO monad to get the actual result (<code>List[String]</code>).</li>
       <li><code>.foreach(println)</code> - Outputs each element of the result.</li>
     </ul>
@@ -224,7 +244,7 @@
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="string-literal">sql&quot;SELECT name, email FROM user&quot;</span><span>
   .</span><span class="identifier">query</span><span>[(</span><span class="type-name">String</span><span>, </span><span class="type-name">String</span><span>)]       </span><span class="comment">// Query[(String, String)]
 </span><span>  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]                      </span><span class="comment">// DBIO[List[(String, String)]]
-</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)                </span><span class="comment">// IO[List[(String, String)]]
+</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)                </span><span class="comment">// IO[List[(String, String)]]
 </span><span>  .</span><span class="identifier">unsafeRunSync</span><span>()               </span><span class="comment">// List[(String, String)]
 </span><span>  .</span><span class="identifier">foreach</span><span> { </span><span class="keyword">case</span><span> (</span><span class="identifier">name</span><span>, </span><span class="identifier">email</span><span>) =&gt; </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;Name: </span><span class="substitution">$name</span><span class="string-literal">, Email: </span><span class="substitution">$email</span><span class="string-literal">&quot;</span><span>) }</span></code></pre>
     <p>In multiple column queries, it&#39;s important that the order of selected columns matches the order of type parameters in the tuple. In the above example, <code>name</code> corresponds to the 1st column (tuple&#39;s <code>_1</code>), and <code>email</code> to the 2nd column (tuple&#39;s <code>_2</code>).</p>
@@ -238,7 +258,7 @@
 </span><span class="string-literal">sql&quot;SELECT id, name, email FROM user&quot;</span><span>
   .</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>]                   </span><span class="comment">// Query[User]
 </span><span>  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]                      </span><span class="comment">// DBIO[List[User]]
-</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)                </span><span class="comment">// IO[List[User]]
+</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)                </span><span class="comment">// IO[List[User]]
 </span><span>  .</span><span class="identifier">unsafeRunSync</span><span>()               </span><span class="comment">// List[User]
 </span><span>  .</span><span class="identifier">foreach</span><span>(</span><span class="identifier">user</span><span> =&gt; </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;ID: </span><span class="substitution">${user.id}</span><span class="string-literal">, Name: </span><span class="substitution">${user.name}</span><span class="string-literal">, Email: </span><span class="substitution">${user.email}</span><span class="string-literal">&quot;</span><span>))</span></code></pre>
     <p><strong>Important</strong>: The field names in the case class need to match the column names selected in the SQL query. The order also needs to match, but ldbc will map appropriately if the names match exactly.</p>
@@ -268,7 +288,7 @@
 &quot;&quot;&quot;</span><span>
   .</span><span class="identifier">query</span><span>[</span><span class="type-name">CityWithCountry</span><span>]        </span><span class="comment">// Query[CityWithCountry]
 </span><span>  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]                      </span><span class="comment">// DBIO[List[CityWithCountry]]
-</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)                </span><span class="comment">// IO[List[CityWithCountry]]
+</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)                </span><span class="comment">// IO[List[CityWithCountry]]
 </span><span>  .</span><span class="identifier">unsafeRunSync</span><span>()               </span><span class="comment">// List[CityWithCountry]
 </span><span>  .</span><span class="identifier">foreach</span><span>(</span><span class="identifier">cityWithCountry</span><span> =&gt; </span><span class="identifier">println</span><span>(
     </span><span class="string-literal">s&quot;City: </span><span class="substitution">${cityWithCountry.city.name}</span><span class="string-literal">, Country: </span><span class="substitution">${cityWithCountry.country.name}</span><span class="string-literal">&quot;</span><span>
@@ -300,7 +320,7 @@
 &quot;&quot;&quot;</span><span>
   .</span><span class="identifier">query</span><span>[(</span><span class="type-name">City</span><span>, </span><span class="type-name">Country</span><span>)]        </span><span class="comment">// Query[(City, Country)]
 </span><span>  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]                      </span><span class="comment">// DBIO[List[(City, Country)]]
-</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)                </span><span class="comment">// IO[List[(City, Country)]]
+</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)                </span><span class="comment">// IO[List[(City, Country)]]
 </span><span>  .</span><span class="identifier">unsafeRunSync</span><span>()               </span><span class="comment">// List[(City, Country)]
 </span><span>  .</span><span class="identifier">foreach</span><span> { </span><span class="keyword">case</span><span> (</span><span class="identifier">city</span><span>, </span><span class="identifier">country</span><span>) =&gt; 
     </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;City: </span><span class="substitution">${city.name}</span><span class="string-literal">, Country: </span><span class="substitution">${country.name}</span><span class="string-literal">&quot;</span><span>)
@@ -325,7 +345,7 @@
 &quot;&quot;&quot;</span><span>
   .</span><span class="identifier">query</span><span>[(</span><span class="type-name">C</span><span>, </span><span class="type-name">CT</span><span>)]                </span><span class="comment">// Query[(C, CT)]
 </span><span>  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]                      </span><span class="comment">// DBIO[List[(C, CT)]]
-</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)                </span><span class="comment">// IO[List[(C, CT)]]
+</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)                </span><span class="comment">// IO[List[(C, CT)]]
 </span><span>  .</span><span class="identifier">unsafeRunSync</span><span>()               </span><span class="comment">// List[(C, CT)]
 </span><span>  .</span><span class="identifier">foreach</span><span> { </span><span class="keyword">case</span><span> (</span><span class="identifier">city</span><span>, </span><span class="identifier">country</span><span>) =&gt; 
     </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;City: </span><span class="substitution">${city.name}</span><span class="string-literal">, Country: </span><span class="substitution">${country.name}</span><span class="string-literal">&quot;</span><span>)
@@ -339,7 +359,7 @@
 </span><span class="string-literal">sql&quot;SELECT id, name, email FROM user WHERE id = </span><span class="substitution">${userId}</span><span class="string-literal">&quot;</span><span>
   .</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>]                   </span><span class="comment">// Query[User]
 </span><span>  .</span><span class="identifier">to</span><span>[</span><span class="type-name">Option</span><span>]                    </span><span class="comment">// DBIO[Option[User]]
-</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)                </span><span class="comment">// IO[Option[User]]
+</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)                </span><span class="comment">// IO[Option[User]]
 </span><span>  .</span><span class="identifier">unsafeRunSync</span><span>()               </span><span class="comment">// Option[User]
 </span><span>  .</span><span class="identifier">foreach</span><span>(</span><span class="identifier">user</span><span> =&gt; </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;Found user: </span><span class="substitution">${user.name}</span><span class="string-literal">&quot;</span><span>))</span></code></pre>
     <p>If no result is found, <code>None</code> is returned, and if one is found, <code>Some(User(...))</code> is returned.</p>
@@ -347,27 +367,27 @@
     <h2 id="choosing-query-execution-methods" class="section"><a class="anchor-link left" href="#choosing-query-execution-methods"><i class="icofont-laika link">&#xef71;</i></a>Choosing Query Execution Methods</h2>
     <p>ldbc provides different query execution methods depending on the purpose:</p>
     <ul>
-      <li><code>.readOnly(conn)</code> - Used for read-only operations (such as SELECT statements)</li>
-      <li><code>.commit(conn)</code> - Executes write operations in auto-commit mode</li>
-      <li><code>.rollback(conn)</code> - Executes write operations and always rolls back (for testing)</li>
-      <li><code>.transaction(conn)</code> - Executes operations within a transaction and commits only on success</li>
+      <li><code>.readOnly(connector)</code> - Used for read-only operations (such as SELECT statements)</li>
+      <li><code>.commit(connector)</code> - Executes write operations in auto-commit mode</li>
+      <li><code>.rollback(connector)</code> - Executes write operations and always rolls back (for testing)</li>
+      <li><code>.transaction(connector)</code> - Executes operations within a transaction and commits only on success</li>
     </ul>
     <pre><code class="nohighlight"><span class="comment">// Example of a read-only operation
 </span><span class="string-literal">sql&quot;SELECT * FROM users&quot;</span><span>
   .</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>]
   .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
-  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)
+  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
 
 </span><span class="comment">// Example of a write operation (auto-commit)
 </span><span class="string-literal">sql&quot;UPDATE users SET name = </span><span class="substitution">${newName}</span><span class="string-literal"> WHERE id = </span><span class="substitution">${userId}</span><span class="string-literal">&quot;</span><span>
   .</span><span class="identifier">update</span><span>
-  .</span><span class="identifier">commit</span><span>(</span><span class="identifier">conn</span><span>)
+  .</span><span class="identifier">commit</span><span>(</span><span class="identifier">connector</span><span>)
 
 </span><span class="comment">// Multiple operations in a transaction
 </span><span>(</span><span class="keyword">for</span><span> {
   </span><span class="identifier">userId</span><span> &lt;- </span><span class="string-literal">sql&quot;INSERT INTO users (name, email) VALUES (</span><span class="substitution">${name}</span><span class="string-literal">, </span><span class="substitution">${email}</span><span class="string-literal">)&quot;</span><span>.</span><span class="identifier">returning</span><span>[</span><span class="type-name">Long</span><span>]
   </span><span class="identifier">_</span><span>      &lt;- </span><span class="string-literal">sql&quot;INSERT INTO user_roles (user_id, role_id) VALUES (</span><span class="substitution">${userId}</span><span class="string-literal">, </span><span class="substitution">${roleId}</span><span class="string-literal">)&quot;</span><span>.</span><span class="identifier">update</span><span>
-} </span><span class="keyword">yield</span><span> </span><span class="identifier">userId</span><span>).</span><span class="identifier">transaction</span><span>(</span><span class="identifier">conn</span><span>)</span></code></pre>
+} </span><span class="keyword">yield</span><span> </span><span class="identifier">userId</span><span>).</span><span class="identifier">transaction</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
     
     <h2 id="combining-collection-operations-with-queries" class="section"><a class="anchor-link left" href="#combining-collection-operations-with-queries"><i class="icofont-laika link">&#xef71;</i></a>Combining Collection Operations with Queries</h2>
     <p>By applying Scala collection operations to retrieved data, you can concisely describe more complex data processing:</p>
@@ -375,7 +395,7 @@
 </span><span class="string-literal">sql&quot;SELECT id, name, department FROM employees&quot;</span><span>
   .</span><span class="identifier">query</span><span>[(</span><span class="type-name">Long</span><span>, </span><span class="type-name">String</span><span>, </span><span class="type-name">String</span><span>)] </span><span class="comment">// ID, name, department
 </span><span>  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
-  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)
+  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
   .</span><span class="identifier">unsafeRunSync</span><span>()
   .</span><span class="identifier">groupBy</span><span>(</span><span class="identifier">_</span><span class="number-literal">._3</span><span>) </span><span class="comment">// Group by department
 </span><span>  .</span><span class="identifier">map</span><span> { </span><span class="keyword">case</span><span> (</span><span class="identifier">department</span><span>, </span><span class="identifier">employees</span><span>) =&gt; 
@@ -385,6 +405,138 @@
     </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;Department: </span><span class="substitution">$department</span><span class="string-literal">, Employees: </span><span class="substitution">${names.mkString(&quot;, &quot;)}</span><span class="string-literal">&quot;</span><span>)
   }</span></code></pre>
     
+    <h2 id="efficient-processing-of-large-data-with-streaming" class="section"><a class="anchor-link left" href="#efficient-processing-of-large-data-with-streaming"><i class="icofont-laika link">&#xef71;</i></a>Efficient Processing of Large Data with Streaming</h2>
+    <p>When processing large amounts of data, loading all data into memory at once can cause memory exhaustion. ldbc allows you to process data efficiently using <strong>streaming</strong>.</p>
+    
+    <h3 id="basic-usage-of-streaming" class="section"><a class="anchor-link left" href="#basic-usage-of-streaming"><i class="icofont-laika link">&#xef71;</i></a>Basic Usage of Streaming</h3>
+    <p>Streaming allows you to fetch and process data incrementally, significantly reducing memory usage:</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">fs2</span><span>.</span><span class="type-name">Stream</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.*
+
+</span><span class="comment">// Basic streaming
+</span><span class="keyword">val</span><span> </span><span class="identifier">cityStream</span><span>: </span><span class="type-name">Stream</span><span>[</span><span class="type-name">DBIO</span><span>, </span><span class="type-name">String</span><span>] = 
+  </span><span class="string-literal">sql&quot;SELECT name FROM city&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>]
+    .</span><span class="identifier">stream</span><span>                    </span><span class="comment">// Stream[DBIO, String]
+</span><span>
+</span><span class="comment">// Create Connector
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
+
+</span><span class="comment">// Fetch and process only the first 5 records
+</span><span class="keyword">val</span><span> </span><span class="identifier">firstFiveCities</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">List</span><span>[</span><span class="type-name">String</span><span>]] = 
+  </span><span class="identifier">cityStream</span><span>
+    .</span><span class="identifier">take</span><span>(</span><span class="number-literal">5</span><span>)                   </span><span class="comment">// Only the first 5 records
+</span><span>    .</span><span class="identifier">compile</span><span>.</span><span class="identifier">toList</span><span>            </span><span class="comment">// Convert Stream to List
+</span><span>    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)       </span><span class="comment">// IO[List[String]]</span></code></pre>
+    
+    <h3 id="specifying-fetch-size" class="section"><a class="anchor-link left" href="#specifying-fetch-size"><i class="icofont-laika link">&#xef71;</i></a>Specifying Fetch Size</h3>
+    <p>You can control the number of rows fetched at once using the <code>stream(fetchSize: Int)</code> method:</p>
+    <pre><code class="nohighlight"><span class="comment">// Fetch 10 rows at a time
+</span><span class="keyword">val</span><span> </span><span class="identifier">efficientStream</span><span>: </span><span class="type-name">Stream</span><span>[</span><span class="type-name">DBIO</span><span>, </span><span class="type-name">String</span><span>] = 
+  </span><span class="string-literal">sql&quot;SELECT name FROM city&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>]
+    .</span><span class="identifier">stream</span><span>(</span><span class="number-literal">10</span><span>)                </span><span class="comment">// fetchSize = 10
+</span><span>
+</span><span class="comment">// Efficiently process large data
+</span><span class="keyword">val</span><span> </span><span class="identifier">processLargeData</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">Int</span><span>] = 
+  </span><span class="string-literal">sql&quot;SELECT id, name, population FROM city&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[(</span><span class="type-name">Long</span><span>, </span><span class="type-name">String</span><span>, </span><span class="type-name">Int</span><span>)]
+    .</span><span class="identifier">stream</span><span>(</span><span class="number-literal">100</span><span>)               </span><span class="comment">// Fetch 100 rows at a time
+</span><span>    .</span><span class="identifier">filter</span><span>(</span><span class="identifier">_</span><span class="number-literal">._3</span><span> &gt; </span><span class="number-literal">1000000</span><span>)    </span><span class="comment">// Cities with population over 1 million
+</span><span>    .</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span class="number-literal">._2</span><span>)                 </span><span class="comment">// Extract only city names
+</span><span>    .</span><span class="identifier">compile</span><span>.</span><span class="identifier">toList</span><span>
+    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
+    .</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">size</span><span>)</span></code></pre>
+    
+    <h3 id="practical-data-processing-with-streaming" class="section"><a class="anchor-link left" href="#practical-data-processing-with-streaming"><i class="icofont-laika link">&#xef71;</i></a>Practical Data Processing with Streaming</h3>
+    <p>Since streaming returns Fs2 <code>Stream</code>, you can use rich functional operations:</p>
+    <pre><code class="nohighlight"><span class="comment">// Process large user data incrementally
+// Create Connector
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">processUsers</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">Unit</span><span>] = 
+  </span><span class="string-literal">sql&quot;SELECT id, name, email, created_at FROM users&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[(</span><span class="type-name">Long</span><span>, </span><span class="type-name">String</span><span>, </span><span class="type-name">String</span><span>, </span><span class="identifier">java</span><span>.</span><span class="identifier">time</span><span>.</span><span class="type-name">LocalDateTime</span><span>)]
+    .</span><span class="identifier">stream</span><span>(</span><span class="number-literal">50</span><span>)                </span><span class="comment">// Fetch 50 rows at a time
+</span><span>    .</span><span class="identifier">filter</span><span>(</span><span class="identifier">_</span><span class="number-literal">._4</span><span>.</span><span class="identifier">isAfter</span><span>(</span><span class="identifier">lastWeek</span><span>))  </span><span class="comment">// Users created since last week
+</span><span>    .</span><span class="identifier">map</span><span> { </span><span class="keyword">case</span><span> (</span><span class="identifier">id</span><span>, </span><span class="identifier">name</span><span>, </span><span class="identifier">email</span><span>, </span><span class="identifier">_</span><span>) =&gt; 
+      </span><span class="string-literal">s&quot;New user: </span><span class="substitution">$name</span><span class="string-literal"> (</span><span class="substitution">$email</span><span class="string-literal">)&quot;</span><span>
+    }
+    .</span><span class="identifier">evalMap</span><span>(</span><span class="type-name">IO</span><span>.</span><span class="identifier">println</span><span>)       </span><span class="comment">// Output results sequentially
+</span><span>    .</span><span class="identifier">compile</span><span>.</span><span class="identifier">drain</span><span>             </span><span class="comment">// Execute the stream
+</span><span>    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
+    
+    <h3 id="optimizing-behavior-with-usecursorfetch" class="section"><a class="anchor-link left" href="#optimizing-behavior-with-usecursorfetch"><i class="icofont-laika link">&#xef71;</i></a>Optimizing Behavior with UseCursorFetch</h3>
+    <p>In MySQL, the efficiency of streaming changes significantly depending on the <code>UseCursorFetch</code> setting:</p>
+    <pre><code class="nohighlight"><span class="comment">// UseCursorFetch=true (recommended) - True streaming
+</span><span class="keyword">val</span><span> </span><span class="identifier">efficientProvider</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">host</span><span>, </span><span class="identifier">port</span><span>, </span><span class="identifier">user</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="identifier">password</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="identifier">database</span><span>)
+  .</span><span class="identifier">setUseCursorFetch</span><span>(</span><span class="boolean-literal">true</span><span>)    </span><span class="comment">// Enable server-side cursors
+</span><span>  .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">None</span><span>)
+
+</span><span class="comment">// UseCursorFetch=false (default) - Limited streaming
+</span><span class="keyword">val</span><span> </span><span class="identifier">standardProvider</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">host</span><span>, </span><span class="identifier">port</span><span>, </span><span class="identifier">user</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="identifier">password</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="identifier">database</span><span>)
+  .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">None</span><span>)</span></code></pre>
+    <p><strong>When UseCursorFetch=true:</strong></p>
+    <ul>
+      <li>Uses server-side cursors to fetch data incrementally as needed</li>
+      <li>Significantly reduces memory usage (safe even with millions of rows)</li>
+      <li>Enables true streaming processing</li>
+    </ul>
+    <p><strong>When UseCursorFetch=false:</strong></p>
+    <ul>
+      <li>Loads all results into memory when executing the query</li>
+      <li>Fast for small datasets but risky for large data</li>
+      <li>Limited effectiveness of streaming</li>
+    </ul>
+    
+    <h3 id="example-of-large-data-processing" class="section"><a class="anchor-link left" href="#example-of-large-data-processing"><i class="icofont-laika link">&#xef71;</i></a>Example of Large Data Processing</h3>
+    <p>Here&#39;s an example of safely processing one million rows:</p>
+    <pre><code class="nohighlight"><span class="comment">// Efficient large data processing
+</span><span class="keyword">val</span><span> </span><span class="identifier">datasource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">host</span><span>, </span><span class="identifier">port</span><span>, </span><span class="identifier">user</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="identifier">password</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="identifier">database</span><span>)
+  .</span><span class="identifier">setUseCursorFetch</span><span>(</span><span class="boolean-literal">true</span><span>)   </span><span class="comment">// Important: Enable server-side cursors
+</span><span>
+</span><span class="comment">// Create Connector
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">processMillionRecords</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">Long</span><span>] = 
+  </span><span class="string-literal">sql&quot;SELECT id, amount FROM transactions WHERE year = 2024&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[(</span><span class="type-name">Long</span><span>, </span><span class="type-name">BigDecimal</span><span>)]
+    .</span><span class="identifier">stream</span><span>(</span><span class="number-literal">1000</span><span>)          </span><span class="comment">// Process 1000 rows at a time
+</span><span>    .</span><span class="identifier">filter</span><span>(</span><span class="identifier">_</span><span class="number-literal">._2</span><span> &gt; </span><span class="number-literal">100</span><span>)    </span><span class="comment">// Transactions over 100 yen only
+</span><span>    .</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span class="number-literal">._2</span><span>)             </span><span class="comment">// Extract amounts only
+</span><span>    .</span><span class="identifier">fold</span><span>(</span><span class="type-name">BigDecimal</span><span>(</span><span class="number-literal">0</span><span>))(</span><span class="identifier">_</span><span> + </span><span class="identifier">_</span><span>)  </span><span class="comment">// Calculate sum
+</span><span>    .</span><span class="identifier">compile</span><span>.</span><span class="identifier">lastOrError</span><span>   </span><span class="comment">// Get final result
+</span><span>    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
+    
+    <h3 id="benefits-of-streaming" class="section"><a class="anchor-link left" href="#benefits-of-streaming"><i class="icofont-laika link">&#xef71;</i></a>Benefits of Streaming</h3>
+    <ol class="arabic">
+      <li><strong>Memory Efficiency</strong>: Keep memory usage constant even with large data</li>
+      <li><strong>Early Processing</strong>: Process data while receiving it simultaneously</li>
+      <li><strong>Interruptible</strong>: Stop processing midway based on conditions</li>
+      <li><strong>Functional Operations</strong>: Rich operations like <code>filter</code>, <code>map</code>, <code>take</code></li>
+    </ol>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Example of early termination based on conditions
+// Create Connector
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">findFirstLargeCity</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">Option</span><span>[</span><span class="type-name">String</span><span>]] = 
+  </span><span class="string-literal">sql&quot;SELECT name, population FROM city ORDER BY population DESC&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[(</span><span class="type-name">String</span><span>, </span><span class="type-name">Int</span><span>)]
+    .</span><span class="identifier">stream</span><span>(</span><span class="number-literal">10</span><span>)
+    .</span><span class="identifier">find</span><span>(</span><span class="identifier">_</span><span class="number-literal">._2</span><span> &gt; </span><span class="number-literal">5000000</span><span>)      </span><span class="comment">// First city with population over 5 million
+</span><span>    .</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span class="number-literal">._1</span><span>))          </span><span class="comment">// Extract only city name
+</span><span>    .</span><span class="identifier">compile</span><span>.</span><span class="identifier">last</span><span>
+    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
+    
     <h2 id="summary" class="section"><a class="anchor-link left" href="#summary"><i class="icofont-laika link">&#xef71;</i></a>Summary</h2>
     <p>ldbc provides features for retrieving data from databases in a type-safe and intuitive manner. In this tutorial, we covered:</p>
     <ul>
@@ -393,9 +545,10 @@
       <li>Mapping to case classes</li>
       <li>Joining multiple tables and nested data structures</li>
       <li>Getting single and multiple results</li>
+      <li><strong>Efficient processing of large data with streaming</strong></li>
       <li>Various execution methods</li>
     </ul>
-    <p>Use this knowledge to efficiently retrieve data from databases in your applications and maximize the benefits of Scala&#39;s type system.</p>
+    <p>By leveraging streaming capabilities, you can process large amounts of data efficiently in terms of memory usage. When dealing with large datasets, consider setting <code>UseCursorFetch=true</code>.</p>
     
     <h2 id="next-steps" class="section"><a class="anchor-link left" href="#next-steps"><i class="icofont-laika link">&#xef71;</i></a>Next Steps</h2>
     <p>Now that you understand how to retrieve data from databases in various formats, you&#39;ve seen how type-safe mapping allows you to map database results directly to Scala data structures.</p>

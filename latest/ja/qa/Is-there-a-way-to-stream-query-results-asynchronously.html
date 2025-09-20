@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <a class="text-link menu-toggle" href="#">Version 0.4</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="../reference/">はじめに</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Connector.html">コネクタ</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Performance.html">パフォーマンス</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Pooling.html">コネクションプーリング</a></li>
   </ul>
   
 
@@ -166,7 +167,8 @@
   <p class="header"><a href="#">Q: クエリの結果を非同期でストリーミングする方法はありますか？</a></p>
 
   <ul class="nav-list">
-    <li class="level1 nav-leaf"><a href="#a-現在-ストリーミングapiをサポートしていません">A: 現在、ストリーミングAPIをサポートしていません。</a></li>
+    <li class="level1 nav-leaf"><a href="#a-ストリーミングapiをサポートしています">A: ストリーミングAPIをサポートしています。</a></li>
+    <li class="level1 nav-leaf"><a href="#参考資料">参考資料</a></li>
   </ul>
 
   <p class="footer"></p>
@@ -177,8 +179,20 @@
 
     <h1 id="q-クエリの結果を非同期でストリーミングする方法はありますか" class="title">Q: クエリの結果を非同期でストリーミングする方法はありますか？</h1>
     
-    <h2 id="a-現在-ストリーミングapiをサポートしていません" class="section"><a class="anchor-link left" href="#a-現在-ストリーミングapiをサポートしていません"><i class="icofont-laika link">&#xef71;</i></a>A: 現在、ストリーミングAPIをサポートしていません。</h2>
-    <p>現在ストリーミングのサポートはありませんが、将来のバージョンでサポート予定です。現在は、クエリの結果を一度に取得する方法を使用してください。</p>
+    <h2 id="a-ストリーミングapiをサポートしています" class="section"><a class="anchor-link left" href="#a-ストリーミングapiをサポートしています"><i class="icofont-laika link">&#xef71;</i></a>A: ストリーミングAPIをサポートしています。</h2>
+    <p>ストリーミング処理は<code>stream</code>メソッドを使用して行うことができます。これによって戻り値はFs2の<code>Stream</code>になります。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">stream</span><span>: </span><span class="identifier">fs2</span><span>.</span><span class="type-name">Stream</span><span>[</span><span class="type-name">DBIO</span><span>, </span><span class="type-name">String</span><span>] = </span><span class="string-literal">sql&quot;SELECT * FROM `table`&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>].</span><span class="identifier">stream</span></code></pre>
+    <p>MySQLでは<code>UseCursorFetch</code>の設定によってストリーミングの動作が大きく変わります：</p>
+    <ul>
+      <li><strong>UseCursorFetch=true</strong>: サーバーサイドカーソルを使用して真のストリーミング処理</li>
+      <li><strong>UseCursorFetch=false</strong>: 制限されたストリーミング処理（メモリ制約あり）</li>
+    </ul>
+    <p>大量データを扱う場合は<code>UseCursorFetch=true</code>の設定を推奨します。</p>
+    
+    <h2 id="参考資料" class="section"><a class="anchor-link left" href="#参考資料"><i class="icofont-laika link">&#xef71;</i></a>参考資料</h2>
+    <ul>
+      <li><a href="../tutorial/Selecting-Data.html#ストリーミングによる大量データの効率的な処理">データ選択 - ストリーミングによる大量データの効率的な処理</a></li>
+    </ul>
 
     
 <hr class="footer-rule"/>

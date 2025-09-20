@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <a class="text-link menu-toggle" href="#">Version 0.4</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="index.html">はじめに</a></li>
     <li class="level2 nav-leaf"><a href="Connector.html">コネクタ</a></li>
     <li class="level2 active nav-leaf"><a href="#">パフォーマンス</a></li>
+    <li class="level2 nav-leaf"><a href="Pooling.html">コネクションプーリング</a></li>
   </ul>
   
 
@@ -166,9 +167,32 @@
   <p class="header"><a href="#">パフォーマンス</a></p>
 
   <ul class="nav-list">
-    <li class="level1 nav-node"><a href="#クエリ実行のオーバーヘッド">クエリ実行のオーバーヘッド</a></li>
-    <li class="level2 nav-leaf"><a href="#書き込み">書き込み</a></li>
-    <li class="level2 nav-leaf"><a href="#読み取り">読み取り</a></li>
+    <li class="level1 nav-node"><a href="#エグゼクティブサマリー">エグゼクティブサマリー</a></li>
+    <li class="level2 nav-leaf"><a href="#主要な発見事項">主要な発見事項</a></li>
+    <li class="level1 nav-node"><a href="#ベンチマーク実行環境">ベンチマーク実行環境</a></li>
+    <li class="level2 nav-leaf"><a href="#ハードウェア-ソフトウェア環境">ハードウェア・ソフトウェア環境</a></li>
+    <li class="level2 nav-leaf"><a href="#jmhベンチマーク設定">JMHベンチマーク設定</a></li>
+    <li class="level2 nav-leaf"><a href="#測定条件">測定条件</a></li>
+    <li class="level1 nav-node"><a href="#スレッド数によるパフォーマンス比較">スレッド数によるパフォーマンス比較</a></li>
+    <li class="level2 nav-leaf"><a href="#_1スレッド環境">1スレッド環境</a></li>
+    <li class="level2 nav-leaf"><a href="#_2スレッド環境">2スレッド環境</a></li>
+    <li class="level2 nav-leaf"><a href="#_4スレッド環境">4スレッド環境</a></li>
+    <li class="level2 nav-leaf"><a href="#_8スレッド環境">8スレッド環境</a></li>
+    <li class="level2 nav-leaf"><a href="#_16スレッド環境">16スレッド環境</a></li>
+    <li class="level1 nav-node"><a href="#技術的分析">技術的分析</a></li>
+    <li class="level2 nav-leaf"><a href="#cats-effectのパフォーマンス特性">Cats Effectのパフォーマンス特性</a></li>
+    <li class="level2 nav-leaf"><a href="#並行性モデルの違い">並行性モデルの違い</a></li>
+    <li class="level2 nav-leaf"><a href="#ネットワークi-o実装">ネットワークI/O実装</a></li>
+    <li class="level2 nav-leaf"><a href="#メモリ効率とgc圧力">メモリ効率とGC圧力</a></li>
+    <li class="level1 nav-node"><a href="#使用シナリオ別推奨事項">使用シナリオ別推奨事項</a></li>
+    <li class="level2 nav-leaf"><a href="#ldbcを選択すべきケース">ldbcを選択すべきケース</a></li>
+    <li class="level2 nav-leaf"><a href="#jdbcを選択すべきケース">jdbcを選択すべきケース</a></li>
+    <li class="level1 nav-node"><a href="#パフォーマンスチューニング">パフォーマンスチューニング</a></li>
+    <li class="level2 nav-leaf"><a href="#cats-effectのベストプラクティス">Cats Effectのベストプラクティス</a></li>
+    <li class="level2 nav-leaf"><a href="#ldbc最適化設定">ldbc最適化設定</a></li>
+    <li class="level2 nav-leaf"><a href="#スレッドプール設定">スレッドプール設定</a></li>
+    <li class="level1 nav-node"><a href="#まとめ">まとめ</a></li>
+    <li class="level2 nav-leaf"><a href="#cats-effectの最適化による恩恵">Cats Effectの最適化による恩恵</a></li>
   </ul>
 
   <p class="footer"></p>
@@ -178,98 +202,417 @@
   <main class="content">
 
     <h1 id="パフォーマンス" class="title">パフォーマンス</h1>
-    <p>現在サポートされているJavaのバージョンは11、17、21〜です。それぞれのバージョンで、ldbcとjdbcのパフォーマンスを比較しました。</p>
-    <table>
-      <thead>
-        <tr>
-          <th>Operation</th>
-          <th>11</th>
-          <th>17</th>
-          <th>21~</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>Reading</td>
-          <td>🔺</td>
-          <td>🔺</td>
-          <td>✅</td>
-        </tr>
-        <tr>
-          <td>Writing</td>
-          <td>✅</td>
-          <td>✅</td>
-          <td>✅</td>
-        </tr>
-      </tbody>
-    </table>
+    <p>本ドキュメントでは、ldbcとjdbcのパフォーマンス特性を詳細に分析し、どのような状況でldbcを選択すべきかについて技術的な観点から解説します。</p>
+    
+    <h2 id="エグゼクティブサマリー" class="section"><a class="anchor-link left" href="#エグゼクティブサマリー"><i class="icofont-laika link">&#xef71;</i></a>エグゼクティブサマリー</h2>
+    <p>ベンチマーク結果から、ldbcはjdbcと比較して約1.8〜2.1倍の高いスループットを示しています。この優位性は、Cats EffectのFiberベースの並行性モデルと非ブロッキングI/Oの実装に起因します。特に高並行性環境において、ldbcは優れたスケーラビリティを発揮します。</p>
+    
+    <h3 id="主要な発見事項" class="section"><a class="anchor-link left" href="#主要な発見事項"><i class="icofont-laika link">&#xef71;</i></a>主要な発見事項</h3>
+    <ol class="arabic">
+      <li><strong>パフォーマンス</strong>: ldbcはjdbcより約2倍高速（8スレッド環境）</li>
+      <li><strong>スケーラビリティ</strong>: スレッド数の増加に対してldbcは線形に近いスケーリングを実現</li>
+      <li><strong>リソース効率</strong>: メモリ使用量が大幅に削減（Fiber: 500バイト vs OSスレッド: 1MB）</li>
+      <li><strong>レイテンシ</strong>: 高負荷時でも安定した応答時間を維持</li>
+    </ol>
+    
+    <h2 id="ベンチマーク実行環境" class="section"><a class="anchor-link left" href="#ベンチマーク実行環境"><i class="icofont-laika link">&#xef71;</i></a>ベンチマーク実行環境</h2>
+    
+    <h3 id="ハードウェア-ソフトウェア環境" class="section"><a class="anchor-link left" href="#ハードウェア-ソフトウェア環境"><i class="icofont-laika link">&#xef71;</i></a>ハードウェア・ソフトウェア環境</h3>
     <ul>
-      <li>🔺: パフォーマンスに改善の余地あり</li>
-      <li>✅: パフォーマンスが安定している</li>
+      <li><strong>JDK</strong>: Amazon Corretto 21.0.6</li>
+      <li><strong>JVM</strong>: OpenJDK 64-Bit Server VM (21.0.6+7-LTS)</li>
+      <li><strong>メモリ</strong>: 4GB (ヒープサイズ: -Xms4G -Xmx4G)</li>
+      <li><strong>GC</strong>: G1GC (-XX:+UseG1GC -XX:MaxGCPauseMillis=200)</li>
+      <li><strong>MySQL</strong>: バージョン8.4.0（Docker環境）</li>
     </ul>
-    <p>パフォーマンス結果から分かる通り、最新のバージョンであるJDK 21~が最も高いパフォーマンスを示しています。特に、ldbcのprepareStatementとstatementは、高いスループットを維持しており、高負荷時にも安定しています。ldbcを使用する場合は、JDK 21以上のバージョンを使用することをお勧めします。</p>
     
-    <h2 id="クエリ実行のオーバーヘッド" class="section"><a class="anchor-link left" href="#クエリ実行のオーバーヘッド"><i class="icofont-laika link">&#xef71;</i></a>クエリ実行のオーバーヘッド</h2>
+    <h3 id="jmhベンチマーク設定" class="section"><a class="anchor-link left" href="#jmhベンチマーク設定"><i class="icofont-laika link">&#xef71;</i></a>JMHベンチマーク設定</h3>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="annotation">@BenchmarkMode</span><span>(</span><span class="type-name">Array</span><span>(</span><span class="type-name">Mode</span><span>.</span><span class="type-name">Throughput</span><span>))      </span><span class="comment">// スループット測定
+</span><span class="annotation">@OutputTimeUnit</span><span>(</span><span class="type-name">TimeUnit</span><span>.</span><span class="type-name">SECONDS</span><span>)           </span><span class="comment">// ops/s単位で出力
+</span><span class="annotation">@State</span><span>(</span><span class="type-name">Scope</span><span>.</span><span class="type-name">Benchmark</span><span>)                     </span><span class="comment">// ベンチマークスコープ
+</span><span class="annotation">@Fork</span><span>(</span><span class="identifier">value</span><span> = </span><span class="number-literal">1</span><span>)                            </span><span class="comment">// フォーク数: 1
+</span><span class="annotation">@Warmup</span><span>(</span><span class="identifier">iterations</span><span> = </span><span class="number-literal">5</span><span>)                     </span><span class="comment">// ウォームアップ: 5回
+</span><span class="annotation">@Measurement</span><span>(</span><span class="identifier">iterations</span><span> = </span><span class="number-literal">10</span><span>)               </span><span class="comment">// 測定: 10回
+</span><span class="annotation">@Threads</span><span>(</span><span class="number-literal">1</span><span>)                                 </span><span class="comment">// スレッド数: 1-16で変動</span></code></pre>
     
-    <h3 id="書き込み" class="section"><a class="anchor-link left" href="#書き込み"><i class="icofont-laika link">&#xef71;</i></a>書き込み</h3>
-    <p>ベンチマークは、異なる操作に対する1秒あたりの操作数（ops/s）を測定しました。以下のグラフは、JDKのバージョンごとにldbcとjdbcのパフォーマンスを示しています。</p>
-    <p><strong>JDK 11</strong></p>
-    <p>ldbcとjdbcのパフォーマンスはほぼ同等であり、特定の操作においてはldbcが若干優れていることが確認されました。</p>
-    <div class="default-image-block">
-      <img src="../../img/connector/Insert.svg" alt="Select Benchmark (JDK 11)">
-    </div>
-    <p><strong>JDK 17</strong></p>
-    <p>JDK 11と比較して、ldbcのパフォーマンスが向上していることがわかります。特に、複雑なクエリに対する応答時間が短縮されています。</p>
-    <p>jdbcも同様にパフォーマンスが向上していますが、ldbcの方が一貫して高いパフォーマンスを示しています。</p>
-    <div class="default-image-block">
-      <img src="../../img/connector/Insert17.svg" alt="Select Benchmark (JDK 17)">
-    </div>
-    <p><strong>JDK 21</strong></p>
-    <p>ldbcのパフォーマンスがさらに向上し、jdbcを上回る結果が多く見られます。</p>
-    <p>特に、大量のデータを扱う操作において、ldbcの優位性が顕著です。</p>
-    <div class="default-image-block">
-      <img src="../../img/connector/Insert21.svg" alt="Select Benchmark (JDK 21)">
-    </div>
-    <p>ベンチマーク結果から、ldbcはJDKのバージョンが上がるにつれてパフォーマンスが向上しており、jdbcと比較して一貫して高いパフォーマンスを示しています。特に、JDK 21を使用する場合、ldbcは大規模なデータ操作において優れたパフォーマンスを発揮します。</p>
-    <p>これらの結果を考慮すると、ldbcを使用することでパフォーマンスの懸念を払拭できる可能性が高いです。特に、最新のJDKを使用することで、ldbcの利点を最大限に活用できるでしょう。</p>
-    
-    <h3 id="読み取り" class="section"><a class="anchor-link left" href="#読み取り"><i class="icofont-laika link">&#xef71;</i></a>読み取り</h3>
-    <p>JDK 21を使用した ベンチマーク結果から、ldbcとjdbcのパフォーマンスを比較しました。以下のグラフは、異なる操作に対する1秒あたりの操作数（ops/s）を示しています。</p>
+    <h3 id="測定条件" class="section"><a class="anchor-link left" href="#測定条件"><i class="icofont-laika link">&#xef71;</i></a>測定条件</h3>
     <ul>
-      <li>ldbc: prepareStatement - 青色の線</li>
-      <li>ldbc: statement - オレンジ色の線</li>
-      <li>jdbc: prepareStatement - 緑色の線</li>
-      <li>jdbc: statement - 赤色の線</li>
+      <li><strong>接続方式</strong>: 接続プーリングなし（単一接続を再利用）</li>
+      <li><strong>クエリタイプ</strong>: </li>
     </ul>
-    <p>すべてのバージョンの中で最も高いスループットを示しています。<code>ldbc: prepareStatement</code>および<code>jdbc: statement</code>の両方で優れたパフォーマンスを発揮しており、最新の最適化が効果を発揮していることがわかります。</p>
-    <div class="default-image-block">
-      <img src="../../img/connector/Select21.svg" alt="Select Benchmark (JDK 21)">
-    </div>
-    
-    <h4 id="パフォーマンスの比較" class="section"><a class="anchor-link left" href="#パフォーマンスの比較"><i class="icofont-laika link">&#xef71;</i></a>パフォーマンスの比較</h4>
-    <p><strong>1. ldbc: prepareStatement vs jdbc: prepareStatement</strong></p>
-    <p>ldbcのprepareStatementは、jdbcのprepareStatementと比較して一貫して高いパフォーマンスを示しています。特に高負荷時においても、ldbcは安定した操作数を維持しています。</p>
-    <p><strong>2. ldbc: statement vs jdbc: statement</strong></p>
-    <p>ldbcのstatementも、jdbcのstatementと比較して優れたパフォーマンスを発揮しています。ldbcは、特に複雑なクエリや大量のデータ処理において、jdbcよりも効率的に動作します。</p>
-    <p>ベンチマーク結果から、ldbcはjdbcと比較して以下の点で優れたパフォーマンスを示しています</p>
     <ul>
-      <li>高いスループット：ldbcは、1秒あたりの操作数がjdbcよりも高く、特に高負荷時においても安定しています。</li>
-      <li>効率的なリソース使用：ldbcは、複雑なクエリや大量のデータ処理においても効率的に動作し、リソースの使用を最適化します。</li>
+      <li>Statement: 動的SQL実行</li>
     </ul>
-    <p>これらの結果から、ldbcを使用することで、パフォーマンスの懸念を払拭できると判断できます。ldbcは、特に高負荷環境や大量のデータ処理が必要なシナリオにおいて、優れた選択肢となるでしょう。</p>
+    <ul>
+      <li>PreparedStatement: パラメータ化クエリ</li>
+      <li><strong>データサイズ</strong>: 500, 1000, 1500, 2000行</li>
+      <li><strong>測定対象テーブル</strong>: 16カラム（各種データ型を含む）</li>
+    </ul>
+    <ul>
+      <li>数値型: Long, Short, Int, Float, Double, BigDecimal</li>
+    </ul>
+    <ul>
+      <li>文字列型: String (2種)</li>
+    </ul>
+    <ul>
+      <li>日時型: LocalDate, LocalTime, LocalDateTime (2種)</li>
+    </ul>
+    <ul>
+      <li>論理型: Boolean</li>
+    </ul>
     
-    <h4 id="その他のバージョン" class="section"><a class="anchor-link left" href="#その他のバージョン"><i class="icofont-laika link">&#xef71;</i></a>その他のバージョン</h4>
-    <p>その他のバージョンにおけるベンチマーク結果を以下に示します。</p>
-    <p><strong>JDK 11</strong></p>
-    <p>このバージョンでは、スループットが他のバージョンと比較して低い傾向があります。特に、<code>ldbc: prepareStatement</code>のパフォーマンスが他のバージョンに比べて劣っています。</p>
+    <h2 id="スレッド数によるパフォーマンス比較" class="section"><a class="anchor-link left" href="#スレッド数によるパフォーマンス比較"><i class="icofont-laika link">&#xef71;</i></a>スレッド数によるパフォーマンス比較</h2>
+    
+    <h3 id="_1スレッド環境" class="section"><a class="anchor-link left" href="#_1スレッド環境"><i class="icofont-laika link">&#xef71;</i></a>1スレッド環境</h3>
     <div class="default-image-block">
-      <img src="../../img/connector/Select.svg" alt="Select Benchmark (JDK 11)">
+      <img src="../../img/connector/Select_Thread1.svg" alt="Select Benchmark (1 Thread)">
     </div>
-    <p><strong>JDK 17</strong></p>
-    <p>JDK 11と比較して、全体的なスループットが向上しています。<code>jdbc: prepareStatement</code>のパフォーマンスが特に改善されており、安定した結果を示しています。</p>
+    <p>シングルスレッド環境では、ldbcとjdbcのパフォーマンス差は比較的小さくなります。これは、並行性の利点が発揮されないためです。</p>
+    <p><strong>パフォーマンス比率（ldbc/jdbc）</strong>:</p>
+    <ul>
+      <li>500行: 1.43倍</li>
+      <li>1000行: 1.52倍</li>
+      <li>1500行: 1.48倍</li>
+      <li>2000行: 1.51倍</li>
+    </ul>
+    
+    <h3 id="_2スレッド環境" class="section"><a class="anchor-link left" href="#_2スレッド環境"><i class="icofont-laika link">&#xef71;</i></a>2スレッド環境</h3>
     <div class="default-image-block">
-      <img src="../../img/connector/Select17.svg" alt="Select Benchmark (JDK 17)">
+      <img src="../../img/connector/Select_Thread2.svg" alt="Select Benchmark (2 Threads)">
     </div>
+    <p>2スレッド環境から、ldbcの優位性が明確になり始めます。</p>
+    <p><strong>パフォーマンス比率（ldbc/jdbc）</strong>:</p>
+    <ul>
+      <li>500行: 1.83倍</li>
+      <li>1000行: 1.48倍</li>
+      <li>1500行: 1.66倍</li>
+      <li>2000行: 1.75倍</li>
+    </ul>
+    
+    <h3 id="_4スレッド環境" class="section"><a class="anchor-link left" href="#_4スレッド環境"><i class="icofont-laika link">&#xef71;</i></a>4スレッド環境</h3>
+    <div class="default-image-block">
+      <img src="../../img/connector/Select_Thread4.svg" alt="Select Benchmark (4 Threads)">
+    </div>
+    <p>4スレッド環境では、ldbcのスケーラビリティが顕著に現れます。</p>
+    <p><strong>パフォーマンス比率（ldbc/jdbc）</strong>:</p>
+    <ul>
+      <li>500行: 1.89倍</li>
+      <li>1000行: 1.82倍</li>
+      <li>1500行: 1.87倍</li>
+      <li>2000行: 1.93倍</li>
+    </ul>
+    
+    <h3 id="_8スレッド環境" class="section"><a class="anchor-link left" href="#_8スレッド環境"><i class="icofont-laika link">&#xef71;</i></a>8スレッド環境</h3>
+    <div class="default-image-block">
+      <img src="../../img/connector/Select_Thread8.svg" alt="Select Benchmark (8 Threads)">
+    </div>
+    <p>8スレッド環境で、ldbcは最も高いパフォーマンス優位性を示します。</p>
+    <p><strong>パフォーマンス比率（ldbc/jdbc）</strong>:</p>
+    <ul>
+      <li>500行: 1.76倍</li>
+      <li>1000行: 2.01倍</li>
+      <li>1500行: 1.92倍</li>
+      <li>2000行: 2.09倍</li>
+    </ul>
+    
+    <h3 id="_16スレッド環境" class="section"><a class="anchor-link left" href="#_16スレッド環境"><i class="icofont-laika link">&#xef71;</i></a>16スレッド環境</h3>
+    <div class="default-image-block">
+      <img src="../../img/connector/Select_Thread16.svg" alt="Select Benchmark (16 Threads)">
+    </div>
+    <p>16スレッド環境でも、ldbcは安定した高パフォーマンスを維持します。</p>
+    <p><strong>パフォーマンス比率（ldbc/jdbc）</strong>:</p>
+    <ul>
+      <li>500行: 1.95倍</li>
+      <li>1000行: 2.03倍</li>
+      <li>1500行: 1.98倍</li>
+      <li>2000行: 2.12倍</li>
+    </ul>
+    
+    <h2 id="技術的分析" class="section"><a class="anchor-link left" href="#技術的分析"><i class="icofont-laika link">&#xef71;</i></a>技術的分析</h2>
+    
+    <h3 id="cats-effectのパフォーマンス特性" class="section"><a class="anchor-link left" href="#cats-effectのパフォーマンス特性"><i class="icofont-laika link">&#xef71;</i></a>Cats Effectのパフォーマンス特性</h3>
+    <p>Cats Effect 3は、長時間稼働するバックエンドネットワークアプリケーション向けに最適化されています：</p>
+    
+    <h4 id="最適化対象" class="section"><a class="anchor-link left" href="#最適化対象"><i class="icofont-laika link">&#xef71;</i></a>最適化対象</h4>
+    <ul>
+      <li><strong>物理スレッド数</strong>: 8スレッド以上の環境</li>
+      <li><strong>処理内容</strong>: ネットワークソケットI/O中心の処理</li>
+      <li><strong>稼働時間</strong>: 数時間以上の長時間稼働アプリケーション</li>
+    </ul>
+    
+    <h4 id="パフォーマンス指標" class="section"><a class="anchor-link left" href="#パフォーマンス指標"><i class="icofont-laika link">&#xef71;</i></a>パフォーマンス指標</h4>
+    <ul>
+      <li><strong><code>flatMap</code>操作</strong>: </li>
+    </ul>
+    <ul>
+      <li>旧世代Intel CPU: 約7ナノ秒</li>
+    </ul>
+    <ul>
+      <li>最新AMD CPU: 約3ナノ秒</li>
+      <li><strong>ボトルネック</strong>: 計算処理ではなく、スケジューリングとI/Oが主要因</li>
+    </ul>
+    
+    <h4 id="ユーザー空間スケジューラー" class="section"><a class="anchor-link left" href="#ユーザー空間スケジューラー"><i class="icofont-laika link">&#xef71;</i></a>ユーザー空間スケジューラー</h4>
+    <ol class="arabic">
+      <li><strong>Work-Stealingアルゴリズム</strong>: スループット重視の設計</li>
+      <li><strong>細粒度のプリエンプション</strong>: Kotlinコルーチンより柔軟なタスク切り替え</li>
+      <li><strong>スタック使用量</strong>: コルーチンインタープリターによる定常的なメモリ使用</li>
+    </ol>
+    
+    <h4 id="他のランタイムとの比較" class="section"><a class="anchor-link left" href="#他のランタイムとの比較"><i class="icofont-laika link">&#xef71;</i></a>他のランタイムとの比較</h4>
+    <ul>
+      <li><strong>Project Loom (Virtual Threads)</strong>: 現時点でCats Effectが性能面で優位</li>
+      <li><strong>スレッドレスサスペンション</strong>: リソースの安全な管理と非同期中断をサポート</li>
+    </ul>
+    
+    <h3 id="並行性モデルの違い" class="section"><a class="anchor-link left" href="#並行性モデルの違い"><i class="icofont-laika link">&#xef71;</i></a>並行性モデルの違い</h3>
+    
+    <h4 id="ldbc-cats-effect-3" class="section"><a class="anchor-link left" href="#ldbc-cats-effect-3"><i class="icofont-laika link">&#xef71;</i></a>ldbc（Cats Effect 3）</h4>
+    <p>ldbcはCats Effect 3のFiberベースの並行性モデルを採用しています：</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// 非ブロッキングI/O操作
+</span><span class="keyword">for</span><span> {
+  </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">connection</span><span>.</span><span class="identifier">prepareStatement</span><span>(</span><span class="identifier">sql</span><span>)
+  </span><span class="identifier">_</span><span>         &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">setInt</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="identifier">id</span><span>)
+  </span><span class="identifier">resultSet</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">executeQuery</span><span>()
+  </span><span class="identifier">result</span><span>    &lt;- </span><span class="identifier">resultSet</span><span>.</span><span class="identifier">decode</span><span>[</span><span class="type-name">User</span><span>]
+} </span><span class="keyword">yield</span><span> </span><span class="identifier">result</span></code></pre>
+    <p><strong>特徴</strong>:</p>
+    <ul>
+      <li><strong>Fiber（グリーンスレッド）</strong>: 軽量なユーザー空間スレッド</li>
+    </ul>
+    <ul>
+      <li>メモリ使用量: 約300-500バイト/Fiber</li>
+    </ul>
+    <ul>
+      <li>コンテキストスイッチ: ユーザー空間で完結（カーネル呼び出し不要）</li>
+    </ul>
+    <ul>
+      <li>
+        <p>CPUキャッシュ効率: スレッドアフィニティによる高いキャッシュヒット率</p>
+      </li>
+      <li>
+        <p><strong>Work-Stealingスレッドプール</strong>:</p>
+      </li>
+    </ul>
+    <ul>
+      <li>CPUコア毎の作業キュー（グローバル競合を回避）</li>
+    </ul>
+    <ul>
+      <li>動的負荷分散</li>
+    </ul>
+    <ul>
+      <li>自動yield挿入によるCPU飢餓防止</li>
+    </ul>
+    
+    <h4 id="jdbc-従来のスレッドモデル" class="section"><a class="anchor-link left" href="#jdbc-従来のスレッドモデル"><i class="icofont-laika link">&#xef71;</i></a>jdbc（従来のスレッドモデル）</h4>
+    <p>jdbcは従来のOSスレッドとブロッキングI/Oを使用：</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// ブロッキングI/O操作
+</span><span class="type-name">Sync</span><span>[</span><span class="type-name">F</span><span>].</span><span class="identifier">blocking</span><span> {
+  </span><span class="keyword">val</span><span> </span><span class="identifier">statement</span><span> = </span><span class="identifier">connection</span><span>.</span><span class="identifier">prepareStatement</span><span>(</span><span class="identifier">sql</span><span>)
+  </span><span class="identifier">statement</span><span>.</span><span class="identifier">setInt</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="identifier">id</span><span>)
+  </span><span class="keyword">val</span><span> </span><span class="identifier">resultSet</span><span> = </span><span class="identifier">statement</span><span>.</span><span class="identifier">executeQuery</span><span>()
+  </span><span class="comment">// スレッドがブロックされる
+</span><span>}</span></code></pre>
+    <p><strong>特徴</strong>:</p>
+    <ul>
+      <li><strong>OSスレッド</strong>: ネイティブスレッド</li>
+    </ul>
+    <ul>
+      <li>メモリ使用量: 約1MB/スレッド</li>
+    </ul>
+    <ul>
+      <li>コンテキストスイッチ: カーネル呼び出しが必要</li>
+    </ul>
+    <ul>
+      <li>固定サイズスレッドプール</li>
+    </ul>
+    
+    <h3 id="ネットワークi-o実装" class="section"><a class="anchor-link left" href="#ネットワークi-o実装"><i class="icofont-laika link">&#xef71;</i></a>ネットワークI/O実装</h3>
+    
+    <h4 id="ldbc-非ブロッキングソケット" class="section"><a class="anchor-link left" href="#ldbc-非ブロッキングソケット"><i class="icofont-laika link">&#xef71;</i></a>ldbc - 非ブロッキングソケット</h4>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// fs2 Socketを使用した非ブロッキング読み取り
+</span><span class="identifier">socket</span><span>.</span><span class="identifier">read</span><span>(</span><span class="number-literal">8192</span><span>).</span><span class="identifier">flatMap</span><span> { </span><span class="identifier">chunk</span><span> =&gt;
+  </span><span class="comment">// チャンク単位での効率的な処理
+</span><span>  </span><span class="identifier">processChunk</span><span>(</span><span class="identifier">chunk</span><span>)
+}</span></code></pre>
+    <ul>
+      <li><strong>ゼロコピー最適化</strong>: BitVectorによる効率的なバッファ管理</li>
+      <li><strong>ストリーミング</strong>: 大きな結果セットの効率的な処理</li>
+      <li><strong>タイムアウト制御</strong>: 細粒度のタイムアウト設定が可能</li>
+    </ul>
+    
+    <h4 id="jdbc-ブロッキングソケット" class="section"><a class="anchor-link left" href="#jdbc-ブロッキングソケット"><i class="icofont-laika link">&#xef71;</i></a>jdbc - ブロッキングソケット</h4>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// 従来のブロッキングI/O
+</span><span class="keyword">val</span><span> </span><span class="identifier">bytes</span><span> = </span><span class="identifier">inputStream</span><span>.</span><span class="identifier">read</span><span>(</span><span class="identifier">buffer</span><span>)
+</span><span class="comment">// スレッドがI/O完了までブロック</span></code></pre>
+    <ul>
+      <li><strong>バッファリング</strong>: 結果セット全体をメモリに読み込み</li>
+      <li><strong>スレッドブロッキング</strong>: I/O待機中はスレッドが使用不可</li>
+    </ul>
+    
+    <h3 id="メモリ効率とgc圧力" class="section"><a class="anchor-link left" href="#メモリ効率とgc圧力"><i class="icofont-laika link">&#xef71;</i></a>メモリ効率とGC圧力</h3>
+    
+    <h4 id="ldbcのメモリ管理" class="section"><a class="anchor-link left" href="#ldbcのメモリ管理"><i class="icofont-laika link">&#xef71;</i></a>ldbcのメモリ管理</h4>
+    <ol class="arabic">
+      <li><strong>プリアロケートバッファ</strong>: 結果行用の再利用可能なバッファ</li>
+      <li><strong>ストリーミング処理</strong>: 必要に応じたデータフェッチ</li>
+      <li><strong>不変データ構造</strong>: 構造共有による効率的なメモリ使用</li>
+    </ol>
+    
+    <h4 id="jdbcのメモリ管理" class="section"><a class="anchor-link left" href="#jdbcのメモリ管理"><i class="icofont-laika link">&#xef71;</i></a>jdbcのメモリ管理</h4>
+    <ol class="arabic">
+      <li><strong>一括読み込み</strong>: 結果セット全体をメモリに保持</li>
+      <li><strong>中間オブジェクト</strong>: ボクシング/アンボクシングによるオーバーヘッド</li>
+      <li><strong>GC圧力</strong>: 一時オブジェクトによる頻繁なGC</li>
+    </ol>
+    
+    <h2 id="使用シナリオ別推奨事項" class="section"><a class="anchor-link left" href="#使用シナリオ別推奨事項"><i class="icofont-laika link">&#xef71;</i></a>使用シナリオ別推奨事項</h2>
+    
+    <h3 id="ldbcを選択すべきケース" class="section"><a class="anchor-link left" href="#ldbcを選択すべきケース"><i class="icofont-laika link">&#xef71;</i></a>ldbcを選択すべきケース</h3>
+    <ol class="arabic">
+      <li>
+        <p><strong>高並行性アプリケーション</strong></p>
+        <ul>
+          <li>Webアプリケーション（高トラフィック）</li>
+          <li>マイクロサービス</li>
+          <li>リアルタイムデータ処理</li>
+        </ul>
+      </li>
+      <li>
+        <p><strong>リソース制約環境</strong></p>
+        <ul>
+          <li>コンテナ環境（Kubernetes等）</li>
+          <li>サーバーレス環境</li>
+          <li>メモリ制限のある環境</li>
+        </ul>
+      </li>
+      <li>
+        <p><strong>スケーラビリティ重視</strong></p>
+        <ul>
+          <li>将来的な負荷増加が予想される</li>
+          <li>弾力的なスケーリングが必要</li>
+          <li>クラウドネイティブアプリケーション</li>
+        </ul>
+      </li>
+      <li>
+        <p><strong>関数型プログラミング</strong></p>
+        <ul>
+          <li>純粋関数型アーキテクチャ</li>
+          <li>型安全性重視</li>
+          <li>コンポーザビリティ重視</li>
+        </ul>
+      </li>
+    </ol>
+    
+    <h3 id="jdbcを選択すべきケース" class="section"><a class="anchor-link left" href="#jdbcを選択すべきケース"><i class="icofont-laika link">&#xef71;</i></a>jdbcを選択すべきケース</h3>
+    <ol class="arabic">
+      <li>
+        <p><strong>レガシーシステム統合</strong></p>
+        <ul>
+          <li>既存のjdbcコードベース</li>
+          <li>サードパーティライブラリ依存</li>
+          <li>移行コストが高い場合</li>
+        </ul>
+      </li>
+      <li>
+        <p><strong>シンプルなCRUD操作</strong></p>
+        <ul>
+          <li>低並行性</li>
+          <li>バッチ処理</li>
+          <li>管理ツール</li>
+        </ul>
+      </li>
+      <li>
+        <p><strong>特殊なjdbc機能</strong></p>
+        <ul>
+          <li>ベンダー固有の拡張機能</li>
+          <li>特殊なドライバー要件</li>
+        </ul>
+      </li>
+    </ol>
+    
+    <h2 id="パフォーマンスチューニング" class="section"><a class="anchor-link left" href="#パフォーマンスチューニング"><i class="icofont-laika link">&#xef71;</i></a>パフォーマンスチューニング</h2>
+    
+    <h3 id="cats-effectのベストプラクティス" class="section"><a class="anchor-link left" href="#cats-effectのベストプラクティス"><i class="icofont-laika link">&#xef71;</i></a>Cats Effectのベストプラクティス</h3>
+    
+    <h4 id="_1-適切なワークロードの理解" class="section"><a class="anchor-link left" href="#_1-適切なワークロードの理解"><i class="icofont-laika link">&#xef71;</i></a>1. 適切なワークロードの理解</h4>
+    <ul>
+      <li><strong>I/O集約的なタスク</strong>: Cats Effectは非ブロッキングI/Oで最高のパフォーマンスを発揮</li>
+      <li><strong>CPU集約的なタスク</strong>: 専用のスレッドプールへの委譲を検討</li>
+      <li><strong>測定の重要性</strong>: アプリケーション固有のコンテキストでパフォーマンスを測定</li>
+    </ul>
+    
+    <h4 id="_2-io操作の最適化" class="section"><a class="anchor-link left" href="#_2-io操作の最適化"><i class="icofont-laika link">&#xef71;</i></a>2. IO操作の最適化</h4>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// 細粒度のIO合成を活用
+</span><span class="keyword">val</span><span> </span><span class="identifier">optimized</span><span> = </span><span class="keyword">for</span><span> {
+  </span><span class="identifier">data</span><span> &lt;- </span><span class="identifier">fetchData</span><span>()           </span><span class="comment">// 非ブロッキングI/O
+</span><span>  </span><span class="identifier">_</span><span>    &lt;- </span><span class="type-name">IO</span><span>.</span><span class="identifier">cede</span><span>              </span><span class="comment">// 明示的な協調的yield
+</span><span>  </span><span class="identifier">processed</span><span> &lt;- </span><span class="identifier">processData</span><span>(</span><span class="identifier">data</span><span>) </span><span class="comment">// CPU集約的な処理
+</span><span>  </span><span class="identifier">_</span><span>    &lt;- </span><span class="identifier">saveResult</span><span>(</span><span class="identifier">processed</span><span>) </span><span class="comment">// 非ブロッキングI/O
+</span><span>} </span><span class="keyword">yield</span><span> </span><span class="identifier">processed</span><span>
+
+</span><span class="comment">// CPU集約的なタスクは専用プールで実行
+</span><span class="keyword">val</span><span> </span><span class="identifier">cpuBound</span><span> = </span><span class="type-name">IO</span><span>.</span><span class="identifier">blocking</span><span> {
+  </span><span class="comment">// 重い計算処理
+</span><span>}.</span><span class="identifier">evalOn</span><span>(</span><span class="identifier">cpuBoundExecutor</span><span>)</span></code></pre>
+    
+    <h4 id="_3-リソース管理" class="section"><a class="anchor-link left" href="#_3-リソース管理"><i class="icofont-laika link">&#xef71;</i></a>3. リソース管理</h4>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Resourceを使用した安全なリソース管理
+</span><span class="keyword">val</span><span> </span><span class="identifier">dataSource</span><span> = </span><span class="type-name">Resource</span><span>.</span><span class="identifier">make</span><span>(
+  </span><span class="identifier">createDataSource</span><span>()  </span><span class="comment">// 取得
+</span><span>)(</span><span class="identifier">_</span><span>.</span><span class="identifier">close</span><span>())         </span><span class="comment">// 解放
+</span><span>
+</span><span class="comment">// 自動的なリソース解放を保証
+</span><span class="identifier">dataSource</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">ds</span><span> =&gt;
+  </span><span class="comment">// データソースを使用した処理
+</span><span>}</span></code></pre>
+    
+    <h3 id="ldbc最適化設定" class="section"><a class="anchor-link left" href="#ldbc最適化設定"><i class="icofont-laika link">&#xef71;</i></a>ldbc最適化設定</h3>
+    <pre><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">datasource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;user&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;db&quot;</span><span>)
+  </span><span class="comment">// パフォーマンス設定
+</span><span>  .</span><span class="identifier">setUseServerPrepStmts</span><span>(</span><span class="boolean-literal">true</span><span>)      </span><span class="comment">// サーバーサイドプリペアドステートメント
+</span><span>  .</span><span class="identifier">setUseCursorFetch</span><span>(</span><span class="boolean-literal">true</span><span>)           </span><span class="comment">// カーソルベースフェッチング
+</span><span>  .</span><span class="identifier">setFetchSize</span><span>(</span><span class="number-literal">1000</span><span>)                </span><span class="comment">// フェッチサイズ
+</span><span>  .</span><span class="identifier">setSocketOptions</span><span>(</span><span class="type-name">List</span><span>(
+    </span><span class="type-name">SocketOption</span><span>.</span><span class="identifier">noDelay</span><span>(</span><span class="boolean-literal">true</span><span>),      </span><span class="comment">// TCP_NODELAY
+</span><span>    </span><span class="type-name">SocketOption</span><span>.</span><span class="identifier">keepAlive</span><span>(</span><span class="boolean-literal">true</span><span>)     </span><span class="comment">// キープアライブ
+</span><span>  ))
+  .</span><span class="identifier">setReadTimeout</span><span>(</span><span class="number-literal">30</span><span>.</span><span class="identifier">seconds</span><span>)        </span><span class="comment">// 読み取りタイムアウト</span></code></pre>
+    
+    <h3 id="スレッドプール設定" class="section"><a class="anchor-link left" href="#スレッドプール設定"><i class="icofont-laika link">&#xef71;</i></a>スレッドプール設定</h3>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Cats Effect 3のランタイム設定
+</span><span class="keyword">object</span><span> </span><span class="type-name">Main</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">IOApp</span><span> {
+  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">computeWorkerThreadCount</span><span>: </span><span class="type-name">Int</span><span> = 
+    </span><span class="identifier">math</span><span>.</span><span class="identifier">max</span><span>(</span><span class="number-literal">4</span><span>, </span><span class="type-name">Runtime</span><span>.</span><span class="identifier">getRuntime</span><span>.</span><span class="identifier">availableProcessors</span><span>())
+    
+  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">run</span><span>(</span><span class="identifier">args</span><span>: </span><span class="type-name">List</span><span>[</span><span class="type-name">String</span><span>]): </span><span class="type-name">IO</span><span>[</span><span class="type-name">ExitCode</span><span>] = {
+    </span><span class="comment">// アプリケーションロジック
+</span><span>  }
+}</span></code></pre>
+    
+    <h2 id="まとめ" class="section"><a class="anchor-link left" href="#まとめ"><i class="icofont-laika link">&#xef71;</i></a>まとめ</h2>
+    <p>ldbcは、特に以下の条件を満たす場合に優れた選択肢となります：</p>
+    <ol class="arabic">
+      <li><strong>高並行性</strong>: 多数の同時接続を処理する必要がある</li>
+      <li><strong>スケーラビリティ</strong>: 負荷に応じた柔軟なスケーリングが必要</li>
+      <li><strong>リソース効率</strong>: メモリ使用量を最小限に抑えたい</li>
+      <li><strong>型安全性</strong>: コンパイル時の型チェックを重視</li>
+      <li><strong>関数型プログラミング</strong>: 純粋関数型のアーキテクチャを採用</li>
+    </ol>
+    <p>ベンチマーク結果が示すように、ldbcは8スレッド以上の環境でjdbcの約2倍のスループットを実現し、さらに高いスレッド数でも性能劣化が少ない優れたスケーラビリティを持っています。</p>
+    
+    <h3 id="cats-effectの最適化による恩恵" class="section"><a class="anchor-link left" href="#cats-effectの最適化による恩恵"><i class="icofont-laika link">&#xef71;</i></a>Cats Effectの最適化による恩恵</h3>
+    <p>ldbcが活用するCats Effect 3は、以下の点で最適化されています：</p>
+    <ul>
+      <li><strong>長時間稼働アプリケーション</strong>: 数時間以上の連続稼働で真価を発揮</li>
+      <li><strong>ネットワークI/O中心</strong>: データベースアクセスのような非ブロッキングI/Oに最適</li>
+      <li><strong>マルチコア活用</strong>: 8スレッド以上の環境で最高のパフォーマンス</li>
+    </ul>
+    <p>これらの特性は、まさにデータベースアクセスライブラリであるldbcのユースケースと完璧に合致しており、現代的なクラウドネイティブアプリケーションや高トラフィックWebサービスにおいて、ldbcは強力な選択肢となるでしょう。</p>
+    <p><strong>重要な指針</strong>: 「パフォーマンスは常にターゲットとなるユースケースと前提条件に相対的である」- 実際のアプリケーションコンテキストでの測定を推奨します。</p>
 
     
 <hr class="footer-rule"/>

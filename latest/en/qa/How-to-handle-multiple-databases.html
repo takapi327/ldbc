@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <a class="text-link menu-toggle" href="#">Version 0.4</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="../reference/">Introduction</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Connector.html">Connector</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Performance.html">Performance</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Pooling.html">Connection pooling</a></li>
   </ul>
   
 
@@ -179,15 +180,19 @@
     
     <h2 id="a-when-dealing-with-multiple-databases-create-separate-connectionproviders-for-each-database" class="section"><a class="anchor-link left" href="#a-when-dealing-with-multiple-databases-create-separate-connectionproviders-for-each-database"><i class="icofont-laika link">&#xef71;</i></a>A: When dealing with multiple databases, create separate ConnectionProviders for each database.</h2>
     <p>When handling multiple databases, create separate <code>ConnectionProvider</code> instances for each database. For example, you can create different providers for different databases as shown below, and switch between providers as needed.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">provider1</span><span> = </span><span class="type-name">ConnectionProvider</span><span>
-  .</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;host&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;user&quot;</span><span>, </span><span class="string-literal">&quot;password&quot;</span><span>, </span><span class="string-literal">&quot;database1&quot;</span><span>)
+    <pre><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">datasource1</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;host&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;user&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;database1&quot;</span><span>)
 
-</span><span class="keyword">val</span><span> </span><span class="identifier">provider2</span><span> = </span><span class="type-name">ConnectionProvider</span><span>
-  .</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;host&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;user&quot;</span><span>, </span><span class="string-literal">&quot;password&quot;</span><span>, </span><span class="string-literal">&quot;database2&quot;</span><span>)
+</span><span class="keyword">val</span><span> </span><span class="identifier">datasource2</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;host&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;user&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;database2&quot;</span><span>)
 
-</span><span class="comment">// Switch between providers as needed
-</span><span class="keyword">val</span><span> </span><span class="identifier">program1</span><span> = </span><span class="identifier">provider1</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt; </span><span class="comment">/* operations on database1 */</span><span> }
-</span><span class="keyword">val</span><span> </span><span class="identifier">program2</span><span> = </span><span class="identifier">provider2</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt; </span><span class="comment">/* operations on database2 */</span><span> }</span></code></pre>
+</span><span class="comment">// Switch between datasources as needed
+</span><span class="keyword">val</span><span> </span><span class="identifier">program1</span><span> = </span><span class="identifier">datasource1</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt; </span><span class="comment">/* operations on database1 */</span><span> }
+</span><span class="keyword">val</span><span> </span><span class="identifier">program2</span><span> = </span><span class="identifier">datasource2</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt; </span><span class="comment">/* operations on database2 */</span><span> }</span></code></pre>
 
     
 <hr class="footer-rule"/>

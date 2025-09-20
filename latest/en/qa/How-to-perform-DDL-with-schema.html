@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <a class="text-link menu-toggle" href="#">Version 0.4</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="../reference/">Introduction</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Connector.html">Connector</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Performance.html">Performance</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Pooling.html">Connection pooling</a></li>
   </ul>
   
 
@@ -198,16 +199,12 @@
 </span><span class="identifier">truncateDDL</span><span>.</span><span class="identifier">foreach</span><span>(</span><span class="identifier">println</span><span>)  </span><span class="comment">// TRUNCATE TABLE statement will be output
 </span><span>
 </span><span class="comment">// Example of executing DDL operations
-</span><span class="identifier">provider</span><span>
-  .</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
-    </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">sequence</span><span>(
-        </span><span class="identifier">userSchema</span><span>.</span><span class="identifier">createIfNotExists</span><span>,
-        </span><span class="identifier">userSchema</span><span>.</span><span class="identifier">truncate</span><span>,
-        </span><span class="identifier">userSchema</span><span>.</span><span class="identifier">dropIfExists</span><span>
-      )
-      .</span><span class="identifier">commit</span><span>(</span><span class="identifier">conn</span><span>)
-  }
-</span><span class="comment">// ...existing code...</span></code></pre>
+</span><span class="type-name">DBIO</span><span>.</span><span class="identifier">sequence</span><span>(
+    </span><span class="identifier">userSchema</span><span>.</span><span class="identifier">createIfNotExists</span><span>,
+    </span><span class="identifier">userSchema</span><span>.</span><span class="identifier">truncate</span><span>,
+    </span><span class="identifier">userSchema</span><span>.</span><span class="identifier">dropIfExists</span><span>
+  )
+  .</span><span class="identifier">commit</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
     <p>The code above implements operations that create tables while checking for their existence, reset table data as needed, and then delete the tables themselves.</p>
     
     <h2 id="references" class="section"><a class="anchor-link left" href="#references"><i class="icofont-laika link">&#xef71;</i></a>References</h2>

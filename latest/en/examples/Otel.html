@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <a class="text-link menu-toggle" href="#">Version 0.4</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="../reference/">Introduction</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Connector.html">Connector</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Performance.html">Performance</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Pooling.html">Connection pooling</a></li>
   </ul>
   
 
@@ -176,7 +177,6 @@
     <li class="level2 nav-leaf"><a href="#docker-compose-yaml">docker-compose.yaml</a></li>
     <li class="level2 nav-leaf"><a href="#execution-steps">Execution Steps</a></li>
     <li class="level1 nav-leaf"><a href="#trace-details">Trace Details</a></li>
-    <li class="level1 nav-leaf"><a href="#adding-custom-spans">Adding Custom Spans</a></li>
     <li class="level1 nav-leaf"><a href="#trace-customization-options">Trace Customization Options</a></li>
     <li class="level1 nav-leaf"><a href="#summary">Summary</a></li>
   </ul>
@@ -232,7 +232,7 @@
 </span><span class="keyword">val</span><span> </span><span class="identifier">serviceName</span><span> = </span><span class="string-literal">&quot;my-ldbc-app&quot;</span><span>
 
 </span><span class="comment">// Resource configuration
-</span><span class="keyword">val</span><span> </span><span class="identifier">resource</span><span>: </span><span class="type-name">Resource</span><span>[</span><span class="type-name">IO</span><span>, </span><span class="type-name">Connection</span><span>[</span><span class="type-name">IO</span><span>]] =
+</span><span class="keyword">val</span><span> </span><span class="identifier">resource</span><span>: </span><span class="type-name">Resource</span><span>[</span><span class="type-name">IO</span><span>, </span><span class="type-name">Connector</span><span>[</span><span class="type-name">IO</span><span>]] =
   </span><span class="keyword">for</span><span>
     </span><span class="comment">// Create otel4s instance from GlobalOpenTelemetry
 </span><span>    </span><span class="identifier">otel</span><span> &lt;- </span><span class="type-name">Resource</span><span>
@@ -243,16 +243,17 @@
 </span><span>    </span><span class="identifier">tracer</span><span> &lt;- </span><span class="type-name">Resource</span><span>.</span><span class="identifier">eval</span><span>(</span><span class="identifier">otel</span><span>.</span><span class="identifier">tracerProvider</span><span>.</span><span class="identifier">get</span><span>(</span><span class="identifier">serviceName</span><span>))
     
     </span><span class="comment">// Configure database connection and set TracerProvider
-</span><span>    </span><span class="identifier">connection</span><span> &lt;- </span><span class="type-name">ConnectionProvider</span><span>
-      .</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;user&quot;</span><span>, </span><span class="string-literal">&quot;password&quot;</span><span>, </span><span class="string-literal">&quot;database&quot;</span><span>)
+</span><span>    </span><span class="identifier">datasource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+      .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;user&quot;</span><span>)
+      .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+      .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;database&quot;</span><span>)
       .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)
       .</span><span class="identifier">setTracer</span><span>(</span><span class="identifier">tracer</span><span>)  </span><span class="comment">// Set OpenTelemetry Tracer
-</span><span>      .</span><span class="identifier">createConnection</span><span>()
-  </span><span class="keyword">yield</span><span> </span><span class="identifier">connection</span><span>
+</span><span>  </span><span class="keyword">yield</span><span> </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
 
 </span><span class="comment">// Execute query using the resource
-</span><span class="keyword">val</span><span> </span><span class="identifier">program</span><span> = </span><span class="identifier">resource</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
-  </span><span class="string-literal">sql&quot;SELECT * FROM users&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)
+</span><span class="keyword">val</span><span> </span><span class="identifier">program</span><span> = </span><span class="identifier">resource</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">connector</span><span> =&gt;
+  </span><span class="string-literal">sql&quot;SELECT * FROM users&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
 }</span></code></pre>
     
     <h2 id="configuration-via-environment-variables" class="section"><a class="anchor-link left" href="#configuration-via-environment-variables"><i class="icofont-laika link">&#xef71;</i></a>Configuration via Environment Variables</h2>
@@ -304,22 +305,24 @@
 
   </span><span class="keyword">private</span><span> </span><span class="keyword">val</span><span> </span><span class="identifier">serviceName</span><span> = </span><span class="string-literal">&quot;ldbc-otel-example&quot;</span><span>
 
-  </span><span class="keyword">private</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">resource</span><span>: </span><span class="type-name">Resource</span><span>[</span><span class="type-name">IO</span><span>, </span><span class="type-name">Connection</span><span>[</span><span class="type-name">IO</span><span>]] =
+  </span><span class="keyword">private</span><span> </span><span class="keyword">val</span><span> </span><span class="identifier">base</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+    .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;127.0.0.1&quot;</span><span>, </span><span class="number-literal">13307</span><span>, </span><span class="string-literal">&quot;ldbc&quot;</span><span>)
+    .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+    .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;world&quot;</span><span>)
+    .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)
+
+  </span><span class="keyword">private</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">setupTracing</span><span>: </span><span class="type-name">Resource</span><span>[</span><span class="type-name">IO</span><span>, </span><span class="type-name">Connector</span><span>[</span><span class="type-name">IO</span><span>]] =
     </span><span class="keyword">for</span><span>
       </span><span class="identifier">otel</span><span> &lt;- </span><span class="type-name">Resource</span><span>
         .</span><span class="identifier">eval</span><span>(</span><span class="type-name">IO</span><span>.</span><span class="identifier">delay</span><span>(</span><span class="type-name">GlobalOpenTelemetry</span><span>.</span><span class="identifier">get</span><span>))
         .</span><span class="identifier">evalMap</span><span>(</span><span class="type-name">OtelJava</span><span>.</span><span class="identifier">forAsync</span><span>[</span><span class="type-name">IO</span><span>])
       </span><span class="identifier">tracer</span><span> &lt;- </span><span class="type-name">Resource</span><span>.</span><span class="identifier">eval</span><span>(</span><span class="identifier">otel</span><span>.</span><span class="identifier">tracerProvider</span><span>.</span><span class="identifier">get</span><span>(</span><span class="identifier">serviceName</span><span>))
-      </span><span class="identifier">connection</span><span> &lt;- </span><span class="type-name">ConnectionProvider</span><span>
-        .</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;127.0.0.1&quot;</span><span>, </span><span class="number-literal">13307</span><span>, </span><span class="string-literal">&quot;ldbc&quot;</span><span>, </span><span class="string-literal">&quot;password&quot;</span><span>, </span><span class="string-literal">&quot;world&quot;</span><span>)
-        .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)
-        .</span><span class="identifier">setTracer</span><span>(</span><span class="identifier">tracer</span><span>)
-        .</span><span class="identifier">createConnection</span><span>()
-    </span><span class="keyword">yield</span><span> </span><span class="identifier">connection</span><span>
+      </span><span class="identifier">datasource</span><span> &lt;- </span><span class="type-name">Resource</span><span>.</span><span class="identifier">eval</span><span>(</span><span class="type-name">IO</span><span>.</span><span class="identifier">delay</span><span>(</span><span class="identifier">base</span><span>.</span><span class="identifier">setTracer</span><span>(</span><span class="identifier">tracer</span><span>)))
+    </span><span class="keyword">yield</span><span> </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
 
   </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">run</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">Unit</span><span>] =
-    </span><span class="identifier">resource</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
-      </span><span class="string-literal">sql&quot;SELECT name FROM city&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>).</span><span class="identifier">flatMap</span><span> { </span><span class="identifier">cities</span><span> =&gt;
+    </span><span class="identifier">setupTracing</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">connector</span><span> =&gt;
+      </span><span class="string-literal">sql&quot;SELECT name FROM city&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>).</span><span class="identifier">flatMap</span><span> { </span><span class="identifier">cities</span><span> =&gt;
         </span><span class="type-name">IO</span><span>.</span><span class="identifier">println</span><span>(</span><span class="identifier">cities</span><span>)
       }
     }</span></code></pre>
@@ -419,22 +422,6 @@ docker-compose up -d</span></code></pre>
       <li><strong>Connection information</strong>: Server and database name connection details</li>
       <li><strong>Error information</strong>: Detailed information when errors occur</li>
     </ul>
-    
-    <h2 id="adding-custom-spans" class="section"><a class="anchor-link left" href="#adding-custom-spans"><i class="icofont-laika link">&#xef71;</i></a>Adding Custom Spans</h2>
-    <p>For more detailed tracking, you can add custom spans. Here&#39;s an example of wrapping query execution with a custom span:</p>
-    <pre><code class="nohighlight"><span class="identifier">resource</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
-  </span><span class="identifier">tracer</span><span>.</span><span class="identifier">span</span><span>(</span><span class="string-literal">&quot;custom-database-operation&quot;</span><span>).</span><span class="identifier">use</span><span> { </span><span class="identifier">span</span><span> =&gt;
-    </span><span class="comment">// Add attributes to span
-</span><span>    </span><span class="identifier">span</span><span>.</span><span class="identifier">setAttribute</span><span>(</span><span class="string-literal">&quot;db.operation&quot;</span><span>, </span><span class="string-literal">&quot;select-cities&quot;</span><span>)
-    
-    </span><span class="comment">// Execute query
-</span><span>    </span><span class="string-literal">sql&quot;SELECT name FROM city&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>).</span><span class="identifier">flatMap</span><span> { </span><span class="identifier">cities</span><span> =&gt;
-      </span><span class="comment">// Add attributes about result data
-</span><span>      </span><span class="identifier">span</span><span>.</span><span class="identifier">setAttribute</span><span>(</span><span class="string-literal">&quot;result.count&quot;</span><span>, </span><span class="identifier">cities</span><span>.</span><span class="identifier">size</span><span>)
-      </span><span class="type-name">IO</span><span>.</span><span class="identifier">println</span><span>(</span><span class="identifier">cities</span><span>)
-    }
-  }
-}</span></code></pre>
     
     <h2 id="trace-customization-options" class="section"><a class="anchor-link left" href="#trace-customization-options"><i class="icofont-laika link">&#xef71;</i></a>Trace Customization Options</h2>
     <p>ldbc&#39;s OpenTelemetry integration allows for additional customization such as:</p>

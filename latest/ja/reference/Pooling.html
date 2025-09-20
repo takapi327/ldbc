@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="Typelevel Laika + Helium Theme" />
+  <title>コネクションプーリング</title>
+  
+  <meta name="author" content="ldbc contributors"/>
+  
+  <meta name="author" content="Takahiko Tominaga"/>
+  
+  
+  <meta name="description" content="Documentation for ldbc"/>
+  
+  
+  
+  <link rel="icon" sizes="32x32" type="image/png" href="https://typelevel.org/img/favicon.png"/>
+  
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700">
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Mono:500">
+  
+  <link rel="stylesheet" type="text/css" href="../../helium/site/icofont.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../helium/site/laika-helium.css" />
+    <link rel="stylesheet" type="text/css" href="../../css/site.css" />
+  <script src="../../helium/site/laika-helium.js"></script>
+    <script src="../../helium/site/laika-versions.js"></script>
+  <script>initVersions("../../../", "/ja/reference/Pooling.html", "latest", null);</script>
+  
+  <script> /* for avoiding page load transitions */ </script>
+</head>
+
+<body>
+
+<header id="top-bar" class="light-default dark-default">
+
+  <div class="row">
+    <a id="nav-icon">
+      <i class="icofont-laika navigationMenu" title="Navigation">&#xefa2;</i>
+    </a>
+    
+    <div class="menu-container version-menu">
+      <a class="text-link menu-toggle" href="#">Version 0.4</a>
+      <nav class="menu-content">
+        <ul class="nav-list">
+          <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <a class="image-link" href="https://typelevel.org"><img src="https://typelevel.org/img/logo.svg"></a>
+
+  <div class="row links">
+    
+    <a class="icon-link svg-link" href="https://github.com/takapi327/ldbc"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>  
+
+</header>
+
+<nav id="sidebar">
+
+  <div class="row">
+    
+    <a class="icon-link svg-link" href="https://github.com/takapi327/ldbc"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>
+
+  
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="../">ldbc</a></li>
+    <li class="level1 nav-leaf"><a href="../migration-notes.html">マイグレーションノート</a></li>
+    <li class="level1 nav-header">チュートリアル</li>
+    <li class="level2 nav-leaf"><a href="../tutorial/">はじめに</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Setup.html">セットアップ</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Connection.html">コネクション</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Simple-Program.html">シンプルプログラム</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Database-Operations.html">データベース操作</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Parameterized-Queries.html">パラメータ</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Selecting-Data.html">データ選択</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Updating-Data.html">データ更新</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Error-Handling.html">エラーハンドリング</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Logging.html">ロギング</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Custom-Data-Type.html">カスタム データ型</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Query-Builder.html">クエリビルダー</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Schema.html">スキーマ</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Schema-Code-Generation.html">スキーマコード生成</a></li>
+    <li class="level1 nav-header">Examples</li>
+    <li class="level2 nav-leaf"><a href="../examples/">はじめに</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/Http4s.html">Http4s</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/HikariCP.html">HikariCP</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/Otel.html">OpenTelemetry</a></li>
+    <li class="level1 nav-header">QA</li>
+    <li class="level2 nav-leaf"><a href="../qa/">はじめに</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/What-is-ldbc.html">Q: ldbcとは何ですか？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Which-dependencies-should-I-set.html">Q: どの依存関係を設定すればよいですか？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/What-is-the-difference-between-a-Java-connect-and-a-Scala-connector.html">Q: JavaのコネクトとScalaのコネクタの違いは何ですか？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-define-complex-queries-with-plain-queries.html">Q: プレーンクエリで複雑なクエリを定義する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-my-own-type.html">Q: 独自の型を使うにはどうすればいいですか？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-nested-models.html">Q: ネストしたモデルを使うにはどうすればいいですか？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-perform-DDL-with-schema.html">Q: スキーマを使用したDDLを実行する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-change-column-names-in-Query-Builder.html">Q: クエリビルダーでカラム名を変更する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-change-the-format-of-column-names-using-the-schema.html">Q: スキーマを使用したカラム名のフォーマットを変更する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-add-processing-before-and-after-the-connection-is-established.html">Q: コネクション確立の前後に処理を追加する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Implicit-search-problem-too-large.html">Q: `Implicit search problem too large.`が発生する場合の対処方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-use-scala-connector-connection-pool.html">Q: Scalaコネクタでコネクションプールを使用する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Is-there-a-way-to-stream-query-results-asynchronously.html">Q: クエリの結果を非同期でストリーミングする方法はありますか？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Is-there-a-function-to-limit-the-number-of-concurrent-queries.html">Q: 同時実行のクエリ数を制限する機能はありますか？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-handle-multiple-databases.html">Q: 複数のデータベース（マルチテナント環境）を扱う方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-use-with-ZIO.html">Q: ZIOで使用する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-the-Enum-type.html">Q: Enum型の使い方は？</a></li>
+    <li class="level1 nav-header">Reference</li>
+    <li class="level2 nav-leaf"><a href="index.html">はじめに</a></li>
+    <li class="level2 nav-leaf"><a href="Connector.html">コネクタ</a></li>
+    <li class="level2 nav-leaf"><a href="Performance.html">パフォーマンス</a></li>
+    <li class="level2 active nav-leaf"><a href="#">コネクションプーリング</a></li>
+  </ul>
+  
+
+</nav>
+
+<div id="container">
+
+  
+<nav id="page-nav">
+  <p class="header"><a href="#">コネクションプーリング</a></p>
+
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="#概要">概要</a></li>
+    <li class="level1 nav-node"><a href="#アーキテクチャ概要">アーキテクチャ概要</a></li>
+    <li class="level2 nav-leaf"><a href="#_1-pooleddatasource">1. PooledDataSource</a></li>
+    <li class="level2 nav-leaf"><a href="#_2-concurrentbag">2. ConcurrentBag</a></li>
+    <li class="level2 nav-leaf"><a href="#_3-circuitbreaker">3. CircuitBreaker</a></li>
+    <li class="level1 nav-node"><a href="#circuitbreakerの詳細">CircuitBreakerの詳細</a></li>
+    <li class="level2 nav-leaf"><a href="#状態遷移図">状態遷移図</a></li>
+    <li class="level2 nav-leaf"><a href="#circuitbreakerの目的">CircuitBreakerの目的</a></li>
+    <li class="level2 nav-leaf"><a href="#実装の詳細">実装の詳細</a></li>
+    <li class="level2 nav-leaf"><a href="#動作フロー">動作フロー</a></li>
+    <li class="level1 nav-node"><a href="#jvmスレッド-vs-cats-effectファイバー">JVMスレッド vs Cats Effectファイバー</a></li>
+    <li class="level2 nav-leaf"><a href="#並行性モデルの違いと特性">並行性モデルの違いと特性</a></li>
+    <li class="level2 nav-leaf"><a href="#プーリング設計への影響">プーリング設計への影響</a></li>
+    <li class="level1 nav-node"><a href="#hikaricpとの比較">HikariCPとの比較</a></li>
+    <li class="level2 nav-leaf"><a href="#共通点">共通点</a></li>
+    <li class="level2 nav-leaf"><a href="#相違点">相違点</a></li>
+    <li class="level2 nav-leaf"><a href="#使用シナリオと適用判断">使用シナリオと適用判断</a></li>
+    <li class="level1 nav-node"><a href="#バックグラウンドタスク">バックグラウンドタスク</a></li>
+    <li class="level2 nav-leaf"><a href="#housekeeper">HouseKeeper</a></li>
+    <li class="level2 nav-leaf"><a href="#adaptivepoolsizer">AdaptivePoolSizer</a></li>
+    <li class="level2 nav-leaf"><a href="#keepaliveexecutor">KeepaliveExecutor</a></li>
+    <li class="level1 nav-node"><a href="#設定例">設定例</a></li>
+    <li class="level2 nav-leaf"><a href="#基本的な使用方法">基本的な使用方法</a></li>
+    <li class="level2 nav-leaf"><a href="#メトリクス追跡付きプール">メトリクス追跡付きプール</a></li>
+    <li class="level2 nav-leaf"><a href="#ライフサイクルフック付きプール">ライフサイクルフック付きプール</a></li>
+    <li class="level2 nav-leaf"><a href="#circuitbreakerの設定">CircuitBreakerの設定</a></li>
+    <li class="level1 nav-node"><a href="#ベンチマーク結果">ベンチマーク結果</a></li>
+    <li class="level2 nav-leaf"><a href="#測定環境">測定環境</a></li>
+    <li class="level2 nav-leaf"><a href="#結果グラフ">結果グラフ</a></li>
+    <li class="level2 nav-leaf"><a href="#ベンチマーク結果の分析">ベンチマーク結果の分析</a></li>
+    <li class="level2 nav-leaf"><a href="#パフォーマンス特性の考察">パフォーマンス特性の考察</a></li>
+    <li class="level2 nav-leaf"><a href="#使用シーンごとの推奨">使用シーンごとの推奨</a></li>
+    <li class="level1 nav-leaf"><a href="#まとめ">まとめ</a></li>
+  </ul>
+
+  <p class="footer"></p>
+</nav>
+
+
+  <main class="content">
+
+    <h1 id="コネクションプーリング" class="title">コネクションプーリング</h1>
+    
+    <h2 id="概要" class="section"><a class="anchor-link left" href="#概要"><i class="icofont-laika link">&#xef71;</i></a>概要</h2>
+    <p>ldbc-connectorは、高性能で安全なデータベースコネクションプーリングを提供する、Cats Effect向けに設計されたライブラリです。JVMの伝統的なスレッドベースのプーリング（HikariCPなど）とは異なり、Cats Effectのファイバーベースの並行性モデルを最大限に活用した設計となっています。</p>
+    <div class="callout warning">
+      <i class="icofont-laika warning">&#xf026;</i>
+      <p><strong>Scala Native 0.4.x での制限事項</strong></p>
+      <p>現在のScala Native 0.4.xはシングルスレッド実行のみをサポートしています。ldbc-connectorのコネクションプーリング機能はマルチスレッド前提で設計されているため、Scala Native 0.4.xで使用する場合、以下のような問題が発生する可能性があります：</p>
+      <ul>
+        <li>並行接続の管理が正しく動作しない</li>
+        <li>バックグラウンドタスク（HouseKeeper、AdaptivePoolSizer等）が期待通りに実行されない</li>
+        <li>同時接続数が実質的に1に制限される</li>
+        <li>デッドロックや予期しない動作が発生する可能性がある</li>
+      </ul>
+      <p>Scala Native 0.5.xではマルチスレッドがサポートされる予定ですが、それまではScala Nativeでコネクションプーリングを使用することは推奨されません。代わりに、接続ごとに新しいコネクションを作成して使用することをお勧めします。</p>
+    </div>
+    
+    <h2 id="アーキテクチャ概要" class="section"><a class="anchor-link left" href="#アーキテクチャ概要"><i class="icofont-laika link">&#xef71;</i></a>アーキテクチャ概要</h2>
+    <p><img src="../../img/pooling/ConnectionPoolWithCircuitBreaker.svg" alt="Connection Pool Architecture"></p>
+    <p>ldbc-connectorのプーリングシステムは、以下の主要コンポーネントで構成されています：</p>
+    
+    <h3 id="_1-pooleddatasource" class="section"><a class="anchor-link left" href="#_1-pooleddatasource"><i class="icofont-laika link">&#xef71;</i></a>1. PooledDataSource</h3>
+    <p>プールの中核となるコンポーネントで、コネクションのライフサイクル全体を管理します。</p>
+    <p>主な責任：</p>
+    <ul>
+      <li>コネクションの取得と返却の調整</li>
+      <li>プールサイズの管理</li>
+      <li>メトリクスの収集</li>
+      <li>バックグラウンドタスクの調整</li>
+    </ul>
+    
+    <h3 id="_2-concurrentbag" class="section"><a class="anchor-link left" href="#_2-concurrentbag"><i class="icofont-laika link">&#xef71;</i></a>2. ConcurrentBag</h3>
+    <p>HikariCPのConcurrentBagからインスピレーションを受けた、高性能な並行データ構造です。ただし、JVMのスレッドではなくCats Effectのファイバー向けに最適化されています。</p>
+    <p>特徴：</p>
+    <ul>
+      <li>ロックフリーな操作</li>
+      <li>ファイバー間での直接ハンドオフ</li>
+      <li>待機キューの効率的な管理</li>
+      <li><code>Ref[F]</code>を使用した原子的な状態管理</li>
+    </ul>
+    
+    <h3 id="_3-circuitbreaker" class="section"><a class="anchor-link left" href="#_3-circuitbreaker"><i class="icofont-laika link">&#xef71;</i></a>3. CircuitBreaker</h3>
+    <p>データベースがダウンしている場合の「雷鳴の群れ（Thundering Herd）」問題を防ぐための重要なコンポーネントです。</p>
+    
+    <h2 id="circuitbreakerの詳細" class="section"><a class="anchor-link left" href="#circuitbreakerの詳細"><i class="icofont-laika link">&#xef71;</i></a>CircuitBreakerの詳細</h2>
+    
+    <h3 id="状態遷移図" class="section"><a class="anchor-link left" href="#状態遷移図"><i class="icofont-laika link">&#xef71;</i></a>状態遷移図</h3>
+    <p><img src="../../img/pooling/CircuitBreakerStateTransition.svg" alt="Circuit Breaker State Transitions"></p>
+    
+    <h3 id="circuitbreakerの目的" class="section"><a class="anchor-link left" href="#circuitbreakerの目的"><i class="icofont-laika link">&#xef71;</i></a>CircuitBreakerの目的</h3>
+    <p>CircuitBreakerパターンは、以下の問題を解決するために実装されています：</p>
+    <ol class="arabic">
+      <li>
+        <p><strong>雷鳴の群れ（Thundering Herd）問題の防止</strong></p>
+        <ul>
+          <li>データベースが一時的に利用できなくなった後、大量のクライアントが同時に再接続を試みる状況を防ぎます</li>
+          <li>これにより、既に問題を抱えているデータベースへの負荷をさらに増加させることを避けられます</li>
+        </ul>
+      </li>
+      <li>
+        <p><strong>フェイルファスト</strong></p>
+        <ul>
+          <li>データベースが応答しない場合、新しい接続試行を即座に失敗させます</li>
+          <li>これにより、クライアントは長いタイムアウトを待つ必要がなくなります</li>
+        </ul>
+      </li>
+      <li>
+        <p><strong>段階的な回復</strong></p>
+        <ul>
+          <li>Half-Open状態を通じて、サービスが回復したかどうかを慎重にテストします</li>
+          <li>指数バックオフにより、繰り返し失敗する場合の再試行間隔を徐々に増やします</li>
+        </ul>
+      </li>
+    </ol>
+    
+    <h3 id="実装の詳細" class="section"><a class="anchor-link left" href="#実装の詳細"><i class="icofont-laika link">&#xef71;</i></a>実装の詳細</h3>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">trait</span><span> </span><span class="type-name">CircuitBreaker</span><span>[</span><span class="type-name">F</span><span>[</span><span class="identifier">_</span><span>]]:
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">protect</span><span>[</span><span class="type-name">A</span><span>](</span><span class="identifier">action</span><span>: </span><span class="type-name">F</span><span>[</span><span class="type-name">A</span><span>]): </span><span class="type-name">F</span><span>[</span><span class="type-name">A</span><span>]
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">state</span><span>: </span><span class="type-name">F</span><span>[</span><span class="type-name">CircuitBreaker</span><span>.</span><span class="type-name">State</span><span>]
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">reset</span><span>: </span><span class="type-name">F</span><span>[</span><span class="type-name">Unit</span><span>]</span></code></pre>
+    <p>設定パラメータ：</p>
+    <ul>
+      <li><code>maxFailures</code>: Open状態に移行するまでの失敗回数（デフォルト: 5）</li>
+      <li><code>resetTimeout</code>: Open状態から Half-Open状態への移行までの時間（デフォルト: 60秒）</li>
+      <li><code>exponentialBackoffFactor</code>: 失敗時のタイムアウト増加係数（デフォルト: 2.0）</li>
+      <li><code>maxResetTimeout</code>: 最大リセットタイムアウト（デフォルト: 5分）</li>
+    </ul>
+    
+    <h3 id="動作フロー" class="section"><a class="anchor-link left" href="#動作フロー"><i class="icofont-laika link">&#xef71;</i></a>動作フロー</h3>
+    <ol class="arabic">
+      <li>
+        <p><strong>Closed（閉）状態</strong></p>
+        <ul>
+          <li>すべてのリクエストが通常通り処理されます</li>
+          <li>失敗がカウントされ、閾値に達するとOpen状態に移行します</li>
+        </ul>
+      </li>
+      <li>
+        <p><strong>Open（開）状態</strong></p>
+        <ul>
+          <li>すべてのリクエストが即座に失敗します（フェイルファスト）</li>
+          <li>リセットタイムアウト経過後、Half-Open状態への移行を試みます</li>
+        </ul>
+      </li>
+      <li>
+        <p><strong>Half-Open（半開）状態</strong></p>
+        <ul>
+          <li>単一のテストリクエストを許可します</li>
+          <li>成功した場合：Closed状態に戻ります</li>
+          <li>失敗した場合：Open状態に戻り、タイムアウトを指数的に増加させます</li>
+        </ul>
+      </li>
+    </ol>
+    
+    <h2 id="jvmスレッド-vs-cats-effectファイバー" class="section"><a class="anchor-link left" href="#jvmスレッド-vs-cats-effectファイバー"><i class="icofont-laika link">&#xef71;</i></a>JVMスレッド vs Cats Effectファイバー</h2>
+    
+    <h3 id="並行性モデルの違いと特性" class="section"><a class="anchor-link left" href="#並行性モデルの違いと特性"><i class="icofont-laika link">&#xef71;</i></a>並行性モデルの違いと特性</h3>
+    <p><img src="../../img/pooling/ThreadsVsFibers.svg" alt="Threads vs Fibers Comparison"></p>
+    
+    <h4 id="jvmスレッドの特性-hikaricpなど" class="section"><a class="anchor-link left" href="#jvmスレッドの特性-hikaricpなど"><i class="icofont-laika link">&#xef71;</i></a>JVMスレッドの特性（HikariCPなど）</h4>
+    <p><strong>利点:</strong></p>
+    <ul>
+      <li><strong>OSレベルのサポート</strong>: プリエンプティブなスケジューリング</li>
+      <li><strong>既存エコシステム</strong>: 多くのライブラリやツールが対応</li>
+      <li><strong>デバッグツール</strong>: 成熟したプロファイリング・監視ツール</li>
+      <li><strong>シンプルな実行モデル</strong>: 理解しやすい実行フロー</li>
+    </ul>
+    <p><strong>制約:</strong></p>
+    <ul>
+      <li><strong>メモリ使用量</strong>: スレッドあたり1-2MB</li>
+      <li><strong>コンテキストスイッチ</strong>: カーネルレベルで高コスト</li>
+      <li><strong>スケーラビリティ</strong>: 数千スレッドが実用的な上限</li>
+      <li><strong>ブロッキング</strong>: スレッドが実際にブロックされる</li>
+    </ul>
+    
+    <h4 id="cats-effectファイバーの特性-ldbc-connector" class="section"><a class="anchor-link left" href="#cats-effectファイバーの特性-ldbc-connector"><i class="icofont-laika link">&#xef71;</i></a>Cats Effectファイバーの特性（ldbc-connector）</h4>
+    <p><strong>利点:</strong></p>
+    <ul>
+      <li><strong>メモリ効率</strong>: ファイバーあたり約150バイト</li>
+      <li><strong>軽量なコンテキストスイッチ</strong>: ユーザー空間での切り替え</li>
+      <li><strong>高スケーラビリティ</strong>: 数百万のファイバーが可能</li>
+      <li><strong>セマンティックブロッキング</strong>: ワーカースレッドは解放される</li>
+    </ul>
+    <p><strong>制約:</strong></p>
+    <ul>
+      <li><strong>協調的スケジューリング</strong>: 明示的な yield ポイントが必要</li>
+      <li><strong>学習曲線</strong>: 関数型プログラミングの知識が必要</li>
+      <li><strong>エコシステム</strong>: 対応ライブラリが限定的</li>
+      <li><strong>デバッグの複雑さ</strong>: 非同期実行フローの追跡が困難</li>
+    </ul>
+    
+    <h3 id="プーリング設計への影響" class="section"><a class="anchor-link left" href="#プーリング設計への影響"><i class="icofont-laika link">&#xef71;</i></a>プーリング設計への影響</h3>
+    <p>それぞれの並行性モデルの特性により、プーリング実装は異なるアプローチを取ります：</p>
+    
+    <h4 id="スレッドベースプール-hikaricp型" class="section"><a class="anchor-link left" href="#スレッドベースプール-hikaricp型"><i class="icofont-laika link">&#xef71;</i></a>スレッドベースプール（HikariCP型）</h4>
+    <ul>
+      <li><strong>プールサイズ</strong>: OSリソースの制約により慎重な設定が必要</li>
+      <li><strong>待機戦略</strong>: ブロッキング待機、専用スレッドプールの活用</li>
+      <li><strong>適用場面</strong>: CPU集約的なタスク、レガシーシステムとの統合</li>
+      <li><strong>運用</strong>: 既存の監視ツールでの管理が容易</li>
+    </ul>
+    
+    <h4 id="ファイバーベースプール-ldbc-connector" class="section"><a class="anchor-link left" href="#ファイバーベースプール-ldbc-connector"><i class="icofont-laika link">&#xef71;</i></a>ファイバーベースプール（ldbc-connector）</h4>
+    <ul>
+      <li><strong>プールサイズ</strong>: より大きなプールサイズが可能</li>
+      <li><strong>待機戦略</strong>: 非ブロッキング待機、効率的なリソース共有</li>
+      <li><strong>適用場面</strong>: I/O集約的なタスク、高並行性が必要な環境</li>
+      <li><strong>運用</strong>: Cats Effect対応の監視・管理が必要</li>
+    </ul>
+    
+    <h2 id="hikaricpとの比較" class="section"><a class="anchor-link left" href="#hikaricpとの比較"><i class="icofont-laika link">&#xef71;</i></a>HikariCPとの比較</h2>
+    
+    <h3 id="共通点" class="section"><a class="anchor-link left" href="#共通点"><i class="icofont-laika link">&#xef71;</i></a>共通点</h3>
+    <ul>
+      <li>高性能を重視した設計</li>
+      <li>ConcurrentBagのようなロックフリーなデータ構造</li>
+      <li>プロキシパターンによるコネクション管理</li>
+      <li>自動的なプールサイズ調整</li>
+    </ul>
+    
+    <h3 id="相違点" class="section"><a class="anchor-link left" href="#相違点"><i class="icofont-laika link">&#xef71;</i></a>相違点</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>特徴</th>
+          <th>HikariCP</th>
+          <th>ldbc-connector</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>並行性モデル</td>
+          <td>JVMスレッド</td>
+          <td>Cats Effectファイバー</td>
+        </tr>
+        <tr>
+          <td>ブロッキング処理</td>
+          <td>スレッドをブロック</td>
+          <td>セマンティックブロッキング</td>
+        </tr>
+        <tr>
+          <td>スケーラビリティ</td>
+          <td>スレッド数に制限</td>
+          <td>ファイバー数はほぼ無制限</td>
+        </tr>
+        <tr>
+          <td>CircuitBreaker</td>
+          <td>外部ライブラリが必要</td>
+          <td>組み込み</td>
+        </tr>
+        <tr>
+          <td>エラー処理</td>
+          <td>例外ベース</td>
+          <td>関数型</td>
+        </tr>
+        <tr>
+          <td>リソース管理</td>
+          <td>try-with-resources</td>
+          <td>Resource</td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <h3 id="使用シナリオと適用判断" class="section"><a class="anchor-link left" href="#使用シナリオと適用判断"><i class="icofont-laika link">&#xef71;</i></a>使用シナリオと適用判断</h3>
+    
+    <h4 id="ldbc-connectorが適している場面" class="section"><a class="anchor-link left" href="#ldbc-connectorが適している場面"><i class="icofont-laika link">&#xef71;</i></a>ldbc-connectorが適している場面：</h4>
+    <ol class="arabic">
+      <li>
+        <p><strong>高並行性環境</strong></p>
+        <ul>
+          <li>数千の同時接続リクエスト</li>
+          <li>マイクロサービスアーキテクチャ</li>
+          <li>リアクティブアプリケーション</li>
+        </ul>
+      </li>
+      <li>
+        <p><strong>I/Oバウンドなワークロード</strong></p>
+        <ul>
+          <li>長時間実行されるクエリ</li>
+          <li>複数のデータベースへの同時アクセス</li>
+          <li>非同期処理パイプライン</li>
+        </ul>
+      </li>
+      <li>
+        <p><strong>Cats Effectエコシステム</strong></p>
+        <ul>
+          <li>既にCats Effectを使用している</li>
+          <li>関数型プログラミングのアプローチを採用</li>
+          <li>型安全性を重視する環境</li>
+        </ul>
+      </li>
+    </ol>
+    
+    <h4 id="hikaricpなどスレッドベースプールが適している場面" class="section"><a class="anchor-link left" href="#hikaricpなどスレッドベースプールが適している場面"><i class="icofont-laika link">&#xef71;</i></a>HikariCPなどスレッドベースプールが適している場面：</h4>
+    <ol class="arabic">
+      <li>
+        <p><strong>既存システムとの統合</strong></p>
+        <ul>
+          <li>レガシーアプリケーション</li>
+          <li>Spring Frameworkなどの従来型フレームワーク</li>
+          <li>JDBC準拠のツールとの互換性</li>
+        </ul>
+      </li>
+      <li>
+        <p><strong>運用面の考慮</strong></p>
+        <ul>
+          <li>既存の監視・管理ツールの活用</li>
+          <li>運用チームの既存知識の活用</li>
+          <li>実績のある安定した実装</li>
+        </ul>
+      </li>
+      <li>
+        <p><strong>シンプルな並行性要件</strong></p>
+        <ul>
+          <li>中程度の並行接続数</li>
+          <li>予測可能なワークロード</li>
+          <li>CPU集約的な処理</li>
+        </ul>
+      </li>
+    </ol>
+    
+    <h2 id="バックグラウンドタスク" class="section"><a class="anchor-link left" href="#バックグラウンドタスク"><i class="icofont-laika link">&#xef71;</i></a>バックグラウンドタスク</h2>
+    <p>ldbc-connectorは、プールの健全性を維持するために複数のバックグラウンドタスクを実行します：</p>
+    
+    <h3 id="housekeeper" class="section"><a class="anchor-link left" href="#housekeeper"><i class="icofont-laika link">&#xef71;</i></a>HouseKeeper</h3>
+    <ul>
+      <li>期限切れコネクションの削除</li>
+      <li>アイドルタイムアウトの処理</li>
+      <li>最小コネクション数の維持</li>
+    </ul>
+    
+    <h3 id="adaptivepoolsizer" class="section"><a class="anchor-link left" href="#adaptivepoolsizer"><i class="icofont-laika link">&#xef71;</i></a>AdaptivePoolSizer</h3>
+    <ul>
+      <li>使用率メトリクスに基づく動的なプールサイズ調整</li>
+      <li>負荷に応じた拡張と縮小</li>
+      <li>クールダウン期間による安定化</li>
+    </ul>
+    
+    <h3 id="keepaliveexecutor" class="section"><a class="anchor-link left" href="#keepaliveexecutor"><i class="icofont-laika link">&#xef71;</i></a>KeepaliveExecutor</h3>
+    <ul>
+      <li>アイドルコネクションの定期的な検証</li>
+      <li>接続の維持とタイムアウトの防止</li>
+    </ul>
+    
+    <h2 id="設定例" class="section"><a class="anchor-link left" href="#設定例"><i class="icofont-laika link">&#xef71;</i></a>設定例</h2>
+    
+    <h3 id="基本的な使用方法" class="section"><a class="anchor-link left" href="#基本的な使用方法"><i class="icofont-laika link">&#xef71;</i></a>基本的な使用方法</h3>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="type-name">IO</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">scala</span><span>.</span><span class="identifier">concurrent</span><span>.</span><span class="identifier">duration</span><span>.*
+
+</span><span class="comment">// プール設定
+</span><span class="keyword">val</span><span> </span><span class="identifier">config</span><span> = </span><span class="type-name">MySQLConfig</span><span>.</span><span class="identifier">default</span><span>
+  .</span><span class="identifier">setHost</span><span>(</span><span class="string-literal">&quot;localhost&quot;</span><span>)
+  .</span><span class="identifier">setPort</span><span>(</span><span class="number-literal">3306</span><span>)
+  .</span><span class="identifier">setUser</span><span>(</span><span class="string-literal">&quot;myuser&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;mypassword&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;mydb&quot;</span><span>)
+  </span><span class="comment">// プールサイズ設定
+</span><span>  .</span><span class="identifier">setMinConnections</span><span>(</span><span class="number-literal">5</span><span>)           </span><span class="comment">// 最小接続数（デフォルト: 5）
+</span><span>  .</span><span class="identifier">setMaxConnections</span><span>(</span><span class="number-literal">20</span><span>)          </span><span class="comment">// 最大接続数（デフォルト: 10）
+</span><span>  </span><span class="comment">// タイムアウト設定
+</span><span>  .</span><span class="identifier">setConnectionTimeout</span><span>(</span><span class="number-literal">30</span><span>.</span><span class="identifier">seconds</span><span>)    </span><span class="comment">// 接続取得タイムアウト（デフォルト: 30秒）
+</span><span>  .</span><span class="identifier">setIdleTimeout</span><span>(</span><span class="number-literal">10</span><span>.</span><span class="identifier">minutes</span><span>)         </span><span class="comment">// アイドルタイムアウト（デフォルト: 10分）
+</span><span>  .</span><span class="identifier">setMaxLifetime</span><span>(</span><span class="number-literal">30</span><span>.</span><span class="identifier">minutes</span><span>)         </span><span class="comment">// 最大生存時間（デフォルト: 30分）
+</span><span>  .</span><span class="identifier">setValidationTimeout</span><span>(</span><span class="number-literal">5</span><span>.</span><span class="identifier">seconds</span><span>)    </span><span class="comment">// 検証タイムアウト（デフォルト: 5秒）
+</span><span>  </span><span class="comment">// 検証とヘルスチェック
+</span><span>  .</span><span class="identifier">setAliveBypassWindow</span><span>(</span><span class="number-literal">500</span><span>.</span><span class="identifier">millis</span><span>)   </span><span class="comment">// 最近使用時の検証スキップ（デフォルト: 500ms）
+</span><span>  .</span><span class="identifier">setKeepaliveTime</span><span>(</span><span class="number-literal">2</span><span>.</span><span class="identifier">minutes</span><span>)        </span><span class="comment">// アイドル検証間隔（デフォルト: 2分）
+</span><span>  .</span><span class="identifier">setConnectionTestQuery</span><span>(</span><span class="string-literal">&quot;SELECT 1&quot;</span><span>) </span><span class="comment">// カスタムテストクエリ（オプション）
+</span><span>  </span><span class="comment">// リーク検出
+</span><span>  .</span><span class="identifier">setLeakDetectionThreshold</span><span>(</span><span class="number-literal">2</span><span>.</span><span class="identifier">minutes</span><span>) </span><span class="comment">// 接続リーク検出（デフォルト: なし）
+</span><span>  </span><span class="comment">// メンテナンス
+</span><span>  .</span><span class="identifier">setMaintenanceInterval</span><span>(</span><span class="number-literal">30</span><span>.</span><span class="identifier">seconds</span><span>)  </span><span class="comment">// バックグラウンドクリーンアップ間隔（デフォルト: 30秒）
+</span><span>  </span><span class="comment">// アダプティブサイジング
+</span><span>  .</span><span class="identifier">setAdaptiveSizing</span><span>(</span><span class="boolean-literal">true</span><span>)            </span><span class="comment">// 動的プールサイズ調整（デフォルト: false）
+</span><span>  .</span><span class="identifier">setAdaptiveInterval</span><span>(</span><span class="number-literal">1</span><span>.</span><span class="identifier">minute</span><span>)      </span><span class="comment">// アダプティブサイジング確認間隔（デフォルト: 1分）
+</span><span>
+</span><span class="comment">// プールデータソースの作成
+</span><span class="keyword">val</span><span> </span><span class="identifier">poolResource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">config</span><span>)
+
+</span><span class="comment">// プールの使用
+</span><span class="identifier">poolResource</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">pool</span><span> =&gt;
+  </span><span class="identifier">pool</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    </span><span class="comment">// コネクションの使用
+</span><span>    </span><span class="keyword">for</span><span>
+      </span><span class="identifier">stmt</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">createStatement</span><span>()
+      </span><span class="identifier">rs</span><span>   &lt;- </span><span class="identifier">stmt</span><span>.</span><span class="identifier">executeQuery</span><span>(</span><span class="string-literal">&quot;SELECT 1&quot;</span><span>)
+      </span><span class="identifier">_</span><span>    &lt;- </span><span class="identifier">rs</span><span>.</span><span class="identifier">next</span><span>()
+      </span><span class="identifier">result</span><span> &lt;- </span><span class="identifier">rs</span><span>.</span><span class="identifier">getInt</span><span>(</span><span class="number-literal">1</span><span>)
+    </span><span class="keyword">yield</span><span> </span><span class="identifier">result</span><span>
+  }
+}</span></code></pre>
+    
+    <h3 id="メトリクス追跡付きプール" class="section"><a class="anchor-link left" href="#メトリクス追跡付きプール"><i class="icofont-laika link">&#xef71;</i></a>メトリクス追跡付きプール</h3>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.</span><span class="identifier">pool</span><span>.*
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">metricsResource</span><span> = </span><span class="keyword">for</span><span>
+  </span><span class="identifier">tracker</span><span> &lt;- </span><span class="type-name">Resource</span><span>.</span><span class="identifier">eval</span><span>(</span><span class="type-name">PoolMetricsTracker</span><span>.</span><span class="identifier">inMemory</span><span>[</span><span class="type-name">IO</span><span>])
+  </span><span class="identifier">pool</span><span>    &lt;- </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](
+    </span><span class="identifier">config</span><span>,
+    </span><span class="identifier">metricsTracker</span><span> = </span><span class="type-name">Some</span><span>(</span><span class="identifier">tracker</span><span>)
+  )
+</span><span class="keyword">yield</span><span> (</span><span class="identifier">pool</span><span>, </span><span class="identifier">tracker</span><span>)
+
+</span><span class="identifier">metricsResource</span><span>.</span><span class="identifier">use</span><span> { </span><span class="keyword">case</span><span> (</span><span class="identifier">pool</span><span>, </span><span class="identifier">tracker</span><span>) =&gt;
+  </span><span class="comment">// プールの使用とメトリクス監視
+</span><span>  </span><span class="keyword">for</span><span>
+    </span><span class="identifier">_</span><span>       &lt;- </span><span class="identifier">pool</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span>(</span><span class="identifier">conn</span><span> =&gt; </span><span class="comment">/* コネクション使用 */</span><span> </span><span class="type-name">IO</span><span>.</span><span class="identifier">unit</span><span>)
+    </span><span class="identifier">metrics</span><span> &lt;- </span><span class="identifier">tracker</span><span>.</span><span class="identifier">getMetrics</span><span>
+    </span><span class="identifier">_</span><span>       &lt;- </span><span class="type-name">IO</span><span>.</span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;総取得数: </span><span class="substitution">${metrics.totalAcquisitions}</span><span class="string-literal">&quot;</span><span>)
+    </span><span class="identifier">_</span><span>       &lt;- </span><span class="type-name">IO</span><span>.</span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;平均取得時間: </span><span class="substitution">${metrics.acquisitionTime}</span><span class="string-literal">&quot;</span><span>)
+  </span><span class="keyword">yield</span><span> ()
+}</span></code></pre>
+    
+    <h3 id="ライフサイクルフック付きプール" class="section"><a class="anchor-link left" href="#ライフサイクルフック付きプール"><i class="icofont-laika link">&#xef71;</i></a>ライフサイクルフック付きプール</h3>
+    <pre><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">SessionContext</span><span>(</span><span class="identifier">userId</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">startTime</span><span>: </span><span class="type-name">Long</span><span>)
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">beforeHook</span><span>: </span><span class="type-name">Connection</span><span>[</span><span class="type-name">IO</span><span>] =&gt; </span><span class="type-name">IO</span><span>[</span><span class="type-name">SessionContext</span><span>] = </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="keyword">for</span><span>
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">createStatement</span><span>().</span><span class="identifier">flatMap</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">executeUpdate</span><span>(</span><span class="string-literal">&quot;SET SESSION sql_mode = &#39;STRICT_ALL_TABLES&#39;&quot;</span><span>))
+    </span><span class="identifier">startTime</span><span> = </span><span class="type-name">System</span><span>.</span><span class="identifier">currentTimeMillis</span><span>
+  </span><span class="keyword">yield</span><span> </span><span class="type-name">SessionContext</span><span>(</span><span class="string-literal">&quot;user123&quot;</span><span>, </span><span class="identifier">startTime</span><span>)
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">afterHook</span><span>: (</span><span class="type-name">SessionContext</span><span>, </span><span class="type-name">Connection</span><span>[</span><span class="type-name">IO</span><span>]) =&gt; </span><span class="type-name">IO</span><span>[</span><span class="type-name">Unit</span><span>] = (</span><span class="identifier">ctx</span><span>, </span><span class="identifier">conn</span><span>) =&gt;
+  </span><span class="type-name">IO</span><span>.</span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;ユーザー </span><span class="substitution">${ctx.userId}</span><span class="string-literal"> が接続を </span><span class="substitution">${System.currentTimeMillis - ctx.startTime}</span><span class="string-literal">ms 使用&quot;</span><span>)
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">poolWithHooks</span><span> = </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">poolingWithBeforeAfter</span><span>[</span><span class="type-name">IO</span><span>, </span><span class="type-name">SessionContext</span><span>](
+  </span><span class="identifier">config</span><span> = </span><span class="identifier">config</span><span>,
+  </span><span class="identifier">before</span><span> = </span><span class="type-name">Some</span><span>(</span><span class="identifier">beforeHook</span><span>),
+  </span><span class="identifier">after</span><span> = </span><span class="type-name">Some</span><span>(</span><span class="identifier">afterHook</span><span>)
+)</span></code></pre>
+    
+    <h3 id="circuitbreakerの設定" class="section"><a class="anchor-link left" href="#circuitbreakerの設定"><i class="icofont-laika link">&#xef71;</i></a>CircuitBreakerの設定</h3>
+    <p>CircuitBreakerは内部で自動的に設定されますが、現在の実装では以下のデフォルト値が使用されます：</p>
+    <ul>
+      <li><code>maxFailures</code>: 5回（Open状態への移行閾値）</li>
+      <li><code>resetTimeout</code>: 30秒（Half-Open状態への移行時間）</li>
+      <li><code>exponentialBackoffFactor</code>: 2.0（バックオフ係数）</li>
+      <li><code>maxResetTimeout</code>: 5分（最大リセットタイムアウト）</li>
+    </ul>
+    
+    <h2 id="ベンチマーク結果" class="section"><a class="anchor-link left" href="#ベンチマーク結果"><i class="icofont-laika link">&#xef71;</i></a>ベンチマーク結果</h2>
+    <p>ldbc-connectorとHikariCPのパフォーマンスを、異なるスレッド数で比較したベンチマーク結果を以下に示します。ベンチマークは、SELECT文の実行における並行性能を測定したものです。</p>
+    
+    <h3 id="測定環境" class="section"><a class="anchor-link left" href="#測定環境"><i class="icofont-laika link">&#xef71;</i></a>測定環境</h3>
+    <ul>
+      <li>ベンチマーク内容: SELECT文の並行実行</li>
+      <li>測定対象: ldbc-connector vs HikariCP</li>
+      <li>スレッド数: 1, 2, 4, 8, 16</li>
+    </ul>
+    
+    <h3 id="結果グラフ" class="section"><a class="anchor-link left" href="#結果グラフ"><i class="icofont-laika link">&#xef71;</i></a>結果グラフ</h3>
+    
+    <h4 id="スレッド数-1" class="section"><a class="anchor-link left" href="#スレッド数-1"><i class="icofont-laika link">&#xef71;</i></a>スレッド数: 1</h4>
+    <p><img src="../../img/pooling/Select_Thread1.svg" alt="Benchmark Result - Thread 1"></p>
+    
+    <h4 id="スレッド数-2" class="section"><a class="anchor-link left" href="#スレッド数-2"><i class="icofont-laika link">&#xef71;</i></a>スレッド数: 2</h4>
+    <p><img src="../../img/pooling/Select_Thread2.svg" alt="Benchmark Result - Thread 2"></p>
+    
+    <h4 id="スレッド数-4" class="section"><a class="anchor-link left" href="#スレッド数-4"><i class="icofont-laika link">&#xef71;</i></a>スレッド数: 4</h4>
+    <p><img src="../../img/pooling/Select_Thread4.svg" alt="Benchmark Result - Thread 4"></p>
+    
+    <h4 id="スレッド数-8" class="section"><a class="anchor-link left" href="#スレッド数-8"><i class="icofont-laika link">&#xef71;</i></a>スレッド数: 8</h4>
+    <p><img src="../../img/pooling/Select_Thread8.svg" alt="Benchmark Result - Thread 8"></p>
+    
+    <h4 id="スレッド数-16" class="section"><a class="anchor-link left" href="#スレッド数-16"><i class="icofont-laika link">&#xef71;</i></a>スレッド数: 16</h4>
+    <p><img src="../../img/pooling/Select_Thread16.svg" alt="Benchmark Result - Thread 16"></p>
+    
+    <h3 id="ベンチマーク結果の分析" class="section"><a class="anchor-link left" href="#ベンチマーク結果の分析"><i class="icofont-laika link">&#xef71;</i></a>ベンチマーク結果の分析</h3>
+    <p>これらのベンチマーク結果から、以下の傾向が観察されます：</p>
+    <ol class="arabic">
+      <li>
+        <p><strong>低並行性環境（スレッド数1-2）</strong></p>
+        <ul>
+          <li>両実装のパフォーマンスは比較的近い値を示します</li>
+          <li>シンプルなワークロードではオーバーヘッドの差が小さいことがわかります</li>
+        </ul>
+      </li>
+      <li>
+        <p><strong>中並行性環境（スレッド数4-8）</strong></p>
+        <ul>
+          <li>並行性が増すにつれて、それぞれの実装の特性が現れ始めます</li>
+          <li>ファイバーベースの軽量な並行性モデルの影響が観察できます</li>
+        </ul>
+      </li>
+      <li>
+        <p><strong>高並行性環境（スレッド数16）</strong></p>
+        <ul>
+          <li>高並行性下での両実装の挙動の違いが明確になります</li>
+          <li>リソース効率とスケーラビリティの特性が顕著に現れます</li>
+        </ul>
+      </li>
+    </ol>
+    
+    <h3 id="パフォーマンス特性の考察" class="section"><a class="anchor-link left" href="#パフォーマンス特性の考察"><i class="icofont-laika link">&#xef71;</i></a>パフォーマンス特性の考察</h3>
+    <p>ベンチマーク結果は、それぞれのアプローチが持つ固有の特性を反映しています：</p>
+    <p><strong>ldbc-connector（ファイバーベース）</strong></p>
+    <ul>
+      <li>軽量な並行性プリミティブによる効率的なリソース利用</li>
+      <li>セマンティックブロッキングによるCPU使用率の最適化</li>
+      <li>高並行性下でのスケーラビリティ</li>
+    </ul>
+    <p><strong>HikariCP（スレッドベース）</strong></p>
+    <ul>
+      <li>成熟した実装による安定したパフォーマンス</li>
+      <li>OSレベルのスケジューリングによる公平性</li>
+      <li>既存のJVMツールチェーンとの高い互換性</li>
+    </ul>
+    
+    <h3 id="使用シーンごとの推奨" class="section"><a class="anchor-link left" href="#使用シーンごとの推奨"><i class="icofont-laika link">&#xef71;</i></a>使用シーンごとの推奨</h3>
+    <p>ベンチマーク結果を踏まえた、使用シーンごとの推奨事項：</p>
+    <ol class="arabic">
+      <li>
+        <p><strong>低〜中程度の並行性が必要な場合</strong></p>
+        <ul>
+          <li>両実装とも十分なパフォーマンスを提供</li>
+          <li>既存のインフラやチームの経験に基づいて選択</li>
+        </ul>
+      </li>
+      <li>
+        <p><strong>高並行性が要求される場合</strong></p>
+        <ul>
+          <li>アプリケーションの特性（I/O中心 vs CPU中心）を考慮</li>
+          <li>運用面での要件（監視、デバッグ、トラブルシューティング）も検討</li>
+        </ul>
+      </li>
+      <li>
+        <p><strong>動的なワークロードの場合</strong></p>
+        <ul>
+          <li>アダプティブプールサイジングの活用を検討</li>
+          <li>CircuitBreakerによる障害時の挙動も重要な選択基準</li>
+        </ul>
+      </li>
+    </ol>
+    <p>重要な点は、ベンチマーク結果は特定の条件下での測定値であり、実際のアプリケーションでのパフォーマンスは、ワークロードの特性、データベースの設定、ネットワーク環境など、多くの要因に影響されることです。本番環境への適用前には、実際のワークロードでのテストを推奨します。</p>
+    
+    <h2 id="まとめ" class="section"><a class="anchor-link left" href="#まとめ"><i class="icofont-laika link">&#xef71;</i></a>まとめ</h2>
+    <p>ldbc-connectorのプーリングシステムは、Cats Effectの並行性モデルを活用した実装です。CircuitBreakerパターンを組み込むことで、データベース障害時の回復力を高めています。</p>
+    <p>ファイバーベースとスレッドベースのアプローチには、それぞれ長所と短所があります。アプリケーションの要件、既存のインフラストラクチャ、チームのスキルセット、運用面の考慮事項などを総合的に評価して、適切な選択をすることが重要です。</p>
+    <p>ldbc-connectorは、特に高並行性が求められる環境や、Cats Effectエコシステムを採用している場合に、その特性を最大限に活用できる選択肢となります。</p>
+
+    
+<hr class="footer-rule"/>
+<footer>
+  ldbc is a <a href="https://typelevel.org/">Typelevel</a> project distributed under the <a href="https://img.shields.io/badge/license-MIT-green">MIT</a> license.
+</footer>
+
+
+  </main>
+
+</div>
+
+</body>
+
+</html>
