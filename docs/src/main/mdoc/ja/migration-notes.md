@@ -3,600 +3,438 @@
   laika.metadata.language = ja
 %}
 
-# マイグレーションノート (0.2.xから0.3.xへの移行)
+# マイグレーションノート (0.3.xから0.4.xへの移行)
 
 ## パッケージ
 
-**パッケージ名の変更**
-
-| 0.2.x     | 0.3.x       |
-|-----------|-------------|
-| ldbc-core | ldbc-schema |
-
-**新たなパッケージ**
-
-新たに3種類のパッケージが追加されました。
-
-| Module / Platform | JVM | Scala Native | Scala.js |  
-|-------------------|:---:|:------------:|:--------:|
-| `ldbc-connector`  |  ✅  |      ✅       |    ✅     | 
-| `jdbc-connector`  |  ✅  |      ❌       |    ❌     | 
-| `ldbc-statement`  |  ✅  |      ✅       |    ✅     | 
-
-**全てのパッケージ**
+**削除されたパッケージ**
 
 | Module / Platform    | JVM | Scala Native | Scala.js |  
 |----------------------|:---:|:------------:|:--------:|
-| `ldbc-sql`           |  ✅  |      ✅       |    ✅     |
-| `ldbc-connector`     |  ✅  |      ✅       |    ✅     | 
-| `jdbc-connector`     |  ✅  |      ❌       |    ❌     | 
-| `ldbc-dsl`           |  ✅  |      ✅       |    ✅     |
-| `ldbc-statement`     |  ✅  |      ✅       |    ✅     |
-| `ldbc-query-builder` |  ✅  |      ✅       |    ✅     |
-| `ldbc-schema`        |  ✅  |      ✅       |    ✅     |
 | `ldbc-schemaSpy`     |  ✅  |      ❌       |    ❌     | 
-| `ldbc-codegen`       |  ✅  |      ✅       |    ✅     |
-| `ldbc-hikari`        |  ✅  |      ❌       |    ❌     | 
-| `ldbc-plugin`        |  ✅  |      ❌       |    ❌     |
 
-## 機能変更
+**別の機能としてリニューアルされたパッケージ**
 
-### コネクタ切り替え機能
+| Module / Platform    | JVM | Scala Native | Scala.js | Scaladoc                                                                                                                                                  |
+|----------------------|:---:|:------------:|:--------:|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ldbc-core`          |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-core_3)          |
 
-Scala MySQL コネクタに、jdbc と ldbc の接続切り替えのサポートが追加されました。
+**全てのパッケージ**
 
-この変更により、開発者はプロジェクトの要件に応じて jdbc または ldbc ライブラリを使用したデータベース接続を柔軟に選択できるようになりました。これにより、開発者は異なるライブラリの機能を利用できるようになり、接続の設定や操作の柔軟性が向上します。
+| Module / Platform    | JVM | Scala Native | Scala.js | Scaladoc                                                                                                                                                  |
+|----------------------|:---:|:------------:|:--------:|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ldbc-sql`           |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-sql_3)           |
+| `ldbc-core`          |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-core_3)          |
+| `ldbc-connector`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-connector_3)     |
+| `jdbc-connector`     |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/jdbc-connector_3)     |
+| `ldbc-dsl`           |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3)           |
+| `ldbc-statement`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-statement_3)     |
+| `ldbc-query-builder` |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-query-builder_3) |
+| `ldbc-schema`        |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-schema_3)        |
+| `ldbc-codegen`       |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-codegen_3)       |
+| `ldbc-hikari`        |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-hikari_3)        |
+| `ldbc-plugin`        |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-plugin_2.12_1.0) |
 
-#### 変更方法
+## 🎯 主要な変更点
 
-まず、共通の依存関係を設定する。
+### 1. 組み込みコネクションプーリング機能の追加
 
-```scala 3
-libraryDependencies += "@ORGANIZATION@" %% "ldbc-dsl" % "@VERSION@"
-```
+0.4.0 から、ldbc-connector に高性能なコネクションプーリング機能が組み込まれました。これにより、HikariCP などの外部ライブラリを使用せずに、効率的なコネクション管理が可能になりました。
 
-クロスプラットフォームプロジェクトでは（JVM、JS、ネイティブ）
+**メリット:**
+- Cats Effect のファイバーベース並行性モデルに最適化
+- CircuitBreaker による障害時の保護
+- 動的プールサイジング
+- 詳細なメトリクス追跡
 
-```scala 3
-libraryDependencies += "@ORGANIZATION@" %%% "ldbc-dsl" % "@VERSION@"
-```
+### 2. API の変更
 
-使用される依存パッケージは、データベース接続が Java API を使用するコネクタを介して行われるか、または ldbc によって提供されるコネクタを介して行われるかによって異なります。
+#### ConnectionProvider から MySQLDataSource への移行と Connector の使用
 
-**jdbcコネクタの使用**
+ConnectionProvider は非推奨となり、新しい MySQLDataSource と Connector API を使用します。
 
-```scala 3
-libraryDependencies += "@ORGANIZATION@" %% "jdbc-connector" % "@VERSION@"
-```
-
-**ldbcコネクタの使用**
-
-```scala 3
-libraryDependencies += "@ORGANIZATION@" %% "ldbc-connector" % "@VERSION@"
-```
-
-クロスプラットフォームプロジェクトでは（JVM、JS、ネイティブ）
-
-```scala 3
-libraryDependencies += "@ORGANIZATION@" %%% "ldbc-connector" % "@VERSION@"
-```
-
-#### 使用方法
-
-**jdbcコネクタの使用**
-
-```scala 3
-import jdbc.connector.*
-
-val ds = new com.mysql.cj.jdbc.MysqlDataSource()
-ds.setServerName("127.0.0.1")
-ds.setPortNumber(13306)
-ds.setDatabaseName("world")
-ds.setUser("ldbc")
-ds.setPassword("password")
-
-val provider = ConnectionProvider.fromDataSource(ex, ExecutionContexts.synchronous)
-```
-
-**ldbcコネクタの使用**
-
-```scala 3
+**旧 API (0.3.x):**
+```scala
 import ldbc.connector.*
 
-val provider =
-  ConnectionProvider
-    .default[IO]("127.0.0.1", 3306, "ldbc", "password", "ldbc")
-    .setSSL(SSL.Trusted)
+// ConnectionProvider を使用
+val provider = ConnectionProvider
+  .default[IO]("localhost", 3306, "root")
+  .setPassword("password")
+  .setDatabase("test")
+
+// 直接使用
+provider.use { connection =>
+  // SQL実行
+}
 ```
 
-データベースへの接続処理は、それぞれの方法で確立されたコネクションを使って行うことができる。
+**新 API (0.4.x):**
+```scala
+import ldbc.connector.*
+import ldbc.core.*
+import ldbc.dsl.*
 
-```scala 3
-val result: IO[(List[Int], Option[Int], Int)] = provider.use { conn =>
+// MySQLDataSource を使用
+val dataSource = MySQLDataSource
+  .build[IO]("localhost", 3306, "root")
+  .setPassword("password")
+  .setDatabase("test")
+
+// Connector を作成して DBIO を実行
+val connector = Connector.fromDataSource(dataSource)
+
+// SQLクエリの実行
+val result = sql"SELECT * FROM users"
+  .query[User]
+  .to[List]
+  .readOnly(connector)
+
+// または Connection から Connector を作成
+dataSource.getConnection.use { connection =>
+  val connector = Connector.fromConnection(connection)
+  // DBIO を実行
+  sql"INSERT INTO users (name) VALUES ($name)"
+    .update
+    .commit(connector)
+}
+
+// コネクションプーリング
+val pooledDataSource = MySQLDataSource.pooling[IO](
+  MySQLConfig.default
+    .setHost("localhost")
+    .setPort(3306)
+    .setUser("root")
+    .setPassword("password")
+    .setDatabase("test")
+    .setMinConnections(5)
+    .setMaxConnections(20)
+)
+
+pooledDataSource.use { pool =>
+  val connector = Connector.fromDataSource(pool)
+  // DBIO を実行
+  sql"SELECT * FROM users WHERE id = $id"
+    .query[User]
+    .option
+    .readOnly(connector)
+}
+```
+
+### 3. 設定方法の変更
+
+#### ldbc-connector の設定
+
+**旧方式 (0.3.x):**
+```scala
+val provider = ConnectionProvider
+  .default[IO]("localhost", 3306, "root")
+  .setPassword("password")
+  .setDatabase("test")
+  .setSSL(SSL.Trusted)
+  .addSocketOption(SocketOption.receiveBufferSize(4096))
+  .setReadTimeout(30.seconds)
+```
+
+**新方式 (0.4.x):**
+```scala
+val dataSource = MySQLDataSource
+  .build[IO]("localhost", 3306, "root")
+  .setPassword("password")
+  .setDatabase("test")
+  .setSSL(SSL.Trusted)
+  .addSocketOption(SocketOption.receiveBufferSize(4096))
+  .setReadTimeout(30.seconds)
+  .setDebug(true)
+  .setAllowPublicKeyRetrieval(true)
+```
+
+#### jdbc-connector の設定
+
+**旧方式 (0.3.x):**
+```scala
+import jdbc.connector.*
+
+val dataSource = new com.mysql.cj.jdbc.MysqlDataSource()
+// 手動設定
+
+val provider = ConnectionProvider
+  .fromDataSource[IO](dataSource, ec)
+```
+
+**新方式 (0.4.x):**
+```scala
+import jdbc.connector.*
+
+// DataSource から Connector を作成
+val ds = new com.mysql.cj.jdbc.MysqlDataSource()
+ds.setServerName("localhost")
+ds.setPortNumber(3306)
+ds.setDatabaseName("test")
+ds.setUser("root")
+ds.setPassword("password")
+
+val connector = Connector.fromDataSource[IO](ds, ExecutionContexts.synchronous)
+
+// DriverManager から Connector を作成
+val connector = Connector.fromDriverManager[IO].apply(
+  driver = "com.mysql.cj.jdbc.Driver",
+  url = "jdbc:mysql://localhost:3306/test",
+  user = "root",
+  password = "password",
+  logHandler = None
+)
+
+// MySQLDataSource 経由（ldbc-connector）
+val dataSource = MySQLDataSource
+  .fromDataSource[IO](ds, ExecutionContexts.synchronous)
+```
+
+### 4. コネクションプーリングの使用
+
+#### 基本的な使用方法
+
+```scala
+import ldbc.connector.*
+import ldbc.core.*
+import scala.concurrent.duration.*
+
+val config = MySQLConfig.default
+  .setHost("localhost")
+  .setPort(3306)
+  .setUser("myuser")
+  .setPassword("mypassword")
+  .setDatabase("mydb")
+  // プール設定
+  .setMinConnections(5)          // 最小接続数
+  .setMaxConnections(20)         // 最大接続数
+  .setConnectionTimeout(30.seconds)  // 接続タイムアウト
+  .setIdleTimeout(10.minutes)        // アイドルタイムアウト
+  .setMaxLifetime(30.minutes)        // 最大生存時間
+
+MySQLDataSource.pooling[IO](config).use { pool =>
+  // Connector を作成して使用
+  val connector = Connector.fromDataSource(pool)
+
+  // SQLクエリの実行
+  sql"SELECT COUNT(*) FROM users"
+    .query[Long]
+    .unique
+    .readOnly(connector)
+}
+```
+
+#### メトリクス付きプール
+
+```scala
+import ldbc.connector.pool.*
+
+val metricsResource = for {
+  tracker <- Resource.eval(PoolMetricsTracker.inMemory[IO])
+  pool    <- MySQLDataSource.pooling[IO](
+    config,
+    metricsTracker = Some(tracker)
+  )
+} yield (pool, tracker)
+
+metricsResource.use { case (pool, tracker) =>
+  for {
+    _ <- pool.getConnection.use(_.execute("SELECT 1"))
+    metrics <- tracker.getMetrics
+    _ <- IO.println(s"""
+      |プールメトリクス:
+      |  総接続数: ${metrics.totalCreated}
+      |  アクティブ: ${metrics.activeConnections}
+      |  アイドル: ${metrics.idleConnections}
+    """.stripMargin)
+  } yield ()
+}
+```
+
+#### Before/After フック
+
+```scala
+case class RequestContext(requestId: String)
+
+val poolWithHooks = MySQLDataSource.poolingWithBeforeAfter[IO, RequestContext](
+  config = config,
+  before = Some { conn =>
+    for {
+      id <- IO.randomUUID.map(_.toString)
+      _  <- conn.execute(s"SET @request_id = '$id'")
+    } yield RequestContext(id)
+  },
+  after = Some { (ctx, conn) =>
+    IO.println(s"Request ${ctx.requestId} completed")
+  }
+)
+```
+
+### 5. 移行時の注意点
+
+#### Scala Native での制限事項
+
+@:callout(warning)
+**重要**: Scala Native 0.4.x はシングルスレッド実行のみをサポートしています。そのため、Scala Native でコネクションプーリングを使用することは推奨されません。代わりに、各操作で新しいコネクションを作成してください：
+
+```scala
+// Scala Native での推奨使用方法
+val dataSource = MySQLDataSource
+  .build[IO]("localhost", 3306, "user")
+  .setPassword("password")
+  .setDatabase("mydb")
+
+// プーリングは使用しない
+val connector = Connector.fromDataSource(dataSource)
+
+// DBIO の実行
+sql"SELECT * FROM products WHERE price > $minPrice"
+  .query[Product]
+  .to[List]
+  .readOnly(connector)
+```
+@:@
+
+### 6. 破壊的変更
+
+以下の API は削除または変更されています：
+
+1. **ConnectionProvider**: 非推奨となり、`MySQLDataSource` に置き換えられました（0.5.xで削除予定）
+2. **Provider トレイト**: 非推奨となり、`DataSource` トレイトに置き換えられました
+3. **ldbc.sql.Provider**: 削除されました
+4. **接続の直接使用**: 新しい `Connector` API を経由して使用する必要があります
+
+### 7. DBIO 実行パターンの変更
+
+DBIO の実行方法が変更され、より明確で柔軟になりました。
+
+**旧方式 (0.3.x):**
+```scala
+provider.use { connection =>
   (for
     result1 <- sql"SELECT 1".query[Int].to[List]
     result2 <- sql"SELECT 2".query[Int].to[Option]
-    result3 <- sql"SELECT 3".query[Int].unsafe
-  yield (result1, result2, result3)).readOnly(conn)
+  yield (result1, result2)).readOnly(connection)
 }
 ```
 
-## 破壊的変更
+**新方式 (0.4.x):**
+```scala
+val connector = Connector.fromDataSource(dataSource)
 
-### プレーン・クエリ構築の拡張
+// 各種実行モード
+sql"SELECT * FROM users".query[User].to[List].readOnly(connector)    // 読み取り専用
+sql"INSERT INTO users ...".update.commit(connector)                 // コミット付き
+sql"UPDATE users ...".update.transaction(connector)                 // トランザクション
+sql"DELETE FROM users ...".update.rollback(connector)              // ロールバック
 
-プレーン・クエリを用いたデータベース接続メソッドによる検索対象の型の決定は、検索対象の型とそのフォーマット（リストまたはオプション）を一括して指定していた。
-
-今回の修正ではこれを変更し、取得する型とその形式の指定を分離することで内部ロジックを共通化した。これにより、プレーン・クエリの構文はよりdoobieに近くなり、doobieのユーザは混乱することなく使用できるはずである。
-
-**before**
-
-```scala 3
-sql"SELECT id, name, age FROM user".toList[(Long, String, Int)].readOnly(connection)
-sql"SELECT id, name, age FROM user WHERE id = ${1L}".headOption[User].readOnly(connection)
+// 複数のクエリを組み合わせる
+(for
+  users <- sql"SELECT * FROM users".query[User].to[List]
+  count <- sql"SELECT COUNT(*) FROM users".query[Long].unique
+yield (users, count)).readOnly(connector)
 ```
 
-**after**
+### 8. 新機能
 
-```scala 3
-sql"SELECT id, name, age FROM user".query[(Long, String, Int)].to[List].readOnly(connection)
-sql"SELECT id, name, age FROM user WHERE id = ${1L}".query[User].to[Option].readOnly(connection)
-```
+#### CircuitBreaker
 
-### AUTO INCREMENT値取得メソッド命名変更
+コネクションプールには、データベース障害時の保護のための CircuitBreaker が組み込まれています：
 
-更新 API で AUTO INCREMENT 列によって生成された値を変換する API `updateReturningAutoGeneratedKey` の名前が `returning` に変更されました。
+- 連続した失敗後に自動的に接続試行を停止
+- 指数バックオフによる段階的な回復
+- アプリケーションとデータベースの両方を保護
 
-これはMySQLの特徴で、MySQLはデータ挿入時にAUTO INCREMENTで生成された値を返しますが、他のRDBは動作が異なり、AUTO INCREMENTで生成された値以外の値を返すことがあります。
-API 名は、将来の拡張を考慮して、限定的な API 名をより拡張しやすくするために早い段階で変更されました。
+#### アダプティブプールサイジング
 
-**before**
-
-```scala 3
-sql"INSERT INTO `table`(`id`, `c1`) VALUES ($None, ${ "column 1" })".updateReturningAutoGeneratedKey[Long]
-```
-
-**after**
-
-```scala 3
-sql"INSERT INTO `table`(`id`, `c1`) VALUES ($None, ${ "column 1" })".returning[Long]
-```
-
-### クエリビルダーの構築方法
-
-以前まではクエリビルダーはテーブルスキーマを構築しなければ使用することができませんでした。
-
-今回の更新で、より簡易的にクエリビルダーを使用できるように変更を行いました。
-
-**before**
-
-まずモデルに対応したテーブルスキーマを作成し、
-
-```scala 3
-case class User(
-  id: Long,
-  name: String,
-  age: Option[Int],
-)
-
-val userTable = Table[User]("user")(                 // CREATE TABLE `user` (
-  column("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY), //   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  column("name", VARCHAR(255)),                      //   `name` VARCHAR(255) NOT NULL,
-  column("age", INT.UNSIGNED.DEFAULT(None)),         //   `age` INT unsigned DEFAULT NULL
-)
-```
-
-次にテーブルスキーマを使用して`TableQuery`の構築を行います。
-
-```scala 3
-val tableQuery = TableQuery[IO, User](userTable)
-```
-
-最後にクエリ構築を行っていました。
-
-```scala 3
-val result: IO[List[User]] = connection.use { conn =>
-  tableQuery.selectAll.toList[User].readOnly(conn)
-  // "SELECT `id`, `name`, `age` FROM user"
-}
-```
-
-**after**
-
-今回の変更によって、モデルを構築し
-
-```scala 3
-import ldbc.dsl.codec.Codec
-import ldbc.query.builder.Table
-
-case class User(
-  id: Long,
-  name: String,
-  age: Option[Int],
-) derives Table
-object User:
-  given Codec[User] = Codec.derived[User]
-```
-
-次に`Table`を初期化を行います。
-
-```scala 3
-import ldbc.query.builder.Table
-
-val userTable = TableQuery[User]
-```
-
-最後にクエリ構築を行うことで利用可能となります。
+負荷に基づいてプールサイズを動的に調整：
 
 ```scala
-val result: IO[List[User]] = provider.use { conn =>
-  userTable.selectAll.query.to[List].readOnly(conn)
-  // "SELECT `id`, `name`, `age` FROM user"
-}
+val config = MySQLConfig.default
+  // ... 他の設定
+  .setAdaptiveSizing(true)
+  .setAdaptiveInterval(1.minute)
 ```
 
-#### Schemaを使用したクエリビルダーの構築
+#### リーク検出
 
-以前までのスキーマを模したTableの構築方法は、Schemaプロジェクトを使用してテーブル型を構築する方法に変わります。
-以下では、Userモデルに対応するTable型の構築について見ていきます。
-
-```scala 3
-case class User(
-  id: Long,
-  name: String,
-  age: Option[Int],
-)
-```
-
-**Before**
-
-これまでは、Tableのインスタンスを直接作成する必要があった。Tableの引数には、Userクラスが持つプロパティと同じ順序で対応するカラムを渡す必要があり、カラムのデータ型も設定することが必須だった。
-
-このテーブル型を使ったTableQueryは、型安全なアクセスが可能なDynamicを使って実装したが、開発ツールでは補完ができなかった。
-
-また、この構築方法は、クラス生成に比べてコンパイル時間が少し遅かった。
-
-```scala 3
-val userTable = Table[User]("user")(
-  column("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY),
-  column("name", VARCHAR(255)),
-  column("age", INT.UNSIGNED.DEFAULT(None)),
-)
-```
-
-**After**
-
-今回の修正では、Table型の生成は、Tableを継承してクラスを作成する方法に変更された。また、カラムのデータ型は必須ではなくなり、実装者が任意に設定できるようになりました。
-
-このようにSlickと同様の構築方法に変更することで、実装者にとってより馴染みやすいものになっています。
-
-```scala 3
-class UserTable extends Table[User]("user"):
-  def id: Column[Long] = column[Long]("id")
-  def name: Column[String] = column[String]("name")
-  def age: Column[Option[Int]] = column[Option[Int]]("age")
-
-  override def * : Column[User] = (id *: name *: age).to[User]
-```
-
-カラムのデータ型はまだ設定できます。この設定は、たとえば、このテーブル・クラスを使ってスキーマを生成するときに使われます。
-
-```scala 3
-class UserTable extends Table[User]("user"):
-  def id: Column[Long] = column[Long]("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY)
-  def name: Column[String] = column[String]("name", VARCHAR(255))
-  def age: Column[Option[Int]] = column[Option[Int]]("age", INT.UNSIGNED.DEFAULT(None))
-
-  override def * : Column[User] = (id *: name *: age).to[User]
-```
-
-また、データ型を表現したカラム定義方法も存在します。上記の定義方法は以下のように書き換えることが可能です。
-この定義方法では、カラム名を変数名として使用できるためカラム名を引数として渡す必要はありません。
-
-```diff
-class UserTable extends Table[User]("user"):
--  def id: Column[Long] = column[Long]("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY)
--  def name: Column[String] = column[String]("name", VARCHAR(255))
--  def age: Column[Option[Int]] = column[Option[Int]]("age", INT.UNSIGNED.DEFAULT(None))
-+  def id: Column[Long] = bigint().autoIncrement.primaryKey
-+  def name: Column[String] = varchar(255)
-+  def age: Column[Option[Int]] = int().unsigned.defaultNull
-
-  override def * : Column[User] = (id *: name *: age).to[User]
-```
-
-カラム名はNamingを暗黙的に渡すことで書式を変更することができます。
-デフォルトはキャメルケースですが、パスカルケースに変更するには以下のようにします。
-
-```scala 3
-class UserTable extends Table[User]("user"):
-  given Naming = Naming.PASCAL
-
-  def id: Column[Long] = bigint().autoIncrement.primaryKey
-  def name: Column[String] = varchar(255)
-  def age: Column[Option[Int]] = int().unsigned.defaultNull
-
-  override def * : Column[User] = (id *: name *: age).to[User]
-```
-
-特定のカラムの書式を変更したい場合は、カラム名を引数として渡すことで定義できます。
-
-```scala 3
-class UserTable extends Table[User]("user"):
-  def id: Column[Long] = bigint("ID").autoIncrement.primaryKey
-  def name: Column[String] = varchar("NAME", 255)
-  def age: Column[Option[Int]] = int("AGE").unsigned.defaultNull
-
-  override def * : Column[User] = (id *: name *: age).to[User]
-```
-
-### カスタムデータ型のサポート
-
-ユーザー定義のデータ型を使用する際は、`ResultSetReader`と`Parameter`を使用してカスタムデータ型をサポートしていました。
-
-今回の更新で、`ResultSetReader`と`Parameter`を使用してカスタムデータ型をサポートする方法が変更されました。
-
-#### Encoder
-
-クエリ文字列に動的に埋め込むために、`Parameter`から`Encoder`に変更。
-
-これにより、ユーザはEffect Typeを受け取るための冗長な処理を記述する必要がなくなり、よりシンプルな実装とカスタムデータ型のパラメータとしての使用が可能になります。
-
-```scala 3
-enum Status(val code: Int, val name: String):
-  case Active   extends Status(1, "Active")
-  case InActive extends Status(2, "InActive")
-```
-
-```diff
--given Parameter[Status] with
--  override def bind[F[_]](
--    statement: PreparedStatement[F],
--    index: Int,
--    status: Status
--  ): F[Unit] = statement.setInt(index, status.code)
-
-+given Encoder[Status] = Encoder[Int].contramap(_.code)
-```
-
-`Encoder`のエンコード処理では、`PreparedStatement`で扱えるScala型しか返すことができません。
-
-現在、以下のタイプがサポートされている。
-
-| Scala Type                | Methods called in PreparedStatement |
-|---------------------------|-------------------------------------|
-| `Boolean`                 | `setBoolean`                        |
-| `Byte`                    | `setByte`                           |
-| `Short`                   | `setShort`                          |
-| `Int`                     | `setInt`                            |
-| `Long`                    | `setLong`                           |
-| `Float`                   | `setFloat`                          |
-| `Double`                  | `setDouble`                         |
-| `BigDecimal`              | `setBigDecimal`                     |
-| `String`                  | `setString`                         |
-| `Array[Byte]`             | `setBytes`                          |
-| `java.time.LocalDate`     | `setDate`                           |
-| `java.time.LocalTime`     | `setTime`                           |
-| `java.time.LocalDateTime` | `setTimestamp`                      |
-| `None`                    | `setNull`                           |
-
-また、Encoderは複数の型を合成して新しい型を作成することができます。
-
-```scala 3
-val encoder: Encoder[(Int, String)] = Encoder[Int] *: Encoder[String]
-```
-
-合成した型は任意のクラスに変換することもできます。
-
-```scala 3
-case class Status(code: Int, name: String)
-given Encoder[Status] = (Encoder[Int] *: Encoder[String]).to[Status]
-```
-
-#### Decoder
-
-`ResultSet`からデータを取得する処理を`ResultSetReader`から`Decoder`に変更。
-
-```diff
--given ResultSetReader[IO, Status] =
--  ResultSetReader.mapping[IO, Int, Status](code => Status.fromCode(code))
-+given Decoder[Status] = Decoder[Int].map(code => Status.fromCode(code))
-```
-
-Decoderも複数の型を合成して新しい型を作成することができます。
-
-```scala 3
-val decoder: Decoder[(Int, String)] = Decoder[Int] *: Decoder[String]
-```
-
-合成した型は任意のクラスに変換することもできます。
-
-```scala 3
-case class Status(code: Int, name: String)
-given Decoder[Status] = (Decoder[Int] *: Decoder[String]).to[Status]
-```
-
-### Codecの導入
-
-`Codec`は、`Encoder`と`Decoder`を組み合わせたもので、`Codec`を使用することで、`Encoder`と`Decoder`を組み合わせることができます。
-
-```scala 3
-enum Status(val code: Int, val name: String):
-  case Active   extends Status(1, "Active")
-  case InActive extends Status(2, "InActive")
-
-given Codec[Status] = Codec[Int].imap(Status.fromCode)(_.code)
-```
-
-Codecも複数の型を合成して新しい型を作成することができます。
-
-```scala 3
-val codec: Codec[(Int, String)] = Codec[Int] *: Codec[String]
-```
-
-合成した型は任意のクラスに変換することもできます。
-
-```scala 3
-case class Status(code: Int, name: String)
-given Codec[Status] = (Codec[Int] *: Codec[String]).to[Status]
-```
-
-Codecは、`Encoder`と`Decoder`を組み合わせたものであるため、それぞれの型への変換処理を行うことができます。
-
-```scala 3
-val encoder: Encoder[Status] = Codec[Status].asEncoder
-val decoder: Decoder[Status] = Codec[Status].asDecoder
-```
-
-今回の変更により、ユーザーは`Codec`を使用して、`Encoder`と`Decoder`を組み合わせることができるようになりました。
-
-これにより、ユーザーは取得したレコードをネストした階層データに変換できます。
+開発環境でのコネクションリークを検出：
 
 ```scala
-case class City(id: Int, name: String, countryCode: String)
-case class Country(code: String, name: String)
-case class CityWithCountry(city: City, country: Country)
-
-sql"SELECT city.Id, city.Name, city.CountryCode, country.Code, country.Name FROM city JOIN country ON city.CountryCode = country.Code".query[CityWithCountry]
+val config = MySQLConfig.default
+  // ... 他の設定
+  .setLeakDetectionThreshold(2.minutes)
 ```
 
-Codecを始め`Encoder`と`Decoder`は暗黙的に解決されるため、ユーザーはこれらの型を明示的に指定する必要はありません。
+#### ストリーミングクエリのサポート
 
-しかし、モデル内に多くのプロパティがある場合、暗黙的な検索は失敗する可能性があります。
+ldbcは`fs2.Stream`を使用した効率的なストリーミングクエリをサポートします。これにより、大量のデータを扱う際のメモリ使用量を抑えることができます。
 
-```shell
-[error]    |Implicit search problem too large.
-[error]    |an implicit search was terminated with failure after trying 100000 expressions.
-[error]    |The root candidate for the search was:
-[error]    |
-[error]    |  given instance given_Decoder_P in object Decoder  for  ldbc.dsl.codec.Decoder[City]}
-```
-
-このような場合は、コンパイルオプションの検索制限を上げると問題が解決することがあります。
-
+**基本的な使用方法:**
 ```scala
-scalacOptions += "-Ximplicit-search-limit:100000"
+import fs2.Stream
+import ldbc.dsl.*
+
+// デフォルトのfetchSize（1）でストリーミング
+val stream: Stream[DBIO, String] = 
+  sql"SELECT name FROM city"
+    .query[String]
+    .stream
+
+// fetchSizeを指定したストリーミング
+val streamWithFetchSize: Stream[DBIO, City] = 
+  sql"SELECT * FROM city"
+    .query[City]
+    .stream(fetchSize = 100)
 ```
 
-しかし、オプションでの制限拡張はコンパイル時間の増幅につながる可能性があります。その場合は、以下のように手動で任意の型を構築することで解決することもできます。
+**実践的な使用例:**
+```scala
+// 大量データの効率的な処理
+val processLargeCities: IO[List[String]] = 
+  sql"SELECT name, population FROM city"
+    .query[(String, Int)]
+    .stream(1000)                    // 1000行ずつ取得
+    .filter(_._2 > 1000000)          // 人口100万人以上
+    .map(_._1)                       // 都市名のみ取得
+    .take(50)                        // 最初の50件まで
+    .compile.toList
+    .readOnly(connector)
 
-```scala 3
-given Decoder[City] = Decoder.derived[City]
-// Or given Decoder[City] = (Decoder[Int] *: Decoder[String] *: Decoder[Int] *: ....).to[City]
-given Encoder[City] = Encoder.derived[City]
-// Or given Encoder[City] = (Encoder[Int] *: Encoder[String] *: Encoder[Int] *: ....).to[City]
+// 集計処理
+val calculateTotal: IO[BigDecimal] = 
+  sql"SELECT amount FROM transactions WHERE year = 2024"
+    .query[BigDecimal]
+    .stream(5000)                    // 5000行ずつ処理
+    .filter(_ > 100)                 // 100円以上の取引
+    .fold(BigDecimal(0))(_ + _)      // 合計を計算
+    .compile.lastOrError
+    .transaction(connector)
 ```
 
-もしくは、`Codec`を使用して`Encoder`と`Decoder`を組み合わせることで解決することもできます。
-
-```scala 3
-given Codec[City] = Codec.derived[City]
-// Or given Codec[City] = (Codec[Int] *: Codec[String] *: Codec[Int] *: ....).to[City]
+**MySQLでの最適化設定:**
+```scala
+// サーバーサイドカーソルを有効化してメモリ効率を向上
+val datasource = MySQLDataSource
+  .build[IO](host, port, user)
+  .setPassword(password)
+  .setDatabase(database)
+  .setUseCursorFetch(true)  // 真のストリーミング処理を実現
 ```
 
-### 列の絞り込み方法の変更
+**ストリーミングのメリット:**
+- **メモリ効率**: 大量データでもメモリ使用量を一定に保てる
+- **早期処理**: データを受信しながら同時に処理できる
+- **中断可能**: 条件に応じて処理を途中で止められる
+- **fs2の豊富な操作**: `filter`、`map`、`take`、`fold`などの関数型操作が利用可能
 
-これまで、列の絞り込みは単にタプルとして使用される列をグループ化してきました。
+## まとめ
 
-```scala 3
-cityTable.select(city => (city.id, city.name))
-```
+0.4.x への移行により、以下のメリットが得られます：
 
-しかし、これには問題がありました。カラムは1つの型パラメータを持つ型です。Scala2ではTupleの数に制限があったため、ボイラープレートか何かでTupleの数をすべて扱えるものを作る必要がありました。
-この場合、動的TupleはTupleまたはTuple.Mapとして扱われるため、Column型にアクセスしたい場合、その型はTupleとしてしか扱えないため、asInstanceOfを使って型をキャストする必要がありました。
-型をキャストすると、もちろん型の安全性が失われコードが複雑になってしまいます。
+1. **パフォーマンスの向上**: 組み込みプーリングによる効率的なコネクション管理
+2. **より直感的な API**: ビルダーパターンによる設定の簡素化
+3. **高度な機能**: CircuitBreaker、アダプティブサイジング、メトリクス追跡
+4. **外部依存の削減**: HikariCP が不要に
 
-この問題を解決するために、同じTypeLevelプロジェクトの一つである[twiddles](https://github.com/typelevel/twiddles)を採用することにしました。
-
-twiddlesを使うことで、カラムをより簡単に合成することができるようになります。
-
-```scala 3
-cityTable.select(city => city.id *: city.name)
-```
-
-また、内部コードではTupleの代わりに`Column[T]`を使用すればよいので、安全でない型キャストは必要なくなります。
-
-Twiddlesはまた、合成結果を別の型に変換することを容易にします。
-
-```scala 3
-case class City(id: Long, name: String)
-
-def id: Column[Int] = column[Int]("ID")
-def name: Column[String] = column[String]("Name")
-
-def city: Column[City] = (id *: name).to[City]
-```
-
-### TableからTableQueryへの変更
-
-これまでは、同じTable型を使って、モデルからテーブル型とテーブル情報を使ってクエリを構築していました。
-
-```scala 3
-case class City(id: Long, name: String) derives Table
-val cityTable = Table[City]
-```
-
-しかしこの実装は、同じ型が2つのものを表すのに使われるため間違った実装をするのは簡単でした。
-
-```scala 3
-cityTable.select(city => city.insert(???))
-```
-
-IDEのような開発ツールは、利用可能なすべてのAPIを補完するため実装者に少なからぬ混乱を引き起こす可能性があります。
-
-この問題を解決するために、Table型とTableQuery型を分離しました。
-
-```scala 3
-case class City(id: Long, name: String) derives Table
-val cityTable = TableQuery[City]
-```
-
-**テーブル名のカスタマイズはTableのderivedで行うことができます**
-
-```scala 3
-case class City(
-  id: Int,
-  name: String,
-  countryCode: String,
-  district: String,
-  population: Int
-)
-
-object City:
-  given Table[City] = Table.derived[City]("city")
-```
-
-### アップデート文の構築方法変更
-
-以前は、Update Statementは更新するカラムごとに1つずつ設定する必要がありました。この実装は、いくつかのカラムを個別に更新したい場合には便利ですが、更新したいカラムが追加されるたびにセットを記述するのは非常に面倒です。
-
-```scala 3
-cityTable
-  .update("id", 1L)
-  .set("name", "Tokyo")
-  .set("population", 1, false)
-```
-
-今回のアップデートにより、カラムを組み合わせることができるようになり、複数のカラムを一緒に指定して更新処理を行うことができるようになりました。
-
-```scala 3
-cityTable
-  .update(city => city.id *: city.name)((1L, "Tokyo"))
-  .set(_.population, 1, false)
-```
-
-今回のアップデートにより、カラムを組み合わせることができるようになり、複数のカラムを一緒に指定して更新処理を行うことができるようになった。setを使用して特定の列のみを更新することは可能です。また、set を使用して更新条件を設定できるため、条件が正の場合にのみ追加カラムを更新するクエリを作成できます。
-
-### テーブル結合の構築方法の変更
-
-以前は、テーブル結合は第2引数に結合条件を設定することで構築されていました。
-
-```scala 3
-cityTable.join(countryTable)((c, co) => c.countryCode === co.code)
-```
-
-この変更により、テーブルの結合条件は`on`APIで設定する必要があります。この変更は内部的な実装変更の結果です。
-
-```scala 3
-cityTable.join(countryTable).on((c, co) => c.countryCode === co.code)
-```
+移行作業は主に API の更新で、機能的には後方互換性が保たれているため、段階的な移行が可能です。
