@@ -9,6 +9,21 @@ laika.metadata.language = en
 
 ldbc-connector is a library designed for Cats Effect that provides high-performance and safe database connection pooling. Unlike traditional JVM thread-based pooling (such as HikariCP), it is designed to fully utilize Cats Effect's fiber-based concurrency model.
 
+@:callout(warning)
+
+**Limitations with Scala Native 0.4.x**
+
+The current Scala Native 0.4.x only supports single-threaded execution. Since the connection pooling functionality in ldbc-connector is designed with multi-threading in mind, when using it with Scala Native 0.4.x, the following issues may occur:
+
+- Concurrent connection management does not work correctly
+- Background tasks (HouseKeeper, AdaptivePoolSizer, etc.) may not execute as expected
+- Concurrent connections are effectively limited to 1
+- Deadlocks or unexpected behavior may occur
+
+Scala Native 0.5.x is planned to support multi-threading, but until then, using connection pooling with Scala Native is not recommended. Instead, we recommend creating and using a new connection for each database operation.
+
+@:@
+
 ## Architecture Overview
 
 ![Connection Pool Architecture](../../img/pooling/ConnectionPoolWithCircuitBreaker.svg)

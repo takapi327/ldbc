@@ -286,6 +286,16 @@ Using these methods, you can perform database operations while safely managing t
 
 Starting from version 0.4.0, ldbc-connector provides built-in connection pooling capabilities. Connection pooling is essential for production applications as it significantly improves performance by reusing existing database connections instead of creating new ones for each request.
 
+@:callout(warning)
+
+**Limitations with Scala Native 0.4.x**
+
+The current Scala Native 0.4.x only supports single-threaded execution. Since the connection pooling functionality in ldbc-connector is designed with multi-threading in mind, when using it with Scala Native 0.4.x, connection pooling may not work correctly.
+
+Scala Native 0.5.x is planned to support multi-threading, but until then, using connection pooling with Scala Native is not recommended. Instead, we recommend creating and using a new connection for each database operation.
+
+@:@
+
 ### Why Use Connection Pooling?
 
 Creating a new database connection is an expensive operation that involves:

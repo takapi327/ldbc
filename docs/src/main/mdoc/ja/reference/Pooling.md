@@ -9,6 +9,21 @@ laika.metadata.language = ja
 
 ldbc-connectorは、高性能で安全なデータベースコネクションプーリングを提供する、Cats Effect向けに設計されたライブラリです。JVMの伝統的なスレッドベースのプーリング（HikariCPなど）とは異なり、Cats Effectのファイバーベースの並行性モデルを最大限に活用した設計となっています。
 
+@:callout(warning)
+
+**Scala Native 0.4.x での制限事項**
+
+現在のScala Native 0.4.xはシングルスレッド実行のみをサポートしています。ldbc-connectorのコネクションプーリング機能はマルチスレッド前提で設計されているため、Scala Native 0.4.xで使用する場合、以下のような問題が発生する可能性があります：
+
+- 並行接続の管理が正しく動作しない
+- バックグラウンドタスク（HouseKeeper、AdaptivePoolSizer等）が期待通りに実行されない
+- 同時接続数が実質的に1に制限される
+- デッドロックや予期しない動作が発生する可能性がある
+
+Scala Native 0.5.xではマルチスレッドがサポートされる予定ですが、それまではScala Nativeでコネクションプーリングを使用することは推奨されません。代わりに、接続ごとに新しいコネクションを作成して使用することをお勧めします。
+
+@:@
+
 ## アーキテクチャ概要
 
 ![Connection Pool Architecture](../../img/pooling/ConnectionPoolWithCircuitBreaker.svg)
