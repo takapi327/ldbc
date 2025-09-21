@@ -52,6 +52,11 @@ trait PoolMetricsTracker[F[_]]:
   def recordLeak(): F[Unit]
 
   /**
+   * Record a connection removal.
+   */
+  def recordRemoval(): F[Unit]
+
+  /**
    * Update a gauge metric.
    * 
    * @param name the name of the gauge
@@ -84,6 +89,7 @@ object PoolMetricsTracker:
     def recordCreation(duration:    FiniteDuration):      F[Unit]        = Applicative[F].unit
     def recordTimeout():                                  F[Unit]        = Applicative[F].unit
     def recordLeak():                                     F[Unit]        = Applicative[F].unit
+    def recordRemoval():                                  F[Unit]        = Applicative[F].unit
     def updateGauge(name:           String, value: Long): F[Unit]        = Applicative[F].unit
     def getMetrics:                                       F[PoolMetrics] = Applicative[F].pure(PoolMetrics.empty)
 
@@ -143,6 +149,8 @@ object PoolMetricsTracker:
     override def recordTimeout(): F[Unit] = timeouts.update(_ + 1)
 
     override def recordLeak(): F[Unit] = leaks.update(_ + 1)
+
+    override def recordRemoval(): F[Unit] = removals.update(_ + 1)
 
     override def updateGauge(name: String, value: Long): F[Unit] =
       gauges.update(_.updated(name, value))

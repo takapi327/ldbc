@@ -529,6 +529,7 @@ object PooledDataSource:
                idleConnections = state.idleConnections - pooled.id
              )
            }
+      _ <- metricsTracker.recordRemoval()
     yield ()
 
     /**
