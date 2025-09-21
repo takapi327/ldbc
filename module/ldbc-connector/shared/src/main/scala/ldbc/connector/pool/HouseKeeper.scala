@@ -126,13 +126,13 @@ object HouseKeeper:
           pooled.state.get.flatMap {
             case ConnectionState.Idle =>
               pool.poolLogger.debug(
-                s"Removing expired connection ${pooled.id} (age: ${(now - pooled.createdAt) / 1000}s, maxLifetime: ${config.maxLifetime})"
+                s"Removing expired connection ${ pooled.id } (age: ${ (now - pooled.createdAt) / 1000 }s, maxLifetime: ${ config.maxLifetime })"
               ) >>
                 pool.removeConnection(pooled)
             case ConnectionState.InUse =>
               // Mark for removal after use
               pool.poolLogger.debug(
-                s"Marking in-use connection ${pooled.id} for removal after use (expired)"
+                s"Marking in-use connection ${ pooled.id } for removal after use (expired)"
               ) >>
                 pooled.state.set(ConnectionState.Removed)
             case _ =>

@@ -245,14 +245,14 @@ object PooledDataSource:
 
     override def close: F[Unit] =
       poolLogger.info(
-        s"Closing connection pool (host: $host:$port${database.map(d => s", database: $d").getOrElse("")})"
+        s"Closing connection pool (host: $host:$port${ database.map(d => s", database: $d").getOrElse("") })"
       ) >>
         poolState.modify { state =>
           val newState = state.copy(closed = true)
           val closeAll = state.connections.traverse_ { pooled =>
             pooled.finalizer.attempt.flatMap {
               case Left(error) =>
-                poolLogger.debug(s"Error closing connection ${pooled.id}: ${error.getMessage}")
+                poolLogger.debug(s"Error closing connection ${ pooled.id }: ${ error.getMessage }")
               case Right(_) =>
                 Temporal[F].unit
             }
@@ -279,10 +279,11 @@ object PooledDataSource:
               for
                 // Check if validation is needed
                 shouldValidate <- needsValidation(pooled)
-                valid <- if (shouldValidate) { 
+                valid          <- if shouldValidate then {
                            validateConnection(pooled.connection).flatTap {
                              case true  => Temporal[F].unit
-                             case false poolLogger.warn(s"Connection ${pooled.id} failed validation, removing from pool")
+                             case false =>
+                               poolLogger.warn(s"Connection ${ pooled.id } failed validation, removing from pool")
                            }
                          } else Temporal[F].pure(true)
                 result <- if !valid then {
@@ -304,7 +305,7 @@ object PooledDataSource:
                                          pooled.state.get.flatMap {
                                            case ConnectionState.InUse =>
                                              poolLogger.warn(
-                                               s"Possible connection leak detected: Connection ${pooled.id} has been in use for longer than $threshold"
+                                               s"Possible connection leak detected: Connection ${ pooled.id } has been in use for longer than $threshold"
                                              ) >>
                                                metricsTracker.recordLeak()
                                            case _ => Temporal[F].unit
@@ -331,14 +332,14 @@ object PooledDataSource:
                 else
                   // Count active connections for more detailed error message
                   currentState.connections.traverse(_.state.get).flatMap { states =>
-                    val activeCount = states.count(_ == ConnectionState.InUse)
-                    val idleCount   = states.count(_ == ConnectionState.Idle)
+                    val activeCount  = states.count(_ == ConnectionState.InUse)
+                    val idleCount    = states.count(_ == ConnectionState.Idle)
                     val errorMessage =
                       s"Connection acquisition timeout after $connectionTimeout " +
-                        s"(host: $host:$port, db: ${database.getOrElse("none")}, " +
-                        s"pool: ${currentState.connections.size}/${maxConnections}, " +
+                        s"(host: $host:$port, db: ${ database.getOrElse("none") }, " +
+                        s"pool: ${ currentState.connections.size }/${ maxConnections }, " +
                         s"active: $activeCount, idle: $idleCount, " +
-                        s"waiting: ${currentState.waitQueue.size})"
+                        s"waiting: ${ currentState.waitQueue.size })"
                     metricsTracker.recordTimeout() *>
                       poolLogger.error(errorMessage) *>
                       Temporal[F].raiseError(new Exception(errorMessage))
@@ -374,10 +375,13 @@ object PooledDataSource:
                 for
                   // Skip validation if connection was recently validated
                   shouldValidate <- needsValidation(pooled)
-                  valid <- if (shouldValidate) {
+                  valid          <- if shouldValidate then {
                              validateConnection(pooled.connection).flatTap {
-                               case true => Temporal[F].unit
-                               case false => poolLogger.warn(s"Connection ${pooled.id} failed validation on release, removing from pool")
+                               case true  => Temporal[F].unit
+                               case false =>
+                                 poolLogger.warn(
+                                   s"Connection ${ pooled.id } failed validation on release, removing from pool"
+                                 )
                              }
                            } else Temporal[F].pure(true)
                   expired <- isExpired(pooled)
@@ -396,7 +400,7 @@ object PooledDataSource:
                 yield ()
               case Left(error) =>
                 // Reset failed, remove from pool
-                poolLogger.warn(s"Failed to reset connection ${pooled.id} on release: ${error.getMessage}") >>
+                poolLogger.warn(s"Failed to reset connection ${ pooled.id } on release: ${ error.getMessage }") >>
                   removeConnection(pooled) *>
                   Clock[F].monotonic.flatMap { endTime =>
                     metricsTracker.recordUsage(endTime - startTime)
@@ -507,7 +511,9 @@ object PooledDataSource:
           validation
             .timeout(validationTimeout)
             .handleError { error =>
-              poolLogger.debug(s"Connection validation failed or timed out after $validationTimeout: ${error.getMessage}")
+              poolLogger.debug(
+                s"Connection validation failed or timed out after $validationTimeout: ${ error.getMessage }"
+              )
               false
             }
 
@@ -524,7 +530,9 @@ object PooledDataSource:
           validation
             .timeout(validationTimeout)
             .handleError { error =>
-              poolLogger.debug(s"Connection validation failed or timed out after $validationTimeout: ${error.getMessage}")
+              poolLogger.debug(
+                s"Connection validation failed or timed out after $validationTimeout: ${ error.getMessage }"
+              )
               false
             }
 
@@ -560,18 +568,18 @@ object PooledDataSource:
 
     override def removeConnection(pooled: PooledConnection[F]): F[Unit] = for
       currentState <- pooled.state.get
-      _            <- poolLogger.debug(s"Removing connection ${pooled.id} from pool (state: $currentState)")
+      _            <- poolLogger.debug(s"Removing connection ${ pooled.id } from pool (state: $currentState)")
       _            <- pooled.state.set(ConnectionState.Removed)
       _            <- connectionBag.remove(pooled)
       _            <- pooled.finalizer.attempt.void // Use the finalizer instead of close()
       _            <- pooled.leakDetection.get.flatMap(_.traverse_(_.cancel))
       _            <- poolState.update { state =>
-                        state.copy(
-                          connections     = state.connections.filterNot(_ == pooled),
-                          idleConnections = state.idleConnections - pooled.id
-                        )
-                      }
-      _            <- metricsTracker.recordRemoval()
+             state.copy(
+               connections     = state.connections.filterNot(_ == pooled),
+               idleConnections = state.idleConnections - pooled.id
+             )
+           }
+      _ <- metricsTracker.recordRemoval()
     yield ()
 
     /**
