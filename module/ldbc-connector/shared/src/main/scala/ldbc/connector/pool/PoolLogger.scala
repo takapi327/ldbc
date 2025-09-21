@@ -109,38 +109,39 @@ object PoolLogger:
    * @return a new console-based PoolLogger
    */
   def console[F[_]: Console: Applicative](logDebug: Boolean = false): PoolLogger[F] = new PoolLogger[F]:
-    
+
     override def logPoolState(poolName: String, status: PoolStatus, metrics: Option[PoolMetrics]): F[Unit] =
-      val baseStats = s"[$poolName] - stats (total=${status.total}, idle=${status.idle}, active=${status.active}, waiting=${status.waiting})"
-      
+      val baseStats =
+        s"[$poolName] - stats (total=${ status.total }, idle=${ status.idle }, active=${ status.active }, waiting=${ status.waiting })"
+
       val fullMessage = metrics match
         case Some(m) =>
           val avgAcquisition = m.acquisitionTime.toMillis
           val timeouts       = m.timeouts
           val leaks          = m.leaks
-          s"$baseStats [avgAcquisition=${avgAcquisition}ms, timeouts=$timeouts, leaks=$leaks]"
+          s"$baseStats [avgAcquisition=${ avgAcquisition }ms, timeouts=$timeouts, leaks=$leaks]"
         case None =>
           baseStats
-      
+
       if logDebug then debug(fullMessage)
       else Applicative[F].unit
-    
+
     override def debug(message: String): F[Unit] =
       if logDebug then Console[F].println(s"[DEBUG] $message")
       else Applicative[F].unit
-    
+
     override def info(message: String): F[Unit] =
       Console[F].println(s"[INFO] $message")
-    
+
     override def warn(message: String): F[Unit] =
       Console[F].errorln(s"[WARN] $message")
-    
+
     override def error(message: String, error: Option[Throwable]): F[Unit] =
       val errorMessage = error match
-        case Some(e) => s"$message: ${e.getMessage}"
+        case Some(e) => s"$message: ${ e.getMessage }"
         case None    => message
       Console[F].errorln(s"[ERROR] $errorMessage")
-    
+
     override def isDebugEnabled: F[Boolean] =
       Applicative[F].pure(logDebug)
 
@@ -154,15 +155,15 @@ object PoolLogger:
    * @return a PoolLogger that performs no operations
    */
   def noop[F[_]: Applicative]: PoolLogger[F] = new PoolLogger[F]:
-    override def logPoolState(poolName: String, status: PoolStatus, metrics: Option[PoolMetrics]): F[Unit] = 
+    override def logPoolState(poolName: String, status: PoolStatus, metrics: Option[PoolMetrics]): F[Unit] =
       Applicative[F].unit
-    override def debug(message: String): F[Unit] = 
+    override def debug(message: String): F[Unit] =
       Applicative[F].unit
-    override def info(message: String): F[Unit] = 
+    override def info(message: String): F[Unit] =
       Applicative[F].unit
-    override def warn(message: String): F[Unit] = 
+    override def warn(message: String): F[Unit] =
       Applicative[F].unit
-    override def error(message: String, error: Option[Throwable]): F[Unit] = 
+    override def error(message: String, error: Option[Throwable]): F[Unit] =
       Applicative[F].unit
-    override def isDebugEnabled: F[Boolean] = 
+    override def isDebugEnabled: F[Boolean] =
       Applicative[F].pure(false)

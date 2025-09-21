@@ -16,8 +16,8 @@ class PoolLoggerTest extends CatsEffectSuite:
 
   test("PoolLogger.console should log pool state when debug is enabled") {
     val logger = PoolLogger.console[IO](logDebug = true)
-    
-    val status = PoolStatus(total = 10, active = 3, idle = 7, waiting = 0)
+
+    val status  = PoolStatus(total = 10, active = 3, idle = 7, waiting = 0)
     val metrics = PoolMetrics(
       acquisitionTime   = 100.milliseconds,
       usageTime         = 500.milliseconds,
@@ -29,7 +29,7 @@ class PoolLoggerTest extends CatsEffectSuite:
       totalCreations    = 10,
       totalRemovals     = 0
     )
-    
+
     for
       _       <- logger.logPoolState("test-pool", status, Some(metrics))
       enabled <- logger.isDebugEnabled
@@ -38,9 +38,9 @@ class PoolLoggerTest extends CatsEffectSuite:
 
   test("PoolLogger.console should not log when debug is disabled") {
     val logger = PoolLogger.console[IO](logDebug = false)
-    
+
     val status = PoolStatus(total = 10, active = 3, idle = 7, waiting = 0)
-    
+
     for
       _       <- logger.logPoolState("test-pool", status, None)
       enabled <- logger.isDebugEnabled
@@ -49,9 +49,9 @@ class PoolLoggerTest extends CatsEffectSuite:
 
   test("PoolLogger.noop should not perform any operations") {
     val logger = PoolLogger.noop[IO]
-    
+
     val status = PoolStatus(total = 10, active = 3, idle = 7, waiting = 0)
-    
+
     for
       _       <- logger.logPoolState("test-pool", status, None)
       _       <- logger.debug("debug message")
@@ -66,8 +66,8 @@ class PoolLoggerTest extends CatsEffectSuite:
     // This test would need to capture console output to verify formatting
     // For now, we just ensure it doesn't throw exceptions
     val logger = PoolLogger.console[IO](logDebug = true)
-    
-    val status = PoolStatus(total = 10, active = 3, idle = 7, waiting = 2)
+
+    val status  = PoolStatus(total = 10, active = 3, idle = 7, waiting = 2)
     val metrics = PoolMetrics(
       acquisitionTime   = 150.milliseconds,
       usageTime         = 750.milliseconds,
@@ -79,13 +79,13 @@ class PoolLoggerTest extends CatsEffectSuite:
       totalCreations    = 15,
       totalRemovals     = 5
     )
-    
+
     logger.logPoolState("production-pool", status, Some(metrics))
   }
 
   test("PoolLogger should handle all log levels") {
     val logger = PoolLogger.console[IO](logDebug = true)
-    
+
     for
       _ <- logger.debug("Debug message")
       _ <- logger.info("Info message")

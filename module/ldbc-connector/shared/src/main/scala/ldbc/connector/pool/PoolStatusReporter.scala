@@ -65,7 +65,7 @@ object PoolStatusReporter:
     poolLogger:     PoolLogger[F],
     metricsTracker: PoolMetricsTracker[F]
   ): PoolStatusReporter[F] = new PoolStatusReporter[F]:
-    
+
     override def start(pool: PooledDataSource[F], poolName: String): Resource[F, Unit] =
       val task = Stream
         .fixedDelay[F](reportInterval)
@@ -77,11 +77,11 @@ object PoolStatusReporter:
         }
         .compile
         .drain
-      
+
       Resource
         .make(task.start)(_.cancel)
         .void
-    
+
     private def reportStatus(pool: PooledDataSource[F], poolName: String): F[Unit] =
       for
         status  <- pool.status
@@ -99,4 +99,5 @@ object PoolStatusReporter:
    * @tparam F the effect type (must have Applicative instance)
    * @return a PoolStatusReporter that performs no operations
    */
-  def noop[F[_]: Applicative]: PoolStatusReporter[F] = (pool: PooledDataSource[F], poolName: String) => Resource.pure[F, Unit](())
+  def noop[F[_]: Applicative]: PoolStatusReporter[F] = (pool: PooledDataSource[F], poolName: String) =>
+    Resource.pure[F, Unit](())
