@@ -163,7 +163,7 @@ trait ConnectionPoolDslTest extends CatsEffectSuite:
     for
       tracker <- metricsTracker
       pool    <- PooledDataSource
-                .fromConfig[IO](config.setMinConnections(1).setMaxConnections(3), None, Some(tracker))
+                .fromConfig[IO](config.setMinConnections(1).setMaxConnections(3), Some(tracker))
                 .allocated
                 .map(_._1)
 
