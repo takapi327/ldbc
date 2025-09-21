@@ -370,6 +370,52 @@ trait MySQLConfig:
    */
   def setConnectionTestQuery(query: String): MySQLConfig
 
+  /**
+   * Gets whether pool state logging is enabled.
+   * When enabled, the pool will periodically log its state (connections, active, idle, waiting).
+   * @return true if pool state logging is enabled
+   */
+  def logPoolState: Boolean
+
+  /**
+   * Sets whether to enable periodic logging of pool state.
+   * When enabled, the pool will log statistics at regular intervals to help monitor pool health.
+   * This is useful for debugging connection pool issues and monitoring pool usage patterns.
+   * @param enabled true to enable pool state logging
+   * @return a new MySQLConfig with the updated setting
+   */
+  def setLogPoolState(enabled: Boolean): MySQLConfig
+
+  /**
+   * Gets the interval for pool state logging.
+   * @return the logging interval duration
+   */
+  def poolStateLogInterval: FiniteDuration
+
+  /**
+   * Sets the interval at which pool state is logged.
+   * This controls how often the pool logs its current state when logging is enabled.
+   * Shorter intervals provide more granular monitoring but may produce excessive logs.
+   * @param interval the logging interval (must be > 0)
+   * @return a new MySQLConfig with the updated setting
+   * @throws IllegalArgumentException if interval <= 0
+   */
+  def setPoolStateLogInterval(interval: FiniteDuration): MySQLConfig
+
+  /**
+   * Gets the name of the connection pool for logging purposes.
+   * @return the pool name
+   */
+  def poolName: String
+
+  /**
+   * Sets the name of the connection pool.
+   * This name is used in log messages to identify the pool when multiple pools are in use.
+   * @param name the pool name
+   * @return a new MySQLConfig with the updated setting
+   */
+  def setPoolName(name: String): MySQLConfig
+
 /**
  * Companion object for MySQLConfig providing factory methods.
  */
@@ -406,7 +452,10 @@ object MySQLConfig:
     adaptiveInterval:        FiniteDuration                        = 1.minute,
     aliveBypassWindow:       FiniteDuration                        = 500.milliseconds,
     keepaliveTime:           Option[FiniteDuration]                = Some(2.minutes),
-    connectionTestQuery:     Option[String]                        = None
+    connectionTestQuery:     Option[String]                        = None,
+    logPoolState:            Boolean                               = false,
+    poolStateLogInterval:    FiniteDuration                        = 30.seconds,
+    poolName:                String                                = "ldbc-pool"
   ) extends MySQLConfig:
 
     override def setHost(host:                   String):             MySQLConfig = copy(host = host)
@@ -439,6 +488,9 @@ object MySQLConfig:
     override def setAliveBypassWindow(window:     FiniteDuration): MySQLConfig = copy(aliveBypassWindow = window)
     override def setKeepaliveTime(time:           FiniteDuration): MySQLConfig = copy(keepaliveTime = Some(time))
     override def setConnectionTestQuery(query:    String):         MySQLConfig = copy(connectionTestQuery = Some(query))
+    override def setLogPoolState(enabled:         Boolean):        MySQLConfig = copy(logPoolState = enabled)
+    override def setPoolStateLogInterval(interval: FiniteDuration): MySQLConfig = copy(poolStateLogInterval = interval)
+    override def setPoolName(name:                 String):         MySQLConfig = copy(poolName = name)
 
   /**
    * Creates a default MySQLConfig with standard connection parameters.

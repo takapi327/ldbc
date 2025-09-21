@@ -98,6 +98,9 @@ trait PooledDataSource[F[_]] extends DataSource[F]:
   /** Background fiber performing keepalive validation. */
   def keepaliveExecutor: Option[Fiber[F, Throwable, Unit]]
 
+  /** Background fiber performing pool status reporting. */
+  def statusReporter: Option[Fiber[F, Throwable, Unit]]
+
   /** The alive bypass window for validation optimization. */
   def aliveBypassWindow: FiniteDuration
 
@@ -106,6 +109,9 @@ trait PooledDataSource[F[_]] extends DataSource[F]:
 
   /** The connection test query. */
   def connectionTestQuery: Option[String]
+
+  /** The pool logger for logging pool events. */
+  def poolLogger: PoolLogger[F]
 
   /**
    * Returns the current status of the pool.
@@ -209,11 +215,13 @@ object PooledDataSource:
     houseKeeper:             Option[Fiber[F, Throwable, Unit]],
     adaptiveSizer:           Option[Fiber[F, Throwable, Unit]],
     keepaliveExecutor:       Option[Fiber[F, Throwable, Unit]],
+    statusReporter:          Option[Fiber[F, Throwable, Unit]],
     connectionBag:           ConcurrentBag[F, PooledConnection[F]],
     circuitBreaker:          CircuitBreaker[F],
     aliveBypassWindow:       FiniteDuration,
     keepaliveTime:           Option[FiniteDuration],
-    connectionTestQuery:     Option[String]
+    connectionTestQuery:     Option[String],
+    poolLogger:              PoolLogger[F]
   ) extends PooledDataSource[F]:
     given Tracer[F] = tracer.getOrElse(Tracer.noop[F])
 
@@ -621,9 +629,13 @@ object PooledDataSource:
   ): Resource[F, PooledDataSource[F]] =
 
     val tracker           = metricsTracker.getOrElse(PoolMetricsTracker.noop[F])
+    val poolLogger        = PoolLogger.console[F](config.debug || config.logPoolState)
     val houseKeeper       = HouseKeeper.fromAsync[F](config, tracker)
     val adaptivePoolSizer = AdaptivePoolSizer.fromAsync[F](config, tracker)
     val keepaliveExecutor = config.keepaliveTime.map(KeepaliveExecutor.fromAsync[F](_, tracker))
+    val statusReporter    =
+      if config.logPoolState then Some(PoolStatusReporter[F](config.poolStateLogInterval, poolLogger, tracker))
+      else None
 
     def createPool = for
       poolState      <- Ref[F].of(PoolState.empty[F])
@@ -663,11 +675,13 @@ object PooledDataSource:
       houseKeeper             = None,
       adaptiveSizer           = None,
       keepaliveExecutor       = None,
+      statusReporter          = None,
       connectionBag           = connectionBag,
       circuitBreaker          = circuitBreaker,
       aliveBypassWindow       = config.aliveBypassWindow,
       keepaliveTime           = config.keepaliveTime,
       connectionTestQuery     = config.connectionTestQuery,
+      poolLogger              = poolLogger,
       before                  = before,
       after                   = after
     )
@@ -692,7 +706,8 @@ object PooledDataSource:
           Some(houseKeeper.start(pool)),
           if config.adaptiveSizing then Some(adaptivePoolSizer.start(pool))
           else None,
-          keepaliveExecutor.map(_.start(pool))
+          keepaliveExecutor.map(_.start(pool)),
+          statusReporter.map(_.start(pool, config.poolName))
         ).flatten
 
         backgroundTasks.sequence_.as(pool)
