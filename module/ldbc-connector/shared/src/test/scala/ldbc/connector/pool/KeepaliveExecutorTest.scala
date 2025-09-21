@@ -130,9 +130,11 @@ class KeepaliveExecutorTest extends FTestPlatform:
     override def houseKeeper            = None
     override def adaptiveSizer          = None
     override def keepaliveExecutor      = None
+    override def statusReporter         = None
     override def aliveBypassWindow      = 0.seconds
     override def keepaliveTime          = None
     override def connectionTestQuery    = None
+    override def poolLogger             = PoolLogger.noop[F]
     override def circuitBreaker         = ???
     override def getConnection          = ???
     override def status                 = poolStateRef.get.map(s =>
