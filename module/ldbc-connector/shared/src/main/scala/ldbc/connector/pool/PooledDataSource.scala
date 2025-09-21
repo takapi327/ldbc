@@ -24,6 +24,7 @@ import org.typelevel.otel4s.trace.Tracer
 import ldbc.sql.DatabaseMetaData
 
 import ldbc.connector.*
+import ldbc.connector.exception.SQLException
 
 import ldbc.DataSource
 
@@ -258,7 +259,7 @@ object PooledDataSource:
             }
           }
           val failWaiters = state.waitQueue.traverse_ { deferred =>
-            deferred.complete(Left(new Exception("Pool closed"))).attempt.void
+            deferred.complete(Left(new SQLException("Pool closed"))).attempt.void
           }
           (newState, closeAll *> failWaiters)
         }.flatten >>
@@ -271,7 +272,7 @@ object PooledDataSource:
 
     private def acquireConnectionWithStartTime(startTime: FiniteDuration): F[Connection[F]] =
       poolState.get.flatMap { state =>
-        if state.closed then Temporal[F].raiseError(new Exception("Pool is closed"))
+        if state.closed then Temporal[F].raiseError(new SQLException("Pool is closed"))
         else
           connectionBag.borrow(connectionTimeout).flatMap {
             case Some(pooled) =>
@@ -342,7 +343,7 @@ object PooledDataSource:
                         s"waiting: ${ currentState.waitQueue.size })"
                     metricsTracker.recordTimeout() *>
                       poolLogger.error(errorMessage) *>
-                      Temporal[F].raiseError(new Exception(errorMessage))
+                      Temporal[F].raiseError(new SQLException(errorMessage))
                   }
               }
           }
@@ -479,7 +480,7 @@ object PooledDataSource:
           _ <- if !added then {
                  poolLogger.warn(s"Cannot create new connection: pool at maximum size ($maxConnections)") >>
                    conn.close().attempt.void *>
-                   Temporal[F].raiseError[Unit](new Exception("Pool reached maximum size"))
+                   Temporal[F].raiseError[Unit](new SQLException("Pool reached maximum size"))
                } else Temporal[F].unit
 
           // Add to concurrent bag only if we're not creating for immediate use
