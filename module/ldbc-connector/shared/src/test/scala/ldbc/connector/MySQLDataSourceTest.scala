@@ -30,7 +30,6 @@ class MySQLDataSourceTest extends FTestPlatform:
     assertEquals(dataSource.host, "localhost")
     assertEquals(dataSource.port, 3306)
     assertEquals(dataSource.user, "root")
-    assertEquals(dataSource.logHandler, None)
     assertEquals(dataSource.password, None)
     assertEquals(dataSource.database, None)
     assertEquals(dataSource.debug, false)

@@ -25,7 +25,6 @@ import ldbc.sql.DatabaseMetaData
 
 import ldbc.connector.*
 
-import ldbc.logging.LogHandler
 import ldbc.DataSource
 
 /**
@@ -186,7 +185,6 @@ object PooledDataSource:
     host:                    String,
     port:                    Int,
     user:                    String,
-    logHandler:              Option[LogHandler[F]]                 = None,
     password:                Option[String]                        = None,
     database:                Option[String]                        = None,
     debug:                   Boolean                               = false,
@@ -724,14 +722,12 @@ object PooledDataSource:
    * properly initialized when acquired and cleanly shut down when released.
    * 
    * @param config the MySQL configuration containing all pool settings
-   * @param logHandler optional handler for logging database operations
    * @param metricsTracker optional tracker for collecting pool metrics (defaults to in-memory tracker)
    * @tparam F the effect type with required type class instances
    * @return a Resource that manages the pooled data source lifecycle
    */
   def fromConfig[F[_]: Async: Network: Console: Hashing: UUIDGen](
     config:         MySQLConfig,
-    logHandler:     Option[LogHandler[F]] = None,
     metricsTracker: Option[PoolMetricsTracker[F]] = None
   ): Resource[F, PooledDataSource[F]] =
     create(config, metricsTracker, UUIDGen[F].randomUUID.map(_.toString))
@@ -749,7 +745,6 @@ object PooledDataSource:
    * to the client. The after hook is called when the connection is returned to the pool.
    * 
    * @param config the MySQL configuration containing all pool settings
-   * @param logHandler optional handler for logging database operations
    * @param metricsTracker optional tracker for collecting pool metrics (defaults to in-memory tracker)
    * @param before optional callback executed before connection use
    * @param after optional callback executed after connection use
@@ -759,7 +754,6 @@ object PooledDataSource:
    */
   def fromConfigWithBeforeAfter[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
     config:         MySQLConfig,
-    logHandler:     Option[LogHandler[F]] = None,
     metricsTracker: Option[PoolMetricsTracker[F]] = None,
     before:         Option[Connection[F] => F[A]] = None,
     after:          Option[(A, Connection[F]) => F[Unit]] = None
