@@ -89,7 +89,6 @@ trait PooledDataSource[F[_]] extends DataSource[F]:
   /** Generates unique identifiers for connections. */
   def idGenerator: F[String]
 
-
   /** The alive bypass window for validation optimization. */
   def aliveBypassWindow: FiniteDuration
 
@@ -737,8 +736,8 @@ object PooledDataSource:
 
     for
       pool <- Resource.eval(createPool)
-      _ <- createMinimumConnections(pool)
-      _ <- createBackgroundResources(pool)
+      _    <- createMinimumConnections(pool)
+      _    <- createBackgroundResources(pool)
     yield pool
 
   /**
