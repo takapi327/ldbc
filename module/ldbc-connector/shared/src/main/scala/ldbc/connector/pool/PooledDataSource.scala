@@ -722,7 +722,7 @@ object PooledDataSource:
         (1 to config.minConnections).toList.traverse_ { _ =>
           pool.createNewConnectionForPool()
         }
-      )(_ => pool.close) // Ensure background tasks are stopped before closing the pool
+      )(_ => pool.close) // Close the pool after minimum connections are no longer needed
 
     def createBackgroundResources(pool: PooledDataSource[F]): Resource[F, Unit] =
       val backgroundResources = List(
