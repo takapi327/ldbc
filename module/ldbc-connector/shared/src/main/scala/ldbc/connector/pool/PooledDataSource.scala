@@ -89,18 +89,6 @@ trait PooledDataSource[F[_]] extends DataSource[F]:
   /** Generates unique identifiers for connections. */
   def idGenerator: F[String]
 
-  /** Background fiber performing pool maintenance tasks. */
-  def houseKeeper: Option[Fiber[F, Throwable, Unit]]
-
-  /** Background fiber performing adaptive pool sizing. */
-  def adaptiveSizer: Option[Fiber[F, Throwable, Unit]]
-
-  /** Background fiber performing keepalive validation. */
-  def keepaliveExecutor: Option[Fiber[F, Throwable, Unit]]
-
-  /** Background fiber performing pool status reporting. */
-  def statusReporter: Option[Fiber[F, Throwable, Unit]]
-
   /** The alive bypass window for validation optimization. */
   def aliveBypassWindow: FiniteDuration
 
@@ -211,10 +199,6 @@ object PooledDataSource:
     metricsTracker:          PoolMetricsTracker[F],
     poolState:               Ref[F, PoolState[F]],
     idGenerator:             F[String],
-    houseKeeper:             Option[Fiber[F, Throwable, Unit]],
-    adaptiveSizer:           Option[Fiber[F, Throwable, Unit]],
-    keepaliveExecutor:       Option[Fiber[F, Throwable, Unit]],
-    statusReporter:          Option[Fiber[F, Throwable, Unit]],
     connectionBag:           ConcurrentBag[F, PooledConnection[F]],
     circuitBreaker:          CircuitBreaker[F],
     aliveBypassWindow:       FiniteDuration,
@@ -722,10 +706,6 @@ object PooledDataSource:
       metricsTracker          = tracker,
       poolState               = poolState,
       idGenerator             = idGenerator,
-      houseKeeper             = None,
-      adaptiveSizer           = None,
-      keepaliveExecutor       = None,
-      statusReporter          = None,
       connectionBag           = connectionBag,
       circuitBreaker          = circuitBreaker,
       aliveBypassWindow       = config.aliveBypassWindow,
@@ -736,32 +716,29 @@ object PooledDataSource:
       after                   = after
     )
 
-    Resource
-      .eval(createPool)
-      .flatMap { pool =>
-        Resource.make {
-          // Initialize minimum connections within the resource scope
-          val init = (1 to config.minConnections).toList.traverse_ { _ =>
-            pool.createNewConnectionForPool()
-          }
-          init.as(pool)
-        } { pool =>
-          // Ensure background tasks are stopped before closing the pool
-          pool.close
+    // Initialize minimum connections within the resource scope
+    def createMinimumConnections(pool: PooledDataSource[F]): Resource[F, Unit] =
+      Resource.make(
+        (1 to config.minConnections).toList.traverse_ { _ =>
+          pool.createNewConnectionForPool()
         }
-      }
-      .flatMap { pool =>
-        // Start background tasks
-        val backgroundTasks = List(
-          Some(houseKeeper.start(pool)),
-          if config.adaptiveSizing then Some(adaptivePoolSizer.start(pool))
-          else None,
-          keepaliveExecutor.map(_.start(pool)),
-          statusReporter.map(_.start(pool, config.poolName))
-        ).flatten
+      )(_ => pool.close) // Close the pool after minimum connections are no longer needed
 
-        backgroundTasks.sequence_.as(pool)
-      }
+    def createBackgroundResources(pool: PooledDataSource[F]): Resource[F, Unit] =
+      val backgroundResources = List(
+        Some(houseKeeper.start(pool)),
+        if config.adaptiveSizing then Some(adaptivePoolSizer.start(pool))
+        else None,
+        keepaliveExecutor.map(_.start(pool)),
+        statusReporter.map(_.start(pool, config.poolName))
+      ).flatten
+      backgroundResources.sequence_
+
+    for
+      pool <- Resource.eval(createPool)
+      _    <- createMinimumConnections(pool)
+      _    <- createBackgroundResources(pool)
+    yield pool
 
   /**
    * Creates a PooledDataSource from a MySQL configuration.
