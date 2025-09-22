@@ -364,6 +364,11 @@ ldbcコネクションプールは豊富な設定オプションを提供しま�
 - **adaptiveSizing**: 負荷に基づく動的プールサイジングを有効化（デフォルト: true）
 - **adaptiveInterval**: プールサイズをチェック・調整する頻度（デフォルト: 30秒）
 
+#### ログ設定
+- **logPoolState**: プール状態の定期的なログ出力を有効化（デフォルト: false）
+- **poolStateLogInterval**: プール状態ログの出力間隔（デフォルト: 30秒）
+- **poolName**: ログ出力時のプール識別名（デフォルト: "ldbc-pool"）
+
 ### 高度な設定例
 
 ```scala
@@ -396,6 +401,11 @@ val advancedConfig = MySQLConfig.default
   .setLeakDetectionThreshold(2.minutes)  // リークされた接続について警告
   .setAdaptiveSizing(true)              // 動的プールサイジングを有効化
   .setAdaptiveInterval(1.minute)        // 1分ごとにプールサイズをチェック
+  
+  // ログ設定
+  .setLogPoolState(true)                // プール状態ログを有効化
+  .setPoolStateLogInterval(1.minute)    // 1分ごとにプール状態をログ出力
+  .setPoolName("production-pool")       // プール名を設定
 
 // プールを作成して使用
 MySQLDataSource.pooling[IO](advancedConfig).use { pool =>
@@ -471,6 +481,58 @@ monitoredPool.use { (pool, tracker) =>
 }
 ```
 
+### プール状態ログの有効化
+
+ldbc-connectorはHikariCPに影響を受けた詳細なプール状態ログを提供します。これにより、プールの動作を可視化し、パフォーマンスの問題を診断できます：
+
+```scala
+import cats.effect.IO
+import ldbc.connector.*
+import scala.concurrent.duration.*
+
+// プールログを有効化した設定
+val loggedPoolConfig = MySQLConfig.default
+  .setHost("localhost")
+  .setPort(3306)
+  .setUser("myuser")
+  .setPassword("mypassword")
+  .setDatabase("mydb")
+  .setMinConnections(5)
+  .setMaxConnections(20)
+  // ログ設定
+  .setLogPoolState(true)                  // プール状態ログを有効化
+  .setPoolStateLogInterval(30.seconds)     // 30秒ごとにログ出力
+  .setPoolName("app-pool")                 // ログ内でプールを識別する名前
+
+// プールを作成
+MySQLDataSource.pooling[IO](loggedPoolConfig).use { pool =>
+  // プールを使用 - 30秒ごとに以下のようなログが出力される：
+  // [INFO] app-pool - Stats (total=5, active=2, idle=3, waiting=0)
+  pool.getConnection.use { conn =>
+    conn.execute("SELECT * FROM users")
+  }
+}
+```
+
+プールログが有効な場合、以下のような情報がログに記録されます：
+
+```
+// プール状態の定期ログ
+[INFO] app-pool - Stats (total=10, active=3, idle=7, waiting=0)
+
+// 接続作成失敗
+[ERROR] Failed to create connection to localhost:3306 (database: mydb): Connection refused
+
+// 接続取得タイムアウト（詳細な診断情報付き）
+[ERROR] Connection acquisition timeout after 30 seconds (host: localhost:3306, db: mydb, pool: 20/20, active: 20, idle: 0, waiting: 5)
+
+// 接続バリデーション失敗
+[WARN] Connection conn-123 failed validation, removing from pool
+
+// 接続リーク検出
+[WARN] Possible connection leak detected: Connection conn-456 has been in use for longer than 2 minutes
+```
+
 ### プールアーキテクチャの機能
 
 ldbcコネクションプールには、いくつかの高度な機能が含まれています：
@@ -493,6 +555,13 @@ ldbcコネクションプールには、いくつかの高度な機能が含ま�
 - 低使用期間中に縮小
 - リソースの無駄を防ぐ
 
+#### 詳細なプールロギング
+HikariCPに影響を受けた包括的なログシステム：
+- **プール状態ログ**: 接続数、アクティブ/アイドル接続、待機キューサイズを定期的に出力
+- **接続ライフサイクルログ**: 接続の作成、検証、削除時に詳細情報を記録
+- **エラー診断**: 接続取得タイムアウト時に詳細なプール状態を出力
+- **リーク検出ログ**: 設定された閾値を超えて使用中の接続を警告
+
 ### ベストプラクティス
 
 1. **保守的な設定から始める**: デフォルト値から始めて、監視に基づいて調整
@@ -500,10 +569,12 @@ ldbcコネクションプールには、いくつかの高度な機能が含ま�
 3. **適切なタイムアウトを設定**: ユーザー体験とリソース保護のバランスを取る
 4. **開発環境でリーク検出を有効化**: 接続リークを早期に発見
 5. **接続テストクエリは控えめに使用**: オーバーヘッドが発生するため、可能な限りMySQLのisValidを使用
-6. **ワークロードを考慮**: 
+6. **本番環境でプールログを有効化**: トラブルシューティングとパフォーマンス分析のため
+7. **ワークロードを考慮**: 
    - 高スループットアプリケーション: より大きなプールサイズ
    - バースト的なワークロード: アダプティブサイジングを有効化
    - 長時間実行クエリ: 接続タイムアウトを増やす
+   - デバッグとトラブルシューティング: プールログを有効化して問題を迅速に特定
 
 ### 非プール接続からの移行
 
