@@ -64,7 +64,7 @@ class CircuitBreakerTest extends FTestPlatform:
       } yield {
         assert(result.isLeft)
         result.left.foreach { error =>
-          assertEquals(error.getMessage, "Circuit breaker is open")
+          assert(error.getMessage.contains("Circuit breaker is open"))
         }
         assertEquals(state, CircuitBreaker.State.Open)
       }
@@ -121,7 +121,7 @@ class CircuitBreakerTest extends FTestPlatform:
         _          <- IO {
                assert(testResult.isLeft)
                testResult.left.foreach { error =>
-                 assertEquals(error.getMessage, "Circuit breaker is open")
+                 assert(error.getMessage.contains("Circuit breaker is open"))
                }
              }
 

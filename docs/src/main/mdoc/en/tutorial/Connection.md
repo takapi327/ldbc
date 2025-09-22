@@ -364,6 +364,11 @@ The ldbc connection pool offers extensive configuration options:
 - **adaptiveSizing**: Enable dynamic pool sizing based on load (default: true)
 - **adaptiveInterval**: How often to check and adjust pool size (default: 30 seconds)
 
+#### Logging Configuration
+- **logPoolState**: Enable periodic logging of pool state (default: false)
+- **poolStateLogInterval**: Interval for pool state logging (default: 30 seconds)
+- **poolName**: Pool identification name for logging (default: "ldbc-pool")
+
 ### Example with Advanced Configuration
 
 ```scala
@@ -396,6 +401,11 @@ val advancedConfig = MySQLConfig.default
   .setLeakDetectionThreshold(2.minutes)  // Warn about leaked connections
   .setAdaptiveSizing(true)              // Enable dynamic pool sizing
   .setAdaptiveInterval(1.minute)        // Check pool size every minute
+  
+  // Logging Configuration
+  .setLogPoolState(true)                // Enable pool state logging
+  .setPoolStateLogInterval(1.minute)    // Log pool state every minute
+  .setPoolName("production-pool")       // Set pool name
 
 // Create and use the pool
 MySQLDataSource.pooling[IO](advancedConfig).use { pool =>
@@ -471,6 +481,58 @@ monitoredPool.use { (pool, tracker) =>
 }
 ```
 
+### Enabling Pool State Logging
+
+ldbc-connector provides detailed pool state logging influenced by HikariCP. This allows you to visualize pool behavior and diagnose performance issues:
+
+```scala
+import cats.effect.IO
+import ldbc.connector.*
+import scala.concurrent.duration.*
+
+// Configuration with pool logging enabled
+val loggedPoolConfig = MySQLConfig.default
+  .setHost("localhost")
+  .setPort(3306)
+  .setUser("myuser")
+  .setPassword("mypassword")
+  .setDatabase("mydb")
+  .setMinConnections(5)
+  .setMaxConnections(20)
+  // Logging configuration
+  .setLogPoolState(true)                  // Enable pool state logging
+  .setPoolStateLogInterval(30.seconds)     // Log every 30 seconds
+  .setPoolName("app-pool")                 // Name to identify pool in logs
+
+// Create the pool
+MySQLDataSource.pooling[IO](loggedPoolConfig).use { pool =>
+  // Use the pool - logs like the following will be output every 30 seconds:
+  // [INFO] app-pool - Stats (total=5, active=2, idle=3, waiting=0)
+  pool.getConnection.use { conn =>
+    conn.execute("SELECT * FROM users")
+  }
+}
+```
+
+When pool logging is enabled, the following information is recorded in the logs:
+
+```
+// Periodic pool state logs
+[INFO] app-pool - Stats (total=10, active=3, idle=7, waiting=0)
+
+// Connection creation failure
+[ERROR] Failed to create connection to localhost:3306 (database: mydb): Connection refused
+
+// Connection acquisition timeout (with detailed diagnostics)
+[ERROR] Connection acquisition timeout after 30 seconds (host: localhost:3306, db: mydb, pool: 20/20, active: 20, idle: 0, waiting: 5)
+
+// Connection validation failure
+[WARN] Connection conn-123 failed validation, removing from pool
+
+// Connection leak detection
+[WARN] Possible connection leak detected: Connection conn-456 has been in use for longer than 2 minutes
+```
+
 ### Pool Architecture Features
 
 The ldbc connection pool includes several advanced features:
@@ -493,6 +555,13 @@ Dynamically adjusts pool size based on load:
 - Shrinks during low usage periods
 - Prevents resource waste
 
+#### Detailed Pool Logging
+Comprehensive logging system influenced by HikariCP:
+- **Pool State Logs**: Periodically outputs connection counts, active/idle connections, and wait queue size
+- **Connection Lifecycle Logs**: Records detailed information during connection creation, validation, and removal
+- **Error Diagnostics**: Outputs detailed pool state on connection acquisition timeout
+- **Leak Detection Logs**: Warns about connections in use beyond configured threshold
+
 ### Best Practices
 
 1. **Start with Conservative Settings**: Begin with default values and adjust based on monitoring
@@ -500,10 +569,12 @@ Dynamically adjusts pool size based on load:
 3. **Set Appropriate Timeouts**: Balance between user experience and resource protection
 4. **Enable Leak Detection in Development**: Catch connection leaks early
 5. **Use Connection Test Queries Sparingly**: They add overhead; rely on MySQL's isValid when possible
-6. **Consider Your Workload**: 
+6. **Enable Pool Logging in Production**: For troubleshooting and performance analysis
+7. **Consider Your Workload**: 
    - High-throughput applications: larger pool sizes
    - Bursty workloads: enable adaptive sizing
    - Long-running queries: increase connection timeout
+   - Debugging and troubleshooting: enable pool logging to quickly identify issues
 
 ### Migration from Non-Pooled Connections
 

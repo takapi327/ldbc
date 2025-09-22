@@ -15,6 +15,8 @@ import cats.syntax.all.*
 
 import cats.effect.*
 
+import ldbc.connector.exception.SQLException
+
 /**
  * Circuit breaker pattern implementation for connection creation.
  * 
@@ -106,7 +108,7 @@ object CircuitBreaker:
             else
               // Still open, fail fast
               Temporal[F].raiseError(
-                new Exception("Circuit breaker is open")
+                new SQLException("Circuit breaker is open")
               )
           }
 

@@ -24,8 +24,8 @@ import org.typelevel.otel4s.trace.Tracer
 import ldbc.sql.DatabaseMetaData
 
 import ldbc.connector.*
+import ldbc.connector.exception.SQLException
 
-import ldbc.logging.LogHandler
 import ldbc.DataSource
 
 /**
@@ -98,6 +98,9 @@ trait PooledDataSource[F[_]] extends DataSource[F]:
   /** Background fiber performing keepalive validation. */
   def keepaliveExecutor: Option[Fiber[F, Throwable, Unit]]
 
+  /** Background fiber performing pool status reporting. */
+  def statusReporter: Option[Fiber[F, Throwable, Unit]]
+
   /** The alive bypass window for validation optimization. */
   def aliveBypassWindow: FiniteDuration
 
@@ -106,6 +109,9 @@ trait PooledDataSource[F[_]] extends DataSource[F]:
 
   /** The connection test query. */
   def connectionTestQuery: Option[String]
+
+  /** The pool logger for logging pool events. */
+  def poolLogger: PoolLogger[F]
 
   /**
    * Returns the current status of the pool.
@@ -180,7 +186,6 @@ object PooledDataSource:
     host:                    String,
     port:                    Int,
     user:                    String,
-    logHandler:              Option[LogHandler[F]]                 = None,
     password:                Option[String]                        = None,
     database:                Option[String]                        = None,
     debug:                   Boolean                               = false,
@@ -209,11 +214,13 @@ object PooledDataSource:
     houseKeeper:             Option[Fiber[F, Throwable, Unit]],
     adaptiveSizer:           Option[Fiber[F, Throwable, Unit]],
     keepaliveExecutor:       Option[Fiber[F, Throwable, Unit]],
+    statusReporter:          Option[Fiber[F, Throwable, Unit]],
     connectionBag:           ConcurrentBag[F, PooledConnection[F]],
     circuitBreaker:          CircuitBreaker[F],
     aliveBypassWindow:       FiniteDuration,
     keepaliveTime:           Option[FiniteDuration],
-    connectionTestQuery:     Option[String]
+    connectionTestQuery:     Option[String],
+    poolLogger:              PoolLogger[F]
   ) extends PooledDataSource[F]:
     given Tracer[F] = tracer.getOrElse(Tracer.noop[F])
 
@@ -237,16 +244,26 @@ object PooledDataSource:
 
     override def metrics: F[PoolMetrics] = metricsTracker.getMetrics
 
-    override def close: F[Unit] = poolState.modify { state =>
-      val newState = state.copy(closed = true)
-      val closeAll = state.connections.traverse_ { pooled =>
-        pooled.finalizer.attempt.void // Use the finalizer to properly clean up
-      }
-      val failWaiters = state.waitQueue.traverse_ { deferred =>
-        deferred.complete(Left(new Exception("Pool closed"))).attempt.void
-      }
-      (newState, closeAll *> failWaiters)
-    }.flatten
+    override def close: F[Unit] =
+      poolLogger.info(
+        s"Closing connection pool (host: $host:$port${ database.map(d => s", database: $d").getOrElse("") })"
+      ) >>
+        poolState.modify { state =>
+          val newState = state.copy(closed = true)
+          val closeAll = state.connections.traverse_ { pooled =>
+            pooled.finalizer.attempt.flatMap {
+              case Left(error) =>
+                poolLogger.debug(s"Error closing connection ${ pooled.id }: ${ error.getMessage }")
+              case Right(_) =>
+                Temporal[F].unit
+            }
+          }
+          val failWaiters = state.waitQueue.traverse_ { deferred =>
+            deferred.complete(Left(new SQLException("Pool closed"))).attempt.void
+          }
+          (newState, closeAll *> failWaiters)
+        }.flatten >>
+        poolLogger.info("Connection pool closed successfully")
 
     private def acquire: F[Connection[F]] = for
       startTime <- Clock[F].monotonic
@@ -255,7 +272,7 @@ object PooledDataSource:
 
     private def acquireConnectionWithStartTime(startTime: FiniteDuration): F[Connection[F]] =
       poolState.get.flatMap { state =>
-        if state.closed then Temporal[F].raiseError(new Exception("Pool is closed"))
+        if state.closed then Temporal[F].raiseError(new SQLException("Pool is closed"))
         else
           connectionBag.borrow(connectionTimeout).flatMap {
             case Some(pooled) =>
@@ -263,8 +280,13 @@ object PooledDataSource:
               for
                 // Check if validation is needed
                 shouldValidate <- needsValidation(pooled)
-                valid          <- if shouldValidate then validateConnection(pooled.connection)
-                         else Temporal[F].pure(true)
+                valid          <- if shouldValidate then {
+                           validateConnection(pooled.connection).flatTap {
+                             case true  => Temporal[F].unit
+                             case false =>
+                               poolLogger.warn(s"Connection ${ pooled.id } failed validation, removing from pool")
+                           }
+                         } else Temporal[F].pure(true)
                 result <- if !valid then {
                             // Connection is invalid, remove it and try again
                             removeConnection(pooled) >> acquireConnectionWithStartTime(startTime)
@@ -282,8 +304,12 @@ object PooledDataSource:
                                        .sleep(threshold)
                                        .flatMap { _ =>
                                          pooled.state.get.flatMap {
-                                           case ConnectionState.InUse => metricsTracker.recordLeak()
-                                           case _                     => Temporal[F].unit
+                                           case ConnectionState.InUse =>
+                                             poolLogger.warn(
+                                               s"Possible connection leak detected: Connection ${ pooled.id } has been in use for longer than $threshold"
+                                             ) >>
+                                               metricsTracker.recordLeak()
+                                           case _ => Temporal[F].unit
                                          }
                                        }
                                        .start
@@ -305,10 +331,20 @@ object PooledDataSource:
                     yield wrapConnection(pooled)
                   }
                 else
-                  val errorMessage =
-                    s"Connection acquisition timeout after $connectionTimeout (host: $host:$port, db: ${ database.getOrElse("none") }, pool at max size: ${ currentState.connections.size })"
-                  metricsTracker.recordTimeout() *>
-                    Temporal[F].raiseError(new Exception(errorMessage))
+                  // Count active connections for more detailed error message
+                  currentState.connections.traverse(_.state.get).flatMap { states =>
+                    val activeCount  = states.count(_ == ConnectionState.InUse)
+                    val idleCount    = states.count(_ == ConnectionState.Idle)
+                    val errorMessage =
+                      s"Connection acquisition timeout after $connectionTimeout " +
+                        s"(host: $host:$port, db: ${ database.getOrElse("none") }, " +
+                        s"pool: ${ currentState.connections.size }/${ maxConnections }, " +
+                        s"active: $activeCount, idle: $idleCount, " +
+                        s"waiting: ${ currentState.waitQueue.size })"
+                    metricsTracker.recordTimeout() *>
+                      poolLogger.error(errorMessage) *>
+                      Temporal[F].raiseError(new SQLException(errorMessage))
+                  }
               }
           }
       }
@@ -340,8 +376,15 @@ object PooledDataSource:
                 for
                   // Skip validation if connection was recently validated
                   shouldValidate <- needsValidation(pooled)
-                  valid          <- if shouldValidate then validateConnection(pooled.connection)
-                           else Temporal[F].pure(true)
+                  valid          <- if shouldValidate then {
+                             validateConnection(pooled.connection).flatTap {
+                               case true  => Temporal[F].unit
+                               case false =>
+                                 poolLogger.warn(
+                                   s"Connection ${ pooled.id } failed validation on release, removing from pool"
+                                 )
+                             }
+                           } else Temporal[F].pure(true)
                   expired <- isExpired(pooled)
                   _       <- if valid && !expired then {
                          // Return to bag for reuse
@@ -356,9 +399,10 @@ object PooledDataSource:
                              metricsTracker.recordUsage(endTime - startTime)
                            }
                 yield ()
-              case Left(_) =>
+              case Left(error) =>
                 // Reset failed, remove from pool
-                removeConnection(pooled) *>
+                poolLogger.warn(s"Failed to reset connection ${ pooled.id } on release: ${ error.getMessage }") >>
+                  removeConnection(pooled) *>
                   Clock[F].monotonic.flatMap { endTime =>
                     metricsTracker.recordUsage(endTime - startTime)
                   }
@@ -434,8 +478,9 @@ object PooledDataSource:
 
           // If we couldn't add it, close the connection and fail
           _ <- if !added then {
-                 conn.close().attempt.void *>
-                   Temporal[F].raiseError[Unit](new Exception("Pool reached maximum size"))
+                 poolLogger.warn(s"Cannot create new connection: pool at maximum size ($maxConnections)") >>
+                   conn.close().attempt.void *>
+                   Temporal[F].raiseError[Unit](new SQLException("Pool reached maximum size"))
                } else Temporal[F].unit
 
           // Add to concurrent bag only if we're not creating for immediate use
@@ -466,7 +511,12 @@ object PooledDataSource:
 
           validation
             .timeout(validationTimeout)
-            .handleError(_ => false)
+            .handleError { error =>
+              poolLogger.debug(
+                s"Connection validation failed or timed out after $validationTimeout: ${ error.getMessage }"
+              )
+              false
+            }
 
         case None =>
           // Use JDBC4 isValid() method (preferred)
@@ -480,7 +530,12 @@ object PooledDataSource:
 
           validation
             .timeout(validationTimeout)
-            .handleError(_ => false)
+            .handleError { error =>
+              poolLogger.debug(
+                s"Connection validation failed or timed out after $validationTimeout: ${ error.getMessage }"
+              )
+              false
+            }
 
     private def executeTestQuery(conn: Connection[F], query: String): F[Boolean] =
       conn
@@ -513,16 +568,19 @@ object PooledDataSource:
       pooled.state.set(ConnectionState.Idle)
 
     override def removeConnection(pooled: PooledConnection[F]): F[Unit] = for
-      _ <- pooled.state.set(ConnectionState.Removed)
-      _ <- connectionBag.remove(pooled)
-      _ <- pooled.finalizer.attempt.void // Use the finalizer instead of close()
-      _ <- pooled.leakDetection.get.flatMap(_.traverse_(_.cancel))
-      _ <- poolState.update { state =>
+      currentState <- pooled.state.get
+      _            <- poolLogger.debug(s"Removing connection ${ pooled.id } from pool (state: $currentState)")
+      _            <- pooled.state.set(ConnectionState.Removed)
+      _            <- connectionBag.remove(pooled)
+      _            <- pooled.finalizer.attempt.void // Use the finalizer instead of close()
+      _            <- pooled.leakDetection.get.flatMap(_.traverse_(_.cancel))
+      _            <- poolState.update { state =>
              state.copy(
                connections     = state.connections.filterNot(_ == pooled),
                idleConnections = state.idleConnections - pooled.id
              )
            }
+      _ <- metricsTracker.recordRemoval()
     yield ()
 
     /**
@@ -621,9 +679,13 @@ object PooledDataSource:
   ): Resource[F, PooledDataSource[F]] =
 
     val tracker           = metricsTracker.getOrElse(PoolMetricsTracker.noop[F])
+    val poolLogger        = PoolLogger.console[F](config.debug || config.logPoolState)
     val houseKeeper       = HouseKeeper.fromAsync[F](config, tracker)
     val adaptivePoolSizer = AdaptivePoolSizer.fromAsync[F](config, tracker)
     val keepaliveExecutor = config.keepaliveTime.map(KeepaliveExecutor.fromAsync[F](_, tracker))
+    val statusReporter    =
+      if config.logPoolState then Some(PoolStatusReporter[F](config.poolStateLogInterval, poolLogger, tracker))
+      else None
 
     def createPool = for
       poolState      <- Ref[F].of(PoolState.empty[F])
@@ -663,11 +725,13 @@ object PooledDataSource:
       houseKeeper             = None,
       adaptiveSizer           = None,
       keepaliveExecutor       = None,
+      statusReporter          = None,
       connectionBag           = connectionBag,
       circuitBreaker          = circuitBreaker,
       aliveBypassWindow       = config.aliveBypassWindow,
       keepaliveTime           = config.keepaliveTime,
       connectionTestQuery     = config.connectionTestQuery,
+      poolLogger              = poolLogger,
       before                  = before,
       after                   = after
     )
@@ -692,7 +756,8 @@ object PooledDataSource:
           Some(houseKeeper.start(pool)),
           if config.adaptiveSizing then Some(adaptivePoolSizer.start(pool))
           else None,
-          keepaliveExecutor.map(_.start(pool))
+          keepaliveExecutor.map(_.start(pool)),
+          statusReporter.map(_.start(pool, config.poolName))
         ).flatten
 
         backgroundTasks.sequence_.as(pool)
@@ -709,14 +774,12 @@ object PooledDataSource:
    * properly initialized when acquired and cleanly shut down when released.
    * 
    * @param config the MySQL configuration containing all pool settings
-   * @param logHandler optional handler for logging database operations
    * @param metricsTracker optional tracker for collecting pool metrics (defaults to in-memory tracker)
    * @tparam F the effect type with required type class instances
    * @return a Resource that manages the pooled data source lifecycle
    */
   def fromConfig[F[_]: Async: Network: Console: Hashing: UUIDGen](
     config:         MySQLConfig,
-    logHandler:     Option[LogHandler[F]] = None,
     metricsTracker: Option[PoolMetricsTracker[F]] = None
   ): Resource[F, PooledDataSource[F]] =
     create(config, metricsTracker, UUIDGen[F].randomUUID.map(_.toString))
@@ -734,7 +797,6 @@ object PooledDataSource:
    * to the client. The after hook is called when the connection is returned to the pool.
    * 
    * @param config the MySQL configuration containing all pool settings
-   * @param logHandler optional handler for logging database operations
    * @param metricsTracker optional tracker for collecting pool metrics (defaults to in-memory tracker)
    * @param before optional callback executed before connection use
    * @param after optional callback executed after connection use
@@ -744,7 +806,6 @@ object PooledDataSource:
    */
   def fromConfigWithBeforeAfter[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
     config:         MySQLConfig,
-    logHandler:     Option[LogHandler[F]] = None,
     metricsTracker: Option[PoolMetricsTracker[F]] = None,
     before:         Option[Connection[F] => F[A]] = None,
     after:          Option[(A, Connection[F]) => F[Unit]] = None

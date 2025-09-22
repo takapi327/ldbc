@@ -21,7 +21,6 @@ import ldbc.sql.DatabaseMetaData
 
 import ldbc.connector.pool.*
 
-import ldbc.logging.LogHandler
 import ldbc.DataSource
 
 /**
@@ -37,7 +36,6 @@ import ldbc.DataSource
  * @param host the hostname or IP address of the MySQL server
  * @param port the port number on which the MySQL server is listening
  * @param user the username for authenticating with the MySQL server
- * @param logHandler optional handler for logging connection and query events
  * @param password the password for authenticating with the MySQL server
  * @param database the default database to use upon connection
  * @param debug whether to enable debug logging for connections
@@ -72,7 +70,6 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
   host:                    String,
   port:                    Int,
   user:                    String,
-  logHandler:              Option[LogHandler[F]]                 = None,
   password:                Option[String]                        = None,
   database:                Option[String]                        = None,
   debug:                   Boolean                               = false,
@@ -263,7 +260,6 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
       host                    = host,
       port                    = port,
       user                    = user,
-      logHandler              = logHandler,
       password                = password,
       database                = database,
       debug                   = debug,
@@ -318,7 +314,6 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
       host                    = host,
       port                    = port,
       user                    = user,
-      logHandler              = logHandler,
       password                = password,
       database                = database,
       debug                   = debug,
@@ -431,7 +426,6 @@ object MySQLDataSource:
    * resource is released, all connections are closed and background tasks are cancelled.
    * 
    * @param config the MySQL configuration containing pool settings
-   * @param logHandler optional handler for logging database operations
    * @param metricsTracker optional tracker for pool metrics (defaults to in-memory)
    * @tparam F the effect type with required type class instances
    * @return a Resource managing the pooled data source lifecycle
@@ -456,9 +450,8 @@ object MySQLDataSource:
    */
   def pooling[F[_]: Async: Network: Console: Hashing: UUIDGen](
     config:         MySQLConfig,
-    logHandler:     Option[LogHandler[F]] = None,
     metricsTracker: Option[PoolMetricsTracker[F]] = None
-  ): Resource[F, PooledDataSource[F]] = PooledDataSource.fromConfig(config, logHandler, metricsTracker)
+  ): Resource[F, PooledDataSource[F]] = PooledDataSource.fromConfig(config, metricsTracker)
 
   /**
    * Creates a pooled DataSource with connection lifecycle hooks.
@@ -479,7 +472,6 @@ object MySQLDataSource:
    * not just when new connections are created.
    * 
    * @param config the MySQL configuration containing pool settings
-   * @param logHandler optional handler for logging database operations
    * @param metricsTracker optional tracker for pool metrics (defaults to in-memory)
    * @param before optional callback executed when acquiring a connection from the pool
    * @param after optional callback executed when returning a connection to the pool
@@ -511,9 +503,8 @@ object MySQLDataSource:
    */
   def poolingWithBeforeAfter[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
     config:         MySQLConfig,
-    logHandler:     Option[LogHandler[F]] = None,
     metricsTracker: Option[PoolMetricsTracker[F]] = None,
     before:         Option[Connection[F] => F[A]] = None,
     after:          Option[(A, Connection[F]) => F[Unit]] = None
   ): Resource[F, PooledDataSource[F]] =
-    PooledDataSource.fromConfigWithBeforeAfter(config, logHandler, metricsTracker, before, after)
+    PooledDataSource.fromConfigWithBeforeAfter(config, metricsTracker, before, after)
