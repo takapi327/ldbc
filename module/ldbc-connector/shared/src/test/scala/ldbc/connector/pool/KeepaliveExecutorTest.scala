@@ -127,10 +127,6 @@ class KeepaliveExecutorTest extends FTestPlatform:
     override def metricsTracker         = tracker
     override def poolState              = poolStateRef
     override def idGenerator            = Temporal[F].pure(java.util.UUID.randomUUID().toString)
-    override def houseKeeper            = None
-    override def adaptiveSizer          = None
-    override def keepaliveExecutor      = None
-    override def statusReporter         = None
     override def aliveBypassWindow      = 0.seconds
     override def keepaliveTime          = None
     override def connectionTestQuery    = None
