@@ -767,7 +767,7 @@ trait DateTime:
    *   The format style (EUR, USA, JIS, ISO, INTERNAL).
    */
   def GET_FORMAT(
-    dateType: DateTime.DateType,
+    dateType:   DateTime.DateType,
     formatType: DateTime.FormatType
   )(using Decoder[String], Encoder[String]): Column[String] =
     Column.function(s"GET_FORMAT(${ dateType.toString }, '${ formatType.toString }')")
@@ -940,7 +940,7 @@ trait DateTime:
    *   The number of months to add.
    */
   def PERIOD_ADD(period: YearMonth, months: Int): Column[YearMonth] =
-    val formatter = DateTimeFormatter.ofPattern("yyyyMM")
+    val formatter          = DateTimeFormatter.ofPattern("yyyyMM")
     given Codec[YearMonth] = Codec[String].imap { str =>
       YearMonth.parse(str, formatter)
     } { yearMonth =>
@@ -1313,11 +1313,12 @@ trait DateTime:
     A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime |
       Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]
   ](
-    unit: DateTime.TimeUnit,
+    unit:     DateTime.TimeUnit,
     interval: Int,
-    column: Column[A]
+    column:   Column[A]
   ): Column[A] =
-    Column.function(s"TIMESTAMPADD(${ unit.toString }, $interval, ${ column.name })")(using column.decoder, column.encoder)
+    Column
+      .function(s"TIMESTAMPADD(${ unit.toString }, $interval, ${ column.name })")(using column.decoder, column.encoder)
 
   /**
    * Function to add an interval to a date or datetime expression.
@@ -1335,7 +1336,7 @@ trait DateTime:
    *   The date or datetime expression to which the interval will be added.
    */
   def TIMESTAMPADD(
-    unit: DateTime.TimeUnit,
+    unit:     DateTime.TimeUnit,
     interval: Int,
     datetime: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime
   )(using Decoder[LocalDateTime], Encoder[LocalDateTime]): Column[LocalDateTime] =
@@ -1364,7 +1365,7 @@ trait DateTime:
   ](
     unit: DateTime.TimeUnit,
     from: Column[A],
-    to: Column[B]
+    to:   Column[B]
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
     Column.function(s"TIMESTAMPDIFF(${ unit.toString }, ${ from.name }, ${ to.name })")
 
@@ -1389,7 +1390,7 @@ trait DateTime:
   ](
     unit: DateTime.TimeUnit,
     from: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime,
-    to: Column[B]
+    to:   Column[B]
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
     Column.function(s"TIMESTAMPDIFF(${ unit.toString }, '${ from.toString.replaceAll("T", " ") }', ${ to.name })")
 
@@ -1411,9 +1412,11 @@ trait DateTime:
   def TIMESTAMPDIFF(
     unit: DateTime.TimeUnit,
     from: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime,
-    to: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime
+    to:   LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
-    Column.function(s"TIMESTAMPDIFF(${ unit.toString }, '${ from.toString.replaceAll("T", " ") }', '${ to.toString.replaceAll("T", " ") }')")
+    Column.function(
+      s"TIMESTAMPDIFF(${ unit.toString }, '${ from.toString.replaceAll("T", " ") }', '${ to.toString.replaceAll("T", " ") }')"
+    )
 
   /**
    * Function to convert a string to a date according to a format string.
@@ -1448,7 +1451,7 @@ trait DateTime:
    *   The format string specifying how to parse the input string.
    */
   def STR_TO_DATE(
-    str: String,
+    str:    String,
     format: String
   )(using Decoder[Option[LocalDateTime]], Encoder[Option[LocalDateTime]]): Column[Option[LocalDateTime]] =
     Column.function(s"STR_TO_DATE('$str', '$format')")
@@ -1490,7 +1493,7 @@ trait DateTime:
    *   The format string.
    */
   def TIME_FORMAT(
-    time: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime,
+    time:   LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime,
     format: String
   )(using Decoder[String], Encoder[String]): Column[String] =
     Column.function(s"TIME_FORMAT('${ time.toString.replaceAll("T", " ") }', '$format')")
@@ -1590,7 +1593,7 @@ trait DateTime:
    *   // SELECT UNIX_TIMESTAMP() FROM date_time
    * }}}
    */
-  def UNIX_TIMESTAMP()(using Decoder[Long], Encoder[Long]): Column[Long] = 
+  def UNIX_TIMESTAMP()(using Decoder[Long], Encoder[Long]): Column[Long] =
     Column.function("UNIX_TIMESTAMP()")
 
   /**
@@ -1638,7 +1641,7 @@ trait DateTime:
    *   // SELECT UTC_DATE() FROM date_time
    * }}}
    */
-  def UTC_DATE()(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] = 
+  def UTC_DATE()(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] =
     Column.function("UTC_DATE()")
 
   /**
@@ -1649,7 +1652,7 @@ trait DateTime:
    *   // SELECT UTC_TIME() FROM date_time
    * }}}
    */
-  def UTC_TIME()(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] = 
+  def UTC_TIME()(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
     Column.function("UTC_TIME()")
 
   /**
@@ -1663,7 +1666,7 @@ trait DateTime:
    * @param fsp
    *   The fractional seconds precision (0-6).
    */
-  def UTC_TIME(fsp: Int)(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] = 
+  def UTC_TIME(fsp: Int)(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
     require(fsp >= 0 && fsp <= 6, "Fractional seconds precision must be between 0 and 6")
     Column.function(s"UTC_TIME($fsp)")
 
@@ -1675,7 +1678,7 @@ trait DateTime:
    *   // SELECT UTC_TIMESTAMP() FROM date_time
    * }}}
    */
-  def UTC_TIMESTAMP()(using Decoder[LocalDateTime], Encoder[LocalDateTime]): Column[LocalDateTime] = 
+  def UTC_TIMESTAMP()(using Decoder[LocalDateTime], Encoder[LocalDateTime]): Column[LocalDateTime] =
     Column.function("UTC_TIMESTAMP()")
 
   /**
@@ -1689,7 +1692,7 @@ trait DateTime:
    * @param fsp
    *   The fractional seconds precision (0-6).
    */
-  def UTC_TIMESTAMP(fsp: Int)(using Decoder[LocalDateTime], Encoder[LocalDateTime]): Column[LocalDateTime] = 
+  def UTC_TIMESTAMP(fsp: Int)(using Decoder[LocalDateTime], Encoder[LocalDateTime]): Column[LocalDateTime] =
     require(fsp >= 0 && fsp <= 6, "Fractional seconds precision must be between 0 and 6")
     Column.function(s"UTC_TIMESTAMP($fsp)")
 
@@ -1730,7 +1733,7 @@ trait DateTime:
       Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]
   ](
     column: Column[A],
-    mode: Int
+    mode:   Int
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
     require(mode >= 0 && mode <= 7, "Week mode must be between 0 and 7")
     Column.function(s"WEEK(${ column.name }, $mode)")
@@ -1883,7 +1886,7 @@ trait DateTime:
       Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]
   ](
     column: Column[A],
-    mode: Int
+    mode:   Int
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
     require(mode >= 0 && mode <= 7, "Week mode must be between 0 and 7")
     Column.function(s"YEARWEEK(${ column.name }, $mode)")

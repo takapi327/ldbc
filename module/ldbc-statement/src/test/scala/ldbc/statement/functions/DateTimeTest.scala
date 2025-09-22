@@ -294,8 +294,11 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
     assert(TIMESTAMPADD(TimeUnit.DAY, 7, c1).name == "TIMESTAMPADD(DAY, 7, `local_date`)")
     assert(TIMESTAMPADD(TimeUnit.MONTH, 3, c2).name == "TIMESTAMPADD(MONTH, 3, `local_date`)")
     assert(
-      TIMESTAMPADD(TimeUnit.MINUTE, 1, LocalDateTime.of(2003, 1, 2, 0, 0))
-        .name == "TIMESTAMPADD(MINUTE, 1, '2003-01-02 00:00')"
+      TIMESTAMPADD(
+        TimeUnit.MINUTE,
+        1,
+        LocalDateTime.of(2003, 1, 2, 0, 0)
+      ).name == "TIMESTAMPADD(MINUTE, 1, '2003-01-02 00:00')"
     )
   }
 
@@ -303,12 +306,18 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
     assert(TIMESTAMPDIFF(TimeUnit.MONTH, c1, c5).name == "TIMESTAMPDIFF(MONTH, `local_date`, `local_date_time`)")
     assert(TIMESTAMPDIFF(TimeUnit.DAY, c2, c6).name == "TIMESTAMPDIFF(DAY, `local_date`, `local_date_time`)")
     assert(
-      TIMESTAMPDIFF(TimeUnit.MONTH, LocalDate.of(2003, 2, 1), c5)
-        .name == "TIMESTAMPDIFF(MONTH, '2003-02-01', `local_date_time`)"
+      TIMESTAMPDIFF(
+        TimeUnit.MONTH,
+        LocalDate.of(2003, 2, 1),
+        c5
+      ).name == "TIMESTAMPDIFF(MONTH, '2003-02-01', `local_date_time`)"
     )
     assert(
-      TIMESTAMPDIFF(TimeUnit.MONTH, LocalDate.of(2003, 2, 1), LocalDate.of(2003, 5, 1))
-        .name == "TIMESTAMPDIFF(MONTH, '2003-02-01', '2003-05-01')"
+      TIMESTAMPDIFF(
+        TimeUnit.MONTH,
+        LocalDate.of(2003, 2, 1),
+        LocalDate.of(2003, 5, 1)
+      ).name == "TIMESTAMPDIFF(MONTH, '2003-02-01', '2003-05-01')"
     )
   }
 
