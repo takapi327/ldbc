@@ -31,6 +31,8 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
   private val c14 = Column.Impl[Option[Int]]("minute")
   private val c15 = Column.Impl[Int]("second")
   private val c16 = Column.Impl[Option[Int]]("second")
+  private val c17 = Column.Impl[String]("date_string")
+  private val c18 = Column.Impl[Option[String]]("date_string")
 
   it should "Statement generated using the DATE_ADD function matches the specified string." in {
     assert(DATE_ADD(c1, Interval.DAY(1)).name == "DATE_ADD(`local_date`, INTERVAL 1 DAY)")
@@ -271,4 +273,135 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
     assert(TIMESTAMP(c5, c3).name == "TIMESTAMP(`local_date_time`, `local_time`)")
     assert(TIMESTAMP(c6, c4).name == "TIMESTAMP(`local_date_time`, `local_time`)")
     assert(TIMESTAMP(LocalDate.of(2021, 1, 1)).name == "TIMESTAMP('2021-01-01')")
+  }
+
+  it should "Statement generated using the GET_FORMAT function matches the specified string." in {
+    assert(GET_FORMAT(DateType.DATE, FormatType.USA).name == "GET_FORMAT(DATE, 'USA')")
+    assert(GET_FORMAT(DateType.TIME, FormatType.EUR).name == "GET_FORMAT(TIME, 'EUR')")
+    assert(GET_FORMAT(DateType.DATETIME, FormatType.JIS).name == "GET_FORMAT(DATETIME, 'JIS')")
+    assert(GET_FORMAT(DateType.DATE, FormatType.ISO).name == "GET_FORMAT(DATE, 'ISO')")
+    assert(GET_FORMAT(DateType.DATETIME, FormatType.INTERNAL).name == "GET_FORMAT(DATETIME, 'INTERNAL')")
+  }
+
+  it should "Statement generated using the PERIOD_DIFF function matches the specified string." in {
+    assert(PERIOD_DIFF(YearMonth.of(2008, 2), YearMonth.of(2007, 3)).name == "PERIOD_DIFF(200802, 200703)")
+    assert(PERIOD_DIFF(YearMonth.of(2021, 12), YearMonth.of(2021, 1)).name == "PERIOD_DIFF(202112, 202101)")
+  }
+
+  it should "Statement generated using the TIMESTAMPADD function matches the specified string." in {
+    assert(TIMESTAMPADD(TimeUnit.MINUTE, 1, c5).name == "TIMESTAMPADD(MINUTE, 1, `local_date_time`)")
+    assert(TIMESTAMPADD(TimeUnit.HOUR, 24, c6).name == "TIMESTAMPADD(HOUR, 24, `local_date_time`)")
+    assert(TIMESTAMPADD(TimeUnit.DAY, 7, c1).name == "TIMESTAMPADD(DAY, 7, `local_date`)")
+    assert(TIMESTAMPADD(TimeUnit.MONTH, 3, c2).name == "TIMESTAMPADD(MONTH, 3, `local_date`)")
+    assert(
+      TIMESTAMPADD(TimeUnit.MINUTE, 1, LocalDateTime.of(2003, 1, 2, 0, 0))
+        .name == "TIMESTAMPADD(MINUTE, 1, '2003-01-02 00:00')"
+    )
+  }
+
+  it should "Statement generated using the TIMESTAMPDIFF function matches the specified string." in {
+    assert(TIMESTAMPDIFF(TimeUnit.MONTH, c1, c5).name == "TIMESTAMPDIFF(MONTH, `local_date`, `local_date_time`)")
+    assert(TIMESTAMPDIFF(TimeUnit.DAY, c2, c6).name == "TIMESTAMPDIFF(DAY, `local_date`, `local_date_time`)")
+    assert(
+      TIMESTAMPDIFF(TimeUnit.MONTH, LocalDate.of(2003, 2, 1), c5)
+        .name == "TIMESTAMPDIFF(MONTH, '2003-02-01', `local_date_time`)"
+    )
+    assert(
+      TIMESTAMPDIFF(TimeUnit.MONTH, LocalDate.of(2003, 2, 1), LocalDate.of(2003, 5, 1))
+        .name == "TIMESTAMPDIFF(MONTH, '2003-02-01', '2003-05-01')"
+    )
+  }
+
+  it should "Statement generated using the STR_TO_DATE function matches the specified string." in {
+    assert(STR_TO_DATE(c17, "%d,%m,%Y").name == "STR_TO_DATE(`date_string`, '%d,%m,%Y')")
+    assert(STR_TO_DATE(c18, "%Y-%m-%d").name == "STR_TO_DATE(`date_string`, '%Y-%m-%d')")
+    assert(STR_TO_DATE("01,5,2013", "%d,%m,%Y").name == "STR_TO_DATE('01,5,2013', '%d,%m,%Y')")
+    assert(STR_TO_DATE("May 1, 2013", "%M %d,%Y").name == "STR_TO_DATE('May 1, 2013', '%M %d,%Y')")
+  }
+
+  it should "Statement generated using the TIME_FORMAT function matches the specified string." in {
+    assert(TIME_FORMAT(c3, "%H:%i:%s").name == "TIME_FORMAT(`local_time`, '%H:%i:%s')")
+    assert(TIME_FORMAT(c4, "%h:%i %p").name == "TIME_FORMAT(`local_time`, '%h:%i %p')")
+    assert(TIME_FORMAT(c5, "%T").name == "TIME_FORMAT(`local_date_time`, '%T')")
+    assert(TIME_FORMAT(c6, "%H:%i:%s.%f").name == "TIME_FORMAT(`local_date_time`, '%H:%i:%s.%f')")
+    assert(TIME_FORMAT(LocalTime.of(10, 15, 30), "%H:%i:%s").name == "TIME_FORMAT('10:15:30', '%H:%i:%s')")
+  }
+
+  it should "Statement generated using the TO_DAYS function matches the specified string." in {
+    assert(TO_DAYS(c1).name == "TO_DAYS(`local_date`)")
+    assert(TO_DAYS(c2).name == "TO_DAYS(`local_date`)")
+    assert(TO_DAYS(c5).name == "TO_DAYS(`local_date_time`)")
+    assert(TO_DAYS(c6).name == "TO_DAYS(`local_date_time`)")
+    assert(TO_DAYS(LocalDate.of(2007, 10, 7)).name == "TO_DAYS('2007-10-07')")
+  }
+
+  it should "Statement generated using the TO_SECONDS function matches the specified string." in {
+    assert(TO_SECONDS(c1).name == "TO_SECONDS(`local_date`)")
+    assert(TO_SECONDS(c2).name == "TO_SECONDS(`local_date`)")
+    assert(TO_SECONDS(c5).name == "TO_SECONDS(`local_date_time`)")
+    assert(TO_SECONDS(c6).name == "TO_SECONDS(`local_date_time`)")
+    assert(TO_SECONDS(LocalDateTime.of(2009, 11, 29, 13, 43, 32)).name == "TO_SECONDS('2009-11-29 13:43:32')")
+  }
+
+  it should "Statement generated using the UNIX_TIMESTAMP function matches the specified string." in {
+    assert(UNIX_TIMESTAMP().name == "UNIX_TIMESTAMP()")
+    assert(UNIX_TIMESTAMP(c1).name == "UNIX_TIMESTAMP(`local_date`)")
+    assert(UNIX_TIMESTAMP(c2).name == "UNIX_TIMESTAMP(`local_date`)")
+    assert(UNIX_TIMESTAMP(c5).name == "UNIX_TIMESTAMP(`local_date_time`)")
+    assert(UNIX_TIMESTAMP(c6).name == "UNIX_TIMESTAMP(`local_date_time`)")
+    assert(UNIX_TIMESTAMP(LocalDateTime.of(2015, 11, 13, 10, 20, 19)).name == "UNIX_TIMESTAMP('2015-11-13 10:20:19')")
+  }
+
+  it should "Statement generated using the UTC_DATE function matches the specified string." in {
+    assert(UTC_DATE().name == "UTC_DATE()")
+  }
+
+  it should "Statement generated using the UTC_TIME function matches the specified string." in {
+    assert(UTC_TIME().name == "UTC_TIME()")
+    assert(UTC_TIME(3).name == "UTC_TIME(3)")
+    assert(UTC_TIME(6).name == "UTC_TIME(6)")
+  }
+
+  it should "Statement generated using the UTC_TIMESTAMP function matches the specified string." in {
+    assert(UTC_TIMESTAMP().name == "UTC_TIMESTAMP()")
+    assert(UTC_TIMESTAMP(3).name == "UTC_TIMESTAMP(3)")
+    assert(UTC_TIMESTAMP(6).name == "UTC_TIMESTAMP(6)")
+  }
+
+  it should "Statement generated using the WEEK function matches the specified string." in {
+    assert(WEEK(c1).name == "WEEK(`local_date`)")
+    assert(WEEK(c2).name == "WEEK(`local_date`)")
+    assert(WEEK(c5).name == "WEEK(`local_date_time`)")
+    assert(WEEK(c6).name == "WEEK(`local_date_time`)")
+    assert(WEEK(c1, 0).name == "WEEK(`local_date`, 0)")
+    assert(WEEK(c5, 1).name == "WEEK(`local_date_time`, 1)")
+    assert(WEEK(LocalDate.of(2008, 2, 20)).name == "WEEK('2008-02-20')")
+    assert(WEEK(LocalDate.of(2008, 2, 20), 1).name == "WEEK('2008-02-20', 1)")
+  }
+
+  it should "Statement generated using the WEEKDAY function matches the specified string." in {
+    assert(WEEKDAY(c1).name == "WEEKDAY(`local_date`)")
+    assert(WEEKDAY(c2).name == "WEEKDAY(`local_date`)")
+    assert(WEEKDAY(c5).name == "WEEKDAY(`local_date_time`)")
+    assert(WEEKDAY(c6).name == "WEEKDAY(`local_date_time`)")
+    assert(WEEKDAY(LocalDate.of(2008, 2, 3)).name == "WEEKDAY('2008-02-03')")
+  }
+
+  it should "Statement generated using the WEEKOFYEAR function matches the specified string." in {
+    assert(WEEKOFYEAR(c1).name == "WEEKOFYEAR(`local_date`)")
+    assert(WEEKOFYEAR(c2).name == "WEEKOFYEAR(`local_date`)")
+    assert(WEEKOFYEAR(c5).name == "WEEKOFYEAR(`local_date_time`)")
+    assert(WEEKOFYEAR(c6).name == "WEEKOFYEAR(`local_date_time`)")
+    assert(WEEKOFYEAR(LocalDate.of(2008, 2, 20)).name == "WEEKOFYEAR('2008-02-20')")
+  }
+
+  it should "Statement generated using the YEARWEEK function matches the specified string." in {
+    assert(YEARWEEK(c1).name == "YEARWEEK(`local_date`)")
+    assert(YEARWEEK(c2).name == "YEARWEEK(`local_date`)")
+    assert(YEARWEEK(c5).name == "YEARWEEK(`local_date_time`)")
+    assert(YEARWEEK(c6).name == "YEARWEEK(`local_date_time`)")
+    assert(YEARWEEK(c1, 0).name == "YEARWEEK(`local_date`, 0)")
+    assert(YEARWEEK(c5, 1).name == "YEARWEEK(`local_date_time`, 1)")
+    assert(YEARWEEK(LocalDate.of(1987, 1, 1)).name == "YEARWEEK('1987-01-01')")
+    assert(YEARWEEK(LocalDate.of(1987, 1, 1), 0).name == "YEARWEEK('1987-01-01', 0)")
   }

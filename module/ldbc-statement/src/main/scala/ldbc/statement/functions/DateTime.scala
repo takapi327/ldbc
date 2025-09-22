@@ -754,6 +754,25 @@ trait DateTime:
     Column.function(s"MAKETIME($hour, $minute, $second)")
 
   /**
+   * Function that returns a format string that can be used with DATE_FORMAT() and STR_TO_DATE() functions.
+   * 
+   * {{{
+   *   TableQuery[DateTime].select(_ => GET_FORMAT(DateTime.DateType.DATE, DateTime.FormatType.USA))
+   *   // SELECT GET_FORMAT(DATE, 'USA') FROM date_time
+   * }}}
+   *
+   * @param dateType
+   *   The type of date/time format (DATE, TIME, DATETIME).
+   * @param formatType
+   *   The format style (EUR, USA, JIS, ISO, INTERNAL).
+   */
+  def GET_FORMAT(
+    dateType: DateTime.DateType,
+    formatType: DateTime.FormatType
+  )(using Decoder[String], Encoder[String]): Column[String] =
+    Column.function(s"GET_FORMAT(${ dateType.toString }, '${ formatType.toString }')")
+
+  /**
    * Function that returns microseconds from a time or date-time expression as a number in the range 0 to 999999.
    *
    * {{{
@@ -928,6 +947,23 @@ trait DateTime:
       yearMonth.format(formatter)
     }
     Column.function(s"PERIOD_ADD(${ period.format(formatter) }, $months)")
+
+  /**
+   * Function to return the number of months between periods.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => PERIOD_DIFF(YearMonth.of(2008, 2), YearMonth.of(2007, 3)))
+   *   // SELECT PERIOD_DIFF(200802, 200703) FROM date_time
+   * }}}
+   *
+   * @param period1
+   *   First period in YYYYMM format.
+   * @param period2
+   *   Second period in YYYYMM format.
+   */
+  def PERIOD_DIFF(period1: YearMonth, period2: YearMonth)(using Decoder[Int], Encoder[Int]): Column[Int] =
+    val formatter = DateTimeFormatter.ofPattern("yyyyMM")
+    Column.function(s"PERIOD_DIFF(${ period1.format(formatter) }, ${ period2.format(formatter) })")
 
   /**
    * Function to return the quarter corresponding to date in the range 1 to 4.
@@ -1258,6 +1294,637 @@ trait DateTime:
   )(using Decoder[Option[LocalDateTime]], Encoder[Option[LocalDateTime]]): Column[Option[LocalDateTime]] =
     Column.function(s"TIMESTAMP(${ column1.name }, ${ column2.name })")
 
+  /**
+   * Function to add an interval to a date or datetime expression.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => TIMESTAMPADD(DateTime.TimeUnit.MINUTE, 1, p.timestamp))
+   *   // SELECT TIMESTAMPADD(MINUTE, 1, timestamp) FROM date_time
+   * }}}
+   *
+   * @param unit
+   *   The time unit specifying how to add the interval.
+   * @param interval
+   *   The number of units to add.
+   * @param column
+   *   The date or datetime column to which the interval will be added.
+   */
+  def TIMESTAMPADD[
+    A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](
+    unit: DateTime.TimeUnit,
+    interval: Int,
+    column: Column[A]
+  ): Column[A] =
+    Column.function(s"TIMESTAMPADD(${ unit.toString }, $interval, ${ column.name })")(using column.decoder, column.encoder)
+
+  /**
+   * Function to add an interval to a date or datetime expression.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => TIMESTAMPADD(DateTime.TimeUnit.MINUTE, 1, LocalDateTime.of(2003, 1, 2, 0, 0)))
+   *   // SELECT TIMESTAMPADD(MINUTE, 1, '2003-01-02 00:00:00') FROM date_time
+   * }}}
+   *
+   * @param unit
+   *   The time unit specifying how to add the interval.
+   * @param interval
+   *   The number of units to add.
+   * @param datetime
+   *   The date or datetime expression to which the interval will be added.
+   */
+  def TIMESTAMPADD(
+    unit: DateTime.TimeUnit,
+    interval: Int,
+    datetime: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime
+  )(using Decoder[LocalDateTime], Encoder[LocalDateTime]): Column[LocalDateTime] =
+    Column.function(s"TIMESTAMPADD(${ unit.toString }, $interval, '${ datetime.toString.replaceAll("T", " ") }')")
+
+  /**
+   * Function to calculate the difference between two date or datetime expressions.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => TIMESTAMPDIFF(DateTime.TimeUnit.MONTH, p.startDate, p.endDate))
+   *   // SELECT TIMESTAMPDIFF(MONTH, start_date, end_date) FROM date_time
+   * }}}
+   *
+   * @param unit
+   *   The time unit for the difference calculation.
+   * @param from
+   *   The starting date or datetime expression.
+   * @param to
+   *   The ending date or datetime expression.
+   */
+  def TIMESTAMPDIFF[
+    A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime],
+    B <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](
+    unit: DateTime.TimeUnit,
+    from: Column[A],
+    to: Column[B]
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column.function(s"TIMESTAMPDIFF(${ unit.toString }, ${ from.name }, ${ to.name })")
+
+  /**
+   * Function to calculate the difference between two date or datetime expressions.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => TIMESTAMPDIFF(DateTime.TimeUnit.MONTH, LocalDate.of(2003, 2, 1), p.endDate))
+   *   // SELECT TIMESTAMPDIFF(MONTH, '2003-02-01', end_date) FROM date_time
+   * }}}
+   *
+   * @param unit
+   *   The time unit for the difference calculation.
+   * @param from
+   *   The starting date or datetime expression.
+   * @param to
+   *   The ending date or datetime column.
+   */
+  def TIMESTAMPDIFF[
+    B <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](
+    unit: DateTime.TimeUnit,
+    from: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime,
+    to: Column[B]
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column.function(s"TIMESTAMPDIFF(${ unit.toString }, '${ from.toString.replaceAll("T", " ") }', ${ to.name })")
+
+  /**
+   * Function to calculate the difference between two date or datetime expressions.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => TIMESTAMPDIFF(DateTime.TimeUnit.MONTH, LocalDate.of(2003, 2, 1), LocalDate.of(2003, 5, 1)))
+   *   // SELECT TIMESTAMPDIFF(MONTH, '2003-02-01', '2003-05-01') FROM date_time
+   * }}}
+   *
+   * @param unit
+   *   The time unit for the difference calculation.
+   * @param from
+   *   The starting date or datetime expression.
+   * @param to
+   *   The ending date or datetime expression.
+   */
+  def TIMESTAMPDIFF(
+    unit: DateTime.TimeUnit,
+    from: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime,
+    to: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column.function(s"TIMESTAMPDIFF(${ unit.toString }, '${ from.toString.replaceAll("T", " ") }', '${ to.toString.replaceAll("T", " ") }')")
+
+  /**
+   * Function to convert a string to a date according to a format string.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => STR_TO_DATE(p.dateString, "%d,%m,%Y"))
+   *   // SELECT STR_TO_DATE(date_string, '%d,%m,%Y') FROM date_time
+   * }}}
+   *
+   * @param column
+   *   The string column to be converted to a date.
+   * @param format
+   *   The format string specifying how to parse the input string.
+   */
+  def STR_TO_DATE[A <: String | Option[String]](
+    column: Column[A],
+    format: String
+  )(using Decoder[Option[LocalDateTime]], Encoder[Option[LocalDateTime]]): Column[Option[LocalDateTime]] =
+    Column.function(s"STR_TO_DATE(${ column.name }, '$format')")
+
+  /**
+   * Function to convert a string to a date according to a format string.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => STR_TO_DATE("01,5,2013", "%d,%m,%Y"))
+   *   // SELECT STR_TO_DATE('01,5,2013', '%d,%m,%Y') FROM date_time
+   * }}}
+   *
+   * @param str
+   *   The input string to be converted to a date.
+   * @param format
+   *   The format string specifying how to parse the input string.
+   */
+  def STR_TO_DATE(
+    str: String,
+    format: String
+  )(using Decoder[Option[LocalDateTime]], Encoder[Option[LocalDateTime]]): Column[Option[LocalDateTime]] =
+    Column.function(s"STR_TO_DATE('$str', '$format')")
+
+  /**
+   * Function to format a time value according to the format string.
+   * @see https://dev.mysql.com/doc/refman/8.0/en/date-and-time-functions.html#function_time-format
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => TIME_FORMAT(p.time, "%H:%i:%s"))
+   *   // SELECT TIME_FORMAT(time, '%H:%i:%s') FROM date_time
+   * }}}
+   *
+   * @param column
+   *   The time column to be formatted.
+   * @param format
+   *   The format string.
+   */
+  def TIME_FORMAT[
+    A <: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](
+    column: Column[A],
+    format: String
+  )(using Decoder[String], Encoder[String]): Column[String] =
+    Column.function(s"TIME_FORMAT(${ column.name }, '$format')")
+
+  /**
+   * Function to format a time value according to the format string.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => TIME_FORMAT(LocalTime.of(10, 15, 30), "%H:%i:%s"))
+   *   // SELECT TIME_FORMAT('10:15:30', '%H:%i:%s') FROM date_time
+   * }}}
+   *
+   * @param time
+   *   The time or date-time expression to be formatted.
+   * @param format
+   *   The format string.
+   */
+  def TIME_FORMAT(
+    time: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime,
+    format: String
+  )(using Decoder[String], Encoder[String]): Column[String] =
+    Column.function(s"TIME_FORMAT('${ time.toString.replaceAll("T", " ") }', '$format')")
+
+  /**
+   * Function to return the number of days since year 0.
+   *
+   * Use TO_DAYS() carefully with older dates. It is not designed to be used with values prior to the advent of the Gregorian calendar (1582).
+   *
+   * @see https://dev.mysql.com/doc/refman/8.0/en/mysql-calendar.html
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => TO_DAYS(p.birthDate))
+   *   // SELECT TO_DAYS(birth_date) FROM date_time
+   * }}}
+   *
+   * @param column
+   *   The date column to convert to days.
+   */
+  def TO_DAYS[
+    A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](
+    column: Column[A]
+  )(using Decoder[Option[Long]], Encoder[Option[Long]]): Column[Option[Long]] =
+    Column.function(s"TO_DAYS(${ column.name })")
+
+  /**
+   * Function to return the number of days since year 0.
+   *
+   * Use TO_DAYS() carefully with older dates. It is not designed to be used with values prior to the advent of the Gregorian calendar (1582).
+   *
+   * @see https://dev.mysql.com/doc/refman/8.0/en/mysql-calendar.html
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => TO_DAYS(LocalDate.of(2007, 10, 7)))
+   *   // SELECT TO_DAYS('2007-10-07') FROM date_time
+   * }}}
+   *
+   * @param date
+   *   The date or date-time expression to convert to days.
+   */
+  def TO_DAYS(
+    date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime
+  )(using Decoder[Option[Long]], Encoder[Option[Long]]): Column[Option[Long]] =
+    Column.function(s"TO_DAYS('${ date.toString }')")
+
+  /**
+   * Function to return the number of seconds since year 0.
+   *
+   * Use TO_SECONDS() carefully with older dates. It is not designed to be used with values prior to the advent of the Gregorian calendar (1582).
+   *
+   * @see https://dev.mysql.com/doc/refman/8.0/en/mysql-calendar.html
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => TO_SECONDS(p.timestamp))
+   *   // SELECT TO_SECONDS(timestamp) FROM date_time
+   * }}}
+   *
+   * @param column
+   *   The date or datetime column to convert to seconds.
+   */
+  def TO_SECONDS[
+    A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](
+    column: Column[A]
+  )(using Decoder[Option[Long]], Encoder[Option[Long]]): Column[Option[Long]] =
+    Column.function(s"TO_SECONDS(${ column.name })")
+
+  /**
+   * Function to return the number of seconds since year 0.
+   *
+   * Use TO_SECONDS() carefully with older dates. It is not designed to be used with values prior to the advent of the Gregorian calendar (1582).
+   *
+   * @see https://dev.mysql.com/doc/refman/8.0/en/mysql-calendar.html
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => TO_SECONDS(LocalDateTime.of(2009, 11, 29, 13, 43, 32)))
+   *   // SELECT TO_SECONDS('2009-11-29 13:43:32') FROM date_time
+   * }}}
+   *
+   * @param datetime
+   *   The date or date-time expression to convert to seconds.
+   */
+  def TO_SECONDS(
+    datetime: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime
+  )(using Decoder[Option[Long]], Encoder[Option[Long]]): Column[Option[Long]] =
+    Column.function(s"TO_SECONDS('${ datetime.toString.replaceAll("T", " ") }')")
+
+  /**
+   * Function to return a Unix timestamp.
+   * Without arguments, returns the current Unix timestamp (seconds since '1970-01-01 00:00:00' UTC).
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => UNIX_TIMESTAMP())
+   *   // SELECT UNIX_TIMESTAMP() FROM date_time
+   * }}}
+   */
+  def UNIX_TIMESTAMP()(using Decoder[Long], Encoder[Long]): Column[Long] = 
+    Column.function("UNIX_TIMESTAMP()")
+
+  /**
+   * Function to return a Unix timestamp for a given date.
+   * Returns seconds since '1970-01-01 00:00:00' UTC for the given date.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => UNIX_TIMESTAMP(p.timestamp))
+   *   // SELECT UNIX_TIMESTAMP(timestamp) FROM date_time
+   * }}}
+   *
+   * @param column
+   *   The date or datetime column to convert to Unix timestamp.
+   */
+  def UNIX_TIMESTAMP[
+    A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](
+    column: Column[A]
+  )(using Decoder[Option[Long]], Encoder[Option[Long]]): Column[Option[Long]] =
+    Column.function(s"UNIX_TIMESTAMP(${ column.name })")
+
+  /**
+   * Function to return a Unix timestamp for a given date.
+   * Returns seconds since '1970-01-01 00:00:00' UTC for the given date.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => UNIX_TIMESTAMP(LocalDateTime.of(2015, 11, 13, 10, 20, 19)))
+   *   // SELECT UNIX_TIMESTAMP('2015-11-13 10:20:19') FROM date_time
+   * }}}
+   *
+   * @param datetime
+   *   The date or date-time expression to convert to Unix timestamp.
+   */
+  def UNIX_TIMESTAMP(
+    datetime: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime
+  )(using Decoder[Long], Encoder[Long]): Column[Long] =
+    Column.function(s"UNIX_TIMESTAMP('${ datetime.toString.replaceAll("T", " ") }')")
+
+  /**
+   * Function to return the current UTC date in 'YYYY-MM-DD' format.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => UTC_DATE())
+   *   // SELECT UTC_DATE() FROM date_time
+   * }}}
+   */
+  def UTC_DATE()(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] = 
+    Column.function("UTC_DATE()")
+
+  /**
+   * Function to return the current UTC time in 'HH:MM:SS' format.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => UTC_TIME())
+   *   // SELECT UTC_TIME() FROM date_time
+   * }}}
+   */
+  def UTC_TIME()(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] = 
+    Column.function("UTC_TIME()")
+
+  /**
+   * Function to return the current UTC time with fractional seconds precision.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => UTC_TIME(6))
+   *   // SELECT UTC_TIME(6) FROM date_time
+   * }}}
+   *
+   * @param fsp
+   *   The fractional seconds precision (0-6).
+   */
+  def UTC_TIME(fsp: Int)(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] = 
+    require(fsp >= 0 && fsp <= 6, "Fractional seconds precision must be between 0 and 6")
+    Column.function(s"UTC_TIME($fsp)")
+
+  /**
+   * Function to return the current UTC date and time in 'YYYY-MM-DD HH:MM:SS' format.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => UTC_TIMESTAMP())
+   *   // SELECT UTC_TIMESTAMP() FROM date_time
+   * }}}
+   */
+  def UTC_TIMESTAMP()(using Decoder[LocalDateTime], Encoder[LocalDateTime]): Column[LocalDateTime] = 
+    Column.function("UTC_TIMESTAMP()")
+
+  /**
+   * Function to return the current UTC date and time with fractional seconds precision.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => UTC_TIMESTAMP(6))
+   *   // SELECT UTC_TIMESTAMP(6) FROM date_time
+   * }}}
+   *
+   * @param fsp
+   *   The fractional seconds precision (0-6).
+   */
+  def UTC_TIMESTAMP(fsp: Int)(using Decoder[LocalDateTime], Encoder[LocalDateTime]): Column[LocalDateTime] = 
+    require(fsp >= 0 && fsp <= 6, "Fractional seconds precision must be between 0 and 6")
+    Column.function(s"UTC_TIMESTAMP($fsp)")
+
+  /**
+   * Function to return the week number for a date.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => WEEK(p.birthDate))
+   *   // SELECT WEEK(birth_date) FROM date_time
+   * }}}
+   *
+   * @param column
+   *   The date or date-time column from which to extract the week number.
+   */
+  def WEEK[
+    A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](
+    column: Column[A]
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column.function(s"WEEK(${ column.name })")
+
+  /**
+   * Function to return the week number for a date with mode specification.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => WEEK(p.birthDate, 0))
+   *   // SELECT WEEK(birth_date, 0) FROM date_time
+   * }}}
+   *
+   * @param column
+   *   The date or date-time column from which to extract the week number.
+   * @param mode
+   *   The mode parameter for week calculation (0-7).
+   */
+  def WEEK[
+    A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](
+    column: Column[A],
+    mode: Int
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    require(mode >= 0 && mode <= 7, "Week mode must be between 0 and 7")
+    Column.function(s"WEEK(${ column.name }, $mode)")
+
+  /**
+   * Function to return the week number for a date.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => WEEK(LocalDate.of(2008, 2, 20)))
+   *   // SELECT WEEK('2008-02-20') FROM date_time
+   * }}}
+   *
+   * @param date
+   *   The date or date-time expression from which to extract the week number.
+   */
+  def WEEK(
+    date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column.function(s"WEEK('${ date.toString }')")
+
+  /**
+   * Function to return the week number for a date with mode specification.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => WEEK(LocalDate.of(2008, 2, 20), 1))
+   *   // SELECT WEEK('2008-02-20', 1) FROM date_time
+   * }}}
+   *
+   * @param date
+   *   The date or date-time expression from which to extract the week number.
+   * @param mode
+   *   The mode parameter for week calculation (0-7).
+   */
+  def WEEK(
+    date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime,
+    mode: Int
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    require(mode >= 0 && mode <= 7, "Week mode must be between 0 and 7")
+    Column.function(s"WEEK('${ date.toString }', $mode)")
+
+  /**
+   * Function to return the weekday index for a date.
+   * 0 = Monday, 1 = Tuesday, ... 6 = Sunday
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => WEEKDAY(p.birthDate))
+   *   // SELECT WEEKDAY(birth_date) FROM date_time
+   * }}}
+   *
+   * @param column
+   *   The date or date-time column from which to extract the weekday index.
+   */
+  def WEEKDAY[
+    A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](
+    column: Column[A]
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column.function(s"WEEKDAY(${ column.name })")
+
+  /**
+   * Function to return the weekday index for a date.
+   * 0 = Monday, 1 = Tuesday, ... 6 = Sunday
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => WEEKDAY(LocalDate.of(2008, 2, 3)))
+   *   // SELECT WEEKDAY('2008-02-03') FROM date_time
+   * }}}
+   *
+   * @param date
+   *   The date or date-time expression from which to extract the weekday index.
+   */
+  def WEEKDAY(
+    date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column.function(s"WEEKDAY('${ date.toString }')")
+
+  /**
+   * Function to return the calendar week of the date as a number in the range from 1 to 53.
+   * WEEKOFYEAR() is a compatibility function that is equivalent to WEEK(date,3).
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => WEEKOFYEAR(p.birthDate))
+   *   // SELECT WEEKOFYEAR(birth_date) FROM date_time
+   * }}}
+   *
+   * @param column
+   *   The date or date-time column from which to extract the week of year.
+   */
+  def WEEKOFYEAR[
+    A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](
+    column: Column[A]
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column.function(s"WEEKOFYEAR(${ column.name })")
+
+  /**
+   * Function to return the calendar week of the date as a number in the range from 1 to 53.
+   * WEEKOFYEAR() is a compatibility function that is equivalent to WEEK(date,3).
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => WEEKOFYEAR(LocalDate.of(2008, 2, 20)))
+   *   // SELECT WEEKOFYEAR('2008-02-20') FROM date_time
+   * }}}
+   *
+   * @param date
+   *   The date or date-time expression from which to extract the week of year.
+   */
+  def WEEKOFYEAR(
+    date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column.function(s"WEEKOFYEAR('${ date.toString }')")
+
+  /**
+   * Function to return year and week for a date.
+   * The year in the result may be different from the year in the date argument for the first and the last week of the year.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => YEARWEEK(p.birthDate))
+   *   // SELECT YEARWEEK(birth_date) FROM date_time
+   * }}}
+   *
+   * @param column
+   *   The date or date-time column from which to extract the year and week.
+   */
+  def YEARWEEK[
+    A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](
+    column: Column[A]
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column.function(s"YEARWEEK(${ column.name })")
+
+  /**
+   * Function to return year and week for a date with mode specification.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => YEARWEEK(p.birthDate, 0))
+   *   // SELECT YEARWEEK(birth_date, 0) FROM date_time
+   * }}}
+   *
+   * @param column
+   *   The date or date-time column from which to extract the year and week.
+   * @param mode
+   *   The mode parameter for week calculation (0-7).
+   */
+  def YEARWEEK[
+    A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](
+    column: Column[A],
+    mode: Int
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    require(mode >= 0 && mode <= 7, "Week mode must be between 0 and 7")
+    Column.function(s"YEARWEEK(${ column.name }, $mode)")
+
+  /**
+   * Function to return year and week for a date.
+   * The year in the result may be different from the year in the date argument for the first and the last week of the year.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => YEARWEEK(LocalDate.of(1987, 1, 1)))
+   *   // SELECT YEARWEEK('1987-01-01') FROM date_time
+   * }}}
+   *
+   * @param date
+   *   The date or date-time expression from which to extract the year and week.
+   */
+  def YEARWEEK(
+    date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column.function(s"YEARWEEK('${ date.toString }')")
+
+  /**
+   * Function to return year and week for a date with mode specification.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => YEARWEEK(LocalDate.of(1987, 1, 1), 0))
+   *   // SELECT YEARWEEK('1987-01-01', 0) FROM date_time
+   * }}}
+   *
+   * @param date
+   *   The date or date-time expression from which to extract the year and week.
+   * @param mode
+   *   The mode parameter for week calculation (0-7).
+   */
+  def YEARWEEK(
+    date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime,
+    mode: Int
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    require(mode >= 0 && mode <= 7, "Week mode must be between 0 and 7")
+    Column.function(s"YEARWEEK('${ date.toString }', $mode)")
+
 object DateTime:
 
   /**
@@ -1299,3 +1966,15 @@ object DateTime:
     case MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR, SECOND_MICROSECOND, MINUTE_MICROSECOND,
       MINUTE_SECOND, HOUR_MICROSECOND, HOUR_SECOND, HOUR_MINUTE, DAY_MICROSECOND, DAY_SECOND, DAY_MINUTE, DAY_HOUR,
       YEAR_MONTH
+
+  /**
+   * Date type for the GET_FORMAT expression.
+   */
+  enum DateType:
+    case DATE, TIME, DATETIME
+
+  /**
+   * Format type for the GET_FORMAT expression.
+   */
+  enum FormatType:
+    case EUR, USA, JIS, ISO, INTERNAL
