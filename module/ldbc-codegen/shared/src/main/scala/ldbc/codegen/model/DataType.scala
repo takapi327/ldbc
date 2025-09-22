@@ -62,9 +62,9 @@ object DataType:
     def collate: Option[String]
 
   case class BIT(length: Option[Int]) extends DataType:
-    override val name:      String    = "BIT"
-    override val sqlType:   Int       = Types.BIT
-    override val scalaType: ScalaType = ScalaType.Byte
+    override val name:       String         = "BIT"
+    override val sqlType:    Int            = Types.BIT
+    override val scalaType:  ScalaType      = ScalaType.Byte
     override val scalaTypes: Seq[ScalaType] =
       Seq(ScalaType.Short, ScalaType.Int, ScalaType.Long)
 
@@ -204,9 +204,9 @@ object DataType:
     override val scalaTypes: Seq[ScalaType] = Seq(ScalaType.String, ScalaType.Instant, ScalaType.OffsetTime)
 
   case class TIMESTAMP(fsp: Option[Int]) extends DataType:
-    override val name:      String    = "TIMESTAMP"
-    override val sqlType:   Int       = Types.TIMESTAMP
-    override val scalaType: ScalaType = ScalaType.LocalDateTime
+    override val name:       String         = "TIMESTAMP"
+    override val sqlType:    Int            = Types.TIMESTAMP
+    override val scalaType:  ScalaType      = ScalaType.LocalDateTime
     override val scalaTypes: Seq[ScalaType] =
       Seq(ScalaType.String, ScalaType.Instant, ScalaType.OffsetDateTime, ScalaType.ZonedDateTime)
 

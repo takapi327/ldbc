@@ -11,8 +11,9 @@ import java.nio.file.Files
 
 import scala.io.Codec
 
+import ldbc.statement.formatter.Naming
+
 import ldbc.codegen.builder.ColumnCodeBuilder
-import ldbc.codegen.formatter.Naming
 import ldbc.codegen.model.*
 import ldbc.codegen.parser.yml.Parser
 
@@ -53,7 +54,7 @@ private[ldbc] object TableModelGenerator:
 
     val custom = customParser.flatMap(_.find(_.name == statement.tableName))
 
-    val className = classNameFormatter.format(statement.tableName)
+    val className  = classNameFormatter.format(statement.tableName)
     val properties = statement.columnDefinitions.map(column =>
       propertyGenerator(
         className,
@@ -74,7 +75,7 @@ private[ldbc] object TableModelGenerator:
       )
 
     val directory = sourceManaged.toPath.resolve(database)
-    val output = if !directory.toFile.exists() then
+    val output    = if !directory.toFile.exists() then
       directory.toFile.getParentFile.mkdirs()
       Files.createDirectory(directory)
     else directory
@@ -145,9 +146,9 @@ private[ldbc] object TableModelGenerator:
     column.dataType.scalaType match
       case ScalaType.Enum(types) =>
         val enumName = formatter.format(column.name)
-        Some(s"""enum $enumName extends model.Enum:
+        Some(s"""enum $enumName:
            |    case ${ types.mkString(", ") }
-           |  object $enumName extends model.EnumDataType[$enumName]:
-           |    given ldbc.dsl.codec.Codec[$enumName] = ldbc.dsl.codec.Codec[Int].imap($enumName.fromOrdinal)(_.ordinal)
+           |  object $enumName:
+           |    given ldbc.dsl.codec.Codec[$enumName] = ldbc.dsl.codec.Codec.derivedEnum[$enumName]
            |""".stripMargin)
       case _ => None

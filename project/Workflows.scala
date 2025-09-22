@@ -41,4 +41,32 @@ object Workflows {
     commands = List("docker compose down"),
     name     = Some("Stop MySQL on Docker")
   )
+
+  val sbtCoverageReport: Def.Initialize[WorkflowJob] = Def.setting(
+    WorkflowJob(
+      id     = "coverage",
+      name   = "Generate coverage report",
+      javas  = List(githubWorkflowJavaVersions.value.last),
+      scalas = githubWorkflowScalaVersions.value.toList,
+      steps  = List(WorkflowStep.Checkout) ++ List(dockerRun) ++ WorkflowStep.SetupJava(
+        List(githubWorkflowJavaVersions.value.last)
+      ) ++ githubWorkflowGeneratedCacheSteps.value ++ List(
+        WorkflowStep.Sbt(List("coverage", "ldbcJVM/test", "coverageAggregate")),
+        dockerStop,
+        WorkflowStep.Use(
+          UseRef.Public(
+            "codecov",
+            "codecov-action",
+            "v4"
+          ),
+          params = Map(
+            "flags" -> List("${{matrix.scala}}").mkString(",")
+          ),
+          env = Map(
+            "CODECOV_TOKEN" -> "${{secrets.CODECOV_TOKEN}}"
+          )
+        )
+      )
+    )
+  )
 }

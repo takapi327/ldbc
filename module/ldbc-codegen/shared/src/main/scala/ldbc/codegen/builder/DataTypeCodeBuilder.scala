@@ -6,7 +6,8 @@
 
 package ldbc.codegen.builder
 
-import ldbc.codegen.formatter.Naming
+import ldbc.statement.formatter.Naming
+
 import ldbc.codegen.model.DataType
 
 /**
@@ -40,8 +41,8 @@ case class DataTypeCodeBuilder(scalaType: String, formatter: Naming):
       case data: DataType.VARBINARY => s"${ data.name }[$scalaType](${ data.length })"
       case data: DataType.TINYBLOB  => s"${ data.name }[$scalaType]()"
       case data: DataType.TINYTEXT  => s"${ data.name }[$scalaType]()" + buildCharacterSet(data.character, data.collate)
-      case data: DataType.ENUM =>
-        s"${ data.name }[$scalaType](using ${ scalaType.replace("Option[", "").replace("]", "") })" + buildCharacterSet(
+      case data: DataType.ENUM      =>
+        s"${ data.name }[$scalaType]" + buildCharacterSet(
           data.character,
           data.collate
         )

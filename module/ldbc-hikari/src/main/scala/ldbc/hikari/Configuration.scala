@@ -51,7 +51,7 @@ object ConfigLoader:
   given ConfigLoader[ConfigMemorySize] = ConfigLoader(_.getMemorySize)
   given ConfigLoader[FiniteDuration]   = ConfigLoader(_.getDuration).map(_.toNanos.nanos)
   given ConfigLoader[JavaDuration]     = ConfigLoader(_.getDuration)
-  given ConfigLoader[Duration] = ConfigLoader(config =>
+  given ConfigLoader[Duration]         = ConfigLoader(config =>
     path =>
       if config.getIsNull(path) then Duration.Inf
       else config.getDuration(path).toNanos.nanos

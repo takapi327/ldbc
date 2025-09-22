@@ -51,14 +51,14 @@ In the future, support for MySQL 5.7.x is planned to be discontinued.
 
 ## Connection
 
-To connect to MySQL using the ldbc connector, use `ConnectionProvider`.
+To connect to MySQL using the ldbc connector, use `MySQLDataSource`.
 
 ```scala 3
 import cats.effect.IO
-import ldbc.connector.ConnectionProvider
+import ldbc.connector.MySQLDataSource
 
-val provider = ConnectionProvider
-  .default[IO](
+val datasource = MySQLDataSource
+  .build[IO](
     host = "127.0.0.1",
     port = 3306,
     user = "root",
@@ -67,28 +67,40 @@ val provider = ConnectionProvider
 
 Below is a list of properties that can be set when constructing a `Connection`.
 
-| Property                     | Details                                                            | Required |
-|---------------------------|---------------------------------------------------------------|----|
-| `host`                    | `Database host information`                                                 | ✅  |
-| `port`                    | `Database port information`                                                 | ✅  |
-| `user`                    | `Database user information`                                                | ✅  |
-| `password`                | `Database password information (default: None)`                               | ❌  |
-| `database`                | `Database name information (default: None)`                                   | ❌  |
-| `debug`                   | `Whether to display debug information (default: false)`                           | ❌  |
-| `ssl`                     | `SSL settings (default: SSL.None)`                                  | ❌  |
-| `socketOptions`           | `Specify socket options for TCP/UDP sockets (default: defaultSocketOptions)` | ❌  |
-| `readTimeout`             | `Specify timeout duration (default: Duration.Inf)`                       | ❌  |
-| `allowPublicKeyRetrieval` | `Whether to retrieve public key (default: false)`                               | ❌  |
-| `logHandler`              | `Log output settings`                                                      | ❌  |
-| `before`                  | `Processing to be executed after connection is established`                                            | ❌  |
-| `after`                   | `Processing to be executed before disconnecting`                                         | ❌  |
-| `tracer`                  | `Tracer settings for metrics output (default: Tracer.noop)`                     | ❌  |
+| Property                  | Details                                                                      | Required |
+|---------------------------|------------------------------------------------------------------------------|----------|
+| `host`                    | `Database host information`                                                  | ✅        |
+| `port`                    | `Database port information`                                                  | ✅        |
+| `user`                    | `Database user information`                                                  | ✅        |
+| `password`                | `Database password information (default: None)`                              | ❌        |
+| `database`                | `Database name information (default: None)`                                  | ❌        |
+| `debug`                   | `Whether to display debug information (default: false)`                      | ❌        |
+| `ssl`                     | `SSL settings (default: SSL.None)`                                           | ❌        |
+| `socketOptions`           | `Specify socket options for TCP/UDP sockets (default: defaultSocketOptions)` | ❌        |
+| `readTimeout`             | `Specify timeout duration (default: Duration.Inf)`                           | ❌        |
+| `allowPublicKeyRetrieval` | `Whether to retrieve public key (default: false)`                            | ❌        |
+| `logHandler`              | `Log output settings`                                                        | ❌        |
+| `before`                  | `Processing to be executed after connection is established`                  | ❌        |
+| `after`                   | `Processing to be executed before disconnecting`                             | ❌        |
+| `tracer`                  | `Tracer settings for metrics output (default: Tracer.noop)`                  | ❌        |
 
-`ConnectionProvider` uses `Resource` for resource management. Therefore, when using connection information, use the `use` method to manage resources.
+Create a `Connector` from `MySQLDataSource` to perform database operations. The `Connector` is an interface that translates the `DBIO` monad into actual database operations.
 
 ```scala 3
-provider.use { conn =>
-  // Write code
+import ldbc.connector.*
+
+// Connectorを作成
+val connector = Connector.fromDataSource(datasource)
+
+// DBIOを実行
+sql"SELECT 1".query[Int].unsafe.readOnly(connector)
+```
+
+Additionally, if you need to use the low-level Connection API, you can use `getConnection` to obtain a `Resource`:
+
+```scala 3
+datasource.getConnection.use { conn =>
+  // Connection APIを直接使用
 }
 ```
 
@@ -136,7 +148,7 @@ To execute read-only SQL, use the `executeQuery` method.
 The values returned from the MySQL server as a result of executing the query are stored in `ResultSet` and returned as the return value.
 
 ```scala 3 3
-provider.use { conn =>
+datasource.getConnection.use { conn =>
   for
     statement <- conn.createStatement()
     result <- statement.executeQuery("SELECT * FROM users")
@@ -152,7 +164,7 @@ To execute SQL for writing, use the `executeUpdate` method.
 The values returned from the MySQL server as a result of executing the query are the number of affected rows returned as the return value.
 
 ```scala 3
-provider.use { conn =>
+datasource.getConnection.use { conn =>
   for
     statement <- conn.createStatement()
     result <- statement.executeUpdate("INSERT INTO users (name, age) VALUES ('Alice', 20)")
@@ -167,7 +179,7 @@ To retrieve the AUTO_INCREMENT value after executing a query using `Statement`, 
 The values returned from the MySQL server as a result of executing the query are the values generated by AUTO_INCREMENT returned as the return value.
 
 ```scala 3
-provider.use { conn =>
+datasource.getConnection.use { conn =>
   for
     statement <- conn.createStatement()
     _ <- statement.executeUpdate("INSERT INTO users (name, age) VALUES ('Alice', 20)", Statement.RETURN_GENERATED_KEYS)
@@ -202,7 +214,7 @@ When using `Server PreparedStatement`, use the `close` method to properly releas
 Use the `clientPreparedStatement` method of `Connection` to construct a `Client PreparedStatement`.
 
 ```scala 3
-provider.use { conn =>
+datasource.getConnection.use { conn =>
   for 
     statement <- conn.clientPreparedStatement("SELECT * FROM users WHERE id = ?")
     ...
@@ -215,7 +227,7 @@ provider.use { conn =>
 Use the `serverPreparedStatement` method of `Connection` to construct a `Server PreparedStatement`.
 
 ```scala 3
-provider.use { conn =>
+datasource.getConnection.use { conn =>
   for 
     statement <- conn.serverPreparedStatement("SELECT * FROM users WHERE id = ?")
     ...
@@ -230,7 +242,7 @@ To execute read-only SQL, use the `executeQuery` method.
 The values returned from the MySQL server as a result of executing the query are stored in `ResultSet` and returned as the return value.
 
 ```scala 3
-provider.use { conn =>
+datasource.getConnection.use { conn =>
   for 
     statement <- conn.clientPreparedStatement("SELECT * FROM users WHERE id = ?") // or conn.serverPreparedStatement("SELECT * FROM users WHERE id = ?")
     _ <- statement.setLong(1, 1)
@@ -251,20 +263,20 @@ statement.setLong(1, 1)
 
 The following methods are currently supported.
 
-| Method            | Type                                     | Remarks                                |
-|-----------------|---------------------------------------|-----------------------------------|
-| `setNull`       |                                       | Sets NULL as the parameter                |
-| `setBoolean`    | `Boolean/Option[Boolean]`             |                                   |
-| `setByte`       | `Byte/Option[Byte]`                   |                                   |
-| `setShort`      | `Short/Option[Short]`                 |                                   |
-| `setInt`        | `Int/Option[Int]`                     |                                   |
-| `setLong`       | `Long/Option[Long]`                   |                                   |
-| `setBigInt`     | `BigInt/Option[BigInt]`               |                                   |
-| `setFloat`      | `Float/Option[Float]`                 |                                   |
-| `setDouble`     | `Double/Option[Double]`               |                                   |
-| `setBigDecimal` | `BigDecimal/Option[BigDecimal]`       |                                   |
-| `setString`     | `String/Option[String]`               |                                   |
-| `setBytes`      | `Array[Byte]/Option[Array[Byte]]`     |                                   |
+| Method          | Type                                  | Remarks                                             |
+|-----------------|---------------------------------------|-----------------------------------------------------|
+| `setNull`       |                                       | Sets NULL as the parameter                          |
+| `setBoolean`    | `Boolean/Option[Boolean]`             |                                                     |
+| `setByte`       | `Byte/Option[Byte]`                   |                                                     |
+| `setShort`      | `Short/Option[Short]`                 |                                                     |
+| `setInt`        | `Int/Option[Int]`                     |                                                     |
+| `setLong`       | `Long/Option[Long]`                   |                                                     |
+| `setBigInt`     | `BigInt/Option[BigInt]`               |                                                     |
+| `setFloat`      | `Float/Option[Float]`                 |                                                     |
+| `setDouble`     | `Double/Option[Double]`               |                                                     |
+| `setBigDecimal` | `BigDecimal/Option[BigDecimal]`       |                                                     |
+| `setString`     | `String/Option[String]`               |                                                     |
+| `setBytes`      | `Array[Byte]/Option[Array[Byte]]`     |                                                     |
 | `setDate`       | `LocalDate/Option[LocalDate]`         | Directly handles `java.time` instead of `java.sql`. |
 | `setTime`       | `LocalTime/Option[LocalTime]`         | Directly handles `java.time` instead of `java.sql`. |
 | `setTimestamp`  | `LocalDateTime/Option[LocalDateTime]` | Directly handles `java.time` instead of `java.sql`. |
@@ -277,7 +289,7 @@ To execute SQL for writing, use the `executeUpdate` method.
 The values returned from the MySQL server as a result of executing the query are the number of affected rows returned as the return value.
 
 ```scala 3
-provider.use { conn =>
+datasource.getConnection.use { conn =>
   for 
     statement <- conn.clientPreparedStatement("INSERT INTO users (name, age) VALUES (?, ?)") // or conn.serverPreparedStatement("INSERT INTO users (name, age) VALUES (?, ?)")
     _ <- statement.setString(1, "Alice")
@@ -295,7 +307,7 @@ To retrieve the AUTO_INCREMENT value after executing a query, use the `getGenera
 The values returned from the MySQL server as a result of executing the query are the values generated by AUTO_INCREMENT returned as the return value.
 
 ```scala 3
-provider.use { conn =>
+datasource.getConnection.use { conn =>
   for 
     statement <- conn.clientPreparedStatement("INSERT INTO users (name, age) VALUES (?, ?)", Statement.RETURN_GENERATED_KEYS) // or conn.serverPreparedStatement("INSERT INTO users (name, age) VALUES (?, ?)", Statement.RETURN_GENERATED_KEYS)
     _ <- statement.setString(1, "Alice")
@@ -321,7 +333,7 @@ The `getXXX` method is an API for retrieving values from records.
 The `getXXX` method can specify the column index or the column name to retrieve.
 
 ```scala 3
-provider.use { conn =>
+datasource.getConnection.use { conn =>
   for 
     statement <- conn.clientPreparedStatement("SELECT `id`, `name`, `age` FROM users WHERE id = ?")
     _ <- statement.setLong(1, 1)
@@ -465,16 +477,16 @@ MySQL has several utility commands. ([Reference](https://dev.mysql.com/doc/dev/m
 
 ldbc provides APIs to use these commands.
 
-| Command                   | Purpose                                   | Supported |
-|------------------------|--------------------------------------|------|
-| `COM_QUIT`             | `Informs the server that the client is requesting to close the connection.` | ✅    |
-| `COM_INIT_DB`          | `Changes the default schema of the connection.`                 | ✅    |
-| `COM_STATISTICS`       | `Retrieves internal status string in a readable format.`             | ✅    |
-| `COM_DEBUG`            | `Dumps debug information to the server's standard output.`             | ❌    |
-| `COM_PING`             | `Checks if the server is alive.`                  | ✅    |
-| `COM_CHANGE_USER`      | `Changes the user of the current connection.`                    | ✅    |
-| `COM_RESET_CONNECTION` | `Resets the session state.`                    | ✅    |
-| `COM_SET_OPTION`       | `Sets options for the current connection.`                   | ✅    |
+| Command                | Purpose                                                                     | Supported |
+|------------------------|-----------------------------------------------------------------------------|-----------|
+| `COM_QUIT`             | `Informs the server that the client is requesting to close the connection.` | ✅         |
+| `COM_INIT_DB`          | `Changes the default schema of the connection.`                             | ✅         |
+| `COM_STATISTICS`       | `Retrieves internal status string in a readable format.`                    | ✅         |
+| `COM_DEBUG`            | `Dumps debug information to the server's standard output.`                  | ❌         |
+| `COM_PING`             | `Checks if the server is alive.`                                            | ✅         |
+| `COM_CHANGE_USER`      | `Changes the user of the current connection.`                               | ✅         |
+| `COM_RESET_CONNECTION` | `Resets the session state.`                                                 | ✅         |
+| `COM_SET_OPTION`       | `Sets options for the current connection.`                                  | ✅         |
 
 ### COM QUIT
 
@@ -486,7 +498,7 @@ When you use the `close` method, the connection is closed, and you cannot use th
 *Note: `Connection` uses `Resource` for resource management. Therefore, you do not need to use the `close` method to release resources.*
 
 ```scala 3
-provider.use { conn =>
+datasource.getConnection.use { conn =>
   conn.close()
 }
 ```
@@ -498,7 +510,7 @@ provider.use { conn =>
 In ldbc, you can change the default schema using the `setSchema` method of `Connection`.
 
 ```scala 3
-provider.use { conn =>
+datasource.getConnection.use { conn =>
   conn.setSchema("test")
 }
 ```
@@ -510,7 +522,7 @@ provider.use { conn =>
 In ldbc, you can retrieve the internal status string using the `getStatistics` method of `Connection`.
 
 ```scala 3
-provider.use { conn =>
+datasource.getConnection.use { conn =>
   conn.getStatistics
 }
 ```
@@ -534,7 +546,7 @@ In ldbc, you can check if the server is alive using the `isValid` method of `Con
 If the server is alive, it returns `true`, and if it is not alive, it returns `false`.
 
 ```scala 3
-provider.use { conn =>
+datasource.getConnection.use { conn =>
   conn.isValid
 }
 ```
@@ -552,7 +564,7 @@ It also resets the following connection states:
 In ldbc, you can change the user using the `changeUser` method of `Connection`.
 
 ```scala 3
-provider.use { conn =>
+datasource.getConnection.use { conn =>
   conn.changeUser("root", "password")
 }
 ```
@@ -569,7 +581,7 @@ provider.use { conn =>
 In ldbc, you can reset the session state using the `resetServerState` method of `Connection`.
 
 ```scala 3
-provider.use { conn =>
+datasource.getConnection.use { conn =>
   conn.resetServerState
 }
 ```
@@ -586,7 +598,7 @@ Using the `disableMultiQueries` method prevents you from executing multiple quer
 *Note: This can only be used for batch processing with Insert, Update, and Delete statements. If used with Select statements, only the result of the first query will be returned.*
 
 ```scala 3
-provider.use { conn =>
+datasource.getConnection.use { conn =>
   conn.enableMultiQueries *> conn.disableMultiQueries
 }
 ```
@@ -599,7 +611,7 @@ By using batch commands, you can execute multiple queries at once, reducing the 
 To use batch commands, use the `addBatch` method of `Statement` or `PreparedStatement` to add queries, and use the `executeBatch` method to execute the queries.
 
 ```scala 3 3
-provider.use { conn =>
+datasource.getConnection.use { conn =>
   for
     statement <- conn.createStatement()
     _ <- statement.addBatch("INSERT INTO users (name, age) VALUES ('Alice', 20)")
@@ -625,7 +637,7 @@ After executing the batch command, the queries added with the `addBatch` method 
 To manually clear the queries, use the `clearBatch` method to clear them.
 
 ```scala 3
-provider.use { conn =>
+datasource.getConnection.use { conn =>
   for
     statement <- conn.createStatement()
     _ <- statement.addBatch("INSERT INTO users (name, age) VALUES ('Alice', 20)")
@@ -648,7 +660,7 @@ However, when executing an INSERT statement with batch commands using `PreparedS
 For example, when executing the following query with batch commands, multiple queries are executed at once because `Statement` is used.
 
 ```scala 3
-provider.use { conn =>
+datasource.getConnection.use { conn =>
   for
     statement <- conn.createStatement()
     _ <- statement.addBatch("INSERT INTO users (name, age) VALUES ('Alice', 20)")
@@ -664,7 +676,7 @@ provider.use { conn =>
 However, when executing the following query with batch commands, one query is executed because `PreparedStatement` is used.
 
 ```scala 3
-provider.use { conn =>
+datasource.getConnection.use { conn =>
   for
     statement <- conn.clientPreparedStatement("INSERT INTO users (name, age) VALUES (?, ?)")
     _ <- statement.setString(1, "Alice")
@@ -707,7 +719,7 @@ END
 To execute the above stored procedure, it will be as follows.
 
 ```scala 3
-provider.use { conn =>
+datasource.getConnection.use { conn =>
   for
     callableStatement <- conn.prepareCall("CALL demoSp(?, ?)")
     _ <- callableStatement.setString(1, "abcdefg")
@@ -730,7 +742,7 @@ To retrieve the value of an output parameter (a parameter specified as OUT or IN
 However, you can also specify the parameter using the `registerOutputParameter()` method in ldbc.
 
 ```scala 3
-provider.use { conn =>
+datasource.getConnection.use { conn =>
   for
     callableStatement <- conn.prepareCall("CALL demoSp(?, ?)")
     _ <- callableStatement.setString(1, "abcdefg")

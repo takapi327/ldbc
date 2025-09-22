@@ -561,16 +561,17 @@ Execute the constructed queries as follows:
 ```scala 3
 import ldbc.dsl.*
 
-provider.use { conn =>
-  (for
-    // Execute a SELECT query
-    users <- TableQuery[User].selectAll.where(_.id > 5).query.to[List]  // Get results as a List
-    // Get a single result
-    user <- TableQuery[User].selectAll.where(_.id === 1).query.to[Option]
-    // Execute an update query
-    _ <- TableQuery[User].update(_.name)("NewName").where(_.id === 1).update
-  yield ???).transaction(conn)
-}
+// Create Connector
+val connector = Connector.fromDataSource(datasource)
+
+(for
+  // Execute a SELECT query
+  users <- TableQuery[User].selectAll.where(_.id > 5).query.to[List]  // Get results as a List
+  // Get a single result
+  user <- TableQuery[User].selectAll.where(_.id === 1).query.to[Option]
+  // Execute an update query
+  _ <- TableQuery[User].update(_.name)("NewName").where(_.id === 1).update
+yield ???).transaction(connector)
 ```
 
 ## Next Steps

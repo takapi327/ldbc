@@ -6,7 +6,7 @@
 
 package ldbc.codegen.model
 
-import ldbc.codegen.formatter.Naming
+import ldbc.statement.formatter.Naming
 
 trait Key:
   def toCode(tableName: String, classNameFormatter: Naming, propertyFormatter: Naming): String
@@ -83,9 +83,9 @@ object Key:
   ) extends Key:
     def toCode(tableName: String, classNameFormatter: Naming, propertyFormatter: Naming): String =
       val columns = keyParts.map(v => s"${ propertyFormatter.format(v) }")
-      val key = indexType.fold(s"PRIMARY_KEY(${ columns.mkString(" *: ") })")(v =>
+      val key     = indexType.fold(s"PRIMARY_KEY(${ columns.mkString(" *: ") })")(v =>
         indexOption match
-          case None => s"PRIMARY_KEY(${ v.toCode }, ${ columns.mkString(" *: ") })"
+          case None    => s"PRIMARY_KEY(${ v.toCode }, ${ columns.mkString(" *: ") })"
           case Some(o) =>
             s"PRIMARY_KEY(${ v.toCode }, ${ o.toCode }, ${ columns.mkString(" *: ") })"
       )
@@ -102,7 +102,7 @@ object Key:
   ) extends Key:
     def toCode(tableName: String, classNameFormatter: Naming, propertyFormatter: Naming): String =
       val columns = keyParts.map(v => s"${ propertyFormatter.format(v) }")
-      val key =
+      val key     =
         s"UNIQUE_KEY(${ indexName.fold("None")(v => s"Some(\"$v\")") }, ${ indexType
             .fold("None")(v => s"Some(${ v.toCode })") }, ${ indexOption
             .fold("None")(v => s"Some(${ v.toCode })") }, ${ columns.mkString(" *: ") })"
@@ -118,7 +118,7 @@ object Key:
   ) extends Key:
     def toCode(tableName: String, classNameFormatter: Naming, propertyFormatter: Naming): String =
       val columns = keyParts.map(v => s"$tableName.${ propertyFormatter.format(v) }")
-      val key =
+      val key     =
         s"FOREIGN_KEY(${ indexName.fold("None")(v => s"Some(\"$v\")") }, ${ columns
             .mkString(" *: ") }, ${ reference.toCode(classNameFormatter, propertyFormatter) })"
       constraint.fold(key)(_.name match
@@ -132,7 +132,7 @@ object Key:
       on match
         case Some(list) =>
           (list.find(_.isInstanceOf[OnDelete]), list.find(_.isInstanceOf[OnUpdate])) match
-            case (None, None) => s"REFERENCE($className.table, ${ columns.mkString(" *: ") })"
+            case (None, None)         => s"REFERENCE($className.table, ${ columns.mkString(" *: ") })"
             case (Some(delete), None) =>
               s"REFERENCE($className.table, ${ columns.mkString(" *: ") }).onDelete(${ delete.option })"
             case (None, Some(update)) =>

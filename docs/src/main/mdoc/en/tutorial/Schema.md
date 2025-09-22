@@ -187,9 +187,8 @@ Example of using ENUM type:
 
 ```scala 3
 // ENUM definition
-enum UserStatus extends Enum:
+enum UserStatus:
   case Active, Inactive, Suspended
-object UserStatus extends EnumDataType[UserStatus]
 
 // Using ENUM in table definition
 class UserTable extends Table[User]("user"):
@@ -383,12 +382,12 @@ import ldbc.dsl.*
 val schema = users.schema ++ profiles.schema ++ orders.schema
 
 // Apply schema using database connection
-provider.use { conn =>
+datasource.getConnection.use { conn =>
   DBIO.sequence(
     // Create tables (only if they don't exist)
     schema.createIfNotExists,
     // Other operations such as data insertion...
-  ).commit(conn)
+  ).commit(connector)
 }
 ```
 

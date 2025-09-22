@@ -14,8 +14,8 @@ import cats.effect.*
 import cats.effect.syntax.all.*
 import ldbc.dsl.*
 
-def limitedConcurrency[A](program: DBIO[A], conn: Connection[IO], maxConcurrent: Int): IO[A] =
+def limitedConcurrency[A](program: DBIO[A], connector: Connector[IO], maxConcurrent: Int): IO[A] =
   Semaphore[IO](maxConcurrent).flatMap { sem =>
-    sem.permit.use(_ => program.readOnly(conn))
+    sem.permit.use(_ => program.readOnly(connector))
   }
 ```

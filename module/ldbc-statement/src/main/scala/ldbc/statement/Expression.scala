@@ -161,7 +161,7 @@ object Expression:
   ) extends SingleValue[T]:
     override def flag:      String                  = "="
     override def parameter: List[Parameter.Dynamic] = Parameter.Dynamic.many(encoder.encode(value))
-    override def statement: String =
+    override def statement: String                  =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
 

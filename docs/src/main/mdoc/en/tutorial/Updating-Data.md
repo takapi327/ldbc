@@ -34,15 +34,18 @@ def insertUser(name: String, email: String): DBIO[Int] =
 Let's use this method to actually insert data and check the result:
 
 ```scala
+// Create Connector
+val connector = Connector.fromDataSource(datasource)
+
 // Execute the insert operation
-insertUser("dave", "dave@example.com").commit(conn).unsafeRunSync()
+insertUser("dave", "dave@example.com").commit(connector).unsafeRunSync()
 // The return value is the number of affected rows (in this case, 1)
 
 // Check the inserted data
 sql"SELECT id, name, email FROM user WHERE name = 'dave'"
   .query[(Int, String, String)]
   .to[Option]
-  .readOnly(conn)
+  .readOnly(connector)
   .unsafeRunSync()
   .foreach { case (id, name, email) =>
     println(s"ID: $id, Name: $name, Email: $email")
@@ -65,9 +68,12 @@ def insertUserAndGetId(name: String, email: String): DBIO[Long] =
 Let's use this method to insert a new user and get the auto-generated ID:
 
 ```scala
+// Create Connector
+val connector = Connector.fromDataSource(datasource)
+
 // Insert and get the auto-generated ID
 val newUserId = insertUserAndGetId("frank", "frank@example.com")
-  .commit(conn)
+  .commit(connector)
   .unsafeRunSync()
 
 println(s"New user ID: $newUserId")
@@ -94,9 +100,12 @@ def insertAndRetrieveUser(name: String, email: String): DBIO[Option[User]] =
 Usage example:
 
 ```scala
+// Create Connector
+val connector = Connector.fromDataSource(datasource)
+
 // Insert a user and get the inserted user's information
 insertAndRetrieveUser("grace", "grace@example.com")
-  .commit(conn)
+  .commit(connector)
   .unsafeRunSync()
   .foreach { user =>
     println(s"Inserted user: ID=${user.id}, Name=${user.name}, Email=${user.email}")
@@ -117,16 +126,19 @@ def updateUserEmail(id: Long, newEmail: String): DBIO[Int] =
 Usage example:
 
 ```scala
+// Create Connector
+val connector = Connector.fromDataSource(datasource)
+
 // Update a user's email address
 updateUserEmail(1, "alice+updated@example.com")
-  .commit(conn)
+  .commit(connector)
   .unsafeRunSync()
 
 // Check the updated data
 sql"SELECT id, name, email FROM user WHERE id = 1"
   .query[User]
   .to[Option]
-  .readOnly(conn)
+  .readOnly(connector)
   .unsafeRunSync()
   .foreach { user => 
     println(s"Updated user: ID=${user.id}, Name=${user.name}, Email=${user.email}")
@@ -163,16 +175,19 @@ def deleteUser(id: Long): DBIO[Int] =
 Usage example:
 
 ```scala
+// Create Connector
+val connector = Connector.fromDataSource(datasource)
+
 // Delete a user
 deleteUser(5)
-  .commit(conn)
+  .commit(connector)
   .unsafeRunSync()
 
 // Confirm deletion
 sql"SELECT COUNT(*) FROM user WHERE id = 5"
   .query[Int]
   .unsafe
-  .readOnly(conn)
+  .readOnly(connector)
   .unsafeRunSync() match {
     case 0 => println("User with ID 5 has been deleted")
     case n => println(s"User with ID 5 still exists (count: $n)")
@@ -215,8 +230,11 @@ val newUsers = NonEmptyList.of(
   ("irene", "irene@example.com")
 )
 
+// Create Connector
+val connector = Connector.fromDataSource(datasource)
+
 // Execute bulk insertion
-val insertedCount = insertManyUsers(newUsers).commit(conn).unsafeRunSync()
+val insertedCount = insertManyUsers(newUsers).commit(connector).unsafeRunSync()
 println(s"Number of rows inserted: $insertedCount") // Should output "Number of rows inserted: 3"
 ```
 
@@ -236,9 +254,12 @@ def createUserWithProfile(name: String, email: String, bio: String): DBIO[Long] 
 By executing this method using `.transaction`, both user insertion and profile insertion are processed as a single transaction:
 
 ```scala
+// Create Connector
+val connector = Connector.fromDataSource(datasource)
+
 // Execute within a transaction
 val userId = createUserWithProfile("julia", "julia@example.com", "Programmer")
-  .transaction(conn)
+  .transaction(connector)
   .unsafeRunSync()
 
 println(s"Created user ID: $userId")
@@ -250,22 +271,22 @@ If the insertion into the `user_profile` table fails, the insertion into the `us
 
 ldbc provides the following query execution methods for data update operations:
 
-- `.commit(conn)` - Executes a write operation in auto-commit mode (suitable for simple, single update operations)
-- `.rollback(conn)` - Executes a write operation and always rolls back (for testing and verification)
-- `.transaction(conn)` - Executes operations within a transaction, committing only upon success (suitable when you want to treat multiple operations as a single unit)
+- `.commit(connector)` - Executes a write operation in auto-commit mode (suitable for simple, single update operations)
+- `.rollback(connector)` - Executes a write operation and always rolls back (for testing and verification)
+- `.transaction(connector)` - Executes operations within a transaction, committing only upon success (suitable when you want to treat multiple operations as a single unit)
 
 ```scala
 // Execution in auto-commit mode (simple single operation)
-updateUserEmail(1, "new@example.com").commit(conn)
+updateUserEmail(1, "new@example.com").commit(connector)
 
 // Execution for testing (changes are not saved)
-insertUser("test", "test@example.com").rollback(conn)
+insertUser("test", "test@example.com").rollback(connector)
 
 // Multiple operations within a transaction (all succeed or all fail)
 (for {
   userId <- insertUser("kate", "kate@example.com").returning[Long]
   _      <- sql"INSERT INTO user_roles (user_id, role_id) VALUES ($userId, 2)".update
-} yield userId).transaction(conn)
+} yield userId).transaction(connector)
 ```
 
 ## Error Handling
@@ -281,7 +302,7 @@ implicit val runtime: IORuntime = IORuntime.global
 // Example of error handling
 def safeUpdateUser(id: Long, newEmail: String): Unit = {
   val result = updateUserEmail(id, newEmail)
-    .commit(conn)
+    .commit(connector)
     .attempt // Convert IO result to Either[Throwable, Int]
     .unsafeRunSync()
     

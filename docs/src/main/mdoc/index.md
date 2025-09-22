@@ -14,11 +14,12 @@ style = "center-logo"
 }
 
 [![Continuous Integration](https://github.com/takapi327/ldbc/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/takapi327/ldbc/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/takapi327/ldbc/graph/badge.svg?token=GFI6HQ98QO)](https://codecov.io/gh/takapi327/ldbc)
 [![MIT License](https://img.shields.io/badge/license-MIT-green)](https://en.wikipedia.org/wiki/MIT_License)
 [![Scala Version](https://img.shields.io/badge/scala-v3.3.x-red)](https://github.com/lampepfl/dotty)
 [![Typelevel Affiliate Project](https://img.shields.io/badge/typelevel-affiliate%20project-FF6169.svg)](https://typelevel.org/projects/affiliate/)
 [![javadoc](https://javadoc.io/badge2/io.github.takapi327/ldbc-dsl_3/javadoc.svg)](https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3)
-[![Maven Central Version](https://maven-badges.herokuapp.com/maven-central/io.github.takapi327/ldbc-dsl_3/badge.svg?color=blue)](https://search.maven.org/artifact/io.github.takapi327/ldbc-dsl_3/0.3.0-RC2/jar)
+[![Maven Central Version](https://maven-badges.herokuapp.com/maven-central/io.github.takapi327/ldbc-dsl_3/badge.svg?color=blue)](https://search.maven.org/artifact/io.github.takapi327/ldbc-dsl_3/0.3.3/jar)
 [![scaladex](https://index.scala-lang.org/takapi327/ldbc/ldbc-dsl/latest-by-scala-version.svg?color=blue)](https://index.scala-lang.org/takapi327/ldbc)
 [![scaladex](https://index.scala-lang.org/takapi327/ldbc/ldbc-dsl/latest-by-scala-version.svg?color=blue&targetType=js)](https://index.scala-lang.org/takapi327/ldbc)
 [![scaladex](https://index.scala-lang.org/takapi327/ldbc/ldbc-dsl/latest-by-scala-version.svg?color=blue&targetType=native)](https://index.scala-lang.org/takapi327/ldbc)
@@ -35,20 +36,19 @@ Note that **ldbc** is pre-1.0 software and is still undergoing active developmen
 
 ldbc is available on the JVM, Scala.js, and ScalaNative
 
-| Module / Platform    | JVM | Scala Native | Scala.js |  
-|----------------------|:---:|:------------:|:--------:|
-| `ldbc-core`          |  ✅  |      ✅       |    ✅     |
-| `ldbc-sql`           |  ✅  |      ✅       |    ✅     |
-| `ldbc-connector`     |  ✅  |      ✅       |    ✅     | 
-| `jdbc-connector`     |  ✅  |      ❌       |    ❌     | 
-| `ldbc-dsl`           |  ✅  |      ✅       |    ✅     |
-| `ldbc-statement`     |  ✅  |      ✅       |    ✅     |
-| `ldbc-query-builder` |  ✅  |      ✅       |    ✅     |
-| `ldbc-schema`        |  ✅  |      ✅       |    ✅     |
-| `ldbc-schemaSpy`     |  ✅  |      ❌       |    ❌     | 
-| `ldbc-codegen`       |  ✅  |      ✅       |    ✅     |
-| `ldbc-hikari`        |  ✅  |      ❌       |    ❌     | 
-| `ldbc-plugin`        |  ✅  |      ❌       |    ❌     |
+| Module / Platform    | JVM | Scala Native | Scala.js | Scaladoc                                                                                                                                                  |
+|----------------------|:---:|:------------:|:--------:|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ldbc-sql`           |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-sql_3)           |
+| `ldbc-core`          |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-core_3)          |
+| `ldbc-connector`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-connector_3)     |
+| `jdbc-connector`     |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/jdbc-connector_3)     |
+| `ldbc-dsl`           |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3)           |
+| `ldbc-statement`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-statement_3)     |
+| `ldbc-query-builder` |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-query-builder_3) |
+| `ldbc-schema`        |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-schema_3)        |
+| `ldbc-codegen`       |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-codegen_3)       |
+| `ldbc-hikari`        |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-hikari_3)        |
+| `ldbc-plugin`        |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-plugin_2.12_1.0) |
 
 ## Quick Start
 
@@ -104,7 +104,7 @@ ds.setDatabaseName("world")
 ds.setUser("ldbc")
 ds.setPassword("password")
 
-val provider = ConnectionProvider.fromDataSource(ex, ExecutionContexts.synchronous)
+val connector = Connector.fromDataSource[IO](ds, ExecutionContexts.synchronous)
 ```
 
 **ldbc connector**
@@ -112,22 +112,24 @@ val provider = ConnectionProvider.fromDataSource(ex, ExecutionContexts.synchrono
 ```scala
 import ldbc.connector.*
 
-val provider =
-  ConnectionProvider
-    .default[IO]("127.0.0.1", 3306, "ldbc", "password", "ldbc")
+val datasource =
+  MySQLDataSource
+    .build[IO]("127.0.0.1", 3306, "ldbc")
+    .setPassword("password")
+    .setDatabase("ldbc")
     .setSSL(SSL.Trusted)
+
+val connector = Connector.fromDataSource(datasource)
 ```
 
 The connection process to the database can be carried out using the provider established by each of these methods.
 
 ```scala 3
-val result: IO[(List[Int], Option[Int], Int)] = provider.use { conn =>
-  (for
-    result1 <- sql"SELECT 1".toList[Int]
-    result2 <- sql"SELECT 2".headOption[Int]
-    result3 <- sql"SELECT 3".unsafe[Int]
-  yield (result1, result2, result3)).readOnly(conn)
-}
+val result: IO[(List[Int], Option[Int], Int)] = (for
+  result1 <- sql"SELECT 1".query[Int].to[List]
+  result2 <- sql"SELECT 2".query[Int].to[Option]
+  result3 <- sql"SELECT 3".query[Int].unsafe
+yield (result1, result2, result3)).readOnly(connector)
 ```
 
 #### Using the query builder
@@ -169,10 +171,9 @@ val userTable = TableQuery[User]
 Finally, you can use the query builder to create a query.
 
 ```scala
-val result: IO[List[User]] = provider.use { conn =>
-  userTable.selectAll.query.to[List].readOnly(conn)
+val result: IO[List[User]] =
+  userTable.selectAll.query.to[List].readOnly(connector)
   // "SELECT `id`, `name`, `age` FROM user"
-}
 ```
 
 #### Using the schema
@@ -217,10 +218,9 @@ Finally, you can use the query builder to create a query.
 
 ```scala
 val userTable: TableQuery[UserTable] = TableQuery[UserTable]
-val result: IO[List[User]] = provider.use { conn =>
-  userTable.selectAll.query.to[List].readOnly(conn)
+val result: IO[List[User]] =
+  userTable.selectAll.query.to[List].readOnly(connector)
   // "SELECT `id`, `name`, `age` FROM user"
-}
 ```
 
 ## Documentation

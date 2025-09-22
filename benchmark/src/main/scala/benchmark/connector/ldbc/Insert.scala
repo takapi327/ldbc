@@ -24,7 +24,7 @@ import ldbc.connector.*
 class Insert:
 
   @volatile
-  var provider: Provider[IO] = uninitialized
+  var datasource: DataSource[IO] = uninitialized
 
   @volatile
   var values: String = uninitialized
@@ -52,8 +52,10 @@ class Insert:
 
   @Setup
   def setup(): Unit =
-    provider = ConnectionProvider
-      .default[IO]("127.0.0.1", 13306, "ldbc", "password", "benchmark")
+    datasource = MySQLDataSource
+      .build[IO]("127.0.0.1", 13306, "ldbc")
+      .setPassword("password")
+      .setDatabase("benchmark")
       .setSSL(SSL.Trusted)
 
     values = (1 to len).map(_ => "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").mkString(",")
@@ -85,12 +87,12 @@ class Insert:
 
   @Benchmark
   def statement(): Unit =
-    provider
+    datasource.getConnection
       .use { conn =>
         for
           statement <- conn.createStatement()
           _         <- conn.setAutoCommit(false)
-          _ <-
+          _         <-
             statement.executeUpdate(
               s"INSERT INTO ldbc_statement_test (c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15) VALUES ${ records
                   .map {
@@ -107,7 +109,7 @@ class Insert:
 
   @Benchmark
   def prepareStatement(): Unit =
-    provider
+    datasource.getConnection
       .use { conn =>
         for
           statement <-

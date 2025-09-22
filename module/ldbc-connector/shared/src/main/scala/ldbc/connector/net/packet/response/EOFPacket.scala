@@ -57,7 +57,7 @@ object EOFPacket:
       val hasClientProtocol41Flag      = capabilityFlags.contains(CapabilitiesFlags.CLIENT_PROTOCOL_41)
       val (statusBits, postStatusBits) = bits.splitAt(4)
       val status                       = statusBits.toInt(false)
-      val packet = if hasClientProtocol41Flag then
+      val packet                       = if hasClientProtocol41Flag then
         val (warningsBits, postWarningsBits) = postStatusBits.splitAt(4)
         val statusFlagsBits                  = postWarningsBits.take(4)
         val warnings                         = warningsBits.toInt(false)

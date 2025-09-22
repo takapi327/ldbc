@@ -53,6 +53,7 @@ import com.zaxxer.hikari.HikariDataSource
 import ldbc.dsl.*
 import ldbc.dsl.codec.Codec
 import jdbc.connector.*
+import ldbc.connector.Connector
 
 // Data model definition
 case class User(id: Int, name: String, email: String)
@@ -67,17 +68,17 @@ object HikariExample extends IOApp.Simple:
     ds.setUsername("user")
     ds.setPassword("password")
     
-    // Establishing connection
+    // DataSource and Connector setup
     val program = for
       hikari     <- Resource.fromAutoCloseable(IO(ds))
       execution  <- ExecutionContexts.fixedThreadPool[IO](10)
-      connection <- ConnectionProvider.fromDataSource[IO](hikari, execution).createConnection()
-    yield connection
+      datasource = MySQLDataSource.fromDataSource[IO](hikari, execution)
+    yield Connector.fromDataSource(datasource)
     
     // Query execution
-    program.use { conn =>
+    program.use { connector =>
       for
-        users <- sql"SELECT * FROM users".query[User].to[List].readOnly(conn)
+        users <- sql"SELECT * FROM users".query[User].to[List].readOnly(connector)
         _     <- IO.println(s"Found users: $users")
       yield ()
     }

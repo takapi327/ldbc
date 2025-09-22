@@ -20,4 +20,6 @@ case class CommentOut(message: String)
  * @param message
  *   Comments to be set on columns and tables
  */
-case class CommentSet(message: String)
+case class CommentSet(message: String):
+
+  override def toString: String = s"Comment(\"$message\")"

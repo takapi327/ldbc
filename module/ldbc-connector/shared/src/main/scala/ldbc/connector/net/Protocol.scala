@@ -236,7 +236,7 @@ object Protocol:
       val builder = Vector.newBuilder[P]
       def loop: F[Vector[P]] =
         socket.receive(decoder).flatMap {
-          case _: EOFPacket => ev.pure(builder.result())
+          case _: EOFPacket     => ev.pure(builder.result())
           case error: ERRPacket =>
             ev.raiseError(error.toException("Error during database operation"))
           case row =>
@@ -250,7 +250,7 @@ object Protocol:
       resetSequenceId *>
         send(ComQueryPacket(SELECT_SERVER_VARIABLES_QUERY, initialPacket.capabilityFlags, ListMap.empty)) *>
         receive(ColumnsNumberPacket.decoder(initialPacket.capabilityFlags)).flatMap {
-          case _: OKPacket => ev.pure(Map.empty)
+          case _: OKPacket      => ev.pure(Map.empty)
           case error: ERRPacket =>
             ev.raiseError(error.toException(Some(SELECT_SERVER_VARIABLES_QUERY), None))
           case result: ColumnsNumberPacket =>
@@ -318,14 +318,14 @@ object Protocol:
         case more: AuthMoreDataPacket        => readUntilOk(plugin, password)
         case packet: AuthSwitchRequestPacket => changeAuthenticationMethod(packet, password)
         case _: OKPacket                     => ev.unit
-        case error: ERRPacket =>
+        case error: ERRPacket                =>
           ev.raiseError(
             error.toException(
               s"Check that the ${ hostInfo.host }:${ hostInfo.port } server is running or that the authentication information, etc. used for the connection is correct."
             )
           )
         case unknown: UnknownPacket => ev.raiseError(unknown.toException("Error during database operation"))
-        case unknown =>
+        case unknown                =>
           ev.raiseError(
             new SQLInvalidAuthorizationSpecException(
               "Unexpected packets processed",
@@ -349,12 +349,12 @@ object Protocol:
      */
     private def changeAuthenticationMethod(switchRequestPacket: AuthSwitchRequestPacket, password: String): F[Unit] =
       determinatePlugin(switchRequestPacket.pluginName, initialPacket.serverVersion) match
-        case Left(error) => ev.raiseError(error) *> socket.send(ComQuitPacket())
+        case Left(error)                                 => ev.raiseError(error) *> socket.send(ComQuitPacket())
         case Right(plugin: CachingSha2PasswordPlugin[F]) =>
           for
             hashedPassword <- plugin.hashPassword(password, switchRequestPacket.pluginProvidedData)
             _              <- socket.send(AuthSwitchResponsePacket(hashedPassword))
-            _ <- readUntilOk(
+            _              <- readUntilOk(
                    plugin,
                    password,
                    Some(switchRequestPacket.pluginProvidedData)
@@ -369,7 +369,7 @@ object Protocol:
           for
             hashedPassword <- plugin.hashPassword(password, switchRequestPacket.pluginProvidedData)
             _              <- socket.send(AuthSwitchResponsePacket(hashedPassword))
-            _ <- readUntilOk(
+            _              <- readUntilOk(
                    plugin,
                    password,
                    Some(switchRequestPacket.pluginProvidedData)
@@ -440,7 +440,7 @@ object Protocol:
       scrambleBuff: Array[Byte]
     ): F[Unit] =
       (useSSL, allowPublicKeyRetrieval) match
-        case (true, _) => sslHandshake(password)
+        case (true, _)     => sslHandshake(password)
         case (false, true) =>
           socket.send(ComQuitPacket()) *> allowPublicKeyRetrievalRequest(plugin, password, scrambleBuff)
         case (_, _) => plainTextHandshake(plugin, password, scrambleBuff)
@@ -459,7 +459,7 @@ object Protocol:
       scrambleBuff: Array[Byte]
     ): F[Unit] =
       (useSSL, allowPublicKeyRetrieval) match
-        case (true, _) => sslHandshake(password)
+        case (true, _)     => sslHandshake(password)
         case (false, true) =>
           socket.send(ComInitDBPacket("")) *> allowPublicKeyRetrievalRequest(plugin, password, scrambleBuff)
         case (_, _) => plainTextHandshake(plugin, password, scrambleBuff)
@@ -503,11 +503,11 @@ object Protocol:
           )*
         ) *> (
           determinatePlugin(initialPacket.authPlugin, initialPacket.serverVersion) match
-            case Left(error) => ev.raiseError(error) *> socket.send(ComQuitPacket())
+            case Left(error)   => ev.raiseError(error) *> socket.send(ComQuitPacket())
             case Right(plugin) =>
               for
                 hashedPassword <- plugin.hashPassword(password, initialPacket.scrambleBuff)
-                _ <- socket.send(
+                _              <- socket.send(
                        ComChangeUserPacket(
                          capabilityFlags,
                          user,
@@ -534,7 +534,7 @@ object Protocol:
     for
       sequenceIdRef    <- Resource.eval(Ref[F].of[Byte](0x01))
       initialPacketRef <- Resource.eval(Ref[F].of[Option[InitialPacket]](None))
-      packetSocket <-
+      packetSocket     <-
         PacketSocket[F](debug, sockets, sslOptions, sequenceIdRef, initialPacketRef, readTimeout, capabilitiesFlags)
       protocol <- Resource.eval(
                     fromPacketSocket(

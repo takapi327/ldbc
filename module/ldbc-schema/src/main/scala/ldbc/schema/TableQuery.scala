@@ -84,7 +84,7 @@ object TableQuery:
   ): Expr[AbstractTableQuery[T, Table.Opt[Extract[T]]]] =
     import quotes.reflect.*
     val tableType = TypeRepr.of[T]
-    val table = Select
+    val table     = Select
       .unique(New(TypeIdent(tableType.typeSymbol)), "<init>")
       .appliedToArgs(List.empty)
       .asExprOf[T]

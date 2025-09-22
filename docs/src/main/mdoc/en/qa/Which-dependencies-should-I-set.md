@@ -64,7 +64,7 @@ import ldbc.dsl.*
 val plainResult = sql"SELECT name FROM user"
   .query[String]
   .to[List]
-  .readOnly(conn)
+  .readOnly(connector)
 // plainResult is returned as List[String]
 ```
 

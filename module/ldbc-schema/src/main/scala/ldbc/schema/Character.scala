@@ -6,8 +6,9 @@
 
 package ldbc.schema
 
+import scala.reflect.Enum
+
 import ldbc.schema.attribute.Attribute
-import ldbc.schema.model.Enum
 
 /**
  * A model for representing character sets to be set in column definitions for the string data types CHAR, VARCHAR,
@@ -294,7 +295,7 @@ object Collate:
   def armscii8_general_ci[T <: COLLATION_TYPE]: Collate[T] =
     Collate[T]("armscii8_general_ci", Character.armscii8, 32, true, true, 1)
 
-  def ascii_bin[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("ascii_bin", Character.ascii, 65, false, true, 1)
+  def ascii_bin[T <: COLLATION_TYPE]:        Collate[T] = Collate[T]("ascii_bin", Character.ascii, 65, false, true, 1)
   def ascii_general_ci[T <: COLLATION_TYPE]: Collate[T] =
     Collate[T]("ascii_general_ci", Character.ascii, 11, true, true, 1)
 
@@ -333,19 +334,19 @@ object Collate:
   def cp1257_lithuanian_ci[T <: COLLATION_TYPE]: Collate[T] =
     Collate[T]("cp1257_lithuanian_ci", Character.cp1257, 29, false, true, 1)
 
-  def cp850_bin[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("cp850_bin", Character.cp850, 80, false, true, 1)
+  def cp850_bin[T <: COLLATION_TYPE]:        Collate[T] = Collate[T]("cp850_bin", Character.cp850, 80, false, true, 1)
   def cp850_general_ci[T <: COLLATION_TYPE]: Collate[T] =
     Collate[T]("cp850_general_ci", Character.cp850, 4, true, true, 1)
 
-  def cp852_bin[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("cp852_bin", Character.cp852, 81, false, true, 1)
+  def cp852_bin[T <: COLLATION_TYPE]:        Collate[T] = Collate[T]("cp852_bin", Character.cp852, 81, false, true, 1)
   def cp852_general_ci[T <: COLLATION_TYPE]: Collate[T] =
     Collate[T]("cp852_general_ci", Character.cp852, 40, true, true, 1)
 
-  def cp866_bin[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("cp866_bin", Character.cp866, 68, false, true, 1)
+  def cp866_bin[T <: COLLATION_TYPE]:        Collate[T] = Collate[T]("cp866_bin", Character.cp866, 68, false, true, 1)
   def cp866_general_ci[T <: COLLATION_TYPE]: Collate[T] =
     Collate[T]("cp866_general_ci", Character.cp866, 36, true, true, 1)
 
-  def cp932_bin[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("cp932_bin", Character.cp932, 96, false, true, 1)
+  def cp932_bin[T <: COLLATION_TYPE]:         Collate[T] = Collate[T]("cp932_bin", Character.cp932, 96, false, true, 1)
   def cp932_japanese_ci[T <: COLLATION_TYPE]: Collate[T] =
     Collate[T]("cp932_japanese_ci", Character.cp932, 95, true, true, 1)
 
@@ -356,7 +357,7 @@ object Collate:
   def eucjpms_japanese_ci[T <: COLLATION_TYPE]: Collate[T] =
     Collate[T]("eucjpms_japanese_ci", Character.eucjpms, 97, true, true, 1)
 
-  def euckr_bin[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("euckr_bin", Character.euckr, 85, false, true, 1)
+  def euckr_bin[T <: COLLATION_TYPE]:       Collate[T] = Collate[T]("euckr_bin", Character.euckr, 85, false, true, 1)
   def euckr_korean_ci[T <: COLLATION_TYPE]: Collate[T] =
     Collate[T]("euckr_korean_ci", Character.euckr, 19, true, true, 1)
 
@@ -377,7 +378,7 @@ object Collate:
   def geostd8_general_ci[T <: COLLATION_TYPE]: Collate[T] =
     Collate[T]("geostd8_general_ci", Character.geostd8, 92, true, true, 1)
 
-  def greek_bin[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("greek_bin", Character.greek, 70, false, true, 1)
+  def greek_bin[T <: COLLATION_TYPE]:        Collate[T] = Collate[T]("greek_bin", Character.greek, 70, false, true, 1)
   def greek_general_ci[T <: COLLATION_TYPE]: Collate[T] =
     Collate[T]("greek_general_ci", Character.greek, 25, true, true, 1)
 
@@ -392,15 +393,15 @@ object Collate:
   def keybcs2_general_ci[T <: COLLATION_TYPE]: Collate[T] =
     Collate[T]("keybcs2_general_ci", Character.keybcs2, 37, true, true, 1)
 
-  def koi8r_bin[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("koi8r_bin", Character.koi8r, 74, false, true, 1)
+  def koi8r_bin[T <: COLLATION_TYPE]:        Collate[T] = Collate[T]("koi8r_bin", Character.koi8r, 74, false, true, 1)
   def koi8r_general_ci[T <: COLLATION_TYPE]: Collate[T] =
     Collate[T]("koi8r_general_ci", Character.koi8r, 7, true, true, 1)
 
-  def koi8u_bin[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("koi8u_bin", Character.koi8u, 75, false, true, 1)
+  def koi8u_bin[T <: COLLATION_TYPE]:        Collate[T] = Collate[T]("koi8u_bin", Character.koi8u, 75, false, true, 1)
   def koi8u_general_ci[T <: COLLATION_TYPE]: Collate[T] =
     Collate[T]("koi8u_general_ci", Character.koi8u, 22, true, true, 1)
 
-  def latin1_bin[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("latin1_bin", Character.latin1, 47, false, true, 1)
+  def latin1_bin[T <: COLLATION_TYPE]:       Collate[T] = Collate[T]("latin1_bin", Character.latin1, 47, false, true, 1)
   def latin1_danish_ci[T <: COLLATION_TYPE]: Collate[T] =
     Collate[T]("latin1_danish_ci", Character.latin1, 15, false, true, 1)
   def latin1_general_ci[T <: COLLATION_TYPE]: Collate[T] =
@@ -438,7 +439,7 @@ object Collate:
   def latin7_general_cs[T <: COLLATION_TYPE]: Collate[T] =
     Collate[T]("latin7_general_cs", Character.latin7, 42, false, true, 1)
 
-  def macce_bin[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("macce_bin", Character.macce, 43, false, true, 1)
+  def macce_bin[T <: COLLATION_TYPE]:        Collate[T] = Collate[T]("macce_bin", Character.macce, 43, false, true, 1)
   def macce_general_ci[T <: COLLATION_TYPE]: Collate[T] =
     Collate[T]("macce_general_ci", Character.macce, 38, true, true, 1)
 
@@ -446,21 +447,21 @@ object Collate:
   def macroman_general_ci[T <: COLLATION_TYPE]: Collate[T] =
     Collate[T]("macroman_general_ci", Character.macroman, 39, true, true, 1)
 
-  def swe7_bin[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("swe7_bin", Character.swe7, 1, false, true, 1)
+  def swe7_bin[T <: COLLATION_TYPE]:        Collate[T] = Collate[T]("swe7_bin", Character.swe7, 1, false, true, 1)
   def swe7_swedish_ci[T <: COLLATION_TYPE]: Collate[T] =
     Collate[T]("swe7_swedish_ci", Character.swe7, 10, true, true, 1)
 
   def tis620_bin[T <: COLLATION_TYPE]:     Collate[T] = Collate[T]("tis620_bin", Character.swe7, 89, false, true, 1)
   def tis620_thai_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("tis620_thai_ci", Character.swe7, 18, true, true, 4)
 
-  def sjis_bin[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("sjis_bin", Character.sjis, 88, false, true, 1)
+  def sjis_bin[T <: COLLATION_TYPE]:         Collate[T] = Collate[T]("sjis_bin", Character.sjis, 88, false, true, 1)
   def sjis_japanese_ci[T <: COLLATION_TYPE]: Collate[T] =
     Collate[T]("sjis_japanese_ci", Character.sjis, 13, true, true, 1)
 
-  def ucs2_bin[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("ucs2_bin", Character.ucs2, 90, false, true, 1)
+  def ucs2_bin[T <: COLLATION_TYPE]:         Collate[T] = Collate[T]("ucs2_bin", Character.ucs2, 90, false, true, 1)
   def ucs2_croatian_ci[T <: COLLATION_TYPE]: Collate[T] =
     Collate[T]("ucs2_croatian_ci", Character.ucs2, 149, false, true, 8)
-  def ucs2_czech_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("ucs2_czech_ci", Character.ucs2, 138, false, true, 8)
+  def ucs2_czech_ci[T <: COLLATION_TYPE]:  Collate[T] = Collate[T]("ucs2_czech_ci", Character.ucs2, 138, false, true, 8)
   def ucs2_danish_ci[T <: COLLATION_TYPE]: Collate[T] =
     Collate[T]("ucs2_danish_ci", Character.ucs2, 139, false, true, 8)
   def ucs2_esperanto_ci[T <: COLLATION_TYPE]: Collate[T] =
@@ -509,7 +510,7 @@ object Collate:
   def ucs2_vietnamese_ci[T <: COLLATION_TYPE]: Collate[T] =
     Collate[T]("ucs2_vietnamese_ci", Character.ucs2, 151, false, true, 8)
 
-  def ujis_bin[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("ujis_bin", Character.ujis, 91, false, true, 1)
+  def ujis_bin[T <: COLLATION_TYPE]:         Collate[T] = Collate[T]("ujis_bin", Character.ujis, 91, false, true, 1)
   def ujis_japanese_ci[T <: COLLATION_TYPE]: Collate[T] =
     Collate[T]("ujis_japanese_ci", Character.ujis, 12, true, true, 1)
 
@@ -517,7 +518,7 @@ object Collate:
   def utf16le_general_ci[T <: COLLATION_TYPE]: Collate[T] =
     Collate[T]("utf16le_general_ci", Character.utf16le, 56, true, true, 1)
 
-  def utf16_bin[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("utf16_bin", Character.utf16, 55, false, true, 1)
+  def utf16_bin[T <: COLLATION_TYPE]:         Collate[T] = Collate[T]("utf16_bin", Character.utf16, 55, false, true, 1)
   def utf16_croatian_ci[T <: COLLATION_TYPE]: Collate[T] =
     Collate[T]("utf16_croatian_ci", Character.utf16, 122, false, true, 8)
   def utf16_czech_ci[T <: COLLATION_TYPE]: Collate[T] =
@@ -569,7 +570,7 @@ object Collate:
   def utf16_vietnamese_ci[T <: COLLATION_TYPE]: Collate[T] =
     Collate[T]("utf16_vietnamese_ci", Character.utf16, 124, false, true, 8)
 
-  def utf32_bin[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("utf32_bin", Character.utf32, 61, false, true, 1)
+  def utf32_bin[T <: COLLATION_TYPE]:         Collate[T] = Collate[T]("utf32_bin", Character.utf32, 61, false, true, 1)
   def utf32_croatian_ci[T <: COLLATION_TYPE]: Collate[T] =
     Collate[T]("utf32_croatian_ci", Character.utf32, 181, false, true, 8)
   def utf32_czech_ci[T <: COLLATION_TYPE]: Collate[T] =

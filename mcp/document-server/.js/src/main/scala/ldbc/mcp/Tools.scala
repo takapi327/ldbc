@@ -277,6 +277,7 @@ object Tools:
       |│ │ ├── How-to-perform-DDL-with-schema.md
       |│ │ ├── How-to-use-scala-connector-connection-pool.md
       |│ │ ├── How-to-use-with-ZIO.md
+      |│ │ ├── How-do-I-use-the-Enum-type.md
       |│ │ ├── Implicit-search-problem-too-large.md
       |│ │ ├── Is-there-a-function-to-limit-the-number-of-concurrent-queries.md
       |│ │ ├── Is-there-a-way-to-stream-query-results-asynchronously.md

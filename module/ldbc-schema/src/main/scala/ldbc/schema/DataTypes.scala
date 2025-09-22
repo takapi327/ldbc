@@ -18,8 +18,11 @@ import java.time.{
 }
 
 import scala.compiletime.{ erasedValue, error }
+import scala.deriving.Mirror
+import scala.reflect.Enum as ScalaEnum
 
-import ldbc.schema.model.{ Enum as EnumModel, EnumDataType }
+import ldbc.dsl.util.Mirrors
+
 import ldbc.schema.DataType.*
 
 /**
@@ -41,7 +44,7 @@ trait DataTypes:
 
   @deprecated(
     "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
-    "Ldbc-Core 0.1.0"
+    "ldbc 0.1.0"
   )
   inline def TINYINT[T <: Byte | Short | Option[Byte | Short]](inline length: Int): Tinyint[T] =
     inline if length < 0 || length > 255 then error("The length of the TINYINT must be in the range 0 to 255.")
@@ -52,7 +55,7 @@ trait DataTypes:
 
   @deprecated(
     "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
-    "Ldbc-Core 0.1.0"
+    "ldbc 0.1.0"
   )
   inline def SMALLINT[T <: Short | Int | Option[Short | Int]](inline length: Int): Smallint[T] =
     inline if length < 0 || length > 255 then error("The length of the SMALLINT must be in the range 0 to 255.")
@@ -63,7 +66,7 @@ trait DataTypes:
 
   @deprecated(
     "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
-    "Ldbc-Core 0.1.0"
+    "ldbc 0.1.0"
   )
   inline def MEDIUMINT[T <: Int | Option[Int]](inline length: Int): Mediumint[T] =
     inline if length < 0 || length > 255 then error("The length of the MEDIUMINT must be in the range 0 to 255.")
@@ -74,7 +77,7 @@ trait DataTypes:
 
   @deprecated(
     "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
-    "Ldbc-Core 0.1.0"
+    "ldbc 0.1.0"
   )
   inline def INT[T <: Int | Long | Option[Int | Long]](inline length: Int): Integer[T] =
     inline if length < 0 || length > 255 then error("The length of the INT must be in the range 0 to 255.")
@@ -85,7 +88,7 @@ trait DataTypes:
 
   @deprecated(
     "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
-    "Ldbc-Core 0.1.0"
+    "ldbc 0.1.0"
   )
   inline def BIGINT[T <: Long | BigInt | Option[Long | BigInt]](inline length: Int): Bigint[T] =
     inline if length < 0 || length > 255 then error("The length of the BIGINT must be in the range 0 to 255.")
@@ -132,7 +135,7 @@ trait DataTypes:
 
   inline def TINYBLOB[T <: Array[Byte] | Option[Array[Byte]]](): Tinyblob[T] = Tinyblob(isOptional[T])
 
-  inline def BLOB[T <: Array[Byte] | Option[Array[Byte]]](): Blob[T] = Blob(None, isOptional[T])
+  inline def BLOB[T <: Array[Byte] | Option[Array[Byte]]]():                    Blob[T] = Blob(None, isOptional[T])
   inline def BLOB[T <: Array[Byte] | Option[Array[Byte]]](inline length: Long): Blob[T] =
     inline if length < 0 || length > 4294967295L then
       error("The length of the BLOB must be in the range 0 to 4294967295.")
@@ -150,7 +153,8 @@ trait DataTypes:
 
   inline def LONGTEXT[T <: String | Option[String]](): LongText[T] = LongText(isOptional[T])
 
-  inline def ENUM[T <: EnumModel | Option[EnumModel]](using EnumDataType[?]): Enum[T] = Enum(isOptional[T])
+  inline def ENUM[T <: ScalaEnum | Option[ScalaEnum]](using mirror: Mirror.Of[Mirrors.ExtractOption[T]]): Enum[T] =
+    Enum(Mirrors.summonLabels[mirror.MirroredElemLabels], isOptional[T])
 
   /** ===== List of Date Data Types ===== */
 
@@ -183,7 +187,7 @@ trait DataTypes:
 
   @deprecated(
     "As of MySQL 8.0.19, specifying the number of digits for the YEAR data type is deprecated. It will not be supported in future MySQL versions.",
-    "Ldbc-Core 0.1.0"
+    "ldbc 0.1.0"
   )
   inline def YEAR[T <: Int | Instant | LocalDate | JYear | Option[Int | Instant | LocalDate | JYear]](
     digit: 4

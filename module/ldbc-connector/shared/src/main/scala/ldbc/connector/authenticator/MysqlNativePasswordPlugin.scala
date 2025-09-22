@@ -21,7 +21,7 @@ import fs2.Chunk
 
 class MysqlNativePasswordPlugin[F[_]: Hashing: Sync] extends AuthenticationPlugin[F]:
 
-  override def name: String = "mysql_native_password"
+  override def name:                                                  String        = "mysql_native_password"
   override def hashPassword(password: String, scramble: Array[Byte]): F[ByteVector] =
     if password.isEmpty then Sync[F].pure(ByteVector.empty)
     else

@@ -27,6 +27,8 @@ import ldbc.dsl.syntax.*
  */
 package object dsl extends HelperFunctionsSyntax:
 
+  export ldbc.DBIO
+
   private[ldbc] trait ParamBinder:
     protected def paramBind[F[_]: MonadThrow](
       prepareStatement: PreparedStatement[F],
@@ -35,9 +37,9 @@ package object dsl extends HelperFunctionsSyntax:
       val encoded = params.foldLeft(MonadThrow[F].pure(List.empty[Encoder.Supported])) {
         case (acc, param) =>
           for
-            acc$ <- acc
+            acc$  <- acc
             value <- param match
-                       case Parameter.Dynamic.Success(value) => MonadThrow[F].pure(value)
+                       case Parameter.Dynamic.Success(value)  => MonadThrow[F].pure(value)
                        case Parameter.Dynamic.Failure(errors) =>
                          MonadThrow[F].raiseError(new IllegalArgumentException(errors.mkString(", ")))
           yield acc$ :+ value

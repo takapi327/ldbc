@@ -17,8 +17,6 @@ import com.mysql.cj.jdbc.MysqlDataSource
 import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
-import ldbc.sql.*
-
 import ldbc.query.builder.*
 
 import jdbc.connector.*
@@ -31,7 +29,7 @@ import benchmark.City
 class Select:
 
   @volatile
-  var provider: Provider[IO] = uninitialized
+  var connector: Connector[IO] = uninitialized
 
   @volatile
   var query: TableQuery[City] = uninitialized
@@ -45,7 +43,7 @@ class Select:
     ds.setUser("ldbc")
     ds.setPassword("password")
 
-    provider = ConnectionProvider.fromDataSource(ds, ExecutionContexts.synchronous)
+    connector = Connector.fromDataSource[IO](ds, ExecutionContexts.synchronous)
 
     query = TableQuery[City]
 
@@ -54,24 +52,18 @@ class Select:
 
   @Benchmark
   def querySelectN: List[(Int, String, String)] =
-    provider
-      .use { conn =>
-        query
-          .select(city => city.id *: city.name *: city.countryCode)
-          .limit(len)
-          .query
-          .to[List]
-          .readOnly(conn)
-      }
+    query
+      .select(city => city.id *: city.name *: city.countryCode)
+      .limit(len)
+      .query
+      .to[List]
+      .readOnly(connector)
       .unsafeRunSync()
 
   @Benchmark
   def dslSelectN: List[(Int, String, String)] =
-    provider
-      .use { conn =>
-        sql"SELECT ID, Name, CountryCode FROM city LIMIT $len"
-          .query[(Int, String, String)]
-          .to[List]
-          .readOnly(conn)
-      }
+    sql"SELECT ID, Name, CountryCode FROM city LIMIT $len"
+      .query[(Int, String, String)]
+      .to[List]
+      .readOnly(connector)
       .unsafeRunSync()

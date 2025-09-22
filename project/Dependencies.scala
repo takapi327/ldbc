@@ -8,7 +8,7 @@ import ScalaVersions.*
 
 object Dependencies {
 
-  val catsEffect = "org.typelevel" %% "cats-effect" % "3.6.1"
+  val catsEffect = "org.typelevel" %% "cats-effect" % "3.6.3"
 
   val schemaspy = "org.schemaspy" % "schemaspy" % "6.2.4"
 
@@ -17,17 +17,17 @@ object Dependencies {
   val mysqlVersion = "8.4.0"
   val mysql        = "com.mysql" % "mysql-connector-j" % mysqlVersion
 
-  val typesafeConfig = "com.typesafe" % "config" % "1.4.3"
+  val typesafeConfig = "com.typesafe" % "config" % "1.4.5"
 
-  val hikariCP = "com.zaxxer" % "HikariCP" % "6.3.0"
+  val hikariCP = "com.zaxxer" % "HikariCP" % "7.0.2"
 
   val scala3Compiler = "org.scala-lang" %% "scala3-compiler" % scala3
 
-  val doobie = "org.tpolecat" %% "doobie-core" % "1.0.0-RC9"
+  val doobie = "org.tpolecat" %% "doobie-core" % "1.0.0-RC10"
 
-  val slick = "com.typesafe.slick" %% "slick" % "3.6.0"
+  val slick = "com.typesafe.slick" %% "slick" % "3.6.1"
 
-  val specs2Version = "5.6.2"
+  val specs2Version = "5.6.4"
   val specs2: Seq[ModuleID] = Seq(
     "specs2-core",
     "specs2-junit"
