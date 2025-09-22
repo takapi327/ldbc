@@ -190,6 +190,7 @@
     <li class="level2 nav-leaf"><a href="#高度な設定例">高度な設定例</a></li>
     <li class="level2 nav-leaf"><a href="#プーリングでの接続ライフサイクルフック">プーリングでの接続ライフサイクルフック</a></li>
     <li class="level2 nav-leaf"><a href="#プールヘルスの監視">プールヘルスの監視</a></li>
+    <li class="level2 nav-leaf"><a href="#プール状態ログの有効化">プール状態ログの有効化</a></li>
     <li class="level2 nav-leaf"><a href="#プールアーキテクチャの機能">プールアーキテクチャの機能</a></li>
     <li class="level2 nav-leaf"><a href="#ベストプラクティス">ベストプラクティス</a></li>
     <li class="level2 nav-leaf"><a href="#非プール接続からの移行">非プール接続からの移行</a></li>
@@ -226,7 +227,7 @@
     
     <h3 id="依存関係の追加-1" class="section"><a class="anchor-link left" href="#依存関係の追加-1"><i class="icofont-laika link">&#xef71;</i></a>依存関係の追加</h3>
     <p>まず、必要な依存関係を追加します。jdbcコネクタを使用する場合は、MySQLのコネクタも一緒に追加する必要があります。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">//&gt; dep &quot;io.github.takapi327::jdbc-connector:0.4.0-RC1&quot;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">//&gt; dep &quot;io.github.takapi327::jdbc-connector:0.4.0-RC2&quot;
 //&gt; dep &quot;com.mysql&quot;:&quot;mysql-connector-j&quot;:&quot;8.4.0&quot;</span></code></pre>
     
     <h3 id="datasourceを用いたコネクション" class="section"><a class="anchor-link left" href="#datasourceを用いたコネクション"><i class="icofont-laika link">&#xef71;</i></a>DataSourceを用いたコネクション</h3>
@@ -290,7 +291,7 @@
     
     <h3 id="依存関係の追加-2" class="section"><a class="anchor-link left" href="#依存関係の追加-2"><i class="icofont-laika link">&#xef71;</i></a>依存関係の追加</h3>
     <p>まず、必要な依存関係を追加します。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">//&gt; dep &quot;io.github.takapi327::ldbc-connector:0.4.0-RC1&quot;</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">//&gt; dep &quot;io.github.takapi327::ldbc-connector:0.4.0-RC2&quot;</span></code></pre>
     
     <h3 id="基本的な設定でのコネクション" class="section"><a class="anchor-link left" href="#基本的な設定でのコネクション"><i class="icofont-laika link">&#xef71;</i></a>基本的な設定でのコネクション</h3>
     <p>最もシンプルな設定から始めましょう：</p>
@@ -615,6 +616,13 @@
       <li><strong>adaptiveInterval</strong>: プールサイズをチェック・調整する頻度（デフォルト: 30秒）</li>
     </ul>
     
+    <h4 id="ログ設定" class="section"><a class="anchor-link left" href="#ログ設定"><i class="icofont-laika link">&#xef71;</i></a>ログ設定</h4>
+    <ul>
+      <li><strong>logPoolState</strong>: プール状態の定期的なログ出力を有効化（デフォルト: false）</li>
+      <li><strong>poolStateLogInterval</strong>: プール状態ログの出力間隔（デフォルト: 30秒）</li>
+      <li><strong>poolName</strong>: ログ出力時のプール識別名（デフォルト: &quot;ldbc-pool&quot;）</li>
+    </ul>
+    
     <h3 id="高度な設定例" class="section"><a class="anchor-link left" href="#高度な設定例"><i class="icofont-laika link">&#xef71;</i></a>高度な設定例</h3>
     <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="type-name">IO</span><span>
 </span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
@@ -645,6 +653,11 @@
 </span><span>  .</span><span class="identifier">setLeakDetectionThreshold</span><span>(</span><span class="number-literal">2</span><span>.</span><span class="identifier">minutes</span><span>)  </span><span class="comment">// リークされた接続について警告
 </span><span>  .</span><span class="identifier">setAdaptiveSizing</span><span>(</span><span class="boolean-literal">true</span><span>)              </span><span class="comment">// 動的プールサイジングを有効化
 </span><span>  .</span><span class="identifier">setAdaptiveInterval</span><span>(</span><span class="number-literal">1</span><span>.</span><span class="identifier">minute</span><span>)        </span><span class="comment">// 1分ごとにプールサイズをチェック
+</span><span>  
+  </span><span class="comment">// ログ設定
+</span><span>  .</span><span class="identifier">setLogPoolState</span><span>(</span><span class="boolean-literal">true</span><span>)                </span><span class="comment">// プール状態ログを有効化
+</span><span>  .</span><span class="identifier">setPoolStateLogInterval</span><span>(</span><span class="number-literal">1</span><span>.</span><span class="identifier">minute</span><span>)    </span><span class="comment">// 1分ごとにプール状態をログ出力
+</span><span>  .</span><span class="identifier">setPoolName</span><span>(</span><span class="string-literal">&quot;production-pool&quot;</span><span>)       </span><span class="comment">// プール名を設定
 </span><span>
 </span><span class="comment">// プールを作成して使用
 </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">advancedConfig</span><span>).</span><span class="identifier">use</span><span> { </span><span class="identifier">pool</span><span> =&gt;
@@ -711,6 +724,50 @@
   } </span><span class="keyword">yield</span><span> ()
 }</span></code></pre>
     
+    <h3 id="プール状態ログの有効化" class="section"><a class="anchor-link left" href="#プール状態ログの有効化"><i class="icofont-laika link">&#xef71;</i></a>プール状態ログの有効化</h3>
+    <p>ldbc-connectorはHikariCPに影響を受けた詳細なプール状態ログを提供します。これにより、プールの動作を可視化し、パフォーマンスの問題を診断できます：</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="type-name">IO</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">scala</span><span>.</span><span class="identifier">concurrent</span><span>.</span><span class="identifier">duration</span><span>.*
+
+</span><span class="comment">// プールログを有効化した設定
+</span><span class="keyword">val</span><span> </span><span class="identifier">loggedPoolConfig</span><span> = </span><span class="type-name">MySQLConfig</span><span>.</span><span class="identifier">default</span><span>
+  .</span><span class="identifier">setHost</span><span>(</span><span class="string-literal">&quot;localhost&quot;</span><span>)
+  .</span><span class="identifier">setPort</span><span>(</span><span class="number-literal">3306</span><span>)
+  .</span><span class="identifier">setUser</span><span>(</span><span class="string-literal">&quot;myuser&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;mypassword&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;mydb&quot;</span><span>)
+  .</span><span class="identifier">setMinConnections</span><span>(</span><span class="number-literal">5</span><span>)
+  .</span><span class="identifier">setMaxConnections</span><span>(</span><span class="number-literal">20</span><span>)
+  </span><span class="comment">// ログ設定
+</span><span>  .</span><span class="identifier">setLogPoolState</span><span>(</span><span class="boolean-literal">true</span><span>)                  </span><span class="comment">// プール状態ログを有効化
+</span><span>  .</span><span class="identifier">setPoolStateLogInterval</span><span>(</span><span class="number-literal">30</span><span>.</span><span class="identifier">seconds</span><span>)     </span><span class="comment">// 30秒ごとにログ出力
+</span><span>  .</span><span class="identifier">setPoolName</span><span>(</span><span class="string-literal">&quot;app-pool&quot;</span><span>)                 </span><span class="comment">// ログ内でプールを識別する名前
+</span><span>
+</span><span class="comment">// プールを作成
+</span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">loggedPoolConfig</span><span>).</span><span class="identifier">use</span><span> { </span><span class="identifier">pool</span><span> =&gt;
+  </span><span class="comment">// プールを使用 - 30秒ごとに以下のようなログが出力される：
+</span><span>  </span><span class="comment">// [INFO] app-pool - Stats (total=5, active=2, idle=3, waiting=0)
+</span><span>  </span><span class="identifier">pool</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    </span><span class="identifier">conn</span><span>.</span><span class="identifier">execute</span><span>(</span><span class="string-literal">&quot;SELECT * FROM users&quot;</span><span>)
+  }
+}</span></code></pre>
+    <p>プールログが有効な場合、以下のような情報がログに記録されます：</p>
+    <pre><code>// プール状態の定期ログ
+[INFO] app-pool - Stats (total=10, active=3, idle=7, waiting=0)
+
+// 接続作成失敗
+[ERROR] Failed to create connection to localhost:3306 (database: mydb): Connection refused
+
+// 接続取得タイムアウト（詳細な診断情報付き）
+[ERROR] Connection acquisition timeout after 30 seconds (host: localhost:3306, db: mydb, pool: 20/20, active: 20, idle: 0, waiting: 5)
+
+// 接続バリデーション失敗
+[WARN] Connection conn-123 failed validation, removing from pool
+
+// 接続リーク検出
+[WARN] Possible connection leak detected: Connection conn-456 has been in use for longer than 2 minutes</code></pre>
+    
     <h3 id="プールアーキテクチャの機能" class="section"><a class="anchor-link left" href="#プールアーキテクチャの機能"><i class="icofont-laika link">&#xef71;</i></a>プールアーキテクチャの機能</h3>
     <p>ldbcコネクションプールには、いくつかの高度な機能が含まれています：</p>
     
@@ -738,6 +795,15 @@
       <li>リソースの無駄を防ぐ</li>
     </ul>
     
+    <h4 id="詳細なプールロギング" class="section"><a class="anchor-link left" href="#詳細なプールロギング"><i class="icofont-laika link">&#xef71;</i></a>詳細なプールロギング</h4>
+    <p>HikariCPに影響を受けた包括的なログシステム：</p>
+    <ul>
+      <li><strong>プール状態ログ</strong>: 接続数、アクティブ/アイドル接続、待機キューサイズを定期的に出力</li>
+      <li><strong>接続ライフサイクルログ</strong>: 接続の作成、検証、削除時に詳細情報を記録</li>
+      <li><strong>エラー診断</strong>: 接続取得タイムアウト時に詳細なプール状態を出力</li>
+      <li><strong>リーク検出ログ</strong>: 設定された閾値を超えて使用中の接続を警告</li>
+    </ul>
+    
     <h3 id="ベストプラクティス" class="section"><a class="anchor-link left" href="#ベストプラクティス"><i class="icofont-laika link">&#xef71;</i></a>ベストプラクティス</h3>
     <ol class="arabic">
       <li><strong>保守的な設定から始める</strong>: デフォルト値から始めて、監視に基づいて調整</li>
@@ -745,12 +811,14 @@
       <li><strong>適切なタイムアウトを設定</strong>: ユーザー体験とリソース保護のバランスを取る</li>
       <li><strong>開発環境でリーク検出を有効化</strong>: 接続リークを早期に発見</li>
       <li><strong>接続テストクエリは控えめに使用</strong>: オーバーヘッドが発生するため、可能な限りMySQLのisValidを使用</li>
+      <li><strong>本番環境でプールログを有効化</strong>: トラブルシューティングとパフォーマンス分析のため</li>
       <li>
         <strong>ワークロードを考慮</strong>: 
         <ul>
           <li>高スループットアプリケーション: より大きなプールサイズ</li>
           <li>バースト的なワークロード: アダプティブサイジングを有効化</li>
           <li>長時間実行クエリ: 接続タイムアウトを増やす</li>
+          <li>デバッグとトラブルシューティング: プールログを有効化して問題を迅速に特定</li>
         </ul>
       </li>
     </ol>

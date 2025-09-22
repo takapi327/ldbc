@@ -190,6 +190,7 @@
     <li class="level2 nav-leaf"><a href="#example-with-advanced-configuration">Example with Advanced Configuration</a></li>
     <li class="level2 nav-leaf"><a href="#connection-lifecycle-hooks-with-pooling">Connection Lifecycle Hooks with Pooling</a></li>
     <li class="level2 nav-leaf"><a href="#monitoring-pool-health">Monitoring Pool Health</a></li>
+    <li class="level2 nav-leaf"><a href="#enabling-pool-state-logging">Enabling Pool State Logging</a></li>
     <li class="level2 nav-leaf"><a href="#pool-architecture-features">Pool Architecture Features</a></li>
     <li class="level2 nav-leaf"><a href="#best-practices">Best Practices</a></li>
     <li class="level2 nav-leaf"><a href="#migration-from-non-pooled-connections">Migration from Non-Pooled Connections</a></li>
@@ -226,7 +227,7 @@
     
     <h3 id="adding-dependencies-1" class="section"><a class="anchor-link left" href="#adding-dependencies-1"><i class="icofont-laika link">&#xef71;</i></a>Adding Dependencies</h3>
     <p>First, add the necessary dependencies. When using the jdbc connector, you need to add the MySQL connector as well.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">//&gt; dep &quot;io.github.takapi327::jdbc-connector:0.4.0-RC1&quot;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">//&gt; dep &quot;io.github.takapi327::jdbc-connector:0.4.0-RC2&quot;
 //&gt; dep &quot;com.mysql&quot;:&quot;mysql-connector-j&quot;:&quot;8.4.0&quot;</span></code></pre>
     
     <h3 id="connection-using-datasource" class="section"><a class="anchor-link left" href="#connection-using-datasource"><i class="icofont-laika link">&#xef71;</i></a>Connection using DataSource</h3>
@@ -292,7 +293,7 @@
     
     <h3 id="adding-dependencies-2" class="section"><a class="anchor-link left" href="#adding-dependencies-2"><i class="icofont-laika link">&#xef71;</i></a>Adding Dependencies</h3>
     <p>First, add the necessary dependency.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">//&gt; dep &quot;io.github.takapi327::ldbc-connector:0.4.0-RC1&quot;</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">//&gt; dep &quot;io.github.takapi327::ldbc-connector:0.4.0-RC2&quot;</span></code></pre>
     
     <h3 id="connection-with-basic-configuration" class="section"><a class="anchor-link left" href="#connection-with-basic-configuration"><i class="icofont-laika link">&#xef71;</i></a>Connection with Basic Configuration</h3>
     <p>Let&#39;s start with the simplest configuration:</p>
@@ -615,6 +616,13 @@
       <li><strong>adaptiveInterval</strong>: How often to check and adjust pool size (default: 30 seconds)</li>
     </ul>
     
+    <h4 id="logging-configuration" class="section"><a class="anchor-link left" href="#logging-configuration"><i class="icofont-laika link">&#xef71;</i></a>Logging Configuration</h4>
+    <ul>
+      <li><strong>logPoolState</strong>: Enable periodic logging of pool state (default: false)</li>
+      <li><strong>poolStateLogInterval</strong>: Interval for pool state logging (default: 30 seconds)</li>
+      <li><strong>poolName</strong>: Pool identification name for logging (default: &quot;ldbc-pool&quot;)</li>
+    </ul>
+    
     <h3 id="example-with-advanced-configuration" class="section"><a class="anchor-link left" href="#example-with-advanced-configuration"><i class="icofont-laika link">&#xef71;</i></a>Example with Advanced Configuration</h3>
     <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="type-name">IO</span><span>
 </span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
@@ -645,6 +653,11 @@
 </span><span>  .</span><span class="identifier">setLeakDetectionThreshold</span><span>(</span><span class="number-literal">2</span><span>.</span><span class="identifier">minutes</span><span>)  </span><span class="comment">// Warn about leaked connections
 </span><span>  .</span><span class="identifier">setAdaptiveSizing</span><span>(</span><span class="boolean-literal">true</span><span>)              </span><span class="comment">// Enable dynamic pool sizing
 </span><span>  .</span><span class="identifier">setAdaptiveInterval</span><span>(</span><span class="number-literal">1</span><span>.</span><span class="identifier">minute</span><span>)        </span><span class="comment">// Check pool size every minute
+</span><span>  
+  </span><span class="comment">// Logging Configuration
+</span><span>  .</span><span class="identifier">setLogPoolState</span><span>(</span><span class="boolean-literal">true</span><span>)                </span><span class="comment">// Enable pool state logging
+</span><span>  .</span><span class="identifier">setPoolStateLogInterval</span><span>(</span><span class="number-literal">1</span><span>.</span><span class="identifier">minute</span><span>)    </span><span class="comment">// Log pool state every minute
+</span><span>  .</span><span class="identifier">setPoolName</span><span>(</span><span class="string-literal">&quot;production-pool&quot;</span><span>)       </span><span class="comment">// Set pool name
 </span><span>
 </span><span class="comment">// Create and use the pool
 </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">advancedConfig</span><span>).</span><span class="identifier">use</span><span> { </span><span class="identifier">pool</span><span> =&gt;
@@ -711,6 +724,50 @@
   } </span><span class="keyword">yield</span><span> ()
 }</span></code></pre>
     
+    <h3 id="enabling-pool-state-logging" class="section"><a class="anchor-link left" href="#enabling-pool-state-logging"><i class="icofont-laika link">&#xef71;</i></a>Enabling Pool State Logging</h3>
+    <p>ldbc-connector provides detailed pool state logging influenced by HikariCP. This allows you to visualize pool behavior and diagnose performance issues:</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="type-name">IO</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">scala</span><span>.</span><span class="identifier">concurrent</span><span>.</span><span class="identifier">duration</span><span>.*
+
+</span><span class="comment">// Configuration with pool logging enabled
+</span><span class="keyword">val</span><span> </span><span class="identifier">loggedPoolConfig</span><span> = </span><span class="type-name">MySQLConfig</span><span>.</span><span class="identifier">default</span><span>
+  .</span><span class="identifier">setHost</span><span>(</span><span class="string-literal">&quot;localhost&quot;</span><span>)
+  .</span><span class="identifier">setPort</span><span>(</span><span class="number-literal">3306</span><span>)
+  .</span><span class="identifier">setUser</span><span>(</span><span class="string-literal">&quot;myuser&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;mypassword&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;mydb&quot;</span><span>)
+  .</span><span class="identifier">setMinConnections</span><span>(</span><span class="number-literal">5</span><span>)
+  .</span><span class="identifier">setMaxConnections</span><span>(</span><span class="number-literal">20</span><span>)
+  </span><span class="comment">// Logging configuration
+</span><span>  .</span><span class="identifier">setLogPoolState</span><span>(</span><span class="boolean-literal">true</span><span>)                  </span><span class="comment">// Enable pool state logging
+</span><span>  .</span><span class="identifier">setPoolStateLogInterval</span><span>(</span><span class="number-literal">30</span><span>.</span><span class="identifier">seconds</span><span>)     </span><span class="comment">// Log every 30 seconds
+</span><span>  .</span><span class="identifier">setPoolName</span><span>(</span><span class="string-literal">&quot;app-pool&quot;</span><span>)                 </span><span class="comment">// Name to identify pool in logs
+</span><span>
+</span><span class="comment">// Create the pool
+</span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">loggedPoolConfig</span><span>).</span><span class="identifier">use</span><span> { </span><span class="identifier">pool</span><span> =&gt;
+  </span><span class="comment">// Use the pool - logs like the following will be output every 30 seconds:
+</span><span>  </span><span class="comment">// [INFO] app-pool - Stats (total=5, active=2, idle=3, waiting=0)
+</span><span>  </span><span class="identifier">pool</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    </span><span class="identifier">conn</span><span>.</span><span class="identifier">execute</span><span>(</span><span class="string-literal">&quot;SELECT * FROM users&quot;</span><span>)
+  }
+}</span></code></pre>
+    <p>When pool logging is enabled, the following information is recorded in the logs:</p>
+    <pre><code>// Periodic pool state logs
+[INFO] app-pool - Stats (total=10, active=3, idle=7, waiting=0)
+
+// Connection creation failure
+[ERROR] Failed to create connection to localhost:3306 (database: mydb): Connection refused
+
+// Connection acquisition timeout (with detailed diagnostics)
+[ERROR] Connection acquisition timeout after 30 seconds (host: localhost:3306, db: mydb, pool: 20/20, active: 20, idle: 0, waiting: 5)
+
+// Connection validation failure
+[WARN] Connection conn-123 failed validation, removing from pool
+
+// Connection leak detection
+[WARN] Possible connection leak detected: Connection conn-456 has been in use for longer than 2 minutes</code></pre>
+    
     <h3 id="pool-architecture-features" class="section"><a class="anchor-link left" href="#pool-architecture-features"><i class="icofont-laika link">&#xef71;</i></a>Pool Architecture Features</h3>
     <p>The ldbc connection pool includes several advanced features:</p>
     
@@ -738,6 +795,15 @@
       <li>Prevents resource waste</li>
     </ul>
     
+    <h4 id="detailed-pool-logging" class="section"><a class="anchor-link left" href="#detailed-pool-logging"><i class="icofont-laika link">&#xef71;</i></a>Detailed Pool Logging</h4>
+    <p>Comprehensive logging system influenced by HikariCP:</p>
+    <ul>
+      <li><strong>Pool State Logs</strong>: Periodically outputs connection counts, active/idle connections, and wait queue size</li>
+      <li><strong>Connection Lifecycle Logs</strong>: Records detailed information during connection creation, validation, and removal</li>
+      <li><strong>Error Diagnostics</strong>: Outputs detailed pool state on connection acquisition timeout</li>
+      <li><strong>Leak Detection Logs</strong>: Warns about connections in use beyond configured threshold</li>
+    </ul>
+    
     <h3 id="best-practices" class="section"><a class="anchor-link left" href="#best-practices"><i class="icofont-laika link">&#xef71;</i></a>Best Practices</h3>
     <ol class="arabic">
       <li><strong>Start with Conservative Settings</strong>: Begin with default values and adjust based on monitoring</li>
@@ -745,12 +811,14 @@
       <li><strong>Set Appropriate Timeouts</strong>: Balance between user experience and resource protection</li>
       <li><strong>Enable Leak Detection in Development</strong>: Catch connection leaks early</li>
       <li><strong>Use Connection Test Queries Sparingly</strong>: They add overhead; rely on MySQL&#39;s isValid when possible</li>
+      <li><strong>Enable Pool Logging in Production</strong>: For troubleshooting and performance analysis</li>
       <li>
         <strong>Consider Your Workload</strong>: 
         <ul>
           <li>High-throughput applications: larger pool sizes</li>
           <li>Bursty workloads: enable adaptive sizing</li>
           <li>Long-running queries: increase connection timeout</li>
+          <li>Debugging and troubleshooting: enable pool logging to quickly identify issues</li>
         </ul>
       </li>
     </ol>
