@@ -1068,8 +1068,8 @@ trait DateTime:
    * Function to calculate the difference time from a date/time or time type value.
    *
    * {{{
-   *   TableQuery[DateTime].select(p => SEC_TO_TIME(p.start, p.end))
-   *   // SELECT SEC_TO_TIME(start, end) FROM date_time
+   *   TableQuery[DateTime].select(p => SUBTIME(p.start, p.end))
+   *   // SELECT SUBTIME(start, end) FROM date_time
    * }}}
    *
    * @param time
