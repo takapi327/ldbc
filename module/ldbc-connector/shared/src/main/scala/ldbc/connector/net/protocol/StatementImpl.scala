@@ -60,8 +60,7 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
         dbQuerySummary(sanitizeSql(sql))
       ) ++ table.map(dbCollectionName).toList
 
-      span.addAttributes(queryAttributes*) *>
-        protocol.resetSequenceId *>
+      protocol.resetSequenceId *>
         protocol.send(ComQueryPacket(sql, protocol.initialPacket.capabilityFlags, ListMap.empty)) *>
         protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
           case _: OKPacket =>
@@ -79,8 +78,9 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
                                )
                            )
               _ <- currentResultSet.set(Some(resultSet))
+              _ <- span.addAttributes(queryAttributes*)
             yield resultSet
-          case error: ERRPacket            => F.raiseError(error.toException(Some(sql), None))
+          case error: ERRPacket            => span.addAttributes((queryAttributes ++ error.attributes)*) *> F.raiseError(error.toException(Some(sql), None))
           case result: ColumnsNumberPacket =>
             for
               columnDefinitions <-
@@ -107,6 +107,7 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
                             Some(sql)
                           )
               _ <- currentResultSet.set(Some(resultSet))
+              _ <- span.addAttributes(queryAttributes*)
             yield resultSet
         }
     }
@@ -221,13 +222,13 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
           dbQuerySummary(sanitizeSql(sql))
         ) ++ table.map(dbCollectionName).toList
 
-        span.addAttributes(queryAttributes*) *> protocol.resetSequenceId *> (
+        protocol.resetSequenceId *> (
           protocol.send(ComQueryPacket(sql, protocol.initialPacket.capabilityFlags, ListMap.empty)) *>
             protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
               case result: OKPacket =>
-                lastInsertId.set(result.lastInsertId) *> updateCount.updateAndGet(_ => result.affectedRows)
-              case error: ERRPacket => F.raiseError(error.toException(Some(sql), None))
-              case _: EOFPacket     => F.raiseError(new SQLException("Unexpected EOF packet"))
+                lastInsertId.set(result.lastInsertId) *> updateCount.updateAndGet(_ => result.affectedRows) <* span.addAttributes(queryAttributes*)
+              case error: ERRPacket => span.addAttributes((queryAttributes ++ error.attributes)*) *> F.raiseError(error.toException(Some(sql), None))
+              case _: EOFPacket     => span.addAttributes((queryAttributes ++ List(eofException))*) *> F.raiseError(new SQLException("Unexpected EOF packet"))
             }
         )
       }
@@ -254,36 +255,33 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
       protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON) *>
       exchange[F, Array[Long]]("BATCH") { (span: Span[F]) =>
         batchedArgs.get.flatMap { args =>
-          val batchAttributes = baseAttributes ++ List(
-            dbOperationName("BATCH"),
-            batchSize(args.length.toLong)
-          )
+          val batchAttributes = batchSize(args.length.toLong) match
+            case Some(attr) => baseAttributes ++ List(dbOperationName("BATCH"), attr)
+            case None       => baseAttributes ++ List(dbOperationName("BATCH"))
 
-          span.addAttributes(batchAttributes*) *> (
-            if args.isEmpty then F.pure(Array.empty)
-            else
-              protocol.resetSequenceId *>
-                protocol.send(
-                  ComQueryPacket(args.mkString(";"), protocol.initialPacket.capabilityFlags, ListMap.empty)
-                ) *>
-                args
-                  .foldLeft(F.pure(Vector.empty[Long])) { ($acc, _) =>
-                    for
-                      acc    <- $acc
-                      result <-
-                        protocol
-                          .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
-                          .flatMap {
-                            case result: OKPacket =>
-                              lastInsertId.set(result.lastInsertId) *> F.pure(acc :+ result.affectedRows)
-                            case error: ERRPacket =>
-                              F.raiseError(error.toException("Failed to execute batch", acc))
-                            case _: EOFPacket => F.raiseError(new SQLException("Unexpected EOF packet"))
-                          }
-                    yield result
-                  }
-                  .map(_.toArray)
-          )
+          if args.isEmpty then F.pure(Array.empty)
+          else
+            protocol.resetSequenceId *>
+              protocol.send(
+                ComQueryPacket(args.mkString(";"), protocol.initialPacket.capabilityFlags, ListMap.empty)
+              ) *>
+              args
+                .foldLeft(F.pure(Vector.empty[Long])) { ($acc, _) =>
+                  for
+                    acc    <- $acc
+                    result <-
+                      protocol
+                        .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
+                        .flatMap {
+                          case result: OKPacket =>
+                            lastInsertId.set(result.lastInsertId) *> F.pure(acc :+ result.affectedRows) <* span.addAttributes(batchAttributes*)
+                          case error: ERRPacket =>
+                            span.addAttributes((batchAttributes ++ error.attributes)*) *> F.raiseError(error.toException("Failed to execute batch", acc))
+                          case _: EOFPacket => span.addAttributes((batchAttributes ++ List(eofException))*) *> F.raiseError(new SQLException("Unexpected EOF packet"))
+                        }
+                  yield result
+                }
+                .map(_.toArray)
         }
       } <* protocol.resetSequenceId <* protocol.comSetOption(
         EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF

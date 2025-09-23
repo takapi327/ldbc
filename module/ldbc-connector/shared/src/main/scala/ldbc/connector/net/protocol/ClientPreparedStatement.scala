@@ -78,8 +78,7 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
             dbQuerySummary(sanitizeSql(sql))
           ) ++ table.map(dbCollectionName).toList
 
-          span.addAttributes(queryAttributes*) *>
-            protocol.resetSequenceId *>
+          protocol.resetSequenceId *>
             protocol.send(
               ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)
             ) *>
@@ -96,8 +95,8 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
                       useCursorFetch,
                       useServerPrepStmts
                     )
-                )
-              case error: ERRPacket            => F.raiseError(error.toException(Some(sql), None, params))
+                ) <* span.addAttributes(queryAttributes*)
+              case error: ERRPacket            => span.addAttributes((queryAttributes ++ error.attributes)*) *> F.raiseError(error.toException(Some(sql), None, params))
               case result: ColumnsNumberPacket =>
                 for
                   columnDefinitions <-
@@ -124,6 +123,7 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
                                 Some(sql)
                               )
                   _ <- currentResultSet.set(Some(resultSet))
+                  _ <- span.addAttributes(queryAttributes*)
                 yield resultSet
             }
         } <* params.set(SortedMap.empty)
@@ -144,15 +144,14 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
             dbQuerySummary(sanitizeSql(sql))
           ) ++ table.map(dbCollectionName).toList
 
-          span.addAttributes(queryAttributes*) *>
-            protocol.resetSequenceId *>
+          protocol.resetSequenceId *>
             protocol.send(
               ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)
             ) *>
             protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
-              case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
-              case error: ERRPacket => F.raiseError(error.toException(Some(sql), None, params))
-              case _: EOFPacket     => F.raiseError(new SQLException("Unexpected EOF packet"))
+              case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows) <* span.addAttributes(queryAttributes*)
+              case error: ERRPacket => span.addAttributes((queryAttributes ++ error.attributes)*) *> F.raiseError(error.toException(Some(sql), None, params))
+              case _: EOFPacket     => span.addAttributes((queryAttributes ++ List(eofException))*) *> F.raiseError(new SQLException("Unexpected EOF packet"))
             }
         } <* params.set(SortedMap.empty)
       }
@@ -180,30 +179,27 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
           exchange[F, Array[Long]]("statement") { (span: Span[F]) =>
             protocol.resetSequenceId *>
               batchedArgs.get.flatMap { args =>
-                val batchAttributes = baseAttributes ++ List(
-                  dbOperationName("BATCH"),
-                  batchSize(args.length.toLong)
-                )
+                val batchAttributes = batchSize(args.length.toLong) match
+                  case Some(attr) => baseAttributes ++ List(dbOperationName("BATCH"), attr)
+                  case None       => baseAttributes ++ List(dbOperationName("BATCH"))
 
-                span.addAttributes(batchAttributes*) *> (
-                  if args.isEmpty then F.pure(Array.empty)
-                  else
-                    protocol.resetSequenceId *>
-                      protocol.send(
-                        ComQueryPacket(
-                          sql.split("VALUES").head + " VALUES" + args.mkString(","),
-                          protocol.initialPacket.capabilityFlags,
-                          ListMap.empty
-                        )
-                      ) *>
-                      protocol
-                        .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
-                        .flatMap {
-                          case _: OKPacket      => F.pure(Array.fill(args.length)(Statement.SUCCESS_NO_INFO.toLong))
-                          case error: ERRPacket => F.raiseError(error.toException(Some(sql), None))
-                          case _: EOFPacket     => F.raiseError(new SQLException("Unexpected EOF packet"))
-                        }
-                )
+                if args.isEmpty then F.pure(Array.empty)
+                else
+                  protocol.resetSequenceId *>
+                    protocol.send(
+                      ComQueryPacket(
+                        sql.split("VALUES").head + " VALUES" + args.mkString(","),
+                        protocol.initialPacket.capabilityFlags,
+                        ListMap.empty
+                      )
+                    ) *>
+                    protocol
+                      .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
+                      .flatMap {
+                        case _: OKPacket      => F.pure(Array.fill(args.length)(Statement.SUCCESS_NO_INFO.toLong)) <* span.addAttributes(batchAttributes*)
+                        case error: ERRPacket => span.addAttributes((batchAttributes ++ error.attributes)*) *> F.raiseError(error.toException(Some(sql), None))
+                        case _: EOFPacket     => span.addAttributes((batchAttributes ++ List(eofException))*) *> F.raiseError(new SQLException("Unexpected EOF packet"))
+                      }
               }
           } <* params.set(SortedMap.empty) <* batchedArgs.set(Vector.empty)
         case q if q.startsWith("update") || q.startsWith("delete") =>
@@ -213,39 +209,37 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
               protocol.resetSequenceId *>
                 batchedArgs.get.flatMap { args =>
                   val batchAttributes = baseAttributes ++ List(
-                    dbOperationName("BATCH"),
+                    Some(dbOperationName("BATCH")),
                     batchSize(args.length.toLong)
-                  )
+                  ).flatten
 
-                  span.addAttributes(batchAttributes*) *> (
-                    if args.isEmpty then F.pure(Array.empty)
-                    else
-                      protocol.resetSequenceId *>
-                        protocol.send(
-                          ComQueryPacket(
-                            args.mkString(";"),
-                            protocol.initialPacket.capabilityFlags,
-                            ListMap.empty
-                          )
-                        ) *>
-                        args
-                          .foldLeft(F.pure(Vector.empty[Long])) { ($acc, _) =>
-                            for
-                              acc    <- $acc
-                              result <-
-                                protocol
-                                  .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
-                                  .flatMap {
-                                    case result: OKPacket =>
-                                      lastInsertId.set(result.lastInsertId) *> F.pure(acc :+ result.affectedRows)
-                                    case error: ERRPacket =>
-                                      F.raiseError(error.toException("Failed to execute batch", acc))
-                                    case _: EOFPacket => F.raiseError(new SQLException("Unexpected EOF packet"))
-                                  }
-                            yield result
-                          }
-                          .map(_.toArray)
-                  )
+                  if args.isEmpty then F.pure(Array.empty)
+                  else
+                    protocol.resetSequenceId *>
+                      protocol.send(
+                        ComQueryPacket(
+                          args.mkString(";"),
+                          protocol.initialPacket.capabilityFlags,
+                          ListMap.empty
+                        )
+                      ) *>
+                      args
+                        .foldLeft(F.pure(Vector.empty[Long])) { ($acc, _) =>
+                          for
+                            acc    <- $acc
+                            result <-
+                              protocol
+                                .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
+                                .flatMap {
+                                  case result: OKPacket =>
+                                    lastInsertId.set(result.lastInsertId) *> F.pure(acc :+ result.affectedRows) <* span.addAttributes(batchAttributes*)
+                                  case error: ERRPacket =>
+                                    span.addAttributes((batchAttributes ++ error.attributes)*) *> F.raiseError(error.toException("Failed to execute batch", acc))
+                                  case _: EOFPacket => span.addAttributes((batchAttributes ++ List(eofException))*) *> F.raiseError(new SQLException("Unexpected EOF packet"))
+                                }
+                          yield result
+                        }
+                        .map(_.toArray)
                 }
             } <*
             protocol.resetSequenceId <*

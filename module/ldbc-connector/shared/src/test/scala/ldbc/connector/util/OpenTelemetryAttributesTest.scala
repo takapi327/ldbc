@@ -71,9 +71,14 @@ class OpenTelemetryAttributesTest extends FTestPlatform:
     assertEquals(OpenTelemetryAttributes.statementType(sType), Attribute("db.statement.type", sType))
   }
 
-  test("batchSize should return correct attribute") {
-    val size = 100L
-    assertEquals(OpenTelemetryAttributes.batchSize(size), Attribute("db.operation.batch.size", size))
+  test("batchSize should return Some for size >= 2") {
+    assertEquals(OpenTelemetryAttributes.batchSize(2L), Some(Attribute("db.operation.batch.size", 2L)))
+    assertEquals(OpenTelemetryAttributes.batchSize(100L), Some(Attribute("db.operation.batch.size", 100L)))
+  }
+
+  test("batchSize should return None for size < 2") {
+    assertEquals(OpenTelemetryAttributes.batchSize(1L), None)
+    assertEquals(OpenTelemetryAttributes.batchSize(0L), None)
   }
 
   test("sanitizeSql should replace string literals") {
@@ -217,4 +222,24 @@ class OpenTelemetryAttributesTest extends FTestPlatform:
     assertEquals(OpenTelemetryAttributes.createSpanName("INSERT", Some("products")), "INSERT products")
     assertEquals(OpenTelemetryAttributes.createSpanName("DELETE", Some("orders")), "DELETE orders")
     assertEquals(OpenTelemetryAttributes.createSpanName("SHOW", None), "SHOW")
+  }
+
+  test("dbStoredProcedureName should return correct attribute") {
+    val procName = "get_user_by_id"
+    assertEquals(OpenTelemetryAttributes.dbStoredProcedureName(procName), Attribute("db.stored_procedure.name", procName))
+  }
+
+  test("extractStoredProcedureName should extract procedure name from CALL statements") {
+    assertEquals(OpenTelemetryAttributes.extractStoredProcedureName("CALL get_user_by_id(123)"), Some("GET_USER_BY_ID"))
+    assertEquals(OpenTelemetryAttributes.extractStoredProcedureName("call my_procedure"), Some("MY_PROCEDURE"))
+    assertEquals(OpenTelemetryAttributes.extractStoredProcedureName("CALL schema.procedure_name(?)"), Some("SCHEMA.PROCEDURE_NAME"))
+  }
+
+  test("extractStoredProcedureName should return None for non-CALL statements") {
+    assertEquals(OpenTelemetryAttributes.extractStoredProcedureName("SELECT * FROM users"), None)
+    assertEquals(OpenTelemetryAttributes.extractStoredProcedureName("INSERT INTO users VALUES (1)"), None)
+  }
+
+  test("extractOperationName should extract CALL") {
+    assertEquals(OpenTelemetryAttributes.extractOperationName("CALL my_procedure()"), "CALL")
   }

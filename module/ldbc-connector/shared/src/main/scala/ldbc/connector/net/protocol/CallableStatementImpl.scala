@@ -95,12 +95,12 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                 dbQuerySummary(sanitizeSql(sql))
               ) ++ table.map(dbCollectionName).toList
 
-              span.addAttributes(queryAttributes*) *>
-                protocol.resetSequenceId *>
+              protocol.resetSequenceId *>
                 protocol.send(
                   ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)
                 ) *>
-                receiveQueryResult()
+                receiveQueryResult() <*
+                span.addAttributes(queryAttributes*)
             }
         }
       } <* params.set(SortedMap.empty)
@@ -141,12 +141,11 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                 dbQueryText(sql),
                 dbQuerySummary(sanitizeSql(sql))
               ) ++ table.map(dbCollectionName).toList
-
-              span.addAttributes(queryAttributes*) *>
-                sendQuery(buildQuery(sql, params)).flatMap {
-                  case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
-                  case error: ERRPacket => F.raiseError(error.toException(Some(sql), None))
-                  case _: EOFPacket     => F.raiseError(new SQLException("Unexpected EOF packet"))
+  
+              sendQuery(buildQuery(sql, params)).flatMap {
+                  case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows) <* span.addAttributes(queryAttributes*)
+                  case error: ERRPacket => span.addAttributes((queryAttributes ++ error.attributes)*) *> F.raiseError(error.toException(Some(sql), None))
+                  case _: EOFPacket     => span.addAttributes((queryAttributes ++ List(eofException))*) *> F.raiseError(new SQLException("Unexpected EOF packet"))
                 }
             }
         }
@@ -176,11 +175,10 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                   dbQuerySummary(sanitizeSql(sql))
                 ) ++ table.map(dbCollectionName).toList
 
-                span.addAttributes(queryAttributes*) *>
-                  sendQuery(buildQuery(sql, params)).flatMap {
-                    case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
-                    case error: ERRPacket => F.raiseError(error.toException(Some(sql), None))
-                    case _: EOFPacket     => F.raiseError(new SQLException("Unexpected EOF packet"))
+                sendQuery(buildQuery(sql, params)).flatMap {
+                    case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows) <* span.addAttributes(queryAttributes*)
+                    case error: ERRPacket => span.addAttributes((queryAttributes ++ error.attributes)*) *> F.raiseError(error.toException(Some(sql), None))
+                    case _: EOFPacket     => span.addAttributes((queryAttributes ++ List(eofException))*) *> F.raiseError(new SQLException("Unexpected EOF packet"))
                   }
               }
               .map(_ => false)
@@ -218,57 +216,54 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
       checkNullOrEmptyQuery(sql) *>
       exchange[F, Array[Long]]("BATCH") { (span: Span[F]) =>
         batchedArgs.get.flatMap { args =>
-          val batchAttributes = baseAttributes ++ List(
-            dbOperationName("BATCH"),
-            batchSize(args.length.toLong)
-          )
+          val batchAttributes = batchSize(args.length.toLong) match
+            case Some(attr) => baseAttributes ++ List(dbOperationName("BATCH"), attr)
+            case None       => baseAttributes ++ List(dbOperationName("BATCH"))
 
-          span.addAttributes(batchAttributes*) *> (
-            if args.isEmpty then F.pure(Array.empty)
-            else
-              sql.toUpperCase match
-                case q if q.startsWith("INSERT") =>
-                  sendQuery(sql.split("VALUES").head + " VALUES" + args.mkString(","))
-                    .flatMap {
-                      case _: OKPacket      => F.pure(Array.fill(args.length)(Statement.SUCCESS_NO_INFO.toLong))
-                      case error: ERRPacket => F.raiseError(error.toException(Some(sql), None))
-                      case _: EOFPacket     => F.raiseError(new SQLException("Unexpected EOF packet"))
-                    }
-                case q if q.startsWith("update") || q.startsWith("delete") || q.startsWith("CALL") =>
+          if args.isEmpty then F.pure(Array.empty)
+          else
+            sql.toUpperCase match
+              case q if q.startsWith("INSERT") =>
+                sendQuery(sql.split("VALUES").head + " VALUES" + args.mkString(","))
+                  .flatMap {
+                    case _: OKPacket      => F.pure(Array.fill(args.length)(Statement.SUCCESS_NO_INFO.toLong)) <* span.addAttributes(batchAttributes*)
+                    case error: ERRPacket => span.addAttributes((batchAttributes ++ error.attributes)*) *> F.raiseError(error.toException(Some(sql), None))
+                    case _: EOFPacket     =>  span.addAttributes((batchAttributes ++ List(eofException))*) *> F.raiseError(new SQLException("Unexpected EOF packet"))
+                  }
+              case q if q.startsWith("update") || q.startsWith("delete") || q.startsWith("CALL") =>
+                protocol.resetSequenceId *>
+                  protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON) *>
                   protocol.resetSequenceId *>
-                    protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON) *>
-                    protocol.resetSequenceId *>
-                    protocol.send(
-                      ComQueryPacket(
-                        args.mkString(";"),
-                        protocol.initialPacket.capabilityFlags,
-                        ListMap.empty
-                      )
-                    ) *>
-                    args
-                      .foldLeft(F.pure(Vector.empty[Long])) { ($acc, _) =>
-                        for
-                          acc    <- $acc
-                          result <-
-                            protocol
-                              .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
-                              .flatMap {
-                                case result: OKPacket =>
-                                  lastInsertId.set(result.lastInsertId) *> F.pure(acc :+ result.affectedRows)
-                                case error: ERRPacket =>
-                                  F.raiseError(error.toException("Failed to execute batch", acc))
-                                case _: EOFPacket => F.raiseError(new SQLException("Unexpected EOF packet"))
-                              }
-                        yield result
-                      }
-                      .map(_.toArray) <*
-                    protocol.resetSequenceId <*
-                    protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF)
-                case _ =>
-                  F.raiseError(
-                    new SQLException("The batch query must be an INSERT, UPDATE, or DELETE, CALL statement.")
-                  )
-          )
+                  protocol.send(
+                    ComQueryPacket(
+                      args.mkString(";"),
+                      protocol.initialPacket.capabilityFlags,
+                      ListMap.empty
+                    )
+                  ) *>
+                  args
+                    .foldLeft(F.pure(Vector.empty[Long])) { ($acc, _) =>
+                      for
+                        acc    <- $acc
+                        result <-
+                          protocol
+                            .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
+                            .flatMap {
+                              case result: OKPacket =>
+                                lastInsertId.set(result.lastInsertId) *> F.pure(acc :+ result.affectedRows) <* span.addAttributes(batchAttributes*)
+                              case error: ERRPacket =>
+                                span.addAttributes((batchAttributes ++ error.attributes)*) *> F.raiseError(error.toException("Failed to execute batch", acc))
+                              case _: EOFPacket => span.addAttributes((batchAttributes ++ List(eofException))*) *> F.raiseError(new SQLException("Unexpected EOF packet"))
+                            }
+                      yield result
+                    }
+                    .map(_.toArray) <*
+                  protocol.resetSequenceId <*
+                  protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF)
+              case _ =>
+                F.raiseError(
+                  new SQLException("The batch query must be an INSERT, UPDATE, or DELETE, CALL statement.")
+                )
         }
       } <* params.set(SortedMap.empty) <* batchedArgs.set(Vector.empty)
 
@@ -806,18 +801,19 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
       params.get.flatMap { params =>
         val operation       = extractOperationName(sql)
         val table           = extractTableName(sql)
+        val procName        = extractStoredProcedureName(sql)
         val queryAttributes = baseAttributes ++ List(
           dbOperationName(operation),
           dbQueryText(sql),
           dbQuerySummary(sanitizeSql(sql))
-        ) ++ table.map(dbCollectionName).toList
+        ) ++ table.map(dbCollectionName).toList ++ procName.map(dbStoredProcedureName).toList
 
-        span.addAttributes(queryAttributes*) *>
-          protocol.resetSequenceId *>
+        protocol.resetSequenceId *>
           protocol.send(
             ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)
           ) *>
-          receiveUntilOkPacket(Vector.empty)
+          receiveUntilOkPacket(Vector.empty) <*
+          span.addAttributes(queryAttributes*)
       }
 
 object CallableStatementImpl:

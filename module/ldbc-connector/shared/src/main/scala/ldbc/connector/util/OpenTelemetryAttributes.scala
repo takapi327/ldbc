@@ -87,9 +87,11 @@ object OpenTelemetryAttributes:
 
   /**
    * Batch size for batch operations
+   * Operations are only considered batches when they contain two or more operations
    */
-  def batchSize(size: Long): Attribute[Long] =
-    Attribute("db.operation.batch.size", size)
+  def batchSize(size: Long): Option[Attribute[Long]] =
+    if (size >= 2) Some(Attribute("db.operation.batch.size", size))
+    else None
 
   /**
    * Sanitize SQL query to remove sensitive data
@@ -102,7 +104,21 @@ object OpenTelemetryAttributes:
       .replaceAll("\\b\\d+(\\.\\d+)?\\b", "?") // Replace numbers (including decimals) with ?
 
   /**
+   * Stored procedure name attribute
+   */
+  def dbStoredProcedureName(name: String): Attribute[String] =
+    Attribute("db.stored_procedure.name", name)
+
+  /**
+   * Attribute for EOFException
+   */
+  def eofException: Attribute[String] =
+    Attribute("error.type", "EOFException")
+
+  /**
    * Extract operation name from SQL statement
+   * Note: According to OpenTelemetry spec, db.operation.name SHOULD NOT be extracted from db.query.text
+   * This is provided for cases where operation name is not available through other means
    */
   def extractOperationName(sql: String): String =
     val trimmed   = sql.trim.toUpperCase
@@ -121,15 +137,25 @@ object OpenTelemetryAttributes:
       case "BEGIN"    => "BEGIN"
       case "COMMIT"   => "COMMIT"
       case "ROLLBACK" => "ROLLBACK"
+      case "CALL"     => "CALL"
       case _          => "OTHER"
 
   /**
    * Extract table name from simple SQL statements
-   * Returns None if table cannot be determined
+   * Note: According to OpenTelemetry spec, db.collection.name SHOULD NOT be extracted from db.query.text
+   * This is provided for cases where collection name is not available through other means
    */
   def extractTableName(sql: String): Option[String] =
     val trimmed = sql.trim.toUpperCase
     val pattern = """(?:FROM|INTO|UPDATE)\s+([^\s,;]+)""".r
+    pattern.findFirstMatchIn(trimmed).map(_.group(1))
+  
+  /**
+   * Extract stored procedure name from CALL statements
+   */
+  def extractStoredProcedureName(sql: String): Option[String] =
+    val trimmed = sql.trim.toUpperCase
+    val pattern = """CALL\s+([^\s(]+)""".r
     pattern.findFirstMatchIn(trimmed).map(_.group(1))
 
   /**

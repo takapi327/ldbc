@@ -14,6 +14,8 @@ import scodec.codecs.*
 
 import cats.syntax.option.*
 
+import org.typelevel.otel4s.Attribute
+
 import ldbc.connector.data.*
 import ldbc.connector.exception.*
 
@@ -54,6 +56,22 @@ case class ERRPacket(
 ) extends GenericResponsePackets:
 
   override def toString: String = "ERR_Packet"
+
+  def attributes: List[Attribute[?]] =
+    val errorType = sqlState match
+      case Some(SQLState.TRANSIENT_CONNECTION_EXCEPTION) => "TransientConnectionException"
+      case Some(SQLState.DATA_EXCEPTION)                  => "DataException"
+      case Some(SQLState.INVALID_AUTHORIZATION_SPEC_EXCEPTION) => "InvalidAuthorizationSpecException"
+      case Some(SQLState.INTEGRITY_CONSTRAINT_VIOLATION_EXCEPTION) => "IntegrityConstraintViolationException"
+      case Some(SQLState.TRANSACTION_ROLLBACK_EXCEPTION) => "TransactionRollbackException"
+      case Some(SQLState.SYNTAX_ERROR_EXCEPTION)         => "SyntaxErrorException"
+      case Some(SQLState.FEATURE_NOT_SUPPORTED_EXCEPTION) => "FeatureNotSupportedException"
+      case Some(_)                                       => "SQLException"
+      case None                                          => "SQLException"
+    List(
+      Attribute[String]("error.type", errorType),
+      Attribute[Long]("db.response.status_code", errorCode.toLong)
+    )
 
   def toException(
     sql:    Option[String],
