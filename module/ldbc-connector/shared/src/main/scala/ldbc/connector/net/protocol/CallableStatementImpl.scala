@@ -95,12 +95,12 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                 dbQuerySummary(sanitizeSql(sql))
               ) ++ table.map(dbCollectionName).toList
 
-              protocol.resetSequenceId *>
+              span.addAttributes(queryAttributes*) *>
+                protocol.resetSequenceId *>
                 protocol.send(
                   ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)
                 ) *>
-                receiveQueryResult() <*
-                span.addAttributes(queryAttributes*)
+                receiveQueryResult()
             }
         }
       } <* params.set(SortedMap.empty)
@@ -142,20 +142,12 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                 dbQuerySummary(sanitizeSql(sql))
               ) ++ table.map(dbCollectionName).toList
 
-              sendQuery(buildQuery(sql, params)).flatMap {
-                case result: OKPacket =>
-                  lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows) <* span.addAttributes(
-                    queryAttributes*
-                  )
-                case error: ERRPacket =>
-                  span.addAttributes((queryAttributes ++ error.attributes)*) *> F.raiseError(
-                    error.toException(Some(sql), None)
-                  )
-                case _: EOFPacket =>
-                  span.addAttributes((queryAttributes ++ List(eofException))*) *> F.raiseError(
-                    new SQLException("Unexpected EOF packet")
-                  )
-              }
+              span.addAttributes(queryAttributes*) *>
+                sendQuery(buildQuery(sql, params)).flatMap {
+                  case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
+                  case error: ERRPacket => span.addAttributes(error.attributes*) *> F.raiseError(error.toException(Some(sql), None))
+                  case _: EOFPacket => span.addAttribute(eofException) *> F.raiseError(new SQLException("Unexpected EOF packet"))
+                }
             }
         }
       }
@@ -184,20 +176,13 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                   dbQuerySummary(sanitizeSql(sql))
                 ) ++ table.map(dbCollectionName).toList
 
-                sendQuery(buildQuery(sql, params)).flatMap {
-                  case result: OKPacket =>
-                    lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows) <* span.addAttributes(
-                      queryAttributes*
+                span.addAttributes(queryAttributes*) *>
+                  sendQuery(buildQuery(sql, params)).flatMap {
+                    case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
+                    case error: ERRPacket => span.addAttributes(error.attributes*) *> F.raiseError(error.toException(Some(sql), None)
                     )
-                  case error: ERRPacket =>
-                    span.addAttributes((queryAttributes ++ error.attributes)*) *> F.raiseError(
-                      error.toException(Some(sql), None)
-                    )
-                  case _: EOFPacket =>
-                    span.addAttributes((queryAttributes ++ List(eofException))*) *> F.raiseError(
-                      new SQLException("Unexpected EOF packet")
-                    )
-                }
+                    case _: EOFPacket => span.addAttribute(eofException) *> F.raiseError(new SQLException("Unexpected EOF packet"))
+                  }
               }
               .map(_ => false)
         }
@@ -242,23 +227,16 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
           else
             sql.toUpperCase match
               case q if q.startsWith("INSERT") =>
-                sendQuery(sql.split("VALUES").head + " VALUES" + args.mkString(","))
-                  .flatMap {
-                    case _: OKPacket =>
-                      F.pure(Array.fill(args.length)(Statement.SUCCESS_NO_INFO.toLong)) <* span.addAttributes(
-                        batchAttributes*
-                      )
-                    case error: ERRPacket =>
-                      span.addAttributes((batchAttributes ++ error.attributes)*) *> F.raiseError(
-                        error.toException(Some(sql), None)
-                      )
-                    case _: EOFPacket =>
-                      span.addAttributes((batchAttributes ++ List(eofException))*) *> F.raiseError(
-                        new SQLException("Unexpected EOF packet")
-                      )
-                  }
+                span.addAttributes(batchAttributes*) *>
+                  sendQuery(sql.split("VALUES").head + " VALUES" + args.mkString(","))
+                    .flatMap {
+                      case _: OKPacket => F.pure(Array.fill(args.length)(Statement.SUCCESS_NO_INFO.toLong))
+                      case error: ERRPacket => span.addAttributes(error.attributes*) *> F.raiseError(error.toException(Some(sql), None))
+                      case _: EOFPacket => span.addAttribute(eofException) *> F.raiseError(new SQLException("Unexpected EOF packet"))
+                    }
               case q if q.startsWith("update") || q.startsWith("delete") || q.startsWith("CALL") =>
-                protocol.resetSequenceId *>
+                span.addAttributes(batchAttributes*) *>
+                  protocol.resetSequenceId *>
                   protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON) *>
                   protocol.resetSequenceId *>
                   protocol.send(
@@ -276,17 +254,9 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                           protocol
                             .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
                             .flatMap {
-                              case result: OKPacket =>
-                                lastInsertId.set(result.lastInsertId) *> F.pure(acc :+ result.affectedRows) <* span
-                                  .addAttributes(batchAttributes*)
-                              case error: ERRPacket =>
-                                span.addAttributes((batchAttributes ++ error.attributes)*) *> F.raiseError(
-                                  error.toException("Failed to execute batch", acc)
-                                )
-                              case _: EOFPacket =>
-                                span.addAttributes((batchAttributes ++ List(eofException))*) *> F.raiseError(
-                                  new SQLException("Unexpected EOF packet")
-                                )
+                              case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(acc :+ result.affectedRows)
+                              case error: ERRPacket => span.addAttributes(error.attributes*) *> F.raiseError(error.toException("Failed to execute batch", acc))
+                              case _: EOFPacket => span.addAttribute(eofException) *> F.raiseError(new SQLException("Unexpected EOF packet"))
                             }
                       yield result
                     }
@@ -841,12 +811,12 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
           dbQuerySummary(sanitizeSql(sql))
         ) ++ table.map(dbCollectionName).toList ++ procName.map(dbStoredProcedureName).toList
 
-        protocol.resetSequenceId *>
+        span.addAttributes(queryAttributes*) *>
+          protocol.resetSequenceId *>
           protocol.send(
             ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)
           ) *>
-          receiveUntilOkPacket(Vector.empty) <*
-          span.addAttributes(queryAttributes*)
+          receiveUntilOkPacket(Vector.empty)
       }
 
 object CallableStatementImpl:
