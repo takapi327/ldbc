@@ -56,77 +56,107 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
   extends CallableStatement[F],
           SharedPreparedStatement[F]:
 
-  private val spanName      = "callable statement"
+  private val spanName       = "callable statement"
   private val baseAttributes = buildBaseAttributes(protocol)
 
   override def executeQuery(): F[ResultSet[F]] =
     checkClosed() *>
       checkNullOrEmptyQuery(sql) *>
       exchange[F, ResultSet[F]](spanName) { (span: Span[F]) =>
-          if sql.toUpperCase.startsWith("CALL") then
-            executeCallStatement(span).flatMap { resultSets =>
-              resultSets.headOption match
-                case None =>
-                  for
-                    resultSet <- F.pure(
-                                   ResultSetImpl.empty(
-                                     protocol,
-                                     serverVariables,
-                                     protocol.initialPacket.serverVersion,
-                                     resultSetClosed,
-                                     fetchSize,
-                                     useCursorFetch,
-                                     useServerPrepStmts
-                                   )
+        if sql.toUpperCase.startsWith("CALL") then
+          executeCallStatement(span).flatMap { resultSets =>
+            resultSets.headOption match
+              case None =>
+                for
+                  resultSet <- F.pure(
+                                 ResultSetImpl.empty(
+                                   protocol,
+                                   serverVariables,
+                                   protocol.initialPacket.serverVersion,
+                                   resultSetClosed,
+                                   fetchSize,
+                                   useCursorFetch,
+                                   useServerPrepStmts
                                  )
-                    _ <- currentResultSet.set(Some(resultSet))
-                  yield resultSet
-                case Some(resultSet) =>
-                  currentResultSet.update(_ => Some(resultSet)) *> resultSet.pure[F]
-            } <* retrieveOutParams()
-          else
-            params.get.flatMap { params =>
-              val queryAttributes = baseAttributes ++ List(
-                dbQueryText(sql),
-                dbQuerySummary(sanitizeSql(sql))
-              )
+                               )
+                  _ <- currentResultSet.set(Some(resultSet))
+                yield resultSet
+              case Some(resultSet) =>
+                currentResultSet.update(_ => Some(resultSet)) *> resultSet.pure[F]
+          } <* retrieveOutParams()
+        else
+          params.get.flatMap { params =>
+            val queryAttributes = baseAttributes ++ List(
+              dbQueryText(sql),
+              dbQuerySummary(sanitizeSql(sql))
+            )
 
-              span.addAttributes(queryAttributes*) *>
-                protocol.resetSequenceId *>
-                protocol.send(
-                  ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)
-                ) *>
-                receiveQueryResult()
-            }
-        } <* params.set(SortedMap.empty)
+            span.addAttributes(queryAttributes*) *>
+              protocol.resetSequenceId *>
+              protocol.send(
+                ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)
+              ) *>
+              receiveQueryResult()
+          }
+      } <* params.set(SortedMap.empty)
 
   override def executeLargeUpdate(): F[Long] =
     checkClosed() *>
       checkNullOrEmptyQuery(sql) *>
       exchange[F, Long](spanName) { (span: Span[F]) =>
-          if sql.toUpperCase.startsWith("CALL") then
-            executeCallStatement(span).flatMap { resultSets =>
-              resultSets.headOption match
-                case None =>
-                  for
-                    resultSet <- F.pure(
-                                   ResultSetImpl.empty(
-                                     protocol,
-                                     serverVariables,
-                                     protocol.initialPacket.serverVersion,
-                                     resultSetClosed,
-                                     fetchSize,
-                                     useCursorFetch,
-                                     useServerPrepStmts
-                                   )
+        if sql.toUpperCase.startsWith("CALL") then
+          executeCallStatement(span).flatMap { resultSets =>
+            resultSets.headOption match
+              case None =>
+                for
+                  resultSet <- F.pure(
+                                 ResultSetImpl.empty(
+                                   protocol,
+                                   serverVariables,
+                                   protocol.initialPacket.serverVersion,
+                                   resultSetClosed,
+                                   fetchSize,
+                                   useCursorFetch,
+                                   useServerPrepStmts
                                  )
-                    _ <- currentResultSet.set(Some(resultSet))
-                  yield resultSet
-                case Some(resultSet) =>
-                  currentResultSet.update(_ => Some(resultSet)) *> resultSet.pure[F]
-            } *> retrieveOutParams() *> F.pure(-1)
-          else
-            params.get.flatMap { params =>
+                               )
+                  _ <- currentResultSet.set(Some(resultSet))
+                yield resultSet
+              case Some(resultSet) =>
+                currentResultSet.update(_ => Some(resultSet)) *> resultSet.pure[F]
+          } *> retrieveOutParams() *> F.pure(-1)
+        else
+          params.get.flatMap { params =>
+            val queryAttributes = baseAttributes ++ List(
+              dbQueryText(sql),
+              dbQuerySummary(sanitizeSql(sql))
+            )
+
+            span.addAttributes(queryAttributes*) *>
+              sendQuery(buildQuery(sql, params)).flatMap {
+                case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
+                case error: ERRPacket =>
+                  span.addAttributes(error.attributes*) *> F.raiseError(error.toException(Some(sql), None))
+                case _: EOFPacket =>
+                  span.addAttribute(eofException) *> F.raiseError(new SQLException("Unexpected EOF packet"))
+              }
+          }
+      }
+
+  override def execute(): F[Boolean] =
+    checkClosed() *>
+      checkNullOrEmptyQuery(sql) *>
+      exchange[F, Boolean](spanName) { (span: Span[F]) =>
+        if sql.toUpperCase.startsWith("CALL") then
+          executeCallStatement(span).flatMap { results =>
+            moreResults.update(_ => results.nonEmpty) *>
+              currentResultSet.update(_ => results.headOption) *>
+              resultSets.set(results.toList) *>
+              F.pure(results.nonEmpty)
+          } <* retrieveOutParams()
+        else
+          params.get
+            .flatMap { params =>
               val queryAttributes = baseAttributes ++ List(
                 dbQueryText(sql),
                 dbQuerySummary(sanitizeSql(sql))
@@ -141,38 +171,8 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                     span.addAttribute(eofException) *> F.raiseError(new SQLException("Unexpected EOF packet"))
                 }
             }
-        }
-
-  override def execute(): F[Boolean] =
-    checkClosed() *>
-      checkNullOrEmptyQuery(sql) *>
-      exchange[F, Boolean](spanName) { (span: Span[F]) =>
-          if sql.toUpperCase.startsWith("CALL") then
-            executeCallStatement(span).flatMap { results =>
-              moreResults.update(_ => results.nonEmpty) *>
-                currentResultSet.update(_ => results.headOption) *>
-                resultSets.set(results.toList) *>
-                F.pure(results.nonEmpty)
-            } <* retrieveOutParams()
-          else
-            params.get
-              .flatMap { params =>
-                val queryAttributes = baseAttributes ++ List(
-                  dbQueryText(sql),
-                  dbQuerySummary(sanitizeSql(sql))
-                )
-
-                span.addAttributes(queryAttributes*) *>
-                  sendQuery(buildQuery(sql, params)).flatMap {
-                    case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
-                    case error: ERRPacket =>
-                      span.addAttributes(error.attributes*) *> F.raiseError(error.toException(Some(sql), None))
-                    case _: EOFPacket =>
-                      span.addAttribute(eofException) *> F.raiseError(new SQLException("Unexpected EOF packet"))
-                  }
-              }
-              .map(_ => false)
-        }
+            .map(_ => false)
+      }
 
   override def getMoreResults(): F[Boolean] =
     checkClosed() *> moreResults.get.flatMap { isMoreResults =>

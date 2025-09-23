@@ -63,7 +63,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
 )(using F: MonadThrow[F])
   extends SharedPreparedStatement[F]:
 
-  private val spanName      = "server prepared statement"
+  private val spanName       = "server prepared statement"
   private val baseAttributes = buildBaseAttributes(protocol)
 
   private def buildResultSet(
@@ -109,38 +109,38 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
         dbQuerySummary(sanitizeSql(sql))
       )
 
-        for
-          parameter   <- params.get
-          _           <- span.addAttributes(queryAttributes*)
-          columnCount <-
-            protocol.resetSequenceId *>
-              protocol.send(
-                ComStmtExecutePacket(statementId, parameter, resultSetType, resultSetConcurrency, useCursorFetch)
-              ) *>
-              protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
-                case _: OKPacket      => F.pure(ColumnsNumberPacket(0))
-                case error: ERRPacket =>
-                  span.addAttributes(error.attributes) *> F.raiseError(error.toException(Some(sql), None, parameter))
-                case result: ColumnsNumberPacket => F.pure(result)
-              }
-          columnDefinitions <-
-            protocol.repeatProcess(
-              columnCount.size,
-              ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags)
-            )
-          resultSetRow <-
-            protocol.readUntilEOF[BinaryProtocolResultSetRowPacket](
-              BinaryProtocolResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions)
-            )
-          _ <- columnDefinitions.headOption match {
-            case None        => F.unit
-            case Some(column) => span.addAttribute(dbCollectionName(column.table))
-          }
-          _ <- params.set(SortedMap.empty)
-          resultSet = buildResultSet(columnDefinitions, resultSetRow)
-          _ <- currentResultSet.set(Some(resultSet))
-        yield resultSet
-      }
+      for
+        parameter   <- params.get
+        _           <- span.addAttributes(queryAttributes*)
+        columnCount <-
+          protocol.resetSequenceId *>
+            protocol.send(
+              ComStmtExecutePacket(statementId, parameter, resultSetType, resultSetConcurrency, useCursorFetch)
+            ) *>
+            protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
+              case _: OKPacket      => F.pure(ColumnsNumberPacket(0))
+              case error: ERRPacket =>
+                span.addAttributes(error.attributes) *> F.raiseError(error.toException(Some(sql), None, parameter))
+              case result: ColumnsNumberPacket => F.pure(result)
+            }
+        columnDefinitions <-
+          protocol.repeatProcess(
+            columnCount.size,
+            ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags)
+          )
+        resultSetRow <-
+          protocol.readUntilEOF[BinaryProtocolResultSetRowPacket](
+            BinaryProtocolResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions)
+          )
+        _ <- columnDefinitions.headOption match {
+               case None         => F.unit
+               case Some(column) => span.addAttribute(dbCollectionName(column.table))
+             }
+        _ <- params.set(SortedMap.empty)
+        resultSet = buildResultSet(columnDefinitions, resultSetRow)
+        _ <- currentResultSet.set(Some(resultSet))
+      yield resultSet
+    }
 
   override def executeLargeUpdate(): F[Long] =
     checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, Long](spanName) { (span: Span[F]) =>

@@ -62,95 +62,95 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
 )(using F: MonadThrow[F])
   extends SharedPreparedStatement[F]:
 
-  private val spanName      = "client prepared statement"
+  private val spanName       = "client prepared statement"
   private val baseAttributes = buildBaseAttributes(protocol)
 
   override def executeQuery(): F[ResultSet[F]] =
     checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, ResultSet[F]](spanName) { (span: Span[F]) =>
-        params.get.flatMap { params =>
-          val queryAttributes = baseAttributes ++ List(
-            dbQueryText(sql),
-            dbQuerySummary(sanitizeSql(sql))
-          )
+      params.get.flatMap { params =>
+        val queryAttributes = baseAttributes ++ List(
+          dbQueryText(sql),
+          dbQuerySummary(sanitizeSql(sql))
+        )
 
-          span.addAttributes(queryAttributes*) *>
-            protocol.resetSequenceId *>
-            protocol.send(
-              ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)
-            ) *>
-            protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
-              case _: OKPacket =>
-                F.pure(
-                  ResultSetImpl
-                    .empty(
-                      protocol,
-                      serverVariables,
-                      protocol.initialPacket.serverVersion,
-                      resultSetClosed,
-                      fetchSize,
-                      useCursorFetch,
-                      useServerPrepStmts
-                    )
-                )
-              case error: ERRPacket =>
-                span.addAttributes(error.attributes*) *> F.raiseError(error.toException(Some(sql), None, params))
-              case result: ColumnsNumberPacket =>
-                for
-                  columnDefinitions <-
-                    protocol.repeatProcess(
-                      result.size,
-                      ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags)
-                    )
-                  resultSetRow <-
-                    protocol.readUntilEOF[ResultSetRowPacket](
-                      ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions.length)
-                    )
-                  _ <- columnDefinitions.headOption match {
-                    case None        => F.unit
-                    case Some(column) => span.addAttribute(dbCollectionName(column.table))
-                  }
-                  resultSet = ResultSetImpl(
-                                protocol,
-                                columnDefinitions,
-                                resultSetRow,
-                                serverVariables,
-                                protocol.initialPacket.serverVersion,
-                                resultSetClosed,
-                                fetchSize,
-                                useCursorFetch,
-                                useServerPrepStmts,
-                                resultSetType,
-                                resultSetConcurrency,
-                                Some(sql)
-                              )
-                  _ <- currentResultSet.set(Some(resultSet))
-                yield resultSet
-            }
-        } <* params.set(SortedMap.empty)
-      }
+        span.addAttributes(queryAttributes*) *>
+          protocol.resetSequenceId *>
+          protocol.send(
+            ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)
+          ) *>
+          protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
+            case _: OKPacket =>
+              F.pure(
+                ResultSetImpl
+                  .empty(
+                    protocol,
+                    serverVariables,
+                    protocol.initialPacket.serverVersion,
+                    resultSetClosed,
+                    fetchSize,
+                    useCursorFetch,
+                    useServerPrepStmts
+                  )
+              )
+            case error: ERRPacket =>
+              span.addAttributes(error.attributes*) *> F.raiseError(error.toException(Some(sql), None, params))
+            case result: ColumnsNumberPacket =>
+              for
+                columnDefinitions <-
+                  protocol.repeatProcess(
+                    result.size,
+                    ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags)
+                  )
+                resultSetRow <-
+                  protocol.readUntilEOF[ResultSetRowPacket](
+                    ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions.length)
+                  )
+                _ <- columnDefinitions.headOption match {
+                       case None         => F.unit
+                       case Some(column) => span.addAttribute(dbCollectionName(column.table))
+                     }
+                resultSet = ResultSetImpl(
+                              protocol,
+                              columnDefinitions,
+                              resultSetRow,
+                              serverVariables,
+                              protocol.initialPacket.serverVersion,
+                              resultSetClosed,
+                              fetchSize,
+                              useCursorFetch,
+                              useServerPrepStmts,
+                              resultSetType,
+                              resultSetConcurrency,
+                              Some(sql)
+                            )
+                _ <- currentResultSet.set(Some(resultSet))
+              yield resultSet
+          }
+      } <* params.set(SortedMap.empty)
+    }
 
   override def executeLargeUpdate(): F[Long] =
     checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, Long](spanName) { (span: Span[F]) =>
-        params.get.flatMap { params =>
-          val queryAttributes = baseAttributes ++ List(
-            dbQueryText(sql),
-            dbQuerySummary(sanitizeSql(sql))
-          )
+      params.get.flatMap { params =>
+        val queryAttributes = baseAttributes ++ List(
+          dbQueryText(sql),
+          dbQuerySummary(sanitizeSql(sql))
+        )
 
-          span.addAttributes(queryAttributes*) *>
-            protocol.resetSequenceId *>
-            protocol.send(
-              ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)
-            ) *>
-            protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
-              case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
-              case error: ERRPacket =>
-                span.addAttributes(error.attributes*) *> F.raiseError(error.toException(Some(sql), None, params))
-              case _: EOFPacket =>
-                span.addAttribute(eofException) *> F.raiseError(new SQLException("Unexpected EOF packet"))
-            }
-        } <* params.set(SortedMap.empty)
-      }
+        span.addAttributes(queryAttributes*) *>
+          protocol.resetSequenceId *>
+          protocol.send(
+            ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)
+          ) *>
+          protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
+            case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
+            case error: ERRPacket =>
+              span.addAttributes(error.attributes*) *> F.raiseError(error.toException(Some(sql), None, params))
+            case _: EOFPacket =>
+              span.addAttribute(eofException) *> F.raiseError(new SQLException("Unexpected EOF packet"))
+          }
+      } <* params.set(SortedMap.empty)
+    }
 
   override def execute(): F[Boolean] =
     if sql.toUpperCase.startsWith("SELECT") then

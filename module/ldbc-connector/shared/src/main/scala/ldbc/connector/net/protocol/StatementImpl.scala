@@ -90,9 +90,9 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
                   ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions.length)
                 )
               _ <- columnDefinitions.headOption match {
-                case None        => F.unit
-                case Some(column) => span.addAttribute(dbCollectionName(column.table))
-              }
+                     case None         => F.unit
+                     case Some(column) => span.addAttribute(dbCollectionName(column.table))
+                   }
               resultSet = ResultSetImpl(
                             protocol,
                             columnDefinitions,
@@ -228,7 +228,7 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
                 span.addAttribute(eofException) *> F.raiseError(new SQLException("Unexpected EOF packet"))
             }
         )
-      }
+    }
 
   override def close(): F[Unit] = statementClosed.set(true) *> resultSetClosed.set(true)
 
@@ -385,5 +385,5 @@ object StatementImpl:
         serverAddress(protocol.hostInfo.host),
         serverPort(protocol.hostInfo.port),
         dbMysqlVersion(protocol.initialPacket.serverVersion.toString),
-        dbMysqlThreadId(protocol.initialPacket.threadId),
+        dbMysqlThreadId(protocol.initialPacket.threadId)
       ) ++ protocol.hostInfo.database.map(dbNamespace).toList
