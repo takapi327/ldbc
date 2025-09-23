@@ -24,6 +24,7 @@ import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.Protocol
 import ldbc.connector.ResultSetImpl
+import ldbc.connector.util.OpenTelemetryAttributes.*
 
 private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
   protocol:             Protocol[F],
@@ -45,11 +46,28 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
 )(using F: MonadThrow[F])
   extends StatementImpl.ShareStatement[F]:
 
-  private val attributes = protocol.initialPacket.attributes ++ List(Attribute("type", "Statement"))
+  private val baseAttributes = List(
+    dbSystemName,
+    serverAddress(protocol.hostInfo.host),
+    serverPort(protocol.hostInfo.port),
+    dbMysqlVersion(protocol.initialPacket.serverVersion.toString),
+    dbMysqlThreadId(protocol.initialPacket.threadId),
+    statementType("Statement")
+  ) ++ protocol.hostInfo.database.map(dbNamespace).toList
 
   private def simpleQueryRun(sql: String): F[ResultSet[F]] =
-    exchange[F, ResultSet[F]]("statement") { (span: Span[F]) =>
-      span.addAttributes((attributes ++ List(Attribute("execute", "query"), Attribute("sql", sql)))*) *>
+    val operation = extractOperationName(sql)
+    val table = extractTableName(sql)
+    val spanName = createSpanName(operation, table)
+    
+    exchange[F, ResultSet[F]](spanName) { (span: Span[F]) =>
+      val queryAttributes = baseAttributes ++ List(
+        dbOperationName(operation),
+        dbQueryText(sql),
+        dbQuerySummary(sanitizeSql(sql))
+      ) ++ table.map(dbCollectionName).toList
+      
+      span.addAttributes(queryAttributes*) *>
         protocol.resetSequenceId *>
         protocol.send(ComQueryPacket(sql, protocol.initialPacket.capabilityFlags, ListMap.empty)) *>
         protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
@@ -198,18 +216,28 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
     executeLargeUpdate(sql).map(_.toInt)
 
   override def executeLargeUpdate(sql: String): F[Long] =
-    checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, Long]("statement") { (span: Span[F]) =>
-      span.addAttributes(
-        (attributes ++ List(Attribute("execute", "update"), Attribute("sql", sql)))*
-      ) *> protocol.resetSequenceId *> (
-        protocol.send(ComQueryPacket(sql, protocol.initialPacket.capabilityFlags, ListMap.empty)) *>
-          protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
-            case result: OKPacket =>
-              lastInsertId.set(result.lastInsertId) *> updateCount.updateAndGet(_ => result.affectedRows)
-            case error: ERRPacket => F.raiseError(error.toException(Some(sql), None))
-            case _: EOFPacket     => F.raiseError(new SQLException("Unexpected EOF packet"))
-          }
-      )
+    checkClosed() *> checkNullOrEmptyQuery(sql) *> {
+      val operation = extractOperationName(sql)
+      val table = extractTableName(sql)
+      val spanName = createSpanName(operation, table)
+      
+      exchange[F, Long](spanName) { (span: Span[F]) =>
+        val queryAttributes = baseAttributes ++ List(
+          dbOperationName(operation),
+          dbQueryText(sql),
+          dbQuerySummary(sanitizeSql(sql))
+        ) ++ table.map(dbCollectionName).toList
+        
+        span.addAttributes(queryAttributes*) *> protocol.resetSequenceId *> (
+          protocol.send(ComQueryPacket(sql, protocol.initialPacket.capabilityFlags, ListMap.empty)) *>
+            protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
+              case result: OKPacket =>
+                lastInsertId.set(result.lastInsertId) *> updateCount.updateAndGet(_ => result.affectedRows)
+              case error: ERRPacket => F.raiseError(error.toException(Some(sql), None))
+              case _: EOFPacket     => F.raiseError(new SQLException("Unexpected EOF packet"))
+            }
+        )
+      }
     }
 
   override def close(): F[Unit] = statementClosed.set(true) *> resultSetClosed.set(true)
@@ -231,15 +259,14 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
   override def executeLargeBatch(): F[Array[Long]] =
     checkClosed() *> protocol.resetSequenceId *>
       protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON) *>
-      exchange[F, Array[Long]]("statement") { (span: Span[F]) =>
+      exchange[F, Array[Long]]("BATCH") { (span: Span[F]) =>
         batchedArgs.get.flatMap { args =>
-          span.addAttributes(
-            (attributes ++ List(
-              Attribute("execute", "batch"),
-              Attribute("size", args.length.toLong),
-              Attribute("sql", args.toArray.toSeq)
-            ))*
-          ) *> (
+          val batchAttributes = baseAttributes ++ List(
+            dbOperationName("BATCH"),
+            batchSize(args.length.toLong)
+          )
+          
+          span.addAttributes(batchAttributes*) *> (
             if args.isEmpty then F.pure(Array.empty)
             else
               protocol.resetSequenceId *>

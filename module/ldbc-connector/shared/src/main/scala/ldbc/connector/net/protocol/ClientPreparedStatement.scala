@@ -24,6 +24,7 @@ import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.Protocol
 import ldbc.connector.ResultSetImpl
+import ldbc.connector.util.OpenTelemetryAttributes.*
 
 /**
  * PreparedStatement for query construction at the client side.
@@ -61,20 +62,30 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
 )(using F: MonadThrow[F])
   extends SharedPreparedStatement[F]:
 
-  private val attributes = protocol.initialPacket.attributes ++ List(
-    Attribute("type", "Client PreparedStatement"),
-    Attribute("sql", sql)
-  )
+  private val baseAttributes = List(
+    dbSystemName,
+    serverAddress(protocol.hostInfo.host),
+    serverPort(protocol.hostInfo.port),
+    dbMysqlVersion(protocol.initialPacket.serverVersion.toString),
+    dbMysqlThreadId(protocol.initialPacket.threadId),
+    statementType("ClientPreparedStatement")
+  ) ++ protocol.hostInfo.database.map(dbNamespace).toList
 
   override def executeQuery(): F[ResultSet[F]] =
-    checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, ResultSet[F]]("statement") { (span: Span[F]) =>
-      params.get.flatMap { params =>
-        span.addAttributes(
-          (attributes ++ List(
-            Attribute("params", params.map((_, param) => param.toString).mkString(", ")),
-            Attribute("execute", "query")
-          ))*
-        ) *>
+    checkClosed() *> checkNullOrEmptyQuery(sql) *> {
+      val operation = extractOperationName(sql)
+      val table = extractTableName(sql)
+      val spanName = createSpanName(operation, table)
+      
+      exchange[F, ResultSet[F]](spanName) { (span: Span[F]) =>
+        params.get.flatMap { params =>
+          val queryAttributes = baseAttributes ++ List(
+            dbOperationName(operation),
+            dbQueryText(sql),
+            dbQuerySummary(sanitizeSql(sql))
+          ) ++ table.map(dbCollectionName).toList
+          
+          span.addAttributes(queryAttributes*) *>
           protocol.resetSequenceId *>
           protocol.send(
             ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)
@@ -122,18 +133,25 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
                 _ <- currentResultSet.set(Some(resultSet))
               yield resultSet
           }
-      } <* params.set(SortedMap.empty)
+        } <* params.set(SortedMap.empty)
+      }
     }
 
   override def executeLargeUpdate(): F[Long] =
-    checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, Long]("statement") { (span: Span[F]) =>
-      params.get.flatMap { params =>
-        span.addAttributes(
-          (attributes ++ List(
-            Attribute("params", params.map((_, param) => param.toString).mkString(", ")),
-            Attribute("execute", "update")
-          ))*
-        ) *>
+    checkClosed() *> checkNullOrEmptyQuery(sql) *> {
+      val operation = extractOperationName(sql)
+      val table = extractTableName(sql)
+      val spanName = createSpanName(operation, table)
+      
+      exchange[F, Long](spanName) { (span: Span[F]) =>
+        params.get.flatMap { params =>
+          val queryAttributes = baseAttributes ++ List(
+            dbOperationName(operation),
+            dbQueryText(sql),
+            dbQuerySummary(sanitizeSql(sql))
+          ) ++ table.map(dbCollectionName).toList
+          
+          span.addAttributes(queryAttributes*) *>
           protocol.resetSequenceId *>
           protocol.send(
             ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)
@@ -143,7 +161,8 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
             case error: ERRPacket => F.raiseError(error.toException(Some(sql), None, params))
             case _: EOFPacket     => F.raiseError(new SQLException("Unexpected EOF packet"))
           }
-      } <* params.set(SortedMap.empty)
+        } <* params.set(SortedMap.empty)
+      }
     }
 
   override def execute(): F[Boolean] =
@@ -168,13 +187,12 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
           exchange[F, Array[Long]]("statement") { (span: Span[F]) =>
             protocol.resetSequenceId *>
               batchedArgs.get.flatMap { args =>
-                span.addAttributes(
-                  (attributes ++ List(
-                    Attribute("execute", "batch"),
-                    Attribute("size", args.length.toLong),
-                    Attribute("sql", args.toArray.toSeq)
-                  ))*
-                ) *> (
+                val batchAttributes = baseAttributes ++ List(
+                  dbOperationName("BATCH"),
+                  batchSize(args.length.toLong)
+                )
+                
+                span.addAttributes(batchAttributes*) *> (
                   if args.isEmpty then F.pure(Array.empty)
                   else
                     protocol.resetSequenceId *>
@@ -201,13 +219,12 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
             exchange[F, Array[Long]]("statement") { (span: Span[F]) =>
               protocol.resetSequenceId *>
                 batchedArgs.get.flatMap { args =>
-                  span.addAttributes(
-                    (attributes ++ List(
-                      Attribute("execute", "batch"),
-                      Attribute("size", args.length.toLong),
-                      Attribute("sql", args.toArray.toSeq)
-                    ))*
-                  ) *> (
+                  val batchAttributes = baseAttributes ++ List(
+                    dbOperationName("BATCH"),
+                    batchSize(args.length.toLong)
+                  )
+                  
+                  span.addAttributes(batchAttributes*) *> (
                     if args.isEmpty then F.pure(Array.empty)
                     else
                       protocol.resetSequenceId *>
