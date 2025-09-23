@@ -90,7 +90,7 @@ object OpenTelemetryAttributes:
    * Operations are only considered batches when they contain two or more operations
    */
   def batchSize(size: Long): Option[Attribute[Long]] =
-    if (size >= 2) Some(Attribute("db.operation.batch.size", size))
+    if size >= 2 then Some(Attribute("db.operation.batch.size", size))
     else None
 
   /**
@@ -149,7 +149,7 @@ object OpenTelemetryAttributes:
     val trimmed = sql.trim.toUpperCase
     val pattern = """(?:FROM|INTO|UPDATE)\s+([^\s,;]+)""".r
     pattern.findFirstMatchIn(trimmed).map(_.group(1))
-  
+
   /**
    * Extract stored procedure name from CALL statements
    */

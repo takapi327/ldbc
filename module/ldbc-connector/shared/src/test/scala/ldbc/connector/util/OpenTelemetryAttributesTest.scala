@@ -226,13 +226,19 @@ class OpenTelemetryAttributesTest extends FTestPlatform:
 
   test("dbStoredProcedureName should return correct attribute") {
     val procName = "get_user_by_id"
-    assertEquals(OpenTelemetryAttributes.dbStoredProcedureName(procName), Attribute("db.stored_procedure.name", procName))
+    assertEquals(
+      OpenTelemetryAttributes.dbStoredProcedureName(procName),
+      Attribute("db.stored_procedure.name", procName)
+    )
   }
 
   test("extractStoredProcedureName should extract procedure name from CALL statements") {
     assertEquals(OpenTelemetryAttributes.extractStoredProcedureName("CALL get_user_by_id(123)"), Some("GET_USER_BY_ID"))
     assertEquals(OpenTelemetryAttributes.extractStoredProcedureName("call my_procedure"), Some("MY_PROCEDURE"))
-    assertEquals(OpenTelemetryAttributes.extractStoredProcedureName("CALL schema.procedure_name(?)"), Some("SCHEMA.PROCEDURE_NAME"))
+    assertEquals(
+      OpenTelemetryAttributes.extractStoredProcedureName("CALL schema.procedure_name(?)"),
+      Some("SCHEMA.PROCEDURE_NAME")
+    )
   }
 
   test("extractStoredProcedureName should return None for non-CALL statements") {

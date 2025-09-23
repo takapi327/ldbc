@@ -80,7 +80,9 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
               _ <- currentResultSet.set(Some(resultSet))
               _ <- span.addAttributes(queryAttributes*)
             yield resultSet
-          case error: ERRPacket            => span.addAttributes((queryAttributes ++ error.attributes)*) *> F.raiseError(error.toException(Some(sql), None))
+          case error: ERRPacket =>
+            span
+              .addAttributes((queryAttributes ++ error.attributes)*) *> F.raiseError(error.toException(Some(sql), None))
           case result: ColumnsNumberPacket =>
             for
               columnDefinitions <-
@@ -226,9 +228,16 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
           protocol.send(ComQueryPacket(sql, protocol.initialPacket.capabilityFlags, ListMap.empty)) *>
             protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
               case result: OKPacket =>
-                lastInsertId.set(result.lastInsertId) *> updateCount.updateAndGet(_ => result.affectedRows) <* span.addAttributes(queryAttributes*)
-              case error: ERRPacket => span.addAttributes((queryAttributes ++ error.attributes)*) *> F.raiseError(error.toException(Some(sql), None))
-              case _: EOFPacket     => span.addAttributes((queryAttributes ++ List(eofException))*) *> F.raiseError(new SQLException("Unexpected EOF packet"))
+                lastInsertId.set(result.lastInsertId) *> updateCount.updateAndGet(_ => result.affectedRows) <* span
+                  .addAttributes(queryAttributes*)
+              case error: ERRPacket =>
+                span.addAttributes((queryAttributes ++ error.attributes)*) *> F.raiseError(
+                  error.toException(Some(sql), None)
+                )
+              case _: EOFPacket =>
+                span.addAttributes((queryAttributes ++ List(eofException))*) *> F.raiseError(
+                  new SQLException("Unexpected EOF packet")
+                )
             }
         )
       }
@@ -274,10 +283,16 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
                         .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
                         .flatMap {
                           case result: OKPacket =>
-                            lastInsertId.set(result.lastInsertId) *> F.pure(acc :+ result.affectedRows) <* span.addAttributes(batchAttributes*)
+                            lastInsertId.set(result.lastInsertId) *> F.pure(acc :+ result.affectedRows) <* span
+                              .addAttributes(batchAttributes*)
                           case error: ERRPacket =>
-                            span.addAttributes((batchAttributes ++ error.attributes)*) *> F.raiseError(error.toException("Failed to execute batch", acc))
-                          case _: EOFPacket => span.addAttributes((batchAttributes ++ List(eofException))*) *> F.raiseError(new SQLException("Unexpected EOF packet"))
+                            span.addAttributes((batchAttributes ++ error.attributes)*) *> F.raiseError(
+                              error.toException("Failed to execute batch", acc)
+                            )
+                          case _: EOFPacket =>
+                            span.addAttributes((batchAttributes ++ List(eofException))*) *> F.raiseError(
+                              new SQLException("Unexpected EOF packet")
+                            )
                         }
                   yield result
                 }
