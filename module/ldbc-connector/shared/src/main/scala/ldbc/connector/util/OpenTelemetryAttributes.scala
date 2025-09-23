@@ -80,12 +80,6 @@ object OpenTelemetryAttributes:
     Attribute("db.mysql.auth_plugin", plugin)
 
   /**
-   * Statement type (custom attribute)
-   */
-  def statementType(sType: String): Attribute[String] =
-    Attribute("db.statement.type", sType)
-
-  /**
    * Batch size for batch operations
    * Operations are only considered batches when they contain two or more operations
    */
@@ -157,11 +151,3 @@ object OpenTelemetryAttributes:
     val trimmed = sql.trim.toUpperCase
     val pattern = """CALL\s+([^\s(]+)""".r
     pattern.findFirstMatchIn(trimmed).map(_.group(1))
-
-  /**
-   * Create span name based on operation and table
-   */
-  def createSpanName(operation: String, table: Option[String]): String =
-    table match
-      case Some(t) => s"$operation $t"
-      case None    => operation

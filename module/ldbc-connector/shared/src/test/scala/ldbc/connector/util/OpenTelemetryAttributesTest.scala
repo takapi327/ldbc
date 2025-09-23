@@ -66,11 +66,6 @@ class OpenTelemetryAttributesTest extends FTestPlatform:
     assertEquals(OpenTelemetryAttributes.dbMysqlAuthPlugin(plugin), Attribute("db.mysql.auth_plugin", plugin))
   }
 
-  test("statementType should return correct attribute") {
-    val sType = "PreparedStatement"
-    assertEquals(OpenTelemetryAttributes.statementType(sType), Attribute("db.statement.type", sType))
-  }
-
   test("batchSize should return Some for size >= 2") {
     assertEquals(OpenTelemetryAttributes.batchSize(2L), Some(Attribute("db.operation.batch.size", 2L)))
     assertEquals(OpenTelemetryAttributes.batchSize(100L), Some(Attribute("db.operation.batch.size", 100L)))
@@ -210,20 +205,6 @@ class OpenTelemetryAttributesTest extends FTestPlatform:
     )
   }
 
-  test("createSpanName should create name with operation and table") {
-    assertEquals(OpenTelemetryAttributes.createSpanName("SELECT", Some("users")), "SELECT users")
-  }
-
-  test("createSpanName should create name with operation only when table is None") {
-    assertEquals(OpenTelemetryAttributes.createSpanName("COMMIT", None), "COMMIT")
-  }
-
-  test("createSpanName should handle various combinations") {
-    assertEquals(OpenTelemetryAttributes.createSpanName("INSERT", Some("products")), "INSERT products")
-    assertEquals(OpenTelemetryAttributes.createSpanName("DELETE", Some("orders")), "DELETE orders")
-    assertEquals(OpenTelemetryAttributes.createSpanName("SHOW", None), "SHOW")
-  }
-
   test("dbStoredProcedureName should return correct attribute") {
     val procName = "get_user_by_id"
     assertEquals(
@@ -244,8 +225,4 @@ class OpenTelemetryAttributesTest extends FTestPlatform:
   test("extractStoredProcedureName should return None for non-CALL statements") {
     assertEquals(OpenTelemetryAttributes.extractStoredProcedureName("SELECT * FROM users"), None)
     assertEquals(OpenTelemetryAttributes.extractStoredProcedureName("INSERT INTO users VALUES (1)"), None)
-  }
-
-  test("extractOperationName should extract CALL") {
-    assertEquals(OpenTelemetryAttributes.extractOperationName("CALL my_procedure()"), "CALL")
   }
