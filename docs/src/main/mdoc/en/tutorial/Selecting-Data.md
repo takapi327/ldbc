@@ -87,9 +87,18 @@ sql"SELECT id, name, email FROM user"
   .foreach(user => println(s"ID: ${user.id}, Name: ${user.name}, Email: ${user.email}"))
 ```
 
-**Important**: The field names in the case class need to match the column names selected in the SQL query. The order also needs to match, but ldbc will map appropriately if the names match exactly.
+### How Mapping Works
 
-![Selecting Data](../../img/data_select.png)
+The following diagram shows how SQL query results are mapped to the User model:
+
+![Simple Mapping Mechanism](../../../img/select-mapping-simple-EN.svg)
+
+The mapping process is performed as follows based on this diagram:
+
+1. **SQL Execution**: Create a query with `sql"SELECT id, name, email FROM user"` string interpolation and specify the result type with `.query[User]`
+2. **ResultSet**: The result set returned from the database (values stored sequentially starting from column number 1)
+3. **Decoder Resolution**: At compile time, compose basic Decoders like `Decoder[Long]` and `Decoder[String]` to build `Decoder[User]`
+4. **Mapping Process**: At runtime, convert each column value to the appropriate type with the decode method and finally generate a User instance
 
 ## Joining Multiple Tables and Nested Case Classes
 
@@ -125,15 +134,24 @@ sql"""
   ))
 ```
 
-A feature of ldbc is that columns specified in the format `table_name.column_name` are automatically mapped to `class_name.field_name`. This enables the following mappings in the above example:
+### How Complex Mapping Works
 
-- `city.id` → `CityWithCountry.city.id`
-- `city.name` → `CityWithCountry.city.name`
-- `country.code` → `CityWithCountry.country.code`
-- `country.name` → `CityWithCountry.country.name`
-- `country.region` → `CityWithCountry.country.region`
+The following diagram shows how JOIN results are mapped to nested case classes (CityWithCountry):
 
-![Selecting Data](../../img/data_multi_select.png)
+![Complex Mapping Mechanism (JOIN Results)](../../../img/select-mapping-complex-EN.svg)
+
+As can be seen from this diagram:
+
+1. **SQL Execution**: Execute a SQL query with JOIN clause and specify the result type with `.query[CityWithCountry]`
+2. **ResultSet**: Result set with 5 columns (city.id, city.name, country.code, country.name, country.region)
+3. **Decoder Construction**: 
+   - Decoder for City: Compose `Decoder[Long]` and `Decoder[String]` to create `Decoder[City]`
+   - Decoder for Country: Compose three `Decoder[String]`s to create `Decoder[Country]`
+   - Finally compose both to build `Decoder[CityWithCountry]`
+4. **Mapping Process**: 
+   - Generate City object from columns 1,2
+   - Generate Country object from columns 3,4,5
+   - Combine both to create CityWithCountry instance
 
 ## Using Tuples for Join Queries
 
@@ -157,36 +175,6 @@ sql"""
   .to[List]                      // DBIO[List[(City, Country)]]
   .readOnly(connector)                // IO[List[(City, Country)]]
   .unsafeRunSync()               // List[(City, Country)]
-  .foreach { case (city, country) => 
-    println(s"City: ${city.name}, Country: ${country.name}")
-  }
-```
-
-It's important to note that when using tuples, the table name and the case class name need to match. That is, the `city` table is mapped to the `City` class, and the `country` table is mapped to the `Country` class.
-
-## Table Aliases and Mapping
-
-When using aliases for tables in SQL statements, you need to match the case class name with that alias:
-
-```scala
-// Case class names matching alias names
-case class C(id: Long, name: String)
-case class CT(code: String, name: String, region: String)
-
-sql"""
-  SELECT
-    c.id,
-    c.name,
-    ct.code,
-    ct.name,
-    ct.region
-  FROM city AS c
-  JOIN country AS ct ON c.country_code = ct.code
-"""
-  .query[(C, CT)]                // Query[(C, CT)]
-  .to[List]                      // DBIO[List[(C, CT)]]
-  .readOnly(connector)                // IO[List[(C, CT)]]
-  .unsafeRunSync()               // List[(C, CT)]
   .foreach { case (city, country) => 
     println(s"City: ${city.name}, Country: ${country.name}")
   }
@@ -411,19 +399,66 @@ val findFirstLargeCity: IO[Option[String]] =
     .readOnly(connector)
 ```
 
+## How Mapping Works in Detail
+
+### What is a Decoder?
+
+In ldbc, a `Decoder` is a crucial component responsible for converting from `ResultSet` to Scala types. Decoders have the following characteristics:
+
+1. **Type Safety**: Verify type consistency at compile time
+2. **Composable**: Create Decoders for complex structures by combining smaller Decoders
+3. **Auto-derivation**: Often generated automatically without explicit definitions
+
+### Basic Decoder Operations
+
+```scala
+// Basic type Decoders (implicitly provided)
+val longDecoder: Decoder[Long] = Decoder.long
+val stringDecoder: Decoder[String] = Decoder.string
+
+// Composing multiple Decoders
+val tupleDecoder: Decoder[(Long, String)] = 
+  longDecoder *: stringDecoder
+
+// Converting to case class
+case class User(id: Long, name: String)
+val userDecoder: Decoder[User] = tupleDecoder.to[User]
+```
+
+### Reading by Column Number
+
+When Decoders read values from a `ResultSet`, they use column numbers (starting from 1):
+
+```scala
+// How decode(columnIndex, resultSet) method works
+decoder.decode(1, resultSet) // Read the 1st column
+decoder.decode(2, resultSet) // Read the 2nd column
+```
+
+### Error Handling
+
+During the decoding process, the following types of errors may occur:
+
+- **Type mismatch**: SQL type and Scala type are incompatible
+- **NULL values**: Mapping to types that don't allow NULL
+- **Column count mismatch**: Expected column count differs from actual
+
+These errors are represented as `Either[Decoder.Error, A]` and appropriate error messages are provided at runtime.
+
 ## Summary
 
 ldbc provides features for retrieving data from databases in a type-safe and intuitive manner. In this tutorial, we covered:
 
 - The basic workflow for data retrieval
 - Single-column and multi-column queries
-- Mapping to case classes
+- Mapping to case classes and **how the internal mechanism works**
+- **Type-safe conversion processing with Decoders**
 - Joining multiple tables and nested data structures
 - Getting single and multiple results
 - **Efficient processing of large data with streaming**
 - Various execution methods
 
-By leveraging streaming capabilities, you can process large amounts of data efficiently in terms of memory usage. When dealing with large datasets, consider setting `UseCursorFetch=true`.
+By understanding how mapping works through Decoder composition, you can safely handle even more complex data structures. Additionally, by leveraging streaming capabilities, you can process large amounts of data efficiently in terms of memory usage. When dealing with large datasets, consider setting `UseCursorFetch=true`.
 
 ## Next Steps
 

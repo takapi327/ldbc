@@ -87,9 +87,18 @@ sql"SELECT id, name, email FROM user"
   .foreach(user => println(s"ID: ${user.id}, Name: ${user.name}, Email: ${user.email}"))
 ```
 
-**重要**: ケースクラスのフィールド名とSQLクエリで選択するカラム名が一致している必要があります。順序も一致している必要がありますが、名前が正確に一致していれば、ldbcが適切にマッピングします。
+### マッピングの仕組み
 
-![Selecting Data](../../img/data_select.png)
+以下の図は、SQLクエリの結果がどのようにしてUserモデルにマッピングされるかを示しています：
+
+![シンプルなマッピングの仕組み](../../../img/select-mapping-simple-JP.svg)
+
+この図から以下のような形でマッピング処理が行われています：
+
+1. **SQL実行**: `sql"SELECT id, name, email FROM user"`文字列補間でクエリを作成し、`.query[User]`で結果の型を指定
+2. **ResultSet**: データベースから返される結果セット（カラム番号1から順に値が格納）
+3. **Decoder解決**: コンパイル時に`Decoder[Long]`、`Decoder[String]`などの基本Decoderを合成して`Decoder[User]`を構築
+4. **マッピング処理**: 実行時に各カラムの値をdecodeメソッドで適切な型に変換し、最終的にUserインスタンスを生成
 
 ## 複数テーブルの結合とネストしたケースクラス
 
@@ -125,15 +134,26 @@ sql"""
   ))
 ```
 
-ldbcの特徴として、`テーブル名.カラム名`の形式で指定されたカラムは、自動的に`クラス名.フィールド名`にマッピングされます。これにより、上記の例では次のようなマッピングが行われます：
+### 複雑なマッピングの仕組み
 
-- `city.id` → `CityWithCountry.city.id`
-- `city.name` → `CityWithCountry.city.name`
-- `country.code` → `CityWithCountry.country.code`
-- `country.name` → `CityWithCountry.country.name`
-- `country.region` → `CityWithCountry.country.region`
+以下の図は、JOIN結果がどのようにしてネストしたケースクラス（CityWithCountry）にマッピングされるかを示しています：
 
-![Selecting Data](../../img/data_multi_select.png)
+![複雑なマッピングの仕組み（JOIN結果）](../../../img/select-mapping-complex-JP.svg)
+
+この図から分かるように：
+
+1. **SQL実行**: JOIN句を含むSQLクエリを実行し、`.query[CityWithCountry]`で結果の型を指定
+2. **ResultSet**: 5つのカラム（city.id、city.name、country.code、country.name、country.region）を持つ結果セット
+3. **Decoder構築**: 
+   - City用のDecoder: `Decoder[Long]`と`Decoder[String]`を合成して`Decoder[City]`を作成
+   - Country用のDecoder: 3つの`Decoder[String]`を合成して`Decoder[Country]`を作成
+   - 最終的に両者を合成して`Decoder[CityWithCountry]`を構築
+4. **マッピング処理**: 
+   - カラム1,2からCityオブジェクトを生成
+   - カラム3,4,5からCountryオブジェクトを生成
+   - 両者を組み合わせてCityWithCountryインスタンスを生成
+
+このように、ldbcは複雑なネストした構造でも、Decoderの合成により型安全にマッピングを行います。
 
 ## タプルを使用した結合クエリ
 
@@ -157,36 +177,6 @@ sql"""
   .to[List]                      // DBIO[List[(City, Country)]]
   .readOnly(connector)                // IO[List[(City, Country)]]
   .unsafeRunSync()               // List[(City, Country)]
-  .foreach { case (city, country) => 
-    println(s"City: ${city.name}, Country: ${country.name}")
-  }
-```
-
-ここで重要なのは、タプルを使用する場合、テーブル名とケースクラスの名前は一致している必要があるということです。つまり、`city`テーブルは`City`クラスに、`country`テーブルは`Country`クラスにマッピングされます。
-
-## テーブルのエイリアスとマッピング
-
-SQL文でテーブルにエイリアスを使用する場合、ケースクラスの名前もそのエイリアスと一致させる必要があります：
-
-```scala
-// エイリアス名に合わせたケースクラス名
-case class C(id: Long, name: String)
-case class CT(code: String, name: String, region: String)
-
-sql"""
-  SELECT
-    c.id,
-    c.name,
-    ct.code,
-    ct.name,
-    ct.region
-  FROM city AS c
-  JOIN country AS ct ON c.country_code = ct.code
-"""
-  .query[(C, CT)]                // Query[(C, CT)]
-  .to[List]                      // DBIO[List[(C, CT)]]
-  .readOnly(connector)                // IO[List[(C, CT)]]
-  .unsafeRunSync()               // List[(C, CT)]
   .foreach { case (city, country) => 
     println(s"City: ${city.name}, Country: ${country.name}")
   }
@@ -400,19 +390,66 @@ val findFirstLargeCity: IO[Option[String]] =
     .readOnly(connector)
 ```
 
+## マッピングの詳細な仕組み
+
+### Decoderとは
+
+ldbcにおいて、`Decoder`は`ResultSet`からScalaの型への変換を担当する重要なコンポーネントです。Decoderは以下の特徴を持ちます：
+
+1. **型安全性**: コンパイル時に型の整合性を確認
+2. **合成可能**: 小さなDecoderを組み合わせて複雑な構造のDecoderを作成
+3. **自動導出**: 多くの場合、明示的な定義なしに自動的に生成
+
+### 基本的なDecoderの動作
+
+```scala
+// 基本型のDecoder（暗黙的に提供される）
+val longDecoder: Decoder[Long] = Decoder.long
+val stringDecoder: Decoder[String] = Decoder.string
+
+// 複数のDecoderを合成
+val tupleDecoder: Decoder[(Long, String)] = 
+  longDecoder *: stringDecoder
+
+// ケースクラスへの変換
+case class User(id: Long, name: String)
+val userDecoder: Decoder[User] = tupleDecoder.to[User]
+```
+
+### カラム番号による読み取り
+
+Decoderは`ResultSet`から値を読み取る際、カラム番号（1から開始）を使用します：
+
+```scala
+// decode(columnIndex, resultSet)メソッドの動作
+decoder.decode(1, resultSet) // 1番目のカラムを読み取り
+decoder.decode(2, resultSet) // 2番目のカラムを読み取り
+```
+
+### エラーハンドリング
+
+デコード処理では、以下のようなエラーが発生する可能性があります：
+
+- **型の不一致**: SQLの型とScalaの型が互換性がない
+- **NULL値**: NULLを許可しない型へのマッピング
+- **カラム数の不一致**: 期待するカラム数と実際のカラム数が異なる
+
+これらのエラーは`Either[Decoder.Error, A]`として表現され、実行時に適切なエラーメッセージが提供されます。
+
 ## まとめ
 
 ldbcは、データベースからのデータ取得を型安全かつ直感的に行うための機能を提供しています。このチュートリアルでは、以下の内容を説明しました：
 
 - 基本的なデータ取得のワークフロー
 - 単一カラムと複数カラムのクエリ
-- ケースクラスへのマッピング
+- ケースクラスへのマッピングと**その内部動作の仕組み**
+- **Decoderによる型安全な変換処理**
 - 複数テーブルの結合とネストしたデータ構造
 - 単一結果と複数結果の取得
 - **ストリーミングによる大量データの効率的な処理**
 - さまざまな実行メソッド
 
-特にストリーミング機能を活用することで、大量のデータでもメモリ効率的に処理できるようになります。大量データを扱う場合は`UseCursorFetch=true`の設定を検討してください。
+特に、Decoderの合成によるマッピングの仕組みを理解することで、より複雑なデータ構造でも安全に扱えるようになります。また、ストリーミング機能を活用することで、大量のデータでもメモリ効率的に処理できるようになります。大量データを扱う場合は`UseCursorFetch=true`の設定を検討してください。
 
 ## 次のステップ
 

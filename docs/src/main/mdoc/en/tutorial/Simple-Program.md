@@ -32,11 +32,13 @@ The above code does the following:
 
 The `to` method allows you to specify how to retrieve results. The main methods and their return types are as follows:
 
-| Method       | Return Type    | Notes                        |
-|--------------|----------------|------------------------------|
-| `to[List]`   | `F[List[A]]`   | Retrieves all results as a list |
-| `to[Option]` | `F[Option[A]]` | Expects 0 or 1 result, errors if more |
-| `unsafe`     | `F[A]`         | Expects exactly 1 result, errors otherwise |
+| Method       | Return Type          | Notes                                                                               |
+|--------------|----------------------|-------------------------------------------------------------------------------------|
+| `to[List]`   | `F[List[A]]`         | Retrieves all results as a list                                                     |
+| `to[Option]` | `F[Option[A]]`       | Expects 0 or 1 result, errors if more                                               |
+| `unsafe`     | `F[A]`               | Expects exactly 1 result, errors otherwise                                          |
+| `option`     | `F[Option[A]]`       | Expects exactly one line of results; if more than one line exists, an error occurs. |
+| `nel`        | `F[NonEmptyList[A]]` | Expecting multiple results precisely; an error occurs if there are zero results.    |
 
 Next, we execute this program. We create a Connector, run the query, and display the results:
 
