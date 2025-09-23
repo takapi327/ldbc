@@ -153,3 +153,43 @@ object OpenTelemetryAttributes:
     val trimmed = sql.trim.toUpperCase
     val pattern = """CALL\s+([^\s(]+)""".r
     pattern.findFirstMatchIn(trimmed).map(_.group(1))
+
+  /**
+   * Build span name from available components
+   *
+   * Database spans MUST follow the overall [guidelines for span names](https://github.com/open-telemetry/opentelemetry-specification/tree/v1.48.0/specification/trace/api.md#span).
+   *
+   * The span name SHOULD be {db.query.summary} if a summary is available.
+   *
+   * If no summary is available, the span name SHOULD be {db.operation.name} {target} provided that a (low-cardinality) db.operation.name is available (see below for the exact definition of the {target} placeholder).
+   *
+   * If a (low-cardinality) db.operation.name is not available, database span names SHOULD default to the {target}.
+   *
+   * If neither {db.operation.name} nor {target} are available, span name SHOULD be {db.system.name}.
+   *
+   * Semantic conventions for individual database systems MAY specify different span name format.
+   *
+   * The {target} SHOULD describe the entity that the operation is performed against and SHOULD adhere to one of the following values, provided they are accessible:
+   *
+   * - db.collection.name SHOULD be used for operations on a specific database collection.<br>
+   * - db.stored_procedure.name SHOULD be used for operations on a specific stored procedure.<br>
+   * - db.namespace SHOULD be used for operations on a specific database namespace.<br>
+   * - server.address:server.port SHOULD be used for other operations not targeting any specific collection(s), stored procedure(s), or namespace(s).
+   *
+   * If a corresponding {target} value is not available for a specific operation, the instrumentation SHOULD omit the {target}. For example, for an operation describing SQL query on an anonymous table like SELECT * FROM (SELECT * FROM table) t, span name should be SELECT.
+   */
+  def buildSpanName(
+    host:     String,
+    port:     Int,
+    sql: Option[String],
+    collectionName: Option[String],
+    namespace: Option[String]
+  ): String =
+    val operationName = sql.map(extractOperationName)
+    val storedProcedure = sql.flatMap(extractStoredProcedureName)
+    val target = collectionName
+      .orElse(storedProcedure)
+      .orElse(namespace)
+      .getOrElse(s"$host:$port")
+
+    operationName.map(op => s"$op $target").getOrElse(target)

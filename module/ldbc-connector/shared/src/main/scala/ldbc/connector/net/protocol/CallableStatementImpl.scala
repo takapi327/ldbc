@@ -56,7 +56,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
   extends CallableStatement[F],
           SharedPreparedStatement[F]:
 
-  private val spanName       = "callable statement"
+  private val spanName: String = buildSpanName(protocol.hostInfo.host, protocol.hostInfo.port, Some(sql), None, protocol.hostInfo.database)
   private val baseAttributes = buildBaseAttributes(protocol)
 
   override def executeQuery(): F[ResultSet[F]] =
@@ -207,7 +207,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
   override def executeLargeBatch(): F[Array[Long]] =
     checkClosed() *>
       checkNullOrEmptyQuery(sql) *>
-      exchange[F, Array[Long]]("BATCH") { (span: Span[F]) =>
+      exchange[F, Array[Long]](spanName) { (span: Span[F]) =>
         batchedArgs.get.flatMap { args =>
           val batchAttributes = batchSize(args.length.toLong) match
             case Some(attr) => baseAttributes ++ List(dbOperationName("BATCH"), attr)

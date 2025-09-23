@@ -47,9 +47,12 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
   extends StatementImpl.ShareStatement[F]:
 
   private val baseAttributes = buildBaseAttributes(protocol)
+  
+  private def spanName(sql: Option[String]): String =
+    buildSpanName(protocol.hostInfo.host, protocol.hostInfo.port, sql, None, protocol.hostInfo.database)
 
   private def simpleQueryRun(sql: String): F[ResultSet[F]] =
-    exchange[F, ResultSet[F]]("statement") { (span: Span[F]) =>
+    exchange[F, ResultSet[F]](spanName(Some(sql))) { (span: Span[F]) =>
       val queryAttributes = baseAttributes ++ List(
         dbQueryText(sql),
         dbQuerySummary(sanitizeSql(sql))
@@ -210,7 +213,7 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
     executeLargeUpdate(sql).map(_.toInt)
 
   override def executeLargeUpdate(sql: String): F[Long] =
-    checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, Long]("statement") { (span: Span[F]) =>
+    checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, Long](spanName(Some(sql))) { (span: Span[F]) =>
       val queryAttributes = baseAttributes ++ List(
         dbQueryText(sql),
         dbQuerySummary(sanitizeSql(sql))
@@ -251,7 +254,7 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
   override def executeLargeBatch(): F[Array[Long]] =
     checkClosed() *> protocol.resetSequenceId *>
       protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON) *>
-      exchange[F, Array[Long]]("BATCH") { (span: Span[F]) =>
+      exchange[F, Array[Long]](spanName(None)) { (span: Span[F]) =>
         batchedArgs.get.flatMap { args =>
           val batchAttributes = batchSize(args.length.toLong) match
             case Some(attr) => baseAttributes ++ List(dbOperationName("BATCH"), attr)
