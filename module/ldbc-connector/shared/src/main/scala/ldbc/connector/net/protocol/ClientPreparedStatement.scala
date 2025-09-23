@@ -62,21 +62,16 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
 )(using F: MonadThrow[F])
   extends SharedPreparedStatement[F]:
 
-  private val baseAttributes = buildBaseAttributes(protocol, "Client PreparedStatement")
+  private val spanName      = "client prepared statement"
+  private val baseAttributes = buildBaseAttributes(protocol)
 
   override def executeQuery(): F[ResultSet[F]] =
-    checkClosed() *> checkNullOrEmptyQuery(sql) *> {
-      val operation = extractOperationName(sql)
-      val table     = extractTableName(sql)
-      val spanName  = createSpanName(operation, table)
-
-      exchange[F, ResultSet[F]](spanName) { (span: Span[F]) =>
+    checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, ResultSet[F]](spanName) { (span: Span[F]) =>
         params.get.flatMap { params =>
           val queryAttributes = baseAttributes ++ List(
-            dbOperationName(operation),
             dbQueryText(sql),
             dbQuerySummary(sanitizeSql(sql))
-          ) ++ table.map(dbCollectionName).toList
+          )
 
           span.addAttributes(queryAttributes*) *>
             protocol.resetSequenceId *>
@@ -110,6 +105,10 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
                     protocol.readUntilEOF[ResultSetRowPacket](
                       ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions.length)
                     )
+                  _ <- columnDefinitions.headOption match {
+                    case None        => F.unit
+                    case Some(column) => span.addAttribute(dbCollectionName(column.table))
+                  }
                   resultSet = ResultSetImpl(
                                 protocol,
                                 columnDefinitions,
@@ -129,21 +128,14 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
             }
         } <* params.set(SortedMap.empty)
       }
-    }
 
   override def executeLargeUpdate(): F[Long] =
-    checkClosed() *> checkNullOrEmptyQuery(sql) *> {
-      val operation = extractOperationName(sql)
-      val table     = extractTableName(sql)
-      val spanName  = createSpanName(operation, table)
-
-      exchange[F, Long](spanName) { (span: Span[F]) =>
+    checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, Long](spanName) { (span: Span[F]) =>
         params.get.flatMap { params =>
           val queryAttributes = baseAttributes ++ List(
-            dbOperationName(operation),
             dbQueryText(sql),
             dbQuerySummary(sanitizeSql(sql))
-          ) ++ table.map(dbCollectionName).toList
+          )
 
           span.addAttributes(queryAttributes*) *>
             protocol.resetSequenceId *>
@@ -159,7 +151,6 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
             }
         } <* params.set(SortedMap.empty)
       }
-    }
 
   override def execute(): F[Boolean] =
     if sql.toUpperCase.startsWith("SELECT") then
@@ -180,7 +171,7 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
     checkClosed() *> checkNullOrEmptyQuery(sql) *> (
       sql.trim.toLowerCase match
         case q if q.startsWith("insert") =>
-          exchange[F, Array[Long]]("statement") { (span: Span[F]) =>
+          exchange[F, Array[Long]](spanName) { (span: Span[F]) =>
             protocol.resetSequenceId *>
               batchedArgs.get.flatMap { args =>
                 val batchAttributes = batchSize(args.length.toLong) match
@@ -212,7 +203,7 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
         case q if q.startsWith("update") || q.startsWith("delete") =>
           protocol.resetSequenceId *>
             protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON) *>
-            exchange[F, Array[Long]]("statement") { (span: Span[F]) =>
+            exchange[F, Array[Long]](spanName) { (span: Span[F]) =>
               protocol.resetSequenceId *>
                 batchedArgs.get.flatMap { args =>
                   val batchAttributes = baseAttributes ++ List(

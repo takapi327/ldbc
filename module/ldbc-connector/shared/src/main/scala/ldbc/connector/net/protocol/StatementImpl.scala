@@ -46,19 +46,14 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
 )(using F: MonadThrow[F])
   extends StatementImpl.ShareStatement[F]:
 
-  private val baseAttributes = buildBaseAttributes(protocol, "Statement")
+  private val baseAttributes = buildBaseAttributes(protocol)
 
   private def simpleQueryRun(sql: String): F[ResultSet[F]] =
-    val operation = extractOperationName(sql)
-    val table     = extractTableName(sql)
-    val spanName  = createSpanName(operation, table)
-
-    exchange[F, ResultSet[F]](spanName) { (span: Span[F]) =>
+    exchange[F, ResultSet[F]]("statement") { (span: Span[F]) =>
       val queryAttributes = baseAttributes ++ List(
-        dbOperationName(operation),
         dbQueryText(sql),
         dbQuerySummary(sanitizeSql(sql))
-      ) ++ table.map(dbCollectionName).toList
+      )
 
       span.addAttributes(queryAttributes*) *>
         protocol.resetSequenceId *>
@@ -94,6 +89,10 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
                 protocol.readUntilEOF[ResultSetRowPacket](
                   ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions.length)
                 )
+              _ <- columnDefinitions.headOption match {
+                case None        => F.unit
+                case Some(column) => span.addAttribute(dbCollectionName(column.table))
+              }
               resultSet = ResultSetImpl(
                             protocol,
                             columnDefinitions,
@@ -211,32 +210,25 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
     executeLargeUpdate(sql).map(_.toInt)
 
   override def executeLargeUpdate(sql: String): F[Long] =
-    checkClosed() *> checkNullOrEmptyQuery(sql) *> {
-      val operation = extractOperationName(sql)
-      val table     = extractTableName(sql)
-      val spanName  = createSpanName(operation, table)
+    checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, Long]("statement") { (span: Span[F]) =>
+      val queryAttributes = baseAttributes ++ List(
+        dbQueryText(sql),
+        dbQuerySummary(sanitizeSql(sql))
+      )
 
-      exchange[F, Long](spanName) { (span: Span[F]) =>
-        val queryAttributes = baseAttributes ++ List(
-          dbOperationName(operation),
-          dbQueryText(sql),
-          dbQuerySummary(sanitizeSql(sql))
-        ) ++ table.map(dbCollectionName).toList
-
-        span.addAttributes(queryAttributes*) *>
-          protocol.resetSequenceId *> (
-            protocol.send(ComQueryPacket(sql, protocol.initialPacket.capabilityFlags, ListMap.empty)) *>
-              protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
-                case result: OKPacket =>
-                  lastInsertId.set(result.lastInsertId) *> updateCount.updateAndGet(_ => result.affectedRows)
-                case error: ERRPacket =>
-                  span.addAttributes(error.attributes*) *> F.raiseError(error.toException(Some(sql), None))
-                case _: EOFPacket =>
-                  span.addAttribute(eofException) *> F.raiseError(new SQLException("Unexpected EOF packet"))
-              }
-          )
+      span.addAttributes(queryAttributes*) *>
+        protocol.resetSequenceId *> (
+          protocol.send(ComQueryPacket(sql, protocol.initialPacket.capabilityFlags, ListMap.empty)) *>
+            protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
+              case result: OKPacket =>
+                lastInsertId.set(result.lastInsertId) *> updateCount.updateAndGet(_ => result.affectedRows)
+              case error: ERRPacket =>
+                span.addAttributes(error.attributes*) *> F.raiseError(error.toException(Some(sql), None))
+              case _: EOFPacket =>
+                span.addAttribute(eofException) *> F.raiseError(new SQLException("Unexpected EOF packet"))
+            }
+        )
       }
-    }
 
   override def close(): F[Unit] = statementClosed.set(true) *> resultSetClosed.set(true)
 
@@ -387,12 +379,11 @@ object StatementImpl:
         useCursorFetch && fetchSize > 0 && resultSetType == ResultSet.TYPE_FORWARD_ONLY
       }
 
-    protected def buildBaseAttributes(protocol: Protocol[F], statement: String): List[Attribute[?]] =
+    protected def buildBaseAttributes(protocol: Protocol[F]): List[Attribute[?]] =
       List[Attribute[?]](
         dbSystemName,
         serverAddress(protocol.hostInfo.host),
         serverPort(protocol.hostInfo.port),
         dbMysqlVersion(protocol.initialPacket.serverVersion.toString),
         dbMysqlThreadId(protocol.initialPacket.threadId),
-        statementType(statement)
       ) ++ protocol.hostInfo.database.map(dbNamespace).toList

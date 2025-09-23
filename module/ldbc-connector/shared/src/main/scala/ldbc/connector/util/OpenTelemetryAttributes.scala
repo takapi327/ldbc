@@ -135,9 +135,11 @@ object OpenTelemetryAttributes:
       case _          => "OTHER"
 
   /**
-   * Extract table name from simple SQL statements
-   * Note: According to OpenTelemetry spec, db.collection.name SHOULD NOT be extracted from db.query.text
-   * This is provided for cases where collection name is not available through other means
+   * WARNING: This function violates the OpenTelemetry spec, which states that db.collection.name
+   * SHOULD NOT be extracted from db.query.text. Use this ONLY as a fallback when the collection name
+   * cannot be obtained by other means. Prefer explicit sources for table/collection names.
+   *
+   * Extract table name from simple SQL statements (fallback only).
    */
   def extractTableName(sql: String): Option[String] =
     val trimmed = sql.trim.toUpperCase

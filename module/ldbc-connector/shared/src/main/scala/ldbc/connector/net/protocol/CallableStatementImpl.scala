@@ -56,16 +56,13 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
   extends CallableStatement[F],
           SharedPreparedStatement[F]:
 
-  private val baseAttributes = buildBaseAttributes(protocol, "CallableStatement")
+  private val spanName      = "callable statement"
+  private val baseAttributes = buildBaseAttributes(protocol)
 
   override def executeQuery(): F[ResultSet[F]] =
     checkClosed() *>
-      checkNullOrEmptyQuery(sql) *> {
-        val operation = extractOperationName(sql)
-        val table     = extractTableName(sql)
-        val spanName  = createSpanName(operation, table)
-
-        exchange[F, ResultSet[F]](spanName) { (span: Span[F]) =>
+      checkNullOrEmptyQuery(sql) *>
+      exchange[F, ResultSet[F]](spanName) { (span: Span[F]) =>
           if sql.toUpperCase.startsWith("CALL") then
             executeCallStatement(span).flatMap { resultSets =>
               resultSets.headOption match
@@ -90,10 +87,9 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
           else
             params.get.flatMap { params =>
               val queryAttributes = baseAttributes ++ List(
-                dbOperationName(operation),
                 dbQueryText(sql),
                 dbQuerySummary(sanitizeSql(sql))
-              ) ++ table.map(dbCollectionName).toList
+              )
 
               span.addAttributes(queryAttributes*) *>
                 protocol.resetSequenceId *>
@@ -102,17 +98,12 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                 ) *>
                 receiveQueryResult()
             }
-        }
-      } <* params.set(SortedMap.empty)
+        } <* params.set(SortedMap.empty)
 
   override def executeLargeUpdate(): F[Long] =
     checkClosed() *>
-      checkNullOrEmptyQuery(sql) *> {
-        val operation = extractOperationName(sql)
-        val table     = extractTableName(sql)
-        val spanName  = createSpanName(operation, table)
-
-        exchange[F, Long](spanName) { (span: Span[F]) =>
+      checkNullOrEmptyQuery(sql) *>
+      exchange[F, Long](spanName) { (span: Span[F]) =>
           if sql.toUpperCase.startsWith("CALL") then
             executeCallStatement(span).flatMap { resultSets =>
               resultSets.headOption match
@@ -137,10 +128,9 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
           else
             params.get.flatMap { params =>
               val queryAttributes = baseAttributes ++ List(
-                dbOperationName(operation),
                 dbQueryText(sql),
                 dbQuerySummary(sanitizeSql(sql))
-              ) ++ table.map(dbCollectionName).toList
+              )
 
               span.addAttributes(queryAttributes*) *>
                 sendQuery(buildQuery(sql, params)).flatMap {
@@ -152,16 +142,11 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                 }
             }
         }
-      }
 
   override def execute(): F[Boolean] =
     checkClosed() *>
-      checkNullOrEmptyQuery(sql) *> {
-        val operation = extractOperationName(sql)
-        val table     = extractTableName(sql)
-        val spanName  = createSpanName(operation, table)
-
-        exchange[F, Boolean](spanName) { (span: Span[F]) =>
+      checkNullOrEmptyQuery(sql) *>
+      exchange[F, Boolean](spanName) { (span: Span[F]) =>
           if sql.toUpperCase.startsWith("CALL") then
             executeCallStatement(span).flatMap { results =>
               moreResults.update(_ => results.nonEmpty) *>
@@ -173,10 +158,9 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
             params.get
               .flatMap { params =>
                 val queryAttributes = baseAttributes ++ List(
-                  dbOperationName(operation),
                   dbQueryText(sql),
                   dbQuerySummary(sanitizeSql(sql))
-                ) ++ table.map(dbCollectionName).toList
+                )
 
                 span.addAttributes(queryAttributes*) *>
                   sendQuery(buildQuery(sql, params)).flatMap {
@@ -189,7 +173,6 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
               }
               .map(_ => false)
         }
-      }
 
   override def getMoreResults(): F[Boolean] =
     checkClosed() *> moreResults.get.flatMap { isMoreResults =>
@@ -813,14 +796,11 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
     setInOutParamsOnServer(paramInfo) *>
       setOutParams() *>
       params.get.flatMap { params =>
-        val operation       = extractOperationName(sql)
-        val table           = extractTableName(sql)
         val procName        = extractStoredProcedureName(sql)
         val queryAttributes = baseAttributes ++ List(
-          dbOperationName(operation),
           dbQueryText(sql),
           dbQuerySummary(sanitizeSql(sql))
-        ) ++ table.map(dbCollectionName).toList ++ procName.map(dbStoredProcedureName).toList
+        ) ++ procName.map(dbStoredProcedureName).toList
 
         span.addAttributes(queryAttributes*) *>
           protocol.resetSequenceId *>

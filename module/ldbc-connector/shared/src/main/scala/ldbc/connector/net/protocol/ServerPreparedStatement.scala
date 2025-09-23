@@ -63,7 +63,8 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
 )(using F: MonadThrow[F])
   extends SharedPreparedStatement[F]:
 
-  private val baseAttributes = buildBaseAttributes(protocol, "Server PreparedStatement")
+  private val spanName      = "server prepared statement"
+  private val baseAttributes = buildBaseAttributes(protocol)
 
   private def buildResultSet(
     columnDefinitions: Vector[ColumnDefinitionPacket],
@@ -102,17 +103,11 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
       )
 
   override def executeQuery(): F[ResultSet[F]] =
-    checkClosed() *> checkNullOrEmptyQuery(sql) *> {
-      val operation = extractOperationName(sql)
-      val table     = extractTableName(sql)
-      val spanName  = createSpanName(operation, table)
-
-      exchange[F, ResultSet[F]](spanName) { (span: Span[F]) =>
-        val queryAttributes = baseAttributes ++ List(
-          dbOperationName(operation),
-          dbQueryText(sql),
-          dbQuerySummary(sanitizeSql(sql))
-        ) ++ table.map(dbCollectionName).toList
+    checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, ResultSet[F]](spanName) { (span: Span[F]) =>
+      val queryAttributes = baseAttributes ++ List(
+        dbQueryText(sql),
+        dbQuerySummary(sanitizeSql(sql))
+      )
 
         for
           parameter   <- params.get
@@ -137,41 +132,37 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
             protocol.readUntilEOF[BinaryProtocolResultSetRowPacket](
               BinaryProtocolResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions)
             )
+          _ <- columnDefinitions.headOption match {
+            case None        => F.unit
+            case Some(column) => span.addAttribute(dbCollectionName(column.table))
+          }
           _ <- params.set(SortedMap.empty)
           resultSet = buildResultSet(columnDefinitions, resultSetRow)
           _ <- currentResultSet.set(Some(resultSet))
         yield resultSet
       }
-    }
 
   override def executeLargeUpdate(): F[Long] =
-    checkClosed() *> checkNullOrEmptyQuery(sql) *> {
-      val operation = extractOperationName(sql)
-      val table     = extractTableName(sql)
-      val spanName  = createSpanName(operation, table)
+    checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, Long](spanName) { (span: Span[F]) =>
+      params.get.flatMap { params =>
+        val queryAttributes = baseAttributes ++ List(
+          dbQueryText(sql),
+          dbQuerySummary(sanitizeSql(sql))
+        )
 
-      exchange[F, Long](spanName) { (span: Span[F]) =>
-        params.get.flatMap { params =>
-          val queryAttributes = baseAttributes ++ List(
-            dbOperationName(operation),
-            dbQueryText(sql),
-            dbQuerySummary(sanitizeSql(sql))
-          ) ++ table.map(dbCollectionName).toList
-
-          span.addAttributes(queryAttributes*) *>
-            protocol.resetSequenceId *>
-            protocol.send(
-              ComStmtExecutePacket(statementId, params, resultSetType, resultSetConcurrency, useCursorFetch)
-            ) *>
-            protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
-              case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
-              case error: ERRPacket =>
-                span.addAttributes(error.attributes*) *> F.raiseError(error.toException(Some(sql), None, params))
-              case _: EOFPacket =>
-                span.addAttribute(eofException) *> F.raiseError(new SQLException("Unexpected EOF packet"))
-            }
-        } <* params.set(SortedMap.empty)
-      }
+        span.addAttributes(queryAttributes*) *>
+          protocol.resetSequenceId *>
+          protocol.send(
+            ComStmtExecutePacket(statementId, params, resultSetType, resultSetConcurrency, useCursorFetch)
+          ) *>
+          protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
+            case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
+            case error: ERRPacket =>
+              span.addAttributes(error.attributes*) *> F.raiseError(error.toException(Some(sql), None, params))
+            case _: EOFPacket =>
+              span.addAttribute(eofException) *> F.raiseError(new SQLException("Unexpected EOF packet"))
+          }
+      } <* params.set(SortedMap.empty)
     }
 
   override def execute(): F[Boolean] =
@@ -193,7 +184,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
     checkClosed() *> checkNullOrEmptyQuery(sql) *> (
       sql.trim.toLowerCase match
         case q if q.startsWith("insert") =>
-          exchange[F, Array[Long]]("statement") { (span: Span[F]) =>
+          exchange[F, Array[Long]](spanName) { (span: Span[F]) =>
             protocol.resetSequenceId *>
               batchedArgs.get.flatMap { args =>
                 val batchAttributes = batchSize(args.length.toLong) match
@@ -225,7 +216,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
         case q if q.startsWith("update") || q.startsWith("delete") =>
           protocol.resetSequenceId *>
             protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON) *>
-            exchange[F, Array[Long]]("statement") { (span: Span[F]) =>
+            exchange[F, Array[Long]](spanName) { (span: Span[F]) =>
               protocol.resetSequenceId *>
                 batchedArgs.get.flatMap { args =>
                   val batchAttributes = baseAttributes ++ List(
