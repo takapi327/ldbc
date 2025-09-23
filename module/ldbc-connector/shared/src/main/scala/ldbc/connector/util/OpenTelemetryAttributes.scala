@@ -22,73 +22,73 @@ object OpenTelemetryAttributes:
   /**
    * The name of the database (schema) being accessed
    */
-  def dbNamespace(database: String): Attribute[String] = 
+  def dbNamespace(database: String): Attribute[String] =
     Attribute("db.namespace", database)
 
   /**
    * The name of the primary table/collection
    */
-  def dbCollectionName(table: String): Attribute[String] = 
+  def dbCollectionName(table: String): Attribute[String] =
     Attribute("db.collection.name", table)
 
   /**
    * The name of the operation being executed
    */
-  def dbOperationName(operation: String): Attribute[String] = 
+  def dbOperationName(operation: String): Attribute[String] =
     Attribute("db.operation.name", operation)
 
   /**
    * The database query text
    */
-  def dbQueryText(query: String): Attribute[String] = 
+  def dbQueryText(query: String): Attribute[String] =
     Attribute("db.query.text", query)
 
   /**
    * Low cardinality representation of the query
    */
-  def dbQuerySummary(summary: String): Attribute[String] = 
+  def dbQuerySummary(summary: String): Attribute[String] =
     Attribute("db.query.summary", summary)
 
   /**
    * Database server address
    */
-  def serverAddress(host: String): Attribute[String] = 
+  def serverAddress(host: String): Attribute[String] =
     Attribute("server.address", host)
 
   /**
    * Database server port
    */
-  def serverPort(port: Int): Attribute[Long] = 
+  def serverPort(port: Int): Attribute[Long] =
     Attribute("server.port", port.toLong)
 
   /**
    * MySQL server version
    */
-  def dbMysqlVersion(version: String): Attribute[String] = 
+  def dbMysqlVersion(version: String): Attribute[String] =
     Attribute("db.mysql.version", version)
 
   /**
    * MySQL thread ID
    */
-  def dbMysqlThreadId(threadId: Int): Attribute[Long] = 
+  def dbMysqlThreadId(threadId: Int): Attribute[Long] =
     Attribute("db.mysql.thread_id", threadId.toLong)
 
   /**
    * MySQL authentication plugin
    */
-  def dbMysqlAuthPlugin(plugin: String): Attribute[String] = 
+  def dbMysqlAuthPlugin(plugin: String): Attribute[String] =
     Attribute("db.mysql.auth_plugin", plugin)
 
   /**
    * Statement type (custom attribute)
    */
-  def statementType(sType: String): Attribute[String] = 
+  def statementType(sType: String): Attribute[String] =
     Attribute("db.statement.type", sType)
 
   /**
    * Batch size for batch operations
    */
-  def batchSize(size: Long): Attribute[Long] = 
+  def batchSize(size: Long): Attribute[Long] =
     Attribute("db.operation.batch.size", size)
 
   /**
@@ -97,15 +97,15 @@ object OpenTelemetryAttributes:
    */
   def sanitizeSql(sql: String): String =
     sql
-      .replaceAll("'[^']*'", "'?'")  // Replace string literals with '?'
-      .replaceAll("\"[^\"]*\"", "\"?\"")  // Replace quoted identifiers with "?"
-      .replaceAll("\\b\\d+\\b", "?")  // Replace numbers with ?
+      .replaceAll("'[^']*'", "'?'")      // Replace string literals with '?'
+      .replaceAll("\"[^\"]*\"", "\"?\"") // Replace quoted identifiers with "?"
+      .replaceAll("\\b\\d+\\b", "?")     // Replace numbers with ?
 
   /**
    * Extract operation name from SQL statement
    */
   def extractOperationName(sql: String): String =
-    val trimmed = sql.trim.toUpperCase
+    val trimmed   = sql.trim.toUpperCase
     val firstWord = trimmed.split("\\s+").headOption.getOrElse("UNKNOWN")
     firstWord match
       case "SELECT"   => "SELECT"

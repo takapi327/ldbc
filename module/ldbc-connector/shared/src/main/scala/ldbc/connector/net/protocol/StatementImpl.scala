@@ -23,8 +23,8 @@ import ldbc.connector.exception.SQLException
 import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.Protocol
-import ldbc.connector.ResultSetImpl
 import ldbc.connector.util.OpenTelemetryAttributes.*
+import ldbc.connector.ResultSetImpl
 
 private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
   protocol:             Protocol[F],
@@ -57,16 +57,16 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
 
   private def simpleQueryRun(sql: String): F[ResultSet[F]] =
     val operation = extractOperationName(sql)
-    val table = extractTableName(sql)
-    val spanName = createSpanName(operation, table)
-    
+    val table     = extractTableName(sql)
+    val spanName  = createSpanName(operation, table)
+
     exchange[F, ResultSet[F]](spanName) { (span: Span[F]) =>
       val queryAttributes = baseAttributes ++ List(
         dbOperationName(operation),
         dbQueryText(sql),
         dbQuerySummary(sanitizeSql(sql))
       ) ++ table.map(dbCollectionName).toList
-      
+
       span.addAttributes(queryAttributes*) *>
         protocol.resetSequenceId *>
         protocol.send(ComQueryPacket(sql, protocol.initialPacket.capabilityFlags, ListMap.empty)) *>
@@ -218,16 +218,16 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
   override def executeLargeUpdate(sql: String): F[Long] =
     checkClosed() *> checkNullOrEmptyQuery(sql) *> {
       val operation = extractOperationName(sql)
-      val table = extractTableName(sql)
-      val spanName = createSpanName(operation, table)
-      
+      val table     = extractTableName(sql)
+      val spanName  = createSpanName(operation, table)
+
       exchange[F, Long](spanName) { (span: Span[F]) =>
         val queryAttributes = baseAttributes ++ List(
           dbOperationName(operation),
           dbQueryText(sql),
           dbQuerySummary(sanitizeSql(sql))
         ) ++ table.map(dbCollectionName).toList
-        
+
         span.addAttributes(queryAttributes*) *> protocol.resetSequenceId *> (
           protocol.send(ComQueryPacket(sql, protocol.initialPacket.capabilityFlags, ListMap.empty)) *>
             protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
@@ -265,7 +265,7 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
             dbOperationName("BATCH"),
             batchSize(args.length.toLong)
           )
-          
+
           span.addAttributes(batchAttributes*) *> (
             if args.isEmpty then F.pure(Array.empty)
             else
