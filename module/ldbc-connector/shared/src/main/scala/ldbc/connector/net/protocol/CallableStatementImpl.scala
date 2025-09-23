@@ -136,9 +136,11 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
               sendQuery(buildQuery(sql, params)).flatMap {
                 case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
                 case error: ERRPacket =>
-                  span.addAttributes(error.attributes*) *> F.raiseError(error.toException(Some(sql), None))
+                  val exception = error.toException(Some(sql), None, params)
+                  span.recordException(exception, error.attributes*) *> F.raiseError(exception)
                 case _: EOFPacket =>
-                  span.addAttribute(eofException) *> F.raiseError(new SQLException("Unexpected EOF packet"))
+                  val exception = new SQLException("Unexpected EOF packet")
+                  span.recordException(exception, eofException) *> F.raiseError(exception)
               }
           }
       }
@@ -166,9 +168,11 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                 sendQuery(buildQuery(sql, params)).flatMap {
                   case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
                   case error: ERRPacket =>
-                    span.addAttributes(error.attributes*) *> F.raiseError(error.toException(Some(sql), None))
+                    val exception = error.toException(Some(sql), None, params)
+                    span.recordException(exception, error.attributes*) *> F.raiseError(exception)
                   case _: EOFPacket =>
-                    span.addAttribute(eofException) *> F.raiseError(new SQLException("Unexpected EOF packet"))
+                    val exception = new SQLException("Unexpected EOF packet")
+                    span.recordException(exception, eofException) *> F.raiseError(exception)
                 }
             }
             .map(_ => false)
@@ -218,9 +222,11 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                     .flatMap {
                       case _: OKPacket      => F.pure(Array.fill(args.length)(Statement.SUCCESS_NO_INFO.toLong))
                       case error: ERRPacket =>
-                        span.addAttributes(error.attributes*) *> F.raiseError(error.toException(Some(sql), None))
+                        val exception = error.toException(Some(sql), None)
+                        span.recordException(exception, error.attributes*) *> F.raiseError(exception)
                       case _: EOFPacket =>
-                        span.addAttribute(eofException) *> F.raiseError(new SQLException("Unexpected EOF packet"))
+                        val exception = new SQLException("Unexpected EOF packet")
+                        span.recordException(exception, eofException) *> F.raiseError(exception)
                     }
               case q if q.startsWith("update") || q.startsWith("delete") || q.startsWith("CALL") =>
                 span.addAttributes(batchAttributes*) *>
@@ -245,12 +251,11 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                               case result: OKPacket =>
                                 lastInsertId.set(result.lastInsertId) *> F.pure(acc :+ result.affectedRows)
                               case error: ERRPacket =>
-                                span.addAttributes(error.attributes*) *> F.raiseError(
-                                  error.toException("Failed to execute batch", acc)
-                                )
+                                val exception = error.toException("Failed to execute batch", acc)
+                                span.recordException(exception, error.attributes*) *> F.raiseError(exception)
                               case _: EOFPacket =>
-                                span
-                                  .addAttribute(eofException) *> F.raiseError(new SQLException("Unexpected EOF packet"))
+                                val exception = new SQLException("Unexpected EOF packet")
+                                span.recordException(exception, eofException) *> F.raiseError(exception)
                             }
                       yield result
                     }

@@ -93,7 +93,8 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
                   )
               )
             case error: ERRPacket =>
-              span.addAttributes(error.attributes*) *> F.raiseError(error.toException(Some(sql), None, params))
+              val exception = error.toException(Some(sql), None, params)
+              span.recordException(exception, error.attributes*) *> F.raiseError(exception)
             case result: ColumnsNumberPacket =>
               for
                 columnDefinitions <-
@@ -145,9 +146,11 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
           protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
             case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
             case error: ERRPacket =>
-              span.addAttributes(error.attributes*) *> F.raiseError(error.toException(Some(sql), None, params))
+              val exception = error.toException(Some(sql), None, params)
+              span.recordException(exception, error.attributes*) *> F.raiseError(exception)
             case _: EOFPacket =>
-              span.addAttribute(eofException) *> F.raiseError(new SQLException("Unexpected EOF packet"))
+              val exception = new SQLException("Unexpected EOF packet")
+              span.recordException(exception, eofException) *> F.raiseError(exception)
           }
       } <* params.set(SortedMap.empty)
     }
@@ -194,9 +197,11 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
                       .flatMap {
                         case _: OKPacket      => F.pure(Array.fill(args.length)(Statement.SUCCESS_NO_INFO.toLong))
                         case error: ERRPacket =>
-                          span.addAttributes(error.attributes*) *> F.raiseError(error.toException(Some(sql), None))
+                          val exception = error.toException(Some(sql), None)
+                          span.recordException(exception, error.attributes*) *> F.raiseError(exception)
                         case _: EOFPacket =>
-                          span.addAttribute(eofException) *> F.raiseError(new SQLException("Unexpected EOF packet"))
+                          val exception = new SQLException("Unexpected EOF packet")
+                          span.recordException(exception, eofException) *> F.raiseError(exception)
                       }
               }
           } <* params.set(SortedMap.empty) <* batchedArgs.set(Vector.empty)
@@ -233,13 +238,11 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
                                   case result: OKPacket =>
                                     lastInsertId.set(result.lastInsertId) *> F.pure(acc :+ result.affectedRows)
                                   case error: ERRPacket =>
-                                    span.addAttributes(error.attributes*) *> F.raiseError(
-                                      error.toException("Failed to execute batch", acc)
-                                    )
+                                    val exception = error.toException("Failed to execute batch", acc)
+                                    span.recordException(exception, error.attributes*) *> F.raiseError(exception)
                                   case _: EOFPacket =>
-                                    span.addAttribute(eofException) *> F.raiseError(
-                                      new SQLException("Unexpected EOF packet")
-                                    )
+                                    val exception = new SQLException("Unexpected EOF packet")
+                                    span.recordException(exception, eofException) *> F.raiseError(exception)
                                 }
                           yield result
                         }
