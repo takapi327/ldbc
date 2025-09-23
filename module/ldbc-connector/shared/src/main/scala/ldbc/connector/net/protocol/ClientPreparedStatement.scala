@@ -62,7 +62,7 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
 )(using F: MonadThrow[F])
   extends SharedPreparedStatement[F]:
 
-  private val baseAttributes = buildBaseAttributes("Client PreparedStatement")
+  private val baseAttributes = buildBaseAttributes(protocol, "Client PreparedStatement")
 
   override def executeQuery(): F[ResultSet[F]] =
     checkClosed() *> checkNullOrEmptyQuery(sql) *> {

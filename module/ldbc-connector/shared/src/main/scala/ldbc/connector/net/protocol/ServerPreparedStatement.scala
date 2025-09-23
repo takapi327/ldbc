@@ -63,7 +63,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
 )(using F: MonadThrow[F])
   extends SharedPreparedStatement[F]:
 
-  private val baseAttributes = buildBaseAttributes("Server PreparedStatement")
+  private val baseAttributes = buildBaseAttributes(protocol, "Server PreparedStatement")
 
   private def buildResultSet(
     columnDefinitions: Vector[ColumnDefinitionPacket],

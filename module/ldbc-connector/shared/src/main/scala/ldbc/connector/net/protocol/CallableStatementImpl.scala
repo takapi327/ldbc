@@ -56,7 +56,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
   extends CallableStatement[F],
           SharedPreparedStatement[F]:
 
-  private val baseAttributes = buildBaseAttributes("CallableStatement")
+  private val baseAttributes = buildBaseAttributes(protocol, "CallableStatement")
 
   override def executeQuery(): F[ResultSet[F]] =
     checkClosed() *>
