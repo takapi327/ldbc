@@ -77,31 +77,31 @@ class OpenTelemetryAttributesTest extends FTestPlatform:
   }
 
   test("sanitizeSql should replace string literals") {
-    val sql = "SELECT * FROM users WHERE name = 'John Doe' AND age = 25"
+    val sql       = "SELECT * FROM users WHERE name = 'John Doe' AND age = 25"
     val sanitized = OpenTelemetryAttributes.sanitizeSql(sql)
     assertEquals(sanitized, "SELECT * FROM users WHERE name = '?' AND age = ?")
   }
 
   test("sanitizeSql should replace double-quoted identifiers") {
-    val sql = """SELECT "user_name" FROM "users" WHERE "id" = 1"""
+    val sql       = """SELECT "user_name" FROM "users" WHERE "id" = 1"""
     val sanitized = OpenTelemetryAttributes.sanitizeSql(sql)
     assertEquals(sanitized, """SELECT "?" FROM "?" WHERE "?" = ?""")
   }
 
   test("sanitizeSql should handle multiple string literals") {
-    val sql = "INSERT INTO users (name, email) VALUES ('John', 'john@example.com')"
+    val sql       = "INSERT INTO users (name, email) VALUES ('John', 'john@example.com')"
     val sanitized = OpenTelemetryAttributes.sanitizeSql(sql)
     assertEquals(sanitized, "INSERT INTO users (name, email) VALUES ('?', '?')")
   }
 
   test("sanitizeSql should handle empty strings") {
-    val sql = "SELECT * FROM users WHERE name = ''"
+    val sql       = "SELECT * FROM users WHERE name = ''"
     val sanitized = OpenTelemetryAttributes.sanitizeSql(sql)
     assertEquals(sanitized, "SELECT * FROM users WHERE name = '?'")
   }
 
   test("sanitizeSql should handle mixed numbers") {
-    val sql = "SELECT * FROM users WHERE age BETWEEN 18 AND 65 AND score = 100.5"
+    val sql       = "SELECT * FROM users WHERE age BETWEEN 18 AND 65 AND score = 100.5"
     val sanitized = OpenTelemetryAttributes.sanitizeSql(sql)
     assertEquals(sanitized, "SELECT * FROM users WHERE age BETWEEN ? AND ? AND score = ?")
   }

@@ -97,9 +97,9 @@ object OpenTelemetryAttributes:
    */
   def sanitizeSql(sql: String): String =
     sql
-      .replaceAll("'[^']*'", "'?'")      // Replace string literals with '?'
-      .replaceAll("\"[^\"]*\"", "\"?\"") // Replace quoted identifiers with "?"
-      .replaceAll("\\b\\d+(\\.\\d+)?\\b", "?")     // Replace numbers (including decimals) with ?
+      .replaceAll("'[^']*'", "'?'")            // Replace string literals with '?'
+      .replaceAll("\"[^\"]*\"", "\"?\"")       // Replace quoted identifiers with "?"
+      .replaceAll("\\b\\d+(\\.\\d+)?\\b", "?") // Replace numbers (including decimals) with ?
 
   /**
    * Extract operation name from SQL statement
