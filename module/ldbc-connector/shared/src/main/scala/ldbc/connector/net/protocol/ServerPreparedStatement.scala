@@ -63,14 +63,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
 )(using F: MonadThrow[F])
   extends SharedPreparedStatement[F]:
 
-  private val baseAttributes = List(
-    dbSystemName,
-    serverAddress(protocol.hostInfo.host),
-    serverPort(protocol.hostInfo.port),
-    dbMysqlVersion(protocol.initialPacket.serverVersion.toString),
-    dbMysqlThreadId(protocol.initialPacket.threadId),
-    statementType("ServerPreparedStatement")
-  ) ++ protocol.hostInfo.database.map(dbNamespace).toList
+  private val baseAttributes = buildBaseAttributes("Server PreparedStatement")
 
   private def buildResultSet(
     columnDefinitions: Vector[ColumnDefinitionPacket],

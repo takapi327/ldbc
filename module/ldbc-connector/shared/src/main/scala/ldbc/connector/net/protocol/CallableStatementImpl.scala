@@ -27,6 +27,7 @@ import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.Protocol
 import ldbc.connector.syntax.*
+import ldbc.connector.util.OpenTelemetryAttributes.*
 
 case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
   protocol:                Protocol[F],
@@ -55,17 +56,18 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
   extends CallableStatement[F],
           SharedPreparedStatement[F]:
 
-  private val attributes = protocol.initialPacket.attributes ++ List(
-    Attribute("type", "CallableStatement"),
-    Attribute("sql", sql)
-  )
+  private val baseAttributes = buildBaseAttributes("CallableStatement")
 
   override def executeQuery(): F[ResultSet[F]] =
     checkClosed() *>
-      checkNullOrEmptyQuery(sql) *>
-      exchange[F, ResultSet[F]]("statement") { (span: Span[F]) =>
-        if sql.toUpperCase.startsWith("CALL") then
-          executeCallStatement(span).flatMap { resultSets =>
+      checkNullOrEmptyQuery(sql) *> {
+        val operation = extractOperationName(sql)
+        val table = extractTableName(sql)
+        val spanName = createSpanName(operation, table)
+        
+        exchange[F, ResultSet[F]](spanName) { (span: Span[F]) =>
+          if sql.toUpperCase.startsWith("CALL") then
+            executeCallStatement(span).flatMap { resultSets =>
             resultSets.headOption match
               case None =>
                 for
@@ -87,26 +89,32 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
           } <* retrieveOutParams()
         else
           params.get.flatMap { params =>
-            span.addAttributes(
-              (attributes ++ List(
-                Attribute("params", params.map((_, param) => param.toString).mkString(", ")),
-                Attribute("execute", "query")
-              ))*
-            ) *>
+            val queryAttributes = baseAttributes ++ List(
+              dbOperationName(operation),
+              dbQueryText(sql),
+              dbQuerySummary(sanitizeSql(sql))
+            ) ++ table.map(dbCollectionName).toList
+            
+            span.addAttributes(queryAttributes*) *>
               protocol.resetSequenceId *>
               protocol.send(
                 ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)
               ) *>
               receiveQueryResult()
           }
+        }
       } <* params.set(SortedMap.empty)
 
   override def executeLargeUpdate(): F[Long] =
     checkClosed() *>
-      checkNullOrEmptyQuery(sql) *>
-      exchange[F, Long]("statement") { (span: Span[F]) =>
-        if sql.toUpperCase.startsWith("CALL") then
-          executeCallStatement(span).flatMap { resultSets =>
+      checkNullOrEmptyQuery(sql) *> {
+        val operation = extractOperationName(sql)
+        val table = extractTableName(sql)
+        val spanName = createSpanName(operation, table)
+        
+        exchange[F, Long](spanName) { (span: Span[F]) =>
+          if sql.toUpperCase.startsWith("CALL") then
+            executeCallStatement(span).flatMap { resultSets =>
             resultSets.headOption match
               case None =>
                 for
@@ -128,26 +136,32 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
           } *> retrieveOutParams() *> F.pure(-1)
         else
           params.get.flatMap { params =>
-            span.addAttributes(
-              (attributes ++ List(
-                Attribute("params", params.map((_, param) => param.toString).mkString(", ")),
-                Attribute("execute", "update")
-              ))*
-            ) *>
+            val queryAttributes = baseAttributes ++ List(
+              dbOperationName(operation),
+              dbQueryText(sql),
+              dbQuerySummary(sanitizeSql(sql))
+            ) ++ table.map(dbCollectionName).toList
+            
+            span.addAttributes(queryAttributes*) *>
               sendQuery(buildQuery(sql, params)).flatMap {
                 case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
                 case error: ERRPacket => F.raiseError(error.toException(Some(sql), None))
                 case _: EOFPacket     => F.raiseError(new SQLException("Unexpected EOF packet"))
               }
           }
+        }
       }
 
   override def execute(): F[Boolean] =
     checkClosed() *>
-      checkNullOrEmptyQuery(sql) *>
-      exchange[F, Boolean]("statement") { (span: Span[F]) =>
-        if sql.toUpperCase.startsWith("CALL") then
-          executeCallStatement(span).flatMap { results =>
+      checkNullOrEmptyQuery(sql) *> {
+        val operation = extractOperationName(sql)
+        val table = extractTableName(sql)
+        val spanName = createSpanName(operation, table)
+        
+        exchange[F, Boolean](spanName) { (span: Span[F]) =>
+          if sql.toUpperCase.startsWith("CALL") then
+            executeCallStatement(span).flatMap { results =>
             moreResults.update(_ => results.nonEmpty) *>
               currentResultSet.update(_ => results.headOption) *>
               resultSets.set(results.toList) *>
@@ -156,12 +170,13 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
         else
           params.get
             .flatMap { params =>
-              span.addAttributes(
-                (attributes ++ List(
-                  Attribute("params", params.map((_, param) => param.toString).mkString(", ")),
-                  Attribute("execute", "update")
-                ))*
-              ) *>
+              val queryAttributes = baseAttributes ++ List(
+                dbOperationName(operation),
+                dbQueryText(sql),
+                dbQuerySummary(sanitizeSql(sql))
+              ) ++ table.map(dbCollectionName).toList
+              
+              span.addAttributes(queryAttributes*) *>
                 sendQuery(buildQuery(sql, params)).flatMap {
                   case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
                   case error: ERRPacket => F.raiseError(error.toException(Some(sql), None))
@@ -169,6 +184,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                 }
             }
             .map(_ => false)
+        }
       }
 
   override def getMoreResults(): F[Boolean] =
@@ -200,15 +216,14 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
   override def executeLargeBatch(): F[Array[Long]] =
     checkClosed() *>
       checkNullOrEmptyQuery(sql) *>
-      exchange[F, Array[Long]]("statement") { (span: Span[F]) =>
+      exchange[F, Array[Long]]("BATCH") { (span: Span[F]) =>
         batchedArgs.get.flatMap { args =>
-          span.addAttributes(
-            (attributes ++ List(
-              Attribute("execute", "batch"),
-              Attribute("size", args.length.toLong),
-              Attribute("sql", args.toArray.toSeq)
-            ))*
-          ) *> (
+          val batchAttributes = baseAttributes ++ List(
+            dbOperationName("BATCH"),
+            batchSize(args.length.toLong)
+          )
+          
+          span.addAttributes(batchAttributes*) *> (
             if args.isEmpty then F.pure(Array.empty)
             else
               sql.toUpperCase match
@@ -789,12 +804,15 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
     setInOutParamsOnServer(paramInfo) *>
       setOutParams() *>
       params.get.flatMap { params =>
-        span.addAttributes(
-          (attributes ++ List(
-            Attribute("params", params.map((_, param) => param.toString).mkString(", ")),
-            Attribute("execute", "query")
-          ))*
-        ) *>
+        val operation = extractOperationName(sql)
+        val table = extractTableName(sql)
+        val queryAttributes = baseAttributes ++ List(
+          dbOperationName(operation),
+          dbQueryText(sql),
+          dbQuerySummary(sanitizeSql(sql))
+        ) ++ table.map(dbCollectionName).toList
+        
+        span.addAttributes(queryAttributes*) *>
           protocol.resetSequenceId *>
           protocol.send(
             ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)

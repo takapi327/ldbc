@@ -46,14 +46,7 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
 )(using F: MonadThrow[F])
   extends StatementImpl.ShareStatement[F]:
 
-  private val baseAttributes = List(
-    dbSystemName,
-    serverAddress(protocol.hostInfo.host),
-    serverPort(protocol.hostInfo.port),
-    dbMysqlVersion(protocol.initialPacket.serverVersion.toString),
-    dbMysqlThreadId(protocol.initialPacket.threadId),
-    statementType("Statement")
-  ) ++ protocol.hostInfo.database.map(dbNamespace).toList
+  private val baseAttributes = buildBaseAttributes("Statement")
 
   private def simpleQueryRun(sql: String): F[ResultSet[F]] =
     val operation = extractOperationName(sql)
@@ -334,6 +327,8 @@ object StatementImpl:
 
   private[ldbc] trait ShareStatement[F[_]](using F: MonadThrow[F]) extends Statement[F]:
 
+    def protocol: Protocol[F]
+
     def statementClosed:   Ref[F, Boolean]
     def connectionClosed:  Ref[F, Boolean]
     def currentResultSet:  Ref[F, Option[ResultSet[F]]]
@@ -387,3 +382,13 @@ object StatementImpl:
       fetchSize.get.map { fetchSize =>
         useCursorFetch && fetchSize > 0 && resultSetType == ResultSet.TYPE_FORWARD_ONLY
       }
+
+    protected def buildBaseAttributes(statement: String): List[Attribute[?]] =
+      List[Attribute[?]](
+        dbSystemName,
+        serverAddress(protocol.hostInfo.host),
+        serverPort(protocol.hostInfo.port),
+        dbMysqlVersion(protocol.initialPacket.serverVersion.toString),
+        dbMysqlThreadId(protocol.initialPacket.threadId),
+        statementType(statement)
+      ) ++ protocol.hostInfo.database.map(dbNamespace).toList
