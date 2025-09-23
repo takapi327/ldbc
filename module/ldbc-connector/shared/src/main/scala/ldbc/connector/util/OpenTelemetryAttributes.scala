@@ -179,15 +179,15 @@ object OpenTelemetryAttributes:
    * If a corresponding {target} value is not available for a specific operation, the instrumentation SHOULD omit the {target}. For example, for an operation describing SQL query on an anonymous table like SELECT * FROM (SELECT * FROM table) t, span name should be SELECT.
    */
   def buildSpanName(
-    host:     String,
-    port:     Int,
-    sql: Option[String],
+    host:           String,
+    port:           Int,
+    sql:            Option[String],
     collectionName: Option[String],
-    namespace: Option[String]
+    namespace:      Option[String]
   ): String =
-    val operationName = sql.map(extractOperationName)
+    val operationName   = sql.map(extractOperationName)
     val storedProcedure = sql.flatMap(extractStoredProcedureName)
-    val target = collectionName
+    val target          = collectionName
       .orElse(storedProcedure)
       .orElse(namespace)
       .getOrElse(s"$host:$port")

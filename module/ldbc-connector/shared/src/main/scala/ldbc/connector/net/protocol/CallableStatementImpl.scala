@@ -56,7 +56,8 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
   extends CallableStatement[F],
           SharedPreparedStatement[F]:
 
-  private val spanName: String = buildSpanName(protocol.hostInfo.host, protocol.hostInfo.port, Some(sql), None, protocol.hostInfo.database)
+  private val spanName: String =
+    buildSpanName(protocol.hostInfo.host, protocol.hostInfo.port, Some(sql), None, protocol.hostInfo.database)
   private val baseAttributes = buildBaseAttributes(protocol)
 
   override def executeQuery(): F[ResultSet[F]] =

@@ -63,7 +63,8 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
 )(using F: MonadThrow[F])
   extends SharedPreparedStatement[F]:
 
-  private val spanName: String = buildSpanName(protocol.hostInfo.host, protocol.hostInfo.port, Some(sql), None, protocol.hostInfo.database)
+  private val spanName: String =
+    buildSpanName(protocol.hostInfo.host, protocol.hostInfo.port, Some(sql), None, protocol.hostInfo.database)
   private val baseAttributes = buildBaseAttributes(protocol)
 
   private def buildResultSet(

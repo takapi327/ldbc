@@ -47,7 +47,7 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
   extends StatementImpl.ShareStatement[F]:
 
   private val baseAttributes = buildBaseAttributes(protocol)
-  
+
   private def spanName(sql: Option[String]): String =
     buildSpanName(protocol.hostInfo.host, protocol.hostInfo.port, sql, None, protocol.hostInfo.database)
 
