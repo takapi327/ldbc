@@ -190,6 +190,8 @@ class OpenTelemetryAttributesTest extends FTestPlatform:
 
   test("extractTableName should handle table names with backticks") {
     assertEquals(OpenTelemetryAttributes.extractTableName("SELECT * FROM `users`"), Some("`USERS`"))
+    assertEquals(OpenTelemetryAttributes.extractTableName("SELECT * FROM `my schema`.`my table`"), Some("`MY SCHEMA`.`MY TABLE`"))
+    assertEquals(OpenTelemetryAttributes.extractTableName("UPDATE `db`.`table` SET col = 1"), Some("`DB`.`TABLE`"))
   }
 
   test("extractTableName should return None for queries without tables") {

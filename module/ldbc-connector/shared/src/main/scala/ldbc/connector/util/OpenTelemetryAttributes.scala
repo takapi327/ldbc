@@ -143,7 +143,11 @@ object OpenTelemetryAttributes:
    */
   def extractTableName(sql: String): Option[String] =
     val trimmed = sql.trim.toUpperCase
-    val pattern = """(?:FROM|INTO|UPDATE)\s+([^\s,;]+)""".r
+    // Pattern to match:
+    // 1. `schema`.`table` or `table` (quoted identifiers)
+    // 2. schema.table or table (unquoted identifiers)
+    // 3. Handles optional schema prefix
+    val pattern = """(?:FROM|INTO|UPDATE)\s+(`[^`]+`(?:\.`[^`]+`)?|[^\s,;]+(?:\.[^\s,;]+)?)""".r
     pattern.findFirstMatchIn(trimmed).map(_.group(1))
 
   /**
