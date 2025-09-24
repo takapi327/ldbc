@@ -93,9 +93,9 @@ object OpenTelemetryAttributes:
    */
   def sanitizeSql(sql: String): String =
     sql
-      .replaceAll("'(?:[^']|'')*'", "'?'")            // Replace string literals with '?', handling escaped quotes
-      .replaceAll("\"(?:[^\"]|\"\")*\"", "\"?\"")     // Replace quoted identifiers with "?", handling escaped quotes
-      .replaceAll("\\b\\d+(\\.\\d+)?\\b", "?")        // Replace numbers (including decimals) with ?
+      .replaceAll("'(?:[^']|'')*'", "'?'")        // Replace string literals with '?', handling escaped quotes
+      .replaceAll("\"(?:[^\"]|\"\")*\"", "\"?\"") // Replace quoted identifiers with "?", handling escaped quotes
+      .replaceAll("\\b\\d+(\\.\\d+)?\\b", "?")    // Replace numbers (including decimals) with ?
 
   /**
    * Stored procedure name attribute

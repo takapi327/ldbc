@@ -107,19 +107,19 @@ class OpenTelemetryAttributesTest extends FTestPlatform:
   }
 
   test("sanitizeSql should handle escaped single quotes") {
-    val sql = "SELECT * FROM users WHERE name = 'O''Brien' AND city = 'New York'"
+    val sql       = "SELECT * FROM users WHERE name = 'O''Brien' AND city = 'New York'"
     val sanitized = OpenTelemetryAttributes.sanitizeSql(sql)
     assertEquals(sanitized, "SELECT * FROM users WHERE name = '?' AND city = '?'")
   }
 
   test("sanitizeSql should handle escaped double quotes") {
-    val sql = """SELECT * FROM "table""name" WHERE "col""umn" = 1"""
+    val sql       = """SELECT * FROM "table""name" WHERE "col""umn" = 1"""
     val sanitized = OpenTelemetryAttributes.sanitizeSql(sql)
     assertEquals(sanitized, """SELECT * FROM "?" WHERE "?" = ?""")
   }
 
   test("sanitizeSql should handle complex escaped quotes") {
-    val sql = "INSERT INTO logs (message) VALUES ('User said: ''Hello, I''m here!''')"
+    val sql       = "INSERT INTO logs (message) VALUES ('User said: ''Hello, I''m here!''')"
     val sanitized = OpenTelemetryAttributes.sanitizeSql(sql)
     assertEquals(sanitized, "INSERT INTO logs (message) VALUES ('?')")
   }
@@ -208,7 +208,10 @@ class OpenTelemetryAttributesTest extends FTestPlatform:
 
   test("extractTableName should handle table names with backticks") {
     assertEquals(OpenTelemetryAttributes.extractTableName("SELECT * FROM `users`"), Some("`USERS`"))
-    assertEquals(OpenTelemetryAttributes.extractTableName("SELECT * FROM `my schema`.`my table`"), Some("`MY SCHEMA`.`MY TABLE`"))
+    assertEquals(
+      OpenTelemetryAttributes.extractTableName("SELECT * FROM `my schema`.`my table`"),
+      Some("`MY SCHEMA`.`MY TABLE`")
+    )
     assertEquals(OpenTelemetryAttributes.extractTableName("UPDATE `db`.`table` SET col = 1"), Some("`DB`.`TABLE`"))
   }
 
