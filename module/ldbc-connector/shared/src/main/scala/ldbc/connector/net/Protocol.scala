@@ -7,17 +7,24 @@
 package ldbc.connector.net
 
 import java.nio.charset.StandardCharsets
+
 import scala.collection.immutable.ListMap
 import scala.concurrent.duration.*
+
 import scodec.Decoder
+
 import cats.*
 import cats.syntax.all.*
+
 import cats.effect.*
 import cats.effect.std.Console
+
 import fs2.hashing.Hashing
 import fs2.io.net.Socket
-import org.typelevel.otel4s.trace.{Span, Tracer}
+
+import org.typelevel.otel4s.trace.{ Span, Tracer }
 import org.typelevel.otel4s.Attribute
+
 import ldbc.connector.authenticator.*
 import ldbc.connector.data.*
 import ldbc.connector.exception.*
@@ -169,7 +176,7 @@ object Protocol:
             case error: ERRPacket =>
               val ex = error.toException(s"Failed to change schema to '$schema'")
               span.recordException(ex, error.attributes) *> ev.raiseError(ex)
-            case ok: OKPacket     => ev.unit
+            case ok: OKPacket => ev.unit
           }
       }
 
@@ -195,10 +202,10 @@ object Protocol:
         span.addAttributes(attributes*) *>
           socket.send(ComResetConnectionPacket()) *>
           socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
-            case error: ERRPacket => 
+            case error: ERRPacket =>
               val ex = error.toException("Failed to execute reset connection")
               span.recordException(ex, error.attributes) *> ev.raiseError(ex)
-            case ok: OKPacket     => ev.unit
+            case ok: OKPacket => ev.unit
           }
       }
 
@@ -210,8 +217,8 @@ object Protocol:
             case error: ERRPacket =>
               val ex = error.toException("Failed to execute set option")
               span.recordException(ex, error.attributes) *> ev.raiseError(ex)
-            case eof: EOFPacket   => ev.unit
-            case ok: OKPacket     => ev.unit
+            case eof: EOFPacket => ev.unit
+            case ok: OKPacket   => ev.unit
           }
       }
 
@@ -490,7 +497,12 @@ object Protocol:
 
     override def startAuthentication(username: String, password: String): F[Unit] =
       exchange[F, Unit](TelemetrySpanName.CONNECTION_CREATE) { (span: Span[F]) =>
-        span.addAttributes((attributes ++ List(TelemetryAttribute.dbMysqlAuthPlugin(initialPacket.authPlugin), Attribute("username", username)))*) *> (
+        span.addAttributes(
+          (attributes ++ List(
+            TelemetryAttribute.dbMysqlAuthPlugin(initialPacket.authPlugin),
+            Attribute("username", username)
+          ))*
+        ) *> (
           determinatePlugin(initialPacket.authPlugin, initialPacket.serverVersion) match
             case Left(error)   => span.recordException(error) *> ev.raiseError(error) *> socket.send(ComQuitPacket())
             case Right(plugin) => handshake(plugin, username, password) *> readUntilOk(plugin, password)

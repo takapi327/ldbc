@@ -23,8 +23,8 @@ import ldbc.connector.exception.SQLException
 import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.Protocol
-import ldbc.connector.ResultSetImpl
 import ldbc.connector.telemetry.*
+import ldbc.connector.ResultSetImpl
 
 private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
   protocol:             Protocol[F],
@@ -51,7 +51,7 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
   private def simpleQueryRun(sql: String): F[ResultSet[F]] =
     exchange[F, ResultSet[F]](TelemetrySpanName.STMT_EXECUTE) { (span: Span[F]) =>
       val queryAttributes = baseAttributes ++ List(
-        TelemetryAttribute.dbQueryText(sql),
+        TelemetryAttribute.dbQueryText(sql)
       )
 
       span.addAttributes(queryAttributes*) *>
@@ -209,25 +209,26 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
     executeLargeUpdate(sql).map(_.toInt)
 
   override def executeLargeUpdate(sql: String): F[Long] =
-    checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, Long](TelemetrySpanName.STMT_EXECUTE) { (span: Span[F]) =>
-      val queryAttributes = baseAttributes ++ List(
-        TelemetryAttribute.dbQueryText(sql),
-      )
-
-      span.addAttributes(queryAttributes*) *>
-        protocol.resetSequenceId *> (
-          protocol.send(ComQueryPacket(sql, protocol.initialPacket.capabilityFlags, ListMap.empty)) *>
-            protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
-              case result: OKPacket =>
-                lastInsertId.set(result.lastInsertId) *> updateCount.updateAndGet(_ => result.affectedRows)
-              case error: ERRPacket =>
-                val exception = error.toException(Some(sql), None)
-                span.recordException(exception, error.attributes*) *> F.raiseError(exception)
-              case eof: EOFPacket =>
-                val exception = new SQLException("Unexpected EOF packet")
-                span.recordException(exception, eof.attribute) *> F.raiseError(exception)
-            }
+    checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, Long](TelemetrySpanName.STMT_EXECUTE) {
+      (span: Span[F]) =>
+        val queryAttributes = baseAttributes ++ List(
+          TelemetryAttribute.dbQueryText(sql)
         )
+
+        span.addAttributes(queryAttributes*) *>
+          protocol.resetSequenceId *> (
+            protocol.send(ComQueryPacket(sql, protocol.initialPacket.capabilityFlags, ListMap.empty)) *>
+              protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
+                case result: OKPacket =>
+                  lastInsertId.set(result.lastInsertId) *> updateCount.updateAndGet(_ => result.affectedRows)
+                case error: ERRPacket =>
+                  val exception = error.toException(Some(sql), None)
+                  span.recordException(exception, error.attributes*) *> F.raiseError(exception)
+                case eof: EOFPacket =>
+                  val exception = new SQLException("Unexpected EOF packet")
+                  span.recordException(exception, eof.attribute) *> F.raiseError(exception)
+              }
+          )
     }
 
   override def close(): F[Unit] = statementClosed.set(true) *> resultSetClosed.set(true)

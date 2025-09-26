@@ -6,8 +6,9 @@
 
 package ldbc.connector.telemetry
 
-import ldbc.connector.*
 import org.typelevel.otel4s.Attribute
+
+import ldbc.connector.*
 
 class TelemetryAttributeTest extends FTestPlatform:
 

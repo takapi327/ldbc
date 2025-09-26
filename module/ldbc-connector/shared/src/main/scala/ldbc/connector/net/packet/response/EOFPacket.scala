@@ -10,9 +10,9 @@ package response
 import scodec.*
 import scodec.bits.*
 
-import org.typelevel.otel4s.Attribute
-
 import cats.syntax.option.*
+
+import org.typelevel.otel4s.Attribute
 
 import ldbc.connector.data.CapabilitiesFlags
 

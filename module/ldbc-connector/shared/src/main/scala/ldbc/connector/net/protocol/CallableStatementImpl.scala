@@ -126,7 +126,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
         else
           params.get.flatMap { params =>
             val queryAttributes = baseAttributes ++ List(
-              TelemetryAttribute.dbQueryText(sql),
+              TelemetryAttribute.dbQueryText(sql)
             )
 
             span.addAttributes(queryAttributes*) *>
@@ -157,7 +157,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
           params.get
             .flatMap { params =>
               val queryAttributes = baseAttributes ++ List(
-                TelemetryAttribute.dbQueryText(sql),
+                TelemetryAttribute.dbQueryText(sql)
               )
 
               span.addAttributes(queryAttributes*) *>
@@ -798,7 +798,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
       setOutParams() *>
       params.get.flatMap { params =>
         val queryAttributes = baseAttributes ++ List(
-          TelemetryAttribute.dbQueryText(sql),
+          TelemetryAttribute.dbQueryText(sql)
         )
 
         span.addAttributes(queryAttributes*) *>
