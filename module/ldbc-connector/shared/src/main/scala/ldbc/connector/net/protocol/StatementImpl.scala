@@ -23,8 +23,8 @@ import ldbc.connector.exception.SQLException
 import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.Protocol
-import ldbc.connector.util.OpenTelemetryAttributes.*
 import ldbc.connector.ResultSetImpl
+import ldbc.connector.telemetry.*
 
 private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
   protocol:             Protocol[F],
@@ -48,14 +48,10 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
 
   private val baseAttributes = buildBaseAttributes(protocol)
 
-  private def spanName(sql: Option[String]): String =
-    buildSpanName(protocol.hostInfo.host, protocol.hostInfo.port, sql, None, protocol.hostInfo.database)
-
   private def simpleQueryRun(sql: String): F[ResultSet[F]] =
-    exchange[F, ResultSet[F]](spanName(Some(sql))) { (span: Span[F]) =>
+    exchange[F, ResultSet[F]](TelemetrySpanName.STMT_EXECUTE) { (span: Span[F]) =>
       val queryAttributes = baseAttributes ++ List(
-        dbQueryText(sql),
-        dbQuerySummary(sanitizeSql(sql))
+        TelemetryAttribute.dbQueryText(sql),
       )
 
       span.addAttributes(queryAttributes*) *>
@@ -94,7 +90,7 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
                 )
               _ <- columnDefinitions.headOption match {
                      case None         => F.unit
-                     case Some(column) => span.addAttribute(dbCollectionName(column.table))
+                     case Some(column) => span.addAttribute(TelemetryAttribute.dbCollectionName(column.table))
                    }
               resultSet = ResultSetImpl(
                             protocol,
@@ -213,10 +209,9 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
     executeLargeUpdate(sql).map(_.toInt)
 
   override def executeLargeUpdate(sql: String): F[Long] =
-    checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, Long](spanName(Some(sql))) { (span: Span[F]) =>
+    checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, Long](TelemetrySpanName.STMT_EXECUTE) { (span: Span[F]) =>
       val queryAttributes = baseAttributes ++ List(
-        dbQueryText(sql),
-        dbQuerySummary(sanitizeSql(sql))
+        TelemetryAttribute.dbQueryText(sql),
       )
 
       span.addAttributes(queryAttributes*) *>
@@ -228,9 +223,9 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
               case error: ERRPacket =>
                 val exception = error.toException(Some(sql), None)
                 span.recordException(exception, error.attributes*) *> F.raiseError(exception)
-              case _: EOFPacket =>
+              case eof: EOFPacket =>
                 val exception = new SQLException("Unexpected EOF packet")
-                span.recordException(exception, eofException) *> F.raiseError(exception)
+                span.recordException(exception, eof.attribute) *> F.raiseError(exception)
             }
         )
     }
@@ -254,11 +249,11 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
   override def executeLargeBatch(): F[Array[Long]] =
     checkClosed() *> protocol.resetSequenceId *>
       protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON) *>
-      exchange[F, Array[Long]](spanName(None)) { (span: Span[F]) =>
+      exchange[F, Array[Long]](TelemetrySpanName.STMT_EXECUTE_BATCH) { (span: Span[F]) =>
         batchedArgs.get.flatMap { args =>
-          val batchAttributes = batchSize(args.length.toLong) match
-            case Some(attr) => baseAttributes ++ List(dbOperationName("BATCH"), attr)
-            case None       => baseAttributes ++ List(dbOperationName("BATCH"))
+          val batchAttributes = TelemetryAttribute.batchSize(args.length.toLong) match
+            case Some(attr) => baseAttributes ++ List(TelemetryAttribute.dbOperationName("BATCH"), attr)
+            case None       => baseAttributes ++ List(TelemetryAttribute.dbOperationName("BATCH"))
 
           if args.isEmpty then F.pure(Array.empty)
           else
@@ -280,9 +275,9 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
                           case error: ERRPacket =>
                             val exception = error.toException("Failed to execute batch", acc)
                             span.recordException(exception, error.attributes*) *> F.raiseError(exception)
-                          case _: EOFPacket =>
+                          case eof: EOFPacket =>
                             val exception = new SQLException("Unexpected EOF packet")
-                            span.recordException(exception, eofException) *> F.raiseError(exception)
+                            span.recordException(exception, eof.attribute) *> F.raiseError(exception)
                         }
                   yield result
                 }
@@ -386,9 +381,9 @@ object StatementImpl:
 
     protected def buildBaseAttributes(protocol: Protocol[F]): List[Attribute[?]] =
       List[Attribute[?]](
-        dbSystemName,
-        serverAddress(protocol.hostInfo.host),
-        serverPort(protocol.hostInfo.port),
-        dbMysqlVersion(protocol.initialPacket.serverVersion.toString),
-        dbMysqlThreadId(protocol.initialPacket.threadId)
-      ) ++ protocol.hostInfo.database.map(dbNamespace).toList
+        TelemetryAttribute.dbSystemName,
+        TelemetryAttribute.serverAddress(protocol.hostInfo.host),
+        TelemetryAttribute.serverPort(protocol.hostInfo.port),
+        TelemetryAttribute.dbMysqlVersion(protocol.initialPacket.serverVersion.toString),
+        TelemetryAttribute.dbMysqlThreadId(protocol.initialPacket.threadId)
+      ) ++ protocol.hostInfo.database.map(name => TelemetryAttribute.dbNamespace(name)).toList

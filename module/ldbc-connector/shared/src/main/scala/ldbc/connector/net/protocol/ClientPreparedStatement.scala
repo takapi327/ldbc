@@ -23,8 +23,8 @@ import ldbc.connector.exception.SQLException
 import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.Protocol
-import ldbc.connector.util.OpenTelemetryAttributes.*
 import ldbc.connector.ResultSetImpl
+import ldbc.connector.telemetry.*
 
 /**
  * PreparedStatement for query construction at the client side.
@@ -62,16 +62,13 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
 )(using F: MonadThrow[F])
   extends SharedPreparedStatement[F]:
 
-  private val spanName: String =
-    buildSpanName(protocol.hostInfo.host, protocol.hostInfo.port, Some(sql), None, protocol.hostInfo.database)
   private val baseAttributes = buildBaseAttributes(protocol)
 
   override def executeQuery(): F[ResultSet[F]] =
-    checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, ResultSet[F]](spanName) { (span: Span[F]) =>
+    checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, ResultSet[F]](TelemetrySpanName.STMT_EXECUTE_PREPARED) { (span: Span[F]) =>
       params.get.flatMap { params =>
         val queryAttributes = baseAttributes ++ List(
-          dbQueryText(sql),
-          dbQuerySummary(sanitizeSql(sql))
+          TelemetryAttribute.dbQueryText(sql),
         )
 
         span.addAttributes(queryAttributes*) *>
@@ -109,7 +106,7 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
                   )
                 _ <- columnDefinitions.headOption match {
                        case None         => F.unit
-                       case Some(column) => span.addAttribute(dbCollectionName(column.table))
+                       case Some(column) => span.addAttribute(TelemetryAttribute.dbCollectionName(column.table))
                      }
                 resultSet = ResultSetImpl(
                               protocol,
@@ -132,11 +129,10 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
     }
 
   override def executeLargeUpdate(): F[Long] =
-    checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, Long](spanName) { (span: Span[F]) =>
+    checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, Long](TelemetrySpanName.STMT_EXECUTE_PREPARED) { (span: Span[F]) =>
       params.get.flatMap { params =>
         val queryAttributes = baseAttributes ++ List(
-          dbQueryText(sql),
-          dbQuerySummary(sanitizeSql(sql))
+          TelemetryAttribute.dbQueryText(sql),
         )
 
         span.addAttributes(queryAttributes*) *>
@@ -149,9 +145,9 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
             case error: ERRPacket =>
               val exception = error.toException(Some(sql), None, params)
               span.recordException(exception, error.attributes*) *> F.raiseError(exception)
-            case _: EOFPacket =>
+            case eof: EOFPacket =>
               val exception = new SQLException("Unexpected EOF packet")
-              span.recordException(exception, eofException) *> F.raiseError(exception)
+              span.recordException(exception, eof.attribute) *> F.raiseError(exception)
           }
       } <* params.set(SortedMap.empty)
     }
@@ -175,12 +171,12 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
     checkClosed() *> checkNullOrEmptyQuery(sql) *> (
       sql.trim.toLowerCase match
         case q if q.startsWith("insert") =>
-          exchange[F, Array[Long]](spanName) { (span: Span[F]) =>
+          exchange[F, Array[Long]](TelemetrySpanName.STMT_EXECUTE_BATCH_PREPARED) { (span: Span[F]) =>
             protocol.resetSequenceId *>
               batchedArgs.get.flatMap { args =>
-                val batchAttributes = batchSize(args.length.toLong) match
-                  case Some(attr) => baseAttributes ++ List(dbOperationName("BATCH"), attr)
-                  case None       => baseAttributes ++ List(dbOperationName("BATCH"))
+                val batchAttributes = TelemetryAttribute.batchSize(args.length.toLong) match
+                  case Some(attr) => baseAttributes ++ List(TelemetryAttribute.dbOperationName("BATCH"), attr)
+                  case None       => baseAttributes ++ List(TelemetryAttribute.dbOperationName("BATCH"))
 
                 if args.isEmpty then F.pure(Array.empty)
                 else
@@ -200,21 +196,21 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
                         case error: ERRPacket =>
                           val exception = error.toException(Some(sql), None)
                           span.recordException(exception, error.attributes*) *> F.raiseError(exception)
-                        case _: EOFPacket =>
+                        case eof: EOFPacket =>
                           val exception = new SQLException("Unexpected EOF packet")
-                          span.recordException(exception, eofException) *> F.raiseError(exception)
+                          span.recordException(exception, eof.attribute) *> F.raiseError(exception)
                       }
               }
           } <* params.set(SortedMap.empty) <* batchedArgs.set(Vector.empty)
         case q if q.startsWith("update") || q.startsWith("delete") =>
           protocol.resetSequenceId *>
             protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON) *>
-            exchange[F, Array[Long]](spanName) { (span: Span[F]) =>
+            exchange[F, Array[Long]](TelemetrySpanName.STMT_EXECUTE_BATCH_PREPARED) { (span: Span[F]) =>
               protocol.resetSequenceId *>
                 batchedArgs.get.flatMap { args =>
                   val batchAttributes = baseAttributes ++ List(
-                    Some(dbOperationName("BATCH")),
-                    batchSize(args.length.toLong)
+                    Some(TelemetryAttribute.dbOperationName("BATCH")),
+                    TelemetryAttribute.batchSize(args.length.toLong)
                   ).flatten
 
                   if args.isEmpty then F.pure(Array.empty)
@@ -241,9 +237,9 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
                                   case error: ERRPacket =>
                                     val exception = error.toException("Failed to execute batch", acc)
                                     span.recordException(exception, error.attributes*) *> F.raiseError(exception)
-                                  case _: EOFPacket =>
+                                  case eof: EOFPacket =>
                                     val exception = new SQLException("Unexpected EOF packet")
-                                    span.recordException(exception, eofException) *> F.raiseError(exception)
+                                    span.recordException(exception, eof.attribute) *> F.raiseError(exception)
                                 }
                           yield result
                         }

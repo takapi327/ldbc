@@ -27,7 +27,7 @@ import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.Protocol
 import ldbc.connector.syntax.*
-import ldbc.connector.util.OpenTelemetryAttributes.*
+import ldbc.connector.telemetry.*
 
 case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
   protocol:                Protocol[F],
@@ -56,14 +56,12 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
   extends CallableStatement[F],
           SharedPreparedStatement[F]:
 
-  private val spanName: String =
-    buildSpanName(protocol.hostInfo.host, protocol.hostInfo.port, Some(sql), None, protocol.hostInfo.database)
   private val baseAttributes = buildBaseAttributes(protocol)
 
   override def executeQuery(): F[ResultSet[F]] =
     checkClosed() *>
       checkNullOrEmptyQuery(sql) *>
-      exchange[F, ResultSet[F]](spanName) { (span: Span[F]) =>
+      exchange[F, ResultSet[F]](TelemetrySpanName.STMT_CALLABLE) { (span: Span[F]) =>
         if sql.toUpperCase.startsWith("CALL") then
           executeCallStatement(span).flatMap { resultSets =>
             resultSets.headOption match
@@ -88,8 +86,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
         else
           params.get.flatMap { params =>
             val queryAttributes = baseAttributes ++ List(
-              dbQueryText(sql),
-              dbQuerySummary(sanitizeSql(sql))
+              TelemetryAttribute.dbQueryText(sql)
             )
 
             span.addAttributes(queryAttributes*) *>
@@ -104,7 +101,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
   override def executeLargeUpdate(): F[Long] =
     checkClosed() *>
       checkNullOrEmptyQuery(sql) *>
-      exchange[F, Long](spanName) { (span: Span[F]) =>
+      exchange[F, Long](TelemetrySpanName.STMT_CALLABLE) { (span: Span[F]) =>
         if sql.toUpperCase.startsWith("CALL") then
           executeCallStatement(span).flatMap { resultSets =>
             resultSets.headOption match
@@ -129,8 +126,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
         else
           params.get.flatMap { params =>
             val queryAttributes = baseAttributes ++ List(
-              dbQueryText(sql),
-              dbQuerySummary(sanitizeSql(sql))
+              TelemetryAttribute.dbQueryText(sql),
             )
 
             span.addAttributes(queryAttributes*) *>
@@ -139,9 +135,9 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                 case error: ERRPacket =>
                   val exception = error.toException(Some(sql), None, params)
                   span.recordException(exception, error.attributes*) *> F.raiseError(exception)
-                case _: EOFPacket =>
+                case eof: EOFPacket =>
                   val exception = new SQLException("Unexpected EOF packet")
-                  span.recordException(exception, eofException) *> F.raiseError(exception)
+                  span.recordException(exception, eof.attribute) *> F.raiseError(exception)
               }
           }
       }
@@ -149,7 +145,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
   override def execute(): F[Boolean] =
     checkClosed() *>
       checkNullOrEmptyQuery(sql) *>
-      exchange[F, Boolean](spanName) { (span: Span[F]) =>
+      exchange[F, Boolean](TelemetrySpanName.STMT_CALLABLE) { (span: Span[F]) =>
         if sql.toUpperCase.startsWith("CALL") then
           executeCallStatement(span).flatMap { results =>
             moreResults.update(_ => results.nonEmpty) *>
@@ -161,8 +157,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
           params.get
             .flatMap { params =>
               val queryAttributes = baseAttributes ++ List(
-                dbQueryText(sql),
-                dbQuerySummary(sanitizeSql(sql))
+                TelemetryAttribute.dbQueryText(sql),
               )
 
               span.addAttributes(queryAttributes*) *>
@@ -171,9 +166,9 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                   case error: ERRPacket =>
                     val exception = error.toException(Some(sql), None, params)
                     span.recordException(exception, error.attributes*) *> F.raiseError(exception)
-                  case _: EOFPacket =>
+                  case eof: EOFPacket =>
                     val exception = new SQLException("Unexpected EOF packet")
-                    span.recordException(exception, eofException) *> F.raiseError(exception)
+                    span.recordException(exception, eof.attribute) *> F.raiseError(exception)
                 }
             }
             .map(_ => false)
@@ -208,11 +203,11 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
   override def executeLargeBatch(): F[Array[Long]] =
     checkClosed() *>
       checkNullOrEmptyQuery(sql) *>
-      exchange[F, Array[Long]](spanName) { (span: Span[F]) =>
+      exchange[F, Array[Long]](TelemetrySpanName.STMT_CALLABLE) { (span: Span[F]) =>
         batchedArgs.get.flatMap { args =>
-          val batchAttributes = batchSize(args.length.toLong) match
-            case Some(attr) => baseAttributes ++ List(dbOperationName("BATCH"), attr)
-            case None       => baseAttributes ++ List(dbOperationName("BATCH"))
+          val batchAttributes = TelemetryAttribute.batchSize(args.length.toLong) match
+            case Some(attr) => baseAttributes ++ List(TelemetryAttribute.dbOperationName("BATCH"), attr)
+            case None       => baseAttributes ++ List(TelemetryAttribute.dbOperationName("BATCH"))
 
           if args.isEmpty then F.pure(Array.empty)
           else
@@ -225,9 +220,9 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                       case error: ERRPacket =>
                         val exception = error.toException(Some(sql), None)
                         span.recordException(exception, error.attributes*) *> F.raiseError(exception)
-                      case _: EOFPacket =>
+                      case eof: EOFPacket =>
                         val exception = new SQLException("Unexpected EOF packet")
-                        span.recordException(exception, eofException) *> F.raiseError(exception)
+                        span.recordException(exception, eof.attribute) *> F.raiseError(exception)
                     }
               case q if q.startsWith("update") || q.startsWith("delete") || q.startsWith("CALL") =>
                 span.addAttributes(batchAttributes*) *>
@@ -254,9 +249,9 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                               case error: ERRPacket =>
                                 val exception = error.toException("Failed to execute batch", acc)
                                 span.recordException(exception, error.attributes*) *> F.raiseError(exception)
-                              case _: EOFPacket =>
+                              case eof: EOFPacket =>
                                 val exception = new SQLException("Unexpected EOF packet")
-                                span.recordException(exception, eofException) *> F.raiseError(exception)
+                                span.recordException(exception, eof.attribute) *> F.raiseError(exception)
                             }
                       yield result
                     }
@@ -802,11 +797,9 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
     setInOutParamsOnServer(paramInfo) *>
       setOutParams() *>
       params.get.flatMap { params =>
-        val procName        = extractStoredProcedureName(sql)
         val queryAttributes = baseAttributes ++ List(
-          dbQueryText(sql),
-          dbQuerySummary(sanitizeSql(sql))
-        ) ++ procName.map(dbStoredProcedureName).toList
+          TelemetryAttribute.dbQueryText(sql),
+        )
 
         span.addAttributes(queryAttributes*) *>
           protocol.resetSequenceId *>

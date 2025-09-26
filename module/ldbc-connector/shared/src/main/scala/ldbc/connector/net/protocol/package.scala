@@ -9,6 +9,8 @@ package ldbc.connector.net
 import org.typelevel.otel4s.trace.Span
 import org.typelevel.otel4s.trace.Tracer
 
+import ldbc.connector.telemetry.TelemetrySpanName
+
 package object protocol:
 
   /**
@@ -17,6 +19,6 @@ package object protocol:
   def parseHeader(headerBytes: Array[Byte]): Int =
     (headerBytes(0) & 0xff) | ((headerBytes(1) & 0xff) << 8) | ((headerBytes(2) & 0xff) << 16)
 
-  def exchange[F[_]: Tracer, A](label: String)(f: Span[F] => F[A])(using
+  def exchange[F[_]: Tracer, A](span: TelemetrySpanName)(f: Span[F] => F[A])(using
     exchange: Exchange[F]
-  ): F[A] = Tracer[F].span(label).use(span => exchange(f(span)))
+  ): F[A] = Tracer[F].span(span.name).use(span => exchange(f(span)))
