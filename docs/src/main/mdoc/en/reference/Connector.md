@@ -755,12 +755,3 @@ datasource.getConnection.use { conn =>
 ```
 
 *Note: When specifying an Out parameter with `registerOutParameter`, if the same index value is not used to set the parameter with the `setXXX` method, the value will be set to `Null` on the server.*
-
-## Unsupported Features
-
-The ldbc connector is currently an experimental feature. Therefore, the following features are not supported.
-Feature provision will be carried out sequentially.
-
-- Connection pooling
-- Failover measures
-- etc...
