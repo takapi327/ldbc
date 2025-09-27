@@ -176,9 +176,7 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
           exchange[F, Array[Long]](TelemetrySpanName.STMT_EXECUTE_BATCH_PREPARED) { (span: Span[F]) =>
             protocol.resetSequenceId *>
               batchedArgs.get.flatMap { args =>
-                val batchAttributes = TelemetryAttribute.batchSize(args.length.toLong) match
-                  case Some(attr) => baseAttributes ++ List(TelemetryAttribute.dbOperationName("BATCH"), attr)
-                  case None       => baseAttributes ++ List(TelemetryAttribute.dbOperationName("BATCH"))
+                val batchAttributes = baseAttributes ++ TelemetryAttribute.batchSize(args.length.toLong)
 
                 if args.isEmpty then F.pure(Array.empty)
                 else
@@ -210,10 +208,7 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
             exchange[F, Array[Long]](TelemetrySpanName.STMT_EXECUTE_BATCH_PREPARED) { (span: Span[F]) =>
               protocol.resetSequenceId *>
                 batchedArgs.get.flatMap { args =>
-                  val batchAttributes = baseAttributes ++ List(
-                    Some(TelemetryAttribute.dbOperationName("BATCH")),
-                    TelemetryAttribute.batchSize(args.length.toLong)
-                  ).flatten
+                  val batchAttributes = baseAttributes ++ TelemetryAttribute.batchSize(args.length.toLong)
 
                   if args.isEmpty then F.pure(Array.empty)
                   else

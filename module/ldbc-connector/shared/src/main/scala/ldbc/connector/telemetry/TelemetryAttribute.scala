@@ -117,9 +117,12 @@ object TelemetryAttribute:
    * Batch size for batch operations
    * Operations are only considered batches when they contain two or more operations
    */
-  def batchSize(size: Long): Option[Attribute[Long]] =
-    if size >= 2 then Some(Attribute(BATCH_SIZE, size))
-    else None
+  def batchSize(size: Long): List[Attribute[?]] =
+    if size >= 2 then List(
+      dbOperationName("BATCH"),
+      Attribute(BATCH_SIZE, size)
+    )
+    else List(dbOperationName("BATCH"))
 
   /**
    * Stored procedure name attribute

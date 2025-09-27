@@ -252,9 +252,7 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
       protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON) *>
       exchange[F, Array[Long]](TelemetrySpanName.STMT_EXECUTE_BATCH) { (span: Span[F]) =>
         batchedArgs.get.flatMap { args =>
-          val batchAttributes = TelemetryAttribute.batchSize(args.length.toLong) match
-            case Some(attr) => baseAttributes ++ List(TelemetryAttribute.dbOperationName("BATCH"), attr)
-            case None       => baseAttributes ++ List(TelemetryAttribute.dbOperationName("BATCH"))
+          val batchAttributes = baseAttributes ++ TelemetryAttribute.batchSize(args.length.toLong)
 
           if args.isEmpty then F.pure(Array.empty)
           else

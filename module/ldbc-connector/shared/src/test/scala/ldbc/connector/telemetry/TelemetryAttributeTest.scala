@@ -67,11 +67,11 @@ class TelemetryAttributeTest extends FTestPlatform:
   }
 
   test("batchSize should return Some for size >= 2") {
-    assertEquals(TelemetryAttribute.batchSize(2L), Some(Attribute("db.operation.batch.size", 2L)))
-    assertEquals(TelemetryAttribute.batchSize(100L), Some(Attribute("db.operation.batch.size", 100L)))
+    assertEquals(TelemetryAttribute.batchSize(2L), List(TelemetryAttribute.dbOperationName("BATCH"), Attribute("db.operation.batch.size", 2L)))
+    assertEquals(TelemetryAttribute.batchSize(100L), List(TelemetryAttribute.dbOperationName("BATCH"), Attribute("db.operation.batch.size", 100L)))
   }
 
   test("batchSize should return None for size < 2") {
-    assertEquals(TelemetryAttribute.batchSize(1L), None)
-    assertEquals(TelemetryAttribute.batchSize(0L), None)
+    assertEquals(TelemetryAttribute.batchSize(1L), List(TelemetryAttribute.dbOperationName("BATCH")))
+    assertEquals(TelemetryAttribute.batchSize(0L), List(TelemetryAttribute.dbOperationName("BATCH")))
   }
