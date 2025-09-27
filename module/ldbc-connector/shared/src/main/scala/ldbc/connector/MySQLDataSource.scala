@@ -427,6 +427,7 @@ object MySQLDataSource:
    * 
    * @param config the MySQL configuration containing pool settings
    * @param metricsTracker optional tracker for pool metrics (defaults to in-memory)
+   * @param tracer optional OpenTelemetry tracer for distributed tracing (defaults to no-op tracer)
    * @tparam F the effect type with required type class instances
    * @return a Resource managing the pooled data source lifecycle
    * 
@@ -450,8 +451,9 @@ object MySQLDataSource:
    */
   def pooling[F[_]: Async: Network: Console: Hashing: UUIDGen](
     config:         MySQLConfig,
-    metricsTracker: Option[PoolMetricsTracker[F]] = None
-  ): Resource[F, PooledDataSource[F]] = PooledDataSource.fromConfig(config, metricsTracker)
+    metricsTracker: Option[PoolMetricsTracker[F]] = None,
+    tracer:         Option[Tracer[F]] = None
+  ): Resource[F, PooledDataSource[F]] = PooledDataSource.fromConfig(config, metricsTracker, tracer)
 
   /**
    * Creates a pooled DataSource with connection lifecycle hooks.
@@ -473,6 +475,7 @@ object MySQLDataSource:
    * 
    * @param config the MySQL configuration containing pool settings
    * @param metricsTracker optional tracker for pool metrics (defaults to in-memory)
+   * @param tracer optional OpenTelemetry tracer for distributed tracing (defaults to no-op tracer)
    * @param before optional callback executed when acquiring a connection from the pool
    * @param after optional callback executed when returning a connection to the pool
    * @tparam F the effect type with required type class instances
@@ -504,7 +507,8 @@ object MySQLDataSource:
   def poolingWithBeforeAfter[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
     config:         MySQLConfig,
     metricsTracker: Option[PoolMetricsTracker[F]] = None,
+    tracer:         Option[Tracer[F]] = None,
     before:         Option[Connection[F] => F[A]] = None,
     after:          Option[(A, Connection[F]) => F[Unit]] = None
   ): Resource[F, PooledDataSource[F]] =
-    PooledDataSource.fromConfigWithBeforeAfter(config, metricsTracker, before, after)
+    PooledDataSource.fromConfigWithBeforeAfter(config, metricsTracker, tracer, before, after)
