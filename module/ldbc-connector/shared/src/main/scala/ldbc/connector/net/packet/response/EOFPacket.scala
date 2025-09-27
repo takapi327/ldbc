@@ -12,6 +12,8 @@ import scodec.bits.*
 
 import cats.syntax.option.*
 
+import org.typelevel.otel4s.Attribute
+
 import ldbc.connector.data.CapabilitiesFlags
 
 /**
@@ -37,6 +39,11 @@ case class EOFPacket(
   warnings:    Int,
   statusFlags: Int
 ) extends GenericResponsePackets:
+
+  /**
+   * Attribute for EOFException
+   */
+  def attribute: Attribute[String] = Attribute("error.type", "EOFException")
 
   override def toString: String = "EOF_Packet"
 

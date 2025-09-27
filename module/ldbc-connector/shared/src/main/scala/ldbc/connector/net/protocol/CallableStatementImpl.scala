@@ -27,6 +27,7 @@ import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.Protocol
 import ldbc.connector.syntax.*
+import ldbc.connector.telemetry.*
 
 case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
   protocol:                Protocol[F],
@@ -55,15 +56,12 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
   extends CallableStatement[F],
           SharedPreparedStatement[F]:
 
-  private val attributes = protocol.initialPacket.attributes ++ List(
-    Attribute("type", "CallableStatement"),
-    Attribute("sql", sql)
-  )
+  private val baseAttributes = buildBaseAttributes(protocol)
 
   override def executeQuery(): F[ResultSet[F]] =
     checkClosed() *>
       checkNullOrEmptyQuery(sql) *>
-      exchange[F, ResultSet[F]]("statement") { (span: Span[F]) =>
+      exchange[F, ResultSet[F]](TelemetrySpanName.STMT_CALLABLE) { (span: Span[F]) =>
         if sql.toUpperCase.startsWith("CALL") then
           executeCallStatement(span).flatMap { resultSets =>
             resultSets.headOption match
@@ -87,12 +85,11 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
           } <* retrieveOutParams()
         else
           params.get.flatMap { params =>
-            span.addAttributes(
-              (attributes ++ List(
-                Attribute("params", params.map((_, param) => param.toString).mkString(", ")),
-                Attribute("execute", "query")
-              ))*
-            ) *>
+            val queryAttributes = baseAttributes ++ List(
+              TelemetryAttribute.dbQueryText(sql)
+            )
+
+            span.addAttributes(queryAttributes*) *>
               protocol.resetSequenceId *>
               protocol.send(
                 ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)
@@ -104,7 +101,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
   override def executeLargeUpdate(): F[Long] =
     checkClosed() *>
       checkNullOrEmptyQuery(sql) *>
-      exchange[F, Long]("statement") { (span: Span[F]) =>
+      exchange[F, Long](TelemetrySpanName.STMT_CALLABLE) { (span: Span[F]) =>
         if sql.toUpperCase.startsWith("CALL") then
           executeCallStatement(span).flatMap { resultSets =>
             resultSets.headOption match
@@ -128,16 +125,19 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
           } *> retrieveOutParams() *> F.pure(-1)
         else
           params.get.flatMap { params =>
-            span.addAttributes(
-              (attributes ++ List(
-                Attribute("params", params.map((_, param) => param.toString).mkString(", ")),
-                Attribute("execute", "update")
-              ))*
-            ) *>
+            val queryAttributes = baseAttributes ++ List(
+              TelemetryAttribute.dbQueryText(sql)
+            )
+
+            span.addAttributes(queryAttributes*) *>
               sendQuery(buildQuery(sql, params)).flatMap {
                 case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
-                case error: ERRPacket => F.raiseError(error.toException(Some(sql), None))
-                case _: EOFPacket     => F.raiseError(new SQLException("Unexpected EOF packet"))
+                case error: ERRPacket =>
+                  val exception = error.toException(Some(sql), None, params)
+                  span.recordException(exception, error.attributes*) *> F.raiseError(exception)
+                case eof: EOFPacket =>
+                  val exception = new SQLException("Unexpected EOF packet")
+                  span.recordException(exception, eof.attribute) *> F.raiseError(exception)
               }
           }
       }
@@ -145,7 +145,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
   override def execute(): F[Boolean] =
     checkClosed() *>
       checkNullOrEmptyQuery(sql) *>
-      exchange[F, Boolean]("statement") { (span: Span[F]) =>
+      exchange[F, Boolean](TelemetrySpanName.STMT_CALLABLE) { (span: Span[F]) =>
         if sql.toUpperCase.startsWith("CALL") then
           executeCallStatement(span).flatMap { results =>
             moreResults.update(_ => results.nonEmpty) *>
@@ -156,16 +156,19 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
         else
           params.get
             .flatMap { params =>
-              span.addAttributes(
-                (attributes ++ List(
-                  Attribute("params", params.map((_, param) => param.toString).mkString(", ")),
-                  Attribute("execute", "update")
-                ))*
-              ) *>
+              val queryAttributes = baseAttributes ++ List(
+                TelemetryAttribute.dbQueryText(sql)
+              )
+
+              span.addAttributes(queryAttributes*) *>
                 sendQuery(buildQuery(sql, params)).flatMap {
                   case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
-                  case error: ERRPacket => F.raiseError(error.toException(Some(sql), None))
-                  case _: EOFPacket     => F.raiseError(new SQLException("Unexpected EOF packet"))
+                  case error: ERRPacket =>
+                    val exception = error.toException(Some(sql), None, params)
+                    span.recordException(exception, error.attributes*) *> F.raiseError(exception)
+                  case eof: EOFPacket =>
+                    val exception = new SQLException("Unexpected EOF packet")
+                    span.recordException(exception, eof.attribute) *> F.raiseError(exception)
                 }
             }
             .map(_ => false)
@@ -200,60 +203,63 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
   override def executeLargeBatch(): F[Array[Long]] =
     checkClosed() *>
       checkNullOrEmptyQuery(sql) *>
-      exchange[F, Array[Long]]("statement") { (span: Span[F]) =>
+      exchange[F, Array[Long]](TelemetrySpanName.STMT_CALLABLE) { (span: Span[F]) =>
         batchedArgs.get.flatMap { args =>
-          span.addAttributes(
-            (attributes ++ List(
-              Attribute("execute", "batch"),
-              Attribute("size", args.length.toLong),
-              Attribute("sql", args.toArray.toSeq)
-            ))*
-          ) *> (
-            if args.isEmpty then F.pure(Array.empty)
-            else
-              sql.toUpperCase match
-                case q if q.startsWith("INSERT") =>
+          val batchAttributes = baseAttributes ++ TelemetryAttribute.batchSize(args.length.toLong)
+
+          if args.isEmpty then F.pure(Array.empty)
+          else
+            sql.toUpperCase match
+              case q if q.startsWith("INSERT") =>
+                span.addAttributes(batchAttributes*) *>
                   sendQuery(sql.split("VALUES").head + " VALUES" + args.mkString(","))
                     .flatMap {
                       case _: OKPacket      => F.pure(Array.fill(args.length)(Statement.SUCCESS_NO_INFO.toLong))
-                      case error: ERRPacket => F.raiseError(error.toException(Some(sql), None))
-                      case _: EOFPacket     => F.raiseError(new SQLException("Unexpected EOF packet"))
+                      case error: ERRPacket =>
+                        val exception = error.toException(Some(sql), None)
+                        span.recordException(exception, error.attributes*) *> F.raiseError(exception)
+                      case eof: EOFPacket =>
+                        val exception = new SQLException("Unexpected EOF packet")
+                        span.recordException(exception, eof.attribute) *> F.raiseError(exception)
                     }
-                case q if q.startsWith("update") || q.startsWith("delete") || q.startsWith("CALL") =>
+              case q if q.startsWith("update") || q.startsWith("delete") || q.startsWith("CALL") =>
+                span.addAttributes(batchAttributes*) *>
                   protocol.resetSequenceId *>
-                    protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON) *>
-                    protocol.resetSequenceId *>
-                    protocol.send(
-                      ComQueryPacket(
-                        args.mkString(";"),
-                        protocol.initialPacket.capabilityFlags,
-                        ListMap.empty
-                      )
-                    ) *>
-                    args
-                      .foldLeft(F.pure(Vector.empty[Long])) { ($acc, _) =>
-                        for
-                          acc    <- $acc
-                          result <-
-                            protocol
-                              .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
-                              .flatMap {
-                                case result: OKPacket =>
-                                  lastInsertId.set(result.lastInsertId) *> F.pure(acc :+ result.affectedRows)
-                                case error: ERRPacket =>
-                                  F.raiseError(error.toException("Failed to execute batch", acc))
-                                case _: EOFPacket => F.raiseError(new SQLException("Unexpected EOF packet"))
-                              }
-                        yield result
-                      }
-                      .map(_.toArray) <*
-                    protocol.resetSequenceId <*
-                    protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF)
-                case _ =>
-                  F.raiseError(
-                    new SQLException("The batch query must be an INSERT, UPDATE, or DELETE, CALL statement.")
-                  )
-          )
+                  protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON) *>
+                  protocol.resetSequenceId *>
+                  protocol.send(
+                    ComQueryPacket(
+                      args.mkString(";"),
+                      protocol.initialPacket.capabilityFlags,
+                      ListMap.empty
+                    )
+                  ) *>
+                  args
+                    .foldLeft(F.pure(Vector.empty[Long])) { ($acc, _) =>
+                      for
+                        acc    <- $acc
+                        result <-
+                          protocol
+                            .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
+                            .flatMap {
+                              case result: OKPacket =>
+                                lastInsertId.set(result.lastInsertId) *> F.pure(acc :+ result.affectedRows)
+                              case error: ERRPacket =>
+                                val exception = error.toException("Failed to execute batch", acc)
+                                span.recordException(exception, error.attributes*) *> F.raiseError(exception)
+                              case eof: EOFPacket =>
+                                val exception = new SQLException("Unexpected EOF packet")
+                                span.recordException(exception, eof.attribute) *> F.raiseError(exception)
+                            }
+                      yield result
+                    }
+                    .map(_.toArray) <*
+                  protocol.resetSequenceId <*
+                  protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF)
+              case _ =>
+                F.raiseError(
+                  new SQLException("The batch query must be an INSERT, UPDATE, or DELETE, CALL statement.")
+                )
         }
       } <* params.set(SortedMap.empty) <* batchedArgs.set(Vector.empty)
 
@@ -789,12 +795,11 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
     setInOutParamsOnServer(paramInfo) *>
       setOutParams() *>
       params.get.flatMap { params =>
-        span.addAttributes(
-          (attributes ++ List(
-            Attribute("params", params.map((_, param) => param.toString).mkString(", ")),
-            Attribute("execute", "query")
-          ))*
-        ) *>
+        val queryAttributes = baseAttributes ++ List(
+          TelemetryAttribute.dbQueryText(sql)
+        )
+
+        span.addAttributes(queryAttributes*) *>
           protocol.resetSequenceId *>
           protocol.send(
             ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)
