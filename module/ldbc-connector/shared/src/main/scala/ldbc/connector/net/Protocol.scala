@@ -164,7 +164,7 @@ object Protocol:
     override def send(request: RequestPacket): F[Unit] = socket.send(request)
 
     override def comQuit(): F[Unit] =
-      exchange[F, Unit](TelemetrySpanName.COMMAND_QUIT) { (span: Span[F]) =>
+      exchange[F, Unit](TelemetrySpanName.CONNECTION_CLOSE) { (span: Span[F]) =>
         span.addAttributes(attributes*) *> socket.send(ComQuitPacket())
       }
 
