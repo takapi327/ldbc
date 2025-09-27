@@ -204,19 +204,19 @@
     <p>とはいえ、もしこのドキュメントやldbc APIに戸惑ったり苛立ったりしたら、issueを発行して助けを求めてください。ライブラリもドキュメントも歴史が浅く、急速に変化しているため、不明瞭な点があるのは避けられません。従って、本書は問題や脱落に対処するために継続的に更新されます。</p>
     
     <h2 id="クイックスタート" class="section"><a class="anchor-link left" href="#クイックスタート"><i class="icofont-laika link">&#xef71;</i></a>クイックスタート</h2>
-    <p>現在のバージョンは <strong>Scala 3.3.6</strong> に対応した <strong>0.4.0-RC2</strong> です。</p>
+    <p>現在のバージョンは <strong>Scala 3.3.6</strong> に対応した <strong>0.4.0-RC3</strong> です。</p>
     <pre><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> ++= </span><span class="type-name">Seq</span><span>(
 
   </span><span class="comment">// まずはこの1つから
-</span><span>  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-dsl&quot;</span><span> % </span><span class="string-literal">&quot;0.4.0-RC2&quot;</span><span>,
+</span><span>  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-dsl&quot;</span><span> % </span><span class="string-literal">&quot;0.4.0-RC3&quot;</span><span>,
   
   </span><span class="comment">// 使用するコネクタを選択
-</span><span>  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;jdbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.4.0-RC2&quot;</span><span>, </span><span class="comment">// Javaコネクタ (対応プラットフォーム: JVM)
-</span><span>  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.4.0-RC2&quot;</span><span>, </span><span class="comment">// Scalaコネクタ (対応プラットフォーム: JVM, JS, Native)
+</span><span>  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;jdbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.4.0-RC3&quot;</span><span>, </span><span class="comment">// Javaコネクタ (対応プラットフォーム: JVM)
+</span><span>  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.4.0-RC3&quot;</span><span>, </span><span class="comment">// Scalaコネクタ (対応プラットフォーム: JVM, JS, Native)
 </span><span>
   </span><span class="comment">// そして、必要に応じてこれらを加える
-</span><span>  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-query-builder&quot;</span><span> % </span><span class="string-literal">&quot;0.4.0-RC2&quot;</span><span>, </span><span class="comment">// 型安全なクエリ構築
-</span><span>  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-schema&quot;</span><span>        % </span><span class="string-literal">&quot;0.4.0-RC2&quot;</span><span>, </span><span class="comment">// データベーススキーマの構築
+</span><span>  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-query-builder&quot;</span><span> % </span><span class="string-literal">&quot;0.4.0-RC3&quot;</span><span>, </span><span class="comment">// 型安全なクエリ構築
+</span><span>  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-schema&quot;</span><span>        % </span><span class="string-literal">&quot;0.4.0-RC3&quot;</span><span>, </span><span class="comment">// データベーススキーマの構築
 </span><span>)</span></code></pre>
     
     <h2 id="todo" class="section"><a class="anchor-link left" href="#todo"><i class="icofont-laika link">&#xef71;</i></a>TODO</h2>

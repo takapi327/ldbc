@@ -170,10 +170,11 @@
     <li class="level1 nav-leaf"><a href="#データ取得の基本ワークフロー">データ取得の基本ワークフロー</a></li>
     <li class="level1 nav-leaf"><a href="#コレクションへの行の読み込み">コレクションへの行の読み込み</a></li>
     <li class="level1 nav-leaf"><a href="#複数列クエリ">複数列クエリ</a></li>
-    <li class="level1 nav-leaf"><a href="#ケースクラスへのマッピング">ケースクラスへのマッピング</a></li>
-    <li class="level1 nav-leaf"><a href="#複数テーブルの結合とネストしたケースクラス">複数テーブルの結合とネストしたケースクラス</a></li>
+    <li class="level1 nav-node"><a href="#ケースクラスへのマッピング">ケースクラスへのマッピング</a></li>
+    <li class="level2 nav-leaf"><a href="#マッピングの仕組み">マッピングの仕組み</a></li>
+    <li class="level1 nav-node"><a href="#複数テーブルの結合とネストしたケースクラス">複数テーブルの結合とネストしたケースクラス</a></li>
+    <li class="level2 nav-leaf"><a href="#複雑なマッピングの仕組み">複雑なマッピングの仕組み</a></li>
     <li class="level1 nav-leaf"><a href="#タプルを使用した結合クエリ">タプルを使用した結合クエリ</a></li>
-    <li class="level1 nav-leaf"><a href="#テーブルのエイリアスとマッピング">テーブルのエイリアスとマッピング</a></li>
     <li class="level1 nav-leaf"><a href="#単一結果の取得-option型">単一結果の取得（Option型）</a></li>
     <li class="level1 nav-leaf"><a href="#クエリ実行メソッドの選択">クエリ実行メソッドの選択</a></li>
     <li class="level1 nav-leaf"><a href="#コレクション操作とクエリの組み合わせ">コレクション操作とクエリの組み合わせ</a></li>
@@ -184,6 +185,11 @@
     <li class="level2 nav-leaf"><a href="#usecursorfetchによる動作の最適化">UseCursorFetchによる動作の最適化</a></li>
     <li class="level2 nav-leaf"><a href="#大量データ処理の実例">大量データ処理の実例</a></li>
     <li class="level2 nav-leaf"><a href="#ストリーミングのメリット">ストリーミングのメリット</a></li>
+    <li class="level1 nav-node"><a href="#マッピングの詳細な仕組み">マッピングの詳細な仕組み</a></li>
+    <li class="level2 nav-leaf"><a href="#decoderとは">Decoderとは</a></li>
+    <li class="level2 nav-leaf"><a href="#基本的なdecoderの動作">基本的なDecoderの動作</a></li>
+    <li class="level2 nav-leaf"><a href="#カラム番号による読み取り">カラム番号による読み取り</a></li>
+    <li class="level2 nav-leaf"><a href="#エラーハンドリング">エラーハンドリング</a></li>
     <li class="level1 nav-leaf"><a href="#まとめ">まとめ</a></li>
     <li class="level1 nav-leaf"><a href="#次のステップ">次のステップ</a></li>
   </ul>
@@ -261,8 +267,17 @@
 </span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)                </span><span class="comment">// IO[List[User]]
 </span><span>  .</span><span class="identifier">unsafeRunSync</span><span>()               </span><span class="comment">// List[User]
 </span><span>  .</span><span class="identifier">foreach</span><span>(</span><span class="identifier">user</span><span> =&gt; </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;ID: </span><span class="substitution">${user.id}</span><span class="string-literal">, Name: </span><span class="substitution">${user.name}</span><span class="string-literal">, Email: </span><span class="substitution">${user.email}</span><span class="string-literal">&quot;</span><span>))</span></code></pre>
-    <p><strong>重要</strong>: ケースクラスのフィールド名とSQLクエリで選択するカラム名が一致している必要があります。順序も一致している必要がありますが、名前が正確に一致していれば、ldbcが適切にマッピングします。</p>
-    <p><img src="../../img/data_select.png" alt="Selecting Data"></p>
+    
+    <h3 id="マッピングの仕組み" class="section"><a class="anchor-link left" href="#マッピングの仕組み"><i class="icofont-laika link">&#xef71;</i></a>マッピングの仕組み</h3>
+    <p>以下の図は、SQLクエリの結果がどのようにしてUserモデルにマッピングされるかを示しています：</p>
+    <p><img src="../../img/select-mapping-simple-JP.svg" alt="シンプルなマッピングの仕組み"></p>
+    <p>この図から以下のような形でマッピング処理が行われています：</p>
+    <ol class="arabic">
+      <li><strong>SQL実行</strong>: <code>sql&quot;SELECT id, name, email FROM user&quot;</code>文字列補間でクエリを作成し、<code>.query[User]</code>で結果の型を指定</li>
+      <li><strong>ResultSet</strong>: データベースから返される結果セット（カラム番号1から順に値が格納）</li>
+      <li><strong>Decoder解決</strong>: コンパイル時に<code>Decoder[Long]</code>、<code>Decoder[String]</code>などの基本Decoderを合成して<code>Decoder[User]</code>を構築</li>
+      <li><strong>マッピング処理</strong>: 実行時に各カラムの値をdecodeメソッドで適切な型に変換し、最終的にUserインスタンスを生成</li>
+    </ol>
     
     <h2 id="複数テーブルの結合とネストしたケースクラス" class="section"><a class="anchor-link left" href="#複数テーブルの結合とネストしたケースクラス"><i class="icofont-laika link">&#xef71;</i></a>複数テーブルの結合とネストしたケースクラス</h2>
     <p><code>JOIN</code>を使って複数のテーブルからデータを取得する場合、ネストしたケースクラス構造にマッピングすることができます。以下の例では、<code>city</code>テーブルと<code>country</code>テーブルを結合し、結果を<code>CityWithCountry</code>クラスにマッピングしています：</p>
@@ -293,15 +308,32 @@
 </span><span>  .</span><span class="identifier">foreach</span><span>(</span><span class="identifier">cityWithCountry</span><span> =&gt; </span><span class="identifier">println</span><span>(
     </span><span class="string-literal">s&quot;City: </span><span class="substitution">${cityWithCountry.city.name}</span><span class="string-literal">, Country: </span><span class="substitution">${cityWithCountry.country.name}</span><span class="string-literal">&quot;</span><span>
   ))</span></code></pre>
-    <p>ldbcの特徴として、<code>テーブル名.カラム名</code>の形式で指定されたカラムは、自動的に<code>クラス名.フィールド名</code>にマッピングされます。これにより、上記の例では次のようなマッピングが行われます：</p>
-    <ul>
-      <li><code>city.id</code> → <code>CityWithCountry.city.id</code></li>
-      <li><code>city.name</code> → <code>CityWithCountry.city.name</code></li>
-      <li><code>country.code</code> → <code>CityWithCountry.country.code</code></li>
-      <li><code>country.name</code> → <code>CityWithCountry.country.name</code></li>
-      <li><code>country.region</code> → <code>CityWithCountry.country.region</code></li>
-    </ul>
-    <p><img src="../../img/data_multi_select.png" alt="Selecting Data"></p>
+    
+    <h3 id="複雑なマッピングの仕組み" class="section"><a class="anchor-link left" href="#複雑なマッピングの仕組み"><i class="icofont-laika link">&#xef71;</i></a>複雑なマッピングの仕組み</h3>
+    <p>以下の図は、JOIN結果がどのようにしてネストしたケースクラス（CityWithCountry）にマッピングされるかを示しています：</p>
+    <p><img src="../../img/select-mapping-complex-JP.svg" alt="複雑なマッピングの仕組み（JOIN結果）"></p>
+    <p>この図から分かるように：</p>
+    <ol class="arabic">
+      <li><strong>SQL実行</strong>: JOIN句を含むSQLクエリを実行し、<code>.query[CityWithCountry]</code>で結果の型を指定</li>
+      <li><strong>ResultSet</strong>: 5つのカラム（city.id、city.name、country.code、country.name、country.region）を持つ結果セット</li>
+      <li>
+        <strong>Decoder構築</strong>: 
+        <ul>
+          <li>City用のDecoder: <code>Decoder[Long]</code>と<code>Decoder[String]</code>を合成して<code>Decoder[City]</code>を作成</li>
+          <li>Country用のDecoder: 3つの<code>Decoder[String]</code>を合成して<code>Decoder[Country]</code>を作成</li>
+          <li>最終的に両者を合成して<code>Decoder[CityWithCountry]</code>を構築</li>
+        </ul>
+      </li>
+      <li>
+        <strong>マッピング処理</strong>: 
+        <ul>
+          <li>カラム1,2からCityオブジェクトを生成</li>
+          <li>カラム3,4,5からCountryオブジェクトを生成</li>
+          <li>両者を組み合わせてCityWithCountryインスタンスを生成</li>
+        </ul>
+      </li>
+    </ol>
+    <p>このように、ldbcは複雑なネストした構造でも、Decoderの合成により型安全にマッピングを行います。</p>
     
     <h2 id="タプルを使用した結合クエリ" class="section"><a class="anchor-link left" href="#タプルを使用した結合クエリ"><i class="icofont-laika link">&#xef71;</i></a>タプルを使用した結合クエリ</h2>
     <p>ネストしたケースクラスの代わりに、タプルを使用して複数テーブルのデータを取得することもできます：</p>
@@ -322,31 +354,6 @@
 </span><span>  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]                      </span><span class="comment">// DBIO[List[(City, Country)]]
 </span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)                </span><span class="comment">// IO[List[(City, Country)]]
 </span><span>  .</span><span class="identifier">unsafeRunSync</span><span>()               </span><span class="comment">// List[(City, Country)]
-</span><span>  .</span><span class="identifier">foreach</span><span> { </span><span class="keyword">case</span><span> (</span><span class="identifier">city</span><span>, </span><span class="identifier">country</span><span>) =&gt; 
-    </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;City: </span><span class="substitution">${city.name}</span><span class="string-literal">, Country: </span><span class="substitution">${country.name}</span><span class="string-literal">&quot;</span><span>)
-  }</span></code></pre>
-    <p>ここで重要なのは、タプルを使用する場合、テーブル名とケースクラスの名前は一致している必要があるということです。つまり、<code>city</code>テーブルは<code>City</code>クラスに、<code>country</code>テーブルは<code>Country</code>クラスにマッピングされます。</p>
-    
-    <h2 id="テーブルのエイリアスとマッピング" class="section"><a class="anchor-link left" href="#テーブルのエイリアスとマッピング"><i class="icofont-laika link">&#xef71;</i></a>テーブルのエイリアスとマッピング</h2>
-    <p>SQL文でテーブルにエイリアスを使用する場合、ケースクラスの名前もそのエイリアスと一致させる必要があります：</p>
-    <pre><code class="nohighlight"><span class="comment">// エイリアス名に合わせたケースクラス名
-</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">C</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Long</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>)
-</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">CT</span><span>(</span><span class="identifier">code</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">region</span><span>: </span><span class="type-name">String</span><span>)
-
-</span><span class="string-literal">sql&quot;&quot;&quot;
-  SELECT
-    c.id,
-    c.name,
-    ct.code,
-    ct.name,
-    ct.region
-  FROM city AS c
-  JOIN country AS ct ON c.country_code = ct.code
-&quot;&quot;&quot;</span><span>
-  .</span><span class="identifier">query</span><span>[(</span><span class="type-name">C</span><span>, </span><span class="type-name">CT</span><span>)]                </span><span class="comment">// Query[(C, CT)]
-</span><span>  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]                      </span><span class="comment">// DBIO[List[(C, CT)]]
-</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)                </span><span class="comment">// IO[List[(C, CT)]]
-</span><span>  .</span><span class="identifier">unsafeRunSync</span><span>()               </span><span class="comment">// List[(C, CT)]
 </span><span>  .</span><span class="identifier">foreach</span><span> { </span><span class="keyword">case</span><span> (</span><span class="identifier">city</span><span>, </span><span class="identifier">country</span><span>) =&gt; 
     </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;City: </span><span class="substitution">${city.name}</span><span class="string-literal">, Country: </span><span class="substitution">${country.name}</span><span class="string-literal">&quot;</span><span>)
   }</span></code></pre>
@@ -526,18 +533,57 @@
 </span><span>    .</span><span class="identifier">compile</span><span>.</span><span class="identifier">last</span><span>
     .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
     
+    <h2 id="マッピングの詳細な仕組み" class="section"><a class="anchor-link left" href="#マッピングの詳細な仕組み"><i class="icofont-laika link">&#xef71;</i></a>マッピングの詳細な仕組み</h2>
+    
+    <h3 id="decoderとは" class="section"><a class="anchor-link left" href="#decoderとは"><i class="icofont-laika link">&#xef71;</i></a>Decoderとは</h3>
+    <p>ldbcにおいて、<code>Decoder</code>は<code>ResultSet</code>からScalaの型への変換を担当する重要なコンポーネントです。Decoderは以下の特徴を持ちます：</p>
+    <ol class="arabic">
+      <li><strong>型安全性</strong>: コンパイル時に型の整合性を確認</li>
+      <li><strong>合成可能</strong>: 小さなDecoderを組み合わせて複雑な構造のDecoderを作成</li>
+      <li><strong>自動導出</strong>: 多くの場合、明示的な定義なしに自動的に生成</li>
+    </ol>
+    
+    <h3 id="基本的なdecoderの動作" class="section"><a class="anchor-link left" href="#基本的なdecoderの動作"><i class="icofont-laika link">&#xef71;</i></a>基本的なDecoderの動作</h3>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// 基本型のDecoder（暗黙的に提供される）
+</span><span class="keyword">val</span><span> </span><span class="identifier">longDecoder</span><span>: </span><span class="type-name">Decoder</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="type-name">Decoder</span><span>.</span><span class="identifier">long</span><span>
+</span><span class="keyword">val</span><span> </span><span class="identifier">stringDecoder</span><span>: </span><span class="type-name">Decoder</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="type-name">Decoder</span><span>.</span><span class="identifier">string</span><span>
+
+</span><span class="comment">// 複数のDecoderを合成
+</span><span class="keyword">val</span><span> </span><span class="identifier">tupleDecoder</span><span>: </span><span class="type-name">Decoder</span><span>[(</span><span class="type-name">Long</span><span>, </span><span class="type-name">String</span><span>)] = 
+  </span><span class="identifier">longDecoder</span><span> *: </span><span class="identifier">stringDecoder</span><span>
+
+</span><span class="comment">// ケースクラスへの変換
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">User</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Long</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>)
+</span><span class="keyword">val</span><span> </span><span class="identifier">userDecoder</span><span>: </span><span class="type-name">Decoder</span><span>[</span><span class="type-name">User</span><span>] = </span><span class="identifier">tupleDecoder</span><span>.</span><span class="identifier">to</span><span>[</span><span class="type-name">User</span><span>]</span></code></pre>
+    
+    <h3 id="カラム番号による読み取り" class="section"><a class="anchor-link left" href="#カラム番号による読み取り"><i class="icofont-laika link">&#xef71;</i></a>カラム番号による読み取り</h3>
+    <p>Decoderは<code>ResultSet</code>から値を読み取る際、カラム番号（1から開始）を使用します：</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// decode(columnIndex, resultSet)メソッドの動作
+</span><span class="identifier">decoder</span><span>.</span><span class="identifier">decode</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="identifier">resultSet</span><span>) </span><span class="comment">// 1番目のカラムを読み取り
+</span><span class="identifier">decoder</span><span>.</span><span class="identifier">decode</span><span>(</span><span class="number-literal">2</span><span>, </span><span class="identifier">resultSet</span><span>) </span><span class="comment">// 2番目のカラムを読み取り</span></code></pre>
+    
+    <h3 id="エラーハンドリング" class="section"><a class="anchor-link left" href="#エラーハンドリング"><i class="icofont-laika link">&#xef71;</i></a>エラーハンドリング</h3>
+    <p>デコード処理では、以下のようなエラーが発生する可能性があります：</p>
+    <ul>
+      <li><strong>型の不一致</strong>: SQLの型とScalaの型が互換性がない</li>
+      <li><strong>NULL値</strong>: NULLを許可しない型へのマッピング</li>
+      <li><strong>カラム数の不一致</strong>: 期待するカラム数と実際のカラム数が異なる</li>
+    </ul>
+    <p>これらのエラーは<code>Either[Decoder.Error, A]</code>として表現され、実行時に適切なエラーメッセージが提供されます。</p>
+    
     <h2 id="まとめ" class="section"><a class="anchor-link left" href="#まとめ"><i class="icofont-laika link">&#xef71;</i></a>まとめ</h2>
     <p>ldbcは、データベースからのデータ取得を型安全かつ直感的に行うための機能を提供しています。このチュートリアルでは、以下の内容を説明しました：</p>
     <ul>
       <li>基本的なデータ取得のワークフロー</li>
       <li>単一カラムと複数カラムのクエリ</li>
-      <li>ケースクラスへのマッピング</li>
+      <li>ケースクラスへのマッピングと<strong>その内部動作の仕組み</strong></li>
+      <li><strong>Decoderによる型安全な変換処理</strong></li>
       <li>複数テーブルの結合とネストしたデータ構造</li>
       <li>単一結果と複数結果の取得</li>
       <li><strong>ストリーミングによる大量データの効率的な処理</strong></li>
       <li>さまざまな実行メソッド</li>
     </ul>
-    <p>特にストリーミング機能を活用することで、大量のデータでもメモリ効率的に処理できるようになります。大量データを扱う場合は<code>UseCursorFetch=true</code>の設定を検討してください。</p>
+    <p>特に、Decoderの合成によるマッピングの仕組みを理解することで、より複雑なデータ構造でも安全に扱えるようになります。また、ストリーミング機能を活用することで、大量のデータでもメモリ効率的に処理できるようになります。大量データを扱う場合は<code>UseCursorFetch=true</code>の設定を検討してください。</p>
     
     <h2 id="次のステップ" class="section"><a class="anchor-link left" href="#次のステップ"><i class="icofont-laika link">&#xef71;</i></a>次のステップ</h2>
     <p>これでデータベースからさまざまな形式でデータを取得する方法が理解できました。型安全なマッピングにより、データベースの結果を直接Scalaのデータ構造にマッピングできることがわかりました。</p>

@@ -187,7 +187,6 @@
     <li class="level1 nav-node"><a href="#batch-commands">Batch Commands</a></li>
     <li class="level2 nav-leaf"><a href="#difference-between-statement-and-preparedstatement">Difference Between Statement and PreparedStatement</a></li>
     <li class="level1 nav-leaf"><a href="#executing-stored-procedures">Executing Stored Procedures</a></li>
-    <li class="level1 nav-leaf"><a href="#unsupported-features">Unsupported Features</a></li>
   </ul>
 
   <p class="footer"></p>
@@ -211,9 +210,9 @@
     We plan to provide higher-layer APIs using this connector in the future. We also plan to maintain compatibility with existing higher-layer APIs.</p>
     <p>To use it, you need to set up the following dependency in your project:</p>
     <p><strong>JVM</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.4.0-RC2&quot;</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.4.0-RC3&quot;</span></code></pre>
     <p><strong>JS/Native</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %%% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.4.0-RC2&quot;</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %%% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.4.0-RC3&quot;</span></code></pre>
     <p><strong>Supported Versions</strong></p>
     <p>The current version supports the following versions of MySQL:</p>
     <ul>
@@ -894,15 +893,6 @@
   </span><span class="keyword">yield</span><span> </span><span class="identifier">value</span><span> </span><span class="comment">// 2
 </span><span>}</span></code></pre>
     <p><em>Note: When specifying an Out parameter with <code>registerOutParameter</code>, if the same index value is not used to set the parameter with the <code>setXXX</code> method, the value will be set to <code>Null</code> on the server.</em></p>
-    
-    <h2 id="unsupported-features" class="section"><a class="anchor-link left" href="#unsupported-features"><i class="icofont-laika link">&#xef71;</i></a>Unsupported Features</h2>
-    <p>The ldbc connector is currently an experimental feature. Therefore, the following features are not supported.
-    Feature provision will be carried out sequentially.</p>
-    <ul>
-      <li>Connection pooling</li>
-      <li>Failover measures</li>
-      <li>etc...</li>
-    </ul>
 
     
 <hr class="footer-rule"/>

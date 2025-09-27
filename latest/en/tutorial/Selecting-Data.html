@@ -170,10 +170,11 @@
     <li class="level1 nav-leaf"><a href="#basic-data-retrieval-workflow">Basic Data Retrieval Workflow</a></li>
     <li class="level1 nav-leaf"><a href="#reading-rows-into-collections">Reading Rows into Collections</a></li>
     <li class="level1 nav-leaf"><a href="#multiple-column-queries">Multiple Column Queries</a></li>
-    <li class="level1 nav-leaf"><a href="#mapping-to-case-classes">Mapping to Case Classes</a></li>
-    <li class="level1 nav-leaf"><a href="#joining-multiple-tables-and-nested-case-classes">Joining Multiple Tables and Nested Case Classes</a></li>
+    <li class="level1 nav-node"><a href="#mapping-to-case-classes">Mapping to Case Classes</a></li>
+    <li class="level2 nav-leaf"><a href="#how-mapping-works">How Mapping Works</a></li>
+    <li class="level1 nav-node"><a href="#joining-multiple-tables-and-nested-case-classes">Joining Multiple Tables and Nested Case Classes</a></li>
+    <li class="level2 nav-leaf"><a href="#how-complex-mapping-works">How Complex Mapping Works</a></li>
     <li class="level1 nav-leaf"><a href="#using-tuples-for-join-queries">Using Tuples for Join Queries</a></li>
-    <li class="level1 nav-leaf"><a href="#table-aliases-and-mapping">Table Aliases and Mapping</a></li>
     <li class="level1 nav-leaf"><a href="#getting-a-single-result-option-type">Getting a Single Result (Option Type)</a></li>
     <li class="level1 nav-leaf"><a href="#choosing-query-execution-methods">Choosing Query Execution Methods</a></li>
     <li class="level1 nav-leaf"><a href="#combining-collection-operations-with-queries">Combining Collection Operations with Queries</a></li>
@@ -184,6 +185,11 @@
     <li class="level2 nav-leaf"><a href="#optimizing-behavior-with-usecursorfetch">Optimizing Behavior with UseCursorFetch</a></li>
     <li class="level2 nav-leaf"><a href="#example-of-large-data-processing">Example of Large Data Processing</a></li>
     <li class="level2 nav-leaf"><a href="#benefits-of-streaming">Benefits of Streaming</a></li>
+    <li class="level1 nav-node"><a href="#how-mapping-works-in-detail">How Mapping Works in Detail</a></li>
+    <li class="level2 nav-leaf"><a href="#what-is-a-decoder">What is a Decoder?</a></li>
+    <li class="level2 nav-leaf"><a href="#basic-decoder-operations">Basic Decoder Operations</a></li>
+    <li class="level2 nav-leaf"><a href="#reading-by-column-number">Reading by Column Number</a></li>
+    <li class="level2 nav-leaf"><a href="#error-handling">Error Handling</a></li>
     <li class="level1 nav-leaf"><a href="#summary">Summary</a></li>
     <li class="level1 nav-leaf"><a href="#next-steps">Next Steps</a></li>
   </ul>
@@ -261,8 +267,17 @@
 </span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)                </span><span class="comment">// IO[List[User]]
 </span><span>  .</span><span class="identifier">unsafeRunSync</span><span>()               </span><span class="comment">// List[User]
 </span><span>  .</span><span class="identifier">foreach</span><span>(</span><span class="identifier">user</span><span> =&gt; </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;ID: </span><span class="substitution">${user.id}</span><span class="string-literal">, Name: </span><span class="substitution">${user.name}</span><span class="string-literal">, Email: </span><span class="substitution">${user.email}</span><span class="string-literal">&quot;</span><span>))</span></code></pre>
-    <p><strong>Important</strong>: The field names in the case class need to match the column names selected in the SQL query. The order also needs to match, but ldbc will map appropriately if the names match exactly.</p>
-    <p><img src="../../img/data_select.png" alt="Selecting Data"></p>
+    
+    <h3 id="how-mapping-works" class="section"><a class="anchor-link left" href="#how-mapping-works"><i class="icofont-laika link">&#xef71;</i></a>How Mapping Works</h3>
+    <p>The following diagram shows how SQL query results are mapped to the User model:</p>
+    <p><img src="../../img/select-mapping-simple-EN.svg" alt="Simple Mapping Mechanism"></p>
+    <p>The mapping process is performed as follows based on this diagram:</p>
+    <ol class="arabic">
+      <li><strong>SQL Execution</strong>: Create a query with <code>sql&quot;SELECT id, name, email FROM user&quot;</code> string interpolation and specify the result type with <code>.query[User]</code></li>
+      <li><strong>ResultSet</strong>: The result set returned from the database (values stored sequentially starting from column number 1)</li>
+      <li><strong>Decoder Resolution</strong>: At compile time, compose basic Decoders like <code>Decoder[Long]</code> and <code>Decoder[String]</code> to build <code>Decoder[User]</code></li>
+      <li><strong>Mapping Process</strong>: At runtime, convert each column value to the appropriate type with the decode method and finally generate a User instance</li>
+    </ol>
     
     <h2 id="joining-multiple-tables-and-nested-case-classes" class="section"><a class="anchor-link left" href="#joining-multiple-tables-and-nested-case-classes"><i class="icofont-laika link">&#xef71;</i></a>Joining Multiple Tables and Nested Case Classes</h2>
     <p>When retrieving data from multiple tables using <code>JOIN</code>, you can map to nested case class structures. In the following example, we join the <code>city</code> and <code>country</code> tables and map the result to a <code>CityWithCountry</code> class:</p>
@@ -293,15 +308,31 @@
 </span><span>  .</span><span class="identifier">foreach</span><span>(</span><span class="identifier">cityWithCountry</span><span> =&gt; </span><span class="identifier">println</span><span>(
     </span><span class="string-literal">s&quot;City: </span><span class="substitution">${cityWithCountry.city.name}</span><span class="string-literal">, Country: </span><span class="substitution">${cityWithCountry.country.name}</span><span class="string-literal">&quot;</span><span>
   ))</span></code></pre>
-    <p>A feature of ldbc is that columns specified in the format <code>table_name.column_name</code> are automatically mapped to <code>class_name.field_name</code>. This enables the following mappings in the above example:</p>
-    <ul>
-      <li><code>city.id</code> → <code>CityWithCountry.city.id</code></li>
-      <li><code>city.name</code> → <code>CityWithCountry.city.name</code></li>
-      <li><code>country.code</code> → <code>CityWithCountry.country.code</code></li>
-      <li><code>country.name</code> → <code>CityWithCountry.country.name</code></li>
-      <li><code>country.region</code> → <code>CityWithCountry.country.region</code></li>
-    </ul>
-    <p><img src="../../img/data_multi_select.png" alt="Selecting Data"></p>
+    
+    <h3 id="how-complex-mapping-works" class="section"><a class="anchor-link left" href="#how-complex-mapping-works"><i class="icofont-laika link">&#xef71;</i></a>How Complex Mapping Works</h3>
+    <p>The following diagram shows how JOIN results are mapped to nested case classes (CityWithCountry):</p>
+    <p><img src="../../img/select-mapping-complex-EN.svg" alt="Complex Mapping Mechanism (JOIN Results)"></p>
+    <p>As can be seen from this diagram:</p>
+    <ol class="arabic">
+      <li><strong>SQL Execution</strong>: Execute a SQL query with JOIN clause and specify the result type with <code>.query[CityWithCountry]</code></li>
+      <li><strong>ResultSet</strong>: Result set with 5 columns (city.id, city.name, country.code, country.name, country.region)</li>
+      <li>
+        <strong>Decoder Construction</strong>: 
+        <ul>
+          <li>Decoder for City: Compose <code>Decoder[Long]</code> and <code>Decoder[String]</code> to create <code>Decoder[City]</code></li>
+          <li>Decoder for Country: Compose three <code>Decoder[String]</code>s to create <code>Decoder[Country]</code></li>
+          <li>Finally compose both to build <code>Decoder[CityWithCountry]</code></li>
+        </ul>
+      </li>
+      <li>
+        <strong>Mapping Process</strong>: 
+        <ul>
+          <li>Generate City object from columns 1,2</li>
+          <li>Generate Country object from columns 3,4,5</li>
+          <li>Combine both to create CityWithCountry instance</li>
+        </ul>
+      </li>
+    </ol>
     
     <h2 id="using-tuples-for-join-queries" class="section"><a class="anchor-link left" href="#using-tuples-for-join-queries"><i class="icofont-laika link">&#xef71;</i></a>Using Tuples for Join Queries</h2>
     <p>Instead of nested case classes, you can also use tuples to retrieve data from multiple tables:</p>
@@ -322,31 +353,6 @@
 </span><span>  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]                      </span><span class="comment">// DBIO[List[(City, Country)]]
 </span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)                </span><span class="comment">// IO[List[(City, Country)]]
 </span><span>  .</span><span class="identifier">unsafeRunSync</span><span>()               </span><span class="comment">// List[(City, Country)]
-</span><span>  .</span><span class="identifier">foreach</span><span> { </span><span class="keyword">case</span><span> (</span><span class="identifier">city</span><span>, </span><span class="identifier">country</span><span>) =&gt; 
-    </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;City: </span><span class="substitution">${city.name}</span><span class="string-literal">, Country: </span><span class="substitution">${country.name}</span><span class="string-literal">&quot;</span><span>)
-  }</span></code></pre>
-    <p>It&#39;s important to note that when using tuples, the table name and the case class name need to match. That is, the <code>city</code> table is mapped to the <code>City</code> class, and the <code>country</code> table is mapped to the <code>Country</code> class.</p>
-    
-    <h2 id="table-aliases-and-mapping" class="section"><a class="anchor-link left" href="#table-aliases-and-mapping"><i class="icofont-laika link">&#xef71;</i></a>Table Aliases and Mapping</h2>
-    <p>When using aliases for tables in SQL statements, you need to match the case class name with that alias:</p>
-    <pre><code class="nohighlight"><span class="comment">// Case class names matching alias names
-</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">C</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Long</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>)
-</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">CT</span><span>(</span><span class="identifier">code</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">region</span><span>: </span><span class="type-name">String</span><span>)
-
-</span><span class="string-literal">sql&quot;&quot;&quot;
-  SELECT
-    c.id,
-    c.name,
-    ct.code,
-    ct.name,
-    ct.region
-  FROM city AS c
-  JOIN country AS ct ON c.country_code = ct.code
-&quot;&quot;&quot;</span><span>
-  .</span><span class="identifier">query</span><span>[(</span><span class="type-name">C</span><span>, </span><span class="type-name">CT</span><span>)]                </span><span class="comment">// Query[(C, CT)]
-</span><span>  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]                      </span><span class="comment">// DBIO[List[(C, CT)]]
-</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)                </span><span class="comment">// IO[List[(C, CT)]]
-</span><span>  .</span><span class="identifier">unsafeRunSync</span><span>()               </span><span class="comment">// List[(C, CT)]
 </span><span>  .</span><span class="identifier">foreach</span><span> { </span><span class="keyword">case</span><span> (</span><span class="identifier">city</span><span>, </span><span class="identifier">country</span><span>) =&gt; 
     </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;City: </span><span class="substitution">${city.name}</span><span class="string-literal">, Country: </span><span class="substitution">${country.name}</span><span class="string-literal">&quot;</span><span>)
   }</span></code></pre>
@@ -537,18 +543,57 @@
 </span><span>    .</span><span class="identifier">compile</span><span>.</span><span class="identifier">last</span><span>
     .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
     
+    <h2 id="how-mapping-works-in-detail" class="section"><a class="anchor-link left" href="#how-mapping-works-in-detail"><i class="icofont-laika link">&#xef71;</i></a>How Mapping Works in Detail</h2>
+    
+    <h3 id="what-is-a-decoder" class="section"><a class="anchor-link left" href="#what-is-a-decoder"><i class="icofont-laika link">&#xef71;</i></a>What is a Decoder?</h3>
+    <p>In ldbc, a <code>Decoder</code> is a crucial component responsible for converting from <code>ResultSet</code> to Scala types. Decoders have the following characteristics:</p>
+    <ol class="arabic">
+      <li><strong>Type Safety</strong>: Verify type consistency at compile time</li>
+      <li><strong>Composable</strong>: Create Decoders for complex structures by combining smaller Decoders</li>
+      <li><strong>Auto-derivation</strong>: Often generated automatically without explicit definitions</li>
+    </ol>
+    
+    <h3 id="basic-decoder-operations" class="section"><a class="anchor-link left" href="#basic-decoder-operations"><i class="icofont-laika link">&#xef71;</i></a>Basic Decoder Operations</h3>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Basic type Decoders (implicitly provided)
+</span><span class="keyword">val</span><span> </span><span class="identifier">longDecoder</span><span>: </span><span class="type-name">Decoder</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="type-name">Decoder</span><span>.</span><span class="identifier">long</span><span>
+</span><span class="keyword">val</span><span> </span><span class="identifier">stringDecoder</span><span>: </span><span class="type-name">Decoder</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="type-name">Decoder</span><span>.</span><span class="identifier">string</span><span>
+
+</span><span class="comment">// Composing multiple Decoders
+</span><span class="keyword">val</span><span> </span><span class="identifier">tupleDecoder</span><span>: </span><span class="type-name">Decoder</span><span>[(</span><span class="type-name">Long</span><span>, </span><span class="type-name">String</span><span>)] = 
+  </span><span class="identifier">longDecoder</span><span> *: </span><span class="identifier">stringDecoder</span><span>
+
+</span><span class="comment">// Converting to case class
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">User</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Long</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>)
+</span><span class="keyword">val</span><span> </span><span class="identifier">userDecoder</span><span>: </span><span class="type-name">Decoder</span><span>[</span><span class="type-name">User</span><span>] = </span><span class="identifier">tupleDecoder</span><span>.</span><span class="identifier">to</span><span>[</span><span class="type-name">User</span><span>]</span></code></pre>
+    
+    <h3 id="reading-by-column-number" class="section"><a class="anchor-link left" href="#reading-by-column-number"><i class="icofont-laika link">&#xef71;</i></a>Reading by Column Number</h3>
+    <p>When Decoders read values from a <code>ResultSet</code>, they use column numbers (starting from 1):</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// How decode(columnIndex, resultSet) method works
+</span><span class="identifier">decoder</span><span>.</span><span class="identifier">decode</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="identifier">resultSet</span><span>) </span><span class="comment">// Read the 1st column
+</span><span class="identifier">decoder</span><span>.</span><span class="identifier">decode</span><span>(</span><span class="number-literal">2</span><span>, </span><span class="identifier">resultSet</span><span>) </span><span class="comment">// Read the 2nd column</span></code></pre>
+    
+    <h3 id="error-handling" class="section"><a class="anchor-link left" href="#error-handling"><i class="icofont-laika link">&#xef71;</i></a>Error Handling</h3>
+    <p>During the decoding process, the following types of errors may occur:</p>
+    <ul>
+      <li><strong>Type mismatch</strong>: SQL type and Scala type are incompatible</li>
+      <li><strong>NULL values</strong>: Mapping to types that don&#39;t allow NULL</li>
+      <li><strong>Column count mismatch</strong>: Expected column count differs from actual</li>
+    </ul>
+    <p>These errors are represented as <code>Either[Decoder.Error, A]</code> and appropriate error messages are provided at runtime.</p>
+    
     <h2 id="summary" class="section"><a class="anchor-link left" href="#summary"><i class="icofont-laika link">&#xef71;</i></a>Summary</h2>
     <p>ldbc provides features for retrieving data from databases in a type-safe and intuitive manner. In this tutorial, we covered:</p>
     <ul>
       <li>The basic workflow for data retrieval</li>
       <li>Single-column and multi-column queries</li>
-      <li>Mapping to case classes</li>
+      <li>Mapping to case classes and <strong>how the internal mechanism works</strong></li>
+      <li><strong>Type-safe conversion processing with Decoders</strong></li>
       <li>Joining multiple tables and nested data structures</li>
       <li>Getting single and multiple results</li>
       <li><strong>Efficient processing of large data with streaming</strong></li>
       <li>Various execution methods</li>
     </ul>
-    <p>By leveraging streaming capabilities, you can process large amounts of data efficiently in terms of memory usage. When dealing with large datasets, consider setting <code>UseCursorFetch=true</code>.</p>
+    <p>By understanding how mapping works through Decoder composition, you can safely handle even more complex data structures. Additionally, by leveraging streaming capabilities, you can process large amounts of data efficiently in terms of memory usage. When dealing with large datasets, consider setting <code>UseCursorFetch=true</code>.</p>
     
     <h2 id="next-steps" class="section"><a class="anchor-link left" href="#next-steps"><i class="icofont-laika link">&#xef71;</i></a>Next Steps</h2>
     <p>Now that you understand how to retrieve data from databases in various formats, you&#39;ve seen how type-safe mapping allows you to map database results directly to Scala data structures.</p>

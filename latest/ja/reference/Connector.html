@@ -187,7 +187,6 @@
     <li class="level1 nav-node"><a href="#バッチコマンド">バッチコマンド</a></li>
     <li class="level2 nav-leaf"><a href="#statementとpreparedstatementの違い">StatementとPreparedStatementの違い</a></li>
     <li class="level1 nav-leaf"><a href="#ストアドプロシージャの実行">ストアドプロシージャの実行</a></li>
-    <li class="level1 nav-leaf"><a href="#未対応機能">未対応機能</a></li>
   </ul>
 
   <p class="footer"></p>
@@ -211,9 +210,9 @@
     今後このコネクタを使用してより高レイヤーのAPIを提供する予定です。また既存の高レイヤーのAPIとの互換性を持たせることも予定しています。</p>
     <p>使用するにはプロジェクトに以下の依存関係を設定する必要があります。</p>
     <p><strong>JVM</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.4.0-RC2&quot;</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.4.0-RC3&quot;</span></code></pre>
     <p><strong>JS/Native</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %%% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.4.0-RC2&quot;</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %%% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.4.0-RC3&quot;</span></code></pre>
     <p><strong>サポートバージョン</strong></p>
     <p>現在のバージョンは以下のバージョンのMySQLをサポートしています。</p>
     <ul>
@@ -896,15 +895,6 @@
   </span><span class="keyword">yield</span><span> </span><span class="identifier">value</span><span> </span><span class="comment">// 2
 </span><span>}</span></code></pre>
     <p>※ <code>registerOutParameter</code>でOutパラメータを指定する場合、同じindex値を使用して<code>setXXX</code>メソッドでパラメータを設定していない場合サーバーには<code>Null</code>で値が設定されることに注意してください。</p>
-    
-    <h2 id="未対応機能" class="section"><a class="anchor-link left" href="#未対応機能"><i class="icofont-laika link">&#xef71;</i></a>未対応機能</h2>
-    <p>ldbcコネクタは現在実験的な機能となります。そのため、以下の機能はサポートされていません。
-    機能提供は順次行っていく予定です。</p>
-    <ul>
-      <li>コネクションプーリング</li>
-      <li>フェイルオーバー対策</li>
-      <li>etc...</li>
-    </ul>
 
     
 <hr class="footer-rule"/>
