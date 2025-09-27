@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1400" height="1100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .box { fill: #f5f5f5; stroke: #333; stroke-width: 2; }
+      .sql-box { fill: #e3f2fd; stroke: #1976d2; stroke-width: 2; }
+      .resultset-box { fill: #fff8e1; stroke: #f57c00; stroke-width: 2; }
+      .decoder-box { fill: #f3e5f5; stroke: #7b1fa2; stroke-width: 2; }
+      .city-decoder { fill: #e8eaf6; stroke: #3f51b5; stroke-width: 2; }
+      .country-decoder { fill: #fce4ec; stroke: #c2185b; stroke-width: 2; }
+      .result-box { fill: #e8f5e9; stroke: #388e3c; stroke-width: 2; }
+      .arrow { fill: none; stroke: #666; stroke-width: 2; marker-end: url(#arrowhead); }
+      .text { font-family: Arial, sans-serif; font-size: 14px; }
+      .title { font-size: 16px; font-weight: bold; }
+      .code { font-family: 'Courier New', monospace; font-size: 12px; }
+      .small-code { font-family: 'Courier New', monospace; font-size: 11px; }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#666" />
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="700" y="30" class="title" text-anchor="middle">Complex Case: Mapping CityWithCountry (JOIN Result)</text>
+
+  <!-- SQL execution section -->
+  <g id="sql-execution">
+    <rect x="50" y="60" width="500" height="120" class="sql-box" rx="5"/>
+    <text x="300" y="85" class="text" text-anchor="middle">SQL string interpolation</text>
+    <text x="300" y="105" class="code" text-anchor="middle">sql"""SELECT city.id, city.name,</text>
+    <text x="300" y="120" class="code" text-anchor="middle">       country.code, country.name, country.region</text>
+    <text x="300" y="135" class="code" text-anchor="middle">    FROM city</text>
+    <text x="300" y="150" class="code" text-anchor="middle">    JOIN country ON city.country_code = country.code"""</text>
+    <text x="300" y="170" class="code" text-anchor="middle">.query[CityWithCountry]</text>
+  </g>
+
+  <!-- ResultSet -->
+  <g id="resultset">
+    <rect x="100" y="220" width="800" height="80" class="resultset-box" rx="5"/>
+    <text x="500" y="245" class="text" text-anchor="middle">ResultSet</text>
+    <line x1="120" y1="255" x2="880" y2="255" stroke="#f57c00" stroke-width="1"/>
+    <text x="180" y="275" class="small-code">1: city.id</text>
+    <text x="300" y="275" class="small-code">2: city.name</text>
+    <text x="450" y="275" class="small-code">3: country.code</text>
+    <text x="600" y="275" class="small-code">4: country.name</text>
+    <text x="750" y="275" class="small-code">5: country.region</text>
+    <text x="180" y="290" class="small-code">101</text>
+    <text x="300" y="290" class="small-code">'Tokyo'</text>
+    <text x="450" y="290" class="small-code">'JPN'</text>
+    <text x="600" y="290" class="small-code">'Japan'</text>
+    <text x="750" y="290" class="small-code">'Asia'</text>
+  </g>
+
+  <!-- Decoder Construction -->
+  <g id="decoder-construction">
+    <text x="700" y="340" class="text" text-anchor="middle">Decoder Construction (Compile Time)</text>
+    
+    <!-- Decoder for City -->
+    <g id="city-decoder">
+      <text x="250" y="370" class="text" text-anchor="middle">Decoder for City</text>
+      
+      <rect x="100" y="385" width="120" height="35" class="city-decoder" rx="5"/>
+      <text x="160" y="407" class="code" text-anchor="middle">Decoder[Long]</text>
+      
+      <rect x="230" y="385" width="120" height="35" class="city-decoder" rx="5"/>
+      <text x="290" y="407" class="code" text-anchor="middle">Decoder[String]</text>
+      
+      <rect x="120" y="440" width="210" height="35" class="city-decoder" rx="5"/>
+      <text x="225" y="462" class="small-code" text-anchor="middle">Decoder[Long] *: Decoder[String]</text>
+      
+      <rect x="120" y="495" width="210" height="35" class="city-decoder" rx="5"/>
+      <text x="225" y="517" class="code" text-anchor="middle">Decoder[(Long, String)]</text>
+      
+      <rect x="120" y="550" width="210" height="35" class="city-decoder" rx="5"/>
+      <text x="225" y="572" class="code" text-anchor="middle">.to[City] → Decoder[City]</text>
+      
+      <!-- Arrow -->
+      <line x1="160" y1="420" x2="200" y2="440" class="arrow"/>
+      <line x1="290" y1="420" x2="250" y2="440" class="arrow"/>
+      <line x1="225" y1="475" x2="225" y2="495" class="arrow"/>
+      <line x1="225" y1="530" x2="225" y2="550" class="arrow"/>
+    </g>
+    
+    <!-- Decoder for Country -->
+    <g id="country-decoder">
+      <text x="600" y="370" class="text" text-anchor="middle">Decoder for Country</text>
+      
+      <rect x="400" y="385" width="120" height="35" class="country-decoder" rx="5"/>
+      <text x="460" y="407" class="code" text-anchor="middle">Decoder[String]</text>
+      
+      <rect x="530" y="385" width="120" height="35" class="country-decoder" rx="5"/>
+      <text x="590" y="407" class="code" text-anchor="middle">Decoder[String]</text>
+      
+      <rect x="660" y="385" width="120" height="35" class="country-decoder" rx="5"/>
+      <text x="720" y="407" class="code" text-anchor="middle">Decoder[String]</text>
+      
+      <rect x="450" y="440" width="280" height="35" class="country-decoder" rx="5"/>
+      <text x="590" y="457" class="small-code" text-anchor="middle">Decoder[String] *: Decoder[String]</text>
+      <text x="590" y="469" class="small-code" text-anchor="middle">*: Decoder[String]</text>
+      
+      <rect x="450" y="495" width="280" height="35" class="country-decoder" rx="5"/>
+      <text x="590" y="517" class="code" text-anchor="middle">Decoder[(String, String, String)]</text>
+      
+      <rect x="450" y="550" width="280" height="35" class="country-decoder" rx="5"/>
+      <text x="590" y="572" class="code" text-anchor="middle">.to[Country] → Decoder[Country]</text>
+      
+      <!-- Arrow -->
+      <line x1="460" y1="420" x2="520" y2="440" class="arrow"/>
+      <line x1="590" y1="420" x2="590" y2="440" class="arrow"/>
+      <line x1="720" y1="420" x2="660" y2="440" class="arrow"/>
+      <line x1="590" y1="475" x2="590" y2="495" class="arrow"/>
+      <line x1="590" y1="530" x2="590" y2="550" class="arrow"/>
+    </g>
+    
+    <!-- Combined Decoder -->
+    <g id="combined-decoder">
+      <rect x="800" y="440" width="350" height="35" class="decoder-box" rx="5"/>
+      <text x="975" y="462" class="code" text-anchor="middle">Decoder[City] *: Decoder[Country]</text>
+      
+      <rect x="800" y="495" width="350" height="35" class="decoder-box" rx="5"/>
+      <text x="975" y="517" class="code" text-anchor="middle">Decoder[(City, Country)]</text>
+      
+      <rect x="800" y="550" width="350" height="35" class="decoder-box" rx="5"/>
+      <text x="975" y="572" class="code" text-anchor="middle">.to[CityWithCountry] → Decoder[CityWithCountry]</text>
+      
+      <!-- Arrow -->
+      <line x1="330" y1="567" x2="800" y2="457" class="arrow"/>
+      <line x1="730" y1="567" x2="800" y2="457" class="arrow"/>
+      <line x1="975" y1="475" x2="975" y2="495" class="arrow"/>
+      <line x1="975" y1="530" x2="975" y2="550" class="arrow"/>
+    </g>
+  </g>
+
+  <!-- Mapping process -->
+  <g id="mapping-process">
+    <text x="500" y="640" class="text" text-anchor="middle">Runtime mapping processing</text>
+    
+    <!-- Column reading -->
+    <rect x="50" y="670" width="140" height="35" class="box" rx="5"/>
+    <text x="120" y="692" class="code" text-anchor="middle">decode(1) → 101L</text>
+    
+    <rect x="210" y="670" width="160" height="35" class="box" rx="5"/>
+    <text x="290" y="692" class="code" text-anchor="middle">decode(2) → "Tokyo"</text>
+    
+    <rect x="390" y="670" width="160" height="35" class="box" rx="5"/>
+    <text x="470" y="692" class="code" text-anchor="middle">decode(3) → "JPN"</text>
+    
+    <rect x="570" y="670" width="170" height="35" class="box" rx="5"/>
+    <text x="655" y="692" class="code" text-anchor="middle">decode(4) → "Japan"</text>
+    
+    <rect x="760" y="670" width="160" height="35" class="box" rx="5"/>
+    <text x="840" y="692" class="code" text-anchor="middle">decode(5) → "Asia"</text>
+    
+    <!-- Object generation -->
+    <rect x="100" y="750" width="300" height="60" class="city-decoder" rx="5"/>
+    <text x="250" y="775" class="text" text-anchor="middle">City</text>
+    <text x="250" y="795" class="code" text-anchor="middle">City(id = 101L, name = "Tokyo")</text>
+    
+    <rect x="450" y="750" width="400" height="60" class="country-decoder" rx="5"/>
+    <text x="650" y="775" class="text" text-anchor="middle">Country</text>
+    <text x="650" y="795" class="code" text-anchor="middle">Country(code = "JPN", name = "Japan", region = "Asia")</text>
+    
+    <!-- Final Results -->
+    <rect x="200" y="860" width="600" height="80" class="result-box" rx="5"/>
+    <text x="500" y="885" class="text" text-anchor="middle">Final Results</text>
+    <text x="500" y="905" class="code" text-anchor="middle">CityWithCountry(</text>
+    <text x="500" y="920" class="code" text-anchor="middle">  city = City(id = 101L, name = "Tokyo"),</text>
+    <text x="500" y="935" class="code" text-anchor="middle">  country = Country(code = "JPN", name = "Japan", region = "Asia")</text>
+    
+    <!-- Arrow -->
+    <line x1="180" y1="300" x2="120" y2="670" class="arrow"/>
+    <line x1="300" y1="300" x2="290" y2="670" class="arrow"/>
+    <line x1="450" y1="300" x2="470" y2="670" class="arrow"/>
+    <line x1="600" y1="300" x2="655" y2="670" class="arrow"/>
+    <line x1="750" y1="300" x2="840" y2="670" class="arrow"/>
+    
+    <line x1="120" y1="705" x2="200" y2="750" class="arrow"/>
+    <line x1="290" y1="705" x2="300" y2="750" class="arrow"/>
+    <line x1="470" y1="705" x2="550" y2="750" class="arrow"/>
+    <line x1="655" y1="705" x2="650" y2="750" class="arrow"/>
+    <line x1="840" y1="705" x2="750" y2="750" class="arrow"/>
+    
+    <line x1="250" y1="810" x2="400" y2="860" class="arrow"/>
+    <line x1="650" y1="810" x2="600" y2="860" class="arrow"/>
+    
+    <!-- DashedLine connecting Decoder and mapping -->
+    <line x1="975" y1="585" x2="975" y2="900" stroke="#999" stroke-width="2" stroke-dasharray="5,5"/>
+    <text x="995" y="740" class="text">Decoderが</text>
+    <text x="995" y="755" class="text">変換を制御</text>
+  </g>
+
+  <!-- Explanatory Text -->
+  <g id="annotations">
+    <text x="60" y="1000" class="text">Points:</text>
+    <text x="80" y="1020" class="text">1. Map columns from multiple tables to their corresponding case classes</text>
+    <text x="80" y="1040" class="text">2. Nested structures (CityWithCountry) are also converted to be type-safe through Decoder composition.</text>
+    <text x="80" y="1060" class="text">3. Column order and type are strictly managed and verified at compile time.</text>
+  </g>
+</svg>

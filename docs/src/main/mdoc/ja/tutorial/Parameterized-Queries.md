@@ -32,15 +32,18 @@ val id = 1
 sql"SELECT name, email FROM user WHERE id = $id".query[(String, String)].to[List]
 ```
 
-コネクションを使用してクエリを実行すると問題なく動作します。
+Connectorを使用してクエリを実行すると問題なく動作します。
 
 ```scala
-provider.use { conn =>
-  sql"SELECT name, email FROM user WHERE id = $id"
-    .query[(String, String)]
-    .to[List]
-    .readOnly(conn)
-}
+import ldbc.connector.*
+
+// Connectorを作成
+val connector = Connector.fromDataSource(datasource)
+
+sql"SELECT name, email FROM user WHERE id = $id"
+  .query[(String, String)]
+  .to[List]
+  .readOnly(connector)
 ```
 
 ここでは何が起こっているのでしょうか？文字列リテラルをSQL文字列にドロップしているだけのように見えますが、実際には`PreparedStatement`を構築しており、`id`値は最終的に`setInt`の呼び出しによって設定されます。これにより、SQLインジェクション攻撃からアプリケーションを守ることができます。
@@ -66,12 +69,11 @@ ldbcでは、各型に対して適切なエンコーダーが用意されてお�
 val id = 1
 val email = "alice@example.com"
 
-provider.use { conn =>
+// Connectorを使用して実行
   sql"SELECT name, email FROM user WHERE id = $id AND email > $email"
     .query[(String, String)]
     .to[List]
-    .readOnly(conn)
-}
+    .readOnly(connector)
 ```
 
 ## クエリーの結合
@@ -97,12 +99,11 @@ SQLでよくある課題は、一連の値をIN句で使用したい場合です
 ```scala
 val ids = NonEmptyList.of(1, 2, 3)
 
-provider.use { conn =>
+// Connectorを使用して実行
   (sql"SELECT name, email FROM user WHERE " ++ in("id", ids))
     .query[(String, String)]
     .to[List]
-    .readOnly(conn)
-}
+    .readOnly(connector)
 ```
 
 これは以下のSQLに相当します：

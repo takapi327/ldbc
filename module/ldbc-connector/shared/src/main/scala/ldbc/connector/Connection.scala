@@ -23,7 +23,6 @@ import fs2.io.net.*
 import org.typelevel.otel4s.trace.Tracer
 
 import ldbc.sql.{ Connection, DatabaseMetaData }
-import ldbc.sql.logging.{ LogEvent, LogHandler }
 
 import ldbc.connector.data.*
 import ldbc.connector.exception.*
@@ -55,7 +54,6 @@ object Connection:
 
   private def unitBefore[F[_]: Async]: Connection[F] => F[Unit]         = _ => Async[F].unit
   private def unitAfter[F[_]: Async]:  (Unit, Connection[F]) => F[Unit] = (_, _) => Async[F].unit
-  private def noopLogger[F[_]: Applicative]: LogHandler[F] = (logEvent: LogEvent) => Applicative[F].unit
 
   def apply[F[_]: Async: Network: Console: Hashing: UUIDGen](
     host: String,
@@ -75,8 +73,9 @@ object Connection:
     socketOptions:           List[SocketOption] = defaultSocketOptions,
     readTimeout:             Duration = Duration.Inf,
     allowPublicKeyRetrieval: Boolean = false,
-    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
-    logHandler:              Option[LogHandler[F]] = None
+    useCursorFetch:          Boolean = false,
+    useServerPrepStmts:      Boolean = false,
+    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG)
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] = this.default[F, Unit](
     host,
     port,
@@ -88,8 +87,9 @@ object Connection:
     socketOptions,
     readTimeout,
     allowPublicKeyRetrieval,
+    useCursorFetch,
+    useServerPrepStmts,
     databaseTerm,
-    logHandler,
     unitBefore,
     unitAfter
   )
@@ -107,8 +107,9 @@ object Connection:
     socketOptions:           List[SocketOption] = defaultSocketOptions,
     readTimeout:             Duration = Duration.Inf,
     allowPublicKeyRetrieval: Boolean = false,
-    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
-    logHandler:              Option[LogHandler[F]] = None
+    useCursorFetch:          Boolean = false,
+    useServerPrepStmts:      Boolean = false,
+    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG)
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] = this.default(
     host,
     port,
@@ -120,8 +121,9 @@ object Connection:
     socketOptions,
     readTimeout,
     allowPublicKeyRetrieval,
+    useCursorFetch,
+    useServerPrepStmts,
     databaseTerm,
-    logHandler,
     before,
     after
   )
@@ -137,8 +139,9 @@ object Connection:
     socketOptions:           List[SocketOption] = defaultSocketOptions,
     readTimeout:             Duration = Duration.Inf,
     allowPublicKeyRetrieval: Boolean = false,
+    useCursorFetch:          Boolean = false,
+    useServerPrepStmts:      Boolean = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
-    logHandler:              Option[LogHandler[F]] = None,
     before:                  Connection[F] => F[A],
     after:                   (A, Connection[F]) => F[Unit]
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] =
@@ -159,8 +162,9 @@ object Connection:
                       sslOp,
                       readTimeout,
                       allowPublicKeyRetrieval,
+                      useCursorFetch,
+                      useServerPrepStmts,
                       databaseTerm,
-                      logHandler.getOrElse(noopLogger),
                       before,
                       after
                     )
@@ -177,8 +181,9 @@ object Connection:
     sslOptions:              Option[SSLNegotiation.Options[F]],
     readTimeout:             Duration = Duration.Inf,
     allowPublicKeyRetrieval: Boolean = false,
+    useCursorFetch:          Boolean = false,
+    useServerPrepStmts:      Boolean = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = None,
-    logHandler:              LogHandler[F],
     acquire:                 Connection[F] => F[A],
     release:                 (A, Connection[F]) => F[Unit]
   ): Resource[F, LdbcConnection[F]] =
@@ -205,8 +210,9 @@ object Connection:
               readOnly,
               autoCommit,
               connectionClosed,
-              databaseTerm.getOrElse(DatabaseMetaData.DatabaseTerm.CATALOG),
-              logHandler
+              useCursorFetch,
+              useServerPrepStmts,
+              databaseTerm.getOrElse(DatabaseMetaData.DatabaseTerm.CATALOG)
             )
           )
         )(_.close())
@@ -225,8 +231,9 @@ object Connection:
     sslOptions:              Option[SSLNegotiation.Options[F]],
     readTimeout:             Duration = Duration.Inf,
     allowPublicKeyRetrieval: Boolean = false,
+    useCursorFetch:          Boolean = false,
+    useServerPrepStmts:      Boolean = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = None,
-    logHandler:              LogHandler[F],
     acquire:                 Connection[F] => F[A],
     release:                 (A, Connection[F]) => F[Unit]
   )(using ev: Async[F]): Resource[F, LdbcConnection[F]] =
@@ -252,8 +259,9 @@ object Connection:
       sslOptions,
       readTimeout,
       allowPublicKeyRetrieval,
+      useCursorFetch,
+      useServerPrepStmts,
       databaseTerm,
-      logHandler,
       acquire,
       release
     )

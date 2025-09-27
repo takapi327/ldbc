@@ -5,18 +5,22 @@ laika.metadata.language = ja
 
 # Q: 複数のデータベース（マルチテナント環境）を扱う方法は？
 
-## A: 複数のデータベースを扱う場合は、それぞれのデータベースに対して別々のConnectionProviderを作成します。
+## A: 複数のデータベースを扱う場合は、それぞれのデータベースに対して別々のDataSourceを作成します。
 
-複数のデータベースを扱う場合は、それぞれのデータベースに対して別々の`ConnectionProvider`を作成します。例えば、次のように異なるデータベースに対して異なるプロバイダーを作成し、必要に応じてプロバイダーを切り替えて使用します。
+複数のデータベースを扱う場合は、それぞれのデータベースに対して別々の`DataSource`を作成します。例えば、次のように異なるデータベースに対して異なるデータソースを作成し、必要に応じてデータソースを切り替えて使用します。
 
 ```scala 3
-val provider1 = ConnectionProvider
-  .default[IO]("host", 3306, "user", "password", "database1")
+val datasource1 = MySQLDataSource
+  .build[IO]("host", 3306, "user")
+  .setPassword("password")
+  .setDatabase("database1")
 
-val provider2 = ConnectionProvider
-  .default[IO]("host", 3306, "user", "password", "database2")
+val datasource2 = MySQLDataSource
+  .build[IO]("host", 3306, "user")
+  .setPassword("password")
+  .setDatabase("database2")
 
-// 必要に応じてプロバイダーを切り替えて使用
-val program1 = provider1.use { conn => /* database1に対する操作 */ }
-val program2 = provider2.use { conn => /* database2に対する操作 */ }
+// 必要に応じてデータソースを切り替えて使用
+val program1 = datasource1.getConnection.use { conn => /* database1に対する操作 */ }
+val program2 = datasource2.getConnection.use { conn => /* database2に対する操作 */ }
 ```

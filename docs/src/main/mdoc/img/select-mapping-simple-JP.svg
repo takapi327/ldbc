@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .box { fill: #f5f5f5; stroke: #333; stroke-width: 2; }
+      .sql-box { fill: #e3f2fd; stroke: #1976d2; stroke-width: 2; }
+      .resultset-box { fill: #fff8e1; stroke: #f57c00; stroke-width: 2; }
+      .decoder-box { fill: #f3e5f5; stroke: #7b1fa2; stroke-width: 2; }
+      .result-box { fill: #e8f5e9; stroke: #388e3c; stroke-width: 2; }
+      .arrow { fill: none; stroke: #666; stroke-width: 2; marker-end: url(#arrowhead); }
+      .text { font-family: Arial, sans-serif; font-size: 14px; }
+      .title { font-size: 16px; font-weight: bold; }
+      .code { font-family: 'Courier New', monospace; font-size: 12px; }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#666" />
+    </marker>
+  </defs>
+
+  <!-- タイトル -->
+  <text x="600" y="30" class="title" text-anchor="middle">シンプルなケース: Userモデルへのマッピング</text>
+
+  <!-- SQL実行部分 -->
+  <g id="sql-execution">
+    <rect x="50" y="60" width="300" height="60" class="sql-box" rx="5"/>
+    <text x="200" y="85" class="text" text-anchor="middle">SQL文字列補間</text>
+    <text x="200" y="105" class="code" text-anchor="middle">sql"SELECT id, name, email FROM user"</text>
+    
+    <rect x="400" y="60" width="150" height="60" class="sql-box" rx="5"/>
+    <text x="475" y="90" class="code" text-anchor="middle">.query[User]</text>
+    
+    <line x1="350" y1="90" x2="400" y2="90" class="arrow"/>
+  </g>
+
+  <!-- ResultSet -->
+  <g id="resultset">
+    <rect x="150" y="180" width="400" height="80" class="resultset-box" rx="5"/>
+    <text x="350" y="205" class="text" text-anchor="middle">ResultSet</text>
+    <line x1="170" y1="215" x2="530" y2="215" stroke="#f57c00" stroke-width="1"/>
+    <text x="210" y="235" class="code">1: id</text>
+    <text x="300" y="235" class="code">2: name</text>
+    <text x="410" y="235" class="code">3: email</text>
+    <text x="210" y="250" class="code">123</text>
+    <text x="300" y="250" class="code">'Alice'</text>
+    <text x="410" y="250" class="code">'alice@example.com'</text>
+  </g>
+
+  <!-- Decoder解決 -->
+  <g id="decoder-resolution">
+    <text x="750" y="85" class="text" text-anchor="middle">Decoder解決（コンパイル時）</text>
+    
+    <!-- 基本Decoder -->
+    <rect x="620" y="110" width="120" height="40" class="decoder-box" rx="5"/>
+    <text x="680" y="135" class="code" text-anchor="middle">Decoder[Long]</text>
+    
+    <rect x="760" y="110" width="120" height="40" class="decoder-box" rx="5"/>
+    <text x="820" y="135" class="code" text-anchor="middle">Decoder[String]</text>
+    
+    <rect x="900" y="110" width="120" height="40" class="decoder-box" rx="5"/>
+    <text x="960" y="135" class="code" text-anchor="middle">Decoder[String]</text>
+    
+    <!-- 合成 -->
+    <rect x="700" y="180" width="240" height="50" class="decoder-box" rx="5"/>
+    <text x="820" y="200" class="code" text-anchor="middle">Decoder[Long] *: Decoder[String]</text>
+    <text x="820" y="215" class="code" text-anchor="middle">*: Decoder[String]</text>
+    
+    <!-- タプルDecoder -->
+    <rect x="680" y="260" width="280" height="40" class="decoder-box" rx="5"/>
+    <text x="820" y="285" class="code" text-anchor="middle">Decoder[(Long, String, String)]</text>
+    
+    <!-- User Decoder -->
+    <rect x="720" y="330" width="200" height="40" class="decoder-box" rx="5"/>
+    <text x="820" y="355" class="code" text-anchor="middle">.to[User] → Decoder[User]</text>
+    
+    <!-- 矢印 -->
+    <line x1="680" y1="150" x2="760" y2="180" class="arrow"/>
+    <line x1="820" y1="150" x2="820" y2="180" class="arrow"/>
+    <line x1="960" y1="150" x2="880" y2="180" class="arrow"/>
+    <line x1="820" y1="230" x2="820" y2="260" class="arrow"/>
+    <line x1="820" y1="300" x2="820" y2="330" class="arrow"/>
+  </g>
+
+  <!-- マッピング処理 -->
+  <g id="mapping-process">
+    <text x="350" y="320" class="text" text-anchor="middle">実行時のマッピング処理</text>
+    
+    <!-- デコード処理 -->
+    <rect x="50" y="350" width="180" height="40" class="box" rx="5"/>
+    <text x="140" y="375" class="code" text-anchor="middle">decode(1, rs) → 123L</text>
+    
+    <rect x="250" y="350" width="200" height="40" class="box" rx="5"/>
+    <text x="350" y="375" class="code" text-anchor="middle">decode(2, rs) → "Alice"</text>
+    
+    <rect x="470" y="350" width="280" height="40" class="box" rx="5"/>
+    <text x="610" y="375" class="code" text-anchor="middle">decode(3, rs) → "alice@example.com"</text>
+    
+    <!-- タプル生成 -->
+    <rect x="200" y="430" width="400" height="40" class="box" rx="5"/>
+    <text x="400" y="455" class="code" text-anchor="middle">(123L, "Alice", "alice@example.com")</text>
+    
+    <!-- 最終結果 -->
+    <rect x="150" y="510" width="500" height="60" class="result-box" rx="5"/>
+    <text x="400" y="535" class="text" text-anchor="middle">最終結果</text>
+    <text x="400" y="555" class="code" text-anchor="middle">User(id = 123L, name = "Alice", email = "alice@example.com")</text>
+    
+    <!-- 矢印 -->
+    <line x1="350" y1="260" x2="140" y2="350" class="arrow"/>
+    <line x1="350" y1="260" x2="350" y2="350" class="arrow"/>
+    <line x1="350" y1="260" x2="610" y2="350" class="arrow"/>
+    
+    <line x1="140" y1="390" x2="250" y2="430" class="arrow"/>
+    <line x1="350" y1="390" x2="400" y2="430" class="arrow"/>
+    <line x1="610" y1="390" x2="550" y2="430" class="arrow"/>
+    
+    <line x1="400" y1="470" x2="400" y2="510" class="arrow"/>
+    
+    <!-- DecoderとマッピングをつなぐDashedLine -->
+    <line x1="820" y1="370" x2="820" y2="540" stroke="#999" stroke-width="2" stroke-dasharray="5,5"/>
+    <text x="840" y="460" class="text">Decoderが</text>
+    <text x="840" y="475" class="text">変換を制御</text>
+  </g>
+
+  <!-- 説明テキスト -->
+  <g id="annotations">
+    <text x="60" y="680" class="text">ポイント:</text>
+    <text x="80" y="700" class="text">1. SELECTの列順序とDecoderの順序が一致する必要がある</text>
+    <text x="80" y="720" class="text">2. 各列のデータ型とDecoderの型が一致する必要がある</text>
+    <text x="80" y="740" class="text">3. コンパイル時に型安全性が保証される</text>
+  </g>
+</svg>

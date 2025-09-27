@@ -560,17 +560,19 @@ val query = TableQuery[User]
 
 ```scala 3
 import ldbc.dsl.*
+import ldbc.connector.*
 
-provider.use { conn =>
-  (for
-    // SELECTクエリの実行
-    users <- TableQuery[User].selectAll.where(_.id > 5).query.to[List]  // Listとして結果を取得
-    // 単一の結果を取得
-    user <- TableQuery[User].selectAll.where(_.id === 1).query.to[Option]
-    // 更新系クエリの実行
-    _ <- TableQuery[User].update(_.name)("NewName").where(_.id === 1).update
-  yield ???).transaction(conn)
-}
+// Connectorを作成
+val connector = Connector.fromDataSource(datasource)
+
+(for
+  // SELECTクエリの実行
+  users <- TableQuery[User].selectAll.where(_.id > 5).query.to[List]  // Listとして結果を取得
+  // 単一の結果を取得
+  user <- TableQuery[User].selectAll.where(_.id === 1).query.to[Option]
+  // 更新系クエリの実行
+  _ <- TableQuery[User].update(_.name)("NewName").where(_.id === 1).update
+yield ???).transaction(connector)
 ```
 
 ## 次のステップ

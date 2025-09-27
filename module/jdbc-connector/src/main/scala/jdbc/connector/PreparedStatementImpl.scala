@@ -17,7 +17,7 @@ import ldbc.sql.{ PreparedStatement, ResultSet }
 private[jdbc] open class PreparedStatementImpl[F[_]: Sync](statement: java.sql.PreparedStatement)
   extends PreparedStatement[F]:
 
-  override def executeQuery(): F[ResultSet] = Sync[F].blocking(statement.executeQuery()).map(ResultSetImpl.apply)
+  override def executeQuery(): F[ResultSet[F]] = Sync[F].blocking(statement.executeQuery()).map(ResultSetImpl.apply)
 
   override def executeUpdate(): F[Int] = Sync[F].blocking(statement.executeUpdate())
 
@@ -69,18 +69,22 @@ private[jdbc] open class PreparedStatementImpl[F[_]: Sync](statement: java.sql.P
 
   override def addBatch(): F[Unit] = Sync[F].blocking(statement.addBatch())
 
-  override def getResultSet(): F[Option[ResultSet]] =
+  override def getResultSet(): F[Option[ResultSet[F]]] =
     Sync[F].blocking(Option(statement.getResultSet).map(ResultSetImpl.apply))
 
   override def getUpdateCount(): F[Int] = Sync[F].blocking(statement.getUpdateCount)
 
   override def getMoreResults(): F[Boolean] = Sync[F].blocking(statement.getMoreResults())
 
+  override def setFetchSize(rows: Int): F[Unit] = Sync[F].pure(statement.setFetchSize(rows))
+
+  override def getFetchSize(): F[Int] = Sync[F].pure(statement.getFetchSize)
+
   override def clearBatch(): F[Unit] = Sync[F].blocking(statement.clearBatch())
 
   override def executeBatch(): F[Array[Int]] = Sync[F].blocking(statement.executeBatch())
 
-  override def getGeneratedKeys(): F[ResultSet] =
+  override def getGeneratedKeys(): F[ResultSet[F]] =
     Sync[F].blocking(statement.getGeneratedKeys).map(ResultSetImpl.apply)
 
   override def executeUpdate(

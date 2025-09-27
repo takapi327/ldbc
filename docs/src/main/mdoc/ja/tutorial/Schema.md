@@ -381,14 +381,16 @@ import ldbc.dsl.*
 // スキーマの組み合わせ
 val schema = users.schema ++ profiles.schema ++ orders.schema
 
-// データベース接続を使ってスキーマを適用
-provider.use { conn =>
-  DBIO.sequence(
-    // テーブル作成（存在しない場合のみ）
-    schema.createIfNotExists,
-    // データ投入など他の操作...
-  ).commit(conn)
-}
+// Connectorを作成
+import ldbc.connector.*
+val connector = Connector.fromDataSource(datasource)
+
+// スキーマを適用
+DBIO.sequence(
+  // テーブル作成（存在しない場合のみ）
+  schema.createIfNotExists,
+  // データ投入など他の操作...
+).commit(connector)
 ```
 
 ### DDL操作

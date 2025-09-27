@@ -377,13 +377,13 @@ database:
 import ldbc.dsl.*
 import ldbc.generated.shop.Product
 
-val provider = MySQLConnectionProvider(...)
+val datasource = MySQLDataSource(...)
 
 // テーブルクエリの参照
 val products = Product.table
 
 // クエリの実行
-val allProducts = provider.use { conn =>
+val allProducts = datasource.getConnection.use { conn =>
   products.filter(_.price > 100).all.run(conn)
 }
 ```

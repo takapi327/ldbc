@@ -47,8 +47,8 @@ val schemaSelect = userTable.selectAll.query.to[List]
 
 // Execution example
 for
-  _     <- schemaInsert.commit(conn)
-  users <- schemaSelect.readOnly(conn)
+  _     <- schemaInsert.commit(connector)
+  users <- schemaSelect.readOnly(connector)
 yield users.foreach(println)
 ```
 
@@ -65,8 +65,8 @@ val plainSelect: DBIO[List[User]] =
 
 // Execution example
 for
-  _     <- plainInsert.commit(conn)
-  users <- plainSelect.readOnly(conn)
+  _     <- plainInsert.commit(connector)
+  users <- plainSelect.readOnly(connector)
 yield users.foreach(println)
 ```
 

@@ -35,12 +35,13 @@ sql"SELECT name, email FROM user WHERE id = $id".query[(String, String)].to[List
 When we execute the query using a connection, it works without issues.
 
 ```scala
-provider.use { conn =>
-  sql"SELECT name, email FROM user WHERE id = $id"
-    .query[(String, String)]
-    .to[List]
-    .readOnly(conn)
-}
+// Create Connector
+val connector = Connector.fromDataSource(datasource)
+
+sql"SELECT name, email FROM user WHERE id = $id"
+  .query[(String, String)]
+  .to[List]
+  .readOnly(connector)
 ```
 
 What's happening here? It looks like we're just dropping string literals into an SQL string, but we're actually building a `PreparedStatement`, and the `id` value is ultimately set by a call to `setInt`. This protects our application from SQL injection attacks.
@@ -66,12 +67,13 @@ Multiple parameters can be used in the same way.
 val id = 1
 val email = "alice@example.com"
 
-provider.use { conn =>
-  sql"SELECT name, email FROM user WHERE id = $id AND email > $email"
-    .query[(String, String)]
-    .to[List]
-    .readOnly(conn)
-}
+// Create Connector
+val connector = Connector.fromDataSource(datasource)
+
+sql"SELECT name, email FROM user WHERE id = $id AND email > $email"
+  .query[(String, String)]
+  .to[List]
+  .readOnly(connector)
 ```
 
 ## Combining Queries
@@ -97,12 +99,13 @@ A common challenge in SQL is using a series of values in an IN clause. In ldbc, 
 ```scala
 val ids = NonEmptyList.of(1, 2, 3)
 
-provider.use { conn =>
-  (sql"SELECT name, email FROM user WHERE " ++ in("id", ids))
-    .query[(String, String)]
-    .to[List]
-    .readOnly(conn)
-}
+// Create Connector
+val connector = Connector.fromDataSource(datasource)
+
+(sql"SELECT name, email FROM user WHERE " ++ in("id", ids))
+  .query[(String, String)]
+  .to[List]
+  .readOnly(connector)
 ```
 
 This is equivalent to the following SQL:

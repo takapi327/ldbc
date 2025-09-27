@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#333"/>
+    </marker>
+    <filter id="dropShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+      <feOffset dx="2" dy="2" result="offsetblur"/>
+      <feFlood flood-color="#000000" flood-opacity="0.1"/>
+      <feComposite in2="offsetblur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <style>
+    .state-box { fill: white; stroke: #333; stroke-width: 2; filter: url(#dropShadow); }
+    .closed { fill: #4CAF50; }
+    .open { fill: #f44336; }
+    .half-open { fill: #ff9800; }
+    .text { fill: white; font-family: Arial, sans-serif; font-size: 16px; text-anchor: middle; }
+    .label { fill: #333; font-family: Arial, sans-serif; font-size: 14px; text-anchor: middle; }
+    .arrow { stroke: #333; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+    .title { fill: #333; font-family: Arial, sans-serif; font-size: 24px; font-weight: bold; text-anchor: middle; }
+  </style>
+  
+  <!-- Title -->
+  <text x="400" y="40" class="title">Circuit Breaker State Transitions</text>
+  
+  <!-- Closed State -->
+  <rect x="300" y="100" width="200" height="80" rx="10" class="state-box closed"/>
+  <text x="400" y="135" class="text">Closed</text>
+  <text x="400" y="160" class="text" style="font-size: 12px;">Normal Operation</text>
+  
+  <!-- Open State -->
+  <rect x="100" y="300" width="200" height="80" rx="10" class="state-box open"/>
+  <text x="200" y="335" class="text">Open</text>
+  <text x="200" y="360" class="text" style="font-size: 12px;">Failing Fast</text>
+  
+  <!-- Half-Open State -->
+  <rect x="500" y="300" width="200" height="80" rx="10" class="state-box half-open"/>
+  <text x="600" y="335" class="text">Half-Open</text>
+  <text x="600" y="360" class="text" style="font-size: 12px;">Testing Recovery</text>
+  
+  <!-- Arrows and Labels -->
+  <!-- Closed to Open -->
+  <path d="M 350 180 Q 250 240 200 300" class="arrow"/>
+  <text x="250" y="235" class="label" transform="rotate(-35, 250, 235)">Failures ≥ maxFailures</text>
+  
+  <!-- Open to Half-Open -->
+  <path d="M 300 340 L 500 340" class="arrow"/>
+  <text x="400" y="330" class="label">Reset timeout elapsed</text>
+  
+  <!-- Half-Open to Closed -->
+  <path d="M 600 300 Q 550 240 450 180" class="arrow"/>
+  <text x="530" y="235" class="label" transform="rotate(35, 530, 235)">Request succeeds</text>
+  
+  <!-- Half-Open to Open -->
+  <path d="M 550 380 Q 400 450 250 380" class="arrow"/>
+  <text x="400" y="435" class="label">Request fails</text>
+  <text x="400" y="455" class="label" style="font-size: 12px;">(Timeout × backoff factor)</text>
+  
+  <!-- Legend -->
+  <rect x="50" y="500" width="700" height="80" rx="5" fill="#f5f5f5" stroke="#ddd"/>
+  <text x="400" y="520" style="font-family: Arial; font-size: 14px; font-weight: bold; text-anchor: middle;">Key Points:</text>
+  <text x="60" y="545" style="font-family: Arial; font-size: 12px;">• Closed: All requests pass through, failures are tracked</text>
+  <text x="60" y="565" style="font-family: Arial; font-size: 12px;">• Open: All requests fail immediately without attempting connection</text>
+  <text x="420" y="545" style="font-family: Arial; font-size: 12px;">• Half-Open: Single test request to check if service recovered</text>
+  <text x="420" y="565" style="font-family: Arial; font-size: 12px;">• Exponential backoff increases timeout on repeated failures</text>
+</svg>
