@@ -168,6 +168,12 @@ trait PooledDataSource[F[_]] extends DataSource[F]:
    */
   def validateConnection(conn: Connection[F]): F[Boolean]
 
+  /** Sets the OpenTelemetry tracer for distributed tracing.
+   * @param newTracer the tracer instance
+   * @return a new MySQLDataSource with the updated tracer
+   */
+  // def setTracer(newTracer: Tracer[F]): PooledDataSource[F]
+
 object PooledDataSource:
 
   private case class Impl[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
@@ -182,31 +188,32 @@ object PooledDataSource:
     readTimeout:             Duration                              = Duration.Inf,
     allowPublicKeyRetrieval: Boolean                               = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
-    tracer:                  Option[Tracer[F]]                     = None,
-    useCursorFetch:          Boolean                               = false,
-    useServerPrepStmts:      Boolean                               = false,
-    before:                  Option[Connection[F] => F[A]]         = None,
-    after:                   Option[(A, Connection[F]) => F[Unit]] = None,
-    minConnections:          Int                                   = 5,
-    maxConnections:          Int                                   = 20,
-    connectionTimeout:       FiniteDuration                        = 30.seconds,
-    idleTimeout:             FiniteDuration                        = 10.minutes,
-    maxLifetime:             FiniteDuration                        = 30.minutes,
-    validationTimeout:       FiniteDuration                        = 5.seconds,
-    leakDetectionThreshold:  Option[FiniteDuration]                = None,
-    adaptiveSizing:          Boolean                               = true,
-    adaptiveInterval:        FiniteDuration                        = 30.seconds,
-    metricsTracker:          PoolMetricsTracker[F],
-    poolState:               Ref[F, PoolState[F]],
-    idGenerator:             F[String],
-    connectionBag:           ConcurrentBag[F, PooledConnection[F]],
-    circuitBreaker:          CircuitBreaker[F],
-    aliveBypassWindow:       FiniteDuration,
-    keepaliveTime:           Option[FiniteDuration],
-    connectionTestQuery:     Option[String],
-    poolLogger:              PoolLogger[F]
-  ) extends PooledDataSource[F]:
-    given Tracer[F] = tracer.getOrElse(Tracer.noop[F])
+    // tracer:                  Option[Tracer[F]]                     = None,
+    useCursorFetch:         Boolean                               = false,
+    useServerPrepStmts:     Boolean                               = false,
+    before:                 Option[Connection[F] => F[A]]         = None,
+    after:                  Option[(A, Connection[F]) => F[Unit]] = None,
+    minConnections:         Int                                   = 5,
+    maxConnections:         Int                                   = 20,
+    connectionTimeout:      FiniteDuration                        = 30.seconds,
+    idleTimeout:            FiniteDuration                        = 10.minutes,
+    maxLifetime:            FiniteDuration                        = 30.minutes,
+    validationTimeout:      FiniteDuration                        = 5.seconds,
+    leakDetectionThreshold: Option[FiniteDuration]                = None,
+    adaptiveSizing:         Boolean                               = true,
+    adaptiveInterval:       FiniteDuration                        = 30.seconds,
+    metricsTracker:         PoolMetricsTracker[F],
+    poolState:              Ref[F, PoolState[F]],
+    idGenerator:            F[String],
+    connectionBag:          ConcurrentBag[F, PooledConnection[F]],
+    circuitBreaker:         CircuitBreaker[F],
+    aliveBypassWindow:      FiniteDuration,
+    keepaliveTime:          Option[FiniteDuration],
+    connectionTestQuery:    Option[String],
+    poolLogger:             PoolLogger[F]
+  )(using Tracer[F])
+    extends PooledDataSource[F]:
+    // given Tracer[F] = tracer.getOrElse(Tracer.noop[F])
 
     override def getConnection: Resource[F, Connection[F]] = Resource.make(acquire)(release)
 
@@ -412,6 +419,9 @@ object PooledDataSource:
       startTime <- Clock[F].monotonic
       result    <- createNewConnectionWithState(startTime, ConnectionState.Idle, 0L)
     yield result
+
+    /// override def setTracer(newTracer: Tracer[F]): PooledDataSource[F] =
+    ///  this.copy(tracer = Some(newTracer))
 
     private def createNewConnectionWithState(
       startTime:       FiniteDuration,
@@ -642,7 +652,7 @@ object PooledDataSource:
     idGenerator:    F[String],
     before:         Option[Connection[F] => F[A]] = None,
     after:          Option[(A, Connection[F]) => F[Unit]] = None
-  ): Resource[F, PooledDataSource[F]] =
+  )(using Tracer[F]): Resource[F, PooledDataSource[F]] =
 
     // Validate configuration before creating the pool (similar to HikariDataSource)
     Resource
@@ -660,7 +670,7 @@ object PooledDataSource:
     idGenerator:    F[String],
     before:         Option[Connection[F] => F[A]],
     after:          Option[(A, Connection[F]) => F[Unit]]
-  ): Resource[F, PooledDataSource[F]] =
+  )(using Tracer[F]): Resource[F, PooledDataSource[F]] =
 
     val tracker           = metricsTracker.getOrElse(PoolMetricsTracker.noop[F])
     val poolLogger        = PoolLogger.console[F](config.debug || config.logPoolState)
@@ -752,16 +762,19 @@ object PooledDataSource:
    * 
    * @param config the MySQL configuration containing all pool settings
    * @param metricsTracker optional tracker for collecting pool metrics (defaults to in-memory tracker)
+   * @param tracer optional OpenTelemetry tracer for distributed tracing (defaults to no-op tracer)
    * @tparam F the effect type with required type class instances
    * @return a Resource that manages the pooled data source lifecycle
    */
   def fromConfig[F[_]: Async: Network: Console: Hashing: UUIDGen](
     config:         MySQLConfig,
-    metricsTracker: Option[PoolMetricsTracker[F]] = None
+    metricsTracker: Option[PoolMetricsTracker[F]] = None,
+    tracer:         Option[Tracer[F]] = None
   ): Resource[F, PooledDataSource[F]] =
+    given Tracer[F] = tracer.getOrElse(Tracer.noop[F])
     create(config, metricsTracker, UUIDGen[F].randomUUID.map(_.toString))
 
-  /**
+    /**
    * Creates a PooledDataSource with before/after hooks for each connection use.
    * 
    * This variant allows you to specify callbacks that will be executed before
@@ -775,6 +788,7 @@ object PooledDataSource:
    * 
    * @param config the MySQL configuration containing all pool settings
    * @param metricsTracker optional tracker for collecting pool metrics (defaults to in-memory tracker)
+   * @param tracer optional OpenTelemetry tracer for distributed tracing (defaults to no-op tracer)
    * @param before optional callback executed before connection use
    * @param after optional callback executed after connection use
    * @tparam F the effect type with required type class instances
@@ -784,7 +798,9 @@ object PooledDataSource:
   def fromConfigWithBeforeAfter[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
     config:         MySQLConfig,
     metricsTracker: Option[PoolMetricsTracker[F]] = None,
+    tracer:         Option[Tracer[F]] = None,
     before:         Option[Connection[F] => F[A]] = None,
     after:          Option[(A, Connection[F]) => F[Unit]] = None
   ): Resource[F, PooledDataSource[F]] =
+    given Tracer[F] = tracer.getOrElse(Tracer.noop[F])
     create(config, metricsTracker, UUIDGen[F].randomUUID.map(_.toString), before, after)
