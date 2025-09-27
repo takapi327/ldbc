@@ -26,7 +26,7 @@ enum TelemetrySpanName(val name: String):
   case ROUTINE_EXECUTE_BATCH                     extends TelemetrySpanName("Execute Routine Batch")
   case ROUTINE_PREPARE                           extends TelemetrySpanName("Prepare Routine")
   case SET_CHARSET                               extends TelemetrySpanName("Set Charset")
-  case SET_OPTION_MULTI_STATEMENTS(code: Short)  extends TelemetrySpanName(s"Set multi-statements '$code''")
+  case SET_OPTION_MULTI_STATEMENTS(code: Short)  extends TelemetrySpanName(s"Set multi-statements '$code'")
   case SET_TRANSACTION_ACCESS_MODE(mode: String) extends TelemetrySpanName(s"Set transaction access mode '$mode'")
   case SET_VARIABLE(variable: String)            extends TelemetrySpanName(s"Set variable '$variable'")
   case SET_VARIABLES(variables: String)          extends TelemetrySpanName(s"Set variables($variables)")

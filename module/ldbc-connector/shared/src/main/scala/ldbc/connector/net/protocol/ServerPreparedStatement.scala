@@ -303,7 +303,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
     }
 
   override def close(): F[Unit] =
-    exchange[F, Unit](TelemetrySpanName.STMT_PREPARE) { (span: Span[F]) =>
+    exchange[F, Unit](TelemetrySpanName.STMT_DEALLOCATE_PREPARED) { (span: Span[F]) =>
       val closeAttributes = baseAttributes ++ List(
         TelemetryAttribute.dbOperationName("CLOSE")
       )
