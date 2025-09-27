@@ -118,10 +118,11 @@ object TelemetryAttribute:
    * Operations are only considered batches when they contain two or more operations
    */
   def batchSize(size: Long): List[Attribute[?]] =
-    if size >= 2 then List(
-      dbOperationName("BATCH"),
-      Attribute(BATCH_SIZE, size)
-    )
+    if size >= 2 then
+      List(
+        dbOperationName("BATCH"),
+        Attribute(BATCH_SIZE, size)
+      )
     else List(dbOperationName("BATCH"))
 
   /**
