@@ -170,7 +170,7 @@ class TelemetrySpanNameTest extends FTestPlatform:
     // Test that different enum cases are not equal
     assert(TelemetrySpanName.COMMIT != TelemetrySpanName.ROLLBACK)
     assert(TelemetrySpanName.PING != TelemetrySpanName.COMMIT)
-    
+
     // Test that same enum cases are equal
     assertEquals(TelemetrySpanName.COMMIT, TelemetrySpanName.COMMIT)
     assertEquals(TelemetrySpanName.ROLLBACK, TelemetrySpanName.ROLLBACK)
