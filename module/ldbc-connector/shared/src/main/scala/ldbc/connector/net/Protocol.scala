@@ -175,7 +175,7 @@ object Protocol:
           socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
             case error: ERRPacket =>
               val ex = error.toException(s"Failed to change schema to '$schema'")
-              span.recordException(ex, error.attributes) *> ev.raiseError(ex)
+              span.recordException(ex, error.attributes*) *> ev.raiseError(ex)
             case ok: OKPacket => ev.unit
           }
       }
@@ -192,7 +192,7 @@ object Protocol:
         span.addAttributes(attributes*) *>
           socket.send(ComPingPacket()) *>
           socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
-            case error: ERRPacket => span.recordException(error.toException, error.attributes) *> ev.pure(false)
+            case error: ERRPacket => span.recordException(error.toException, error.attributes*) *> ev.pure(false)
             case ok: OKPacket     => ev.pure(true)
           }
       }
@@ -204,7 +204,7 @@ object Protocol:
           socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
             case error: ERRPacket =>
               val ex = error.toException("Failed to execute reset connection")
-              span.recordException(ex, error.attributes) *> ev.raiseError(ex)
+              span.recordException(ex, error.attributes*) *> ev.raiseError(ex)
             case ok: OKPacket => ev.unit
           }
       }
@@ -216,7 +216,7 @@ object Protocol:
           socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
             case error: ERRPacket =>
               val ex = error.toException("Failed to execute set option")
-              span.recordException(ex, error.attributes) *> ev.raiseError(ex)
+              span.recordException(ex, error.attributes*) *> ev.raiseError(ex)
             case eof: EOFPacket => ev.unit
             case ok: OKPacket   => ev.unit
           }

@@ -120,7 +120,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
                 case _: OKPacket      => F.pure(ColumnsNumberPacket(0))
                 case error: ERRPacket =>
                   val exception = error.toException(Some(sql), None, parameter)
-                  span.recordException(exception, error.attributes) *> F.raiseError(exception)
+                  span.recordException(exception, error.attributes*) *> F.raiseError(exception)
                 case result: ColumnsNumberPacket => F.pure(result)
               }
           columnDefinitions <-
