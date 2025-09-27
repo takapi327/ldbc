@@ -11,7 +11,7 @@ enum TelemetrySpanName(val name: String):
   case CHANGE_DATABASE                           extends TelemetrySpanName("Change Database")
   case COMMIT                                    extends TelemetrySpanName("Commit")
   case CONNECTION_CREATE                         extends TelemetrySpanName("Create Connection")
-  case CONNECTION_CLOSE                         extends TelemetrySpanName("Close Connection")
+  case CONNECTION_CLOSE                          extends TelemetrySpanName("Close Connection")
   case CONNECTION_RESET                          extends TelemetrySpanName("Reset Connection")
   case CREATE_DATABASE                           extends TelemetrySpanName("Create Database")
   case EXPLAIN_QUERY                             extends TelemetrySpanName("Explain Query")
