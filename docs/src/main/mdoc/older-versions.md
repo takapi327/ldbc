@@ -24,6 +24,6 @@ and now also more API stability than those older releases.
 [doc02]: https://takapi327.github.io/ldbc/0.2/
 [doc03]: https://takapi327.github.io/ldbc/0.3/
 
-[api03]: https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/0.3.2/index.html
+[api03]: https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/0.3.3/index.html
 [api02]: https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/0.2.1/index.html
 [api01]: https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/0.1.1/index.html
