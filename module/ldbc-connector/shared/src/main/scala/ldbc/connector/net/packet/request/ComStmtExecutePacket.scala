@@ -16,6 +16,8 @@ import scodec.interop.cats.*
 
 import cats.syntax.all.*
 
+import ldbc.sql.ResultSet
+
 import ldbc.connector.data.*
 
 /**
@@ -30,8 +32,9 @@ import ldbc.connector.data.*
  *   The parameters to bind to the prepared statement
  */
 case class ComStmtExecutePacket(
-  statementId: Long,
-  params:      SortedMap[Int, Parameter]
+  statementId:    Long,
+  params:         SortedMap[Int, Parameter],
+  enumCursorType: ComStmtExecutePacket.EnumCursorType
 ) extends RequestPacket:
 
   override protected def encodeBody: Attempt[BitVector] =
@@ -42,6 +45,25 @@ case class ComStmtExecutePacket(
   override def toString: String = "COM_STMT_EXECUTE Request"
 
 object ComStmtExecutePacket:
+
+  def apply(
+    statementId:          Long,
+    params:               SortedMap[Int, Parameter],
+    resultSetType:        Int,
+    resultSetConcurrency: Int,
+    useCursorFetch:       Boolean
+  ): ComStmtExecutePacket =
+    val enumCursorType = (resultSetType, resultSetConcurrency, useCursorFetch) match {
+      case (ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, false) => EnumCursorType.CURSOR_TYPE_NO_CURSOR
+      case (ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, true)  => EnumCursorType.CURSOR_TYPE_READ_ONLY
+      case (ResultSet.TYPE_SCROLL_INSENSITIVE | ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY, _) =>
+        EnumCursorType.CURSOR_TYPE_NO_CURSOR
+      case (ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, _) => EnumCursorType.CURSOR_TYPE_NO_CURSOR
+      case (ResultSet.TYPE_SCROLL_INSENSITIVE | ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE, _) =>
+        EnumCursorType.CURSOR_TYPE_NO_CURSOR
+      case _ => EnumCursorType.PARAMETER_COUNT_AVAILABLE
+    }
+    ComStmtExecutePacket(statementId, params, enumCursorType)
 
   val encoder: Encoder[ComStmtExecutePacket] = Encoder { comStmtExecute =>
 
@@ -67,7 +89,7 @@ object ComStmtExecutePacket:
     Attempt.successful(
       BitVector(CommandId.COM_STMT_EXECUTE) |+|
         uint32L.encode(comStmtExecute.statementId).require |+|
-        BitVector(EnumCursorType.PARAMETER_COUNT_AVAILABLE.code) |+|
+        BitVector(comStmtExecute.enumCursorType.code) |+|
         uint32L.encode(1L).require |+|
         BitVector(paramCount) |+|
         nullBitmap(comStmtExecute.params.values.map(_.columnDataType).toList) |+|
@@ -80,7 +102,7 @@ object ComStmtExecutePacket:
   // @see https://dev.mysql.com/doc/dev/mysql-server/latest/mysql__com_8h.html
   enum EnumCursorType(val code: Short):
     case CURSOR_TYPE_NO_CURSOR     extends EnumCursorType(0)
-    case CURSOR_TYPE_READ_ONLY     extends EnumCursorType(1)
+    case CURSOR_TYPE_READ_ONLY     extends EnumCursorType(9)
     case CURSOR_TYPE_FOR_UPDATE    extends EnumCursorType(2)
     case CURSOR_TYPE_SCROLLABLE    extends EnumCursorType(4)
     case PARAMETER_COUNT_AVAILABLE extends EnumCursorType(8)

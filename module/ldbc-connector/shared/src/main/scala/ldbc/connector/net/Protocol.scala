@@ -32,6 +32,7 @@ import ldbc.connector.net.packet.*
 import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.protocol.*
+import ldbc.connector.telemetry.*
 
 /**
  * Protocol is a protocol to communicate with MySQL server.
@@ -148,66 +149,76 @@ object Protocol:
   )(using ev: MonadError[F, Throwable], ex: Exchange[F])
     extends Protocol[F]:
 
-    private val attributes = initialPacket.attributes ++ List(
-      hostInfo.database.map(db => Attribute("database", db))
-    ).flatten
+    private val attributes = List(
+      TelemetryAttribute.dbSystemName,
+      TelemetryAttribute.serverAddress(hostInfo.host),
+      TelemetryAttribute.serverPort(hostInfo.port),
+      TelemetryAttribute.dbMysqlVersion(initialPacket.serverVersion.toString),
+      TelemetryAttribute.dbMysqlThreadId(initialPacket.threadId)
+    ) ++ hostInfo.database
+      .map(db => TelemetryAttribute.dbNamespace(db))
+      .toList
 
     override def receive[P <: ResponsePacket](decoder: Decoder[P]): F[P] = socket.receive(decoder)
 
     override def send(request: RequestPacket): F[Unit] = socket.send(request)
 
     override def comQuit(): F[Unit] =
-      exchange[F, Unit]("utility_commands") { (span: Span[F]) =>
-        span.addAttributes((attributes :+ Attribute("command", "COM_QUIT"))*) *> socket.send(ComQuitPacket())
+      exchange[F, Unit](TelemetrySpanName.CONNECTION_CLOSE) { (span: Span[F]) =>
+        span.addAttributes(attributes*) *> socket.send(ComQuitPacket())
       }
 
     override def comInitDB(schema: String): F[Unit] =
-      exchange[F, Unit]("utility_commands") { (span: Span[F]) =>
-        span.addAttributes((attributes ++ List(Attribute("command", "COM_INIT_DB"), Attribute("schema", schema)))*) *>
+      exchange[F, Unit](TelemetrySpanName.CHANGE_DATABASE) { (span: Span[F]) =>
+        span.addAttributes((attributes ++ List(TelemetryAttribute.dbNamespace(schema)))*) *>
           socket.send(ComInitDBPacket(schema)) *>
           socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
-            case error: ERRPacket => ev.raiseError(error.toException("Failed to execute change schema"))
-            case ok: OKPacket     => ev.unit
+            case error: ERRPacket =>
+              val ex = error.toException(s"Failed to change schema to '$schema'")
+              span.recordException(ex, error.attributes*) *> ev.raiseError(ex)
+            case ok: OKPacket => ev.unit
           }
       }
 
     override def comStatistics(): F[StatisticsPacket] =
-      exchange[F, StatisticsPacket]("utility_commands") { (span: Span[F]) =>
-        span.addAttributes((attributes :+ Attribute("command", "COM_STATISTICS"))*) *>
+      exchange[F, StatisticsPacket](TelemetrySpanName.COMMAND_STATISTICS) { (span: Span[F]) =>
+        span.addAttributes(attributes*) *>
           socket.send(ComStatisticsPacket()) *>
           socket.receive(StatisticsPacket.decoder)
       }
 
     override def comPing(): F[Boolean] =
-      exchange[F, Boolean]("utility_commands") { (span: Span[F]) =>
-        span.addAttributes((attributes :+ Attribute("command", "COM_PING"))*) *>
+      exchange[F, Boolean](TelemetrySpanName.PING) { (span: Span[F]) =>
+        span.addAttributes(attributes*) *>
           socket.send(ComPingPacket()) *>
           socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
-            case error: ERRPacket => ev.pure(false)
+            case error: ERRPacket => span.recordException(error.toException, error.attributes*) *> ev.pure(false)
             case ok: OKPacket     => ev.pure(true)
           }
       }
 
     override def comResetConnection(): F[Unit] =
-      exchange[F, Unit]("utility_commands") { (span: Span[F]) =>
-        span.addAttributes((attributes :+ Attribute("command", "COM_RESET_CONNECTION"))*) *>
+      exchange[F, Unit](TelemetrySpanName.CONNECTION_RESET) { (span: Span[F]) =>
+        span.addAttributes(attributes*) *>
           socket.send(ComResetConnectionPacket()) *>
           socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
-            case error: ERRPacket => ev.raiseError(error.toException("Failed to execute reset connection"))
-            case ok: OKPacket     => ev.unit
+            case error: ERRPacket =>
+              val ex = error.toException("Failed to execute reset connection")
+              span.recordException(ex, error.attributes*) *> ev.raiseError(ex)
+            case ok: OKPacket => ev.unit
           }
       }
 
     override def comSetOption(optionOperation: EnumMySQLSetOption): F[Unit] =
-      exchange[F, Unit]("utility_commands") { (span: Span[F]) =>
-        span.addAttributes(
-          (attributes ++ List(Attribute("command", "COM_SET_OPTION"), Attribute("option", optionOperation.toString)))*
-        ) *>
+      exchange[F, Unit](TelemetrySpanName.SET_OPTION_MULTI_STATEMENTS(optionOperation.code)) { (span: Span[F]) =>
+        span.addAttributes(attributes*) *>
           socket.send(ComSetOptionPacket(optionOperation)) *>
           socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
-            case error: ERRPacket => ev.raiseError(error.toException("Failed to execute set option"))
-            case eof: EOFPacket   => ev.unit
-            case ok: OKPacket     => ev.unit
+            case error: ERRPacket =>
+              val ex = error.toException("Failed to execute set option")
+              span.recordException(ex, error.attributes*) *> ev.raiseError(ex)
+            case eof: EOFPacket => ev.unit
+            case ok: OKPacket   => ev.unit
           }
       }
 
@@ -485,25 +496,24 @@ object Protocol:
       yield ()
 
     override def startAuthentication(username: String, password: String): F[Unit] =
-      exchange[F, Unit]("database.authentication") { (span: Span[F]) =>
-        span.addAttributes((attributes ++ List(Attribute("username", username)))*) *> (
+      exchange[F, Unit](TelemetrySpanName.CONNECTION_CREATE) { (span: Span[F]) =>
+        span.addAttributes(
+          (attributes ++ List(
+            TelemetryAttribute.dbMysqlAuthPlugin(initialPacket.authPlugin),
+            Attribute("username", username)
+          ))*
+        ) *> (
           determinatePlugin(initialPacket.authPlugin, initialPacket.serverVersion) match
-            case Left(error)   => ev.raiseError(error) *> socket.send(ComQuitPacket())
+            case Left(error)   => span.recordException(error) *> ev.raiseError(error) *> socket.send(ComQuitPacket())
             case Right(plugin) => handshake(plugin, username, password) *> readUntilOk(plugin, password)
         )
       }
 
     override def changeUser(user: String, password: String): F[Unit] =
-      exchange[F, Unit]("authentication.change.user") { (span: Span[F]) =>
-        span.addAttributes(
-          (
-            attributes ++
-              List(Attribute("type", "Utility Commands")) ++
-              List(Attribute("command", "COM_CHANGE_USER"), Attribute("user", user))
-          )*
-        ) *> (
+      exchange[F, Unit](TelemetrySpanName.CHANGE_USER) { (span: Span[F]) =>
+        span.addAttributes(attributes*) *> (
           determinatePlugin(initialPacket.authPlugin, initialPacket.serverVersion) match
-            case Left(error)   => ev.raiseError(error) *> socket.send(ComQuitPacket())
+            case Left(error)   => span.recordException(error) *> ev.raiseError(error) *> socket.send(ComQuitPacket())
             case Right(plugin) =>
               for
                 hashedPassword <- plugin.hashPassword(password, initialPacket.scrambleBuff)

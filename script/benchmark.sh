@@ -112,6 +112,7 @@ done
 [ ${#KINDS[@]} = 0 ] && {
     KINDS=(
         'connector'
+        'pooling'
         'wrapper'
     )
 }
@@ -138,9 +139,9 @@ EXCLUDE=('doobie' 'slick')
 run_feature() {
     KIND="$1"
     FEATURE="$2"
-    # If KIND is connector, only jdbc and ldbc are targeted.
-    [ "$KIND" = "connector" ] && TARGETS=(${TARGETS[@]/doobie/})
-    [ "$KIND" = "connector" ] && TARGETS=(${TARGETS[@]/slick/})
+    # If KIND is connector or pooling, only jdbc and ldbc are targeted.
+    ([ "$KIND" = "connector" ] || [ "$KIND" = "pooling" ]) && TARGETS=(${TARGETS[@]/doobie/})
+    ([ "$KIND" = "connector" ] || [ "$KIND" = "pooling" ]) && TARGETS=(${TARGETS[@]/slick/})
 
     for target in ${TARGETS[@]}; do
         run "benchmark" "$target" "${KIND}" "${FEATURE}"
@@ -148,11 +149,6 @@ run_feature() {
 
     CHART_INPUT="script/${OUT_DIR}/${KIND}/${PREFIX}${FEATURE}${SUFFIX}.json"
     CHART_OUTPUT="docs/src/main/mdoc/img/${KIND}/${PREFIX}${FEATURE}${SUFFIX}.svg"
-
-    #OUTPUTS+=("script/${OUT_DIR}/${KIND}/jdbc/${FEATURE}.json")
-    #OUTPUTS+=("script/${OUT_DIR}/${KIND}/ldbc/${FEATURE}.json")
-    #OUTPUTS+=("script/${OUT_DIR}/${KIND}/doobie/${FEATURE}.json")
-    #OUTPUTS+=("script/${OUT_DIR}/${KIND}/slick/${FEATURE}.json")
 
     for output in ${OUTPUTS[@]}; do
         jq '.[]' "${output}"

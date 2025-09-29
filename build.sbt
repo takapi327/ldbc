@@ -31,66 +31,7 @@ ThisBuild / githubWorkflowBuildPostamble += dockerStop
 ThisBuild / githubWorkflowTargetBranches        := Seq("**")
 ThisBuild / githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v")))
 ThisBuild / tlSitePublishBranch                 := None
-ThisBuild / mimaBinaryIssueFilters ++= List(
-  ProblemFilters.exclude[DirectMissingMethodProblem]("ldbc.schema.DataType.mapping"),
-
-  // Exclusions for Naming class relocation from ldbc.codegen.formatter to ldbc.statement.formatter
-  ProblemFilters.exclude[MissingClassProblem]("ldbc.codegen.formatter.Naming"),
-  ProblemFilters.exclude[MissingClassProblem]("ldbc.codegen.formatter.Naming$"),
-
-  // ColumnCodeBuilder related exclusions
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.builder.ColumnCodeBuilder.apply"),
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.builder.ColumnCodeBuilder.this"),
-  ProblemFilters.exclude[IncompatibleResultTypeProblem]("ldbc.codegen.builder.ColumnCodeBuilder.formatter"),
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.builder.ColumnCodeBuilder.copy"),
-  ProblemFilters.exclude[IncompatibleResultTypeProblem]("ldbc.codegen.builder.ColumnCodeBuilder.copy$default$1"),
-  ProblemFilters.exclude[IncompatibleResultTypeProblem]("ldbc.codegen.builder.ColumnCodeBuilder._1"),
-
-  // DataTypeCodeBuilder related exclusions
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.builder.DataTypeCodeBuilder.apply"),
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.builder.DataTypeCodeBuilder.this"),
-  ProblemFilters.exclude[IncompatibleResultTypeProblem]("ldbc.codegen.builder.DataTypeCodeBuilder.formatter"),
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.builder.DataTypeCodeBuilder.copy"),
-  ProblemFilters.exclude[IncompatibleResultTypeProblem]("ldbc.codegen.builder.DataTypeCodeBuilder.copy$default$2"),
-  ProblemFilters.exclude[IncompatibleResultTypeProblem]("ldbc.codegen.builder.DataTypeCodeBuilder._2"),
-
-  // Key related exclusions
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.model.Key.toCode"),
-  ProblemFilters.exclude[ReversedMissingMethodProblem]("ldbc.codegen.model.Key.toCode"),
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.model.Key#Foreign.toCode"),
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.model.Key#Index.toCode"),
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.model.Key#Primary.toCode"),
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.model.Key#Reference.toCode"),
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.codegen.model.Key#Unique.toCode")
-)
-
-lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
-  .crossType(CrossType.Full)
-  .default("core", "ldbc core project")
-  .settings(
-    onLoadMessage :=
-      s"""
-         |${ scala.Console.RED }WARNING: This project is deprecated and will be removed in future versions. Please use ldbc-schema instead.
-         |
-         |${ scala.Console.RED }${ organization.value } %% ${ name.value } % ${ version.value }
-         |
-         |         ${ scala.Console.RED }↓↓↓↓↓
-         |
-         |${ scala.Console.RED }${ organization.value } %% ldbc-schema % ${ version.value }
-         |
-         |""".stripMargin,
-    libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-core"   % "2.10.0",
-      "org.scalatest" %%% "scalatest"   % "3.2.18" % Test,
-      "org.specs2"    %%% "specs2-core" % "4.20.5" % Test
-    ),
-    Test / scalacOptions -= "-Werror"
-  )
-  .platformsSettings(JSPlatform, NativePlatform)(
-    libraryDependencies ++= Seq(
-      "io.github.cquiroz" %%% "scala-java-time" % "2.5.0"
-    )
-  )
+ThisBuild / tlCiMimaBinaryIssueCheck            := false
 
 lazy val sql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
@@ -101,18 +42,28 @@ lazy val sql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     )
   )
 
+lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
+  .module("core", "Core project for ldbc")
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel" %%% "cats-free"   % "2.10.0",
+      "org.typelevel" %%% "cats-effect" % "3.6.2"
+    )
+  )
+  .dependsOn(sql)
+
 lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("dsl", "Projects that provide a way to connect to the database")
   .settings(
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "twiddles-core"     % "0.8.0",
-      "org.typelevel" %%% "cats-free"         % "2.10.0",
-      "org.typelevel" %%% "cats-effect"       % "3.6.3",
+      "co.fs2"        %%% "fs2-core"          % "3.12.0",
       "org.typelevel" %%% "munit-cats-effect" % "2.1.0" % Test
     )
   )
-  .dependsOn(sql)
+  .dependsOn(core)
 
 lazy val statement = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
@@ -139,14 +90,6 @@ lazy val schema = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.18" % Test)
   .settings(Test / scalacOptions -= "-Werror")
   .dependsOn(statement)
-
-lazy val schemaSpy = LepusSbtProject("ldbc-schemaSpy", "module/ldbc-schemaspy")
-  .settings(
-    description := "Project to generate SchemaSPY documentation",
-    onLoadMessage := s"${ scala.Console.RED }WARNING: This project is deprecated and will be removed in future versions.${ scala.Console.RESET }",
-    libraryDependencies += schemaspy
-  )
-  .dependsOn(core.jvm)
 
 lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
@@ -177,8 +120,7 @@ lazy val jdbcConnector = crossProject(JVMPlatform)
     description := "JDBC API wrapped project with Effect System."
   )
   .defaultSettings
-  .settings(libraryDependencies += catsEffect)
-  .dependsOn(sql)
+  .dependsOn(core)
 
 lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
@@ -186,7 +128,6 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     scalacOptions += "-Ykind-projector:underscores",
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-effect"       % "3.6.3",
       "co.fs2"        %%% "fs2-core"          % "3.12.2",
       "co.fs2"        %%% "fs2-io"            % "3.12.2",
       "org.scodec"    %%% "scodec-bits"       % "1.1.38",
@@ -202,7 +143,7 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
   .nativeSettings(Test / nativeBrewFormulas += "s2n")
-  .dependsOn(sql)
+  .dependsOn(core)
 
 lazy val hikari = LepusSbtProject("ldbc-hikari", "module/ldbc-hikari")
   .settings(description := "Project to build HikariCP")
@@ -276,7 +217,7 @@ lazy val benchmark = (project in file("benchmark"))
       slick
     )
   )
-  .dependsOn(jdbcConnector.jvm, connector.jvm, queryBuilder.jvm)
+  .dependsOn(jdbcConnector.jvm, connector.jvm, queryBuilder.jvm, hikari)
   .enablePlugins(JmhPlugin, AutomateHeaderPlugin, NoPublishPlugin)
 
 lazy val http4sExample = crossProject(JVMPlatform)
@@ -390,7 +331,7 @@ lazy val mcpDocumentServer = crossProject(JSPlatform)
     npmPackageAuthor              := "takapi327",
     npmPackageLicense             := Some("MIT"),
     npmPackageBinaryEnable        := true,
-    npmPackageVersion             := "0.1.0-alpha5",
+    npmPackageVersion             := "0.1.0-alpha6",
     npmPackageREADME              := Some(baseDirectory.value / "README.md"),
     npmPackageAdditionalNpmConfig := Map(
       "homepage"      -> _root_.io.circe.Json.fromString("https://takapi327.github.io/ldbc/"),
@@ -433,8 +374,8 @@ lazy val ldbc = tlCrossRootProject
   .settings(description := "Pure functional JDBC layer with Cats Effect 3 and Scala 3")
   .settings(commonSettings)
   .aggregate(
-    core,
     sql,
+    core,
     jdbcConnector,
     connector,
     dsl,
@@ -446,7 +387,6 @@ lazy val ldbc = tlCrossRootProject
     tests,
     docs,
     benchmark,
-    schemaSpy,
     hikari,
     mcpDocumentServer
   )

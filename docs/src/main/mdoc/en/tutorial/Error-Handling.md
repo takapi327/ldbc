@@ -252,9 +252,10 @@ val fromAccount: Int = ???
 val toAccount: Int = ???
 val amount: BigDecimal = ???
 
-provider.use { conn =>
-  transferMoney(fromAccount, toAccount, amount).transaction(conn)
-}
+// Create Connector
+val connector = Connector.fromDataSource(datasource)
+
+transferMoney(fromAccount, toAccount, amount).transaction(connector)
 ```
 
 ## Summary

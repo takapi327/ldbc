@@ -20,8 +20,10 @@ class LdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest:
   override def connection: ConnectionFixture =
     ConnectionFixture(
       "connection",
-      ConnectionProvider
-        .default[IO]("127.0.0.1", 13306, "ldbc", "password", "connector_test")
+      MySQLDataSource
+        .build[IO]("127.0.0.1", 13306, "ldbc")
+        .setPassword("password")
+        .setDatabase("connector_test")
         .setSSL(SSL.Trusted)
     )
 
@@ -70,10 +72,10 @@ trait SQLStringContextUpdateTest extends CatsEffectSuite:
     )
   }
 
-  test("Not a single submission of result data rolled back in transaction has been reflected.　") {
+  test("Not a single submission of result data rolled back in transaction has been reflected.") {
     assertIO(
       for
-        result <-
+        _ <-
           sql"INSERT INTO $table (`id`, `c1`) VALUES ($None, ${ "column 1" })".update
             .flatMap(_ => sql"INSERT INTO $table (`id`, `xxx`) VALUES ($None, ${ "column 2" })".update)
             .transaction(connectionFixture())

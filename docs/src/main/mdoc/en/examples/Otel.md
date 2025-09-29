@@ -58,7 +58,7 @@ import ldbc.dsl.*
 val serviceName = "my-ldbc-app"
 
 // Resource configuration
-val resource: Resource[IO, Connection[IO]] =
+val resource: Resource[IO, Connector[IO]] =
   for
     // Create otel4s instance from GlobalOpenTelemetry
     otel <- Resource
@@ -69,16 +69,17 @@ val resource: Resource[IO, Connection[IO]] =
     tracer <- Resource.eval(otel.tracerProvider.get(serviceName))
     
     // Configure database connection and set TracerProvider
-    connection <- ConnectionProvider
-      .default[IO]("localhost", 3306, "user", "password", "database")
+    datasource = MySQLDataSource
+      .build[IO]("localhost", 3306, "user")
+      .setPassword("password")
+      .setDatabase("database")
       .setSSL(SSL.Trusted)
       .setTracer(tracer)  // Set OpenTelemetry Tracer
-      .createConnection()
-  yield connection
+  yield Connector.fromDataSource(datasource)
 
 // Execute query using the resource
-val program = resource.use { conn =>
-  sql"SELECT * FROM users".query[String].to[List].readOnly(conn)
+val program = resource.use { connector =>
+  sql"SELECT * FROM users".query[String].to[List].readOnly(connector)
 }
 ```
 
@@ -147,22 +148,24 @@ object Main extends IOApp.Simple:
 
   private val serviceName = "ldbc-otel-example"
 
-  private def resource: Resource[IO, Connection[IO]] =
+  private val base = MySQLDataSource
+    .build[IO]("127.0.0.1", 13307, "ldbc")
+    .setPassword("password")
+    .setDatabase("world")
+    .setSSL(SSL.Trusted)
+
+  private def setupTracing: Resource[IO, Connector[IO]] =
     for
       otel <- Resource
         .eval(IO.delay(GlobalOpenTelemetry.get))
         .evalMap(OtelJava.forAsync[IO])
       tracer <- Resource.eval(otel.tracerProvider.get(serviceName))
-      connection <- ConnectionProvider
-        .default[IO]("127.0.0.1", 13307, "ldbc", "password", "world")
-        .setSSL(SSL.Trusted)
-        .setTracer(tracer)
-        .createConnection()
-    yield connection
+      datasource <- Resource.eval(IO.delay(base.setTracer(tracer)))
+    yield Connector.fromDataSource(datasource)
 
   override def run: IO[Unit] =
-    resource.use { conn =>
-      sql"SELECT name FROM city".query[String].to[List].readOnly(conn).flatMap { cities =>
+    setupTracing.use { connector =>
+      sql"SELECT name FROM city".query[String].to[List].readOnly(connector).flatMap { cities =>
         IO.println(cities)
       }
     }
@@ -273,26 +276,6 @@ ldbc's OpenTelemetry integration records the following information in traces:
 - **Query parameters**: Parameter values passed to queries (safely recorded)
 - **Connection information**: Server and database name connection details
 - **Error information**: Detailed information when errors occur
-
-## Adding Custom Spans
-
-For more detailed tracking, you can add custom spans. Here's an example of wrapping query execution with a custom span:
-
-```scala
-resource.use { conn =>
-  tracer.span("custom-database-operation").use { span =>
-    // Add attributes to span
-    span.setAttribute("db.operation", "select-cities")
-    
-    // Execute query
-    sql"SELECT name FROM city".query[String].to[List].readOnly(conn).flatMap { cities =>
-      // Add attributes about result data
-      span.setAttribute("result.count", cities.size)
-      IO.println(cities)
-    }
-  }
-}
-```
 
 ## Trace Customization Options
 

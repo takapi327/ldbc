@@ -32,27 +32,27 @@ The above code does the following:
 
 The `to` method allows you to specify how to retrieve results. The main methods and their return types are as follows:
 
-| Method       | Return Type    | Notes                        |
-|--------------|----------------|------------------------------|
-| `to[List]`   | `F[List[A]]`   | Retrieves all results as a list |
-| `to[Option]` | `F[Option[A]]` | Expects 0 or 1 result, errors if more |
-| `unsafe`     | `F[A]`         | Expects exactly 1 result, errors otherwise |
+| Method       | Return Type          | Notes                                                                               |
+|--------------|----------------------|-------------------------------------------------------------------------------------|
+| `to[List]`   | `F[List[A]]`         | Retrieves all results as a list                                                     |
+| `to[Option]` | `F[Option[A]]`       | Expects 0 or 1 result, errors if more                                               |
+| `unsafe`     | `F[A]`               | Expects exactly 1 result, errors otherwise                                          |
+| `option`     | `F[Option[A]]`       | Expects exactly one line of results; if more than one line exists, an error occurs. |
+| `nel`        | `F[NonEmptyList[A]]` | Expecting multiple results precisely; an error occurs if there are zero results.    |
 
-Next, we execute this program. We acquire a database connection, run the query, and display the results:
+Next, we execute this program. We create a Connector, run the query, and display the results:
 
 ```scala 3
-// Acquire a database connection and execute the program
-provider
-  .use { conn =>
-    program.readOnly(conn).map(println(_))
-  }
-  .unsafeRunSync()
+// Create Connector and execute the program
+val connector = Connector.fromDataSource(datasource)
+
+program.readOnly(connector).map(println(_)).unsafeRunSync()
 ```
 
 In the above code:
 
-1. `provider.use`: Acquires a connection from the database connection provider
-2. `program.readOnly(conn)`: Executes the created query in read-only mode
+1. `val connector = Connector.fromDataSource(datasource)`: Creates a Connector from the datasource
+2. `program.readOnly(connector)`: Executes the created query in read-only mode using the Connector
 3. `.map(println(_))`: Displays the result to standard output
 4. `.unsafeRunSync()`: Executes the IO effect
 
@@ -85,12 +85,10 @@ In the above for-comprehension, we execute three different queries in sequence a
 The execution method is the same as before:
 
 ```scala 3
-// Acquire a database connection and execute the program
-provider
-  .use { conn =>
-    program.readOnly(conn).map(println(_))
-  }
-  .unsafeRunSync()
+// Create Connector and execute the program
+val connector = Connector.fromDataSource(datasource)
+
+program.readOnly(connector).map(println(_)).unsafeRunSync()
 ```
 
 The execution result will look like `(List(1), Some(2), 3)`. This is a tuple containing the results of the three queries.
@@ -116,12 +114,10 @@ Using the `update` method, you can execute update queries such as INSERT, UPDATE
 When executing update queries, you need to use the `commit` method instead of `readOnly` to commit the transaction:
 
 ```scala 3
-// Acquire a database connection, execute the update program, and commit
-provider
-  .use { conn =>
-    program.commit(conn).map(println(_))
-  }
-  .unsafeRunSync()
+// Create Connector, execute the update program, and commit
+val connector = Connector.fromDataSource(datasource)
+
+program.commit(connector).map(println(_)).unsafeRunSync()
 ```
 
 The `commit` method automatically enables `AutoCommit` and commits the transaction after the query execution. This ensures that changes are persisted to the database.
@@ -150,11 +146,10 @@ val complexProgram: DBIO[Int] = for
   count <- sql"SELECT COUNT(*) FROM accounts".query[Int].unsafe
 yield count
 
-provider
-  .use { conn =>
-    complexProgram.transaction(conn).map(println(_))
-  }
-  .unsafeRunSync()
+// Create Connector and execute the complex program
+val connector = Connector.fromDataSource(datasource)
+
+complexProgram.transaction(connector).map(println(_)).unsafeRunSync()
 ```
 
 In this program, if either INSERT fails, both changes are rolled back. Only when both succeed are the changes committed.

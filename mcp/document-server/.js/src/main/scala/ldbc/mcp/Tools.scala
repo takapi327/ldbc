@@ -237,6 +237,7 @@ object Tools:
       |│ ├── reference
       |│ │ ├── Connector.md
       |│ │ ├── Performance.md
+      |│ │ ├── Pooling.md
       |│ │ ├── directory.conf
       |│ │ └── index.md
       |│ └── tutorial
@@ -290,6 +291,7 @@ object Tools:
       |│ │ ├── Connector.md
       |│ │ ├── Performance.md
       |│ │ ├── directory.conf
+      |│ │ ├── Pooling.md
       |│ │ └── index.md
       |│ └── tutorial
       |│     ├── Connection.md

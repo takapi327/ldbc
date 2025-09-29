@@ -53,7 +53,7 @@ object Main extends ResourceApp.Forever:
       .default[IO]("127.0.0.1", 13306, "ldbc", "password", "world")
       .setSSL(SSL.Trusted)
 
-  private def routes(conn: Connection[IO]): HttpRoutes[IO] = HttpRoutes.of[IO] {
+  private def routes(conn: Connector[IO]): HttpRoutes[IO] = HttpRoutes.of[IO] {
     case GET -> Root / "cities" =>
       for
         cities <- cityTable.selectAll.query.to[List].readOnly(conn)
@@ -63,7 +63,7 @@ object Main extends ResourceApp.Forever:
 
   override def run(args: List[String]): Resource[IO, Unit] =
     for
-      conn <- provider.createConnection()
+      conn <- provider.createConnector()
       _    <- EmberServerBuilder
              .default[IO]
              .withHttpApp(routes(conn).orNotFound)

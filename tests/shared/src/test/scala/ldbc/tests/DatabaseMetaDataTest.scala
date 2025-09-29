@@ -8,6 +8,8 @@ package ldbc.tests
 
 import scala.concurrent.duration.*
 
+import cats.Monad
+
 import cats.effect.*
 
 import munit.*
@@ -16,12 +18,16 @@ import ldbc.sql.*
 
 import ldbc.connector.*
 
+import ldbc.DataSource
+
 class LdbcDatabaseMetaDataTest extends DatabaseMetaDataTest:
   override def prefix: "ldbc" = "ldbc"
 
-  override def connection: Provider[IO] =
-    ConnectionProvider
-      .default[IO](host, port, user, password, database)
+  override def datasource: DataSource[IO] =
+    MySQLDataSource
+      .build[IO](host, port, user)
+      .setPassword(password)
+      .setDatabase(database)
       .setSSL(SSL.Trusted)
 
 trait DatabaseMetaDataTest extends CatsEffectSuite:
@@ -33,11 +39,11 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
   protected val database: String = "connector_test"
 
   def prefix:     "jdbc" | "ldbc"
-  def connection: Provider[IO]
+  def datasource: DataSource[IO]
 
   test(s"$prefix: allTablesAreSelectable") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.allTablesAreSelectable()
       },
@@ -47,7 +53,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getURL") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getURL()
       },
@@ -57,7 +63,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getUserName") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData <- conn.getMetaData()
           value    <- metaData.getUserName()
@@ -69,7 +75,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: isReadOnly") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.isReadOnly()
       },
@@ -79,7 +85,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: nullsAreSortedHigh") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.nullsAreSortedHigh()
       },
@@ -89,7 +95,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: nullsAreSortedLow") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.nullsAreSortedLow()
       },
@@ -99,7 +105,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: nullsAreSortedAtStart") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.nullsAreSortedAtStart()
       },
@@ -109,7 +115,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: nullsAreSortedAtEnd") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.nullsAreSortedAtEnd()
       },
@@ -119,7 +125,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getDatabaseProductName") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getDatabaseProductName()
       },
@@ -129,7 +135,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getDatabaseProductVersion") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getDatabaseProductVersion()
       },
@@ -139,7 +145,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getDriverName") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getDriverName()
       },
@@ -149,18 +155,18 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getDriverVersion") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getDriverVersion()
       },
       if prefix == "jdbc" then "mysql-connector-j-8.4.0 (Revision: 1c3f5c149e0bfe31c7fbeb24e2d260cd890972c4)"
-      else "ldbc-connector-0.3.3"
+      else "ldbc-connector-0.4.0"
     )
   }
 
   test(s"$prefix: getDriverMajorVersion") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getDriverMajorVersion()
       },
@@ -170,17 +176,17 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getDriverMinorVersion") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getDriverMinorVersion()
       },
-      if prefix == "jdbc" then 4 else 3
+      if prefix == "jdbc" then 4 else 4
     )
   }
 
   test(s"$prefix: usesLocalFiles") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.usesLocalFiles()
       },
@@ -190,7 +196,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: usesLocalFilePerTable") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.usesLocalFilePerTable()
       },
@@ -200,7 +206,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsMixedCaseIdentifiers") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsMixedCaseIdentifiers()
       },
@@ -210,7 +216,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: storesUpperCaseIdentifiers") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.storesUpperCaseIdentifiers()
       },
@@ -220,7 +226,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: storesLowerCaseIdentifiers") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.storesLowerCaseIdentifiers()
       },
@@ -230,7 +236,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: storesMixedCaseIdentifiers") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.storesMixedCaseIdentifiers()
       },
@@ -240,7 +246,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsMixedCaseQuotedIdentifiers") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsMixedCaseQuotedIdentifiers()
       },
@@ -250,7 +256,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: storesUpperCaseQuotedIdentifiers") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.storesUpperCaseQuotedIdentifiers()
       },
@@ -260,7 +266,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: storesLowerCaseQuotedIdentifiers") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.storesLowerCaseQuotedIdentifiers()
       },
@@ -270,7 +276,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: storesMixedCaseQuotedIdentifiers") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.storesMixedCaseQuotedIdentifiers()
       },
@@ -280,7 +286,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getIdentifierQuoteString") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getIdentifierQuoteString()
       },
@@ -290,7 +296,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getSQLKeywords") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData <- conn.getMetaData()
           value    <- metaData.getSQLKeywords()
@@ -302,7 +308,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getNumericFunctions") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getNumericFunctions()
       },
@@ -312,7 +318,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getStringFunctions") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getStringFunctions()
       },
@@ -322,7 +328,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getSystemFunctions") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getSystemFunctions()
       },
@@ -332,7 +338,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getTimeDateFunctions") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getTimeDateFunctions()
       },
@@ -342,7 +348,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getSearchStringEscape") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getSearchStringEscape()
       },
@@ -352,7 +358,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getExtraNameCharacters") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getExtraNameCharacters()
       },
@@ -362,7 +368,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsAlterTableWithAddColumn") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsAlterTableWithAddColumn()
       },
@@ -372,7 +378,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsAlterTableWithDropColumn") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsAlterTableWithDropColumn()
       },
@@ -382,7 +388,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsColumnAliasing") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsColumnAliasing()
       },
@@ -392,7 +398,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: nullPlusNonNullIsNull") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.nullPlusNonNullIsNull()
       },
@@ -402,7 +408,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsConvert") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsConvert()
       },
@@ -412,7 +418,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsTableCorrelationNames") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsTableCorrelationNames()
       },
@@ -422,7 +428,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsDifferentTableCorrelationNames") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsDifferentTableCorrelationNames()
       },
@@ -432,7 +438,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsExpressionsInOrderBy") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsExpressionsInOrderBy()
       },
@@ -442,7 +448,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsOrderByUnrelated") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsOrderByUnrelated()
       },
@@ -452,7 +458,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsGroupBy") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsGroupBy()
       },
@@ -462,7 +468,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsGroupByUnrelated") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsGroupByUnrelated()
       },
@@ -472,7 +478,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsGroupByBeyondSelect") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsGroupByBeyondSelect()
       },
@@ -482,7 +488,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsLikeEscapeClause") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsLikeEscapeClause()
       },
@@ -492,7 +498,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsMultipleResultSets") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsMultipleResultSets()
       },
@@ -502,7 +508,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsMultipleTransactions") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsMultipleTransactions()
       },
@@ -512,7 +518,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsNonNullableColumns") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsNonNullableColumns()
       },
@@ -522,7 +528,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsMinimumSQLGrammar") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsMinimumSQLGrammar()
       },
@@ -532,7 +538,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsCoreSQLGrammar") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsCoreSQLGrammar()
       },
@@ -542,7 +548,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsExtendedSQLGrammar") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsExtendedSQLGrammar()
       },
@@ -552,7 +558,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsANSI92EntryLevelSQL") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsANSI92EntryLevelSQL()
       },
@@ -562,7 +568,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsANSI92IntermediateSQL") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsANSI92IntermediateSQL()
       },
@@ -572,7 +578,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsANSI92FullSQL") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsANSI92FullSQL()
       },
@@ -582,7 +588,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsIntegrityEnhancementFacility") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsIntegrityEnhancementFacility()
       },
@@ -592,7 +598,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsOuterJoins") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsOuterJoins()
       },
@@ -602,7 +608,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsLimitedOuterJoins") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsLimitedOuterJoins()
       },
@@ -612,7 +618,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getSchemaTerm") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getSchemaTerm()
       },
@@ -622,7 +628,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getProcedureTerm") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getProcedureTerm()
       },
@@ -632,7 +638,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getCatalogTerm") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getCatalogTerm()
       },
@@ -642,7 +648,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: isCatalogAtStart") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.isCatalogAtStart()
       },
@@ -652,7 +658,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getCatalogSeparator") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getCatalogSeparator()
       },
@@ -662,7 +668,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsSchemasInDataManipulation") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsSchemasInDataManipulation()
       },
@@ -672,7 +678,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsSchemasInProcedureCalls") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsSchemasInProcedureCalls()
       },
@@ -682,7 +688,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsSchemasInTableDefinitions") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsSchemasInTableDefinitions()
       },
@@ -692,7 +698,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsSchemasInIndexDefinitions") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsSchemasInIndexDefinitions()
       },
@@ -702,7 +708,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsSchemasInPrivilegeDefinitions") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsSchemasInPrivilegeDefinitions()
       },
@@ -712,7 +718,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsCatalogsInDataManipulation") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsCatalogsInDataManipulation()
       },
@@ -722,7 +728,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsCatalogsInProcedureCalls") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsCatalogsInProcedureCalls()
       },
@@ -732,7 +738,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsCatalogsInTableDefinitions") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsCatalogsInTableDefinitions()
       },
@@ -742,7 +748,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsCatalogsInIndexDefinitions") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsCatalogsInIndexDefinitions()
       },
@@ -752,7 +758,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsCatalogsInPrivilegeDefinitions") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsCatalogsInPrivilegeDefinitions()
       },
@@ -762,7 +768,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsPositionedDelete") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsPositionedDelete()
       },
@@ -772,7 +778,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsPositionedUpdate") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsPositionedUpdate()
       },
@@ -782,7 +788,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsSelectForUpdate") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsSelectForUpdate()
       },
@@ -792,7 +798,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsStoredProcedures") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsStoredProcedures()
       },
@@ -802,7 +808,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsSubqueriesInComparisons") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsSubqueriesInComparisons()
       },
@@ -812,7 +818,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsSubqueriesInExists") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsSubqueriesInExists()
       },
@@ -822,7 +828,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsSubqueriesInIns") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsSubqueriesInIns()
       },
@@ -832,7 +838,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsSubqueriesInQuantifieds") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsSubqueriesInQuantifieds()
       },
@@ -842,7 +848,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsCorrelatedSubqueries") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsCorrelatedSubqueries()
       },
@@ -852,7 +858,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsUnion") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsUnion()
       },
@@ -862,7 +868,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsUnionAll") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsUnionAll()
       },
@@ -872,7 +878,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsOpenCursorsAcrossCommit") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsOpenCursorsAcrossCommit()
       },
@@ -882,7 +888,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsOpenCursorsAcrossRollback") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsOpenCursorsAcrossRollback()
       },
@@ -892,7 +898,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsOpenStatementsAcrossCommit") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsOpenStatementsAcrossCommit()
       },
@@ -902,7 +908,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsOpenStatementsAcrossRollback") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsOpenStatementsAcrossRollback()
       },
@@ -912,7 +918,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxBinaryLiteralLength") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxBinaryLiteralLength()
       },
@@ -922,7 +928,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxCharLiteralLength") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxCharLiteralLength()
       },
@@ -932,7 +938,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxColumnNameLength") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxColumnNameLength()
       },
@@ -942,7 +948,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxColumnsInGroupBy") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxColumnsInGroupBy()
       },
@@ -952,7 +958,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxColumnsInIndex") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxColumnsInIndex()
       },
@@ -962,7 +968,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxColumnsInOrderBy") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxColumnsInOrderBy()
       },
@@ -972,7 +978,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxColumnsInSelect") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxColumnsInSelect()
       },
@@ -982,7 +988,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxColumnsInTable") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxColumnsInTable()
       },
@@ -992,7 +998,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxConnections") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxConnections()
       },
@@ -1002,7 +1008,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxCursorNameLength") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxCursorNameLength()
       },
@@ -1012,7 +1018,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxIndexLength") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxIndexLength()
       },
@@ -1022,7 +1028,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxSchemaNameLength") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxSchemaNameLength()
       },
@@ -1032,7 +1038,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxProcedureNameLength") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxProcedureNameLength()
       },
@@ -1042,7 +1048,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxCatalogNameLength") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxCatalogNameLength()
       },
@@ -1052,7 +1058,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxRowSize") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxRowSize()
       },
@@ -1062,7 +1068,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: doesMaxRowSizeIncludeBlobs") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.doesMaxRowSizeIncludeBlobs()
       },
@@ -1072,7 +1078,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxStatementLength") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxStatementLength()
       },
@@ -1082,7 +1088,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxStatements") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxStatements()
       },
@@ -1092,7 +1098,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxTableNameLength") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxTableNameLength()
       },
@@ -1102,7 +1108,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxTablesInSelect") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxTablesInSelect()
       },
@@ -1112,7 +1118,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxUserNameLength") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxUserNameLength()
       },
@@ -1122,7 +1128,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getDefaultTransactionIsolation") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getDefaultTransactionIsolation()
       },
@@ -1132,7 +1138,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsTransactions") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsTransactions()
       },
@@ -1142,7 +1148,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsTransactionIsolationLevel") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsTransactionIsolationLevel(2)
       },
@@ -1152,7 +1158,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsDataDefinitionAndDataManipulationTransactions") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsDataDefinitionAndDataManipulationTransactions()
       },
@@ -1162,7 +1168,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsDataManipulationTransactionsOnly") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsDataManipulationTransactionsOnly()
       },
@@ -1172,7 +1178,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: dataDefinitionCausesTransactionCommit") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.dataDefinitionCausesTransactionCommit()
       },
@@ -1182,7 +1188,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: dataDefinitionIgnoredInTransactions") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.dataDefinitionIgnoredInTransactions()
       },
@@ -1192,20 +1198,20 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getProcedures") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getProcedures(None, None, None)
-        yield
-          val builder = List.newBuilder[String]
-          while resultSet.next() do
-            val procedureCat   = resultSet.getString("PROCEDURE_CAT")
-            val procedureSchem = resultSet.getString("PROCEDURE_SCHEM")
-            val procedureName  = resultSet.getString("PROCEDURE_NAME")
-            val procedureType  = resultSet.getShort("PROCEDURE_TYPE")
-            val specificName   = resultSet.getString("SPECIFIC_NAME")
-            builder += s"$procedureCat, $procedureSchem, $procedureName, $procedureType, $specificName"
-          builder.result()
+          result    <- Monad[IO].whileM[List, String](resultSet.next()) {
+                      for
+                        procedureCat   <- resultSet.getString("PROCEDURE_CAT")
+                        procedureSchem <- resultSet.getString("PROCEDURE_SCHEM")
+                        procedureName  <- resultSet.getString("PROCEDURE_NAME")
+                        procedureType  <- resultSet.getShort("PROCEDURE_TYPE")
+                        specificName   <- resultSet.getString("SPECIFIC_NAME")
+                      yield s"$procedureCat, $procedureSchem, $procedureName, $procedureType, $specificName"
+                    }
+        yield result
       },
       List(
         "connector_test, null, demoSp, 1, demoSp",
@@ -1270,34 +1276,35 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getProcedureColumns") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getProcedureColumns(None, None, None, None)
-        yield
-          val builder = List.newBuilder[String]
-          while resultSet.next() do
-            val procedureCat    = resultSet.getString("PROCEDURE_CAT")
-            val procedureSchem  = resultSet.getString("PROCEDURE_SCHEM")
-            val procedureName   = resultSet.getString("PROCEDURE_NAME")
-            val columnName      = resultSet.getString("COLUMN_NAME")
-            val columnType      = resultSet.getInt("COLUMN_TYPE")
-            val dataType        = resultSet.getInt("DATA_TYPE")
-            val typeName        = resultSet.getString("TYPE_NAME")
-            val precision       = resultSet.getInt("PRECISION")
-            val length          = resultSet.getInt("LENGTH")
-            val scale           = resultSet.getInt("SCALE")
-            val radix           = resultSet.getInt("RADIX")
-            val nullable        = resultSet.getInt("NULLABLE")
-            val remarks         = resultSet.getString("REMARKS")
-            val columnDef       = resultSet.getString("COLUMN_DEF")
-            val sqlDataType     = resultSet.getInt("SQL_DATA_TYPE")
-            val sqlDatetimeSub  = resultSet.getInt("SQL_DATETIME_SUB")
-            val charOctetLength = resultSet.getInt("CHAR_OCTET_LENGTH")
-            val ordinalPosition = resultSet.getInt("ORDINAL_POSITION")
-            val isNullable      = resultSet.getString("IS_NULLABLE")
-            builder += s"$procedureCat, $procedureSchem, $procedureName, $columnName, $columnType, $dataType, $typeName, $precision, $length, $scale, $radix, $nullable, $remarks, $columnDef, $sqlDataType, $sqlDatetimeSub, $charOctetLength, $ordinalPosition, $isNullable"
-          builder.result()
+          result    <-
+            Monad[IO].whileM[List, String](resultSet.next()) {
+              for
+                procedureCat    <- resultSet.getString("PROCEDURE_CAT")
+                procedureSchem  <- resultSet.getString("PROCEDURE_SCHEM")
+                procedureName   <- resultSet.getString("PROCEDURE_NAME")
+                columnName      <- resultSet.getString("COLUMN_NAME")
+                columnType      <- resultSet.getInt("COLUMN_TYPE")
+                dataType        <- resultSet.getInt("DATA_TYPE")
+                typeName        <- resultSet.getString("TYPE_NAME")
+                precision       <- resultSet.getInt("PRECISION")
+                length          <- resultSet.getInt("LENGTH")
+                scale           <- resultSet.getInt("SCALE")
+                radix           <- resultSet.getInt("RADIX")
+                nullable        <- resultSet.getInt("NULLABLE")
+                remarks         <- resultSet.getString("REMARKS")
+                columnDef       <- resultSet.getString("COLUMN_DEF")
+                sqlDataType     <- resultSet.getInt("SQL_DATA_TYPE")
+                sqlDatetimeSub  <- resultSet.getInt("SQL_DATETIME_SUB")
+                charOctetLength <- resultSet.getInt("CHAR_OCTET_LENGTH")
+                ordinalPosition <- resultSet.getInt("ORDINAL_POSITION")
+                isNullable      <- resultSet.getString("IS_NULLABLE")
+              yield s"$procedureCat, $procedureSchem, $procedureName, $columnName, $columnType, $dataType, $typeName, $precision, $length, $scale, $radix, $nullable, $remarks, $columnDef, $sqlDataType, $sqlDatetimeSub, $charOctetLength, $ordinalPosition, $isNullable"
+            }
+        yield result
       },
       List(
         "connector_test, null, demoSp, inputParam, 1, 12, VARCHAR, 0, 255, 0, 10, 1, null, null, 0, 0, 1020, 1, YES",
@@ -1400,25 +1407,26 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getTables") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getTables(Some("world"), None, None, Array.empty[String])
-        yield
-          val builder = List.newBuilder[String]
-          while resultSet.next() do
-            val tableCat               = resultSet.getString("TABLE_CAT")
-            val tableSchem             = resultSet.getString("TABLE_SCHEM")
-            val tableName              = resultSet.getString("TABLE_NAME")
-            val tableType              = resultSet.getString("TABLE_TYPE")
-            val remarks                = resultSet.getString("REMARKS")
-            val typeCat                = resultSet.getString("TYPE_CAT")
-            val typeSchem              = resultSet.getString("TYPE_SCHEM")
-            val typeName               = resultSet.getString("TYPE_NAME")
-            val selfReferencingColName = resultSet.getString("SELF_REFERENCING_COL_NAME")
-            val refGeneration          = resultSet.getString("REF_GENERATION")
-            builder += s"$tableCat, $tableSchem, $tableName, $tableType, $remarks, $typeCat, $typeSchem, $typeName, $selfReferencingColName, $refGeneration"
-          builder.result()
+          result    <-
+            Monad[IO].whileM[List, String](resultSet.next()) {
+              for
+                tableCat       <- resultSet.getString("TABLE_CAT")
+                tableSchem     <- resultSet.getString("TABLE_SCHEM")
+                tableName      <- resultSet.getString("TABLE_NAME")
+                tableType      <- resultSet.getString("TABLE_TYPE")
+                remarks        <- resultSet.getString("REMARKS")
+                typeCat        <- resultSet.getString("TYPE_CAT")
+                typeSchem      <- resultSet.getString("TYPE_SCHEM")
+                typeName       <- resultSet.getString("TYPE_NAME")
+                selfRefColName <- resultSet.getString("SELF_REFERENCING_COL_NAME")
+                refGeneration  <- resultSet.getString("REF_GENERATION")
+              yield s"$tableCat, $tableSchem, $tableName, $tableType, $remarks, $typeCat, $typeSchem, $typeName, $selfRefColName, $refGeneration"
+            }
+        yield result
       },
       List(
         "world, null, city, TABLE, , null, null, null, null, null",
@@ -1431,14 +1439,14 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getSchemas") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getSchemas()
-        yield
-          val builder = List.newBuilder[String]
-          while resultSet.next() do builder += resultSet.getString("TABLE_SCHEM")
-          builder.result()
+          result    <- Monad[IO].whileM[List, String](resultSet.next()) {
+                      resultSet.getString("TABLE_SCHEM")
+                    }
+        yield result
       },
       List.empty
     )
@@ -1447,14 +1455,14 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
   test(s"$prefix: getCatalogs") {
     // Waiting for Schema values to increase or decrease in other tests.
     IO.sleep(5.seconds) *> assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getCatalogs()
-        yield
-          val builder = List.newBuilder[String]
-          while resultSet.next() do builder += resultSet.getString("TABLE_CAT")
-          builder.result()
+          result    <- Monad[IO].whileM[List, String](resultSet.next()) {
+                      resultSet.getString("TABLE_CAT")
+                    }
+        yield result
       },
       List(
         "benchmark",
@@ -1472,13 +1480,14 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getTableTypes") {
     assertIO(
-      connection.use { conn =>
-        for metaData <- conn.getMetaData()
-        yield
-          val resultSet = metaData.getTableTypes()
-          val builder   = List.newBuilder[String]
-          while resultSet.next() do builder += resultSet.getString("TABLE_TYPE")
-          builder.result()
+      datasource.getConnection.use { conn =>
+        for
+          metaData  <- conn.getMetaData()
+          resultSet <- metaData.getTableTypes()
+          result    <- Monad[IO].whileM[List, String](resultSet.next()) {
+                      resultSet.getString("TABLE_TYPE")
+                    }
+        yield result
       },
       List(
         "LOCAL TEMPORARY",
@@ -1492,38 +1501,39 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getColumns") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getColumns(None, None, Some("tax"), None)
-        yield
-          val builder = Vector.newBuilder[String]
-          while resultSet.next() do
-            val tableCat        = resultSet.getString("TABLE_CAT")
-            val tableSchem      = resultSet.getString("TABLE_SCHEM")
-            val tableName       = resultSet.getString("TABLE_NAME")
-            val columnName      = resultSet.getString("COLUMN_NAME")
-            val dataType        = resultSet.getInt("DATA_TYPE")
-            val typeName        = resultSet.getString("TYPE_NAME")
-            val columnSize      = resultSet.getInt("COLUMN_SIZE")
-            val bufferLength    = resultSet.getInt("BUFFER_LENGTH")
-            val decimalDigits   = resultSet.getInt("DECIMAL_DIGITS")
-            val numPrecRadix    = resultSet.getInt("NUM_PREC_RADIX")
-            val nullable        = resultSet.getInt("NULLABLE")
-            val remarks         = resultSet.getString("REMARKS")
-            val columnDef       = resultSet.getString("COLUMN_DEF")
-            val sqlDataType     = resultSet.getInt("SQL_DATA_TYPE")
-            val sqlDatetimeSub  = resultSet.getInt("SQL_DATETIME_SUB")
-            val charOctetLength = resultSet.getInt("CHAR_OCTET_LENGTH")
-            val ordinalPosition = resultSet.getInt("ORDINAL_POSITION")
-            val isNullable      = resultSet.getString("IS_NULLABLE")
-            val scopeCatalog    = resultSet.getString("SCOPE_CATALOG")
-            val scopeSchema     = resultSet.getString("SCOPE_SCHEMA")
-            val scopeTable      = resultSet.getString("SCOPE_TABLE")
-            val sourceDataType  = resultSet.getShort("SOURCE_DATA_TYPE")
-            val isAutoincrement = resultSet.getString("IS_AUTOINCREMENT")
-            builder += s"$tableCat, $tableSchem, $tableName, $columnName, $dataType, $typeName, $columnSize, $bufferLength, $decimalDigits, $numPrecRadix, $nullable, $remarks, $columnDef, $sqlDataType, $sqlDatetimeSub, $charOctetLength, $ordinalPosition, $isNullable, $scopeCatalog, $scopeSchema, $scopeTable, $sourceDataType, $isAutoincrement"
-          builder.result()
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                tableCat        <- resultSet.getString("TABLE_CAT")
+                tableSchem      <- resultSet.getString("TABLE_SCHEM")
+                tableName       <- resultSet.getString("TABLE_NAME")
+                columnName      <- resultSet.getString("COLUMN_NAME")
+                dataType        <- resultSet.getInt("DATA_TYPE")
+                typeName        <- resultSet.getString("TYPE_NAME")
+                columnSize      <- resultSet.getInt("COLUMN_SIZE")
+                bufferLength    <- resultSet.getInt("BUFFER_LENGTH")
+                decimalDigits   <- resultSet.getInt("DECIMAL_DIGITS")
+                numPrecRadix    <- resultSet.getInt("NUM_PREC_RADIX")
+                nullable        <- resultSet.getInt("NULLABLE")
+                remarks         <- resultSet.getString("REMARKS")
+                columnDef       <- resultSet.getString("COLUMN_DEF")
+                sqlDataType     <- resultSet.getInt("SQL_DATA_TYPE")
+                sqlDatetimeSub  <- resultSet.getInt("SQL_DATETIME_SUB")
+                charOctetLength <- resultSet.getInt("CHAR_OCTET_LENGTH")
+                ordinalPosition <- resultSet.getInt("ORDINAL_POSITION")
+                isNullable      <- resultSet.getString("IS_NULLABLE")
+                scopeCatalog    <- resultSet.getString("SCOPE_CATALOG")
+                scopeSchema     <- resultSet.getString("SCOPE_SCHEMA")
+                scopeTable      <- resultSet.getString("SCOPE_TABLE")
+                sourceDataType  <- resultSet.getShort("SOURCE_DATA_TYPE")
+                isAutoincrement <- resultSet.getString("IS_AUTOINCREMENT")
+              yield s"$tableCat, $tableSchem, $tableName, $columnName, $dataType, $typeName, $columnSize, $bufferLength, $decimalDigits, $numPrecRadix, $nullable, $remarks, $columnDef, $sqlDataType, $sqlDatetimeSub, $charOctetLength, $ordinalPosition, $isNullable, $scopeCatalog, $scopeSchema, $scopeTable, $sourceDataType, $isAutoincrement"
+            }
+        yield result
       },
       Vector(
         "connector_test, null, tax, id, -5, BIGINT, 19, 65535, 0, 10, 0, , null, 0, 0, 0, 1, NO, null, null, null, 0, YES",
@@ -1535,23 +1545,24 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getColumnPrivileges") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getColumnPrivileges(Some("connector_test"), None, Some("tax"), Some("id"))
-        yield
-          val builder = Vector.newBuilder[String]
-          while resultSet.next() do
-            val tableCat    = resultSet.getString("TABLE_CAT")
-            val tableSchem  = resultSet.getString("TABLE_SCHEM")
-            val tableName   = resultSet.getString("TABLE_NAME")
-            val columnName  = resultSet.getString("COLUMN_NAME")
-            val grantor     = resultSet.getString("GRANTOR")
-            val grantee     = resultSet.getString("GRANTEE")
-            val privilege   = resultSet.getString("PRIVILEGE")
-            val isGrantable = resultSet.getString("IS_GRANTABLE")
-            builder += s"$tableCat, $tableSchem, $tableName, $columnName, $grantor, $grantee, $privilege, $isGrantable"
-          builder.result()
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                tableCat    <- resultSet.getString("TABLE_CAT")
+                tableSchem  <- resultSet.getString("TABLE_SCHEM")
+                tableName   <- resultSet.getString("TABLE_NAME")
+                columnName  <- resultSet.getString("COLUMN_NAME")
+                grantor     <- resultSet.getString("GRANTOR")
+                grantee     <- resultSet.getString("GRANTEE")
+                privilege   <- resultSet.getString("PRIVILEGE")
+                isGrantable <- resultSet.getString("IS_GRANTABLE")
+              yield s"$tableCat, $tableSchem, $tableName, $columnName, $grantor, $grantee, $privilege, $isGrantable"
+            }
+        yield result
       },
       Vector()
     )
@@ -1559,22 +1570,22 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getTablePrivileges") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getTablePrivileges(None, None, Some("tax"))
-        yield
-          val builder = Vector.newBuilder[String]
-          while resultSet.next() do
-            val tableCat    = resultSet.getString("TABLE_CAT")
-            val tableSchem  = resultSet.getString("TABLE_SCHEM")
-            val tableName   = resultSet.getString("TABLE_NAME")
-            val grantor     = resultSet.getString("GRANTOR")
-            val grantee     = resultSet.getString("GRANTEE")
-            val privilege   = resultSet.getString("PRIVILEGE")
-            val isGrantable = resultSet.getString("IS_GRANTABLE")
-            builder += s"$tableCat, $tableSchem, $tableName, $grantor, $grantee, $privilege, $isGrantable"
-          builder.result()
+          result    <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+                      for
+                        tableCat    <- resultSet.getString("TABLE_CAT")
+                        tableSchem  <- resultSet.getString("TABLE_SCHEM")
+                        tableName   <- resultSet.getString("TABLE_NAME")
+                        grantor     <- resultSet.getString("GRANTOR")
+                        grantee     <- resultSet.getString("GRANTEE")
+                        privilege   <- resultSet.getString("PRIVILEGE")
+                        isGrantable <- resultSet.getString("IS_GRANTABLE")
+                      yield s"$tableCat, $tableSchem, $tableName, $grantor, $grantee, $privilege, $isGrantable"
+                    }
+        yield result
       },
       Vector.empty
     )
@@ -1582,23 +1593,24 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getBestRowIdentifier") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getBestRowIdentifier(None, None, "tax", Some(1), Some(true))
-        yield
-          val builder = Vector.newBuilder[String]
-          while resultSet.next() do
-            val scope         = resultSet.getShort("SCOPE")
-            val columnName    = resultSet.getString("COLUMN_NAME")
-            val dataType      = resultSet.getInt("DATA_TYPE")
-            val typeName      = resultSet.getString("TYPE_NAME")
-            val columnSize    = resultSet.getInt("COLUMN_SIZE")
-            val bufferLength  = resultSet.getInt("BUFFER_LENGTH")
-            val decimalDigits = resultSet.getShort("DECIMAL_DIGITS")
-            val pseudoColumn  = resultSet.getShort("PSEUDO_COLUMN")
-            builder += s"$scope, $columnName, $dataType, $typeName, $columnSize, $bufferLength, $decimalDigits, $pseudoColumn"
-          builder.result()
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                scope         <- resultSet.getShort("SCOPE")
+                columnName    <- resultSet.getString("COLUMN_NAME")
+                dataType      <- resultSet.getInt("DATA_TYPE")
+                typeName      <- resultSet.getString("TYPE_NAME")
+                columnSize    <- resultSet.getInt("COLUMN_SIZE")
+                bufferLength  <- resultSet.getInt("BUFFER_LENGTH")
+                decimalDigits <- resultSet.getShort("DECIMAL_DIGITS")
+                pseudoColumn  <- resultSet.getShort("PSEUDO_COLUMN")
+              yield s"$scope, $columnName, $dataType, $typeName, $columnSize, $bufferLength, $decimalDigits, $pseudoColumn"
+            }
+        yield result
       },
       Vector("2, id, -5, bigint, 19, 65535, 0, 1")
     )
@@ -1606,23 +1618,24 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getVersionColumns") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getVersionColumns(None, None, "tax")
-        yield
-          val builder = Vector.newBuilder[String]
-          while resultSet.next() do
-            val scope         = resultSet.getShort("SCOPE")
-            val columnName    = resultSet.getString("COLUMN_NAME")
-            val dataType      = resultSet.getInt("DATA_TYPE")
-            val typeName      = resultSet.getString("TYPE_NAME")
-            val columnSize    = resultSet.getInt("COLUMN_SIZE")
-            val bufferLength  = resultSet.getInt("BUFFER_LENGTH")
-            val decimalDigits = resultSet.getShort("DECIMAL_DIGITS")
-            val pseudoColumn  = resultSet.getShort("PSEUDO_COLUMN")
-            builder += s"$scope, $columnName, $dataType, $typeName, $columnSize, $bufferLength, $decimalDigits, $pseudoColumn"
-          builder.result()
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                scope         <- resultSet.getShort("SCOPE")
+                columnName    <- resultSet.getString("COLUMN_NAME")
+                dataType      <- resultSet.getInt("DATA_TYPE")
+                typeName      <- resultSet.getString("TYPE_NAME")
+                columnSize    <- resultSet.getInt("COLUMN_SIZE")
+                bufferLength  <- resultSet.getInt("BUFFER_LENGTH")
+                decimalDigits <- resultSet.getShort("DECIMAL_DIGITS")
+                pseudoColumn  <- resultSet.getShort("PSEUDO_COLUMN")
+              yield s"$scope, $columnName, $dataType, $typeName, $columnSize, $bufferLength, $decimalDigits, $pseudoColumn"
+            }
+        yield result
       },
       Vector()
     )
@@ -1630,21 +1643,21 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getPrimaryKeys") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getPrimaryKeys(None, None, "tax")
-        yield
-          val builder = Vector.newBuilder[String]
-          while resultSet.next() do
-            val tableCat   = resultSet.getString("TABLE_CAT")
-            val tableSchem = resultSet.getString("TABLE_SCHEM")
-            val tableName  = resultSet.getString("TABLE_NAME")
-            val columnName = resultSet.getString("COLUMN_NAME")
-            val keySeq     = resultSet.getShort("KEY_SEQ")
-            val pkName     = resultSet.getString("PK_NAME")
-            builder += s"$tableCat, $tableSchem, $tableName, $columnName, $keySeq, $pkName"
-          builder.result()
+          result    <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+                      for
+                        tableCat   <- resultSet.getString("TABLE_CAT")
+                        tableSchem <- resultSet.getString("TABLE_SCHEM")
+                        tableName  <- resultSet.getString("TABLE_NAME")
+                        columnName <- resultSet.getString("COLUMN_NAME")
+                        keySeq     <- resultSet.getShort("KEY_SEQ")
+                        pkName     <- resultSet.getString("PK_NAME")
+                      yield s"$tableCat, $tableSchem, $tableName, $columnName, $keySeq, $pkName"
+                    }
+        yield result
       },
       Vector("connector_test, null, tax, id, 1, PRIMARY")
     )
@@ -1652,29 +1665,30 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getImportedKeys") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getImportedKeys(None, None, "tax")
-        yield
-          val builder = Vector.newBuilder[String]
-          while resultSet.next() do
-            val pkTableCat    = resultSet.getString("PKTABLE_CAT")
-            val pkTableSchem  = resultSet.getString("PKTABLE_SCHEM")
-            val pkTableName   = resultSet.getString("PKTABLE_NAME")
-            val pkColumnName  = resultSet.getString("PKCOLUMN_NAME")
-            val fkTableCat    = resultSet.getString("FKTABLE_CAT")
-            val fkTableSchem  = resultSet.getString("FKTABLE_SCHEM")
-            val fkTableName   = resultSet.getString("FKTABLE_NAME")
-            val fkColumnName  = resultSet.getString("FKCOLUMN_NAME")
-            val keySeq        = resultSet.getShort("KEY_SEQ")
-            val updateRule    = resultSet.getShort("UPDATE_RULE")
-            val deleteRule    = resultSet.getShort("DELETE_RULE")
-            val fkName        = resultSet.getString("FK_NAME")
-            val pkName        = resultSet.getString("PK_NAME")
-            val deferrability = resultSet.getShort("DEFERRABILITY")
-            builder += s"$pkTableCat, $pkTableSchem, $pkTableName, $pkColumnName, $fkTableCat, $fkTableSchem, $fkTableName, $fkColumnName, $keySeq, $updateRule, $deleteRule, $fkName, $pkName, $deferrability"
-          builder.result()
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                pkTableCat    <- resultSet.getString("PKTABLE_CAT")
+                pkTableSchem  <- resultSet.getString("PKTABLE_SCHEM")
+                pkTableName   <- resultSet.getString("PKTABLE_NAME")
+                pkColumnName  <- resultSet.getString("PKCOLUMN_NAME")
+                fkTableCat    <- resultSet.getString("FKTABLE_CAT")
+                fkTableSchem  <- resultSet.getString("FKTABLE_SCHEM")
+                fkTableName   <- resultSet.getString("FKTABLE_NAME")
+                fkColumnName  <- resultSet.getString("FKCOLUMN_NAME")
+                keySeq        <- resultSet.getShort("KEY_SEQ")
+                updateRule    <- resultSet.getShort("UPDATE_RULE")
+                deleteRule    <- resultSet.getShort("DELETE_RULE")
+                fkName        <- resultSet.getString("FK_NAME")
+                pkName        <- resultSet.getString("PK_NAME")
+                deferrability <- resultSet.getShort("DEFERRABILITY")
+              yield s"$pkTableCat, $pkTableSchem, $pkTableName, $pkColumnName, $fkTableCat, $fkTableSchem, $fkTableName, $fkColumnName, $keySeq, $updateRule, $deleteRule, $fkName, $pkName, $deferrability"
+            }
+        yield result
       },
       Vector()
     )
@@ -1682,29 +1696,30 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getExportedKeys") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getExportedKeys(None, None, "tax")
-        yield
-          val builder = Vector.newBuilder[String]
-          while resultSet.next() do
-            val pkTableCat    = resultSet.getString("PKTABLE_CAT")
-            val pkTableSchem  = resultSet.getString("PKTABLE_SCHEM")
-            val pkTableName   = resultSet.getString("PKTABLE_NAME")
-            val pkColumnName  = resultSet.getString("PKCOLUMN_NAME")
-            val fkTableCat    = resultSet.getString("FKTABLE_CAT")
-            val fkTableSchem  = resultSet.getString("FKTABLE_SCHEM")
-            val fkTableName   = resultSet.getString("FKTABLE_NAME")
-            val fkColumnName  = resultSet.getString("FKCOLUMN_NAME")
-            val keySeq        = resultSet.getShort("KEY_SEQ")
-            val updateRule    = resultSet.getShort("UPDATE_RULE")
-            val deleteRule    = resultSet.getShort("DELETE_RULE")
-            val fkName        = resultSet.getString("FK_NAME")
-            val pkName        = resultSet.getString("PK_NAME")
-            val deferrability = resultSet.getShort("DEFERRABILITY")
-            builder += s"$pkTableCat, $pkTableSchem, $pkTableName, $pkColumnName, $fkTableCat, $fkTableSchem, $fkTableName, $fkColumnName, $keySeq, $updateRule, $deleteRule, $fkName, $pkName, $deferrability"
-          builder.result()
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                pkTableCat    <- resultSet.getString("PKTABLE_CAT")
+                pkTableSchem  <- resultSet.getString("PKTABLE_SCHEM")
+                pkTableName   <- resultSet.getString("PKTABLE_NAME")
+                pkColumnName  <- resultSet.getString("PKCOLUMN_NAME")
+                fkTableCat    <- resultSet.getString("FKTABLE_CAT")
+                fkTableSchem  <- resultSet.getString("FKTABLE_SCHEM")
+                fkTableName   <- resultSet.getString("FKTABLE_NAME")
+                fkColumnName  <- resultSet.getString("FKCOLUMN_NAME")
+                keySeq        <- resultSet.getShort("KEY_SEQ")
+                updateRule    <- resultSet.getShort("UPDATE_RULE")
+                deleteRule    <- resultSet.getShort("DELETE_RULE")
+                fkName        <- resultSet.getString("FK_NAME")
+                pkName        <- resultSet.getString("PK_NAME")
+                deferrability <- resultSet.getShort("DEFERRABILITY")
+              yield s"$pkTableCat, $pkTableSchem, $pkTableName, $pkColumnName, $fkTableCat, $fkTableSchem, $fkTableName, $fkColumnName, $keySeq, $updateRule, $deleteRule, $fkName, $pkName, $deferrability"
+            }
+        yield result
       },
       Vector()
     )
@@ -1712,29 +1727,30 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getCrossReference") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getCrossReference(None, None, "tax", None, None, Some("film"))
-        yield
-          val builder = Vector.newBuilder[String]
-          while resultSet.next() do
-            val pkTableCat    = resultSet.getString("PKTABLE_CAT")
-            val pkTableSchem  = resultSet.getString("PKTABLE_SCHEM")
-            val pkTableName   = resultSet.getString("PKTABLE_NAME")
-            val pkColumnName  = resultSet.getString("PKCOLUMN_NAME")
-            val fkTableCat    = resultSet.getString("FKTABLE_CAT")
-            val fkTableSchem  = resultSet.getString("FKTABLE_SCHEM")
-            val fkTableName   = resultSet.getString("FKTABLE_NAME")
-            val fkColumnName  = resultSet.getString("FKCOLUMN_NAME")
-            val keySeq        = resultSet.getShort("KEY_SEQ")
-            val updateRule    = resultSet.getShort("UPDATE_RULE")
-            val deleteRule    = resultSet.getShort("DELETE_RULE")
-            val fkName        = resultSet.getString("FK_NAME")
-            val pkName        = resultSet.getString("PK_NAME")
-            val deferrability = resultSet.getShort("DEFERRABILITY")
-            builder += s"$pkTableCat, $pkTableSchem, $pkTableName, $pkColumnName, $fkTableCat, $fkTableSchem, $fkTableName, $fkColumnName, $keySeq, $updateRule, $deleteRule, $fkName, $pkName, $deferrability"
-          builder.result()
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                pkTableCat    <- resultSet.getString("PKTABLE_CAT")
+                pkTableSchem  <- resultSet.getString("PKTABLE_SCHEM")
+                pkTableName   <- resultSet.getString("PKTABLE_NAME")
+                pkColumnName  <- resultSet.getString("PKCOLUMN_NAME")
+                fkTableCat    <- resultSet.getString("FKTABLE_CAT")
+                fkTableSchem  <- resultSet.getString("FKTABLE_SCHEM")
+                fkTableName   <- resultSet.getString("FKTABLE_NAME")
+                fkColumnName  <- resultSet.getString("FKCOLUMN_NAME")
+                keySeq        <- resultSet.getShort("KEY_SEQ")
+                updateRule    <- resultSet.getShort("UPDATE_RULE")
+                deleteRule    <- resultSet.getShort("DELETE_RULE")
+                fkName        <- resultSet.getString("FK_NAME")
+                pkName        <- resultSet.getString("PK_NAME")
+                deferrability <- resultSet.getShort("DEFERRABILITY")
+              yield s"$pkTableCat, $pkTableSchem, $pkTableName, $pkColumnName, $fkTableCat, $fkTableSchem, $fkTableName, $fkColumnName, $keySeq, $updateRule, $deleteRule, $fkName, $pkName, $deferrability"
+            }
+        yield result
       },
       Vector()
     )
@@ -1742,27 +1758,28 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getIndexInfo") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getIndexInfo(None, None, Some("tax"), false, false)
-        yield
-          val builder = Vector.newBuilder[String]
-          while resultSet.next() do
-            val tableCat        = resultSet.getString("TABLE_CAT")
-            val tableSchem      = resultSet.getString("TABLE_SCHEM")
-            val tableName       = resultSet.getString("TABLE_NAME")
-            val nonUnique       = resultSet.getBoolean("NON_UNIQUE")
-            val indexQualifier  = resultSet.getString("INDEX_QUALIFIER")
-            val indexName       = resultSet.getString("INDEX_NAME")
-            val typed           = resultSet.getShort("TYPE")
-            val ordinalPosition = resultSet.getInt("ORDINAL_POSITION")
-            val columnName      = resultSet.getString("COLUMN_NAME")
-            val ascOrDesc       = resultSet.getString("ASC_OR_DESC")
-            val pages           = resultSet.getInt("PAGES")
-            val filterCondition = resultSet.getString("FILTER_CONDITION")
-            builder += s"$tableCat, $tableSchem, $tableName, $nonUnique, $indexQualifier, $indexName, $typed, $ordinalPosition, $columnName, $ascOrDesc, $pages, $filterCondition"
-          builder.result()
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                tableCat        <- resultSet.getString("TABLE_CAT")
+                tableSchem      <- resultSet.getString("TABLE_SCHEM")
+                tableName       <- resultSet.getString("TABLE_NAME")
+                nonUnique       <- resultSet.getBoolean("NON_UNIQUE")
+                indexQualifier  <- resultSet.getString("INDEX_QUALIFIER")
+                indexName       <- resultSet.getString("INDEX_NAME")
+                typed           <- resultSet.getShort("TYPE")
+                ordinalPosition <- resultSet.getInt("ORDINAL_POSITION")
+                columnName      <- resultSet.getString("COLUMN_NAME")
+                ascOrDesc       <- resultSet.getString("ASC_OR_DESC")
+                pages           <- resultSet.getInt("PAGES")
+                filterCondition <- resultSet.getString("FILTER_CONDITION")
+              yield s"$tableCat, $tableSchem, $tableName, $nonUnique, $indexQualifier, $indexName, $typed, $ordinalPosition, $columnName, $ascOrDesc, $pages, $filterCondition"
+            }
+        yield result
       },
       Vector(
         "connector_test, null, tax, false, null, PRIMARY, 3, 1, id, A, 0, null"
@@ -1772,7 +1789,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsResultSetType") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsResultSetType(ResultSet.TYPE_FORWARD_ONLY)
       },
@@ -1782,7 +1799,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsResultSetConcurrency") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsResultSetConcurrency(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
       },
@@ -1792,7 +1809,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: ownUpdatesAreVisible") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.ownUpdatesAreVisible(ResultSet.TYPE_FORWARD_ONLY)
       },
@@ -1802,7 +1819,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: ownDeletesAreVisible") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.ownDeletesAreVisible(ResultSet.TYPE_FORWARD_ONLY)
       },
@@ -1812,7 +1829,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: ownInsertsAreVisible") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.ownInsertsAreVisible(ResultSet.TYPE_FORWARD_ONLY)
       },
@@ -1822,7 +1839,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: othersUpdatesAreVisible") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.othersUpdatesAreVisible(ResultSet.TYPE_FORWARD_ONLY)
       },
@@ -1832,7 +1849,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: othersDeletesAreVisible") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.othersDeletesAreVisible(ResultSet.TYPE_FORWARD_ONLY)
       },
@@ -1842,7 +1859,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: othersInsertsAreVisible") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.othersInsertsAreVisible(ResultSet.TYPE_FORWARD_ONLY)
       },
@@ -1852,7 +1869,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: updatesAreDetected") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.updatesAreDetected(ResultSet.TYPE_FORWARD_ONLY)
       },
@@ -1862,7 +1879,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: deletesAreDetected") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.deletesAreDetected(ResultSet.TYPE_FORWARD_ONLY)
       },
@@ -1872,7 +1889,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: insertsAreDetected") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.insertsAreDetected(ResultSet.TYPE_FORWARD_ONLY)
       },
@@ -1882,7 +1899,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsBatchUpdates") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsBatchUpdates()
       },
@@ -1892,21 +1909,22 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getUDTs") {
     assertIO(
-      connection.use { conn =>
-        for metaData <- conn.getMetaData()
-        yield
-          val resultSet = metaData.getUDTs(None, None, None, Array.empty[Int])
-          val builder   = Vector.newBuilder[String]
-          while resultSet.next() do
-            val typeCat   = resultSet.getString("TYPE_CAT")
-            val typeSchem = resultSet.getString("TYPE_SCHEM")
-            val typeName  = resultSet.getString("TYPE_NAME")
-            val className = resultSet.getString("CLASS_NAME")
-            val dataType  = resultSet.getInt("DATA_TYPE")
-            val remarks   = resultSet.getString("REMARKS")
-            val baseType  = resultSet.getShort("BASE_TYPE")
-            builder += s"$typeCat, $typeSchem, $typeName, $className, $dataType, $remarks, $baseType"
-          builder.result()
+      datasource.getConnection.use { conn =>
+        for
+          metaData  <- conn.getMetaData()
+          resultSet <- metaData.getUDTs(None, None, None, Array.empty[Int])
+          result    <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+                      for
+                        typeCat   <- resultSet.getString("TYPE_CAT")
+                        typeSchem <- resultSet.getString("TYPE_SCHEM")
+                        typeName  <- resultSet.getString("TYPE_NAME")
+                        className <- resultSet.getString("CLASS_NAME")
+                        dataType  <- resultSet.getInt("DATA_TYPE")
+                        remarks   <- resultSet.getString("REMARKS")
+                        baseType  <- resultSet.getShort("BASE_TYPE")
+                      yield s"$typeCat, $typeSchem, $typeName, $className, $dataType, $remarks, $baseType"
+                    }
+        yield result
       },
       Vector()
     )
@@ -1914,7 +1932,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsSavepoints") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsSavepoints()
       },
@@ -1924,7 +1942,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsNamedParameters") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsNamedParameters()
       },
@@ -1934,7 +1952,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsMultipleOpenResults") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsMultipleOpenResults()
       },
@@ -1944,7 +1962,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsGetGeneratedKeys") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsGetGeneratedKeys()
       },
@@ -1954,20 +1972,21 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getSuperTypes") {
     assertIO(
-      connection.use { conn =>
-        for metaData <- conn.getMetaData()
-        yield
-          val resultSet = metaData.getSuperTypes(None, None, None)
-          val builder   = Vector.newBuilder[String]
-          while resultSet.next() do
-            val typeCat        = resultSet.getString("TYPE_CAT")
-            val typeSchem      = resultSet.getString("TYPE_SCHEM")
-            val typeName       = resultSet.getString("TYPE_NAME")
-            val superTypeCat   = resultSet.getString("SUPERTYPE_CAT")
-            val superTypeSchem = resultSet.getString("SUPERTYPE_SCHEM")
-            val superTypeName  = resultSet.getString("SUPERTYPE_NAME")
-            builder += s"$typeCat, $typeSchem, $typeName, $superTypeCat, $superTypeSchem, $superTypeName"
-          builder.result()
+      datasource.getConnection.use { conn =>
+        for
+          metaData  <- conn.getMetaData()
+          resultSet <- metaData.getSuperTypes(None, None, None)
+          result    <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+                      for
+                        typeCat        <- resultSet.getString("TYPE_CAT")
+                        typeSchem      <- resultSet.getString("TYPE_SCHEM")
+                        typeName       <- resultSet.getString("TYPE_NAME")
+                        superTypeCat   <- resultSet.getString("SUPERTYPE_CAT")
+                        superTypeSchem <- resultSet.getString("SUPERTYPE_SCHEM")
+                        superTypeName  <- resultSet.getString("SUPERTYPE_NAME")
+                      yield s"$typeCat, $typeSchem, $typeName, $superTypeCat, $superTypeSchem, $superTypeName"
+                    }
+        yield result
       },
       Vector()
     )
@@ -1975,18 +1994,19 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getSuperTables") {
     assertIO(
-      connection.use { conn =>
-        for metaData <- conn.getMetaData()
-        yield
-          val resultSet = metaData.getSuperTables(None, None, None)
-          val builder   = Vector.newBuilder[String]
-          while resultSet.next() do
-            val tableCat       = resultSet.getString("TABLE_CAT")
-            val tableSchem     = resultSet.getString("TABLE_SCHEM")
-            val tableName      = resultSet.getString("TABLE_NAME")
-            val superTableName = resultSet.getString("SUPERTABLE_NAME")
-            builder += s"$tableCat, $tableSchem, $tableName, $superTableName"
-          builder.result()
+      datasource.getConnection.use { conn =>
+        for
+          metaData  <- conn.getMetaData()
+          resultSet <- metaData.getSuperTables(None, None, None)
+          result    <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+                      for
+                        tableCat       <- resultSet.getString("TABLE_CAT")
+                        tableSchem     <- resultSet.getString("TABLE_SCHEM")
+                        tableName      <- resultSet.getString("TABLE_NAME")
+                        superTableName <- resultSet.getString("SUPERTABLE_NAME")
+                      yield s"$tableCat, $tableSchem, $tableName, $superTableName"
+                    }
+        yield result
       },
       Vector()
     )
@@ -1994,29 +2014,31 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getAttributes") {
     assertIO(
-      connection.use { conn =>
-        for metaData <- conn.getMetaData()
-        yield
-          val resultSet = metaData.getAttributes(None, None, None, None)
-          val builder   = Vector.newBuilder[String]
-          while resultSet.next() do
-            val typeName          = resultSet.getString("TYPE_NAME")
-            val attributeName     = resultSet.getString("ATTR_NAME")
-            val attributeType     = resultSet.getString("DATA_TYPE")
-            val attributeTypeName = resultSet.getString("ATTR_TYPE_NAME")
-            val attributeSize     = resultSet.getInt("ATTR_SIZE")
-            val decimalDigits     = resultSet.getInt("DECIMAL_DIGITS")
-            val numPrecRadix      = resultSet.getInt("NUM_PREC_RADIX")
-            val nullable          = resultSet.getInt("NULLABLE")
-            val remarks           = resultSet.getString("REMARKS")
-            val attrDef           = resultSet.getString("ATTR_DEF")
-            val sqlDataType       = resultSet.getInt("SQL_DATA_TYPE")
-            val sqlDateTimeSub    = resultSet.getInt("SQL_DATETIME_SUB")
-            val charOctetLength   = resultSet.getInt("CHAR_OCTET_LENGTH")
-            val ordinalPosition   = resultSet.getInt("ORDINAL_POSITION")
-            val isNullable        = resultSet.getString("IS_NULLABLE")
-            builder += s"$typeName, $attributeName, $attributeType, $attributeTypeName, $attributeSize, $decimalDigits, $numPrecRadix, $nullable, $remarks, $attrDef, $sqlDataType, $sqlDateTimeSub, $charOctetLength, $ordinalPosition, $isNullable"
-          builder.result()
+      datasource.getConnection.use { conn =>
+        for
+          metaData  <- conn.getMetaData()
+          resultSet <- metaData.getAttributes(None, None, None, None)
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                typeName          <- resultSet.getString("TYPE_NAME")
+                attributeName     <- resultSet.getString("ATTR_NAME")
+                attributeType     <- resultSet.getString("DATA_TYPE")
+                attributeTypeName <- resultSet.getString("ATTR_TYPE_NAME")
+                attributeSize     <- resultSet.getInt("ATTR_SIZE")
+                decimalDigits     <- resultSet.getInt("DECIMAL_DIGITS")
+                numPrecRadix      <- resultSet.getInt("NUM_PREC_RADIX")
+                nullable          <- resultSet.getInt("NULLABLE")
+                remarks           <- resultSet.getString("REMARKS")
+                attrDef           <- resultSet.getString("ATTR_DEF")
+                sqlDataType       <- resultSet.getInt("SQL_DATA_TYPE")
+                sqlDateTimeSub    <- resultSet.getInt("SQL_DATETIME_SUB")
+                charOctetLength   <- resultSet.getInt("CHAR_OCTET_LENGTH")
+                ordinalPosition   <- resultSet.getInt("ORDINAL_POSITION")
+                isNullable        <- resultSet.getString("IS_NULLABLE")
+              yield s"$typeName, $attributeName, $attributeType, $attributeTypeName, $attributeSize, $decimalDigits, $numPrecRadix, $nullable, $remarks, $attrDef, $sqlDataType, $sqlDateTimeSub, $charOctetLength, $ordinalPosition, $isNullable"
+            }
+        yield result
       },
       Vector()
     )
@@ -2024,7 +2046,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsResultSetHoldability") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsResultSetHoldability(ResultSet.HOLD_CURSORS_OVER_COMMIT)
       },
@@ -2034,7 +2056,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getResultSetHoldability") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getResultSetHoldability()
       },
@@ -2044,7 +2066,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getDatabaseMajorVersion") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getDatabaseMajorVersion()
       },
@@ -2054,7 +2076,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getDatabaseMinorVersion") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getDatabaseMinorVersion()
       },
@@ -2064,7 +2086,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getJDBCMajorVersion") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getJDBCMajorVersion()
       },
@@ -2074,17 +2096,17 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getJDBCMinorVersion") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getJDBCMinorVersion()
       },
-      if prefix == "jdbc" then 2 else 3
+      if prefix == "jdbc" then 2 else 4
     )
   }
 
   test(s"$prefix: getSQLStateType") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getSQLStateType()
       },
@@ -2094,7 +2116,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: locatorsUpdateCopy") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.locatorsUpdateCopy()
       },
@@ -2104,7 +2126,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsStatementPooling") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsStatementPooling()
       },
@@ -2114,7 +2136,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getRowIdLifetime") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getRowIdLifetime()
       },
@@ -2124,17 +2146,17 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getSchemas") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getSchemas(None, None)
-        yield
-          val builder = Vector.newBuilder[String]
-          while resultSet.next() do
-            val tableSchem   = resultSet.getString("TABLE_SCHEM")
-            val tableCatalog = resultSet.getString("TABLE_CATALOG")
-            builder += s"$tableSchem, $tableCatalog"
-          builder.result()
+          result    <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+                      for
+                        tableSchem   <- resultSet.getString("TABLE_SCHEM")
+                        tableCatalog <- resultSet.getString("TABLE_CATALOG")
+                      yield s"$tableSchem, $tableCatalog"
+                    }
+        yield result
       },
       Vector()
     )
@@ -2142,7 +2164,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsStoredFunctionsUsingCallSyntax") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsStoredFunctionsUsingCallSyntax()
       },
@@ -2152,7 +2174,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: autoCommitFailureClosesAllResultSets") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.autoCommitFailureClosesAllResultSets()
       },
@@ -2162,18 +2184,19 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getClientInfoProperties") {
     assertIO(
-      connection.use { conn =>
-        for metaData <- conn.getMetaData()
-        yield
-          val resultSet = metaData.getClientInfoProperties()
-          val builder   = Vector.newBuilder[String]
-          while resultSet.next() do
-            val name         = resultSet.getString("NAME")
-            val maxLen       = resultSet.getInt("MAX_LEN")
-            val defaultValue = resultSet.getString("DEFAULT_VALUE")
-            val description  = resultSet.getString("DESCRIPTION")
-            builder += s"$name, $maxLen, $defaultValue, $description"
-          builder.result()
+      datasource.getConnection.use { conn =>
+        for
+          metaData  <- conn.getMetaData()
+          resultSet <- metaData.getClientInfoProperties()
+          result    <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+                      for
+                        name         <- resultSet.getString("NAME")
+                        maxLen       <- resultSet.getInt("MAX_LEN")
+                        defaultValue <- resultSet.getString("DEFAULT_VALUE")
+                        description  <- resultSet.getString("DESCRIPTION")
+                      yield s"$name, $maxLen, $defaultValue, $description"
+                    }
+        yield result
       },
       Vector()
     )
@@ -2181,20 +2204,20 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getFunctions") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getFunctions(None, None, None)
-        yield
-          val builder = Vector.newBuilder[String]
-          while resultSet.next() do
-            val functionCat   = resultSet.getString("FUNCTION_CAT")
-            val functionSchem = resultSet.getString("FUNCTION_SCHEM")
-            val functionName  = resultSet.getString("FUNCTION_NAME")
-            val functionType  = resultSet.getInt("FUNCTION_TYPE")
-            val specificName  = resultSet.getString("SPECIFIC_NAME")
-            builder += s"$functionCat, $functionSchem, $functionName, $functionType, $specificName"
-          builder.result()
+          result    <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+                      for
+                        functionCat   <- resultSet.getString("FUNCTION_CAT")
+                        functionSchem <- resultSet.getString("FUNCTION_SCHEM")
+                        functionName  <- resultSet.getString("FUNCTION_NAME")
+                        functionType  <- resultSet.getInt("FUNCTION_TYPE")
+                        specificName  <- resultSet.getString("SPECIFIC_NAME")
+                      yield s"$functionCat, $functionSchem, $functionName, $functionType, $specificName"
+                    }
+        yield result
       },
       Vector(
         "connector_test, null, func1, 1, func1",
@@ -2228,31 +2251,32 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getFunctionColumns") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getFunctionColumns(None, None, None, None)
-        yield
-          val builder = Vector.newBuilder[String]
-          while resultSet.next() do
-            val functionCat     = resultSet.getString("FUNCTION_CAT")
-            val functionSchem   = resultSet.getString("FUNCTION_SCHEM")
-            val functionName    = resultSet.getString("FUNCTION_NAME")
-            val columnName      = resultSet.getString("COLUMN_NAME")
-            val columnType      = resultSet.getInt("COLUMN_TYPE")
-            val dataType        = resultSet.getInt("DATA_TYPE")
-            val typeName        = resultSet.getString("TYPE_NAME")
-            val precision       = resultSet.getInt("PRECISION")
-            val length          = resultSet.getInt("LENGTH")
-            val scale           = resultSet.getInt("SCALE")
-            val radix           = resultSet.getInt("RADIX")
-            val nullable        = resultSet.getInt("NULLABLE")
-            val remarks         = resultSet.getString("REMARKS")
-            val charOctetLength = resultSet.getInt("CHAR_OCTET_LENGTH")
-            val ordinalPosition = resultSet.getInt("ORDINAL_POSITION")
-            val isNullable      = resultSet.getString("IS_NULLABLE")
-            builder += s"$functionCat, $functionSchem, $functionName, $columnName, $columnType, $dataType, $typeName, $precision, $length, $scale, $radix, $nullable, $remarks, $charOctetLength, $ordinalPosition, $isNullable"
-          builder.result()
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                functionCat     <- resultSet.getString("FUNCTION_CAT")
+                functionSchem   <- resultSet.getString("FUNCTION_SCHEM")
+                functionName    <- resultSet.getString("FUNCTION_NAME")
+                columnName      <- resultSet.getString("COLUMN_NAME")
+                columnType      <- resultSet.getInt("COLUMN_TYPE")
+                dataType        <- resultSet.getInt("DATA_TYPE")
+                typeName        <- resultSet.getString("TYPE_NAME")
+                precision       <- resultSet.getInt("PRECISION")
+                length          <- resultSet.getInt("LENGTH")
+                scale           <- resultSet.getInt("SCALE")
+                radix           <- resultSet.getInt("RADIX")
+                nullable        <- resultSet.getInt("NULLABLE")
+                remarks         <- resultSet.getString("REMARKS")
+                charOctetLength <- resultSet.getInt("CHAR_OCTET_LENGTH")
+                ordinalPosition <- resultSet.getInt("ORDINAL_POSITION")
+                isNullable      <- resultSet.getString("IS_NULLABLE")
+              yield s"$functionCat, $functionSchem, $functionName, $columnName, $columnType, $dataType, $typeName, $precision, $length, $scale, $radix, $nullable, $remarks, $charOctetLength, $ordinalPosition, $isNullable"
+            }
+        yield result
       },
       Vector(
         "connector_test, null, func1, , 4, 4, INT, 10, 10, 0, 10, 1, null, 0, 0, YES",
@@ -2311,26 +2335,27 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getPseudoColumns") {
     assertIO(
-      connection.use { conn =>
-        for metaData <- conn.getMetaData()
-        yield
-          val resultSet = metaData.getPseudoColumns(None, None, None, None)
-          val builder   = Vector.newBuilder[String]
-          while resultSet.next() do
-            val tableCat        = resultSet.getString("TABLE_CAT")
-            val tableSchem      = resultSet.getString("TABLE_SCHEM")
-            val tableName       = resultSet.getString("TABLE_NAME")
-            val columnName      = resultSet.getString("COLUMN_NAME")
-            val dataType        = resultSet.getInt("DATA_TYPE")
-            val columnSize      = resultSet.getInt("COLUMN_SIZE")
-            val decimalDigits   = resultSet.getInt("DECIMAL_DIGITS")
-            val numPrecRadix    = resultSet.getInt("NUM_PREC_RADIX")
-            val columnUsage     = resultSet.getString("COLUMN_USAGE")
-            val remarks         = resultSet.getString("REMARKS")
-            val charOctetLength = resultSet.getInt("CHAR_OCTET_LENGTH")
-            val isNullable      = resultSet.getInt("IS_NULLABLE")
-            builder += s"$tableCat, $tableSchem, $tableName, $columnName, $dataType, $columnSize, $decimalDigits, $numPrecRadix, $columnUsage, $remarks, $charOctetLength, $isNullable"
-          builder.result()
+      datasource.getConnection.use { conn =>
+        for
+          metaData  <- conn.getMetaData()
+          resultSet <- metaData.getPseudoColumns(None, None, None, None)
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                tableCat        <- resultSet.getString("TABLE_CAT")
+                tableSchem      <- resultSet.getString("TABLE_SCHEM")
+                tableName       <- resultSet.getString("TABLE_NAME")
+                columnName      <- resultSet.getString("COLUMN_NAME")
+                dataType        <- resultSet.getInt("DATA_TYPE")
+                columnSize      <- resultSet.getInt("COLUMN_SIZE")
+                decimalDigits   <- resultSet.getInt("DECIMAL_DIGITS")
+                numPrecRadix    <- resultSet.getInt("NUM_PREC_RADIX")
+                remarks         <- resultSet.getString("REMARKS")
+                charOctetLength <- resultSet.getInt("CHAR_OCTET_LENGTH")
+                isNullable      <- resultSet.getInt("IS_NULLABLE")
+              yield s"$tableCat, $tableSchem, $tableName, $columnName, $dataType, $columnSize, $decimalDigits, $numPrecRadix, $remarks, $charOctetLength, $isNullable"
+            }
+        yield result
       },
       Vector()
     )
@@ -2338,7 +2363,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: generatedKeyAlwaysReturned") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.generatedKeyAlwaysReturned()
       },
@@ -2348,7 +2373,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: getMaxLogicalLobSize") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.getMaxLogicalLobSize()
       },
@@ -2358,7 +2383,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsRefCursors") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsRefCursors()
       },
@@ -2368,7 +2393,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   test(s"$prefix: supportsSharding") {
     assertIO(
-      connection.use { conn =>
+      datasource.getConnection.use { conn =>
         for metaData <- conn.getMetaData()
         yield metaData.supportsSharding()
       },

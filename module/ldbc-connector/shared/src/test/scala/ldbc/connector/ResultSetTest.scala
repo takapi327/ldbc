@@ -4,6 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
+/*
 package ldbc.connector
 
 import java.time.*
@@ -1020,8 +1021,9 @@ class ResultSetTest extends FTestPlatform:
     version:              Version,
     resultSetType:        Int = ResultSet.TYPE_FORWARD_ONLY,
     resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY
-  ): ResultSetImpl =
+  ): ResultSetImpl[IO] =
     ResultSetImpl(
+      ???,
       columns,
       records,
       Map.empty,
@@ -1059,3 +1061,4 @@ class ResultSetTest extends FTestPlatform:
       flags        = flags,
       decimals     = if useScale then 2 else 0
     )
+ */

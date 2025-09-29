@@ -11,6 +11,8 @@ ldbcでは、`DBIO`モナドを使って一連のデータベース操作を表�
 
 `DBIO`モナドは、実際のデータベース接続を使って実行される処理を表現します。これにより、実際の接続が行われるまでクエリの実行が遅延され、効率的にリソースを管理できます。
 
+データベース操作を実行するには、`Connector`を使用します。`Connector`は`DataSource`から作成でき、`DBIO`モナドを実際のデータベース操作に変換します。
+
 ※ このページで使用するプログラムの環境はセットアップで構築したものを前提としています。
 
 ## 1つめのプログラム：単純な値の取得
@@ -20,6 +22,10 @@ ldbcでは、`DBIO`モナドを使って一連のデータベース操作を表�
 まず、`sql string interpolator`を使って、データベースに対する問い合わせを作成します。この機能を使うことで、SQLクエリを安全かつ簡潔に記述することができます。
 
 ```scala 3
+// 必要なインポート
+import ldbc.dsl.*
+import ldbc.connector.*
+
 // SQLクエリを作成し、返り値の型を指定
 val program: DBIO[Option[Int]] = sql"SELECT 2".query[Int].to[Option]
 ```
@@ -32,27 +38,29 @@ val program: DBIO[Option[Int]] = sql"SELECT 2".query[Int].to[Option]
 
 `to`メソッドでは、結果の取得方法を指定できます。主要なメソッドと戻り値の型は以下の通りです：
 
-| Method       | Return Type    | Notes                        |
-|--------------|----------------|------------------------------|
-| `to[List]`   | `F[List[A]]`   | すべての結果をリストで取得                |
-| `to[Option]` | `F[Option[A]]` | 結果は0か1行、それ以上はエラーが発生する        |
-| `unsafe`     | `F[A]`         | 正確に1行の結果を期待、そうでない場合はエラーが発生する |
+| Method       | Return Type          | Notes                             |
+|--------------|----------------------|-----------------------------------|
+| `to[List]`   | `F[List[A]]`         | すべての結果をリストで取得                     |
+| `to[Option]` | `F[Option[A]]`       | 結果は0か1行、それ以上はエラーが発生する             |
+| `unsafe`     | `F[A]`               | 正確に1行の結果を期待、そうでない場合はエラーが発生する      |
+| `option`     | `F[Option[A]]`       | 正確に1行の結果を期待、1行以上存在している場合はエラーが発生する |
+| `nel`        | `F[NonEmptyList[A]]` | 正確に複数の結果を期待、0件の場合はエラーが発生する        |
 
-次に、このプログラムを実行します。データベース接続を取得し、クエリを実行し、結果を表示します：
+次に、このプログラムを実行します。データソースからConnectorを作成し、クエリを実行し、結果を表示します：
 
 ```scala 3
-// データベース接続を取得し、プログラムを実行
-provider
-  .use { conn =>
-    program.readOnly(conn).map(println(_))
-  }
+// Connectorを作成し、プログラムを実行
+val connector = Connector.fromDataSource(datasource)
+program
+  .readOnly(connector)
+  .map(println(_))
   .unsafeRunSync()
 ```
 
 上記のコードでは：
 
-1. `provider.use`：データベース接続プロバイダーからコネクションを取得
-2. `program.readOnly(conn)`：作成したクエリを読み取り専用モードで実行
+1. `Connector.fromDataSource(datasource)`：データソースからConnectorを作成
+2. `program.readOnly(connector)`：作成したクエリを読み取り専用モードで実行
 3. `.map(println(_))`：結果を標準出力に表示
 4. `.unsafeRunSync()`：IO効果を実行
 
@@ -85,11 +93,11 @@ val program: DBIO[(List[Int], Option[Int], Int)] =
 このプログラムの実行方法も前回と同様です：
 
 ```scala 3
-// データベース接続を取得し、プログラムを実行
-provider
-  .use { conn =>
-    program.readOnly(conn).map(println(_))
-  }
+// Connectorを作成し、プログラムを実行
+val connector = Connector.fromDataSource(datasource)
+program
+  .readOnly(connector)
+  .map(println(_))
   .unsafeRunSync()
 ```
 
@@ -116,11 +124,11 @@ val program: DBIO[Int] =
 更新系クエリを実行する場合は、`readOnly`ではなく`commit`メソッドを使用してトランザクションをコミットする必要があります：
 
 ```scala 3
-// データベース接続を取得し、更新プログラムを実行してコミット
-provider
-  .use { conn =>
-    program.commit(conn).map(println(_))
-  }
+// Connectorを作成し、更新プログラムを実行してコミット
+val connector = Connector.fromDataSource(datasource)
+program
+  .commit(connector)
+  .map(println(_))
   .unsafeRunSync()
 ```
 
@@ -136,10 +144,10 @@ scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/04-P
 
 ldbcでは、以下の主要なトランザクション制御メソッドを提供しています：
 
-- `readOnly(conn)`: 読み取り専用のトランザクションで実行します（データ更新ができません）
-- `commit(conn)`: 自動コミットモードで実行し、成功時に変更をコミットします
-- `rollback(conn)`: 自動コミットをオフにして実行し、終了時にロールバックします
-- `transaction(conn)`: 自動コミットをオフにして実行し、成功時にコミットし、例外発生時にはロールバックします
+- `readOnly(connector)`: 読み取り専用のトランザクションで実行します（データ更新ができません）
+- `commit(connector)`: 自動コミットモードで実行し、成功時に変更をコミットします
+- `rollback(connector)`: 自動コミットをオフにして実行し、終了時にロールバックします
+- `transaction(connector)`: 自動コミットをオフにして実行し、成功時にコミットし、例外発生時にはロールバックします
 
 複雑なトランザクションを実装する場合は、`transaction`メソッドを使用すると、適切にコミットとロールバックを処理できます：
 
@@ -150,10 +158,10 @@ val complexProgram: DBIO[Int] = for
   count <- sql"SELECT COUNT(*) FROM accounts".query[Int].unsafe
 yield count
 
-provider
-  .use { conn =>
-    complexProgram.transaction(conn).map(println(_))
-  }
+val connector = Connector.fromDataSource(datasource)
+complexProgram
+  .transaction(connector)
+  .map(println(_))
   .unsafeRunSync()
 ```
 

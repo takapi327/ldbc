@@ -27,16 +27,12 @@ dropDDL.foreach(println)      // DROP TABLE statement will be output
 truncateDDL.foreach(println)  // TRUNCATE TABLE statement will be output
 
 // Example of executing DDL operations
-provider
-  .use { conn =>
-    DBIO.sequence(
-        userSchema.createIfNotExists,
-        userSchema.truncate,
-        userSchema.dropIfExists
-      )
-      .commit(conn)
-  }
-// ...existing code...
+DBIO.sequence(
+    userSchema.createIfNotExists,
+    userSchema.truncate,
+    userSchema.dropIfExists
+  )
+  .commit(connector)
 ```
 
 The code above implements operations that create tables while checking for their existence, reset table data as needed, and then delete the tables themselves.

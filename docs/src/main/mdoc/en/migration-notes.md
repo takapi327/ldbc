@@ -3,600 +3,438 @@
   laika.metadata.language = en
 %}
 
-# Migration Notes (from 0.2.x to 0.3.x)
+# Migration Notes (from 0.3.x to 0.4.x)
 
-## Package
+## Packages
 
-**Change package name**
-
-| 0.2.x     | 0.3.x       |
-|-----------|-------------|
-| ldbc-core | ldbc-schema |
-
-**New Packages**
-
-Three new packages have been added.
-
-| Module / Platform | JVM | Scala Native | Scala.js |  
-|-------------------|:---:|:------------:|:--------:|
-| `ldbc-connector`  |  ✅  |      ✅       |    ✅     | 
-| `jdbc-connector`  |  ✅  |      ❌       |    ❌     | 
-| `ldbc-statement`  |  ✅  |      ✅       |    ✅     | 
-
-**All Packages**
+**Removed Packages**
 
 | Module / Platform    | JVM | Scala Native | Scala.js |  
 |----------------------|:---:|:------------:|:--------:|
-| `ldbc-sql`           |  ✅  |      ✅       |    ✅     |
-| `ldbc-connector`     |  ✅  |      ✅       |    ✅     | 
-| `jdbc-connector`     |  ✅  |      ❌       |    ❌     | 
-| `ldbc-dsl`           |  ✅  |      ✅       |    ✅     |
-| `ldbc-statement`     |  ✅  |      ✅       |    ✅     |
-| `ldbc-query-builder` |  ✅  |      ✅       |    ✅     |
-| `ldbc-schema`        |  ✅  |      ✅       |    ✅     |
 | `ldbc-schemaSpy`     |  ✅  |      ❌       |    ❌     | 
-| `ldbc-codegen`       |  ✅  |      ✅       |    ✅     |
-| `ldbc-hikari`        |  ✅  |      ❌       |    ❌     | 
-| `ldbc-plugin`        |  ✅  |      ❌       |    ❌     |
 
-## Functional change
+**Packages renewed as different features**
 
-### Connector switching function
+| Module / Platform    | JVM | Scala Native | Scala.js | Scaladoc                                                                                                                                                  |
+|----------------------|:---:|:------------:|:--------:|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ldbc-core`          |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-core_3)          |
 
-Support for jdbc and ldbc connection switching has been added to the Scala MySQL connector.
+**All Packages**
 
-This change gives developers the flexibility to choose database connections using either the jdbc or ldbc libraries depending on their project requirements. This allows developers to take advantage of the features of the different libraries, increasing flexibility in connection setup and operation.
+| Module / Platform    | JVM | Scala Native | Scala.js | Scaladoc                                                                                                                                                  |
+|----------------------|:---:|:------------:|:--------:|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ldbc-sql`           |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-sql_3)           |
+| `ldbc-core`          |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-core_3)          |
+| `ldbc-connector`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-connector_3)     |
+| `jdbc-connector`     |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/jdbc-connector_3)     |
+| `ldbc-dsl`           |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3)           |
+| `ldbc-statement`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-statement_3)     |
+| `ldbc-query-builder` |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-query-builder_3) |
+| `ldbc-schema`        |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-schema_3)        |
+| `ldbc-codegen`       |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-codegen_3)       |
+| `ldbc-hikari`        |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-hikari_3)        |
+| `ldbc-plugin`        |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-plugin_2.12_1.0) |
 
-#### How to change
+## 🎯 Major Changes
 
-First, common dependencies are set up.
+### 1. Built-in Connection Pooling
 
-```scala 3
-libraryDependencies += "@ORGANIZATION@" %% "ldbc-dsl" % "@VERSION@"
-```
+Starting from version 0.4.0, ldbc-connector includes a high-performance connection pooling feature. This enables efficient connection management without using external libraries like HikariCP.
 
-In cross-platform projects (JVM, JS, native)
+**Benefits:**
+- Optimized for Cats Effect's fiber-based concurrency model
+- Circuit breaker protection during failures
+- Dynamic pool sizing
+- Detailed metrics tracking
 
-```scala 3
-libraryDependencies += "@ORGANIZATION@" %%% "ldbc-dsl" % "@VERSION@"
-```
+### 2. API Changes
 
-The dependency package used depends on whether the database connection is made through a connector using the Java API or through a connector provided by ldbc.
+#### Migration from ConnectionProvider to MySQLDataSource and Connector Usage
 
-**Use of JDBC connectors**
+ConnectionProvider is now deprecated and replaced with the new MySQLDataSource and Connector APIs.
 
-```scala 3
-libraryDependencies += "@ORGANIZATION@" %% "jdbc-connector" % "@VERSION@"
-```
-
-**Using the ldbc connector**
-
-```scala 3
-libraryDependencies += "@ORGANIZATION@" %% "ldbc-connector" % "@VERSION@"
-```
-
-In cross-platform projects (JVM, JS, native)
-
-```scala 3
-libraryDependencies += "@ORGANIZATION@" %%% "ldbc-connector" % "@VERSION@"
-```
-
-#### Usage rules
-
-**Use of JDBC connectors**
-
-```scala 3
-import jdbc.connector.*
-
-val ds = new com.mysql.cj.jdbc.MysqlDataSource()
-ds.setServerName("127.0.0.1")
-ds.setPortNumber(13306)
-ds.setDatabaseName("world")
-ds.setUser("ldbc")
-ds.setPassword("password")
-
-val provider = ConnectionProvider.fromDataSource(ex, ExecutionContexts.synchronous)
-```
-
-**Using the ldbc connector**
-
-```scala 3
+**Old API (0.3.x):**
+```scala
 import ldbc.connector.*
 
-val provider =
-  ConnectionProvider
-    .default[IO]("127.0.0.1", 3306, "ldbc", "password", "ldbc")
-    .setSSL(SSL.Trusted)
+// Using ConnectionProvider
+val provider = ConnectionProvider
+  .default[IO]("localhost", 3306, "root")
+  .setPassword("password")
+  .setDatabase("test")
+
+// Direct usage
+provider.use { connection =>
+  // SQL execution
+}
 ```
 
-The process of connecting to the database can be done using connections established by each method.
+**New API (0.4.x):**
+```scala
+import ldbc.connector.*
+import ldbc.core.*
+import ldbc.dsl.*
 
-```scala 3
-val result: IO[(List[Int], Option[Int], Int)] = provider.use { conn =>
+// Using MySQLDataSource
+val dataSource = MySQLDataSource
+  .build[IO]("localhost", 3306, "root")
+  .setPassword("password")
+  .setDatabase("test")
+
+// Create Connector and execute DBIO
+val connector = Connector.fromDataSource(dataSource)
+
+// Execute SQL queries
+val result = sql"SELECT * FROM users"
+  .query[User]
+  .to[List]
+  .readOnly(connector)
+
+// Or create Connector from Connection
+dataSource.getConnection.use { connection =>
+  val connector = Connector.fromConnection(connection)
+  // Execute DBIO
+  sql"INSERT INTO users (name) VALUES ($name)"
+    .update
+    .commit(connector)
+}
+
+// Connection pooling
+val pooledDataSource = MySQLDataSource.pooling[IO](
+  MySQLConfig.default
+    .setHost("localhost")
+    .setPort(3306)
+    .setUser("root")
+    .setPassword("password")
+    .setDatabase("test")
+    .setMinConnections(5)
+    .setMaxConnections(20)
+)
+
+pooledDataSource.use { pool =>
+  val connector = Connector.fromDataSource(pool)
+  // Execute DBIO
+  sql"SELECT * FROM users WHERE id = $id"
+    .query[User]
+    .option
+    .readOnly(connector)
+}
+```
+
+### 3. Configuration Changes
+
+#### ldbc-connector Configuration
+
+**Old Method (0.3.x):**
+```scala
+val provider = ConnectionProvider
+  .default[IO]("localhost", 3306, "root")
+  .setPassword("password")
+  .setDatabase("test")
+  .setSSL(SSL.Trusted)
+  .addSocketOption(SocketOption.receiveBufferSize(4096))
+  .setReadTimeout(30.seconds)
+```
+
+**New Method (0.4.x):**
+```scala
+val dataSource = MySQLDataSource
+  .build[IO]("localhost", 3306, "root")
+  .setPassword("password")
+  .setDatabase("test")
+  .setSSL(SSL.Trusted)
+  .addSocketOption(SocketOption.receiveBufferSize(4096))
+  .setReadTimeout(30.seconds)
+  .setDebug(true)
+  .setAllowPublicKeyRetrieval(true)
+```
+
+#### jdbc-connector Configuration
+
+**Old Method (0.3.x):**
+```scala
+import jdbc.connector.*
+
+val dataSource = new com.mysql.cj.jdbc.MysqlDataSource()
+// Manual configuration
+
+val provider = ConnectionProvider
+  .fromDataSource[IO](dataSource, ec)
+```
+
+**New Method (0.4.x):**
+```scala
+import jdbc.connector.*
+
+// Create Connector from DataSource
+val ds = new com.mysql.cj.jdbc.MysqlDataSource()
+ds.setServerName("localhost")
+ds.setPortNumber(3306)
+ds.setDatabaseName("test")
+ds.setUser("root")
+ds.setPassword("password")
+
+val connector = Connector.fromDataSource[IO](ds, ExecutionContexts.synchronous)
+
+// Create Connector from DriverManager
+val connector = Connector.fromDriverManager[IO].apply(
+  driver = "com.mysql.cj.jdbc.Driver",
+  url = "jdbc:mysql://localhost:3306/test",
+  user = "root",
+  password = "password",
+  logHandler = None
+)
+
+// Via MySQLDataSource (ldbc-connector)
+val dataSource = MySQLDataSource
+  .fromDataSource[IO](ds, ExecutionContexts.synchronous)
+```
+
+### 4. Connection Pooling Usage
+
+#### Basic Usage
+
+```scala
+import ldbc.connector.*
+import ldbc.core.*
+import scala.concurrent.duration.*
+
+val config = MySQLConfig.default
+  .setHost("localhost")
+  .setPort(3306)
+  .setUser("myuser")
+  .setPassword("mypassword")
+  .setDatabase("mydb")
+  // Pool configuration
+  .setMinConnections(5)              // Minimum connections
+  .setMaxConnections(20)             // Maximum connections
+  .setConnectionTimeout(30.seconds)  // Connection timeout
+  .setIdleTimeout(10.minutes)        // Idle timeout
+  .setMaxLifetime(30.minutes)        // Maximum lifetime
+
+MySQLDataSource.pooling[IO](config).use { pool =>
+  // Create and use Connector
+  val connector = Connector.fromDataSource(pool)
+
+  // Execute SQL queries
+  sql"SELECT COUNT(*) FROM users"
+    .query[Long]
+    .unique
+    .readOnly(connector)
+}
+```
+
+#### Pool with Metrics
+
+```scala
+import ldbc.connector.pool.*
+
+val metricsResource = for {
+  tracker <- Resource.eval(PoolMetricsTracker.inMemory[IO])
+  pool    <- MySQLDataSource.pooling[IO](
+    config,
+    metricsTracker = Some(tracker)
+  )
+} yield (pool, tracker)
+
+metricsResource.use { case (pool, tracker) =>
+  for {
+    _ <- pool.getConnection.use(_.execute("SELECT 1"))
+    metrics <- tracker.getMetrics
+    _ <- IO.println(s"""
+      |Pool Metrics:
+      |  Total connections: ${metrics.totalCreated}
+      |  Active: ${metrics.activeConnections}
+      |  Idle: ${metrics.idleConnections}
+    """.stripMargin)
+  } yield ()
+}
+```
+
+#### Before/After Hooks
+
+```scala
+case class RequestContext(requestId: String)
+
+val poolWithHooks = MySQLDataSource.poolingWithBeforeAfter[IO, RequestContext](
+  config = config,
+  before = Some { conn =>
+    for {
+      id <- IO.randomUUID.map(_.toString)
+      _  <- conn.execute(s"SET @request_id = '$id'")
+    } yield RequestContext(id)
+  },
+  after = Some { (ctx, conn) =>
+    IO.println(s"Request ${ctx.requestId} completed")
+  }
+)
+```
+
+### 5. Migration Considerations
+
+#### Scala Native Limitations
+
+@:callout(warning)
+**Important**: Scala Native 0.4.x only supports single-threaded execution. Therefore, using connection pooling with Scala Native is not recommended. Instead, create a new connection for each operation:
+
+```scala
+// Recommended usage for Scala Native
+val dataSource = MySQLDataSource
+  .build[IO]("localhost", 3306, "user")
+  .setPassword("password")
+  .setDatabase("mydb")
+
+// Don't use pooling
+val connector = Connector.fromDataSource(dataSource)
+
+// Execute DBIO
+sql"SELECT * FROM products WHERE price > $minPrice"
+  .query[Product]
+  .to[List]
+  .readOnly(connector)
+```
+@:@
+
+### 6. Breaking Changes
+
+The following APIs have been removed or changed:
+
+1. **ConnectionProvider**: Deprecated and replaced with `MySQLDataSource` (will be removed in 0.5.x)
+2. **Provider trait**: Deprecated and replaced with `DataSource` trait
+3. **ldbc.sql.Provider**: Removed
+4. **Direct connection usage**: Must now use the new `Connector` API
+
+### 7. DBIO Execution Pattern Changes
+
+The DBIO execution method has been changed to be clearer and more flexible.
+
+**Old Method (0.3.x):**
+```scala
+provider.use { connection =>
   (for
     result1 <- sql"SELECT 1".query[Int].to[List]
     result2 <- sql"SELECT 2".query[Int].to[Option]
-    result3 <- sql"SELECT 3".query[Int].unsafe
-  yield (result1, result2, result3)).readOnly(conn)
+  yield (result1, result2)).readOnly(connection)
 }
 ```
 
-## Destructive change
+**New Method (0.4.x):**
+```scala
+val connector = Connector.fromDataSource(dataSource)
 
-### Extension of plain query construction
+// Various execution modes
+sql"SELECT * FROM users".query[User].to[List].readOnly(connector)    // Read-only
+sql"INSERT INTO users ...".update.commit(connector)                 // With commit
+sql"UPDATE users ...".update.transaction(connector)                 // Transaction
+sql"DELETE FROM users ...".update.rollback(connector)              // Rollback
 
-The determination of the type to be retrieved by the database connection method using plain query had been specifying the type to be retrieved and its format (list or option) all at once.
-
-This modification changes this and makes the internal logic common by separating the specification of the type to be retrieved and its format. This makes the plain query syntax more similar to doobie, and should allow doobie users to use it without confusion.
-
-**before**
-
-```scala 3
-sql"SELECT id, name, age FROM user".toList[(Long, String, Int)].readOnly(connection)
-sql"SELECT id, name, age FROM user WHERE id = ${1L}".headOption[User].readOnly(connection)
+// Combining multiple queries
+(for
+  users <- sql"SELECT * FROM users".query[User].to[List]
+  count <- sql"SELECT COUNT(*) FROM users".query[Long].unique
+yield (users, count)).readOnly(connector)
 ```
 
-**after**
+### 8. New Features
 
-```scala 3
-sql"SELECT id, name, age FROM user".query[(Long, String, Int)].to[List].readOnly(connection)
-sql"SELECT id, name, age FROM user WHERE id = ${1L}".query[User].to[Option].readOnly(connection)
-```
+#### CircuitBreaker
 
-### AUTO INCREMENT value acquisition method renaming
+The connection pool includes a built-in CircuitBreaker for protection during database failures:
 
-The API `updateReturningAutoGeneratedKey`, which converts values generated by an AUTO INCREMENT column in the update API, has been renamed to `returning`.
+- Automatically stops connection attempts after consecutive failures
+- Gradual recovery through exponential backoff
+- Protects both the application and database
 
-This is a feature of MySQL, which returns the value generated by AUTO INCREMENT when inserting data, but other RDBs behave differently and may return values other than those generated by AUTO INCREMENT.
-API names were changed early on to make the limited API names more extensible for future extensions.
+#### Adaptive Pool Sizing
 
-**before**
-
-```scala 3
-sql"INSERT INTO `table`(`id`, `c1`) VALUES ($None, ${ "column 1" })".updateReturningAutoGeneratedKey[Long]
-```
-
-**after**
-
-```scala 3
-sql"INSERT INTO `table`(`id`, `c1`) VALUES ($None, ${ "column 1" })".returning[Long]
-```
-
-### How to build a query builder
-
-Previously, the query builder could not be used without building the table schema.
-
-In this update, changes have been made to allow the Query Builder to be used in a simpler manner.
-
-**before**
-
-First, create a table schema corresponding to the model,
-
-```scala 3
-case class User(
-  id: Long,
-  name: String,
-  age: Option[Int],
-)
-
-val userTable = Table[User]("user")(                 // CREATE TABLE `user` (
-  column("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY), //   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  column("name", VARCHAR(255)),                      //   `name` VARCHAR(255) NOT NULL,
-  column("age", INT.UNSIGNED.DEFAULT(None)),         //   `age` INT unsigned DEFAULT NULL
-)
-```
-
-Next, use the table schema to build the `TableQuery`.
-
-```scala 3
-val tableQuery = TableQuery[IO, User](userTable)
-```
-
-The last step was query construction.
-
-```scala 3
-val result: IO[List[User]] = connection.use { conn =>
-  tableQuery.selectAll.toList[User].readOnly(conn)
-  // "SELECT `id`, `name`, `age` FROM user"
-}
-```
-
-**after**
-
-This change will allow the model to be built and
-
-```scala 3
-import ldbc.dsl.codec.Codec
-import ldbc.query.builder.Table
-
-case class User(
-  id: Long,
-  name: String,
-  age: Option[Int],
-) derives Table
-object User:
-  given Codec[User] = Codec.derived[User]
-```
-
-Next, initialize the `Table`.
-
-```scala 3
-import ldbc.query.builder.Table
-
-val userTable = TableQuery[User]
-```
-
-Finally, query construction is performed to make it available.
+Dynamically adjusts pool size based on load:
 
 ```scala
-val result: IO[List[User]] = provider.use { conn =>
-  userTable.selectAll.query.to[List].readOnly(conn)
-  // "SELECT `id`, `name`, `age` FROM user"
-}
+val config = MySQLConfig.default
+  // ... other configuration
+  .setAdaptiveSizing(true)
+  .setAdaptiveInterval(1.minute)
 ```
 
-#### Building a query builder using Schema
+#### Leak Detection
 
-The previous method of building a Table that mimics a schema has been replaced by building a Table type using the Schema project.
-In the following, we will look at the construction of a Table type corresponding to the User model.
-
-```scala 3
-case class User(
-  id: Long,
-  name: String,
-  age: Option[Int],
-)
-```
-
-**Before**
-
-Previously, it was necessary to create an instance of Table directly; it was mandatory to pass as arguments of Table the corresponding columns in the same order as the properties possessed by the User class, and to set the data types of the columns as well.
-
-TableQuery with this table type was implemented using Dynamic, which allows type-safe access, but could not be complemented by the development tools.
-
-In addition, this construction method was a bit slower in compile time than class generation.
-
-```scala 3
-val userTable = Table[User]("user")(
-  column("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY),
-  column("name", VARCHAR(255)),
-  column("age", INT.UNSIGNED.DEFAULT(None)),
-)
-```
-
-**After**
-
-In this modification, the creation of the Table type has been changed to a method of creating a class that inherits from Table. In addition, the data type of a column is no longer mandatory and can be set arbitrarily by the implementer.
-
-This change to a construction method similar to Slick makes it more familiar to implementors.
-
-```scala 3
-class UserTable extends Table[User]("user"):
-  def id: Column[Long] = column[Long]("id")
-  def name: Column[String] = column[String]("name")
-  def age: Column[Option[Int]] = column[Option[Int]]("age")
-
-  override def * : Column[User] = (id *: name *: age).to[User]
-```
-
-The data type of a column can still be set. This setting is used, for example, when generating a schema using this table class.
-
-```scala 3
-class UserTable extends Table[User]("user"):
-  def id: Column[Long] = column[Long]("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY)
-  def name: Column[String] = column[String]("name", VARCHAR(255))
-  def age: Column[Option[Int]] = column[Option[Int]]("age", INT.UNSIGNED.DEFAULT(None))
-
-  override def * : Column[User] = (id *: name *: age).to[User]
-```
-
-There is also a column definition method that expresses the data type. The above definition method can be rewritten as follows
-In this definition method, the column name can be used as a variable name, so there is no need to pass the column name as an argument.
-
-```diff
-class UserTable extends Table[User]("user"):
--  def id: Column[Long] = column[Long]("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY)
--  def name: Column[String] = column[String]("name", VARCHAR(255))
--  def age: Column[Option[Int]] = column[Option[Int]]("age", INT.UNSIGNED.DEFAULT(None))
-+  def id: Column[Long] = bigint().autoIncrement.primaryKey
-+  def name: Column[String] = varchar(255)
-+  def age: Column[Option[Int]] = int().unsigned.defaultNull
-
-  override def * : Column[User] = (id *: name *: age).to[User]
-```
-
-Column names can be formatted by passing Naming implicitly.
-The default is CamelCase, but to change it to PascalCase, do the following
-
-```scala 3
-class UserTable extends Table[User]("user"):
-  given Naming = Naming.PASCAL
-
-  def id: Column[Long] = bigint().autoIncrement.primaryKey
-  def name: Column[String] = varchar(255)
-  def age: Column[Option[Int]] = int().unsigned.defaultNull
-
-  override def * : Column[User] = (id *: name *: age).to[User]
-```
-
-If you want to change the format of a specific column, you can define it by passing the column name as an argument.
-
-```scala 3
-class UserTable extends Table[User]("user"):
-  def id: Column[Long] = bigint("ID").autoIncrement.primaryKey
-  def name: Column[String] = varchar("NAME", 255)
-  def age: Column[Option[Int]] = int("AGE").unsigned.defaultNull
-
-  override def * : Column[User] = (id *: name *: age).to[User]
-```
-
-### Support for custom data types
-
-When using user-defined data types, custom data types were supported using `ResultSetReader` and `Parameter`.
-
-With this update, the method of supporting custom data types using `ResultSetReader` and `Parameter` has changed.
-
-#### Encoder
-
-Changed from `Parameter` to `Encoder` to dynamically embed in the query string.
-
-This eliminates the need for users to write redundant processing to receive the Effect Type, allowing for simpler implementation and use as a parameter for custom data types.
-
-```scala 3
-enum Status(val code: Int, val name: String):
-  case Active   extends Status(1, "Active")
-  case InActive extends Status(2, "InActive")
-```
-
-```diff
--given Parameter[Status] with
--  override def bind[F[_]](
--    statement: PreparedStatement[F],
--    index: Int,
--    status: Status
--  ): F[Unit] = statement.setInt(index, status.code)
-
-+given Encoder[Status] = Encoder[Int].contramap(_.code)
-```
-
-The `Encoder` encoding process can only return Scala types that can be handled by `PreparedStatement`.
-
-Currently, the following types are supported
-
-| Scala Type                | Methods called in PreparedStatement |
-|---------------------------|-------------------------------------|
-| `Boolean`                 | `setBoolean`                        |
-| `Byte`                    | `setByte`                           |
-| `Short`                   | `setShort`                          |
-| `Int`                     | `setInt`                            |
-| `Long`                    | `setLong`                           |
-| `Float`                   | `setFloat`                          |
-| `Double`                  | `setDouble`                         |
-| `BigDecimal`              | `setBigDecimal`                     |
-| `String`                  | `setString`                         |
-| `Array[Byte]`             | `setBytes`                          |
-| `java.time.LocalDate`     | `setDate`                           |
-| `java.time.LocalTime`     | `setTime`                           |
-| `java.time.LocalDateTime` | `setTimestamp`                      |
-| `None`                    | `setNull`                           |
-
-Encoder can also compose multiple types to create a new type.
-
-```scala 3
-val encoder: Encoder[(Int, String)] = Encoder[Int] *: Encoder[String]
-```
-
-Composite types can also be converted to arbitrary classes.
-
-```scala 3
-case class Status(code: Int, name: String)
-given Encoder[Status] = (Encoder[Int] *: Encoder[String]).to[Status]
-```
-
-#### Decoder
-
-Changed the process of getting data from a `ResultSet` from a `ResultSetReader` to a `Decoder`.
-
-```diff
--given ResultSetReader[IO, Status] =
--  ResultSetReader.mapping[IO, Int, Status](code => Status.fromCode(code))
-+given Decoder[Status] = Decoder[Int].map(code => Status.fromCode(code))
-```
-
-Decoder can also composite multiple types to create a new type.
-
-```scala 3
-val decoder: Decoder[(Int, String)] = Decoder[Int] *: Decoder[String]
-```
-
-Composite types can also be converted to arbitrary classes.
-
-```scala 3
-case class Status(code: Int, name: String)
-given Decoder[Status] = (Decoder[Int] *: Decoder[String]).to[Status]
-```
-
-### Introducing Codec
-
-`Codec` is a combination of `Encoder` and `Decoder`.
-
-```scala 3
-enum Status(val code: Int, val name: String):
-  case Active   extends Status(1, "Active")
-  case InActive extends Status(2, "InActive")
-
-given Codec[Status] = Codec[Int].imap(Status.fromCode)(_.code)
-```
-
-Codec can also composite multiple types to create a new type.
-
-```scala 3
-val codec: Codec[(Int, String)] = Codec[Int] *: Codec[String]
-```
-
-Composite types can also be converted to arbitrary classes.
-
-```scala 3
-case class Status(code: Int, name: String)
-given Codec[Status] = (Codec[Int] *: Codec[String]).to[Status]
-```
-
-Codec is a combination of `Encoder` and `Decoder`, so it can perform the conversion process to each type.
-
-```scala 3
-val encoder: Encoder[Status] = Codec[Status].asEncoder
-val decoder: Decoder[Status] = Codec[Status].asDecoder
-```
-
-This change allows users to use `Codec` to combine `Encoder` and `Decoder`.
-
-This allows users to convert retrieved records into nested hierarchical data.
+Detects connection leaks in development:
 
 ```scala
-case class City(id: Int, name: String, countryCode: String)
-case class Country(code: String, name: String)
-case class CityWithCountry(city: City, country: Country)
-
-sql"SELECT city.Id, city.Name, city.CountryCode, country.Code, country.Name FROM city JOIN country ON city.CountryCode = country.Code".query[CityWithCountry]
+val config = MySQLConfig.default
+  // ... other configuration
+  .setLeakDetectionThreshold(2.minutes)
 ```
 
-Starting with Codec, `Encoder` and `Decoder` are resolved implicitly, so users do not need to specify these types explicitly.
+#### Streaming Query Support
 
-However, if there are many properties in the model, implicit lookups may fail.
+ldbc supports efficient streaming queries using `fs2.Stream`. This allows handling large amounts of data with controlled memory usage.
 
-```shell
-[error]    |Implicit search problem too large.
-[error]    |an implicit search was terminated with failure after trying 100000 expressions.
-[error]    |The root candidate for the search was:
-[error]    |
-[error]    |  given instance given_Decoder_P in object Decoder  for  ldbc.dsl.codec.Decoder[City]}
-```
-
-In such cases, raising the search limit in the compile options may solve the problem.
-
+**Basic Usage:**
 ```scala
-scalacOptions += "-Ximplicit-search-limit:100000"
+import fs2.Stream
+import ldbc.dsl.*
+
+// Streaming with default fetchSize (1)
+val stream: Stream[DBIO, String] = 
+  sql"SELECT name FROM city"
+    .query[String]
+    .stream
+
+// Streaming with specified fetchSize
+val streamWithFetchSize: Stream[DBIO, City] = 
+  sql"SELECT * FROM city"
+    .query[City]
+    .stream(fetchSize = 100)
 ```
 
-However, optional limit extensions may lead to amplification of compile time. In that case, the solution may be to manually construct an arbitrary type as follows.
+**Practical Examples:**
+```scala
+// Efficiently process large datasets
+val processLargeCities: IO[List[String]] = 
+  sql"SELECT name, population FROM city"
+    .query[(String, Int)]
+    .stream(1000)                    // Fetch 1000 rows at a time
+    .filter(_._2 > 1000000)          // Cities with > 1M population
+    .map(_._1)                       // Extract city names
+    .take(50)                        // Take first 50
+    .compile.toList
+    .readOnly(connector)
 
-```scala 3
-given Decoder[City] = Decoder.derived[City]
-// Or given Decoder[City] = (Decoder[Int] *: Decoder[String] *: Decoder[Int] *: ....).to[City]
-given Encoder[City] = Encoder.derived[City]
-// Or given Encoder[City] = (Encoder[Int] *: Encoder[String] *: Encoder[Int] *: ....).to[City]
+// Aggregation processing
+val calculateTotal: IO[BigDecimal] = 
+  sql"SELECT amount FROM transactions WHERE year = 2024"
+    .query[BigDecimal]
+    .stream(5000)                    // Process 5000 rows at a time
+    .filter(_ > 100)                 // Transactions > 100
+    .fold(BigDecimal(0))(_ + _)      // Calculate total
+    .compile.lastOrError
+    .transaction(connector)
 ```
 
-Alternatively, you can use `Codec` to solve this problem by combining `Encoder` and `Decoder`.
-
-```scala 3
-given Codec[City] = Codec.derived[City]
-// Or given Codec[City] = (Codec[Int] *: Codec[String] *: Codec[Int] *: ....).to[City]
+**MySQL Optimization Settings:**
+```scala
+// Enable server-side cursors for better memory efficiency
+val datasource = MySQLDataSource
+  .build[IO](host, port, user)
+  .setPassword(password)
+  .setDatabase(database)
+  .setUseCursorFetch(true)  // Enable true streaming
 ```
 
-### Change column refinement method
+**Streaming Benefits:**
+- **Memory Efficiency**: Constant memory usage even with large datasets
+- **Early Processing**: Process data while receiving it
+- **Cancellable**: Stop processing based on conditions
+- **Rich fs2 Operations**: Use functional operations like `filter`, `map`, `take`, `fold`
 
-Until now, column refinement has simply grouped columns to be used as tuples.
+## Summary
 
-```scala 3
-cityTable.select(city => (city.id, city.name))
-```
+Migrating to 0.4.x provides the following benefits:
 
-However, there was a problem with this. Columns are types with a single type parameter, and since Scala2 had a limit on the number of Tuples, it was necessary to create a boilerplate or something that could handle the full number of Tuples.
-In this case, the dynamic Tuple was treated as a Tuple or Tuple.Map, so if you wanted to access a Column type, you had to cast the type using asInstanceOf, since that type could only be treated as a Tuple.
-Casting the type, of course, would have made the code more complex, since type safety would have been lost.
+1. **Performance Improvements**: Efficient connection management through built-in pooling
+2. **More Intuitive API**: Simplified configuration with builder pattern
+3. **Advanced Features**: CircuitBreaker, adaptive sizing, metrics tracking
+4. **Reduced External Dependencies**: No need for HikariCP
 
-To solve this problem, we decided to adopt one of the same TypeLevel projects, [twiddles](https://github.com/typelevel/twiddles).
-
-With twiddles, we will be able to compose columns more easily.
-
-```scala 3
-cityTable.select(city => city.id *: city.name)
-```
-
-It also eliminates the need for unsafe typecasting, since the internal code can just use `Column[T]` instead of Tuple.
-
-Twiddles also make it easier to convert the composite result to another type.
-
-```scala 3
-case class City(id: Long, name: String)
-
-def id: Column[Int] = column[Int]("ID")
-def name: Column[String] = column[String]("Name")
-
-def city: Column[City] = (id *: name).to[City]
-```
-
-### Change from Table to TableQuery
-
-Previously, the same Table type was used to construct queries from the model using the table type and table information.
-
-```scala 3
-case class City(id: Long, name: String) derives Table
-val cityTable = Table[City]
-```
-
-However, this implementation was easy to get wrong because the same type could be used to represent two things.
-
-```scala 3
-cityTable.select(city => city.insert(???))
-```
-
-Development tools such as IDEs can cause no small amount of confusion to implementers because they complement all available APIs.
-
-To solve this problem, we have separated the Table and TableQuery types.
-
-```scala 3
-case class City(id: Long, name: String) derives Table
-val cityTable = TableQuery[City]
-```
-
-**Table name customization can be done in Table's derived**
-
-```scala 3
-case class City(
-  id: Int,
-  name: String,
-  countryCode: String,
-  district: String,
-  population: Int
-)
-
-object City:
-  given Table[City] = Table.derived[City]("city")
-```
-
-### Change in the way the update statement is constructed
-
-Previously, Update Statements had to be set one for each column to be updated. This implementation is convenient if you want to update several columns individually, but it is very tedious to write a set for each additional column you want to update.
-
-```scala 3
-cityTable
-  .update("id", 1L)
-  .set("name", "Tokyo")
-  .set("population", 1, false)
-```
-
-With this update, columns can now be combined, allowing multiple columns to be specified together for update processing.
-
-```scala 3
-cityTable
-  .update(city => city.id *: city.name)((1L, "Tokyo"))
-  .set(_.population, 1, false)
-```
-
-With this update, columns can now be combined and multiple columns can be specified together for the update process. set can be used to update only certain columns. It is also possible to use set to set update conditions so that a query can be created that updates additional columns only if the condition is positive.
-
-### Change the way table joins are constructed
-
-Previously, table joins were constructed by setting the join condition as the second argument.
-
-```scala 3
-cityTable.join(countryTable)((c, co) => c.countryCode === co.code)
-```
-
-With this change, table join conditions must be set with the `on` API. This change is the result of an internal implementation change.
-
-```scala 3
-cityTable.join(countryTable).on((c, co) => c.countryCode === co.code)
-```
+The migration work mainly involves API updates, and since functional backward compatibility is maintained, gradual migration is possible.
