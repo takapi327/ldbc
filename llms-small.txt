@@ -625,21 +625,21 @@ That said, if you find yourself confused or frustrated by this documentation or 
 
 ## Quick Start
 
-The current version is **0.4.0-RC3**, compatible with **Scala 3.3.6**.
+The current version is **0.4.0**, compatible with **Scala 3.3.6**.
 
 ```scala
 libraryDependencies ++= Seq(
 
   // Start with this one
-  "io.github.takapi327" %% "ldbc-dsl" % "0.4.0-RC3",
+  "io.github.takapi327" %% "ldbc-dsl" % "0.4.0",
   
   // Choose the connector you want to use
-  "io.github.takapi327" %% "jdbc-connector" % "0.4.0-RC3", // Java connector (supported platform: JVM)
-  "io.github.takapi327" %% "ldbc-connector" % "0.4.0-RC3", // Scala connector (supported platforms: JVM, JS, Native)
+  "io.github.takapi327" %% "jdbc-connector" % "0.4.0", // Java connector (supported platform: JVM)
+  "io.github.takapi327" %% "ldbc-connector" % "0.4.0", // Scala connector (supported platforms: JVM, JS, Native)
 
   // And add these as needed
-  "io.github.takapi327" %% "ldbc-query-builder" % "0.4.0-RC3", // Type-safe query building
-  "io.github.takapi327" %% "ldbc-schema"        % "0.4.0-RC3", // Database schema construction
+  "io.github.takapi327" %% "ldbc-query-builder" % "0.4.0", // Type-safe query building
+  "io.github.takapi327" %% "ldbc-schema"        % "0.4.0", // Database schema construction
 )
 ```
 
@@ -670,23 +670,23 @@ libraryDependencies ++= Seq(
 
 | Module / Platform    | JVM | Scala Native | Scala.js | Scaladoc                                                                                                                                                  |
 |----------------------|:---:|:------------:|:--------:|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `ldbc-core`          |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-core_3)          |
+| `ldbc-core`          |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-core_3)          |
 
 **All Packages**
 
 | Module / Platform    | JVM | Scala Native | Scala.js | Scaladoc                                                                                                                                                  |
 |----------------------|:---:|:------------:|:--------:|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `ldbc-sql`           |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-sql_3)           |
-| `ldbc-core`          |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-core_3)          |
-| `ldbc-connector`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-connector_3)     |
-| `jdbc-connector`     |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/jdbc-connector_3)     |
-| `ldbc-dsl`           |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3)           |
-| `ldbc-statement`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-statement_3)     |
-| `ldbc-query-builder` |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-query-builder_3) |
-| `ldbc-schema`        |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-schema_3)        |
-| `ldbc-codegen`       |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-codegen_3)       |
-| `ldbc-hikari`        |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-hikari_3)        |
-| `ldbc-plugin`        |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.3.3-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-plugin_2.12_1.0) |
+| `ldbc-sql`           |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-sql_3)           |
+| `ldbc-core`          |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-core_3)          |
+| `ldbc-connector`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-connector_3)     |
+| `jdbc-connector`     |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/jdbc-connector_3)     |
+| `ldbc-dsl`           |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3)           |
+| `ldbc-statement`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-statement_3)     |
+| `ldbc-query-builder` |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-query-builder_3) |
+| `ldbc-schema`        |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-schema_3)        |
+| `ldbc-codegen`       |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-codegen_3)       |
+| `ldbc-hikari`        |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-hikari_3)        |
+| `ldbc-plugin`        |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-plugin_2.12_1.0) |
 
 ## 🎯 Major Changes
 
@@ -1119,7 +1119,7 @@ val provider =
 This feature is only available when using `ldbc-connector`.
 
 ```scala 3
-libraryDependencies += "io.github.takapi327" %% "ldbc-connector" % "0.4.0-RC3"
+libraryDependencies += "io.github.takapi327" %% "ldbc-connector" % "0.4.0"
 ```
 
 @:@
@@ -1988,7 +1988,7 @@ If you want to use the traditional connector written in Java, set the following 
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "io.github.takapi327" %% "jdbc-connector" % "0.4.0-RC3",
+  "io.github.takapi327" %% "jdbc-connector" % "0.4.0",
   "com.mysql" % "mysql-connector-j" % "8.4.0"
 )
 ```
@@ -1999,7 +1999,7 @@ If you want to use the new connector written in Scala, set the following depende
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "io.github.takapi327" %% "ldbc-connector" % "0.4.0-RC3"
+  "io.github.takapi327" %% "ldbc-connector" % "0.4.0"
 )
 ```
 
@@ -2009,7 +2009,7 @@ To use ldbc with Scala.js or Scala Native, set the dependencies as follows:
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "com.example" %%% "ldbc-connector" % "0.4.0-RC3"
+  "com.example" %%% "ldbc-connector" % "0.4.0"
 )
 ```
 
@@ -2019,7 +2019,7 @@ To use the plain DSL, set the following dependencies:
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "io.github.takapi327" %% "ldbc-dsl" % "0.4.0-RC3"
+  "io.github.takapi327" %% "ldbc-dsl" % "0.4.0"
 )
 ```
 
@@ -2041,7 +2041,7 @@ To use the query builder, set the following dependencies:
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "io.github.takapi327" %% "ldbc-query-builder" % "0.4.0-RC3"
+  "io.github.takapi327" %% "ldbc-query-builder" % "0.4.0"
 )
 ```
 
@@ -2068,7 +2068,7 @@ To use schema definition and model mapping, set the following dependencies:
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "io.github.takapi327" %% "ldbc-schema" % "0.4.0-RC3"
+  "io.github.takapi327" %% "ldbc-schema" % "0.4.0"
 )
 ```
 
@@ -2141,13 +2141,13 @@ To use it, you need to set up the following dependency in your project:
 **JVM**
 
 ```scala 3
-libraryDependencies += "io.github.takapi327" %% "ldbc-connector" % "0.4.0-RC3"
+libraryDependencies += "io.github.takapi327" %% "ldbc-connector" % "0.4.0"
 ```
 
 **JS/Native**
 
 ```scala 3
-libraryDependencies += "io.github.takapi327" %%% "ldbc-connector" % "0.4.0-RC3"
+libraryDependencies += "io.github.takapi327" %%% "ldbc-connector" % "0.4.0"
 ```
 
 **Supported Versions**
@@ -3731,7 +3731,7 @@ The JDBC connector establishes connections using standard JDBC drivers. It's rec
 First, add the necessary dependencies. When using the jdbc connector, you need to add the MySQL connector as well.
 
 ```scala
-//> dep "io.github.takapi327::jdbc-connector:0.4.0-RC3"
+//> dep "io.github.takapi327::jdbc-connector:0.4.0"
 //> dep "com.mysql":"mysql-connector-j":"8.4.0"
 ```
 
@@ -3814,7 +3814,7 @@ The ldbc connector is an optimized connector developed by ldbc, offering more co
 First, add the necessary dependency.
 
 ```scala
-//> dep "io.github.takapi327::ldbc-connector:0.4.0-RC3"
+//> dep "io.github.takapi327::ldbc-connector:0.4.0"
 ```
 
 ### Connection with Basic Configuration
@@ -5193,7 +5193,7 @@ In this chapter, we'll explain methods for building type-safe queries.
 You need to set up the following dependency in your project:
 
 ```scala
-//> using dep "io.github.takapi327::ldbc-query-builder:0.4.0-RC3"
+//> using dep "io.github.takapi327::ldbc-query-builder:0.4.0"
 ```
 
 ## Basic Usage
@@ -5772,7 +5772,7 @@ Code generation is a powerful tool for automating repetitive tasks and reducing 
 You need to set up the following dependency in your project. Add it to `project/plugins.sbt`.
 
 ```scala
-addSbtPlugin("io.github.takapi327" % "ldbc-plugin" % "0.4.0-RC3")
+addSbtPlugin("io.github.takapi327" % "ldbc-plugin" % "0.4.0")
 ```
 
 ### Enabling the Plugin
@@ -6216,7 +6216,7 @@ This chapter explains how to handle database schemas in Scala code, particularly
 You need to set up the following dependency in your project:
 
 ```scala
-//> using dep "io.github.takapi327::ldbc-schema:0.4.0-RC3"
+//> using dep "io.github.takapi327::ldbc-schema:0.4.0"
 ```
 
 The following code examples assume these imports:
@@ -7259,8 +7259,8 @@ Add the following code to `FirstSteps.scala`:
 
 ```scala
 //> using scala "3.3.6"
-//> using dep "io.github.takapi327::ldbc-dsl:0.4.0-RC3"
-//> using dep "io.github.takapi327::ldbc-connector:0.4.0-RC3"
+//> using dep "io.github.takapi327::ldbc-dsl:0.4.0"
+//> using dep "io.github.takapi327::ldbc-connector:0.4.0"
 
 import cats.effect.*
 import cats.syntax.all.*
@@ -7302,7 +7302,7 @@ If you see "Value retrieved from database: 42", you've succeeded! This doesn't a
 We also provide a Scala CLI script that automatically handles all the setup:
 
 ```bash
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/00-Setup.scala --dependency io.github.takapi327::ldbc-dsl:0.4.0-RC3 --dependency io.github.takapi327::ldbc-connector:0.4.0-RC3
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/00-Setup.scala --dependency io.github.takapi327::ldbc-dsl:0.4.0 --dependency io.github.takapi327::ldbc-connector:0.4.0
 ```
 
 ## Next Steps
@@ -7371,7 +7371,7 @@ When you run this program, it will return the result `Some(2)` from the database
 This program can be easily executed using Scala CLI:
 
 ```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/02-Program.scala --dependency io.github.takapi327::ldbc-dsl:0.4.0-RC3 --dependency io.github.takapi327::ldbc-connector:0.4.0-RC3
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/02-Program.scala --dependency io.github.takapi327::ldbc-dsl:0.4.0 --dependency io.github.takapi327::ldbc-connector:0.4.0
 ```
 
 ## Second Program: Combining Multiple Queries
@@ -7404,7 +7404,7 @@ The execution result will look like `(List(1), Some(2), 3)`. This is a tuple con
 **Execute with Scala CLI**
 
 ```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/03-Program.scala --dependency io.github.takapi327::ldbc-dsl:0.4.0-RC3 --dependency io.github.takapi327::ldbc-connector:0.4.0-RC3
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/03-Program.scala --dependency io.github.takapi327::ldbc-dsl:0.4.0 --dependency io.github.takapi327::ldbc-connector:0.4.0
 ```
 
 ## Third Program: Data Update Operations
@@ -7433,7 +7433,7 @@ The `commit` method automatically enables `AutoCommit` and commits the transacti
 **Execute with Scala CLI**
 
 ```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/04-Program.scala --dependency io.github.takapi327::ldbc-dsl:0.4.0-RC3 --dependency io.github.takapi327::ldbc-connector:0.4.0-RC3
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/04-Program.scala --dependency io.github.takapi327::ldbc-dsl:0.4.0 --dependency io.github.takapi327::ldbc-connector:0.4.0
 ```
 
 ## Transaction Control
