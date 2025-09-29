@@ -10,8 +10,6 @@ object Dependencies {
 
   val catsEffect = "org.typelevel" %% "cats-effect" % "3.6.3"
 
-  val schemaspy = "org.schemaspy" % "schemaspy" % "6.2.4"
-
   val parserCombinators = "org.scala-lang.modules" %% "scala-parser-combinators" % "2.3.0"
 
   val mysqlVersion = "8.4.0"
