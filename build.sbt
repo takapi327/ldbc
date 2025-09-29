@@ -145,18 +145,6 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .nativeSettings(Test / nativeBrewFormulas += "s2n")
   .dependsOn(core)
 
-lazy val hikari = LepusSbtProject("ldbc-hikari", "module/ldbc-hikari")
-  .settings(description := "Project to build HikariCP")
-  .settings(
-    onLoadMessage := s"${ scala.Console.RED }WARNING: This project is deprecated and will be removed in future versions.${ scala.Console.RESET }",
-    libraryDependencies ++= Seq(
-      catsEffect,
-      typesafeConfig,
-      hikariCP
-    ) ++ specs2
-  )
-  .dependsOn(dsl.jvm)
-
 lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
   .settings(description := "Projects that provide sbt plug-ins")
   .settings((Compile / sourceGenerators) += Def.task {
@@ -215,10 +203,11 @@ lazy val benchmark = (project in file("benchmark"))
       scala3Compiler,
       mysql,
       doobie,
-      slick
+      slick,
+      hikariCP,
     )
   )
-  .dependsOn(jdbcConnector.jvm, connector.jvm, queryBuilder.jvm, hikari)
+  .dependsOn(jdbcConnector.jvm, connector.jvm, queryBuilder.jvm)
   .enablePlugins(JmhPlugin, AutomateHeaderPlugin, NoPublishPlugin)
 
 lazy val http4sExample = crossProject(JVMPlatform)
@@ -388,7 +377,6 @@ lazy val ldbc = tlCrossRootProject
     tests,
     docs,
     benchmark,
-    hikari,
     mcpDocumentServer
   )
   .aggregate(examples *)
