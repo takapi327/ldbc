@@ -148,6 +148,7 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
 lazy val hikari = LepusSbtProject("ldbc-hikari", "module/ldbc-hikari")
   .settings(description := "Project to build HikariCP")
   .settings(
+    onLoadMessage := s"${ scala.Console.RED }WARNING: This project is deprecated and will be removed in future versions.${ scala.Console.RESET }",
     libraryDependencies ++= Seq(
       catsEffect,
       typesafeConfig,
