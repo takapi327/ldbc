@@ -204,7 +204,7 @@ lazy val benchmark = (project in file("benchmark"))
       mysql,
       doobie,
       slick,
-      hikariCP,
+      hikariCP
     )
   )
   .dependsOn(jdbcConnector.jvm, connector.jvm, queryBuilder.jvm)
