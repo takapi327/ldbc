@@ -19,15 +19,13 @@ import ldbc.connector.*
   // #cleanupDatabase
 
   // #connection
-  def connection = ConnectionProvider
-    .default[IO]("127.0.0.1", 13306, "ldbc")
+  val dataSource = MySQLDataSource
+    .build[IO]("127.0.0.1", 13306, "ldbc")
     .setPassword("password")
+  def connector = Connector.fromDataSource(dataSource)
   // #connection
 
   // #run
-  connection
-    .use { conn =>
-      dropDatabase.commit(conn).as(println("Database dropped"))
-    }
+  dropDatabase.commit(connector).as(println("Database dropped"))
     .unsafeRunSync()
   // #run
