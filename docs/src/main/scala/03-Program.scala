@@ -32,7 +32,9 @@ import ldbc.connector.*
   // #connection
 
   // #run
-  program.readOnly(connector).map(println(_))
+  program
+    .readOnly(connector)
+    .map(println(_))
     .unsafeRunSync()
   // (List(1), Some(2), 3)
   // #run

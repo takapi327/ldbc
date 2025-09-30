@@ -27,7 +27,9 @@ import ldbc.connector.*
   // #connection
 
   // #run
-  program.readOnly(connector).map(println(_))
+  program
+    .readOnly(connector)
+    .map(println(_))
     .unsafeRunSync()
   // 1
   // #run

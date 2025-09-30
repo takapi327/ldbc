@@ -28,7 +28,7 @@ object Main extends IOApp.Simple:
       otel <- Resource
                 .eval(IO.delay(GlobalOpenTelemetry.get))
                 .evalMap(OtelJava.fromJOpenTelemetry[IO])
-      tracer     <- Resource.eval(otel.tracerProvider.get(serviceName))
+      tracer <- Resource.eval(otel.tracerProvider.get(serviceName))
     yield Connector.fromDataSource(dataSource.setTracer(tracer))
 
   override def run: IO[Unit] =

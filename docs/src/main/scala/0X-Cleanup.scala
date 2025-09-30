@@ -26,6 +26,8 @@ import ldbc.connector.*
   // #connection
 
   // #run
-  dropDatabase.commit(connector).as(println("Database dropped"))
+  dropDatabase
+    .commit(connector)
+    .as(println("Database dropped"))
     .unsafeRunSync()
   // #run

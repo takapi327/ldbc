@@ -64,9 +64,8 @@ object Main extends ResourceApp.Forever:
   }
 
   override def run(args: List[String]): Resource[IO, Unit] =
-    for
-      _    <- EmberServerBuilder
-             .default[IO]
-             .withHttpApp(routes.orNotFound)
-             .build
+    for _ <- EmberServerBuilder
+               .default[IO]
+               .withHttpApp(routes.orNotFound)
+               .build
     yield ()
