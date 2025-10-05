@@ -4,14 +4,16 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-import zio.*
-import zio.http.*
-import zio.json.*
-import zio.interop.catz.*
+import ldbc.dsl.*
 
 import ldbc.connector.*
+
 import ldbc.zio.interop.*
-import ldbc.dsl.*
+
+import zio.*
+import zio.http.*
+import zio.interop.catz.*
+import zio.json.*
 
 object Main extends ZIOAppDefault:
 
@@ -31,7 +33,7 @@ object Main extends ZIOAppDefault:
     }
 
   private val routes = Routes(
-    Method.GET / Root -> handler(Response.text("Hello, World!")),
+    Method.GET / Root               -> handler(Response.text("Hello, World!")),
     Method.GET / Root / "countries" -> handler {
       for
         connector <- ZIO.service[Connector[Task]]
@@ -39,11 +41,12 @@ object Main extends ZIOAppDefault:
       yield Response.json(countries.toJson)
     }.catchAll { error =>
       handler(Response.json(Map("error" -> error.getMessage).toJson))
-    },
+    }
   )
 
   override def run =
-    Server.serve(routes)
+    Server
+      .serve(routes)
       .provide(
         Server.default,
         connectorLayer
