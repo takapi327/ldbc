@@ -166,6 +166,9 @@ lazy val zioInterop = crossProject(JVMPlatform, JSPlatform)
       "dev.zio" %%% "zio-test-sbt"     % "2.1.21" % Test
     )
   )
+  .jsSettings(
+    Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
+  )
   .dependsOn(connector % "test->compile")
 
 lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
