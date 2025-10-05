@@ -155,6 +155,16 @@ lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
     )
   }.taskValue)
 
+lazy val zioInterop = crossProject(JVMPlatform, JSPlatform)
+  .crossType(CrossType.Pure)
+  .module("zio-interop", "Projects that provide a way to connect to the database for ZIO")
+  .settings(
+    libraryDependencies ++= Seq(
+      "dev.zio" %%% "zio"              % "2.1.6",
+      "dev.zio" %%% "zio-interop-cats" % "23.1.0.5"
+    )
+  )
+
 lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
   .in(file("tests"))
@@ -372,6 +382,7 @@ lazy val ldbc = tlCrossRootProject
     queryBuilder,
     schema,
     codegen,
+    zioInterop,
     plugin,
     tests,
     docs,
