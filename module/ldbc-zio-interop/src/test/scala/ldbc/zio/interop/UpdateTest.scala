@@ -41,7 +41,6 @@ object UpdateTest extends ZIOSpecDefault:
         yield assert(count)(equalTo(1))
       }
     },
-
     test("Byte values can be set as parameters") {
       datasource.getConnection.use { conn =>
         for
@@ -56,7 +55,6 @@ object UpdateTest extends ZIOSpecDefault:
         yield assert(count)(equalTo(1))
       }
     },
-
     test("Short values can be set as parameters") {
       datasource.getConnection.use { conn =>
         for
@@ -73,7 +71,6 @@ object UpdateTest extends ZIOSpecDefault:
         yield assert(count)(equalTo(1))
       }
     },
-
     test("Int values can be set as parameters") {
       datasource.getConnection.use { conn =>
         for
@@ -92,7 +89,6 @@ object UpdateTest extends ZIOSpecDefault:
         yield assert(count)(equalTo(1))
       }
     },
-
     test("Long values can be set as parameters") {
       datasource.getConnection.use { conn =>
         for
@@ -110,7 +106,6 @@ object UpdateTest extends ZIOSpecDefault:
         yield assert(count)(equalTo(1))
       }
     },
-
     test("BigInt values can be set as parameters") {
       datasource.getConnection.use { conn =>
         for
@@ -128,7 +123,6 @@ object UpdateTest extends ZIOSpecDefault:
         yield assert(count)(equalTo(1))
       }
     },
-
     test("Float values can be set as parameters") {
       datasource.getConnection.use { conn =>
         for
@@ -144,7 +138,6 @@ object UpdateTest extends ZIOSpecDefault:
         yield assert(count)(equalTo(1))
       }
     },
-
     test("Double values can be set as parameters") {
       datasource.getConnection.use { conn =>
         for
@@ -161,7 +154,6 @@ object UpdateTest extends ZIOSpecDefault:
         yield assert(count)(equalTo(1))
       }
     },
-
     test("BigDecimal values can be set as parameters") {
       datasource.getConnection.use { conn =>
         for
@@ -178,7 +170,6 @@ object UpdateTest extends ZIOSpecDefault:
         yield assert(count)(equalTo(1))
       }
     },
-
     test("String values can be set as parameters") {
       datasource.getConnection.use { conn =>
         for
@@ -195,7 +186,6 @@ object UpdateTest extends ZIOSpecDefault:
         yield assert(count)(equalTo(1))
       }
     },
-
     test("Array[Byte] values can be set as parameters") {
       datasource.getConnection.use { conn =>
         for
@@ -213,7 +203,6 @@ object UpdateTest extends ZIOSpecDefault:
         yield assert(count)(equalTo(1))
       }
     },
-
     test("java.time.LocalTime values can be set as parameters") {
       datasource.getConnection.use { conn =>
         for
@@ -230,7 +219,6 @@ object UpdateTest extends ZIOSpecDefault:
         yield assert(count)(equalTo(1))
       }
     },
-
     test("java.time.LocalDate values can be set as parameters") {
       datasource.getConnection.use { conn =>
         for
@@ -247,7 +235,6 @@ object UpdateTest extends ZIOSpecDefault:
         yield assert(count)(equalTo(1))
       }
     },
-
     test("java.time.LocalDateTime values can be set as parameters") {
       datasource.getConnection.use { conn =>
         for
@@ -263,7 +250,6 @@ object UpdateTest extends ZIOSpecDefault:
         yield assert(count)(equalTo(1))
       }
     },
-
     test("java.time.Year values can be set as parameters") {
       datasource.getConnection.use { conn =>
         for
