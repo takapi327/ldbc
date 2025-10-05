@@ -272,6 +272,18 @@ lazy val otelExample = crossProject(JVMPlatform)
   )
   .dependsOn(connector, dsl)
 
+lazy val zioExample = crossProject(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .withoutSuffixFor(JVMPlatform)
+  .example("zio", "ZIO example project")
+  .settings(
+    libraryDependencies ++= Seq(
+      "dev.zio" %% "zio-http" % "3.5.1",
+      "dev.zio" %% "zio-json" % "0.7.44"
+    )
+  )
+  .dependsOn(connector, dsl, zioInterop)
+
 lazy val docs = (project in file("docs"))
   .settings(
     description              := "Documentation for ldbc",
@@ -372,7 +384,8 @@ lazy val mcpDocumentServer = crossProject(JSPlatform)
 lazy val examples = Seq(
   http4sExample,
   hikariCPExample,
-  otelExample
+  otelExample,
+  zioExample
 )
 
 lazy val ldbc = tlCrossRootProject
