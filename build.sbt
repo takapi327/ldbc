@@ -155,6 +155,22 @@ lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
     )
   }.taskValue)
 
+lazy val zioInterop = crossProject(JVMPlatform, JSPlatform)
+  .crossType(CrossType.Pure)
+  .module("zio-interop", "Projects that provide a way to connect to the database for ZIO")
+  .settings(
+    libraryDependencies ++= Seq(
+      "dev.zio" %%% "zio"              % "2.1.21",
+      "dev.zio" %%% "zio-interop-cats" % "23.1.0.5",
+      "dev.zio" %%% "zio-test"         % "2.1.21" % Test,
+      "dev.zio" %%% "zio-test-sbt"     % "2.1.21" % Test
+    )
+  )
+  .jsSettings(
+    Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
+  )
+  .dependsOn(connector % "test->compile")
+
 lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
   .in(file("tests"))
@@ -256,6 +272,18 @@ lazy val otelExample = crossProject(JVMPlatform)
   )
   .dependsOn(connector, dsl)
 
+lazy val zioExample = crossProject(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .withoutSuffixFor(JVMPlatform)
+  .example("zio", "ZIO example project")
+  .settings(
+    libraryDependencies ++= Seq(
+      "dev.zio" %% "zio-http" % "3.5.1",
+      "dev.zio" %% "zio-json" % "0.7.44"
+    )
+  )
+  .dependsOn(connector, dsl, zioInterop)
+
 lazy val docs = (project in file("docs"))
   .settings(
     description              := "Documentation for ldbc",
@@ -356,7 +384,8 @@ lazy val mcpDocumentServer = crossProject(JSPlatform)
 lazy val examples = Seq(
   http4sExample,
   hikariCPExample,
-  otelExample
+  otelExample,
+  zioExample
 )
 
 lazy val ldbc = tlCrossRootProject
@@ -372,6 +401,7 @@ lazy val ldbc = tlCrossRootProject
     queryBuilder,
     schema,
     codegen,
+    zioInterop,
     plugin,
     tests,
     docs,

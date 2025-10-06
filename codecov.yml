@@ -23,3 +23,4 @@ coverage:
     - "module/ldbc-connector/shared/src/main/scala/ldbc/connector/net/protocol/Initial.scala"
     - "module/ldbc-schema/src/main/scala/ldbc/schema/Character.scala"
     - "module/ldbc-dsl/src/main/scala/ldbc/dsl/ResultSetConsumer.scala"
+    - "module/ldbc-zio-interop/src/main/scala/ldbc/zio/interop/package.scala"
