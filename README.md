@@ -351,29 +351,6 @@ However, not all jdbc APIs could be supported. Nor can we guarantee that it is p
 
 We will continue to develop features and improve the stability of the ldbc connector to achieve the same level of stability and reliability as the jdbc connector.
 
-#### Connection pooling implementation
-
-- [ ] Failover Countermeasures
-
-#### Other
-
-- [ ] Integration with java.sql API
-- [ ] etc...
-
-### Redesign of query builders and schema definitions
-
-Initially, ldbc was inspired by tapir to create a development system that could centralise Scala models, sql schemas and documentation by managing a single resource at the database level.
-
-In addition, database connection, query construction and document generation were to be used in combination with retrofitted packages, as the aim was to be able to integrate with other database systems.
-
-As a result, we feel that it has become difficult for users to use because of the various configurations required to build it.
-
-What users originally wanted from a database connectivity library was something simpler, easier and more intuitive to use.
-
-Initially, ldbc aimed to create documentation from the schema, so building the schema and query builder was not as simple as it could have been, as it required a complete description of the database data types and so on.
-
-It was therefore decided to redesign it to make it simpler and easier to use.
-
 ## Contributing
 
 All suggestions welcome :)!
