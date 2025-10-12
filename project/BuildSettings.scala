@@ -65,17 +65,6 @@ object BuildSettings {
     )
   )
 
-  /** A project that runs in the sbt runtime. */
-  object LepusSbtProject {
-    def apply(name: String, dir: String): Project =
-      Project(name, file(dir))
-        .settings(scalaVersion := scala3)
-        .settings(scalacOptions ++= additionalSettings)
-        .settings(scalacOptions --= removeSettings)
-        .settings(commonSettings)
-        .enablePlugins(AutomateHeaderPlugin)
-  }
-
   /** A project that is an sbt plugin. */
   object LepusSbtPluginProject {
     def apply(name: String, dir: String): Project =
