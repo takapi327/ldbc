@@ -39,7 +39,6 @@ private[ldbc] object LdbcGenerator:
     }
 
     val parsed = parseFiles.flatMap { file =>
-
       val content = new String(
         Files.readAllBytes(file.toPath),
         Charset.defaultCharset()

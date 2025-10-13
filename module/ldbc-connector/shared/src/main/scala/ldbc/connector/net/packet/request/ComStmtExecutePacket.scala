@@ -66,7 +66,6 @@ object ComStmtExecutePacket:
     ComStmtExecutePacket(statementId, params, enumCursorType)
 
   val encoder: Encoder[ComStmtExecutePacket] = Encoder { comStmtExecute =>
-
     val types = comStmtExecute.params.values.foldLeft(BitVector.empty) { (acc, param) =>
       acc |+| uint24L.encode(param.columnDataType.code.toInt).require
     }
