@@ -97,7 +97,6 @@ object Generator {
         classNameFormat:    String,
         propertyNameFormat: String,
         sourceManaged:      File,
-        baseDirectory:      File,
         packageName:        String
       ): Array[File]
     }
@@ -147,7 +146,6 @@ object Generator {
       classNameFormat.value.toString,
       propertyNameFormat.value.toString,
       sourceManaged.value,
-      baseDirectory.value,
       packageName.value
     )
 
