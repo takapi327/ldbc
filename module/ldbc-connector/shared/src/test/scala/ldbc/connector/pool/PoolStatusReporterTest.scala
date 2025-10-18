@@ -53,10 +53,6 @@ class PoolStatusReporterTest extends CatsEffectSuite:
       def metricsTracker               = PoolMetricsTracker.noop[IO]
       def poolState                    = ???
       def idGenerator                  = IO.pure("test-id")
-      def houseKeeper                  = None
-      def adaptiveSizer                = None
-      def keepaliveExecutor            = None
-      def statusReporter               = None
       def aliveBypassWindow            = 500.milliseconds
       def keepaliveTime                = None
       def connectionTestQuery          = None
@@ -99,10 +95,6 @@ class PoolStatusReporterTest extends CatsEffectSuite:
       def metricsTracker               = PoolMetricsTracker.noop[IO]
       def poolState                    = ???
       def idGenerator                  = IO.pure("test-id")
-      def houseKeeper                  = None
-      def adaptiveSizer                = None
-      def keepaliveExecutor            = None
-      def statusReporter               = None
       def aliveBypassWindow            = 500.milliseconds
       def keepaliveTime                = None
       def connectionTestQuery          = None
@@ -163,10 +155,6 @@ class PoolStatusReporterTest extends CatsEffectSuite:
       def metricsTracker               = PoolMetricsTracker.noop[IO]
       def poolState                    = ???
       def idGenerator                  = IO.pure("test-id")
-      def houseKeeper                  = None
-      def adaptiveSizer                = None
-      def keepaliveExecutor            = None
-      def statusReporter               = None
       def aliveBypassWindow            = 500.milliseconds
       def keepaliveTime                = None
       def connectionTestQuery          = None

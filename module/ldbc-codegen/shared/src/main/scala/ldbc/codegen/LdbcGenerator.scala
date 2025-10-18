@@ -23,7 +23,6 @@ private[ldbc] object LdbcGenerator:
     classNameFormat:    String,
     propertyNameFormat: String,
     sourceManaged:      File,
-    baseDirectory:      File,
     packageName:        String
   ): Array[File] =
     val classNameFormatter    = Naming.fromString(classNameFormat)

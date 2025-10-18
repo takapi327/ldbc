@@ -559,7 +559,7 @@ object Protocol:
                   )
     yield protocol
 
-  def fromPacketSocket[F[_]: Async: Tracer: Exchange: Hashing](
+  def fromPacketSocket[F[_]: Tracer: Exchange: Hashing](
     packetSocket:            PacketSocket[F],
     hostInfo:                HostInfo,
     sslOptions:              Option[SSLNegotiation.Options[F]],
@@ -567,26 +567,30 @@ object Protocol:
     capabilitiesFlags:       Set[CapabilitiesFlags],
     sequenceIdRef:           Ref[F, Byte],
     initialPacketRef:        Ref[F, Option[InitialPacket]]
-  )(using ev: Temporal[F]): F[Protocol[F]] =
-    for initialPacketOpt <- initialPacketRef.get
-    yield initialPacketOpt match
+  )(using ev: Async[F]): F[Protocol[F]] =
+    initialPacketRef.get.flatMap {
       case Some(initialPacket) =>
-        Impl(
-          initialPacket,
-          hostInfo,
-          packetSocket,
-          sslOptions.isDefined,
-          allowPublicKeyRetrieval,
-          capabilitiesFlags,
-          sequenceIdRef
-        )
-      case None =>
-        throw new SQLException(
-          "Initial packet is not set",
-          detail = Some(
-            "This error may be due to a lack of support on the ldbc side or a change in behaviour on the MySQL side."
-          ),
-          hint = Some(
-            "Report Issues here: https://github.com/takapi327/ldbc/issues/new?assignees=&labels=&projects=&template=bug_report.md&title="
+        ev.pure(
+          Impl(
+            initialPacket,
+            hostInfo,
+            packetSocket,
+            sslOptions.isDefined,
+            allowPublicKeyRetrieval,
+            capabilitiesFlags,
+            sequenceIdRef
           )
         )
+      case None =>
+        ev.raiseError(
+          new SQLException(
+            "Initial packet is not set",
+            detail = Some(
+              "This error may be due to a lack of support on the ldbc side or a change in behaviour on the MySQL side."
+            ),
+            hint = Some(
+              "Report Issues here: https://github.com/takapi327/ldbc/issues/new?assignees=&labels=&projects=&template=bug_report.md&title="
+            )
+          )
+        )
+    }

@@ -12,7 +12,6 @@ import cats.*
 import cats.syntax.all.*
 
 import cats.effect.*
-import cats.effect.std.Console
 import cats.effect.std.UUIDGen
 
 import org.typelevel.otel4s.trace.Tracer
@@ -27,7 +26,7 @@ import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.protocol.*
 import ldbc.connector.util.StringHelper
 
-private[ldbc] case class ConnectionImpl[F[_]: Tracer: Console: Exchange: UUIDGen](
+private[ldbc] case class ConnectionImpl[F[_]: Tracer: Exchange: UUIDGen](
   protocol:           Protocol[F],
   serverVariables:    Map[String, String],
   database:           Option[String],

@@ -16,7 +16,6 @@ import cats.effect.*
 
 import ldbc.sql.Connection
 
-import ldbc.logging.LogHandler
 import ldbc.DataSource as LdbcDataSource
 
 object MySQLDataSource:
@@ -76,11 +75,10 @@ object MySQLDataSource:
      *   database password
      */
     def apply(
-      driver:     String,
-      url:        String,
-      user:       String,
-      password:   String,
-      logHandler: Option[LogHandler[F]]
+      driver:   String,
+      url:      String,
+      user:     String,
+      password: String
     ): LdbcDataSource[F] =
       create(driver, () => DriverManager.getConnection(url, user, password))
 
@@ -94,10 +92,9 @@ object MySQLDataSource:
      *   a `Properties` containing connection information (see `DriverManager.getConnection`)
      */
     def apply(
-      driver:     String,
-      url:        String,
-      info:       java.util.Properties,
-      logHandler: Option[LogHandler[F]]
+      driver: String,
+      url:    String,
+      info:   java.util.Properties
     ): LdbcDataSource[F] =
       create(driver, () => DriverManager.getConnection(url, info))
 

@@ -8,8 +8,6 @@ package jdbc.connector
 
 import java.time.*
 
-import cats.syntax.all.*
-
 import cats.effect.Sync
 
 import ldbc.sql.{ ResultSet, ResultSetMetaData }

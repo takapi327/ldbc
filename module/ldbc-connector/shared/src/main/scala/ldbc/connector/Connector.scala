@@ -18,7 +18,7 @@ import ldbc.logging.{ LogEvent, LogHandler }
 
 object Connector:
 
-  private def noopLogger[F[_]: Applicative]: LogHandler[F] = (logEvent: LogEvent) => Applicative[F].unit
+  private def noopLogger[F[_]: Applicative]: LogHandler[F] = (_: LogEvent) => Applicative[F].unit
 
   private case class Impl[F[_]: Sync](
     logHandler: LogHandler[F],

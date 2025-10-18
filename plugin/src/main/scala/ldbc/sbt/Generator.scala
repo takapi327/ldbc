@@ -34,7 +34,6 @@ object Generator {
       Compile / classNameFormat,
       Compile / propertyNameFormat,
       Compile / sourceManaged,
-      Compile / baseDirectory,
       Compile / ldbcPackage
     )
 
@@ -50,7 +49,6 @@ object Generator {
       Compile / classNameFormat,
       Compile / propertyNameFormat,
       Compile / sourceManaged,
-      Compile / baseDirectory,
       Compile / ldbcPackage,
       alwaysGenerate = true
     )
@@ -85,7 +83,6 @@ object Generator {
     classNameFormat:    SettingKey[Format],
     propertyNameFormat: SettingKey[Format],
     sourceManaged:      SettingKey[File],
-    baseDirectory:      SettingKey[File],
     packageName:        SettingKey[String],
     alwaysGenerate:     Boolean = false
   ): Def.Initialize[Task[Seq[File]]] = Def.task {
@@ -97,7 +94,6 @@ object Generator {
         classNameFormat:    String,
         propertyNameFormat: String,
         sourceManaged:      File,
-        baseDirectory:      File,
         packageName:        String
       ): Array[File]
     }
@@ -147,7 +143,6 @@ object Generator {
       classNameFormat.value.toString,
       propertyNameFormat.value.toString,
       sourceManaged.value,
-      baseDirectory.value,
       packageName.value
     )
 

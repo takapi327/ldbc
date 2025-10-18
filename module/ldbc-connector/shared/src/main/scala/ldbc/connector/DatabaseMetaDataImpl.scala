@@ -31,8 +31,6 @@ import ldbc.connector.syntax.*
 import ldbc.connector.util.StringHelper
 import ldbc.connector.util.Version
 
-import collection.mutable
-
 private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
   protocol:                      Protocol[F],
   serverVariables:               Map[String, String],

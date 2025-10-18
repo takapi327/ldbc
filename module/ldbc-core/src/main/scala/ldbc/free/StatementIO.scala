@@ -10,7 +10,6 @@ import scala.concurrent.duration.FiniteDuration
 
 import cats.~>
 import cats.free.Free
-import cats.syntax.all.*
 
 import cats.effect.kernel.{ Poll, Sync }
 

@@ -6,8 +6,6 @@
 
 package ldbc.connector.net.packet
 
-import java.time.*
-
 import scodec.bits.BitVector
 
 import ldbc.connector.*

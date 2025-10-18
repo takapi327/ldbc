@@ -8,7 +8,6 @@ package ldbc.connector
 
 import ldbc.sql.Connection
 
-import ldbc.connector.net.*
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.protocol.*
 

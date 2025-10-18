@@ -124,8 +124,8 @@ class PooledDataSourceTest extends FTestPlatform:
     val resource = PooledDataSource.fromConfig[IO](testConfig)
 
     val testResult = resource.use { datasource =>
-      datasource.getConnection.use { conn1 =>
-        datasource.getConnection.use { conn2 =>
+      datasource.getConnection.use { _ =>
+        datasource.getConnection.use { _ =>
           // Try to acquire one more (should timeout)
           val acquireThird = datasource.getConnection.use(_ => IO.unit)
 
@@ -274,7 +274,7 @@ class PooledDataSourceTest extends FTestPlatform:
     resource.use { datasource =>
       for
         // Much more conservative approach for GitHub Actions
-        _ <- IO.parTraverseN(2)((1 to 20).toList) { i => // Only 2 concurrent, 20 total operations
+        _ <- IO.parTraverseN(2)((1 to 20).toList) { _ => // Only 2 concurrent, 20 total operations
                datasource.getConnection.use { conn =>
                  for
                    stmt <- conn.createStatement()

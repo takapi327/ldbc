@@ -10,8 +10,6 @@ package response
 import scodec.*
 import scodec.codecs.*
 
-import cats.syntax.option.*
-
 /**
  * StatisticsPacket is a response packet that contains the statistics of the MySQL server.
  *

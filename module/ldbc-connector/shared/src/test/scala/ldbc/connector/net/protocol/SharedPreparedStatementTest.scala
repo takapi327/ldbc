@@ -10,8 +10,6 @@ import java.time.*
 
 import scala.collection.immutable.SortedMap
 
-import cats.syntax.all.*
-
 import cats.effect.{ IO, Ref }
 
 import ldbc.sql.ResultSet

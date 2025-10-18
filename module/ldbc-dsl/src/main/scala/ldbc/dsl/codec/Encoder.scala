@@ -8,12 +8,10 @@ package ldbc.dsl.codec
 
 import java.time.*
 
-import scala.compiletime.constValue
 import scala.deriving.Mirror
 import scala.reflect.Enum
 
 import cats.data.NonEmptyList
-import cats.syntax.all.*
 import cats.ContravariantSemigroupal
 
 import org.typelevel.twiddles.TwiddleSyntax

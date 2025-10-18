@@ -17,7 +17,7 @@ import munit.CatsEffectSuite
 class ConcurrentBagTest extends CatsEffectSuite:
 
   // Test implementation of BagEntry
-  case class TestBagEntry[F[_]: Sync](id: String, stateRef: Ref[F, Int]) extends BagEntry[F]:
+  case class TestBagEntry[F[_]](id: String, stateRef: Ref[F, Int]) extends BagEntry[F]:
     def getState:                                F[Int]     = stateRef.get
     def setState(state: Int):                    F[Unit]    = stateRef.set(state)
     def compareAndSet(expect: Int, update: Int): F[Boolean] =

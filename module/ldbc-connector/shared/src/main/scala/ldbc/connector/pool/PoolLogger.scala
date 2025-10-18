@@ -8,7 +8,6 @@ package ldbc.connector.pool
 
 import cats.*
 
-import cats.effect.*
 import cats.effect.std.Console
 
 /**
