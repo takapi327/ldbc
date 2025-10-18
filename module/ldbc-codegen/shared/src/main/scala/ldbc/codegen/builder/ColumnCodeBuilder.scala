@@ -44,7 +44,6 @@ case class ColumnCodeBuilder(formatter: Naming):
 
   private def buildDefault(column: ColumnDefinition): Option[String] =
     column.attributes.fold(None)(attribute =>
-
       val defaultOpt = attribute.flatMap {
         case v: ColumnDefinition.Attribute.Default => Some(v)
         case _                                     => None

@@ -889,7 +889,6 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
         setting *> preparedStatement.executeQuery()
       }
       .flatMap { resultSet =>
-
         val keys = resultSet.whileM[Vector, Vector[(Option[String], Option[String], Option[String], String, String)]] {
           for
             host    <- resultSet.getString(1).map(Option(_))
