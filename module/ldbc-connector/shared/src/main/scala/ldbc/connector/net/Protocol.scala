@@ -582,13 +582,15 @@ object Protocol:
           )
         )
       case None =>
-        ev.raiseError(new SQLException(
-          "Initial packet is not set",
-          detail = Some(
-            "This error may be due to a lack of support on the ldbc side or a change in behaviour on the MySQL side."
-          ),
-          hint = Some(
-            "Report Issues here: https://github.com/takapi327/ldbc/issues/new?assignees=&labels=&projects=&template=bug_report.md&title="
+        ev.raiseError(
+          new SQLException(
+            "Initial packet is not set",
+            detail = Some(
+              "This error may be due to a lack of support on the ldbc side or a change in behaviour on the MySQL side."
+            ),
+            hint = Some(
+              "Report Issues here: https://github.com/takapi327/ldbc/issues/new?assignees=&labels=&projects=&template=bug_report.md&title="
+            )
           )
-        ))
+        )
     }

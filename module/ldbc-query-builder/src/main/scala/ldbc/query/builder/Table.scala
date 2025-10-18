@@ -6,10 +6,10 @@
 
 package ldbc.query.builder
 
+import scala.annotation.nowarn
 import scala.deriving.Mirror
 import scala.language.dynamics
 import scala.quoted.*
-import scala.annotation.nowarn
 
 import ldbc.dsl.codec.*
 

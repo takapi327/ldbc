@@ -98,5 +98,4 @@ object PoolStatusReporter:
    * 
    * @return a PoolStatusReporter that performs no operations
    */
-  def noop[F[_]]: PoolStatusReporter[F] = (_: PooledDataSource[F], _: String) =>
-    Resource.pure[F, Unit](())
+  def noop[F[_]]: PoolStatusReporter[F] = (_: PooledDataSource[F], _: String) => Resource.pure[F, Unit](())

@@ -32,11 +32,11 @@ private[ldbc] object DatabaseModelGenerator:
    *   A file containing the generated database model.
    */
   def generate(
-    statement:             Database.CreateStatement,
-    statements:            List[String],
-    classNameFormatter:    Naming,
-    sourceManaged:         File,
-    packageName:           String
+    statement:          Database.CreateStatement,
+    statements:         List[String],
+    classNameFormatter: Naming,
+    sourceManaged:      File,
+    packageName:        String
   ): File =
     val className = classNameFormatter.format(statement.name)
 

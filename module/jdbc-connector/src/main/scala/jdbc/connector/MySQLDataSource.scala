@@ -75,10 +75,10 @@ object MySQLDataSource:
      *   database password
      */
     def apply(
-      driver:     String,
-      url:        String,
-      user:       String,
-      password:   String
+      driver:   String,
+      url:      String,
+      user:     String,
+      password: String
     ): LdbcDataSource[F] =
       create(driver, () => DriverManager.getConnection(url, user, password))
 
@@ -92,9 +92,9 @@ object MySQLDataSource:
      *   a `Properties` containing connection information (see `DriverManager.getConnection`)
      */
     def apply(
-      driver:     String,
-      url:        String,
-      info:       java.util.Properties
+      driver: String,
+      url:    String,
+      info:   java.util.Properties
     ): LdbcDataSource[F] =
       create(driver, () => DriverManager.getConnection(url, info))
 
