@@ -6,9 +6,7 @@
 
 package ldbc.dsl
 
-import cats.*
 import cats.data.NonEmptyList
-import cats.syntax.all.*
 
 import ldbc.dsl.codec.Decoder
 import ldbc.dsl.util.FactoryCompat

@@ -17,6 +17,7 @@ import java.time.{
   ZonedDateTime
 }
 
+import scala.annotation.nowarn
 import scala.compiletime.erasedValue
 import scala.deriving.Mirror
 import scala.language.dynamics
@@ -546,7 +547,7 @@ object Table:
     override def statement: String = $name
 
     transparent inline def selectDynamic[Tag <: Singleton](
-      tag: Tag
+      @nowarn("msg=unused explicit parameter") tag: Tag
     )(using
       mirror: Mirror.Of[T],
       index:  ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]

@@ -168,12 +168,6 @@ trait PooledDataSource[F[_]] extends DataSource[F]:
    */
   def validateConnection(conn: Connection[F]): F[Boolean]
 
-  /** Sets the OpenTelemetry tracer for distributed tracing.
-   * @param newTracer the tracer instance
-   * @return a new MySQLDataSource with the updated tracer
-   */
-  // def setTracer(newTracer: Tracer[F]): PooledDataSource[F]
-
 object PooledDataSource:
 
   private case class Impl[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
@@ -188,32 +182,30 @@ object PooledDataSource:
     readTimeout:             Duration                              = Duration.Inf,
     allowPublicKeyRetrieval: Boolean                               = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
-    // tracer:                  Option[Tracer[F]]                     = None,
-    useCursorFetch:         Boolean                               = false,
-    useServerPrepStmts:     Boolean                               = false,
-    before:                 Option[Connection[F] => F[A]]         = None,
-    after:                  Option[(A, Connection[F]) => F[Unit]] = None,
-    minConnections:         Int                                   = 5,
-    maxConnections:         Int                                   = 20,
-    connectionTimeout:      FiniteDuration                        = 30.seconds,
-    idleTimeout:            FiniteDuration                        = 10.minutes,
-    maxLifetime:            FiniteDuration                        = 30.minutes,
-    validationTimeout:      FiniteDuration                        = 5.seconds,
-    leakDetectionThreshold: Option[FiniteDuration]                = None,
-    adaptiveSizing:         Boolean                               = true,
-    adaptiveInterval:       FiniteDuration                        = 30.seconds,
-    metricsTracker:         PoolMetricsTracker[F],
-    poolState:              Ref[F, PoolState[F]],
-    idGenerator:            F[String],
-    connectionBag:          ConcurrentBag[F, PooledConnection[F]],
-    circuitBreaker:         CircuitBreaker[F],
-    aliveBypassWindow:      FiniteDuration,
-    keepaliveTime:          Option[FiniteDuration],
-    connectionTestQuery:    Option[String],
-    poolLogger:             PoolLogger[F]
+    useCursorFetch:          Boolean                               = false,
+    useServerPrepStmts:      Boolean                               = false,
+    before:                  Option[Connection[F] => F[A]]         = None,
+    after:                   Option[(A, Connection[F]) => F[Unit]] = None,
+    minConnections:          Int                                   = 5,
+    maxConnections:          Int                                   = 20,
+    connectionTimeout:       FiniteDuration                        = 30.seconds,
+    idleTimeout:             FiniteDuration                        = 10.minutes,
+    maxLifetime:             FiniteDuration                        = 30.minutes,
+    validationTimeout:       FiniteDuration                        = 5.seconds,
+    leakDetectionThreshold:  Option[FiniteDuration]                = None,
+    adaptiveSizing:          Boolean                               = true,
+    adaptiveInterval:        FiniteDuration                        = 30.seconds,
+    metricsTracker:          PoolMetricsTracker[F],
+    poolState:               Ref[F, PoolState[F]],
+    idGenerator:             F[String],
+    connectionBag:           ConcurrentBag[F, PooledConnection[F]],
+    circuitBreaker:          CircuitBreaker[F],
+    aliveBypassWindow:       FiniteDuration,
+    keepaliveTime:           Option[FiniteDuration],
+    connectionTestQuery:     Option[String],
+    poolLogger:              PoolLogger[F]
   )(using Tracer[F])
     extends PooledDataSource[F]:
-    // given Tracer[F] = tracer.getOrElse(Tracer.noop[F])
 
     override def getConnection: Resource[F, Connection[F]] = Resource.make(acquire)(release)
 
@@ -405,8 +397,6 @@ object PooledDataSource:
           }
       }
 
-    // findIdleConnection is no longer needed - ConcurrentBag handles this
-
     override def createNewConnection(): F[PooledConnection[F]] = for
       startTime <- Clock[F].monotonic
       result    <- createNewConnectionWithStartTime(startTime)
@@ -419,9 +409,6 @@ object PooledDataSource:
       startTime <- Clock[F].monotonic
       result    <- createNewConnectionWithState(startTime, ConnectionState.Idle, 0L)
     yield result
-
-    /// override def setTracer(newTracer: Tracer[F]): PooledDataSource[F] =
-    ///  this.copy(tracer = Some(newTracer))
 
     private def createNewConnectionWithState(
       startTime:       FiniteDuration,

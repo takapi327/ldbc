@@ -472,7 +472,7 @@ trait DataTypeParser extends SqlParser:
       caseSensitivity("mediumtext") ~> opt(character) ~ opt(collate) ^^ {
         case character ~ collate => DataType.MEDIUMTEXT(character, collate)
       },
-      input => """
+      _ => """
         |===============================================================================
         |Failed to parse mediumtext data type.
         |The mediumtext Data type must be defined as follows

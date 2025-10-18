@@ -15,7 +15,6 @@ import cats.*
 import cats.syntax.all.*
 
 import cats.effect.*
-import cats.effect.std.Console
 import cats.effect.syntax.temporal.*
 
 import fs2.io.net.Socket
@@ -76,7 +75,7 @@ object BitVectorSocket:
         // nb: unsafe for concurrent reads but protected by protocol mutex
         carryRef.get.flatMap(carry => readUntilN(nBytes, carry))
 
-  def apply[F[_]: Temporal: Console](
+  def apply[F[_]: Temporal](
     sockets:           Resource[F, Socket[F]],
     sequenceIdRef:     Ref[F, Byte],
     initialPacketRef:  Ref[F, Option[InitialPacket]],

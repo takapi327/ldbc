@@ -20,7 +20,7 @@ class LdbcException(
   def title: String = "ldbc Exception"
 
   protected def width = 80 // wrap here
-  private def wrap(w: Int, s: String, delim: String = "\n"): String =
+  private def wrap(w: Int, s: String, delim: String): String =
     if w >= s.length then s
     else
       s.lastIndexWhere(_ == ' ', w) match

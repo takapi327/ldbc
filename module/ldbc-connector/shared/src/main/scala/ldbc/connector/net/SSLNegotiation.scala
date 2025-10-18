@@ -6,9 +6,6 @@
 
 package ldbc.connector.net
 
-import cats.*
-import cats.syntax.all.*
-
 import cats.effect.*
 
 import fs2.io.net.*

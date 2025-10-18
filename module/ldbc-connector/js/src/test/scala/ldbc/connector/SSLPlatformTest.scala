@@ -53,7 +53,7 @@ class SSLPlatformTest extends FTestPlatform:
   test("SSL.fromSecureContext toSSLNegotiationOptions") {
     val secureContext = SecureContext()
     val ssl           = SSL.fromSecureContext(secureContext)
-    val logger: String => IO[Unit] = msg => IO.unit
+    val logger: String => IO[Unit] = _ => IO.unit
 
     ssl.toSSLNegotiationOptions[IO](Some(logger))(Network[IO], implicitly).use { options =>
       IO {

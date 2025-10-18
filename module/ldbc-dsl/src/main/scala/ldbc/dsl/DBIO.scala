@@ -15,7 +15,6 @@ import cats.data.NonEmptyList
 import cats.free.Free
 import cats.syntax.all.*
 
-import cats.effect.*
 import cats.effect.kernel.{ CancelScope, Poll, Sync }
 
 import ldbc.sql.*

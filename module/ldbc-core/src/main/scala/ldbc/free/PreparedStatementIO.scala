@@ -12,7 +12,6 @@ import scala.concurrent.duration.FiniteDuration
 
 import cats.{ ~>, Applicative }
 import cats.free.Free
-import cats.syntax.all.*
 
 import cats.effect.kernel.{ CancelScope, Poll, Sync }
 

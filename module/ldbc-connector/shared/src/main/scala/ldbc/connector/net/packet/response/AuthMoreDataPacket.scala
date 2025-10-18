@@ -10,8 +10,6 @@ package response
 import scodec.*
 import scodec.codecs.*
 
-import cats.syntax.all.*
-
 /**
  * We need to make sure that when sending plugin supplied data to the client they are not considered a special out-of-band command, like e.g.
  *

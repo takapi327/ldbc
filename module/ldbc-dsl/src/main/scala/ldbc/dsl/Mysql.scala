@@ -8,8 +8,6 @@ package ldbc.dsl
 
 import scala.annotation.targetName
 
-import cats.syntax.all.*
-
 import ldbc.dsl.codec.Decoder
 
 /**

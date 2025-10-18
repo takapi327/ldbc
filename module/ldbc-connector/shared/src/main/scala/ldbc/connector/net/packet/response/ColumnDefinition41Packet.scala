@@ -12,8 +12,6 @@ import java.nio.charset.StandardCharsets.UTF_8
 import scodec.*
 import scodec.bits.BitVector
 
-import cats.syntax.all.*
-
 import ldbc.connector.data.*
 
 /**

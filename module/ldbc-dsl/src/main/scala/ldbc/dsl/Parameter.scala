@@ -6,8 +6,6 @@
 
 package ldbc.dsl
 
-import cats.syntax.all.*
-
 import ldbc.dsl.codec.*
 
 /**

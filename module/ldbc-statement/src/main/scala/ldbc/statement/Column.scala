@@ -61,7 +61,7 @@ trait Column[A]:
 
   def opt: Column[Option[A]] = Column.Opt[A](name, alias, decoder, encoder)
 
-  def count(using Decoder[Int], Encoder[Int]): Column.Count = Column.Count(name, alias)
+  def count(using Codec[Int]): Column.Count = Column.Count(name, alias)
 
   def asc:  OrderBy.Order[A] = OrderBy.Order.asc(this)
   def desc: OrderBy.Order[A] = OrderBy.Order.desc(this)
@@ -770,7 +770,7 @@ object Column extends TwiddleSyntax[Column]:
       override def offset:                                Int                                   = 0
       override def decode(index: Int, statement: String): ResultSetIO[Either[Decoder.Error, A]] =
         ResultSetIO.pure(Right(value))
-    override def encoder:                     Encoder[A]      = (value: A) => Encoder.Encoded.success(List.empty)
+    override def encoder:                     Encoder[A]      = (_: A) => Encoder.Encoded.success(List.empty)
     override def insertStatement:             String          = ""
     override def updateStatement:             String          = ""
     override def duplicateKeyUpdateStatement: String          = ""
