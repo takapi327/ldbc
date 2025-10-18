@@ -34,7 +34,6 @@ object Generator {
       Compile / classNameFormat,
       Compile / propertyNameFormat,
       Compile / sourceManaged,
-      Compile / baseDirectory,
       Compile / ldbcPackage
     )
 
@@ -50,7 +49,6 @@ object Generator {
       Compile / classNameFormat,
       Compile / propertyNameFormat,
       Compile / sourceManaged,
-      Compile / baseDirectory,
       Compile / ldbcPackage,
       alwaysGenerate = true
     )
@@ -85,7 +83,6 @@ object Generator {
     classNameFormat:    SettingKey[Format],
     propertyNameFormat: SettingKey[Format],
     sourceManaged:      SettingKey[File],
-    baseDirectory:      SettingKey[File],
     packageName:        SettingKey[String],
     alwaysGenerate:     Boolean = false
   ): Def.Initialize[Task[Seq[File]]] = Def.task {
