@@ -51,7 +51,6 @@ case class ComChangeUserPacket(
 object ComChangeUserPacket:
 
   val encoder: Encoder[ComChangeUserPacket] = Encoder { comChangeUserPacket =>
-
     val authPluginData =
       if comChangeUserPacket.capabilitiesFlags.contains(CapabilitiesFlags.CLIENT_RESERVED2) then
         BitVector(comChangeUserPacket.hashedPassword.length) ++ BitVector(comChangeUserPacket.hashedPassword)
