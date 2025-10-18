@@ -9,8 +9,6 @@ package response
 
 import java.nio.charset.StandardCharsets.UTF_8
 
-import cats.syntax.all.*
-
 import ldbc.connector.data.*
 import ldbc.connector.util.Version
 

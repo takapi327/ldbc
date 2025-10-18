@@ -91,13 +91,13 @@ class WhereTest extends AnyFlatSpec:
 
     // With Some value
     val someOption: Option[String] = Some("John")
-    val result1 = initialQuery.andOpt(table => someOption.map(value => nameEquals(value)))
+    val result1 = initialQuery.andOpt(_ => someOption.map(value => nameEquals(value)))
     assert(result1.statement === "SELECT name FROM users WHERE id = ? AND name = ?")
     assert(result1.params.size === 2)
 
     // With None value
     val noneOption: Option[String] = None
-    val result2 = initialQuery.andOpt(table => noneOption.map(value => nameEquals(value)))
+    val result2 = initialQuery.andOpt(_ => noneOption.map(value => nameEquals(value)))
     assert(result2.statement === "SELECT name FROM users WHERE id = ?")
     assert(result2.params.size === 1)
   }
@@ -125,13 +125,13 @@ class WhereTest extends AnyFlatSpec:
 
     // With Some value
     val someOption: Option[String] = Some("John")
-    val result1 = initialQuery.orOpt(table => someOption.map(value => nameEquals(value)))
+    val result1 = initialQuery.orOpt(_ => someOption.map(value => nameEquals(value)))
     assert(result1.statement === "SELECT name FROM users WHERE id = ? OR name = ?")
     assert(result1.params.size === 2)
 
     // With None value
     val noneOption: Option[String] = None
-    val result2 = initialQuery.orOpt(table => noneOption.map(value => nameEquals(value)))
+    val result2 = initialQuery.orOpt(_ => noneOption.map(value => nameEquals(value)))
     assert(result2.statement === "SELECT name FROM users WHERE id = ?")
     assert(result2.params.size === 1)
   }
@@ -159,13 +159,13 @@ class WhereTest extends AnyFlatSpec:
 
     // With Some value
     val someOption: Option[String] = Some("John")
-    val result1 = initialQuery.xorOpt(table => someOption.map(value => nameEquals(value)))
+    val result1 = initialQuery.xorOpt(_ => someOption.map(value => nameEquals(value)))
     assert(result1.statement === "SELECT name FROM users WHERE id = ? XOR name = ?")
     assert(result1.params.size === 2)
 
     // With None value
     val noneOption: Option[String] = None
-    val result2 = initialQuery.xorOpt(table => noneOption.map(value => nameEquals(value)))
+    val result2 = initialQuery.xorOpt(_ => noneOption.map(value => nameEquals(value)))
     assert(result2.statement === "SELECT name FROM users WHERE id = ?")
     assert(result2.params.size === 1)
   }
@@ -332,7 +332,7 @@ class WhereTest extends AnyFlatSpec:
 
     // Test andOpt with function
     val someNameOption: Option[String] = Some("John")
-    val result1 = initialCommand.andOpt(table => someNameOption.map(value => nameEquals(value)))
+    val result1 = initialCommand.andOpt(_ => someNameOption.map(value => nameEquals(value)))
     assert(result1.statement === "UPDATE users SET active = true WHERE id = ? AND name = ?")
     assert(result1.params.size === 2)
 

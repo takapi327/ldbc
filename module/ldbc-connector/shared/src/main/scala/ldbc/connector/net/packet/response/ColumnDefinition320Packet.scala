@@ -10,8 +10,6 @@ package response
 import scodec.*
 import scodec.codecs.*
 
-import cats.syntax.all.*
-
 import ldbc.connector.data.*
 
 /**

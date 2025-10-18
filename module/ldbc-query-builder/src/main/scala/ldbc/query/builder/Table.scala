@@ -9,6 +9,7 @@ package ldbc.query.builder
 import scala.deriving.Mirror
 import scala.language.dynamics
 import scala.quoted.*
+import scala.annotation.nowarn
 
 import ldbc.dsl.codec.*
 
@@ -41,7 +42,7 @@ trait Table[P] extends SharedTable, AbstractTable[P]:
    *   Type with a single instance
    */
   transparent inline def selectDynamic[Tag <: Singleton](
-    tag: Tag
+    @nowarn("msg=unused explicit parameter") tag: Tag
   )(using
     mirror: Mirror.Of[P],
     index:  ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
@@ -203,7 +204,7 @@ object Table:
     override type Self = Opt[P]
 
     transparent inline def selectDynamic[Tag <: Singleton](
-      tag: Tag
+      @nowarn("msg=unused explicit parameter") tag: Tag
     )(using
       mirror: Mirror.Of[P],
       index:  ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]

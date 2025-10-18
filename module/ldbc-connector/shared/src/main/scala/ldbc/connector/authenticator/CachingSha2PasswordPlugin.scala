@@ -12,7 +12,7 @@ import fs2.hashing.Hashing
 
 import ldbc.connector.util.Version
 
-trait CachingSha2PasswordPlugin[F[_]: Hashing: Sync] extends Sha256PasswordPlugin[F]:
+trait CachingSha2PasswordPlugin[F[_]] extends Sha256PasswordPlugin[F]:
 
   override def name: String = "caching_sha2_password"
 

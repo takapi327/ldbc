@@ -96,8 +96,7 @@ object PoolStatusReporter:
    * or not needed. The start method returns immediately without
    * creating any background tasks.
    * 
-   * @tparam F the effect type (must have Applicative instance)
    * @return a PoolStatusReporter that performs no operations
    */
-  def noop[F[_]: Applicative]: PoolStatusReporter[F] = (pool: PooledDataSource[F], poolName: String) =>
+  def noop[F[_]]: PoolStatusReporter[F] = (_: PooledDataSource[F], _: String) =>
     Resource.pure[F, Unit](())

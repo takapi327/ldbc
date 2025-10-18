@@ -22,6 +22,7 @@ import scala.deriving.Mirror
 import scala.language.dynamics
 import scala.quoted.*
 import scala.reflect.Enum
+import scala.annotation.nowarn
 
 import ldbc.dsl.codec.Codec
 import ldbc.dsl.util.Mirrors
@@ -546,7 +547,7 @@ object Table:
     override def statement: String = $name
 
     transparent inline def selectDynamic[Tag <: Singleton](
-      tag: Tag
+      @nowarn("msg=unused explicit parameter") tag: Tag
     )(using
       mirror: Mirror.Of[T],
       index:  ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]

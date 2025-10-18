@@ -113,7 +113,7 @@ object Tools:
               Files[IO].readUtf8(fullPath).compile.string
           }
       }
-      .handleErrorWith { error =>
+      .handleErrorWith { _ =>
         IO.raiseError(new Exception(s"Path not found: $docPath"))
       }
 

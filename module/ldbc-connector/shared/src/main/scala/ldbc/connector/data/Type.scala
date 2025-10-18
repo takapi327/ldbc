@@ -6,7 +6,6 @@
 
 package ldbc.connector.data
 
-import cats.syntax.all.*
 import cats.Eq
 
 /**

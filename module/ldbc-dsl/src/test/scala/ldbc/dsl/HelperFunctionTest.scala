@@ -13,7 +13,7 @@ import munit.CatsEffectSuite
 import ldbc.dsl.*
 import ldbc.dsl.codec.Codec
 
-class HelperFunctionTest extends munit.CatsEffectSuite:
+class HelperFunctionTest extends CatsEffectSuite:
 
   test(
     "The statement that constructs VALUES with multiple values of the same type will be the same as the string specified."

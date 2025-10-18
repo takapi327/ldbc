@@ -6,8 +6,6 @@
 
 package ldbc.connector.pool
 
-import cats.effect.*
-
 import ldbc.sql.*
 
 import ldbc.connector.Connection
@@ -20,7 +18,7 @@ import ldbc.connector.Connection
  * @param releaseCallback callback to invoke when the connection is released
  * @tparam F the effect type
  */
-private[pool] class ConnectionProxy[F[_]: Temporal](
+private[pool] class ConnectionProxy[F[_]](
   val pooled:      PooledConnection[F],
   releaseCallback: Connection[F] => F[Unit]
 ) extends Connection[F]:

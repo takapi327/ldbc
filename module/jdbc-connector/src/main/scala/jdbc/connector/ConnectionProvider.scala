@@ -12,10 +12,7 @@ import javax.sql.DataSource
 
 import scala.concurrent.ExecutionContext
 
-import cats.syntax.all.*
-
 import cats.effect.*
-import cats.effect.std.Console
 
 import ldbc.sql.Connection
 
@@ -58,7 +55,7 @@ object ConnectionProvider:
     override def createConnector(): Resource[F, Connector[F]] =
       createConnection().map(conn => Connector.fromConnection(conn, logHandler))
 
-  class DriverProvider[F[_]: Console](using ev: Async[F]):
+  class DriverProvider[F[_]](using ev: Async[F]):
 
     private def create(
       driver:     String,
@@ -148,7 +145,7 @@ object ConnectionProvider:
    * @param logHandler
    *   Handler for outputting logs of process execution using connections.
    */
-  def fromDataSource[F[_]: Console: Async](
+  def fromDataSource[F[_]: Async](
     dataSource: DataSource,
     connectEC:  ExecutionContext,
     logHandler: Option[LogHandler[F]] = None
@@ -163,7 +160,7 @@ object ConnectionProvider:
    * @param logHandler
    *   Handler for outputting logs of process execution using connections.
    */
-  def fromConnection[F[_]: Console: Sync](
+  def fromConnection[F[_]: Sync](
     connection: java.sql.Connection,
     logHandler: Option[LogHandler[F]] = None
   ): Provider[F] = JavaConnectionProvider[F](connection, logHandler)
@@ -174,4 +171,4 @@ object ConnectionProvider:
    * executed on an unbounded cached daemon thread pool by default, so you are also at risk of exhausting system
    * threads. TL;DR this is fine for console apps but don't use it for a web application.
    */
-  def fromDriverManager[F[_]: Console: Async]: DriverProvider[F] = new DriverProvider[F]
+  def fromDriverManager[F[_]: Async]: DriverProvider[F] = new DriverProvider[F]

@@ -1741,7 +1741,7 @@ class ConnectionTest extends FTestPlatform:
              )
       yield 1
 
-    def after(length: Int, connection: ldbc.sql.Connection[IO]): IO[Unit] =
+    def after(connection: ldbc.sql.Connection[IO]): IO[Unit] =
       for
         statement <- connection.createStatement()
         _         <- statement.execute("DROP DATABASE IF EXISTS connector_before_after_test")
@@ -1753,7 +1753,7 @@ class ConnectionTest extends FTestPlatform:
       user     = "ldbc",
       password = Some("password"),
       before   = before,
-      after    = after
+      after    = (_, connection) => after(connection)
     )
 
     assertIO(

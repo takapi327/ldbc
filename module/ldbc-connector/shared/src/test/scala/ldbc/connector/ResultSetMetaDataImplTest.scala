@@ -50,7 +50,7 @@ class ResultSetMetaDataImplTest extends FTestPlatform:
     name:       String,
     length:     Int,
     columnType: ColumnDataType,
-    flags:      Seq[ColumnDefinitionFlags] = Seq.empty,
+    flags:      Seq[ColumnDefinitionFlags],
     decimals:   Int
   ): ColumnDefinition320Packet =
     ColumnDefinition320Packet(
