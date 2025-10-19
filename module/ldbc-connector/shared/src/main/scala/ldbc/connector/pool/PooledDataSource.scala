@@ -465,8 +465,9 @@ object PooledDataSource:
                } else Temporal[F].unit
 
           // Add to concurrent bag only if we're not creating for immediate use
-          _ <- if initialState != ConnectionState.InUse then connectionBag.add(pooled)
-               else Temporal[F].unit
+          _ <-
+            if initialState != ConnectionState.InUse then connectionBag.add(pooled)
+            else Temporal[F].unit
 
           endTime <- Clock[F].monotonic
           _       <- metricsTracker.recordCreation(endTime - startTime)
@@ -486,8 +487,9 @@ object PooledDataSource:
           // Use custom test query
           val validation = for
             closed <- conn.isClosed()
-            valid  <- if !closed then executeTestQuery(conn, query)
-                     else Temporal[F].pure(false)
+            valid  <-
+              if !closed then executeTestQuery(conn, query)
+              else Temporal[F].pure(false)
           yield !closed && valid
 
           validation

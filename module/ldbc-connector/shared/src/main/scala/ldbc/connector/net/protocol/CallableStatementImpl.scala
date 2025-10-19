@@ -699,19 +699,20 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
 
           acc *> params.get.flatMap { params =>
             for
-              outParamIndex <- (
-                                 if params.isEmpty then F.pure(param.index)
-                                 else
-                                   params.keys
-                                     .find(_ == param.index)
-                                     .fold(
-                                       F.raiseError(
-                                         new SQLException(
-                                           s"Parameter ${ param.index } is not registered as an output parameter"
-                                         )
-                                       )
-                                     )(_.pure[F])
-                               )
+              outParamIndex <-
+                (
+                  if params.isEmpty then F.pure(param.index)
+                  else
+                    params.keys
+                      .find(_ == param.index)
+                      .fold(
+                        F.raiseError(
+                          new SQLException(
+                            s"Parameter ${ param.index } is not registered as an output parameter"
+                          )
+                        )
+                      )(_.pure[F])
+                )
               _ <- setParameter(outParamIndex, outParameterName)
             yield ()
           }
