@@ -18,17 +18,18 @@ import ldbc.connector.*
   // #program
 
   // #connection
-  def connection = ConnectionProvider
-    .default[IO]("127.0.0.1", 13306, "ldbc")
+  val dataSource = MySQLDataSource
+    .build[IO]("127.0.0.1", 13306, "ldbc")
     .setPassword("password")
     .setSSL(SSL.Trusted)
+
+  def connector = Connector.fromDataSource(dataSource)
   // #connection
 
   // #run
-  connection
-    .use { conn =>
-      program.readOnly(conn).map(println(_))
-    }
+  program
+    .readOnly(connector)
+    .map(println(_))
     .unsafeRunSync()
   // Some(2)
   // #run

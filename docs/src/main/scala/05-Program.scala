@@ -35,13 +35,12 @@ import ldbc.connector.*
   val program2: DBIO[(String, String, Status)] =
     sql"SELECT name, email, status FROM user WHERE id = 1".query[(String, String, Status)].unsafe
 
-  def connection = ConnectionProvider
-    .default[IO]("127.0.0.1", 13306, "ldbc")
+  val dataSource = MySQLDataSource
+    .build[IO]("127.0.0.1", 13306, "ldbc")
     .setPassword("password")
     .setSSL(SSL.Trusted)
 
-  connection
-    .use { conn =>
-      program1.commit(conn) *> program2.readOnly(conn).map(println(_))
-    }
+  def connector = Connector.fromDataSource(dataSource)
+
+  (program1.commit(connector) *> program2.readOnly(connector).map(println(_)))
     .unsafeRunSync()
