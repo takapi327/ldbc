@@ -132,7 +132,7 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
       "org.scodec"    %%% "scodec-bits"       % "1.1.38",
       "org.scodec"    %%% "scodec-core"       % "2.2.2",
       "org.scodec"    %%% "scodec-cats"       % "1.2.0",
-      "org.typelevel" %%% "otel4s-core-trace" % "0.13.2",
+      "org.typelevel" %%% "otel4s-core-trace" % "0.14.0",
       "org.typelevel" %%% "twiddles-core"     % "0.8.0",
       "org.typelevel" %%% "munit-cats-effect" % "2.1.0" % Test
     )
@@ -234,7 +234,7 @@ lazy val http4sExample = crossProject(JVMPlatform)
       "org.http4s"    %% "http4s-dsl"          % "0.23.32",
       "org.http4s"    %% "http4s-ember-server" % "0.23.32",
       "org.http4s"    %% "http4s-circe"        % "0.23.32",
-      "ch.qos.logback" % "logback-classic"     % "1.5.19",
+      "ch.qos.logback" % "logback-classic"     % "1.5.20",
       "io.circe"      %% "circe-generic"       % "0.14.10"
     )
   )
@@ -258,7 +258,7 @@ lazy val otelExample = crossProject(JVMPlatform)
   .example("otel", "OpenTelemetry example project")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel"   %% "otel4s-oteljava"                           % "0.13.2",
+      "org.typelevel"   %% "otel4s-oteljava"                           % "0.14.0",
       "io.opentelemetry" % "opentelemetry-exporter-otlp"               % "1.55.0" % Runtime,
       "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.55.0" % Runtime
     )
