@@ -66,7 +66,8 @@ object Query:
     statement: String,
     params:    List[Parameter.Dynamic],
     decoder:   Decoder[T]
-  ) extends Query[T]:
+  ) extends Query[T],
+            ParamBinder:
 
     override def to[G[_]](using factory: FactoryCompat[T, G[T]]): DBIO[G[T]] =
       DBIO.queryTo(statement, params, decoder, factory)
