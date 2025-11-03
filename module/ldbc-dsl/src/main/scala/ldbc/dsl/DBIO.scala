@@ -453,8 +453,8 @@ object DBIO:
    */
   def updateRaw(statement: String): DBIO[Int] =
     (for
-      stmt <- ConnectionIO.createStatement()
-      result         <- ConnectionIO.embed(stmt, StatementIO.executeUpdate(statement))
+      stmt   <- ConnectionIO.createStatement()
+      result <- ConnectionIO.embed(stmt, StatementIO.executeUpdate(statement))
     yield result).onError { ex =>
       ConnectionIO.performLogging(LogEvent.ProcessingFailure(statement, List.empty, ex))
     } <*
@@ -487,8 +487,8 @@ object DBIO:
     (for
       stmt <- ConnectionIO.createStatement()
       statements = statement.trim.split(";").toList
-      _         <- ConnectionIO.embed(stmt, statements.map(statement => StatementIO.addBatch(statement)).sequence)
-      result    <- ConnectionIO.embed(stmt, StatementIO.executeBatch())
+      _      <- ConnectionIO.embed(stmt, statements.map(statement => StatementIO.addBatch(statement)).sequence)
+      result <- ConnectionIO.embed(stmt, StatementIO.executeBatch())
     yield result).onError { ex =>
       ConnectionIO.performLogging(LogEvent.ProcessingFailure(statement, List.empty, ex))
     } <*
@@ -684,7 +684,7 @@ object DBIO:
    * @return A DBIO action that produces the given value
    */
   def pure[A](value: A): DBIO[A] = Free.pure(value)
-  
+
   /**
    * Creates a failed DBIO action with the given error.
    * 
