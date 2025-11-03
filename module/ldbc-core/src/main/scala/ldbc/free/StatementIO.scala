@@ -42,6 +42,10 @@ object StatementOp:
   final case class OnCancel[A](fa: StatementIO[A], fin: StatementIO[Unit]) extends StatementOp[A]:
     override def visit[F[_]](v: StatementOp.Visitor[F]): F[A] = v.onCancel(fa, fin)
 
+  final case class ExecuteQuery(sql: String) extends StatementOp[ResultSet[?]]:
+    override def visit[F[_]](v: StatementOp.Visitor[F]): F[ResultSet[?]] = v.executeQuery(sql)
+  final case class ExecuteUpdate(sql: String) extends StatementOp[Int]:
+    override def visit[F[_]](v: StatementOp.Visitor[F]): F[Int] = v.executeUpdate(sql)
   final case class AddBatch[A](sql: String) extends StatementOp[Unit]:
     override def visit[F[_]](v: StatementOp.Visitor[F]): F[Unit] = v.addBatch(sql)
   final case class ExecuteBatch[A]() extends StatementOp[Array[Int]]:
@@ -67,6 +71,8 @@ object StatementOp:
     def canceled:                                                                 F[Unit]
     def onCancel[A](fa:        StatementIO[A], fin: StatementIO[Unit]):           F[A]
 
+    def executeQuery(sql: String): F[ResultSet[?]]
+    def executeUpdate(sql: String): F[Int]
     def addBatch(sql: String): F[Unit]
     def executeBatch():        F[Array[Int]]
 
@@ -95,5 +101,7 @@ object StatementIO:
   def capturePoll[M[_]](mpoll: Poll[M]): Poll[StatementIO] = new Poll[StatementIO]:
     override def apply[A](fa: StatementIO[A]): StatementIO[A] = Free.liftF[StatementOp, A](StatementOp.Poll1(mpoll, fa))
 
+  def executeQuery(sql: String): StatementIO[ResultSet[?]] = Free.liftF[StatementOp, ResultSet[?]](StatementOp.ExecuteQuery(sql))
+  def executeUpdate(sql: String): StatementIO[Int] = Free.liftF[StatementOp, Int](StatementOp.ExecuteUpdate(sql))
   def addBatch(sql: String): StatementIO[Unit]       = Free.liftF[StatementOp, Unit](StatementOp.AddBatch(sql))
   def executeBatch():        StatementIO[Array[Int]] = Free.liftF[StatementOp, Array[Int]](StatementOp.ExecuteBatch())

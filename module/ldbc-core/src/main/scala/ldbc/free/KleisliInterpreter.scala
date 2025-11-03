@@ -140,6 +140,8 @@ class KleisliInterpreter[F[_]: Sync](logHandler: LogHandler[F]) extends Interpre
     override def onCancel[A](fa: StatementIO[A], fin: StatementIO[Unit]): Kleisli[F, Statement[F], A] =
       outer.onCancel(this)(fa, fin)
 
+    override def executeQuery(sql: String): Kleisli[F, Statement[F], ResultSet[?]] = primitive[Statement[F], ResultSet[F]](_.executeQuery(sql)).asInstanceOf[Kleisli[F, Statement[F], ResultSet[?]]]
+    override def executeUpdate(sql: String): Kleisli[F, Statement[F], Int] = primitive(_.executeUpdate(sql))
     override def addBatch(sql: String): Kleisli[F, Statement[F], Unit]       = primitive(_.addBatch(sql))
     override def executeBatch():        Kleisli[F, Statement[F], Array[Int]] = primitive(_.executeBatch())
 
