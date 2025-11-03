@@ -102,3 +102,26 @@ class DBIOTest extends CatsEffectSuite:
       program.attempt.readOnly(connector).map(_.isLeft)
     )
   }
+
+  test("DBIO#updateRaw") {
+    assertIO(
+      (for
+        r1 <- DBIO.updateRaw("CREATE DATABASE `dbio`;").commit(connector)
+        r2 <- DBIO.updateRaw("DROP DATABASE `dbio`;").commit(connector)
+      yield List(r1, r2)),
+      List(1, 0)
+    )
+  }
+
+  test("DBIO#updateRaws") {
+    assertIO(
+      (for
+        results <- DBIO.updateRaws(
+          """
+            |CREATE DATABASE `dbio`;
+            |DROP DATABASE `dbio`;
+            |""".stripMargin).commit(connector)
+      yield results.toList),
+      List(1, 0)
+    )
+  }
