@@ -222,6 +222,26 @@ object DBIO:
     } <*
       ConnectionIO.performLogging(LogEvent.Success(statement, params.map(_.value)))
 
+  def updateRaw(statement: String): DBIO[Int] =
+    (for
+      stmt <- ConnectionIO.createStatement()
+      result         <- ConnectionIO.embed(stmt, StatementIO.executeUpdate(statement))
+    yield result).onError { ex =>
+      ConnectionIO.performLogging(LogEvent.ProcessingFailure(statement, List.empty, ex))
+    } <*
+      ConnectionIO.performLogging(LogEvent.Success(statement, List.empty))
+
+  def updateRaws(statement: String): DBIO[Array[Int]] =
+    (for
+      stmt <- ConnectionIO.createStatement()
+      statements = statement.trim.split(";").toList
+      _         <- ConnectionIO.embed(stmt, statements.map(statement => StatementIO.addBatch(statement)).sequence)
+      result    <- ConnectionIO.embed(stmt, StatementIO.executeBatch())
+    yield result).onError { ex =>
+      ConnectionIO.performLogging(LogEvent.ProcessingFailure(statement, List.empty, ex))
+    } <*
+      ConnectionIO.performLogging(LogEvent.Success(statement, List.empty))
+
   def returning[A](
     statement: String,
     params:    List[Parameter.Dynamic],
