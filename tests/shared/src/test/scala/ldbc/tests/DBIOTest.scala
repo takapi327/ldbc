@@ -15,6 +15,7 @@ import munit.CatsEffectSuite
 import ldbc.dsl.*
 
 import ldbc.connector.*
+import ldbc.connector.exception.*
 
 import ldbc.Connector
 
@@ -113,6 +114,12 @@ class DBIOTest extends CatsEffectSuite:
     )
   }
 
+  test("DBIO#updateRaw#Exception") {
+    interceptIO[SQLSyntaxErrorException](
+      DBIO.updateRaw("CREATE `dbio`;").commit(connector)
+    )
+  }
+
   test("DBIO#updateRaws") {
     val sql = """
       |CREATE DATABASE `dbio`;
@@ -121,5 +128,15 @@ class DBIOTest extends CatsEffectSuite:
     assertIO(
       DBIO.updateRaws(sql).commit(connector).map(_.toList),
       List(1, 0)
+    )
+  }
+
+  test("DBIO#updateRaws#Exception") {
+    val sql = """
+                |CREATE DATABASE `dbio`
+                |DROP DATABASE `dbio`
+                |""".stripMargin
+    interceptIO[BatchUpdateException](
+      DBIO.updateRaws(sql).commit(connector).map(_.toList)
     )
   }
