@@ -114,14 +114,12 @@ class DBIOTest extends CatsEffectSuite:
   }
 
   test("DBIO#updateRaws") {
+    val sql = """
+      |CREATE DATABASE `dbio`;
+      |DROP DATABASE `dbio`;
+      |""".stripMargin
     assertIO(
-      (for
-        results <- DBIO.updateRaws(
-          """
-            |CREATE DATABASE `dbio`;
-            |DROP DATABASE `dbio`;
-            |""".stripMargin).commit(connector)
-      yield results.toList),
+      DBIO.updateRaws(sql).commit(connector).map(_.toList),
       List(1, 0)
     )
   }
