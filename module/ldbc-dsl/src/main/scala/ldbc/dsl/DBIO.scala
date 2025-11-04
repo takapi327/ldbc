@@ -571,7 +571,7 @@ object DBIO:
       statement <- ConnectionIO.createStatement()
       _         <- ConnectionIO.embed(statement, statements.map(statement => StatementIO.addBatch(statement)).sequence)
       result    <- ConnectionIO.embed(statement, StatementIO.executeBatch())
-      _ <- ConnectionIO.embed(statement, StatementIO.close())
+      _         <- ConnectionIO.embed(statement, StatementIO.close())
     yield result).onError { ex =>
       ConnectionIO.performLogging(LogEvent.ProcessingFailure(statements.mkString("\n"), List.empty, ex))
     } <*

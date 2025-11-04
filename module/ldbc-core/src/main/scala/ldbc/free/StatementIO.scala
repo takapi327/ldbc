@@ -77,7 +77,7 @@ object StatementOp:
     def executeUpdate(sql: String): F[Int]
     def addBatch(sql:      String): F[Unit]
     def executeBatch():             F[Array[Int]]
-    def close(): F[Unit]
+    def close():                    F[Unit]
 
 type StatementIO[A] = Free[StatementOp, A]
 
@@ -109,4 +109,4 @@ object StatementIO:
   def executeUpdate(sql: String): StatementIO[Int]  = Free.liftF[StatementOp, Int](StatementOp.ExecuteUpdate(sql))
   def addBatch(sql:      String): StatementIO[Unit] = Free.liftF[StatementOp, Unit](StatementOp.AddBatch(sql))
   def executeBatch(): StatementIO[Array[Int]] = Free.liftF[StatementOp, Array[Int]](StatementOp.ExecuteBatch())
-  def close(): StatementIO[Unit] = Free.liftF[StatementOp, Unit](StatementOp.Close())
+  def close():        StatementIO[Unit]       = Free.liftF[StatementOp, Unit](StatementOp.Close())

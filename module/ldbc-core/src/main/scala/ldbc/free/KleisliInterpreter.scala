@@ -144,8 +144,8 @@ class KleisliInterpreter[F[_]: Sync](logHandler: LogHandler[F]) extends Interpre
       primitive[Statement[F], ResultSet[F]](_.executeQuery(sql)).asInstanceOf[Kleisli[F, Statement[F], ResultSet[?]]]
     override def executeUpdate(sql: String): Kleisli[F, Statement[F], Int]        = primitive(_.executeUpdate(sql))
     override def addBatch(sql:      String): Kleisli[F, Statement[F], Unit]       = primitive(_.addBatch(sql))
-    override def executeBatch(): Kleisli[F, Statement[F], Array[Int]] = primitive(_.executeBatch())
-    override def close(): Kleisli[F, Statement[F], Unit] = primitive(_.close())
+    override def executeBatch():             Kleisli[F, Statement[F], Array[Int]] = primitive(_.executeBatch())
+    override def close():                    Kleisli[F, Statement[F], Unit]       = primitive(_.close())
 
   trait PreparedStatementInterpreter extends PreparedStatementOp.Visitor[[A] =>> Kleisli[F, PreparedStatement[F], A]]:
 
