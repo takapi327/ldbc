@@ -40,7 +40,7 @@ import ldbc.logging.LogEvent
  * import ldbc.dsl.*
  * 
  * val query: DBIO[List[User]] = 
- *   sql"SELECT * FROM users WHERE age > \${18}".query[User].to[List]
+ *   sql"SELECT * FROM users WHERE age > ${ 18 }".query[User].to[List]
  *   
  * val result: F[List[User]] = query.run(connector)
  * }}}
