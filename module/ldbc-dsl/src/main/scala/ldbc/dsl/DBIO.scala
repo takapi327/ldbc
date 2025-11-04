@@ -455,6 +455,7 @@ object DBIO:
     (for
       stmt   <- ConnectionIO.createStatement()
       result <- ConnectionIO.embed(stmt, StatementIO.executeUpdate(statement))
+      _      <- ConnectionIO.embed(stmt, StatementIO.close())
     yield result).onError { ex =>
       ConnectionIO.performLogging(LogEvent.ProcessingFailure(statement, List.empty, ex))
     } <*
@@ -489,6 +490,7 @@ object DBIO:
       statements = statement.trim.split(";").toList
       _      <- ConnectionIO.embed(stmt, statements.map(statement => StatementIO.addBatch(statement)).sequence)
       result <- ConnectionIO.embed(stmt, StatementIO.executeBatch())
+      _      <- ConnectionIO.embed(stmt, StatementIO.close())
     yield result).onError { ex =>
       ConnectionIO.performLogging(LogEvent.ProcessingFailure(statement, List.empty, ex))
     } <*
@@ -569,6 +571,7 @@ object DBIO:
       statement <- ConnectionIO.createStatement()
       _         <- ConnectionIO.embed(statement, statements.map(statement => StatementIO.addBatch(statement)).sequence)
       result    <- ConnectionIO.embed(statement, StatementIO.executeBatch())
+      _ <- ConnectionIO.embed(statement, StatementIO.close())
     yield result).onError { ex =>
       ConnectionIO.performLogging(LogEvent.ProcessingFailure(statements.mkString("\n"), List.empty, ex))
     } <*
