@@ -10,4 +10,4 @@ addSbtPlugin("org.scala-native"   % "sbt-scala-native"                          
 addSbtPlugin("com.armanbilge"     % "sbt-scala-native-config-brew-github-actions" % "0.4.0")
 addSbtPlugin("com.github.sbt"     % "sbt-boilerplate"                             % "0.7.0")
 addSbtPlugin("io.chrisdavenport" %% "sbt-npm-package"                             % "0.2.0")
-addSbtPlugin("org.scoverage"      % "sbt-scoverage"                               % "2.4.0")
+addSbtPlugin("org.scoverage"      % "sbt-scoverage"                               % "2.4.1")
