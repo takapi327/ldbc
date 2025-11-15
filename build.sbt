@@ -143,6 +143,15 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .nativeSettings(Test / nativeBrewFormulas += "s2n")
   .dependsOn(core)
 
+lazy val awsAuthenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Full)
+  .module("aws-authentication-plugin", "")
+  .jsSettings(
+    Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
+  )
+  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
+  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+
 lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
   .settings(description := "Projects that provide sbt plug-ins")
   .settings((Compile / sourceGenerators) += Def.task {
@@ -401,6 +410,7 @@ lazy val ldbc = tlCrossRootProject
     schema,
     codegen,
     zioInterop,
+    awsAuthenticationPlugin,
     plugin,
     tests,
     docs,
