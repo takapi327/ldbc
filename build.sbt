@@ -6,7 +6,6 @@
 
 import com.typesafe.tools.mima.core.*
 import BuildSettings.*
-import Dependencies.*
 import Implicits.*
 import JavaVersions.*
 import ProjectKeys.*
@@ -31,7 +30,6 @@ ThisBuild / githubWorkflowBuildPostamble += dockerStop
 ThisBuild / githubWorkflowTargetBranches        := Seq("**")
 ThisBuild / githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v")))
 ThisBuild / tlSitePublishBranch                 := None
-ThisBuild / tlCiMimaBinaryIssueCheck            := false
 
 lazy val sql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
@@ -145,18 +143,6 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .nativeSettings(Test / nativeBrewFormulas += "s2n")
   .dependsOn(core)
 
-lazy val hikari = LepusSbtProject("ldbc-hikari", "module/ldbc-hikari")
-  .settings(description := "Project to build HikariCP")
-  .settings(
-    onLoadMessage := s"${ scala.Console.RED }WARNING: This project is deprecated and will be removed in future versions.${ scala.Console.RESET }",
-    libraryDependencies ++= Seq(
-      catsEffect,
-      typesafeConfig,
-      hikariCP
-    ) ++ specs2
-  )
-  .dependsOn(dsl.jvm)
-
 lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
   .settings(description := "Projects that provide sbt plug-ins")
   .settings((Compile / sourceGenerators) += Def.task {
@@ -167,6 +153,22 @@ lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
       dir          = (Compile / sourceManaged).value
     )
   }.taskValue)
+
+lazy val zioInterop = crossProject(JVMPlatform, JSPlatform)
+  .crossType(CrossType.Pure)
+  .module("zio-interop", "Projects that provide a way to connect to the database for ZIO")
+  .settings(
+    libraryDependencies ++= Seq(
+      "dev.zio" %%% "zio"              % "2.1.21",
+      "dev.zio" %%% "zio-interop-cats" % "23.1.0.5",
+      "dev.zio" %%% "zio-test"         % "2.1.21" % Test,
+      "dev.zio" %%% "zio-test-sbt"     % "2.1.21" % Test
+    )
+  )
+  .jsSettings(
+    Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
+  )
+  .dependsOn(connector % "test->compile")
 
 lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
@@ -186,8 +188,8 @@ lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .defaultSettings
   .jvmSettings(
-    Test / fork                 := true,
-    libraryDependencies += mysql % Test
+    Test / fork                       := true,
+    libraryDependencies += "com.mysql" % "mysql-connector-j" % "8.4.0" % Test
   )
   .jvmConfigure(_ dependsOn jdbcConnector.jvm)
   .jsSettings(
@@ -212,13 +214,14 @@ lazy val benchmark = (project in file("benchmark"))
   .settings(Compile / javacOptions ++= Seq("--release", java21))
   .settings(
     libraryDependencies ++= Seq(
-      scala3Compiler,
-      mysql,
-      doobie,
-      slick
+      "org.scala-lang"     %% "scala3-compiler"   % scala3,
+      "com.mysql"           % "mysql-connector-j" % "8.4.0",
+      "org.tpolecat"       %% "doobie-core"       % "1.0.0-RC10",
+      "com.typesafe.slick" %% "slick"             % "3.6.1",
+      "com.zaxxer"          % "HikariCP"          % "7.0.2"
     )
   )
-  .dependsOn(jdbcConnector.jvm, connector.jvm, queryBuilder.jvm, hikari)
+  .dependsOn(jdbcConnector.jvm, connector.jvm, queryBuilder.jvm)
   .enablePlugins(JmhPlugin, AutomateHeaderPlugin, NoPublishPlugin)
 
 lazy val http4sExample = crossProject(JVMPlatform)
@@ -242,8 +245,8 @@ lazy val hikariCPExample = crossProject(JVMPlatform)
   .example("hikariCP", "HikariCP example project")
   .settings(
     libraryDependencies ++= Seq(
-      hikariCP,
-      mysql
+      "com.zaxxer" % "HikariCP"          % "7.0.2",
+      "com.mysql"  % "mysql-connector-j" % "8.4.0"
     )
   )
   .dependsOn(jdbcConnector, dsl)
@@ -268,6 +271,18 @@ lazy val otelExample = crossProject(JVMPlatform)
   )
   .dependsOn(connector, dsl)
 
+lazy val zioExample = crossProject(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .withoutSuffixFor(JVMPlatform)
+  .example("zio", "ZIO example project")
+  .settings(
+    libraryDependencies ++= Seq(
+      "dev.zio" %% "zio-http" % "3.5.1",
+      "dev.zio" %% "zio-json" % "0.7.44"
+    )
+  )
+  .dependsOn(connector, dsl, zioInterop)
+
 lazy val docs = (project in file("docs"))
   .settings(
     description              := "Documentation for ldbc",
@@ -276,7 +291,7 @@ lazy val docs = (project in file("docs"))
     mdocVariables ++= Map(
       "ORGANIZATION"  -> organization.value,
       "SCALA_VERSION" -> scalaVersion.value,
-      "MYSQL_VERSION" -> mysqlVersion
+      "MYSQL_VERSION" -> "8.4.0"
     ),
     laikaTheme := LaikaSettings.helium.value,
     // Modify tlSite task to run the LLM docs script after the site is generated
@@ -368,7 +383,8 @@ lazy val mcpDocumentServer = crossProject(JSPlatform)
 lazy val examples = Seq(
   http4sExample,
   hikariCPExample,
-  otelExample
+  otelExample,
+  zioExample
 )
 
 lazy val ldbc = tlCrossRootProject
@@ -384,11 +400,11 @@ lazy val ldbc = tlCrossRootProject
     queryBuilder,
     schema,
     codegen,
+    zioInterop,
     plugin,
     tests,
     docs,
     benchmark,
-    hikari,
     mcpDocumentServer
   )
   .aggregate(examples *)
