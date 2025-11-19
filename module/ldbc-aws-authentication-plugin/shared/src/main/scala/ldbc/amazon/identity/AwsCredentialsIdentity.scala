@@ -42,9 +42,9 @@ object AwsCredentialsIdentity:
    * @param secretAccessKey The AWS secret access key, used to authenticate the user interacting with services.
    */
   def create(accessKeyId: String, secretAccessKey: String): AwsCredentialsIdentity = DefaultAwsCredentialsIdentity(
-    accessKeyId = accessKeyId,
+    accessKeyId     = accessKeyId,
     secretAccessKey = secretAccessKey,
-    accountId = None,
-    expirationTime = None,
-    providerName = None
+    accountId       = None,
+    expirationTime  = None,
+    providerName    = None
   )

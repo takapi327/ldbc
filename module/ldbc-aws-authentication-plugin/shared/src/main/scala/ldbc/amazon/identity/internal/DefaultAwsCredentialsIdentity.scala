@@ -12,11 +12,11 @@ import java.util.Objects
 import ldbc.amazon.identity.AwsCredentialsIdentity
 
 final case class DefaultAwsCredentialsIdentity(
-  accessKeyId: String,
+  accessKeyId:     String,
   secretAccessKey: String,
-  accountId: Option[String],
-  expirationTime: Option[Instant],
-  providerName: Option[String]
+  accountId:       Option[String],
+  expirationTime:  Option[Instant],
+  providerName:    Option[String]
 ) extends AwsCredentialsIdentity:
 
   override def toString: String =
@@ -29,16 +29,15 @@ final case class DefaultAwsCredentialsIdentity(
     builder.result()
 
   override def equals(obj: Any): Boolean =
-    if this == obj then
-      true
-    else if obj == null || getClass != obj.getClass then
-      false
-    else obj match
-      case that: AwsCredentialsIdentity =>
-        Objects.equals(accessKeyId, that.accessKeyId) &&
+    if this == obj then true
+    else if obj == null || getClass != obj.getClass then false
+    else
+      obj match
+        case that: AwsCredentialsIdentity =>
+          Objects.equals(accessKeyId, that.accessKeyId) &&
           Objects.equals(secretAccessKey, that.secretAccessKey) &&
           Objects.equals(accountId, that.accountId)
-      case _ => false
+        case _ => false
 
   override def hashCode(): Int =
     var hashCode = 1

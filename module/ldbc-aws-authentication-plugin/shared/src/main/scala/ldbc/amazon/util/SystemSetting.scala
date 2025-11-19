@@ -69,9 +69,11 @@ enum SdkSystemSetting(val systemProperty: String, val defaultValue: Option[Strin
    * This allows a service running in EC2 to automatically load its credentials and region without needing to configure them
    * in the SdkClientBuilder.
    */
-  case AWS_EC2_METADATA_SERVICE_ENDPOINT extends SdkSystemSetting("aws.ec2MetadataServiceEndpoint", Some("http://169.254.169.254"))
+  case AWS_EC2_METADATA_SERVICE_ENDPOINT
+    extends SdkSystemSetting("aws.ec2MetadataServiceEndpoint", Some("http://169.254.169.254"))
 
-  case AWS_EC2_METADATA_SERVICE_ENDPOINT_MODE extends SdkSystemSetting("aws.ec2MetadataServiceEndpointMode", Some("IPv4"))
+  case AWS_EC2_METADATA_SERVICE_ENDPOINT_MODE
+    extends SdkSystemSetting("aws.ec2MetadataServiceEndpointMode", Some("IPv4"))
 
   /**
    * The number of seconds (either as an integer or double) before a connection to the instance
@@ -92,7 +94,8 @@ enum SdkSystemSetting(val systemProperty: String, val defaultValue: Option[Strin
    *
    * This is not used if the [[AWS_CONTAINER_CREDENTIALS_RELATIVE_URI]] is not specified.
    */
-  case AWS_CONTAINER_SERVICE_ENDPOINT extends SdkSystemSetting("aws.containerServiceEndpoint", Some("http://169.254.170.2"))
+  case AWS_CONTAINER_SERVICE_ENDPOINT
+    extends SdkSystemSetting("aws.containerServiceEndpoint", Some("http://169.254.170.2"))
 
   /**
    * The elastic container metadata service path that should be called by the ContainerCredentialsProvider when
@@ -225,7 +228,6 @@ enum SdkSystemSetting(val systemProperty: String, val defaultValue: Option[Strin
    * This is a non-empty, comma-delimited list of AWS region names used during signing.
    */
   case AWS_SIGV4A_SIGNING_REGION_SET extends SdkSystemSetting("aws.sigv4a.signing.region.set", None)
-
 
   /**
    * Configure the preferred auth scheme to use.
