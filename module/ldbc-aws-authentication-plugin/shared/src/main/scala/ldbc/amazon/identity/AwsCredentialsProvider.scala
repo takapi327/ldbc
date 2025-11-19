@@ -1,5 +1,7 @@
 package ldbc.amazon.identity
 
+import ldbc.amazon.exception.SdkClientException
+
 trait AwsCredentialsProvider:
 
   /**
@@ -12,4 +14,4 @@ trait AwsCredentialsProvider:
    *
    * @return AwsCredentials which the caller can use to authorize an AWS request.
    */
-  def resolveCredentials(): AwsCredentials
+  def resolveCredentials(): Either[SdkClientException, AwsCredentials]
