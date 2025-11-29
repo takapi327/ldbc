@@ -28,7 +28,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-22.04]
-        scala: [3.3.7, 3.7.3]
+        scala: [3.3.7, 3.7.4]
         java:
           - corretto@11
           - corretto@17
@@ -42,11 +42,11 @@ jobs:
             java: corretto@21
           - project: ldbcJS
             java: corretto@25
-          - scala: 3.7.3
+          - scala: 3.7.4
             java: corretto@17
-          - scala: 3.7.3
+          - scala: 3.7.4
             java: corretto@21
-          - scala: 3.7.3
+          - scala: 3.7.4
             java: corretto@25
           - project: ldbcNative
             java: corretto@17
@@ -163,7 +163,7 @@ jobs:
 
       - name: Upload target directories
         if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: target-${{ matrix.os }}-${{ matrix.java }}-${{ matrix.scala }}-${{ matrix.project }}
           path: targets.tar
@@ -239,7 +239,7 @@ jobs:
         run: sbt +update
 
       - name: Download target directories (3.3.7, ldbcJS)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: target-${{ matrix.os }}-${{ matrix.java }}-3.3.7-ldbcJS
 
@@ -249,7 +249,7 @@ jobs:
           rm targets.tar
 
       - name: Download target directories (3.3.7, ldbcNative)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: target-${{ matrix.os }}-${{ matrix.java }}-3.3.7-ldbcNative
 
@@ -259,7 +259,7 @@ jobs:
           rm targets.tar
 
       - name: Download target directories (3.3.7, ldbcJVM)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: target-${{ matrix.os }}-${{ matrix.java }}-3.3.7-ldbcJVM
 
@@ -268,32 +268,32 @@ jobs:
           tar xf targets.tar
           rm targets.tar
 
-      - name: Download target directories (3.7.3, ldbcJS)
-        uses: actions/download-artifact@v4
+      - name: Download target directories (3.7.4, ldbcJS)
+        uses: actions/download-artifact@v6
         with:
-          name: target-${{ matrix.os }}-${{ matrix.java }}-3.7.3-ldbcJS
+          name: target-${{ matrix.os }}-${{ matrix.java }}-3.7.4-ldbcJS
 
-      - name: Inflate target directories (3.7.3, ldbcJS)
+      - name: Inflate target directories (3.7.4, ldbcJS)
         run: |
           tar xf targets.tar
           rm targets.tar
 
-      - name: Download target directories (3.7.3, ldbcNative)
-        uses: actions/download-artifact@v4
+      - name: Download target directories (3.7.4, ldbcNative)
+        uses: actions/download-artifact@v6
         with:
-          name: target-${{ matrix.os }}-${{ matrix.java }}-3.7.3-ldbcNative
+          name: target-${{ matrix.os }}-${{ matrix.java }}-3.7.4-ldbcNative
 
-      - name: Inflate target directories (3.7.3, ldbcNative)
+      - name: Inflate target directories (3.7.4, ldbcNative)
         run: |
           tar xf targets.tar
           rm targets.tar
 
-      - name: Download target directories (3.7.3, ldbcJVM)
-        uses: actions/download-artifact@v4
+      - name: Download target directories (3.7.4, ldbcJVM)
+        uses: actions/download-artifact@v6
         with:
-          name: target-${{ matrix.os }}-${{ matrix.java }}-3.7.3-ldbcJVM
+          name: target-${{ matrix.os }}-${{ matrix.java }}-3.7.4-ldbcJVM
 
-      - name: Inflate target directories (3.7.3, ldbcJVM)
+      - name: Inflate target directories (3.7.4, ldbcJVM)
         run: |
           tar xf targets.tar
           rm targets.tar
@@ -581,7 +581,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-22.04]
-        scala: [3.3.7, 3.7.3]
+        scala: [3.3.7, 3.7.4]
         java: [corretto@25]
     runs-on: ${{ matrix.os }}
     steps:
