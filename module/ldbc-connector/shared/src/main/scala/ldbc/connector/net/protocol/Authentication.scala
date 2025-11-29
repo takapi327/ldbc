@@ -40,6 +40,7 @@ trait Authentication[F[_]: Hashing: Sync]:
    */
   protected def determinatePlugin(pluginName: String, version: Version): Either[SQLException, AuthenticationPlugin[F]] =
     pluginName match
+      case "mysql_clear_password" => Right(MysqlClearPasswordPlugin[F]())
       case "mysql_native_password" => Right(MysqlNativePasswordPlugin[F]())
       case "sha256_password"       => Right(Sha256PasswordPlugin[F]())
       case "caching_sha2_password" => Right(CachingSha2PasswordPlugin[F](version))
