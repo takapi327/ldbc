@@ -24,11 +24,11 @@ import org.typelevel.otel4s.trace.Tracer
 
 import ldbc.sql.DatabaseMetaData
 
+import ldbc.connector.authenticator.AuthenticationPlugin
 import ldbc.connector.data.*
 import ldbc.connector.exception.*
 import ldbc.connector.net.*
 import ldbc.connector.net.protocol.*
-import ldbc.connector.authenticator.AuthenticationPlugin
 
 type Connection[F[_]] = ldbc.sql.Connection[F]
 object Connection:
@@ -64,20 +64,20 @@ object Connection:
     this.default[F, Unit](host, port, user, before = unitBefore, after = unitAfter)
 
   def apply[F[_]: Async: Network: Console: Hashing: UUIDGen](
-    host:                    String,
-    port:                    Int,
-    user:                    String,
-    password:                Option[String] = None,
-    database:                Option[String] = None,
-    debug:                   Boolean = false,
-    ssl:                     SSL = SSL.None,
-    socketOptions:           List[SocketOption] = defaultSocketOptions,
-    readTimeout:             Duration = Duration.Inf,
-    allowPublicKeyRetrieval: Boolean = false,
-    useCursorFetch:          Boolean = false,
-    useServerPrepStmts:      Boolean = false,
-    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
-    defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]] = None,
+    host:                        String,
+    port:                        Int,
+    user:                        String,
+    password:                    Option[String] = None,
+    database:                    Option[String] = None,
+    debug:                       Boolean = false,
+    ssl:                         SSL = SSL.None,
+    socketOptions:               List[SocketOption] = defaultSocketOptions,
+    readTimeout:                 Duration = Duration.Inf,
+    allowPublicKeyRetrieval:     Boolean = false,
+    useCursorFetch:              Boolean = false,
+    useServerPrepStmts:          Boolean = false,
+    databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
+    defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]] = None
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] = this.default[F, Unit](
     host,
     port,
@@ -98,22 +98,22 @@ object Connection:
   )
 
   def withBeforeAfter[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
-    host:                    String,
-    port:                    Int,
-    user:                    String,
-    before:                  Connection[F] => F[A],
-    after:                   (A, Connection[F]) => F[Unit],
-    password:                Option[String] = None,
-    database:                Option[String] = None,
-    debug:                   Boolean = false,
-    ssl:                     SSL = SSL.None,
-    socketOptions:           List[SocketOption] = defaultSocketOptions,
-    readTimeout:             Duration = Duration.Inf,
-    allowPublicKeyRetrieval: Boolean = false,
-    useCursorFetch:          Boolean = false,
-    useServerPrepStmts:      Boolean = false,
-    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
-    defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]] = None,
+    host:                        String,
+    port:                        Int,
+    user:                        String,
+    before:                      Connection[F] => F[A],
+    after:                       (A, Connection[F]) => F[Unit],
+    password:                    Option[String] = None,
+    database:                    Option[String] = None,
+    debug:                       Boolean = false,
+    ssl:                         SSL = SSL.None,
+    socketOptions:               List[SocketOption] = defaultSocketOptions,
+    readTimeout:                 Duration = Duration.Inf,
+    allowPublicKeyRetrieval:     Boolean = false,
+    useCursorFetch:              Boolean = false,
+    useServerPrepStmts:          Boolean = false,
+    databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
+    defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]] = None
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] = this.default(
     host,
     port,
@@ -134,22 +134,22 @@ object Connection:
   )
 
   def default[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
-    host:                    String,
-    port:                    Int,
-    user:                    String,
-    password:                Option[String] = None,
-    database:                Option[String] = None,
-    debug:                   Boolean = false,
-    ssl:                     SSL = SSL.None,
-    socketOptions:           List[SocketOption] = defaultSocketOptions,
-    readTimeout:             Duration = Duration.Inf,
-    allowPublicKeyRetrieval: Boolean = false,
-    useCursorFetch:          Boolean = false,
-    useServerPrepStmts:      Boolean = false,
-    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
+    host:                        String,
+    port:                        Int,
+    user:                        String,
+    password:                    Option[String] = None,
+    database:                    Option[String] = None,
+    debug:                       Boolean = false,
+    ssl:                         SSL = SSL.None,
+    socketOptions:               List[SocketOption] = defaultSocketOptions,
+    readTimeout:                 Duration = Duration.Inf,
+    allowPublicKeyRetrieval:     Boolean = false,
+    useCursorFetch:              Boolean = false,
+    useServerPrepStmts:          Boolean = false,
+    databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
     defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]] = None,
-    before:                  Connection[F] => F[A],
-    after:                   (A, Connection[F]) => F[Unit]
+    before:                      Connection[F] => F[A],
+    after:                       (A, Connection[F]) => F[Unit]
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] =
 
     val logger: String => F[Unit] = s => Console[F].println(s"TLS: $s")
@@ -171,29 +171,29 @@ object Connection:
                       useCursorFetch,
                       useServerPrepStmts,
                       databaseTerm,
-        defaultAuthenticationPlugin,
+                      defaultAuthenticationPlugin,
                       before,
                       after
                     )
     yield connection
 
   def fromSockets[F[_]: Async: Tracer: Console: Hashing: UUIDGen, A](
-    sockets:                 Resource[F, Socket[F]],
-    host:                    String,
-    port:                    Int,
-    user:                    String,
-    password:                Option[String] = None,
-    database:                Option[String] = None,
-    debug:                   Boolean = false,
-    sslOptions:              Option[SSLNegotiation.Options[F]],
-    readTimeout:             Duration = Duration.Inf,
-    allowPublicKeyRetrieval: Boolean = false,
-    useCursorFetch:          Boolean = false,
-    useServerPrepStmts:      Boolean = false,
-    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = None,
+    sockets:                     Resource[F, Socket[F]],
+    host:                        String,
+    port:                        Int,
+    user:                        String,
+    password:                    Option[String] = None,
+    database:                    Option[String] = None,
+    debug:                       Boolean = false,
+    sslOptions:                  Option[SSLNegotiation.Options[F]],
+    readTimeout:                 Duration = Duration.Inf,
+    allowPublicKeyRetrieval:     Boolean = false,
+    useCursorFetch:              Boolean = false,
+    useServerPrepStmts:          Boolean = false,
+    databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = None,
     defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
-    acquire:                 Connection[F] => F[A],
-    release:                 (A, Connection[F]) => F[Unit]
+    acquire:                     Connection[F] => F[A],
+    release:                     (A, Connection[F]) => F[Unit]
   ): Resource[F, LdbcConnection[F]] =
     val capabilityFlags = defaultCapabilityFlags ++
       (if database.isDefined then Set(CapabilitiesFlags.CLIENT_CONNECT_WITH_DB) else Set.empty) ++
@@ -202,7 +202,16 @@ object Connection:
     for
       given Exchange[F] <- Resource.eval(Exchange[F])
       protocol          <-
-        Protocol[F](sockets, hostInfo, debug, sslOptions, allowPublicKeyRetrieval, readTimeout, capabilityFlags, defaultAuthenticationPlugin)
+        Protocol[F](
+          sockets,
+          hostInfo,
+          debug,
+          sslOptions,
+          allowPublicKeyRetrieval,
+          readTimeout,
+          capabilityFlags,
+          defaultAuthenticationPlugin
+        )
       _                <- Resource.eval(protocol.startAuthentication(user, password.getOrElse("")))
       serverVariables  <- Resource.eval(protocol.serverVariables())
       readOnly         <- Resource.eval(Ref[F].of[Boolean](false))
@@ -228,23 +237,23 @@ object Connection:
     yield connection
 
   def fromSocketGroup[F[_]: Tracer: Console: Hashing: UUIDGen, A](
-    socketGroup:             SocketGroup[F],
-    host:                    String,
-    port:                    Int,
-    user:                    String,
-    password:                Option[String] = None,
-    database:                Option[String] = None,
-    debug:                   Boolean = false,
-    socketOptions:           List[SocketOption],
-    sslOptions:              Option[SSLNegotiation.Options[F]],
-    readTimeout:             Duration = Duration.Inf,
-    allowPublicKeyRetrieval: Boolean = false,
-    useCursorFetch:          Boolean = false,
-    useServerPrepStmts:      Boolean = false,
-    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = None,
+    socketGroup:                 SocketGroup[F],
+    host:                        String,
+    port:                        Int,
+    user:                        String,
+    password:                    Option[String] = None,
+    database:                    Option[String] = None,
+    debug:                       Boolean = false,
+    socketOptions:               List[SocketOption],
+    sslOptions:                  Option[SSLNegotiation.Options[F]],
+    readTimeout:                 Duration = Duration.Inf,
+    allowPublicKeyRetrieval:     Boolean = false,
+    useCursorFetch:              Boolean = false,
+    useServerPrepStmts:          Boolean = false,
+    databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = None,
     defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
-    acquire:                 Connection[F] => F[A],
-    release:                 (A, Connection[F]) => F[Unit]
+    acquire:                     Connection[F] => F[A],
+    release:                     (A, Connection[F]) => F[Unit]
   )(using ev: Async[F]): Resource[F, LdbcConnection[F]] =
 
     def fail[B](msg: String): Resource[F, B] =

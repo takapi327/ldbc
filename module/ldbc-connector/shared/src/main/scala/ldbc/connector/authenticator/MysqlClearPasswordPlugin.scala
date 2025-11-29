@@ -15,7 +15,7 @@ import cats.effect.kernel.Sync
 class MysqlClearPasswordPlugin[F[_]: Sync] extends AuthenticationPlugin[F]:
 
   override def name:                                                  String        = "mysql_clear_password"
-  override def requiresConfidentiality: Boolean = true
+  override def requiresConfidentiality:                               Boolean       = true
   override def hashPassword(password: String, scramble: Array[Byte]): F[ByteVector] =
     if password.isEmpty then Sync[F].pure(ByteVector.empty)
     else Sync[F].delay(ByteVector(password.getBytes(StandardCharsets.UTF_8)))

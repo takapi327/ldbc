@@ -16,8 +16,8 @@ import org.typelevel.otel4s.trace.Tracer
 
 import ldbc.sql.DatabaseMetaData
 
-import ldbc.connector.exception.*
 import ldbc.connector.authenticator.MysqlClearPasswordPlugin
+import ldbc.connector.exception.*
 
 class ConnectionTest extends FTestPlatform:
 
@@ -270,27 +270,28 @@ class ConnectionTest extends FTestPlatform:
 
   test("You can connect to the database by specifying the default authentication plugin.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc_mysql_native_user",
-      password = Some("ldbc_mysql_native_password"),
+      host                        = "127.0.0.1",
+      port                        = 13306,
+      user                        = "ldbc_mysql_native_user",
+      password                    = Some("ldbc_mysql_native_password"),
       defaultAuthenticationPlugin = Some(MysqlClearPasswordPlugin[IO]()),
-      ssl = SSL.Trusted
+      ssl                         = SSL.Trusted
     )
     assertIOBoolean(connection.use(_ => IO(true)))
   }
 
-  test("Using the MySQL Clear Password Plugin when SSL is not enabled causes an SQLInvalidAuthorizationSpecException to occur.") {
+  test(
+    "Using the MySQL Clear Password Plugin when SSL is not enabled causes an SQLInvalidAuthorizationSpecException to occur."
+  ) {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc_mysql_native_user",
-      password = Some("ldbc_mysql_native_password"),
+      host                        = "127.0.0.1",
+      port                        = 13306,
+      user                        = "ldbc_mysql_native_user",
+      password                    = Some("ldbc_mysql_native_password"),
       defaultAuthenticationPlugin = Some(MysqlClearPasswordPlugin[IO]())
     )
     interceptIO[SQLInvalidAuthorizationSpecException](connection.use(_ => IO(true)))
   }
-
 
   test("Catalog change will change the currently connected Catalog.") {
     val connection = Connection[IO](
