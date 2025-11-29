@@ -99,12 +99,34 @@ class RdsIamAuthTokenGenerator[F[_]: Hashing](
       signature <- calculateSignature(credentials.secretAccessKey, date, region, stringToSign)
     yield s"${config.hostname}:${config.port}/?$queryParams&X-Amz-Signature=$signature"
 
+  /**
+   * Formats an Instant to ISO 8601 basic format string required by AWS Signature Version 4.
+   * 
+   * Converts a timestamp to the format "yyyyMMddTHHmmssZ" in UTC timezone,
+   * which is required for AWS authentication requests.
+   * 
+   * @param instant The timestamp to format
+   * @return Formatted datetime string in AWS SigV4 format (e.g., "20230101T120000Z")
+   */
   private def formatDateTime(instant: Instant): String =
     DateTimeFormatter
       .ofPattern("yyyyMMdd'T'HHmmss'Z'")
       .withZone(ZoneOffset.UTC)
       .format(instant)
 
+  /**
+   * Builds the query parameters for the RDS authentication request.
+   * 
+   * Creates a URL-encoded query string containing all the required AWS Signature Version 4
+   * parameters for RDS IAM authentication. The parameters are sorted alphabetically
+   * as required by the AWS signing process.
+   * 
+   * @param credential The AWS credential string in format "accessKeyId/scope"
+   * @param dateTime The formatted timestamp for the request
+   * @param sessionToken The AWS session token (for temporary credentials)
+   * @param username The database username to authenticate as
+   * @return URL-encoded query string with all required authentication parameters
+   */
   private def buildQueryParams(
                                 credential: String,
                                 dateTime: String,
@@ -126,6 +148,17 @@ class RdsIamAuthTokenGenerator[F[_]: Hashing](
       .map { case (k, v) => s"${urlEncode(k)}=${urlEncode(v)}" }
       .mkString("&")
 
+  /**
+   * Constructs the canonical request string according to AWS Signature Version 4 specification.
+   * 
+   * The canonical request is a standardized representation of the HTTP request that will be
+   * used for signature calculation. It includes the HTTP method, URI path, query string,
+   * headers, signed headers list, and payload hash.
+   * 
+   * @param host The database host including port (e.g., "host.rds.amazonaws.com:3306")
+   * @param queryString The URL-encoded query parameters
+   * @return The canonical request string formatted according to AWS SigV4 requirements
+   */
   private def buildCanonicalRequest(host: String, queryString: String): String =
     val method = "GET"
     val canonicalUri = "/"
@@ -134,9 +167,28 @@ class RdsIamAuthTokenGenerator[F[_]: Hashing](
     val payloadHash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" // SHA256 of empty string
     s"$method\n$canonicalUri\n$queryString\n$canonicalHeaders\n$signedHeaders\n$payloadHash"
 
+  /**
+   * Converts a byte array to lowercase hexadecimal string representation.
+   * 
+   * Used for converting hash outputs to the hex format required by AWS signatures.
+   * Each byte is formatted as a two-character lowercase hex string.
+   * 
+   * @param bytes The byte array to convert
+   * @return Lowercase hexadecimal string representation
+   */
   private def bytesToHex(bytes: Array[Byte]): String =
     bytes.map("%02x".format(_)).mkString
 
+  /**
+   * Computes the SHA-256 hash of a string and returns it as a lowercase hex string.
+   * 
+   * Uses fs2's streaming hash functionality to compute the SHA-256 hash of the input
+   * string encoded as UTF-8 bytes. The result is converted to lowercase hexadecimal
+   * format as required by AWS Signature Version 4.
+   * 
+   * @param data The string to hash
+   * @return The SHA-256 hash as a lowercase hexadecimal string
+   */
   private def sha256Hex(data: String): F[String] =
     Stream
       .chunk(Chunk.array(data.getBytes(StandardCharsets.UTF_8)))
@@ -145,6 +197,18 @@ class RdsIamAuthTokenGenerator[F[_]: Hashing](
       .lastOrError
       .map(hash => bytesToHex(hash.bytes.toArray))
 
+  /**
+   * Creates the "String to Sign" for AWS Signature Version 4.
+   * 
+   * The string to sign is a formatted string that combines the algorithm identifier,
+   * timestamp, credential scope, and canonical request hash. This string will be
+   * signed using the AWS signing key to produce the final signature.
+   * 
+   * @param dateTime The ISO 8601 formatted timestamp
+   * @param credentialScope The credential scope (date/region/service/terminator)
+   * @param canonicalRequestHash The SHA-256 hash of the canonical request
+   * @return The formatted string to be signed
+   */
   private def buildStringToSign(
                                  dateTime: String,
                                  credentialScope: String,
@@ -152,6 +216,17 @@ class RdsIamAuthTokenGenerator[F[_]: Hashing](
                                ): String =
     s"$Algorithm\n$dateTime\n$credentialScope\n$canonicalRequestHash"
 
+  /**
+   * Computes HMAC-SHA256 hash using the provided key and data.
+   * 
+   * Uses fs2's streaming HMAC functionality to compute the HMAC-SHA256 of the input
+   * data using the provided key. This is a core cryptographic operation used in
+   * AWS Signature Version 4 key derivation and final signature calculation.
+   * 
+   * @param key The cryptographic key as byte array
+   * @param data The data to authenticate as string (will be UTF-8 encoded)
+   * @return The HMAC-SHA256 result as byte array
+   */
   private def hmacSha256(key: Array[Byte], data: String): F[Array[Byte]] =
     Hashing[F]
       .hmac(HashAlgorithm.SHA256, Chunk.array(key))
@@ -162,6 +237,26 @@ class RdsIamAuthTokenGenerator[F[_]: Hashing](
         yield hash.bytes.toArray
       }
 
+  /**
+   * Derives the AWS Signature Version 4 signing key and calculates the final signature.
+   * 
+   * Implements the AWS SigV4 key derivation algorithm by computing a series of
+   * HMAC-SHA256 operations to derive the signing key, then signs the string-to-sign
+   * with that key. The process follows AWS specifications for signature calculation.
+   * 
+   * Key derivation steps:
+   * 1. kDate = HMAC-SHA256("AWS4" + SecretKey, Date)
+   * 2. kRegion = HMAC-SHA256(kDate, Region)
+   * 3. kService = HMAC-SHA256(kRegion, Service)
+   * 4. kSigning = HMAC-SHA256(kService, "aws4_request")
+   * 5. signature = HMAC-SHA256(kSigning, StringToSign)
+   * 
+   * @param secretKey The AWS secret access key
+   * @param date The date in YYYYMMDD format
+   * @param region The AWS region
+   * @param stringToSign The formatted string to be signed
+   * @return The final signature as lowercase hexadecimal string
+   */
   private def calculateSignature(
                                   secretKey: String,
                                   date: String,
@@ -176,6 +271,19 @@ class RdsIamAuthTokenGenerator[F[_]: Hashing](
       sig <- hmacSha256(kSigning, stringToSign)
     yield bytesToHex(sig)
 
+  /**
+   * URL encodes a string according to AWS requirements.
+   * 
+   * Performs URL encoding with specific character replacements required by AWS:
+   * - Spaces are encoded as %20 (not +)
+   * - Asterisks (*) are encoded as %2A
+   * - Tildes (~) remain unencoded
+   * 
+   * This encoding is required for query parameter values in AWS authentication.
+   * 
+   * @param value The string to URL encode
+   * @return The URL encoded string with AWS-specific character handling
+   */
   private def urlEncode(value: String): String =
     URLEncoder.encode(value, "UTF-8")
       .replace("+", "%20")
