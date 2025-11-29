@@ -146,6 +146,8 @@ val program = datasource.getConnection.use { connection =>
 
 ※ Trustedは全ての証明書を受け入れることに注意してください。これは開発環境向けの設定です。
 
+※ MySQL クリアテキストプラガブル認証などの一部の認証プラグインでは、セキュリティ上の理由からSSL/TLS接続が必須です。詳細は[リファレンスの認証セクション](/ja/reference/Connector.md#認証)を参照してください。
+
 ```scala
 import cats.effect.IO
 import ldbc.connector.*
