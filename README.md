@@ -30,17 +30,17 @@ ldbc is available on the JVM, Scala.js, and ScalaNative
 
 | Module / Platform    | JVM | Scala Native | Scala.js | Scaladoc                                                                                                                                                  |
 |----------------------|:---:|:------------:|:--------:|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `ldbc-sql`           |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.1-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-sql_3)           |
-| `ldbc-core`          |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.1-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-core_3)          |
-| `ldbc-connector`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.1-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-connector_3)     |
-| `jdbc-connector`     |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.1-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/jdbc-connector_3)     |
-| `ldbc-dsl`           |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.1-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3)           |
-| `ldbc-statement`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.1-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-statement_3)     |
-| `ldbc-query-builder` |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.1-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-query-builder_3) |
-| `ldbc-schema`        |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.1-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-schema_3)        |
-| `ldbc-codegen`       |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.1-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-codegen_3)       |
-| `ldbc-hikari`        |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.1-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-hikari_3)        |
-| `ldbc-plugin`        |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.1-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-plugin_2.12_1.0) |
+| `ldbc-sql`           |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-sql_3)           |
+| `ldbc-core`          |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-core_3)          |
+| `ldbc-connector`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-connector_3)     |
+| `jdbc-connector`     |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/jdbc-connector_3)     |
+| `ldbc-dsl`           |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3)           |
+| `ldbc-statement`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-statement_3)     |
+| `ldbc-query-builder` |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-query-builder_3) |
+| `ldbc-schema`        |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-schema_3)        |
+| `ldbc-codegen`       |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-codegen_3)       |
+| `ldbc-plugin`        |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-plugin_2.12_1.0) |
+| `ldbc-zio-interop`   |  ✅  |      ❌       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-zio-interop_3)   |
 
 ## Performance
 
@@ -229,28 +229,25 @@ val result: IO[List[User]] =
 
 ## How to use with ZIO
 
-Although ldbc was created to run on the Cats Effect, can also be used in conjunction with ZIO by using [ZIO Interop Cats](https://github.com/zio/interop-cats).
+Although ldbc was created to run on the Cats Effect, can also be used in conjunction with ZIO by using `ldbc-zio-interop`.
 
 > [!CAUTION]
 > Although ldbc supports three platforms, Note that ZIO Interop Cats does not currently support Scala Native.
 
 ```scala
-libraryDependencies += "dev.zio" %% "zio-interop-cats" % "<latest-version>"
+libraryDependencies += "io.github.takapi327" %% "ldbc-zio-interop" % "latest"
 ```
 
 The following is sample code for using ldbc with ZIO.
 
 ```scala 3
 import zio.*
-import zio.interop.catz.*
+
+import ldbc.zio.interop.*
+import ldbc.connector.*
+import ldbc.dsl.*
 
 object Main extends ZIOAppDefault:
-
-  given cats.effect.std.Console[Task] = cats.effect.std.Console.make[Task]
-  given cats.effect.std.UUIDGen[Task] with
-    override def randomUUID: Task[UUID] = ZIO.attempt(UUID.randomUUID())
-  given fs2.hashing.Hashing[Task] = fs2.hashing.Hashing.forSync[Task]
-  given fs2.io.net.Network[Task] = fs2.io.net.Network.forAsync[Task]
 
   private val datasource =
     MySQLDataSource

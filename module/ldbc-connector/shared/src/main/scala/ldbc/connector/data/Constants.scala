@@ -14,4 +14,4 @@ import ldbc.connector.util.Version
 object Constants:
 
   val DRIVER_NAME:    String  = "MySQL Connector/L"
-  val DRIVER_VERSION: Version = Version(0, 4, 1)
+  val DRIVER_VERSION: Version = Version(0, 5, 0)

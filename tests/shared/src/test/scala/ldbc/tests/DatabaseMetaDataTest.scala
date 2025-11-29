@@ -160,7 +160,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         yield metaData.getDriverVersion()
       },
       if prefix == "jdbc" then "mysql-connector-j-8.4.0 (Revision: 1c3f5c149e0bfe31c7fbeb24e2d260cd890972c4)"
-      else "ldbc-connector-0.4.1"
+      else "ldbc-connector-0.5.0"
     )
   }
 
@@ -180,7 +180,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for metaData <- conn.getMetaData()
         yield metaData.getDriverMinorVersion()
       },
-      if prefix == "jdbc" then 4 else 4
+      if prefix == "jdbc" then 4 else 5
     )
   }
 
@@ -2100,7 +2100,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for metaData <- conn.getMetaData()
         yield metaData.getJDBCMinorVersion()
       },
-      if prefix == "jdbc" then 2 else 4
+      if prefix == "jdbc" then 2 else 5
     )
   }
 

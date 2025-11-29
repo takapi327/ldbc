@@ -48,24 +48,24 @@ object Main extends ResourceApp.Forever:
 
   private val cityTable = TableQuery[CityTable]
 
-  private def provider =
-    ConnectionProvider
-      .default[IO]("127.0.0.1", 13306, "ldbc", "password", "world")
-      .setSSL(SSL.Trusted)
+  private val dataSource = MySQLDataSource
+    .build[IO]("127.0.0.1", 13306, "ldbc")
+    .setPassword("password")
+    .setDatabase("world")
+    .setSSL(SSL.Trusted)
+  private val connector = Connector.fromDataSource(dataSource)
 
-  private def routes(conn: Connector[IO]): HttpRoutes[IO] = HttpRoutes.of[IO] {
+  private def routes: HttpRoutes[IO] = HttpRoutes.of[IO] {
     case GET -> Root / "cities" =>
       for
-        cities <- cityTable.selectAll.query.to[List].readOnly(conn)
+        cities <- cityTable.selectAll.query.to[List].readOnly(connector)
         result <- Ok(cities.asJson)
       yield result
   }
 
   override def run(args: List[String]): Resource[IO, Unit] =
-    for
-      conn <- provider.createConnector()
-      _    <- EmberServerBuilder
-             .default[IO]
-             .withHttpApp(routes(conn).orNotFound)
-             .build
+    for _ <- EmberServerBuilder
+               .default[IO]
+               .withHttpApp(routes.orNotFound)
+               .build
     yield ()

@@ -5,39 +5,30 @@ laika.metadata.language = ja
 
 # Q: ZIOで使用する方法は？
 
-## A: ZIOで使用する場合、`zio-interop-cats`を使用します。
+## A: ZIOで使用する場合、`ldbc-zio-interop`を使用します。
 
 ```scala
-libraryDependencies += "dev.zio" %% "zio-interop-cats" % "<latest-version>"
+libraryDependencies += "io.github.takapi327" %% "ldbc-zio-interop" % "latest"
 ```
 
 以下は、ZIOを使用してldbcを利用するためのサンプルコードです。
 
 ```scala 3 mdoc
-import java.util.UUID
-
-import cats.effect.std.UUIDGen
-
-import fs2.hashing.Hashing
-import fs2.io.net.Network
-
 import zio.*
-import zio.interop.catz.*
+
+import ldbc.zio.interop.*
+import ldbc.connector.*
+import ldbc.dsl.*
 
 object Main extends ZIOAppDefault:
 
-  given cats.effect.std.Console[Task] = cats.effect.std.Console.make[Task]
-  given UUIDGen[Task] with
-    override def randomUUID: Task[UUID] = ZIO.attempt(UUID.randomUUID())
-  given Hashing[Task] = Hashing.forSync[Task]
-  given Network[Task] = Network.forAsync[Task]
+  private val datasource =
+    MySQLDataSource
+      .build[Task]("127.0.0.1", 3306, "ldbc")
+      .setPassword("password")
+      .setDatabase("world")
+      .setSSL(SSL.Trusted)
 
-  private def datasource = MySQLDataSource
-    .build[Task]("127.0.0.1", 13306, "ldbc")
-    .setPassword("password")
-    .setDatabase("world")
-    .setSSL(SSL.Trusted)
-  
   private val connector = Connector.fromDataSource(datasource)
 
   override def run =
