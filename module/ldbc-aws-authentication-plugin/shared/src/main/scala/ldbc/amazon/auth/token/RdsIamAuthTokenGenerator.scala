@@ -16,6 +16,46 @@ import fs2.{Chunk, Stream}
 
 import ldbc.amazon.identity.AwsCredentials
 
+/**
+ * Implementation of AuthTokenGenerator for Amazon RDS IAM database authentication.
+ * 
+ * This class generates authentication tokens that can be used to connect to Amazon RDS
+ * database instances using IAM credentials instead of traditional database passwords.
+ * The generated tokens are signed using AWS Signature Version 4 and are valid for
+ * 15 minutes from the time of generation.
+ * 
+ * The tokens enable secure, temporary access to RDS databases based on IAM policies
+ * and eliminate the need to store database passwords in application code.
+ * 
+ * @param hostname The RDS instance hostname or endpoint
+ * @param port The database port number (typically 3306 for MySQL)
+ * @param username The database username for which to generate the token
+ * @param region The AWS region where the RDS instance is located
+ * @param clock Clock instance for timestamp generation
+ * @tparam F The effect type that wraps the token generation operations
+ * 
+ * @example
+ * {{{
+ * import cats.effect.IO
+ * import ldbc.amazon.auth.token.RdsIamAuthTokenGenerator
+ * import ldbc.amazon.identity.AwsCredentials
+ * 
+ * val generator = new RdsIamAuthTokenGenerator[IO](
+ *   hostname = "my-db-instance.region.rds.amazonaws.com",
+ *   port = 3306,
+ *   username = "db_user",
+ *   region = "us-east-1"
+ * )
+ * 
+ * val credentials = AwsCredentials(
+ *   accessKeyId = "AKIAIOSFODNN7EXAMPLE",
+ *   secretAccessKey = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+ *   sessionToken = None
+ * )
+ * 
+ * val token: IO[String] = generator.generateToken(credentials)
+ * }}}
+ */
 class RdsIamAuthTokenGenerator[F[_]: Hashing](
   hostname: String,
   port: Int,
@@ -23,11 +63,28 @@ class RdsIamAuthTokenGenerator[F[_]: Hashing](
   region: String
 )(using clock: Clock[F]) extends AuthTokenGenerator[F]:
 
+  /** AWS Signature Version 4 algorithm identifier */
   private val ALGORITHM = "AWS4-HMAC-SHA256"
+  /** AWS service identifier for RDS database connections */
   private val SERVICE = "rds-db"
+  /** Token expiration time in seconds (15 minutes) */
   private val EXPIRES_SECONDS = 900
+  /** AWS4 request terminator string */
   private val TERMINATOR = "aws4_request"
 
+  /**
+   * Generates a signed authentication token for RDS IAM database authentication.
+   * 
+   * This method creates a presigned URL-style token that can be used as a password
+   * when connecting to an RDS database instance. The token is signed using AWS
+   * Signature Version 4 and includes the necessary IAM credentials and metadata.
+   * 
+   * The generated token follows the format required by MySQL's mysql_clear_password
+   * authentication plugin and can be used with SSL/TLS connections to RDS instances.
+   * 
+   * @param credentials AWS credentials containing access key, secret key, and optional session token
+   * @return The signed authentication token that can be used as a database password
+   */
   override def generateToken(credentials: AwsCredentials): F[String] =
     for
       now <- clock.realTimeInstant
