@@ -146,6 +146,13 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
 lazy val awsAuthenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
   .module("aws-authentication-plugin", "")
+  .settings(
+    libraryDependencies ++= Seq(
+      "co.fs2"        %%% "fs2-core"          % "3.12.2",
+      "co.fs2"        %%% "fs2-io"            % "3.12.2",
+      "org.typelevel" %%% "munit-cats-effect" % "2.1.0" % Test
+    )
+  )
   .jsSettings(
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
   )
