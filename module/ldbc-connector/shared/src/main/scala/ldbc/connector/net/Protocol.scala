@@ -505,10 +505,10 @@ object Protocol:
           ))*
         ) *> (
           defaultAuthenticationPlugin match
-            case Some(plugin) => handshake(plugin, username, password) *> readUntilOk(plugin, password)
+            case Some(plugin) => checkRequiresConfidentiality(plugin, span) *> handshake(plugin, username, password) *> readUntilOk(plugin, password)
             case None => determinatePlugin(initialPacket.authPlugin, initialPacket.serverVersion) match
               case Left(error)   => span.recordException(error) *> ev.raiseError(error) *> socket.send(ComQuitPacket())
-              case Right(plugin) => handshake(plugin, username, password) *> readUntilOk(plugin, password)
+              case Right(plugin) => checkRequiresConfidentiality(plugin, span) *> handshake(plugin, username, password) *> readUntilOk(plugin, password)
         )
       }
 
@@ -534,6 +534,19 @@ object Protocol:
               yield ()
         )
       }
+
+    private def checkRequiresConfidentiality(plugin: AuthenticationPlugin[F], span: Span[F]): F[Unit] =
+      if plugin.requiresConfidentiality && !useSSL then
+        val error = new SQLInvalidAuthorizationSpecException(
+          s"SSL connection required for plugin “${plugin.name}”. Check if ‘ssl’ is enabled.",
+          hint = Some(
+            """// You can enable SSL.
+              |           MySQLDataSource.build[IO](....).setSSL(SSL.Trusted)
+              |""".stripMargin
+          )
+        )
+        span.recordException(error) *> ev.raiseError(error)
+      else ev.unit
 
   def apply[F[_]: Async: Console: Tracer: Exchange: Hashing](
     sockets:                 Resource[F, Socket[F]],
