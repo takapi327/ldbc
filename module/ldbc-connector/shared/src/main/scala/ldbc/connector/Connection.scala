@@ -28,6 +28,7 @@ import ldbc.connector.data.*
 import ldbc.connector.exception.*
 import ldbc.connector.net.*
 import ldbc.connector.net.protocol.*
+import ldbc.connector.authenticator.AuthenticationPlugin
 
 type Connection[F[_]] = ldbc.sql.Connection[F]
 object Connection:
@@ -75,7 +76,8 @@ object Connection:
     allowPublicKeyRetrieval: Boolean = false,
     useCursorFetch:          Boolean = false,
     useServerPrepStmts:      Boolean = false,
-    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG)
+    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
+    defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]] = None,
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] = this.default[F, Unit](
     host,
     port,
@@ -90,6 +92,7 @@ object Connection:
     useCursorFetch,
     useServerPrepStmts,
     databaseTerm,
+    defaultAuthenticationPlugin,
     unitBefore,
     unitAfter
   )
@@ -109,7 +112,8 @@ object Connection:
     allowPublicKeyRetrieval: Boolean = false,
     useCursorFetch:          Boolean = false,
     useServerPrepStmts:      Boolean = false,
-    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG)
+    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
+    defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]] = None,
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] = this.default(
     host,
     port,
@@ -124,6 +128,7 @@ object Connection:
     useCursorFetch,
     useServerPrepStmts,
     databaseTerm,
+    defaultAuthenticationPlugin,
     before,
     after
   )
@@ -142,6 +147,7 @@ object Connection:
     useCursorFetch:          Boolean = false,
     useServerPrepStmts:      Boolean = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
+    defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]] = None,
     before:                  Connection[F] => F[A],
     after:                   (A, Connection[F]) => F[Unit]
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] =
@@ -165,6 +171,7 @@ object Connection:
                       useCursorFetch,
                       useServerPrepStmts,
                       databaseTerm,
+        defaultAuthenticationPlugin,
                       before,
                       after
                     )
@@ -184,6 +191,7 @@ object Connection:
     useCursorFetch:          Boolean = false,
     useServerPrepStmts:      Boolean = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = None,
+    defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
     acquire:                 Connection[F] => F[A],
     release:                 (A, Connection[F]) => F[Unit]
   ): Resource[F, LdbcConnection[F]] =
@@ -194,7 +202,7 @@ object Connection:
     for
       given Exchange[F] <- Resource.eval(Exchange[F])
       protocol          <-
-        Protocol[F](sockets, hostInfo, debug, sslOptions, allowPublicKeyRetrieval, readTimeout, capabilityFlags)
+        Protocol[F](sockets, hostInfo, debug, sslOptions, allowPublicKeyRetrieval, readTimeout, capabilityFlags, defaultAuthenticationPlugin)
       _                <- Resource.eval(protocol.startAuthentication(user, password.getOrElse("")))
       serverVariables  <- Resource.eval(protocol.serverVariables())
       readOnly         <- Resource.eval(Ref[F].of[Boolean](false))
@@ -234,6 +242,7 @@ object Connection:
     useCursorFetch:          Boolean = false,
     useServerPrepStmts:      Boolean = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = None,
+    defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
     acquire:                 Connection[F] => F[A],
     release:                 (A, Connection[F]) => F[Unit]
   )(using ev: Async[F]): Resource[F, LdbcConnection[F]] =
@@ -262,6 +271,7 @@ object Connection:
       useCursorFetch,
       useServerPrepStmts,
       databaseTerm,
+      defaultAuthenticationPlugin,
       acquire,
       release
     )

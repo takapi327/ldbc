@@ -145,7 +145,8 @@ object Protocol:
     useSSL:                  Boolean = false,
     allowPublicKeyRetrieval: Boolean = false,
     capabilityFlags:         Set[CapabilitiesFlags],
-    sequenceIdRef:           Ref[F, Byte]
+    sequenceIdRef:           Ref[F, Byte],
+    defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
   )(using ev: MonadError[F, Throwable], ex: Exchange[F])
     extends Protocol[F]:
 
@@ -503,9 +504,11 @@ object Protocol:
             Attribute("username", username)
           ))*
         ) *> (
-          determinatePlugin(initialPacket.authPlugin, initialPacket.serverVersion) match
-            case Left(error)   => span.recordException(error) *> ev.raiseError(error) *> socket.send(ComQuitPacket())
-            case Right(plugin) => handshake(plugin, username, password) *> readUntilOk(plugin, password)
+          defaultAuthenticationPlugin match
+            case Some(plugin) => handshake(plugin, username, password) *> readUntilOk(plugin, password)
+            case None => determinatePlugin(initialPacket.authPlugin, initialPacket.serverVersion) match
+              case Left(error)   => span.recordException(error) *> ev.raiseError(error) *> socket.send(ComQuitPacket())
+              case Right(plugin) => handshake(plugin, username, password) *> readUntilOk(plugin, password)
         )
       }
 
@@ -539,7 +542,8 @@ object Protocol:
     sslOptions:              Option[SSLNegotiation.Options[F]],
     allowPublicKeyRetrieval: Boolean = false,
     readTimeout:             Duration,
-    capabilitiesFlags:       Set[CapabilitiesFlags]
+    capabilitiesFlags:       Set[CapabilitiesFlags],
+    defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
   ): Resource[F, Protocol[F]] =
     for
       sequenceIdRef    <- Resource.eval(Ref[F].of[Byte](0x01))
@@ -554,7 +558,8 @@ object Protocol:
                       allowPublicKeyRetrieval,
                       capabilitiesFlags,
                       sequenceIdRef,
-                      initialPacketRef
+                      initialPacketRef,
+                      defaultAuthenticationPlugin
                     )
                   )
     yield protocol
@@ -566,7 +571,8 @@ object Protocol:
     allowPublicKeyRetrieval: Boolean = false,
     capabilitiesFlags:       Set[CapabilitiesFlags],
     sequenceIdRef:           Ref[F, Byte],
-    initialPacketRef:        Ref[F, Option[InitialPacket]]
+    initialPacketRef:        Ref[F, Option[InitialPacket]],
+    defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
   )(using ev: Async[F]): F[Protocol[F]] =
     initialPacketRef.get.flatMap {
       case Some(initialPacket) =>
@@ -578,7 +584,8 @@ object Protocol:
             sslOptions.isDefined,
             allowPublicKeyRetrieval,
             capabilitiesFlags,
-            sequenceIdRef
+            sequenceIdRef,
+            defaultAuthenticationPlugin
           )
         )
       case None =>
