@@ -19,6 +19,7 @@ import org.typelevel.otel4s.trace.Tracer
 
 import ldbc.sql.DatabaseMetaData
 
+import ldbc.connector.authenticator.AuthenticationPlugin
 import ldbc.connector.pool.*
 
 import ldbc.DataSource
@@ -47,6 +48,7 @@ import ldbc.DataSource
  * @param tracer optional OpenTelemetry tracer for distributed tracing
  * @param useCursorFetch whether to use cursor-based fetching for result sets
  * @param useServerPrepStmts whether to use server-side prepared statements
+ * @param defaultAuthenticationPlugin The authentication plugin used first for communication with the server
  * @param before optional hook to execute before a connection is acquired
  * @param after optional hook to execute after a connection is used
  * 
@@ -67,22 +69,23 @@ import ldbc.DataSource
  * }}}
  */
 final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
-  host:                    String,
-  port:                    Int,
-  user:                    String,
-  password:                Option[String]                        = None,
-  database:                Option[String]                        = None,
-  debug:                   Boolean                               = false,
-  ssl:                     SSL                                   = SSL.None,
-  socketOptions:           List[SocketOption]                    = MySQLConfig.defaultSocketOptions,
-  readTimeout:             Duration                              = Duration.Inf,
-  allowPublicKeyRetrieval: Boolean                               = false,
-  databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
-  tracer:                  Option[Tracer[F]]                     = None,
-  useCursorFetch:          Boolean                               = false,
-  useServerPrepStmts:      Boolean                               = false,
-  before:                  Option[Connection[F] => F[A]]         = None,
-  after:                   Option[(A, Connection[F]) => F[Unit]] = None
+  host:                        String,
+  port:                        Int,
+  user:                        String,
+  password:                    Option[String]                        = None,
+  database:                    Option[String]                        = None,
+  debug:                       Boolean                               = false,
+  ssl:                         SSL                                   = SSL.None,
+  socketOptions:               List[SocketOption]                    = MySQLConfig.defaultSocketOptions,
+  readTimeout:                 Duration                              = Duration.Inf,
+  allowPublicKeyRetrieval:     Boolean                               = false,
+  databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
+  tracer:                      Option[Tracer[F]]                     = None,
+  useCursorFetch:              Boolean                               = false,
+  useServerPrepStmts:          Boolean                               = false,
+  defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]]       = None,
+  before:                      Option[Connection[F] => F[A]]         = None,
+  after:                       Option[(A, Connection[F]) => F[Unit]] = None
 ) extends DataSource[F]:
   given Tracer[F] = tracer.getOrElse(Tracer.noop[F])
 
@@ -99,55 +102,58 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
     (before, after) match
       case (Some(b), Some(a)) =>
         Connection.withBeforeAfter(
-          host                    = host,
-          port                    = port,
-          user                    = user,
-          before                  = b,
-          after                   = a,
-          password                = password,
-          database                = database,
-          debug                   = debug,
-          ssl                     = ssl,
-          socketOptions           = socketOptions,
-          readTimeout             = readTimeout,
-          allowPublicKeyRetrieval = allowPublicKeyRetrieval,
-          useCursorFetch          = useCursorFetch,
-          useServerPrepStmts      = useServerPrepStmts,
-          databaseTerm            = databaseTerm
+          host                        = host,
+          port                        = port,
+          user                        = user,
+          before                      = b,
+          after                       = a,
+          password                    = password,
+          database                    = database,
+          debug                       = debug,
+          ssl                         = ssl,
+          socketOptions               = socketOptions,
+          readTimeout                 = readTimeout,
+          allowPublicKeyRetrieval     = allowPublicKeyRetrieval,
+          useCursorFetch              = useCursorFetch,
+          useServerPrepStmts          = useServerPrepStmts,
+          databaseTerm                = databaseTerm,
+          defaultAuthenticationPlugin = defaultAuthenticationPlugin
         )
       case (Some(b), None) =>
         Connection.withBeforeAfter(
-          host                    = host,
-          port                    = port,
-          user                    = user,
-          before                  = b,
-          after                   = (_, _) => Async[F].unit,
-          password                = password,
-          database                = database,
-          debug                   = debug,
-          ssl                     = ssl,
-          socketOptions           = socketOptions,
-          readTimeout             = readTimeout,
-          allowPublicKeyRetrieval = allowPublicKeyRetrieval,
-          useCursorFetch          = useCursorFetch,
-          useServerPrepStmts      = useServerPrepStmts,
-          databaseTerm            = databaseTerm
+          host                        = host,
+          port                        = port,
+          user                        = user,
+          before                      = b,
+          after                       = (_, _) => Async[F].unit,
+          password                    = password,
+          database                    = database,
+          debug                       = debug,
+          ssl                         = ssl,
+          socketOptions               = socketOptions,
+          readTimeout                 = readTimeout,
+          allowPublicKeyRetrieval     = allowPublicKeyRetrieval,
+          useCursorFetch              = useCursorFetch,
+          useServerPrepStmts          = useServerPrepStmts,
+          databaseTerm                = databaseTerm,
+          defaultAuthenticationPlugin = defaultAuthenticationPlugin
         )
       case (None, _) =>
         Connection(
-          host                    = host,
-          port                    = port,
-          user                    = user,
-          password                = password,
-          database                = database,
-          debug                   = debug,
-          ssl                     = ssl,
-          socketOptions           = socketOptions,
-          readTimeout             = readTimeout,
-          allowPublicKeyRetrieval = allowPublicKeyRetrieval,
-          useCursorFetch          = useCursorFetch,
-          useServerPrepStmts      = useServerPrepStmts,
-          databaseTerm            = databaseTerm
+          host                        = host,
+          port                        = port,
+          user                        = user,
+          password                    = password,
+          database                    = database,
+          debug                       = debug,
+          ssl                         = ssl,
+          socketOptions               = socketOptions,
+          readTimeout                 = readTimeout,
+          allowPublicKeyRetrieval     = allowPublicKeyRetrieval,
+          useCursorFetch              = useCursorFetch,
+          useServerPrepStmts          = useServerPrepStmts,
+          databaseTerm                = databaseTerm,
+          defaultAuthenticationPlugin = defaultAuthenticationPlugin
         )
 
   /** Sets the hostname or IP address of the MySQL server.
@@ -244,6 +250,14 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
     */
   def setUseServerPrepStmts(newUseServerPrepStmts: Boolean): MySQLDataSource[F, A] =
     copy(useServerPrepStmts = newUseServerPrepStmts)
+
+  /** Sets whether to authentication plugin to be used first for communication with the server.
+   * @param defaultAuthenticationPlugin
+   *   The authentication plugin used first for communication with the server
+   * @return a new MySQLDataSource with the updated setting
+   */
+  def setDefaultAuthenticationPlugin(defaultAuthenticationPlugin: AuthenticationPlugin[F]): MySQLDataSource[F, A] =
+    copy(defaultAuthenticationPlugin = Some(defaultAuthenticationPlugin))
 
   /**
    * Adds a before hook that will be executed when a connection is acquired.

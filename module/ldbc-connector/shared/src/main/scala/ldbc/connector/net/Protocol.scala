@@ -139,13 +139,14 @@ object Protocol:
     "SELECT @@session.auto_increment_increment AS auto_increment_increment, @@character_set_client AS character_set_client, @@character_set_connection AS character_set_connection, @@character_set_results AS character_set_results, @@character_set_server AS character_set_server, @@collation_server AS collation_server, @@collation_connection AS collation_connection, @@init_connect AS init_connect, @@interactive_timeout AS interactive_timeout, @@license AS license, @@lower_case_table_names AS lower_case_table_names, @@max_allowed_packet AS max_allowed_packet, @@net_write_timeout AS net_write_timeout, @@performance_schema AS performance_schema, @@sql_mode AS sql_mode, @@system_time_zone AS system_time_zone, @@time_zone AS time_zone, @@transaction_isolation AS transaction_isolation, @@wait_timeout AS wait_timeout"
 
   private[ldbc] case class Impl[F[_]: Async: Tracer: Hashing](
-    initialPacket:           InitialPacket,
-    hostInfo:                HostInfo,
-    socket:                  PacketSocket[F],
-    useSSL:                  Boolean = false,
-    allowPublicKeyRetrieval: Boolean = false,
-    capabilityFlags:         Set[CapabilitiesFlags],
-    sequenceIdRef:           Ref[F, Byte]
+    initialPacket:               InitialPacket,
+    hostInfo:                    HostInfo,
+    socket:                      PacketSocket[F],
+    useSSL:                      Boolean = false,
+    allowPublicKeyRetrieval:     Boolean = false,
+    capabilityFlags:             Set[CapabilitiesFlags],
+    sequenceIdRef:               Ref[F, Byte],
+    defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]]
   )(using ev: MonadError[F, Throwable], ex: Exchange[F])
     extends Protocol[F]:
 
@@ -503,9 +504,20 @@ object Protocol:
             Attribute("username", username)
           ))*
         ) *> (
-          determinatePlugin(initialPacket.authPlugin, initialPacket.serverVersion) match
-            case Left(error)   => span.recordException(error) *> ev.raiseError(error) *> socket.send(ComQuitPacket())
-            case Right(plugin) => handshake(plugin, username, password) *> readUntilOk(plugin, password)
+          defaultAuthenticationPlugin match
+            case Some(plugin) =>
+              checkRequiresConfidentiality(plugin, span) *> handshake(plugin, username, password) *> readUntilOk(
+                plugin,
+                password
+              )
+            case None =>
+              determinatePlugin(initialPacket.authPlugin, initialPacket.serverVersion) match
+                case Left(error) => span.recordException(error) *> ev.raiseError(error) *> socket.send(ComQuitPacket())
+                case Right(plugin) =>
+                  checkRequiresConfidentiality(plugin, span) *> handshake(plugin, username, password) *> readUntilOk(
+                    plugin,
+                    password
+                  )
         )
       }
 
@@ -532,14 +544,28 @@ object Protocol:
         )
       }
 
+    private def checkRequiresConfidentiality(plugin: AuthenticationPlugin[F], span: Span[F]): F[Unit] =
+      if plugin.requiresConfidentiality && !useSSL then
+        val error = new SQLInvalidAuthorizationSpecException(
+          s"SSL connection required for plugin “${ plugin.name }”. Check if ‘ssl’ is enabled.",
+          hint = Some(
+            """// You can enable SSL.
+              |           MySQLDataSource.build[IO](....).setSSL(SSL.Trusted)
+              |""".stripMargin
+          )
+        )
+        span.recordException(error) *> ev.raiseError(error)
+      else ev.unit
+
   def apply[F[_]: Async: Console: Tracer: Exchange: Hashing](
-    sockets:                 Resource[F, Socket[F]],
-    hostInfo:                HostInfo,
-    debug:                   Boolean,
-    sslOptions:              Option[SSLNegotiation.Options[F]],
-    allowPublicKeyRetrieval: Boolean = false,
-    readTimeout:             Duration,
-    capabilitiesFlags:       Set[CapabilitiesFlags]
+    sockets:                     Resource[F, Socket[F]],
+    hostInfo:                    HostInfo,
+    debug:                       Boolean,
+    sslOptions:                  Option[SSLNegotiation.Options[F]],
+    allowPublicKeyRetrieval:     Boolean = false,
+    readTimeout:                 Duration,
+    capabilitiesFlags:           Set[CapabilitiesFlags],
+    defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]]
   ): Resource[F, Protocol[F]] =
     for
       sequenceIdRef    <- Resource.eval(Ref[F].of[Byte](0x01))
@@ -554,19 +580,21 @@ object Protocol:
                       allowPublicKeyRetrieval,
                       capabilitiesFlags,
                       sequenceIdRef,
-                      initialPacketRef
+                      initialPacketRef,
+                      defaultAuthenticationPlugin
                     )
                   )
     yield protocol
 
   def fromPacketSocket[F[_]: Tracer: Exchange: Hashing](
-    packetSocket:            PacketSocket[F],
-    hostInfo:                HostInfo,
-    sslOptions:              Option[SSLNegotiation.Options[F]],
-    allowPublicKeyRetrieval: Boolean = false,
-    capabilitiesFlags:       Set[CapabilitiesFlags],
-    sequenceIdRef:           Ref[F, Byte],
-    initialPacketRef:        Ref[F, Option[InitialPacket]]
+    packetSocket:                PacketSocket[F],
+    hostInfo:                    HostInfo,
+    sslOptions:                  Option[SSLNegotiation.Options[F]],
+    allowPublicKeyRetrieval:     Boolean = false,
+    capabilitiesFlags:           Set[CapabilitiesFlags],
+    sequenceIdRef:               Ref[F, Byte],
+    initialPacketRef:            Ref[F, Option[InitialPacket]],
+    defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]]
   )(using ev: Async[F]): F[Protocol[F]] =
     initialPacketRef.get.flatMap {
       case Some(initialPacket) =>
@@ -578,7 +606,8 @@ object Protocol:
             sslOptions.isDefined,
             allowPublicKeyRetrieval,
             capabilitiesFlags,
-            sequenceIdRef
+            sequenceIdRef,
+            defaultAuthenticationPlugin
           )
         )
       case None =>
