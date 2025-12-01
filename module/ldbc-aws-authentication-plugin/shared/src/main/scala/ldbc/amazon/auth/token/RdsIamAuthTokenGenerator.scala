@@ -1,12 +1,15 @@
+/**
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
+
 package ldbc.amazon.auth.token
 
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.time.{ Instant, ZoneOffset }
 import java.time.format.DateTimeFormatter
-
-import javax.crypto.spec.SecretKeySpec
-import javax.crypto.Mac
 
 import cats.syntax.all.*
 
@@ -57,7 +60,7 @@ import ldbc.amazon.identity.AwsCredentials
  * val token: IO[String] = generator.generateToken(credentials)
  * }}}
  */
-class RdsIamAuthTokenGenerator[F[_]: Hashing](
+class RdsIamAuthTokenGenerator[F[_]: Hashing: Sync](
   hostname: String,
   port:     Int,
   username: String,
@@ -97,12 +100,13 @@ class RdsIamAuthTokenGenerator[F[_]: Hashing](
       date             = dateTime.substring(0, 8)
       credentialScope  = s"$date/$region/$SERVICE/$TERMINATOR"
       credential       = s"${ credentials.accessKeyId }/$credentialScope"
-      queryParams      = buildQueryParams(credential, dateTime, credentials.sessionToken, username)
+      //queryParams      = buildQueryParams(credential, dateTime, credentials.sessionToken, username)
+      queryParams      = buildQueryParams(credential, dateTime, ???, username)
       canonicalRequest = buildCanonicalRequest(s"$hostname:$port", queryParams)
       canonicalRequestHash <- sha256Hex(canonicalRequest)
       stringToSign = buildStringToSign(dateTime, credentialScope, canonicalRequestHash)
       signature <- calculateSignature(credentials.secretAccessKey, date, region, stringToSign)
-    yield s"${ config.hostname }:${ config.port }/?$queryParams&X-Amz-Signature=$signature"
+    yield s"$hostname:$port/?$queryParams&X-Amz-Signature=$signature"
 
   /**
    * Formats an Instant to ISO 8601 basic format string required by AWS Signature Version 4.
@@ -135,19 +139,23 @@ class RdsIamAuthTokenGenerator[F[_]: Hashing](
   private def buildQueryParams(
     credential:   String,
     dateTime:     String,
-    sessionToken: String,
+    sessionToken: Option[String],
     username:     String
   ): String =
-    val params = List(
-      "Action"               -> "connect",
-      "DBUser"               -> username,
-      "X-Amz-Algorithm"      -> ALGORITHM,
-      "X-Amz-Credential"     -> credential,
-      "X-Amz-Date"           -> dateTime,
-      "X-Amz-Expires"        -> EXPIRESSECONDS.toString,
-      "X-Amz-Security-Token" -> sessionToken,
-      "X-Amz-SignedHeaders"  -> "host"
+    val baseParams = List(
+      "Action" -> "connect",
+      "DBUser" -> username,
+      "X-Amz-Algorithm" -> ALGORITHM,
+      "X-Amz-Credential" -> credential,
+      "X-Amz-Date" -> dateTime,
+      "X-Amz-Expires" -> EXPIRES_SECONDS.toString,
+      "X-Amz-SignedHeaders" -> "host"
     )
+
+    val params = sessionToken match
+      case Some(token) => baseParams :+ ("X-Amz-Security-Token" -> token)
+      case None => baseParams
+
     params
       .sortBy(_._1)
       .map { case (k, v) => s"${ urlEncode(k) }=${ urlEncode(v) }" }
@@ -219,7 +227,7 @@ class RdsIamAuthTokenGenerator[F[_]: Hashing](
     credentialScope:      String,
     canonicalRequestHash: String
   ): String =
-    s"$Algorithm\n$dateTime\n$credentialScope\n$canonicalRequestHash"
+    s"$ALGORITHM\n$dateTime\n$credentialScope\n$canonicalRequestHash"
 
   /**
    * Computes HMAC-SHA256 hash using the provided key and data.
@@ -271,8 +279,8 @@ class RdsIamAuthTokenGenerator[F[_]: Hashing](
     for
       kDate    <- hmacSha256(s"AWS4$secretKey".getBytes(StandardCharsets.UTF_8), date)
       kRegion  <- hmacSha256(kDate, region)
-      kService <- hmacSha256(kRegion, Service)
-      kSigning <- hmacSha256(kService, Terminator)
+      kService <- hmacSha256(kRegion, SERVICE)
+      kSigning <- hmacSha256(kService, TERMINATOR)
       sig      <- hmacSha256(kSigning, stringToSign)
     yield bytesToHex(sig)
 
