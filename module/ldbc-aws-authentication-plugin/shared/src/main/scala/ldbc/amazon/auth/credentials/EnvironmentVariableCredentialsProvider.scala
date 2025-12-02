@@ -7,6 +7,7 @@
 package ldbc.amazon.auth.credentials
 
 import cats.MonadThrow
+
 import cats.effect.std.Env
 
 import ldbc.amazon.auth.credentials.internal.SystemSettingsCredentialsProvider

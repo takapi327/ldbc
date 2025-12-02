@@ -24,8 +24,8 @@ package ldbc.amazon.exception
  * @param cause The underlying cause of the exception (optional)
  */
 class InvalidTokenException(
-  message: String, 
-  cause: Option[Throwable] = None
+  message: String,
+  cause:   Option[Throwable] = None
 ) extends WebIdentityTokenException(message, cause):
 
   /**

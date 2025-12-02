@@ -96,11 +96,11 @@ class RdsIamAuthTokenGenerator[F[_]: Hashing: Sync](
   override def generateToken(credentials: AwsCredentials): F[String] =
     for
       now <- clock.realTimeInstant
-      dateTime         = formatDateTime(now)
-      date             = dateTime.substring(0, 8)
-      credentialScope  = s"$date/$region/$SERVICE/$TERMINATOR"
-      credential       = s"${ credentials.accessKeyId }/$credentialScope"
-      //queryParams      = buildQueryParams(credential, dateTime, credentials.sessionToken, username)
+      dateTime        = formatDateTime(now)
+      date            = dateTime.substring(0, 8)
+      credentialScope = s"$date/$region/$SERVICE/$TERMINATOR"
+      credential      = s"${ credentials.accessKeyId }/$credentialScope"
+      // queryParams      = buildQueryParams(credential, dateTime, credentials.sessionToken, username)
       queryParams      = buildQueryParams(credential, dateTime, ???, username)
       canonicalRequest = buildCanonicalRequest(s"$hostname:$port", queryParams)
       canonicalRequestHash <- sha256Hex(canonicalRequest)
@@ -143,18 +143,18 @@ class RdsIamAuthTokenGenerator[F[_]: Hashing: Sync](
     username:     String
   ): String =
     val baseParams = List(
-      "Action" -> "connect",
-      "DBUser" -> username,
-      "X-Amz-Algorithm" -> ALGORITHM,
-      "X-Amz-Credential" -> credential,
-      "X-Amz-Date" -> dateTime,
-      "X-Amz-Expires" -> EXPIRES_SECONDS.toString,
+      "Action"              -> "connect",
+      "DBUser"              -> username,
+      "X-Amz-Algorithm"     -> ALGORITHM,
+      "X-Amz-Credential"    -> credential,
+      "X-Amz-Date"          -> dateTime,
+      "X-Amz-Expires"       -> EXPIRES_SECONDS.toString,
       "X-Amz-SignedHeaders" -> "host"
     )
 
     val params = sessionToken match
       case Some(token) => baseParams :+ ("X-Amz-Security-Token" -> token)
-      case None => baseParams
+      case None        => baseParams
 
     params
       .sortBy(_._1)

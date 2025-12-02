@@ -8,15 +8,16 @@ package ldbc.amazon.auth.credentials
 
 import scala.concurrent.duration.*
 
-import cats.effect.std.{Env, SystemProperties}
-import cats.effect.*
 import cats.syntax.all.*
 
-import fs2.io.file.{Files, Path}
+import cats.effect.*
+import cats.effect.std.{ Env, SystemProperties }
+
+import fs2.io.file.{ Files, Path }
 import fs2.io.net.*
 
 import ldbc.amazon.auth.credentials.internal.WebIdentityCredentialsUtils
-import ldbc.amazon.client.{HttpClient, SimpleHttpClient}
+import ldbc.amazon.client.{ HttpClient, SimpleHttpClient }
 import ldbc.amazon.exception.SdkClientException
 import ldbc.amazon.identity.*
 import ldbc.amazon.useragent.BusinessMetricFeatureId
@@ -61,56 +62,60 @@ import ldbc.amazon.util.SdkSystemSetting
  */
 final class WebIdentityTokenFileCredentialsProvider[F[_]: Env: SystemProperties: Concurrent](
   webIdentityUtils: WebIdentityCredentialsUtils[F],
-  httpClient: HttpClient[F],
-  region: String = "us-east-1"
+  httpClient:       HttpClient[F],
+  region:           String = "us-east-1"
 ) extends AwsCredentialsProvider[F]:
 
   override def resolveCredentials(): F[AwsCredentials] =
     for
-      config <- loadWebIdentityConfig()
+      config      <- loadWebIdentityConfig()
       credentials <- config match {
-        case None =>
-          Concurrent[F].raiseError(new SdkClientException(
-            "Unable to load Web Identity Token credentials. " +
-            "Required environment variables (AWS_WEB_IDENTITY_TOKEN_FILE, AWS_ROLE_ARN) or " +
-            "system properties (aws.webIdentityTokenFile, aws.roleArn) are not set."
-          ))
-        case Some(webIdentityConfig) =>
-          webIdentityUtils.assumeRoleWithWebIdentity(webIdentityConfig, region, httpClient)
-      }
+                       case None =>
+                         Concurrent[F].raiseError(
+                           new SdkClientException(
+                             "Unable to load Web Identity Token credentials. " +
+                               "Required environment variables (AWS_WEB_IDENTITY_TOKEN_FILE, AWS_ROLE_ARN) or " +
+                               "system properties (aws.webIdentityTokenFile, aws.roleArn) are not set."
+                           )
+                         )
+                       case Some(webIdentityConfig) =>
+                         webIdentityUtils.assumeRoleWithWebIdentity(webIdentityConfig, region, httpClient)
+                     }
     yield credentials
 
   private def loadWebIdentityConfig(): F[Option[WebIdentityTokenCredentialProperties]] =
     for
-      tokenFilePath <- loadTokenFilePath()
-      roleArn <- loadRoleArn()
+      tokenFilePath   <- loadTokenFilePath()
+      roleArn         <- loadRoleArn()
       roleSessionName <- loadRoleSessionName()
     yield (tokenFilePath, roleArn) match {
       case (Some(tokenFile), Some(arn)) =>
-        Some(WebIdentityTokenCredentialProperties(
-          webIdentityTokenFile = Path(tokenFile),
-          roleArn = arn,
-          roleSessionName = roleSessionName,
-          providerName = BusinessMetricFeatureId.CREDENTIALS_WEB_IDENTITY_TOKEN.code
-        ))
+        Some(
+          WebIdentityTokenCredentialProperties(
+            webIdentityTokenFile = Path(tokenFile),
+            roleArn              = arn,
+            roleSessionName      = roleSessionName,
+            providerName         = BusinessMetricFeatureId.CREDENTIALS_WEB_IDENTITY_TOKEN.code
+          )
+        )
       case _ => None
     }
 
   private def loadTokenFilePath(): F[Option[String]] =
     for
-      envValue <- Env[F].get("AWS_WEB_IDENTITY_TOKEN_FILE")
+      envValue     <- Env[F].get("AWS_WEB_IDENTITY_TOKEN_FILE")
       sysPropValue <- SystemProperties[F].get(SdkSystemSetting.AWS_WEB_IDENTITY_TOKEN_FILE.systemProperty)
     yield envValue.orElse(sysPropValue).map(_.trim).filter(_.nonEmpty)
 
   private def loadRoleArn(): F[Option[String]] =
     for
-      envValue <- Env[F].get("AWS_ROLE_ARN")
+      envValue     <- Env[F].get("AWS_ROLE_ARN")
       sysPropValue <- SystemProperties[F].get(SdkSystemSetting.AWS_ROLE_ARN.systemProperty)
     yield envValue.orElse(sysPropValue).map(_.trim).filter(_.nonEmpty)
 
   private def loadRoleSessionName(): F[Option[String]] =
     for
-      envValue <- Env[F].get("AWS_ROLE_SESSION_NAME")
+      envValue     <- Env[F].get("AWS_ROLE_SESSION_NAME")
       sysPropValue <- SystemProperties[F].get(SdkSystemSetting.AWS_ROLE_SESSION_NAME.systemProperty)
     yield envValue.orElse(sysPropValue).map(_.trim).filter(_.nonEmpty)
 
@@ -124,9 +129,9 @@ final class WebIdentityTokenFileCredentialsProvider[F[_]: Env: SystemProperties:
  */
 case class WebIdentityTokenCredentialProperties(
   webIdentityTokenFile: Path,
-  roleArn: String,
-  roleSessionName: Option[String],
-  providerName: String
+  roleArn:              String,
+  roleSessionName:      Option[String],
+  providerName:         String
 )
 
 object WebIdentityTokenFileCredentialsProvider:
@@ -156,7 +161,7 @@ object WebIdentityTokenFileCredentialsProvider:
    */
   def default[F[_]: Env: SystemProperties: Files: Concurrent](
     httpClient: HttpClient[F],
-    region: String = "us-east-1"
+    region:     String = "us-east-1"
   ): WebIdentityTokenFileCredentialsProvider[F] =
     val webIdentityUtils = WebIdentityCredentialsUtils.default[F]
     new WebIdentityTokenFileCredentialsProvider[F](webIdentityUtils, httpClient, region)
@@ -172,8 +177,8 @@ object WebIdentityTokenFileCredentialsProvider:
    */
   def create[F[_]: Env: SystemProperties: Concurrent](
     webIdentityUtils: WebIdentityCredentialsUtils[F],
-    httpClient: HttpClient[F],
-    region: String = "us-east-1"
+    httpClient:       HttpClient[F],
+    region:           String = "us-east-1"
   ): WebIdentityTokenFileCredentialsProvider[F] =
     new WebIdentityTokenFileCredentialsProvider[F](webIdentityUtils, httpClient, region)
 
@@ -184,10 +189,12 @@ object WebIdentityTokenFileCredentialsProvider:
    * @return A configured HTTP client
    */
   private def createDefaultHttpClient[F[_]: Network: Async](): F[HttpClient[F]] =
-    Async[F].pure(new SimpleHttpClient[F](
-      connectTimeout = 30.seconds,
-      readTimeout = 30.seconds
-    ))
+    Async[F].pure(
+      new SimpleHttpClient[F](
+        connectTimeout = 30.seconds,
+        readTimeout    = 30.seconds
+      )
+    )
 
   /**
    * Checks if Web Identity Token authentication is available by verifying
@@ -198,10 +205,18 @@ object WebIdentityTokenFileCredentialsProvider:
    */
   def isAvailable[F[_]: Env: SystemProperties: Concurrent](): F[Boolean] =
     for
-      tokenFile <- Env[F].get("AWS_WEB_IDENTITY_TOKEN_FILE")
-        .flatMap(envValue => SystemProperties[F].get(SdkSystemSetting.AWS_WEB_IDENTITY_TOKEN_FILE.systemProperty)
-          .map(envValue.orElse(_)))
-      roleArn <- Env[F].get("AWS_ROLE_ARN")
-        .flatMap(envValue => SystemProperties[F].get(SdkSystemSetting.AWS_ROLE_ARN.systemProperty)
-          .map(envValue.orElse(_)))
+      tokenFile <- Env[F]
+                     .get("AWS_WEB_IDENTITY_TOKEN_FILE")
+                     .flatMap(envValue =>
+                       SystemProperties[F]
+                         .get(SdkSystemSetting.AWS_WEB_IDENTITY_TOKEN_FILE.systemProperty)
+                         .map(envValue.orElse(_))
+                     )
+      roleArn <- Env[F]
+                   .get("AWS_ROLE_ARN")
+                   .flatMap(envValue =>
+                     SystemProperties[F]
+                       .get(SdkSystemSetting.AWS_ROLE_ARN.systemProperty)
+                       .map(envValue.orElse(_))
+                   )
     yield tokenFile.exists(_.trim.nonEmpty) && roleArn.exists(_.trim.nonEmpty)

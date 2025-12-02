@@ -6,15 +6,16 @@
 
 package ldbc.amazon.auth.credentials.internal
 
-import cats.MonadThrow
-import cats.effect.Concurrent
 import cats.syntax.all.*
+import cats.MonadThrow
 
-import fs2.io.file.{Files, Path}
+import cats.effect.Concurrent
+
+import fs2.io.file.{ Files, Path }
 
 import ldbc.amazon.auth.credentials.*
-import ldbc.amazon.client.{HttpClient, StsClient}
-import ldbc.amazon.exception.{TokenFileNotFoundException, InvalidTokenException}
+import ldbc.amazon.client.{ HttpClient, StsClient }
+import ldbc.amazon.exception.{ InvalidTokenException, TokenFileNotFoundException }
 import ldbc.amazon.identity.AwsCredentials
 
 /**
@@ -39,8 +40,8 @@ trait WebIdentityCredentialsUtils[F[_]]:
    * @return AWS credentials with session token
    */
   def assumeRoleWithWebIdentity(
-    config: WebIdentityTokenCredentialProperties,
-    region: String,
+    config:     WebIdentityTokenCredentialProperties,
+    region:     String,
     httpClient: HttpClient[F]
   ): F[AwsCredentials]
 
@@ -51,18 +52,18 @@ object WebIdentityCredentialsUtils:
   ) extends WebIdentityCredentialsUtils[F]:
 
     def assumeRoleWithWebIdentity(
-      config: WebIdentityTokenCredentialProperties,
-      region: String,
+      config:     WebIdentityTokenCredentialProperties,
+      region:     String,
       httpClient: HttpClient[F]
     ): F[AwsCredentials] =
       for
         token <- readTokenFromFile(config.webIdentityTokenFile)
-        _ <- validateToken(token)
+        _     <- validateToken(token)
         stsRequest = StsClient.AssumeRoleWithWebIdentityRequest(
-          roleArn = config.roleArn,
-          webIdentityToken = token,
-          roleSessionName = config.roleSessionName
-        )
+                       roleArn          = config.roleArn,
+                       webIdentityToken = token,
+                       roleSessionName  = config.roleSessionName
+                     )
         stsResponse <- stsClient.assumeRoleWithWebIdentity(stsRequest, region, httpClient)
         credentials = convertStsResponseToCredentials(stsResponse, config)
       yield credentials
@@ -76,13 +77,13 @@ object WebIdentityCredentialsUtils:
     private def readTokenFromFile(tokenFilePath: Path): F[String] =
       for
         exists <- Files[F].exists(tokenFilePath)
-        _ <- Concurrent[F].raiseUnless(exists)(
-          new TokenFileNotFoundException(s"Web Identity Token file not found: $tokenFilePath")
-        )
+        _      <- Concurrent[F].raiseUnless(exists)(
+               new TokenFileNotFoundException(s"Web Identity Token file not found: $tokenFilePath")
+             )
         token <- Files[F].readUtf8(tokenFilePath).compile.string.map(_.trim)
-        _ <- Concurrent[F].raiseWhen(token.isEmpty)(
-          new InvalidTokenException(s"Web Identity Token file is empty: $tokenFilePath")
-        )
+        _     <- Concurrent[F].raiseWhen(token.isEmpty)(
+               new InvalidTokenException(s"Web Identity Token file is empty: $tokenFilePath")
+             )
       yield token
 
     /**
@@ -98,9 +99,9 @@ object WebIdentityCredentialsUtils:
       MonadThrow[F].fromEither {
         // Basic JWT format validation (header.payload.signature)
         val parts = token.split("\\.")
-        if (parts.length != 3) {
-          Left(new InvalidTokenException(s"Invalid JWT token format. Expected 3 parts, got ${parts.length}"))
-        } else if (parts.exists(_.isEmpty)) {
+        if parts.length != 3 then {
+          Left(new InvalidTokenException(s"Invalid JWT token format. Expected 3 parts, got ${ parts.length }"))
+        } else if parts.exists(_.isEmpty) then {
           Left(new InvalidTokenException("JWT token contains empty parts"))
         } else {
           Right(())
@@ -116,16 +117,16 @@ object WebIdentityCredentialsUtils:
      */
     private def convertStsResponseToCredentials(
       stsResponse: StsClient.AssumeRoleWithWebIdentityResponse,
-      config: WebIdentityTokenCredentialProperties
+      config:      WebIdentityTokenCredentialProperties
     ): AwsCredentials =
       AwsSessionCredentials(
-        accessKeyId = stsResponse.accessKeyId,
-        secretAccessKey = stsResponse.secretAccessKey,
-        sessionToken = stsResponse.sessionToken,
+        accessKeyId         = stsResponse.accessKeyId,
+        secretAccessKey     = stsResponse.secretAccessKey,
+        sessionToken        = stsResponse.sessionToken,
         validateCredentials = false,
-        providerName = Some(config.providerName),
-        accountId = extractAccountIdFromArn(stsResponse.assumedRoleArn),
-        expirationTime = Some(stsResponse.expiration)
+        providerName        = Some(config.providerName),
+        accountId           = extractAccountIdFromArn(stsResponse.assumedRoleArn),
+        expirationTime      = Some(stsResponse.expiration)
       )
 
     /**
@@ -137,7 +138,7 @@ object WebIdentityCredentialsUtils:
     private def extractAccountIdFromArn(arn: String): Option[String] =
       // ARN format: arn:aws:sts::ACCOUNT_ID:assumed-role/ROLE_NAME/SESSION_NAME
       val arnParts = arn.split(":")
-      if (arnParts.length >= 5) {
+      if arnParts.length >= 5 then {
         Some(arnParts(4))
       } else {
         None
@@ -149,7 +150,7 @@ object WebIdentityCredentialsUtils:
    * @tparam F The effect type
    * @return A WebIdentityCredentialsUtils instance
    */
-  def default[F[_]: Files: Concurrent]: WebIdentityCredentialsUtils[F] = 
+  def default[F[_]: Files: Concurrent]: WebIdentityCredentialsUtils[F] =
     val stsClient = StsClient.default[F]
     Impl[F](stsClient)
 

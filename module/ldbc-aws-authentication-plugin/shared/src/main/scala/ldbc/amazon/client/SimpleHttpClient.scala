@@ -10,13 +10,13 @@ import java.net.URI
 
 import scala.concurrent.duration.*
 
-import cats.MonadThrow
+import com.comcast.ip4s.*
+
 import cats.syntax.all.*
+import cats.MonadThrow
 
 import cats.effect.*
 import cats.effect.syntax.all.*
-
-import com.comcast.ip4s.*
 
 import fs2.*
 import fs2.io.net.*
@@ -25,8 +25,9 @@ import ldbc.amazon.exception.*
 
 class SimpleHttpClient[F[_]: Network: Async](
   connectTimeout: Duration,
-  readTimeout: Duration
-)(using ev: MonadThrow[F]) extends HttpClient[F]:
+  readTimeout:    Duration
+)(using ev: MonadThrow[F])
+  extends HttpClient[F]:
 
   override def get(uri: URI, headers: Map[String, String]): F[HttpResponse] =
     val host = uri.getHost
@@ -35,7 +36,7 @@ class SimpleHttpClient[F[_]: Network: Async](
       Option(uri.getQuery).map("?" + _).getOrElse("")
 
     for
-      address <- resolveAddress(host, port)
+      address  <- resolveAddress(host, port)
       response <- makeRequest(address, host, port, path, headers)
     yield response
 
@@ -46,20 +47,21 @@ class SimpleHttpClient[F[_]: Network: Async](
     yield SocketAddress(h, p)
 
   private def sendRequest(
-                           socket: Socket[F],
-                           host: String,
-                           port: Int,
-                           path: String,
-                           headers: Map[String, String]
-                         ): F[Unit] =
+    socket:  Socket[F],
+    host:    String,
+    port:    Int,
+    path:    String,
+    headers: Map[String, String]
+  ): F[Unit] =
     val hostHeader = if port == 80 then host else s"$host:$port"
     val allHeaders = headers + ("Host" -> hostHeader) + ("Connection" -> "close")
 
     val requestLine = s"GET $path HTTP/1.1\r\n"
     val headerLines = allHeaders.map((k, v) => s"$k: $v\r\n").mkString
-    val request = requestLine + headerLines + "\r\n"
+    val request     = requestLine + headerLines + "\r\n"
 
-    Stream.emit(request)
+    Stream
+      .emit(request)
       .through(text.utf8.encode)
       .through(socket.writes)
       .compile
@@ -71,13 +73,13 @@ class SimpleHttpClient[F[_]: Network: Async](
       case _ :: code :: _ =>
         code.toIntOption match
           case Some(c) => ev.pure(c)
-          case None => ev.raiseError(new CredentialsFetchError(s"Invalid status code: $code"))
+          case None    => ev.raiseError(new CredentialsFetchError(s"Invalid status code: $code"))
       case _ => ev.raiseError(new CredentialsFetchError(s"Invalid status line: $line"))
 
   private def parseHeaderLine(line: String): Option[(String, String)] =
     line.split(": ", 2).toList match
       case key :: value :: Nil => Some(key -> value)
-      case _ => None
+      case _                   => None
 
   private def parseHttpResponse(raw: String): F[HttpResponse] =
     val lines = raw.split("\r\n").toList
@@ -86,8 +88,8 @@ class SimpleHttpClient[F[_]: Network: Async](
       case statusLine :: rest =>
         parseStatusLine(statusLine).flatMap: statusCode =>
           val (headerLines, bodyLines) = rest.span(_.nonEmpty)
-          val headers = headerLines.flatMap(parseHeaderLine).toMap
-          val body = bodyLines.drop(1).mkString("\r\n") // drop empty line
+          val headers                  = headerLines.flatMap(parseHeaderLine).toMap
+          val body                     = bodyLines.drop(1).mkString("\r\n") // drop empty line
 
           ev.pure(HttpResponse(statusCode, headers, body))
       case _ =>
@@ -101,16 +103,17 @@ class SimpleHttpClient[F[_]: Network: Async](
       .flatMap(parseHttpResponse)
 
   private def makeRequest(
-                           address: SocketAddress[Host],
-                           host: String,
-                           port: Int,
-                           path: String,
-                           headers: Map[String, String]
-                         ): F[HttpResponse] =
-    Network[F].client(address)
+    address: SocketAddress[Host],
+    host:    String,
+    port:    Int,
+    path:    String,
+    headers: Map[String, String]
+  ): F[HttpResponse] =
+    Network[F]
+      .client(address)
       .use { socket =>
         for
-          _ <- sendRequest(socket, host, port, path, headers)
+          _        <- sendRequest(socket, host, port, path, headers)
           response <- receiveResponse(socket)
         yield response
       }

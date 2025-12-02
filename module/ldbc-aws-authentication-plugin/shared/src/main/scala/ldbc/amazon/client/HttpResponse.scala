@@ -7,7 +7,7 @@
 package ldbc.amazon.client
 
 final case class HttpResponse(
-                                       statusCode: Int,
-                                       headers: Map[String, String],
-                                       body: String
-                                     )
+  statusCode: Int,
+  headers:    Map[String, String],
+  body:       String
+)

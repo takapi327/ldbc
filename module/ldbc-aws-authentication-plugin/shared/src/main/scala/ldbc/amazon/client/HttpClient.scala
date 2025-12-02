@@ -9,5 +9,5 @@ package ldbc.amazon.client
 import java.net.URI
 
 trait HttpClient[F[_]]:
-  
+
   def get(uri: URI, headers: Map[String, String]): F[HttpResponse]

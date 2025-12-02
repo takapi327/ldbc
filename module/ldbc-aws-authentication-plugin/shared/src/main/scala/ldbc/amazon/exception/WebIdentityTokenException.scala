@@ -16,8 +16,9 @@ import scala.util.control.NoStackTrace
  */
 abstract class WebIdentityTokenException(
   message: String,
-  cause: Option[Throwable] = None
-) extends SdkClientException(message) with NoStackTrace:
+  cause:   Option[Throwable] = None
+) extends SdkClientException(message)
+     with NoStackTrace:
 
   // Set the cause if provided
   cause.foreach(initCause)

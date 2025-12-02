@@ -24,9 +24,9 @@ package ldbc.amazon.exception
  * @param cause The underlying cause of the exception (optional)
  */
 class TokenFileNotFoundException(
-  message: String,
-  tokenFilePath: Option[String] = None,
-  cause: Option[Throwable] = None
+  message:       String,
+  tokenFilePath: Option[String]    = None,
+  cause:         Option[Throwable] = None
 ) extends WebIdentityTokenException(message, cause):
 
   /**
@@ -50,4 +50,4 @@ class TokenFileNotFoundException(
   override def getMessage: String =
     tokenFilePath match
       case Some(path) => s"$message (Token file path: $path)"
-      case None => message
+      case None       => message

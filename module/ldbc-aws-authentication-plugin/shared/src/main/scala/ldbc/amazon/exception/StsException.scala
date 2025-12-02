@@ -32,9 +32,10 @@ import scala.util.control.NoStackTrace
  * @param cause The underlying cause of the exception (optional)
  */
 class StsException(
-  message: String, 
-  cause: Option[Throwable] = None
-) extends SdkClientException(message) with NoStackTrace:
+  message: String,
+  cause:   Option[Throwable] = None
+) extends SdkClientException(message)
+     with NoStackTrace:
 
   // Set the cause if provided
   cause.foreach(initCause)
