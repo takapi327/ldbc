@@ -148,10 +148,10 @@ lazy val awsAuthenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativeP
   .module("aws-authentication-plugin", "")
   .settings(
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %%% "scala-xml" % "2.2.0",
-      "co.fs2"        %%% "fs2-core"          % "3.12.2",
-      "co.fs2"        %%% "fs2-io"            % "3.12.2",
-      "org.typelevel" %%% "munit-cats-effect" % "2.1.0" % Test
+      "org.scala-lang.modules" %%% "scala-xml"         % "2.2.0",
+      "co.fs2"                 %%% "fs2-core"          % "3.12.2",
+      "co.fs2"                 %%% "fs2-io"            % "3.12.2",
+      "org.typelevel"          %%% "munit-cats-effect" % "2.1.0" % Test
     )
   )
   .jsSettings(
