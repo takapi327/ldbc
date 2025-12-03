@@ -37,7 +37,18 @@ class SimpleHttpClient[F[_]: Network: Async](
 
     for
       address  <- resolveAddress(host, port)
-      response <- makeRequest(address, host, port, path, headers)
+      response <- makeRequest(address, host, port, "GET", path, headers, None)
+    yield response
+
+  override def put(uri: URI, headers: Map[String, String], body: String): F[HttpResponse] =
+    val host = uri.getHost
+    val port = if uri.getPort > 0 then uri.getPort else 80
+    val path = Option(uri.getPath).filter(_.nonEmpty).getOrElse("/") +
+      Option(uri.getQuery).map("?" + _).getOrElse("")
+
+    for
+      address  <- resolveAddress(host, port)
+      response <- makeRequest(address, host, port, "PUT", path, headers, Some(body))
     yield response
 
   private def resolveAddress(host: String, port: Int): F[SocketAddress[Host]] =
@@ -48,20 +59,27 @@ class SimpleHttpClient[F[_]: Network: Async](
 
   private def sendRequest(
     socket:  Socket[F],
+    method:  String,
     host:    String,
     port:    Int,
     path:    String,
-    headers: Map[String, String]
+    headers: Map[String, String],
+    body:    Option[String]
   ): F[Unit] =
     val hostHeader = if port == 80 then host else s"$host:$port"
-    val allHeaders = headers + ("Host" -> hostHeader) + ("Connection" -> "close")
+    val contentHeaders = body match {
+      case Some(b) => Map("Content-Length" -> b.getBytes("UTF-8").length.toString)
+      case None => Map.empty
+    }
+    val allHeaders = headers ++ contentHeaders + ("Host" -> hostHeader) + ("Connection" -> "close")
 
-    val requestLine = s"GET $path HTTP/1.1\r\n"
+    val requestLine = s"$method $path HTTP/1.1\r\n"
     val headerLines = allHeaders.map((k, v) => s"$k: $v\r\n").mkString
-    val request     = requestLine + headerLines + "\r\n"
+    val requestWithHeaders = requestLine + headerLines + "\r\n"
+    val fullRequest = body.map(requestWithHeaders + _).getOrElse(requestWithHeaders)
 
     Stream
-      .emit(request)
+      .emit(fullRequest)
       .through(text.utf8.encode)
       .through(socket.writes)
       .compile
@@ -106,14 +124,16 @@ class SimpleHttpClient[F[_]: Network: Async](
     address: SocketAddress[Host],
     host:    String,
     port:    Int,
+    method:  String,
     path:    String,
-    headers: Map[String, String]
+    headers: Map[String, String],
+    body:    Option[String]
   ): F[HttpResponse] =
     Network[F]
       .client(address)
       .use { socket =>
         for
-          _        <- sendRequest(socket, host, port, path, headers)
+          _        <- sendRequest(socket, method, host, port, path, headers, body)
           response <- receiveResponse(socket)
         yield response
       }
