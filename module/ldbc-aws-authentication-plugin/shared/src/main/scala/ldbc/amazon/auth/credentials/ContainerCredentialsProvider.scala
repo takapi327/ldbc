@@ -19,13 +19,11 @@ import cats.effect.std.Env
 import fs2.io.file.{ Files, Path }
 import fs2.io.net.*
 
-import io.circe.*
-import io.circe.parser.*
-
 import ldbc.amazon.client.{ HttpClient, SimpleHttpClient }
 import ldbc.amazon.exception.SdkClientException
 import ldbc.amazon.identity.*
 import ldbc.amazon.useragent.BusinessMetricFeatureId
+import ldbc.amazon.util.SimpleJsonParser
 
 /**
  * [[AwsCredentialsProvider]] implementation that loads credentials from AWS Container Credential Provider.
@@ -161,7 +159,11 @@ final class ContainerCredentialsProvider[F[_]: Files: Env: Concurrent](
   private def parseCredentialsResponse(jsonBody: String): F[AwsCredentials] =
     Concurrent[F]
       .fromEither(
-        parse(jsonBody).flatMap(_.as[ContainerCredentialsResponse])
+        SimpleJsonParser
+          .parse(jsonBody)
+          .flatMap(ContainerCredentialsResponse.fromJson)
+          .left
+          .map(msg => new SdkClientException(s"Failed to parse JSON: $msg"))
       )
       .map { response =>
         AwsSessionCredentials(
@@ -219,13 +221,19 @@ private case class ContainerCredentialsResponse(
 )
 
 private object ContainerCredentialsResponse:
-  given Decoder[ContainerCredentialsResponse] = Decoder.forProduct5(
-    "AccessKeyId",
-    "SecretAccessKey",
-    "Token",
-    "Expiration",
-    "RoleArn"
-  )(ContainerCredentialsResponse.apply)
+  def fromJson(json: SimpleJsonParser.JsonObject): Either[String, ContainerCredentialsResponse] =
+    for
+      accessKeyId <- json.require("AccessKeyId")
+      secretAccessKey <- json.require("SecretAccessKey")
+      token <- json.require("Token")
+      expiration <- json.require("Expiration")
+    yield ContainerCredentialsResponse(
+      AccessKeyId     = accessKeyId,
+      SecretAccessKey = secretAccessKey,
+      Token           = token,
+      Expiration      = expiration,
+      RoleArn = json.get("RoleArn")
+    )
 
 object ContainerCredentialsProvider:
 

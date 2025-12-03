@@ -18,14 +18,12 @@ import cats.effect.std.Env
 
 import fs2.io.net.*
 
-import io.circe.*
-import io.circe.parser.*
-
 import ldbc.amazon.client.*
 import ldbc.amazon.client.{ HttpClient, SimpleHttpClient }
 import ldbc.amazon.exception.SdkClientException
 import ldbc.amazon.identity.*
 import ldbc.amazon.useragent.BusinessMetricFeatureId
+import ldbc.amazon.util.SimpleJsonParser
 
 /**
  * [[AwsCredentialsProvider]] implementation that loads credentials from EC2 Instance Metadata Service (IMDS).
@@ -178,7 +176,11 @@ final class InstanceProfileCredentialsProvider[F[_]: Env: Concurrent](
   private def parseCredentialsResponse(jsonBody: String, roleName: String): F[AwsCredentials] =
     Concurrent[F]
       .fromEither(
-        parse(jsonBody).flatMap(_.as[InstanceMetadataCredentialsResponse])
+        SimpleJsonParser
+          .parse(jsonBody)
+          .flatMap(InstanceMetadataCredentialsResponse.fromJson)
+          .left
+          .map(msg => new SdkClientException(s"Failed to parse JSON: $msg"))
       )
       .flatMap { response =>
         if response.Code == "Success" then {
@@ -240,15 +242,23 @@ private case class InstanceMetadataCredentialsResponse(
 )
 
 private object InstanceMetadataCredentialsResponse:
-  given Decoder[InstanceMetadataCredentialsResponse] = Decoder.forProduct7(
-    "Code",
-    "LastUpdated",
-    "Type",
-    "AccessKeyId",
-    "SecretAccessKey",
-    "Token",
-    "Expiration"
-  )(InstanceMetadataCredentialsResponse.apply)
+
+  def fromJson(json: SimpleJsonParser.JsonObject): Either[String, InstanceMetadataCredentialsResponse] =
+    for
+      code            <- json.require("Code")
+      accessKeyId     <- json.require("AccessKeyId")
+      secretAccessKey <- json.require("SecretAccessKey")
+      token           <- json.require("Token")
+      expiration      <- json.require("Expiration")
+    yield InstanceMetadataCredentialsResponse(
+      Code            = code,
+      LastUpdated     = json.getOrEmpty("LastUpdated"),
+      Type            = json.getOrEmpty("Type"),
+      AccessKeyId     = accessKeyId,
+      SecretAccessKey = secretAccessKey,
+      Token           = token,
+      Expiration      = expiration
+    )
 
 object InstanceProfileCredentialsProvider:
 
