@@ -11,7 +11,7 @@ import scala.concurrent.duration.*
 import cats.syntax.all.*
 
 import cats.effect.*
-import cats.effect.std.{ Env, SystemProperties }
+import cats.effect.std.{ Env, SystemProperties, UUIDGen }
 
 import fs2.io.file.Files
 import fs2.io.net.*
@@ -44,7 +44,7 @@ import ldbc.amazon.identity.*
  * 
  * @tparam F The effect type
  */
-class DefaultCredentialsProviderChain[F[_]: Files: Env: SystemProperties: Concurrent](
+class DefaultCredentialsProviderChain[F[_]: Files: Env: SystemProperties: UUIDGen: Concurrent](
   httpClient: HttpClient[F],
   region:     String
 ) extends AwsCredentialsProvider[F]:
@@ -94,7 +94,7 @@ object DefaultCredentialsProviderChain:
  * @tparam F The effect type
  * @return A new DefaultCredentialsProviderChain instance
  */
-  def default[F[_]: Files: Env: SystemProperties: Network: Async](region: String): DefaultCredentialsProviderChain[F] =
+  def default[F[_]: Files: Env: SystemProperties: Network: UUIDGen: Async](region: String): DefaultCredentialsProviderChain[F] =
     val httpClient = new SimpleHttpClient[F](
       connectTimeout = 1.second,
       readTimeout    = 2.seconds

@@ -9,12 +9,12 @@ package ldbc.amazon.client
 import java.net.{ URI, URLEncoder }
 import java.time.{ Instant, ZoneOffset }
 import java.time.format.DateTimeFormatter
-import java.util.UUID
 
 import cats.syntax.all.*
 import cats.MonadThrow
 
 import cats.effect.Concurrent
+import cats.effect.std.UUIDGen
 
 import ldbc.amazon.exception.{ SdkClientException, StsException }
 import ldbc.amazon.util.SimpleXmlParser
@@ -75,7 +75,7 @@ object StsClient:
     assumedRoleArn:  String
   )
 
-  private case class Impl[F[_]: Concurrent]() extends StsClient[F]:
+  private case class Impl[F[_]: UUIDGen: Concurrent]() extends StsClient[F]:
 
     def assumeRoleWithWebIdentity(
       request:    AssumeRoleWithWebIdentityRequest,
@@ -84,7 +84,7 @@ object StsClient:
     ): F[AssumeRoleWithWebIdentityResponse] =
       for
         timestamp <- Concurrent[F].fromEither(getCurrentTimestamp())
-        sessionName = request.roleSessionName.getOrElse(s"ldbc-session-${ UUID.randomUUID() }")
+        sessionName = request.roleSessionName.getOrElse(s"ldbc-session-${ UUIDGen[F].randomUUID }")
         duration    = request.durationSeconds.getOrElse(3600)
 
         // Build STS request
@@ -114,7 +114,7 @@ object StsClient:
    * @tparam F The effect type
    * @return A StsClient instance
    */
-  def default[F[_]: Concurrent]: StsClient[F] = Impl[F]()
+  def default[F[_]: UUIDGen: Concurrent]: StsClient[F] = Impl[F]()
 
   /**
    * Builds the STS request body in AWS Query format.

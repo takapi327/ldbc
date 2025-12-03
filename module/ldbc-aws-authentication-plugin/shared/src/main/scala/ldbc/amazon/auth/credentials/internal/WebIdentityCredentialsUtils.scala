@@ -10,6 +10,7 @@ import cats.syntax.all.*
 import cats.MonadThrow
 
 import cats.effect.Concurrent
+import cats.effect.std.UUIDGen
 
 import fs2.io.file.{ Files, Path }
 
@@ -150,7 +151,7 @@ object WebIdentityCredentialsUtils:
    * @tparam F The effect type
    * @return A WebIdentityCredentialsUtils instance
    */
-  def default[F[_]: Files: Concurrent]: WebIdentityCredentialsUtils[F] =
+  def default[F[_]: Files: UUIDGen: Concurrent]: WebIdentityCredentialsUtils[F] =
     val stsClient = StsClient.default[F]
     Impl[F](stsClient)
 

@@ -11,7 +11,7 @@ import scala.concurrent.duration.*
 import cats.syntax.all.*
 
 import cats.effect.*
-import cats.effect.std.{ Env, SystemProperties }
+import cats.effect.std.{ Env, SystemProperties, UUIDGen }
 
 import fs2.io.file.{ Files, Path }
 import fs2.io.net.*
@@ -143,7 +143,7 @@ object WebIdentityTokenFileCredentialsProvider:
    * @tparam F The effect type
    * @return A new WebIdentityTokenFileCredentialsProvider instance
    */
-  def apply[F[_]: Files: Env: SystemProperties: Network: Async](
+  def apply[F[_]: Files: Env: SystemProperties: Network: UUIDGen: Async](
     region: String = "us-east-1"
   ): F[WebIdentityTokenFileCredentialsProvider[F]] =
     for
@@ -159,7 +159,7 @@ object WebIdentityTokenFileCredentialsProvider:
    * @tparam F The effect type
    * @return A new WebIdentityTokenFileCredentialsProvider instance
    */
-  def default[F[_]: Env: SystemProperties: Files: Concurrent](
+  def default[F[_]: Env: SystemProperties: Files: UUIDGen: Concurrent](
     httpClient: HttpClient[F],
     region:     String = "us-east-1"
   ): WebIdentityTokenFileCredentialsProvider[F] =
