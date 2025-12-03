@@ -41,7 +41,7 @@ import ldbc.amazon.identity.*
  * 
  * @tparam F The effect type
  */
-class DefaultCredentialsProviderChain[F[_]: Files: Env: SystemProperties: Network: MonadThrow: Concurrent] 
+class DefaultCredentialsProviderChain[F[_]: Files: Env: SystemProperties: Network: MonadThrow: Concurrent]
   extends AwsCredentialsProvider[F]:
 
   private lazy val providers: F[List[AwsCredentialsProvider[F]]] =
@@ -54,7 +54,7 @@ class DefaultCredentialsProviderChain[F[_]: Files: Env: SystemProperties: Networ
       webIdentityProvider,
       profileProvider
       // ContainerCredentialsProvider - TODO: implement
-      // InstanceProfileCredentialsProvider - TODO: implement  
+      // InstanceProfileCredentialsProvider - TODO: implement
     )
 
   override def resolveCredentials(): F[AwsCredentials] =
@@ -64,7 +64,7 @@ class DefaultCredentialsProviderChain[F[_]: Files: Env: SystemProperties: Networ
     yield credentials
 
   private def tryProvidersInOrder(
-    providers: List[AwsCredentialsProvider[F]], 
+    providers: List[AwsCredentialsProvider[F]],
     exceptions: List[String]
   ): F[AwsCredentials] =
     providers match
@@ -82,20 +82,20 @@ class DefaultCredentialsProviderChain[F[_]: Files: Env: SystemProperties: Networ
 object DefaultCredentialsProviderChain:
 
   /**
-   * Creates a new default credentials provider chain.
-   * 
-   * @tparam F The effect type
-   * @return A new DefaultCredentialsProviderChain instance
-   */
+ * Creates a new default credentials provider chain.
+ * 
+ * @tparam F The effect type
+ * @return A new DefaultCredentialsProviderChain instance
+ */
   def apply[F[_]: Files: Env: SystemProperties: Network: MonadThrow: Concurrent](): DefaultCredentialsProviderChain[F] =
     new DefaultCredentialsProviderChain[F]()
 
   /**
-   * Convenience method to resolve credentials using the default chain.
-   * 
-   * @tparam F The effect type
-   * @return AWS credentials from the first successful provider
-   */
+ * Convenience method to resolve credentials using the default chain.
+ * 
+ * @tparam F The effect type
+ * @return AWS credentials from the first successful provider
+ */
   def resolveCredentials[F[_]: Files: Env: SystemProperties: Network: MonadThrow: Concurrent](): F[AwsCredentials] =
     DefaultCredentialsProviderChain[F]().resolveCredentials()
  */
