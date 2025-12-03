@@ -11,14 +11,13 @@ import java.time.{ Instant, ZoneOffset }
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
-import scala.xml.XML
-
 import cats.syntax.all.*
 import cats.MonadThrow
 
 import cats.effect.Concurrent
 
 import ldbc.amazon.exception.{ SdkClientException, StsException }
+import ldbc.amazon.util.SimpleXmlParser
 
 /**
  * Trait for AWS STS (Security Token Service) client operations.
@@ -190,37 +189,27 @@ object StsClient:
   private def parseAssumeRoleResponse[F[_]: MonadThrow](xmlBody: String): F[AssumeRoleWithWebIdentityResponse] =
     MonadThrow[F]
       .catchNonFatal {
-        val xml = XML.loadString(xmlBody)
 
-        // Extract credentials
-        val credentials     = (xml \ "AssumeRoleWithWebIdentityResult" \ "Credentials").head
-        val accessKeyId     = (credentials \ "AccessKeyId").text.trim
-        val secretAccessKey = (credentials \ "SecretAccessKey").text.trim
-        val sessionToken    = (credentials \ "SessionToken").text.trim
-        val expirationStr   = (credentials \ "Expiration").text.trim
+        val accessKeyId = SimpleXmlParser.requireTag("AccessKeyId", xmlBody, "AccessKeyId not found")
+        val secretAccessKey = SimpleXmlParser.requireTag("SecretAccessKey", xmlBody, "SecretAccessKey not found")
+        val sessionToken = SimpleXmlParser.requireTag("SessionToken", xmlBody, "SessionToken not found")
+        val expirationStr = SimpleXmlParser.requireTag("Expiration", xmlBody, "Expiration not found")
 
-        // Extract assumed role information
-        val assumedRoleUser = (xml \ "AssumeRoleWithWebIdentityResult" \ "AssumedRoleUser").head
-        val assumedRoleArn  = (assumedRoleUser \ "Arn").text.trim
-
-        // Parse expiration time
-        val expiration = Instant.parse(expirationStr)
-
-        // Validate required fields
-        if accessKeyId.isEmpty then throw new StsException("AccessKeyId not found in STS response")
-        if secretAccessKey.isEmpty then throw new StsException("SecretAccessKey not found in STS response")
-        if sessionToken.isEmpty then throw new StsException("SessionToken not found in STS response")
-        if assumedRoleArn.isEmpty then throw new StsException("AssumedRoleArn not found in STS response")
+        val assumedRoleArn = SimpleXmlParser.extractSection("AssumedRoleUser", xmlBody)
+          .flatMap(section => SimpleXmlParser.extractTagContent("Arn", section))
+          .filter(_.nonEmpty)
+          .getOrElse(throw new StsException("AssumedRoleArn not found"))
 
         AssumeRoleWithWebIdentityResponse(
-          accessKeyId     = accessKeyId,
+          accessKeyId = accessKeyId,
           secretAccessKey = secretAccessKey,
-          sessionToken    = sessionToken,
-          expiration      = expiration,
-          assumedRoleArn  = assumedRoleArn
+          sessionToken = sessionToken,
+          expiration = Instant.parse(expirationStr),
+          assumedRoleArn = assumedRoleArn
         )
       }
       .adaptError {
+        case ex: StsException => ex
         case ex =>
           new StsException(s"Failed to parse STS response: ${ ex.getMessage }")
       }
