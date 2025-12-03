@@ -116,7 +116,7 @@ class RdsIamAuthTokenGenerator[F[_]: Hashing: Sync](
    * Converts a timestamp to the format "yyyyMMddTHHmmssZ" in UTC timezone,
    * which is required for AWS authentication requests.
    * 
-   * @param duration current time is used regardless of this value
+   * @param duration Duration to add to the current time
    * @return Formatted datetime string in AWS SigV4 format (e.g., "20230101T120000Z")
    */
   private def formatDateTime(duration: FiniteDuration): String =
