@@ -127,7 +127,7 @@ class RdsIamAuthTokenGenerator[F[_]: Hashing: Sync](
     DateTimeFormatter
       .ofPattern("yyyyMMdd'T'HHmmss'Z'")
       .withZone(ZoneOffset.UTC)
-      .format(Instant.now().plusMillis(duration.toMillis))
+      .format(Instant.EPOCH.plusNanos(duration.toNanos))
 
   /**
    * Builds the query parameters for the RDS authentication request.
