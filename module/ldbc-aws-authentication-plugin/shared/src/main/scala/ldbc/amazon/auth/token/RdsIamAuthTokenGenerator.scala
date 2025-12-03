@@ -11,6 +11,8 @@ import java.nio.charset.StandardCharsets
 import java.time.{ Instant, ZoneOffset }
 import java.time.format.DateTimeFormatter
 
+import scala.concurrent.duration.FiniteDuration
+
 import cats.syntax.all.*
 
 import cats.effect.kernel.{ Clock, Sync }
@@ -95,7 +97,7 @@ class RdsIamAuthTokenGenerator[F[_]: Hashing: Sync](
    */
   override def generateToken(credentials: AwsCredentials): F[String] =
     for
-      now <- clock.realTimeInstant
+      now <- clock.realTime
       dateTime        = formatDateTime(now)
       date            = dateTime.substring(0, 8)
       credentialScope = s"$date/$region/$SERVICE/$TERMINATOR"
@@ -109,19 +111,19 @@ class RdsIamAuthTokenGenerator[F[_]: Hashing: Sync](
     yield s"$hostname:$port/?$queryParams&X-Amz-Signature=$signature"
 
   /**
-   * Formats an Instant to ISO 8601 basic format string required by AWS Signature Version 4.
+   * Formats an FiniteDuration to ISO 8601 basic format string required by AWS Signature Version 4.
    * 
    * Converts a timestamp to the format "yyyyMMddTHHmmssZ" in UTC timezone,
    * which is required for AWS authentication requests.
    * 
-   * @param instant The timestamp to format
+   * @param duration current time is used regardless of this value
    * @return Formatted datetime string in AWS SigV4 format (e.g., "20230101T120000Z")
    */
-  private def formatDateTime(instant: Instant): String =
+  private def formatDateTime(duration: FiniteDuration): String =
     DateTimeFormatter
       .ofPattern("yyyyMMdd'T'HHmmss'Z'")
       .withZone(ZoneOffset.UTC)
-      .format(instant)
+      .format(Instant.now().plusMillis(duration.toMillis))
 
   /**
    * Builds the query parameters for the RDS authentication request.
