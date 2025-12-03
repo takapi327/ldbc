@@ -20,6 +20,7 @@ import cats.effect.kernel.{ Clock, Sync }
 import fs2.{ Chunk, Stream }
 import fs2.hashing.{ HashAlgorithm, Hashing }
 
+import ldbc.amazon.auth.credentials.*
 import ldbc.amazon.identity.AwsCredentials
 
 /**
@@ -102,8 +103,11 @@ class RdsIamAuthTokenGenerator[F[_]: Hashing: Sync](
       date            = dateTime.substring(0, 8)
       credentialScope = s"$date/$region/$SERVICE/$TERMINATOR"
       credential      = s"${ credentials.accessKeyId }/$credentialScope"
-      // queryParams      = buildQueryParams(credential, dateTime, credentials.sessionToken, username)
-      queryParams      = buildQueryParams(credential, dateTime, ???, username)
+      queryParams     = credentials match {
+                      case c: AwsBasicCredentials   => buildQueryParams(credential, dateTime, None, username)
+                      case c: AwsSessionCredentials =>
+                        buildQueryParams(credential, dateTime, Some(c.sessionToken), username)
+                    }
       canonicalRequest = buildCanonicalRequest(s"$hostname:$port", queryParams)
       canonicalRequestHash <- sha256Hex(canonicalRequest)
       stringToSign = buildStringToSign(dateTime, credentialScope, canonicalRequestHash)
