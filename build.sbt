@@ -151,6 +151,7 @@ lazy val awsAuthenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativeP
       "org.scala-lang.modules" %%% "scala-xml"         % "2.2.0",
       "co.fs2"                 %%% "fs2-core"          % "3.12.2",
       "co.fs2"                 %%% "fs2-io"            % "3.12.2",
+      "io.circe"      %% "circe-parser"       % "0.14.10",
       "org.typelevel"          %%% "munit-cats-effect" % "2.1.0" % Test
     )
   )
