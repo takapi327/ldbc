@@ -94,7 +94,9 @@ object DefaultCredentialsProviderChain:
  * @tparam F The effect type
  * @return A new DefaultCredentialsProviderChain instance
  */
-  def default[F[_]: Files: Env: SystemProperties: Network: UUIDGen: Async](region: String): DefaultCredentialsProviderChain[F] =
+  def default[F[_]: Files: Env: SystemProperties: Network: UUIDGen: Async](
+    region: String
+  ): DefaultCredentialsProviderChain[F] =
     val httpClient = new SimpleHttpClient[F](
       connectTimeout = 1.second,
       readTimeout    = 2.seconds

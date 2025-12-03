@@ -9,8 +9,8 @@ package ldbc.amazon.auth.credentials.internal
 import cats.syntax.all.*
 import cats.MonadThrow
 
-import cats.effect.Concurrent
 import cats.effect.std.UUIDGen
+import cats.effect.Concurrent
 
 import fs2.io.file.{ Files, Path }
 

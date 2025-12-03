@@ -223,16 +223,16 @@ private case class ContainerCredentialsResponse(
 private object ContainerCredentialsResponse:
   def fromJson(json: SimpleJsonParser.JsonObject): Either[String, ContainerCredentialsResponse] =
     for
-      accessKeyId <- json.require("AccessKeyId")
+      accessKeyId     <- json.require("AccessKeyId")
       secretAccessKey <- json.require("SecretAccessKey")
-      token <- json.require("Token")
-      expiration <- json.require("Expiration")
+      token           <- json.require("Token")
+      expiration      <- json.require("Expiration")
     yield ContainerCredentialsResponse(
       AccessKeyId     = accessKeyId,
       SecretAccessKey = secretAccessKey,
       Token           = token,
       Expiration      = expiration,
-      RoleArn = json.get("RoleArn")
+      RoleArn         = json.get("RoleArn")
     )
 
 object ContainerCredentialsProvider:

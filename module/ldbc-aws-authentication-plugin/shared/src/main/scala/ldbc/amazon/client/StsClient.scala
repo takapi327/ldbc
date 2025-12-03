@@ -13,8 +13,8 @@ import java.time.format.DateTimeFormatter
 import cats.syntax.all.*
 import cats.MonadThrow
 
-import cats.effect.Concurrent
 import cats.effect.std.UUIDGen
+import cats.effect.Concurrent
 
 import ldbc.amazon.exception.{ SdkClientException, StsException }
 import ldbc.amazon.util.SimpleXmlParser
@@ -190,26 +190,27 @@ object StsClient:
     MonadThrow[F]
       .catchNonFatal {
 
-        val accessKeyId = SimpleXmlParser.requireTag("AccessKeyId", xmlBody, "AccessKeyId not found")
+        val accessKeyId     = SimpleXmlParser.requireTag("AccessKeyId", xmlBody, "AccessKeyId not found")
         val secretAccessKey = SimpleXmlParser.requireTag("SecretAccessKey", xmlBody, "SecretAccessKey not found")
-        val sessionToken = SimpleXmlParser.requireTag("SessionToken", xmlBody, "SessionToken not found")
-        val expirationStr = SimpleXmlParser.requireTag("Expiration", xmlBody, "Expiration not found")
+        val sessionToken    = SimpleXmlParser.requireTag("SessionToken", xmlBody, "SessionToken not found")
+        val expirationStr   = SimpleXmlParser.requireTag("Expiration", xmlBody, "Expiration not found")
 
-        val assumedRoleArn = SimpleXmlParser.extractSection("AssumedRoleUser", xmlBody)
+        val assumedRoleArn = SimpleXmlParser
+          .extractSection("AssumedRoleUser", xmlBody)
           .flatMap(section => SimpleXmlParser.extractTagContent("Arn", section))
           .filter(_.nonEmpty)
           .getOrElse(throw new StsException("AssumedRoleArn not found"))
 
         AssumeRoleWithWebIdentityResponse(
-          accessKeyId = accessKeyId,
+          accessKeyId     = accessKeyId,
           secretAccessKey = secretAccessKey,
-          sessionToken = sessionToken,
-          expiration = Instant.parse(expirationStr),
-          assumedRoleArn = assumedRoleArn
+          sessionToken    = sessionToken,
+          expiration      = Instant.parse(expirationStr),
+          assumedRoleArn  = assumedRoleArn
         )
       }
       .adaptError {
         case ex: StsException => ex
-        case ex =>
+        case ex               =>
           new StsException(s"Failed to parse STS response: ${ ex.getMessage }")
       }

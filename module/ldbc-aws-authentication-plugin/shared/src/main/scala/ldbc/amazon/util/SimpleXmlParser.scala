@@ -16,27 +16,27 @@ object SimpleXmlParser:
 
   def extractTagContent(tagName: String, xml: String): Option[String] = {
     val startTag = s"<$tagName>"
-    val endTag = s"</$tagName>"
+    val endTag   = s"</$tagName>"
     val startIdx = xml.indexOf(startTag)
 
-    if (startIdx < 0) None
+    if startIdx < 0 then None
     else {
       val contentStart = startIdx + startTag.length
-      val endIdx = xml.indexOf(endTag, contentStart)
-      if (endIdx < 0) None
+      val endIdx       = xml.indexOf(endTag, contentStart)
+      if endIdx < 0 then None
       else Some(decodeXmlEntities(xml.substring(contentStart, endIdx).trim))
     }
   }
 
   def extractSection(tagName: String, xml: String): Option[String] = {
     val startTag = s"<$tagName>"
-    val endTag = s"</$tagName>"
+    val endTag   = s"</$tagName>"
     val startIdx = xml.indexOf(startTag)
 
-    if (startIdx < 0) None
+    if startIdx < 0 then None
     else {
       val endIdx = xml.indexOf(endTag, startIdx)
-      if (endIdx < 0) None
+      if endIdx < 0 then None
       else Some(xml.substring(startIdx, endIdx + endTag.length))
     }
   }
