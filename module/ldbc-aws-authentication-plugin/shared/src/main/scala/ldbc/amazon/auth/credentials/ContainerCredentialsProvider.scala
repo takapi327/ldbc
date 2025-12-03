@@ -11,17 +11,18 @@ import java.time.Instant
 
 import scala.concurrent.duration.*
 
-import cats.effect.std.Env
-import cats.effect.{Async, Concurrent}
 import cats.syntax.all.*
 
-import fs2.io.file.{Files, Path}
+import cats.effect.{ Async, Concurrent }
+import cats.effect.std.Env
+
+import fs2.io.file.{ Files, Path }
 import fs2.io.net.*
 
 import io.circe.*
 import io.circe.parser.*
 
-import ldbc.amazon.client.{HttpClient, SimpleHttpClient}
+import ldbc.amazon.client.{ HttpClient, SimpleHttpClient }
 import ldbc.amazon.exception.SdkClientException
 import ldbc.amazon.identity.*
 import ldbc.amazon.useragent.BusinessMetricFeatureId
@@ -58,59 +59,68 @@ final class ContainerCredentialsProvider[F[_]: Files: Env: Concurrent](
 
   override def resolveCredentials(): F[AwsCredentials] =
     for
-      config <- loadContainerCredentialsConfig()
+      config      <- loadContainerCredentialsConfig()
       credentials <- config match {
-        case None =>
-          Concurrent[F].raiseError(new SdkClientException(
-            "Unable to load container credentials. " +
-            "Environment variables AWS_CONTAINER_CREDENTIALS_RELATIVE_URI or " +
-            "AWS_CONTAINER_CREDENTIALS_FULL_URI are not set."
-          ))
-        case Some(containerConfig) =>
-          fetchCredentialsFromEndpoint(containerConfig)
-      }
+                       case None =>
+                         Concurrent[F].raiseError(
+                           new SdkClientException(
+                             "Unable to load container credentials. " +
+                               "Environment variables AWS_CONTAINER_CREDENTIALS_RELATIVE_URI or " +
+                               "AWS_CONTAINER_CREDENTIALS_FULL_URI are not set."
+                           )
+                         )
+                       case Some(containerConfig) =>
+                         fetchCredentialsFromEndpoint(containerConfig)
+                     }
     yield credentials
 
   private def loadContainerCredentialsConfig(): F[Option[ContainerCredentialsConfig]] =
     for
       relativeUri <- Env[F].get("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI")
-      fullUri <- Env[F].get("AWS_CONTAINER_CREDENTIALS_FULL_URI")
+      fullUri     <- Env[F].get("AWS_CONTAINER_CREDENTIALS_FULL_URI")
       directToken <- Env[F].get("AWS_CONTAINER_AUTHORIZATION_TOKEN")
-      tokenFile <- Env[F].get("AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE")
-      token <- loadAuthorizationToken(directToken, tokenFile)
+      tokenFile   <- Env[F].get("AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE")
+      token       <- loadAuthorizationToken(directToken, tokenFile)
     yield (relativeUri, fullUri) match {
       case (Some(relative), _) =>
-        Some(ContainerCredentialsConfig(
-          endpointUri = s"http://169.254.170.2$relative",
-          authorizationToken = token
-        ))
+        Some(
+          ContainerCredentialsConfig(
+            endpointUri        = s"http://169.254.170.2$relative",
+            authorizationToken = token
+          )
+        )
       case (_, Some(full)) =>
-        Some(ContainerCredentialsConfig(
-          endpointUri = full,
-          authorizationToken = token
-        ))
+        Some(
+          ContainerCredentialsConfig(
+            endpointUri        = full,
+            authorizationToken = token
+          )
+        )
       case _ => None
     }
 
   private def loadAuthorizationToken(
-    directToken: Option[String], 
+    directToken:   Option[String],
     tokenFilePath: Option[String]
   ): F[Option[String]] =
     (directToken, tokenFilePath) match {
-      case (Some(token), _) => 
+      case (Some(token), _) =>
         Concurrent[F].pure(Some(token.trim).filter(_.nonEmpty))
       case (_, Some(filePath)) =>
         loadTokenFromFile(Path(filePath))
-      case _ => 
+      case _ =>
         Concurrent[F].pure(None)
     }
 
   private def loadTokenFromFile(tokenFilePath: Path): F[Option[String]] =
     Files[F].exists(tokenFilePath).flatMap { exists =>
-      if (exists) {
-        Files[F].readUtf8(tokenFilePath).compile.string
+      if exists then {
+        Files[F]
+          .readUtf8(tokenFilePath)
+          .compile
+          .string
           .map(_.trim)
-          .map(token => if (token.nonEmpty) Some(token) else None)
+          .map(token => if token.nonEmpty then Some(token) else None)
           .handleErrorWith { _ =>
             Concurrent[F].pure(None)
           }
@@ -122,52 +132,58 @@ final class ContainerCredentialsProvider[F[_]: Files: Env: Concurrent](
   private def fetchCredentialsFromEndpoint(config: ContainerCredentialsConfig): F[AwsCredentials] =
     val headers = buildRequestHeaders(config.authorizationToken)
     for
-      response <- httpClient.get(URI.create(config.endpointUri), headers)
-      _ <- validateHttpResponse(response)
+      response    <- httpClient.get(URI.create(config.endpointUri), headers)
+      _           <- validateHttpResponse(response)
       credentials <- parseCredentialsResponse(response.body)
     yield credentials
 
   private def buildRequestHeaders(authToken: Option[String]): Map[String, String] =
     val baseHeaders = Map(
-      "Accept" -> "application/json",
+      "Accept"     -> "application/json",
       "User-Agent" -> "aws-sdk-scala/ldbc"
     )
     authToken match {
       case Some(token) => baseHeaders + ("Authorization" -> token)
-      case None => baseHeaders
+      case None        => baseHeaders
     }
 
   private def validateHttpResponse(response: ldbc.amazon.client.HttpResponse): F[Unit] =
-    if (response.statusCode >= 200 && response.statusCode < 300) {
+    if response.statusCode >= 200 && response.statusCode < 300 then {
       Concurrent[F].unit
     } else {
-      Concurrent[F].raiseError(new SdkClientException(
-        s"Container credentials request failed with status ${response.statusCode}: ${response.body}"
-      ))
+      Concurrent[F].raiseError(
+        new SdkClientException(
+          s"Container credentials request failed with status ${ response.statusCode }: ${ response.body }"
+        )
+      )
     }
 
   private def parseCredentialsResponse(jsonBody: String): F[AwsCredentials] =
-    Concurrent[F].fromEither(
-      parse(jsonBody).flatMap(_.as[ContainerCredentialsResponse])
-    ).map { response =>
-      AwsSessionCredentials(
-        accessKeyId = response.AccessKeyId,
-        secretAccessKey = response.SecretAccessKey,
-        sessionToken = response.Token,
-        validateCredentials = false,
-        providerName = Some(BusinessMetricFeatureId.CREDENTIALS_CONTAINER.code),
-        accountId = extractAccountIdFromRoleArn(response.RoleArn),
-        expirationTime = Some(Instant.parse(response.Expiration))
+    Concurrent[F]
+      .fromEither(
+        parse(jsonBody).flatMap(_.as[ContainerCredentialsResponse])
       )
-    }.adaptError { case ex =>
-      new SdkClientException(s"Failed to parse container credentials response: ${ex.getMessage}")
-    }
+      .map { response =>
+        AwsSessionCredentials(
+          accessKeyId         = response.AccessKeyId,
+          secretAccessKey     = response.SecretAccessKey,
+          sessionToken        = response.Token,
+          validateCredentials = false,
+          providerName        = Some(BusinessMetricFeatureId.CREDENTIALS_CONTAINER.code),
+          accountId           = extractAccountIdFromRoleArn(response.RoleArn),
+          expirationTime      = Some(Instant.parse(response.Expiration))
+        )
+      }
+      .adaptError {
+        case ex =>
+          new SdkClientException(s"Failed to parse container credentials response: ${ ex.getMessage }")
+      }
 
   private def extractAccountIdFromRoleArn(roleArn: Option[String]): Option[String] =
     roleArn.flatMap { arn =>
       // ARN format: arn:aws:iam::ACCOUNT_ID:role/ROLE_NAME
       val arnParts = arn.split(":")
-      if (arnParts.length >= 5) {
+      if arnParts.length >= 5 then {
         Some(arnParts(4))
       } else {
         None
@@ -181,7 +197,7 @@ final class ContainerCredentialsProvider[F[_]: Files: Env: Concurrent](
  * @param authorizationToken Optional authorization token for requests
  */
 private case class ContainerCredentialsConfig(
-  endpointUri: String,
+  endpointUri:        String,
   authorizationToken: Option[String]
 )
 
@@ -195,17 +211,17 @@ private case class ContainerCredentialsConfig(
  * @param RoleArn Optional ARN of the assumed role
  */
 private case class ContainerCredentialsResponse(
-  AccessKeyId: String,
+  AccessKeyId:     String,
   SecretAccessKey: String,
-  Token: String,
-  Expiration: String,
-  RoleArn: Option[String] = None
+  Token:           String,
+  Expiration:      String,
+  RoleArn:         Option[String] = None
 )
 
 private object ContainerCredentialsResponse:
   given Decoder[ContainerCredentialsResponse] = Decoder.forProduct5(
     "AccessKeyId",
-    "SecretAccessKey", 
+    "SecretAccessKey",
     "Token",
     "Expiration",
     "RoleArn"
@@ -241,10 +257,12 @@ object ContainerCredentialsProvider:
    * @return A configured HTTP client
    */
   private def createDefaultHttpClient[F[_]: Network: Async](): F[HttpClient[F]] =
-    Async[F].pure(new SimpleHttpClient[F](
-      connectTimeout = 5.seconds,
-      readTimeout = 5.seconds
-    ))
+    Async[F].pure(
+      new SimpleHttpClient[F](
+        connectTimeout = 5.seconds,
+        readTimeout    = 5.seconds
+      )
+    )
 
   /**
    * Checks if Container credentials are available by verifying
@@ -256,5 +274,5 @@ object ContainerCredentialsProvider:
   def isAvailable[F[_]: Env: Concurrent](): F[Boolean] =
     for
       relativeUri <- Env[F].get("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI")
-      fullUri <- Env[F].get("AWS_CONTAINER_CREDENTIALS_FULL_URI")
+      fullUri     <- Env[F].get("AWS_CONTAINER_CREDENTIALS_FULL_URI")
     yield relativeUri.exists(_.trim.nonEmpty) || fullUri.exists(_.trim.nonEmpty)

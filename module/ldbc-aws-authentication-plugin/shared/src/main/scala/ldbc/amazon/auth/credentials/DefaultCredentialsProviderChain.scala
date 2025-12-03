@@ -8,16 +8,17 @@ package ldbc.amazon.auth.credentials
 
 import scala.concurrent.duration.*
 
-import cats.effect.std.{Env, SystemProperties}
-import cats.effect.*
 import cats.syntax.all.*
+
+import cats.effect.*
+import cats.effect.std.{ Env, SystemProperties }
 
 import fs2.io.file.Files
 import fs2.io.net.*
 
+import ldbc.amazon.client.*
 import ldbc.amazon.exception.SdkClientException
 import ldbc.amazon.identity.*
-import ldbc.amazon.client.*
 
 /**
  * Default AWS credentials provider chain that matches AWS SDK v2 behavior.
@@ -43,12 +44,14 @@ import ldbc.amazon.client.*
  * 
  * @tparam F The effect type
  */
-class DefaultCredentialsProviderChain[F[_]: Files: Env: SystemProperties: Concurrent](httpClient: HttpClient[F], region: String)
-  extends AwsCredentialsProvider[F]:
+class DefaultCredentialsProviderChain[F[_]: Files: Env: SystemProperties: Concurrent](
+  httpClient: HttpClient[F],
+  region:     String
+) extends AwsCredentialsProvider[F]:
 
   private lazy val providers: F[List[AwsCredentialsProvider[F]]] =
     for
-      profileProvider <- ProfileCredentialsProvider.default[F]()
+      profileProvider                    <- ProfileCredentialsProvider.default[F]()
       instanceProfileCredentialsProvider <- InstanceProfileCredentialsProvider.create[F](httpClient)
     yield List(
       new SystemPropertyCredentialsProvider[F](),
@@ -62,22 +65,24 @@ class DefaultCredentialsProviderChain[F[_]: Files: Env: SystemProperties: Concur
   override def resolveCredentials(): F[AwsCredentials] =
     for
       providerList <- providers
-      credentials <- tryProvidersInOrder(providerList, Nil)
+      credentials  <- tryProvidersInOrder(providerList, Nil)
     yield credentials
 
   private def tryProvidersInOrder(
-    providers: List[AwsCredentialsProvider[F]],
+    providers:  List[AwsCredentialsProvider[F]],
     exceptions: List[String]
   ): F[AwsCredentials] =
     providers match
       case Nil =>
-        Concurrent[F].raiseError(new SdkClientException(
-          s"Unable to load AWS credentials from any provider in the chain: ${exceptions.mkString(", ")}"
-        ))
-      
+        Concurrent[F].raiseError(
+          new SdkClientException(
+            s"Unable to load AWS credentials from any provider in the chain: ${ exceptions.mkString(", ") }"
+          )
+        )
+
       case provider :: remainingProviders =>
         provider.resolveCredentials().recoverWith { ex =>
-          val errorMsg = s"${provider.getClass.getSimpleName}: ${ex.getMessage}"
+          val errorMsg = s"${ provider.getClass.getSimpleName }: ${ ex.getMessage }"
           tryProvidersInOrder(remainingProviders, exceptions :+ errorMsg)
         }
 
@@ -92,6 +97,6 @@ object DefaultCredentialsProviderChain:
   def default[F[_]: Files: Env: SystemProperties: Network: Async](region: String): DefaultCredentialsProviderChain[F] =
     val httpClient = new SimpleHttpClient[F](
       connectTimeout = 1.second,
-      readTimeout = 2.seconds
+      readTimeout    = 2.seconds
     )
     new DefaultCredentialsProviderChain[F](httpClient, region)

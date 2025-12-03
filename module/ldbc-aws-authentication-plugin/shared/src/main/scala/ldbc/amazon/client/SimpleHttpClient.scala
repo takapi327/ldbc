@@ -66,17 +66,17 @@ class SimpleHttpClient[F[_]: Network: Async](
     headers: Map[String, String],
     body:    Option[String]
   ): F[Unit] =
-    val hostHeader = if port == 80 then host else s"$host:$port"
+    val hostHeader     = if port == 80 then host else s"$host:$port"
     val contentHeaders = body match {
       case Some(b) => Map("Content-Length" -> b.getBytes("UTF-8").length.toString)
-      case None => Map.empty
+      case None    => Map.empty
     }
     val allHeaders = headers ++ contentHeaders + ("Host" -> hostHeader) + ("Connection" -> "close")
 
-    val requestLine = s"$method $path HTTP/1.1\r\n"
-    val headerLines = allHeaders.map((k, v) => s"$k: $v\r\n").mkString
+    val requestLine        = s"$method $path HTTP/1.1\r\n"
+    val headerLines        = allHeaders.map((k, v) => s"$k: $v\r\n").mkString
     val requestWithHeaders = requestLine + headerLines + "\r\n"
-    val fullRequest = body.map(requestWithHeaders + _).getOrElse(requestWithHeaders)
+    val fullRequest        = body.map(requestWithHeaders + _).getOrElse(requestWithHeaders)
 
     Stream
       .emit(fullRequest)
