@@ -148,7 +148,6 @@ lazy val awsAuthenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativeP
   .module("aws-authentication-plugin", "")
   .settings(
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %%% "scala-xml"         % "2.2.0",
       "co.fs2"                 %%% "fs2-core"          % "3.12.2",
       "co.fs2"                 %%% "fs2-io"            % "3.12.2",
       "io.circe"      %% "circe-parser"       % "0.14.10",
@@ -221,7 +220,7 @@ lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
   .nativeSettings(Test / nativeBrewFormulas += "s2n")
-  .dependsOn(connector, queryBuilder, schema)
+  .dependsOn(connector, queryBuilder, schema, awsAuthenticationPlugin)
   .enablePlugins(NoPublishPlugin)
 
 lazy val benchmark = (project in file("benchmark"))
