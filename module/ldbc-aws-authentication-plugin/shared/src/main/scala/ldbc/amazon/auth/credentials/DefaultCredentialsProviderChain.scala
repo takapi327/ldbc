@@ -4,18 +4,20 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-/*
 package ldbc.amazon.auth.credentials
 
-import cats.MonadThrow
+import scala.concurrent.duration.*
+
 import cats.effect.std.{Env, SystemProperties}
-import cats.effect.{Concurrent, Network}
+import cats.effect.*
 import cats.syntax.all.*
 
 import fs2.io.file.Files
+import fs2.io.net.*
 
 import ldbc.amazon.exception.SdkClientException
 import ldbc.amazon.identity.*
+import ldbc.amazon.client.*
 
 /**
  * Default AWS credentials provider chain that matches AWS SDK v2 behavior.
@@ -41,20 +43,20 @@ import ldbc.amazon.identity.*
  * 
  * @tparam F The effect type
  */
-class DefaultCredentialsProviderChain[F[_]: Files: Env: SystemProperties: Network: MonadThrow: Concurrent]
+class DefaultCredentialsProviderChain[F[_]: Files: Env: SystemProperties: Concurrent](httpClient: HttpClient[F], region: String)
   extends AwsCredentialsProvider[F]:
 
   private lazy val providers: F[List[AwsCredentialsProvider[F]]] =
     for
-      webIdentityProvider <- WebIdentityTokenFileCredentialsProvider[F]()
       profileProvider <- ProfileCredentialsProvider.default[F]()
+      instanceProfileCredentialsProvider <- InstanceProfileCredentialsProvider.create[F](httpClient)
     yield List(
       new SystemPropertyCredentialsProvider[F](),
       new EnvironmentVariableCredentialsProvider[F](),
-      webIdentityProvider,
-      profileProvider
-      // ContainerCredentialsProvider - TODO: implement
-      // InstanceProfileCredentialsProvider - TODO: implement
+      WebIdentityTokenFileCredentialsProvider.default[F](httpClient, region),
+      profileProvider,
+      ContainerCredentialsProvider.create[F](httpClient),
+      instanceProfileCredentialsProvider
     )
 
   override def resolveCredentials(): F[AwsCredentials] =
@@ -69,7 +71,7 @@ class DefaultCredentialsProviderChain[F[_]: Files: Env: SystemProperties: Networ
   ): F[AwsCredentials] =
     providers match
       case Nil =>
-        MonadThrow[F].raiseError(new SdkClientException(
+        Concurrent[F].raiseError(new SdkClientException(
           s"Unable to load AWS credentials from any provider in the chain: ${exceptions.mkString(", ")}"
         ))
       
@@ -87,15 +89,9 @@ object DefaultCredentialsProviderChain:
  * @tparam F The effect type
  * @return A new DefaultCredentialsProviderChain instance
  */
-  def apply[F[_]: Files: Env: SystemProperties: Network: MonadThrow: Concurrent](): DefaultCredentialsProviderChain[F] =
-    new DefaultCredentialsProviderChain[F]()
-
-  /**
- * Convenience method to resolve credentials using the default chain.
- * 
- * @tparam F The effect type
- * @return AWS credentials from the first successful provider
- */
-  def resolveCredentials[F[_]: Files: Env: SystemProperties: Network: MonadThrow: Concurrent](): F[AwsCredentials] =
-    DefaultCredentialsProviderChain[F]().resolveCredentials()
- */
+  def default[F[_]: Files: Env: SystemProperties: Network: Async](region: String): DefaultCredentialsProviderChain[F] =
+    val httpClient = new SimpleHttpClient[F](
+      connectTimeout = 1.second,
+      readTimeout = 2.seconds
+    )
+    new DefaultCredentialsProviderChain[F](httpClient, region)
