@@ -6,7 +6,6 @@
 
 package ldbc.amazon.auth.credentials
 
-
 import cats.syntax.all.*
 
 import cats.effect.*
