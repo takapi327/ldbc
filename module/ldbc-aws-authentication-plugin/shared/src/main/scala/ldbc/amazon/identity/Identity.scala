@@ -25,6 +25,6 @@ trait Identity:
   /**
    * The source that resolved this identity, normally an identity provider. Note that
    * this string value would be set by an identity provider implementation and is
-   * intended to be used for for tracking purposes. Avoid building logic on its value.
+   * intended to be used for tracking purposes. Avoid building logic on its value.
    */
   def providerName: Option[String]

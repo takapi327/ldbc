@@ -84,7 +84,9 @@ object StsClient:
     ): F[AssumeRoleWithWebIdentityResponse] =
       for
         timestamp <- Concurrent[F].fromEither(getCurrentTimestamp())
-        sessionName = request.roleSessionName.getOrElse(s"ldbc-session-${ UUIDGen[F].randomUUID }")
+        sessionName <- request.roleSessionName.fold(
+          UUIDGen[F].randomUUID.map(uuid => s"ldbc-session-$uuid")
+        )(Concurrent[F].pure)
         duration    = request.durationSeconds.getOrElse(3600)
 
         // Build STS request
