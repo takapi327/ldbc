@@ -6,19 +6,25 @@
 
 package ldbc.amazon.client
 
+import java.net.URI
+
+import javax.net.ssl.SNIHostName
+
+import scala.concurrent.duration.*
+
+import com.comcast.ip4s.*
+
+import cats.syntax.all.*
 import cats.MonadThrow
+
 import cats.effect.*
 import cats.effect.syntax.all.*
-import cats.syntax.all.*
-import com.comcast.ip4s.*
+
 import fs2.*
 import fs2.io.net.*
 import fs2.io.net.tls.*
-import ldbc.amazon.exception.*
 
-import java.net.URI
-import javax.net.ssl.SNIHostName
-import scala.concurrent.duration.*
+import ldbc.amazon.exception.*
 
 /**
  * Secure HTTP client that supports both HTTP and HTTPS protocols.
