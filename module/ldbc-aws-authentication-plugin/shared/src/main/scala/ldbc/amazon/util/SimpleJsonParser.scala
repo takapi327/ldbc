@@ -12,13 +12,16 @@ package ldbc.amazon.util
  */
 object SimpleJsonParser:
 
-  case class JsonObject(fields: Map[String, String]):
-    def get(key: String): Option[String] = fields.get(key)
+  case class JsonObject(fields: Map[String, Option[String]]):
+    def get(key: String): Option[String] = fields.get(key).flatten
 
-    def getOrEmpty(key: String): String = fields.getOrElse(key, "")
+    def getOrEmpty(key: String): String = fields.get(key).flatten.getOrElse("")
 
     def require(key: String): Either[String, String] =
-      fields.get(key).toRight(s"Required field '$key' not found")
+      fields.get(key) match
+        case None => Left(s"Required field '$key' not found")
+        case Some(None) => Left(s"Field '$key' is null")
+        case Some(Some(value)) => Right(value)
 
   /**
    * Parses a flat JSON object with string values.
@@ -45,8 +48,8 @@ object SimpleJsonParser:
           Right(JsonObject(fields))
     catch case ex: Exception => Left(s"JSON parse error: ${ ex.getMessage }")
 
-  private def parseFields(content: String): Map[String, String] =
-    val result = scala.collection.mutable.Map[String, String]()
+  private def parseFields(content: String): Map[String, Option[String]] =
+    val result = scala.collection.mutable.Map[String, Option[String]]()
     var idx    = 0
 
     while idx < content.length do
@@ -65,7 +68,7 @@ object SimpleJsonParser:
 
         // Parse value
         val (value, nextIdx2) = parseValue(content, idx)
-        result(key) = value
+        result(key) = Option(value)
         idx         = skipWhitespace(content, nextIdx2)
 
         // Skip comma if present
@@ -121,8 +124,8 @@ object SimpleJsonParser:
       // String value
       parseString(s, from)
     else if ch == 'n' && s.length >= from + 4 && s.substring(from, from + 4) == "null" then
-      // null value - return empty string
-      ("", from + 4)
+      // null value
+      (null, from + 4)
     else if ch == 't' && s.length >= from + 4 && s.substring(from, from + 4) == "true" then ("true", from + 4)
     else if ch == 'f' && s.length >= from + 5 && s.substring(from, from + 5) == "false" then ("false", from + 5)
     else if ch == '-' || ch.isDigit then
