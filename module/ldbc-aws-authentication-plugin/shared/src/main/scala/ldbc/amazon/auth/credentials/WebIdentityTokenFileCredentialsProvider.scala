@@ -6,7 +6,6 @@
 
 package ldbc.amazon.auth.credentials
 
-import scala.concurrent.duration.*
 
 import cats.syntax.all.*
 
@@ -14,10 +13,9 @@ import cats.effect.*
 import cats.effect.std.{ Env, SystemProperties, UUIDGen }
 
 import fs2.io.file.{ Files, Path }
-import fs2.io.net.*
 
 import ldbc.amazon.auth.credentials.internal.WebIdentityCredentialsUtils
-import ldbc.amazon.client.{ HttpClient, SimpleHttpClient }
+import ldbc.amazon.client.HttpClient
 import ldbc.amazon.exception.SdkClientException
 import ldbc.amazon.identity.*
 import ldbc.amazon.util.SdkSystemSetting
@@ -131,21 +129,6 @@ case class WebIdentityTokenCredentialProperties(
 object WebIdentityTokenFileCredentialsProvider:
 
   /**
-   * Creates a new Web Identity Token File credentials provider with default settings.
-   * 
-   * @param region The AWS region for STS endpoint (default: us-east-1)
-   * @tparam F The effect type
-   * @return A new WebIdentityTokenFileCredentialsProvider instance
-   */
-  def apply[F[_]: Files: Env: SystemProperties: Network: UUIDGen: Async](
-    region: String = "us-east-1"
-  ): F[WebIdentityTokenFileCredentialsProvider[F]] =
-    for
-      httpClient <- createDefaultHttpClient[F]()
-      webIdentityUtils = WebIdentityCredentialsUtils.default[F](region, httpClient)
-    yield new WebIdentityTokenFileCredentialsProvider[F](webIdentityUtils)
-
-  /**
    * Creates a new Web Identity Token File credentials provider with custom HTTP client.
    * 
    * @param httpClient The HTTP client for STS requests
@@ -171,20 +154,6 @@ object WebIdentityTokenFileCredentialsProvider:
     webIdentityUtils: WebIdentityCredentialsUtils[F]
   ): WebIdentityTokenFileCredentialsProvider[F] =
     new WebIdentityTokenFileCredentialsProvider[F](webIdentityUtils)
-
-  /**
-   * Creates a default HTTP client for STS operations.
-   * 
-   * @tparam F The effect type
-   * @return A configured HTTP client
-   */
-  private def createDefaultHttpClient[F[_]: Network: Async](): F[HttpClient[F]] =
-    Async[F].pure(
-      new SimpleHttpClient[F](
-        connectTimeout = 30.seconds,
-        readTimeout    = 30.seconds
-      )
-    )
 
   /**
    * Checks if Web Identity Token authentication is available by verifying

@@ -107,7 +107,6 @@ object WebIdentityCredentialsUtils:
      * Converts STS response to AWS credentials.
      * 
      * @param stsResponse The STS AssumeRoleWithWebIdentity response
-     * @param config The Web Identity Token configuration
      * @return AWS session credentials
      */
     private def convertStsResponseToCredentials(
