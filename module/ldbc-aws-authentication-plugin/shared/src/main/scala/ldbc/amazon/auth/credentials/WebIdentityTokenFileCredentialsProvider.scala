@@ -93,7 +93,7 @@ final class WebIdentityTokenFileCredentialsProvider[F[_]: Env: SystemProperties:
           WebIdentityTokenCredentialProperties(
             webIdentityTokenFile = Path(tokenFile),
             roleArn              = arn,
-            roleSessionName      = roleSessionName,
+            roleSessionName      = roleSessionName
           )
         )
       case _ => None
@@ -127,7 +127,7 @@ final class WebIdentityTokenFileCredentialsProvider[F[_]: Env: SystemProperties:
 case class WebIdentityTokenCredentialProperties(
   webIdentityTokenFile: Path,
   roleArn:              String,
-  roleSessionName:      Option[String],
+  roleSessionName:      Option[String]
 )
 
 object WebIdentityTokenFileCredentialsProvider:

@@ -117,7 +117,7 @@ object WebIdentityCredentialsUtils:
      * @return AWS session credentials
      */
     private def convertStsResponseToCredentials(
-      stsResponse: StsClient.AssumeRoleWithWebIdentityResponse,
+      stsResponse: StsClient.AssumeRoleWithWebIdentityResponse
     ): AwsCredentials =
       AwsSessionCredentials(
         accessKeyId         = stsResponse.accessKeyId,

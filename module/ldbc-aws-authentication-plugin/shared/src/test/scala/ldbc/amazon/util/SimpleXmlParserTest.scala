@@ -11,13 +11,13 @@ import munit.CatsEffectSuite
 class SimpleXmlParserTest extends CatsEffectSuite:
 
   test("decodeXmlEntities should decode all standard XML entities") {
-    val input = "&amp;&lt;&gt;&quot;&apos;"
+    val input    = "&amp;&lt;&gt;&quot;&apos;"
     val expected = "&<>\"'"
     assertEquals(SimpleXmlParser.decodeXmlEntities(input), expected)
   }
 
   test("decodeXmlEntities should handle mixed content with entities") {
-    val input = "Hello &amp; welcome to &lt;XML&gt; parsing &quot;test&quot;"
+    val input    = "Hello &amp; welcome to &lt;XML&gt; parsing &quot;test&quot;"
     val expected = "Hello & welcome to <XML> parsing \"test\""
     assertEquals(SimpleXmlParser.decodeXmlEntities(input), expected)
   }
@@ -32,37 +32,37 @@ class SimpleXmlParserTest extends CatsEffectSuite:
   }
 
   test("extractTagContent should extract simple tag content") {
-    val xml = "<name>John Doe</name>"
+    val xml    = "<name>John Doe</name>"
     val result = SimpleXmlParser.extractTagContent("name", xml)
     assertEquals(result, Some("John Doe"))
   }
 
   test("extractTagContent should extract content with whitespace trimmed") {
-    val xml = "<name>  John Doe  </name>"
+    val xml    = "<name>  John Doe  </name>"
     val result = SimpleXmlParser.extractTagContent("name", xml)
     assertEquals(result, Some("John Doe"))
   }
 
   test("extractTagContent should extract content with XML entities decoded") {
-    val xml = "<message>Hello &amp; welcome to &lt;XML&gt;</message>"
+    val xml    = "<message>Hello &amp; welcome to &lt;XML&gt;</message>"
     val result = SimpleXmlParser.extractTagContent("message", xml)
     assertEquals(result, Some("Hello & welcome to <XML>"))
   }
 
   test("extractTagContent should return None for non-existent tag") {
-    val xml = "<name>John Doe</name>"
+    val xml    = "<name>John Doe</name>"
     val result = SimpleXmlParser.extractTagContent("email", xml)
     assertEquals(result, None)
   }
 
   test("extractTagContent should return None for malformed XML (missing end tag)") {
-    val xml = "<name>John Doe"
+    val xml    = "<name>John Doe"
     val result = SimpleXmlParser.extractTagContent("name", xml)
     assertEquals(result, None)
   }
 
   test("extractTagContent should extract from complex XML structure") {
-    val xml = """
+    val xml         = """
       <response>
         <user>
           <name>John Doe</name>
@@ -70,21 +70,21 @@ class SimpleXmlParserTest extends CatsEffectSuite:
         </user>
       </response>
     """
-    val nameResult = SimpleXmlParser.extractTagContent("name", xml)
+    val nameResult  = SimpleXmlParser.extractTagContent("name", xml)
     val emailResult = SimpleXmlParser.extractTagContent("email", xml)
     assertEquals(nameResult, Some("John Doe"))
     assertEquals(emailResult, Some("john@example.com"))
   }
 
   test("extractTagContent should handle nested tags with same name") {
-    val xml = "<outer><name>Outer Name</name><inner><name>Inner Name</name></inner></outer>"
+    val xml    = "<outer><name>Outer Name</name><inner><name>Inner Name</name></inner></outer>"
     val result = SimpleXmlParser.extractTagContent("name", xml)
     // Should extract the first occurrence
     assertEquals(result, Some("Outer Name"))
   }
 
   test("extractSection should extract complete XML section") {
-    val xml = """
+    val xml    = """
       <response>
         <user>
           <name>John Doe</name>
@@ -103,19 +103,19 @@ class SimpleXmlParserTest extends CatsEffectSuite:
   }
 
   test("extractSection should return None for non-existent section") {
-    val xml = "<response><status>success</status></response>"
+    val xml    = "<response><status>success</status></response>"
     val result = SimpleXmlParser.extractSection("user", xml)
     assertEquals(result, None)
   }
 
   test("extractSection should return None for malformed XML section") {
-    val xml = "<user><name>John Doe</name>"
+    val xml    = "<user><name>John Doe</name>"
     val result = SimpleXmlParser.extractSection("user", xml)
     assertEquals(result, None)
   }
 
   test("extractSection should handle nested sections") {
-    val xml = """
+    val xml    = """
       <outer>
         <inner>
           <data>test</data>
@@ -129,7 +129,7 @@ class SimpleXmlParserTest extends CatsEffectSuite:
   }
 
   test("requireTag should return content for existing tag") {
-    val xml = "<AccessKeyId>AKIAIOSFODNN7EXAMPLE</AccessKeyId>"
+    val xml    = "<AccessKeyId>AKIAIOSFODNN7EXAMPLE</AccessKeyId>"
     val result = SimpleXmlParser.requireTag("AccessKeyId", xml, "AccessKeyId not found")
     assertEquals(result, "AKIAIOSFODNN7EXAMPLE")
   }
@@ -156,7 +156,7 @@ class SimpleXmlParserTest extends CatsEffectSuite:
   }
 
   test("requireTag should handle valid content with entities") {
-    val xml = "<message>Hello &amp; welcome</message>"
+    val xml    = "<message>Hello &amp; welcome</message>"
     val result = SimpleXmlParser.requireTag("message", xml, "Message not found")
     assertEquals(result, "Hello & welcome")
   }
@@ -187,11 +187,11 @@ class SimpleXmlParserTest extends CatsEffectSuite:
     assert(credentialsSection.isDefined)
 
     // Extract individual credential fields
-    val credentials = credentialsSection.get
-    val accessKeyId = SimpleXmlParser.extractTagContent("AccessKeyId", credentials)
+    val credentials     = credentialsSection.get
+    val accessKeyId     = SimpleXmlParser.extractTagContent("AccessKeyId", credentials)
     val secretAccessKey = SimpleXmlParser.extractTagContent("SecretAccessKey", credentials)
-    val sessionToken = SimpleXmlParser.extractTagContent("SessionToken", credentials)
-    val expiration = SimpleXmlParser.extractTagContent("Expiration", credentials)
+    val sessionToken    = SimpleXmlParser.extractTagContent("SessionToken", credentials)
+    val expiration      = SimpleXmlParser.extractTagContent("Expiration", credentials)
 
     assertEquals(accessKeyId, Some("ASIAIOSFODNN7EXAMPLE"))
     assertEquals(secretAccessKey, Some("wJalrXUtnFEMI/K7MDENG/bPxRfiCYzEXAMPLEKEY"))
@@ -217,9 +217,9 @@ class SimpleXmlParserTest extends CatsEffectSuite:
     val errorSection = SimpleXmlParser.extractSection("Error", errorResponse)
     assert(errorSection.isDefined)
 
-    val error = errorSection.get
-    val errorType = SimpleXmlParser.extractTagContent("Type", error)
-    val errorCode = SimpleXmlParser.extractTagContent("Code", error)
+    val error        = errorSection.get
+    val errorType    = SimpleXmlParser.extractTagContent("Type", error)
+    val errorCode    = SimpleXmlParser.extractTagContent("Code", error)
     val errorMessage = SimpleXmlParser.extractTagContent("Message", error)
 
     assertEquals(errorType, Some("Sender"))
@@ -228,13 +228,13 @@ class SimpleXmlParserTest extends CatsEffectSuite:
   }
 
   test("handle XML with special characters and entities") {
-    val xml = """<message>Data contains &lt;brackets&gt; &amp; "quotes" &apos;apostrophes&apos;</message>"""
+    val xml    = """<message>Data contains &lt;brackets&gt; &amp; "quotes" &apos;apostrophes&apos;</message>"""
     val result = SimpleXmlParser.extractTagContent("message", xml)
     assertEquals(result, Some("Data contains <brackets> & \"quotes\" 'apostrophes'"))
   }
 
   test("handle empty XML documents") {
-    val xml = ""
+    val xml    = ""
     val result = SimpleXmlParser.extractTagContent("any", xml)
     assertEquals(result, None)
   }

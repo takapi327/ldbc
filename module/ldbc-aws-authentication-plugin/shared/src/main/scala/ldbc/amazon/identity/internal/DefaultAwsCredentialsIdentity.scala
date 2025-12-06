@@ -33,9 +33,9 @@ final case class DefaultAwsCredentialsIdentity(
     obj match
       case that: DefaultAwsCredentialsIdentity =>
         (this eq that) ||
-          (Objects.equals(accessKeyId, that.accessKeyId) &&
-            Objects.equals(secretAccessKey, that.secretAccessKey) &&
-            Objects.equals(accountId, that.accountId))
+        (Objects.equals(accessKeyId, that.accessKeyId) &&
+          Objects.equals(secretAccessKey, that.secretAccessKey) &&
+          Objects.equals(accountId, that.accountId))
       case _ => false
 
   override def hashCode(): Int =
