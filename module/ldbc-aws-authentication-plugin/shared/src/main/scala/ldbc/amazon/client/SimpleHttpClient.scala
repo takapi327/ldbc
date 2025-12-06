@@ -7,6 +7,7 @@
 package ldbc.amazon.client
 
 import java.net.URI
+
 import javax.net.ssl.SNIHostName
 
 import scala.concurrent.duration.*
@@ -43,7 +44,7 @@ class SimpleHttpClient[F[_]: Network: Async](
 )(using ev: MonadThrow[F])
   extends HttpClient[F]:
 
-  private def isHttps(uri: URI): Boolean = 
+  private def isHttps(uri: URI): Boolean =
     uri.getScheme != null && uri.getScheme.toLowerCase == "https"
 
   private def getDefaultPort(uri: URI): Int =
@@ -53,55 +54,58 @@ class SimpleHttpClient[F[_]: Network: Async](
 
   private def validateScheme(uri: URI): F[Unit] =
     uri.getScheme match
-      case null => ev.raiseError(new SdkClientException("URI scheme is required"))
-      case scheme if scheme.toLowerCase == "http" => 
+      case null                                   => ev.raiseError(new SdkClientException("URI scheme is required"))
+      case scheme if scheme.toLowerCase == "http" =>
         // Log warning for HTTP usage, but allow it for non-sensitive endpoints
         ev.unit
       case scheme if scheme.toLowerCase == "https" => ev.unit
-      case unsupported => ev.raiseError(new SdkClientException(s"Unsupported URI scheme: $unsupported. Only http and https are supported."))
+      case unsupported                             =>
+        ev.raiseError(
+          new SdkClientException(s"Unsupported URI scheme: $unsupported. Only http and https are supported.")
+        )
 
   private def validateSecurityRequirements(uri: URI): F[Unit] =
     // AWS endpoints should always use HTTPS
     if uri.getHost != null && uri.getHost.contains(".amazonaws.com") && !isHttps(uri) then
-      ev.raiseError(new SdkClientException(s"AWS endpoints require HTTPS. Attempted to use: ${uri.getScheme}://${uri.getHost}"))
-    else
-      ev.unit
+      ev.raiseError(
+        new SdkClientException(s"AWS endpoints require HTTPS. Attempted to use: ${ uri.getScheme }://${ uri.getHost }")
+      )
+    else ev.unit
 
   private def createSocket(address: SocketAddress[Host], isSecure: Boolean, host: String): Resource[F, Socket[F]] =
     if isSecure then
       for
-        socket <- Network[F].client(address)
+        socket     <- Network[F].client(address)
         tlsContext <- Network[F].tlsContext.systemResource
-        tlsSocket <- tlsContext
-          .clientBuilder(socket)
-          .withParameters(TLSParameters(serverNames = Some(List(new SNIHostName(host)))))
-          .build
+        tlsSocket  <- tlsContext
+                       .clientBuilder(socket)
+                       .withParameters(TLSParameters(serverNames = Some(List(new SNIHostName(host)))))
+                       .build
       yield tlsSocket
-    else
-      Network[F].client(address)
+    else Network[F].client(address)
 
   override def get(uri: URI, headers: Map[String, String]): F[HttpResponse] =
     for
-      _        <- validateScheme(uri)
-      _        <- validateSecurityRequirements(uri)
+      _ <- validateScheme(uri)
+      _ <- validateSecurityRequirements(uri)
       host     = uri.getHost
       port     = getDefaultPort(uri)
       isSecure = isHttps(uri)
       path     = Option(uri.getPath).filter(_.nonEmpty).getOrElse("/") +
-                 Option(uri.getQuery).map("?" + _).getOrElse("")
+               Option(uri.getQuery).map("?" + _).getOrElse("")
       address  <- resolveAddress(host, port)
       response <- makeRequest(address, host, port, isSecure, "GET", path, headers, None)
     yield response
 
   override def put(uri: URI, headers: Map[String, String], body: String): F[HttpResponse] =
     for
-      _        <- validateScheme(uri)
-      _        <- validateSecurityRequirements(uri)
+      _ <- validateScheme(uri)
+      _ <- validateSecurityRequirements(uri)
       host     = uri.getHost
       port     = getDefaultPort(uri)
       isSecure = isHttps(uri)
       path     = Option(uri.getPath).filter(_.nonEmpty).getOrElse("/") +
-                 Option(uri.getQuery).map("?" + _).getOrElse("")
+               Option(uri.getQuery).map("?" + _).getOrElse("")
       address  <- resolveAddress(host, port)
       response <- makeRequest(address, host, port, isSecure, "PUT", path, headers, Some(body))
     yield response

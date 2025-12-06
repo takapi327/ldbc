@@ -19,8 +19,8 @@ object SimpleJsonParser:
 
     def require(key: String): Either[String, String] =
       fields.get(key) match
-        case None => Left(s"Required field '$key' not found")
-        case Some(None) => Left(s"Field '$key' is null")
+        case None              => Left(s"Required field '$key' not found")
+        case Some(None)        => Left(s"Field '$key' is null")
         case Some(Some(value)) => Right(value)
 
   /**

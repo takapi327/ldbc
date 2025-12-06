@@ -25,11 +25,15 @@ class SimpleJsonParserTest extends CatsEffectSuite:
   }
 
   test("parse object with multiple string fields") {
-    val json   = """{"AccessKeyId": "AKIAIOSFODNN7EXAMPLE", "SecretAccessKey": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYzEXAMPLEKEY"}"""
+    val json =
+      """{"AccessKeyId": "AKIAIOSFODNN7EXAMPLE", "SecretAccessKey": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYzEXAMPLEKEY"}"""
     val result = SimpleJsonParser.parse(json)
     assert(result.isRight)
     assertEquals(result.map(_.get("AccessKeyId")).toOption.flatten, Some("AKIAIOSFODNN7EXAMPLE"))
-    assertEquals(result.map(_.get("SecretAccessKey")).toOption.flatten, Some("wJalrXUtnFEMI/K7MDENG/bPxRfiCYzEXAMPLEKEY"))
+    assertEquals(
+      result.map(_.get("SecretAccessKey")).toOption.flatten,
+      Some("wJalrXUtnFEMI/K7MDENG/bPxRfiCYzEXAMPLEKEY")
+    )
   }
 
   test("parse object with number values") {
@@ -161,7 +165,7 @@ class SimpleJsonParserTest extends CatsEffectSuite:
   }
 
   test("parse complex AWS credentials response") {
-    val json = """{
+    val json   = """{
       "AccessKeyId": "ASIAIOSFODNN7EXAMPLE",
       "SecretAccessKey": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYzEXAMPLEKEY",
       "Token": "IQoJb3JpZ2luX2VjECoaCXVzLWVhc3QtMSJIMEYCIQD6m6XYcCTgK8jELjQXqKE",
@@ -170,7 +174,13 @@ class SimpleJsonParserTest extends CatsEffectSuite:
     val result = SimpleJsonParser.parse(json)
     assert(result.isRight)
     assertEquals(result.map(_.get("AccessKeyId")).toOption.flatten, Some("ASIAIOSFODNN7EXAMPLE"))
-    assertEquals(result.map(_.get("SecretAccessKey")).toOption.flatten, Some("wJalrXUtnFEMI/K7MDENG/bPxRfiCYzEXAMPLEKEY"))
-    assertEquals(result.map(_.get("Token")).toOption.flatten, Some("IQoJb3JpZ2luX2VjECoaCXVzLWVhc3QtMSJIMEYCIQD6m6XYcCTgK8jELjQXqKE"))
+    assertEquals(
+      result.map(_.get("SecretAccessKey")).toOption.flatten,
+      Some("wJalrXUtnFEMI/K7MDENG/bPxRfiCYzEXAMPLEKEY")
+    )
+    assertEquals(
+      result.map(_.get("Token")).toOption.flatten,
+      Some("IQoJb3JpZ2luX2VjECoaCXVzLWVhc3QtMSJIMEYCIQD6m6XYcCTgK8jELjQXqKE")
+    )
     assertEquals(result.map(_.get("Expiration")).toOption.flatten, Some("2024-12-06T12:34:56Z"))
   }

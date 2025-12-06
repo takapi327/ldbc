@@ -83,11 +83,11 @@ object StsClient:
       httpClient: HttpClient[F]
     ): F[AssumeRoleWithWebIdentityResponse] =
       for
-        timestamp <- Concurrent[F].fromEither(getCurrentTimestamp())
+        timestamp   <- Concurrent[F].fromEither(getCurrentTimestamp())
         sessionName <- request.roleSessionName.fold(
-          UUIDGen[F].randomUUID.map(uuid => s"ldbc-session-$uuid")
-        )(Concurrent[F].pure)
-        duration    = request.durationSeconds.getOrElse(3600)
+                         UUIDGen[F].randomUUID.map(uuid => s"ldbc-session-$uuid")
+                       )(Concurrent[F].pure)
+        duration = request.durationSeconds.getOrElse(3600)
 
         // Build STS request
         stsEndpoint = s"https://sts.$region.amazonaws.com/"
