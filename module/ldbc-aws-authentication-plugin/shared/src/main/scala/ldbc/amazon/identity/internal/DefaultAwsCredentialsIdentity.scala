@@ -30,15 +30,13 @@ final case class DefaultAwsCredentialsIdentity(
     builder.result()
 
   override def equals(obj: Any): Boolean =
-    if this == obj then true
-    else if obj == null || getClass != obj.getClass then false
-    else
-      obj match
-        case that: AwsCredentialsIdentity =>
-          Objects.equals(accessKeyId, that.accessKeyId) &&
-          Objects.equals(secretAccessKey, that.secretAccessKey) &&
-          Objects.equals(accountId, that.accountId)
-        case _ => false
+    obj match
+      case that: DefaultAwsCredentialsIdentity =>
+        (this eq that) ||
+          (Objects.equals(accessKeyId, that.accessKeyId) &&
+            Objects.equals(secretAccessKey, that.secretAccessKey) &&
+            Objects.equals(accountId, that.accountId))
+      case _ => false
 
   override def hashCode(): Int =
     var hashCode = 1
