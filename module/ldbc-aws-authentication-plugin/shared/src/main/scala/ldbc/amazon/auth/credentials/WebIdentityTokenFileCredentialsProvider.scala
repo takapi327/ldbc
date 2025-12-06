@@ -60,7 +60,7 @@ import ldbc.amazon.util.SdkSystemSetting
  * @tparam F The effect type
  */
 final class WebIdentityTokenFileCredentialsProvider[F[_]: Env: SystemProperties: Concurrent](
-  webIdentityUtils: WebIdentityCredentialsUtils[F],
+  webIdentityUtils: WebIdentityCredentialsUtils[F]
 ) extends AwsCredentialsProvider[F]:
 
   override def resolveCredentials(): F[AwsCredentials] =
@@ -168,7 +168,7 @@ object WebIdentityTokenFileCredentialsProvider:
    * @return A new WebIdentityTokenFileCredentialsProvider instance
    */
   def create[F[_]: Env: SystemProperties: Concurrent](
-    webIdentityUtils: WebIdentityCredentialsUtils[F],
+    webIdentityUtils: WebIdentityCredentialsUtils[F]
   ): WebIdentityTokenFileCredentialsProvider[F] =
     new WebIdentityTokenFileCredentialsProvider[F](webIdentityUtils)
 

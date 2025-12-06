@@ -34,7 +34,7 @@ trait StsClient[F[_]]:
    * @return STS response with temporary credentials
    */
   def assumeRoleWithWebIdentity(
-    request:    StsClient.AssumeRoleWithWebIdentityRequest
+    request: StsClient.AssumeRoleWithWebIdentityRequest
   ): F[StsClient.AssumeRoleWithWebIdentityResponse]
 
 object StsClient:
@@ -72,12 +72,12 @@ object StsClient:
   )
 
   private case class Impl[F[_]: UUIDGen: Concurrent](
-                                                      stsEndpoint: String,
-                                                      httpClient: HttpClient[F]
-                                                    ) extends StsClient[F]:
+    stsEndpoint: String,
+    httpClient:  HttpClient[F]
+  ) extends StsClient[F]:
 
     override def assumeRoleWithWebIdentity(
-      request:    AssumeRoleWithWebIdentityRequest,
+      request: AssumeRoleWithWebIdentityRequest
     ): F[AssumeRoleWithWebIdentityResponse] =
       for
         timestamp   <- Concurrent[F].fromEither(getCurrentTimestamp())
@@ -114,7 +114,8 @@ object StsClient:
    * @tparam F The effect type
    * @return A StsClient instance
    */
-  def build[F[_]: UUIDGen: Concurrent](endpoint: String, httpClient: HttpClient[F]): StsClient[F] = Impl[F](endpoint, httpClient)
+  def build[F[_]: UUIDGen: Concurrent](endpoint: String, httpClient: HttpClient[F]): StsClient[F] =
+    Impl[F](endpoint, httpClient)
 
   /**
    * Builds the STS request body in AWS Query format.

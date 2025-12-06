@@ -118,7 +118,7 @@ class SimpleHttpClient[F[_]: Network: Async](
       port     = getDefaultPort(uri)
       isSecure = isHttps(uri)
       path     = Option(uri.getPath).filter(_.nonEmpty).getOrElse("/") +
-        Option(uri.getQuery).map("?" + _).getOrElse("")
+               Option(uri.getQuery).map("?" + _).getOrElse("")
       address  <- resolveAddress(host, port)
       response <- makeRequest(address, host, port, isSecure, "PUT", path, headers, Some(body))
     yield response

@@ -39,7 +39,7 @@ trait WebIdentityCredentialsUtils[F[_]]:
    * @return AWS credentials with session token
    */
   def assumeRoleWithWebIdentity(
-    config:     WebIdentityTokenCredentialProperties,
+    config: WebIdentityTokenCredentialProperties
   ): F[AwsCredentials]
 
 object WebIdentityCredentialsUtils:
@@ -49,7 +49,7 @@ object WebIdentityCredentialsUtils:
   ) extends WebIdentityCredentialsUtils[F]:
 
     override def assumeRoleWithWebIdentity(
-      config:     WebIdentityTokenCredentialProperties,
+      config: WebIdentityTokenCredentialProperties
     ): F[AwsCredentials] =
       for
         token <- readTokenFromFile(config.webIdentityTokenFile)
@@ -142,7 +142,10 @@ object WebIdentityCredentialsUtils:
    * @tparam F The effect type
    * @return A WebIdentityCredentialsUtils instance
    */
-  def default[F[_]: Files: UUIDGen: Concurrent](region: String, httpClient: HttpClient[F]): WebIdentityCredentialsUtils[F] =
+  def default[F[_]: Files: UUIDGen: Concurrent](
+    region:     String,
+    httpClient: HttpClient[F]
+  ): WebIdentityCredentialsUtils[F] =
     val stsClient = StsClient.build[F](s"https://sts.$region.amazonaws.com/", httpClient)
     Impl[F](stsClient)
 
