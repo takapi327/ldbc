@@ -20,8 +20,8 @@ import ldbc.amazon.util.SdkSystemSetting
  */
 final class EnvironmentVariableCredentialsProvider[F[_]: Env: MonadThrow] extends SystemSettingsCredentialsProvider[F]:
 
-  // Customers should be able to specify a credentials provider that only looks at the system properties,
-  // but not the environment variables. For that reason, we're only checking the system properties here.
+  // Customers should be able to specify a credentials provider that only looks at the environment variables,
+  // but not the system properties. For that reason, we're only checking the environment variables here.
   override def loadSetting(setting: SdkSystemSetting): F[Option[String]] = Env[F].get(setting.toString)
 
   override def provider: String = BusinessMetricFeatureId.CREDENTIALS_ENV_VARS.code

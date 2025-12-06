@@ -139,11 +139,7 @@ object WebIdentityCredentialsUtils:
     private def extractAccountIdFromArn(arn: String): Option[String] =
       // ARN format: arn:aws:sts::ACCOUNT_ID:assumed-role/ROLE_NAME/SESSION_NAME
       val arnParts = arn.split(":")
-      if arnParts.length >= 5 then {
-        Some(arnParts(4))
-      } else {
-        None
-      }
+      arnParts.lift(4)
 
   /**
    * Creates a default implementation of WebIdentityCredentialsUtils.
