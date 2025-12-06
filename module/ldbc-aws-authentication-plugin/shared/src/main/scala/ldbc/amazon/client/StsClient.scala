@@ -31,13 +31,11 @@ trait StsClient[F[_]]:
    * Performs AssumeRoleWithWebIdentity operation.
    * 
    * @param request The STS request parameters
-   * @param region The AWS region for STS endpoint
    * @param httpClient HTTP client for making requests
    * @return STS response with temporary credentials
    */
   def assumeRoleWithWebIdentity(
     request:    StsClient.AssumeRoleWithWebIdentityRequest,
-    region:     String,
     httpClient: HttpClient[F]
   ): F[StsClient.AssumeRoleWithWebIdentityResponse]
 
@@ -75,11 +73,13 @@ object StsClient:
     assumedRoleArn:  String
   )
 
-  private case class Impl[F[_]: UUIDGen: Concurrent]() extends StsClient[F]:
+  private case class Impl[F[_]: UUIDGen: Concurrent](
+                                                      region:     String,
+                                                      stsEndpoint: String
+                                                    ) extends StsClient[F]:
 
     def assumeRoleWithWebIdentity(
       request:    AssumeRoleWithWebIdentityRequest,
-      region:     String,
       httpClient: HttpClient[F]
     ): F[AssumeRoleWithWebIdentityResponse] =
       for
@@ -90,7 +90,6 @@ object StsClient:
         duration = request.durationSeconds.getOrElse(3600)
 
         // Build STS request
-        stsEndpoint = s"https://sts.$region.amazonaws.com/"
         requestBody = buildRequestBody(
                         request.copy(
                           roleSessionName = Some(sessionName),
@@ -112,11 +111,12 @@ object StsClient:
 
   /**
    * Creates a default implementation of StsClient.
-   * 
+   *
+   * @param region The AWS region for STS endpoint
    * @tparam F The effect type
    * @return A StsClient instance
    */
-  def default[F[_]: UUIDGen: Concurrent]: StsClient[F] = Impl[F]()
+  def default[F[_]: UUIDGen: Concurrent](region: String): StsClient[F] = Impl[F](region, s"https://sts.$region.amazonaws.com/")
 
   /**
    * Builds the STS request body in AWS Query format.

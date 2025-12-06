@@ -65,7 +65,7 @@ object WebIdentityCredentialsUtils:
                        webIdentityToken = token,
                        roleSessionName  = config.roleSessionName
                      )
-        stsResponse <- stsClient.assumeRoleWithWebIdentity(stsRequest, region, httpClient)
+        stsResponse <- stsClient.assumeRoleWithWebIdentity(stsRequest, httpClient)
         credentials = convertStsResponseToCredentials(stsResponse)
       yield credentials
 
@@ -142,12 +142,13 @@ object WebIdentityCredentialsUtils:
 
   /**
    * Creates a default implementation of WebIdentityCredentialsUtils.
-   * 
+   *
+   * @param region The AWS region for STS endpoint
    * @tparam F The effect type
    * @return A WebIdentityCredentialsUtils instance
    */
-  def default[F[_]: Files: UUIDGen: Concurrent]: WebIdentityCredentialsUtils[F] =
-    val stsClient = StsClient.default[F]
+  def default[F[_]: Files: UUIDGen: Concurrent](region: String): WebIdentityCredentialsUtils[F] =
+    val stsClient = StsClient.default[F](region)
     Impl[F](stsClient)
 
   /**

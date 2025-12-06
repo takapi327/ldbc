@@ -144,7 +144,7 @@ object WebIdentityTokenFileCredentialsProvider:
   ): F[WebIdentityTokenFileCredentialsProvider[F]] =
     for
       httpClient <- createDefaultHttpClient[F]()
-      webIdentityUtils = WebIdentityCredentialsUtils.default[F]
+      webIdentityUtils = WebIdentityCredentialsUtils.default[F](region)
     yield new WebIdentityTokenFileCredentialsProvider[F](webIdentityUtils, httpClient, region)
 
   /**
@@ -159,7 +159,7 @@ object WebIdentityTokenFileCredentialsProvider:
     httpClient: HttpClient[F],
     region:     String = "us-east-1"
   ): WebIdentityTokenFileCredentialsProvider[F] =
-    val webIdentityUtils = WebIdentityCredentialsUtils.default[F]
+    val webIdentityUtils = WebIdentityCredentialsUtils.default[F](region)
     new WebIdentityTokenFileCredentialsProvider[F](webIdentityUtils, httpClient, region)
 
   /**
