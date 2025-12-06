@@ -25,6 +25,7 @@ final case class DefaultAwsCredentialsIdentity(
     builder.append(s"accessKeyId=$accessKeyId")
     providerName.foreach(v => builder.append(s", providerName=$v"))
     accountId.foreach(v => builder.append(s", accountId=$v"))
+    builder.append(")")
 
     builder.result()
 
