@@ -23,8 +23,8 @@ final case class DefaultAwsCredentialsIdentity(
     val builder = new StringBuilder()
     builder.append("AwsCredentialsIdentity(")
     builder.append(s"accessKeyId=$accessKeyId")
-    providerName.foreach(v => builder.append(s"providerName=$v"))
-    accountId.foreach(v => builder.append(s"accountId=$v"))
+    providerName.foreach(v => builder.append(s", providerName=$v"))
+    accountId.foreach(v => builder.append(s", accountId=$v"))
 
     builder.result()
 
