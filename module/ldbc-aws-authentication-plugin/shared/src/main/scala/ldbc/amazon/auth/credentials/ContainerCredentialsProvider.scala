@@ -9,17 +9,15 @@ package ldbc.amazon.auth.credentials
 import java.net.URI
 import java.time.Instant
 
-import scala.concurrent.duration.*
 
 import cats.syntax.all.*
 
-import cats.effect.{ Async, Concurrent }
+import cats.effect.Concurrent
 import cats.effect.std.Env
 
 import fs2.io.file.{ Files, Path }
-import fs2.io.net.*
 
-import ldbc.amazon.client.{ HttpClient, SimpleHttpClient }
+import ldbc.amazon.client.HttpClient
 import ldbc.amazon.exception.SdkClientException
 import ldbc.amazon.identity.*
 import ldbc.amazon.useragent.BusinessMetricFeatureId
@@ -238,15 +236,6 @@ private object ContainerCredentialsResponse:
 object ContainerCredentialsProvider:
 
   /**
-   * Creates a new Container credentials provider with default settings.
-   * 
-   * @tparam F The effect type
-   * @return A new ContainerCredentialsProvider instance
-   */
-  def apply[F[_]: Files: Env: Network: Async](): F[ContainerCredentialsProvider[F]] =
-    createDefaultHttpClient[F]().map(httpClient => new ContainerCredentialsProvider[F](httpClient))
-
-  /**
    * Creates a new Container credentials provider with custom HTTP client.
    * 
    * @param httpClient The HTTP client for credential requests
@@ -257,20 +246,6 @@ object ContainerCredentialsProvider:
     httpClient: HttpClient[F]
   ): ContainerCredentialsProvider[F] =
     new ContainerCredentialsProvider[F](httpClient)
-
-  /**
-   * Creates a default HTTP client for container credential operations.
-   * 
-   * @tparam F The effect type
-   * @return A configured HTTP client
-   */
-  private def createDefaultHttpClient[F[_]: Network: Async](): F[HttpClient[F]] =
-    Async[F].pure(
-      new SimpleHttpClient[F](
-        connectTimeout = 5.seconds,
-        readTimeout    = 5.seconds
-      )
-    )
 
   /**
    * Checks if Container credentials are available by verifying
