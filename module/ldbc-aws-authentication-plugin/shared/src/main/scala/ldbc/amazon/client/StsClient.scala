@@ -80,6 +80,7 @@ object StsClient:
       request: AssumeRoleWithWebIdentityRequest
     ): F[AssumeRoleWithWebIdentityResponse] =
       for
+        _ <- validateRoleArn(request.roleArn)
         timestamp   <- Concurrent[F].fromEither(getCurrentTimestamp())
         sessionName <- request.roleSessionName.fold(
                          UUIDGen[F].randomUUID.map(uuid => s"ldbc-session-$uuid")
@@ -105,6 +106,17 @@ object StsClient:
         _           <- validateHttpResponse(response)
         stsResponse <- parseAssumeRoleResponse(response.body)
       yield stsResponse
+
+    private def validateRoleArn(roleArn: String): F[Unit] =
+      val roleArnPattern = """^arn:aws:iam::\d{12}:role/[\w+=,.@-]+$""".r
+      roleArnPattern.findFirstIn(roleArn) match {
+        case Some(_) => Concurrent[F].unit
+        case None => Concurrent[F].raiseError(
+          new IllegalArgumentException(
+            s"An error occurred (ValidationError) when calling the AssumeRole operation: $roleArn is invalid"
+          )
+        )
+      }
 
   /**
    * Creates implementation of StsClient.
