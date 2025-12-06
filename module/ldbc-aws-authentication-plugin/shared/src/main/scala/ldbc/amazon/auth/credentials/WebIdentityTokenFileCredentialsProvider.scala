@@ -95,7 +95,6 @@ final class WebIdentityTokenFileCredentialsProvider[F[_]: Env: SystemProperties:
             webIdentityTokenFile = Path(tokenFile),
             roleArn              = arn,
             roleSessionName      = roleSessionName,
-            providerName         = BusinessMetricFeatureId.CREDENTIALS_WEB_IDENTITY_TOKEN.code
           )
         )
       case _ => None
@@ -125,13 +124,11 @@ final class WebIdentityTokenFileCredentialsProvider[F[_]: Env: SystemProperties:
  * @param webIdentityTokenFile Path to the JWT token file
  * @param roleArn The ARN of the IAM role to assume
  * @param roleSessionName Optional session name for the assumed role session
- * @param providerName Provider identifier for logging and metrics
  */
 case class WebIdentityTokenCredentialProperties(
   webIdentityTokenFile: Path,
   roleArn:              String,
   roleSessionName:      Option[String],
-  providerName:         String
 )
 
 object WebIdentityTokenFileCredentialsProvider:

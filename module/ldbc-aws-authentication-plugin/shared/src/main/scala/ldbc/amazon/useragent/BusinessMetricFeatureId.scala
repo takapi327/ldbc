@@ -61,5 +61,4 @@ enum BusinessMetricFeatureId(val code: String):
   case CREDENTIALS_HTTP                      extends BusinessMetricFeatureId("z")
   case CREDENTIALS_IMDS                      extends BusinessMetricFeatureId("0")
   case CREDENTIALS_CONTAINER                 extends BusinessMetricFeatureId("1")
-  case CREDENTIALS_WEB_IDENTITY_TOKEN        extends BusinessMetricFeatureId("k")
   case UNKNOWN                               extends BusinessMetricFeatureId("Unknown")
