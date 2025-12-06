@@ -103,7 +103,7 @@ object SimpleJsonParser:
             val hex = s.substring(idx + 1, idx + 5)
             sb.append(Integer.parseInt(hex, 16).toChar)
             idx += 4
-          case _ => sb.append(ch)
+          case _ => throw new IllegalArgumentException(s"Invalid escape sequence: \\$ch")
         escaped = false
       else if ch == '\\' then escaped = true
       else if ch == '"' then return (sb.toString, idx + 1)
