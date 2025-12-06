@@ -13,3 +13,5 @@ trait HttpClient[F[_]]:
   def get(uri: URI, headers: Map[String, String]): F[HttpResponse]
 
   def put(uri: URI, headers: Map[String, String], body: String): F[HttpResponse]
+
+  def post(uri: URI, headers: Map[String, String], body: String): F[HttpResponse]

@@ -36,14 +36,10 @@ trait WebIdentityCredentialsUtils[F[_]]:
    * a Web Identity Token (JWT) for temporary AWS credentials.
    * 
    * @param config The Web Identity Token configuration
-   * @param region The AWS region for STS endpoint (default: us-east-1)
-   * @param httpClient HTTP client for making STS requests
    * @return AWS credentials with session token
    */
   def assumeRoleWithWebIdentity(
     config:     WebIdentityTokenCredentialProperties,
-    region:     String,
-    httpClient: HttpClient[F]
   ): F[AwsCredentials]
 
 object WebIdentityCredentialsUtils:
@@ -52,10 +48,8 @@ object WebIdentityCredentialsUtils:
     stsClient: StsClient[F]
   ) extends WebIdentityCredentialsUtils[F]:
 
-    def assumeRoleWithWebIdentity(
+    override def assumeRoleWithWebIdentity(
       config:     WebIdentityTokenCredentialProperties,
-      region:     String,
-      httpClient: HttpClient[F]
     ): F[AwsCredentials] =
       for
         token <- readTokenFromFile(config.webIdentityTokenFile)
@@ -65,7 +59,7 @@ object WebIdentityCredentialsUtils:
                        webIdentityToken = token,
                        roleSessionName  = config.roleSessionName
                      )
-        stsResponse <- stsClient.assumeRoleWithWebIdentity(stsRequest, httpClient)
+        stsResponse <- stsClient.assumeRoleWithWebIdentity(stsRequest)
         credentials = convertStsResponseToCredentials(stsResponse)
       yield credentials
 
@@ -144,11 +138,12 @@ object WebIdentityCredentialsUtils:
    * Creates a default implementation of WebIdentityCredentialsUtils.
    *
    * @param region The AWS region for STS endpoint
+   * @param httpClient HTTP client for making requests
    * @tparam F The effect type
    * @return A WebIdentityCredentialsUtils instance
    */
-  def default[F[_]: Files: UUIDGen: Concurrent](region: String): WebIdentityCredentialsUtils[F] =
-    val stsClient = StsClient.default[F](region)
+  def default[F[_]: Files: UUIDGen: Concurrent](region: String, httpClient: HttpClient[F]): WebIdentityCredentialsUtils[F] =
+    val stsClient = StsClient.build[F](s"https://sts.$region.amazonaws.com/", httpClient)
     Impl[F](stsClient)
 
   /**

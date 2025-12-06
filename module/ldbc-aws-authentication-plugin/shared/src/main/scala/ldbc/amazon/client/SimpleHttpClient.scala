@@ -110,6 +110,19 @@ class SimpleHttpClient[F[_]: Network: Async](
       response <- makeRequest(address, host, port, isSecure, "PUT", path, headers, Some(body))
     yield response
 
+  override def post(uri: URI, headers: Map[String, String], body: String): F[HttpResponse] =
+    for
+      _ <- validateScheme(uri)
+      _ <- validateSecurityRequirements(uri)
+      host     = uri.getHost
+      port     = getDefaultPort(uri)
+      isSecure = isHttps(uri)
+      path     = Option(uri.getPath).filter(_.nonEmpty).getOrElse("/") +
+        Option(uri.getQuery).map("?" + _).getOrElse("")
+      address  <- resolveAddress(host, port)
+      response <- makeRequest(address, host, port, isSecure, "PUT", path, headers, Some(body))
+    yield response
+
   private def resolveAddress(host: String, port: Int): F[SocketAddress[Host]] =
     for
       h <- ev.fromOption(Host.fromString(host), new SdkClientException("Invalid host"))

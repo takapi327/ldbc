@@ -61,8 +61,6 @@ import ldbc.amazon.util.SdkSystemSetting
  */
 final class WebIdentityTokenFileCredentialsProvider[F[_]: Env: SystemProperties: Concurrent](
   webIdentityUtils: WebIdentityCredentialsUtils[F],
-  httpClient:       HttpClient[F],
-  region:           String = "us-east-1"
 ) extends AwsCredentialsProvider[F]:
 
   override def resolveCredentials(): F[AwsCredentials] =
@@ -78,7 +76,7 @@ final class WebIdentityTokenFileCredentialsProvider[F[_]: Env: SystemProperties:
                            )
                          )
                        case Some(webIdentityConfig) =>
-                         webIdentityUtils.assumeRoleWithWebIdentity(webIdentityConfig, region, httpClient)
+                         webIdentityUtils.assumeRoleWithWebIdentity(webIdentityConfig)
                      }
     yield credentials
 
@@ -144,8 +142,8 @@ object WebIdentityTokenFileCredentialsProvider:
   ): F[WebIdentityTokenFileCredentialsProvider[F]] =
     for
       httpClient <- createDefaultHttpClient[F]()
-      webIdentityUtils = WebIdentityCredentialsUtils.default[F](region)
-    yield new WebIdentityTokenFileCredentialsProvider[F](webIdentityUtils, httpClient, region)
+      webIdentityUtils = WebIdentityCredentialsUtils.default[F](region, httpClient)
+    yield new WebIdentityTokenFileCredentialsProvider[F](webIdentityUtils)
 
   /**
    * Creates a new Web Identity Token File credentials provider with custom HTTP client.
@@ -159,24 +157,20 @@ object WebIdentityTokenFileCredentialsProvider:
     httpClient: HttpClient[F],
     region:     String = "us-east-1"
   ): WebIdentityTokenFileCredentialsProvider[F] =
-    val webIdentityUtils = WebIdentityCredentialsUtils.default[F](region)
-    new WebIdentityTokenFileCredentialsProvider[F](webIdentityUtils, httpClient, region)
+    val webIdentityUtils = WebIdentityCredentialsUtils.default[F](region, httpClient)
+    new WebIdentityTokenFileCredentialsProvider[F](webIdentityUtils)
 
   /**
    * Creates a new Web Identity Token File credentials provider with custom WebIdentityCredentialsUtils.
    * 
    * @param webIdentityUtils Custom Web Identity credentials utility
-   * @param httpClient The HTTP client for STS requests
-   * @param region The AWS region for STS endpoint
    * @tparam F The effect type
    * @return A new WebIdentityTokenFileCredentialsProvider instance
    */
   def create[F[_]: Env: SystemProperties: Concurrent](
     webIdentityUtils: WebIdentityCredentialsUtils[F],
-    httpClient:       HttpClient[F],
-    region:           String = "us-east-1"
   ): WebIdentityTokenFileCredentialsProvider[F] =
-    new WebIdentityTokenFileCredentialsProvider[F](webIdentityUtils, httpClient, region)
+    new WebIdentityTokenFileCredentialsProvider[F](webIdentityUtils)
 
   /**
    * Creates a default HTTP client for STS operations.

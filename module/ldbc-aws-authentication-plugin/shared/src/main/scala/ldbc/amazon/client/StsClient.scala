@@ -31,12 +31,10 @@ trait StsClient[F[_]]:
    * Performs AssumeRoleWithWebIdentity operation.
    * 
    * @param request The STS request parameters
-   * @param httpClient HTTP client for making requests
    * @return STS response with temporary credentials
    */
   def assumeRoleWithWebIdentity(
-    request:    StsClient.AssumeRoleWithWebIdentityRequest,
-    httpClient: HttpClient[F]
+    request:    StsClient.AssumeRoleWithWebIdentityRequest
   ): F[StsClient.AssumeRoleWithWebIdentityResponse]
 
 object StsClient:
@@ -74,13 +72,12 @@ object StsClient:
   )
 
   private case class Impl[F[_]: UUIDGen: Concurrent](
-                                                      region:     String,
-                                                      stsEndpoint: String
+                                                      stsEndpoint: String,
+                                                      httpClient: HttpClient[F]
                                                     ) extends StsClient[F]:
 
-    def assumeRoleWithWebIdentity(
+    override def assumeRoleWithWebIdentity(
       request:    AssumeRoleWithWebIdentityRequest,
-      httpClient: HttpClient[F]
     ): F[AssumeRoleWithWebIdentityResponse] =
       for
         timestamp   <- Concurrent[F].fromEither(getCurrentTimestamp())
@@ -99,24 +96,25 @@ object StsClient:
 
         // Make HTTP request
         headers = Map(
-                    "Content-Type" -> "application/x-amz-json-1.0",
+                    "Content-Type" -> "application/x-www-form-urlencoded",
                     "X-Amz-Target" -> "AWSSecurityTokenServiceV20110615.AssumeRoleWithWebIdentity",
                     "X-Amz-Date"   -> timestamp
                   )
 
-        response    <- httpClient.get(URI.create(stsEndpoint), headers)
+        response    <- httpClient.post(URI.create(stsEndpoint), headers, requestBody)
         _           <- validateHttpResponse(response)
         stsResponse <- parseAssumeRoleResponse(response.body)
       yield stsResponse
 
   /**
-   * Creates a default implementation of StsClient.
+   * Creates implementation of StsClient.
    *
-   * @param region The AWS region for STS endpoint
+   * @param endpoint STS Endpoint
+   * @param httpClient HTTP client for making requests
    * @tparam F The effect type
    * @return A StsClient instance
    */
-  def default[F[_]: UUIDGen: Concurrent](region: String): StsClient[F] = Impl[F](region, s"https://sts.$region.amazonaws.com/")
+  def build[F[_]: UUIDGen: Concurrent](endpoint: String, httpClient: HttpClient[F]): StsClient[F] = Impl[F](endpoint, httpClient)
 
   /**
    * Builds the STS request body in AWS Query format.
