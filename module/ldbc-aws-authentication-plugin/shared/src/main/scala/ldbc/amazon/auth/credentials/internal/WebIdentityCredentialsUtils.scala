@@ -66,7 +66,7 @@ object WebIdentityCredentialsUtils:
                        roleSessionName  = config.roleSessionName
                      )
         stsResponse <- stsClient.assumeRoleWithWebIdentity(stsRequest, region, httpClient)
-        credentials = convertStsResponseToCredentials(stsResponse, config)
+        credentials = convertStsResponseToCredentials(stsResponse)
       yield credentials
 
     /**
@@ -118,14 +118,13 @@ object WebIdentityCredentialsUtils:
      */
     private def convertStsResponseToCredentials(
       stsResponse: StsClient.AssumeRoleWithWebIdentityResponse,
-      config:      WebIdentityTokenCredentialProperties
     ): AwsCredentials =
       AwsSessionCredentials(
         accessKeyId         = stsResponse.accessKeyId,
         secretAccessKey     = stsResponse.secretAccessKey,
         sessionToken        = stsResponse.sessionToken,
         validateCredentials = false,
-        providerName        = Some(config.providerName),
+        providerName        = None,
         accountId           = extractAccountIdFromArn(stsResponse.assumedRoleArn),
         expirationTime      = Some(stsResponse.expiration)
       )

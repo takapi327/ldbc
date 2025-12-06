@@ -20,7 +20,6 @@ import ldbc.amazon.auth.credentials.internal.WebIdentityCredentialsUtils
 import ldbc.amazon.client.{ HttpClient, SimpleHttpClient }
 import ldbc.amazon.exception.SdkClientException
 import ldbc.amazon.identity.*
-import ldbc.amazon.useragent.BusinessMetricFeatureId
 import ldbc.amazon.util.SdkSystemSetting
 
 /**
