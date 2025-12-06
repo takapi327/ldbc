@@ -6,25 +6,18 @@
 
 package ldbc.amazon.client
 
-import java.net.URI
-
-import javax.net.ssl.SNIHostName
-
-import scala.concurrent.duration.*
-
-import com.comcast.ip4s.*
-
-import cats.syntax.all.*
 import cats.MonadThrow
-
 import cats.effect.*
 import cats.effect.syntax.all.*
-
+import cats.syntax.all.*
+import com.comcast.ip4s.*
 import fs2.*
 import fs2.io.net.*
 import fs2.io.net.tls.*
-
 import ldbc.amazon.exception.*
+
+import java.net.URI
+import scala.concurrent.duration.*
 
 /**
  * Secure HTTP client that supports both HTTP and HTTPS protocols.
@@ -79,7 +72,7 @@ class SimpleHttpClient[F[_]: Network: Async](
         tlsContext <- Network[F].tlsContext.systemResource
         tlsSocket  <- tlsContext
                        .clientBuilder(socket)
-                       .withParameters(TLSParameters(serverNames = Some(List(new SNIHostName(host)))))
+                       .withParameters(TLSParameters(servername = Some(host)))
                        .build
       yield tlsSocket
     else Network[F].client(address)
