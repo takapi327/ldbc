@@ -18,6 +18,22 @@ services:
       timeout: 20s
       retries: 10
 
+  localstack:
+    image: localstack/localstack:latest
+    platform: linux/amd64
+    container_name: ldbc-localstack
+    ports:
+      - "4566:4566"
+      - "4571:4571"
+    environment:
+      - SERVICES=iam,sts
+      - DEBUG=1
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - AWS_DEFAULT_REGION=ap-northeast-1
+    volumes:
+      - ./localstack:/etc/localstack/init/ready.d
+      - /var/run/docker.sock:/var/run/docker.sock
+
   verdaccio:
     image: verdaccio/verdaccio:nightly-master
     container_name: verdaccio
