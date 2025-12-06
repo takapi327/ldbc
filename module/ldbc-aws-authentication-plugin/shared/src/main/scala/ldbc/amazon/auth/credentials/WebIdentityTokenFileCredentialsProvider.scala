@@ -53,8 +53,6 @@ import ldbc.amazon.util.SdkSystemSetting
  * - AWS_WEB_IDENTITY_TOKEN_FILE=/var/run/secrets/eks.amazonaws.com/serviceaccount/token
  * 
  * @param webIdentityUtils Web Identity credentials utility for STS operations
- * @param httpClient HTTP client for STS requests
- * @param region AWS region for STS endpoint
  * @tparam F The effect type
  */
 final class WebIdentityTokenFileCredentialsProvider[F[_]: Env: SystemProperties: Concurrent](
