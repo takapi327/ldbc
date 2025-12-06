@@ -9,11 +9,10 @@ package ldbc.amazon.auth.credentials
 import java.net.URI
 import java.time.Instant
 
-
 import cats.syntax.all.*
 
-import cats.effect.Concurrent
 import cats.effect.std.Env
+import cats.effect.Concurrent
 
 import fs2.io.file.{ Files, Path }
 
