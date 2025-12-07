@@ -18,9 +18,9 @@ import ldbc.amazon.util.SdkSystemSetting
 class SystemPropertyCredentialsProviderTest extends CatsEffectSuite:
 
   // Test fixtures
-  private val testAccessKeyId = "AKIAIOSFODNN7EXAMPLE"
+  private val testAccessKeyId     = "AKIAIOSFODNN7EXAMPLE"
   private val testSecretAccessKey = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYzEXAMPLEKEY"
-  private val testSessionToken = "IQoJb3JpZ2luX2VjECoaCXVzLWVhc3QtMSJHMEUCIQDtqstfDEaRfZKFK5Z2n2CnP3"
+  private val testSessionToken    = "IQoJb3JpZ2luX2VjECoaCXVzLWVhc3QtMSJHMEUCIQDtqstfDEaRfZKFK5Z2n2CnP3"
 
   // Mock system properties
   private def mockSystemProperties(sysProps: Map[String, String]): SystemProperties[IO] =
@@ -34,10 +34,10 @@ class SystemPropertyCredentialsProviderTest extends CatsEffectSuite:
 
   test("resolveCredentials with basic credentials") {
     val sysProps = Map(
-      "aws.accessKeyId" -> testAccessKeyId,
+      "aws.accessKeyId"     -> testAccessKeyId,
       "aws.secretAccessKey" -> testSecretAccessKey
     )
-    
+
     given SystemProperties[IO] = mockSystemProperties(sysProps)
 
     val provider = new SystemPropertyCredentialsProvider[IO]
@@ -56,11 +56,11 @@ class SystemPropertyCredentialsProviderTest extends CatsEffectSuite:
 
   test("resolveCredentials with session credentials") {
     val sysProps = Map(
-      "aws.accessKeyId" -> testAccessKeyId,
+      "aws.accessKeyId"     -> testAccessKeyId,
       "aws.secretAccessKey" -> testSecretAccessKey,
-      "aws.sessionToken" -> testSessionToken
+      "aws.sessionToken"    -> testSessionToken
     )
-    
+
     given SystemProperties[IO] = mockSystemProperties(sysProps)
 
     val provider = new SystemPropertyCredentialsProvider[IO]
@@ -80,11 +80,11 @@ class SystemPropertyCredentialsProviderTest extends CatsEffectSuite:
 
   test("resolveCredentials with account ID") {
     val sysProps = Map(
-      "aws.accessKeyId" -> testAccessKeyId,
+      "aws.accessKeyId"     -> testAccessKeyId,
       "aws.secretAccessKey" -> testSecretAccessKey,
-      "aws.accountId" -> "123456789012"
+      "aws.accountId"       -> "123456789012"
     )
-    
+
     given SystemProperties[IO] = mockSystemProperties(sysProps)
 
     val provider = new SystemPropertyCredentialsProvider[IO]
@@ -102,7 +102,7 @@ class SystemPropertyCredentialsProviderTest extends CatsEffectSuite:
     val sysProps = Map(
       "aws.secretAccessKey" -> testSecretAccessKey
     )
-    
+
     given SystemProperties[IO] = mockSystemProperties(sysProps)
 
     val provider = new SystemPropertyCredentialsProvider[IO]
@@ -119,7 +119,7 @@ class SystemPropertyCredentialsProviderTest extends CatsEffectSuite:
     val sysProps = Map(
       "aws.accessKeyId" -> testAccessKeyId
     )
-    
+
     given SystemProperties[IO] = mockSystemProperties(sysProps)
 
     val provider = new SystemPropertyCredentialsProvider[IO]
@@ -147,10 +147,10 @@ class SystemPropertyCredentialsProviderTest extends CatsEffectSuite:
 
   test("handle empty system property values") {
     val sysProps = Map(
-      "aws.accessKeyId" -> "",
+      "aws.accessKeyId"     -> "",
       "aws.secretAccessKey" -> testSecretAccessKey
     )
-    
+
     given SystemProperties[IO] = mockSystemProperties(sysProps)
 
     val provider = new SystemPropertyCredentialsProvider[IO]
@@ -165,10 +165,10 @@ class SystemPropertyCredentialsProviderTest extends CatsEffectSuite:
 
   test("handle whitespace-only system property values") {
     val sysProps = Map(
-      "aws.accessKeyId" -> "   ",
+      "aws.accessKeyId"     -> "   ",
       "aws.secretAccessKey" -> testSecretAccessKey
     )
-    
+
     given SystemProperties[IO] = mockSystemProperties(sysProps)
 
     val provider = new SystemPropertyCredentialsProvider[IO]
@@ -183,11 +183,11 @@ class SystemPropertyCredentialsProviderTest extends CatsEffectSuite:
 
   test("handle empty session token") {
     val sysProps = Map(
-      "aws.accessKeyId" -> testAccessKeyId,
+      "aws.accessKeyId"     -> testAccessKeyId,
       "aws.secretAccessKey" -> testSecretAccessKey,
-      "aws.sessionToken" -> ""
+      "aws.sessionToken"    -> ""
     )
-    
+
     given SystemProperties[IO] = mockSystemProperties(sysProps)
 
     val provider = new SystemPropertyCredentialsProvider[IO]
@@ -203,11 +203,11 @@ class SystemPropertyCredentialsProviderTest extends CatsEffectSuite:
 
   test("handle whitespace-only session token") {
     val sysProps = Map(
-      "aws.accessKeyId" -> testAccessKeyId,
+      "aws.accessKeyId"     -> testAccessKeyId,
       "aws.secretAccessKey" -> testSecretAccessKey,
-      "aws.sessionToken" -> "   \n  "
+      "aws.sessionToken"    -> "   \n  "
     )
-    
+
     given SystemProperties[IO] = mockSystemProperties(sysProps)
 
     val provider = new SystemPropertyCredentialsProvider[IO]
@@ -223,11 +223,11 @@ class SystemPropertyCredentialsProviderTest extends CatsEffectSuite:
 
   test("trim whitespace from credentials") {
     val sysProps = Map(
-      "aws.accessKeyId" -> s"  $testAccessKeyId  ",
+      "aws.accessKeyId"     -> s"  $testAccessKeyId  ",
       "aws.secretAccessKey" -> s"\n$testSecretAccessKey\t",
-      "aws.sessionToken" -> s"  $testSessionToken  \n"
+      "aws.sessionToken"    -> s"  $testSessionToken  \n"
     )
-    
+
     given SystemProperties[IO] = mockSystemProperties(sysProps)
 
     val provider = new SystemPropertyCredentialsProvider[IO]
@@ -243,25 +243,28 @@ class SystemPropertyCredentialsProviderTest extends CatsEffectSuite:
 
   test("provider name is correct") {
     val sysProps = Map(
-      "aws.accessKeyId" -> testAccessKeyId,
+      "aws.accessKeyId"     -> testAccessKeyId,
       "aws.secretAccessKey" -> testSecretAccessKey
     )
-    
+
     given SystemProperties[IO] = mockSystemProperties(sysProps)
 
     val provider = new SystemPropertyCredentialsProvider[IO]
 
     provider.resolveCredentials().map { credentials =>
-      assertEquals(credentials.providerName, Some("f")) // BusinessMetricFeatureId.CREDENTIALS_JVM_SYSTEM_PROPERTIES.code
+      assertEquals(
+        credentials.providerName,
+        Some("f")
+      ) // BusinessMetricFeatureId.CREDENTIALS_JVM_SYSTEM_PROPERTIES.code
     }
   }
 
   test("loadSetting method reads from system properties") {
     val testValue = "test-setting-value"
-    val sysProps = Map(
+    val sysProps  = Map(
       "aws.accessKeyId" -> testValue
     )
-    
+
     given SystemProperties[IO] = mockSystemProperties(sysProps)
 
     val provider = new SystemPropertyCredentialsProvider[IO]
@@ -283,13 +286,13 @@ class SystemPropertyCredentialsProviderTest extends CatsEffectSuite:
 
   test("implements AwsCredentialsProvider trait") {
     val sysProps = Map(
-      "aws.accessKeyId" -> testAccessKeyId,
+      "aws.accessKeyId"     -> testAccessKeyId,
       "aws.secretAccessKey" -> testSecretAccessKey
     )
-    
+
     given SystemProperties[IO] = mockSystemProperties(sysProps)
 
-    val provider: ldbc.amazon.identity.AwsCredentialsProvider[IO] = 
+    val provider: ldbc.amazon.identity.AwsCredentialsProvider[IO] =
       new SystemPropertyCredentialsProvider[IO]
 
     provider.resolveCredentials().map { credentials =>
@@ -299,11 +302,11 @@ class SystemPropertyCredentialsProviderTest extends CatsEffectSuite:
 
   test("consistent behavior across multiple calls") {
     val sysProps = Map(
-      "aws.accessKeyId" -> testAccessKeyId,
+      "aws.accessKeyId"     -> testAccessKeyId,
       "aws.secretAccessKey" -> testSecretAccessKey,
-      "aws.sessionToken" -> testSessionToken
+      "aws.sessionToken"    -> testSessionToken
     )
-    
+
     given SystemProperties[IO] = mockSystemProperties(sysProps)
 
     val provider = new SystemPropertyCredentialsProvider[IO]
@@ -325,10 +328,10 @@ class SystemPropertyCredentialsProviderTest extends CatsEffectSuite:
 
   test("validates credentials format") {
     val sysProps = Map(
-      "aws.accessKeyId" -> testAccessKeyId,
+      "aws.accessKeyId"     -> testAccessKeyId,
       "aws.secretAccessKey" -> testSecretAccessKey
     )
-    
+
     given SystemProperties[IO] = mockSystemProperties(sysProps)
 
     val provider = new SystemPropertyCredentialsProvider[IO]
@@ -337,7 +340,7 @@ class SystemPropertyCredentialsProviderTest extends CatsEffectSuite:
       // Verify access key format (starts with AKIA for IAM users)
       assert(credentials.accessKeyId.startsWith("AKIA"))
       assert(credentials.accessKeyId.length >= 16)
-      
+
       // Verify secret key is not empty and has reasonable length
       assert(credentials.secretAccessKey.nonEmpty)
       assert(credentials.secretAccessKey.length >= 20)
@@ -346,21 +349,21 @@ class SystemPropertyCredentialsProviderTest extends CatsEffectSuite:
 
   test("system property keys are correct") {
     val sysProps = Map(
-      "aws.accessKeyId" -> testAccessKeyId,
+      "aws.accessKeyId"     -> testAccessKeyId,
       "aws.secretAccessKey" -> testSecretAccessKey,
-      "aws.sessionToken" -> testSessionToken,
-      "aws.accountId" -> "123456789012"
+      "aws.sessionToken"    -> testSessionToken,
+      "aws.accountId"       -> "123456789012"
     )
-    
+
     given SystemProperties[IO] = mockSystemProperties(sysProps)
 
     val provider = new SystemPropertyCredentialsProvider[IO]
 
     for
-      accessKey <- provider.loadSetting(SdkSystemSetting.AWS_ACCESS_KEY_ID)
-      secretKey <- provider.loadSetting(SdkSystemSetting.AWS_SECRET_ACCESS_KEY)
+      accessKey    <- provider.loadSetting(SdkSystemSetting.AWS_ACCESS_KEY_ID)
+      secretKey    <- provider.loadSetting(SdkSystemSetting.AWS_SECRET_ACCESS_KEY)
       sessionToken <- provider.loadSetting(SdkSystemSetting.AWS_SESSION_TOKEN)
-      accountId <- provider.loadSetting(SdkSystemSetting.AWS_ACCOUNT_ID)
+      accountId    <- provider.loadSetting(SdkSystemSetting.AWS_ACCOUNT_ID)
     yield
       assertEquals(accessKey, Some(testAccessKeyId))
       assertEquals(secretKey, Some(testSecretAccessKey))
@@ -372,11 +375,11 @@ class SystemPropertyCredentialsProviderTest extends CatsEffectSuite:
     // This test ensures that SystemPropertyCredentialsProvider only reads from system properties,
     // not environment variables, even if the system property names are similar
     val sysProps = Map(
-      "aws.accessKeyId" -> testAccessKeyId, // System property format
-      "aws.secretAccessKey" -> testSecretAccessKey,
+      "aws.accessKeyId"     -> testAccessKeyId, // System property format
+      "aws.secretAccessKey" -> testSecretAccessKey
       // Note: NO AWS_ACCESS_KEY_ID (environment variable format)
     )
-    
+
     given SystemProperties[IO] = mockSystemProperties(sysProps)
 
     val provider = new SystemPropertyCredentialsProvider[IO]
@@ -392,10 +395,10 @@ class SystemPropertyCredentialsProviderTest extends CatsEffectSuite:
   test("case sensitivity of system property names") {
     // System properties are case-sensitive in Java
     val sysProps = Map(
-      "AWS.ACCESSKEYID" -> testAccessKeyId,  // Wrong case
+      "AWS.ACCESSKEYID"     -> testAccessKeyId, // Wrong case
       "aws.secretAccessKey" -> testSecretAccessKey
     )
-    
+
     given SystemProperties[IO] = mockSystemProperties(sysProps)
 
     val provider = new SystemPropertyCredentialsProvider[IO]
@@ -404,17 +407,17 @@ class SystemPropertyCredentialsProviderTest extends CatsEffectSuite:
       case Left(exception: SdkClientException) =>
         assert(exception.getMessage.contains("Unable to load credentials from system settings"))
         assert(exception.getMessage.contains("Access key"))
-      case Left(other) => fail(s"Expected SdkClientException, got ${other.getClass.getSimpleName}")
-      case Right(_) => fail("Should fail with incorrect case system property")
+      case Left(other) => fail(s"Expected SdkClientException, got ${ other.getClass.getSimpleName }")
+      case Right(_)    => fail("Should fail with incorrect case system property")
     }
   }
 
   test("alternative system property names are not supported") {
     val sysProps = Map(
-      "aws.access.key.id" -> testAccessKeyId,  // Not aws.accessKeyId
-      "aws.secret.access.key" -> testSecretAccessKey  // Not aws.secretAccessKey
+      "aws.access.key.id"     -> testAccessKeyId,    // Not aws.accessKeyId
+      "aws.secret.access.key" -> testSecretAccessKey // Not aws.secretAccessKey
     )
-    
+
     given SystemProperties[IO] = mockSystemProperties(sysProps)
 
     val provider = new SystemPropertyCredentialsProvider[IO]
@@ -422,17 +425,17 @@ class SystemPropertyCredentialsProviderTest extends CatsEffectSuite:
     provider.resolveCredentials().attempt.map {
       case Left(exception: SdkClientException) =>
         assert(exception.getMessage.contains("Unable to load credentials from system settings"))
-      case Left(other) => fail(s"Expected SdkClientException, got ${other.getClass.getSimpleName}")
-      case Right(_) => fail("Should fail with non-standard system property names")
+      case Left(other) => fail(s"Expected SdkClientException, got ${ other.getClass.getSimpleName }")
+      case Right(_)    => fail("Should fail with non-standard system property names")
     }
   }
 
   test("credentials validation is disabled by default") {
     val sysProps = Map(
-      "aws.accessKeyId" -> testAccessKeyId,
+      "aws.accessKeyId"     -> testAccessKeyId,
       "aws.secretAccessKey" -> testSecretAccessKey
     )
-    
+
     given SystemProperties[IO] = mockSystemProperties(sysProps)
 
     val provider = new SystemPropertyCredentialsProvider[IO]
@@ -447,12 +450,12 @@ class SystemPropertyCredentialsProviderTest extends CatsEffectSuite:
 
   test("handles all supported AWS system properties") {
     val sysProps = Map(
-      "aws.accessKeyId" -> testAccessKeyId,
+      "aws.accessKeyId"     -> testAccessKeyId,
       "aws.secretAccessKey" -> testSecretAccessKey,
-      "aws.sessionToken" -> testSessionToken,
-      "aws.accountId" -> "123456789012"
+      "aws.sessionToken"    -> testSessionToken,
+      "aws.accountId"       -> "123456789012"
     )
-    
+
     given SystemProperties[IO] = mockSystemProperties(sysProps)
 
     val provider = new SystemPropertyCredentialsProvider[IO]

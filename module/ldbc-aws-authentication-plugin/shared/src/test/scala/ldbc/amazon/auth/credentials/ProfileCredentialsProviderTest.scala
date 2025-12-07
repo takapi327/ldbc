@@ -34,10 +34,9 @@ class ProfileCredentialsProviderTest extends CatsEffectSuite:
 
   test("ProfileCredentialsProvider creation succeeds with default parameters") {
     given SystemProperties[IO] = mockSystemProperties()
-    given Files[IO] = Files.forIO
+    given Files[IO]            = Files.forIO
 
-    for
-      provider <- ProfileCredentialsProvider.default[IO]()
+    for provider <- ProfileCredentialsProvider.default[IO]()
     yield
       // Basic test - provider was created successfully
       assert(provider != null)
@@ -45,10 +44,9 @@ class ProfileCredentialsProviderTest extends CatsEffectSuite:
 
   test("ProfileCredentialsProvider creation succeeds with named profile") {
     given SystemProperties[IO] = mockSystemProperties()
-    given Files[IO] = Files.forIO
+    given Files[IO]            = Files.forIO
 
-    for
-      provider <- ProfileCredentialsProvider.default[IO]("dev")
+    for provider <- ProfileCredentialsProvider.default[IO]("dev")
     yield
       // Basic test - provider was created successfully
       assert(provider != null)
@@ -56,17 +54,16 @@ class ProfileCredentialsProviderTest extends CatsEffectSuite:
 
   test("ProfileCredentialsProvider fails when user.home is missing") {
     given SystemProperties[IO] = mockSystemProperties(homeDir = None)
-    given Files[IO] = Files.forIO
+    given Files[IO]            = Files.forIO
 
     for
       provider <- ProfileCredentialsProvider.default[IO]()
-      result <- provider.resolveCredentials().attempt
-    yield
-      result match
-        case Left(exception: SdkClientException) =>
-          // Should fail because user.home is not available
-          assert(true) // Test passed
-        case _ => fail("Expected SdkClientException")
+      result   <- provider.resolveCredentials().attempt
+    yield result match
+      case Left(exception: SdkClientException) =>
+        // Should fail because user.home is not available
+        assert(true) // Test passed
+      case _ => fail("Expected SdkClientException")
   }
 
   test("ProfileCredentialsProvider companion object methods work") {
@@ -78,24 +75,24 @@ class ProfileCredentialsProviderTest extends CatsEffectSuite:
   test("ProfileFile case class creation works") {
     import java.time.Instant
     import ProfileCredentialsProvider.*
-    
-    val profiles = Map("default" -> Profile("default", Map("aws_access_key_id" -> "test")))
-    val instant = Instant.now()
+
+    val profiles    = Map("default" -> Profile("default", Map("aws_access_key_id" -> "test")))
+    val instant     = Instant.now()
     val profileFile = ProfileFile(profiles, instant)
-    
+
     assertEquals(profileFile.profiles, profiles)
     assertEquals(profileFile.lastModified, instant)
   }
 
   test("Profile case class creation works") {
     import ProfileCredentialsProvider.*
-    
+
     val properties = Map(
-      "aws_access_key_id" -> "AKIAIOSFODNN7EXAMPLE",
+      "aws_access_key_id"     -> "AKIAIOSFODNN7EXAMPLE",
       "aws_secret_access_key" -> "wJalrXUtnFEMI/K7MDENG/bPxRfiCYzEXAMPLEKEY"
     )
     val profile = Profile("production", properties)
-    
+
     assertEquals(profile.name, "production")
     assertEquals(profile.properties, properties)
   }
@@ -103,7 +100,7 @@ class ProfileCredentialsProviderTest extends CatsEffectSuite:
   // Test basic functionality that doesn't require file system access
   test("ProfileCredentialsProvider implements AwsCredentialsProvider trait") {
     given SystemProperties[IO] = mockSystemProperties()
-    given Files[IO] = Files.forIO
+    given Files[IO]            = Files.forIO
 
     for
       provider <- ProfileCredentialsProvider.default[IO]()
@@ -115,11 +112,11 @@ class ProfileCredentialsProviderTest extends CatsEffectSuite:
 
   test("ProfileCredentialsProvider default factory creates provider with correct profile name") {
     given SystemProperties[IO] = mockSystemProperties()
-    given Files[IO] = Files.forIO
+    given Files[IO]            = Files.forIO
 
     for
       defaultProvider <- ProfileCredentialsProvider.default[IO]()
-      namedProvider <- ProfileCredentialsProvider.default[IO]("custom")
+      namedProvider   <- ProfileCredentialsProvider.default[IO]("custom")
     yield
       // Both providers should be created successfully
       assert(defaultProvider != null)
@@ -129,10 +126,9 @@ class ProfileCredentialsProviderTest extends CatsEffectSuite:
   // Test thread safety of provider creation
   test("ProfileCredentialsProvider factory is thread-safe") {
     given SystemProperties[IO] = mockSystemProperties()
-    given Files[IO] = Files.forIO
+    given Files[IO]            = Files.forIO
 
-    for
-      providers <- IO.parSequenceN(10)((1 to 10).map(_ => ProfileCredentialsProvider.default[IO]()).toList)
+    for providers <- IO.parSequenceN(10)((1 to 10).map(_ => ProfileCredentialsProvider.default[IO]()).toList)
     yield
       // All providers should be created successfully
       providers.foreach(provider => assert(provider != null))
@@ -140,12 +136,11 @@ class ProfileCredentialsProviderTest extends CatsEffectSuite:
 
   test("ProfileCredentialsProvider handles various profile names correctly") {
     given SystemProperties[IO] = mockSystemProperties()
-    given Files[IO] = Files.forIO
+    given Files[IO]            = Files.forIO
 
     val profileNames = List("default", "dev", "staging", "production", "test-profile", "profile_with_underscores")
 
-    for
-      providers <- IO.traverse(profileNames)(ProfileCredentialsProvider.default[IO](_))
+    for providers <- IO.traverse(profileNames)(ProfileCredentialsProvider.default[IO](_))
     yield
       // All providers should be created successfully regardless of profile name format
       providers.foreach(provider => assert(provider != null))
