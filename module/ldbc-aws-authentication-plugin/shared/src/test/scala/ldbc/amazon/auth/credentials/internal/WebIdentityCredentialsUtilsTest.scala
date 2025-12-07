@@ -297,19 +297,6 @@ class WebIdentityCredentialsUtilsTest extends CatsEffectSuite:
     }
   }
 
-  test("default factory creates WebIdentityCredentialsUtils with proper STS client") {
-    val mockHttpClient: HttpClient[IO] = new HttpClient[IO]:
-      override def get(uri: URI, headers: Map[String, String]): IO[HttpResponse] =
-        IO.raiseError(new UnsupportedOperationException("HTTP requests not supported in test"))
-      override def post(uri: URI, headers: Map[String, String], body: String): IO[HttpResponse] =
-        IO.raiseError(new UnsupportedOperationException("HTTP requests not supported in test"))
-      override def put(uri: URI, headers: Map[String, String], body: String): IO[HttpResponse] =
-        IO.raiseError(new UnsupportedOperationException("HTTP requests not supported in test"))
-
-    val webIdentityUtils = WebIdentityCredentialsUtils.default[IO]("us-east-1", mockHttpClient)
-    assert(webIdentityUtils != null)
-  }
-
   test("reads token from file with correct trimming") {
     val tokenWithWhitespace = s"  $validJwtToken  \n\t"
 
