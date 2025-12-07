@@ -33,51 +33,11 @@ package ldbc.amazon.exception
  * @param message The detailed error message describing the file lookup failure
  * @param tokenFilePath The path to the missing token file (optional). When provided, this path
  *                      will be included in the error message returned by [[getMessage]]
- * @param cause The underlying cause of the exception (optional). Typically a file system
- *              related exception such as `FileNotFoundException` or access-related errors
  */
 class TokenFileNotFoundException(
   message:       String,
   tokenFilePath: Option[String]    = None,
-  cause:         Option[Throwable] = None
-) extends WebIdentityTokenException(message, cause):
-
-  /**
-   * Constructor with cause only.
-   * 
-   * Use this constructor when the underlying file system exception is available but the
-   * specific file path should be extracted from the exception or is not relevant.
-   * 
-   * @param message The detailed error message describing the file lookup failure
-   * @param cause The underlying file system exception that caused this failure
-   */
-  def this(message: String, cause: Throwable) =
-    this(message, None, Some(cause))
-
-  /**
-   * Constructor with token file path only.
-   * 
-   * Use this constructor when you have the specific file path that failed but no underlying
-   * exception (e.g., when programmatically checking file existence).
-   * 
-   * @param message The detailed error message describing the file lookup failure
-   * @param tokenFilePath The full path to the token file that was not found
-   */
-  def this(message: String, tokenFilePath: String) =
-    this(message, Some(tokenFilePath), None)
-
-  /**
-   * Constructor with both token file path and cause.
-   * 
-   * This is the most comprehensive constructor, providing both the file path context
-   * and the underlying exception for complete error traceability.
-   * 
-   * @param message The detailed error message describing the file lookup failure
-   * @param tokenFilePath The full path to the token file that was not found
-   * @param cause The underlying file system exception that caused this failure
-   */
-  def this(message: String, tokenFilePath: String, cause: Throwable) =
-    this(message, Some(tokenFilePath), Some(cause))
+) extends WebIdentityTokenException(message):
 
   /**
    * Returns the error message for this exception, including the token file path when available.

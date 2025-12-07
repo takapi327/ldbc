@@ -47,10 +47,10 @@ class StsException(
 
   /**
    * Alternative constructor that accepts a required cause parameter.
-   * 
+   *
    * This constructor is useful when the underlying cause is always available and should be
    * explicitly tracked for debugging purposes.
-   * 
+   *
    * @param message The detailed error message including STS response details
    * @param cause The underlying cause of the exception that triggered this STS failure
    */

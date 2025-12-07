@@ -52,25 +52,7 @@ package ldbc.amazon.exception
  * 
  * @param message The detailed error message describing the specific access failure,
  *                including file path and permission details when available
- * @param cause The underlying cause of the exception (optional). Common causes include
- *              `AccessDeniedException`, `IOException`, `SecurityException`, or other
- *              file system related exceptions
  */
 class TokenFileAccessException(
   message: String,
-  cause:   Option[Throwable] = None
-) extends WebIdentityTokenException(message, cause):
-
-  /**
-   * Alternative constructor that accepts a required cause parameter.
-   * 
-   * This constructor is preferred when the underlying file system exception provides
-   * valuable diagnostic information that should be preserved for troubleshooting
-   * access issues.
-   * 
-   * @param message The detailed error message describing the access failure
-   * @param cause The underlying file system exception that caused this access failure
-   *              (e.g., `AccessDeniedException`, `IOException`, `SecurityException`)
-   */
-  def this(message: String, cause: Throwable) =
-    this(message, Some(cause))
+) extends WebIdentityTokenException(message)

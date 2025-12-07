@@ -33,23 +33,7 @@ package ldbc.amazon.exception
  * 
  * @param message The detailed error message describing the specific validation failure,
  *                including information about which part of the token validation failed
- * @param cause The underlying cause of the exception (optional). Common causes include
- *              JSON parsing exceptions, Base64 decoding errors, or I/O exceptions
  */
 class InvalidTokenException(
   message: String,
-  cause:   Option[Throwable] = None
-) extends WebIdentityTokenException(message, cause):
-
-  /**
-   * Alternative constructor that accepts a required cause parameter.
-   * 
-   * This is useful when the underlying parsing or validation error should always be
-   * preserved for debugging token format issues.
-   * 
-   * @param message The detailed error message describing the token validation failure
-   * @param cause The underlying cause of the validation failure (e.g., JSON parsing exception,
-   *              Base64 decoding error, or character encoding exception)
-   */
-  def this(message: String, cause: Throwable) =
-    this(message, Some(cause))
+) extends WebIdentityTokenException(message)
