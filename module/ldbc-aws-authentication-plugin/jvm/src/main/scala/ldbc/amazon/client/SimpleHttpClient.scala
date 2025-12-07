@@ -120,7 +120,7 @@ class SimpleHttpClient[F[_]: Network: Async](
       path     = Option(uri.getPath).filter(_.nonEmpty).getOrElse("/") +
                Option(uri.getQuery).map("?" + _).getOrElse("")
       address  <- resolveAddress(host, port)
-      response <- makeRequest(address, host, port, isSecure, "PUT", path, headers, Some(body))
+      response <- makeRequest(address, host, port, isSecure, "POST", path, headers, Some(body))
     yield response
 
   private def resolveAddress(host: String, port: Int): F[SocketAddress[Host]] =
