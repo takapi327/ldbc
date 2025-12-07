@@ -21,6 +21,33 @@ import ldbc.amazon.identity.*
 
 import ProfileCredentialsProvider.*
 
+/**
+ * AWS credentials provider that loads credentials from the AWS credentials file.
+ * 
+ * This provider reads credentials from the standard AWS credentials file located at
+ * `~/.aws/credentials` and supports profile-based credential management. The credentials
+ * file uses INI format with profile sections containing access keys and other configuration.
+ * 
+ * The provider implements caching and file change detection to avoid unnecessary file I/O
+ * and provides thread-safe access to credentials through semaphore-based synchronization.
+ * 
+ * File format example:
+ * ```
+ * [default]
+ * aws_access_key_id = AKIAIOSFODNN7EXAMPLE
+ * aws_secret_access_key = wJalrXUtnFEMI/K7MDENG/bPxRfiCYzEXAMPLEKEY
+ * 
+ * [production]
+ * aws_access_key_id = AKIAIOSFODNN7EXAMPLE
+ * aws_secret_access_key = wJalrXUtnFEMI/K7MDENG/bPxRfiCYzEXAMPLEKEY
+ * aws_session_token = IQoJb3JpZ2luX2VjECoaCXVzLWVhc3QtMQ==
+ * ```
+ * 
+ * @param profileName The name of the profile to load credentials from
+ * @param cacheRef Mutable reference for caching parsed credentials and file metadata
+ * @param semaphore Semaphore for controlling concurrent access to file operations
+ * @tparam F The effect type that supports file operations, system properties, and concurrency
+ */
 final class ProfileCredentialsProvider[F[_]: SystemProperties: Files: Concurrent](
   profileName: String,
   cacheRef:    Ref[F, Option[(ProfileFile, AwsCredentials)]],
@@ -28,6 +55,17 @@ final class ProfileCredentialsProvider[F[_]: SystemProperties: Files: Concurrent
 )(using ev: MonadThrow[F])
   extends AwsCredentialsProvider[F]:
 
+  /**
+   * Resolves AWS credentials from the specified profile in the credentials file.
+   * 
+   * This method implements intelligent caching by checking if the credentials file
+   * has been modified since the last read. If the file is unchanged, cached credentials
+   * are returned. Otherwise, the file is re-parsed and credentials are updated.
+   * 
+   * @return AWS credentials from the specified profile
+   * @throws SdkClientException if the credentials file is not found, the profile
+   *                           doesn't exist, or required fields are missing
+   */
   override def resolveCredentials(): F[AwsCredentials] =
     for
       currentFile <- loadFile
@@ -38,6 +76,17 @@ final class ProfileCredentialsProvider[F[_]: SystemProperties: Files: Concurrent
                        case _ => updateCredentials(currentFile)
     yield credentials
 
+  /**
+   * Loads and parses the AWS credentials file from the user's home directory.
+   * 
+   * This method locates the credentials file at `~/.aws/credentials`, reads its contents,
+   * and parses the INI-format configuration into profile structures. File metadata
+   * including last modified time is tracked for cache invalidation.
+   * 
+   * @return Parsed credentials file with profiles and metadata
+   * @throws SdkClientException if the home directory cannot be determined, the file
+   *                           doesn't exist, or the file format is invalid
+   */
   private def loadFile: F[ProfileFile] =
     for
       homeOpt <- SystemProperties[F].get("user.home")
@@ -50,6 +99,16 @@ final class ProfileCredentialsProvider[F[_]: SystemProperties: Files: Concurrent
       profiles <- ev.fromEither(parseProfiles(content))
     yield ProfileFile(profiles, Instant.ofEpochMilli(lastMod.toMillis))
 
+  /**
+   * Parses the INI-format credentials file content into profile structures.
+   * 
+   * This method processes the credentials file line by line, extracting profile
+   * sections and their properties. It supports both `[profile name]` and `[name]`
+   * section headers and handles various property formats.
+   * 
+   * @param content The raw content of the credentials file
+   * @return Either an error if parsing fails, or a map of profile names to profile data
+   */
   private def parseProfiles(content: String): Either[Throwable, Map[String, Profile]] =
     val profilePattern  = "\\[(?:profile\\s+)?(.+)\\]".r
     val propertyPattern = "^\\s*([^=]+)\\s*=\\s*(.+)\\s*$".r

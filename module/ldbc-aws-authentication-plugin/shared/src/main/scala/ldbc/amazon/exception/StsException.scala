@@ -28,8 +28,13 @@ import scala.util.control.NoStackTrace
  * https://sts.us-east-1.amazonaws.com/
  * ```
  * 
- * @param message The detailed error message including STS response details
- * @param cause The underlying cause of the exception (optional)
+ * This exception extends [[SdkClientException]] and implements [[NoStackTrace]] for improved performance
+ * when exception handling is frequent, particularly in AWS authentication scenarios where retries are common.
+ * 
+ * @param message The detailed error message including STS response details, HTTP status codes, 
+ *                and any relevant context from the failed STS operation
+ * @param cause The underlying cause of the exception (optional). Typically contains the original
+ *              HTTP exception, JSON parsing error, or network connectivity issue
  */
 class StsException(
   message: String,
@@ -41,7 +46,13 @@ class StsException(
   cause.foreach(initCause)
 
   /**
-   * Constructor with cause
+   * Alternative constructor that accepts a required cause parameter.
+   * 
+   * This constructor is useful when the underlying cause is always available and should be
+   * explicitly tracked for debugging purposes.
+   * 
+   * @param message The detailed error message including STS response details
+   * @param cause The underlying cause of the exception that triggered this STS failure
    */
   def this(message: String, cause: Throwable) =
     this(message, Some(cause))

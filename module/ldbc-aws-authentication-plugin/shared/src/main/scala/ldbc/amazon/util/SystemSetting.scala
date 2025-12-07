@@ -6,8 +6,47 @@
 
 package ldbc.amazon.util
 
+/**
+ * Base trait for system setting definitions. This trait serves as a marker interface
+ * for all system setting implementations in the AWS authentication plugin.
+ * 
+ * System settings provide a way to configure AWS SDK behavior through system properties
+ * and environment variables. Implementations of this trait define the available
+ * configuration options and their default values.
+ * 
+ * @see [[SdkSystemSetting]] for the concrete implementation with AWS SDK settings
+ */
 trait SystemSetting
 
+/**
+ * Enumeration of AWS SDK system settings that can be configured through system properties.
+ * 
+ * This enum defines all the AWS SDK configuration options available through system properties,
+ * providing a type-safe way to access configuration values. Each setting includes both the
+ * system property name and an optional default value.
+ * 
+ * The settings cover various aspects of AWS SDK configuration including:
+ *  - Credential configuration (access keys, session tokens, roles)
+ *  - Regional settings and endpoint configuration
+ *  - Metadata service settings
+ *  - HTTP client configuration
+ *  - Optimization and feature toggles
+ *  - Authentication and signing preferences
+ * 
+ * @param systemProperty the name of the system property used to configure this setting
+ * @param defaultValue the default value to use if the system property is not set, None if no default
+ * 
+ * @example {{{
+ *   // Access the system property name
+ *   val propertyName = SdkSystemSetting.AWS_REGION.systemProperty
+ *   
+ *   // Get the default value
+ *   val default = SdkSystemSetting.AWS_EC2_METADATA_DISABLED.defaultValue
+ * }}}
+ * 
+ * @see [[SystemSetting]]
+ * @see [[ldbc.amazon.client.HttpClient]] for HTTP client configuration
+ */
 enum SdkSystemSetting(val systemProperty: String, val defaultValue: Option[String]):
   /**
    * Configure the AWS access key ID.

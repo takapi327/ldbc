@@ -58,6 +58,28 @@ final class WebIdentityTokenFileCredentialsProvider[F[_]: Env: SystemProperties:
   webIdentityUtils: WebIdentityCredentialsUtils[F]
 ) extends AwsCredentialsProvider[F]:
 
+  /**
+   * Resolves AWS credentials using Web Identity Token authentication.
+   * 
+   * This method implements the OIDC (OpenID Connect) authentication flow used in
+   * containerized environments such as Kubernetes with IRSA (IAM Roles for Service Accounts)
+   * or other OIDC-enabled platforms.
+   * 
+   * The resolution process:
+   * 1. Load Web Identity configuration from environment variables/system properties
+   * 2. Validate that required configuration (token file path and role ARN) is present
+   * 3. Use STS AssumeRoleWithWebIdentity to exchange the JWT token for AWS credentials
+   * 4. Return the temporary AWS credentials with session token
+   * 
+   * This provider is commonly used in:
+   * - Amazon EKS with IAM Roles for Service Accounts (IRSA)
+   * - Self-managed Kubernetes clusters with OIDC providers
+   * - CI/CD environments with OIDC authentication
+   * - Serverless platforms with Web Identity token support
+   * 
+   * @return F[AwsCredentials] The resolved AWS credentials with temporary access key, secret key, and session token
+   * @throws SdkClientException if Web Identity configuration is missing or credential exchange fails
+   */
   override def resolveCredentials(): F[AwsCredentials] =
     for
       config      <- loadWebIdentityConfig()
@@ -75,6 +97,25 @@ final class WebIdentityTokenFileCredentialsProvider[F[_]: Env: SystemProperties:
                      }
     yield credentials
 
+  /**
+   * Loads Web Identity Token credential configuration from environment variables and system properties.
+   * 
+   * This method attempts to load the required configuration for Web Identity Token authentication
+   * by checking environment variables first, then falling back to system properties.
+   * 
+   * Required configuration:
+   * - Token file path: Path to the JWT token file (typically mounted by Kubernetes)
+   * - Role ARN: The ARN of the IAM role to assume using the Web Identity token
+   * 
+   * Optional configuration:
+   * - Role session name: Custom session name for the assumed role session
+   * 
+   * Configuration sources (in priority order):
+   * 1. Environment variables: AWS_WEB_IDENTITY_TOKEN_FILE, AWS_ROLE_ARN, AWS_ROLE_SESSION_NAME
+   * 2. System properties: aws.webIdentityTokenFile, aws.roleArn, aws.roleSessionName
+   * 
+   * @return F[Option[WebIdentityTokenCredentialProperties]] Web Identity configuration if both token file and role ARN are available, None otherwise
+   */
   private def loadWebIdentityConfig(): F[Option[WebIdentityTokenCredentialProperties]] =
     for
       tokenFilePath   <- loadTokenFilePath()
@@ -92,18 +133,95 @@ final class WebIdentityTokenFileCredentialsProvider[F[_]: Env: SystemProperties:
       case _ => None
     }
 
+  /**
+   * Loads the Web Identity Token file path from configuration sources.
+   * 
+   * This method retrieves the file system path to the JWT token file used for
+   * Web Identity authentication. The token file is typically mounted by container
+   * orchestration systems and contains a JWT token signed by an OIDC provider.
+   * 
+   * Configuration sources (in priority order):
+   * 1. Environment variable: AWS_WEB_IDENTITY_TOKEN_FILE
+   * 2. System property: aws.webIdentityTokenFile
+   * 
+   * Common token file paths in Kubernetes environments:
+   * - /var/run/secrets/eks.amazonaws.com/serviceaccount/token (EKS IRSA)
+   * - /var/run/secrets/kubernetes.io/serviceaccount/token (Standard Kubernetes SA token)
+   * 
+   * @return F[Option[String]] The token file path if configured, None otherwise
+   */
   private def loadTokenFilePath(): F[Option[String]] =
     for
       envValue     <- Env[F].get("AWS_WEB_IDENTITY_TOKEN_FILE")
       sysPropValue <- SystemProperties[F].get(SdkSystemSetting.AWS_WEB_IDENTITY_TOKEN_FILE.systemProperty)
     yield envValue.orElse(sysPropValue).map(_.trim).filter(_.nonEmpty)
 
+  /**
+   * Loads the IAM role ARN for Web Identity Token authentication.
+   * 
+   * This method retrieves the Amazon Resource Name (ARN) of the IAM role that should
+   * be assumed using the Web Identity token. The role must be configured with a trust
+   * policy that allows the OIDC provider to assume it.
+   * 
+   * Configuration sources (in priority order):
+   * 1. Environment variable: AWS_ROLE_ARN
+   * 2. System property: aws.roleArn
+   * 
+   * Example role ARN format:
+   * arn:aws:iam::123456789012:role/EKS-Pod-Identity-Role
+   * 
+   * The IAM role must have a trust policy similar to:
+   * ```json
+   * {
+   *   "Version": "2012-10-17",
+   *   "Statement": [
+   *     {
+   *       "Effect": "Allow",
+   *       "Principal": {
+   *         "Federated": "arn:aws:iam::ACCOUNT_ID:oidc-provider/OIDC_PROVIDER_URL"
+   *       },
+   *       "Action": "sts:AssumeRoleWithWebIdentity"
+   *     }
+   *   ]
+   * }
+   * ```
+   * 
+   * @return F[Option[String]] The IAM role ARN if configured, None otherwise
+   */
   private def loadRoleArn(): F[Option[String]] =
     for
       envValue     <- Env[F].get("AWS_ROLE_ARN")
       sysPropValue <- SystemProperties[F].get(SdkSystemSetting.AWS_ROLE_ARN.systemProperty)
     yield envValue.orElse(sysPropValue).map(_.trim).filter(_.nonEmpty)
 
+  /**
+   * Loads the optional role session name for Web Identity Token authentication.
+   * 
+   * This method retrieves an optional session name that will be used to identify
+   * the assumed role session in AWS CloudTrail logs and other AWS services.
+   * If not provided, a default session name will be generated automatically.
+   * 
+   * Configuration sources (in priority order):
+   * 1. Environment variable: AWS_ROLE_SESSION_NAME
+   * 2. System property: aws.roleSessionName
+   * 
+   * Session name requirements:
+   * - Must be 2-64 characters long
+   * - Can contain letters, numbers, and the characters +=,.@-
+   * - Cannot contain spaces
+   * 
+   * The session name appears in:
+   * - AWS CloudTrail logs as the "roleSessionName" field
+   * - AWS STS GetCallerIdentity response
+   * - IAM policy evaluation context for condition keys
+   * 
+   * Example session names:
+   * - "kubernetes-pod-web-app"
+   * - "ci-cd-pipeline-123"
+   * - "user-workload-session"
+   * 
+   * @return F[Option[String]] The role session name if configured, None otherwise
+   */
   private def loadRoleSessionName(): F[Option[String]] =
     for
       envValue     <- Env[F].get("AWS_ROLE_SESSION_NAME")

@@ -60,6 +60,17 @@ final class InstanceProfileCredentialsProvider[F[_]: Env: Concurrent](
   private val METADATA_TOKEN_TTL_SECONDS = 21600 // 6 hours
   private val CREDENTIAL_REFRESH_BUFFER  = 4.minutes
 
+  /**
+   * Resolves AWS credentials from EC2 instance metadata service.
+   * 
+   * This method performs the following steps:
+   * 1. Checks if the metadata service is disabled via environment variable
+   * 2. Retrieves cached credentials if they are still valid
+   * 3. Refreshes credentials from IMDS if needed
+   * 
+   * @return AWS credentials from the instance profile
+   * @throws SdkClientException if metadata service is disabled or unreachable
+   */
   override def resolveCredentials(): F[AwsCredentials] =
     for
       disabled <- checkIfDisabled()
@@ -75,12 +86,32 @@ final class InstanceProfileCredentialsProvider[F[_]: Env: Concurrent](
                      }
     yield credentials
 
+  /**
+   * Checks if the EC2 metadata service is disabled via environment variable.
+   * 
+   * The AWS_EC2_METADATA_DISABLED environment variable can be set to "true"
+   * to disable this credentials provider.
+   * 
+   * @return true if the metadata service is disabled, false otherwise
+   */
   private def checkIfDisabled(): F[Boolean] =
     Env[F].get("AWS_EC2_METADATA_DISABLED").map {
       case Some(value) => value.toLowerCase == "true"
       case None        => false
     }
 
+  /**
+   * Refreshes credentials from the EC2 instance metadata service.
+   * 
+   * This method performs the complete IMDS authentication flow:
+   * 1. Gets the IMDS endpoint (default or custom)
+   * 2. Attempts to acquire an IMDSv2 token (falls back to IMDSv1 if it fails)
+   * 3. Retrieves the available IAM role name
+   * 4. Fetches credentials for the role
+   * 5. Caches the credentials with timestamp
+   * 
+   * @return Fresh AWS credentials from IMDS
+   */
   private def refreshCredentials(): F[AwsCredentials] =
     for
       endpoint    <- getImdsEndpoint()
@@ -91,12 +122,31 @@ final class InstanceProfileCredentialsProvider[F[_]: Env: Concurrent](
       _ <- credentialsRef.set(Some(cached))
     yield credentials
 
+  /**
+   * Gets the IMDS endpoint URL from environment variable or default.
+   * 
+   * The AWS_EC2_METADATA_SERVICE_ENDPOINT environment variable can be used
+   * to override the default IMDS endpoint (useful for testing or proxies).
+   * 
+   * @return The IMDS endpoint URL without trailing slash
+   */
   private def getImdsEndpoint(): F[String] =
     Env[F].get("AWS_EC2_METADATA_SERVICE_ENDPOINT").map {
       case Some(endpoint) => endpoint.stripSuffix("/")
       case None           => DEFAULT_IMD_SEND_POINT
     }
 
+  /**
+   * Acquires an IMDSv2 session token for enhanced security.
+   * 
+   * IMDSv2 requires a session token to access metadata, which helps prevent
+   * Server-Side Request Forgery (SSRF) attacks. The token is obtained via
+   * a PUT request with a TTL header.
+   * 
+   * @param endpoint The IMDS endpoint URL
+   * @return A session token valid for the configured TTL period
+   * @throws SdkClientException if token acquisition fails
+   */
   private def acquireMetadataToken(endpoint: String): F[String] =
     val tokenUrl = s"$endpoint/latest/api/token"
     val headers  = Map(
@@ -108,6 +158,18 @@ final class InstanceProfileCredentialsProvider[F[_]: Env: Concurrent](
       _        <- validateHttpResponse(response, "Failed to acquire metadata token")
     yield response.body.trim
 
+  /**
+   * Retrieves the IAM role name associated with the instance.
+   * 
+   * This method lists all available IAM roles from the metadata service
+   * and selects the first one. In practice, EC2 instances typically have
+   * only one attached IAM role.
+   * 
+   * @param endpoint The IMDS endpoint URL
+   * @param token Optional IMDSv2 session token
+   * @return The name of the IAM role attached to the instance
+   * @throws SdkClientException if no roles are available or request fails
+   */
   private def getRoleName(endpoint: String, token: Option[String]): F[String] =
     val roleUrl = s"$endpoint/latest/meta-data/iam/security-credentials/"
     val headers = buildRequestHeaders(token)
@@ -118,6 +180,19 @@ final class InstanceProfileCredentialsProvider[F[_]: Env: Concurrent](
       roleName <- parseRoleListResponse(response.body)
     yield roleName
 
+  /**
+   * Retrieves AWS credentials for the specified IAM role.
+   * 
+   * This method fetches the temporary credentials (access key, secret key,
+   * and session token) associated with the IAM role. The credentials are
+   * returned in JSON format by the metadata service.
+   * 
+   * @param endpoint The IMDS endpoint URL
+   * @param token Optional IMDSv2 session token
+   * @param roleName The name of the IAM role
+   * @return AWS credentials for the specified role
+   * @throws SdkClientException if credentials cannot be retrieved or parsed
+   */
   private def getCredentialsForRole(
     endpoint: String,
     token:    Option[String],
@@ -132,6 +207,15 @@ final class InstanceProfileCredentialsProvider[F[_]: Env: Concurrent](
       credentials <- parseCredentialsResponse(response.body, roleName)
     yield credentials
 
+  /**
+   * Builds HTTP request headers for IMDS requests.
+   * 
+   * Creates appropriate headers for both IMDSv1 and IMDSv2 requests.
+   * When an IMDSv2 token is available, it's included in the headers.
+   * 
+   * @param token Optional IMDSv2 session token
+   * @return Map of HTTP headers for the request
+   */
   private def buildRequestHeaders(token: Option[String]): Map[String, String] =
     val baseHeaders = Map(
       "Accept"     -> "application/json",
@@ -142,6 +226,17 @@ final class InstanceProfileCredentialsProvider[F[_]: Env: Concurrent](
       case None    => baseHeaders
     }
 
+  /**
+   * Validates HTTP response status codes and provides appropriate error messages.
+   * 
+   * This method interprets common HTTP status codes in the context of IMDS operations
+   * and provides meaningful error messages for debugging authentication issues.
+   * 
+   * @param response The HTTP response to validate
+   * @param context A descriptive context for error messages
+   * @return Unit if the response is successful
+   * @throws SdkClientException with context-specific error message for failed responses
+   */
   private def validateHttpResponse(response: HttpResponse, context: String): F[Unit] =
     response.statusCode match {
       case code if code >= 200 && code < 300 => Concurrent[F].unit

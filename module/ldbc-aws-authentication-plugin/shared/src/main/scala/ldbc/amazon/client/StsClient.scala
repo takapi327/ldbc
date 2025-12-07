@@ -71,6 +71,18 @@ object StsClient:
     assumedRoleArn:  String
   )
 
+  /**
+   * Private implementation of StsClient.
+   * 
+   * This implementation handles:
+   * 1. Request validation and parameter setup
+   * 2. HTTP request formatting and execution
+   * 3. Response parsing and error handling
+   * 
+   * @param stsEndpoint The STS service endpoint URL
+   * @param httpClient The HTTP client to use for making requests
+   * @tparam F The effect type that supports UUID generation and concurrency
+   */
   private case class Impl[F[_]: UUIDGen: Concurrent](
     stsEndpoint: String,
     httpClient:  HttpClient[F]
@@ -107,6 +119,15 @@ object StsClient:
         stsResponse <- parseAssumeRoleResponse(response.body)
       yield stsResponse
 
+    /**
+     * Validates that the provided IAM role ARN has the correct format.
+     * 
+     * Role ARNs must match the pattern: arn:aws:iam::ACCOUNT_ID:role/ROLE_NAME
+     * where ACCOUNT_ID is a 12-digit number and ROLE_NAME contains valid characters.
+     * 
+     * @param roleArn The IAM role ARN to validate
+     * @return Unit if valid, raises an error if invalid
+     */
     private def validateRoleArn(roleArn: String): F[Unit] =
       val roleArnPattern = """^arn:aws:iam::\d{12}:role/[\w+=,.@-]+$""".r
       roleArnPattern.findFirstIn(roleArn) match {
@@ -132,6 +153,13 @@ object StsClient:
 
   /**
    * Builds the STS request body in AWS Query format.
+   * 
+   * Creates a URL-encoded form body with the required STS parameters for the
+   * AssumeRoleWithWebIdentity operation. All parameter names and values are
+   * properly URL-encoded to ensure safe transmission.
+   * 
+   * @param request The STS request containing the parameters
+   * @return URL-encoded form data string for the request body
    */
   private def buildRequestBody(request: AssumeRoleWithWebIdentityRequest): String =
     val params = Map(
@@ -152,6 +180,12 @@ object StsClient:
 
   /**
    * Gets current timestamp in AWS format.
+   * 
+   * Generates a timestamp string in the ISO 8601 format required by AWS:
+   * yyyyMMddTHHmmssZ (e.g., "20231201T120000Z"). The timestamp is always
+   * generated in UTC timezone.
+   * 
+   * @return Either an error if timestamp generation fails, or the formatted timestamp string
    */
   private def getCurrentTimestamp(): Either[Throwable, String] =
     try {
@@ -167,6 +201,13 @@ object StsClient:
 
   /**
    * Validates HTTP response status.
+   * 
+   * Checks if the HTTP response has a successful status code (2xx range).
+   * If the status code indicates an error, raises an StsException with
+   * the status code and response body for debugging.
+   * 
+   * @param response The HTTP response to validate
+   * @return Unit if status is successful, raises StsException otherwise
    */
   private def validateHttpResponse[F[_]: MonadThrow](response: HttpResponse): F[Unit] =
     if response.statusCode >= 200 && response.statusCode < 300 then {

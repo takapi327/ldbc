@@ -7,21 +7,34 @@
 package ldbc.amazon.exception
 
 /**
- * Thrown when the Web Identity Token is invalid or malformed.
+ * Exception thrown when a Web Identity Token is invalid, malformed, or cannot be processed.
  * 
- * This exception is typically thrown when:
+ * This exception is typically thrown during token validation when:
  * - The JWT token does not have the correct format (header.payload.signature)
  * - The token file is empty or contains only whitespace
- * - The token contains invalid characters or encoding
- * - The JWT structure is corrupted
+ * - The token contains invalid characters or encoding issues
+ * - The JWT structure is corrupted or missing required components
+ * - Base64 decoding of JWT segments fails
+ * - JSON parsing of JWT header or payload fails
  * 
- * Valid JWT token format:
+ * Valid JWT token format (3 base64-encoded segments separated by dots):
  * ```
  * eyJhbGciOiJSUzI1NiIsImtpZCI6IjEyMyJ9.eyJpc3MiOiJodHRwczovL29pZGMuZWtzLnVzLWVhc3QtMS5hbWF6b25hd3MuY29tL2lkLzEyMyIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpkZWZhdWx0Om15LWFwcCJ9.signature
  * ```
  * 
- * @param message The detailed error message
- * @param cause The underlying cause of the exception (optional)
+ * Common scenarios that trigger this exception:
+ * - Token file contains non-JWT content (e.g., HTML error page, plain text)
+ * - Network issues resulted in partial token download
+ * - Token rotation occurred mid-process leaving stale content
+ * - File system corruption affecting the token file
+ * 
+ * This exception extends [[WebIdentityTokenException]] and inherits [[NoStackTrace]] behavior
+ * for performance optimization during token validation workflows.
+ * 
+ * @param message The detailed error message describing the specific validation failure,
+ *                including information about which part of the token validation failed
+ * @param cause The underlying cause of the exception (optional). Common causes include
+ *              JSON parsing exceptions, Base64 decoding errors, or I/O exceptions
  */
 class InvalidTokenException(
   message: String,
@@ -29,7 +42,14 @@ class InvalidTokenException(
 ) extends WebIdentityTokenException(message, cause):
 
   /**
-   * Constructor with cause
+   * Alternative constructor that accepts a required cause parameter.
+   * 
+   * This is useful when the underlying parsing or validation error should always be
+   * preserved for debugging token format issues.
+   * 
+   * @param message The detailed error message describing the token validation failure
+   * @param cause The underlying cause of the validation failure (e.g., JSON parsing exception,
+   *              Base64 decoding error, or character encoding exception)
    */
   def this(message: String, cause: Throwable) =
     this(message, Some(cause))

@@ -44,6 +44,18 @@ trait WebIdentityCredentialsUtils[F[_]]:
 
 object WebIdentityCredentialsUtils:
 
+  /**
+   * Private implementation of WebIdentityCredentialsUtils.
+   * 
+   * This implementation handles the complete Web Identity Token flow:
+   * 1. Reading JWT token from file system
+   * 2. Validating the token format
+   * 3. Calling STS AssumeRoleWithWebIdentity
+   * 4. Converting the STS response to AWS credentials
+   * 
+   * @param stsClient The STS client to use for AssumeRoleWithWebIdentity operations
+   * @tparam F The effect type that supports file operations and concurrency
+   */
   private case class Impl[F[_]: Files: Concurrent](
     stsClient: StsClient[F]
   ) extends WebIdentityCredentialsUtils[F]:

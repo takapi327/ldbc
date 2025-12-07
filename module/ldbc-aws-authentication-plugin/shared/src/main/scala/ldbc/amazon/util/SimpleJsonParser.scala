@@ -8,15 +8,51 @@ package ldbc.amazon.util
 
 /**
  * Simple JSON parser for AWS credential responses.
- * Avoids external dependencies for Scala.js and Scala Native compatibility.
+ * 
+ * This parser is designed specifically for parsing AWS service responses that contain
+ * credentials and other simple data structures. It avoids external dependencies to
+ * maintain compatibility with Scala.js and Scala Native environments.
+ * 
+ * The parser handles flat JSON objects with string, number, boolean, and null values
+ * but does not support nested objects or arrays.
  */
 object SimpleJsonParser:
 
+  /**
+   * Represents a parsed JSON object with string-valued fields.
+   * 
+   * This class provides convenient methods for accessing JSON fields with
+   * proper null handling and error reporting for missing required fields.
+   * 
+   * @param fields Map of field names to optional string values (None represents JSON null)
+   */
   case class JsonObject(fields: Map[String, Option[String]]):
+
+    /**
+     * Gets an optional field value.
+     * 
+     * @param key The field name to retrieve
+     * @return Some(value) if the field exists and is not null, None otherwise
+     */
     def get(key: String): Option[String] = fields.get(key).flatten
 
+    /**
+     * Gets a field value with empty string as fallback.
+     * 
+     * @param key The field name to retrieve
+     * @return The field value or empty string if the field is missing or null
+     */
     def getOrEmpty(key: String): String = fields.get(key).flatten.getOrElse("")
 
+    /**
+     * Requires a field to exist with a non-null value.
+     * 
+     * This method is useful for extracting required fields from JSON responses
+     * with proper error messaging.
+     * 
+     * @param key The field name to retrieve
+     * @return Right(value) if the field exists and is not null, Left(error message) otherwise
+     */
     def require(key: String): Either[String, String] =
       fields.get(key) match
         case None              => Left(s"Required field '$key' not found")

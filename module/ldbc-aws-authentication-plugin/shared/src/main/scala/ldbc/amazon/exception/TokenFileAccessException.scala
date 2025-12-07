@@ -7,20 +7,54 @@
 package ldbc.amazon.exception
 
 /**
- * Thrown when the Web Identity Token file cannot be accessed due to permissions or I/O issues.
+ * Exception thrown when the Web Identity Token file exists but cannot be accessed due to 
+ * permissions, I/O errors, or other file system issues.
  * 
- * This exception is typically thrown when:
- * - The file exists but cannot be read due to insufficient permissions
- * - I/O errors occur while reading the token file
- * - File system issues prevent access to the token file
+ * This exception is typically thrown in the following scenarios:
+ * - The file exists but cannot be read due to insufficient file system permissions
+ * - I/O errors occur while reading the token file (disk errors, network mount issues)
+ * - File system issues prevent access (read-only file systems, corrupted file systems)
+ * - File is locked by another process or application
+ * - Security policy restrictions prevent file access (SELinux, AppArmor, etc.)
+ * - File descriptor limits are exceeded
  * 
- * Common solutions:
- * - Verify file permissions (typically 600 for token files)
- * - Check if the process has read access to the file
- * - Ensure the file system is mounted and accessible
+ * Common environments and solutions:
  * 
- * @param message The detailed error message
- * @param cause The underlying cause of the exception (optional)
+ * **Container environments (Docker, Kubernetes):**
+ * - Ensure the container user has read access to mounted token files
+ * - Verify that volume mounts are configured correctly
+ * - Check that security contexts allow file access
+ * 
+ * **File permissions:**
+ * - Token files typically need 600 permissions (read for owner only)
+ * - Verify the process owner matches the file owner or has appropriate group access
+ * - Check parent directory permissions (must be executable to access files within)
+ * 
+ * **File system issues:**
+ * - Ensure file systems are mounted correctly (especially network mounts)
+ * - Verify disk space and inode availability
+ * - Check for file system corruption or read-only states
+ * 
+ * Example debugging steps:
+ * ```bash
+ * # Check file permissions
+ * ls -la /var/run/secrets/eks.amazonaws.com/serviceaccount/token
+ * 
+ * # Test file access as the application user
+ * sudo -u app-user cat /var/run/secrets/eks.amazonaws.com/serviceaccount/token
+ * 
+ * # Check file system mount status
+ * mount | grep /var/run/secrets
+ * ```
+ * 
+ * This exception extends [[WebIdentityTokenException]] and inherits [[NoStackTrace]] behavior
+ * to avoid performance overhead during frequent access attempts.
+ * 
+ * @param message The detailed error message describing the specific access failure,
+ *                including file path and permission details when available
+ * @param cause The underlying cause of the exception (optional). Common causes include
+ *              `AccessDeniedException`, `IOException`, `SecurityException`, or other
+ *              file system related exceptions
  */
 class TokenFileAccessException(
   message: String,
@@ -28,7 +62,15 @@ class TokenFileAccessException(
 ) extends WebIdentityTokenException(message, cause):
 
   /**
-   * Constructor with cause
+   * Alternative constructor that accepts a required cause parameter.
+   * 
+   * This constructor is preferred when the underlying file system exception provides
+   * valuable diagnostic information that should be preserved for troubleshooting
+   * access issues.
+   * 
+   * @param message The detailed error message describing the access failure
+   * @param cause The underlying file system exception that caused this access failure
+   *              (e.g., `AccessDeniedException`, `IOException`, `SecurityException`)
    */
   def this(message: String, cause: Throwable) =
     this(message, Some(cause))
