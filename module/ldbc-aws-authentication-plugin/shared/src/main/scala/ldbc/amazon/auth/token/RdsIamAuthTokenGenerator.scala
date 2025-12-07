@@ -196,7 +196,7 @@ class RdsIamAuthTokenGenerator[F[_]: Hashing: Sync](
    * @return Lowercase hexadecimal string representation
    */
   private def bytesToHex(bytes: Array[Byte]): String =
-    bytes.map("%02x".format(_)).mkString
+    bytes.map(b => "%02x".format(b & 0xFF)).mkString
 
   /**
    * Computes the SHA-256 hash of a string and returns it as a lowercase hex string.
