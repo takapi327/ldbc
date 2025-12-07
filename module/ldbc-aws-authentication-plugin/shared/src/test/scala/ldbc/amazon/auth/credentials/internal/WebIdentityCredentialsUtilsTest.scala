@@ -32,41 +32,42 @@ class WebIdentityCredentialsUtilsTest extends CatsEffectSuite:
   private val testAssumedRoleArn  = "arn:aws:sts::123456789012:assumed-role/test-role/test-session"
 
   // Valid JWT token (simplified for testing)
-  private val validJwtToken = "eyJhbGciOiJSUzI1NiIsImtpZCI6IjEyMyJ9.eyJpc3MiOiJodHRwczovL29pZGMuZWtzLnVzLWVhc3QtMS5hbWF6b25hd3MuY29tL2lkLzEyMyIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpkZWZhdWx0Om15LWFwcCJ9.signature"
+  private val validJwtToken =
+    "eyJhbGciOiJSUzI1NiIsImtpZCI6IjEyMyJ9.eyJpc3MiOiJodHRwczovL29pZGMuZWtzLnVzLWVhc3QtMS5hbWF6b25hd3MuY29tL2lkLzEyMyIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpkZWZhdWx0Om15LWFwcCJ9.signature"
 
   // For these tests, we'll focus on mocking the StsClient behavior since Files[IO] is sealed
   // We'll create temporary files for file-based tests when needed
 
   // Mock StsClient
   private def mockStsClient(
-    response:             Option[StsClient.AssumeRoleWithWebIdentityResponse] = None,
-    shouldFail:           Boolean = false,
-    errorMessage:         String = "Mock STS error",
-    captureRequestsTo:    Option[Ref[IO, List[StsClient.AssumeRoleWithWebIdentityRequest]]] = None
+    response:          Option[StsClient.AssumeRoleWithWebIdentityResponse] = None,
+    shouldFail:        Boolean = false,
+    errorMessage:      String = "Mock STS error",
+    captureRequestsTo: Option[Ref[IO, List[StsClient.AssumeRoleWithWebIdentityRequest]]] = None
   ): StsClient[IO] =
-    (request: StsClient.AssumeRoleWithWebIdentityRequest) => for
-      _ <- captureRequestsTo match
-        case Some(ref) => ref.update(_ :+ request)
-        case None => IO.unit
-    yield
-      if shouldFail then throw new StsException(errorMessage)
-      else
-        response.getOrElse(
-          StsClient.AssumeRoleWithWebIdentityResponse(
-            accessKeyId = testAccessKeyId,
-            secretAccessKey = testSecretAccessKey,
-            sessionToken = testSessionToken,
-            expiration = futureExpiration,
-            assumedRoleArn = testAssumedRoleArn
+    (request: StsClient.AssumeRoleWithWebIdentityRequest) =>
+      for _ <- captureRequestsTo match
+                 case Some(ref) => ref.update(_ :+ request)
+                 case None      => IO.unit
+      yield
+        if shouldFail then throw new StsException(errorMessage)
+        else
+          response.getOrElse(
+            StsClient.AssumeRoleWithWebIdentityResponse(
+              accessKeyId     = testAccessKeyId,
+              secretAccessKey = testSecretAccessKey,
+              sessionToken    = testSessionToken,
+              expiration      = futureExpiration,
+              assumedRoleArn  = testAssumedRoleArn
+            )
           )
-        )
 
   test("assumeRoleWithWebIdentity with successful flow") {
     // Create a temporary file with the JWT token for testing
     val tempFile = for
-      tempDir <- Files[IO].createTempDirectory(None, "webidentity-test", None)
+      tempDir   <- Files[IO].createTempDirectory(None, "webidentity-test", None)
       tokenFile <- Files[IO].createTempFile(Some(tempDir), "jwt-token", ".txt", None)
-      _ <- Files[IO].writeUtf8(tokenFile).apply(fs2.Stream.emit(validJwtToken)).compile.drain
+      _         <- Files[IO].writeUtf8(tokenFile).apply(fs2.Stream.emit(validJwtToken)).compile.drain
     yield tokenFile
 
     tempFile.flatMap { tokenFilePath =>
@@ -76,14 +77,14 @@ class WebIdentityCredentialsUtilsTest extends CatsEffectSuite:
         roleSessionName      = Some(testSessionName)
       )
 
-      val requestCapture = Ref.unsafe[IO, List[StsClient.AssumeRoleWithWebIdentityRequest]](List.empty)
-      val stsClient      = mockStsClient(captureRequestsTo = Some(requestCapture))
+      val requestCapture   = Ref.unsafe[IO, List[StsClient.AssumeRoleWithWebIdentityRequest]](List.empty)
+      val stsClient        = mockStsClient(captureRequestsTo = Some(requestCapture))
       val webIdentityUtils = WebIdentityCredentialsUtils.create[IO](stsClient)
 
       for
         credentials <- webIdentityUtils.assumeRoleWithWebIdentity(config)
         requests    <- requestCapture.get
-        _ <- Files[IO].deleteIfExists(tokenFilePath) // Cleanup
+        _           <- Files[IO].deleteIfExists(tokenFilePath) // Cleanup
       yield
         credentials match
           case session: AwsSessionCredentials =>
@@ -110,11 +111,11 @@ class WebIdentityCredentialsUtilsTest extends CatsEffectSuite:
 
   test("fail when JWT token has invalid format - too few parts") {
     val invalidToken = "header.payload" // Missing signature part
-    
+
     val tempFile = for
-      tempDir <- Files[IO].createTempDirectory(None, "webidentity-test", None)
+      tempDir   <- Files[IO].createTempDirectory(None, "webidentity-test", None)
       tokenFile <- Files[IO].createTempFile(Some(tempDir), "jwt-token", ".txt", None)
-      _ <- Files[IO].writeUtf8(tokenFile).apply(fs2.Stream.emit(invalidToken)).compile.drain
+      _         <- Files[IO].writeUtf8(tokenFile).apply(fs2.Stream.emit(invalidToken)).compile.drain
     yield tokenFile
 
     tempFile.flatMap { tokenFilePath =>
@@ -124,28 +125,27 @@ class WebIdentityCredentialsUtilsTest extends CatsEffectSuite:
         roleSessionName      = Some(testSessionName)
       )
 
-      val stsClient = mockStsClient()
+      val stsClient        = mockStsClient()
       val webIdentityUtils = WebIdentityCredentialsUtils.create[IO](stsClient)
 
-      for 
+      for
         result <- webIdentityUtils.assumeRoleWithWebIdentity(config).attempt
-        _ <- Files[IO].deleteIfExists(tokenFilePath) // Cleanup
-      yield
-        result match
-          case Left(exception: InvalidTokenException) =>
-            assert(exception.getMessage.contains("Invalid JWT token format"))
-            assert(exception.getMessage.contains("Expected 3 parts, got 2"))
-          case _ => fail("Expected InvalidTokenException")
+        _      <- Files[IO].deleteIfExists(tokenFilePath) // Cleanup
+      yield result match
+        case Left(exception: InvalidTokenException) =>
+          assert(exception.getMessage.contains("Invalid JWT token format"))
+          assert(exception.getMessage.contains("Expected 3 parts, got 2"))
+        case _ => fail("Expected InvalidTokenException")
     }
   }
 
   test("fail when JWT token has invalid format - too many parts") {
     val invalidToken = "header.payload.signature.extra" // Too many parts
-    
+
     val tempFile = for
-      tempDir <- Files[IO].createTempDirectory(None, "webidentity-test", None)
+      tempDir   <- Files[IO].createTempDirectory(None, "webidentity-test", None)
       tokenFile <- Files[IO].createTempFile(Some(tempDir), "jwt-token", ".txt", None)
-      _ <- Files[IO].writeUtf8(tokenFile).apply(fs2.Stream.emit(invalidToken)).compile.drain
+      _         <- Files[IO].writeUtf8(tokenFile).apply(fs2.Stream.emit(invalidToken)).compile.drain
     yield tokenFile
 
     tempFile.flatMap { tokenFilePath =>
@@ -155,28 +155,27 @@ class WebIdentityCredentialsUtilsTest extends CatsEffectSuite:
         roleSessionName      = Some(testSessionName)
       )
 
-      val stsClient = mockStsClient()
+      val stsClient        = mockStsClient()
       val webIdentityUtils = WebIdentityCredentialsUtils.create[IO](stsClient)
 
-      for 
+      for
         result <- webIdentityUtils.assumeRoleWithWebIdentity(config).attempt
-        _ <- Files[IO].deleteIfExists(tokenFilePath) // Cleanup
-      yield
-        result match
-          case Left(exception: InvalidTokenException) =>
-            assert(exception.getMessage.contains("Invalid JWT token format"))
-            assert(exception.getMessage.contains("Expected 3 parts, got 4"))
-          case _ => fail("Expected InvalidTokenException")
+        _      <- Files[IO].deleteIfExists(tokenFilePath) // Cleanup
+      yield result match
+        case Left(exception: InvalidTokenException) =>
+          assert(exception.getMessage.contains("Invalid JWT token format"))
+          assert(exception.getMessage.contains("Expected 3 parts, got 4"))
+        case _ => fail("Expected InvalidTokenException")
     }
   }
 
   test("fail when JWT token has empty parts") {
     val invalidToken = "header..signature" // Empty payload
-    
+
     val tempFile = for
-      tempDir <- Files[IO].createTempDirectory(None, "webidentity-test", None)
+      tempDir   <- Files[IO].createTempDirectory(None, "webidentity-test", None)
       tokenFile <- Files[IO].createTempFile(Some(tempDir), "jwt-token", ".txt", None)
-      _ <- Files[IO].writeUtf8(tokenFile).apply(fs2.Stream.emit(invalidToken)).compile.drain
+      _         <- Files[IO].writeUtf8(tokenFile).apply(fs2.Stream.emit(invalidToken)).compile.drain
     yield tokenFile
 
     tempFile.flatMap { tokenFilePath =>
@@ -186,25 +185,24 @@ class WebIdentityCredentialsUtilsTest extends CatsEffectSuite:
         roleSessionName      = Some(testSessionName)
       )
 
-      val stsClient = mockStsClient()
+      val stsClient        = mockStsClient()
       val webIdentityUtils = WebIdentityCredentialsUtils.create[IO](stsClient)
 
-      for 
+      for
         result <- webIdentityUtils.assumeRoleWithWebIdentity(config).attempt
-        _ <- Files[IO].deleteIfExists(tokenFilePath) // Cleanup
-      yield
-        result match
-          case Left(exception: InvalidTokenException) =>
-            assert(exception.getMessage.contains("JWT token contains empty parts"))
-          case _ => fail("Expected InvalidTokenException")
+        _      <- Files[IO].deleteIfExists(tokenFilePath) // Cleanup
+      yield result match
+        case Left(exception: InvalidTokenException) =>
+          assert(exception.getMessage.contains("JWT token contains empty parts"))
+        case _ => fail("Expected InvalidTokenException")
     }
   }
 
   test("fail when STS client throws exception") {
     val tempFile = for
-      tempDir <- Files[IO].createTempDirectory(None, "webidentity-test", None)
+      tempDir   <- Files[IO].createTempDirectory(None, "webidentity-test", None)
       tokenFile <- Files[IO].createTempFile(Some(tempDir), "jwt-token", ".txt", None)
-      _ <- Files[IO].writeUtf8(tokenFile).apply(fs2.Stream.emit(validJwtToken)).compile.drain
+      _         <- Files[IO].writeUtf8(tokenFile).apply(fs2.Stream.emit(validJwtToken)).compile.drain
     yield tokenFile
 
     tempFile.flatMap { tokenFilePath =>
@@ -214,25 +212,24 @@ class WebIdentityCredentialsUtilsTest extends CatsEffectSuite:
         roleSessionName      = Some(testSessionName)
       )
 
-      val stsClient = mockStsClient(shouldFail = true, errorMessage = "STS service unavailable")
+      val stsClient        = mockStsClient(shouldFail = true, errorMessage = "STS service unavailable")
       val webIdentityUtils = WebIdentityCredentialsUtils.create[IO](stsClient)
 
-      for 
+      for
         result <- webIdentityUtils.assumeRoleWithWebIdentity(config).attempt
-        _ <- Files[IO].deleteIfExists(tokenFilePath) // Cleanup
-      yield
-        result match
-          case Left(exception: StsException) =>
-            assertEquals(exception.getMessage, "STS service unavailable")
-          case _ => fail("Expected StsException")
+        _      <- Files[IO].deleteIfExists(tokenFilePath) // Cleanup
+      yield result match
+        case Left(exception: StsException) =>
+          assertEquals(exception.getMessage, "STS service unavailable")
+        case _ => fail("Expected StsException")
     }
   }
 
   test("extract account ID from ARN correctly") {
     val tempFile = for
-      tempDir <- Files[IO].createTempDirectory(None, "webidentity-test", None)
+      tempDir   <- Files[IO].createTempDirectory(None, "webidentity-test", None)
       tokenFile <- Files[IO].createTempFile(Some(tempDir), "jwt-token", ".txt", None)
-      _ <- Files[IO].writeUtf8(tokenFile).apply(fs2.Stream.emit(validJwtToken)).compile.drain
+      _         <- Files[IO].writeUtf8(tokenFile).apply(fs2.Stream.emit(validJwtToken)).compile.drain
     yield tokenFile
 
     tempFile.flatMap { tokenFilePath =>
@@ -243,7 +240,7 @@ class WebIdentityCredentialsUtilsTest extends CatsEffectSuite:
       )
 
       val customAssumedRoleArn = "arn:aws:sts::999888777666:assumed-role/my-role/my-session"
-      val customResponse = StsClient.AssumeRoleWithWebIdentityResponse(
+      val customResponse       = StsClient.AssumeRoleWithWebIdentityResponse(
         accessKeyId     = testAccessKeyId,
         secretAccessKey = testSecretAccessKey,
         sessionToken    = testSessionToken,
@@ -251,25 +248,24 @@ class WebIdentityCredentialsUtilsTest extends CatsEffectSuite:
         assumedRoleArn  = customAssumedRoleArn
       )
 
-      val stsClient = mockStsClient(response = Some(customResponse))
+      val stsClient        = mockStsClient(response = Some(customResponse))
       val webIdentityUtils = WebIdentityCredentialsUtils.create[IO](stsClient)
 
-      for 
+      for
         credentials <- webIdentityUtils.assumeRoleWithWebIdentity(config)
-        _ <- Files[IO].deleteIfExists(tokenFilePath) // Cleanup
-      yield
-        credentials match
-          case session: AwsSessionCredentials =>
-            assertEquals(session.accountId, Some("999888777666"))
-          case _ => fail("Expected AwsSessionCredentials")
+        _           <- Files[IO].deleteIfExists(tokenFilePath) // Cleanup
+      yield credentials match
+        case session: AwsSessionCredentials =>
+          assertEquals(session.accountId, Some("999888777666"))
+        case _ => fail("Expected AwsSessionCredentials")
     }
   }
 
   test("handle malformed ARN gracefully") {
     val tempFile = for
-      tempDir <- Files[IO].createTempDirectory(None, "webidentity-test", None)
+      tempDir   <- Files[IO].createTempDirectory(None, "webidentity-test", None)
       tokenFile <- Files[IO].createTempFile(Some(tempDir), "jwt-token", ".txt", None)
-      _ <- Files[IO].writeUtf8(tokenFile).apply(fs2.Stream.emit(validJwtToken)).compile.drain
+      _         <- Files[IO].writeUtf8(tokenFile).apply(fs2.Stream.emit(validJwtToken)).compile.drain
     yield tokenFile
 
     tempFile.flatMap { tokenFilePath =>
@@ -279,7 +275,7 @@ class WebIdentityCredentialsUtilsTest extends CatsEffectSuite:
         roleSessionName      = Some(testSessionName)
       )
 
-      val malformedArn = "invalid:arn:format"
+      val malformedArn   = "invalid:arn:format"
       val customResponse = StsClient.AssumeRoleWithWebIdentityResponse(
         accessKeyId     = testAccessKeyId,
         secretAccessKey = testSecretAccessKey,
@@ -288,17 +284,16 @@ class WebIdentityCredentialsUtilsTest extends CatsEffectSuite:
         assumedRoleArn  = malformedArn
       )
 
-      val stsClient = mockStsClient(response = Some(customResponse))
+      val stsClient        = mockStsClient(response = Some(customResponse))
       val webIdentityUtils = WebIdentityCredentialsUtils.create[IO](stsClient)
 
-      for 
+      for
         credentials <- webIdentityUtils.assumeRoleWithWebIdentity(config)
-        _ <- Files[IO].deleteIfExists(tokenFilePath) // Cleanup
-      yield
-        credentials match
-          case session: AwsSessionCredentials =>
-            assertEquals(session.accountId, None) // Should be None for malformed ARN
-          case _ => fail("Expected AwsSessionCredentials")
+        _           <- Files[IO].deleteIfExists(tokenFilePath) // Cleanup
+      yield credentials match
+        case session: AwsSessionCredentials =>
+          assertEquals(session.accountId, None) // Should be None for malformed ARN
+        case _ => fail("Expected AwsSessionCredentials")
     }
   }
 
@@ -317,11 +312,11 @@ class WebIdentityCredentialsUtilsTest extends CatsEffectSuite:
 
   test("reads token from file with correct trimming") {
     val tokenWithWhitespace = s"  $validJwtToken  \n\t"
-    
+
     val tempFile = for
-      tempDir <- Files[IO].createTempDirectory(None, "webidentity-test", None)
+      tempDir   <- Files[IO].createTempDirectory(None, "webidentity-test", None)
       tokenFile <- Files[IO].createTempFile(Some(tempDir), "jwt-token", ".txt", None)
-      _ <- Files[IO].writeUtf8(tokenFile).apply(fs2.Stream.emit(tokenWithWhitespace)).compile.drain
+      _         <- Files[IO].writeUtf8(tokenFile).apply(fs2.Stream.emit(tokenWithWhitespace)).compile.drain
     yield tokenFile
 
     tempFile.flatMap { tokenFilePath =>
@@ -331,14 +326,14 @@ class WebIdentityCredentialsUtilsTest extends CatsEffectSuite:
         roleSessionName      = Some(testSessionName)
       )
 
-      val requestCapture = Ref.unsafe[IO, List[StsClient.AssumeRoleWithWebIdentityRequest]](List.empty)
-      val stsClient      = mockStsClient(captureRequestsTo = Some(requestCapture))
+      val requestCapture   = Ref.unsafe[IO, List[StsClient.AssumeRoleWithWebIdentityRequest]](List.empty)
+      val stsClient        = mockStsClient(captureRequestsTo = Some(requestCapture))
       val webIdentityUtils = WebIdentityCredentialsUtils.create[IO](stsClient)
 
       for
         credentials <- webIdentityUtils.assumeRoleWithWebIdentity(config)
         requests    <- requestCapture.get
-        _ <- Files[IO].deleteIfExists(tokenFilePath) // Cleanup
+        _           <- Files[IO].deleteIfExists(tokenFilePath) // Cleanup
       yield
         credentials match
           case session: AwsSessionCredentials =>
