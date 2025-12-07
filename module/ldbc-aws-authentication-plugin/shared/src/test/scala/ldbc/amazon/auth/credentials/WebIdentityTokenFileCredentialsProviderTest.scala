@@ -14,8 +14,8 @@ import cats.effect.std.{ Env, SystemProperties }
 import munit.CatsEffectSuite
 
 import ldbc.amazon.auth.credentials.internal.WebIdentityCredentialsUtils
-import ldbc.amazon.exception.SdkClientException
 import ldbc.amazon.auth.credentials.AwsSessionCredentials
+import ldbc.amazon.exception.SdkClientException
 import ldbc.amazon.identity.AwsCredentials
 
 class WebIdentityTokenFileCredentialsProviderTest extends CatsEffectSuite:
@@ -49,29 +49,29 @@ class WebIdentityTokenFileCredentialsProviderTest extends CatsEffectSuite:
 
   // Mock WebIdentityCredentialsUtils
   private def mockWebIdentityUtils(
-    response:             Option[AwsCredentials] = None,
-    shouldFail:           Boolean = false,
-    errorMessage:         String = "Mock STS error",
-    captureRequestsTo:    Option[Ref[IO, List[WebIdentityTokenCredentialProperties]]] = None
+    response:          Option[AwsCredentials] = None,
+    shouldFail:        Boolean = false,
+    errorMessage:      String = "Mock STS error",
+    captureRequestsTo: Option[Ref[IO, List[WebIdentityTokenCredentialProperties]]] = None
   ): WebIdentityCredentialsUtils[IO] =
-    (config: WebIdentityTokenCredentialProperties) => for
-      _ <- captureRequestsTo match
-        case Some(ref) => ref.update(_ :+ config)
-        case None => IO.unit
-    yield
-      if shouldFail then throw new SdkClientException(errorMessage)
-      else
-        response.getOrElse(
-          AwsSessionCredentials(
-            accessKeyId = testAccessKeyId,
-            secretAccessKey = testSecretAccessKey,
-            sessionToken = testSessionToken,
-            validateCredentials = false,
-            providerName = None,
-            accountId = Some("123456789012"),
-            expirationTime = Some(futureExpiration)
+    (config: WebIdentityTokenCredentialProperties) =>
+      for _ <- captureRequestsTo match
+                 case Some(ref) => ref.update(_ :+ config)
+                 case None      => IO.unit
+      yield
+        if shouldFail then throw new SdkClientException(errorMessage)
+        else
+          response.getOrElse(
+            AwsSessionCredentials(
+              accessKeyId         = testAccessKeyId,
+              secretAccessKey     = testSecretAccessKey,
+              sessionToken        = testSessionToken,
+              validateCredentials = false,
+              providerName        = None,
+              accountId           = Some("123456789012"),
+              expirationTime      = Some(futureExpiration)
+            )
           )
-        )
 
   test("resolveCredentials with successful Web Identity Token authentication") {
     val envVars = Map(
@@ -122,9 +122,9 @@ class WebIdentityTokenFileCredentialsProviderTest extends CatsEffectSuite:
     val provider         = WebIdentityTokenFileCredentialsProvider.create[IO](webIdentityUtils)
 
     provider.resolveCredentials().map {
-        case session: AwsSessionCredentials =>
-          assertEquals(session.accessKeyId, testAccessKeyId)
-        case _ => fail("Expected AwsSessionCredentials")
+      case session: AwsSessionCredentials =>
+        assertEquals(session.accessKeyId, testAccessKeyId)
+      case _ => fail("Expected AwsSessionCredentials")
     }
   }
 
@@ -133,7 +133,7 @@ class WebIdentityTokenFileCredentialsProviderTest extends CatsEffectSuite:
       "AWS_WEB_IDENTITY_TOKEN_FILE" -> testTokenFile,
       "AWS_ROLE_ARN"                -> testRoleArn
     )
-    
+
     val sysProps = Map(
       "aws.webIdentityTokenFile" -> "/wrong/path",
       "aws.roleArn"              -> "arn:aws:iam::999999999999:role/wrong-role"
@@ -166,7 +166,7 @@ class WebIdentityTokenFileCredentialsProviderTest extends CatsEffectSuite:
       "AWS_ROLE_ARN"                -> testRoleArn
     )
 
-    given Env[IO]            = mockEnv(envVars)
+    given Env[IO]              = mockEnv(envVars)
     given SystemProperties[IO] = mockSystemProperties()
 
     val requestCapture   = Ref.unsafe[IO, List[WebIdentityTokenCredentialProperties]](List.empty)
@@ -191,7 +191,7 @@ class WebIdentityTokenFileCredentialsProviderTest extends CatsEffectSuite:
       "AWS_ROLE_ARN" -> testRoleArn
     )
 
-    given Env[IO]            = mockEnv(envVars)
+    given Env[IO]              = mockEnv(envVars)
     given SystemProperties[IO] = mockSystemProperties()
 
     val webIdentityUtils = mockWebIdentityUtils()
@@ -210,7 +210,7 @@ class WebIdentityTokenFileCredentialsProviderTest extends CatsEffectSuite:
       "AWS_WEB_IDENTITY_TOKEN_FILE" -> testTokenFile
     )
 
-    given Env[IO]            = mockEnv(envVars)
+    given Env[IO]              = mockEnv(envVars)
     given SystemProperties[IO] = mockSystemProperties()
 
     val webIdentityUtils = mockWebIdentityUtils()
@@ -225,16 +225,16 @@ class WebIdentityTokenFileCredentialsProviderTest extends CatsEffectSuite:
   }
 
   test("fail when both token file and role ARN are missing") {
-    given Env[IO]            = mockEnv(Map.empty)
+    given Env[IO]              = mockEnv(Map.empty)
     given SystemProperties[IO] = mockSystemProperties()
 
     val webIdentityUtils = mockWebIdentityUtils()
     val provider         = WebIdentityTokenFileCredentialsProvider.create[IO](webIdentityUtils)
 
     provider.resolveCredentials().attempt.map {
-        case Left(exception: SdkClientException) =>
-          assert(exception.getMessage.contains("Unable to load Web Identity Token credentials"))
-        case _ => fail("Expected SdkClientException")
+      case Left(exception: SdkClientException) =>
+        assert(exception.getMessage.contains("Unable to load Web Identity Token credentials"))
+      case _ => fail("Expected SdkClientException")
     }
   }
 
@@ -244,7 +244,7 @@ class WebIdentityTokenFileCredentialsProviderTest extends CatsEffectSuite:
       "AWS_ROLE_ARN"                -> testRoleArn
     )
 
-    given Env[IO]            = mockEnv(envVars)
+    given Env[IO]              = mockEnv(envVars)
     given SystemProperties[IO] = mockSystemProperties()
 
     val webIdentityUtils = mockWebIdentityUtils(shouldFail = true, errorMessage = "STS service unavailable")
@@ -263,7 +263,7 @@ class WebIdentityTokenFileCredentialsProviderTest extends CatsEffectSuite:
       "AWS_ROLE_ARN"                -> testRoleArn
     )
 
-    given Env[IO]            = mockEnv(envVars)
+    given Env[IO]              = mockEnv(envVars)
     given SystemProperties[IO] = mockSystemProperties()
 
     val webIdentityUtils = mockWebIdentityUtils()
@@ -285,7 +285,7 @@ class WebIdentityTokenFileCredentialsProviderTest extends CatsEffectSuite:
     given SystemProperties[IO] = mockSystemProperties()
 
     assertIOBoolean(
-      WebIdentityTokenFileCredentialsProvider.isAvailable[IO](),
+      WebIdentityTokenFileCredentialsProvider.isAvailable[IO]()
     )
   }
 
@@ -349,7 +349,7 @@ class WebIdentityTokenFileCredentialsProviderTest extends CatsEffectSuite:
       "AWS_ROLE_SESSION_NAME"       -> s"  $testSessionName  "
     )
 
-    given Env[IO]            = mockEnv(envVars)
+    given Env[IO]              = mockEnv(envVars)
     given SystemProperties[IO] = mockSystemProperties()
 
     val requestCapture   = Ref.unsafe[IO, List[WebIdentityTokenCredentialProperties]](List.empty)
