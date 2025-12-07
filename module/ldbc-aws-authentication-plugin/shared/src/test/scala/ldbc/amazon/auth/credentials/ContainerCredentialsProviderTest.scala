@@ -9,8 +9,8 @@ package ldbc.amazon.auth.credentials
 import java.net.URI
 import java.time.Instant
 
-import cats.effect.std.Env
 import cats.effect.{ IO, Ref }
+import cats.effect.std.Env
 
 import fs2.io.file.{ Files, Path }
 
@@ -44,29 +44,28 @@ class ContainerCredentialsProviderTest extends CatsEffectSuite:
   }"""
 
   private val eksEndpoint = "http://169.254.170.23/v1/credentials"
-  private val authToken = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  private val authToken   = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 
   // Mock HTTP client
   private def mockHttpClient(
-    responseBody: String,
-    statusCode: Int = 200,
+    responseBody:   String,
+    statusCode:     Int = 200,
     captureRequest: Option[Ref[IO, Option[MockRequest]]] = None
   ): HttpClient[IO] =
     new HttpClient[IO]:
       override def get(uri: URI, headers: Map[String, String]): IO[HttpResponse] =
-        for
-          _ <- captureRequest match
-                 case Some(ref) => ref.set(Some(MockRequest(uri, headers)))
-                 case None => IO.unit
+        for _ <- captureRequest match
+                   case Some(ref) => ref.set(Some(MockRequest(uri, headers)))
+                   case None      => IO.unit
         yield HttpResponse(
           statusCode = statusCode,
-          headers = Map.empty,
-          body = responseBody
+          headers    = Map.empty,
+          body       = responseBody
         )
 
       override def post(uri: URI, headers: Map[String, String], body: String): IO[HttpResponse] =
         IO.raiseError(new UnsupportedOperationException("POST not supported in mock"))
-        
+
       override def put(uri: URI, headers: Map[String, String], body: String): IO[HttpResponse] =
         IO.raiseError(new UnsupportedOperationException("PUT not supported in mock"))
 
@@ -85,18 +84,18 @@ class ContainerCredentialsProviderTest extends CatsEffectSuite:
   test("resolveCredentials with ECS relative URI") {
     val envVars = Map(
       "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI" -> "/v2/credentials/test-uuid",
-      "AWS_CONTAINER_AUTHORIZATION_TOKEN" -> authToken
+      "AWS_CONTAINER_AUTHORIZATION_TOKEN"      -> authToken
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
     val requestCapture = Ref.unsafe[IO, Option[MockRequest]](None)
-    val httpClient = mockHttpClient(validJsonResponse, captureRequest = Some(requestCapture))
-    val provider = ContainerCredentialsProvider.create[IO](httpClient)
+    val httpClient     = mockHttpClient(validJsonResponse, captureRequest = Some(requestCapture))
+    val provider       = ContainerCredentialsProvider.create[IO](httpClient)
 
     for
       credentials <- provider.resolveCredentials()
-      captured <- requestCapture.get
+      captured    <- requestCapture.get
     yield
       // Verify credentials
       credentials match
@@ -123,18 +122,18 @@ class ContainerCredentialsProviderTest extends CatsEffectSuite:
   test("resolveCredentials with EKS full URI") {
     val envVars = Map(
       "AWS_CONTAINER_CREDENTIALS_FULL_URI" -> eksEndpoint,
-      "AWS_CONTAINER_AUTHORIZATION_TOKEN" -> authToken
+      "AWS_CONTAINER_AUTHORIZATION_TOKEN"  -> authToken
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
     val requestCapture = Ref.unsafe[IO, Option[MockRequest]](None)
-    val httpClient = mockHttpClient(minimalJsonResponse, captureRequest = Some(requestCapture))
-    val provider = ContainerCredentialsProvider.create[IO](httpClient)
+    val httpClient     = mockHttpClient(minimalJsonResponse, captureRequest = Some(requestCapture))
+    val provider       = ContainerCredentialsProvider.create[IO](httpClient)
 
     for
       credentials <- provider.resolveCredentials()
-      captured <- requestCapture.get
+      captured    <- requestCapture.get
     yield
       // Verify credentials without RoleArn
       credentials match
@@ -157,22 +156,22 @@ class ContainerCredentialsProviderTest extends CatsEffectSuite:
     // This test works in both JVM and JavaScript environments
     val envVars = Map(
       "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI" -> "/v2/credentials/test-uuid",
-      "AWS_CONTAINER_AUTHORIZATION_TOKEN" -> s"  $authToken  \n" // With whitespace
+      "AWS_CONTAINER_AUTHORIZATION_TOKEN"      -> s"  $authToken  \n" // With whitespace
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
     val requestCapture = Ref.unsafe[IO, Option[MockRequest]](None)
-    val httpClient = mockHttpClient(validJsonResponse, captureRequest = Some(requestCapture))
-    val provider = ContainerCredentialsProvider.create[IO](httpClient)
+    val httpClient     = mockHttpClient(validJsonResponse, captureRequest = Some(requestCapture))
+    val provider       = ContainerCredentialsProvider.create[IO](httpClient)
 
     for
       credentials <- provider.resolveCredentials()
-      captured <- requestCapture.get
+      captured    <- requestCapture.get
     yield
       credentials match
         case _: AwsSessionCredentials => // Success
-        case _ => fail("Expected AwsSessionCredentials")
+        case _                        => fail("Expected AwsSessionCredentials")
 
       // Verify token was trimmed and used (ContainerCredentialsProvider trims the token)
       captured match
@@ -186,20 +185,20 @@ class ContainerCredentialsProviderTest extends CatsEffectSuite:
       "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI" -> "/v2/credentials/test-uuid"
       // No authorization token
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
     val requestCapture = Ref.unsafe[IO, Option[MockRequest]](None)
-    val httpClient = mockHttpClient(validJsonResponse, captureRequest = Some(requestCapture))
-    val provider = ContainerCredentialsProvider.create[IO](httpClient)
+    val httpClient     = mockHttpClient(validJsonResponse, captureRequest = Some(requestCapture))
+    val provider       = ContainerCredentialsProvider.create[IO](httpClient)
 
     for
       credentials <- provider.resolveCredentials()
-      captured <- requestCapture.get
+      captured    <- requestCapture.get
     yield
       credentials match
         case _: AwsSessionCredentials => // Success
-        case _ => fail("Expected AwsSessionCredentials")
+        case _                        => fail("Expected AwsSessionCredentials")
 
       // Verify no Authorization header
       captured match
@@ -212,7 +211,7 @@ class ContainerCredentialsProviderTest extends CatsEffectSuite:
     given Env[IO] = mockEnv(Map.empty)
 
     val httpClient = mockHttpClient(validJsonResponse)
-    val provider = ContainerCredentialsProvider.create[IO](httpClient)
+    val provider   = ContainerCredentialsProvider.create[IO](httpClient)
 
     provider.resolveCredentials().attempt.map {
       case Left(exception: SdkClientException) =>
@@ -227,11 +226,11 @@ class ContainerCredentialsProviderTest extends CatsEffectSuite:
     val envVars = Map(
       "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI" -> "/v2/credentials/test-uuid"
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
     val httpClient = mockHttpClient("Internal Server Error", statusCode = 500)
-    val provider = ContainerCredentialsProvider.create[IO](httpClient)
+    val provider   = ContainerCredentialsProvider.create[IO](httpClient)
 
     provider.resolveCredentials().attempt.map {
       case Left(exception: SdkClientException) =>
@@ -246,11 +245,11 @@ class ContainerCredentialsProviderTest extends CatsEffectSuite:
     val envVars = Map(
       "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI" -> "/v2/credentials/test-uuid"
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
     val httpClient = mockHttpClient(invalidJsonResponse)
-    val provider = ContainerCredentialsProvider.create[IO](httpClient)
+    val provider   = ContainerCredentialsProvider.create[IO](httpClient)
 
     provider.resolveCredentials().attempt.map {
       case Left(exception: SdkClientException) =>
@@ -261,45 +260,44 @@ class ContainerCredentialsProviderTest extends CatsEffectSuite:
 
   test("fail when token file does not exist") {
     val tokenFilePath = Path("/tmp/non-existent-token")
-    val envVars = Map(
+    val envVars       = Map(
       "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI" -> "/v2/credentials/test-uuid",
       "AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE" -> tokenFilePath.toString
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
     val httpClient = mockHttpClient(validJsonResponse)
-    val provider = ContainerCredentialsProvider.create[IO](httpClient)
+    val provider   = ContainerCredentialsProvider.create[IO](httpClient)
 
-    for
-      credentials <- provider.resolveCredentials()
+    for credentials <- provider.resolveCredentials()
     yield
       // Should succeed without token (Authorization header optional)
       credentials match
         case _: AwsSessionCredentials => // Success
-        case _ => fail("Expected AwsSessionCredentials")
+        case _                        => fail("Expected AwsSessionCredentials")
   }
 
   test("handle empty authorization token") {
     // Test with empty environment variable
     val envVars = Map(
       "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI" -> "/v2/credentials/test-uuid",
-      "AWS_CONTAINER_AUTHORIZATION_TOKEN" -> "   \n  " // Only whitespace
+      "AWS_CONTAINER_AUTHORIZATION_TOKEN"      -> "   \n  " // Only whitespace
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
     val requestCapture = Ref.unsafe[IO, Option[MockRequest]](None)
-    val httpClient = mockHttpClient(validJsonResponse, captureRequest = Some(requestCapture))
-    val provider = ContainerCredentialsProvider.create[IO](httpClient)
+    val httpClient     = mockHttpClient(validJsonResponse, captureRequest = Some(requestCapture))
+    val provider       = ContainerCredentialsProvider.create[IO](httpClient)
 
     for
       credentials <- provider.resolveCredentials()
-      captured <- requestCapture.get
+      captured    <- requestCapture.get
     yield
       credentials match
         case _: AwsSessionCredentials => // Success
-        case _ => fail("Expected AwsSessionCredentials")
+        case _                        => fail("Expected AwsSessionCredentials")
 
       // Verify no Authorization header for empty token
       captured match
@@ -311,25 +309,25 @@ class ContainerCredentialsProviderTest extends CatsEffectSuite:
   test("prefer direct token over token file path") {
     // Test priority without actual file operations
     val directToken = "direct-token"
-    val envVars = Map(
+    val envVars     = Map(
       "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI" -> "/v2/credentials/test-uuid",
-      "AWS_CONTAINER_AUTHORIZATION_TOKEN" -> directToken,
+      "AWS_CONTAINER_AUTHORIZATION_TOKEN"      -> directToken,
       "AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE" -> "/some/file/path" // File path provided but direct token should take precedence
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
     val requestCapture = Ref.unsafe[IO, Option[MockRequest]](None)
-    val httpClient = mockHttpClient(validJsonResponse, captureRequest = Some(requestCapture))
-    val provider = ContainerCredentialsProvider.create[IO](httpClient)
+    val httpClient     = mockHttpClient(validJsonResponse, captureRequest = Some(requestCapture))
+    val provider       = ContainerCredentialsProvider.create[IO](httpClient)
 
     for
       credentials <- provider.resolveCredentials()
-      captured <- requestCapture.get
+      captured    <- requestCapture.get
     yield
       credentials match
         case _: AwsSessionCredentials => // Success
-        case _ => fail("Expected AwsSessionCredentials")
+        case _                        => fail("Expected AwsSessionCredentials")
 
       // Verify direct token was used, not file token
       captured match
@@ -341,22 +339,22 @@ class ContainerCredentialsProviderTest extends CatsEffectSuite:
   test("prefer relative URI over full URI") {
     val envVars = Map(
       "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI" -> "/v2/credentials/test-uuid",
-      "AWS_CONTAINER_CREDENTIALS_FULL_URI" -> eksEndpoint
+      "AWS_CONTAINER_CREDENTIALS_FULL_URI"     -> eksEndpoint
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
     val requestCapture = Ref.unsafe[IO, Option[MockRequest]](None)
-    val httpClient = mockHttpClient(validJsonResponse, captureRequest = Some(requestCapture))
-    val provider = ContainerCredentialsProvider.create[IO](httpClient)
+    val httpClient     = mockHttpClient(validJsonResponse, captureRequest = Some(requestCapture))
+    val provider       = ContainerCredentialsProvider.create[IO](httpClient)
 
     for
       credentials <- provider.resolveCredentials()
-      captured <- requestCapture.get
+      captured    <- requestCapture.get
     yield
       credentials match
         case _: AwsSessionCredentials => // Success
-        case _ => fail("Expected AwsSessionCredentials")
+        case _                        => fail("Expected AwsSessionCredentials")
 
       // Verify relative URI was used (ECS endpoint)
       captured match
@@ -369,7 +367,7 @@ class ContainerCredentialsProviderTest extends CatsEffectSuite:
     val envVars = Map(
       "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI" -> "/v2/credentials/test-uuid"
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
     val responseWithValidArn = """{
@@ -381,7 +379,7 @@ class ContainerCredentialsProviderTest extends CatsEffectSuite:
     }"""
 
     val httpClient = mockHttpClient(responseWithValidArn)
-    val provider = ContainerCredentialsProvider.create[IO](httpClient)
+    val provider   = ContainerCredentialsProvider.create[IO](httpClient)
 
     provider.resolveCredentials().map {
       case session: AwsSessionCredentials =>
@@ -394,7 +392,7 @@ class ContainerCredentialsProviderTest extends CatsEffectSuite:
     val envVars = Map(
       "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI" -> "/v2/credentials/test-uuid"
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
     val responseWithInvalidArn = """{
@@ -406,7 +404,7 @@ class ContainerCredentialsProviderTest extends CatsEffectSuite:
     }"""
 
     val httpClient = mockHttpClient(responseWithInvalidArn)
-    val provider = ContainerCredentialsProvider.create[IO](httpClient)
+    val provider   = ContainerCredentialsProvider.create[IO](httpClient)
 
     provider.resolveCredentials().map {
       case session: AwsSessionCredentials =>
@@ -419,7 +417,7 @@ class ContainerCredentialsProviderTest extends CatsEffectSuite:
     val envVars = Map(
       "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI" -> "/v2/credentials/test-uuid"
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
     ContainerCredentialsProvider.isAvailable[IO]().map { available =>
@@ -431,7 +429,7 @@ class ContainerCredentialsProviderTest extends CatsEffectSuite:
     val envVars = Map(
       "AWS_CONTAINER_CREDENTIALS_FULL_URI" -> eksEndpoint
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
     ContainerCredentialsProvider.isAvailable[IO]().map { available =>
@@ -450,9 +448,9 @@ class ContainerCredentialsProviderTest extends CatsEffectSuite:
   test("isAvailable returns false when URIs are empty") {
     val envVars = Map(
       "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI" -> "   ",
-      "AWS_CONTAINER_CREDENTIALS_FULL_URI" -> ""
+      "AWS_CONTAINER_CREDENTIALS_FULL_URI"     -> ""
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
     ContainerCredentialsProvider.isAvailable[IO]().map { available =>
@@ -464,11 +462,11 @@ class ContainerCredentialsProviderTest extends CatsEffectSuite:
     val envVars = Map(
       "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI" -> "/v2/credentials/test-uuid"
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
     val httpClient = mockHttpClient(validJsonResponse)
-    val provider: ldbc.amazon.identity.AwsCredentialsProvider[IO] = 
+    val provider: ldbc.amazon.identity.AwsCredentialsProvider[IO] =
       ContainerCredentialsProvider.create[IO](httpClient)
 
     provider.resolveCredentials().map { credentials =>
@@ -481,22 +479,22 @@ class ContainerCredentialsProviderTest extends CatsEffectSuite:
     // In JavaScript environment, test with direct token instead of file
     val envVars = Map(
       "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI" -> "/v2/credentials/test-uuid",
-      "AWS_CONTAINER_AUTHORIZATION_TOKEN" -> authToken
+      "AWS_CONTAINER_AUTHORIZATION_TOKEN"      -> authToken
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
     val requestCapture = Ref.unsafe[IO, Option[MockRequest]](None)
-    val httpClient = mockHttpClient(validJsonResponse, captureRequest = Some(requestCapture))
-    val provider = ContainerCredentialsProvider.create[IO](httpClient)
+    val httpClient     = mockHttpClient(validJsonResponse, captureRequest = Some(requestCapture))
+    val provider       = ContainerCredentialsProvider.create[IO](httpClient)
 
     for
       credentials <- provider.resolveCredentials()
-      captured <- requestCapture.get
+      captured    <- requestCapture.get
     yield
       credentials match
         case _: AwsSessionCredentials => // Success
-        case _ => fail("Expected AwsSessionCredentials")
+        case _                        => fail("Expected AwsSessionCredentials")
 
       // Verify token was used
       captured match
@@ -509,23 +507,23 @@ class ContainerCredentialsProviderTest extends CatsEffectSuite:
     // Test that direct token takes precedence over file token path
     val envVars = Map(
       "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI" -> "/v2/credentials/test-uuid",
-      "AWS_CONTAINER_AUTHORIZATION_TOKEN" -> "direct-token",
+      "AWS_CONTAINER_AUTHORIZATION_TOKEN"      -> "direct-token",
       "AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE" -> "/non/existent/file"
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
     val requestCapture = Ref.unsafe[IO, Option[MockRequest]](None)
-    val httpClient = mockHttpClient(validJsonResponse, captureRequest = Some(requestCapture))
-    val provider = ContainerCredentialsProvider.create[IO](httpClient)
+    val httpClient     = mockHttpClient(validJsonResponse, captureRequest = Some(requestCapture))
+    val provider       = ContainerCredentialsProvider.create[IO](httpClient)
 
     for
       credentials <- provider.resolveCredentials()
-      captured <- requestCapture.get
+      captured    <- requestCapture.get
     yield
       credentials match
         case _: AwsSessionCredentials => // Success
-        case _ => fail("Expected AwsSessionCredentials")
+        case _                        => fail("Expected AwsSessionCredentials")
 
       // Verify direct token was used
       captured match

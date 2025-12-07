@@ -18,9 +18,9 @@ import ldbc.amazon.util.SdkSystemSetting
 class EnvironmentVariableCredentialsProviderTest extends CatsEffectSuite:
 
   // Test fixtures
-  private val testAccessKeyId = "AKIAIOSFODNN7EXAMPLE"
+  private val testAccessKeyId     = "AKIAIOSFODNN7EXAMPLE"
   private val testSecretAccessKey = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYzEXAMPLEKEY"
-  private val testSessionToken = "IQoJb3JpZ2luX2VjECoaCXVzLWVhc3QtMSJHMEUCIQDtqstfDEaRfZKFK5Z2n2CnP3"
+  private val testSessionToken    = "IQoJb3JpZ2luX2VjECoaCXVzLWVhc3QtMSJHMEUCIQDtqstfDEaRfZKFK5Z2n2CnP3"
 
   // Mock environment
   private def mockEnv(envVars: Map[String, String]): Env[IO] =
@@ -32,10 +32,10 @@ class EnvironmentVariableCredentialsProviderTest extends CatsEffectSuite:
 
   test("resolveCredentials with basic credentials") {
     val envVars = Map(
-      "AWS_ACCESS_KEY_ID" -> testAccessKeyId,
+      "AWS_ACCESS_KEY_ID"     -> testAccessKeyId,
       "AWS_SECRET_ACCESS_KEY" -> testSecretAccessKey
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
     val provider = new EnvironmentVariableCredentialsProvider[IO]
@@ -54,11 +54,11 @@ class EnvironmentVariableCredentialsProviderTest extends CatsEffectSuite:
 
   test("resolveCredentials with session credentials") {
     val envVars = Map(
-      "AWS_ACCESS_KEY_ID" -> testAccessKeyId,
+      "AWS_ACCESS_KEY_ID"     -> testAccessKeyId,
       "AWS_SECRET_ACCESS_KEY" -> testSecretAccessKey,
-      "AWS_SESSION_TOKEN" -> testSessionToken
+      "AWS_SESSION_TOKEN"     -> testSessionToken
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
     val provider = new EnvironmentVariableCredentialsProvider[IO]
@@ -80,7 +80,7 @@ class EnvironmentVariableCredentialsProviderTest extends CatsEffectSuite:
     val envVars = Map(
       "AWS_SECRET_ACCESS_KEY" -> testSecretAccessKey
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
     val provider = new EnvironmentVariableCredentialsProvider[IO]
@@ -97,7 +97,7 @@ class EnvironmentVariableCredentialsProviderTest extends CatsEffectSuite:
     val envVars = Map(
       "AWS_ACCESS_KEY_ID" -> testAccessKeyId
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
     val provider = new EnvironmentVariableCredentialsProvider[IO]
@@ -125,10 +125,10 @@ class EnvironmentVariableCredentialsProviderTest extends CatsEffectSuite:
 
   test("handle empty environment variable values") {
     val envVars = Map(
-      "AWS_ACCESS_KEY_ID" -> "",
+      "AWS_ACCESS_KEY_ID"     -> "",
       "AWS_SECRET_ACCESS_KEY" -> testSecretAccessKey
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
     val provider = new EnvironmentVariableCredentialsProvider[IO]
@@ -143,10 +143,10 @@ class EnvironmentVariableCredentialsProviderTest extends CatsEffectSuite:
 
   test("handle whitespace-only environment variable values") {
     val envVars = Map(
-      "AWS_ACCESS_KEY_ID" -> "   ",
+      "AWS_ACCESS_KEY_ID"     -> "   ",
       "AWS_SECRET_ACCESS_KEY" -> testSecretAccessKey
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
     val provider = new EnvironmentVariableCredentialsProvider[IO]
@@ -161,11 +161,11 @@ class EnvironmentVariableCredentialsProviderTest extends CatsEffectSuite:
 
   test("handle empty session token") {
     val envVars = Map(
-      "AWS_ACCESS_KEY_ID" -> testAccessKeyId,
+      "AWS_ACCESS_KEY_ID"     -> testAccessKeyId,
       "AWS_SECRET_ACCESS_KEY" -> testSecretAccessKey,
-      "AWS_SESSION_TOKEN" -> ""
+      "AWS_SESSION_TOKEN"     -> ""
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
     val provider = new EnvironmentVariableCredentialsProvider[IO]
@@ -181,11 +181,11 @@ class EnvironmentVariableCredentialsProviderTest extends CatsEffectSuite:
 
   test("handle whitespace-only session token") {
     val envVars = Map(
-      "AWS_ACCESS_KEY_ID" -> testAccessKeyId,
+      "AWS_ACCESS_KEY_ID"     -> testAccessKeyId,
       "AWS_SECRET_ACCESS_KEY" -> testSecretAccessKey,
-      "AWS_SESSION_TOKEN" -> "   \n  "
+      "AWS_SESSION_TOKEN"     -> "   \n  "
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
     val provider = new EnvironmentVariableCredentialsProvider[IO]
@@ -201,11 +201,11 @@ class EnvironmentVariableCredentialsProviderTest extends CatsEffectSuite:
 
   test("trim whitespace from credentials") {
     val envVars = Map(
-      "AWS_ACCESS_KEY_ID" -> s"  $testAccessKeyId  ",
+      "AWS_ACCESS_KEY_ID"     -> s"  $testAccessKeyId  ",
       "AWS_SECRET_ACCESS_KEY" -> s"\n$testSecretAccessKey\t",
-      "AWS_SESSION_TOKEN" -> s"  $testSessionToken  \n"
+      "AWS_SESSION_TOKEN"     -> s"  $testSessionToken  \n"
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
     val provider = new EnvironmentVariableCredentialsProvider[IO]
@@ -221,10 +221,10 @@ class EnvironmentVariableCredentialsProviderTest extends CatsEffectSuite:
 
   test("provider name is correct") {
     val envVars = Map(
-      "AWS_ACCESS_KEY_ID" -> testAccessKeyId,
+      "AWS_ACCESS_KEY_ID"     -> testAccessKeyId,
       "AWS_SECRET_ACCESS_KEY" -> testSecretAccessKey
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
     val provider = new EnvironmentVariableCredentialsProvider[IO]
@@ -236,10 +236,10 @@ class EnvironmentVariableCredentialsProviderTest extends CatsEffectSuite:
 
   test("loadSetting method reads from environment") {
     val testValue = "test-setting-value"
-    val envVars = Map(
+    val envVars   = Map(
       "AWS_ACCESS_KEY_ID" -> testValue
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
     val provider = new EnvironmentVariableCredentialsProvider[IO]
@@ -261,13 +261,13 @@ class EnvironmentVariableCredentialsProviderTest extends CatsEffectSuite:
 
   test("implements AwsCredentialsProvider trait") {
     val envVars = Map(
-      "AWS_ACCESS_KEY_ID" -> testAccessKeyId,
+      "AWS_ACCESS_KEY_ID"     -> testAccessKeyId,
       "AWS_SECRET_ACCESS_KEY" -> testSecretAccessKey
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
-    val provider: ldbc.amazon.identity.AwsCredentialsProvider[IO] = 
+    val provider: ldbc.amazon.identity.AwsCredentialsProvider[IO] =
       new EnvironmentVariableCredentialsProvider[IO]
 
     provider.resolveCredentials().map { credentials =>
@@ -277,11 +277,11 @@ class EnvironmentVariableCredentialsProviderTest extends CatsEffectSuite:
 
   test("consistent behavior across multiple calls") {
     val envVars = Map(
-      "AWS_ACCESS_KEY_ID" -> testAccessKeyId,
+      "AWS_ACCESS_KEY_ID"     -> testAccessKeyId,
       "AWS_SECRET_ACCESS_KEY" -> testSecretAccessKey,
-      "AWS_SESSION_TOKEN" -> testSessionToken
+      "AWS_SESSION_TOKEN"     -> testSessionToken
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
     val provider = new EnvironmentVariableCredentialsProvider[IO]
@@ -303,10 +303,10 @@ class EnvironmentVariableCredentialsProviderTest extends CatsEffectSuite:
 
   test("validates credentials format") {
     val envVars = Map(
-      "AWS_ACCESS_KEY_ID" -> testAccessKeyId,
+      "AWS_ACCESS_KEY_ID"     -> testAccessKeyId,
       "AWS_SECRET_ACCESS_KEY" -> testSecretAccessKey
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
     val provider = new EnvironmentVariableCredentialsProvider[IO]
@@ -315,7 +315,7 @@ class EnvironmentVariableCredentialsProviderTest extends CatsEffectSuite:
       // Verify access key format (starts with AKIA for IAM users)
       assert(credentials.accessKeyId.startsWith("AKIA"))
       assert(credentials.accessKeyId.length >= 16)
-      
+
       // Verify secret key is not empty and has reasonable length
       assert(credentials.secretAccessKey.nonEmpty)
       assert(credentials.secretAccessKey.length >= 20)
@@ -324,10 +324,10 @@ class EnvironmentVariableCredentialsProviderTest extends CatsEffectSuite:
 
   test("case sensitivity of environment variable names") {
     val envVars = Map(
-      "aws_access_key_id" -> testAccessKeyId,  // lowercase
+      "aws_access_key_id"     -> testAccessKeyId, // lowercase
       "AWS_SECRET_ACCESS_KEY" -> testSecretAccessKey
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
     val provider = new EnvironmentVariableCredentialsProvider[IO]
@@ -336,17 +336,17 @@ class EnvironmentVariableCredentialsProviderTest extends CatsEffectSuite:
     provider.resolveCredentials().attempt.map {
       case Left(exception: SdkClientException) =>
         assert(exception.getMessage.contains("Unable to load"))
-      case Left(other) => fail(s"Expected SdkClientException, got ${other.getClass.getSimpleName}")
-      case Right(_) => fail("Should fail with incorrect case environment variable")
+      case Left(other) => fail(s"Expected SdkClientException, got ${ other.getClass.getSimpleName }")
+      case Right(_)    => fail("Should fail with incorrect case environment variable")
     }
   }
 
   test("alternative environment variable names are not supported") {
     val envVars = Map(
-      "AWS_ACCESS_KEY" -> testAccessKeyId,  // Not AWS_ACCESS_KEY_ID
-      "AWS_SECRET_KEY" -> testSecretAccessKey  // Not AWS_SECRET_ACCESS_KEY
+      "AWS_ACCESS_KEY" -> testAccessKeyId,    // Not AWS_ACCESS_KEY_ID
+      "AWS_SECRET_KEY" -> testSecretAccessKey // Not AWS_SECRET_ACCESS_KEY
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
     val provider = new EnvironmentVariableCredentialsProvider[IO]
@@ -354,17 +354,17 @@ class EnvironmentVariableCredentialsProviderTest extends CatsEffectSuite:
     provider.resolveCredentials().attempt.map {
       case Left(exception: SdkClientException) =>
         assert(exception.getMessage.contains("Unable to load"))
-      case Left(other) => fail(s"Expected SdkClientException, got ${other.getClass.getSimpleName}")
-      case Right(_) => fail("Should fail with non-standard environment variable names")
+      case Left(other) => fail(s"Expected SdkClientException, got ${ other.getClass.getSimpleName }")
+      case Right(_)    => fail("Should fail with non-standard environment variable names")
     }
   }
 
   test("credentials validation is disabled by default") {
     val envVars = Map(
-      "AWS_ACCESS_KEY_ID" -> testAccessKeyId,
+      "AWS_ACCESS_KEY_ID"     -> testAccessKeyId,
       "AWS_SECRET_ACCESS_KEY" -> testSecretAccessKey
     )
-    
+
     given Env[IO] = mockEnv(envVars)
 
     val provider = new EnvironmentVariableCredentialsProvider[IO]
