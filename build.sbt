@@ -145,7 +145,7 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
 
 lazy val awsAuthenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
-  .module("aws-authentication-plugin", "")
+  .module("aws-authentication-plugin", "Project for the plugin used with Aurora IAM authentication")
   .settings(
     libraryDependencies ++= Seq(
       "co.fs2"            %%% "fs2-core"          % "3.12.2",
@@ -220,7 +220,7 @@ lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
   .nativeSettings(Test / nativeBrewFormulas += "s2n")
-  .dependsOn(connector, queryBuilder, schema, awsAuthenticationPlugin)
+  .dependsOn(connector, queryBuilder, schema)
   .enablePlugins(NoPublishPlugin)
 
 lazy val benchmark = (project in file("benchmark"))
