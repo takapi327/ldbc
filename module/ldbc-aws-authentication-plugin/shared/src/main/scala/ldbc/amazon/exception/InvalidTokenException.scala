@@ -35,5 +35,5 @@ package ldbc.amazon.exception
  *                including information about which part of the token validation failed
  */
 class InvalidTokenException(
-  message: String,
+  message: String
 ) extends WebIdentityTokenException(message)

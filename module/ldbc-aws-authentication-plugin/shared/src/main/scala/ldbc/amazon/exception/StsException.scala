@@ -33,5 +33,5 @@ package ldbc.amazon.exception
  *                and any relevant context from the failed STS operation
  */
 class StsException(
-  message: String,
+  message: String
 ) extends SdkClientException(message)

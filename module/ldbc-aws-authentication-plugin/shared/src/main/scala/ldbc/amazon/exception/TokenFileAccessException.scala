@@ -54,5 +54,5 @@ package ldbc.amazon.exception
  *                including file path and permission details when available
  */
 class TokenFileAccessException(
-  message: String,
+  message: String
 ) extends WebIdentityTokenException(message)

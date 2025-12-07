@@ -12,5 +12,5 @@ package ldbc.amazon.exception
  * @param message The error message
  */
 abstract class WebIdentityTokenException(
-  message: String,
+  message: String
 ) extends SdkClientException(message)

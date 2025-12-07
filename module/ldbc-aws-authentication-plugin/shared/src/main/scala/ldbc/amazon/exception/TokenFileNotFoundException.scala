@@ -36,7 +36,7 @@ package ldbc.amazon.exception
  */
 class TokenFileNotFoundException(
   message:       String,
-  tokenFilePath: Option[String]    = None,
+  tokenFilePath: Option[String] = None
 ) extends WebIdentityTokenException(message):
 
   /**
