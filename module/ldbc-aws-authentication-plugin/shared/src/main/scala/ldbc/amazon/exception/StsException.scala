@@ -6,8 +6,6 @@
 
 package ldbc.amazon.exception
 
-import scala.util.control.NoStackTrace
-
 /**
  * Exception thrown when AWS STS (Security Token Service) operations fail.
  * 
@@ -33,26 +31,7 @@ import scala.util.control.NoStackTrace
  * 
  * @param message The detailed error message including STS response details, HTTP status codes, 
  *                and any relevant context from the failed STS operation
- * @param cause The underlying cause of the exception (optional). Typically contains the original
- *              HTTP exception, JSON parsing error, or network connectivity issue
  */
 class StsException(
   message: String,
-  cause:   Option[Throwable] = None
 ) extends SdkClientException(message)
-     with NoStackTrace:
-
-  // Set the cause if provided
-  cause.foreach(initCause)
-
-  /**
-   * Alternative constructor that accepts a required cause parameter.
-   *
-   * This constructor is useful when the underlying cause is always available and should be
-   * explicitly tracked for debugging purposes.
-   *
-   * @param message The detailed error message including STS response details
-   * @param cause The underlying cause of the exception that triggered this STS failure
-   */
-  def this(message: String, cause: Throwable) =
-    this(message, Some(cause))
