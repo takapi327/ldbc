@@ -40,7 +40,7 @@ class ProfileCredentialsProviderTest extends CatsEffectSuite:
     assertIOBoolean(
       for
         provider <- ProfileCredentialsProvider.default[IO]()
-        result <- provider.resolveCredentials().attempt
+        result   <- provider.resolveCredentials().attempt
       yield result.isLeft
     )
   }

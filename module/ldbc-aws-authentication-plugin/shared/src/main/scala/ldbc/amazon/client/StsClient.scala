@@ -203,8 +203,7 @@ object StsClient:
    * @return Unit if status is successful, raises StsException otherwise
    */
   private def validateHttpResponse[F[_]: MonadThrow](response: HttpResponse): F[Unit] =
-    if response.statusCode >= 200 && response.statusCode < 300 then
-      MonadThrow[F].unit
+    if response.statusCode >= 200 && response.statusCode < 300 then MonadThrow[F].unit
     else
       MonadThrow[F].raiseError(
         new StsException(
