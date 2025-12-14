@@ -25,7 +25,7 @@ import ldbc.amazon.exception.*
 private[client] trait BasedHttpClient[F[_]: Async] extends HttpClient[F]:
 
   def connectTimeout: Duration
-  def readTimeout: Duration
+  def readTimeout:    Duration
 
   private def isHttps(uri: URI): Boolean =
     Option(uri.getScheme).exists(_.toLowerCase == "https")
@@ -42,7 +42,7 @@ private[client] trait BasedHttpClient[F[_]: Async] extends HttpClient[F]:
         // Log warning for HTTP usage, but allow it for non-sensitive endpoints
         Async[F].unit
       case Some(scheme) if scheme.toLowerCase == "https" => Async[F].unit
-      case Some(unsupported) =>
+      case Some(unsupported)                             =>
         Async[F].raiseError(
           new SdkClientException(s"Unsupported URI scheme: $unsupported. Only http and https are supported.")
         )
@@ -51,12 +51,11 @@ private[client] trait BasedHttpClient[F[_]: Async] extends HttpClient[F]:
     // AWS endpoints should always use HTTPS
     if Option(uri.getHost).exists(_.contains(".amazonaws.com")) && !isHttps(uri) then
       Async[F].raiseError(
-        new SdkClientException(s"AWS endpoints require HTTPS. Attempted to use: ${uri.getScheme}://${uri.getHost}")
+        new SdkClientException(s"AWS endpoints require HTTPS. Attempted to use: ${ uri.getScheme }://${ uri.getHost }")
       )
     else Async[F].unit
 
   def createSocket(address: SocketAddress[Host], isSecure: Boolean, host: String): Resource[F, Socket[F]]
-
 
   override def get(uri: URI, headers: Map[String, String]): F[HttpResponse] =
     for
@@ -66,7 +65,7 @@ private[client] trait BasedHttpClient[F[_]: Async] extends HttpClient[F]:
       port     = getDefaultPort(uri)
       isSecure = isHttps(uri)
       path     = Option(uri.getPath).filter(_.nonEmpty).getOrElse("/") +
-        Option(uri.getQuery).map("?" + _).getOrElse("")
+               Option(uri.getQuery).map("?" + _).getOrElse("")
       address  <- resolveAddress(host, port)
       response <- makeRequest(address, host, port, isSecure, "GET", path, headers, None)
     yield response
@@ -79,7 +78,7 @@ private[client] trait BasedHttpClient[F[_]: Async] extends HttpClient[F]:
       port     = getDefaultPort(uri)
       isSecure = isHttps(uri)
       path     = Option(uri.getPath).filter(_.nonEmpty).getOrElse("/") +
-        Option(uri.getQuery).map("?" + _).getOrElse("")
+               Option(uri.getQuery).map("?" + _).getOrElse("")
       address  <- resolveAddress(host, port)
       response <- makeRequest(address, host, port, isSecure, "PUT", path, headers, Some(body))
     yield response
@@ -92,7 +91,7 @@ private[client] trait BasedHttpClient[F[_]: Async] extends HttpClient[F]:
       port     = getDefaultPort(uri)
       isSecure = isHttps(uri)
       path     = Option(uri.getPath).filter(_.nonEmpty).getOrElse("/") +
-        Option(uri.getQuery).map("?" + _).getOrElse("")
+               Option(uri.getQuery).map("?" + _).getOrElse("")
       address  <- resolveAddress(host, port)
       response <- makeRequest(address, host, port, isSecure, "POST", path, headers, Some(body))
     yield response
@@ -104,15 +103,15 @@ private[client] trait BasedHttpClient[F[_]: Async] extends HttpClient[F]:
     yield SocketAddress(h, p)
 
   private def sendRequest(
-                           socket:   Socket[F],
-                           method:   String,
-                           host:     String,
-                           port:     Int,
-                           isSecure: Boolean,
-                           path:     String,
-                           headers:  Map[String, String],
-                           body:     Option[String]
-                         ): F[Unit] =
+    socket:   Socket[F],
+    method:   String,
+    host:     String,
+    port:     Int,
+    isSecure: Boolean,
+    path:     String,
+    headers:  Map[String, String],
+    body:     Option[String]
+  ): F[Unit] =
     val defaultPort    = if isSecure then 443 else 80
     val hostHeader     = if port == defaultPort then host else s"$host:$port"
     val contentHeaders = body match {
@@ -169,15 +168,15 @@ private[client] trait BasedHttpClient[F[_]: Async] extends HttpClient[F]:
       .flatMap(parseHttpResponse)
 
   private def makeRequest(
-                           address:  SocketAddress[Host],
-                           host:     String,
-                           port:     Int,
-                           isSecure: Boolean,
-                           method:   String,
-                           path:     String,
-                           headers:  Map[String, String],
-                           body:     Option[String]
-                         ): F[HttpResponse] =
+    address:  SocketAddress[Host],
+    host:     String,
+    port:     Int,
+    isSecure: Boolean,
+    method:   String,
+    path:     String,
+    headers:  Map[String, String],
+    body:     Option[String]
+  ): F[HttpResponse] =
     createSocket(address, isSecure, host)
       .use { socket =>
         for
