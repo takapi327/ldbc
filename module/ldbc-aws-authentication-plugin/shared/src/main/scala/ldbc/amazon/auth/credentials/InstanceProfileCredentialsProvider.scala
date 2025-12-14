@@ -391,7 +391,7 @@ object InstanceProfileCredentialsProvider:
    */
   private def createDefaultHttpClient[F[_]: Network: Async](): F[HttpClient[F]] =
     Async[F].pure(
-      new SimpleHttpClient[F](
+      SimpleHttpClient[F](
         connectTimeout = 2.seconds,
         readTimeout    = 5.seconds
       )
@@ -418,7 +418,7 @@ object InstanceProfileCredentialsProvider:
     yield available
 
   private def checkMetadataServiceAvailability[F[_]: Network: Async](): F[Boolean] =
-    val httpClient = new SimpleHttpClient[F](
+    val httpClient = SimpleHttpClient[F](
       connectTimeout = 1.second,
       readTimeout    = 2.seconds
     )

@@ -32,7 +32,7 @@ class StsClientTest extends CatsEffectSuite:
 
   // HTTP client for testing
   private def httpClient: SimpleHttpClient[IO] =
-    new SimpleHttpClient[IO](connectTimeout = 5.seconds, readTimeout = 10.seconds)
+    SimpleHttpClient[IO](connectTimeout = 5.seconds, readTimeout = 10.seconds)
 
   // STS client configured for LocalStack
   private def localStackStsClient: StsClient[IO] = StsClient.build(localStackEndpoint, httpClient)
