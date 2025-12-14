@@ -15,7 +15,6 @@ import scala.concurrent.duration.*
 import com.comcast.ip4s.*
 
 import cats.syntax.all.*
-import cats.MonadThrow
 
 import cats.effect.*
 import cats.effect.syntax.all.*
@@ -41,8 +40,7 @@ import ldbc.amazon.exception.*
 class SimpleHttpClient[F[_]: Network: Async](
   connectTimeout: Duration,
   readTimeout:    Duration
-)(using ev: MonadThrow[F])
-  extends HttpClient[F]:
+) extends HttpClient[F]:
 
   private def isHttps(uri: URI): Boolean =
     Option(uri.getScheme).exists(_.toLowerCase == "https")
@@ -54,23 +52,23 @@ class SimpleHttpClient[F[_]: Network: Async](
 
   private def validateScheme(uri: URI): F[Unit] =
     Option(uri.getScheme) match
-      case None => ev.raiseError(new SdkClientException("URI scheme is required"))
+      case None => Async[F].raiseError(new SdkClientException("URI scheme is required"))
       case Some(scheme) if scheme.toLowerCase == "http" =>
         // Log warning for HTTP usage, but allow it for non-sensitive endpoints
-        ev.unit
-      case Some(scheme) if scheme.toLowerCase == "https" => ev.unit
+        Async[F].unit
+      case Some(scheme) if scheme.toLowerCase == "https" => Async[F].unit
       case Some(unsupported)                             =>
-        ev.raiseError(
+        Async[F].raiseError(
           new SdkClientException(s"Unsupported URI scheme: $unsupported. Only http and https are supported.")
         )
 
   private def validateSecurityRequirements(uri: URI): F[Unit] =
     // AWS endpoints should always use HTTPS
     if Option(uri.getHost).exists(_.contains(".amazonaws.com")) && !isHttps(uri) then
-      ev.raiseError(
+      Async[F].raiseError(
         new SdkClientException(s"AWS endpoints require HTTPS. Attempted to use: ${ uri.getScheme }://${ uri.getHost }")
       )
-    else ev.unit
+    else Async[F].unit
 
   private def createSocket(address: SocketAddress[Host], isSecure: Boolean, host: String): Resource[F, Socket[F]] =
     if isSecure then
@@ -125,8 +123,8 @@ class SimpleHttpClient[F[_]: Network: Async](
 
   private def resolveAddress(host: String, port: Int): F[SocketAddress[Host]] =
     for
-      h <- ev.fromOption(Host.fromString(host), new SdkClientException("Invalid host"))
-      p <- ev.fromOption(Port.fromInt(port), new SdkClientException("Invalid port"))
+      h <- Async[F].fromOption(Host.fromString(host), new SdkClientException("Invalid host"))
+      p <- Async[F].fromOption(Port.fromInt(port), new SdkClientException("Invalid port"))
     yield SocketAddress(h, p)
 
   private def sendRequest(
@@ -164,9 +162,9 @@ class SimpleHttpClient[F[_]: Network: Async](
     line.split(" ").toList match
       case _ :: code :: _ =>
         code.toIntOption match
-          case Some(c) => ev.pure(c)
-          case None    => ev.raiseError(new CredentialsFetchError(s"Invalid status code: $code"))
-      case _ => ev.raiseError(new CredentialsFetchError(s"Invalid status line: $line"))
+          case Some(c) => Async[F].pure(c)
+          case None    => Async[F].raiseError(new CredentialsFetchError(s"Invalid status code: $code"))
+      case _ => Async[F].raiseError(new CredentialsFetchError(s"Invalid status line: $line"))
 
   private def parseHeaderLine(line: String): Option[(String, String)] =
     line.split(": ", 2).toList match
@@ -183,9 +181,9 @@ class SimpleHttpClient[F[_]: Network: Async](
           val headers                  = headerLines.flatMap(parseHeaderLine).toMap
           val body                     = bodyLines.drop(1).mkString("\r\n") // drop empty line
 
-          ev.pure(HttpResponse(statusCode, headers, body))
+          Async[F].pure(HttpResponse(statusCode, headers, body))
       case _ =>
-        ev.raiseError(CredentialsFetchError("Empty response"))
+        Async[F].raiseError(CredentialsFetchError("Empty response"))
 
   private def receiveResponse(socket: Socket[F]): F[HttpResponse] =
     socket.reads
