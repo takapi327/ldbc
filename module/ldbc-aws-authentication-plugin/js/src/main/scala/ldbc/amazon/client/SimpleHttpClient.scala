@@ -43,7 +43,7 @@ class SimpleHttpClient[F[_]: Network: Async](
   extends HttpClient[F]:
 
   private def isHttps(uri: URI): Boolean =
-    uri.getScheme != null && uri.getScheme.toLowerCase == "https"
+    Option(uri.getScheme).exists(_.toLowerCase == "https")
 
   private def getDefaultPort(uri: URI): Int =
     if uri.getPort > 0 then uri.getPort
@@ -51,20 +51,20 @@ class SimpleHttpClient[F[_]: Network: Async](
     else 80
 
   private def validateScheme(uri: URI): F[Unit] =
-    uri.getScheme match
-      case null                                   => ev.raiseError(new SdkClientException("URI scheme is required"))
-      case scheme if scheme.toLowerCase == "http" =>
+    Option(uri.getScheme) match
+      case None                                   => ev.raiseError(new SdkClientException("URI scheme is required"))
+      case Some(scheme) if scheme.toLowerCase == "http" =>
         // Log warning for HTTP usage, but allow it for non-sensitive endpoints
         ev.unit
-      case scheme if scheme.toLowerCase == "https" => ev.unit
-      case unsupported                             =>
+      case Some(scheme) if scheme.toLowerCase == "https" => ev.unit
+      case Some(unsupported)                      =>
         ev.raiseError(
           new SdkClientException(s"Unsupported URI scheme: $unsupported. Only http and https are supported.")
         )
 
   private def validateSecurityRequirements(uri: URI): F[Unit] =
     // AWS endpoints should always use HTTPS
-    if uri.getHost != null && uri.getHost.contains(".amazonaws.com") && !isHttps(uri) then
+    if Option(uri.getHost).exists(_.contains(".amazonaws.com")) && !isHttps(uri) then
       ev.raiseError(
         new SdkClientException(s"AWS endpoints require HTTPS. Attempted to use: ${ uri.getScheme }://${ uri.getHost }")
       )
