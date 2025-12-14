@@ -6,18 +6,16 @@
 
 package ldbc.amazon.auth.credentials.internal
 
-import java.net.URI
 import java.time.Instant
 
 import cats.effect.{ IO, Ref }
-import cats.effect.std.UUIDGen
 
 import fs2.io.file.Files
 
 import munit.CatsEffectSuite
 
 import ldbc.amazon.auth.credentials.{ AwsSessionCredentials, WebIdentityTokenCredentialProperties }
-import ldbc.amazon.client.{ HttpClient, HttpResponse, StsClient }
+import ldbc.amazon.client.StsClient
 import ldbc.amazon.exception.{ InvalidTokenException, StsException }
 
 class WebIdentityCredentialsUtilsTest extends CatsEffectSuite:
