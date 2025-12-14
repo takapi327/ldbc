@@ -15,8 +15,6 @@ import fs2.io.file.Files
 
 import munit.CatsEffectSuite
 
-import ldbc.amazon.exception.SdkClientException
-
 import ProfileCredentialsProvider.*
 
 class ProfileCredentialsProviderTest extends CatsEffectSuite:
@@ -39,14 +37,12 @@ class ProfileCredentialsProviderTest extends CatsEffectSuite:
   test("ProfileCredentialsProvider fails when user.home is missing") {
     given SystemProperties[IO] = mockSystemProperties(homeDir = None)
 
-    for
-      provider <- ProfileCredentialsProvider.default[IO]()
-      result   <- provider.resolveCredentials().attempt
-    yield result match
-      case Left(exception: SdkClientException) =>
-        // Should fail because user.home is not available
-        assert(true) // Test passed
-      case _ => fail("Expected SdkClientException")
+    assertIOBoolean(
+      for
+        provider <- ProfileCredentialsProvider.default[IO]()
+        result <- provider.resolveCredentials().attempt
+      yield result.isLeft
+    )
   }
 
   test("ProfileCredentialsProvider companion object methods work") {

@@ -16,7 +16,7 @@ import cats.MonadThrow
 import cats.effect.std.UUIDGen
 import cats.effect.Concurrent
 
-import ldbc.amazon.exception.{ SdkClientException, StsException }
+import ldbc.amazon.exception.StsException
 import ldbc.amazon.util.SimpleXmlParser
 
 /**
@@ -179,14 +179,14 @@ object StsClient:
 
   /**
    * Gets current timestamp in AWS format.
-   * 
+   *
    * Generates a timestamp string in the ISO 8601 format required by AWS:
    * yyyyMMddTHHmmssZ (e.g., "20231201T120000Z"). The timestamp is always
    * generated in UTC timezone.
-   * 
+   *
    * @return formatted timestamp string
    */
-  private def getCurrentTimestamp: String = 
+  private def getCurrentTimestamp: String =
     DateTimeFormatter
       .ofPattern("yyyyMMdd'T'HHmmss'Z'")
       .withZone(ZoneOffset.UTC)
