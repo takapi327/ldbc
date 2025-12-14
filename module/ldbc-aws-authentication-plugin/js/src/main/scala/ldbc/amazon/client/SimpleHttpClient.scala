@@ -52,12 +52,12 @@ class SimpleHttpClient[F[_]: Network: Async](
 
   private def validateScheme(uri: URI): F[Unit] =
     Option(uri.getScheme) match
-      case None                                   => ev.raiseError(new SdkClientException("URI scheme is required"))
+      case None => ev.raiseError(new SdkClientException("URI scheme is required"))
       case Some(scheme) if scheme.toLowerCase == "http" =>
         // Log warning for HTTP usage, but allow it for non-sensitive endpoints
         ev.unit
       case Some(scheme) if scheme.toLowerCase == "https" => ev.unit
-      case Some(unsupported)                      =>
+      case Some(unsupported)                             =>
         ev.raiseError(
           new SdkClientException(s"Unsupported URI scheme: $unsupported. Only http and https are supported.")
         )
