@@ -93,7 +93,6 @@ object StsClient:
     ): F[AssumeRoleWithWebIdentityResponse] =
       for
         _           <- validateRoleArn(request.roleArn)
-        timestamp   <- Concurrent[F].fromEither(getCurrentTimestamp())
         sessionName <- request.roleSessionName.fold(
                          UUIDGen[F].randomUUID.map(uuid => s"ldbc-session-$uuid")
                        )(Concurrent[F].pure)
@@ -111,7 +110,7 @@ object StsClient:
         headers = Map(
                     "Content-Type" -> "application/x-www-form-urlencoded",
                     "X-Amz-Target" -> "AWSSecurityTokenServiceV20110615.AssumeRoleWithWebIdentity",
-                    "X-Amz-Date"   -> timestamp
+                    "X-Amz-Date"   -> getCurrentTimestamp
                   )
 
         response    <- httpClient.post(URI.create(stsEndpoint), headers, requestBody)
@@ -185,19 +184,13 @@ object StsClient:
    * yyyyMMddTHHmmssZ (e.g., "20231201T120000Z"). The timestamp is always
    * generated in UTC timezone.
    * 
-   * @return Either an error if timestamp generation fails, or the formatted timestamp string
+   * @return formatted timestamp string
    */
-  private def getCurrentTimestamp(): Either[Throwable, String] =
-    try {
-      Right(
-        DateTimeFormatter
-          .ofPattern("yyyyMMdd'T'HHmmss'Z'")
-          .withZone(ZoneOffset.UTC)
-          .format(Instant.now())
-      )
-    } catch {
-      case ex: Exception => Left(new SdkClientException("Failed to generate timestamp"))
-    }
+  private def getCurrentTimestamp: String = 
+    DateTimeFormatter
+      .ofPattern("yyyyMMdd'T'HHmmss'Z'")
+      .withZone(ZoneOffset.UTC)
+      .format(Instant.now())
 
   /**
    * Validates HTTP response status.
@@ -210,15 +203,14 @@ object StsClient:
    * @return Unit if status is successful, raises StsException otherwise
    */
   private def validateHttpResponse[F[_]: MonadThrow](response: HttpResponse): F[Unit] =
-    if response.statusCode >= 200 && response.statusCode < 300 then {
+    if response.statusCode >= 200 && response.statusCode < 300 then
       MonadThrow[F].unit
-    } else {
+    else
       MonadThrow[F].raiseError(
         new StsException(
           s"STS request failed with status ${ response.statusCode }: ${ response.body }"
         )
       )
-    }
 
   /**
    * Parses STS XML response to extract credentials.
