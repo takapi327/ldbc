@@ -4,6 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
+/*
 package ldbc.connector.authenticator
 
 import java.nio.charset.StandardCharsets
@@ -37,3 +38,5 @@ trait Sha256PasswordPluginPlatform[F[_]] { self: Sha256PasswordPlugin[F] =>
     val kf              = KeyFactory.getInstance("RSA")
     kf.generatePublic(spec).asInstanceOf[RSAPublicKey]
 }
+
+ */
