@@ -19,7 +19,7 @@ class CachingSha2PasswordPluginTest extends FTestPlatform:
 
   test("CachingSha2PasswordPlugin#name should return correct plugin name") {
     val plugin = CachingSha2PasswordPlugin[IO](Version(8, 0, 10))
-    assertEquals(plugin.name, "caching_sha2_password")
+    assertEquals(plugin.name.toString, "caching_sha2_password")
   }
 
   test("CachingSha2PasswordPlugin for version >= 8.0.5 should use default transformation") {

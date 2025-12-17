@@ -14,6 +14,8 @@ import cats.effect.*
 
 import ldbc.sql.*
 
+import ldbc.authentication.plugin.AuthenticationPlugin
+
 import ldbc.connector.*
 
 class KeepaliveExecutorTest extends FTestPlatform:
@@ -148,6 +150,7 @@ class KeepaliveExecutorTest extends FTestPlatform:
     override def returnToPool(pooled:     PooledConnection[F]) = Temporal[F].unit
     override def removeConnection(pooled: PooledConnection[F]) = Temporal[F].unit
     override def validateConnection(conn: Connection[F])       = validationFunc(conn)
+    override def setPlugins(p1: AuthenticationPlugin[F], pn: AuthenticationPlugin[F]*): PooledDataSource[F] = ???
 
   test("KeepaliveExecutor should start and stop correctly") {
     for
