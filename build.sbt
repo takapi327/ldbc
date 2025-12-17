@@ -126,7 +126,7 @@ lazy val authenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativePlat
   .settings(
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "cats-core"   % "2.10.0",
-      "org.scodec"    %%% "scodec-bits"       % "1.1.38",
+      "org.scodec"    %%% "scodec-bits" % "1.1.38"
     )
   )
   .jsSettings(
