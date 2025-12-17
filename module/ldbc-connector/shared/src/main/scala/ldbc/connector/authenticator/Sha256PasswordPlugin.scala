@@ -18,12 +18,11 @@ import cats.effect.kernel.Sync
 import fs2.hashing.HashAlgorithm
 import fs2.hashing.Hashing
 import fs2.Chunk
-trait Sha256PasswordPlugin[F[_]: Hashing: Sync] extends AuthenticationPlugin[F] with Sha256PasswordPluginPlatform[F]:
-  protected def xorString(from: Array[Byte], scramble: Array[Byte], length: Int): Array[Byte] =
-    val scrambleLength = scramble.length
-    (0 until length).map(pos => (from(pos) ^ scramble(pos % scrambleLength)).toByte).toArray
 
-  override def name:                                                  String        = "sha256_password"
+import ldbc.authentication.plugin.*
+
+trait Sha256PasswordPlugin[F[_]: Hashing: Sync] extends AuthenticationPlugin[F], EncryptPasswordPlugin:
+  override def name:                                                  PluginName        = SHA256_PASSWORD
   override def requiresConfidentiality:                               Boolean       = false
   override def hashPassword(password: String, scramble: Array[Byte]): F[ByteVector] =
     if password.isEmpty then Sync[F].pure(ByteVector.empty)
