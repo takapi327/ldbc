@@ -23,6 +23,8 @@ import org.typelevel.otel4s.trace.Tracer
 
 import ldbc.sql.DatabaseMetaData
 
+import ldbc.authentication.plugin.AuthenticationPlugin
+
 import ldbc.connector.*
 import ldbc.connector.exception.SQLException
 
@@ -168,6 +170,17 @@ trait PooledDataSource[F[_]] extends DataSource[F]:
    */
   def validateConnection(conn: Connection[F]): F[Boolean]
 
+  /**
+   * Sets whether to authentication plugin to be used for communication with the server.
+   *
+   * @param p1
+   *   The authentication plugin used for communication with the server
+   * @param pn
+   *   List of authentication plugins used for communication with the server
+   * @return a new MySQLDataSource with the updated setting
+   */
+  def setPlugins(p1: AuthenticationPlugin[F], pn: AuthenticationPlugin[F]*): PooledDataSource[F]
+
 object PooledDataSource:
 
   private case class Impl[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
@@ -184,6 +197,7 @@ object PooledDataSource:
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
     useCursorFetch:          Boolean                               = false,
     useServerPrepStmts:      Boolean                               = false,
+    plugins: List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
     before:                  Option[Connection[F] => F[A]]         = None,
     after:                   Option[(A, Connection[F]) => F[Unit]] = None,
     minConnections:          Int                                   = 5,
@@ -598,7 +612,8 @@ object PooledDataSource:
             allowPublicKeyRetrieval = allowPublicKeyRetrieval,
             useCursorFetch          = useCursorFetch,
             useServerPrepStmts      = useServerPrepStmts,
-            databaseTerm            = databaseTerm
+            databaseTerm            = databaseTerm,
+            plugins = plugins
           )
         case (Some(b), None) =>
           Connection.withBeforeAfter(
@@ -616,7 +631,8 @@ object PooledDataSource:
             allowPublicKeyRetrieval = allowPublicKeyRetrieval,
             useCursorFetch          = useCursorFetch,
             useServerPrepStmts      = useServerPrepStmts,
-            databaseTerm            = databaseTerm
+            databaseTerm            = databaseTerm,
+            plugins = plugins
           )
         case (None, _) =>
           Connection(
@@ -632,8 +648,21 @@ object PooledDataSource:
             allowPublicKeyRetrieval = allowPublicKeyRetrieval,
             useCursorFetch          = useCursorFetch,
             useServerPrepStmts      = useServerPrepStmts,
-            databaseTerm            = databaseTerm
+            databaseTerm            = databaseTerm,
+            plugins = plugins
           )
+
+    /**
+     * Sets whether to authentication plugin to be used for communication with the server.
+     *
+     * @param p1
+     * The authentication plugin used for communication with the server
+     * @param pn
+     * List of authentication plugins used for communication with the server
+     * @return a new MySQLDataSource with the updated setting
+     */
+    override def setPlugins(p1: AuthenticationPlugin[F], pn: AuthenticationPlugin[F]*): PooledDataSource[F] =
+      copy(plugins = p1 :: pn.toList)
 
   private[connector] def create[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
     config:         MySQLConfig,

@@ -19,7 +19,8 @@ import org.typelevel.otel4s.trace.Tracer
 
 import ldbc.sql.DatabaseMetaData
 
-import ldbc.connector.authenticator.AuthenticationPlugin
+import ldbc.authentication.plugin.AuthenticationPlugin
+
 import ldbc.connector.pool.*
 
 import ldbc.DataSource
@@ -49,6 +50,7 @@ import ldbc.DataSource
  * @param useCursorFetch whether to use cursor-based fetching for result sets
  * @param useServerPrepStmts whether to use server-side prepared statements
  * @param defaultAuthenticationPlugin The authentication plugin used first for communication with the server
+ * @param plugins Additional authentication plugins used for communication with the server
  * @param before optional hook to execute before a connection is acquired
  * @param after optional hook to execute after a connection is used
  * 
@@ -84,6 +86,7 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
   useCursorFetch:              Boolean                               = false,
   useServerPrepStmts:          Boolean                               = false,
   defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]]       = None,
+  plugins: List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
   before:                      Option[Connection[F] => F[A]]         = None,
   after:                       Option[(A, Connection[F]) => F[Unit]] = None
 ) extends DataSource[F]:
@@ -117,7 +120,8 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
           useCursorFetch              = useCursorFetch,
           useServerPrepStmts          = useServerPrepStmts,
           databaseTerm                = databaseTerm,
-          defaultAuthenticationPlugin = defaultAuthenticationPlugin
+          defaultAuthenticationPlugin = defaultAuthenticationPlugin,
+          plugins = plugins
         )
       case (Some(b), None) =>
         Connection.withBeforeAfter(
@@ -136,7 +140,8 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
           useCursorFetch              = useCursorFetch,
           useServerPrepStmts          = useServerPrepStmts,
           databaseTerm                = databaseTerm,
-          defaultAuthenticationPlugin = defaultAuthenticationPlugin
+          defaultAuthenticationPlugin = defaultAuthenticationPlugin,
+          plugins = plugins
         )
       case (None, _) =>
         Connection(
@@ -153,7 +158,8 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
           useCursorFetch              = useCursorFetch,
           useServerPrepStmts          = useServerPrepStmts,
           databaseTerm                = databaseTerm,
-          defaultAuthenticationPlugin = defaultAuthenticationPlugin
+          defaultAuthenticationPlugin = defaultAuthenticationPlugin,
+          plugins = plugins
         )
 
   /** Sets the hostname or IP address of the MySQL server.
@@ -258,6 +264,18 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
    */
   def setDefaultAuthenticationPlugin(defaultAuthenticationPlugin: AuthenticationPlugin[F]): MySQLDataSource[F, A] =
     copy(defaultAuthenticationPlugin = Some(defaultAuthenticationPlugin))
+
+  /**
+   * Sets whether to authentication plugin to be used for communication with the server.
+   * 
+   * @param p1
+   *   The authentication plugin used for communication with the server
+   * @param pn
+   *   List of authentication plugins used for communication with the server
+   * @return a new MySQLDataSource with the updated setting
+   */
+  def setPlugins(p1: AuthenticationPlugin[F], pn: AuthenticationPlugin[F]*): MySQLDataSource[F, A] =
+    copy(plugins = p1 :: pn.toList)
 
   /**
    * Adds a before hook that will be executed when a connection is acquired.
