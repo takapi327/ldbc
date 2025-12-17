@@ -10,11 +10,13 @@ import cats.effect.kernel.Sync
 
 import fs2.hashing.Hashing
 
+import ldbc.authentication.plugin.*
+
 import ldbc.connector.util.Version
 
 trait CachingSha2PasswordPlugin[F[_]] extends Sha256PasswordPlugin[F]:
 
-  override def name: String = "caching_sha2_password"
+  override def name: PluginName = CACHING_SHA2_PASSWORD
 
 object CachingSha2PasswordPlugin:
   def apply[F[_]: Hashing: Sync](version: Version): CachingSha2PasswordPlugin[F] =
