@@ -14,9 +14,9 @@ import cats.effect.*
 
 import ldbc.sql.*
 
-import ldbc.authentication.plugin.AuthenticationPlugin
-
 import ldbc.connector.*
+
+import ldbc.authentication.plugin.AuthenticationPlugin
 
 class KeepaliveExecutorTest extends FTestPlatform:
 

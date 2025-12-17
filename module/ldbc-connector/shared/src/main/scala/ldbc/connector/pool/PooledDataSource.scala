@@ -23,11 +23,10 @@ import org.typelevel.otel4s.trace.Tracer
 
 import ldbc.sql.DatabaseMetaData
 
-import ldbc.authentication.plugin.AuthenticationPlugin
-
 import ldbc.connector.*
 import ldbc.connector.exception.SQLException
 
+import ldbc.authentication.plugin.AuthenticationPlugin
 import ldbc.DataSource
 
 /**
@@ -197,7 +196,7 @@ object PooledDataSource:
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
     useCursorFetch:          Boolean                               = false,
     useServerPrepStmts:      Boolean                               = false,
-    plugins: List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
+    plugins:                 List[AuthenticationPlugin[F]]         = List.empty[AuthenticationPlugin[F]],
     before:                  Option[Connection[F] => F[A]]         = None,
     after:                   Option[(A, Connection[F]) => F[Unit]] = None,
     minConnections:          Int                                   = 5,
@@ -613,7 +612,7 @@ object PooledDataSource:
             useCursorFetch          = useCursorFetch,
             useServerPrepStmts      = useServerPrepStmts,
             databaseTerm            = databaseTerm,
-            plugins = plugins
+            plugins                 = plugins
           )
         case (Some(b), None) =>
           Connection.withBeforeAfter(
@@ -632,7 +631,7 @@ object PooledDataSource:
             useCursorFetch          = useCursorFetch,
             useServerPrepStmts      = useServerPrepStmts,
             databaseTerm            = databaseTerm,
-            plugins = plugins
+            plugins                 = plugins
           )
         case (None, _) =>
           Connection(
@@ -649,7 +648,7 @@ object PooledDataSource:
             useCursorFetch          = useCursorFetch,
             useServerPrepStmts      = useServerPrepStmts,
             databaseTerm            = databaseTerm,
-            plugins = plugins
+            plugins                 = plugins
           )
 
     /**

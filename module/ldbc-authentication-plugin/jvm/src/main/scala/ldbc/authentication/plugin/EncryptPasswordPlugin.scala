@@ -37,9 +37,9 @@ trait EncryptPasswordPlugin:
     cipher.doFinal(input)
 
   private def decodeRSAPublicKey(key: String): RSAPublicKey =
-    val offset = key.indexOf("\n") + 1
-    val len = key.indexOf("-----END PUBLIC KEY-----") - offset
+    val offset          = key.indexOf("\n") + 1
+    val len             = key.indexOf("-----END PUBLIC KEY-----") - offset
     val certificateData = Base64.getMimeDecoder.decode(key.substring(offset, offset + len))
-    val spec = new X509EncodedKeySpec(certificateData)
-    val kf = KeyFactory.getInstance("RSA")
+    val spec            = new X509EncodedKeySpec(certificateData)
+    val kf              = KeyFactory.getInstance("RSA")
     kf.generatePublic(spec).asInstanceOf[RSAPublicKey]

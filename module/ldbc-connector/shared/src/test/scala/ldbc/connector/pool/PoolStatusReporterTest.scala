@@ -14,9 +14,9 @@ import cats.effect.*
 
 import munit.CatsEffectSuite
 
-import ldbc.authentication.plugin.AuthenticationPlugin
-
 import ldbc.connector.Connection
+
+import ldbc.authentication.plugin.AuthenticationPlugin
 
 class PoolStatusReporterTest extends CatsEffectSuite:
 
@@ -68,8 +68,8 @@ class PoolStatusReporterTest extends CatsEffectSuite:
       def createNewConnectionForPool() = ???
       def returnToPool(pooled:     PooledConnection[IO]) = ???
       def removeConnection(pooled: PooledConnection[IO]) = ???
-      def validateConnection(conn: Connection[IO])       = ???
-      def setPlugins(p1: AuthenticationPlugin[IO], pn: AuthenticationPlugin[IO]*): PooledDataSource[IO] = ???
+      def validateConnection(conn: Connection[IO]) = ???
+      def setPlugins(p1:           AuthenticationPlugin[IO], pn: AuthenticationPlugin[IO]*): PooledDataSource[IO] = ???
     }
 
     reporter.start(pool, "test-pool").use { _ =>
@@ -111,8 +111,8 @@ class PoolStatusReporterTest extends CatsEffectSuite:
       def createNewConnectionForPool() = ???
       def returnToPool(pooled:     PooledConnection[IO]) = ???
       def removeConnection(pooled: PooledConnection[IO]) = ???
-      def validateConnection(conn: Connection[IO])       = ???
-      def setPlugins(p1: AuthenticationPlugin[IO], pn: AuthenticationPlugin[IO]*): PooledDataSource[IO] = ???
+      def validateConnection(conn: Connection[IO]) = ???
+      def setPlugins(p1:           AuthenticationPlugin[IO], pn: AuthenticationPlugin[IO]*): PooledDataSource[IO] = ???
     }
 
     reporter.start(pool, "test-pool").use { _ =>
@@ -172,8 +172,8 @@ class PoolStatusReporterTest extends CatsEffectSuite:
       def createNewConnectionForPool() = ???
       def returnToPool(pooled:     PooledConnection[IO]) = ???
       def removeConnection(pooled: PooledConnection[IO]) = ???
-      def validateConnection(conn: Connection[IO])       = ???
-      def setPlugins(p1: AuthenticationPlugin[IO], pn: AuthenticationPlugin[IO]*): PooledDataSource[IO] = ???
+      def validateConnection(conn: Connection[IO]) = ???
+      def setPlugins(p1:           AuthenticationPlugin[IO], pn: AuthenticationPlugin[IO]*): PooledDataSource[IO] = ???
     }
 
     reporter.start(pool, "test-pool").use { _ =>

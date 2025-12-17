@@ -24,11 +24,12 @@ import org.typelevel.otel4s.trace.Tracer
 
 import ldbc.sql.DatabaseMetaData
 
-import ldbc.authentication.plugin.*
 import ldbc.connector.data.*
 import ldbc.connector.exception.*
 import ldbc.connector.net.*
 import ldbc.connector.net.protocol.*
+
+import ldbc.authentication.plugin.*
 
 type Connection[F[_]] = ldbc.sql.Connection[F]
 object Connection:
@@ -78,7 +79,7 @@ object Connection:
     useServerPrepStmts:          Boolean = false,
     databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
     defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]] = None,
-    plugins: List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
+    plugins:                     List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]]
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] = this.default[F, Unit](
     host,
     port,
@@ -116,7 +117,7 @@ object Connection:
     useServerPrepStmts:          Boolean = false,
     databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
     defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]] = None,
-    plugins: List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
+    plugins:                     List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]]
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] = this.default(
     host,
     port,
@@ -152,7 +153,7 @@ object Connection:
     useServerPrepStmts:          Boolean = false,
     databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
     defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]] = None,
-    plugins: List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
+    plugins:                     List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
     before:                      Connection[F] => F[A],
     after:                       (A, Connection[F]) => F[Unit]
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] =
@@ -177,7 +178,7 @@ object Connection:
                       useServerPrepStmts,
                       databaseTerm,
                       defaultAuthenticationPlugin,
-        plugins,
+                      plugins,
                       before,
                       after
                     )
@@ -198,11 +199,11 @@ object Connection:
     useServerPrepStmts:          Boolean = false,
     databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = None,
     defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
-    plugins: List[AuthenticationPlugin[F]],
+    plugins:                     List[AuthenticationPlugin[F]],
     acquire:                     Connection[F] => F[A],
     release:                     (A, Connection[F]) => F[Unit]
   ): Resource[F, LdbcConnection[F]] =
-    val pluginMap = plugins.map(plugin => plugin.name.toString -> plugin).toMap
+    val pluginMap       = plugins.map(plugin => plugin.name.toString -> plugin).toMap
     val capabilityFlags = defaultCapabilityFlags ++
       (if database.isDefined then Set(CapabilitiesFlags.CLIENT_CONNECT_WITH_DB) else Set.empty) ++
       (if sslOptions.isDefined then Set(CapabilitiesFlags.CLIENT_SSL) else Set.empty)
@@ -261,7 +262,7 @@ object Connection:
     useServerPrepStmts:          Boolean = false,
     databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = None,
     defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
-    plugins: List[AuthenticationPlugin[F]],
+    plugins:                     List[AuthenticationPlugin[F]],
     acquire:                     Connection[F] => F[A],
     release:                     (A, Connection[F]) => F[Unit]
   )(using ev: Async[F]): Resource[F, LdbcConnection[F]] =

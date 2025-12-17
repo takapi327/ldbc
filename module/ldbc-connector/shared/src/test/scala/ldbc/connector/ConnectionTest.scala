@@ -16,9 +16,9 @@ import org.typelevel.otel4s.trace.Tracer
 
 import ldbc.sql.DatabaseMetaData
 
-import ldbc.authentication.plugin.MysqlClearPasswordPlugin
-
 import ldbc.connector.exception.*
+
+import ldbc.authentication.plugin.MysqlClearPasswordPlugin
 
 class ConnectionTest extends FTestPlatform:
 

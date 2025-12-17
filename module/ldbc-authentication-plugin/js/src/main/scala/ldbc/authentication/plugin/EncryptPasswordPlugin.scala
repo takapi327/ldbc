@@ -16,7 +16,7 @@ import scodec.bits.ByteVector
 trait EncryptPasswordPlugin:
 
   private val crypto = js.Dynamic.global.require("crypto")
-  
+
   def transformation: String
 
   private def xorString(from: Array[Byte], scramble: Array[Byte], length: Int): Array[Byte] =

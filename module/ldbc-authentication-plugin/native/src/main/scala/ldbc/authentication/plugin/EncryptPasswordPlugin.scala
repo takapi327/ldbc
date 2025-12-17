@@ -32,7 +32,7 @@ trait EncryptPasswordPlugin:
   private def encryptWithRSAPublicKey(input: Array[Byte], publicKey: String): Array[Byte] =
     Zone { implicit zone =>
       val publicKeyCStr = toCString(publicKey)
-      val bio = BIO_new_mem_buf(publicKeyCStr, publicKey.length)
+      val bio           = BIO_new_mem_buf(publicKeyCStr, publicKey.length)
       if bio == null then throw new RuntimeException("Failed to create a new memory BIO.")
 
       val evpPkey = PEM_read_bio_PUBKEY(bio, null, null, null)

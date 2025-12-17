@@ -23,7 +23,7 @@ import ldbc.authentication.plugin.*
 
 class MysqlNativePasswordPlugin[F[_]: Hashing: Sync] extends AuthenticationPlugin[F]:
 
-  override def name:                                                  PluginName        = MYSQL_NATIVE_PASSWORD
+  override def name:                                                  PluginName    = MYSQL_NATIVE_PASSWORD
   override def requiresConfidentiality:                               Boolean       = false
   override def hashPassword(password: String, scramble: Array[Byte]): F[ByteVector] =
     if password.isEmpty then Sync[F].pure(ByteVector.empty)

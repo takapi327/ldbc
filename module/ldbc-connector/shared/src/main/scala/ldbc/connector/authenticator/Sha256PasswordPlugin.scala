@@ -22,7 +22,7 @@ import fs2.Chunk
 import ldbc.authentication.plugin.*
 
 trait Sha256PasswordPlugin[F[_]: Hashing: Sync] extends AuthenticationPlugin[F], EncryptPasswordPlugin:
-  override def name:                                                  PluginName        = SHA256_PASSWORD
+  override def name:                                                  PluginName    = SHA256_PASSWORD
   override def requiresConfidentiality:                               Boolean       = false
   override def hashPassword(password: String, scramble: Array[Byte]): F[ByteVector] =
     if password.isEmpty then Sync[F].pure(ByteVector.empty)

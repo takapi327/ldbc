@@ -25,9 +25,7 @@ import fs2.io.net.Socket
 import org.typelevel.otel4s.trace.{ Span, Tracer }
 import org.typelevel.otel4s.Attribute
 
-import ldbc.authentication.plugin.*
-
-import ldbc.connector.authenticator.{ MysqlNativePasswordPlugin, Sha256PasswordPlugin, CachingSha2PasswordPlugin }
+import ldbc.connector.authenticator.{ CachingSha2PasswordPlugin, MysqlNativePasswordPlugin, Sha256PasswordPlugin }
 import ldbc.connector.data.*
 import ldbc.connector.exception.*
 import ldbc.connector.net.packet.*
@@ -35,6 +33,8 @@ import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.protocol.*
 import ldbc.connector.telemetry.*
+
+import ldbc.authentication.plugin.*
 
 /**
  * Protocol is a protocol to communicate with MySQL server.
@@ -149,7 +149,7 @@ object Protocol:
     capabilityFlags:             Set[CapabilitiesFlags],
     sequenceIdRef:               Ref[F, Byte],
     defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
-    plugins: Map[String, AuthenticationPlugin[F]]
+    plugins:                     Map[String, AuthenticationPlugin[F]]
   )(using ev: MonadError[F, Throwable], ex: Exchange[F])
     extends Protocol[F]:
 
@@ -561,17 +561,19 @@ object Protocol:
       else ev.unit
 
     private def determinatePlugin(pluginName: String): Either[SQLException, AuthenticationPlugin[F]] =
-      plugins.get(pluginName).toRight(
-        new SQLInvalidAuthorizationSpecException(
-          s"Unknown authentication plugin: $pluginName",
-          detail = Some(
-            "This error may be due to lack of support on the ldbc side or a newly added plugin on the MySQL side."
-          ),
-          hint = Some(
-            "Report Issues here: https://github.com/takapi327/ldbc/issues/new?assignees=&labels=&projects=&template=feature_request.md&title="
+      plugins
+        .get(pluginName)
+        .toRight(
+          new SQLInvalidAuthorizationSpecException(
+            s"Unknown authentication plugin: $pluginName",
+            detail = Some(
+              "This error may be due to lack of support on the ldbc side or a newly added plugin on the MySQL side."
+            ),
+            hint = Some(
+              "Report Issues here: https://github.com/takapi327/ldbc/issues/new?assignees=&labels=&projects=&template=feature_request.md&title="
+            )
           )
         )
-      )
 
   def apply[F[_]: Async: Console: Tracer: Exchange: Hashing](
     sockets:                     Resource[F, Socket[F]],
@@ -582,7 +584,7 @@ object Protocol:
     readTimeout:                 Duration,
     capabilitiesFlags:           Set[CapabilitiesFlags],
     defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
-    plugins: Map[String, AuthenticationPlugin[F]]
+    plugins:                     Map[String, AuthenticationPlugin[F]]
   ): Resource[F, Protocol[F]] =
     for
       sequenceIdRef    <- Resource.eval(Ref[F].of[Byte](0x01))
@@ -613,7 +615,7 @@ object Protocol:
     sequenceIdRef:               Ref[F, Byte],
     initialPacketRef:            Ref[F, Option[InitialPacket]],
     defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
-    plugins: Map[String, AuthenticationPlugin[F]]
+    plugins:                     Map[String, AuthenticationPlugin[F]]
   )(using ev: Async[F]): F[Protocol[F]] =
     initialPacketRef.get.flatMap {
       case Some(initialPacket) =>
@@ -629,7 +631,7 @@ object Protocol:
             defaultAuthenticationPlugin,
             Map(
               MYSQL_NATIVE_PASSWORD.toString -> MysqlNativePasswordPlugin[F](),
-              SHA256_PASSWORD.toString -> Sha256PasswordPlugin[F](),
+              SHA256_PASSWORD.toString       -> Sha256PasswordPlugin[F](),
               CACHING_SHA2_PASSWORD.toString -> CachingSha2PasswordPlugin[F](initialPacket.serverVersion)
             ) ++ plugins
           )

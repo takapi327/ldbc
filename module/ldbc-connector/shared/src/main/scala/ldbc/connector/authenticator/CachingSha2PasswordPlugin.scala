@@ -10,9 +10,9 @@ import cats.effect.kernel.Sync
 
 import fs2.hashing.Hashing
 
-import ldbc.authentication.plugin.*
-
 import ldbc.connector.util.Version
+
+import ldbc.authentication.plugin.*
 
 trait CachingSha2PasswordPlugin[F[_]] extends Sha256PasswordPlugin[F]:
 
