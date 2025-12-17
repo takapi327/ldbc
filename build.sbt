@@ -120,6 +120,21 @@ lazy val jdbcConnector = crossProject(JVMPlatform)
   .defaultSettings
   .dependsOn(core)
 
+lazy val authenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Full)
+  .module("authentication-plugin", "MySQL authentication plugin written in pure Scala3")
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel" %%% "cats-core"   % "2.10.0",
+      "org.scodec"    %%% "scodec-bits"       % "1.1.38",
+    )
+  )
+  .jsSettings(
+    Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
+  )
+  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
+  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+
 lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
   .module("connector", "MySQL connector written in pure Scala3")
@@ -141,7 +156,7 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
   .nativeSettings(Test / nativeBrewFormulas += "s2n")
-  .dependsOn(core)
+  .dependsOn(core, authenticationPlugin)
 
 lazy val awsAuthenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
@@ -159,6 +174,7 @@ lazy val awsAuthenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativeP
   )
   .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
   .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .dependsOn(authenticationPlugin)
 
 lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
   .settings(description := "Projects that provide sbt plug-ins")
@@ -418,6 +434,7 @@ lazy val ldbc = tlCrossRootProject
     schema,
     codegen,
     zioInterop,
+    authenticationPlugin,
     awsAuthenticationPlugin,
     plugin,
     tests,
