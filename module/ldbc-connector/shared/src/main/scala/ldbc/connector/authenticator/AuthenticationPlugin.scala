@@ -20,6 +20,7 @@ import scodec.bits.ByteVector
  * 
  * @tparam F The effect type that wraps the authentication operations
  */
+@deprecated("This plugin is deprecated. Please use ldbc.authentication.plugin.AuthenticationPlugin instead.", "0.5.0")
 trait AuthenticationPlugin[F[_]]:
 
   /**
