@@ -238,7 +238,8 @@ object PooledDataSource:
           val closeAll = state.connections.traverse_ { pooled =>
             pooled.finalizer.attempt.flatMap {
               case Left(error) =>
-                poolLogger.debug(s"Error closing connection ${ pooled.id }: ${ error.getMessage }")
+                poolLogger.debug(s"Error closing connection ${ pooled.id }: ${ error.getMessage }") >>
+                  pooled.connection.close().attempt.void
               case Right(_) =>
                 Temporal[F].unit
             }
