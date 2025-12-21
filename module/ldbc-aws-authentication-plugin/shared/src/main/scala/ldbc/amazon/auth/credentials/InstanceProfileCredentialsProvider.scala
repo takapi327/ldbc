@@ -134,9 +134,11 @@ final class InstanceProfileCredentialsProvider[F[_]: Env: Concurrent](
     Env[F].get("AWS_EC2_METADATA_SERVICE_ENDPOINT").flatMap {
       case Some(endpoint) =>
         Concurrent[F]
-          .raiseUnless(endpoint.matches("^https?://169\\.254\\.169\\.254.*"))(new SecurityException("Invalid IMDS endpoint"))
+          .raiseUnless(endpoint.matches("^https?://169\\.254\\.169\\.254.*"))(
+            new SecurityException("Invalid IMDS endpoint")
+          )
           .map(_ => endpoint.stripSuffix("/"))
-      case None           => Concurrent[F].pure(DEFAULT_IMD_SEND_POINT)
+      case None => Concurrent[F].pure(DEFAULT_IMD_SEND_POINT)
     }
 
   /**
