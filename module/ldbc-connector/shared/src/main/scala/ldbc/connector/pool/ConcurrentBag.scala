@@ -352,7 +352,7 @@ object ConcurrentBag:
           // Temporary reservation status - Please wait a short while and try again
           Temporal[F].sleep(1.milli) >>
             item.compareAndSet(BagEntry.STATE_RESERVED, BagEntry.STATE_NOT_IN_USE).flatMap {
-              case true => continueRequiteProcess(item)
+              case true  => continueRequiteProcess(item)
               case false => handleStateConflict(item)
             }
 
