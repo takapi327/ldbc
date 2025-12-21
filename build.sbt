@@ -316,6 +316,20 @@ lazy val zioExample = crossProject(JVMPlatform)
   )
   .dependsOn(connector, dsl, zioInterop)
 
+lazy val awsIamAuthExample = crossProject(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .withoutSuffixFor(JVMPlatform)
+  .example("aws-iam-auth", "Aws Iam Authentication example project")
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.http4s"    %% "http4s-dsl"          % "0.23.33",
+      "org.http4s"    %% "http4s-ember-server" % "0.23.33",
+      "org.http4s"    %% "http4s-circe"        % "0.23.33",
+      "io.circe"      %% "circe-generic"       % "0.14.10"
+    )
+  )
+  .dependsOn(connector, awsAuthenticationPlugin, dsl)
+
 lazy val docs = (project in file("docs"))
   .settings(
     description              := "Documentation for ldbc",
@@ -417,7 +431,8 @@ lazy val examples = Seq(
   http4sExample,
   hikariCPExample,
   otelExample,
-  zioExample
+  zioExample,
+  awsIamAuthExample
 )
 
 lazy val ldbc = tlCrossRootProject
