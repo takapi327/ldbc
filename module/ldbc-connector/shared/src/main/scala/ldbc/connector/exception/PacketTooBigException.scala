@@ -58,8 +58,8 @@ package ldbc.connector.exception
  */
 class PacketTooBigException(
   packetLength: Int,
-  maxAllowed: Int
+  maxAllowed:   Int
 ) extends SQLException(
-  s"Packet for query is too large ($packetLength > $maxAllowed). " +
-    s"You can change the value by setting the 'maxAllowedPacket' configuration."
-)
+    s"Packet for query is too large ($packetLength > $maxAllowed). " +
+      s"You can change the value by setting the 'maxAllowedPacket' configuration."
+  )

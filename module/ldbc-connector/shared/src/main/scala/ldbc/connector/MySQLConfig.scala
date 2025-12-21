@@ -428,7 +428,7 @@ trait MySQLConfig:
    * @return the maximum packet size in bytes
    */
   def maxAllowedPacket: Int
-  
+
   /**
    * Sets the maximum allowed packet size for network communication.
    * 
@@ -497,7 +497,7 @@ object MySQLConfig:
     logPoolState:            Boolean                               = false,
     poolStateLogInterval:    FiniteDuration                        = 30.seconds,
     poolName:                String                                = "ldbc-pool",
-    maxAllowedPacket: Int = 65535
+    maxAllowedPacket:        Int                                   = 65535
   ) extends MySQLConfig:
 
     override def setHost(host:                   String):             MySQLConfig = copy(host = host)

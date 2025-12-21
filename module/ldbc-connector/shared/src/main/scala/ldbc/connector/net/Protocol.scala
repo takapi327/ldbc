@@ -583,7 +583,7 @@ object Protocol:
     allowPublicKeyRetrieval:     Boolean = false,
     readTimeout:                 Duration,
     capabilitiesFlags:           Set[CapabilitiesFlags],
-    maxAllowedPacket: Int,
+    maxAllowedPacket:            Int,
     defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
     plugins:                     Map[String, AuthenticationPlugin[F]]
   ): Resource[F, Protocol[F]] =
@@ -591,7 +591,16 @@ object Protocol:
       sequenceIdRef    <- Resource.eval(Ref[F].of[Byte](0x01))
       initialPacketRef <- Resource.eval(Ref[F].of[Option[InitialPacket]](None))
       packetSocket     <-
-        PacketSocket[F](debug, sockets, sslOptions, sequenceIdRef, initialPacketRef, readTimeout, capabilitiesFlags, maxAllowedPacket)
+        PacketSocket[F](
+          debug,
+          sockets,
+          sslOptions,
+          sequenceIdRef,
+          initialPacketRef,
+          readTimeout,
+          capabilitiesFlags,
+          maxAllowedPacket
+        )
       protocol <- Resource.eval(
                     fromPacketSocket(
                       packetSocket,

@@ -85,7 +85,7 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
   tracer:                      Option[Tracer[F]]                     = None,
   useCursorFetch:              Boolean                               = false,
   useServerPrepStmts:          Boolean                               = false,
-  maxAllowedPacket: Int = 65535,
+  maxAllowedPacket:            Int                                   = 65535,
   defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]]       = None,
   plugins:                     List[AuthenticationPlugin[F]]         = List.empty[AuthenticationPlugin[F]],
   before:                      Option[Connection[F] => F[A]]         = None,
@@ -120,7 +120,7 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
           allowPublicKeyRetrieval     = allowPublicKeyRetrieval,
           useCursorFetch              = useCursorFetch,
           useServerPrepStmts          = useServerPrepStmts,
-          maxAllowedPacket = maxAllowedPacket,
+          maxAllowedPacket            = maxAllowedPacket,
           databaseTerm                = databaseTerm,
           defaultAuthenticationPlugin = defaultAuthenticationPlugin,
           plugins                     = plugins
@@ -141,7 +141,7 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
           allowPublicKeyRetrieval     = allowPublicKeyRetrieval,
           useCursorFetch              = useCursorFetch,
           useServerPrepStmts          = useServerPrepStmts,
-          maxAllowedPacket = maxAllowedPacket,
+          maxAllowedPacket            = maxAllowedPacket,
           databaseTerm                = databaseTerm,
           defaultAuthenticationPlugin = defaultAuthenticationPlugin,
           plugins                     = plugins
@@ -160,7 +160,7 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
           allowPublicKeyRetrieval     = allowPublicKeyRetrieval,
           useCursorFetch              = useCursorFetch,
           useServerPrepStmts          = useServerPrepStmts,
-          maxAllowedPacket = maxAllowedPacket,
+          maxAllowedPacket            = maxAllowedPacket,
           databaseTerm                = databaseTerm,
           defaultAuthenticationPlugin = defaultAuthenticationPlugin,
           plugins                     = plugins
@@ -403,7 +403,7 @@ object MySQLDataSource:
       databaseTerm            = config.databaseTerm,
       useCursorFetch          = config.useCursorFetch,
       useServerPrepStmts      = config.useServerPrepStmts,
-      maxAllowedPacket = config.maxAllowedPacket
+      maxAllowedPacket        = config.maxAllowedPacket
     )
 
   /**

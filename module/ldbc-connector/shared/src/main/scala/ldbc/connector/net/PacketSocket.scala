@@ -21,10 +21,10 @@ import fs2.io.net.Socket
 import fs2.Chunk
 
 import ldbc.connector.data.CapabilitiesFlags
+import ldbc.connector.exception.PacketTooBigException
 import ldbc.connector.net.packet.*
 import ldbc.connector.net.packet.response.InitialPacket
 import ldbc.connector.net.protocol.parseHeader
-import ldbc.connector.exception.PacketTooBigException
 
 /**
  * A higher-level `BitVectorSocket` that speaks in terms of `Packet`.
@@ -42,14 +42,14 @@ trait PacketSocket[F[_]]:
 
 object PacketSocket:
 
-  val DEFAULT_MAX_PACKET_SIZE = 65535 // 64KB (JDBC Driver default)
+  val DEFAULT_MAX_PACKET_SIZE  = 65535    // 64KB (JDBC Driver default)
   val PROTOCOL_MAX_PACKET_SIZE = 16777215 // 16MB (MySQL protocol limit)
-  val MIN_PACKET_SIZE = 0
+  val MIN_PACKET_SIZE          = 0
 
   def fromBitVectorSocket[F[_]: Concurrent: Console](
-    bvs:           BitVectorSocket[F],
-    debugEnabled:  Boolean,
-    sequenceIdRef: Ref[F, Byte],
+    bvs:              BitVectorSocket[F],
+    debugEnabled:     Boolean,
+    sequenceIdRef:    Ref[F, Byte],
     maxAllowedPacket: Int
   ): PacketSocket[F] = new PacketSocket[F]:
 
@@ -62,7 +62,7 @@ object PacketSocket:
       (for
         header <- bvs.read(4)
         payloadSize = parseHeader(header.toByteArray)
-        _ <- validatePacketSize(payloadSize)
+        _       <- validatePacketSize(payloadSize)
         payload <- bvs.read(payloadSize)
         response = decoder.decodeValue(payload).require
         _ <-
@@ -120,7 +120,7 @@ object PacketSocket:
     initialPacketRef:  Ref[F, Option[InitialPacket]],
     readTimeout:       Duration,
     capabilitiesFlags: Set[CapabilitiesFlags],
-    maxAllowedPacket: Int
+    maxAllowedPacket:  Int
   ): Resource[F, PacketSocket[F]] =
     BitVectorSocket(sockets, sequenceIdRef, initialPacketRef, sslOptions, readTimeout, capabilitiesFlags).map(
       fromBitVectorSocket(_, debug, sequenceIdRef, maxAllowedPacket)
