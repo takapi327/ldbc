@@ -247,39 +247,25 @@ object ConcurrentBag:
           item.getState.flatMap { state =>
             if state == BagEntry.STATE_REMOVED then Temporal[F].unit
             else
-              // Reset state to not in use
+              // Attempt atomic transition from IN_USE to NOT_IN_USE
               item.compareAndSet(BagEntry.STATE_IN_USE, BagEntry.STATE_NOT_IN_USE).flatMap {
-                case true => // 成功時のみ処理継続
-                  // Check if item is in the shared list
-                  sharedList.get.flatMap { list =>
-                    if list.exists(_ eq item) then
-                      // Item is already in the list, handle waiters
-                      waiters.get.flatMap { waiting =>
-                        if waiting > 0 then
-                          // Try to hand off directly to a waiter
-                          handoffQueue.tryOffer(item).void
-                        else
-                          // No waiters, item stays in shared list
-                          Temporal[F].unit
-                      }
-                    else
-                      // Item not in list, add it with distribution
-                      sharedList.modify { list =>
-                        val newList = distributeItem(item, list)
-                        (newList, ())
-                      } >>
-                        waiters.get.flatMap { waiting =>
-                          if waiting > 0 then
-                            // Try to hand off directly to a waiter
-                            handoffQueue.tryOffer(item).flatMap {
-                              case true  => Temporal[F].unit
-                              case false => Temporal[F].unit
-                            }
-                          else Temporal[F].unit
-                        }
+                case true => // Successfully transitioned from IN_USE
+                  continueRequiteProcess(item)
+                case false => 
+                  // Failed transition - could be NOT_IN_USE already or other state
+                  item.getState.flatMap { currentState =>
+                    currentState match {
+                      case BagEntry.STATE_NOT_IN_USE =>
+                        // Item already in correct state - continue with requite
+                        continueRequiteProcess(item)
+                      case BagEntry.STATE_REMOVED =>
+                        // Item was removed, nothing to do
+                        Temporal[F].unit
+                      case _ =>
+                        // Handle other state conflicts
+                        handleStateConflict(item)
+                    }
                   }
-                case false => // 他のファイバーが状態を変更済み
-                  handleStateConflict(item)
               }
           }
       }
