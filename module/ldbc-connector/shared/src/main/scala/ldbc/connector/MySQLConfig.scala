@@ -415,6 +415,10 @@ trait MySQLConfig:
    * @return a new MySQLConfig with the updated setting
    */
   def setPoolName(name: String): MySQLConfig
+  
+  def maxAllowedPacket: Int
+  
+  def setMaxAllowedPacket(maxAllowedPacket: Int): MySQLConfig
 
 /**
  * Companion object for MySQLConfig providing factory methods.
@@ -455,7 +459,8 @@ object MySQLConfig:
     connectionTestQuery:     Option[String]                        = None,
     logPoolState:            Boolean                               = false,
     poolStateLogInterval:    FiniteDuration                        = 30.seconds,
-    poolName:                String                                = "ldbc-pool"
+    poolName:                String                                = "ldbc-pool",
+    maxAllowedPacket: Int = 65535
   ) extends MySQLConfig:
 
     override def setHost(host:                   String):             MySQLConfig = copy(host = host)
@@ -491,6 +496,7 @@ object MySQLConfig:
     override def setLogPoolState(enabled:         Boolean):        MySQLConfig = copy(logPoolState = enabled)
     override def setPoolStateLogInterval(interval: FiniteDuration): MySQLConfig = copy(poolStateLogInterval = interval)
     override def setPoolName(name:                 String):         MySQLConfig = copy(poolName = name)
+    override def setMaxAllowedPacket(maxAllowedPacket: Int): MySQLConfig = copy(maxAllowedPacket = maxAllowedPacket)
 
   /**
    * Creates a default MySQLConfig with standard connection parameters.

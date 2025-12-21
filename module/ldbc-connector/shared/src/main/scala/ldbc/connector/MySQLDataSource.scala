@@ -84,6 +84,7 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
   tracer:                      Option[Tracer[F]]                     = None,
   useCursorFetch:              Boolean                               = false,
   useServerPrepStmts:          Boolean                               = false,
+  maxAllowedPacket: Int = 65535,
   defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]]       = None,
   plugins:                     List[AuthenticationPlugin[F]]         = List.empty[AuthenticationPlugin[F]],
   before:                      Option[Connection[F] => F[A]]         = None,
@@ -118,6 +119,7 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
           allowPublicKeyRetrieval     = allowPublicKeyRetrieval,
           useCursorFetch              = useCursorFetch,
           useServerPrepStmts          = useServerPrepStmts,
+          maxAllowedPacket = maxAllowedPacket,
           databaseTerm                = databaseTerm,
           defaultAuthenticationPlugin = defaultAuthenticationPlugin,
           plugins                     = plugins
@@ -138,6 +140,7 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
           allowPublicKeyRetrieval     = allowPublicKeyRetrieval,
           useCursorFetch              = useCursorFetch,
           useServerPrepStmts          = useServerPrepStmts,
+          maxAllowedPacket = maxAllowedPacket,
           databaseTerm                = databaseTerm,
           defaultAuthenticationPlugin = defaultAuthenticationPlugin,
           plugins                     = plugins
@@ -156,6 +159,7 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
           allowPublicKeyRetrieval     = allowPublicKeyRetrieval,
           useCursorFetch              = useCursorFetch,
           useServerPrepStmts          = useServerPrepStmts,
+          maxAllowedPacket = maxAllowedPacket,
           databaseTerm                = databaseTerm,
           defaultAuthenticationPlugin = defaultAuthenticationPlugin,
           plugins                     = plugins
@@ -255,6 +259,9 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
     */
   def setUseServerPrepStmts(newUseServerPrepStmts: Boolean): MySQLDataSource[F, A] =
     copy(useServerPrepStmts = newUseServerPrepStmts)
+    
+  def setMaxAllowedPacket(maxAllowedPacket: Int): MySQLDataSource[F, A] =
+    copy(maxAllowedPacket = maxAllowedPacket)
 
   /** Sets whether to authentication plugin to be used first for communication with the server.
    * @param defaultAuthenticationPlugin
@@ -389,7 +396,8 @@ object MySQLDataSource:
       allowPublicKeyRetrieval = config.allowPublicKeyRetrieval,
       databaseTerm            = config.databaseTerm,
       useCursorFetch          = config.useCursorFetch,
-      useServerPrepStmts      = config.useServerPrepStmts
+      useServerPrepStmts      = config.useServerPrepStmts,
+      maxAllowedPacket = config.maxAllowedPacket
     )
 
   /**
