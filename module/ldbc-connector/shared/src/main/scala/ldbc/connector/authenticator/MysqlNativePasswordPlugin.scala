@@ -19,9 +19,11 @@ import fs2.hashing.HashAlgorithm
 import fs2.hashing.Hashing
 import fs2.Chunk
 
+import ldbc.authentication.plugin.*
+
 class MysqlNativePasswordPlugin[F[_]: Hashing: Sync] extends AuthenticationPlugin[F]:
 
-  override def name:                                                  String        = "mysql_native_password"
+  override def name:                                                  PluginName    = MYSQL_NATIVE_PASSWORD
   override def requiresConfidentiality:                               Boolean       = false
   override def hashPassword(password: String, scramble: Array[Byte]): F[ByteVector] =
     if password.isEmpty then Sync[F].pure(ByteVector.empty)

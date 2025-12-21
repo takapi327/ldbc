@@ -25,7 +25,7 @@ import fs2.io.net.Socket
 import org.typelevel.otel4s.trace.{ Span, Tracer }
 import org.typelevel.otel4s.Attribute
 
-import ldbc.connector.authenticator.*
+import ldbc.connector.authenticator.{ CachingSha2PasswordPlugin, MysqlNativePasswordPlugin, Sha256PasswordPlugin }
 import ldbc.connector.data.*
 import ldbc.connector.exception.*
 import ldbc.connector.net.packet.*
@@ -33,6 +33,8 @@ import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.protocol.*
 import ldbc.connector.telemetry.*
+
+import ldbc.authentication.plugin.*
 
 /**
  * Protocol is a protocol to communicate with MySQL server.
@@ -138,7 +140,7 @@ object Protocol:
   private val SELECT_SERVER_VARIABLES_QUERY =
     "SELECT @@session.auto_increment_increment AS auto_increment_increment, @@character_set_client AS character_set_client, @@character_set_connection AS character_set_connection, @@character_set_results AS character_set_results, @@character_set_server AS character_set_server, @@collation_server AS collation_server, @@collation_connection AS collation_connection, @@init_connect AS init_connect, @@interactive_timeout AS interactive_timeout, @@license AS license, @@lower_case_table_names AS lower_case_table_names, @@max_allowed_packet AS max_allowed_packet, @@net_write_timeout AS net_write_timeout, @@performance_schema AS performance_schema, @@sql_mode AS sql_mode, @@system_time_zone AS system_time_zone, @@time_zone AS time_zone, @@transaction_isolation AS transaction_isolation, @@wait_timeout AS wait_timeout"
 
-  private[ldbc] case class Impl[F[_]: Async: Tracer: Hashing](
+  private[ldbc] case class Impl[F[_]: Async: Tracer](
     initialPacket:               InitialPacket,
     hostInfo:                    HostInfo,
     socket:                      PacketSocket[F],
@@ -146,7 +148,8 @@ object Protocol:
     allowPublicKeyRetrieval:     Boolean = false,
     capabilityFlags:             Set[CapabilitiesFlags],
     sequenceIdRef:               Ref[F, Byte],
-    defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]]
+    defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
+    plugins:                     Map[String, AuthenticationPlugin[F]]
   )(using ev: MonadError[F, Throwable], ex: Exchange[F])
     extends Protocol[F]:
 
@@ -360,7 +363,7 @@ object Protocol:
      * Authentication method Switch Request Packet
      */
     private def changeAuthenticationMethod(switchRequestPacket: AuthSwitchRequestPacket, password: String): F[Unit] =
-      determinatePlugin(switchRequestPacket.pluginName, initialPacket.serverVersion) match
+      determinatePlugin(switchRequestPacket.pluginName) match
         case Left(error)                                 => ev.raiseError(error) *> socket.send(ComQuitPacket())
         case Right(plugin: CachingSha2PasswordPlugin[F]) =>
           for
@@ -422,7 +425,7 @@ object Protocol:
      * Scramble buffer for authentication payload
      */
     private def allowPublicKeyRetrievalRequest(
-      plugin:       Sha256PasswordPlugin[F],
+      plugin:       EncryptPasswordPlugin,
       password:     String,
       scrambleBuff: Array[Byte]
     ): F[Unit] =
@@ -489,7 +492,7 @@ object Protocol:
                               capabilityFlags,
                               username,
                               hashedPassword.length.toByte +: hashedPassword.toArray,
-                              plugin.name,
+                              plugin.name.toString,
                               initialPacket.characterSet,
                               hostInfo.database
                             )
@@ -511,7 +514,7 @@ object Protocol:
                 password
               )
             case None =>
-              determinatePlugin(initialPacket.authPlugin, initialPacket.serverVersion) match
+              determinatePlugin(initialPacket.authPlugin) match
                 case Left(error) => span.recordException(error) *> ev.raiseError(error) *> socket.send(ComQuitPacket())
                 case Right(plugin) =>
                   checkRequiresConfidentiality(plugin, span) *> handshake(plugin, username, password) *> readUntilOk(
@@ -524,7 +527,7 @@ object Protocol:
     override def changeUser(user: String, password: String): F[Unit] =
       exchange[F, Unit](TelemetrySpanName.CHANGE_USER) { (span: Span[F]) =>
         span.addAttributes(attributes*) *> (
-          determinatePlugin(initialPacket.authPlugin, initialPacket.serverVersion) match
+          determinatePlugin(initialPacket.authPlugin) match
             case Left(error)   => span.recordException(error) *> ev.raiseError(error) *> socket.send(ComQuitPacket())
             case Right(plugin) =>
               for
@@ -557,6 +560,21 @@ object Protocol:
         span.recordException(error) *> ev.raiseError(error)
       else ev.unit
 
+    private def determinatePlugin(pluginName: String): Either[SQLException, AuthenticationPlugin[F]] =
+      plugins
+        .get(pluginName)
+        .toRight(
+          new SQLInvalidAuthorizationSpecException(
+            s"Unknown authentication plugin: $pluginName",
+            detail = Some(
+              "This error may be due to lack of support on the ldbc side or a newly added plugin on the MySQL side."
+            ),
+            hint = Some(
+              "Report Issues here: https://github.com/takapi327/ldbc/issues/new?assignees=&labels=&projects=&template=feature_request.md&title="
+            )
+          )
+        )
+
   def apply[F[_]: Async: Console: Tracer: Exchange: Hashing](
     sockets:                     Resource[F, Socket[F]],
     hostInfo:                    HostInfo,
@@ -565,7 +583,8 @@ object Protocol:
     allowPublicKeyRetrieval:     Boolean = false,
     readTimeout:                 Duration,
     capabilitiesFlags:           Set[CapabilitiesFlags],
-    defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]]
+    defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
+    plugins:                     Map[String, AuthenticationPlugin[F]]
   ): Resource[F, Protocol[F]] =
     for
       sequenceIdRef    <- Resource.eval(Ref[F].of[Byte](0x01))
@@ -581,7 +600,8 @@ object Protocol:
                       capabilitiesFlags,
                       sequenceIdRef,
                       initialPacketRef,
-                      defaultAuthenticationPlugin
+                      defaultAuthenticationPlugin,
+                      plugins
                     )
                   )
     yield protocol
@@ -594,7 +614,8 @@ object Protocol:
     capabilitiesFlags:           Set[CapabilitiesFlags],
     sequenceIdRef:               Ref[F, Byte],
     initialPacketRef:            Ref[F, Option[InitialPacket]],
-    defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]]
+    defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
+    plugins:                     Map[String, AuthenticationPlugin[F]]
   )(using ev: Async[F]): F[Protocol[F]] =
     initialPacketRef.get.flatMap {
       case Some(initialPacket) =>
@@ -607,7 +628,12 @@ object Protocol:
             allowPublicKeyRetrieval,
             capabilitiesFlags,
             sequenceIdRef,
-            defaultAuthenticationPlugin
+            defaultAuthenticationPlugin,
+            Map(
+              MYSQL_NATIVE_PASSWORD.toString -> MysqlNativePasswordPlugin[F](),
+              SHA256_PASSWORD.toString       -> Sha256PasswordPlugin[F](),
+              CACHING_SHA2_PASSWORD.toString -> CachingSha2PasswordPlugin[F](initialPacket.serverVersion)
+            ) ++ plugins
           )
         )
       case None =>

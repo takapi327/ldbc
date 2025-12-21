@@ -120,6 +120,21 @@ lazy val jdbcConnector = crossProject(JVMPlatform)
   .defaultSettings
   .dependsOn(core)
 
+lazy val authenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Full)
+  .module("authentication-plugin", "MySQL authentication plugin written in pure Scala3")
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel" %%% "cats-core"   % "2.10.0",
+      "org.scodec"    %%% "scodec-bits" % "1.1.38"
+    )
+  )
+  .jsSettings(
+    Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
+  )
+  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
+  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+
 lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
   .module("connector", "MySQL connector written in pure Scala3")
@@ -141,7 +156,7 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
   .nativeSettings(Test / nativeBrewFormulas += "s2n")
-  .dependsOn(core)
+  .dependsOn(core, authenticationPlugin)
 
 lazy val awsAuthenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
@@ -159,6 +174,7 @@ lazy val awsAuthenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativeP
   )
   .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
   .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .dependsOn(authenticationPlugin)
 
 lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
   .settings(description := "Projects that provide sbt plug-ins")
@@ -300,6 +316,20 @@ lazy val zioExample = crossProject(JVMPlatform)
   )
   .dependsOn(connector, dsl, zioInterop)
 
+lazy val awsIamAuthExample = crossProject(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .withoutSuffixFor(JVMPlatform)
+  .example("aws-iam-auth", "Aws Iam Authentication example project")
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.http4s" %% "http4s-dsl"          % "0.23.33",
+      "org.http4s" %% "http4s-ember-server" % "0.23.33",
+      "org.http4s" %% "http4s-circe"        % "0.23.33",
+      "io.circe"   %% "circe-generic"       % "0.14.10"
+    )
+  )
+  .dependsOn(connector, awsAuthenticationPlugin, dsl)
+
 lazy val docs = (project in file("docs"))
   .settings(
     description              := "Documentation for ldbc",
@@ -401,7 +431,8 @@ lazy val examples = Seq(
   http4sExample,
   hikariCPExample,
   otelExample,
-  zioExample
+  zioExample,
+  awsIamAuthExample
 )
 
 lazy val ldbc = tlCrossRootProject
@@ -418,6 +449,7 @@ lazy val ldbc = tlCrossRootProject
     schema,
     codegen,
     zioInterop,
+    authenticationPlugin,
     awsAuthenticationPlugin,
     plugin,
     tests,

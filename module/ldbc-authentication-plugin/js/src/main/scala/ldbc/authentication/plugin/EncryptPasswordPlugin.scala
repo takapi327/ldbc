@@ -4,15 +4,24 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.connector.authenticator
+package ldbc.authentication.plugin
+
 import java.nio.charset.StandardCharsets
 
 import scala.scalajs.js
 import scala.scalajs.js.typedarray.Uint8Array
 
 import scodec.bits.ByteVector
-trait Sha256PasswordPluginPlatform[F[_]] { self: Sha256PasswordPlugin[F] =>
+
+trait EncryptPasswordPlugin:
+
   private val crypto = js.Dynamic.global.require("crypto")
+
+  def transformation: String
+
+  private def xorString(from: Array[Byte], scramble: Array[Byte], length: Int): Array[Byte] =
+    val scrambleLength = scramble.length
+    (0 until length).map(pos => (from(pos) ^ scramble(pos % scrambleLength)).toByte).toArray
 
   def encryptPassword(password: String, scramble: Array[Byte], publicKeyString: String): Array[Byte] =
     val input = if password.nonEmpty then (password + "\u0000").getBytes(StandardCharsets.UTF_8) else Array[Byte](0)
@@ -28,4 +37,3 @@ trait Sha256PasswordPluginPlatform[F[_]] { self: Sha256PasswordPlugin[F] =>
       ByteVector(input).toUint8Array
     )
     ByteVector.view(encrypted.asInstanceOf[Uint8Array]).toArray
-}

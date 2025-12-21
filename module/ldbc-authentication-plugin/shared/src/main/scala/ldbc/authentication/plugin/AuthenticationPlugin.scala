@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.connector.authenticator
+package ldbc.authentication.plugin
 
 import scodec.bits.ByteVector
 
@@ -20,7 +20,6 @@ import scodec.bits.ByteVector
  * 
  * @tparam F The effect type that wraps the authentication operations
  */
-@deprecated("This plugin is deprecated. Please use ldbc.authentication.plugin.AuthenticationPlugin instead.", "0.5.0")
 trait AuthenticationPlugin[F[_]]:
 
   /**
@@ -34,7 +33,7 @@ trait AuthenticationPlugin[F[_]]:
    * 
    * @return The plugin name string that identifies this authentication method
    */
-  def name: String
+  def name: PluginName
 
   /**
    * Indicates whether this authentication plugin requires a secure (encrypted) connection.

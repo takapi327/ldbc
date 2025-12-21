@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.connector.authenticator
+package ldbc.authentication.plugin
 
 import scala.scalanative.unsafe.*
 import scala.scalanative.unsigned.*

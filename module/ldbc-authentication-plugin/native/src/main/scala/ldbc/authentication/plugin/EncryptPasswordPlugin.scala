@@ -4,15 +4,19 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.connector.authenticator
+package ldbc.authentication.plugin
+
 import java.nio.charset.StandardCharsets
 
 import scala.scalanative.unsafe.*
 import scala.scalanative.unsigned.*
 
-import ldbc.connector.authenticator.Openssl.*
+import ldbc.authentication.plugin.Openssl.*
 
-trait Sha256PasswordPluginPlatform[F[_]] { self: Sha256PasswordPlugin[F] =>
+trait EncryptPasswordPlugin:
+
+  def transformation: String
+
   def encryptPassword(password: String, scramble: Array[Byte], publicKeyString: String): Array[Byte] =
     val input = if password.nonEmpty then (password + "\u0000").getBytes(StandardCharsets.UTF_8) else Array[Byte](0)
     val mysqlScrambleBuff = xorString(input, scramble, input.length)
@@ -20,6 +24,10 @@ trait Sha256PasswordPluginPlatform[F[_]] { self: Sha256PasswordPlugin[F] =>
       mysqlScrambleBuff,
       publicKeyString
     )
+
+  private def xorString(from: Array[Byte], scramble: Array[Byte], length: Int): Array[Byte] =
+    val scrambleLength = scramble.length
+    (0 until length).map(pos => (from(pos) ^ scramble(pos % scrambleLength)).toByte).toArray
 
   private def encryptWithRSAPublicKey(input: Array[Byte], publicKey: String): Array[Byte] =
     Zone { implicit zone =>
@@ -64,4 +72,3 @@ trait Sha256PasswordPluginPlatform[F[_]] { self: Sha256PasswordPlugin[F] =>
 
       result
     }
-}

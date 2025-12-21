@@ -12,6 +12,10 @@ import scodec.bits.ByteVector
 
 import cats.effect.kernel.Sync
 
+@deprecated(
+  "This plugin is deprecated. Please use ldbc.authentication.plugin.MysqlClearPasswordPlugin instead.",
+  "0.5.0"
+)
 class MysqlClearPasswordPlugin[F[_]: Sync] extends AuthenticationPlugin[F]:
 
   override def name:                                                  String        = "mysql_clear_password"
@@ -21,4 +25,8 @@ class MysqlClearPasswordPlugin[F[_]: Sync] extends AuthenticationPlugin[F]:
     else Sync[F].delay(ByteVector(password.getBytes(StandardCharsets.UTF_8)))
 
 object MysqlClearPasswordPlugin:
+  @deprecated(
+    "This plugin is deprecated. Please use ldbc.authentication.plugin.MysqlClearPasswordPlugin instead.",
+    "0.5.0"
+  )
   def apply[F[_]: Sync](): MysqlClearPasswordPlugin[F] = new MysqlClearPasswordPlugin[F]()
