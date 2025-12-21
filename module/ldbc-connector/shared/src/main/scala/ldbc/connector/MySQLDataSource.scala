@@ -483,8 +483,9 @@ object MySQLDataSource:
   def pooling[F[_]: Async: Network: Console: Hashing: UUIDGen](
     config:         MySQLConfig,
     metricsTracker: Option[PoolMetricsTracker[F]] = None,
-    tracer:         Option[Tracer[F]] = None
-  ): Resource[F, PooledDataSource[F]] = PooledDataSource.fromConfig(config, metricsTracker, tracer)
+    tracer:         Option[Tracer[F]] = None,
+    plugins: List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
+  ): Resource[F, PooledDataSource[F]] = PooledDataSource.fromConfig(config, metricsTracker, tracer, plugins)
 
   /**
    * Creates a pooled DataSource with connection lifecycle hooks.
@@ -539,7 +540,8 @@ object MySQLDataSource:
     config:         MySQLConfig,
     metricsTracker: Option[PoolMetricsTracker[F]] = None,
     tracer:         Option[Tracer[F]] = None,
+    plugins: List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
     before:         Option[Connection[F] => F[A]] = None,
     after:          Option[(A, Connection[F]) => F[Unit]] = None
   ): Resource[F, PooledDataSource[F]] =
-    PooledDataSource.fromConfigWithBeforeAfter(config, metricsTracker, tracer, before, after)
+    PooledDataSource.fromConfigWithBeforeAfter(config, metricsTracker, tracer, plugins, before, after)

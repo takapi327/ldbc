@@ -169,17 +169,6 @@ trait PooledDataSource[F[_]] extends DataSource[F]:
    */
   def validateConnection(conn: Connection[F]): F[Boolean]
 
-  /**
-   * Sets whether to authentication plugin to be used for communication with the server.
-   *
-   * @param p1
-   *   The authentication plugin used for communication with the server
-   * @param pn
-   *   List of authentication plugins used for communication with the server
-   * @return a new MySQLDataSource with the updated setting
-   */
-  def setPlugins(p1: AuthenticationPlugin[F], pn: AuthenticationPlugin[F]*): PooledDataSource[F]
-
 object PooledDataSource:
 
   private case class Impl[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
@@ -651,22 +640,11 @@ object PooledDataSource:
             plugins                 = plugins
           )
 
-    /**
-     * Sets whether to authentication plugin to be used for communication with the server.
-     *
-     * @param p1
-     * The authentication plugin used for communication with the server
-     * @param pn
-     * List of authentication plugins used for communication with the server
-     * @return a new MySQLDataSource with the updated setting
-     */
-    override def setPlugins(p1: AuthenticationPlugin[F], pn: AuthenticationPlugin[F]*): PooledDataSource[F] =
-      copy(plugins = p1 :: pn.toList)
-
   private[connector] def create[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
     config:         MySQLConfig,
     metricsTracker: Option[PoolMetricsTracker[F]],
     idGenerator:    F[String],
+    plugins: List[AuthenticationPlugin[F]],
     before:         Option[Connection[F] => F[A]] = None,
     after:          Option[(A, Connection[F]) => F[Unit]] = None
   )(using Tracer[F]): Resource[F, PooledDataSource[F]] =
@@ -675,7 +653,7 @@ object PooledDataSource:
     Resource
       .eval(PoolConfigValidator.validate(config))
       .flatMap { _ =>
-        createValidatedPool(config, metricsTracker, idGenerator, before, after)
+        createValidatedPool(config, metricsTracker, idGenerator, plugins, before, after)
       }
       .handleErrorWith { error =>
         Resource.eval(Async[F].raiseError(error))
@@ -685,6 +663,7 @@ object PooledDataSource:
     config:         MySQLConfig,
     metricsTracker: Option[PoolMetricsTracker[F]],
     idGenerator:    F[String],
+    plugins: List[AuthenticationPlugin[F]],
     before:         Option[Connection[F] => F[A]],
     after:          Option[(A, Connection[F]) => F[Unit]]
   )(using Tracer[F]): Resource[F, PooledDataSource[F]] =
@@ -739,6 +718,7 @@ object PooledDataSource:
       keepaliveTime           = config.keepaliveTime,
       connectionTestQuery     = config.connectionTestQuery,
       poolLogger              = poolLogger,
+      plugins = plugins,
       before                  = before,
       after                   = after
     )
@@ -786,10 +766,11 @@ object PooledDataSource:
   def fromConfig[F[_]: Async: Network: Console: Hashing: UUIDGen](
     config:         MySQLConfig,
     metricsTracker: Option[PoolMetricsTracker[F]] = None,
-    tracer:         Option[Tracer[F]] = None
+    tracer:         Option[Tracer[F]] = None,
+    plugins: List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]]
   ): Resource[F, PooledDataSource[F]] =
     given Tracer[F] = tracer.getOrElse(Tracer.noop[F])
-    create(config, metricsTracker, UUIDGen[F].randomUUID.map(_.toString))
+    create(config, metricsTracker, UUIDGen[F].randomUUID.map(_.toString), plugins)
 
     /**
    * Creates a PooledDataSource with before/after hooks for each connection use.
@@ -816,8 +797,9 @@ object PooledDataSource:
     config:         MySQLConfig,
     metricsTracker: Option[PoolMetricsTracker[F]] = None,
     tracer:         Option[Tracer[F]] = None,
+    plugins: List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
     before:         Option[Connection[F] => F[A]] = None,
     after:          Option[(A, Connection[F]) => F[Unit]] = None
   ): Resource[F, PooledDataSource[F]] =
     given Tracer[F] = tracer.getOrElse(Tracer.noop[F])
-    create(config, metricsTracker, UUIDGen[F].randomUUID.map(_.toString), before, after)
+    create(config, metricsTracker, UUIDGen[F].randomUUID.map(_.toString), plugins, before, after)
