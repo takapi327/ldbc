@@ -66,7 +66,7 @@ object Main extends ResourceApp.Forever:
   }
 
   private def routes(connector: Connector[IO]): HttpRoutes[IO] = HttpRoutes.of[IO] {
-    case GET -> Root / "healthcheck" -> Ok("Healthcheck")
+    case GET -> Root / "healthcheck" => Ok("Healthcheck")
     case GET -> Root / "cities" =>
       for
         cities <- sql"SELECT * FROM city".query[City].to[List].readOnly(connector)
