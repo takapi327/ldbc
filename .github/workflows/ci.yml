@@ -394,7 +394,7 @@ jobs:
       - name: Submit Dependencies
         uses: scalacenter/sbt-dependency-submission@v2
         with:
-          modules-ignore: ldbcjs_3 ldbcjs_3 otel_3 mcp-ldbc-document-server_sjs1_3 docs_3 docs_3 zio_3 ldbcnative_3 ldbcnative_3 ldbcjvm_3 ldbcjvm_3 hikaricp_3 tests_sjs1_3 tests_sjs1_3 http4s_3 tests_3 tests_3 benchmark_3 benchmark_3 tests_native0.4_3 tests_native0.4_3
+          modules-ignore: ldbcjs_3 ldbcjs_3 otel_3 mcp-ldbc-document-server_sjs1_3 docs_3 docs_3 zio_3 ldbcnative_3 ldbcnative_3 ldbcjvm_3 ldbcjvm_3 hikaricp_3 tests_sjs1_3 tests_sjs1_3 http4s_3 aws-iam-auth_3 tests_3 tests_3 benchmark_3 benchmark_3 tests_native0.4_3 tests_native0.4_3
           configs-ignore: test scala-tool scala-doc-tool test-internal
 
   validate-steward:
