@@ -415,9 +415,46 @@ trait MySQLConfig:
    * @return a new MySQLConfig with the updated setting
    */
   def setPoolName(name: String): MySQLConfig
-  
+
+  /**
+   * Gets the maximum allowed packet size for network communication with MySQL server.
+   * 
+   * This setting controls the maximum size of packets that can be sent to or received from
+   * the MySQL server. It helps prevent memory exhaustion attacks and ensures compatibility
+   * with the MySQL protocol limits.
+   * 
+   * The value corresponds to the MySQL server's `max_allowed_packet` system variable.
+   * 
+   * @return the maximum packet size in bytes
+   */
   def maxAllowedPacket: Int
   
+  /**
+   * Sets the maximum allowed packet size for network communication.
+   * 
+   * This setting provides protection against:
+   * - Memory exhaustion attacks through oversized packets
+   * - Denial of Service (DoS) attacks via large data payloads
+   * - Accidental transmission of extremely large data sets
+   * 
+   * @param maxAllowedPacket the maximum packet size in bytes
+   * @return a new MySQLConfig with the updated setting
+   * 
+   * @example {{{
+   * // Set conservative 64KB limit (default)
+   * config.setMaxAllowedPacket(65535)
+   * 
+   * // Set practical 1MB limit for applications with moderate BLOB usage
+   * config.setMaxAllowedPacket(1048576)
+   * 
+   * // Set maximum protocol limit for applications requiring large data transfers
+   * config.setMaxAllowedPacket(16777215)
+   * }}}
+   * 
+   * @note The default value of 65,535 bytes (64KB) is compatible with MySQL JDBC Driver defaults
+   *       and provides good security against packet-based attacks while accommodating most use cases.
+   * @see [[https://dev.mysql.com/doc/refman/en/packet-too-large.html MySQL Protocol Packet Limits]]
+   */
   def setMaxAllowedPacket(maxAllowedPacket: Int): MySQLConfig
 
 /**

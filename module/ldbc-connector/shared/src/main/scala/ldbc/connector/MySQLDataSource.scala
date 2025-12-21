@@ -48,6 +48,7 @@ import ldbc.DataSource
  * @param tracer optional OpenTelemetry tracer for distributed tracing
  * @param useCursorFetch whether to use cursor-based fetching for result sets
  * @param useServerPrepStmts whether to use server-side prepared statements
+ * @param maxAllowedPacket Maximum allowed packet size for network communication in bytes.
  * @param defaultAuthenticationPlugin The authentication plugin used first for communication with the server
  * @param plugins Additional authentication plugins used for communication with the server
  * @param before optional hook to execute before a connection is acquired
@@ -259,7 +260,12 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
     */
   def setUseServerPrepStmts(newUseServerPrepStmts: Boolean): MySQLDataSource[F, A] =
     copy(useServerPrepStmts = newUseServerPrepStmts)
-    
+
+  /** Sets the maximum allowed packet size for network communication.
+   * 
+   * @param maxAllowedPacket the maximum packet size in bytes (0 to 16,777,215)
+   * @return a new MySQLDataSource with the updated packet size limit
+   */
   def setMaxAllowedPacket(maxAllowedPacket: Int): MySQLDataSource[F, A] =
     copy(maxAllowedPacket = maxAllowedPacket)
 
