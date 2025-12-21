@@ -644,7 +644,7 @@ object PooledDataSource:
     config:         MySQLConfig,
     metricsTracker: Option[PoolMetricsTracker[F]],
     idGenerator:    F[String],
-    plugins: List[AuthenticationPlugin[F]],
+    plugins:        List[AuthenticationPlugin[F]],
     before:         Option[Connection[F] => F[A]] = None,
     after:          Option[(A, Connection[F]) => F[Unit]] = None
   )(using Tracer[F]): Resource[F, PooledDataSource[F]] =
@@ -663,7 +663,7 @@ object PooledDataSource:
     config:         MySQLConfig,
     metricsTracker: Option[PoolMetricsTracker[F]],
     idGenerator:    F[String],
-    plugins: List[AuthenticationPlugin[F]],
+    plugins:        List[AuthenticationPlugin[F]],
     before:         Option[Connection[F] => F[A]],
     after:          Option[(A, Connection[F]) => F[Unit]]
   )(using Tracer[F]): Resource[F, PooledDataSource[F]] =
@@ -718,7 +718,7 @@ object PooledDataSource:
       keepaliveTime           = config.keepaliveTime,
       connectionTestQuery     = config.connectionTestQuery,
       poolLogger              = poolLogger,
-      plugins = plugins,
+      plugins                 = plugins,
       before                  = before,
       after                   = after
     )
@@ -767,7 +767,7 @@ object PooledDataSource:
     config:         MySQLConfig,
     metricsTracker: Option[PoolMetricsTracker[F]] = None,
     tracer:         Option[Tracer[F]] = None,
-    plugins: List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]]
+    plugins:        List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]]
   ): Resource[F, PooledDataSource[F]] =
     given Tracer[F] = tracer.getOrElse(Tracer.noop[F])
     create(config, metricsTracker, UUIDGen[F].randomUUID.map(_.toString), plugins)
@@ -797,7 +797,7 @@ object PooledDataSource:
     config:         MySQLConfig,
     metricsTracker: Option[PoolMetricsTracker[F]] = None,
     tracer:         Option[Tracer[F]] = None,
-    plugins: List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
+    plugins:        List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
     before:         Option[Connection[F] => F[A]] = None,
     after:          Option[(A, Connection[F]) => F[Unit]] = None
   ): Resource[F, PooledDataSource[F]] =

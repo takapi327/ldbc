@@ -16,9 +16,9 @@ import cats.Monad
 import cats.effect.*
 import cats.effect.std.{ Env, SystemProperties, UUIDGen }
 
+import fs2.hashing.Hashing
 import fs2.io.file.Files
 import fs2.io.net.*
-import fs2.hashing.Hashing
 
 import ldbc.amazon.auth.credentials.DefaultCredentialsProviderChain
 import ldbc.amazon.auth.token.{ AuthTokenGenerator, RdsIamAuthTokenGenerator }
