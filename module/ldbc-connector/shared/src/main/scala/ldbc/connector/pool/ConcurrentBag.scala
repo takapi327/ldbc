@@ -251,7 +251,7 @@ object ConcurrentBag:
               item.compareAndSet(BagEntry.STATE_IN_USE, BagEntry.STATE_NOT_IN_USE).flatMap {
                 case true => // Successfully transitioned from IN_USE
                   continueRequiteProcess(item)
-                case false => 
+                case false =>
                   // Failed transition - could be NOT_IN_USE already or other state
                   item.getState.flatMap { currentState =>
                     currentState match {
