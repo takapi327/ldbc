@@ -131,9 +131,14 @@ final class InstanceProfileCredentialsProvider[F[_]: Env: Concurrent](
    * @return The IMDS endpoint URL without trailing slash
    */
   private def getImdsEndpoint(): F[String] =
-    Env[F].get("AWS_EC2_METADATA_SERVICE_ENDPOINT").map {
-      case Some(endpoint) => endpoint.stripSuffix("/")
-      case None           => DEFAULT_IMD_SEND_POINT
+    Env[F].get("AWS_EC2_METADATA_SERVICE_ENDPOINT").flatMap {
+      case Some(endpoint) =>
+        Concurrent[F]
+          .raiseUnless(endpoint.matches("^https?://169\\.254\\.169\\.254.*"))(
+            new SecurityException("Invalid IMDS endpoint")
+          )
+          .map(_ => endpoint.stripSuffix("/"))
+      case None => Concurrent[F].pure(DEFAULT_IMD_SEND_POINT)
     }
 
   /**
