@@ -10,8 +10,8 @@ import java.nio.charset.StandardCharsets
 
 import scodec.bits.ByteVector
 
-import cats.Monad
 import cats.syntax.all.*
+import cats.Monad
 
 import cats.effect.*
 import cats.effect.std.{ Env, SystemProperties, UUIDGen }
@@ -19,11 +19,10 @@ import cats.effect.std.{ Env, SystemProperties, UUIDGen }
 import fs2.io.file.Files
 import fs2.io.net.*
 
-import ldbc.authentication.plugin.MysqlClearPasswordPlugin
-
-import ldbc.amazon.identity.{AwsCredentials, AwsCredentialsProvider}
 import ldbc.amazon.auth.credentials.DefaultCredentialsProviderChain
-import ldbc.amazon.auth.token.{AuthTokenGenerator, RdsIamAuthTokenGenerator}
+import ldbc.amazon.auth.token.{ AuthTokenGenerator, RdsIamAuthTokenGenerator }
+import ldbc.amazon.identity.{ AwsCredentials, AwsCredentialsProvider }
+import ldbc.authentication.plugin.MysqlClearPasswordPlugin
 
 /**
  * AWS IAM authentication plugin for connecting to MySQL databases using IAM credentials.
@@ -56,8 +55,8 @@ import ldbc.amazon.auth.token.{AuthTokenGenerator, RdsIamAuthTokenGenerator}
  * @since 1.0.0
  */
 final class AwsIamAuthenticationPlugin[F[_]: Monad](
-   provider: AwsCredentialsProvider[F],
-   generator: AuthTokenGenerator[F]
+  provider:  AwsCredentialsProvider[F],
+  generator: AuthTokenGenerator[F]
 ) extends MysqlClearPasswordPlugin[F]:
 
   /**
@@ -87,7 +86,7 @@ final class AwsIamAuthenticationPlugin[F[_]: Monad](
   override def hashPassword(password: String, scramble: Array[Byte]): F[ByteVector] =
     for
       credentials <- provider.resolveCredentials()
-      token <- generator.generateToken(credentials)
+      token       <- generator.generateToken(credentials)
     yield ByteVector(token.getBytes(StandardCharsets.UTF_8))
 
 object AwsIamAuthenticationPlugin:
@@ -134,10 +133,10 @@ object AwsIamAuthenticationPlugin:
    * @since 1.0.0
    */
   def default[F[_]: Files: Env: SystemProperties: Network: UUIDGen: Async](
-    region: String,
+    region:   String,
     hostname: String,
     username: String,
-    port: Int = 3306
+    port:     Int = 3306
   ): AwsIamAuthenticationPlugin[F] =
     new AwsIamAuthenticationPlugin[F](
       DefaultCredentialsProviderChain.default[F](region),
