@@ -66,7 +66,7 @@ class PoolStatusReporterTest extends CatsEffectSuite:
       def createNewConnectionForPool() = ???
       def returnToPool(pooled:     PooledConnection[IO]) = ???
       def removeConnection(pooled: PooledConnection[IO]) = ???
-      def validateConnection(conn: Connection[IO]) = ???
+      def validateConnection(conn: Connection[IO])       = ???
     }
 
     reporter.start(pool, "test-pool").use { _ =>
@@ -108,7 +108,7 @@ class PoolStatusReporterTest extends CatsEffectSuite:
       def createNewConnectionForPool() = ???
       def returnToPool(pooled:     PooledConnection[IO]) = ???
       def removeConnection(pooled: PooledConnection[IO]) = ???
-      def validateConnection(conn: Connection[IO]) = ???
+      def validateConnection(conn: Connection[IO])       = ???
     }
 
     reporter.start(pool, "test-pool").use { _ =>
@@ -168,7 +168,7 @@ class PoolStatusReporterTest extends CatsEffectSuite:
       def createNewConnectionForPool() = ???
       def returnToPool(pooled:     PooledConnection[IO]) = ???
       def removeConnection(pooled: PooledConnection[IO]) = ???
-      def validateConnection(conn: Connection[IO]) = ???
+      def validateConnection(conn: Connection[IO])       = ???
     }
 
     reporter.start(pool, "test-pool").use { _ =>
