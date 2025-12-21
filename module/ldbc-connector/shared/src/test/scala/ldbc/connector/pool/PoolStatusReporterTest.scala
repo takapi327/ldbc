@@ -16,8 +16,6 @@ import munit.CatsEffectSuite
 
 import ldbc.connector.Connection
 
-import ldbc.authentication.plugin.AuthenticationPlugin
-
 class PoolStatusReporterTest extends CatsEffectSuite:
 
   class TestPoolLogger[F[_]: Applicative](var logCount: Int = 0) extends PoolLogger[F]:
@@ -69,7 +67,6 @@ class PoolStatusReporterTest extends CatsEffectSuite:
       def returnToPool(pooled:     PooledConnection[IO]) = ???
       def removeConnection(pooled: PooledConnection[IO]) = ???
       def validateConnection(conn: Connection[IO]) = ???
-      def setPlugins(p1:           AuthenticationPlugin[IO], pn: AuthenticationPlugin[IO]*): PooledDataSource[IO] = ???
     }
 
     reporter.start(pool, "test-pool").use { _ =>
@@ -112,7 +109,6 @@ class PoolStatusReporterTest extends CatsEffectSuite:
       def returnToPool(pooled:     PooledConnection[IO]) = ???
       def removeConnection(pooled: PooledConnection[IO]) = ???
       def validateConnection(conn: Connection[IO]) = ???
-      def setPlugins(p1:           AuthenticationPlugin[IO], pn: AuthenticationPlugin[IO]*): PooledDataSource[IO] = ???
     }
 
     reporter.start(pool, "test-pool").use { _ =>
@@ -173,7 +169,6 @@ class PoolStatusReporterTest extends CatsEffectSuite:
       def returnToPool(pooled:     PooledConnection[IO]) = ???
       def removeConnection(pooled: PooledConnection[IO]) = ???
       def validateConnection(conn: Connection[IO]) = ???
-      def setPlugins(p1:           AuthenticationPlugin[IO], pn: AuthenticationPlugin[IO]*): PooledDataSource[IO] = ???
     }
 
     reporter.start(pool, "test-pool").use { _ =>
