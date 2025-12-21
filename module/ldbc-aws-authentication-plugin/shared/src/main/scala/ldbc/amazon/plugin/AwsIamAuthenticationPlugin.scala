@@ -18,10 +18,11 @@ import cats.effect.std.{ Env, SystemProperties, UUIDGen }
 
 import fs2.io.file.Files
 import fs2.io.net.*
+import fs2.hashing.Hashing
 
 import ldbc.amazon.auth.credentials.DefaultCredentialsProviderChain
 import ldbc.amazon.auth.token.{ AuthTokenGenerator, RdsIamAuthTokenGenerator }
-import ldbc.amazon.identity.{ AwsCredentials, AwsCredentialsProvider }
+import ldbc.amazon.identity.AwsCredentialsProvider
 import ldbc.authentication.plugin.MysqlClearPasswordPlugin
 
 /**
@@ -52,7 +53,6 @@ import ldbc.authentication.plugin.MysqlClearPasswordPlugin
  * @param generator The token generator for creating RDS IAM authentication tokens
  * 
  * @see [[https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.html AWS RDS IAM Database Authentication]]
- * @since 1.0.0
  */
 final class AwsIamAuthenticationPlugin[F[_]: Monad](
   provider:  AwsCredentialsProvider[F],
@@ -130,9 +130,8 @@ object AwsIamAuthenticationPlugin:
    * 
    * @see [[ldbc.amazon.auth.credentials.DefaultCredentialsProviderChain]] for credential resolution details
    * @see [[ldbc.amazon.auth.token.RdsIamAuthTokenGenerator]] for token generation implementation
-   * @since 1.0.0
    */
-  def default[F[_]: Files: Env: SystemProperties: Network: UUIDGen: Async](
+  def default[F[_]: Files: Hashing: Env: SystemProperties: Network: UUIDGen: Async](
     region:   String,
     hostname: String,
     username: String,
