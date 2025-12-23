@@ -6,7 +6,7 @@
 
 package ldbc.connector
 
-import java.nio.file.Path
+import java.nio.file.Path as JPath
 import java.security.KeyStore
 
 import javax.net.ssl.SSLContext
@@ -17,6 +17,7 @@ import cats.effect.Resource
 
 import fs2.io.net.tls.TLSContext
 import fs2.io.net.Network
+import fs2.io.file.Path
 
 private[ldbc] trait SSLPlatform:
 
@@ -27,13 +28,24 @@ private[ldbc] trait SSLPlatform:
         Resource.pure(Network[F].tlsContext.fromSSLContext(ctx))
 
   /** Creates an `SSL` from the specified key store file. */
+  @deprecated("Use overload that takes an fs2.io.file.Path instead", "3.13.0")
   def fromKeyStoreFile(
-    file:          Path,
+    file:          JPath,
     storePassword: Array[Char],
     keyPassword:   Array[Char]
   ): SSL =
     new SSL:
       override def tlsContext[F[_]: Network](implicit ev: ApplicativeError[F, Throwable]): Resource[F, TLSContext[F]] =
+        Resource.eval(Network[F].tlsContext.fromKeyStoreFile(fs2.io.file.Path.fromNioPath(file), storePassword, keyPassword))
+
+  /** Creates an `SSL` from the specified key store file. */
+  def fromKeyStoreFile(
+                        file: Path,
+                        storePassword: Array[Char],
+                        keyPassword: Array[Char]
+                      ): SSL =
+    new SSL:
+      override def tlsContext[F[_] : Network](implicit ev: ApplicativeError[F, Throwable]): Resource[F, TLSContext[F]] =
         Resource.eval(Network[F].tlsContext.fromKeyStoreFile(file, storePassword, keyPassword))
 
   /** Creates an `SSL` from the specified class path resource. */
