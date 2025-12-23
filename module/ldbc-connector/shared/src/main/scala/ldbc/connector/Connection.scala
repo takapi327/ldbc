@@ -246,25 +246,25 @@ object Connection:
       _ <- Resource.make(acquire(connection))(v => release(v, connection))
     yield connection
 
-  def fromNetwork[F[_] : Tracer : Console : Hashing : UUIDGen, A](
-                                                                   network: Network[F],
-    host: String,
-    port: Int,
-    user: String,
-    password: Option[String] = None,
-    database: Option[String] = None,
-    debug: Boolean = false,
-    socketOptions: List[SocketOption],
-    sslOptions: Option[SSLNegotiation.Options[F]],
-    readTimeout: Duration = Duration.Inf,
-    allowPublicKeyRetrieval: Boolean = false,
-    useCursorFetch: Boolean = false,
-    useServerPrepStmts: Boolean = false,
-    databaseTerm: Option[DatabaseMetaData.DatabaseTerm] = None,
+  def fromNetwork[F[_]: Tracer: Console: Hashing: UUIDGen, A](
+    network:                     Network[F],
+    host:                        String,
+    port:                        Int,
+    user:                        String,
+    password:                    Option[String] = None,
+    database:                    Option[String] = None,
+    debug:                       Boolean = false,
+    socketOptions:               List[SocketOption],
+    sslOptions:                  Option[SSLNegotiation.Options[F]],
+    readTimeout:                 Duration = Duration.Inf,
+    allowPublicKeyRetrieval:     Boolean = false,
+    useCursorFetch:              Boolean = false,
+    useServerPrepStmts:          Boolean = false,
+    databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = None,
     defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
-    plugins: List[AuthenticationPlugin[F]],
-    acquire: Connection[F] => F[A],
-    release: (A, Connection[F]) => F[Unit]
+    plugins:                     List[AuthenticationPlugin[F]],
+    acquire:                     Connection[F] => F[A],
+    release:                     (A, Connection[F]) => F[Unit]
   )(using ev: Async[F]): Resource[F, LdbcConnection[F]] =
 
     def fail[B](msg: String): Resource[F, B] =
