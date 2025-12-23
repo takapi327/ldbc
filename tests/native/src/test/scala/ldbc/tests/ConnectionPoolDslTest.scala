@@ -112,7 +112,7 @@ trait ConnectionPoolDslTest extends CatsEffectSuite:
       .fromConfig[IO](config.setMinConnections(2).setMaxConnections(5))
       .use { pool =>
         // Execute multiple queries concurrently
-        val queries = (1 to 5).toList.traverse { i =>
+        val queries = (1 to 5).toList.parTraverse { i =>
           country.selectAll
             .limit(1)
             .offset(i)
