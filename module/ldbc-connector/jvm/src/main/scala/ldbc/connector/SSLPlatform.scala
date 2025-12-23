@@ -28,7 +28,7 @@ private[ldbc] trait SSLPlatform:
         Resource.pure(Network[F].tlsContext.fromSSLContext(ctx))
 
   /** Creates an `SSL` from the specified key store file. */
-  @deprecated("Use overload that takes an fs2.io.file.Path instead", "3.13.0")
+  @deprecated("Use overload that takes an fs2.io.file.Path instead", "0.X.0")
   def fromKeyStoreFile(
     file:          JPath,
     storePassword: Array[Char],
