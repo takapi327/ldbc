@@ -21,6 +21,7 @@ import fs2.io.net.Socket
 import fs2.Chunk
 
 import ldbc.connector.data.CapabilitiesFlags
+import ldbc.connector.exception.PacketTooBigException
 import ldbc.connector.net.packet.*
 import ldbc.connector.net.packet.response.InitialPacket
 import ldbc.connector.net.protocol.parseHeader
@@ -41,10 +42,15 @@ trait PacketSocket[F[_]]:
 
 object PacketSocket:
 
+  val DEFAULT_MAX_PACKET_SIZE  = 65535    // 64KB (JDBC Driver default)
+  val PROTOCOL_MAX_PACKET_SIZE = 16777215 // 16MB (MySQL protocol limit)
+  val MIN_PACKET_SIZE          = 0
+
   def fromBitVectorSocket[F[_]: Concurrent: Console](
-    bvs:           BitVectorSocket[F],
-    debugEnabled:  Boolean,
-    sequenceIdRef: Ref[F, Byte]
+    bvs:              BitVectorSocket[F],
+    debugEnabled:     Boolean,
+    sequenceIdRef:    Ref[F, Byte],
+    maxAllowedPacket: Int
   ): PacketSocket[F] = new PacketSocket[F]:
 
     private def debug(msg: => String): F[Unit] =
@@ -56,6 +62,7 @@ object PacketSocket:
       (for
         header <- bvs.read(4)
         payloadSize = parseHeader(header.toByteArray)
+        _       <- validatePacketSize(payloadSize)
         payload <- bvs.read(payloadSize)
         response = decoder.decodeValue(payload).require
         _ <-
@@ -94,6 +101,17 @@ object PacketSocket:
         _ <- sequenceIdRef.update(sequenceId => ((sequenceId + 1) % 256).toByte)
       yield ()
 
+    private def validatePacketSize(size: Int): F[Unit] =
+      if size < MIN_PACKET_SIZE then
+        Concurrent[F].raiseError(
+          PacketTooBigException(size, maxAllowedPacket)
+        )
+      else if size > maxAllowedPacket then
+        Concurrent[F].raiseError(
+          PacketTooBigException(size, maxAllowedPacket)
+        )
+      else Concurrent[F].unit
+
   def apply[F[_]: Console: Temporal](
     debug:             Boolean,
     sockets:           Resource[F, Socket[F]],
@@ -101,8 +119,9 @@ object PacketSocket:
     sequenceIdRef:     Ref[F, Byte],
     initialPacketRef:  Ref[F, Option[InitialPacket]],
     readTimeout:       Duration,
-    capabilitiesFlags: Set[CapabilitiesFlags]
+    capabilitiesFlags: Set[CapabilitiesFlags],
+    maxAllowedPacket:  Int
   ): Resource[F, PacketSocket[F]] =
     BitVectorSocket(sockets, sequenceIdRef, initialPacketRef, sslOptions, readTimeout, capabilitiesFlags).map(
-      fromBitVectorSocket(_, debug, sequenceIdRef)
+      fromBitVectorSocket(_, debug, sequenceIdRef, maxAllowedPacket)
     )

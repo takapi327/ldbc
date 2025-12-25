@@ -30,6 +30,7 @@ class MySQLConfigTest extends FTestPlatform:
     assertEquals(config.databaseTerm, Some(DatabaseMetaData.DatabaseTerm.CATALOG))
     assertEquals(config.useCursorFetch, false)
     assertEquals(config.useServerPrepStmts, false)
+    assertEquals(config.maxAllowedPacket, MySQLConfig.DEFAULT_PACKET_SIZE)
   }
 
   test("setHost should update host value") {
@@ -130,6 +131,68 @@ class MySQLConfigTest extends FTestPlatform:
     assertEquals(updated.useServerPrepStmts, true)
   }
 
+  test("setMaxAllowedPacket should update maxAllowedPacket value") {
+    val config  = MySQLConfig.default
+    val updated = config.setMaxAllowedPacket(1048576) // 1MB
+
+    assertEquals(updated.maxAllowedPacket, 1048576)
+    // Ensure other values remain unchanged
+    assertEquals(updated.host, config.host)
+    assertEquals(updated.port, config.port)
+  }
+
+  test("setMaxAllowedPacket should accept minimum valid value") {
+    val config  = MySQLConfig.default
+    val updated = config.setMaxAllowedPacket(MySQLConfig.MIN_PACKET_SIZE)
+
+    assertEquals(updated.maxAllowedPacket, MySQLConfig.MIN_PACKET_SIZE)
+  }
+
+  test("setMaxAllowedPacket should accept maximum valid value") {
+    val config  = MySQLConfig.default
+    val updated = config.setMaxAllowedPacket(MySQLConfig.MAX_PACKET_SIZE)
+
+    assertEquals(updated.maxAllowedPacket, MySQLConfig.MAX_PACKET_SIZE)
+  }
+
+  test("setMaxAllowedPacket should reject values below minimum") {
+    val config = MySQLConfig.default
+
+    intercept[IllegalArgumentException] {
+      config.setMaxAllowedPacket(MySQLConfig.MIN_PACKET_SIZE - 1)
+    }
+  }
+
+  test("setMaxAllowedPacket should reject values above maximum") {
+    val config = MySQLConfig.default
+
+    intercept[IllegalArgumentException] {
+      config.setMaxAllowedPacket(MySQLConfig.MAX_PACKET_SIZE + 1)
+    }
+  }
+
+  test("setMaxAllowedPacket should reject zero value") {
+    val config = MySQLConfig.default
+
+    intercept[IllegalArgumentException] {
+      config.setMaxAllowedPacket(0)
+    }
+  }
+
+  test("setMaxAllowedPacket should reject negative values") {
+    val config = MySQLConfig.default
+
+    intercept[IllegalArgumentException] {
+      config.setMaxAllowedPacket(-1)
+    }
+  }
+
+  test("MySQLConfig constants should have expected values") {
+    assertEquals(MySQLConfig.MIN_PACKET_SIZE, 1024)
+    assertEquals(MySQLConfig.MAX_PACKET_SIZE, 16777215)
+    assertEquals(MySQLConfig.DEFAULT_PACKET_SIZE, 65535)
+  }
+
   test("MySQLConfig should be immutable - original config should not change") {
     val original     = MySQLConfig.default
     val originalHost = original.host
@@ -167,6 +230,7 @@ class MySQLConfigTest extends FTestPlatform:
       .setAllowPublicKeyRetrieval(true)
       .setUseCursorFetch(true)
       .setUseServerPrepStmts(true)
+      .setMaxAllowedPacket(1048576)
 
     assertEquals(config.host, "localhost")
     assertEquals(config.port, 3307)
@@ -178,6 +242,7 @@ class MySQLConfigTest extends FTestPlatform:
     assertEquals(config.allowPublicKeyRetrieval, true)
     assertEquals(config.useCursorFetch, true)
     assertEquals(config.useServerPrepStmts, true)
+    assertEquals(config.maxAllowedPacket, 1048576)
   }
 
   test("MySQLConfig with custom socket options") {

@@ -48,6 +48,7 @@ import ldbc.DataSource
  * @param tracer optional OpenTelemetry tracer for distributed tracing
  * @param useCursorFetch whether to use cursor-based fetching for result sets
  * @param useServerPrepStmts whether to use server-side prepared statements
+ * @param maxAllowedPacket Maximum allowed packet size for network communication in bytes.
  * @param defaultAuthenticationPlugin The authentication plugin used first for communication with the server
  * @param plugins Additional authentication plugins used for communication with the server
  * @param before optional hook to execute before a connection is acquired
@@ -84,6 +85,7 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
   tracer:                      Option[Tracer[F]]                     = None,
   useCursorFetch:              Boolean                               = false,
   useServerPrepStmts:          Boolean                               = false,
+  maxAllowedPacket:            Int                                   = MySQLConfig.DEFAULT_PACKET_SIZE,
   defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]]       = None,
   plugins:                     List[AuthenticationPlugin[F]]         = List.empty[AuthenticationPlugin[F]],
   before:                      Option[Connection[F] => F[A]]         = None,
@@ -118,6 +120,7 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
           allowPublicKeyRetrieval     = allowPublicKeyRetrieval,
           useCursorFetch              = useCursorFetch,
           useServerPrepStmts          = useServerPrepStmts,
+          maxAllowedPacket            = maxAllowedPacket,
           databaseTerm                = databaseTerm,
           defaultAuthenticationPlugin = defaultAuthenticationPlugin,
           plugins                     = plugins
@@ -138,6 +141,7 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
           allowPublicKeyRetrieval     = allowPublicKeyRetrieval,
           useCursorFetch              = useCursorFetch,
           useServerPrepStmts          = useServerPrepStmts,
+          maxAllowedPacket            = maxAllowedPacket,
           databaseTerm                = databaseTerm,
           defaultAuthenticationPlugin = defaultAuthenticationPlugin,
           plugins                     = plugins
@@ -156,6 +160,7 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
           allowPublicKeyRetrieval     = allowPublicKeyRetrieval,
           useCursorFetch              = useCursorFetch,
           useServerPrepStmts          = useServerPrepStmts,
+          maxAllowedPacket            = maxAllowedPacket,
           databaseTerm                = databaseTerm,
           defaultAuthenticationPlugin = defaultAuthenticationPlugin,
           plugins                     = plugins
@@ -255,6 +260,24 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
     */
   def setUseServerPrepStmts(newUseServerPrepStmts: Boolean): MySQLDataSource[F, A] =
     copy(useServerPrepStmts = newUseServerPrepStmts)
+
+  /** Sets the maximum allowed packet size for network communication.
+   * 
+   * @param maxAllowedPacket the maximum packet size in bytes (1,024 to 16,777,215)
+   * @return a new MySQLDataSource with the updated packet size limit
+   * @throws IllegalArgumentException if the value is outside the valid range
+   */
+  def setMaxAllowedPacket(maxAllowedPacket: Int): MySQLDataSource[F, A] = {
+    require(
+      maxAllowedPacket >= MySQLConfig.MIN_PACKET_SIZE,
+      s"maxAllowedPacket must be at least ${ MySQLConfig.MIN_PACKET_SIZE } bytes, but got $maxAllowedPacket"
+    )
+    require(
+      maxAllowedPacket <= MySQLConfig.MAX_PACKET_SIZE,
+      s"maxAllowedPacket must not exceed ${ MySQLConfig.MAX_PACKET_SIZE } bytes (MySQL protocol limit), but got $maxAllowedPacket"
+    )
+    copy(maxAllowedPacket = maxAllowedPacket)
+  }
 
   /** Sets whether to authentication plugin to be used first for communication with the server.
    * @param defaultAuthenticationPlugin
@@ -389,7 +412,8 @@ object MySQLDataSource:
       allowPublicKeyRetrieval = config.allowPublicKeyRetrieval,
       databaseTerm            = config.databaseTerm,
       useCursorFetch          = config.useCursorFetch,
-      useServerPrepStmts      = config.useServerPrepStmts
+      useServerPrepStmts      = config.useServerPrepStmts,
+      maxAllowedPacket        = config.maxAllowedPacket
     )
 
   /**
