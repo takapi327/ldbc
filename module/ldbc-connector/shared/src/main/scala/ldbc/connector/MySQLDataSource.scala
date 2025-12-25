@@ -85,7 +85,7 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
   tracer:                      Option[Tracer[F]]                     = None,
   useCursorFetch:              Boolean                               = false,
   useServerPrepStmts:          Boolean                               = false,
-  maxAllowedPacket:            Int                                   = 65535,
+  maxAllowedPacket:            Int                                   = MySQLConfig.DEFAULT_PACKET_SIZE,
   defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]]       = None,
   plugins:                     List[AuthenticationPlugin[F]]         = List.empty[AuthenticationPlugin[F]],
   before:                      Option[Connection[F] => F[A]]         = None,
@@ -263,11 +263,15 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
 
   /** Sets the maximum allowed packet size for network communication.
    * 
-   * @param maxAllowedPacket the maximum packet size in bytes (0 to 16,777,215)
+   * @param maxAllowedPacket the maximum packet size in bytes (1,024 to 16,777,215)
    * @return a new MySQLDataSource with the updated packet size limit
+   * @throws IllegalArgumentException if the value is outside the valid range
    */
-  def setMaxAllowedPacket(maxAllowedPacket: Int): MySQLDataSource[F, A] =
+  def setMaxAllowedPacket(maxAllowedPacket: Int): MySQLDataSource[F, A] = {
+    require(maxAllowedPacket >= MySQLConfig.MIN_PACKET_SIZE, s"maxAllowedPacket must be at least ${MySQLConfig.MIN_PACKET_SIZE} bytes, but got $maxAllowedPacket")
+    require(maxAllowedPacket <= MySQLConfig.MAX_PACKET_SIZE, s"maxAllowedPacket must not exceed ${MySQLConfig.MAX_PACKET_SIZE} bytes (MySQL protocol limit), but got $maxAllowedPacket")
     copy(maxAllowedPacket = maxAllowedPacket)
+  }
 
   /** Sets whether to authentication plugin to be used first for communication with the server.
    * @param defaultAuthenticationPlugin
