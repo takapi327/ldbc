@@ -157,7 +157,7 @@ class MySQLConfigTest extends FTestPlatform:
 
   test("setMaxAllowedPacket should reject values below minimum") {
     val config = MySQLConfig.default
-    
+
     intercept[IllegalArgumentException] {
       config.setMaxAllowedPacket(MySQLConfig.MIN_PACKET_SIZE - 1)
     }
@@ -165,7 +165,7 @@ class MySQLConfigTest extends FTestPlatform:
 
   test("setMaxAllowedPacket should reject values above maximum") {
     val config = MySQLConfig.default
-    
+
     intercept[IllegalArgumentException] {
       config.setMaxAllowedPacket(MySQLConfig.MAX_PACKET_SIZE + 1)
     }
@@ -173,7 +173,7 @@ class MySQLConfigTest extends FTestPlatform:
 
   test("setMaxAllowedPacket should reject zero value") {
     val config = MySQLConfig.default
-    
+
     intercept[IllegalArgumentException] {
       config.setMaxAllowedPacket(0)
     }
@@ -181,7 +181,7 @@ class MySQLConfigTest extends FTestPlatform:
 
   test("setMaxAllowedPacket should reject negative values") {
     val config = MySQLConfig.default
-    
+
     intercept[IllegalArgumentException] {
       config.setMaxAllowedPacket(-1)
     }

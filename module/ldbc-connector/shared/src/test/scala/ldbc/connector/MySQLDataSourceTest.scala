@@ -176,7 +176,7 @@ class MySQLDataSourceTest extends FTestPlatform:
 
   test("setMaxAllowedPacket should reject values below minimum") {
     val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
-    
+
     intercept[IllegalArgumentException] {
       dataSource.setMaxAllowedPacket(MySQLConfig.MIN_PACKET_SIZE - 1)
     }
@@ -184,7 +184,7 @@ class MySQLDataSourceTest extends FTestPlatform:
 
   test("setMaxAllowedPacket should reject values above maximum") {
     val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
-    
+
     intercept[IllegalArgumentException] {
       dataSource.setMaxAllowedPacket(MySQLConfig.MAX_PACKET_SIZE + 1)
     }
@@ -192,7 +192,7 @@ class MySQLDataSourceTest extends FTestPlatform:
 
   test("setMaxAllowedPacket should reject zero value") {
     val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
-    
+
     intercept[IllegalArgumentException] {
       dataSource.setMaxAllowedPacket(0)
     }
@@ -200,7 +200,7 @@ class MySQLDataSourceTest extends FTestPlatform:
 
   test("setMaxAllowedPacket should reject negative values") {
     val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
-    
+
     intercept[IllegalArgumentException] {
       dataSource.setMaxAllowedPacket(-1)
     }

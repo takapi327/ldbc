@@ -466,10 +466,10 @@ object MySQLConfig:
 
   /** Minimum allowed packet size in bytes (1KB) */
   val MIN_PACKET_SIZE: Int = 1024
-  
+
   /** Maximum allowed packet size in bytes (16MB - MySQL protocol limit) */
   val MAX_PACKET_SIZE: Int = 16777215
-  
+
   /** Default packet size in bytes (64KB - MySQL JDBC Driver compatible) */
   val DEFAULT_PACKET_SIZE: Int = 65535
 
@@ -544,9 +544,15 @@ object MySQLConfig:
     override def setLogPoolState(enabled:         Boolean):        MySQLConfig = copy(logPoolState = enabled)
     override def setPoolStateLogInterval(interval: FiniteDuration): MySQLConfig = copy(poolStateLogInterval = interval)
     override def setPoolName(name:                 String):         MySQLConfig = copy(poolName = name)
-    override def setMaxAllowedPacket(maxAllowedPacket: Int): MySQLConfig = {
-      require(maxAllowedPacket >= MIN_PACKET_SIZE, s"maxAllowedPacket must be at least $MIN_PACKET_SIZE bytes, but got $maxAllowedPacket")
-      require(maxAllowedPacket <= MAX_PACKET_SIZE, s"maxAllowedPacket must not exceed $MAX_PACKET_SIZE bytes (MySQL protocol limit), but got $maxAllowedPacket")
+    override def setMaxAllowedPacket(maxAllowedPacket: Int):        MySQLConfig = {
+      require(
+        maxAllowedPacket >= MIN_PACKET_SIZE,
+        s"maxAllowedPacket must be at least $MIN_PACKET_SIZE bytes, but got $maxAllowedPacket"
+      )
+      require(
+        maxAllowedPacket <= MAX_PACKET_SIZE,
+        s"maxAllowedPacket must not exceed $MAX_PACKET_SIZE bytes (MySQL protocol limit), but got $maxAllowedPacket"
+      )
       copy(maxAllowedPacket = maxAllowedPacket)
     }
 

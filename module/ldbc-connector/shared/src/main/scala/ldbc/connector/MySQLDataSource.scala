@@ -268,8 +268,14 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
    * @throws IllegalArgumentException if the value is outside the valid range
    */
   def setMaxAllowedPacket(maxAllowedPacket: Int): MySQLDataSource[F, A] = {
-    require(maxAllowedPacket >= MySQLConfig.MIN_PACKET_SIZE, s"maxAllowedPacket must be at least ${MySQLConfig.MIN_PACKET_SIZE} bytes, but got $maxAllowedPacket")
-    require(maxAllowedPacket <= MySQLConfig.MAX_PACKET_SIZE, s"maxAllowedPacket must not exceed ${MySQLConfig.MAX_PACKET_SIZE} bytes (MySQL protocol limit), but got $maxAllowedPacket")
+    require(
+      maxAllowedPacket >= MySQLConfig.MIN_PACKET_SIZE,
+      s"maxAllowedPacket must be at least ${ MySQLConfig.MIN_PACKET_SIZE } bytes, but got $maxAllowedPacket"
+    )
+    require(
+      maxAllowedPacket <= MySQLConfig.MAX_PACKET_SIZE,
+      s"maxAllowedPacket must not exceed ${ MySQLConfig.MAX_PACKET_SIZE } bytes (MySQL protocol limit), but got $maxAllowedPacket"
+    )
     copy(maxAllowedPacket = maxAllowedPacket)
   }
 
