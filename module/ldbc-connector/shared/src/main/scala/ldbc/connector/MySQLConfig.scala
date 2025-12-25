@@ -439,6 +439,7 @@ trait MySQLConfig:
    * 
    * @param maxAllowedPacket the maximum packet size in bytes
    * @return a new MySQLConfig with the updated setting
+   * @throws IllegalArgumentException if the value is outside the valid range (1024 to 16,777,215)
    * 
    * @example {{{
    * // Set conservative 64KB limit (default)
@@ -453,6 +454,7 @@ trait MySQLConfig:
    * 
    * @note The default value of 65,535 bytes (64KB) is compatible with MySQL JDBC Driver defaults
    *       and provides good security against packet-based attacks while accommodating most use cases.
+   * @note Valid range: 1,024 bytes (1KB) minimum to 16,777,215 bytes (16MB) maximum (MySQL protocol limit)
    * @see [[https://dev.mysql.com/doc/refman/en/packet-too-large.html MySQL Protocol Packet Limits]]
    */
   def setMaxAllowedPacket(maxAllowedPacket: Int): MySQLConfig
@@ -461,6 +463,15 @@ trait MySQLConfig:
  * Companion object for MySQLConfig providing factory methods.
  */
 object MySQLConfig:
+
+  /** Minimum allowed packet size in bytes (1KB) */
+  val MIN_PACKET_SIZE: Int = 1024
+  
+  /** Maximum allowed packet size in bytes (16MB - MySQL protocol limit) */
+  val MAX_PACKET_SIZE: Int = 16777215
+  
+  /** Default packet size in bytes (64KB - MySQL JDBC Driver compatible) */
+  val DEFAULT_PACKET_SIZE: Int = 65535
 
   /** Default socket options applied to all connections. */
   private[ldbc] val defaultSocketOptions: List[SocketOption] =
@@ -497,7 +508,7 @@ object MySQLConfig:
     logPoolState:            Boolean                               = false,
     poolStateLogInterval:    FiniteDuration                        = 30.seconds,
     poolName:                String                                = "ldbc-pool",
-    maxAllowedPacket:        Int                                   = 65535
+    maxAllowedPacket:        Int                                   = DEFAULT_PACKET_SIZE
   ) extends MySQLConfig:
 
     override def setHost(host:                   String):             MySQLConfig = copy(host = host)
@@ -533,7 +544,11 @@ object MySQLConfig:
     override def setLogPoolState(enabled:         Boolean):        MySQLConfig = copy(logPoolState = enabled)
     override def setPoolStateLogInterval(interval: FiniteDuration): MySQLConfig = copy(poolStateLogInterval = interval)
     override def setPoolName(name:                 String):         MySQLConfig = copy(poolName = name)
-    override def setMaxAllowedPacket(maxAllowedPacket: Int): MySQLConfig = copy(maxAllowedPacket = maxAllowedPacket)
+    override def setMaxAllowedPacket(maxAllowedPacket: Int): MySQLConfig = {
+      require(maxAllowedPacket >= MIN_PACKET_SIZE, s"maxAllowedPacket must be at least $MIN_PACKET_SIZE bytes, but got $maxAllowedPacket")
+      require(maxAllowedPacket <= MAX_PACKET_SIZE, s"maxAllowedPacket must not exceed $MAX_PACKET_SIZE bytes (MySQL protocol limit), but got $maxAllowedPacket")
+      copy(maxAllowedPacket = maxAllowedPacket)
+    }
 
   /**
    * Creates a default MySQLConfig with standard connection parameters.
