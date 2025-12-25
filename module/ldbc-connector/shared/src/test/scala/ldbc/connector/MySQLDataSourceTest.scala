@@ -40,6 +40,7 @@ class MySQLDataSourceTest extends FTestPlatform:
     assertEquals(dataSource.databaseTerm, Some(DatabaseMetaData.DatabaseTerm.CATALOG))
     assertEquals(dataSource.useCursorFetch, false)
     assertEquals(dataSource.useServerPrepStmts, false)
+    assertEquals(dataSource.maxAllowedPacket, MySQLConfig.DEFAULT_PACKET_SIZE)
     assertEquals(dataSource.before, None)
     assertEquals(dataSource.after, None)
   }
@@ -149,6 +150,62 @@ class MySQLDataSourceTest extends FTestPlatform:
     assertEquals(updated.useServerPrepStmts, true)
   }
 
+  test("setMaxAllowedPacket should update maxAllowedPacket value") {
+    val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
+    val updated    = dataSource.setMaxAllowedPacket(1048576) // 1MB
+
+    assertEquals(updated.maxAllowedPacket, 1048576)
+    // Ensure other values remain unchanged
+    assertEquals(updated.host, dataSource.host)
+    assertEquals(updated.port, dataSource.port)
+  }
+
+  test("setMaxAllowedPacket should accept minimum valid value") {
+    val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
+    val updated    = dataSource.setMaxAllowedPacket(MySQLConfig.MIN_PACKET_SIZE)
+
+    assertEquals(updated.maxAllowedPacket, MySQLConfig.MIN_PACKET_SIZE)
+  }
+
+  test("setMaxAllowedPacket should accept maximum valid value") {
+    val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
+    val updated    = dataSource.setMaxAllowedPacket(MySQLConfig.MAX_PACKET_SIZE)
+
+    assertEquals(updated.maxAllowedPacket, MySQLConfig.MAX_PACKET_SIZE)
+  }
+
+  test("setMaxAllowedPacket should reject values below minimum") {
+    val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
+    
+    intercept[IllegalArgumentException] {
+      dataSource.setMaxAllowedPacket(MySQLConfig.MIN_PACKET_SIZE - 1)
+    }
+  }
+
+  test("setMaxAllowedPacket should reject values above maximum") {
+    val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
+    
+    intercept[IllegalArgumentException] {
+      dataSource.setMaxAllowedPacket(MySQLConfig.MAX_PACKET_SIZE + 1)
+    }
+  }
+
+  test("setMaxAllowedPacket should reject zero value") {
+    val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
+    
+    intercept[IllegalArgumentException] {
+      dataSource.setMaxAllowedPacket(0)
+    }
+  }
+
+  test("setMaxAllowedPacket should reject negative values") {
+    val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
+    
+    intercept[IllegalArgumentException] {
+      dataSource.setMaxAllowedPacket(-1)
+    }
+  }
+
   test("withBefore should add a before hook and change type parameter") {
     val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
     val beforeHook: Connection[IO] => IO[String] = _ => IO.pure("before result")
@@ -191,6 +248,7 @@ class MySQLDataSourceTest extends FTestPlatform:
       .setAllowPublicKeyRetrieval(true)
       .setUseCursorFetch(true)
       .setUseServerPrepStmts(true)
+      .setMaxAllowedPacket(1048576)
 
     assertEquals(dataSource.host, "127.0.0.1")
     assertEquals(dataSource.port, 3307)
@@ -202,6 +260,7 @@ class MySQLDataSourceTest extends FTestPlatform:
     assertEquals(dataSource.allowPublicKeyRetrieval, true)
     assertEquals(dataSource.useCursorFetch, true)
     assertEquals(dataSource.useServerPrepStmts, true)
+    assertEquals(dataSource.maxAllowedPacket, 1048576)
   }
 
   test("MySQLDataSource.fromConfig should create DataSource from MySQLConfig") {
@@ -212,6 +271,7 @@ class MySQLDataSourceTest extends FTestPlatform:
       .setPassword("configpass")
       .setDatabase("configdb")
       .setDebug(true)
+      .setMaxAllowedPacket(2097152) // 2MB
 
     val dataSource = MySQLDataSource.fromConfig[IO](config)
 
@@ -221,6 +281,7 @@ class MySQLDataSourceTest extends FTestPlatform:
     assertEquals(dataSource.password, Some("configpass"))
     assertEquals(dataSource.database, Some("configdb"))
     assertEquals(dataSource.debug, true)
+    assertEquals(dataSource.maxAllowedPacket, 2097152)
   }
 
   test("MySQLDataSource.default should create DataSource with default config") {
