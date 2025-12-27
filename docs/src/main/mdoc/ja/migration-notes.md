@@ -3,438 +3,302 @@
   laika.metadata.language = ja
 %}
 
-# マイグレーションノート (0.3.xから0.4.xへの移行)
+# マイグレーションノート (0.4.xから0.5.xへの移行)
 
 ## パッケージ
 
-**削除されたパッケージ**
+**新しく追加されたパッケージ**
+
+| Module / Platform                | JVM | Scala Native | Scala.js | Scaladoc                                                                                                                                                              |
+|----------------------------------|:---:|:------------:|:--------:|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ldbc-zio-interop`               |  ✅  |      ❌       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-zio-interop_3)               |
+| `ldbc-authentication-plugin`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-authentication-plugin_3)     |
+| `ldbc-aws-authentication-plugin` |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-aws-authentication-plugin_3) |
+
+**廃止されたパッケージ**
 
 | Module / Platform    | JVM | Scala Native | Scala.js |  
 |----------------------|:---:|:------------:|:--------:|
-| `ldbc-schemaSpy`     |  ✅  |      ❌       |    ❌     | 
-
-**別の機能としてリニューアルされたパッケージ**
-
-| Module / Platform    | JVM | Scala Native | Scala.js | Scaladoc                                                                                                                                                  |
-|----------------------|:---:|:------------:|:--------:|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `ldbc-core`          |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-core_3)          |
+| `ldbc-hikari`        |  ✅  |      ❌       |    ❌     | 
 
 **全てのパッケージ**
 
-| Module / Platform    | JVM | Scala Native | Scala.js | Scaladoc                                                                                                                                                  |
-|----------------------|:---:|:------------:|:--------:|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `ldbc-sql`           |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-sql_3)           |
-| `ldbc-core`          |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-core_3)          |
-| `ldbc-connector`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-connector_3)     |
-| `jdbc-connector`     |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/jdbc-connector_3)     |
-| `ldbc-dsl`           |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3)           |
-| `ldbc-statement`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-statement_3)     |
-| `ldbc-query-builder` |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-query-builder_3) |
-| `ldbc-schema`        |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-schema_3)        |
-| `ldbc-codegen`       |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-codegen_3)       |
-| `ldbc-hikari`        |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-hikari_3)        |
-| `ldbc-plugin`        |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-plugin_2.12_1.0) |
+| Module / Platform                | JVM | Scala Native | Scala.js | Scaladoc                                                                                                                                                              |
+|----------------------------------|:---:|:------------:|:--------:|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ldbc-sql`                       |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-sql_3)                       |
+| `ldbc-core`                      |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-core_3)                      |
+| `ldbc-connector`                 |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-connector_3)                 |
+| `jdbc-connector`                 |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/jdbc-connector_3)                 |
+| `ldbc-dsl`                       |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3)                       |
+| `ldbc-statement`                 |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-statement_3)                 |
+| `ldbc-query-builder`             |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-query-builder_3)             |
+| `ldbc-schema`                    |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-schema_3)                    |
+| `ldbc-codegen`                   |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-codegen_3)                   |
+| `ldbc-plugin`                    |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-plugin_2.12_1.0)             |
+| `ldbc-zio-interop`               |  ✅  |      ❌       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-zio-interop_3)               |
+| `ldbc-authentication-plugin`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-authentication-plugin_3)     |
+| `ldbc-aws-authentication-plugin` |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-aws-authentication-plugin_3) |
 
 ## 🎯 主要な変更点
 
-### 1. 組み込みコネクションプーリング機能の追加
+### 1. ZIOエコシステムサポートの追加
 
-0.4.0 から、ldbc-connector に高性能なコネクションプーリング機能が組み込まれました。これにより、HikariCP などの外部ライブラリを使用せずに、効率的なコネクション管理が可能になりました。
+0.5.0から、ldbcでZIOをより簡単に使用できるようになりました。
 
-**メリット:**
-- Cats Effect のファイバーベース並行性モデルに最適化
-- CircuitBreaker による障害時の保護
-- 動的プールサイジング
-- 詳細なメトリクス追跡
-
-### 2. API の変更
-
-#### ConnectionProvider から MySQLDataSource への移行と Connector の使用
-
-ConnectionProvider は非推奨となり、新しい MySQLDataSource と Connector API を使用します。
-
-**旧 API (0.3.x):**
 ```scala
-import ldbc.connector.*
-
-// ConnectionProvider を使用
-val provider = ConnectionProvider
-  .default[IO]("localhost", 3306, "root")
-  .setPassword("password")
-  .setDatabase("test")
-
-// 直接使用
-provider.use { connection =>
-  // SQL実行
-}
+libraryDependencies += "io.github.takapi327" %% "ldbc-zio-interop" % "0.5.0"
 ```
 
-**新 API (0.4.x):**
+**使用例:**
 ```scala
+import zio.*
+import ldbc.zio.interop.*
 import ldbc.connector.*
-import ldbc.core.*
 import ldbc.dsl.*
 
-// MySQLDataSource を使用
-val dataSource = MySQLDataSource
-  .build[IO]("localhost", 3306, "root")
-  .setPassword("password")
-  .setDatabase("test")
+object Main extends ZIOAppDefault:
+  
+  private val datasource =
+    MySQLDataSource
+      .build[Task](
+        host = "127.0.0.1",
+        port = 3306,
+        user = "ldbc"
+      )
+      .setPassword("password")
+      .setDatabase("world")
 
-// Connector を作成して DBIO を実行
-val connector = Connector.fromDataSource(dataSource)
+  private val program =
+    for
+      connection <- datasource.getConnection
+      connector = Connector.fromConnection(connection)
+      result     <- sql"SELECT 1".query[Int].to[List].readOnly(connector)
+    yield result
 
-// SQLクエリの実行
-val result = sql"SELECT * FROM users"
-  .query[User]
-  .to[List]
-  .readOnly(connector)
-
-// または Connection から Connector を作成
-dataSource.getConnection.use { connection =>
-  val connector = Connector.fromConnection(connection)
-  // DBIO を実行
-  sql"INSERT INTO users (name) VALUES ($name)"
-    .update
-    .commit(connector)
-}
-
-// コネクションプーリング
-val pooledDataSource = MySQLDataSource.pooling[IO](
-  MySQLConfig.default
-    .setHost("localhost")
-    .setPort(3306)
-    .setUser("root")
-    .setPassword("password")
-    .setDatabase("test")
-    .setMinConnections(5)
-    .setMaxConnections(20)
-)
-
-pooledDataSource.use { pool =>
-  val connector = Connector.fromDataSource(pool)
-  // DBIO を実行
-  sql"SELECT * FROM users WHERE id = $id"
-    .query[User]
-    .option
-    .readOnly(connector)
-}
+  override def run = program
 ```
 
-### 3. 設定方法の変更
+### 2. 認証プラグインの強化
 
-#### ldbc-connector の設定
+新しい認証プラグインモジュールが追加されました。これらのプラグインはPure Scala3で実装され、全てのプラットフォーム（JVM、JS、Native）で利用可能です。
 
-**旧方式 (0.3.x):**
+#### MySQL Clear Password認証
+
 ```scala
-val provider = ConnectionProvider
-  .default[IO]("localhost", 3306, "root")
-  .setPassword("password")
-  .setDatabase("test")
-  .setSSL(SSL.Trusted)
-  .addSocketOption(SocketOption.receiveBufferSize(4096))
-  .setReadTimeout(30.seconds)
+libraryDependencies += "io.github.takapi327" %% "ldbc-authentication-plugin" % "0.5.0"
 ```
-
-**新方式 (0.4.x):**
-```scala
-val dataSource = MySQLDataSource
-  .build[IO]("localhost", 3306, "root")
-  .setPassword("password")
-  .setDatabase("test")
-  .setSSL(SSL.Trusted)
-  .addSocketOption(SocketOption.receiveBufferSize(4096))
-  .setReadTimeout(30.seconds)
-  .setDebug(true)
-  .setAllowPublicKeyRetrieval(true)
-```
-
-#### jdbc-connector の設定
-
-**旧方式 (0.3.x):**
-```scala
-import jdbc.connector.*
-
-val dataSource = new com.mysql.cj.jdbc.MysqlDataSource()
-// 手動設定
-
-val provider = ConnectionProvider
-  .fromDataSource[IO](dataSource, ec)
-```
-
-**新方式 (0.4.x):**
-```scala
-import jdbc.connector.*
-
-// DataSource から Connector を作成
-val ds = new com.mysql.cj.jdbc.MysqlDataSource()
-ds.setServerName("localhost")
-ds.setPortNumber(3306)
-ds.setDatabaseName("test")
-ds.setUser("root")
-ds.setPassword("password")
-
-val connector = Connector.fromDataSource[IO](ds, ExecutionContexts.synchronous)
-
-// DriverManager から Connector を作成
-val connector = Connector.fromDriverManager[IO].apply(
-  driver = "com.mysql.cj.jdbc.Driver",
-  url = "jdbc:mysql://localhost:3306/test",
-  user = "root",
-  password = "password",
-  logHandler = None
-)
-
-// MySQLDataSource 経由（ldbc-connector）
-val dataSource = MySQLDataSource
-  .fromDataSource[IO](ds, ExecutionContexts.synchronous)
-```
-
-### 4. コネクションプーリングの使用
-
-#### 基本的な使用方法
 
 ```scala
 import ldbc.connector.*
-import ldbc.core.*
-import scala.concurrent.duration.*
+import ldbc.authentication.plugin.*
+
+val datasource = MySQLDataSource
+  .build[IO](
+    host = "localhost",
+    port = 3306,
+    user = "cleartext-user"
+  )
+  .setPassword("plaintext-password")
+  .setDatabase("mydb")
+  .setDefaultAuthenticationPlugin(MysqlClearPasswordPlugin)
+```
+
+#### AWS Aurora IAM認証
+
+```scala
+libraryDependencies += "io.github.takapi327" %% "ldbc-aws-authentication-plugin" % "0.5.0"
+```
+
+```scala
+import ldbc.amazon.plugin.AwsIamAuthenticationPlugin
+import ldbc.connector.*
+
+val hostname = "aurora-instance.cluster-xxx.region.rds.amazonaws.com"
+val username = "iam-user"
+val config = MySQLConfig.default
+  .setHost(hostname)
+  .setUser(username)
+  .setDatabase("mydb")
+  .setSSL(SSL.Trusted)  // IAM認証にはSSLが必要
+
+val plugin = AwsIamAuthenticationPlugin.default[IO]("ap-northeast-1", hostname, username)
+
+MySQLDataSource.pooling[IO](config, plugins = List(plugin)).use { datasource =>
+  val connector = Connector.fromDataSource(datasource)
+  // クエリ実行
+}
+```
+
+### 3. ldbc-hikariの廃止
+
+`ldbc-hikari`は0.5.0で正式に廃止されました。組み込みのコネクションプールを使用してください。
+
+**廃止されたAPI:**
+```scala
+// 使用不可
+import ldbc.hikari.*
+```
+
+**推奨される方法:**
+```scala
+import ldbc.connector.*
+
+val poolConfig = MySQLConfig.default
+  .setHost("localhost")
+  .setPort(3306)
+  .setUser("user")
+  .setPassword("password")
+  .setDatabase("mydb")
+  .setMinConnections(5)
+  .setMaxConnections(20)
+
+MySQLDataSource.pooling[IO](poolConfig).use { pool =>
+  val connector = Connector.fromDataSource(pool)
+  // クエリ実行
+}
+```
+
+### 4. セキュリティ強化
+
+#### SQLパラメータのエスケープ処理強化
+
+文字列パラメータのエスケープ処理が改善され、SQLインジェクション攻撃への対策が強化されました。
+
+#### SSRF攻撃対策
+
+データソース設定時のエンドポイント検証が追加されました。
+
+```scala
+// 安全でないエンドポイントは自動的に検出・拒否される
+val datasource = MySQLDataSource
+  .build[IO]("suspicious-host", 3306, "user")
+  .setPassword("password")
+  .setDatabase("mydb")
+```
+
+### 5. パフォーマンス最適化
+
+#### 最大パケットサイズの設定
+
+MySQLサーバーの`max_allowed_packet`設定との互換性が改善されました。
+
+```scala
+val datasource = MySQLDataSource
+  .build[IO]("localhost", 3306, "user")
+  .setPassword("password")
+  .setDatabase("mydb")
+  .setMaxPacketSize(16777216)  // 16MB（MySQLサーバー設定と合わせる）
+```
+
+#### コネクションプールの同時性改善
+
+コネクションプールの状態管理がアトミックチェックにより改善され、並行環境での安定性が向上しました。
+
+### 6. API の改善
+
+#### ファイルからのクエリ実行
+
+新しい`updateRaws`メソッドが追加され、ファイルからSQLクエリを読み込んで実行できるようになりました：
+
+```scala
+import ldbc.dsl.*
+import fs2.io.file.{ Files, Path }
+import fs2.text
+
+private def readFile(filename: String): IO[String] =
+  Files[IO]
+    .readAll(Path(filename))
+    .through(text.utf8.decode)
+    .compile
+    .string
+
+for
+  sql <- readFile("hoge.sql")
+  _ <- DBIO.updateRaws(sql).commit(connector)
+yield ()
+```
+
+## 移行ガイド
+
+### ldbc-hikariからの移行
+
+**移行前 (0.4.x):**
+```scala
+libraryDependencies ++= Seq(
+  "io.github.takapi327" %% "ldbc-dsl" % "0.4.0",
+  "io.github.takapi327" %% "ldbc-hikari" % "0.4.0"
+)
+
+import ldbc.hikari.*
+
+val hikariConfig = Configuration.default
+  .setJdbcUrl("jdbc:mysql://localhost:3306/mydb")
+  .setUsername("user")
+  .setPassword("password")
+  .setMaximumPoolSize(20)
+
+HikariDataSource.fromHikariConfig[IO](hikariConfig).use { pool =>
+  // 使用
+}
+```
+
+**移行後 (0.5.x):**
+```scala
+libraryDependencies ++= Seq(
+  "io.github.takapi327" %% "ldbc-connector" % "0.5.0",
+  "io.github.takapi327" %% "ldbc-dsl" % "0.5.0"
+)
+
+import ldbc.connector.*
 
 val config = MySQLConfig.default
   .setHost("localhost")
   .setPort(3306)
-  .setUser("myuser")
-  .setPassword("mypassword")
-  .setDatabase("mydb")
-  // プール設定
-  .setMinConnections(5)          // 最小接続数
-  .setMaxConnections(20)         // 最大接続数
-  .setConnectionTimeout(30.seconds)  // 接続タイムアウト
-  .setIdleTimeout(10.minutes)        // アイドルタイムアウト
-  .setMaxLifetime(30.minutes)        // 最大生存時間
-
-MySQLDataSource.pooling[IO](config).use { pool =>
-  // Connector を作成して使用
-  val connector = Connector.fromDataSource(pool)
-
-  // SQLクエリの実行
-  sql"SELECT COUNT(*) FROM users"
-    .query[Long]
-    .unique
-    .readOnly(connector)
-}
-```
-
-#### メトリクス付きプール
-
-```scala
-import ldbc.connector.pool.*
-
-val metricsResource = for {
-  tracker <- Resource.eval(PoolMetricsTracker.inMemory[IO])
-  pool    <- MySQLDataSource.pooling[IO](
-    config,
-    metricsTracker = Some(tracker)
-  )
-} yield (pool, tracker)
-
-metricsResource.use { case (pool, tracker) =>
-  for {
-    _ <- pool.getConnection.use(_.execute("SELECT 1"))
-    metrics <- tracker.getMetrics
-    _ <- IO.println(s"""
-      |プールメトリクス:
-      |  総接続数: ${metrics.totalCreated}
-      |  アクティブ: ${metrics.activeConnections}
-      |  アイドル: ${metrics.idleConnections}
-    """.stripMargin)
-  } yield ()
-}
-```
-
-#### Before/After フック
-
-```scala
-case class RequestContext(requestId: String)
-
-val poolWithHooks = MySQLDataSource.poolingWithBeforeAfter[IO, RequestContext](
-  config = config,
-  before = Some { conn =>
-    for {
-      id <- IO.randomUUID.map(_.toString)
-      _  <- conn.execute(s"SET @request_id = '$id'")
-    } yield RequestContext(id)
-  },
-  after = Some { (ctx, conn) =>
-    IO.println(s"Request ${ctx.requestId} completed")
-  }
-)
-```
-
-### 5. 移行時の注意点
-
-#### Scala Native での制限事項
-
-@:callout(warning)
-**重要**: Scala Native 0.4.x はシングルスレッド実行のみをサポートしています。そのため、Scala Native でコネクションプーリングを使用することは推奨されません。代わりに、各操作で新しいコネクションを作成してください：
-
-```scala
-// Scala Native での推奨使用方法
-val dataSource = MySQLDataSource
-  .build[IO]("localhost", 3306, "user")
+  .setUser("user")
   .setPassword("password")
   .setDatabase("mydb")
+  .setMaxConnections(20)
 
-// プーリングは使用しない
-val connector = Connector.fromDataSource(dataSource)
-
-// DBIO の実行
-sql"SELECT * FROM products WHERE price > $minPrice"
-  .query[Product]
-  .to[List]
-  .readOnly(connector)
-```
-@:@
-
-### 6. 破壊的変更
-
-以下の API は削除または変更されています：
-
-1. **ConnectionProvider**: 非推奨となり、`MySQLDataSource` に置き換えられました（0.5.xで削除予定）
-2. **Provider トレイト**: 非推奨となり、`DataSource` トレイトに置き換えられました
-3. **ldbc.sql.Provider**: 削除されました
-4. **接続の直接使用**: 新しい `Connector` API を経由して使用する必要があります
-
-### 7. DBIO 実行パターンの変更
-
-DBIO の実行方法が変更され、より明確で柔軟になりました。
-
-**旧方式 (0.3.x):**
-```scala
-provider.use { connection =>
-  (for
-    result1 <- sql"SELECT 1".query[Int].to[List]
-    result2 <- sql"SELECT 2".query[Int].to[Option]
-  yield (result1, result2)).readOnly(connection)
+MySQLDataSource.pooling[IO](config).use { pool =>
+  val connector = Connector.fromDataSource(pool)
+  // 使用
 }
 ```
 
-**新方式 (0.4.x):**
+### ZIO統合の追加
+
+**Cats Effectベース (従来):**
 ```scala
-val connector = Connector.fromDataSource(dataSource)
+import cats.effect.*
+import ldbc.connector.*
 
-// 各種実行モード
-sql"SELECT * FROM users".query[User].to[List].readOnly(connector)    // 読み取り専用
-sql"INSERT INTO users ...".update.commit(connector)                 // コミット付き
-sql"UPDATE users ...".update.transaction(connector)                 // トランザクション
-sql"DELETE FROM users ...".update.rollback(connector)              // ロールバック
-
-// 複数のクエリを組み合わせる
-(for
-  users <- sql"SELECT * FROM users".query[User].to[List]
-  count <- sql"SELECT COUNT(*) FROM users".query[Long].unique
-yield (users, count)).readOnly(connector)
+val program: IO[List[User]] = 
+  datasource.getConnection.use { connection =>
+    val connector = Connector.fromConnection(connection)
+    sql"SELECT * FROM users".query[User].to[List].readOnly(connector)
+  }
 ```
 
-### 8. 新機能
-
-#### CircuitBreaker
-
-コネクションプールには、データベース障害時の保護のための CircuitBreaker が組み込まれています：
-
-- 連続した失敗後に自動的に接続試行を停止
-- 指数バックオフによる段階的な回復
-- アプリケーションとデータベースの両方を保護
-
-#### アダプティブプールサイジング
-
-負荷に基づいてプールサイズを動的に調整：
-
+**ZIOベース (新規):**
 ```scala
-val config = MySQLConfig.default
-  // ... 他の設定
-  .setAdaptiveSizing(true)
-  .setAdaptiveInterval(1.minute)
+import zio.*
+import ldbc.zio.interop.*
+
+val program: Task[List[User]] = 
+  datasource.getConnection.use { connection =>
+    val connector = Connector.fromConnection(connection)
+    sql"SELECT * FROM users".query[User].to[List].readOnly(connector)
+  }
 ```
-
-#### リーク検出
-
-開発環境でのコネクションリークを検出：
-
-```scala
-val config = MySQLConfig.default
-  // ... 他の設定
-  .setLeakDetectionThreshold(2.minutes)
-```
-
-#### ストリーミングクエリのサポート
-
-ldbcは`fs2.Stream`を使用した効率的なストリーミングクエリをサポートします。これにより、大量のデータを扱う際のメモリ使用量を抑えることができます。
-
-**基本的な使用方法:**
-```scala
-import fs2.Stream
-import ldbc.dsl.*
-
-// デフォルトのfetchSize（1）でストリーミング
-val stream: Stream[DBIO, String] = 
-  sql"SELECT name FROM city"
-    .query[String]
-    .stream
-
-// fetchSizeを指定したストリーミング
-val streamWithFetchSize: Stream[DBIO, City] = 
-  sql"SELECT * FROM city"
-    .query[City]
-    .stream(fetchSize = 100)
-```
-
-**実践的な使用例:**
-```scala
-// 大量データの効率的な処理
-val processLargeCities: IO[List[String]] = 
-  sql"SELECT name, population FROM city"
-    .query[(String, Int)]
-    .stream(1000)                    // 1000行ずつ取得
-    .filter(_._2 > 1000000)          // 人口100万人以上
-    .map(_._1)                       // 都市名のみ取得
-    .take(50)                        // 最初の50件まで
-    .compile.toList
-    .readOnly(connector)
-
-// 集計処理
-val calculateTotal: IO[BigDecimal] = 
-  sql"SELECT amount FROM transactions WHERE year = 2024"
-    .query[BigDecimal]
-    .stream(5000)                    // 5000行ずつ処理
-    .filter(_ > 100)                 // 100円以上の取引
-    .fold(BigDecimal(0))(_ + _)      // 合計を計算
-    .compile.lastOrError
-    .transaction(connector)
-```
-
-**MySQLでの最適化設定:**
-```scala
-// サーバーサイドカーソルを有効化してメモリ効率を向上
-val datasource = MySQLDataSource
-  .build[IO](host, port, user)
-  .setPassword(password)
-  .setDatabase(database)
-  .setUseCursorFetch(true)  // 真のストリーミング処理を実現
-```
-
-**ストリーミングのメリット:**
-- **メモリ効率**: 大量データでもメモリ使用量を一定に保てる
-- **早期処理**: データを受信しながら同時に処理できる
-- **中断可能**: 条件に応じて処理を途中で止められる
-- **fs2の豊富な操作**: `filter`、`map`、`take`、`fold`などの関数型操作が利用可能
 
 ## まとめ
 
-0.4.x への移行により、以下のメリットが得られます：
+0.5.x への移行により、以下のメリットが得られます：
 
-1. **パフォーマンスの向上**: 組み込みプーリングによる効率的なコネクション管理
-2. **より直感的な API**: ビルダーパターンによる設定の簡素化
-3. **高度な機能**: CircuitBreaker、アダプティブサイジング、メトリクス追跡
-4. **外部依存の削減**: HikariCP が不要に
+1. **ZIOエコシステムの完全サポート**: ZIOベースアプリケーションでの自然な統合
+2. **強化されたセキュリティ**: SSRF攻撃対策、SQLエスケープ処理の改善
+3. **AWS統合の簡素化**: Aurora IAM認証の簡単な設定
+4. **パフォーマンスの向上**: 最大パケットサイズ対応、プール並行性改善
+5. **開発者体験の向上**: 新しいAPI、バイナリ互換性チェック
 
-移行作業は主に API の更新で、機能的には後方互換性が保たれているため、段階的な移行が可能です。
+移行作業は主にライブラリ依存関係の更新とAPIの小さな変更で完了し、段階的な移行が可能です。

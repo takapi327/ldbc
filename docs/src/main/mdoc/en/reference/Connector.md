@@ -115,8 +115,16 @@ ldbc currently supports the following authentication plugins:
 - Native Pluggable Authentication
 - SHA-256 Pluggable Authentication
 - SHA-2 Pluggable Authentication Cache
+- Cleartext Pluggable Authentication
 
 *Note: Native Pluggable Authentication and SHA-256 Pluggable Authentication are deprecated plugins from MySQL 8.x. It is recommended to use the SHA-2 Pluggable Authentication Cache unless there is a specific reason.*
+
+@:callout(warning)
+**Important Security Precautions：**
+MySQL cleartext pluggable authentication is an authentication method that sends passwords in plain text to the server. When using this authentication plugin, you must enable SSL/TLS connections. Using it without SSL/TLS connections is extremely dangerous from a security standpoint, as passwords are transmitted over the network in plain text.
+
+This authentication plugin is primarily used for integration with AWS IAM authentication and other external authentication systems. For instructions on configuring SSL/TLS connections, refer to the [SSL configuration section of the tutorial](/en/tutorial/Connection.md#connection-with-ssl-configuration).
+@:@
 
 You do not need to be aware of authentication plugins in the ldbc application code. Users should create users with the desired authentication plugin on the MySQL database and use those users to attempt connections to MySQL in the ldbc application code.
 ldbc internally determines the authentication plugin and connects to MySQL using the appropriate authentication plugin.

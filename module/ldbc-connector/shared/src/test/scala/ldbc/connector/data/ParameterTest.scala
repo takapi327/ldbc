@@ -164,7 +164,7 @@ class ParameterTest extends FTestPlatform:
 
     // Test string with quotes
     val quotedStringParam = Parameter.string("test'quotes")
-    assertEquals(quotedStringParam.toString, "'test'quotes'")
+    assertEquals(quotedStringParam.toString, "'test''quotes'")
 
     // Test zero values
     assertEquals(Parameter.byte(0).toString, "0")

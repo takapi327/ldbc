@@ -18,18 +18,18 @@ object Main extends IOApp.Simple:
 
   private val serviceName = "ldbc-otel-example"
 
+  private val dataSource = MySQLDataSource
+    .build[IO]("127.0.0.1", 13307, "ldbc")
+    .setPassword("password")
+    .setDatabase("world")
+
   private def resource: Resource[IO, Connector[IO]] =
     for
       otel <- Resource
                 .eval(IO.delay(GlobalOpenTelemetry.get))
                 .evalMap(OtelJava.fromJOpenTelemetry[IO])
-      tracer     <- Resource.eval(otel.tracerProvider.get(serviceName))
-      connection <- ConnectionProvider
-                      .default[IO]("127.0.0.1", 13307, "ldbc", "password", "world")
-                      .setSSL(SSL.Trusted)
-                      .setTracer(tracer)
-                      .createConnector()
-    yield connection
+      tracer <- Resource.eval(otel.tracerProvider.get(serviceName))
+    yield Connector.fromDataSource(dataSource.setTracer(tracer))
 
   override def run: IO[Unit] =
     resource.use { conn =>

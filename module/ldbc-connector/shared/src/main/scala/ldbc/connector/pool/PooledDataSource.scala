@@ -26,6 +26,7 @@ import ldbc.sql.DatabaseMetaData
 import ldbc.connector.*
 import ldbc.connector.exception.SQLException
 
+import ldbc.authentication.plugin.AuthenticationPlugin
 import ldbc.DataSource
 
 /**
@@ -184,6 +185,7 @@ object PooledDataSource:
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
     useCursorFetch:          Boolean                               = false,
     useServerPrepStmts:      Boolean                               = false,
+    plugins:                 List[AuthenticationPlugin[F]]         = List.empty[AuthenticationPlugin[F]],
     before:                  Option[Connection[F] => F[A]]         = None,
     after:                   Option[(A, Connection[F]) => F[Unit]] = None,
     minConnections:          Int                                   = 5,
@@ -236,7 +238,8 @@ object PooledDataSource:
           val closeAll = state.connections.traverse_ { pooled =>
             pooled.finalizer.attempt.flatMap {
               case Left(error) =>
-                poolLogger.debug(s"Error closing connection ${ pooled.id }: ${ error.getMessage }")
+                poolLogger.debug(s"Error closing connection ${ pooled.id }: ${ error.getMessage }") >>
+                  pooled.connection.close().attempt.void
               case Right(_) =>
                 Temporal[F].unit
             }
@@ -598,7 +601,8 @@ object PooledDataSource:
             allowPublicKeyRetrieval = allowPublicKeyRetrieval,
             useCursorFetch          = useCursorFetch,
             useServerPrepStmts      = useServerPrepStmts,
-            databaseTerm            = databaseTerm
+            databaseTerm            = databaseTerm,
+            plugins                 = plugins
           )
         case (Some(b), None) =>
           Connection.withBeforeAfter(
@@ -616,7 +620,8 @@ object PooledDataSource:
             allowPublicKeyRetrieval = allowPublicKeyRetrieval,
             useCursorFetch          = useCursorFetch,
             useServerPrepStmts      = useServerPrepStmts,
-            databaseTerm            = databaseTerm
+            databaseTerm            = databaseTerm,
+            plugins                 = plugins
           )
         case (None, _) =>
           Connection(
@@ -632,13 +637,15 @@ object PooledDataSource:
             allowPublicKeyRetrieval = allowPublicKeyRetrieval,
             useCursorFetch          = useCursorFetch,
             useServerPrepStmts      = useServerPrepStmts,
-            databaseTerm            = databaseTerm
+            databaseTerm            = databaseTerm,
+            plugins                 = plugins
           )
 
   private[connector] def create[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
     config:         MySQLConfig,
     metricsTracker: Option[PoolMetricsTracker[F]],
     idGenerator:    F[String],
+    plugins:        List[AuthenticationPlugin[F]],
     before:         Option[Connection[F] => F[A]] = None,
     after:          Option[(A, Connection[F]) => F[Unit]] = None
   )(using Tracer[F]): Resource[F, PooledDataSource[F]] =
@@ -647,7 +654,7 @@ object PooledDataSource:
     Resource
       .eval(PoolConfigValidator.validate(config))
       .flatMap { _ =>
-        createValidatedPool(config, metricsTracker, idGenerator, before, after)
+        createValidatedPool(config, metricsTracker, idGenerator, plugins, before, after)
       }
       .handleErrorWith { error =>
         Resource.eval(Async[F].raiseError(error))
@@ -657,6 +664,7 @@ object PooledDataSource:
     config:         MySQLConfig,
     metricsTracker: Option[PoolMetricsTracker[F]],
     idGenerator:    F[String],
+    plugins:        List[AuthenticationPlugin[F]],
     before:         Option[Connection[F] => F[A]],
     after:          Option[(A, Connection[F]) => F[Unit]]
   )(using Tracer[F]): Resource[F, PooledDataSource[F]] =
@@ -711,6 +719,7 @@ object PooledDataSource:
       keepaliveTime           = config.keepaliveTime,
       connectionTestQuery     = config.connectionTestQuery,
       poolLogger              = poolLogger,
+      plugins                 = plugins,
       before                  = before,
       after                   = after
     )
@@ -758,10 +767,11 @@ object PooledDataSource:
   def fromConfig[F[_]: Async: Network: Console: Hashing: UUIDGen](
     config:         MySQLConfig,
     metricsTracker: Option[PoolMetricsTracker[F]] = None,
-    tracer:         Option[Tracer[F]] = None
+    tracer:         Option[Tracer[F]] = None,
+    plugins:        List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]]
   ): Resource[F, PooledDataSource[F]] =
     given Tracer[F] = tracer.getOrElse(Tracer.noop[F])
-    create(config, metricsTracker, UUIDGen[F].randomUUID.map(_.toString))
+    create(config, metricsTracker, UUIDGen[F].randomUUID.map(_.toString), plugins)
 
     /**
    * Creates a PooledDataSource with before/after hooks for each connection use.
@@ -788,8 +798,9 @@ object PooledDataSource:
     config:         MySQLConfig,
     metricsTracker: Option[PoolMetricsTracker[F]] = None,
     tracer:         Option[Tracer[F]] = None,
+    plugins:        List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
     before:         Option[Connection[F] => F[A]] = None,
     after:          Option[(A, Connection[F]) => F[Unit]] = None
   ): Resource[F, PooledDataSource[F]] =
     given Tracer[F] = tracer.getOrElse(Tracer.noop[F])
-    create(config, metricsTracker, UUIDGen[F].randomUUID.map(_.toString), before, after)
+    create(config, metricsTracker, UUIDGen[F].randomUUID.map(_.toString), plugins, before, after)

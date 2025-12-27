@@ -97,7 +97,7 @@ object Parameter:
 
   def string(value: String): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_STRING
-    override def sql:            String         = ("'" + value + "'")
+    override def sql:            String         = "'" + value.replaceAll("'", "''").replaceAll("\\\\", "\\\\\\\\") + "'"
     override def encode:         BitVector      =
       val bytes = value.getBytes
       BitVector(bytes.length) |+| BitVector(copyOf(bytes, bytes.length))

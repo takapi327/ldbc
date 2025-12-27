@@ -148,6 +148,8 @@ You can add SSL configuration to establish a secure connection:
 
 ※ Note that Trusted accepts all certificates. This is a setting for development environments.
 
+※ For security reasons, SSL/TLS connections are required for certain authentication plugins, such as MySQL cleartext pluggable authentication. For details, see the [authentication section of the reference](/en/reference/Connector.md#authentication).
+
 ```scala
 import cats.effect.IO
 import ldbc.connector.*

@@ -18,6 +18,8 @@ import ldbc.sql.DatabaseMetaData
 
 import ldbc.connector.exception.*
 
+import ldbc.authentication.plugin.MysqlClearPasswordPlugin
+
 class ConnectionTest extends FTestPlatform:
 
   given Tracer[IO] = Tracer.noop[IO]
@@ -265,6 +267,31 @@ class ConnectionTest extends FTestPlatform:
       ssl      = SSL.Trusted
     )
     assertIOBoolean(connection.use(_ => IO(true)))
+  }
+
+  test("You can connect to the database by specifying the default authentication plugin.") {
+    val connection = Connection[IO](
+      host                        = "127.0.0.1",
+      port                        = 13306,
+      user                        = "ldbc_mysql_native_user",
+      password                    = Some("ldbc_mysql_native_password"),
+      defaultAuthenticationPlugin = Some(MysqlClearPasswordPlugin[IO]()),
+      ssl                         = SSL.Trusted
+    )
+    assertIOBoolean(connection.use(_ => IO(true)))
+  }
+
+  test(
+    "Using the MySQL Clear Password Plugin when SSL is not enabled causes an SQLInvalidAuthorizationSpecException to occur."
+  ) {
+    val connection = Connection[IO](
+      host                        = "127.0.0.1",
+      port                        = 13306,
+      user                        = "ldbc_mysql_native_user",
+      password                    = Some("ldbc_mysql_native_password"),
+      defaultAuthenticationPlugin = Some(MysqlClearPasswordPlugin[IO]())
+    )
+    interceptIO[SQLInvalidAuthorizationSpecException](connection.use(_ => IO(true)))
   }
 
   test("Catalog change will change the currently connected Catalog.") {
@@ -624,7 +651,7 @@ class ConnectionTest extends FTestPlatform:
 
     assertIO(
       connection.use(_.getMetaData().map(_.getDriverVersion())),
-      "ldbc-connector-0.4.1"
+      "ldbc-connector-0.5.0"
     )
   }
 

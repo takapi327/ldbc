@@ -29,6 +29,8 @@ import ldbc.connector.exception.*
 import ldbc.connector.net.*
 import ldbc.connector.net.protocol.*
 
+import ldbc.authentication.plugin.*
+
 type Connection[F[_]] = ldbc.sql.Connection[F]
 object Connection:
 
@@ -63,19 +65,22 @@ object Connection:
     this.default[F, Unit](host, port, user, before = unitBefore, after = unitAfter)
 
   def apply[F[_]: Async: Network: Console: Hashing: UUIDGen](
-    host:                    String,
-    port:                    Int,
-    user:                    String,
-    password:                Option[String] = None,
-    database:                Option[String] = None,
-    debug:                   Boolean = false,
-    ssl:                     SSL = SSL.None,
-    socketOptions:           List[SocketOption] = defaultSocketOptions,
-    readTimeout:             Duration = Duration.Inf,
-    allowPublicKeyRetrieval: Boolean = false,
-    useCursorFetch:          Boolean = false,
-    useServerPrepStmts:      Boolean = false,
-    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG)
+    host:                        String,
+    port:                        Int,
+    user:                        String,
+    password:                    Option[String] = None,
+    database:                    Option[String] = None,
+    debug:                       Boolean = false,
+    ssl:                         SSL = SSL.None,
+    socketOptions:               List[SocketOption] = defaultSocketOptions,
+    readTimeout:                 Duration = Duration.Inf,
+    allowPublicKeyRetrieval:     Boolean = false,
+    useCursorFetch:              Boolean = false,
+    useServerPrepStmts:          Boolean = false,
+    maxAllowedPacket:            Int = MySQLConfig.DEFAULT_PACKET_SIZE,
+    databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
+    defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]] = None,
+    plugins:                     List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]]
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] = this.default[F, Unit](
     host,
     port,
@@ -89,27 +94,33 @@ object Connection:
     allowPublicKeyRetrieval,
     useCursorFetch,
     useServerPrepStmts,
+    maxAllowedPacket,
     databaseTerm,
+    defaultAuthenticationPlugin,
+    plugins,
     unitBefore,
     unitAfter
   )
 
   def withBeforeAfter[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
-    host:                    String,
-    port:                    Int,
-    user:                    String,
-    before:                  Connection[F] => F[A],
-    after:                   (A, Connection[F]) => F[Unit],
-    password:                Option[String] = None,
-    database:                Option[String] = None,
-    debug:                   Boolean = false,
-    ssl:                     SSL = SSL.None,
-    socketOptions:           List[SocketOption] = defaultSocketOptions,
-    readTimeout:             Duration = Duration.Inf,
-    allowPublicKeyRetrieval: Boolean = false,
-    useCursorFetch:          Boolean = false,
-    useServerPrepStmts:      Boolean = false,
-    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG)
+    host:                        String,
+    port:                        Int,
+    user:                        String,
+    before:                      Connection[F] => F[A],
+    after:                       (A, Connection[F]) => F[Unit],
+    password:                    Option[String] = None,
+    database:                    Option[String] = None,
+    debug:                       Boolean = false,
+    ssl:                         SSL = SSL.None,
+    socketOptions:               List[SocketOption] = defaultSocketOptions,
+    readTimeout:                 Duration = Duration.Inf,
+    allowPublicKeyRetrieval:     Boolean = false,
+    useCursorFetch:              Boolean = false,
+    useServerPrepStmts:          Boolean = false,
+    maxAllowedPacket:            Int = MySQLConfig.DEFAULT_PACKET_SIZE,
+    databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
+    defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]] = None,
+    plugins:                     List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]]
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] = this.default(
     host,
     port,
@@ -123,27 +134,33 @@ object Connection:
     allowPublicKeyRetrieval,
     useCursorFetch,
     useServerPrepStmts,
+    maxAllowedPacket,
     databaseTerm,
+    defaultAuthenticationPlugin,
+    plugins,
     before,
     after
   )
 
   def default[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
-    host:                    String,
-    port:                    Int,
-    user:                    String,
-    password:                Option[String] = None,
-    database:                Option[String] = None,
-    debug:                   Boolean = false,
-    ssl:                     SSL = SSL.None,
-    socketOptions:           List[SocketOption] = defaultSocketOptions,
-    readTimeout:             Duration = Duration.Inf,
-    allowPublicKeyRetrieval: Boolean = false,
-    useCursorFetch:          Boolean = false,
-    useServerPrepStmts:      Boolean = false,
-    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
-    before:                  Connection[F] => F[A],
-    after:                   (A, Connection[F]) => F[Unit]
+    host:                        String,
+    port:                        Int,
+    user:                        String,
+    password:                    Option[String] = None,
+    database:                    Option[String] = None,
+    debug:                       Boolean = false,
+    ssl:                         SSL = SSL.None,
+    socketOptions:               List[SocketOption] = defaultSocketOptions,
+    readTimeout:                 Duration = Duration.Inf,
+    allowPublicKeyRetrieval:     Boolean = false,
+    useCursorFetch:              Boolean = false,
+    useServerPrepStmts:          Boolean = false,
+    maxAllowedPacket:            Int = MySQLConfig.DEFAULT_PACKET_SIZE,
+    databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
+    defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]] = None,
+    plugins:                     List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
+    before:                      Connection[F] => F[A],
+    after:                       (A, Connection[F]) => F[Unit]
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] =
 
     val logger: String => F[Unit] = s => Console[F].println(s"TLS: $s")
@@ -164,29 +181,36 @@ object Connection:
                       allowPublicKeyRetrieval,
                       useCursorFetch,
                       useServerPrepStmts,
+                      maxAllowedPacket,
                       databaseTerm,
+                      defaultAuthenticationPlugin,
+                      plugins,
                       before,
                       after
                     )
     yield connection
 
   def fromSockets[F[_]: Async: Tracer: Console: Hashing: UUIDGen, A](
-    sockets:                 Resource[F, Socket[F]],
-    host:                    String,
-    port:                    Int,
-    user:                    String,
-    password:                Option[String] = None,
-    database:                Option[String] = None,
-    debug:                   Boolean = false,
-    sslOptions:              Option[SSLNegotiation.Options[F]],
-    readTimeout:             Duration = Duration.Inf,
-    allowPublicKeyRetrieval: Boolean = false,
-    useCursorFetch:          Boolean = false,
-    useServerPrepStmts:      Boolean = false,
-    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = None,
-    acquire:                 Connection[F] => F[A],
-    release:                 (A, Connection[F]) => F[Unit]
+    sockets:                     Resource[F, Socket[F]],
+    host:                        String,
+    port:                        Int,
+    user:                        String,
+    password:                    Option[String] = None,
+    database:                    Option[String] = None,
+    debug:                       Boolean = false,
+    sslOptions:                  Option[SSLNegotiation.Options[F]],
+    readTimeout:                 Duration = Duration.Inf,
+    allowPublicKeyRetrieval:     Boolean = false,
+    useCursorFetch:              Boolean = false,
+    useServerPrepStmts:          Boolean = false,
+    maxAllowedPacket:            Int = MySQLConfig.DEFAULT_PACKET_SIZE,
+    databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = None,
+    defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
+    plugins:                     List[AuthenticationPlugin[F]],
+    acquire:                     Connection[F] => F[A],
+    release:                     (A, Connection[F]) => F[Unit]
   ): Resource[F, LdbcConnection[F]] =
+    val pluginMap       = plugins.map(plugin => plugin.name.toString -> plugin).toMap
     val capabilityFlags = defaultCapabilityFlags ++
       (if database.isDefined then Set(CapabilitiesFlags.CLIENT_CONNECT_WITH_DB) else Set.empty) ++
       (if sslOptions.isDefined then Set(CapabilitiesFlags.CLIENT_SSL) else Set.empty)
@@ -194,7 +218,18 @@ object Connection:
     for
       given Exchange[F] <- Resource.eval(Exchange[F])
       protocol          <-
-        Protocol[F](sockets, hostInfo, debug, sslOptions, allowPublicKeyRetrieval, readTimeout, capabilityFlags)
+        Protocol[F](
+          sockets,
+          hostInfo,
+          debug,
+          sslOptions,
+          allowPublicKeyRetrieval,
+          readTimeout,
+          capabilityFlags,
+          maxAllowedPacket,
+          defaultAuthenticationPlugin,
+          pluginMap
+        )
       _                <- Resource.eval(protocol.startAuthentication(user, password.getOrElse("")))
       serverVariables  <- Resource.eval(protocol.serverVariables())
       readOnly         <- Resource.eval(Ref[F].of[Boolean](false))
@@ -220,22 +255,25 @@ object Connection:
     yield connection
 
   def fromSocketGroup[F[_]: Tracer: Console: Hashing: UUIDGen, A](
-    socketGroup:             SocketGroup[F],
-    host:                    String,
-    port:                    Int,
-    user:                    String,
-    password:                Option[String] = None,
-    database:                Option[String] = None,
-    debug:                   Boolean = false,
-    socketOptions:           List[SocketOption],
-    sslOptions:              Option[SSLNegotiation.Options[F]],
-    readTimeout:             Duration = Duration.Inf,
-    allowPublicKeyRetrieval: Boolean = false,
-    useCursorFetch:          Boolean = false,
-    useServerPrepStmts:      Boolean = false,
-    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = None,
-    acquire:                 Connection[F] => F[A],
-    release:                 (A, Connection[F]) => F[Unit]
+    socketGroup:                 SocketGroup[F],
+    host:                        String,
+    port:                        Int,
+    user:                        String,
+    password:                    Option[String] = None,
+    database:                    Option[String] = None,
+    debug:                       Boolean = false,
+    socketOptions:               List[SocketOption],
+    sslOptions:                  Option[SSLNegotiation.Options[F]],
+    readTimeout:                 Duration = Duration.Inf,
+    allowPublicKeyRetrieval:     Boolean = false,
+    useCursorFetch:              Boolean = false,
+    useServerPrepStmts:          Boolean = false,
+    maxAllowedPacket:            Int = MySQLConfig.DEFAULT_PACKET_SIZE,
+    databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = None,
+    defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
+    plugins:                     List[AuthenticationPlugin[F]],
+    acquire:                     Connection[F] => F[A],
+    release:                     (A, Connection[F]) => F[Unit]
   )(using ev: Async[F]): Resource[F, LdbcConnection[F]] =
 
     def fail[B](msg: String): Resource[F, B] =
@@ -261,7 +299,10 @@ object Connection:
       allowPublicKeyRetrieval,
       useCursorFetch,
       useServerPrepStmts,
+      maxAllowedPacket,
       databaseTerm,
+      defaultAuthenticationPlugin,
+      plugins,
       acquire,
       release
     )
