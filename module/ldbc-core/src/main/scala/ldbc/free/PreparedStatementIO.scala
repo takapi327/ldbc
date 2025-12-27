@@ -164,7 +164,7 @@ object PreparedStatementIO:
       override def raiseError[A](e: Throwable): PreparedStatementIO[A] = module.raiseError(e)
       override def handleErrorWith[A](fa: PreparedStatementIO[A])(
         f: Throwable => PreparedStatementIO[A]
-      ): PreparedStatementIO[A] = module.handleErrorWith(fa)(f)
+      ):                      PreparedStatementIO[A]              = module.handleErrorWith(fa)(f)
       override def monotonic: PreparedStatementIO[FiniteDuration] = module.monotonic
       override def realTime:  PreparedStatementIO[FiniteDuration] = module.realtime
       override def suspend[A](hint: Sync.Type)(thunk: => A): PreparedStatementIO[A] = module.suspend(hint)(thunk)
