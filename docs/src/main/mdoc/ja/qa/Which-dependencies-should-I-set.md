@@ -42,7 +42,7 @@ Scala.jsやScala Nativeでldbcを使用する場合は、以下のように依�
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "com.example" %%% "ldbc-connector" % "@VERSION@"
+  "@ORGANIZATION@" %%% "ldbc-connector" % "@VERSION@"
 )
 ```
 

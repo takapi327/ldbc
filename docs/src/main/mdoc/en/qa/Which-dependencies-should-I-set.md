@@ -42,7 +42,7 @@ To use ldbc with Scala.js or Scala Native, set the dependencies as follows:
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "com.example" %%% "ldbc-connector" % "@VERSION@"
+  "@ORGANIZATION@" %%% "ldbc-connector" % "@VERSION@"
 )
 ```
 

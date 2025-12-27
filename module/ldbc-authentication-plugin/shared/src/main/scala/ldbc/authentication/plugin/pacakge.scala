@@ -39,7 +39,6 @@ package object plugin:
 
   // Test plugins (for testing purposes)
   val TEST_PLUGIN_SERVER: PluginName = "test_plugin_server"
-  val DAEMON_EXAMPLE:     PluginName = "daemon_example"
 
   // Socket peer-credential authentication (Unix socket)
   val AUTH_SOCKET: PluginName = "auth_socket"
