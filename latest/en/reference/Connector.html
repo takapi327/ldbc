@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.4</a>
+      <a class="text-link menu-toggle" href="#">Version 0.5</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -110,7 +110,7 @@
   
   <ul class="nav-list">
     <li class="level1 nav-leaf"><a href="../">ldbc</a></li>
-    <li class="level1 nav-leaf"><a href="../migration-notes.html">Migration Note</a></li>
+    <li class="level1 nav-leaf"><a href="../migration-notes.html">Migration Notes</a></li>
     <li class="level1 nav-header">Tutorial</li>
     <li class="level2 nav-leaf"><a href="../tutorial/">Introduction</a></li>
     <li class="level2 nav-leaf"><a href="../tutorial/Setup.html">Setup</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="index.html">Introduction</a></li>
     <li class="level2 active nav-leaf"><a href="#">Connector</a></li>
     <li class="level2 nav-leaf"><a href="Performance.html">Performance</a></li>
+    <li class="level2 nav-leaf"><a href="AuthenticationPlugin.html">Authentication Plugin</a></li>
     <li class="level2 nav-leaf"><a href="Pooling.html">Connection pooling</a></li>
   </ul>
   
@@ -210,9 +211,9 @@
     We plan to provide higher-layer APIs using this connector in the future. We also plan to maintain compatibility with existing higher-layer APIs.</p>
     <p>To use it, you need to set up the following dependency in your project:</p>
     <p><strong>JVM</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.4.1&quot;</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.5.0&quot;</span></code></pre>
     <p><strong>JS/Native</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %%% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.4.1&quot;</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %%% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.5.0&quot;</span></code></pre>
     <p><strong>Supported Versions</strong></p>
     <p>The current version supports the following versions of MySQL:</p>
     <ul>
@@ -336,8 +337,15 @@
       <li>Native Pluggable Authentication</li>
       <li>SHA-256 Pluggable Authentication</li>
       <li>SHA-2 Pluggable Authentication Cache</li>
+      <li>Cleartext Pluggable Authentication</li>
     </ul>
     <p><em>Note: Native Pluggable Authentication and SHA-256 Pluggable Authentication are deprecated plugins from MySQL 8.x. It is recommended to use the SHA-2 Pluggable Authentication Cache unless there is a specific reason.</em></p>
+    <div class="callout warning">
+      <i class="icofont-laika warning">&#xf026;</i>
+      <p><strong>Important Security Precautions：</strong>
+      MySQL cleartext pluggable authentication is an authentication method that sends passwords in plain text to the server. When using this authentication plugin, you must enable SSL/TLS connections. Using it without SSL/TLS connections is extremely dangerous from a security standpoint, as passwords are transmitted over the network in plain text.</p>
+      <p>This authentication plugin is primarily used for integration with AWS IAM authentication and other external authentication systems. For instructions on configuring SSL/TLS connections, refer to the <a href="../tutorial/Connection.html#connection-with-ssl-configuration">SSL configuration section of the tutorial</a>.</p>
+    </div>
     <p>You do not need to be aware of authentication plugins in the ldbc application code. Users should create users with the desired authentication plugin on the MySQL database and use those users to attempt connections to MySQL in the ldbc application code.
     ldbc internally determines the authentication plugin and connects to MySQL using the appropriate authentication plugin.</p>
     

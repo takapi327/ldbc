@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.4</a>
+      <a class="text-link menu-toggle" href="#">Version 0.5</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="../reference/">はじめに</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Connector.html">コネクタ</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Performance.html">パフォーマンス</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/AuthenticationPlugin.html">認証プラグイン</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Pooling.html">コネクションプーリング</a></li>
   </ul>
   
@@ -193,24 +194,24 @@
     <p><strong>jdbc-connector</strong></p>
     <p>Javaで書かれた従来のコネクタを使用する場合は以下の依存関係を設定します。</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> ++= </span><span class="type-name">Seq</span><span>(
-  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;jdbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.4.1&quot;</span><span>,
+  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;jdbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.5.0&quot;</span><span>,
   </span><span class="string-literal">&quot;com.mysql&quot;</span><span> % </span><span class="string-literal">&quot;mysql-connector-j&quot;</span><span> % </span><span class="string-literal">&quot;8.4.0&quot;</span><span>
 )</span></code></pre>
     <p><strong>ldbc-connector</strong></p>
     <p>Scalaで書かれた新しいコネクタを使用する場合は以下の依存関係を設定します。</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> ++= </span><span class="type-name">Seq</span><span>(
-  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.4.1&quot;</span><span>
+  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.5.0&quot;</span><span>
 )</span></code></pre>
     <p>ldbc-connectorは、JVMだけではなくJS, Nativeのプラットフォームでも動作します。</p>
     <p>Scala.jsやScala Nativeでldbcを使用する場合は、以下のように依存関係を設定します。</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> ++= </span><span class="type-name">Seq</span><span>(
-  </span><span class="string-literal">&quot;com.example&quot;</span><span> %%% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.4.1&quot;</span><span>
+  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %%% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.5.0&quot;</span><span>
 )</span></code></pre>
     
     <h3 id="プレーンなdsl" class="section"><a class="anchor-link left" href="#プレーンなdsl"><i class="icofont-laika link">&#xef71;</i></a>プレーンなDSL</h3>
     <p>プレーンなDSLを使用する場合、以下の依存関係を設定します.</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> ++= </span><span class="type-name">Seq</span><span>(
-  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-dsl&quot;</span><span> % </span><span class="string-literal">&quot;0.4.1&quot;</span><span>
+  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-dsl&quot;</span><span> % </span><span class="string-literal">&quot;0.5.0&quot;</span><span>
 )</span></code></pre>
     <p>プレーンなDSLは、シンプルなSQL文をそのまま記述する方法です。たとえば、直接SQLリテラルを用いてクエリを実行できます。</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.*
@@ -224,7 +225,7 @@
     <h3 id="クエリビルダー" class="section"><a class="anchor-link left" href="#クエリビルダー"><i class="icofont-laika link">&#xef71;</i></a>クエリビルダー</h3>
     <p>クエリビルダーを使用する場合、以下の依存関係を設定します.</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> ++= </span><span class="type-name">Seq</span><span>(
-  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-query-builder&quot;</span><span> % </span><span class="string-literal">&quot;0.4.1&quot;</span><span>
+  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-query-builder&quot;</span><span> % </span><span class="string-literal">&quot;0.5.0&quot;</span><span>
 )</span></code></pre>
     <p>クエリビルダーは、型安全なAPIでクエリを構築できる方法です。次の例では、<code>User</code>モデルを定義し、<code>TableQuery</code>を使ってSELECT文を構築しています。</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.</span><span class="identifier">codec</span><span>.</span><span class="type-name">Codec</span><span>
@@ -243,7 +244,7 @@
     <h3 id="スキーマ定義とモデルマッピング" class="section"><a class="anchor-link left" href="#スキーマ定義とモデルマッピング"><i class="icofont-laika link">&#xef71;</i></a>スキーマ定義とモデルマッピング</h3>
     <p>スキーマ定義とモデルマッピングを使用する場合、以下の依存関係を設定します.</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> ++= </span><span class="type-name">Seq</span><span>(
-  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-schema&quot;</span><span> % </span><span class="string-literal">&quot;0.4.1&quot;</span><span>
+  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-schema&quot;</span><span> % </span><span class="string-literal">&quot;0.5.0&quot;</span><span>
 )</span></code></pre>
     <p>スキーマ定義とモデルマッピングを利用すると、テーブル定義とScalaモデルとの1対1のマッピングを実現できます。以下は、<code>User</code>テーブルを定義する例です。</p>
     <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">schema</span><span>.*

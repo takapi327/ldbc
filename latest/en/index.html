@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.4</a>
+      <a class="text-link menu-toggle" href="#">Version 0.5</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../older-versions.html">Older Versions</a></li>
@@ -110,7 +110,7 @@
   
   <ul class="nav-list">
     <li class="level1 active nav-leaf"><a href="#">ldbc</a></li>
-    <li class="level1 nav-leaf"><a href="migration-notes.html">Migration Note</a></li>
+    <li class="level1 nav-leaf"><a href="migration-notes.html">Migration Notes</a></li>
     <li class="level1 nav-header">Tutorial</li>
     <li class="level2 nav-leaf"><a href="tutorial/">Introduction</a></li>
     <li class="level2 nav-leaf"><a href="tutorial/Setup.html">Setup</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="reference/">Introduction</a></li>
     <li class="level2 nav-leaf"><a href="reference/Connector.html">Connector</a></li>
     <li class="level2 nav-leaf"><a href="reference/Performance.html">Performance</a></li>
+    <li class="level2 nav-leaf"><a href="reference/AuthenticationPlugin.html">Authentication Plugin</a></li>
     <li class="level2 nav-leaf"><a href="reference/Pooling.html">Connection pooling</a></li>
   </ul>
   
@@ -204,19 +205,19 @@
     <p>That said, if you find yourself confused or frustrated by this documentation or the ldbc API, please open an issue and ask for help. Both the library and documentation are young and rapidly evolving, so some lack of clarity is inevitable. This document will therefore be continuously updated to address issues and omissions.</p>
     
     <h2 id="quick-start" class="section"><a class="anchor-link left" href="#quick-start"><i class="icofont-laika link">&#xef71;</i></a>Quick Start</h2>
-    <p>The current version is <strong>0.4.1</strong>, compatible with <strong>Scala 3.3.7</strong>.</p>
+    <p>The current version is <strong>0.5.0</strong>, compatible with <strong>Scala 3.3.7</strong>.</p>
     <pre><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> ++= </span><span class="type-name">Seq</span><span>(
 
   </span><span class="comment">// Start with this one
-</span><span>  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-dsl&quot;</span><span> % </span><span class="string-literal">&quot;0.4.1&quot;</span><span>,
+</span><span>  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-dsl&quot;</span><span> % </span><span class="string-literal">&quot;0.5.0&quot;</span><span>,
   
   </span><span class="comment">// Choose the connector you want to use
-</span><span>  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;jdbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.4.1&quot;</span><span>, </span><span class="comment">// Java connector (supported platform: JVM)
-</span><span>  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.4.1&quot;</span><span>, </span><span class="comment">// Scala connector (supported platforms: JVM, JS, Native)
+</span><span>  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;jdbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.5.0&quot;</span><span>, </span><span class="comment">// Java connector (supported platform: JVM)
+</span><span>  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.5.0&quot;</span><span>, </span><span class="comment">// Scala connector (supported platforms: JVM, JS, Native)
 </span><span>
   </span><span class="comment">// And add these as needed
-</span><span>  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-query-builder&quot;</span><span> % </span><span class="string-literal">&quot;0.4.1&quot;</span><span>, </span><span class="comment">// Type-safe query building
-</span><span>  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-schema&quot;</span><span>        % </span><span class="string-literal">&quot;0.4.1&quot;</span><span>, </span><span class="comment">// Database schema construction
+</span><span>  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-query-builder&quot;</span><span> % </span><span class="string-literal">&quot;0.5.0&quot;</span><span>, </span><span class="comment">// Type-safe query building
+</span><span>  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-schema&quot;</span><span>        % </span><span class="string-literal">&quot;0.5.0&quot;</span><span>, </span><span class="comment">// Database schema construction
 </span><span>)</span></code></pre>
     
     <h2 id="todo" class="section"><a class="anchor-link left" href="#todo"><i class="icofont-laika link">&#xef71;</i></a>TODO</h2>
@@ -226,7 +227,6 @@
       <li>Geometry data type support</li>
       <li>CHECK constraint support</li>
       <li>Support for databases other than MySQL</li>
-      <li>ZIO module support</li>
       <li>Test kit</li>
       <li>etc...</li>
     </ul>

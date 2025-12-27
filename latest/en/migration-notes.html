@@ -6,7 +6,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="generator" content="Typelevel Laika + Helium Theme" />
-  <title>Migration Note</title>
+  <title>Migration Notes</title>
   
   <meta name="author" content="ldbc contributors"/>
   
@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.4</a>
+      <a class="text-link menu-toggle" href="#">Version 0.5</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../older-versions.html">Older Versions</a></li>
@@ -110,7 +110,7 @@
   
   <ul class="nav-list">
     <li class="level1 nav-leaf"><a href="index.html">ldbc</a></li>
-    <li class="level1 active nav-leaf"><a href="#">Migration Note</a></li>
+    <li class="level1 active nav-leaf"><a href="#">Migration Notes</a></li>
     <li class="level1 nav-header">Tutorial</li>
     <li class="level2 nav-leaf"><a href="tutorial/">Introduction</a></li>
     <li class="level2 nav-leaf"><a href="tutorial/Setup.html">Setup</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="reference/">Introduction</a></li>
     <li class="level2 nav-leaf"><a href="reference/Connector.html">Connector</a></li>
     <li class="level2 nav-leaf"><a href="reference/Performance.html">Performance</a></li>
+    <li class="level2 nav-leaf"><a href="reference/AuthenticationPlugin.html">Authentication Plugin</a></li>
     <li class="level2 nav-leaf"><a href="reference/Pooling.html">Connection pooling</a></li>
   </ul>
   
@@ -164,19 +165,20 @@
 
   
 <nav id="page-nav">
-  <p class="header"><a href="#">Migration Note</a></p>
+  <p class="header"><a href="#">Migration Notes</a></p>
 
   <ul class="nav-list">
     <li class="level1 nav-leaf"><a href="#packages">Packages</a></li>
     <li class="level1 nav-node"><a href="#major-changes">🎯 Major Changes</a></li>
-    <li class="level2 nav-leaf"><a href="#_1-built-in-connection-pooling">1. Built-in Connection Pooling</a></li>
-    <li class="level2 nav-leaf"><a href="#_2-api-changes">2. API Changes</a></li>
-    <li class="level2 nav-leaf"><a href="#_3-configuration-changes">3. Configuration Changes</a></li>
-    <li class="level2 nav-leaf"><a href="#_4-connection-pooling-usage">4. Connection Pooling Usage</a></li>
-    <li class="level2 nav-leaf"><a href="#_5-migration-considerations">5. Migration Considerations</a></li>
-    <li class="level2 nav-leaf"><a href="#_6-breaking-changes">6. Breaking Changes</a></li>
-    <li class="level2 nav-leaf"><a href="#_7-dbio-execution-pattern-changes">7. DBIO Execution Pattern Changes</a></li>
-    <li class="level2 nav-leaf"><a href="#_8-new-features">8. New Features</a></li>
+    <li class="level2 nav-leaf"><a href="#_1-zio-ecosystem-support">1. ZIO Ecosystem Support</a></li>
+    <li class="level2 nav-leaf"><a href="#_2-enhanced-authentication-plugins">2. Enhanced Authentication Plugins</a></li>
+    <li class="level2 nav-leaf"><a href="#_3-deprecation-of-ldbc-hikari">3. Deprecation of ldbc-hikari</a></li>
+    <li class="level2 nav-leaf"><a href="#_4-security-enhancements">4. Security Enhancements</a></li>
+    <li class="level2 nav-leaf"><a href="#_5-performance-optimizations">5. Performance Optimizations</a></li>
+    <li class="level2 nav-leaf"><a href="#_6-api-improvements">6. API Improvements</a></li>
+    <li class="level1 nav-node"><a href="#migration-guide">Migration Guide</a></li>
+    <li class="level2 nav-leaf"><a href="#migration-from-ldbc-hikari">Migration from ldbc-hikari</a></li>
+    <li class="level2 nav-leaf"><a href="#adding-zio-integration">Adding ZIO Integration</a></li>
     <li class="level1 nav-leaf"><a href="#summary">Summary</a></li>
   </ul>
 
@@ -186,29 +188,10 @@
 
   <main class="content">
 
-    <h1 id="migration-notes-from-0-3-x-to-0-4-x" class="title">Migration Notes (from 0.3.x to 0.4.x)</h1>
+    <h1 id="migration-notes-from-0-4-x-to-0-5-x" class="title">Migration Notes (from 0.4.x to 0.5.x)</h1>
     
     <h2 id="packages" class="section"><a class="anchor-link left" href="#packages"><i class="icofont-laika link">&#xef71;</i></a>Packages</h2>
-    <p><strong>Removed Packages</strong></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Module / Platform</th>
-          <th>JVM</th>
-          <th>Scala Native</th>
-          <th>Scala.js</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><code>ldbc-schemaSpy</code></td>
-          <td>✅</td>
-          <td>❌</td>
-          <td>❌</td>
-        </tr>
-      </tbody>
-    </table>
-    <p><strong>Packages renewed as different features</strong></p>
+    <p><strong>Newly Added Packages</strong></p>
     <table>
       <thead>
         <tr>
@@ -221,11 +204,44 @@
       </thead>
       <tbody>
         <tr>
-          <td><code>ldbc-core</code></td>
+          <td><code>ldbc-zio-interop</code></td>
+          <td>✅</td>
+          <td>❌</td>
+          <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-zio-interop_3"><img src="https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+        <tr>
+          <td><code>ldbc-authentication-plugin</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-core_3"><img src="https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-authentication-plugin_3"><img src="https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+        <tr>
+          <td><code>ldbc-aws-authentication-plugin</code></td>
+          <td>✅</td>
+          <td>✅</td>
+          <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-aws-authentication-plugin_3"><img src="https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+      </tbody>
+    </table>
+    <p><strong>Deprecated Packages</strong></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Module / Platform</th>
+          <th>JVM</th>
+          <th>Scala Native</th>
+          <th>Scala.js</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>ldbc-hikari</code></td>
+          <td>✅</td>
+          <td>❌</td>
+          <td>❌</td>
         </tr>
       </tbody>
     </table>
@@ -246,428 +262,304 @@
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-sql_3"><img src="https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-sql_3"><img src="https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-core</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-core_3"><img src="https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-core_3"><img src="https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-connector</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-connector_3"><img src="https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-connector_3"><img src="https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>jdbc-connector</code></td>
           <td>✅</td>
           <td>❌</td>
           <td>❌</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/jdbc-connector_3"><img src="https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/jdbc-connector_3"><img src="https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-dsl</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3"><img src="https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3"><img src="https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-statement</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-statement_3"><img src="https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-statement_3"><img src="https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-query-builder</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-query-builder_3"><img src="https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-query-builder_3"><img src="https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-schema</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-schema_3"><img src="https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-schema_3"><img src="https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-codegen</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-codegen_3"><img src="https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
-        </tr>
-        <tr>
-          <td><code>ldbc-hikari</code></td>
-          <td>✅</td>
-          <td>❌</td>
-          <td>❌</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-hikari_3"><img src="https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-codegen_3"><img src="https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-plugin</code></td>
           <td>✅</td>
           <td>❌</td>
           <td>❌</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-plugin_2.12_1.0"><img src="https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-plugin_2.12_1.0"><img src="https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+        <tr>
+          <td><code>ldbc-zio-interop</code></td>
+          <td>✅</td>
+          <td>❌</td>
+          <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-zio-interop_3"><img src="https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+        <tr>
+          <td><code>ldbc-authentication-plugin</code></td>
+          <td>✅</td>
+          <td>✅</td>
+          <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-authentication-plugin_3"><img src="https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+        <tr>
+          <td><code>ldbc-aws-authentication-plugin</code></td>
+          <td>✅</td>
+          <td>✅</td>
+          <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-aws-authentication-plugin_3"><img src="https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
       </tbody>
     </table>
     
     <h2 id="major-changes" class="section"><a class="anchor-link left" href="#major-changes"><i class="icofont-laika link">&#xef71;</i></a>🎯 Major Changes</h2>
     
-    <h3 id="_1-built-in-connection-pooling" class="section"><a class="anchor-link left" href="#_1-built-in-connection-pooling"><i class="icofont-laika link">&#xef71;</i></a>1. Built-in Connection Pooling</h3>
-    <p>Starting from version 0.4.0, ldbc-connector includes a high-performance connection pooling feature. This enables efficient connection management without using external libraries like HikariCP.</p>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-      <li>Optimized for Cats Effect&#39;s fiber-based concurrency model</li>
-      <li>Circuit breaker protection during failures</li>
-      <li>Dynamic pool sizing</li>
-      <li>Detailed metrics tracking</li>
-    </ul>
-    
-    <h3 id="_2-api-changes" class="section"><a class="anchor-link left" href="#_2-api-changes"><i class="icofont-laika link">&#xef71;</i></a>2. API Changes</h3>
-    
-    <h4 id="migration-from-connectionprovider-to-mysqldatasource-and-connector-usage" class="section"><a class="anchor-link left" href="#migration-from-connectionprovider-to-mysqldatasource-and-connector-usage"><i class="icofont-laika link">&#xef71;</i></a>Migration from ConnectionProvider to MySQLDataSource and Connector Usage</h4>
-    <p>ConnectionProvider is now deprecated and replaced with the new MySQLDataSource and Connector APIs.</p>
-    <p><strong>Old API (0.3.x):</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
-
-</span><span class="comment">// Using ConnectionProvider
-</span><span class="keyword">val</span><span> </span><span class="identifier">provider</span><span> = </span><span class="type-name">ConnectionProvider</span><span>
-  .</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;root&quot;</span><span>)
-  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
-  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;test&quot;</span><span>)
-
-</span><span class="comment">// Direct usage
-</span><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">connection</span><span> =&gt;
-  </span><span class="comment">// SQL execution
-</span><span>}</span></code></pre>
-    <p><strong>New API (0.4.x):</strong></p>
-    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
-</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">core</span><span>.*
+    <h3 id="_1-zio-ecosystem-support" class="section"><a class="anchor-link left" href="#_1-zio-ecosystem-support"><i class="icofont-laika link">&#xef71;</i></a>1. ZIO Ecosystem Support</h3>
+    <p>Starting with 0.5.0, ldbc makes it easier to use ZIO.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-zio-interop&quot;</span><span> % </span><span class="string-literal">&quot;0.5.0&quot;</span></code></pre>
+    <p><strong>Usage Example:</strong></p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">zio</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">zio</span><span>.</span><span class="identifier">interop</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
 </span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.*
 
-</span><span class="comment">// Using MySQLDataSource
-</span><span class="keyword">val</span><span> </span><span class="identifier">dataSource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
-  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;root&quot;</span><span>)
-  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
-  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;test&quot;</span><span>)
+</span><span class="keyword">object</span><span> </span><span class="type-name">Main</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">ZIOAppDefault</span><span>:
+  
+  </span><span class="keyword">private</span><span> </span><span class="keyword">val</span><span> </span><span class="identifier">datasource</span><span> =
+    </span><span class="type-name">MySQLDataSource</span><span>
+      .</span><span class="identifier">build</span><span>[</span><span class="type-name">Task</span><span>](
+        </span><span class="identifier">host</span><span> = </span><span class="string-literal">&quot;127.0.0.1&quot;</span><span>,
+        </span><span class="identifier">port</span><span> = </span><span class="number-literal">3306</span><span>,
+        </span><span class="identifier">user</span><span> = </span><span class="string-literal">&quot;ldbc&quot;</span><span>
+      )
+      .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+      .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;world&quot;</span><span>)
 
-</span><span class="comment">// Create Connector and execute DBIO
-</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">dataSource</span><span>)
+  </span><span class="keyword">private</span><span> </span><span class="keyword">val</span><span> </span><span class="identifier">program</span><span> =
+    </span><span class="keyword">for</span><span>
+      </span><span class="identifier">connection</span><span> &lt;- </span><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>
+      </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromConnection</span><span>(</span><span class="identifier">connection</span><span>)
+      </span><span class="identifier">result</span><span>     &lt;- </span><span class="string-literal">sql&quot;SELECT 1&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">Int</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
+    </span><span class="keyword">yield</span><span> </span><span class="identifier">result</span><span>
 
-</span><span class="comment">// Execute SQL queries
-</span><span class="keyword">val</span><span> </span><span class="identifier">result</span><span> = </span><span class="string-literal">sql&quot;SELECT * FROM users&quot;</span><span>
-  .</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>]
-  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
-  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
-
-</span><span class="comment">// Or create Connector from Connection
-</span><span class="identifier">dataSource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">connection</span><span> =&gt;
-  </span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromConnection</span><span>(</span><span class="identifier">connection</span><span>)
-  </span><span class="comment">// Execute DBIO
-</span><span>  </span><span class="string-literal">sql&quot;INSERT INTO users (name) VALUES (</span><span class="substitution">$name</span><span class="string-literal">)&quot;</span><span>
-    .</span><span class="identifier">update</span><span>
-    .</span><span class="identifier">commit</span><span>(</span><span class="identifier">connector</span><span>)
-}
-
-</span><span class="comment">// Connection pooling
-</span><span class="keyword">val</span><span> </span><span class="identifier">pooledDataSource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](
-  </span><span class="type-name">MySQLConfig</span><span>.</span><span class="identifier">default</span><span>
-    .</span><span class="identifier">setHost</span><span>(</span><span class="string-literal">&quot;localhost&quot;</span><span>)
-    .</span><span class="identifier">setPort</span><span>(</span><span class="number-literal">3306</span><span>)
-    .</span><span class="identifier">setUser</span><span>(</span><span class="string-literal">&quot;root&quot;</span><span>)
-    .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
-    .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;test&quot;</span><span>)
-    .</span><span class="identifier">setMinConnections</span><span>(</span><span class="number-literal">5</span><span>)
-    .</span><span class="identifier">setMaxConnections</span><span>(</span><span class="number-literal">20</span><span>)
-)
-
-</span><span class="identifier">pooledDataSource</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">pool</span><span> =&gt;
-  </span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">pool</span><span>)
-  </span><span class="comment">// Execute DBIO
-</span><span>  </span><span class="string-literal">sql&quot;SELECT * FROM users WHERE id = </span><span class="substitution">$id</span><span class="string-literal">&quot;</span><span>
-    .</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>]
-    .</span><span class="identifier">option</span><span>
-    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
-}</span></code></pre>
+  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">run</span><span> = </span><span class="identifier">program</span></code></pre>
     
-    <h3 id="_3-configuration-changes" class="section"><a class="anchor-link left" href="#_3-configuration-changes"><i class="icofont-laika link">&#xef71;</i></a>3. Configuration Changes</h3>
+    <h3 id="_2-enhanced-authentication-plugins" class="section"><a class="anchor-link left" href="#_2-enhanced-authentication-plugins"><i class="icofont-laika link">&#xef71;</i></a>2. Enhanced Authentication Plugins</h3>
+    <p>New authentication plugin modules have been added. These plugins are implemented in pure Scala3 and are available on all platforms (JVM, JS, Native).</p>
     
-    <h4 id="ldbc-connector-configuration" class="section"><a class="anchor-link left" href="#ldbc-connector-configuration"><i class="icofont-laika link">&#xef71;</i></a>ldbc-connector Configuration</h4>
-    <p><strong>Old Method (0.3.x):</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">provider</span><span> = </span><span class="type-name">ConnectionProvider</span><span>
-  .</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;root&quot;</span><span>)
-  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
-  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;test&quot;</span><span>)
-  .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)
-  .</span><span class="identifier">addSocketOption</span><span>(</span><span class="type-name">SocketOption</span><span>.</span><span class="identifier">receiveBufferSize</span><span>(</span><span class="number-literal">4096</span><span>))
-  .</span><span class="identifier">setReadTimeout</span><span>(</span><span class="number-literal">30</span><span>.</span><span class="identifier">seconds</span><span>)</span></code></pre>
-    <p><strong>New Method (0.4.x):</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">dataSource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
-  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;root&quot;</span><span>)
-  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
-  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;test&quot;</span><span>)
-  .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)
-  .</span><span class="identifier">addSocketOption</span><span>(</span><span class="type-name">SocketOption</span><span>.</span><span class="identifier">receiveBufferSize</span><span>(</span><span class="number-literal">4096</span><span>))
-  .</span><span class="identifier">setReadTimeout</span><span>(</span><span class="number-literal">30</span><span>.</span><span class="identifier">seconds</span><span>)
-  .</span><span class="identifier">setDebug</span><span>(</span><span class="boolean-literal">true</span><span>)
-  .</span><span class="identifier">setAllowPublicKeyRetrieval</span><span>(</span><span class="boolean-literal">true</span><span>)</span></code></pre>
-    
-    <h4 id="jdbc-connector-configuration" class="section"><a class="anchor-link left" href="#jdbc-connector-configuration"><i class="icofont-laika link">&#xef71;</i></a>jdbc-connector Configuration</h4>
-    <p><strong>Old Method (0.3.x):</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">jdbc</span><span>.</span><span class="identifier">connector</span><span>.*
+    <h4 id="mysql-clear-password-authentication" class="section"><a class="anchor-link left" href="#mysql-clear-password-authentication"><i class="icofont-laika link">&#xef71;</i></a>MySQL Clear Password Authentication</h4>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-authentication-plugin&quot;</span><span> % </span><span class="string-literal">&quot;0.5.0&quot;</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">authentication</span><span>.</span><span class="identifier">plugin</span><span>.*
 
-</span><span class="keyword">val</span><span> </span><span class="identifier">dataSource</span><span> = </span><span class="keyword">new</span><span> </span><span class="identifier">com</span><span>.</span><span class="identifier">mysql</span><span>.</span><span class="identifier">cj</span><span>.</span><span class="identifier">jdbc</span><span>.</span><span class="type-name">MysqlDataSource</span><span>()
-</span><span class="comment">// Manual configuration
+</span><span class="keyword">val</span><span> </span><span class="identifier">datasource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](
+    </span><span class="identifier">host</span><span> = </span><span class="string-literal">&quot;localhost&quot;</span><span>,
+    </span><span class="identifier">port</span><span> = </span><span class="number-literal">3306</span><span>,
+    </span><span class="identifier">user</span><span> = </span><span class="string-literal">&quot;cleartext-user&quot;</span><span>
+  )
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;plaintext-password&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;mydb&quot;</span><span>)
+  .</span><span class="identifier">setDefaultAuthenticationPlugin</span><span>(</span><span class="type-name">MysqlClearPasswordPlugin</span><span>)</span></code></pre>
+    
+    <h4 id="aws-aurora-iam-authentication" class="section"><a class="anchor-link left" href="#aws-aurora-iam-authentication"><i class="icofont-laika link">&#xef71;</i></a>AWS Aurora IAM Authentication</h4>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-aws-authentication-plugin&quot;</span><span> % </span><span class="string-literal">&quot;0.5.0&quot;</span></code></pre>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">amazon</span><span>.</span><span class="identifier">plugin</span><span>.</span><span class="type-name">AwsIamAuthenticationPlugin</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">hostname</span><span> = </span><span class="string-literal">&quot;aurora-instance.cluster-xxx.region.rds.amazonaws.com&quot;</span><span>
+</span><span class="keyword">val</span><span> </span><span class="identifier">username</span><span> = </span><span class="string-literal">&quot;iam-user&quot;</span><span>
+</span><span class="keyword">val</span><span> </span><span class="identifier">config</span><span> = </span><span class="type-name">MySQLConfig</span><span>.</span><span class="identifier">default</span><span>
+  .</span><span class="identifier">setHost</span><span>(</span><span class="identifier">hostname</span><span>)
+  .</span><span class="identifier">setUser</span><span>(</span><span class="identifier">username</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;mydb&quot;</span><span>)
+  .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)  </span><span class="comment">// SSL is required for IAM authentication
 </span><span>
-</span><span class="keyword">val</span><span> </span><span class="identifier">provider</span><span> = </span><span class="type-name">ConnectionProvider</span><span>
-  .</span><span class="identifier">fromDataSource</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">dataSource</span><span>, </span><span class="identifier">ec</span><span>)</span></code></pre>
-    <p><strong>New Method (0.4.x):</strong></p>
-    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">jdbc</span><span>.</span><span class="identifier">connector</span><span>.*
+</span><span class="keyword">val</span><span> </span><span class="identifier">plugin</span><span> = </span><span class="type-name">AwsIamAuthenticationPlugin</span><span>.</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;ap-northeast-1&quot;</span><span>, </span><span class="identifier">hostname</span><span>, </span><span class="identifier">username</span><span>)
 
-</span><span class="comment">// Create Connector from DataSource
-</span><span class="keyword">val</span><span> </span><span class="identifier">ds</span><span> = </span><span class="keyword">new</span><span> </span><span class="identifier">com</span><span>.</span><span class="identifier">mysql</span><span>.</span><span class="identifier">cj</span><span>.</span><span class="identifier">jdbc</span><span>.</span><span class="type-name">MysqlDataSource</span><span>()
-</span><span class="identifier">ds</span><span>.</span><span class="identifier">setServerName</span><span>(</span><span class="string-literal">&quot;localhost&quot;</span><span>)
-</span><span class="identifier">ds</span><span>.</span><span class="identifier">setPortNumber</span><span>(</span><span class="number-literal">3306</span><span>)
-</span><span class="identifier">ds</span><span>.</span><span class="identifier">setDatabaseName</span><span>(</span><span class="string-literal">&quot;test&quot;</span><span>)
-</span><span class="identifier">ds</span><span>.</span><span class="identifier">setUser</span><span>(</span><span class="string-literal">&quot;root&quot;</span><span>)
-</span><span class="identifier">ds</span><span>.</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+</span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">config</span><span>, </span><span class="identifier">plugins</span><span> = </span><span class="type-name">List</span><span>(</span><span class="identifier">plugin</span><span>)).</span><span class="identifier">use</span><span> { </span><span class="identifier">datasource</span><span> =&gt;
+  </span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
+  </span><span class="comment">// Query execution
+</span><span>}</span></code></pre>
+    
+    <h3 id="_3-deprecation-of-ldbc-hikari" class="section"><a class="anchor-link left" href="#_3-deprecation-of-ldbc-hikari"><i class="icofont-laika link">&#xef71;</i></a>3. Deprecation of ldbc-hikari</h3>
+    <p><code>ldbc-hikari</code> is officially deprecated in 0.5.0. Please use the built-in connection pool.</p>
+    <p><strong>Deprecated API:</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// No longer available
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">hikari</span><span>.*</span></code></pre>
+    <p><strong>Recommended Approach:</strong></p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
 
-</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">ds</span><span>, </span><span class="type-name">ExecutionContexts</span><span>.</span><span class="identifier">synchronous</span><span>)
+</span><span class="keyword">val</span><span> </span><span class="identifier">poolConfig</span><span> = </span><span class="type-name">MySQLConfig</span><span>.</span><span class="identifier">default</span><span>
+  .</span><span class="identifier">setHost</span><span>(</span><span class="string-literal">&quot;localhost&quot;</span><span>)
+  .</span><span class="identifier">setPort</span><span>(</span><span class="number-literal">3306</span><span>)
+  .</span><span class="identifier">setUser</span><span>(</span><span class="string-literal">&quot;user&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;mydb&quot;</span><span>)
+  .</span><span class="identifier">setMinConnections</span><span>(</span><span class="number-literal">5</span><span>)
+  .</span><span class="identifier">setMaxConnections</span><span>(</span><span class="number-literal">20</span><span>)
 
-</span><span class="comment">// Create Connector from DriverManager
-</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDriverManager</span><span>[</span><span class="type-name">IO</span><span>].</span><span class="identifier">apply</span><span>(
-  </span><span class="identifier">driver</span><span> = </span><span class="string-literal">&quot;com.mysql.cj.jdbc.Driver&quot;</span><span>,
-  </span><span class="identifier">url</span><span> = </span><span class="string-literal">&quot;jdbc:mysql://localhost:3306/test&quot;</span><span>,
-  </span><span class="identifier">user</span><span> = </span><span class="string-literal">&quot;root&quot;</span><span>,
-  </span><span class="identifier">password</span><span> = </span><span class="string-literal">&quot;password&quot;</span><span>,
-  </span><span class="identifier">logHandler</span><span> = </span><span class="type-name">None</span><span>
+</span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">poolConfig</span><span>).</span><span class="identifier">use</span><span> { </span><span class="identifier">pool</span><span> =&gt;
+  </span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">pool</span><span>)
+  </span><span class="comment">// Query execution
+</span><span>}</span></code></pre>
+    
+    <h3 id="_4-security-enhancements" class="section"><a class="anchor-link left" href="#_4-security-enhancements"><i class="icofont-laika link">&#xef71;</i></a>4. Security Enhancements</h3>
+    
+    <h4 id="enhanced-sql-parameter-escaping" class="section"><a class="anchor-link left" href="#enhanced-sql-parameter-escaping"><i class="icofont-laika link">&#xef71;</i></a>Enhanced SQL Parameter Escaping</h4>
+    <p>String parameter escaping has been improved, strengthening protection against SQL injection attacks.</p>
+    
+    <h4 id="ssrf-attack-protection" class="section"><a class="anchor-link left" href="#ssrf-attack-protection"><i class="icofont-laika link">&#xef71;</i></a>SSRF Attack Protection</h4>
+    <p>Endpoint validation has been added during data source configuration.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Unsafe endpoints are automatically detected and rejected
+</span><span class="keyword">val</span><span> </span><span class="identifier">datasource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;suspicious-host&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;user&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;mydb&quot;</span><span>)</span></code></pre>
+    
+    <h3 id="_5-performance-optimizations" class="section"><a class="anchor-link left" href="#_5-performance-optimizations"><i class="icofont-laika link">&#xef71;</i></a>5. Performance Optimizations</h3>
+    
+    <h4 id="maximum-packet-size-configuration" class="section"><a class="anchor-link left" href="#maximum-packet-size-configuration"><i class="icofont-laika link">&#xef71;</i></a>Maximum Packet Size Configuration</h4>
+    <p>Compatibility with MySQL server&#39;s <code>max_allowed_packet</code> setting has been improved.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">datasource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;user&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;mydb&quot;</span><span>)
+  .</span><span class="identifier">setMaxPacketSize</span><span>(</span><span class="number-literal">16777216</span><span>)  </span><span class="comment">// 16MB (match MySQL server configuration)</span></code></pre>
+    
+    <h4 id="connection-pool-concurrency-improvements" class="section"><a class="anchor-link left" href="#connection-pool-concurrency-improvements"><i class="icofont-laika link">&#xef71;</i></a>Connection Pool Concurrency Improvements</h4>
+    <p>Connection pool state management has been improved with atomic checks, enhancing stability in concurrent environments.</p>
+    
+    <h3 id="_6-api-improvements" class="section"><a class="anchor-link left" href="#_6-api-improvements"><i class="icofont-laika link">&#xef71;</i></a>6. API Improvements</h3>
+    
+    <h4 id="file-based-query-execution" class="section"><a class="anchor-link left" href="#file-based-query-execution"><i class="icofont-laika link">&#xef71;</i></a>File-based Query Execution</h4>
+    <p>A new <code>updateRaws</code> method has been added, allowing SQL queries to be read from files and executed:</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">fs2</span><span>.</span><span class="identifier">io</span><span>.</span><span class="identifier">file</span><span>.{ </span><span class="type-name">Files</span><span>, </span><span class="type-name">Path</span><span> }
+</span><span class="keyword">import</span><span> </span><span class="identifier">fs2</span><span>.</span><span class="identifier">text</span><span>
+
+</span><span class="keyword">private</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">readFile</span><span>(</span><span class="identifier">filename</span><span>: </span><span class="type-name">String</span><span>): </span><span class="type-name">IO</span><span>[</span><span class="type-name">String</span><span>] =
+  </span><span class="type-name">Files</span><span>[</span><span class="type-name">IO</span><span>]
+    .</span><span class="identifier">readAll</span><span>(</span><span class="type-name">Path</span><span>(</span><span class="identifier">filename</span><span>))
+    .</span><span class="identifier">through</span><span>(</span><span class="identifier">text</span><span>.</span><span class="identifier">utf8</span><span>.</span><span class="identifier">decode</span><span>)
+    .</span><span class="identifier">compile</span><span>
+    .</span><span class="identifier">string</span><span>
+
+</span><span class="keyword">for</span><span>
+  </span><span class="identifier">sql</span><span> &lt;- </span><span class="identifier">readFile</span><span>(</span><span class="string-literal">&quot;hoge.sql&quot;</span><span>)
+  </span><span class="identifier">_</span><span> &lt;- </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">updateRaws</span><span>(</span><span class="identifier">sql</span><span>).</span><span class="identifier">commit</span><span>(</span><span class="identifier">connector</span><span>)
+</span><span class="keyword">yield</span><span> ()</span></code></pre>
+    
+    <h2 id="migration-guide" class="section"><a class="anchor-link left" href="#migration-guide"><i class="icofont-laika link">&#xef71;</i></a>Migration Guide</h2>
+    
+    <h3 id="migration-from-ldbc-hikari" class="section"><a class="anchor-link left" href="#migration-from-ldbc-hikari"><i class="icofont-laika link">&#xef71;</i></a>Migration from ldbc-hikari</h3>
+    <p><strong>Before Migration (0.4.x):</strong></p>
+    <pre><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> ++= </span><span class="type-name">Seq</span><span>(
+  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-dsl&quot;</span><span> % </span><span class="string-literal">&quot;0.4.0&quot;</span><span>,
+  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-hikari&quot;</span><span> % </span><span class="string-literal">&quot;0.4.0&quot;</span><span>
 )
 
-</span><span class="comment">// Via MySQLDataSource (ldbc-connector)
-</span><span class="keyword">val</span><span> </span><span class="identifier">dataSource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
-  .</span><span class="identifier">fromDataSource</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">ds</span><span>, </span><span class="type-name">ExecutionContexts</span><span>.</span><span class="identifier">synchronous</span><span>)</span></code></pre>
-    
-    <h3 id="_4-connection-pooling-usage" class="section"><a class="anchor-link left" href="#_4-connection-pooling-usage"><i class="icofont-laika link">&#xef71;</i></a>4. Connection Pooling Usage</h3>
-    
-    <h4 id="basic-usage" class="section"><a class="anchor-link left" href="#basic-usage"><i class="icofont-laika link">&#xef71;</i></a>Basic Usage</h4>
-    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
-</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">core</span><span>.*
-</span><span class="keyword">import</span><span> </span><span class="identifier">scala</span><span>.</span><span class="identifier">concurrent</span><span>.</span><span class="identifier">duration</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">hikari</span><span>.*
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">hikariConfig</span><span> = </span><span class="type-name">Configuration</span><span>.</span><span class="identifier">default</span><span>
+  .</span><span class="identifier">setJdbcUrl</span><span>(</span><span class="string-literal">&quot;jdbc:mysql://localhost:3306/mydb&quot;</span><span>)
+  .</span><span class="identifier">setUsername</span><span>(</span><span class="string-literal">&quot;user&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+  .</span><span class="identifier">setMaximumPoolSize</span><span>(</span><span class="number-literal">20</span><span>)
+
+</span><span class="type-name">HikariDataSource</span><span>.</span><span class="identifier">fromHikariConfig</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">hikariConfig</span><span>).</span><span class="identifier">use</span><span> { </span><span class="identifier">pool</span><span> =&gt;
+  </span><span class="comment">// Usage
+</span><span>}</span></code></pre>
+    <p><strong>After Migration (0.5.x):</strong></p>
+    <pre><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> ++= </span><span class="type-name">Seq</span><span>(
+  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.5.0&quot;</span><span>,
+  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-dsl&quot;</span><span> % </span><span class="string-literal">&quot;0.5.0&quot;</span><span>
+)
+
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
 
 </span><span class="keyword">val</span><span> </span><span class="identifier">config</span><span> = </span><span class="type-name">MySQLConfig</span><span>.</span><span class="identifier">default</span><span>
   .</span><span class="identifier">setHost</span><span>(</span><span class="string-literal">&quot;localhost&quot;</span><span>)
   .</span><span class="identifier">setPort</span><span>(</span><span class="number-literal">3306</span><span>)
-  .</span><span class="identifier">setUser</span><span>(</span><span class="string-literal">&quot;myuser&quot;</span><span>)
-  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;mypassword&quot;</span><span>)
-  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;mydb&quot;</span><span>)
-  </span><span class="comment">// Pool configuration
-</span><span>  .</span><span class="identifier">setMinConnections</span><span>(</span><span class="number-literal">5</span><span>)              </span><span class="comment">// Minimum connections
-</span><span>  .</span><span class="identifier">setMaxConnections</span><span>(</span><span class="number-literal">20</span><span>)             </span><span class="comment">// Maximum connections
-</span><span>  .</span><span class="identifier">setConnectionTimeout</span><span>(</span><span class="number-literal">30</span><span>.</span><span class="identifier">seconds</span><span>)  </span><span class="comment">// Connection timeout
-</span><span>  .</span><span class="identifier">setIdleTimeout</span><span>(</span><span class="number-literal">10</span><span>.</span><span class="identifier">minutes</span><span>)        </span><span class="comment">// Idle timeout
-</span><span>  .</span><span class="identifier">setMaxLifetime</span><span>(</span><span class="number-literal">30</span><span>.</span><span class="identifier">minutes</span><span>)        </span><span class="comment">// Maximum lifetime
-</span><span>
-</span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">config</span><span>).</span><span class="identifier">use</span><span> { </span><span class="identifier">pool</span><span> =&gt;
-  </span><span class="comment">// Create and use Connector
-</span><span>  </span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">pool</span><span>)
-
-  </span><span class="comment">// Execute SQL queries
-</span><span>  </span><span class="string-literal">sql&quot;SELECT COUNT(*) FROM users&quot;</span><span>
-    .</span><span class="identifier">query</span><span>[</span><span class="type-name">Long</span><span>]
-    .</span><span class="identifier">unique</span><span>
-    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
-}</span></code></pre>
-    
-    <h4 id="pool-with-metrics" class="section"><a class="anchor-link left" href="#pool-with-metrics"><i class="icofont-laika link">&#xef71;</i></a>Pool with Metrics</h4>
-    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.</span><span class="identifier">pool</span><span>.*
-
-</span><span class="keyword">val</span><span> </span><span class="identifier">metricsResource</span><span> = </span><span class="keyword">for</span><span> {
-  </span><span class="identifier">tracker</span><span> &lt;- </span><span class="type-name">Resource</span><span>.</span><span class="identifier">eval</span><span>(</span><span class="type-name">PoolMetricsTracker</span><span>.</span><span class="identifier">inMemory</span><span>[</span><span class="type-name">IO</span><span>])
-  </span><span class="identifier">pool</span><span>    &lt;- </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](
-    </span><span class="identifier">config</span><span>,
-    </span><span class="identifier">metricsTracker</span><span> = </span><span class="type-name">Some</span><span>(</span><span class="identifier">tracker</span><span>)
-  )
-} </span><span class="keyword">yield</span><span> (</span><span class="identifier">pool</span><span>, </span><span class="identifier">tracker</span><span>)
-
-</span><span class="identifier">metricsResource</span><span>.</span><span class="identifier">use</span><span> { </span><span class="keyword">case</span><span> (</span><span class="identifier">pool</span><span>, </span><span class="identifier">tracker</span><span>) =&gt;
-  </span><span class="keyword">for</span><span> {
-    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">pool</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">execute</span><span>(</span><span class="string-literal">&quot;SELECT 1&quot;</span><span>))
-    </span><span class="identifier">metrics</span><span> &lt;- </span><span class="identifier">tracker</span><span>.</span><span class="identifier">getMetrics</span><span>
-    </span><span class="identifier">_</span><span> &lt;- </span><span class="type-name">IO</span><span>.</span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;&quot;&quot;
-      |Pool Metrics:
-      |  Total connections: </span><span class="substitution">${metrics.totalCreated}</span><span class="string-literal">
-      |  Active: </span><span class="substitution">${metrics.activeConnections}</span><span class="string-literal">
-      |  Idle: </span><span class="substitution">${metrics.idleConnections}</span><span class="string-literal">
-    &quot;&quot;&quot;</span><span>.</span><span class="identifier">stripMargin</span><span>)
-  } </span><span class="keyword">yield</span><span> ()
-}</span></code></pre>
-    
-    <h4 id="before-after-hooks" class="section"><a class="anchor-link left" href="#before-after-hooks"><i class="icofont-laika link">&#xef71;</i></a>Before/After Hooks</h4>
-    <pre><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">RequestContext</span><span>(</span><span class="identifier">requestId</span><span>: </span><span class="type-name">String</span><span>)
-
-</span><span class="keyword">val</span><span> </span><span class="identifier">poolWithHooks</span><span> = </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">poolingWithBeforeAfter</span><span>[</span><span class="type-name">IO</span><span>, </span><span class="type-name">RequestContext</span><span>](
-  </span><span class="identifier">config</span><span> = </span><span class="identifier">config</span><span>,
-  </span><span class="identifier">before</span><span> = </span><span class="type-name">Some</span><span> { </span><span class="identifier">conn</span><span> =&gt;
-    </span><span class="keyword">for</span><span> {
-      </span><span class="identifier">id</span><span> &lt;- </span><span class="type-name">IO</span><span>.</span><span class="identifier">randomUUID</span><span>.</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">toString</span><span>)
-      </span><span class="identifier">_</span><span>  &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">execute</span><span>(</span><span class="string-literal">s&quot;SET @request_id = &#39;</span><span class="substitution">$id</span><span class="string-literal">&#39;&quot;</span><span>)
-    } </span><span class="keyword">yield</span><span> </span><span class="type-name">RequestContext</span><span>(</span><span class="identifier">id</span><span>)
-  },
-  </span><span class="identifier">after</span><span> = </span><span class="type-name">Some</span><span> { (</span><span class="identifier">ctx</span><span>, </span><span class="identifier">conn</span><span>) =&gt;
-    </span><span class="type-name">IO</span><span>.</span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;Request </span><span class="substitution">${ctx.requestId}</span><span class="string-literal"> completed&quot;</span><span>)
-  }
-)</span></code></pre>
-    
-    <h3 id="_5-migration-considerations" class="section"><a class="anchor-link left" href="#_5-migration-considerations"><i class="icofont-laika link">&#xef71;</i></a>5. Migration Considerations</h3>
-    
-    <h4 id="scala-native-limitations" class="section"><a class="anchor-link left" href="#scala-native-limitations"><i class="icofont-laika link">&#xef71;</i></a>Scala Native Limitations</h4>
-    <div class="callout warning">
-      <i class="icofont-laika warning">&#xf026;</i>
-      <p><strong>Important</strong>: Scala Native 0.4.x only supports single-threaded execution. Therefore, using connection pooling with Scala Native is not recommended. Instead, create a new connection for each operation:</p>
-      <pre><code class="nohighlight"><span class="comment">// Recommended usage for Scala Native
-</span><span class="keyword">val</span><span> </span><span class="identifier">dataSource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
-  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;user&quot;</span><span>)
+  .</span><span class="identifier">setUser</span><span>(</span><span class="string-literal">&quot;user&quot;</span><span>)
   .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
   .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;mydb&quot;</span><span>)
+  .</span><span class="identifier">setMaxConnections</span><span>(</span><span class="number-literal">20</span><span>)
 
-</span><span class="comment">// Don&#39;t use pooling
-</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">dataSource</span><span>)
+</span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">config</span><span>).</span><span class="identifier">use</span><span> { </span><span class="identifier">pool</span><span> =&gt;
+  </span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">pool</span><span>)
+  </span><span class="comment">// Usage
+</span><span>}</span></code></pre>
+    
+    <h3 id="adding-zio-integration" class="section"><a class="anchor-link left" href="#adding-zio-integration"><i class="icofont-laika link">&#xef71;</i></a>Adding ZIO Integration</h3>
+    <p><strong>Cats Effect Based (Traditional):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
 
-</span><span class="comment">// Execute DBIO
-</span><span class="string-literal">sql&quot;SELECT * FROM products WHERE price &gt; </span><span class="substitution">$minPrice</span><span class="string-literal">&quot;</span><span>
-  .</span><span class="identifier">query</span><span>[</span><span class="type-name">Product</span><span>]
-  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
-  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
-    </div>
-    
-    <h3 id="_6-breaking-changes" class="section"><a class="anchor-link left" href="#_6-breaking-changes"><i class="icofont-laika link">&#xef71;</i></a>6. Breaking Changes</h3>
-    <p>The following APIs have been removed or changed:</p>
-    <ol class="arabic">
-      <li><strong>ConnectionProvider</strong>: Deprecated and replaced with <code>MySQLDataSource</code> (will be removed in 0.5.x)</li>
-      <li><strong>Provider trait</strong>: Deprecated and replaced with <code>DataSource</code> trait</li>
-      <li><strong>ldbc.sql.Provider</strong>: Removed</li>
-      <li><strong>Direct connection usage</strong>: Must now use the new <code>Connector</code> API</li>
-    </ol>
-    
-    <h3 id="_7-dbio-execution-pattern-changes" class="section"><a class="anchor-link left" href="#_7-dbio-execution-pattern-changes"><i class="icofont-laika link">&#xef71;</i></a>7. DBIO Execution Pattern Changes</h3>
-    <p>The DBIO execution method has been changed to be clearer and more flexible.</p>
-    <p><strong>Old Method (0.3.x):</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">connection</span><span> =&gt;
-  (</span><span class="keyword">for</span><span>
-    </span><span class="identifier">result1</span><span> &lt;- </span><span class="string-literal">sql&quot;SELECT 1&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">Int</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
-    </span><span class="identifier">result2</span><span> &lt;- </span><span class="string-literal">sql&quot;SELECT 2&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">Int</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">Option</span><span>]
-  </span><span class="keyword">yield</span><span> (</span><span class="identifier">result1</span><span>, </span><span class="identifier">result2</span><span>)).</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connection</span><span>)
-}</span></code></pre>
-    <p><strong>New Method (0.4.x):</strong></p>
-    <pre><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">dataSource</span><span>)
+</span><span class="keyword">val</span><span> </span><span class="identifier">program</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">List</span><span>[</span><span class="type-name">User</span><span>]] = 
+  </span><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">connection</span><span> =&gt;
+    </span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromConnection</span><span>(</span><span class="identifier">connection</span><span>)
+    </span><span class="string-literal">sql&quot;SELECT * FROM users&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
+  }</span></code></pre>
+    <p><strong>ZIO Based (New):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">zio</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">zio</span><span>.</span><span class="identifier">interop</span><span>.*
 
-</span><span class="comment">// Various execution modes
-</span><span class="string-literal">sql&quot;SELECT * FROM users&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)    </span><span class="comment">// Read-only
-</span><span class="string-literal">sql&quot;INSERT INTO users ...&quot;</span><span>.</span><span class="identifier">update</span><span>.</span><span class="identifier">commit</span><span>(</span><span class="identifier">connector</span><span>)                 </span><span class="comment">// With commit
-</span><span class="string-literal">sql&quot;UPDATE users ...&quot;</span><span>.</span><span class="identifier">update</span><span>.</span><span class="identifier">transaction</span><span>(</span><span class="identifier">connector</span><span>)                 </span><span class="comment">// Transaction
-</span><span class="string-literal">sql&quot;DELETE FROM users ...&quot;</span><span>.</span><span class="identifier">update</span><span>.</span><span class="identifier">rollback</span><span>(</span><span class="identifier">connector</span><span>)              </span><span class="comment">// Rollback
-</span><span>
-</span><span class="comment">// Combining multiple queries
-</span><span>(</span><span class="keyword">for</span><span>
-  </span><span class="identifier">users</span><span> &lt;- </span><span class="string-literal">sql&quot;SELECT * FROM users&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
-  </span><span class="identifier">count</span><span> &lt;- </span><span class="string-literal">sql&quot;SELECT COUNT(*) FROM users&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">Long</span><span>].</span><span class="identifier">unique</span><span>
-</span><span class="keyword">yield</span><span> (</span><span class="identifier">users</span><span>, </span><span class="identifier">count</span><span>)).</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
-    
-    <h3 id="_8-new-features" class="section"><a class="anchor-link left" href="#_8-new-features"><i class="icofont-laika link">&#xef71;</i></a>8. New Features</h3>
-    
-    <h4 id="circuitbreaker" class="section"><a class="anchor-link left" href="#circuitbreaker"><i class="icofont-laika link">&#xef71;</i></a>CircuitBreaker</h4>
-    <p>The connection pool includes a built-in CircuitBreaker for protection during database failures:</p>
-    <ul>
-      <li>Automatically stops connection attempts after consecutive failures</li>
-      <li>Gradual recovery through exponential backoff</li>
-      <li>Protects both the application and database</li>
-    </ul>
-    
-    <h4 id="adaptive-pool-sizing" class="section"><a class="anchor-link left" href="#adaptive-pool-sizing"><i class="icofont-laika link">&#xef71;</i></a>Adaptive Pool Sizing</h4>
-    <p>Dynamically adjusts pool size based on load:</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">config</span><span> = </span><span class="type-name">MySQLConfig</span><span>.</span><span class="identifier">default</span><span>
-  </span><span class="comment">// ... other configuration
-</span><span>  .</span><span class="identifier">setAdaptiveSizing</span><span>(</span><span class="boolean-literal">true</span><span>)
-  .</span><span class="identifier">setAdaptiveInterval</span><span>(</span><span class="number-literal">1</span><span>.</span><span class="identifier">minute</span><span>)</span></code></pre>
-    
-    <h4 id="leak-detection" class="section"><a class="anchor-link left" href="#leak-detection"><i class="icofont-laika link">&#xef71;</i></a>Leak Detection</h4>
-    <p>Detects connection leaks in development:</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">config</span><span> = </span><span class="type-name">MySQLConfig</span><span>.</span><span class="identifier">default</span><span>
-  </span><span class="comment">// ... other configuration
-</span><span>  .</span><span class="identifier">setLeakDetectionThreshold</span><span>(</span><span class="number-literal">2</span><span>.</span><span class="identifier">minutes</span><span>)</span></code></pre>
-    
-    <h4 id="streaming-query-support" class="section"><a class="anchor-link left" href="#streaming-query-support"><i class="icofont-laika link">&#xef71;</i></a>Streaming Query Support</h4>
-    <p>ldbc supports efficient streaming queries using <code>fs2.Stream</code>. This allows handling large amounts of data with controlled memory usage.</p>
-    <p><strong>Basic Usage:</strong></p>
-    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">fs2</span><span>.</span><span class="type-name">Stream</span><span>
-</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.*
-
-</span><span class="comment">// Streaming with default fetchSize (1)
-</span><span class="keyword">val</span><span> </span><span class="identifier">stream</span><span>: </span><span class="type-name">Stream</span><span>[</span><span class="type-name">DBIO</span><span>, </span><span class="type-name">String</span><span>] = 
-  </span><span class="string-literal">sql&quot;SELECT name FROM city&quot;</span><span>
-    .</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>]
-    .</span><span class="identifier">stream</span><span>
-
-</span><span class="comment">// Streaming with specified fetchSize
-</span><span class="keyword">val</span><span> </span><span class="identifier">streamWithFetchSize</span><span>: </span><span class="type-name">Stream</span><span>[</span><span class="type-name">DBIO</span><span>, </span><span class="type-name">City</span><span>] = 
-  </span><span class="string-literal">sql&quot;SELECT * FROM city&quot;</span><span>
-    .</span><span class="identifier">query</span><span>[</span><span class="type-name">City</span><span>]
-    .</span><span class="identifier">stream</span><span>(</span><span class="identifier">fetchSize</span><span> = </span><span class="number-literal">100</span><span>)</span></code></pre>
-    <p><strong>Practical Examples:</strong></p>
-    <pre><code class="nohighlight"><span class="comment">// Efficiently process large datasets
-</span><span class="keyword">val</span><span> </span><span class="identifier">processLargeCities</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">List</span><span>[</span><span class="type-name">String</span><span>]] = 
-  </span><span class="string-literal">sql&quot;SELECT name, population FROM city&quot;</span><span>
-    .</span><span class="identifier">query</span><span>[(</span><span class="type-name">String</span><span>, </span><span class="type-name">Int</span><span>)]
-    .</span><span class="identifier">stream</span><span>(</span><span class="number-literal">1000</span><span>)                    </span><span class="comment">// Fetch 1000 rows at a time
-</span><span>    .</span><span class="identifier">filter</span><span>(</span><span class="identifier">_</span><span class="number-literal">._2</span><span> &gt; </span><span class="number-literal">1000000</span><span>)          </span><span class="comment">// Cities with &gt; 1M population
-</span><span>    .</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span class="number-literal">._1</span><span>)                       </span><span class="comment">// Extract city names
-</span><span>    .</span><span class="identifier">take</span><span>(</span><span class="number-literal">50</span><span>)                        </span><span class="comment">// Take first 50
-</span><span>    .</span><span class="identifier">compile</span><span>.</span><span class="identifier">toList</span><span>
-    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
-
-</span><span class="comment">// Aggregation processing
-</span><span class="keyword">val</span><span> </span><span class="identifier">calculateTotal</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">BigDecimal</span><span>] = 
-  </span><span class="string-literal">sql&quot;SELECT amount FROM transactions WHERE year = 2024&quot;</span><span>
-    .</span><span class="identifier">query</span><span>[</span><span class="type-name">BigDecimal</span><span>]
-    .</span><span class="identifier">stream</span><span>(</span><span class="number-literal">5000</span><span>)                    </span><span class="comment">// Process 5000 rows at a time
-</span><span>    .</span><span class="identifier">filter</span><span>(</span><span class="identifier">_</span><span> &gt; </span><span class="number-literal">100</span><span>)                 </span><span class="comment">// Transactions &gt; 100
-</span><span>    .</span><span class="identifier">fold</span><span>(</span><span class="type-name">BigDecimal</span><span>(</span><span class="number-literal">0</span><span>))(</span><span class="identifier">_</span><span> + </span><span class="identifier">_</span><span>)      </span><span class="comment">// Calculate total
-</span><span>    .</span><span class="identifier">compile</span><span>.</span><span class="identifier">lastOrError</span><span>
-    .</span><span class="identifier">transaction</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
-    <p><strong>MySQL Optimization Settings:</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Enable server-side cursors for better memory efficiency
-</span><span class="keyword">val</span><span> </span><span class="identifier">datasource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
-  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">host</span><span>, </span><span class="identifier">port</span><span>, </span><span class="identifier">user</span><span>)
-  .</span><span class="identifier">setPassword</span><span>(</span><span class="identifier">password</span><span>)
-  .</span><span class="identifier">setDatabase</span><span>(</span><span class="identifier">database</span><span>)
-  .</span><span class="identifier">setUseCursorFetch</span><span>(</span><span class="boolean-literal">true</span><span>)  </span><span class="comment">// Enable true streaming</span></code></pre>
-    <p><strong>Streaming Benefits:</strong></p>
-    <ul>
-      <li><strong>Memory Efficiency</strong>: Constant memory usage even with large datasets</li>
-      <li><strong>Early Processing</strong>: Process data while receiving it</li>
-      <li><strong>Cancellable</strong>: Stop processing based on conditions</li>
-      <li><strong>Rich fs2 Operations</strong>: Use functional operations like <code>filter</code>, <code>map</code>, <code>take</code>, <code>fold</code></li>
-    </ul>
+</span><span class="keyword">val</span><span> </span><span class="identifier">program</span><span>: </span><span class="type-name">Task</span><span>[</span><span class="type-name">List</span><span>[</span><span class="type-name">User</span><span>]] = 
+  </span><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">connection</span><span> =&gt;
+    </span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromConnection</span><span>(</span><span class="identifier">connection</span><span>)
+    </span><span class="string-literal">sql&quot;SELECT * FROM users&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
+  }</span></code></pre>
     
     <h2 id="summary" class="section"><a class="anchor-link left" href="#summary"><i class="icofont-laika link">&#xef71;</i></a>Summary</h2>
-    <p>Migrating to 0.4.x provides the following benefits:</p>
+    <p>Migration to 0.5.x provides the following benefits:</p>
     <ol class="arabic">
-      <li><strong>Performance Improvements</strong>: Efficient connection management through built-in pooling</li>
-      <li><strong>More Intuitive API</strong>: Simplified configuration with builder pattern</li>
-      <li><strong>Advanced Features</strong>: CircuitBreaker, adaptive sizing, metrics tracking</li>
-      <li><strong>Reduced External Dependencies</strong>: No need for HikariCP</li>
+      <li><strong>Complete ZIO Ecosystem Support</strong>: Natural integration in ZIO-based applications</li>
+      <li><strong>Enhanced Security</strong>: SSRF attack protection, improved SQL escaping</li>
+      <li><strong>Simplified AWS Integration</strong>: Easy configuration for Aurora IAM authentication</li>
+      <li><strong>Performance Improvements</strong>: Maximum packet size support, improved pool concurrency</li>
+      <li><strong>Enhanced Developer Experience</strong>: New APIs, binary compatibility checks</li>
     </ol>
-    <p>The migration work mainly involves API updates, and since functional backward compatibility is maintained, gradual migration is possible.</p>
+    <p>Migration work mainly involves updating library dependencies and small API changes, allowing for gradual migration.</p>
 
     
 <hr class="footer-rule"/>

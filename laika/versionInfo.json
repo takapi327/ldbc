@@ -1,6 +1,7 @@
 {
   "versions": [
-    { "displayValue": "0.4", "pathSegment": "latest", "fallbackLink": "/index.html", "label": "Stable", "canonical": true },
+    { "displayValue": "0.5", "pathSegment": "latest", "fallbackLink": "/index.html", "label": "Stable", "canonical": true },
+    { "displayValue": "0.4", "pathSegment": "0.4", "fallbackLink": "/index.html", "label": "EOL", "canonical": false },
     { "displayValue": "0.3", "pathSegment": "0.3", "fallbackLink": "/index.html", "label": "EOL", "canonical": false },
     { "displayValue": "0.2", "pathSegment": "0.2", "fallbackLink": "/index.html", "label": "EOL", "canonical": false }
   ],
@@ -29,6 +30,7 @@
     { "path": "/en/qa/What-is-the-difference-between-a-Java-connect-and-a-Scala-connector.html", "versions": ["latest"] },
     { "path": "/en/qa/Which-dependencies-should-I-set.html", "versions": ["latest"] },
     { "path": "/en/qa/index.html", "versions": ["latest"] },
+    { "path": "/en/reference/AuthenticationPlugin.html", "versions": ["latest"] },
     { "path": "/en/reference/Connector.html", "versions": ["latest"] },
     { "path": "/en/reference/Performance.html", "versions": ["latest"] },
     { "path": "/en/reference/Pooling.html", "versions": ["latest"] },
@@ -72,6 +74,7 @@
     { "path": "/ja/qa/What-is-the-difference-between-a-Java-connect-and-a-Scala-connector.html", "versions": ["latest"] },
     { "path": "/ja/qa/Which-dependencies-should-I-set.html", "versions": ["latest"] },
     { "path": "/ja/qa/index.html", "versions": ["latest"] },
+    { "path": "/ja/reference/AuthenticationPlugin.html", "versions": ["latest"] },
     { "path": "/ja/reference/Connector.html", "versions": ["latest"] },
     { "path": "/ja/reference/Performance.html", "versions": ["latest"] },
     { "path": "/ja/reference/Pooling.html", "versions": ["latest"] },

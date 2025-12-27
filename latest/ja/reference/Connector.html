@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.4</a>
+      <a class="text-link menu-toggle" href="#">Version 0.5</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="index.html">はじめに</a></li>
     <li class="level2 active nav-leaf"><a href="#">コネクタ</a></li>
     <li class="level2 nav-leaf"><a href="Performance.html">パフォーマンス</a></li>
+    <li class="level2 nav-leaf"><a href="AuthenticationPlugin.html">認証プラグイン</a></li>
     <li class="level2 nav-leaf"><a href="Pooling.html">コネクションプーリング</a></li>
   </ul>
   
@@ -210,9 +211,9 @@
     今後このコネクタを使用してより高レイヤーのAPIを提供する予定です。また既存の高レイヤーのAPIとの互換性を持たせることも予定しています。</p>
     <p>使用するにはプロジェクトに以下の依存関係を設定する必要があります。</p>
     <p><strong>JVM</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.4.1&quot;</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.5.0&quot;</span></code></pre>
     <p><strong>JS/Native</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %%% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.4.1&quot;</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %%% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.5.0&quot;</span></code></pre>
     <p><strong>サポートバージョン</strong></p>
     <p>現在のバージョンは以下のバージョンのMySQLをサポートしています。</p>
     <ul>
@@ -336,8 +337,15 @@
       <li>ネイティブプラガブル認証</li>
       <li>SHA-256 プラガブル認証</li>
       <li>SHA-2 プラガブル認証のキャッシュ</li>
+      <li>クリアテキストプラガブル認証</li>
     </ul>
     <p>※ ネイティブプラガブル認証とSHA-256 プラガブル認証はMySQL 8.xから非推奨となったプラグインです。特段理由がない場合はSHA-2 プラガブル認証のキャッシュを使用することを推奨します。</p>
+    <div class="callout warning">
+      <i class="icofont-laika warning">&#xf026;</i>
+      <p><strong>重要なセキュリティ注意事項：</strong>
+      MySQL クリアテキストプラガブル認証は、パスワードを平文でサーバーに送信する認証方式です。この認証プラグインを使用する場合は、必ずSSL/TLS接続を有効にしてください。SSL/TLS接続なしでの使用は、パスワードがネットワーク上で平文として送信されるため、セキュリティ上非常に危険です。</p>
+      <p>この認証プラグインは主にAWS IAM認証やその他の外部認証システムとの統合で使用されます。SSL/TLS接続の設定方法については、<a href="../tutorial/Connection.html#ssl設定を使用したコネクション">チュートリアルのSSL設定セクション</a>を参照してください。</p>
+    </div>
     <p>ldbcのアプリケーションコード上で認証プラグインを意識する必要はありません。ユーザーはMySQLのデータベース上で使用したい認証プラグインで作成されたユーザーを作成し、ldbcのアプリケーションコード上ではそのユーザーを使用してMySQLへの接続を試みるだけで問題ありません。
     ldbcが内部で認証プラグインを判断し、適切な認証プラグインを使用してMySQLへの接続を行います。</p>
     

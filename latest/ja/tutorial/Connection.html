@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.4</a>
+      <a class="text-link menu-toggle" href="#">Version 0.5</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="../reference/">はじめに</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Connector.html">コネクタ</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Performance.html">パフォーマンス</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/AuthenticationPlugin.html">認証プラグイン</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Pooling.html">コネクションプーリング</a></li>
   </ul>
   
@@ -227,7 +228,7 @@
     
     <h3 id="依存関係の追加-1" class="section"><a class="anchor-link left" href="#依存関係の追加-1"><i class="icofont-laika link">&#xef71;</i></a>依存関係の追加</h3>
     <p>まず、必要な依存関係を追加します。jdbcコネクタを使用する場合は、MySQLのコネクタも一緒に追加する必要があります。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">//&gt; dep &quot;io.github.takapi327::jdbc-connector:0.4.1&quot;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">//&gt; dep &quot;io.github.takapi327::jdbc-connector:0.5.0&quot;
 //&gt; dep &quot;com.mysql&quot;:&quot;mysql-connector-j&quot;:&quot;8.4.0&quot;</span></code></pre>
     
     <h3 id="datasourceを用いたコネクション" class="section"><a class="anchor-link left" href="#datasourceを用いたコネクション"><i class="icofont-laika link">&#xef71;</i></a>DataSourceを用いたコネクション</h3>
@@ -291,7 +292,7 @@
     
     <h3 id="依存関係の追加-2" class="section"><a class="anchor-link left" href="#依存関係の追加-2"><i class="icofont-laika link">&#xef71;</i></a>依存関係の追加</h3>
     <p>まず、必要な依存関係を追加します。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">//&gt; dep &quot;io.github.takapi327::ldbc-connector:0.4.1&quot;</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">//&gt; dep &quot;io.github.takapi327::ldbc-connector:0.5.0&quot;</span></code></pre>
     
     <h3 id="基本的な設定でのコネクション" class="section"><a class="anchor-link left" href="#基本的な設定でのコネクション"><i class="icofont-laika link">&#xef71;</i></a>基本的な設定でのコネクション</h3>
     <p>最もシンプルな設定から始めましょう：</p>
@@ -312,6 +313,7 @@
     <h3 id="ssl設定を使用したコネクション" class="section"><a class="anchor-link left" href="#ssl設定を使用したコネクション"><i class="icofont-laika link">&#xef71;</i></a>SSL設定を使用したコネクション</h3>
     <p>セキュアな接続を確立するためにSSL設定を追加できます：</p>
     <p>※ Trustedは全ての証明書を受け入れることに注意してください。これは開発環境向けの設定です。</p>
+    <p>※ MySQL クリアテキストプラガブル認証などの一部の認証プラグインでは、セキュリティ上の理由からSSL/TLS接続が必須です。詳細は<a href="../reference/Connector.html#認証">リファレンスの認証セクション</a>を参照してください。</p>
     <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="type-name">IO</span><span>
 </span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
 

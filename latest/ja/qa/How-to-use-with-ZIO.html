@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.4</a>
+      <a class="text-link menu-toggle" href="#">Version 0.5</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="../reference/">はじめに</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Connector.html">コネクタ</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Performance.html">パフォーマンス</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/AuthenticationPlugin.html">認証プラグイン</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Pooling.html">コネクションプーリング</a></li>
   </ul>
   
@@ -167,7 +168,7 @@
   <p class="header"><a href="#">Q: ZIOで使用する方法は？</a></p>
 
   <ul class="nav-list">
-    <li class="level1 nav-node"><a href="#a-zioで使用する場合-zio-interop-catsを使用します">A: ZIOで使用する場合、<code>zio-interop-cats</code>を使用します。</a></li>
+    <li class="level1 nav-node"><a href="#a-zioで使用する場合-ldbc-zio-interopを使用します">A: ZIOで使用する場合、<code>ldbc-zio-interop</code>を使用します。</a></li>
     <li class="level2 nav-leaf"><a href="#パフォーマンス">パフォーマンス</a></li>
   </ul>
 
@@ -179,33 +180,24 @@
 
     <h1 id="q-zioで使用する方法は" class="title">Q: ZIOで使用する方法は？</h1>
     
-    <h2 id="a-zioで使用する場合-zio-interop-catsを使用します" class="section"><a class="anchor-link left" href="#a-zioで使用する場合-zio-interop-catsを使用します"><i class="icofont-laika link">&#xef71;</i></a>A: ZIOで使用する場合、<code>zio-interop-cats</code>を使用します。</h2>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;dev.zio&quot;</span><span> %% </span><span class="string-literal">&quot;zio-interop-cats&quot;</span><span> % </span><span class="string-literal">&quot;&lt;latest-version&gt;&quot;</span></code></pre>
+    <h2 id="a-zioで使用する場合-ldbc-zio-interopを使用します" class="section"><a class="anchor-link left" href="#a-zioで使用する場合-ldbc-zio-interopを使用します"><i class="icofont-laika link">&#xef71;</i></a>A: ZIOで使用する場合、<code>ldbc-zio-interop</code>を使用します。</h2>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-zio-interop&quot;</span><span> % </span><span class="string-literal">&quot;latest&quot;</span></code></pre>
     <p>以下は、ZIOを使用してldbcを利用するためのサンプルコードです。</p>
-    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">UUID</span><span>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">zio</span><span>.*
 
-</span><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="identifier">std</span><span>.</span><span class="type-name">UUIDGen</span><span>
-
-</span><span class="keyword">import</span><span> </span><span class="identifier">fs2</span><span>.</span><span class="identifier">hashing</span><span>.</span><span class="type-name">Hashing</span><span>
-</span><span class="keyword">import</span><span> </span><span class="identifier">fs2</span><span>.</span><span class="identifier">io</span><span>.</span><span class="identifier">net</span><span>.</span><span class="type-name">Network</span><span>
-
-</span><span class="keyword">import</span><span> </span><span class="identifier">zio</span><span>.*
-</span><span class="keyword">import</span><span> </span><span class="identifier">zio</span><span>.</span><span class="identifier">interop</span><span>.</span><span class="identifier">catz</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">zio</span><span>.</span><span class="identifier">interop</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.*
 
 </span><span class="keyword">object</span><span> </span><span class="type-name">Main</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">ZIOAppDefault</span><span>:
 
-  </span><span class="keyword">given</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="identifier">std</span><span>.</span><span class="type-name">Console</span><span>[</span><span class="type-name">Task</span><span>] = </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="identifier">std</span><span>.</span><span class="type-name">Console</span><span>.</span><span class="identifier">make</span><span>[</span><span class="type-name">Task</span><span>]
-  </span><span class="keyword">given</span><span> </span><span class="type-name">UUIDGen</span><span>[</span><span class="type-name">Task</span><span>] </span><span class="keyword">with</span><span>
-    </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">randomUUID</span><span>: </span><span class="type-name">Task</span><span>[</span><span class="type-name">UUID</span><span>] = </span><span class="type-name">ZIO</span><span>.</span><span class="identifier">attempt</span><span>(</span><span class="type-name">UUID</span><span>.</span><span class="identifier">randomUUID</span><span>())
-  </span><span class="keyword">given</span><span> </span><span class="type-name">Hashing</span><span>[</span><span class="type-name">Task</span><span>] = </span><span class="type-name">Hashing</span><span>.</span><span class="identifier">forSync</span><span>[</span><span class="type-name">Task</span><span>]
-  </span><span class="keyword">given</span><span> </span><span class="type-name">Network</span><span>[</span><span class="type-name">Task</span><span>] = </span><span class="type-name">Network</span><span>.</span><span class="identifier">forAsync</span><span>[</span><span class="type-name">Task</span><span>]
+  </span><span class="keyword">private</span><span> </span><span class="keyword">val</span><span> </span><span class="identifier">datasource</span><span> =
+    </span><span class="type-name">MySQLDataSource</span><span>
+      .</span><span class="identifier">build</span><span>[</span><span class="type-name">Task</span><span>](</span><span class="string-literal">&quot;127.0.0.1&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;ldbc&quot;</span><span>)
+      .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+      .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;world&quot;</span><span>)
+      .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)
 
-  </span><span class="keyword">private</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">datasource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
-    .</span><span class="identifier">build</span><span>[</span><span class="type-name">Task</span><span>](</span><span class="string-literal">&quot;127.0.0.1&quot;</span><span>, </span><span class="number-literal">13306</span><span>, </span><span class="string-literal">&quot;ldbc&quot;</span><span>)
-    .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
-    .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;world&quot;</span><span>)
-    .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)
-  
   </span><span class="keyword">private</span><span> </span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
 
   </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">run</span><span> =

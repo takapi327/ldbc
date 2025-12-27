@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.4</a>
+      <a class="text-link menu-toggle" href="#">Version 0.5</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -110,7 +110,7 @@
   
   <ul class="nav-list">
     <li class="level1 nav-leaf"><a href="../">ldbc</a></li>
-    <li class="level1 nav-leaf"><a href="../migration-notes.html">Migration Note</a></li>
+    <li class="level1 nav-leaf"><a href="../migration-notes.html">Migration Notes</a></li>
     <li class="level1 nav-header">Tutorial</li>
     <li class="level2 nav-leaf"><a href="index.html">Introduction</a></li>
     <li class="level2 nav-leaf"><a href="Setup.html">Setup</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="../reference/">Introduction</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Connector.html">Connector</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Performance.html">Performance</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/AuthenticationPlugin.html">Authentication Plugin</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Pooling.html">Connection pooling</a></li>
   </ul>
   
@@ -227,7 +228,7 @@
     
     <h3 id="adding-dependencies-1" class="section"><a class="anchor-link left" href="#adding-dependencies-1"><i class="icofont-laika link">&#xef71;</i></a>Adding Dependencies</h3>
     <p>First, add the necessary dependencies. When using the jdbc connector, you need to add the MySQL connector as well.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">//&gt; dep &quot;io.github.takapi327::jdbc-connector:0.4.1&quot;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">//&gt; dep &quot;io.github.takapi327::jdbc-connector:0.5.0&quot;
 //&gt; dep &quot;com.mysql&quot;:&quot;mysql-connector-j&quot;:&quot;8.4.0&quot;</span></code></pre>
     
     <h3 id="connection-using-datasource" class="section"><a class="anchor-link left" href="#connection-using-datasource"><i class="icofont-laika link">&#xef71;</i></a>Connection using DataSource</h3>
@@ -293,7 +294,7 @@
     
     <h3 id="adding-dependencies-2" class="section"><a class="anchor-link left" href="#adding-dependencies-2"><i class="icofont-laika link">&#xef71;</i></a>Adding Dependencies</h3>
     <p>First, add the necessary dependency.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">//&gt; dep &quot;io.github.takapi327::ldbc-connector:0.4.1&quot;</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">//&gt; dep &quot;io.github.takapi327::ldbc-connector:0.5.0&quot;</span></code></pre>
     
     <h3 id="connection-with-basic-configuration" class="section"><a class="anchor-link left" href="#connection-with-basic-configuration"><i class="icofont-laika link">&#xef71;</i></a>Connection with Basic Configuration</h3>
     <p>Let&#39;s start with the simplest configuration:</p>
@@ -314,6 +315,7 @@
     <h3 id="connection-with-ssl-configuration" class="section"><a class="anchor-link left" href="#connection-with-ssl-configuration"><i class="icofont-laika link">&#xef71;</i></a>Connection with SSL Configuration</h3>
     <p>You can add SSL configuration to establish a secure connection:</p>
     <p>※ Note that Trusted accepts all certificates. This is a setting for development environments.</p>
+    <p>※ For security reasons, SSL/TLS connections are required for certain authentication plugins, such as MySQL cleartext pluggable authentication. For details, see the <a href="../reference/Connector.html#authentication">authentication section of the reference</a>.</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="type-name">IO</span><span>
 </span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
 

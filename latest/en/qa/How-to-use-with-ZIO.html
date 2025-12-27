@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.4</a>
+      <a class="text-link menu-toggle" href="#">Version 0.5</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -154,6 +154,7 @@
     <li class="level2 nav-leaf"><a href="../../ja/reference/">はじめに</a></li>
     <li class="level2 nav-leaf"><a href="../../ja/reference/Connector.html">コネクタ</a></li>
     <li class="level2 nav-leaf"><a href="../../ja/reference/Performance.html">パフォーマンス</a></li>
+    <li class="level2 nav-leaf"><a href="../../ja/reference/AuthenticationPlugin.html">認証プラグイン</a></li>
     <li class="level2 nav-leaf"><a href="../../ja/reference/Pooling.html">コネクションプーリング</a></li>
   </ul>
   
@@ -167,8 +168,8 @@
   <p class="header"><a href="#">Q: How to use with ZIO?</a></p>
 
   <ul class="nav-list">
-    <li class="level1 nav-node"><a href="#a-for-use-with-zio-use-zio-interop-cats">A: For use with ZIO, use <code>zio-interop-cats</code>.</a></li>
-    <li class="level2 nav-leaf"><a href="#パフォーマンス">パフォーマンス</a></li>
+    <li class="level1 nav-node"><a href="#a-for-use-with-zio-use-ldbc-zio-interop">A: For use with ZIO, use <code>ldbc-zio-interop</code>.</a></li>
+    <li class="level2 nav-leaf"><a href="#performance">Performance</a></li>
   </ul>
 
   <p class="footer"></p>
@@ -179,30 +180,20 @@
 
     <h1 id="q-how-to-use-with-zio" class="title">Q: How to use with ZIO?</h1>
     
-    <h2 id="a-for-use-with-zio-use-zio-interop-cats" class="section"><a class="anchor-link left" href="#a-for-use-with-zio-use-zio-interop-cats"><i class="icofont-laika link">&#xef71;</i></a>A: For use with ZIO, use <code>zio-interop-cats</code>.</h2>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;dev.zio&quot;</span><span> %% </span><span class="string-literal">&quot;zio-interop-cats&quot;</span><span> % </span><span class="string-literal">&quot;&lt;latest-version&gt;&quot;</span></code></pre>
+    <h2 id="a-for-use-with-zio-use-ldbc-zio-interop" class="section"><a class="anchor-link left" href="#a-for-use-with-zio-use-ldbc-zio-interop"><i class="icofont-laika link">&#xef71;</i></a>A: For use with ZIO, use <code>ldbc-zio-interop</code>.</h2>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-zio-interop&quot;</span><span> % </span><span class="string-literal">&quot;latest&quot;</span></code></pre>
     <p>The following is sample code for using ldbc with ZIO.</p>
-    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">UUID</span><span>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">zio</span><span>.*
 
-</span><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="identifier">std</span><span>.</span><span class="type-name">UUIDGen</span><span>
-
-</span><span class="keyword">import</span><span> </span><span class="identifier">fs2</span><span>.</span><span class="identifier">hashing</span><span>.</span><span class="type-name">Hashing</span><span>
-</span><span class="keyword">import</span><span> </span><span class="identifier">fs2</span><span>.</span><span class="identifier">io</span><span>.</span><span class="identifier">net</span><span>.</span><span class="type-name">Network</span><span>
-
-</span><span class="keyword">import</span><span> </span><span class="identifier">zio</span><span>.*
-</span><span class="keyword">import</span><span> </span><span class="identifier">zio</span><span>.</span><span class="identifier">interop</span><span>.</span><span class="identifier">catz</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">zio</span><span>.</span><span class="identifier">interop</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.*
 
 </span><span class="keyword">object</span><span> </span><span class="type-name">Main</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">ZIOAppDefault</span><span>:
 
-  </span><span class="keyword">given</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="identifier">std</span><span>.</span><span class="type-name">Console</span><span>[</span><span class="type-name">Task</span><span>] = </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="identifier">std</span><span>.</span><span class="type-name">Console</span><span>.</span><span class="identifier">make</span><span>[</span><span class="type-name">Task</span><span>]
-  </span><span class="keyword">given</span><span> </span><span class="type-name">UUIDGen</span><span>[</span><span class="type-name">Task</span><span>] </span><span class="keyword">with</span><span>
-    </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">randomUUID</span><span>: </span><span class="type-name">Task</span><span>[</span><span class="type-name">UUID</span><span>] = </span><span class="type-name">ZIO</span><span>.</span><span class="identifier">attempt</span><span>(</span><span class="type-name">UUID</span><span>.</span><span class="identifier">randomUUID</span><span>())
-  </span><span class="keyword">given</span><span> </span><span class="type-name">Hashing</span><span>[</span><span class="type-name">Task</span><span>] = </span><span class="type-name">Hashing</span><span>.</span><span class="identifier">forSync</span><span>[</span><span class="type-name">Task</span><span>]
-  </span><span class="keyword">given</span><span> </span><span class="type-name">Network</span><span>[</span><span class="type-name">Task</span><span>] = </span><span class="type-name">Network</span><span>.</span><span class="identifier">forAsync</span><span>[</span><span class="type-name">Task</span><span>]
-
-  </span><span class="keyword">private</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">datasource</span><span> =
+  </span><span class="keyword">private</span><span> </span><span class="keyword">val</span><span> </span><span class="identifier">datasource</span><span> =
     </span><span class="type-name">MySQLDataSource</span><span>
-      .</span><span class="identifier">build</span><span>[</span><span class="type-name">Task</span><span>](</span><span class="string-literal">&quot;127.0.0.1&quot;</span><span>, </span><span class="number-literal">13306</span><span>, </span><span class="string-literal">&quot;ldbc&quot;</span><span>)
+      .</span><span class="identifier">build</span><span>[</span><span class="type-name">Task</span><span>](</span><span class="string-literal">&quot;127.0.0.1&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;ldbc&quot;</span><span>)
       .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
       .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;world&quot;</span><span>)
       .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)
@@ -218,7 +209,7 @@
         </span><span class="type-name">Console</span><span>.</span><span class="identifier">printLine</span><span>(</span><span class="identifier">cities</span><span>)
       }</span></code></pre>
     
-    <h3 id="パフォーマンス" class="section"><a class="anchor-link left" href="#パフォーマンス"><i class="icofont-laika link">&#xef71;</i></a>パフォーマンス</h3>
+    <h3 id="performance" class="section"><a class="anchor-link left" href="#performance"><i class="icofont-laika link">&#xef71;</i></a>Performance</h3>
     <p>Performance results from the Cats Effect to ZIO conversion are shown below.</p>
     <div class="default-image-block">
       <img src="../../img/connector/Select_effect.svg" alt="Select Benchmark for Effect System">

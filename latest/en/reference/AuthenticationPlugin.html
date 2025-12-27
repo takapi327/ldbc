@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="Typelevel Laika + Helium Theme" />
+  <title>Authentication Plugin</title>
+  
+  <meta name="author" content="ldbc contributors"/>
+  
+  <meta name="author" content="Takahiko Tominaga"/>
+  
+  
+  <meta name="description" content="Documentation for ldbc"/>
+  
+  
+  
+  <link rel="icon" sizes="32x32" type="image/png" href="https://typelevel.org/img/favicon.png"/>
+  
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700">
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Mono:500">
+  
+  <link rel="stylesheet" type="text/css" href="../../helium/site/icofont.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../helium/site/laika-helium.css" />
+    <link rel="stylesheet" type="text/css" href="../../css/site.css" />
+  <script src="../../helium/site/laika-helium.js"></script>
+    <script src="../../helium/site/laika-versions.js"></script>
+  <script>initVersions("../../../", "/en/reference/AuthenticationPlugin.html", "latest", null);</script>
+  
+  <script> /* for avoiding page load transitions */ </script>
+</head>
+
+<body>
+
+<header id="top-bar" class="light-default dark-default">
+
+  <div class="row">
+    <a id="nav-icon">
+      <i class="icofont-laika navigationMenu" title="Navigation">&#xefa2;</i>
+    </a>
+    
+    <div class="menu-container version-menu">
+      <a class="text-link menu-toggle" href="#">Version 0.5</a>
+      <nav class="menu-content">
+        <ul class="nav-list">
+          <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <a class="image-link" href="https://typelevel.org"><img src="https://typelevel.org/img/logo.svg"></a>
+
+  <div class="row links">
+    
+    <a class="icon-link svg-link" href="https://github.com/takapi327/ldbc"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>  
+
+</header>
+
+<nav id="sidebar">
+
+  <div class="row">
+    
+    <a class="icon-link svg-link" href="https://github.com/takapi327/ldbc"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>
+
+  
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="../">ldbc</a></li>
+    <li class="level1 nav-leaf"><a href="../migration-notes.html">Migration Notes</a></li>
+    <li class="level1 nav-header">Tutorial</li>
+    <li class="level2 nav-leaf"><a href="../tutorial/">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Setup.html">Setup</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Connection.html">Connection</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Simple-Program.html">Simple Programs</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Database-Operations.html">Database Operations</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Parameterized-Queries.html">Parameterized Queries</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Selecting-Data.html">Selecting Data</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Updating-Data.html">Updating Data</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Error-Handling.html">Error Handling</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Logging.html">logging</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Custom-Data-Type.html">Custom Data Types</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Query-Builder.html">Query Builder</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Schema.html">Schema</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Schema-Code-Generation.html">Schema Code Generation</a></li>
+    <li class="level1 nav-header">Examples</li>
+    <li class="level2 nav-leaf"><a href="../examples/">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/Http4s.html">Http4s</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/HikariCP.html">HikariCP</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/Otel.html">OpenTelemetry</a></li>
+    <li class="level1 nav-header">QA</li>
+    <li class="level2 nav-leaf"><a href="../qa/">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/What-is-ldbc.html">Q: What is ldbc?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Which-dependencies-should-I-set.html">Q: Which dependencies should I set?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/What-is-the-difference-between-a-Java-connect-and-a-Scala-connector.html">Q: What is the difference between a Java connector and a Scala connector?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-define-complex-queries-with-plain-queries.html">Q: How to define complex queries with plain queries?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-my-own-type.html">Q: How do I use my own type?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-nested-models.html">Q: How do I use nested models?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-perform-DDL-with-schema.html">Q: How to perform DDL with schema?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-change-column-names-in-Query-Builder.html">Q: How to change column names in Query Builder?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-change-the-format-of-column-names-using-the-schema.html">Q: How to change the format of column names using the schema?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-add-processing-before-and-after-the-connection-is-established.html">Q: How do I add processing before and after the connection is established?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Implicit-search-problem-too-large.html">Q: How to handle the `Implicit search problem too large.` error?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-use-scala-connector-connection-pool.html">Q: How to use connection pool with Scala connector?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Is-there-a-way-to-stream-query-results-asynchronously.html">Q: Is there a way to stream query results asynchronously?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Is-there-a-function-to-limit-the-number-of-concurrent-queries.html">Q: Is there a function to limit the number of concurrent queries?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-handle-multiple-databases.html">Q: How to handle multiple databases (multi-tenant environment)?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-use-with-ZIO.html">Q: How to use with ZIO?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-the-Enum-type.html">Q: How to use the Enum type?</a></li>
+    <li class="level1 nav-header">Reference</li>
+    <li class="level2 nav-leaf"><a href="index.html">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="Connector.html">Connector</a></li>
+    <li class="level2 nav-leaf"><a href="Performance.html">Performance</a></li>
+    <li class="level2 active nav-leaf"><a href="#">Authentication Plugin</a></li>
+    <li class="level2 nav-leaf"><a href="Pooling.html">Connection pooling</a></li>
+  </ul>
+  
+
+</nav>
+
+<div id="container">
+
+  
+<nav id="page-nav">
+  <p class="header"><a href="#">Authentication Plugin</a></p>
+
+  <ul class="nav-list">
+    <li class="level1 nav-node"><a href="#supported-authentication-methods">Supported Authentication Methods</a></li>
+    <li class="level2 nav-leaf"><a href="#_1-mysql-clear-password-authentication">1. MySQL Clear Password Authentication</a></li>
+    <li class="level2 nav-leaf"><a href="#_2-aws-aurora-iam-authentication-aws-aurora-iam-authentication">2. AWS Aurora IAM Authentication {#aws-aurora-iam-authentication}</a></li>
+    <li class="level1 nav-node"><a href="#authentication-plugin-configuration">Authentication Plugin Configuration</a></li>
+    <li class="level2 nav-leaf"><a href="#required-dependencies">Required Dependencies</a></li>
+    <li class="level1 nav-node"><a href="#authentication-plugin-customization">Authentication Plugin Customization</a></li>
+    <li class="level2 nav-leaf"><a href="#aws-sdk-for-java">AWS SDK for Java</a></li>
+  </ul>
+
+  <p class="footer"></p>
+</nav>
+
+
+  <main class="content">
+
+    <h1 id="authentication-plugin" class="title">Authentication Plugin</h1>
+    <p>In ldbc, you can use authentication plugins implemented in pure Scala3, such as AWS Aurora IAM authentication, in addition to the MySQL authentication plugins provided by default.</p>
+    
+    <h2 id="supported-authentication-methods" class="section"><a class="anchor-link left" href="#supported-authentication-methods"><i class="icofont-laika link">&#xef71;</i></a>Supported Authentication Methods</h2>
+    <p>By default, three authentication methods are supported.</p>
+    <ul>
+      <li>Native Pluggable Authentication (MysqlNativePasswordPlugin)</li>
+      <li>SHA-256 Pluggable Authentication (Sha256PasswordPlugin)</li>
+      <li>Caching SHA-2 Pluggable Authentication (CachingSha2PasswordPlugin)</li>
+    </ul>
+    <p>Apart from the above, ldbc currently supports an additional 2 authentication methods.</p>
+    
+    <h3 id="_1-mysql-clear-password-authentication" class="section"><a class="anchor-link left" href="#_1-mysql-clear-password-authentication"><i class="icofont-laika link">&#xef71;</i></a>1. MySQL Clear Password Authentication</h3>
+    <p>When using plain text password authentication:</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">authentication</span><span>.</span><span class="identifier">plugin</span><span>.*
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">datasource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](
+    </span><span class="identifier">host</span><span> = </span><span class="string-literal">&quot;localhost&quot;</span><span>,
+    </span><span class="identifier">port</span><span> = </span><span class="number-literal">3306</span><span>,
+    </span><span class="identifier">user</span><span> = </span><span class="string-literal">&quot;cleartext-user&quot;</span><span>
+  )
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;plaintext-password&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;mydb&quot;</span><span>)
+  .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)  </span><span class="comment">// SSL required for security
+</span><span>  .</span><span class="identifier">setDefaultAuthenticationPlugin</span><span>(</span><span class="type-name">MysqlClearPasswordPlugin</span><span>)</span></code></pre>
+    <p><strong>Note</strong>: For security reasons, SSL/TLS connection is required when using Clear Password authentication.</p>
+    
+    <h3 id="_2-aws-aurora-iam-authentication-aws-aurora-iam-authentication" class="section"><a class="anchor-link left" href="#_2-aws-aurora-iam-authentication-aws-aurora-iam-authentication"><i class="icofont-laika link">&#xef71;</i></a>2. AWS Aurora IAM Authentication {#aws-aurora-iam-authentication}</h3>
+    <p>When using IAM authentication with AWS Aurora:</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">amazon</span><span>.</span><span class="identifier">plugin</span><span>.</span><span class="type-name">AwsIamAuthenticationPlugin</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">hostname</span><span> = </span><span class="string-literal">&quot;aurora-cluster.cluster-xxx.ap-northeast-1.rds.amazonaws.com&quot;</span><span>
+</span><span class="keyword">val</span><span> </span><span class="identifier">username</span><span> = </span><span class="string-literal">&quot;iam-user&quot;</span><span>
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">config</span><span> = </span><span class="type-name">MySQLConfig</span><span>.</span><span class="identifier">default</span><span>
+  .</span><span class="identifier">setHost</span><span>(</span><span class="identifier">hostname</span><span>)
+  .</span><span class="identifier">setUser</span><span>(</span><span class="identifier">username</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;production&quot;</span><span>)
+  .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)  </span><span class="comment">// SSL required for IAM authentication
+</span><span>
+</span><span class="keyword">val</span><span> </span><span class="identifier">awsPlugin</span><span> = </span><span class="type-name">AwsIamAuthenticationPlugin</span><span>.</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;ap-northeast-1&quot;</span><span>, </span><span class="identifier">hostname</span><span>, </span><span class="identifier">username</span><span>)
+
+</span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">config</span><span>, </span><span class="identifier">plugins</span><span> = </span><span class="type-name">List</span><span>(</span><span class="identifier">awsPlugin</span><span>)).</span><span class="identifier">use</span><span> { </span><span class="identifier">datasource</span><span> =&gt;
+  </span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
+  </span><span class="comment">// Query execution
+</span><span>}</span></code></pre>
+    
+    <h2 id="authentication-plugin-configuration" class="section"><a class="anchor-link left" href="#authentication-plugin-configuration"><i class="icofont-laika link">&#xef71;</i></a>Authentication Plugin Configuration</h2>
+    <p>When combining multiple authentication plugins:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">plugins</span><span> = </span><span class="type-name">List</span><span>(
+  </span><span class="type-name">MysqlClearPasswordPlugin</span><span>,
+  </span><span class="identifier">awsIamPlugin</span><span>
+)
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">datasource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">config</span><span>, </span><span class="identifier">plugins</span><span> = </span><span class="identifier">plugins</span><span>)</span></code></pre>
+    
+    <h3 id="required-dependencies" class="section"><a class="anchor-link left" href="#required-dependencies"><i class="icofont-laika link">&#xef71;</i></a>Required Dependencies</h3>
+    <p>When using each authentication plugin, add the corresponding dependencies:</p>
+    <p><strong>MySQL Clear Password Authentication:</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-authentication-plugin&quot;</span><span> % </span><span class="string-literal">&quot;0.5.0&quot;</span></code></pre>
+    <p><strong>AWS Aurora IAM Authentication:</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-aws-authentication-plugin&quot;</span><span> % </span><span class="string-literal">&quot;0.5.0&quot;</span></code></pre>
+    
+    <h2 id="authentication-plugin-customization" class="section"><a class="anchor-link left" href="#authentication-plugin-customization"><i class="icofont-laika link">&#xef71;</i></a>Authentication Plugin Customization</h2>
+    <p>ldbc allows you to integrate custom authentication plugins.
+    It is possible to create and use plugins for services that are not currently supported, such as Azure Database for MySQL.</p>
+    <p>Creating authentication plugins can be achieved by using <code>AuthenticationPlugin</code>.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">class</span><span> </span><span class="type-name">CustomAuthenticationPlugin</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">AuthenticationPlugin</span><span>[</span><span class="type-name">IO</span><span>]:
+  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">name</span><span>: </span><span class="type-name">PluginName</span><span> = ???
+  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">requiresConfidentiality</span><span>: </span><span class="type-name">Boolean</span><span> = ???
+  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">hashPassword</span><span>(</span><span class="identifier">password</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">scramble</span><span>: </span><span class="type-name">Array</span><span>[</span><span class="type-name">Byte</span><span>]): </span><span class="type-name">IO</span><span>[</span><span class="type-name">ByteVector</span><span>] = ???</span></code></pre>
+    <p>There are three properties that must be configured for authentication plugins:</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Property</th>
+          <th>Details</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>name</code></td>
+          <td>Plugin name</td>
+        </tr>
+        <tr>
+          <td><code>requiresConfidentiality</code></td>
+          <td>Whether SSL is required</td>
+        </tr>
+        <tr>
+          <td><code>hashPassword</code></td>
+          <td>Password processing</td>
+        </tr>
+      </tbody>
+    </table>
+    <p><code>name</code> is the plugin name used by the authentication plugin, which must be a plugin name supported by MySQL.</p>
+    <p>The currently configurable plugin types are as follows:</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Plugin Name</th>
+          <th>Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>mysql_clear_password</code></td>
+          <td>Clear text password transmission (client side)</td>
+        </tr>
+        <tr>
+          <td><code>mysql_native_password</code></td>
+          <td>MySQL traditional password authentication (4.1 and later)</td>
+        </tr>
+        <tr>
+          <td><code>sha256_password</code></td>
+          <td>SHA-256 password authentication</td>
+        </tr>
+        <tr>
+          <td><code>caching_sha2_password</code></td>
+          <td>SHA-256 based authentication with caching (MySQL 8.0 default)</td>
+        </tr>
+        <tr>
+          <td><code>mysql_old_password</code></td>
+          <td>Legacy password authentication (MySQL 4.1 and earlier, deprecated in 5.7.5)</td>
+        </tr>
+        <tr>
+          <td><code>authentication_windows</code></td>
+          <td>Windows authentication</td>
+        </tr>
+        <tr>
+          <td><code>authentication_pam</code></td>
+          <td>PAM (Pluggable Authentication Modules) authentication</td>
+        </tr>
+        <tr>
+          <td><code>authentication_ldap_simple</code></td>
+          <td>LDAP simple authentication</td>
+        </tr>
+        <tr>
+          <td><code>authentication_ldap_sasl</code></td>
+          <td>LDAP SASL authentication</td>
+        </tr>
+        <tr>
+          <td><code>authentication_kerberos</code></td>
+          <td>Kerberos authentication</td>
+        </tr>
+        <tr>
+          <td><code>authentication_fido</code></td>
+          <td>FIDO/WebAuthn authentication (passwordless)</td>
+        </tr>
+        <tr>
+          <td><code>authentication_webauthn</code></td>
+          <td>WebAuthn authentication (FIDO2 compatible)</td>
+        </tr>
+        <tr>
+          <td><code>mysql_no_login</code></td>
+          <td>For non-login accounts (for proxy/stored programs)</td>
+        </tr>
+        <tr>
+          <td><code>test_plugin_server</code></td>
+          <td>Test authentication plugin</td>
+        </tr>
+        <tr>
+          <td><code>auth_socket</code></td>
+          <td>OS authentication via UNIX socket</td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <h3 id="aws-sdk-for-java" class="section"><a class="anchor-link left" href="#aws-sdk-for-java"><i class="icofont-laika link">&#xef71;</i></a>AWS SDK for Java</h3>
+    <p>By utilizing authentication plugin customization, you can also implement AWS Aurora IAM authentication using the AWS SDK for Java.</p>
+    <pre class="keep-together pdf epub"><code class="sbt">lazy val project = project.in(file(&quot;.&quot;))
+  .settings(
+    libraryDependencies ++= Seq(
+      &quot;software.amazon.awssdk&quot; % &quot;rds&quot; % &quot;2.40.16&quot;,
+      &quot;software.amazon.awssdk&quot; % &quot;auth&quot; % &quot;2.40.16&quot;
+    ) 
+  )</code></pre>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="type-name">IO</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">software</span><span>.</span><span class="identifier">amazon</span><span>.</span><span class="identifier">awssdk</span><span>.</span><span class="identifier">auth</span><span>.</span><span class="identifier">credentials</span><span>.</span><span class="type-name">DefaultCredentialsProvider</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">software</span><span>.</span><span class="identifier">amazon</span><span>.</span><span class="identifier">awssdk</span><span>.</span><span class="identifier">regions</span><span>.</span><span class="type-name">Region</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">software</span><span>.</span><span class="identifier">amazon</span><span>.</span><span class="identifier">awssdk</span><span>.</span><span class="identifier">services</span><span>.</span><span class="identifier">rds</span><span>.</span><span class="type-name">RdsUtilities</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">software</span><span>.</span><span class="identifier">amazon</span><span>.</span><span class="identifier">awssdk</span><span>.</span><span class="identifier">services</span><span>.</span><span class="identifier">rds</span><span>.</span><span class="identifier">model</span><span>.</span><span class="type-name">GenerateAuthenticationTokenRequest</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">scodec</span><span>.</span><span class="identifier">bits</span><span>.</span><span class="type-name">ByteVector</span><span>
+
+</span><span class="keyword">import</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">nio</span><span>.</span><span class="identifier">charset</span><span>.</span><span class="type-name">StandardCharsets</span><span>
+
+</span><span class="keyword">class</span><span> </span><span class="type-name">AwsSdkIamAuthenticationPlugin</span><span>(
+  </span><span class="identifier">host</span><span>: </span><span class="type-name">String</span><span>,
+  </span><span class="identifier">port</span><span>: </span><span class="type-name">Int</span><span>,
+  </span><span class="identifier">user</span><span>: </span><span class="type-name">String</span><span>,
+  </span><span class="identifier">region</span><span>: </span><span class="type-name">Region</span><span>
+) </span><span class="keyword">extends</span><span> </span><span class="type-name">AuthenticationPlugin</span><span>[</span><span class="type-name">IO</span><span>]:
+
+  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">name</span><span>: </span><span class="type-name">PluginName</span><span> = </span><span class="type-name">MYSQL_CLEAR_PASSWORD</span><span>
+
+  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">requiresConfidentiality</span><span>: </span><span class="type-name">Boolean</span><span> = </span><span class="boolean-literal">true</span><span>
+
+  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">hashPassword</span><span>(</span><span class="identifier">password</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">scramble</span><span>: </span><span class="type-name">Array</span><span>[</span><span class="type-name">Byte</span><span>]): </span><span class="type-name">IO</span><span>[</span><span class="type-name">ByteVector</span><span>] =
+    </span><span class="type-name">IO</span><span>.</span><span class="identifier">blocking</span><span> {
+      </span><span class="keyword">val</span><span> </span><span class="identifier">credentialsProvider</span><span> = </span><span class="type-name">DefaultCredentialsProvider</span><span>.</span><span class="identifier">builder</span><span>().</span><span class="identifier">build</span><span>()
+
+      </span><span class="keyword">val</span><span> </span><span class="identifier">rdsUtilities</span><span> = </span><span class="type-name">RdsUtilities</span><span>.</span><span class="identifier">builder</span><span>()
+        .</span><span class="identifier">region</span><span>(</span><span class="identifier">region</span><span>)
+        .</span><span class="identifier">credentialsProvider</span><span>(</span><span class="identifier">credentialsProvider</span><span>)
+        .</span><span class="identifier">build</span><span>()
+
+      </span><span class="keyword">val</span><span> </span><span class="identifier">request</span><span> = </span><span class="type-name">GenerateAuthenticationTokenRequest</span><span>.</span><span class="identifier">builder</span><span>()
+        .</span><span class="identifier">hostname</span><span>(</span><span class="identifier">host</span><span>)
+        .</span><span class="identifier">port</span><span>(</span><span class="identifier">port</span><span>)
+        .</span><span class="identifier">username</span><span>(</span><span class="identifier">user</span><span>)
+        .</span><span class="identifier">build</span><span>()
+
+      </span><span class="keyword">val</span><span> </span><span class="identifier">authToken</span><span> = </span><span class="identifier">rdsUtilities</span><span>.</span><span class="identifier">generateAuthenticationToken</span><span>(</span><span class="identifier">request</span><span>)
+
+      </span><span class="type-name">ByteVector</span><span>(</span><span class="identifier">authToken</span><span>.</span><span class="identifier">getBytes</span><span>(</span><span class="type-name">StandardCharsets</span><span>.</span><span class="type-name">UTF_8</span><span>)) :+ </span><span class="number-literal">0</span><span>.</span><span class="identifier">toByte</span><span>
+    }</span></code></pre>
+
+    
+<hr class="footer-rule"/>
+<footer>
+  ldbc is a <a href="https://typelevel.org/">Typelevel</a> project distributed under the <a href="https://img.shields.io/badge/license-MIT-green">MIT</a> license.
+</footer>
+
+
+  </main>
+
+</div>
+
+</body>
+
+</html>
