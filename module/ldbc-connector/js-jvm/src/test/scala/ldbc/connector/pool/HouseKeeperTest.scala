@@ -275,7 +275,6 @@ class HouseKeeperTest extends FTestPlatform:
         yield
           // Connections should be validated and maintained
           assert(finalStatus.total >= 1, "Should maintain at least minimum connections")
-      // Connections should be validated and maintained
     }
   }
 
