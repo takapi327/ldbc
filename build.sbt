@@ -57,7 +57,7 @@ lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "twiddles-core"     % "0.8.0",
-      "co.fs2"        %%% "fs2-core"          % "3.12.0",
+      "co.fs2"        %%% "fs2-core"          % "3.12.2",
       "org.typelevel" %%% "munit-cats-effect" % "2.1.0" % Test
     )
   )
