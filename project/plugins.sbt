@@ -3,8 +3,8 @@
   */
 
 addSbtPlugin("pl.project13.scala" % "sbt-jmh"                                     % "0.4.8")
-addSbtPlugin("org.typelevel"      % "sbt-typelevel"                               % "0.8.3")
-addSbtPlugin("org.typelevel"      % "sbt-typelevel-site"                          % "0.8.3")
+addSbtPlugin("org.typelevel"      % "sbt-typelevel"                               % "0.8.4")
+addSbtPlugin("org.typelevel"      % "sbt-typelevel-site"                          % "0.8.4")
 addSbtPlugin("org.scala-js"       % "sbt-scalajs"                                 % "1.20.1")
 addSbtPlugin("org.scala-native"   % "sbt-scala-native"                            % "0.5.9")
 addSbtPlugin("com.armanbilge"     % "sbt-scala-native-config-brew-github-actions" % "0.4.0")
