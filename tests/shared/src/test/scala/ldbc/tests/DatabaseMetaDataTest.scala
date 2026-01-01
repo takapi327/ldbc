@@ -2100,7 +2100,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for metaData <- conn.getMetaData()
         yield metaData.getJDBCMinorVersion()
       },
-      if prefix == "jdbc" then 2 else 5
+      if prefix == "jdbc" then 2 else 6
     )
   }
 
