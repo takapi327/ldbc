@@ -180,7 +180,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for metaData <- conn.getMetaData()
         yield metaData.getDriverMinorVersion()
       },
-      if prefix == "jdbc" then 4 else 5
+      if prefix == "jdbc" then 4 else 6
     )
   }
 
