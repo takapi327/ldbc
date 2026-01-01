@@ -1,23 +1,4 @@
 services:
-  mysql8.x:
-    image: mysql:8.4.7
-    container_name: ldbc-mysql8.x
-    platform: linux/arm64
-    environment:
-      MYSQL_USER: 'ldbc'
-      MYSQL_PASSWORD: 'password'
-      MYSQL_ROOT_PASSWORD: 'root'
-    ports:
-      - 13306:3306
-    volumes:
-      - ./database:/docker-entrypoint-initdb.d
-      - ./database/mysql-8.x/my.cnf:/etc/mysql/conf.d/my.cnf
-      - ./database/ssl:/etc/mysql/ssl
-    healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
-      timeout: 20s
-      retries: 10
-
   mysql9.x:
     image: mysql:9.0.0
     container_name: ldbc-mysql9.x
@@ -27,10 +8,39 @@ services:
       MYSQL_PASSWORD: 'password'
       MYSQL_ROOT_PASSWORD: 'root'
     ports:
+      - 13306:3306
+    volumes:
+      - ./database/benchmark.sql:/docker-entrypoint-initdb.d/01-benchmark.sql
+      - ./database/connector_test.sql:/docker-entrypoint-initdb.d/02-connector_test.sql
+      - ./database/world.sql:/docker-entrypoint-initdb.d/03-world.sql
+      - ./database/world2.sql:/docker-entrypoint-initdb.d/04-world2.sql
+      - ./database/world3.sql:/docker-entrypoint-initdb.d/05-world3.sql
+      - ./database/mysql-9.x/mysql_user.sql:/docker-entrypoint-initdb.d/99-mysql_user.sql
+      - ./database/mysql-9.x/my.cnf:/etc/mysql/conf.d/my.cnf
+      - ./database/ssl:/etc/mysql/ssl
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      timeout: 20s
+      retries: 10
+
+  mysql8.x:
+    image: mysql:8.4.7
+    container_name: ldbc-mysql8.x
+    platform: linux/arm64
+    environment:
+      MYSQL_USER: 'ldbc'
+      MYSQL_PASSWORD: 'password'
+      MYSQL_ROOT_PASSWORD: 'root'
+    ports:
       - 13307:3306
     volumes:
-      - ./database:/docker-entrypoint-initdb.d
-      - ./database/mysql-9.x/my.cnf:/etc/mysql/conf.d/my.cnf
+      - ./database/benchmark.sql:/docker-entrypoint-initdb.d/01-benchmark.sql
+      - ./database/connector_test.sql:/docker-entrypoint-initdb.d/02-connector_test.sql
+      - ./database/world.sql:/docker-entrypoint-initdb.d/03-world.sql
+      - ./database/world2.sql:/docker-entrypoint-initdb.d/04-world2.sql
+      - ./database/world3.sql:/docker-entrypoint-initdb.d/05-world3.sql
+      - ./database/mysql-8.x/mysql_user.sql:/docker-entrypoint-initdb.d/99-mysql_user.sql
+      - ./database/mysql-8.x/my.cnf:/etc/mysql/conf.d/my.cnf
       - ./database/ssl:/etc/mysql/ssl
     healthcheck:
       test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
