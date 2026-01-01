@@ -1,8 +1,8 @@
 services:
-  mysql:
-    image: mysql:9.0.0
-    container_name: ldbc
-    platform: linux/amd64
+  mysql8.x:
+    image: mysql:8.4.7
+    container_name: ldbc-mysql8.x
+    platform: linux/arm64
     environment:
       MYSQL_USER: 'ldbc'
       MYSQL_PASSWORD: 'password'
@@ -11,7 +11,26 @@ services:
       - 13306:3306
     volumes:
       - ./database:/docker-entrypoint-initdb.d
-      - ./database/my.cnf:/etc/mysql/conf.d/my.cnf
+      - ./database/mysql-8.x/my.cnf:/etc/mysql/conf.d/my.cnf
+      - ./database/ssl:/etc/mysql/ssl
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      timeout: 20s
+      retries: 10
+
+  mysql9.x:
+    image: mysql:9.0.0
+    container_name: ldbc-mysql9.x
+    platform: linux/arm64
+    environment:
+      MYSQL_USER: 'ldbc'
+      MYSQL_PASSWORD: 'password'
+      MYSQL_ROOT_PASSWORD: 'root'
+    ports:
+      - 13307:3306
+    volumes:
+      - ./database:/docker-entrypoint-initdb.d
+      - ./database/mysql-9.x/my.cnf:/etc/mysql/conf.d/my.cnf
       - ./database/ssl:/etc/mysql/ssl
     healthcheck:
       test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
@@ -20,7 +39,7 @@ services:
 
   localstack:
     image: localstack/localstack:latest
-    platform: linux/amd64
+    platform: linux/arm64
     container_name: ldbc-localstack
     ports:
       - "4566:4566"
