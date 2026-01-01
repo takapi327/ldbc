@@ -1960,8 +1960,8 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
             MysqlType.SMALLINT_UNSIGNED | MysqlType.TINYINT | MysqlType.TINYINT_UNSIGNED =>
             Some("true")
           case MysqlType.DOUBLE | MysqlType.DOUBLE_UNSIGNED | MysqlType.FLOAT | MysqlType.FLOAT_UNSIGNED =>
-            val supportsAutoIncrement = protocol.initialPacket.serverVersion.compare(Version(8, 4, 0)) >= 0
-            if supportsAutoIncrement then Some("true") else Some("false")
+            val isLegacyVersion = protocol.initialPacket.serverVersion.compare(Version(8, 4, 0)) < 0
+            if isLegacyVersion then Some("true") else Some("false")
           case _ => Some("false")
       ),                   // AUTO_INCREMENT
       Some(mysqlType.name) // LOCAL_TYPE_NAME
