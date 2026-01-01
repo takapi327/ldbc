@@ -619,7 +619,7 @@ class ConnectionTest extends FTestPlatform:
 
     assertIO(
       connection.use(_.getMetaData().map(_.getDatabaseProductVersion())),
-      "8.4.0"
+      "9.0.0"
     )
   }
 
