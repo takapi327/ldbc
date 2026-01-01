@@ -6,12 +6,13 @@
 
 package ldbc.connector.authenticator
 
-import org.typelevel.otel4s.trace.Tracer
-
 import cats.effect.*
+
+import org.typelevel.otel4s.trace.Tracer
 
 import ldbc.connector.*
 import ldbc.connector.exception.*
+
 import ldbc.authentication.plugin.MysqlClearPasswordPlugin
 
 class MysqlNativePasswordTest extends FTestPlatform:
