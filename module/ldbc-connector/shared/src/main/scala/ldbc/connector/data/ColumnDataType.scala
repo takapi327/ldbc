@@ -37,6 +37,10 @@ enum ColumnDataType(val code: Long, val name: String):
   case MYSQL_TYPE_TIMESTAMP2  extends ColumnDataType(0x11, "TIMESTAMP")
   case MYSQL_TYPE_DATETIME2   extends ColumnDataType(0x12, "DATETIME") // Internal to MySQL. Not used in protocol
   case MYSQL_TYPE_TIME2       extends ColumnDataType(0x13, "TIME")     // Internal to MySQL. Not used in protocol
+  case MYSQL_TYPE_TYPED_ARRAY       extends ColumnDataType(0x14, "TYPED_ARRAY") // < Used for replication only
+  case MYSQL_TYPE_VECTOR extends ColumnDataType(0xF2, "VECTOR")
+  case MYSQL_TYPE_INVALID extends ColumnDataType(0xF3, "INVALID")
+  case MYSQL_TYPE_BOOL extends ColumnDataType(0xF4, "BOOL")
   case MYSQL_TYPE_JSON        extends ColumnDataType(0xf5, "JSON")
   case MYSQL_TYPE_NEWDECIMAL  extends ColumnDataType(0xf6, "DECIMAL")
   case MYSQL_TYPE_ENUM        extends ColumnDataType(0xf7, "ENUM")
