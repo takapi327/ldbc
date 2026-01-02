@@ -690,3 +690,41 @@ class ServerPreparedStatementQueryTest extends FTestPlatform:
       List(("a,b", null))
     )
   }
+
+  test("Server PreparedStatement should be able to retrieve JSON type records.") {
+    assertIO(
+      connection.use { conn =>
+        for
+          statement <- conn.serverPreparedStatement("SELECT `json`, `json_null` FROM `all_types` WHERE JSON_EXTRACT(`json`, '$.a') = ?")
+          resultSet <- statement.setInt(1, 1) *> statement.executeQuery()
+          decoded   <- Monad[IO].whileM[List, (String, String)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getString(1)
+                         v2 <- resultSet.getString(2)
+                       yield (v1, v2)
+                     }
+          _ <- statement.close()
+        yield decoded
+      },
+      List(("{\"a\": 1}", null))
+    )
+  }
+
+  test("Server PreparedStatement should be able to retrieve BOOLEAN type records.") {
+    assertIO(
+      connection.use { conn =>
+        for
+          statement <- conn.serverPreparedStatement("SELECT `bool`, `bool_null` FROM `all_types` WHERE `bool` = ?")
+          resultSet <- statement.setBoolean(1, true) *> statement.executeQuery()
+          decoded   <- Monad[IO].whileM[List, (Boolean, Boolean)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getBoolean(1)
+                         v2 <- resultSet.getBoolean(2)
+                       yield (v1, v2)
+                     }
+          _ <- statement.close()
+        yield decoded
+      },
+      List((true, false))
+    )
+  }
