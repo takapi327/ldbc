@@ -43,17 +43,17 @@ object BinaryProtocolResultSetRowPacket:
         case MYSQL_TYPE_TIME                            => time.map(_.map(timeFormatter(0).format(_)))
         case MYSQL_TYPE_NEWDATE                         =>
           timestamp.map(_.map(localDateTime => localDateFormatter.format(localDateTime.toLocalDate)))
-        case MYSQL_TYPE_TIMESTAMP2                      => timestamp.map(_.map(localDateTimeFormatter(0).format(_)))
-        case MYSQL_TYPE_DATETIME2                       => timestamp.map(_.map(localDateTimeFormatter(0).format(_)))
-        case MYSQL_TYPE_TIME2                           => time.map(_.map(timeFormatter(0).format(_)))
-        case MYSQL_TYPE_JSON                            =>
+        case MYSQL_TYPE_TIMESTAMP2 => timestamp.map(_.map(localDateTimeFormatter(0).format(_)))
+        case MYSQL_TYPE_DATETIME2  => timestamp.map(_.map(localDateTimeFormatter(0).format(_)))
+        case MYSQL_TYPE_TIME2      => time.map(_.map(timeFormatter(0).format(_)))
+        case MYSQL_TYPE_JSON       =>
           lengthEncodedIntDecoder.flatMap(length => bytes(length.toInt)).map(_.decodeUtf8Lenient.some)
-        case MYSQL_TYPE_BOOL                            => uint8L.map(value => (value != 0).toString.some)
-        case MYSQL_TYPE_VECTOR                          =>
+        case MYSQL_TYPE_BOOL   => uint8L.map(value => (value != 0).toString.some)
+        case MYSQL_TYPE_VECTOR =>
           lengthEncodedIntDecoder.flatMap(length => bytes(length.toInt)).map(_.decodeUtf8Lenient.some)
-        case MYSQL_TYPE_TYPED_ARRAY                     =>
+        case MYSQL_TYPE_TYPED_ARRAY =>
           lengthEncodedIntDecoder.flatMap(length => bytes(length.toInt)).map(_.decodeUtf8Lenient.some)
-        case MYSQL_TYPE_NULL                            => provide(None)
+        case MYSQL_TYPE_NULL    => provide(None)
         case MYSQL_TYPE_INVALID =>
           throw new RuntimeException(s"Unsupported column type: ${ column.columnType }")
 
