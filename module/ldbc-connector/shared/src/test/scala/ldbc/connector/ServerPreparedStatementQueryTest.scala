@@ -695,7 +695,9 @@ class ServerPreparedStatementQueryTest extends FTestPlatform:
     assertIO(
       connection.use { conn =>
         for
-          statement <- conn.serverPreparedStatement("SELECT `json`, `json_null` FROM `all_types` WHERE JSON_EXTRACT(`json`, '$.a') = ?")
+          statement <- conn.serverPreparedStatement(
+                         "SELECT `json`, `json_null` FROM `all_types` WHERE JSON_EXTRACT(`json`, '$.a') = ?"
+                       )
           resultSet <- statement.setInt(1, 1) *> statement.executeQuery()
           decoded   <- Monad[IO].whileM[List, (String, String)](resultSet.next()) {
                        for
@@ -733,7 +735,10 @@ class ServerPreparedStatementQueryTest extends FTestPlatform:
     assertIO(
       connection.use { conn =>
         for
-          statement <- conn.serverPreparedStatement("SELECT VECTOR_TO_STRING(`vector`) AS vector_str, `vector_null` FROM `all_types` WHERE `vector` = STRING_TO_VECTOR(?)")
+          statement <-
+            conn.serverPreparedStatement(
+              "SELECT VECTOR_TO_STRING(`vector`) AS vector_str, `vector_null` FROM `all_types` WHERE `vector` = STRING_TO_VECTOR(?)"
+            )
           resultSet <- statement.setString(1, "[1.0, 2.0, 3.0]") *> statement.executeQuery()
           decoded   <- Monad[IO].whileM[List, (String, String)](resultSet.next()) {
                        for
@@ -747,4 +752,3 @@ class ServerPreparedStatementQueryTest extends FTestPlatform:
       List(("[1.00000e+00,2.00000e+00,3.00000e+00]", null))
     )
   }
-
