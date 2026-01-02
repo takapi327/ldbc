@@ -38,6 +38,7 @@ services:
       - ./database/world.sql:/docker-entrypoint-initdb.d/02-world.sql
       - ./database/world2.sql:/docker-entrypoint-initdb.d/03-world2.sql
       - ./database/world3.sql:/docker-entrypoint-initdb.d/04-world3.sql
+      - ./database/mysql-8.x/connector_test.sql:/docker-entrypoint-initdb.d/05-connector_test.sql
       - ./database/mysql-8.x/mysql_user.sql:/docker-entrypoint-initdb.d/99-mysql_user.sql
       - ./database/mysql-8.x/my.cnf:/etc/mysql/conf.d/my.cnf
       - ./database/ssl:/etc/mysql/ssl
