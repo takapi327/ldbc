@@ -69,6 +69,10 @@ class ColumnDataTypeTest extends FTestPlatform:
     assert(values.contains(ColumnDataType.MYSQL_TYPE_TIMESTAMP2))
     assert(values.contains(ColumnDataType.MYSQL_TYPE_DATETIME2))
     assert(values.contains(ColumnDataType.MYSQL_TYPE_TIME2))
+    assert(values.contains(ColumnDataType.MYSQL_TYPE_TYPED_ARRAY))
+    assert(values.contains(ColumnDataType.MYSQL_TYPE_VECTOR))
+    assert(values.contains(ColumnDataType.MYSQL_TYPE_INVALID))
+    assert(values.contains(ColumnDataType.MYSQL_TYPE_BOOL))
     assert(values.contains(ColumnDataType.MYSQL_TYPE_JSON))
     assert(values.contains(ColumnDataType.MYSQL_TYPE_NEWDECIMAL))
     assert(values.contains(ColumnDataType.MYSQL_TYPE_ENUM))
@@ -81,5 +85,5 @@ class ColumnDataTypeTest extends FTestPlatform:
     assert(values.contains(ColumnDataType.MYSQL_TYPE_STRING))
     assert(values.contains(ColumnDataType.MYSQL_TYPE_GEOMETRY))
 
-    assertEquals(values.length, 31)
+    assertEquals(values.length, 35)
   }
