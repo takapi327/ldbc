@@ -728,3 +728,23 @@ class ServerPreparedStatementQueryTest extends FTestPlatform:
       List((true, false))
     )
   }
+
+  test("Server PreparedStatement should be able to retrieve VECTOR type records.") {
+    assertIO(
+      connection.use { conn =>
+        for
+          statement <- conn.serverPreparedStatement("SELECT VECTOR_TO_STRING(`vector`) AS vector_str, `vector_null` FROM `all_types` WHERE `vector` = STRING_TO_VECTOR(?)")
+          resultSet <- statement.setString(1, "[1.0, 2.0, 3.0]") *> statement.executeQuery()
+          decoded   <- Monad[IO].whileM[List, (String, String)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getString(1)
+                         v2 <- resultSet.getString(2)
+                       yield (v1, v2)
+                     }
+          _ <- statement.close()
+        yield decoded
+      },
+      List(("[1.00000e+00,2.00000e+00,3.00000e+00]", null))
+    )
+  }
+
