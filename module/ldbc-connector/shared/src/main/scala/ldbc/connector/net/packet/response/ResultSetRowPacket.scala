@@ -56,7 +56,7 @@ object ResultSetRowPacket:
 
       while index < columnLength do {
         val charset = columnDefinitions(index) match
-          case _: ColumnDefinition320Packet => "UTF-8"
+          case _: ColumnDefinition320Packet     => "UTF-8"
           case column: ColumnDefinition41Packet => CharsetMapping.getJavaCharsetFromCollationIndex(column.characterSet)
 
         if fieldLength == NULL && index == 0 then buffer(index) = None
