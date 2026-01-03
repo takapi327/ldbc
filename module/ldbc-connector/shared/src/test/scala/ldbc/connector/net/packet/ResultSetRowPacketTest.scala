@@ -11,9 +11,12 @@ import scodec.Attempt
 
 import ldbc.connector.*
 import ldbc.connector.data.*
-import ldbc.connector.net.packet.response.ResultSetRowPacket
+import ldbc.connector.net.packet.response.*
 
 class ResultSetRowPacketTest extends FTestPlatform:
+
+  private def buildTestColumnDefinition(characterSet: Int, columnType: ColumnDataType): ColumnDefinition41Packet =
+    ColumnDefinition41Packet("", "", "", "", "", "", 0, characterSet, 0L, columnType, Seq.empty, 0)
 
   test("ResultSetRowPacket creation and properties") {
     val values    = Array[Option[String]](Some("1"), Some("John"), Some("Doe"), None, Some("30"))
@@ -49,11 +52,17 @@ class ResultSetRowPacketTest extends FTestPlatform:
       '0' // fifth column: value "30"
     )
 
-    val bitVector       = BitVector(packetBytes)
-    val capabilityFlags = Set(CapabilitiesFlags.CLIENT_PROTOCOL_41)
-    val columnLength    = 5
+    val bitVector         = BitVector(packetBytes)
+    val capabilityFlags   = Set(CapabilitiesFlags.CLIENT_PROTOCOL_41)
+    val columnDefinitions = Vector(
+      buildTestColumnDefinition(11, ColumnDataType.MYSQL_TYPE_LONG),
+      buildTestColumnDefinition(45, ColumnDataType.MYSQL_TYPE_VARCHAR),
+      buildTestColumnDefinition(45, ColumnDataType.MYSQL_TYPE_VARCHAR),
+      buildTestColumnDefinition(45, ColumnDataType.MYSQL_TYPE_VARCHAR),
+      buildTestColumnDefinition(11, ColumnDataType.MYSQL_TYPE_LONG)
+    )
 
-    val result = ResultSetRowPacket.decoder(capabilityFlags, columnLength).decode(bitVector)
+    val result = ResultSetRowPacket.decoder(capabilityFlags, columnDefinitions).decode(bitVector)
 
     assert(result.isSuccessful)
     result match {
@@ -83,11 +92,16 @@ class ResultSetRowPacketTest extends FTestPlatform:
       Array[Byte](0x03, '1', '0', '0') // value "100"
     )
 
-    val bitVector       = BitVector(packetBytes)
-    val capabilityFlags = Set(CapabilitiesFlags.CLIENT_PROTOCOL_41)
-    val columnLength    = 4
+    val bitVector         = BitVector(packetBytes)
+    val capabilityFlags   = Set(CapabilitiesFlags.CLIENT_PROTOCOL_41)
+    val columnDefinitions = Vector(
+      buildTestColumnDefinition(11, ColumnDataType.MYSQL_TYPE_LONG),
+      buildTestColumnDefinition(11, ColumnDataType.MYSQL_TYPE_BIT),
+      buildTestColumnDefinition(11, ColumnDataType.MYSQL_TYPE_BIT),
+      buildTestColumnDefinition(11, ColumnDataType.MYSQL_TYPE_LONG)
+    )
 
-    val result = ResultSetRowPacket.decoder(capabilityFlags, columnLength).decode(bitVector)
+    val result = ResultSetRowPacket.decoder(capabilityFlags, columnDefinitions).decode(bitVector)
 
     assert(result.isSuccessful)
     result match {
@@ -116,9 +130,13 @@ class ResultSetRowPacketTest extends FTestPlatform:
 
     val bitVector       = BitVector(packetBytes)
     val capabilityFlags = Set(CapabilitiesFlags.CLIENT_PROTOCOL_41)
-    val columnLength    = 2
 
-    val result = ResultSetRowPacket.decoder(capabilityFlags, columnLength).decode(bitVector)
+    val columnDefinitions = Vector(
+      buildTestColumnDefinition(11, ColumnDataType.MYSQL_TYPE_LONG),
+      buildTestColumnDefinition(45, ColumnDataType.MYSQL_TYPE_VARCHAR)
+    )
+
+    val result = ResultSetRowPacket.decoder(capabilityFlags, columnDefinitions).decode(bitVector)
 
     assert(result.isSuccessful)
     result match {

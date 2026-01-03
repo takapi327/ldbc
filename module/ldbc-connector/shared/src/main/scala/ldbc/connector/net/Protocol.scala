@@ -276,7 +276,7 @@ object Protocol:
                   ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags)
                 )
               resultSetRow <- readUntilEOF[ResultSetRowPacket](
-                                ResultSetRowPacket.decoder(initialPacket.capabilityFlags, columnDefinitions.length)
+                                ResultSetRowPacket.decoder(initialPacket.capabilityFlags, columnDefinitions)
                               )
             yield columnDefinitions
               .zip(resultSetRow.flatMap(_.values))

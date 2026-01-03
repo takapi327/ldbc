@@ -86,7 +86,7 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
                 )
               resultSetRow <-
                 protocol.readUntilEOF[ResultSetRowPacket](
-                  ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions.length)
+                  ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions)
                 )
               _ <- columnDefinitions.headOption match {
                      case None         => F.unit
