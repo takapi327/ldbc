@@ -7,6 +7,8 @@
 package ldbc.connector.net.packet
 package response
 
+import java.nio.charset.StandardCharsets.ISO_8859_1
+
 import scodec.*
 import scodec.codecs.*
 import scodec.interop.cats.*
