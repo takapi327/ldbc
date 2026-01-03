@@ -7,12 +7,12 @@
 package ldbc.connector.net.packet
 package response
 
-import java.nio.charset.StandardCharsets.ISO_8859_1
+import java.nio.charset.StandardCharsets.{ISO_8859_1, UTF_8}
 
 import scodec.*
 import scodec.bits.BitVector
 
-import ldbc.connector.data.CapabilitiesFlags
+import ldbc.connector.data.*
 
 /**
  * Represents a row in a result set.
@@ -40,22 +40,36 @@ object ResultSetRowPacket:
 
   def apply(values: Array[Option[String]]): ResultSetRowPacket = Impl(values)
 
+  private def isBinaryType(columnType: ColumnDataType): Boolean = columnType match
+    case ColumnDataType.MYSQL_TYPE_TINY_BLOB |
+         ColumnDataType.MYSQL_TYPE_MEDIUM_BLOB |
+         ColumnDataType.MYSQL_TYPE_LONG_BLOB |
+         ColumnDataType.MYSQL_TYPE_BLOB |
+         ColumnDataType.MYSQL_TYPE_GEOMETRY |
+         ColumnDataType.MYSQL_TYPE_BIT => true
+    case _ => false
+
   /**
    * Decoder of result set acquisition
    *
    * A foolproof implementation using splitAt is faster than the helper functions provided by scodec.
    */
-  private def decodeResultSetRow(fieldLength: Int, columnLength: Int): Decoder[ResultSetRowPacket] =
+  private def decodeResultSetRow(fieldLength: Int, columnDefinitions: Vector[ColumnDefinitionPacket]): Decoder[ResultSetRowPacket] =
     (bits: BitVector) =>
       val bytes  = bits.toByteArray
+      val columnLength = columnDefinitions.length
       val buffer = new Array[Option[String]](columnLength)
       var offset = 0
       var index  = 0
 
       while index < columnLength do {
+        val charset =
+          if isBinaryType(columnDefinitions(index).columnType) then ISO_8859_1
+          else UTF_8
+
         if fieldLength == NULL && index == 0 then buffer(index) = None
         else if index == 0 then
-          buffer(index) = Some(new String(bytes, offset, fieldLength, ISO_8859_1))
+          buffer(index) = Some(new String(bytes, offset, fieldLength, charset))
           offset += fieldLength
         else
           val length = bytes(offset) & 0xff
@@ -63,7 +77,7 @@ object ResultSetRowPacket:
 
           if length == NULL then buffer(index) = None
           else if length <= 251 then
-            buffer(index) = Some(new String(bytes, offset, length, ISO_8859_1))
+            buffer(index) = Some(new String(bytes, offset, length, charset))
             offset += length
           else
             val actualLength = length match
@@ -80,7 +94,7 @@ object ResultSetRowPacket:
 
             val headerSize = if length == 252 then 2 else if length == 253 then 3 else 4
             offset += headerSize
-            buffer(index) = Some(new String(bytes, offset, actualLength, ISO_8859_1))
+            buffer(index) = Some(new String(bytes, offset, actualLength, charset))
             offset += actualLength
 
         index += 1
@@ -90,7 +104,7 @@ object ResultSetRowPacket:
 
   def decoder(
     capabilityFlags: Set[CapabilitiesFlags],
-    columnLength:    Int
+    columnDefinitions: Vector[ColumnDefinitionPacket]
   ): Decoder[ResultSetRowPacket | EOFPacket | ERRPacket] =
     (bits: BitVector) =>
       val (statusBits, postLengthBits) = bits.splitAt(8)
@@ -98,4 +112,4 @@ object ResultSetRowPacket:
       status match
         case EOFPacket.STATUS => EOFPacket.decoder(capabilityFlags).decode(postLengthBits)
         case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags).decode(postLengthBits)
-        case fieldLength      => decodeResultSetRow(fieldLength, columnLength).decode(postLengthBits)
+        case fieldLength      => decodeResultSetRow(fieldLength, columnDefinitions).decode(postLengthBits)

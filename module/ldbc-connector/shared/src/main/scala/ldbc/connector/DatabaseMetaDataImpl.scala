@@ -81,7 +81,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
               )
             resultSetRow <-
               protocol.readUntilEOF[ResultSetRowPacket](
-                ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions.length)
+                ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions)
               )
           yield resultSetRow.headOption.flatMap(_.values.headOption).flatten.getOrElse("")
       }
@@ -136,7 +136,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
               )
             resultSetRow <-
               protocol.readUntilEOF[ResultSetRowPacket](
-                ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions.length)
+                ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions)
               )
           yield resultSetRow
             .flatMap(_.values.flatten)
