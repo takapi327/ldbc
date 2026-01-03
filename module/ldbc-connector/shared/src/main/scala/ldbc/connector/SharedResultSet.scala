@@ -6,7 +6,6 @@
 
 package ldbc.connector
 
-import java.nio.charset.StandardCharsets.ISO_8859_1
 import java.time.*
 
 import cats.syntax.all.*
@@ -16,6 +15,7 @@ import cats.effect.Ref
 
 import ldbc.sql.{ ResultSet, ResultSetMetaData }
 
+import ldbc.connector.data.CharsetMapping
 import ldbc.connector.data.Formatter.*
 import ldbc.connector.exception.SQLException
 import ldbc.connector.net.packet.response.*
@@ -94,12 +94,17 @@ private[ldbc] trait SharedResultSet[F[_]](using ev: MonadThrow[F]) extends Resul
       0.0
     )
 
-  override def getBytes(columnIndex: Int): F[Array[Byte]] =
+  override def getBytes(columnIndex: Int): F[Array[Byte]] = {
+    val charset = columns(columnIndex - 1) match {
+      case _: ColumnDefinition320Packet     => "UTF-8"
+      case column: ColumnDefinition41Packet => CharsetMapping.getJavaCharsetFromCollationIndex(column.characterSet)
+    }
     rowDecode[Array[Byte]](
       columnIndex,
-      _.getBytes(ISO_8859_1),
+      _.getBytes(charset),
       null
     )
+  }
 
   override def getDate(columnIndex: Int): F[LocalDate] =
     rowDecode[LocalDate](

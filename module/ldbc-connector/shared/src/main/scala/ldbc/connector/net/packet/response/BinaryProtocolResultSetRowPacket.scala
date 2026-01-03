@@ -7,8 +7,6 @@
 package ldbc.connector.net.packet
 package response
 
-import java.nio.charset.StandardCharsets.ISO_8859_1
-
 import scodec.*
 import scodec.codecs.*
 import scodec.interop.cats.*
@@ -16,6 +14,7 @@ import scodec.interop.cats.*
 import cats.syntax.all.*
 
 import ldbc.connector.data.CapabilitiesFlags
+import ldbc.connector.data.CharsetMapping
 import ldbc.connector.data.ColumnDataType.*
 import ldbc.connector.data.Formatter.*
 
@@ -28,14 +27,19 @@ object BinaryProtocolResultSetRowPacket:
   def decodeValue(column: ColumnDefinitionPacket, isColumnNull: Boolean): Decoder[Option[String]] =
     if isColumnNull then provide(None)
     else
+      val charset = column match
+        case _: ColumnDefinition320Packet     => "UTF-8"
+        case column: ColumnDefinition41Packet => CharsetMapping.getJavaCharsetFromCollationIndex(column.characterSet)
       column.columnType match
         case MYSQL_TYPE_STRING | MYSQL_TYPE_VARCHAR | MYSQL_TYPE_VAR_STRING | MYSQL_TYPE_ENUM | MYSQL_TYPE_SET |
           MYSQL_TYPE_DECIMAL | MYSQL_TYPE_NEWDECIMAL =>
-          lengthEncodedIntDecoder.flatMap(length => bytes(length.toInt)).map(_.decodeUtf8Lenient.some)
+          lengthEncodedIntDecoder.flatMap(length => bytes(length.toInt)).map { byteVector =>
+            Some(new String(byteVector.toArray, charset))
+          }
         case MYSQL_TYPE_LONG_BLOB | MYSQL_TYPE_MEDIUM_BLOB | MYSQL_TYPE_BLOB | MYSQL_TYPE_TINY_BLOB |
           MYSQL_TYPE_GEOMETRY | MYSQL_TYPE_BIT =>
           lengthEncodedIntDecoder.flatMap(length => bytes(length.toInt)).map { byteVector =>
-            Some(new String(byteVector.toArray, ISO_8859_1))
+            Some(new String(byteVector.toArray, charset))
           }
         case MYSQL_TYPE_LONGLONG                => bytes(8).map(byte => BigInt(1, byte.reverse.toArray).toString.some)
         case MYSQL_TYPE_LONG | MYSQL_TYPE_INT24 => uint32L.map(_.toString.some)
