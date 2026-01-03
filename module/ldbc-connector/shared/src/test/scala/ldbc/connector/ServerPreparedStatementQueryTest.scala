@@ -7,6 +7,8 @@
 package ldbc.connector
 
 import java.time.*
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 import cats.Monad
 
@@ -737,18 +739,24 @@ class ServerPreparedStatementQueryTest extends FTestPlatform:
         for
           statement <-
             conn.serverPreparedStatement(
-              "SELECT VECTOR_TO_STRING(`vector`) AS vector_str, `vector_null` FROM `all_types` WHERE `vector` = STRING_TO_VECTOR(?)"
+              "SELECT `vector`, VECTOR_TO_STRING(`vector`) AS vector_str, `vector_null` FROM `all_types` WHERE `vector` = STRING_TO_VECTOR(?)"
             )
           resultSet <- statement.setString(1, "[1.0, 2.0, 3.0]") *> statement.executeQuery()
-          decoded   <- Monad[IO].whileM[List, (String, String)](resultSet.next()) {
+          decoded   <- Monad[IO].whileM[List, (Array[Byte], String, String)](resultSet.next()) {
                        for
-                         v1 <- resultSet.getString(1)
+                         v1 <- resultSet.getBytes(1)
                          v2 <- resultSet.getString(2)
-                       yield (v1, v2)
+                         v3 <- resultSet.getString(3)
+                       yield (v1, v2, v3)
                      }
           _ <- statement.close()
-        yield decoded
+        yield decoded.map {
+          case (v1, v2, v3) =>
+            val buffer = ByteBuffer.wrap(v1).order(ByteOrder.LITTLE_ENDIAN)
+            val floats = Array.fill(v1.length / 4)(buffer.getFloat())
+            (floats.toSeq, v2, v3)
+        }
       },
-      List(("[1.00000e+00,2.00000e+00,3.00000e+00]", null))
+      List((Seq(1f, 2f, 3f), "[1.00000e+00,2.00000e+00,3.00000e+00]", null))
     )
   }
