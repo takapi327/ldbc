@@ -7,8 +7,6 @@
 package ldbc.connector.net.packet
 package response
 
-import java.nio.charset.StandardCharsets.{ ISO_8859_1, UTF_8 }
-
 import scodec.*
 import scodec.bits.BitVector
 
@@ -40,13 +38,6 @@ object ResultSetRowPacket:
 
   def apply(values: Array[Option[String]]): ResultSetRowPacket = Impl(values)
 
-  private def isBinaryType(columnType: ColumnDataType): Boolean = columnType match
-    case ColumnDataType.MYSQL_TYPE_TINY_BLOB | ColumnDataType.MYSQL_TYPE_MEDIUM_BLOB |
-      ColumnDataType.MYSQL_TYPE_LONG_BLOB | ColumnDataType.MYSQL_TYPE_BLOB | ColumnDataType.MYSQL_TYPE_GEOMETRY |
-      ColumnDataType.MYSQL_TYPE_BIT =>
-      true
-    case _ => false
-
   /**
    * Decoder of result set acquisition
    *
@@ -64,9 +55,9 @@ object ResultSetRowPacket:
       var index        = 0
 
       while index < columnLength do {
-        val charset =
-          if isBinaryType(columnDefinitions(index).columnType) then ISO_8859_1
-          else UTF_8
+        val charset = columnDefinitions(index) match
+          case _: ColumnDefinition320Packet => "UTF-8"
+          case column: ColumnDefinition41Packet => CharsetMapping.getJavaCharsetFromCollationIndex(column.characterSet)
 
         if fieldLength == NULL && index == 0 then buffer(index) = None
         else if index == 0 then
