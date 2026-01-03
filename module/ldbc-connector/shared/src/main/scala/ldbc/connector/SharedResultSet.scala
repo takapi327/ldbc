@@ -6,8 +6,8 @@
 
 package ldbc.connector
 
-import java.time.*
 import java.nio.charset.StandardCharsets.ISO_8859_1
+import java.time.*
 
 import cats.syntax.all.*
 import cats.MonadThrow
