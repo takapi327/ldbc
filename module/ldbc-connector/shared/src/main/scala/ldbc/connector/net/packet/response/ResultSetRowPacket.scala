@@ -7,7 +7,7 @@
 package ldbc.connector.net.packet
 package response
 
-import java.nio.charset.StandardCharsets.UTF_8
+import java.nio.charset.StandardCharsets.ISO_8859_1
 
 import scodec.*
 import scodec.bits.BitVector
@@ -55,7 +55,7 @@ object ResultSetRowPacket:
       while index < columnLength do {
         if fieldLength == NULL && index == 0 then buffer(index) = None
         else if index == 0 then
-          buffer(index) = Some(new String(bytes, offset, fieldLength, UTF_8))
+          buffer(index) = Some(new String(bytes, offset, fieldLength, ISO_8859_1))
           offset += fieldLength
         else
           val length = bytes(offset) & 0xff
@@ -63,7 +63,7 @@ object ResultSetRowPacket:
 
           if length == NULL then buffer(index) = None
           else if length <= 251 then
-            buffer(index) = Some(new String(bytes, offset, length, UTF_8))
+            buffer(index) = Some(new String(bytes, offset, length, ISO_8859_1))
             offset += length
           else
             val actualLength = length match
@@ -80,7 +80,7 @@ object ResultSetRowPacket:
 
             val headerSize = if length == 252 then 2 else if length == 253 then 3 else 4
             offset += headerSize
-            buffer(index) = Some(new String(bytes, offset, actualLength, UTF_8))
+            buffer(index) = Some(new String(bytes, offset, actualLength, ISO_8859_1))
             offset += actualLength
 
         index += 1
