@@ -473,6 +473,18 @@ object CharsetMapping:
       case Some(name) => CHARSET_NAME_TO_COLLATION_INDEX.getOrElse(name, 0)
       case None       => 0
 
+  /**
+   * Get Java charset from MySQL collation index
+   * 
+   * @param collationIndex MySQL collation index
+   * @return Java charset name, defaults to "UTF-8" if not found
+   */
+  def getJavaCharsetFromCollationIndex(collationIndex: Int): String =
+    COLLATION_INDEX_TO_CHARSET
+      .get(collationIndex)
+      .flatMap(_.javaEncodingsUc.headOption)
+      .getOrElse("UTF-8")
+
 case class MysqlCharset(
   charsetName:     String,
   mblen:           Int,
