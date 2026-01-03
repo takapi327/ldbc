@@ -7,7 +7,7 @@
 package ldbc.connector.net.packet
 package response
 
-import java.nio.charset.StandardCharsets.{ISO_8859_1, UTF_8}
+import java.nio.charset.StandardCharsets.{ ISO_8859_1, UTF_8 }
 
 import scodec.*
 import scodec.bits.BitVector
@@ -41,12 +41,10 @@ object ResultSetRowPacket:
   def apply(values: Array[Option[String]]): ResultSetRowPacket = Impl(values)
 
   private def isBinaryType(columnType: ColumnDataType): Boolean = columnType match
-    case ColumnDataType.MYSQL_TYPE_TINY_BLOB |
-         ColumnDataType.MYSQL_TYPE_MEDIUM_BLOB |
-         ColumnDataType.MYSQL_TYPE_LONG_BLOB |
-         ColumnDataType.MYSQL_TYPE_BLOB |
-         ColumnDataType.MYSQL_TYPE_GEOMETRY |
-         ColumnDataType.MYSQL_TYPE_BIT => true
+    case ColumnDataType.MYSQL_TYPE_TINY_BLOB | ColumnDataType.MYSQL_TYPE_MEDIUM_BLOB |
+      ColumnDataType.MYSQL_TYPE_LONG_BLOB | ColumnDataType.MYSQL_TYPE_BLOB | ColumnDataType.MYSQL_TYPE_GEOMETRY |
+      ColumnDataType.MYSQL_TYPE_BIT =>
+      true
     case _ => false
 
   /**
@@ -54,13 +52,16 @@ object ResultSetRowPacket:
    *
    * A foolproof implementation using splitAt is faster than the helper functions provided by scodec.
    */
-  private def decodeResultSetRow(fieldLength: Int, columnDefinitions: Vector[ColumnDefinitionPacket]): Decoder[ResultSetRowPacket] =
+  private def decodeResultSetRow(
+    fieldLength:       Int,
+    columnDefinitions: Vector[ColumnDefinitionPacket]
+  ): Decoder[ResultSetRowPacket] =
     (bits: BitVector) =>
-      val bytes  = bits.toByteArray
+      val bytes        = bits.toByteArray
       val columnLength = columnDefinitions.length
-      val buffer = new Array[Option[String]](columnLength)
-      var offset = 0
-      var index  = 0
+      val buffer       = new Array[Option[String]](columnLength)
+      var offset       = 0
+      var index        = 0
 
       while index < columnLength do {
         val charset =
@@ -103,7 +104,7 @@ object ResultSetRowPacket:
       Attempt.Successful(DecodeResult(ResultSetRowPacket(buffer), bits))
 
   def decoder(
-    capabilityFlags: Set[CapabilitiesFlags],
+    capabilityFlags:   Set[CapabilitiesFlags],
     columnDefinitions: Vector[ColumnDefinitionPacket]
   ): Decoder[ResultSetRowPacket | EOFPacket | ERRPacket] =
     (bits: BitVector) =>
