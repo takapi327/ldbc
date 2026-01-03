@@ -7,6 +7,7 @@
 package ldbc.connector
 
 import java.time.*
+import java.nio.charset.StandardCharsets.ISO_8859_1
 
 import cats.syntax.all.*
 import cats.MonadThrow
@@ -96,7 +97,7 @@ private[ldbc] trait SharedResultSet[F[_]](using ev: MonadThrow[F]) extends Resul
   override def getBytes(columnIndex: Int): F[Array[Byte]] =
     rowDecode[Array[Byte]](
       columnIndex,
-      _.getBytes("UTF-8"),
+      _.getBytes(ISO_8859_1),
       null
     )
 
