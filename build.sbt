@@ -311,7 +311,7 @@ lazy val zioExample = crossProject(JVMPlatform)
   .settings(
     libraryDependencies ++= Seq(
       "dev.zio" %% "zio-http" % "3.7.4",
-      "dev.zio" %% "zio-json" % "0.7.44"
+      "dev.zio" %% "zio-json" % "0.7.45"
     )
   )
   .dependsOn(connector, dsl, zioInterop)
