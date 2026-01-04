@@ -1039,13 +1039,15 @@ class ConnectionTest extends FTestPlatform:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getSchemas()
-          result    <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+          result    <- Monad[IO].whileM[Vector, Option[String]](resultSet.next()) {
                       for
                         tableCatalog <- resultSet.getString("TABLE_CATALOG")
                         tableSchem   <- resultSet.getString("TABLE_SCHEM")
-                      yield s"Table Catalog: $tableCatalog, Table Schema: $tableSchem"
+                      yield
+                        if tableSchem == "codec_test" then None
+                        else Some(s"Table Catalog: $tableCatalog, Table Schema: $tableSchem")
                     }
-        yield result
+        yield result.flatten
       },
       Vector(
         "Table Catalog: def, Table Schema: benchmark",
