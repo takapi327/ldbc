@@ -488,8 +488,7 @@ object CharsetMapping:
    * @return Java charset name, defaults to "UTF-8" if not found
    */
   def getJavaCharsetFromCollationIndex(collationIndex: Int): String =
-    if collationIndex >= 0 && collationIndex < MAP_SIZE then
-      collationToCharsetArray(collationIndex)
+    if collationIndex >= 0 && collationIndex < MAP_SIZE then collationToCharsetArray(collationIndex)
     else "UTF-8"
 
 case class MysqlCharset(

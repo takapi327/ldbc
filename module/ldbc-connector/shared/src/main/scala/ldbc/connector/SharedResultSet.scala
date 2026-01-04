@@ -39,9 +39,9 @@ private[ldbc] trait SharedResultSet[F[_]](using ev: MonadThrow[F]) extends Resul
   protected final var lastColumnReadNullable: Boolean                    = false
   protected final var currentCursor:          Int                        = 0
   protected final var currentRow:             Option[ResultSetRowPacket] = records.headOption
-  
+
   private lazy val charsets: Vector[String] = columns.map {
-    case _: ColumnDefinition320Packet => "UTF-8"
+    case _: ColumnDefinition320Packet     => "UTF-8"
     case column: ColumnDefinition41Packet => CharsetMapping.getJavaCharsetFromCollationIndex(column.characterSet)
   }
 

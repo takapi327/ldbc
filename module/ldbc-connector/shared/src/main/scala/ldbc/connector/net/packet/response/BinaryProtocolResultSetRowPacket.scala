@@ -26,7 +26,7 @@ object BinaryProtocolResultSetRowPacket:
 
   private def precomputeCharsets(columns: Vector[ColumnDefinitionPacket]): Array[String] =
     columns.map {
-      case _: ColumnDefinition320Packet => "UTF-8"
+      case _: ColumnDefinition320Packet     => "UTF-8"
       case column: ColumnDefinition41Packet =>
         CharsetMapping.getJavaCharsetFromCollationIndex(column.characterSet)
     }.toArray

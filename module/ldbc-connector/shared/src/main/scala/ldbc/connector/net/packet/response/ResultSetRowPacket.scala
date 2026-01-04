@@ -44,7 +44,7 @@ object ResultSetRowPacket:
    * A foolproof implementation using splitAt is faster than the helper functions provided by scodec.
    */
   private def decodeResultSetRow(
-    fieldLength:       Int,
+    fieldLength:    Int,
     columnCharsets: Vector[String]
   ): Decoder[ResultSetRowPacket] =
     (bits: BitVector) =>
@@ -103,7 +103,8 @@ object ResultSetRowPacket:
         case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags).decode(postLengthBits)
         case fieldLength      =>
           val columnCharsets = columnDefinitions.map {
-            case _: ColumnDefinition320Packet => "UTF-8"
-            case column: ColumnDefinition41Packet => CharsetMapping.getJavaCharsetFromCollationIndex(column.characterSet)
+            case _: ColumnDefinition320Packet     => "UTF-8"
+            case column: ColumnDefinition41Packet =>
+              CharsetMapping.getJavaCharsetFromCollationIndex(column.characterSet)
           }
           decodeResultSetRow(fieldLength, columnCharsets).decode(postLengthBits)
