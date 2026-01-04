@@ -24,12 +24,16 @@ case class BinaryProtocolResultSetRowPacket(values: Array[Option[String]]) exten
 
 object BinaryProtocolResultSetRowPacket:
 
-  def decodeValue(column: ColumnDefinitionPacket, isColumnNull: Boolean): Decoder[Option[String]] =
+  private def precomputeCharsets(columns: Vector[ColumnDefinitionPacket]): Array[String] =
+    columns.map {
+      case _: ColumnDefinition320Packet => "UTF-8"
+      case column: ColumnDefinition41Packet =>
+        CharsetMapping.getJavaCharsetFromCollationIndex(column.characterSet)
+    }.toArray
+
+  def decodeValue(column: ColumnDefinitionPacket, charset: String, isColumnNull: Boolean): Decoder[Option[String]] =
     if isColumnNull then provide(None)
     else
-      val charset = column match
-        case _: ColumnDefinition320Packet     => "UTF-8"
-        case column: ColumnDefinition41Packet => CharsetMapping.getJavaCharsetFromCollationIndex(column.characterSet)
       column.columnType match
         case MYSQL_TYPE_STRING | MYSQL_TYPE_VARCHAR | MYSQL_TYPE_VAR_STRING | MYSQL_TYPE_ENUM | MYSQL_TYPE_SET |
           MYSQL_TYPE_DECIMAL | MYSQL_TYPE_NEWDECIMAL =>
@@ -63,12 +67,13 @@ object BinaryProtocolResultSetRowPacket:
       case EOFPacket.STATUS => EOFPacket.decoder(capabilityFlags)
       case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags)
       case OKPacket.STATUS  =>
+        val precomputedCharsets = precomputeCharsets(columns)
         for
           nullBitmapBytes <- bytes((columns.length + 7 + 2) / 8)
           values          <- columns.zipWithIndex.traverse {
                       case (column, index) =>
                         val isColumnNull = (nullBitmapBytes((index + 2) / 8) & (1 << ((index + 2) % 8))) != 0
-                        decodeValue(column, isColumnNull)
+                        decodeValue(column, precomputedCharsets(index), isColumnNull)
                     }
         yield BinaryProtocolResultSetRowPacket(values.toArray)
     }

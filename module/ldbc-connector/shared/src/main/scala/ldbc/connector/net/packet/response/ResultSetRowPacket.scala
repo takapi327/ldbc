@@ -45,20 +45,17 @@ object ResultSetRowPacket:
    */
   private def decodeResultSetRow(
     fieldLength:       Int,
-    columnDefinitions: Vector[ColumnDefinitionPacket]
+    columnCharsets: Vector[String]
   ): Decoder[ResultSetRowPacket] =
     (bits: BitVector) =>
       val bytes        = bits.toByteArray
-      val columnLength = columnDefinitions.length
+      val columnLength = columnCharsets.length
       val buffer       = new Array[Option[String]](columnLength)
       var offset       = 0
       var index        = 0
 
       while index < columnLength do {
-        val charset = columnDefinitions(index) match
-          case _: ColumnDefinition320Packet     => "UTF-8"
-          case column: ColumnDefinition41Packet => CharsetMapping.getJavaCharsetFromCollationIndex(column.characterSet)
-
+        val charset = columnCharsets(index)
         if fieldLength == NULL && index == 0 then buffer(index) = None
         else if index == 0 then
           buffer(index) = Some(new String(bytes, offset, fieldLength, charset))
@@ -104,4 +101,9 @@ object ResultSetRowPacket:
       status match
         case EOFPacket.STATUS => EOFPacket.decoder(capabilityFlags).decode(postLengthBits)
         case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags).decode(postLengthBits)
-        case fieldLength      => decodeResultSetRow(fieldLength, columnDefinitions).decode(postLengthBits)
+        case fieldLength      =>
+          val columnCharsets = columnDefinitions.map {
+            case _: ColumnDefinition320Packet => "UTF-8"
+            case column: ColumnDefinition41Packet => CharsetMapping.getJavaCharsetFromCollationIndex(column.characterSet)
+          }
+          decodeResultSetRow(fieldLength, columnCharsets).decode(postLengthBits)

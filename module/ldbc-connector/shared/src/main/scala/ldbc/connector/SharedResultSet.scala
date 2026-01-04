@@ -39,6 +39,11 @@ private[ldbc] trait SharedResultSet[F[_]](using ev: MonadThrow[F]) extends Resul
   protected final var lastColumnReadNullable: Boolean                    = false
   protected final var currentCursor:          Int                        = 0
   protected final var currentRow:             Option[ResultSetRowPacket] = records.headOption
+  
+  private lazy val charsets: Vector[String] = columns.map {
+    case _: ColumnDefinition320Packet => "UTF-8"
+    case column: ColumnDefinition41Packet => CharsetMapping.getJavaCharsetFromCollationIndex(column.characterSet)
+  }
 
   override def close(): F[Unit] = isClosed.set(true)
 
@@ -95,10 +100,7 @@ private[ldbc] trait SharedResultSet[F[_]](using ev: MonadThrow[F]) extends Resul
     )
 
   override def getBytes(columnIndex: Int): F[Array[Byte]] = {
-    val charset = columns(columnIndex - 1) match {
-      case _: ColumnDefinition320Packet     => "UTF-8"
-      case column: ColumnDefinition41Packet => CharsetMapping.getJavaCharsetFromCollationIndex(column.characterSet)
-    }
+    val charset = charsets(columnIndex - 1)
     rowDecode[Array[Byte]](
       columnIndex,
       _.getBytes(charset),
