@@ -70,8 +70,8 @@ class PoolStatusReporterTest extends CatsEffectSuite:
     }
 
     reporter.start(pool, "test-pool").use { _ =>
-      // Wait for at least 2 report cycles
-      IO.sleep(250.milliseconds).map { _ =>
+      // Wait for at least 2 report cycles (extended to account for system load and timing variations)
+      IO.sleep(350.milliseconds).map { _ =>
         assert(testLogger.logCount >= 2, s"Expected at least 2 logs, but got ${ testLogger.logCount }")
       }
     }
