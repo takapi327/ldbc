@@ -348,13 +348,13 @@ trait ConnectionTest extends CatsEffectSuite:
     assertIO(
       datasource().getConnection.use { conn =>
         for
-          metaData  <- conn.getMetaData()
-          result    <- Monad[IO].whileM[Vector, Option[String]](resultSet.next()) {
-            resultSet.getString("TABLE_CAT").map { tableCatalog =>
-              // codec_test is excluded because it is created and deleted in another test, causing unintended test failures when tests are run in parallel.
-              if tableCatalog == "codec_test" then None else Some(s"Table Catalog: $tableCatalog")
-            }
-          }
+          metaData <- conn.getMetaData()
+          result   <- Monad[IO].whileM[Vector, Option[String]](resultSet.next()) {
+                      resultSet.getString("TABLE_CAT").map { tableCatalog =>
+                        // codec_test is excluded because it is created and deleted in another test, causing unintended test failures when tests are run in parallel.
+                        if tableCatalog == "codec_test" then None else Some(s"Table Catalog: $tableCatalog")
+                      }
+                    }
         yield result.flattern
       },
       Vector(
