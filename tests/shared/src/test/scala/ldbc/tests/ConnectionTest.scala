@@ -356,7 +356,7 @@ trait ConnectionTest extends CatsEffectSuite:
                         if tableCatalog == "codec_test" then None else Some(s"Table Catalog: $tableCatalog")
                       }
                     }
-        yield result.flattern
+        yield result.flatten
       },
       Vector(
         "Table Catalog: benchmark",
