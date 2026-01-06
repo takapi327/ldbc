@@ -6,9 +6,9 @@
 
 package ldbc.connector
 
-import java.time.*
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.time.*
 
 import cats.Monad
 
@@ -757,6 +757,6 @@ class ServerPreparedStatementQueryTest extends FTestPlatform:
             (floats.toSeq, v2, v3)
         }
       },
-      List((Seq(1f, 2f, 3f), "[1.00000e+00,2.00000e+00,3.00000e+00]", null))
+      List((Seq(1f, 2f, 3f), "[1.0,2.0,3.0]", null))
     )
   }
