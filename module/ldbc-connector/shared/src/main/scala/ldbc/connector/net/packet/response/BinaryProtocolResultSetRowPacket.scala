@@ -64,9 +64,13 @@ object BinaryProtocolResultSetRowPacket:
           lengthEncodedIntDecoder.flatMap(length => bytes(length.toInt)).map(_.decodeUtf8Lenient.some)
         case MYSQL_TYPE_BOOL   => uint8L.map(value => (value != 0).toString.some)
         case MYSQL_TYPE_VECTOR =>
-          lengthEncodedIntDecoder.flatMap(length => bytes(length.toInt)).map(_.decodeUtf8Lenient.some)
+          lengthEncodedIntDecoder.flatMap(length => bytes(length.toInt)).map { byteVector =>
+            Some(new String(byteVector.toArray, charset))
+          }
         case MYSQL_TYPE_TYPED_ARRAY =>
-          lengthEncodedIntDecoder.flatMap(length => bytes(length.toInt)).map(_.decodeUtf8Lenient.some)
+          lengthEncodedIntDecoder.flatMap(length => bytes(length.toInt)).map { byteVector =>
+            Some(new String(byteVector.toArray, charset))
+          }
         case MYSQL_TYPE_NULL    => provide(None)
         case MYSQL_TYPE_INVALID =>
           throw new RuntimeException(s"Unsupported column type: ${ column.columnType }")
