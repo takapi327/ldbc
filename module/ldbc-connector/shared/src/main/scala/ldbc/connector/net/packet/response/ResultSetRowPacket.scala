@@ -7,12 +7,10 @@
 package ldbc.connector.net.packet
 package response
 
-import java.nio.charset.StandardCharsets.UTF_8
-
 import scodec.*
 import scodec.bits.BitVector
 
-import ldbc.connector.data.CapabilitiesFlags
+import ldbc.connector.data.*
 
 /**
  * Represents a row in a result set.
@@ -45,17 +43,22 @@ object ResultSetRowPacket:
    *
    * A foolproof implementation using splitAt is faster than the helper functions provided by scodec.
    */
-  private def decodeResultSetRow(fieldLength: Int, columnLength: Int): Decoder[ResultSetRowPacket] =
+  private def decodeResultSetRow(
+    fieldLength:    Int,
+    columnCharsets: Vector[String]
+  ): Decoder[ResultSetRowPacket] =
     (bits: BitVector) =>
-      val bytes  = bits.toByteArray
-      val buffer = new Array[Option[String]](columnLength)
-      var offset = 0
-      var index  = 0
+      val bytes        = bits.toByteArray
+      val columnLength = columnCharsets.length
+      val buffer       = new Array[Option[String]](columnLength)
+      var offset       = 0
+      var index        = 0
 
       while index < columnLength do {
+        val charset = columnCharsets(index)
         if fieldLength == NULL && index == 0 then buffer(index) = None
         else if index == 0 then
-          buffer(index) = Some(new String(bytes, offset, fieldLength, UTF_8))
+          buffer(index) = Some(new String(bytes, offset, fieldLength, charset))
           offset += fieldLength
         else
           val length = bytes(offset) & 0xff
@@ -63,7 +66,7 @@ object ResultSetRowPacket:
 
           if length == NULL then buffer(index) = None
           else if length <= 251 then
-            buffer(index) = Some(new String(bytes, offset, length, UTF_8))
+            buffer(index) = Some(new String(bytes, offset, length, charset))
             offset += length
           else
             val actualLength = length match
@@ -80,7 +83,7 @@ object ResultSetRowPacket:
 
             val headerSize = if length == 252 then 2 else if length == 253 then 3 else 4
             offset += headerSize
-            buffer(index) = Some(new String(bytes, offset, actualLength, UTF_8))
+            buffer(index) = Some(new String(bytes, offset, actualLength, charset))
             offset += actualLength
 
         index += 1
@@ -89,8 +92,8 @@ object ResultSetRowPacket:
       Attempt.Successful(DecodeResult(ResultSetRowPacket(buffer), bits))
 
   def decoder(
-    capabilityFlags: Set[CapabilitiesFlags],
-    columnLength:    Int
+    capabilityFlags:   Set[CapabilitiesFlags],
+    columnDefinitions: Vector[ColumnDefinitionPacket]
   ): Decoder[ResultSetRowPacket | EOFPacket | ERRPacket] =
     (bits: BitVector) =>
       val (statusBits, postLengthBits) = bits.splitAt(8)
@@ -98,4 +101,10 @@ object ResultSetRowPacket:
       status match
         case EOFPacket.STATUS => EOFPacket.decoder(capabilityFlags).decode(postLengthBits)
         case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags).decode(postLengthBits)
-        case fieldLength      => decodeResultSetRow(fieldLength, columnLength).decode(postLengthBits)
+        case fieldLength      =>
+          val columnCharsets = columnDefinitions.map {
+            case _: ColumnDefinition320Packet     => "UTF-8"
+            case column: ColumnDefinition41Packet =>
+              CharsetMapping.getJavaCharsetFromCollationIndex(column.characterSet)
+          }
+          decodeResultSetRow(fieldLength, columnCharsets).decode(postLengthBits)

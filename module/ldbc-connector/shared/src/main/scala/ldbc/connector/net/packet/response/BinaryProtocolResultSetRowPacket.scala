@@ -14,6 +14,7 @@ import scodec.interop.cats.*
 import cats.syntax.all.*
 
 import ldbc.connector.data.CapabilitiesFlags
+import ldbc.connector.data.CharsetMapping
 import ldbc.connector.data.ColumnDataType.*
 import ldbc.connector.data.Formatter.*
 
@@ -23,14 +24,27 @@ case class BinaryProtocolResultSetRowPacket(values: Array[Option[String]]) exten
 
 object BinaryProtocolResultSetRowPacket:
 
-  def decodeValue(column: ColumnDefinitionPacket, isColumnNull: Boolean): Decoder[Option[String]] =
+  private def precomputeCharsets(columns: Vector[ColumnDefinitionPacket]): Array[String] =
+    columns.map {
+      case _: ColumnDefinition320Packet     => "UTF-8"
+      case column: ColumnDefinition41Packet =>
+        CharsetMapping.getJavaCharsetFromCollationIndex(column.characterSet)
+    }.toArray
+
+  def decodeValue(column: ColumnDefinitionPacket, charset: String, isColumnNull: Boolean): Decoder[Option[String]] =
     if isColumnNull then provide(None)
     else
       column.columnType match
         case MYSQL_TYPE_STRING | MYSQL_TYPE_VARCHAR | MYSQL_TYPE_VAR_STRING | MYSQL_TYPE_ENUM | MYSQL_TYPE_SET |
-          MYSQL_TYPE_LONG_BLOB | MYSQL_TYPE_MEDIUM_BLOB | MYSQL_TYPE_BLOB | MYSQL_TYPE_TINY_BLOB | MYSQL_TYPE_GEOMETRY |
-          MYSQL_TYPE_BIT | MYSQL_TYPE_DECIMAL | MYSQL_TYPE_NEWDECIMAL =>
-          lengthEncodedIntDecoder.flatMap(length => bytes(length.toInt)).map(_.decodeUtf8Lenient.some)
+          MYSQL_TYPE_DECIMAL | MYSQL_TYPE_NEWDECIMAL =>
+          lengthEncodedIntDecoder.flatMap(length => bytes(length.toInt)).map { byteVector =>
+            Some(new String(byteVector.toArray, charset))
+          }
+        case MYSQL_TYPE_LONG_BLOB | MYSQL_TYPE_MEDIUM_BLOB | MYSQL_TYPE_BLOB | MYSQL_TYPE_TINY_BLOB |
+          MYSQL_TYPE_GEOMETRY | MYSQL_TYPE_BIT =>
+          lengthEncodedIntDecoder.flatMap(length => bytes(length.toInt)).map { byteVector =>
+            Some(new String(byteVector.toArray, charset))
+          }
         case MYSQL_TYPE_LONGLONG                => bytes(8).map(byte => BigInt(1, byte.reverse.toArray).toString.some)
         case MYSQL_TYPE_LONG | MYSQL_TYPE_INT24 => uint32L.map(_.toString.some)
         case MYSQL_TYPE_SHORT | MYSQL_TYPE_YEAR => uint16L.map(_.toString.some)
@@ -65,12 +79,13 @@ object BinaryProtocolResultSetRowPacket:
       case EOFPacket.STATUS => EOFPacket.decoder(capabilityFlags)
       case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags)
       case OKPacket.STATUS  =>
+        val precomputedCharsets = precomputeCharsets(columns)
         for
           nullBitmapBytes <- bytes((columns.length + 7 + 2) / 8)
           values          <- columns.zipWithIndex.traverse {
                       case (column, index) =>
                         val isColumnNull = (nullBitmapBytes((index + 2) / 8) & (1 << ((index + 2) % 8))) != 0
-                        decodeValue(column, isColumnNull)
+                        decodeValue(column, precomputedCharsets(index), isColumnNull)
                     }
         yield BinaryProtocolResultSetRowPacket(values.toArray)
     }

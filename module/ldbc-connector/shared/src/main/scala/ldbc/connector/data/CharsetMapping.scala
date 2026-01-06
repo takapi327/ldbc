@@ -473,6 +473,24 @@ object CharsetMapping:
       case Some(name) => CHARSET_NAME_TO_COLLATION_INDEX.getOrElse(name, 0)
       case None       => 0
 
+  private lazy val collationToCharsetArray: Array[String] =
+    val array = Array.fill[String](MAP_SIZE)("UTF-8")
+    collations.foreach { collation =>
+      if collation.index >= 0 && collation.index < MAP_SIZE then
+        array(collation.index) = collation.charset.javaEncodingsUc.headOption.getOrElse("UTF-8")
+    }
+    array
+
+  /**
+   * Get Java charset from MySQL collation index
+   * 
+   * @param collationIndex MySQL collation index
+   * @return Java charset name, defaults to "UTF-8" if not found
+   */
+  def getJavaCharsetFromCollationIndex(collationIndex: Int): String =
+    if collationIndex >= 0 && collationIndex < MAP_SIZE then collationToCharsetArray(collationIndex)
+    else "UTF-8"
+
 case class MysqlCharset(
   charsetName:     String,
   mblen:           Int,
