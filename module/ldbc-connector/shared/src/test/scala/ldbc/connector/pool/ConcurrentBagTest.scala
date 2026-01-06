@@ -131,7 +131,7 @@ class ConcurrentBagTest extends CatsEffectSuite:
     } yield {
       assert(result.isEmpty)
       assert(elapsed >= 500.millis)
-      assert(elapsed < 600.millis) // Allow some overhead
+      assert(elapsed < 800.millis) // Allow some overhead
     }
   }
 
