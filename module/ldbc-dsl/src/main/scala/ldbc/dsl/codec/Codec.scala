@@ -75,13 +75,6 @@ trait Codec[A] extends Encoder[A], Decoder[A]:
 
 object Codec extends TwiddleSyntax[Codec]:
 
-  opaque type MySQLVector = Array[Float]
-  object MySQLVector:
-    def fromFloats(floats:     Float*):       MySQLVector = floats.toArray
-    def fromArrayFloat(floats: Array[Float]): MySQLVector = floats
-
-  extension (vector: MySQLVector) def toFloats: Array[Float] = vector
-
   def apply[A](using codec: Codec[A]): Codec[A] = codec
 
   def derived[P <: Product](using mirror: Mirror.ProductOf[P], codec: Codec[mirror.MirroredElemTypes]): Codec[P] =
@@ -168,7 +161,7 @@ object Codec extends TwiddleSyntax[Codec]:
     override def decode(index: Int, statement: String): ResultSetIO[Either[Decoder.Error, Array[Byte]]] =
       readCatchError(offset, ResultSetIO.getBytes(index))
 
-  given Codec[MySQLVector] with
+  given codecArrayFloat: Codec[Array[Float]] with
     override def offset:                      Int             = 1
     override def encode(value: Array[Float]): Encoder.Encoded =
       Encoder.Encoded.success(List(value.mkString("[", ",", "]")))
