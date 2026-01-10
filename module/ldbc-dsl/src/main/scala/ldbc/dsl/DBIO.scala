@@ -172,28 +172,6 @@ object DBIO:
     loop(builder).map(_.result())
 
   /**
-   * Reads all rows from a ResultSet and returns them as a NonEmptyList.
-   * 
-   * This method ensures that at least one row exists in the ResultSet.
-   * If the ResultSet is empty, it raises an UnexpectedEnd error.
-   * 
-   * @param statement The SQL statement being executed (used for error messages)
-   * @param decoder The decoder to convert each row into type A
-   * @tparam A The type to decode each row into
-   * @return A ResultSetIO action that produces a NonEmptyList of decoded values
-   * @throws UnexpectedEnd if the ResultSet contains no rows
-   * @throws DecodeFailureException if the decoder fails on any row
-   */
-  private def nel[A](
-    statement: String,
-    decoder:   Decoder[A]
-  ): ResultSetIO[NonEmptyList[A]] =
-    whileM[List, A](statement, decoder, summon[FactoryCompat[A, List[A]]]).flatMap { results =>
-      if results.isEmpty then ResultSetIO.raiseError(new UnexpectedEnd("No results found"))
-      else ResultSetIO.pure(NonEmptyList.fromListUnsafe(results))
-    }
-
-  /**
    * Executes a SQL query that returns exactly one row and decodes it to type A.
    * 
    * This method:
@@ -227,18 +205,9 @@ object DBIO:
     params:    List[Parameter.Dynamic],
     decoder:   Decoder[A]
   ): DBIO[A] =
-    (for
-      prepareStatement <- ConnectionIO.prepareStatement(statement)
-      resultSet        <- ConnectionIO.embed(
-                     prepareStatement,
-                     paramBind(params) *> PreparedStatementIO.executeQuery()
-                   )
-      result <- ConnectionIO.embed(resultSet, unique(statement, decoder))
-      _      <- ConnectionIO.embed(prepareStatement, PreparedStatementIO.close())
-    yield result).onError { ex =>
-      ConnectionIO.performLogging(LogEvent.ProcessingFailure(statement, params.map(_.value), ex))
-    } <*
-      ConnectionIO.performLogging(LogEvent.Success(statement, params.map(_.value)))
+    query(statement, params) {
+      unique(statement, decoder)
+    }
 
   /**
    * Executes a SQL query and collects all results into a collection of type G[A].
@@ -271,18 +240,9 @@ object DBIO:
     decoder:   Decoder[A],
     factory:   FactoryCompat[A, G[A]]
   ): DBIO[G[A]] =
-    (for
-      prepareStatement <- ConnectionIO.prepareStatement(statement)
-      resultSet        <- ConnectionIO.embed(
-                     prepareStatement,
-                     paramBind(params) *> PreparedStatementIO.executeQuery()
-                   )
-      result <- ConnectionIO.embed(resultSet, whileM(statement, decoder, factory))
-      _      <- ConnectionIO.embed(prepareStatement, PreparedStatementIO.close())
-    yield result).onError { ex =>
-      ConnectionIO.performLogging(LogEvent.ProcessingFailure(statement, params.map(_.value), ex))
-    } <*
-      ConnectionIO.performLogging(LogEvent.Success(statement, params.map(_.value)))
+    query[G[A]](statement, params) {
+      whileM(statement, decoder, factory)
+    }
 
   /**
    * Executes a SQL query that returns at most one row as an Option[A].
@@ -316,7 +276,7 @@ object DBIO:
     params:    List[Parameter.Dynamic],
     decoder:   Decoder[A]
   ): DBIO[Option[A]] =
-    val decoded: ResultSetIO[Option[A]] =
+    query(statement, params) {
       for
         data <- ResultSetIO.next().flatMap {
                   case true =>
@@ -338,18 +298,7 @@ object DBIO:
                     )
                   } else ResultSetIO.pure(data)
       yield result
-    (for
-      prepareStatement <- ConnectionIO.prepareStatement(statement)
-      resultSet        <- ConnectionIO.embed(
-                     prepareStatement,
-                     paramBind(params) *> PreparedStatementIO.executeQuery()
-                   )
-      result <- ConnectionIO.embed(resultSet, decoded)
-      _      <- ConnectionIO.embed(prepareStatement, PreparedStatementIO.close())
-    yield result).onError { ex =>
-      ConnectionIO.performLogging(LogEvent.ProcessingFailure(statement, params.map(_.value), ex))
-    } <*
-      ConnectionIO.performLogging(LogEvent.Success(statement, params.map(_.value)))
+    }
 
   /**
    * Executes a SQL query that returns at least one row as a NonEmptyList[A].
@@ -381,18 +330,37 @@ object DBIO:
     params:    List[Parameter.Dynamic],
     decoder:   Decoder[A]
   ): DBIO[NonEmptyList[A]] =
+    query(statement, params) {
+      whileM[List, A](statement, decoder, summon[FactoryCompat[A, List[A]]]).flatMap { results =>
+        if results.isEmpty then ResultSetIO.raiseError(new UnexpectedEnd("No results found"))
+        else ResultSetIO.pure(NonEmptyList.fromListUnsafe(results))
+      }
+    }
+
+  /**
+   * Executes a SQL query that decodes the ResultSet with the given [[ResultSetIO]].
+   *
+   * @param statement The SQL query to execute
+   * @param params    Dynamic parameters to bind to the query
+   * @param decode    Program to decode the queries ResultSet into a value of type A
+   * @tparam A The result type
+   * @return A DBIO action that produces an A
+   * @throws DecodeFailureException if decoding fails
+   */
+  def query[A](statement: String, params: List[Parameter.Dynamic])(decode: ResultSetIO[A]): DBIO[A] =
+    def paramValues = params.map(_.value)
     (for
       prepareStatement <- ConnectionIO.prepareStatement(statement)
       resultSet        <- ConnectionIO.embed(
                      prepareStatement,
                      paramBind(params) *> PreparedStatementIO.executeQuery()
                    )
-      result <- ConnectionIO.embed(resultSet, nel(statement, decoder))
+      result <- ConnectionIO.embed(resultSet, decode)
       _      <- ConnectionIO.embed(prepareStatement, PreparedStatementIO.close())
     yield result).onError { ex =>
-      ConnectionIO.performLogging(LogEvent.ProcessingFailure(statement, params.map(_.value), ex))
+      ConnectionIO.performLogging(LogEvent.ProcessingFailure(statement, paramValues, ex))
     } <*
-      ConnectionIO.performLogging(LogEvent.Success(statement, params.map(_.value)))
+      ConnectionIO.performLogging(LogEvent.Success(statement, paramValues))
 
   /**
    * Executes a SQL update statement (INSERT, UPDATE, DELETE) with parameters.
