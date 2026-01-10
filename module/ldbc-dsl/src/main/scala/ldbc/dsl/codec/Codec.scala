@@ -77,11 +77,10 @@ object Codec extends TwiddleSyntax[Codec]:
 
   opaque type MySQLVector = Array[Float]
   object MySQLVector:
-    def fromFloats(floats: Float*): MySQLVector = floats.toArray
+    def fromFloats(floats:     Float*):       MySQLVector = floats.toArray
     def fromArrayFloat(floats: Array[Float]): MySQLVector = floats
 
-  extension (vector: MySQLVector)
-    def toFloats: Array[Float] = vector
+  extension (vector: MySQLVector) def toFloats: Array[Float] = vector
 
   def apply[A](using codec: Codec[A]): Codec[A] = codec
 
@@ -170,13 +169,17 @@ object Codec extends TwiddleSyntax[Codec]:
       readCatchError(offset, ResultSetIO.getBytes(index))
 
   given Codec[MySQLVector] with
-    override def offset:                     Int             = 1
-    override def encode(value: Array[Float]): Encoder.Encoded = Encoder.Encoded.success(List(value.mkString("[", ",", "]")))
+    override def offset:                      Int             = 1
+    override def encode(value: Array[Float]): Encoder.Encoded =
+      Encoder.Encoded.success(List(value.mkString("[", ",", "]")))
     override def decode(index: Int, statement: String): ResultSetIO[Either[Decoder.Error, Array[Float]]] =
-      readCatchError(offset, ResultSetIO.getBytes(index).map { bytes =>
-        val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
-        Array.fill(bytes.length / 4)(buffer.getFloat())
-      })
+      readCatchError(
+        offset,
+        ResultSetIO.getBytes(index).map { bytes =>
+          val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
+          Array.fill(bytes.length / 4)(buffer.getFloat())
+        }
+      )
 
   given Codec[LocalTime] with
     override def offset:                   Int             = 1
