@@ -160,8 +160,7 @@ trait DataTypes:
     MVector(None, isOptional[T])
 
   inline def VECTOR[T <: Array[Float] | Option[Array[Float]]](inline dimension: Int): MVector[T] =
-    inline if dimension < 1 || dimension > 16383 then
-      error("VECTOR dimension must be in range 1 to 16383")
+    inline if dimension < 1 || dimension > 16383 then error("VECTOR dimension must be in range 1 to 16383")
     else MVector(Some(dimension), isOptional[T])
 
   /** ===== List of Date Data Types ===== */

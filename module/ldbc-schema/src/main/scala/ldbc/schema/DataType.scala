@@ -1289,9 +1289,9 @@ object DataType:
    *   Scala types that match SQL DataType
    */
   private[ldbc] case class MVector[T <: Array[Float] | Option[Array[Float]]](
-    dimension: Option[Int] = None,
+    dimension:  Option[Int]     = None,
     isOptional: Boolean,
-    default: Option[Default] = None
+    default:    Option[Default] = None
   ) extends DataType[T]:
     override def typeName: String = "VECTOR"
 
@@ -1299,7 +1299,7 @@ object DataType:
 
     override def queryString: String =
       dimension.fold(s"$typeName $nullType")(d => s"$typeName($d) $nullType") ++
-        default.fold("")(v => s" ${v.queryString}")
+        default.fold("")(v => s" ${ v.queryString }")
 
     /**
      * Method for setting Default value to DataType in SQL.
@@ -1308,9 +1308,9 @@ object DataType:
      *   Value set as the default value for DataType
      */
     inline def DEFAULT(value: T): MVector[T] = inline value match
-      case None => this.copy(default = Some(Default.Null))
+      case None       => this.copy(default = Some(Default.Null))
       case _: Some[?] => error(s"$typeName cannot have a default value other than NULL.")
-      case v => this.copy(default = Some(Default.Value(v)))
+      case v          => this.copy(default = Some(Default.Value(v)))
 
   /** ===== List of Date Data Types ===== */
 
