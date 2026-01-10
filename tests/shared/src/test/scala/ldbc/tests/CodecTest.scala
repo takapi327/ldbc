@@ -13,6 +13,7 @@ import cats.effect.*
 import munit.*
 
 import ldbc.dsl.*
+import ldbc.dsl.codec.Codec
 
 import ldbc.connector.*
 
@@ -160,6 +161,20 @@ trait CodecTest extends CatsEffectSuite:
           sql"SELECT * FROM array_byte_test WHERE data = ${ Array[Byte](1, 2, 3) }".query[Array[Byte]].to[Option]
       yield result.map(_.mkString(","))).transaction(connectionFixture()),
       Some(Array[Byte](1, 2, 3).mkString(","))
+    )
+  }
+
+  test("Encoder and Decoder work properly for data of type MySQL Vector (Array[Float]).") {
+    val vector = Codec.MySQLVector.fromFloats(1f, 2f, 3f)
+    assertIO(
+      (for
+        _      <- sql"USE codec_test".update
+        _      <- sql"CREATE TABLE vector_test (data VECTOR(384))".update
+        _      <- sql"INSERT INTO vector_test (data) VALUES (STRING_TO_VECTOR(${ vector }))".update
+        result <-
+          sql"SELECT * FROM vector_test WHERE data = STRING_TO_VECTOR(${ vector })".query[Codec.MySQLVector].to[Option]
+      yield result.map(_.toFloats.mkString(","))).transaction(connectionFixture()),
+      Some(vector.toFloats.mkString(","))
     )
   }
 
