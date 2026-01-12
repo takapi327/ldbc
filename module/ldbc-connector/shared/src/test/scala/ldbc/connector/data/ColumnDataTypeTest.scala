@@ -87,3 +87,43 @@ class ColumnDataTypeTest extends FTestPlatform:
 
     assertEquals(values.length, 35)
   }
+
+  test("MYSQL_TYPE_INVALID should have correct code and name") {
+    assertEquals(ColumnDataType.MYSQL_TYPE_INVALID.code, 0xf3L)
+    assertEquals(ColumnDataType.MYSQL_TYPE_INVALID.name, "INVALID")
+    assertEquals(ColumnDataType.MYSQL_TYPE_INVALID.toString, "INVALID")
+  }
+
+  test("apply(code: Long) should return MYSQL_TYPE_INVALID for code 0xf3") {
+    assertEquals(ColumnDataType(0xf3), ColumnDataType.MYSQL_TYPE_INVALID)
+  }
+
+  test("MYSQL_TYPE_TYPED_ARRAY should have correct code and name") {
+    assertEquals(ColumnDataType.MYSQL_TYPE_TYPED_ARRAY.code, 0x14L)
+    assertEquals(ColumnDataType.MYSQL_TYPE_TYPED_ARRAY.name, "TYPED_ARRAY")
+    assertEquals(ColumnDataType.MYSQL_TYPE_TYPED_ARRAY.toString, "TYPED_ARRAY")
+  }
+
+  test("apply(code: Long) should return MYSQL_TYPE_TYPED_ARRAY for code 0x14") {
+    assertEquals(ColumnDataType(0x14), ColumnDataType.MYSQL_TYPE_TYPED_ARRAY)
+  }
+
+  test("MYSQL_TYPE_VECTOR should have correct code and name") {
+    assertEquals(ColumnDataType.MYSQL_TYPE_VECTOR.code, 0xf2L)
+    assertEquals(ColumnDataType.MYSQL_TYPE_VECTOR.name, "VECTOR")
+    assertEquals(ColumnDataType.MYSQL_TYPE_VECTOR.toString, "VECTOR")
+  }
+
+  test("apply(code: Long) should return MYSQL_TYPE_VECTOR for code 0xf2") {
+    assertEquals(ColumnDataType(0xf2), ColumnDataType.MYSQL_TYPE_VECTOR)
+  }
+
+  test("MYSQL_TYPE_BOOL should have correct code and name") {
+    assertEquals(ColumnDataType.MYSQL_TYPE_BOOL.code, 0xf4L)
+    assertEquals(ColumnDataType.MYSQL_TYPE_BOOL.name, "BOOL")
+    assertEquals(ColumnDataType.MYSQL_TYPE_BOOL.toString, "BOOL")
+  }
+
+  test("apply(code: Long) should return MYSQL_TYPE_BOOL for code 0xf4") {
+    assertEquals(ColumnDataType(0xf4), ColumnDataType.MYSQL_TYPE_BOOL)
+  }
