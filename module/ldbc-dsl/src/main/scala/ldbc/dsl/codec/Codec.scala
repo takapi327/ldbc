@@ -169,8 +169,10 @@ object Codec extends TwiddleSyntax[Codec]:
       readCatchError(
         offset,
         ResultSetIO.getBytes(index).map { bytes =>
-          val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
-          Array.fill(bytes.length / 4)(buffer.getFloat())
+          if bytes == null || bytes.isEmpty then Array.empty[Float]
+          else
+            val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
+            Array.fill(bytes.length / 4)(buffer.getFloat())
         }
       )
 

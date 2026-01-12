@@ -178,6 +178,18 @@ trait CodecTest extends CatsEffectSuite:
     )
   }
 
+  test("Encoder and Decoder work properly for data of type MySQL Vector NULL (Option[Array[Float]]).") {
+    assertIO(
+      (for
+        _      <- sql"USE codec_test".update
+        _      <- sql"CREATE TABLE vector_null_test (data VECTOR(384) NULL)".update
+        _      <- sql"INSERT INTO vector_null_test (data) VALUES (NULL)".update
+        result <- sql"SELECT * FROM vector_null_test WHERE data IS NULL".query[Option[Array[Float]]].to[Option]
+      yield result).transaction(connectionFixture()),
+      Some(None)
+    )
+  }
+
   test("Encoder and Decoder work properly for data of type LocalTime.") {
     assertIO(
       (for
