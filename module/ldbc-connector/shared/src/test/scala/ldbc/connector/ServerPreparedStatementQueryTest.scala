@@ -733,6 +733,27 @@ class ServerPreparedStatementQueryTest extends FTestPlatform:
     )
   }
 
+  test("Server PreparedStatement should be able to retrieve BOOLEAN FALSE type records.") {
+    assertIO(
+      connection.use { conn =>
+        for
+          statement <- conn.serverPreparedStatement(
+                         "SELECT ? AS bool_false, ? AS bool_true"
+                       )
+          resultSet <- statement.setBoolean(1, false) *> statement.setBoolean(2, true) *> statement.executeQuery()
+          decoded   <- Monad[IO].whileM[List, (Boolean, Boolean)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getBoolean(1)
+                         v2 <- resultSet.getBoolean(2)
+                       yield (v1, v2)
+                     }
+          _ <- statement.close()
+        yield decoded
+      },
+      List((false, true))
+    )
+  }
+
   test("Server PreparedStatement should be able to retrieve VECTOR type records.") {
     assertIO(
       connection.use { conn =>
@@ -742,11 +763,11 @@ class ServerPreparedStatementQueryTest extends FTestPlatform:
               "SELECT `vector`, VECTOR_TO_STRING(`vector`) AS vector_str, `vector_null` FROM `all_types` WHERE `vector` = STRING_TO_VECTOR(?)"
             )
           resultSet <- statement.setString(1, "[1.0, 2.0, 3.0]") *> statement.executeQuery()
-          decoded   <- Monad[IO].whileM[List, (Array[Byte], String, String)](resultSet.next()) {
+          decoded   <- Monad[IO].whileM[List, (Array[Byte], String, Array[Byte])](resultSet.next()) {
                        for
                          v1 <- resultSet.getBytes(1)
                          v2 <- resultSet.getString(2)
-                         v3 <- resultSet.getString(3)
+                         v3 <- resultSet.getBytes(3)
                        yield (v1, v2, v3)
                      }
           _ <- statement.close()
