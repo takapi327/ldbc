@@ -519,8 +519,23 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
     }
 
   override def getCatalogs(): F[ResultSet[F]] =
+    // Starting with MySQL 9.3.0, it has been changed to reference INFORMATION_SCHEMA.
+    // see: https://dev.mysql.com/doc/relnotes/connector-j/en/news-9-3-0.html
+    protocol.initialPacket.serverVersion.compare(Version(9, 3, 0)) match
+      case 1 => getCatalogsByInformationSchema
+      case _ => getCatalogsByDatabase
+
+  private def getCatalogsByInformationSchema: F[ResultSet[F]] =
+    val query = new StringBuilder("SELECT SCHEMA_NAME AS TABLE_CAT FROM INFORMATION_SCHEMA.SCHEMATA")
+    if databaseTerm != DatabaseMetaData.DatabaseTerm.CATALOG then
+      query.append(" WHERE FALSE")
+    end if
+    query.append(" ORDER BY TABLE_CAT")
+    prepareMetaDataSafeStatement(query.toString()).flatMap(_.executeQuery())
+
+  private def getCatalogsByDatabase: F[ResultSet[F]] =
     (if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then F.pure(List.empty[String])
-     else getDatabases(None)).map { dbList =>
+    else getDatabases(None)).map { dbList =>
       ResultSetImpl(
         protocol,
         Vector("TABLE_CAT").map { value =>
