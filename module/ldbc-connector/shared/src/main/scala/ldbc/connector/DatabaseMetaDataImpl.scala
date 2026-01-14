@@ -2416,7 +2416,7 @@ private[ldbc] object DatabaseMetaDataImpl:
     override def storesUpperCaseIdentifiers():                  Boolean = false
     override def storesMixedCaseIdentifiers():                  Boolean = !storesLowerCaseIdentifiers()
     override def supportsMixedCaseQuotedIdentifiers():          Boolean = supportsMixedCaseIdentifiers()
-    override def storesUpperCaseQuotedIdentifiers():            Boolean = true
+    override def storesUpperCaseQuotedIdentifiers():            Boolean = false
     override def storesLowerCaseQuotedIdentifiers():            Boolean = storesLowerCaseIdentifiers()
     override def storesMixedCaseQuotedIdentifiers():            Boolean = !storesLowerCaseIdentifiers()
     override def isCatalogAtStart():                            Boolean = true
