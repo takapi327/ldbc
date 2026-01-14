@@ -527,15 +527,14 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
 
   private def getCatalogsByInformationSchema: F[ResultSet[F]] =
     val query = new StringBuilder("SELECT SCHEMA_NAME AS TABLE_CAT FROM INFORMATION_SCHEMA.SCHEMATA")
-    if databaseTerm != DatabaseMetaData.DatabaseTerm.CATALOG then
-      query.append(" WHERE FALSE")
+    if databaseTerm != DatabaseMetaData.DatabaseTerm.CATALOG then query.append(" WHERE FALSE")
     end if
     query.append(" ORDER BY TABLE_CAT")
     prepareMetaDataSafeStatement(query.toString()).flatMap(_.executeQuery())
 
   private def getCatalogsByDatabase: F[ResultSet[F]] =
     (if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then F.pure(List.empty[String])
-    else getDatabases(None)).map { dbList =>
+     else getDatabases(None)).map { dbList =>
       ResultSetImpl(
         protocol,
         Vector("TABLE_CAT").map { value =>
@@ -1680,26 +1679,28 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
     query.append(" CATALOG_NAME AS TABLE_CATALOG")
     query.append(" FROM INFORMATION_SCHEMA.SCHEMATA")
     query.append(
-      if databaseTerm == DatabaseMetaData.DatabaseTerm.CATALOG then
-        " WHERE FALSE"
-      else db match
-        case None => ""
-        case Some(dbFilter) => if dbFilter.contains("%") || dbFilter.contains("_") then " WHERE SCHEMA_NAME LIKE ?" else " WHERE SCHEMA_NAME = ?"
+      if databaseTerm == DatabaseMetaData.DatabaseTerm.CATALOG then " WHERE FALSE"
+      else
+        db match
+          case None           => ""
+          case Some(dbFilter) =>
+            if dbFilter.contains("%") || dbFilter.contains("_") then " WHERE SCHEMA_NAME LIKE ?"
+            else " WHERE SCHEMA_NAME = ?"
     )
     query.append(" ORDER BY TABLE_CATALOG, TABLE_SCHEM")
     prepareMetaDataSafeStatement(query.toString()).flatMap(_.executeQuery())
 
   private def getSchemasByDatabase(schemaPattern: Option[String]): F[ResultSet[F]] =
     (if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then getDatabases(schemaPattern)
-    else F.pure(List.empty[String])).map { dbList =>
+     else F.pure(List.empty[String])).map { dbList =>
       ResultSetImpl(
         protocol,
         Vector("TABLE_CATALOG", "TABLE_SCHEM").map { value =>
           new ColumnDefinitionPacket:
-            override def table: String = ""
-            override def name: String = value
-            override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
-            override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
+            override def table:      String                     = ""
+            override def name:       String                     = value
+            override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
+            override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
         },
         dbList.map(name => ResultSetRowPacket(Array(Some("def"), Some(name)))).toVector,
         serverVariables,
