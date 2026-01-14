@@ -912,10 +912,10 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
       }
 
   private def getTablePrivilegesByTablesPriv(
-                                                     catalog: Option[String],
-                                                     schemaPattern: Option[String],
-                                                     tableNamePattern: Option[String]
-                                                   ): F[ResultSet[F]] =
+    catalog:          Option[String],
+    schemaPattern:    Option[String],
+    tableNamePattern: Option[String]
+  ): F[ResultSet[F]] =
 
     val db = getDatabase(catalog, schemaPattern)
 
@@ -985,25 +985,25 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
         for
           keys    <- keys.map(_.flatten)
           records <- keys
-            .traverse { (db, table, grantor, user, privilege) =>
-              val columnResults = getColumns(catalog, schemaPattern, table, None)
-              columnResults.flatMap { columnResult =>
-                columnResult.whileM[Vector, ResultSetRowPacket] {
-                  val rows = Array(
-                    if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then Some("def")
-                    else db,                                                                   // TABLE_CAT
-                    if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then db else None, // TABLE_SCHEM
-                    table,                                                                     // TABLE_NAME
-                    grantor,                                                                   // GRANTOR
-                    Some(user),                                                                // GRANTEE
-                    Some(privilege),                                                           // PRIVILEGE
-                    None // IS_GRANTABLE
-                  )
-                  F.pure(ResultSetRowPacket(rows))
-                }
-              }
-            }
-            .map(_.flatten)
+                       .traverse { (db, table, grantor, user, privilege) =>
+                         val columnResults = getColumns(catalog, schemaPattern, table, None)
+                         columnResults.flatMap { columnResult =>
+                           columnResult.whileM[Vector, ResultSetRowPacket] {
+                             val rows = Array(
+                               if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then Some("def")
+                               else db,                                                                   // TABLE_CAT
+                               if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then db else None, // TABLE_SCHEM
+                               table,                                                                     // TABLE_NAME
+                               grantor,                                                                   // GRANTOR
+                               Some(user),                                                                // GRANTEE
+                               Some(privilege),                                                           // PRIVILEGE
+                               None // IS_GRANTABLE
+                             )
+                             F.pure(ResultSetRowPacket(rows))
+                           }
+                         }
+                       }
+                       .map(_.flatten)
         yield ResultSetImpl(
           protocol,
           Vector(
