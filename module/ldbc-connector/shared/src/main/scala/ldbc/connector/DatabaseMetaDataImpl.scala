@@ -998,7 +998,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
                   yield (Option(field), Option(`type`)) match
                     case (Some(columnName), Some(value)) =>
                       val (size, decimals, typeName, hasLength) = parseTypeColumn(value)
-                      val upperTypeName = typeName.toUpperCase
+                      val upperTypeName                         = typeName.toUpperCase
                       val mysqlType                             = MysqlType.getByName(upperTypeName)
                       val dataType                              =
                         if mysqlType == MysqlType.YEAR && !yearIsDateType then SMALLINT
