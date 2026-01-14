@@ -125,7 +125,7 @@ trait ConnectionTest extends CatsEffectSuite:
   test("The Driver version retrieved from DatabaseMetaData matches the specified value.") {
     assertIO(
       datasource().getConnection.use(_.getMetaData().map(_.getDriverVersion())),
-      if prefix == "jdbc" then "mysql-connector-j-9.5.0 (Revision: e0e8e3461e5257ba4aa19e6b3614a2685b298947)"
+      if prefix == "jdbc" then "mysql-connector-j-9.5.0 (Revision: a7b3c94f50efbddb9f0dd69b3e0d1aaa25305cd6)"
       else "ldbc-connector-0.6.0"
     )
   }
@@ -163,7 +163,7 @@ trait ConnectionTest extends CatsEffectSuite:
   }
 
   test("The storesUpperCaseQuotedIdentifiers method of DatabaseMetaData is always true.") {
-    assertIOBoolean(datasource().getConnection.use(_.getMetaData().map(_.storesUpperCaseQuotedIdentifiers())))
+    assertIOBoolean(datasource().getConnection.use(_.getMetaData().map(meta => !meta.storesUpperCaseQuotedIdentifiers())))
   }
 
   test("The stores Lower Case Quoted Identifiers retrieved from DatabaseMetaData matches the specified value.") {
@@ -447,12 +447,8 @@ trait ConnectionTest extends CatsEffectSuite:
         yield result
       },
       Vector(
-        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: root@localhost, Grantee: ldbc@%, Privilege: SELECT, Is Grantable: null",
-        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: root@localhost, Grantee: ldbc@%, Privilege: SELECT, Is Grantable: null",
-        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: root@localhost, Grantee: ldbc@%, Privilege: SELECT, Is Grantable: null",
-        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: root@localhost, Grantee: ldbc@%, Privilege: INSERT, Is Grantable: null",
-        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: root@localhost, Grantee: ldbc@%, Privilege: INSERT, Is Grantable: null",
-        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: root@localhost, Grantee: ldbc@%, Privilege: INSERT, Is Grantable: null"
+        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: null, Grantee: 'ldbc'@'%', Privilege: SELECT, Is Grantable: NO",
+        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: null, Grantee: 'ldbc'@'%', Privilege: INSERT, Is Grantable: NO"
       )
     )
   }
@@ -479,7 +475,7 @@ trait ConnectionTest extends CatsEffectSuite:
         yield result
       },
       Vector(
-        "Scope: 2, Column Name: c1, Data Type: 4, Type Name: int, Column Size: 10, Buffer Length: 65535, Decimal Digits: 0, Pseudo Column: 1"
+        "Scope: 2, Column Name: c1, Data Type: 4, Type Name: INT, Column Size: 10, Buffer Length: 65535, Decimal Digits: 0, Pseudo Column: 1"
       )
     )
   }
