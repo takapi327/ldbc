@@ -854,7 +854,9 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
 
     val query = new StringBuilder("SELECT")
     query.append(
-      if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then " TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM," else " TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM,"
+      if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then
+        " TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM,"
+      else " TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM,"
     )
     query.append(" TABLE_NAME,")
     query.append(" NULL AS GRANTOR,")
@@ -866,12 +868,9 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
     val condition = new StringBuilder()
     if db.nonEmpty then
       condition.append(
-        if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then
-          " TABLE_SCHEMA = ?"
-        else if db.contains("%") || db.contains("_") then
-          " TABLE_SCHEMA LIKE ?"
-        else
-          " TABLE_SCHEMA = ?"
+        if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then " TABLE_SCHEMA = ?"
+        else if db.contains("%") || db.contains("_") then " TABLE_SCHEMA LIKE ?"
+        else " TABLE_SCHEMA = ?"
       )
     end if
 
@@ -879,10 +878,8 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
       if condition.nonEmpty then condition.append(" AND")
       end if
 
-      if tableNamePattern.contains("%") || tableNamePattern.contains("_") then
-        condition.append(" TABLE_NAME LIKE ?")
-      else
-        condition.append(" TABLE_NAME = ?")
+      if tableNamePattern.contains("%") || tableNamePattern.contains("_") then condition.append(" TABLE_NAME LIKE ?")
+      else condition.append(" TABLE_NAME = ?")
     end if
 
     if condition.nonEmpty then

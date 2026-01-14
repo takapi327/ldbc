@@ -163,7 +163,9 @@ trait ConnectionTest extends CatsEffectSuite:
   }
 
   test("The storesUpperCaseQuotedIdentifiers method of DatabaseMetaData is always true.") {
-    assertIOBoolean(datasource().getConnection.use(_.getMetaData().map(meta => !meta.storesUpperCaseQuotedIdentifiers())))
+    assertIOBoolean(
+      datasource().getConnection.use(_.getMetaData().map(meta => !meta.storesUpperCaseQuotedIdentifiers()))
+    )
   }
 
   test("The stores Lower Case Quoted Identifiers retrieved from DatabaseMetaData matches the specified value.") {
