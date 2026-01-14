@@ -6,6 +6,8 @@
 
 package ldbc.connector
 
+import java.util.{ Locale, StringTokenizer }
+
 import scala.collection.immutable.{ ListMap, SortedMap }
 
 import cats.*
@@ -850,6 +852,16 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
     tableNamePattern: Option[String]
   ): F[ResultSet[F]] =
 
+    protocol.initialPacket.serverVersion.compare(Version(9, 3, 0)) match
+      case 1 => getTablePrivilegesByInformationSchema(catalog, schemaPattern, tableNamePattern)
+      case _ => getTablePrivilegesByTablesPriv(catalog, schemaPattern, tableNamePattern)
+
+  private def getTablePrivilegesByInformationSchema(
+    catalog:          Option[String],
+    schemaPattern:    Option[String],
+    tableNamePattern: Option[String]
+  ): F[ResultSet[F]] =
+
     val db = getDatabase(catalog, schemaPattern)
 
     val query = new StringBuilder("SELECT")
@@ -897,6 +909,126 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
           case _                       => F.unit
 
         setting *> preparedStatement.executeQuery()
+      }
+
+  private def getTablePrivilegesByTablesPriv(
+                                                     catalog: Option[String],
+                                                     schemaPattern: Option[String],
+                                                     tableNamePattern: Option[String]
+                                                   ): F[ResultSet[F]] =
+
+    val db = getDatabase(catalog, schemaPattern)
+
+    val sqlBuf = new StringBuilder(
+      "SELECT host,db,table_name,grantor,user,table_priv FROM mysql.tables_priv"
+    )
+
+    val conditionBuf = new StringBuilder()
+
+    if db.nonEmpty then
+      conditionBuf.append(
+        if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then " db LIKE ?" else " db = ?"
+      )
+    end if
+
+    if tableNamePattern.nonEmpty then
+      if conditionBuf.nonEmpty then conditionBuf.append(" AND")
+      end if
+      conditionBuf.append(" table_name LIKE ?")
+    end if
+
+    if conditionBuf.nonEmpty then
+      sqlBuf.append(" WHERE")
+      sqlBuf.append(conditionBuf)
+    end if
+
+    prepareMetaDataSafeStatement(sqlBuf.toString())
+      .flatMap { preparedStatement =>
+        val setting = (db, tableNamePattern) match
+          case (Some(dbValue), Some(tableName)) =>
+            preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, tableName)
+          case (Some(dbValue), None)   => preparedStatement.setString(1, dbValue)
+          case (None, Some(tableName)) => preparedStatement.setString(1, tableName)
+          case _                       => F.unit
+
+        setting *> preparedStatement.executeQuery()
+      }
+      .flatMap { resultSet =>
+        val keys = resultSet.whileM[Vector, Vector[(Option[String], Option[String], Option[String], String, String)]] {
+          for
+            host    <- resultSet.getString(1).map(Option(_))
+            db      <- resultSet.getString(2).map(Option(_))
+            table   <- resultSet.getString(3).map(Option(_))
+            grantor <- resultSet.getString(4).map(Option(_))
+            user    <- resultSet.getString(5).map(Option(_)).map(_.getOrElse("%"))
+            value   <- resultSet.getString(6).map(Option(_))
+          yield
+            val fullUser = new StringBuilder(user)
+            host.foreach(h => fullUser.append("@").append(h))
+
+            val keys = Vector.newBuilder[(Option[String], Option[String], Option[String], String, String)]
+            value match
+              case Some(value) =>
+                val allPrivileges   = value.toUpperCase(Locale.ENGLISH)
+                val stringTokenizer = new StringTokenizer(allPrivileges, ",")
+
+                while stringTokenizer.hasMoreTokens do
+                  val privilege = stringTokenizer.nextToken().trim
+
+                  keys += ((db, table, grantor, fullUser.toString(), privilege))
+                end while
+              case None => // no privileges
+
+            keys.result()
+        }
+
+        for
+          keys    <- keys.map(_.flatten)
+          records <- keys
+            .traverse { (db, table, grantor, user, privilege) =>
+              val columnResults = getColumns(catalog, schemaPattern, table, None)
+              columnResults.flatMap { columnResult =>
+                columnResult.whileM[Vector, ResultSetRowPacket] {
+                  val rows = Array(
+                    if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then Some("def")
+                    else db,                                                                   // TABLE_CAT
+                    if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then db else None, // TABLE_SCHEM
+                    table,                                                                     // TABLE_NAME
+                    grantor,                                                                   // GRANTOR
+                    Some(user),                                                                // GRANTEE
+                    Some(privilege),                                                           // PRIVILEGE
+                    None // IS_GRANTABLE
+                  )
+                  F.pure(ResultSetRowPacket(rows))
+                }
+              }
+            }
+            .map(_.flatten)
+        yield ResultSetImpl(
+          protocol,
+          Vector(
+            "TABLE_CAT",
+            "TABLE_SCHEM",
+            "TABLE_NAME",
+            "GRANTOR",
+            "GRANTEE",
+            "PRIVILEGE",
+            "IS_GRANTABLE"
+          ).map { value =>
+            new ColumnDefinitionPacket:
+              override def table:      String                     = ""
+              override def name:       String                     = value
+              override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
+              override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
+          },
+          records,
+          serverVariables,
+          protocol.initialPacket.serverVersion,
+          resultSetClosed,
+          fetchSize,
+          useCursorFetch,
+          useServerPrepStmts
+        )
       }
 
   override def getBestRowIdentifier(
