@@ -455,7 +455,7 @@ class ConnectionTest extends FTestPlatform:
 
     assertIO(
       connection.use(_.getMetaData().map(_.getDatabaseProductVersion())),
-      "9.0.0"
+      "9.5.0"
     )
   }
 
@@ -592,7 +592,7 @@ class ConnectionTest extends FTestPlatform:
       ssl      = SSL.Trusted
     )
 
-    assertIOBoolean(connection.use(_.getMetaData().map(_.storesUpperCaseQuotedIdentifiers())))
+    assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.storesUpperCaseQuotedIdentifiers())))
   }
 
   test("The stores Lower Case Quoted Identifiers retrieved from DatabaseMetaData matches the specified value.") {
@@ -649,7 +649,7 @@ class ConnectionTest extends FTestPlatform:
 
     assertIO(
       connection.use(_.getMetaData().flatMap(_.getSQLKeywords())),
-      "ACCESSIBLE,ADD,ANALYZE,ASC,BEFORE,CASCADE,CHANGE,CONTINUE,DATABASE,DATABASES,DAY_HOUR,DAY_MICROSECOND,DAY_MINUTE,DAY_SECOND,DELAYED,DESC,DISTINCTROW,DIV,DUAL,ELSEIF,EMPTY,ENCLOSED,ESCAPED,EXIT,EXPLAIN,FIRST_VALUE,FLOAT4,FLOAT8,FORCE,FULLTEXT,GENERATED,GROUPS,HIGH_PRIORITY,HOUR_MICROSECOND,HOUR_MINUTE,HOUR_SECOND,IF,IGNORE,INDEX,INFILE,INT1,INT2,INT3,INT4,INT8,IO_AFTER_GTIDS,IO_BEFORE_GTIDS,ITERATE,JSON_TABLE,KEY,KEYS,KILL,LAG,LAST_VALUE,LEAD,LEAVE,LIMIT,LINEAR,LINES,LOAD,LOCK,LONG,LONGBLOB,LONGTEXT,LOOP,LOW_PRIORITY,MAXVALUE,MEDIUMBLOB,MEDIUMINT,MEDIUMTEXT,MIDDLEINT,MINUTE_MICROSECOND,MINUTE_SECOND,NO_WRITE_TO_BINLOG,NTH_VALUE,NTILE,OPTIMIZE,OPTIMIZER_COSTS,OPTION,OPTIONALLY,OUTFILE,PURGE,READ,READ_WRITE,REGEXP,RENAME,REPEAT,REPLACE,REQUIRE,RESIGNAL,RESTRICT,RLIKE,SCHEMA,SCHEMAS,SECOND_MICROSECOND,SEPARATOR,SHOW,SIGNAL,SPATIAL,SQL_BIG_RESULT,SQL_CALC_FOUND_ROWS,SQL_SMALL_RESULT,SSL,STARTING,STORED,STRAIGHT_JOIN,TERMINATED,TINYBLOB,TINYINT,TINYTEXT,UNDO,UNLOCK,UNSIGNED,USAGE,USE,UTC_DATE,UTC_TIME,UTC_TIMESTAMP,VARBINARY,VARCHARACTER,VIRTUAL,WHILE,WRITE,XOR,YEAR_MONTH,ZEROFILL"
+      "ACCESSIBLE,ADD,ANALYZE,ASC,BEFORE,CASCADE,CHANGE,CONTINUE,DATABASE,DATABASES,DAY_HOUR,DAY_MICROSECOND,DAY_MINUTE,DAY_SECOND,DELAYED,DESC,DISTINCTROW,DIV,DUAL,ELSEIF,EMPTY,ENCLOSED,ESCAPED,EXIT,EXPLAIN,FIRST_VALUE,FLOAT4,FLOAT8,FORCE,FULLTEXT,GENERATED,GROUPS,HIGH_PRIORITY,HOUR_MICROSECOND,HOUR_MINUTE,HOUR_SECOND,IF,IGNORE,INDEX,INFILE,INT1,INT2,INT3,INT4,INT8,IO_AFTER_GTIDS,IO_BEFORE_GTIDS,ITERATE,JSON_TABLE,KEY,KEYS,KILL,LAG,LAST_VALUE,LEAD,LEAVE,LIBRARY,LIMIT,LINEAR,LINES,LOAD,LOCK,LONG,LONGBLOB,LONGTEXT,LOOP,LOW_PRIORITY,MAXVALUE,MEDIUMBLOB,MEDIUMINT,MEDIUMTEXT,MIDDLEINT,MINUTE_MICROSECOND,MINUTE_SECOND,NO_WRITE_TO_BINLOG,NTH_VALUE,NTILE,OPTIMIZE,OPTIMIZER_COSTS,OPTION,OPTIONALLY,OUTFILE,PURGE,READ,READ_WRITE,REGEXP,RENAME,REPEAT,REPLACE,REQUIRE,RESIGNAL,RESTRICT,RLIKE,SCHEMA,SCHEMAS,SECOND_MICROSECOND,SEPARATOR,SHOW,SIGNAL,SPATIAL,SQL_BIG_RESULT,SQL_CALC_FOUND_ROWS,SQL_SMALL_RESULT,SSL,STARTING,STORED,STRAIGHT_JOIN,TERMINATED,TINYBLOB,TINYINT,TINYTEXT,UNDO,UNLOCK,UNSIGNED,USAGE,USE,UTC_DATE,UTC_TIME,UTC_TIMESTAMP,VARBINARY,VARCHARACTER,VIRTUAL,WHILE,WRITE,XOR,YEAR_MONTH,ZEROFILL"
     )
   }
 
@@ -1092,12 +1092,8 @@ class ConnectionTest extends FTestPlatform:
         yield result
       },
       Vector(
-        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: root@localhost, Grantee: ldbc@%, Privilege: SELECT, Is Grantable: null",
-        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: root@localhost, Grantee: ldbc@%, Privilege: SELECT, Is Grantable: null",
-        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: root@localhost, Grantee: ldbc@%, Privilege: SELECT, Is Grantable: null",
-        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: root@localhost, Grantee: ldbc@%, Privilege: INSERT, Is Grantable: null",
-        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: root@localhost, Grantee: ldbc@%, Privilege: INSERT, Is Grantable: null",
-        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: root@localhost, Grantee: ldbc@%, Privilege: INSERT, Is Grantable: null"
+        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: null, Grantee: 'ldbc'@'%', Privilege: SELECT, Is Grantable: NO",
+        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: null, Grantee: 'ldbc'@'%', Privilege: INSERT, Is Grantable: NO"
       )
     )
   }
@@ -1134,7 +1130,7 @@ class ConnectionTest extends FTestPlatform:
         yield result
       },
       Vector(
-        "Scope: 2, Column Name: c1, Data Type: 4, Type Name: int, Column Size: 10, Buffer Length: 65535, Decimal Digits: 0, Pseudo Column: 1"
+        "Scope: 2, Column Name: c1, Data Type: 4, Type Name: INT, Column Size: 10, Buffer Length: 65535, Decimal Digits: 0, Pseudo Column: 1"
       )
     )
   }

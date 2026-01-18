@@ -38,7 +38,7 @@ class CallableStatementTest extends FTestPlatform:
           value             <- resultSet.getString(1)
         yield Option(value)
       },
-      Some("9.0.0")
+      Some("9.5.0")
     )
   }
 
@@ -53,7 +53,7 @@ class CallableStatementTest extends FTestPlatform:
                      case None     => IO.raiseError(new Exception("No result set"))
         yield Option(value)
       },
-      Some("9.0.0")
+      Some("9.5.0")
     )
   }
 
