@@ -255,7 +255,7 @@ object Connection:
     yield connection
 
   def fromNetwork[F[_]: Tracer: Console: Hashing: UUIDGen, A](
-    network:                     Network[F],
+                                                               network: Network[F],
     host:                        String,
     port:                        Int,
     user:                        String,
@@ -268,6 +268,7 @@ object Connection:
     allowPublicKeyRetrieval:     Boolean = false,
     useCursorFetch:              Boolean = false,
     useServerPrepStmts:          Boolean = false,
+    maxAllowedPacket:            Int = MySQLConfig.DEFAULT_PACKET_SIZE,
     databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = None,
     defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
     plugins:                     List[AuthenticationPlugin[F]],
@@ -298,6 +299,7 @@ object Connection:
       allowPublicKeyRetrieval,
       useCursorFetch,
       useServerPrepStmts,
+      maxAllowedPacket,
       databaseTerm,
       defaultAuthenticationPlugin,
       plugins,
