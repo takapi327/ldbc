@@ -30,6 +30,12 @@ ThisBuild / githubWorkflowBuildPostamble += dockerStop
 ThisBuild / githubWorkflowTargetBranches        := Seq("**")
 ThisBuild / githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v")))
 ThisBuild / tlSitePublishBranch                 := None
+ThisBuild / mimaBinaryIssueFilters ++= List(
+  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.connector.net.packet.response.ResultSetRowPacket.decoder"),
+  ProblemFilters.exclude[DirectMissingMethodProblem](
+    "ldbc.connector.net.packet.response.BinaryProtocolResultSetRowPacket.decodeValue"
+  )
+)
 
 lazy val sql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
@@ -192,10 +198,10 @@ lazy val zioInterop = crossProject(JVMPlatform, JSPlatform)
   .module("zio-interop", "Projects that provide a way to connect to the database for ZIO")
   .settings(
     libraryDependencies ++= Seq(
-      "dev.zio" %%% "zio"              % "2.1.21",
-      "dev.zio" %%% "zio-interop-cats" % "23.1.0.5",
-      "dev.zio" %%% "zio-test"         % "2.1.21" % Test,
-      "dev.zio" %%% "zio-test-sbt"     % "2.1.21" % Test
+      "dev.zio" %%% "zio"              % "2.1.24",
+      "dev.zio" %%% "zio-interop-cats" % "23.1.0.13",
+      "dev.zio" %%% "zio-test"         % "2.1.24" % Test,
+      "dev.zio" %%% "zio-test-sbt"     % "2.1.24" % Test
     )
   )
   .jsSettings(
@@ -266,7 +272,7 @@ lazy val http4sExample = crossProject(JVMPlatform)
       "org.http4s"    %% "http4s-dsl"          % "0.23.33",
       "org.http4s"    %% "http4s-ember-server" % "0.23.33",
       "org.http4s"    %% "http4s-circe"        % "0.23.33",
-      "ch.qos.logback" % "logback-classic"     % "1.5.23",
+      "ch.qos.logback" % "logback-classic"     % "1.5.24",
       "io.circe"      %% "circe-generic"       % "0.14.10"
     )
   )
@@ -291,8 +297,8 @@ lazy val otelExample = crossProject(JVMPlatform)
   .settings(
     libraryDependencies ++= Seq(
       "org.typelevel"   %% "otel4s-oteljava"                           % "0.15.0",
-      "io.opentelemetry" % "opentelemetry-exporter-otlp"               % "1.57.0" % Runtime,
-      "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.57.0" % Runtime
+      "io.opentelemetry" % "opentelemetry-exporter-otlp"               % "1.58.0" % Runtime,
+      "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.58.0" % Runtime
     )
   )
   .settings(
@@ -310,8 +316,7 @@ lazy val zioExample = crossProject(JVMPlatform)
   .example("zio", "ZIO example project")
   .settings(
     libraryDependencies ++= Seq(
-      "dev.zio" %% "zio-http" % "3.5.1",
-      "dev.zio" %% "zio-json" % "0.7.44"
+      "dev.zio" %% "zio-http" % "3.7.4"
     )
   )
   .dependsOn(connector, dsl, zioInterop)

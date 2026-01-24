@@ -1039,13 +1039,15 @@ class ConnectionTest extends FTestPlatform:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getSchemas()
-          result    <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+          result    <- Monad[IO].whileM[Vector, Option[String]](resultSet.next()) {
                       for
                         tableCatalog <- resultSet.getString("TABLE_CATALOG")
                         tableSchem   <- resultSet.getString("TABLE_SCHEM")
-                      yield s"Table Catalog: $tableCatalog, Table Schema: $tableSchem"
+                      yield
+                        if tableSchem == "codec_test" then None
+                        else Some(s"Table Catalog: $tableCatalog, Table Schema: $tableSchem")
                     }
-        yield result
+        yield result.flatten
       },
       Vector(
         "Table Catalog: def, Table Schema: benchmark",
@@ -1076,11 +1078,13 @@ class ConnectionTest extends FTestPlatform:
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getCatalogs()
-          result    <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-                      for tableCatalog <- resultSet.getString("TABLE_CAT")
-                      yield s"Table Catalog: $tableCatalog"
+          result    <- Monad[IO].whileM[Vector, Option[String]](resultSet.next()) {
+                      resultSet.getString("TABLE_CAT").map { tableCatalog =>
+                        // codec_test is excluded because it is created and deleted in another test, causing unintended test failures when tests are run in parallel.
+                        if tableCatalog == "codec_test" then None else Some(s"Table Catalog: $tableCatalog")
+                      }
                     }
-        yield result
+        yield result.flatten
       },
       Vector(
         "Table Catalog: benchmark",

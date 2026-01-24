@@ -15,6 +15,7 @@ import cats.effect.Ref
 
 import ldbc.sql.{ ResultSet, ResultSetMetaData }
 
+import ldbc.connector.data.CharsetMapping
 import ldbc.connector.data.Formatter.*
 import ldbc.connector.exception.SQLException
 import ldbc.connector.net.packet.response.*
@@ -39,15 +40,20 @@ private[ldbc] trait SharedResultSet[F[_]](using ev: MonadThrow[F]) extends Resul
   protected final var currentCursor:          Int                        = 0
   protected final var currentRow:             Option[ResultSetRowPacket] = records.headOption
 
+  private lazy val charsets: Vector[String] = columns.map {
+    case _: ColumnDefinition320Packet     => "UTF-8"
+    case column: ColumnDefinition41Packet => CharsetMapping.getJavaCharsetFromCollationIndex(column.characterSet)
+  }
+
   override def close(): F[Unit] = isClosed.set(true)
 
   override def wasNull(): F[Boolean] = ev.pure(lastColumnReadNullable)
 
   override def getString(columnIndex: Int): F[String] =
-    rowDecode[String](columnIndex, identity, null)
+    checkClosed() *> rowDecode[String](columnIndex, identity, null)
 
   override def getBoolean(columnIndex: Int): F[Boolean] =
-    rowDecode[Boolean](
+    checkClosed() *> rowDecode[Boolean](
       columnIndex,
       {
         case "true" | "1" => true
@@ -57,7 +63,7 @@ private[ldbc] trait SharedResultSet[F[_]](using ev: MonadThrow[F]) extends Resul
     )
 
   override def getByte(columnIndex: Int): F[Byte] =
-    rowDecode[Byte](
+    checkClosed() *> rowDecode[Byte](
       columnIndex,
       str => {
         if str.length == 1 && !str.forall(_.isDigit) then str.getBytes().head
@@ -67,55 +73,57 @@ private[ldbc] trait SharedResultSet[F[_]](using ev: MonadThrow[F]) extends Resul
     )
 
   override def getShort(columnIndex: Int): F[Short] =
-    rowDecode[Short](columnIndex, _.toShort, 0)
+    checkClosed() *> rowDecode[Short](columnIndex, _.toShort, 0)
 
   override def getInt(columnIndex: Int): F[Int] =
-    rowDecode[Int](columnIndex, _.toInt, 0)
+    checkClosed() *> rowDecode[Int](columnIndex, _.toInt, 0)
 
   override def getLong(columnIndex: Int): F[Long] =
-    rowDecode[Long](
+    checkClosed() *> rowDecode[Long](
       columnIndex,
       _.toLong,
       0L
     )
 
   override def getFloat(columnIndex: Int): F[Float] =
-    rowDecode[Float](
+    checkClosed() *> rowDecode[Float](
       columnIndex,
       _.toFloat,
       0f
     )
 
   override def getDouble(columnIndex: Int): F[Double] =
-    rowDecode[Double](
+    checkClosed() *> rowDecode[Double](
       columnIndex,
       _.toDouble,
       0.0
     )
 
-  override def getBytes(columnIndex: Int): F[Array[Byte]] =
-    rowDecode[Array[Byte]](
+  override def getBytes(columnIndex: Int): F[Array[Byte]] = {
+    val charset = charsets(columnIndex - 1)
+    checkClosed() *> rowDecode[Array[Byte]](
       columnIndex,
-      _.getBytes("UTF-8"),
+      _.getBytes(charset),
       null
     )
+  }
 
   override def getDate(columnIndex: Int): F[LocalDate] =
-    rowDecode[LocalDate](
+    checkClosed() *> rowDecode[LocalDate](
       columnIndex,
       str => LocalDate.parse(str, localDateFormatter),
       null
     )
 
   override def getTime(columnIndex: Int): F[LocalTime] =
-    rowDecode[LocalTime](
+    checkClosed() *> rowDecode[LocalTime](
       columnIndex,
       str => LocalTime.parse(str, timeFormatter(6)),
       null
     )
 
   override def getTimestamp(columnIndex: Int): F[LocalDateTime] =
-    rowDecode[LocalDateTime](
+    checkClosed() *> rowDecode[LocalDateTime](
       columnIndex,
       str => LocalDateTime.parse(str, localDateTimeFormatter(6)),
       null
@@ -199,7 +207,7 @@ private[ldbc] trait SharedResultSet[F[_]](using ev: MonadThrow[F]) extends Resul
     }
 
   override def getBigDecimal(columnIndex: Int): F[BigDecimal] =
-    rowDecode[BigDecimal](
+    checkClosed() *> rowDecode[BigDecimal](
       columnIndex,
       str => BigDecimal(str),
       null
