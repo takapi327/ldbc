@@ -77,7 +77,9 @@ class TelemetryAttributeTest extends FTestPlatform:
     )
   }
 
-  test("batchSize should return None for size < 2") {
-    assertEquals(TelemetryAttribute.batchSize(1L), List(TelemetryAttribute.dbOperationName("BATCH")))
-    assertEquals(TelemetryAttribute.batchSize(0L), List(TelemetryAttribute.dbOperationName("BATCH")))
+  test("batchSize should return empty list for size < 2") {
+    // Per OpenTelemetry spec: db.operation.batch.size should NOT be set to 1
+    // Operations are only considered batches when they contain two or more operations
+    assertEquals(TelemetryAttribute.batchSize(1L), List.empty)
+    assertEquals(TelemetryAttribute.batchSize(0L), List.empty)
   }
