@@ -6,6 +6,8 @@
 
 package ldbc.connector
 
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.time.*
 
 import cats.Monad
@@ -688,5 +690,94 @@ class ServerPreparedStatementQueryTest extends FTestPlatform:
         yield decoded
       },
       List(("a,b", null))
+    )
+  }
+
+  test("Server PreparedStatement should be able to retrieve JSON type records.") {
+    assertIO(
+      connection.use { conn =>
+        for
+          statement <- conn.serverPreparedStatement(
+                         "SELECT `json`, `json_null` FROM `all_types` WHERE JSON_EXTRACT(`json`, '$.a') = ?"
+                       )
+          resultSet <- statement.setInt(1, 1) *> statement.executeQuery()
+          decoded   <- Monad[IO].whileM[List, (String, String)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getString(1)
+                         v2 <- resultSet.getString(2)
+                       yield (v1, v2)
+                     }
+          _ <- statement.close()
+        yield decoded
+      },
+      List(("{\"a\": 1}", null))
+    )
+  }
+
+  test("Server PreparedStatement should be able to retrieve BOOLEAN type records.") {
+    assertIO(
+      connection.use { conn =>
+        for
+          statement <- conn.serverPreparedStatement("SELECT `bool`, `bool_null` FROM `all_types` WHERE `bool` = ?")
+          resultSet <- statement.setBoolean(1, true) *> statement.executeQuery()
+          decoded   <- Monad[IO].whileM[List, (Boolean, Boolean)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getBoolean(1)
+                         v2 <- resultSet.getBoolean(2)
+                       yield (v1, v2)
+                     }
+          _ <- statement.close()
+        yield decoded
+      },
+      List((true, false))
+    )
+  }
+
+  test("Server PreparedStatement should be able to retrieve BOOLEAN FALSE type records.") {
+    assertIO(
+      connection.use { conn =>
+        for
+          statement <- conn.serverPreparedStatement(
+                         "SELECT ? AS bool_false, ? AS bool_true"
+                       )
+          resultSet <- statement.setBoolean(1, false) *> statement.setBoolean(2, true) *> statement.executeQuery()
+          decoded   <- Monad[IO].whileM[List, (Boolean, Boolean)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getBoolean(1)
+                         v2 <- resultSet.getBoolean(2)
+                       yield (v1, v2)
+                     }
+          _ <- statement.close()
+        yield decoded
+      },
+      List((false, true))
+    )
+  }
+
+  test("Server PreparedStatement should be able to retrieve VECTOR type records.") {
+    assertIO(
+      connection.use { conn =>
+        for
+          statement <-
+            conn.serverPreparedStatement(
+              "SELECT `vector`, VECTOR_TO_STRING(`vector`) AS vector_str, `vector_null` FROM `all_types` WHERE `vector` = STRING_TO_VECTOR(?)"
+            )
+          resultSet <- statement.setString(1, "[1.0, 2.0, 3.0]") *> statement.executeQuery()
+          decoded   <- Monad[IO].whileM[List, (Array[Byte], String, Array[Byte])](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getBytes(1)
+                         v2 <- resultSet.getString(2)
+                         v3 <- resultSet.getBytes(3)
+                       yield (v1, v2, v3)
+                     }
+          _ <- statement.close()
+        yield decoded.map {
+          case (v1, v2, v3) =>
+            val buffer = ByteBuffer.wrap(v1).order(ByteOrder.LITTLE_ENDIAN)
+            val floats = Array.fill(v1.length / 4)(buffer.getFloat())
+            (floats.toSeq, v2, v3)
+        }
+      },
+      List((Seq(1f, 2f, 3f), "[1.00000e+00,2.00000e+00,3.00000e+00]", null))
     )
   }
