@@ -36,6 +36,8 @@ ThisBuild / mimaBinaryIssueFilters ++= List(
     "ldbc.connector.net.packet.response.BinaryProtocolResultSetRowPacket.decodeValue"
   )
 )
+// for Otel4s
+ThisBuild / resolvers += Resolver.sonatypeCentralSnapshots
 
 lazy val sql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
@@ -152,7 +154,7 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
       "org.scodec"    %%% "scodec-bits"       % "1.2.4",
       "org.scodec"    %%% "scodec-core"       % "2.3.1",
       "org.scodec"    %%% "scodec-cats"       % "1.3.0-RC1",
-      "org.typelevel" %%% "otel4s-core-trace" % "0.15.0",
+      "org.typelevel" %%% "otel4s-core-trace" % "0.15-ca28b04-SNAPSHOT",
       "org.typelevel" %%% "twiddles-core"     % "0.9.0",
       "org.typelevel" %%% "munit-cats-effect" % "2.2.0-RC1" % Test
     )
@@ -296,7 +298,7 @@ lazy val otelExample = crossProject(JVMPlatform)
   .example("otel", "OpenTelemetry example project")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel"   %% "otel4s-oteljava"                           % "0.15.0",
+      "org.typelevel"   %% "otel4s-oteljava"                           % "0.15-f5df7b3-SNAPSHOT",
       "io.opentelemetry" % "opentelemetry-exporter-otlp"               % "1.58.0" % Runtime,
       "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.58.0" % Runtime
     )
