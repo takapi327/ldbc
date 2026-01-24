@@ -255,7 +255,7 @@ object Connection:
     yield connection
 
   def fromNetwork[F[_]: Tracer: Console: Hashing: UUIDGen, A](
-                                                               network: Network[F],
+    network:                     Network[F],
     host:                        String,
     port:                        Int,
     user:                        String,
