@@ -568,7 +568,7 @@ object Protocol:
     private def checkRequiresConfidentiality(plugin: AuthenticationPlugin[F], span: Span[F]): F[Unit] =
       if plugin.requiresConfidentiality && !useSSL then
         val error = new SQLInvalidAuthorizationSpecException(
-          s"SSL connection required for plugin '${plugin.name}'. Check if 'ssl' is enabled.",
+          s"SSL connection required for plugin '${ plugin.name }'. Check if 'ssl' is enabled.",
           hint = Some(
             """// You can enable SSL.
               |           MySQLDataSource.build[IO](....).setSSL(SSL.Trusted)
