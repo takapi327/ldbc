@@ -136,10 +136,10 @@ class TelemetryAttributeTest extends FTestPlatform:
   }
 
   test("errorType should return correct attribute from exception") {
-    val exception = new java.sql.SQLException("Test error")
+    val exception = new ldbc.connector.exception.SQLException("Test error")
     assertEquals(
       TelemetryAttribute.errorType(exception),
-      Attribute("error.type", "java.sql.SQLException")
+      Attribute("error.type", "ldbc.connector.exception.SQLException")
     )
   }
 
