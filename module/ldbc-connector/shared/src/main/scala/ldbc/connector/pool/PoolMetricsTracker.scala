@@ -13,6 +13,8 @@ import cats.syntax.all.*
 
 import cats.effect.*
 
+import ldbc.connector.telemetry.DatabaseMetrics
+
 /**
  * Trait for tracking pool metrics.
  * 
@@ -176,3 +178,48 @@ object PoolMetricsTracker:
       totalCreations    = cre,
       totalRemovals     = rem
     )
+
+  /**
+   * Creates an OpenTelemetry-integrated metrics tracker.
+   *
+   * This implementation delegates to both the in-memory tracker (for getMetrics)
+   * and the OpenTelemetry metrics (for external observability).
+   *
+   * @param otelMetrics The OpenTelemetry DatabaseMetrics instance
+   * @param poolName The name of the connection pool
+   * @return A Resource containing the tracker
+   */
+  def otel[F[_]: Sync](
+    otelMetrics: DatabaseMetrics[F],
+    poolName:    String
+  ): Resource[F, PoolMetricsTracker[F]] =
+    Resource.eval(inMemory[F]).map { inMemoryTracker =>
+      new PoolMetricsTracker[F]:
+        override def recordAcquisition(duration: FiniteDuration): F[Unit] =
+          inMemoryTracker.recordAcquisition(duration) *>
+            otelMetrics.recordConnectionWaitTime(duration, poolName)
+
+        override def recordUsage(duration: FiniteDuration): F[Unit] =
+          inMemoryTracker.recordUsage(duration) *>
+            otelMetrics.recordConnectionUseTime(duration, poolName)
+
+        override def recordCreation(duration: FiniteDuration): F[Unit] =
+          inMemoryTracker.recordCreation(duration) *>
+            otelMetrics.recordConnectionCreateTime(duration, poolName)
+
+        override def recordTimeout(): F[Unit] =
+          inMemoryTracker.recordTimeout() *>
+            otelMetrics.recordConnectionTimeout(poolName)
+
+        override def recordLeak(): F[Unit] =
+          inMemoryTracker.recordLeak()
+
+        override def recordRemoval(): F[Unit] =
+          inMemoryTracker.recordRemoval()
+
+        override def updateGauge(name: String, value: Long): F[Unit] =
+          inMemoryTracker.updateGauge(name, value)
+
+        override def getMetrics: F[PoolMetrics] =
+          inMemoryTracker.getMetrics
+    }
