@@ -167,7 +167,7 @@ object Connection:
 
     for
       sslOp      <- ssl.toSSLNegotiationOptions(if debug then logger.some else none)
-      connection <- fromSocketGroup(
+      connection <- fromNetwork(
                       Network[F],
                       host,
                       port,
@@ -254,6 +254,60 @@ object Connection:
       _ <- Resource.make(acquire(connection))(v => release(v, connection))
     yield connection
 
+  def fromNetwork[F[_]: Tracer: Console: Hashing: UUIDGen, A](
+    network:                     Network[F],
+    host:                        String,
+    port:                        Int,
+    user:                        String,
+    password:                    Option[String] = None,
+    database:                    Option[String] = None,
+    debug:                       Boolean = false,
+    socketOptions:               List[SocketOption],
+    sslOptions:                  Option[SSLNegotiation.Options[F]],
+    readTimeout:                 Duration = Duration.Inf,
+    allowPublicKeyRetrieval:     Boolean = false,
+    useCursorFetch:              Boolean = false,
+    useServerPrepStmts:          Boolean = false,
+    maxAllowedPacket:            Int = MySQLConfig.DEFAULT_PACKET_SIZE,
+    databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = None,
+    defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
+    plugins:                     List[AuthenticationPlugin[F]],
+    acquire:                     Connection[F] => F[A],
+    release:                     (A, Connection[F]) => F[Unit]
+  )(using ev: Async[F]): Resource[F, LdbcConnection[F]] =
+
+    def fail[B](msg: String): Resource[F, B] =
+      Resource.eval(ev.raiseError(new SQLClientInfoException(msg)))
+
+    def sockets: Resource[F, Socket[F]] =
+      (Hostname.fromString(host), Port.fromInt(port)) match
+        case (Some(validHost), Some(validPort)) =>
+          network.connect(SocketAddress(validHost, validPort), socketOptions)
+        case (None, _) => fail(s"""Hostname: "$host" is not syntactically valid.""")
+        case (_, None) => fail(s"Port: $port falls out of the allowed range.")
+
+    fromSockets(
+      sockets,
+      host,
+      port,
+      user,
+      password,
+      database,
+      debug,
+      sslOptions,
+      readTimeout,
+      allowPublicKeyRetrieval,
+      useCursorFetch,
+      useServerPrepStmts,
+      maxAllowedPacket,
+      databaseTerm,
+      defaultAuthenticationPlugin,
+      plugins,
+      acquire,
+      release
+    )
+
+  @deprecated("0.X.0", "Use fromNetwork instead")
   def fromSocketGroup[F[_]: Tracer: Console: Hashing: UUIDGen, A](
     socketGroup:                 SocketGroup[F],
     host:                        String,

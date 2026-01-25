@@ -35,11 +35,11 @@ final case class SimpleHttpClient[F[_]: Network: Async](
   override def createSocket(address: SocketAddress[Host], isSecure: Boolean, host: String): Resource[F, Socket[F]] =
     if isSecure then
       for
-        socket     <- Network[F].client(address)
+        socket     <- Network[F].connect(address)
         tlsContext <- Network[F].tlsContext.systemResource
         tlsSocket  <- tlsContext
                        .clientBuilder(socket)
                        .withParameters(TLSParameters(serverName = Some(host)))
                        .build
       yield tlsSocket
-    else Network[F].client(address)
+    else Network[F].connect(address)
