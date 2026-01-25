@@ -140,23 +140,23 @@ object DatabaseMetrics:
    * Creates a no-op metrics instance.
    */
   def noop[F[_]: Applicative]: DatabaseMetrics[F] = new DatabaseMetrics[F]:
-    def recordOperationDuration(duration: FiniteDuration, attributes: Attribute[?]*): F[Unit] =
+    override def recordOperationDuration(duration: FiniteDuration, attributes: Attribute[?]*): F[Unit] =
       Applicative[F].unit
-    def recordReturnedRows(rows: Long, attributes: Attribute[?]*): F[Unit] =
+    override def recordReturnedRows(rows: Long, attributes: Attribute[?]*): F[Unit] =
       Applicative[F].unit
-    def recordConnectionCount(count: Long, state: String, poolName: String): F[Unit] =
+    override def recordConnectionCount(count: Long, state: String, poolName: String): F[Unit] =
       Applicative[F].unit
-    def incrementConnectionCount(state: String, poolName: String): F[Unit] =
+    override def incrementConnectionCount(state: String, poolName: String): F[Unit] =
       Applicative[F].unit
-    def decrementConnectionCount(state: String, poolName: String): F[Unit] =
+    override def decrementConnectionCount(state: String, poolName: String): F[Unit] =
       Applicative[F].unit
-    def recordConnectionCreateTime(duration: FiniteDuration, poolName: String): F[Unit] =
+    override def recordConnectionCreateTime(duration: FiniteDuration, poolName: String): F[Unit] =
       Applicative[F].unit
-    def recordConnectionWaitTime(duration: FiniteDuration, poolName: String): F[Unit] =
+    override def recordConnectionWaitTime(duration: FiniteDuration, poolName: String): F[Unit] =
       Applicative[F].unit
-    def recordConnectionUseTime(duration: FiniteDuration, poolName: String): F[Unit] =
+    override def recordConnectionUseTime(duration: FiniteDuration, poolName: String): F[Unit] =
       Applicative[F].unit
-    def recordConnectionTimeout(poolName: String): F[Unit] =
+    override def recordConnectionTimeout(poolName: String): F[Unit] =
       Applicative[F].unit
 
   /**
