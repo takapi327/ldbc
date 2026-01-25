@@ -9,10 +9,11 @@ package ldbc.connector.telemetry
 import scala.concurrent.duration.FiniteDuration
 
 import cats.Applicative
+
 import cats.effect.Resource
 
-import org.typelevel.otel4s.Attribute
 import org.typelevel.otel4s.metrics.*
+import org.typelevel.otel4s.Attribute
 
 /**
  * OpenTelemetry metrics for database operations.
@@ -168,70 +169,72 @@ object DatabaseMetrics:
     for
       // db.client.operation.duration (Histogram, Required, Stable)
       operationDuration <- Resource.eval(
-        meter
-          .histogram[Double]("db.client.operation.duration")
-          .withUnit("s")
-          .withDescription("Duration of database client operations")
-          .withExplicitBucketBoundaries(OperationDurationBuckets)
-          .create
-      )
+                             meter
+                               .histogram[Double]("db.client.operation.duration")
+                               .withUnit("s")
+                               .withDescription("Duration of database client operations")
+                               .withExplicitBucketBoundaries(OperationDurationBuckets)
+                               .create
+                           )
 
       // db.client.response.returned_rows (Histogram, Recommended, Development)
       returnedRows <- Resource.eval(
-        meter
-          .histogram[Double]("db.client.response.returned_rows")
-          .withUnit("{row}")
-          .withDescription("The actual number of records returned by the database operation")
-          .withExplicitBucketBoundaries(ReturnedRowsBuckets)
-          .create
-      )
+                        meter
+                          .histogram[Double]("db.client.response.returned_rows")
+                          .withUnit("{row}")
+                          .withDescription("The actual number of records returned by the database operation")
+                          .withExplicitBucketBoundaries(ReturnedRowsBuckets)
+                          .create
+                      )
 
       // db.client.connection.count (UpDownCounter, Required, Development)
-      connectionCount <- Resource.eval(
-        meter
-          .upDownCounter[Long]("db.client.connection.count")
-          .withUnit("{connection}")
-          .withDescription("The number of connections that are currently in state described by the state attribute")
-          .create
-      )
+      connectionCount <-
+        Resource.eval(
+          meter
+            .upDownCounter[Long]("db.client.connection.count")
+            .withUnit("{connection}")
+            .withDescription("The number of connections that are currently in state described by the state attribute")
+            .create
+        )
 
       // db.client.connection.create_time (Histogram, Recommended, Development)
       connectionCreateTime <- Resource.eval(
-        meter
-          .histogram[Double]("db.client.connection.create_time")
-          .withUnit("s")
-          .withDescription("The time it took to create a new connection")
-          .create
-      )
+                                meter
+                                  .histogram[Double]("db.client.connection.create_time")
+                                  .withUnit("s")
+                                  .withDescription("The time it took to create a new connection")
+                                  .create
+                              )
 
       // db.client.connection.wait_time (Histogram, Recommended, Development)
       connectionWaitTime <- Resource.eval(
-        meter
-          .histogram[Double]("db.client.connection.wait_time")
-          .withUnit("s")
-          .withDescription("The time it took to obtain an open connection from the pool")
-          .create
-      )
+                              meter
+                                .histogram[Double]("db.client.connection.wait_time")
+                                .withUnit("s")
+                                .withDescription("The time it took to obtain an open connection from the pool")
+                                .create
+                            )
 
       // db.client.connection.use_time (Histogram, Recommended, Development)
       connectionUseTime <- Resource.eval(
-        meter
-          .histogram[Double]("db.client.connection.use_time")
-          .withUnit("s")
-          .withDescription("The time between borrowing a connection and returning it to the pool")
-          .create
-      )
+                             meter
+                               .histogram[Double]("db.client.connection.use_time")
+                               .withUnit("s")
+                               .withDescription("The time between borrowing a connection and returning it to the pool")
+                               .create
+                           )
 
       // db.client.connection.timeouts (Counter, Recommended, Development)
-      connectionTimeouts <- Resource.eval(
-        meter
-          .counter[Long]("db.client.connection.timeouts")
-          .withUnit("{timeout}")
-          .withDescription(
-            "The number of connection timeouts that have occurred trying to obtain a connection from the pool"
-          )
-          .create
-      )
+      connectionTimeouts <-
+        Resource.eval(
+          meter
+            .counter[Long]("db.client.connection.timeouts")
+            .withUnit("{timeout}")
+            .withDescription(
+              "The number of connection timeouts that have occurred trying to obtain a connection from the pool"
+            )
+            .create
+        )
     yield new DatabaseMetricsImpl(
       operationDuration,
       returnedRows,
