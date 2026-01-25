@@ -15,7 +15,7 @@ import cats.syntax.all.*
 
 import cats.effect.*
 
-import org.typelevel.otel4s.trace.{ Span, Tracer }
+import org.typelevel.otel4s.trace.{ Span, StatusCode, Tracer }
 import org.typelevel.otel4s.Attribute
 
 import ldbc.sql.{ CallableStatement, DatabaseMetaData, ParameterMetaData, ResultSet, Statement }
@@ -134,10 +134,14 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                 case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
                 case error: ERRPacket =>
                   val exception = error.toException(Some(sql), None, params)
-                  span.recordException(exception, error.attributes*) *> F.raiseError(exception)
+                  span.recordException(exception, error.attributes*) *>
+                    span.setStatus(StatusCode.Error, exception.getMessage) *>
+                    F.raiseError(exception)
                 case eof: EOFPacket =>
                   val exception = new SQLException("Unexpected EOF packet")
-                  span.recordException(exception, eof.attribute) *> F.raiseError(exception)
+                  span.recordException(exception, eof.attribute) *>
+                    span.setStatus(StatusCode.Error, exception.getMessage) *>
+                    F.raiseError(exception)
               }
           }
       }
@@ -165,10 +169,14 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                   case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
                   case error: ERRPacket =>
                     val exception = error.toException(Some(sql), None, params)
-                    span.recordException(exception, error.attributes*) *> F.raiseError(exception)
+                    span.recordException(exception, error.attributes*) *>
+                      span.setStatus(StatusCode.Error, exception.getMessage) *>
+                      F.raiseError(exception)
                   case eof: EOFPacket =>
                     val exception = new SQLException("Unexpected EOF packet")
-                    span.recordException(exception, eof.attribute) *> F.raiseError(exception)
+                    span.recordException(exception, eof.attribute) *>
+                      span.setStatus(StatusCode.Error, exception.getMessage) *>
+                      F.raiseError(exception)
                 }
             }
             .map(_ => false)
@@ -217,10 +225,14 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                       case _: OKPacket      => F.pure(Array.fill(args.length)(Statement.SUCCESS_NO_INFO.toLong))
                       case error: ERRPacket =>
                         val exception = error.toException(Some(sql), None)
-                        span.recordException(exception, error.attributes*) *> F.raiseError(exception)
+                        span.recordException(exception, error.attributes*) *>
+                          span.setStatus(StatusCode.Error, exception.getMessage) *>
+                          F.raiseError(exception)
                       case eof: EOFPacket =>
                         val exception = new SQLException("Unexpected EOF packet")
-                        span.recordException(exception, eof.attribute) *> F.raiseError(exception)
+                        span.recordException(exception, eof.attribute) *>
+                          span.setStatus(StatusCode.Error, exception.getMessage) *>
+                          F.raiseError(exception)
                     }
               case q if q.startsWith("update") || q.startsWith("delete") || q.startsWith("CALL") =>
                 span.addAttributes(batchAttributes*) *>
@@ -246,10 +258,14 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                                 lastInsertId.set(result.lastInsertId) *> F.pure(acc :+ result.affectedRows)
                               case error: ERRPacket =>
                                 val exception = error.toException("Failed to execute batch", acc)
-                                span.recordException(exception, error.attributes*) *> F.raiseError(exception)
+                                span.recordException(exception, error.attributes*) *>
+                                  span.setStatus(StatusCode.Error, exception.getMessage) *>
+                                  F.raiseError(exception)
                               case eof: EOFPacket =>
                                 val exception = new SQLException("Unexpected EOF packet")
-                                span.recordException(exception, eof.attribute) *> F.raiseError(exception)
+                                span.recordException(exception, eof.attribute) *>
+                                  span.setStatus(StatusCode.Error, exception.getMessage) *>
+                                  F.raiseError(exception)
                             }
                       yield result
                     }
