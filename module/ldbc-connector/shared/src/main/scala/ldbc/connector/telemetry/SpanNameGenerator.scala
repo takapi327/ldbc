@@ -51,7 +51,7 @@ object SpanNameGenerator:
     storedProcedureName: Option[String] = None,
     namespace:           Option[String] = None,
     serverAddress:       Option[String] = None,
-    serverPort:          Option[Int] = None
+    serverPort:          Option[Int]    = None
   )
 
   /**
@@ -64,7 +64,7 @@ object SpanNameGenerator:
     // Priority 1: query summary
     context.querySummary match
       case Some(summary) => summary
-      case None =>
+      case None          =>
         val target = resolveTarget(context)
 
         // Priority 2: {operation} {target}

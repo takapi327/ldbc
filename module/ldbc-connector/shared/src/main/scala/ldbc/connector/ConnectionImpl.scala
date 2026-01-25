@@ -37,7 +37,7 @@ private[ldbc] case class ConnectionImpl[F[_]: Tracer: Exchange: UUIDGen](
   useCursorFetch:     Boolean,
   useServerPrepStmts: Boolean,
   databaseTerm:       DatabaseMetaData.DatabaseTerm = DatabaseMetaData.DatabaseTerm.CATALOG,
-  telemetryConfig:    TelemetryConfig = TelemetryConfig.default
+  telemetryConfig:    TelemetryConfig               = TelemetryConfig.default
 )(using ev: Sync[F])
   extends LdbcConnection[F]:
 

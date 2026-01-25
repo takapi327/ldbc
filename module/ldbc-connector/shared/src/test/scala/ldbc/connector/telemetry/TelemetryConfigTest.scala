@@ -196,8 +196,8 @@ class TelemetryConfigTest extends FTestPlatform:
   test("generateSpanName should use API metadata when available") {
     val config   = TelemetryConfig.default
     val spanName = config.generateSpanName(
-      sql              = "SELECT * FROM users",
-      apiOperationName = Some("SELECT"),
+      sql               = "SELECT * FROM users",
+      apiOperationName  = Some("SELECT"),
       apiCollectionName = Some("users")
     )
     assertEquals(spanName, "SELECT users")

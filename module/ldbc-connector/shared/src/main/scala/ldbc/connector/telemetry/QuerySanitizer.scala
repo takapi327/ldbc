@@ -44,26 +44,26 @@ object QuerySanitizer:
   val Placeholder: String = "?"
 
   // Regex patterns for different literal types
-  private val StringLiteralPattern: Regex  = """'(?:[^'\\]|\\.)*'""".r
-  private val DoubleQuotedPattern: Regex   = """"(?:[^"\\]|\\.)*"""".r
-  private val NumericPattern: Regex        = """\b\d+\.?\d*\b""".r
-  private val HexPattern: Regex            = """0[xX][0-9a-fA-F]+""".r
-  private val BinaryPattern: Regex         = """0[bB][01]+""".r
-  private val NullPattern: Regex           = """(?i)\bNULL\b""".r
-  private val BooleanPattern: Regex        = """(?i)\b(?:TRUE|FALSE)\b""".r
+  private val StringLiteralPattern: Regex = """'(?:[^'\\]|\\.)*'""".r
+  private val DoubleQuotedPattern:  Regex = """"(?:[^"\\]|\\.)*"""".r
+  private val NumericPattern:       Regex = """\b\d+\.?\d*\b""".r
+  private val HexPattern:           Regex = """0[xX][0-9a-fA-F]+""".r
+  private val BinaryPattern:        Regex = """0[bB][01]+""".r
+  private val NullPattern:          Regex = """(?i)\bNULL\b""".r
+  private val BooleanPattern:       Regex = """(?i)\b(?:TRUE|FALSE)\b""".r
 
   // Pattern to extract operation name (preserves original case)
   private val OperationPattern: Regex = """^\s*(\w+)""".r
 
   // Patterns for parameterized query detection
   private val PositionalPlaceholderPattern: Regex = """\?""".r
-  private val NumericPlaceholderPattern: Regex    = """\$\d+""".r
-  private val NamedPlaceholderPattern: Regex      = """:\w+""".r
+  private val NumericPlaceholderPattern:    Regex = """\$\d+""".r
+  private val NamedPlaceholderPattern:      Regex = """:\w+""".r
 
   // Pattern to extract table name from common SQL statements (case-insensitive)
-  private val SelectFromPattern: Regex  = """(?i)\bFROM\s+`?(\w+)`?""".r
-  private val InsertIntoPattern: Regex  = """(?i)\bINTO\s+`?(\w+)`?""".r
-  private val UpdatePattern: Regex      = """(?i)\bUPDATE\s+`?(\w+)`?""".r
+  private val SelectFromPattern: Regex = """(?i)\bFROM\s+`?(\w+)`?""".r
+  private val InsertIntoPattern: Regex = """(?i)\bINTO\s+`?(\w+)`?""".r
+  private val UpdatePattern:     Regex = """(?i)\bUPDATE\s+`?(\w+)`?""".r
 
   /**
    * Checks if a query is parameterized (contains placeholders).

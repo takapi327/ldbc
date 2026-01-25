@@ -58,8 +58,8 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
   fetchSize:            Ref[F, Int],
   useCursorFetch:       Boolean,
   useServerPrepStmts:   Boolean,
-  resultSetType:        Int = ResultSet.TYPE_FORWARD_ONLY,
-  resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY,
+  resultSetType:        Int             = ResultSet.TYPE_FORWARD_ONLY,
+  resultSetConcurrency: Int             = ResultSet.CONCUR_READ_ONLY,
   telemetryConfig:      TelemetryConfig = TelemetryConfig.default
 )(using F: MonadThrow[F])
   extends SharedPreparedStatement[F]:
@@ -105,7 +105,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
   override def executeQuery(): F[ResultSet[F]] =
     checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, ResultSet[F]](TelemetrySpanName.STMT_EXECUTE_PREPARED) {
       (span: Span[F]) =>
-        val processedSql = telemetryConfig.processQueryText(sql)
+        val processedSql    = telemetryConfig.processQueryText(sql)
         val queryAttributes = baseAttributes ++ List(
           TelemetryAttribute.dbQueryText(processedSql)
         ) ++ telemetryConfig.getOperationName(sql).map(TelemetryAttribute.dbOperationName).toList
@@ -150,7 +150,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
     checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, Long](TelemetrySpanName.STMT_EXECUTE_PREPARED) {
       (span: Span[F]) =>
         params.get.flatMap { params =>
-          val processedSql = telemetryConfig.processQueryText(sql)
+          val processedSql    = telemetryConfig.processQueryText(sql)
           val queryAttributes = baseAttributes ++ List(
             TelemetryAttribute.dbQueryText(processedSql)
           ) ++ telemetryConfig.getOperationName(sql).map(TelemetryAttribute.dbOperationName).toList

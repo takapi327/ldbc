@@ -132,10 +132,8 @@ final case class TelemetryConfig(
    */
   def getOperationName(sql: String, apiOperationName: Option[String] = None): Option[String] =
     apiOperationName.orElse {
-      if extractMetadataFromQueryText then
-        Some(QuerySanitizer.extractOperationName(sql))
-      else
-        None
+      if extractMetadataFromQueryText then Some(QuerySanitizer.extractOperationName(sql))
+      else None
     }
 
   /**
@@ -147,10 +145,8 @@ final case class TelemetryConfig(
    */
   def getCollectionName(sql: String, apiCollectionName: Option[String] = None): Option[String] =
     apiCollectionName.orElse {
-      if extractMetadataFromQueryText then
-        QuerySanitizer.extractTableName(sql)
-      else
-        None
+      if extractMetadataFromQueryText then QuerySanitizer.extractTableName(sql)
+      else None
     }
 
   /**
@@ -211,12 +207,12 @@ final case class TelemetryConfig(
       case _                     => None
 
     val context = SpanNameGenerator.Context(
-      querySummary        = querySummary,
-      operationName       = operationName,
-      collectionName      = collectionName,
-      namespace           = namespace,
-      serverAddress       = serverAddress,
-      serverPort          = serverPort
+      querySummary   = querySummary,
+      operationName  = operationName,
+      collectionName = collectionName,
+      namespace      = namespace,
+      serverAddress  = serverAddress,
+      serverPort     = serverPort
     )
     SpanNameGenerator.generate(context)
 

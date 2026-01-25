@@ -41,8 +41,8 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
   fetchSize:            Ref[F, Int],
   useCursorFetch:       Boolean,
   useServerPrepStmts:   Boolean,
-  resultSetType:        Int = ResultSet.TYPE_FORWARD_ONLY,
-  resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY,
+  resultSetType:        Int             = ResultSet.TYPE_FORWARD_ONLY,
+  resultSetConcurrency: Int             = ResultSet.CONCUR_READ_ONLY,
   telemetryConfig:      TelemetryConfig = TelemetryConfig.default
 )(using F: MonadThrow[F])
   extends StatementImpl.ShareStatement[F]:
@@ -51,7 +51,7 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
 
   private def simpleQueryRun(sql: String): F[ResultSet[F]] =
     exchange[F, ResultSet[F]](TelemetrySpanName.STMT_EXECUTE) { (span: Span[F]) =>
-      val processedSql = telemetryConfig.processQueryText(sql)
+      val processedSql    = telemetryConfig.processQueryText(sql)
       val queryAttributes = baseAttributes ++ List(
         TelemetryAttribute.dbQueryText(processedSql)
       ) ++ telemetryConfig.getOperationName(sql).map(TelemetryAttribute.dbOperationName).toList
@@ -217,7 +217,7 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
   override def executeLargeUpdate(sql: String): F[Long] =
     checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, Long](TelemetrySpanName.STMT_EXECUTE) {
       (span: Span[F]) =>
-        val processedSql = telemetryConfig.processQueryText(sql)
+        val processedSql    = telemetryConfig.processQueryText(sql)
         val queryAttributes = baseAttributes ++ List(
           TelemetryAttribute.dbQueryText(processedSql)
         ) ++ telemetryConfig.getOperationName(sql).map(TelemetryAttribute.dbOperationName).toList
