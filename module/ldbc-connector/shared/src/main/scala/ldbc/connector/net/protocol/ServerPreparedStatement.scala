@@ -59,7 +59,8 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
   useCursorFetch:       Boolean,
   useServerPrepStmts:   Boolean,
   resultSetType:        Int = ResultSet.TYPE_FORWARD_ONLY,
-  resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY
+  resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY,
+  telemetryConfig:      TelemetryConfig = TelemetryConfig.default
 )(using F: MonadThrow[F])
   extends SharedPreparedStatement[F]:
 
@@ -104,9 +105,10 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
   override def executeQuery(): F[ResultSet[F]] =
     checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, ResultSet[F]](TelemetrySpanName.STMT_EXECUTE_PREPARED) {
       (span: Span[F]) =>
+        val processedSql = telemetryConfig.processQueryText(sql)
         val queryAttributes = baseAttributes ++ List(
-          TelemetryAttribute.dbQueryText(sql)
-        )
+          TelemetryAttribute.dbQueryText(processedSql)
+        ) ++ telemetryConfig.getOperationName(sql).map(TelemetryAttribute.dbOperationName).toList
 
         for
           parameter   <- params.get
@@ -148,9 +150,10 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
     checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, Long](TelemetrySpanName.STMT_EXECUTE_PREPARED) {
       (span: Span[F]) =>
         params.get.flatMap { params =>
+          val processedSql = telemetryConfig.processQueryText(sql)
           val queryAttributes = baseAttributes ++ List(
-            TelemetryAttribute.dbQueryText(sql)
-          )
+            TelemetryAttribute.dbQueryText(processedSql)
+          ) ++ telemetryConfig.getOperationName(sql).map(TelemetryAttribute.dbOperationName).toList
 
           span.addAttributes(queryAttributes*) *>
             protocol.resetSequenceId *>
@@ -195,7 +198,9 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
           exchange[F, Array[Long]](TelemetrySpanName.STMT_EXECUTE_BATCH_PREPARED) { (span: Span[F]) =>
             protocol.resetSequenceId *>
               batchedArgs.get.flatMap { args =>
-                val batchAttributes = baseAttributes ++ TelemetryAttribute.batchSize(args.length.toLong)
+                val batchAttributes = baseAttributes ++
+                  List(TelemetryAttribute.dbOperationName(TelemetryAttribute.SqlOperation.BATCH)) ++
+                  TelemetryAttribute.dbOperationBatchSize(args.length).toList
 
                 if args.isEmpty then F.pure(Array.empty)
                 else
@@ -231,7 +236,9 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
             exchange[F, Array[Long]](TelemetrySpanName.STMT_EXECUTE_BATCH_PREPARED) { (span: Span[F]) =>
               protocol.resetSequenceId *>
                 batchedArgs.get.flatMap { args =>
-                  val batchAttributes = baseAttributes ++ TelemetryAttribute.batchSize(args.length.toLong)
+                  val batchAttributes = baseAttributes ++
+                    List(TelemetryAttribute.dbOperationName(TelemetryAttribute.SqlOperation.BATCH)) ++
+                    TelemetryAttribute.dbOperationBatchSize(args.length).toList
 
                   if args.isEmpty then F.pure(Array.empty)
                   else

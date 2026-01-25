@@ -28,6 +28,7 @@ import ldbc.connector.data.*
 import ldbc.connector.exception.*
 import ldbc.connector.net.*
 import ldbc.connector.net.protocol.*
+import ldbc.connector.telemetry.TelemetryConfig
 
 import ldbc.authentication.plugin.*
 
@@ -80,7 +81,8 @@ object Connection:
     maxAllowedPacket:            Int = MySQLConfig.DEFAULT_PACKET_SIZE,
     databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
     defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]] = None,
-    plugins:                     List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]]
+    plugins:                     List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
+    telemetryConfig:             TelemetryConfig = TelemetryConfig.default
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] = this.default[F, Unit](
     host,
     port,
@@ -99,7 +101,8 @@ object Connection:
     defaultAuthenticationPlugin,
     plugins,
     unitBefore,
-    unitAfter
+    unitAfter,
+    telemetryConfig
   )
 
   def withBeforeAfter[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
@@ -120,7 +123,8 @@ object Connection:
     maxAllowedPacket:            Int = MySQLConfig.DEFAULT_PACKET_SIZE,
     databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
     defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]] = None,
-    plugins:                     List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]]
+    plugins:                     List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
+    telemetryConfig:             TelemetryConfig = TelemetryConfig.default
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] = this.default(
     host,
     port,
@@ -139,7 +143,8 @@ object Connection:
     defaultAuthenticationPlugin,
     plugins,
     before,
-    after
+    after,
+    telemetryConfig
   )
 
   def default[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
@@ -160,7 +165,8 @@ object Connection:
     defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]] = None,
     plugins:                     List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
     before:                      Connection[F] => F[A],
-    after:                       (A, Connection[F]) => F[Unit]
+    after:                       (A, Connection[F]) => F[Unit],
+    telemetryConfig:             TelemetryConfig = TelemetryConfig.default
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] =
 
     val logger: String => F[Unit] = s => Console[F].println(s"TLS: $s")
@@ -186,7 +192,8 @@ object Connection:
                       defaultAuthenticationPlugin,
                       plugins,
                       before,
-                      after
+                      after,
+                      telemetryConfig
                     )
     yield connection
 
@@ -208,7 +215,8 @@ object Connection:
     defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
     plugins:                     List[AuthenticationPlugin[F]],
     acquire:                     Connection[F] => F[A],
-    release:                     (A, Connection[F]) => F[Unit]
+    release:                     (A, Connection[F]) => F[Unit],
+    telemetryConfig:             TelemetryConfig = TelemetryConfig.default
   ): Resource[F, LdbcConnection[F]] =
     val pluginMap       = plugins.map(plugin => plugin.name.toString -> plugin).toMap
     val capabilityFlags = defaultCapabilityFlags ++
@@ -247,7 +255,8 @@ object Connection:
               connectionClosed,
               useCursorFetch,
               useServerPrepStmts,
-              databaseTerm.getOrElse(DatabaseMetaData.DatabaseTerm.CATALOG)
+              databaseTerm.getOrElse(DatabaseMetaData.DatabaseTerm.CATALOG),
+              telemetryConfig
             )
           )
         )(_.close())
@@ -273,7 +282,8 @@ object Connection:
     defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
     plugins:                     List[AuthenticationPlugin[F]],
     acquire:                     Connection[F] => F[A],
-    release:                     (A, Connection[F]) => F[Unit]
+    release:                     (A, Connection[F]) => F[Unit],
+    telemetryConfig:             TelemetryConfig = TelemetryConfig.default
   )(using ev: Async[F]): Resource[F, LdbcConnection[F]] =
 
     def fail[B](msg: String): Resource[F, B] =
@@ -304,5 +314,6 @@ object Connection:
       defaultAuthenticationPlugin,
       plugins,
       acquire,
-      release
+      release,
+      telemetryConfig
     )

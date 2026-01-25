@@ -42,7 +42,8 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
   useCursorFetch:       Boolean,
   useServerPrepStmts:   Boolean,
   resultSetType:        Int = ResultSet.TYPE_FORWARD_ONLY,
-  resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY
+  resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY,
+  telemetryConfig:      TelemetryConfig = TelemetryConfig.default
 )(using F: MonadThrow[F])
   extends StatementImpl.ShareStatement[F]:
 
@@ -50,9 +51,10 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
 
   private def simpleQueryRun(sql: String): F[ResultSet[F]] =
     exchange[F, ResultSet[F]](TelemetrySpanName.STMT_EXECUTE) { (span: Span[F]) =>
+      val processedSql = telemetryConfig.processQueryText(sql)
       val queryAttributes = baseAttributes ++ List(
-        TelemetryAttribute.dbQueryText(sql)
-      )
+        TelemetryAttribute.dbQueryText(processedSql)
+      ) ++ telemetryConfig.getOperationName(sql).map(TelemetryAttribute.dbOperationName).toList
 
       span.addAttributes(queryAttributes*) *>
         protocol.resetSequenceId *>
@@ -156,7 +158,8 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
       useCursorFetch,
       useServerPrepStmts,
       resultSetType,
-      resultSetConcurrency
+      resultSetConcurrency,
+      telemetryConfig
     )
 
   private def buildClientPreparedStatement(sql: String): F[PreparedStatement[F]] =
@@ -188,7 +191,8 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
       useCursorFetch,
       useServerPrepStmts,
       resultSetType,
-      resultSetConcurrency
+      resultSetConcurrency,
+      telemetryConfig
     )
 
   private def preparedQueryRun(sql: String): F[ResultSet[F]] =
@@ -213,9 +217,10 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
   override def executeLargeUpdate(sql: String): F[Long] =
     checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, Long](TelemetrySpanName.STMT_EXECUTE) {
       (span: Span[F]) =>
+        val processedSql = telemetryConfig.processQueryText(sql)
         val queryAttributes = baseAttributes ++ List(
-          TelemetryAttribute.dbQueryText(sql)
-        )
+          TelemetryAttribute.dbQueryText(processedSql)
+        ) ++ telemetryConfig.getOperationName(sql).map(TelemetryAttribute.dbOperationName).toList
 
         span.addAttributes(queryAttributes*) *>
           protocol.resetSequenceId *> (
@@ -258,7 +263,9 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
       protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON) *>
       exchange[F, Array[Long]](TelemetrySpanName.STMT_EXECUTE_BATCH) { (span: Span[F]) =>
         batchedArgs.get.flatMap { args =>
-          val batchAttributes = baseAttributes ++ TelemetryAttribute.batchSize(args.length.toLong)
+          val batchAttributes = baseAttributes ++
+            List(TelemetryAttribute.dbOperationName(TelemetryAttribute.SqlOperation.BATCH)) ++
+            TelemetryAttribute.dbOperationBatchSize(args.length).toList
 
           if args.isEmpty then F.pure(Array.empty)
           else
