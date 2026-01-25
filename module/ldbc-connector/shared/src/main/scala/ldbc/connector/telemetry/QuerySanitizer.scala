@@ -85,18 +85,18 @@ object QuerySanitizer:
    * @return Sanitized query with literals replaced by "?"
    */
   def sanitize(sql: String): String =
-    var result = sql
-
     // Order matters: process string literals first to avoid partial matches
-    result = StringLiteralPattern.replaceAllIn(result, Placeholder)
-    result = DoubleQuotedPattern.replaceAllIn(result, Placeholder)
-    result = HexPattern.replaceAllIn(result, Placeholder)
-    result = BinaryPattern.replaceAllIn(result, Placeholder)
-    result = NumericPattern.replaceAllIn(result, Placeholder)
-    result = NullPattern.replaceAllIn(result, Placeholder)
-    result = BooleanPattern.replaceAllIn(result, Placeholder)
-
-    result
+    // Chain replacements using pipe operator for readability
+    val patterns = List(
+      StringLiteralPattern,
+      DoubleQuotedPattern,
+      HexPattern,
+      BinaryPattern,
+      NumericPattern,
+      NullPattern,
+      BooleanPattern
+    )
+    patterns.foldLeft(sql)((result, pattern) => pattern.replaceAllIn(result, Placeholder))
 
   /**
    * Conditionally sanitizes SQL query based on whether it's parameterized.
