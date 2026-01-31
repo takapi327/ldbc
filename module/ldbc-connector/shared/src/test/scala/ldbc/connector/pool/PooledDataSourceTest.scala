@@ -295,3 +295,181 @@ class PooledDataSourceTest extends FTestPlatform:
         assert(metrics.totalReleases >= 20L)     // Adjusted expectation
     }
   }
+
+  // ============================================================
+  // Tests for idleConnections synchronization
+  // ============================================================
+
+  test("PooledDataSource should add connections to idleConnections on initialization") {
+    val resource = PooledDataSource.fromConfig[IO](config.setMinConnections(3).setMaxConnections(5))
+
+    resource.use { datasource =>
+      for
+        state  <- datasource.poolState.get
+        status <- datasource.status
+      yield
+        // All initial connections should be in idleConnections
+        assertEquals(state.idleConnections.size, 3)
+        assertEquals(status.idle, 3)
+        assertEquals(status.active, 0)
+        // Verify all connection IDs are in idleConnections
+        state.connections.foreach { conn =>
+          assert(state.idleConnections.contains(conn.id), s"Connection ${conn.id} should be in idleConnections")
+        }
+    }
+  }
+
+  test("PooledDataSource should remove connection from idleConnections on acquire") {
+    val resource = PooledDataSource.fromConfig[IO](config.setMinConnections(2).setMaxConnections(5))
+
+    resource.use { datasource =>
+      for
+        initialState <- datasource.poolState.get
+        _            <- IO(assertEquals(initialState.idleConnections.size, 2))
+
+        // Acquire a connection
+        result <- datasource.getConnection.use { _ =>
+                    for
+                      stateWhileAcquired <- datasource.poolState.get
+                      status             <- datasource.status
+                    yield
+                      // One connection should be removed from idleConnections
+                      assertEquals(stateWhileAcquired.idleConnections.size, 1)
+                      assertEquals(status.active, 1)
+                      assertEquals(status.idle, 1)
+                  }
+
+        // After release, connection should be back in idleConnections
+        finalState <- datasource.poolState.get
+      yield
+        assertEquals(finalState.idleConnections.size, 2)
+    }
+  }
+
+  test("PooledDataSource should add connection back to idleConnections on release") {
+    val resource = PooledDataSource.fromConfig[IO](config.setMinConnections(1).setMaxConnections(3))
+
+    resource.use { datasource =>
+      for
+        initialState <- datasource.poolState.get
+        initialSize = initialState.idleConnections.size
+
+        // Acquire and release a connection
+        _ <- datasource.getConnection.use { conn =>
+               for
+                 duringAcquire <- datasource.poolState.get
+                 _             <- IO(assertEquals(duringAcquire.idleConnections.size, initialSize - 1))
+                 // Execute a query to ensure connection is used
+                 stmt <- conn.createStatement()
+                 _    <- stmt.executeQuery("SELECT 1")
+               yield ()
+             }
+
+        // After release
+        finalState <- datasource.poolState.get
+      yield
+        // Connection should be back in idleConnections
+        assertEquals(finalState.idleConnections.size, initialSize)
+    }
+  }
+
+  test("PooledDataSource should correctly track idleConnections with multiple concurrent connections") {
+    val resource = PooledDataSource.fromConfig[IO](config.setMinConnections(3).setMaxConnections(5))
+
+    resource.use { datasource =>
+      for
+        initialState <- datasource.poolState.get
+        _            <- IO(assertEquals(initialState.idleConnections.size, 3))
+
+        // Acquire multiple connections concurrently
+        result <- (
+                    datasource.getConnection.use { _ =>
+                      datasource.poolState.get.map(_.idleConnections.size)
+                    },
+                    datasource.getConnection.use { _ =>
+                      datasource.poolState.get.map(_.idleConnections.size)
+                    }
+                  ).parTupled
+
+        // After all releases
+        finalState <- datasource.poolState.get
+      yield
+        // During concurrent acquisition, idle count varies
+        // After release, all should be back
+        assertEquals(finalState.idleConnections.size, finalState.connections.size)
+    }
+  }
+
+  test("PooledDataSource should maintain idleConnections consistency under load") {
+    val resource = PooledDataSource.fromConfig[IO](
+      config
+        .setMinConnections(2)
+        .setMaxConnections(4)
+        .setConnectionTimeout(30.seconds)
+    )
+
+    resource.use { datasource =>
+      for
+        // Run multiple acquire/release cycles
+        _ <- IO.parTraverseN(2)((1 to 10).toList) { _ =>
+               datasource.getConnection.use { conn =>
+                 conn.createStatement().flatMap(_.executeQuery("SELECT 1")).void
+               }
+             }
+
+        // After all operations complete
+        finalState  <- datasource.poolState.get
+        finalStatus <- datasource.status
+      yield
+        // idleConnections should match actual idle connections
+        assertEquals(finalState.idleConnections.size, finalStatus.idle)
+        assertEquals(finalStatus.active, 0)
+
+        // All connections should be in idleConnections
+        finalState.connections.foreach { conn =>
+          assert(
+            finalState.idleConnections.contains(conn.id),
+            s"Connection ${conn.id} should be in idleConnections after release"
+          )
+        }
+    }
+  }
+
+  test("PooledDataSource should remove connection from idleConnections when pool grows") {
+    val resource = PooledDataSource.fromConfig[IO](config.setMinConnections(1).setMaxConnections(3))
+
+    resource.use { datasource =>
+      for
+        initialState <- datasource.poolState.get
+        _            <- IO(assertEquals(initialState.connections.size, 1))
+        _            <- IO(assertEquals(initialState.idleConnections.size, 1))
+
+        // Acquire first connection
+        _ <- datasource.getConnection.use { _ =>
+               for
+                 state1 <- datasource.poolState.get
+                 _      <- IO(assertEquals(state1.idleConnections.size, 0))
+
+                 // Acquire second connection (will create new one)
+                 _ <- datasource.getConnection.use { _ =>
+                        for
+                          state2 <- datasource.poolState.get
+                          // Pool should have grown
+                          _ <- IO(assert(state2.connections.size >= 2))
+                          // New connection is created in InUse state, not added to idleConnections
+                          _ <- IO(assertEquals(state2.idleConnections.size, 0))
+                        yield ()
+                      }
+
+                 // Second connection released
+                 state3 <- datasource.poolState.get
+                 _      <- IO(assertEquals(state3.idleConnections.size, 1))
+               yield ()
+             }
+
+        // Both connections released
+        finalState <- datasource.poolState.get
+      yield
+        assertEquals(finalState.idleConnections.size, finalState.connections.size)
+    }
+  }
