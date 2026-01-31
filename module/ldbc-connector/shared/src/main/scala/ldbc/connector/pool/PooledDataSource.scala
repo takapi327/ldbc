@@ -279,6 +279,8 @@ object PooledDataSource:
                           } else
                             for
                               _       <- pooled.state.set(ConnectionState.InUse)
+                              // Remove from idleConnections when acquired
+                              _       <- poolState.update(s => s.copy(idleConnections = s.idleConnections - pooled.id))
                               now     <- Clock[F].realTime.map(_.toMillis)
                               _       <- pooled.lastUsedAt.set(now)
                               _       <- pooled.useCount.update(_ + 1)
@@ -373,8 +375,9 @@ object PooledDataSource:
                            } else Temporal[F].pure(true)
                   expired <- isExpired(pooled)
                   _       <- if valid && !expired then {
-                         // Return to bag for reuse
-                         connectionBag.requite(pooled) *>
+                         // Return to bag for reuse and add to idleConnections
+                         poolState.update(s => s.copy(idleConnections = s.idleConnections + pooled.id)) *>
+                           connectionBag.requite(pooled) *>
                            Clock[F].monotonic.flatMap { endTime =>
                              metricsTracker.recordUsage(endTime - startTime)
                            }
@@ -454,8 +457,11 @@ object PooledDataSource:
                        (poolState, false)
                      else
                        val newState = poolState.copy(
-                         connections     = poolState.connections :+ pooled,
-                         idleConnections = poolState.idleConnections // Don't add to idle - it's InUse
+                         connections = poolState.connections :+ pooled,
+                         // Add to idleConnections if created in Idle state (for pool initialization)
+                         idleConnections =
+                           if initialState == ConnectionState.Idle then poolState.idleConnections + pooled.id
+                           else poolState.idleConnections
                        )
                        (newState, true)
                    }
@@ -550,8 +556,9 @@ object PooledDataSource:
 
     override def returnToPool(pooled: PooledConnection[F]): F[Unit] =
       // This is now handled by ConcurrentBag.requite
-      // Just update the connection state
-      pooled.state.set(ConnectionState.Idle)
+      // Update the connection state and add to idleConnections
+      pooled.state.set(ConnectionState.Idle) *>
+        poolState.update(s => s.copy(idleConnections = s.idleConnections + pooled.id))
 
     override def removeConnection(pooled: PooledConnection[F]): F[Unit] = for
       currentState <- pooled.state.get

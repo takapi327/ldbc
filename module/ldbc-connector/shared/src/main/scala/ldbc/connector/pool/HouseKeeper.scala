@@ -216,13 +216,9 @@ object HouseKeeper:
 
           if toCreate > 0 then
             (1 to toCreate).toList.traverse_ { _ =>
-              pool
-                .createNewConnection()
-                .flatMap { pooled =>
-                  pooled.state.set(ConnectionState.Idle) *> pool.returnToPool(pooled)
-                }
-                .attempt
-                .void
+              // Use createNewConnectionForPool which creates in Idle state
+              // and properly adds to both connectionBag and idleConnections
+              pool.createNewConnectionForPool().attempt.void
             }
           else Temporal[F].unit
       }
