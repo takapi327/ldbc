@@ -314,7 +314,7 @@ class PooledDataSourceTest extends FTestPlatform:
         assertEquals(status.active, 0)
         // Verify all connection IDs are in idleConnections
         state.connections.foreach { conn =>
-          assert(state.idleConnections.contains(conn.id), s"Connection ${conn.id} should be in idleConnections")
+          assert(state.idleConnections.contains(conn.id), s"Connection ${ conn.id } should be in idleConnections")
         }
     }
   }
@@ -341,8 +341,7 @@ class PooledDataSourceTest extends FTestPlatform:
 
         // After release, connection should be back in idleConnections
         finalState <- datasource.poolState.get
-      yield
-        assertEquals(finalState.idleConnections.size, 2)
+      yield assertEquals(finalState.idleConnections.size, 2)
     }
   }
 
@@ -429,7 +428,7 @@ class PooledDataSourceTest extends FTestPlatform:
         finalState.connections.foreach { conn =>
           assert(
             finalState.idleConnections.contains(conn.id),
-            s"Connection ${conn.id} should be in idleConnections after release"
+            s"Connection ${ conn.id } should be in idleConnections after release"
           )
         }
     }
@@ -469,7 +468,6 @@ class PooledDataSourceTest extends FTestPlatform:
 
         // Both connections released
         finalState <- datasource.poolState.get
-      yield
-        assertEquals(finalState.idleConnections.size, finalState.connections.size)
+      yield assertEquals(finalState.idleConnections.size, finalState.connections.size)
     }
   }
