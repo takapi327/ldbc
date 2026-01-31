@@ -278,7 +278,7 @@ object PooledDataSource:
                             removeConnection(pooled) >> acquireConnectionWithStartTime(startTime)
                           } else
                             for
-                              _       <- pooled.state.set(ConnectionState.InUse)
+                              _ <- pooled.state.set(ConnectionState.InUse)
                               // Remove from idleConnections when acquired
                               _       <- poolState.update(s => s.copy(idleConnections = s.idleConnections - pooled.id))
                               now     <- Clock[F].realTime.map(_.toMillis)
