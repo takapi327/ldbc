@@ -562,7 +562,7 @@ class PooledDataSourceTest extends FTestPlatform:
                      stateDuringUse <- datasource.poolState.get
                      _              <- IO(assert(stateDuringUse.connections.size >= 3))
                      // idleConnections should be empty when all are in use
-                     _              <- IO(assertEquals(stateDuringUse.idleConnections.size, 0))
+                     _ <- IO(assertEquals(stateDuringUse.idleConnections.size, 0))
                    yield ()
                  }
                }
@@ -606,24 +606,22 @@ class PooledDataSourceTest extends FTestPlatform:
         _            <- IO(assertEquals(initialState.idleConnections.size, 2))
 
         // Start a long-running connection use
-        connectionFiber <- datasource.getConnection
-                             .use { conn =>
-                               for
-                                 stmt <- conn.createStatement()
-                                 rs   <- stmt.executeQuery("SELECT SLEEP(0.1)")
-                                 _    <- rs.next()
-                               yield "completed"
-                             }
-                             .start
+        connectionFiber <- datasource.getConnection.use { conn =>
+                             for
+                               stmt <- conn.createStatement()
+                               rs   <- stmt.executeQuery("SELECT SLEEP(0.1)")
+                               _    <- rs.next()
+                             yield "completed"
+                           }.start
 
         // Small delay to ensure connection is acquired
         _ <- IO.sleep(50.millis)
 
         // Verify connection is in use
-        stateWhileInUse <- datasource.poolState.get
+        stateWhileInUse  <- datasource.poolState.get
         statusWhileInUse <- datasource.status
-        _ <- IO(assertEquals(statusWhileInUse.active, 1))
-        _ <- IO(assertEquals(stateWhileInUse.idleConnections.size, 1))
+        _                <- IO(assertEquals(statusWhileInUse.active, 1))
+        _                <- IO(assertEquals(stateWhileInUse.idleConnections.size, 1))
 
         // Wait for the operation to complete
         result <- connectionFiber.joinWithNever
