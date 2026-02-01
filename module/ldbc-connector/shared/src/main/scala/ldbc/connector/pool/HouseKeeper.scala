@@ -118,21 +118,20 @@ object HouseKeeper:
     private def reconcileIdleConnections(
       pool: PooledDataSource[F]
     ): F[Unit] =
-      pool.poolState.modify { state =>
-        val validIds           = state.connections.map(_.id).toSet
-        val reconciledIdleConns = state.idleConnections.intersect(validIds)
+      pool.poolState
+        .modify { state =>
+          val validIds            = state.connections.map(_.id).toSet
+          val reconciledIdleConns = state.idleConnections.intersect(validIds)
 
-        if reconciledIdleConns.size != state.idleConnections.size then
-          // Found orphaned IDs, clean them up
-          (state.copy(idleConnections = reconciledIdleConns), true)
-        else
-          (state, false)
-      }.flatMap { wasReconciled =>
-        if wasReconciled then
-          pool.poolLogger.debug("Reconciled idleConnections: removed orphaned connection IDs")
-        else
-          Temporal[F].unit
-      }
+          if reconciledIdleConns.size != state.idleConnections.size then
+            // Found orphaned IDs, clean them up
+            (state.copy(idleConnections = reconciledIdleConns), true)
+          else (state, false)
+        }
+        .flatMap { wasReconciled =>
+          if wasReconciled then pool.poolLogger.debug("Reconciled idleConnections: removed orphaned connection IDs")
+          else Temporal[F].unit
+        }
 
     /**
      * Remove connections that have exceeded max lifetime.
