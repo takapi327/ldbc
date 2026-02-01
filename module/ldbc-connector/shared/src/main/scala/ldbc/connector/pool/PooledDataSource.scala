@@ -278,7 +278,9 @@ object PooledDataSource:
                             removeConnection(pooled) >> acquireConnectionWithStartTime(startTime)
                           } else
                             for
-                              _       <- pooled.state.set(ConnectionState.InUse)
+                              _ <- pooled.state.set(ConnectionState.InUse)
+                              // Remove from idleConnections when acquired
+                              _       <- poolState.update(s => s.copy(idleConnections = s.idleConnections - pooled.id))
                               now     <- Clock[F].realTime.map(_.toMillis)
                               _       <- pooled.lastUsedAt.set(now)
                               _       <- pooled.useCount.update(_ + 1)
@@ -373,8 +375,11 @@ object PooledDataSource:
                            } else Temporal[F].pure(true)
                   expired <- isExpired(pooled)
                   _       <- if valid && !expired then {
-                         // Return to bag for reuse
+                         // Return to bag for reuse, then add to idleConnections
+                         // Order matters: requite first to ensure connection is actually returned,
+                         // then update idleConnections to maintain consistency
                          connectionBag.requite(pooled) *>
+                           poolState.update(s => s.copy(idleConnections = s.idleConnections + pooled.id)) *>
                            Clock[F].monotonic.flatMap { endTime =>
                              metricsTracker.recordUsage(endTime - startTime)
                            }
@@ -447,6 +452,12 @@ object PooledDataSource:
                      bagState        = bagStateRef
                    )
 
+          // For Idle state connections (pool initialization), add to bag first
+          // to ensure consistency: bag contains the connection before idleConnections tracks it
+          _ <-
+            if initialState != ConnectionState.InUse then connectionBag.add(pooled)
+            else Temporal[F].unit
+
           // Double-check the limit before adding to prevent race conditions
           added <- poolState.modify { poolState =>
                      if poolState.connections.size >= maxConnections then
@@ -454,23 +465,24 @@ object PooledDataSource:
                        (poolState, false)
                      else
                        val newState = poolState.copy(
-                         connections     = poolState.connections :+ pooled,
-                         idleConnections = poolState.idleConnections // Don't add to idle - it's InUse
+                         connections = poolState.connections :+ pooled,
+                         // Add to idleConnections if created in Idle state (for pool initialization)
+                         idleConnections =
+                           if initialState == ConnectionState.Idle then poolState.idleConnections + pooled.id
+                           else poolState.idleConnections
                        )
                        (newState, true)
                    }
 
-          // If we couldn't add it, close the connection and fail
+          // If we couldn't add it, clean up and fail
           _ <- if !added then {
-                 poolLogger.warn(s"Cannot create new connection: pool at maximum size ($maxConnections)") >>
+                 // Remove from bag if we added it earlier
+                 (if initialState != ConnectionState.InUse then connectionBag.remove(pooled).void
+                  else Temporal[F].unit) *>
+                   poolLogger.warn(s"Cannot create new connection: pool at maximum size ($maxConnections)") *>
                    conn.close().attempt.void *>
                    Temporal[F].raiseError[Unit](new SQLException("Pool reached maximum size"))
                } else Temporal[F].unit
-
-          // Add to concurrent bag only if we're not creating for immediate use
-          _ <-
-            if initialState != ConnectionState.InUse then connectionBag.add(pooled)
-            else Temporal[F].unit
 
           endTime <- Clock[F].monotonic
           _       <- metricsTracker.recordCreation(endTime - startTime)
@@ -549,9 +561,13 @@ object PooledDataSource:
       }
 
     override def returnToPool(pooled: PooledConnection[F]): F[Unit] =
-      // This is now handled by ConcurrentBag.requite
-      // Just update the connection state
-      pooled.state.set(ConnectionState.Idle)
+      // Update the connection state, return to bag, then update idleConnections
+      // Order: state change -> bag requite -> idleConnections update
+      // This ensures the connection is in the correct state and available in the bag
+      // before being tracked as idle
+      pooled.state.set(ConnectionState.Idle) *>
+        connectionBag.requite(pooled) *>
+        poolState.update(s => s.copy(idleConnections = s.idleConnections + pooled.id))
 
     override def removeConnection(pooled: PooledConnection[F]): F[Unit] = for
       currentState <- pooled.state.get
