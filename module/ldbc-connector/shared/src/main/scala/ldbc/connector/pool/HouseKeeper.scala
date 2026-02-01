@@ -101,12 +101,37 @@ object HouseKeeper:
         else
           for
             now <- Clock[F].realTime.map(_.toMillis)
+            _   <- reconcileIdleConnections(pool)
             _   <- removeExpiredConnections(pool, now)
             _   <- removeIdleConnections(pool)
             _   <- validateIdleConnections(pool, now)
             _   <- ensureMinimumConnections(pool)
             _   <- updateMetrics(pool)
           yield ()
+      }
+
+    /**
+     * Reconcile idleConnections set with actual connections.
+     * This ensures consistency by removing orphaned IDs from idleConnections
+     * that no longer have corresponding connections in the pool.
+     */
+    private def reconcileIdleConnections(
+      pool: PooledDataSource[F]
+    ): F[Unit] =
+      pool.poolState.modify { state =>
+        val validIds           = state.connections.map(_.id).toSet
+        val reconciledIdleConns = state.idleConnections.intersect(validIds)
+
+        if reconciledIdleConns.size != state.idleConnections.size then
+          // Found orphaned IDs, clean them up
+          (state.copy(idleConnections = reconciledIdleConns), true)
+        else
+          (state, false)
+      }.flatMap { wasReconciled =>
+        if wasReconciled then
+          pool.poolLogger.debug("Reconciled idleConnections: removed orphaned connection IDs")
+        else
+          Temporal[F].unit
       }
 
     /**
