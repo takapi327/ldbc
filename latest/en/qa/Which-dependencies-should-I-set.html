@@ -194,24 +194,24 @@
     <p><strong>jdbc-connector</strong></p>
     <p>If you want to use the traditional connector written in Java, set the following dependencies:</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> ++= </span><span class="type-name">Seq</span><span>(
-  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;jdbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.5.2&quot;</span><span>,
+  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;jdbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.5.3&quot;</span><span>,
   </span><span class="string-literal">&quot;com.mysql&quot;</span><span> % </span><span class="string-literal">&quot;mysql-connector-j&quot;</span><span> % </span><span class="string-literal">&quot;8.4.0&quot;</span><span>
 )</span></code></pre>
     <p><strong>ldbc-connector</strong></p>
     <p>If you want to use the new connector written in Scala, set the following dependencies:</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> ++= </span><span class="type-name">Seq</span><span>(
-  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.5.2&quot;</span><span>
+  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.5.3&quot;</span><span>
 )</span></code></pre>
     <p>ldbc-connector works not only on JVM but also on JS and Native platforms.</p>
     <p>To use ldbc with Scala.js or Scala Native, set the dependencies as follows:</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> ++= </span><span class="type-name">Seq</span><span>(
-  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %%% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.5.2&quot;</span><span>
+  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %%% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.5.3&quot;</span><span>
 )</span></code></pre>
     
     <h3 id="plain-dsl" class="section"><a class="anchor-link left" href="#plain-dsl"><i class="icofont-laika link">&#xef71;</i></a>Plain DSL</h3>
     <p>To use the plain DSL, set the following dependencies:</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> ++= </span><span class="type-name">Seq</span><span>(
-  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-dsl&quot;</span><span> % </span><span class="string-literal">&quot;0.5.2&quot;</span><span>
+  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-dsl&quot;</span><span> % </span><span class="string-literal">&quot;0.5.3&quot;</span><span>
 )</span></code></pre>
     <p>Plain DSL is a method to write simple SQL statements as they are. For example, you can execute queries using SQL literals directly.</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.*
@@ -225,7 +225,7 @@
     <h3 id="query-builder" class="section"><a class="anchor-link left" href="#query-builder"><i class="icofont-laika link">&#xef71;</i></a>Query Builder</h3>
     <p>To use the query builder, set the following dependencies:</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> ++= </span><span class="type-name">Seq</span><span>(
-  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-query-builder&quot;</span><span> % </span><span class="string-literal">&quot;0.5.2&quot;</span><span>
+  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-query-builder&quot;</span><span> % </span><span class="string-literal">&quot;0.5.3&quot;</span><span>
 )</span></code></pre>
     <p>Query builder is a method to construct queries with type-safe API. In the following example, we define a <code>User</code> model and build a SELECT statement using <code>TableQuery</code>.</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.</span><span class="identifier">codec</span><span>.</span><span class="type-name">Codec</span><span>
@@ -244,7 +244,7 @@
     <h3 id="schema-definition-and-model-mapping" class="section"><a class="anchor-link left" href="#schema-definition-and-model-mapping"><i class="icofont-laika link">&#xef71;</i></a>Schema Definition and Model Mapping</h3>
     <p>To use schema definition and model mapping, set the following dependencies:</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> ++= </span><span class="type-name">Seq</span><span>(
-  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-schema&quot;</span><span> % </span><span class="string-literal">&quot;0.5.2&quot;</span><span>
+  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-schema&quot;</span><span> % </span><span class="string-literal">&quot;0.5.3&quot;</span><span>
 )</span></code></pre>
     <p>Schema definition and model mapping enable one-to-one mapping between table definitions and Scala models. Here&#39;s an example of defining a <code>User</code> table:</p>
     <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">schema</span><span>.*
