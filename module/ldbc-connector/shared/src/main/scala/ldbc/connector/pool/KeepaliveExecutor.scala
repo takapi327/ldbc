@@ -98,16 +98,20 @@ object KeepaliveExecutor:
           compareAndSetConnectionState(pooled.state, ConnectionState.Idle, ConnectionState.Reserved).flatMap {
             case true =>
               // Successfully reserved for validation
-              for
-                now   <- Clock[F].realTime.map(_.toMillis)
-                valid <- pool.validateConnection(pooled.connection)
-                _     <- if valid then {
-                       pooled.lastValidatedAt.set(now) >>
-                         pooled.state.set(ConnectionState.Idle)
-                     } else
-                       // Connection is invalid, remove it
-                       pool.removeConnection(pooled)
-              yield ()
+              // Remove from idleConnections while validating for consistency
+              pool.poolState.update(s => s.copy(idleConnections = s.idleConnections - pooled.id)) >>
+                (for
+                  now   <- Clock[F].realTime.map(_.toMillis)
+                  valid <- pool.validateConnection(pooled.connection)
+                  _     <- if valid then {
+                         // Validation successful, return to idle state and add back to idleConnections
+                         pooled.lastValidatedAt.set(now) >>
+                           pooled.state.set(ConnectionState.Idle) >>
+                           pool.poolState.update(s => s.copy(idleConnections = s.idleConnections + pooled.id))
+                       } else
+                         // Connection is invalid, remove it
+                         pool.removeConnection(pooled)
+                yield ())
             case false =>
               // Connection state changed, skip validation
               Temporal[F].unit
