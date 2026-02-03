@@ -11,6 +11,7 @@ import scala.concurrent.duration.*
 import cats.effect.*
 
 import ldbc.connector.*
+import ldbc.connector.telemetry.DatabaseMetrics
 
 class PoolMetricsTrackerTest extends FTestPlatform:
 
@@ -166,4 +167,112 @@ class PoolMetricsTrackerTest extends FTestPlatform:
       assertEquals(metrics.timeouts, 100L)
       assertEquals(metrics.leaks, 100L)
       assertEquals(metrics.totalAcquisitions, 100L)
+  }
+
+  // ============================================================
+  // otel tracker tests
+  // ============================================================
+
+  test("otel tracker should delegate to in-memory tracker for getMetrics") {
+    val otelMetrics = DatabaseMetrics.noop[IO]
+
+    PoolMetricsTracker.otel[IO](otelMetrics, "test-pool").use { tracker =>
+      for
+        _       <- tracker.recordAcquisition(100.millis)
+        _       <- tracker.recordUsage(200.millis)
+        _       <- tracker.recordCreation(50.millis)
+        metrics <- tracker.getMetrics
+      yield
+        assertEquals(metrics.acquisitionTime, 100.millis)
+        assertEquals(metrics.usageTime, 200.millis)
+        assertEquals(metrics.creationTime, 50.millis)
+        assertEquals(metrics.totalAcquisitions, 1L)
+        assertEquals(metrics.totalReleases, 1L)
+        assertEquals(metrics.totalCreations, 1L)
+    }
+  }
+
+  test("otel tracker should record acquisition and delegate to otelMetrics") {
+    val otelMetrics = DatabaseMetrics.noop[IO]
+
+    PoolMetricsTracker.otel[IO](otelMetrics, "test-pool").use { tracker =>
+      for
+        _       <- tracker.recordAcquisition(150.millis)
+        _       <- tracker.recordAcquisition(250.millis)
+        metrics <- tracker.getMetrics
+      yield
+        assertEquals(metrics.acquisitionTime, 200.millis)
+        assertEquals(metrics.totalAcquisitions, 2L)
+    }
+  }
+
+  test("otel tracker should record timeout and delegate to otelMetrics") {
+    val otelMetrics = DatabaseMetrics.noop[IO]
+
+    PoolMetricsTracker.otel[IO](otelMetrics, "test-pool").use { tracker =>
+      for
+        _       <- tracker.recordTimeout()
+        _       <- tracker.recordTimeout()
+        _       <- tracker.recordTimeout()
+        metrics <- tracker.getMetrics
+      yield assertEquals(metrics.timeouts, 3L)
+    }
+  }
+
+  test("otel tracker should record leak without delegating to otelMetrics") {
+    val otelMetrics = DatabaseMetrics.noop[IO]
+
+    PoolMetricsTracker.otel[IO](otelMetrics, "test-pool").use { tracker =>
+      for
+        _       <- tracker.recordLeak()
+        _       <- tracker.recordLeak()
+        metrics <- tracker.getMetrics
+      yield assertEquals(metrics.leaks, 2L)
+    }
+  }
+
+  test("otel tracker should record removal without delegating to otelMetrics") {
+    val otelMetrics = DatabaseMetrics.noop[IO]
+
+    PoolMetricsTracker.otel[IO](otelMetrics, "test-pool").use { tracker =>
+      for
+        _       <- tracker.recordRemoval()
+        _       <- tracker.recordRemoval()
+        metrics <- tracker.getMetrics
+      yield assertEquals(metrics.totalRemovals, 2L)
+    }
+  }
+
+  test("otel tracker should update gauge in in-memory tracker") {
+    val otelMetrics = DatabaseMetrics.noop[IO]
+
+    PoolMetricsTracker.otel[IO](otelMetrics, "test-pool").use { tracker =>
+      for
+        _       <- tracker.updateGauge("active", 5)
+        _       <- tracker.updateGauge("idle", 3)
+        metrics <- tracker.getMetrics
+      yield
+        // Gauges don't affect the returned metrics
+        assertEquals(metrics, PoolMetrics.empty)
+    }
+  }
+
+  test("otel tracker should be thread-safe") {
+    val otelMetrics = DatabaseMetrics.noop[IO]
+
+    PoolMetricsTracker.otel[IO](otelMetrics, "test-pool").use { tracker =>
+      for
+        _ <- IO.parTraverseN(10)((1 to 100).toList) { _ =>
+               tracker.recordAcquisition(100.millis) *>
+                 tracker.recordUsage(200.millis) *>
+                 tracker.recordTimeout()
+             }
+        metrics <- tracker.getMetrics
+      yield
+        assertEquals(metrics.acquisitionTime, 100.millis)
+        assertEquals(metrics.usageTime, 200.millis)
+        assertEquals(metrics.timeouts, 100L)
+        assertEquals(metrics.totalAcquisitions, 100L)
+        assertEquals(metrics.totalReleases, 100L)
+    }
   }
