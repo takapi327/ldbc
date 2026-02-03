@@ -20,6 +20,7 @@ import org.typelevel.otel4s.trace.Tracer
 import ldbc.sql.DatabaseMetaData
 
 import ldbc.connector.pool.*
+import ldbc.connector.telemetry.TelemetryConfig
 
 import ldbc.authentication.plugin.AuthenticationPlugin
 import ldbc.DataSource
@@ -46,6 +47,7 @@ import ldbc.DataSource
  * @param allowPublicKeyRetrieval whether to allow retrieval of RSA public keys from the server
  * @param databaseTerm the database terminology to use (CATALOG or SCHEMA)
  * @param tracer optional OpenTelemetry tracer for distributed tracing
+ * @param telemetryConfig configuration for OpenTelemetry telemetry behavior
  * @param useCursorFetch whether to use cursor-based fetching for result sets
  * @param useServerPrepStmts whether to use server-side prepared statements
  * @param maxAllowedPacket Maximum allowed packet size for network communication in bytes.
@@ -83,6 +85,7 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
   allowPublicKeyRetrieval:     Boolean                               = false,
   databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
   tracer:                      Option[Tracer[F]]                     = None,
+  telemetryConfig:             TelemetryConfig                       = TelemetryConfig.default,
   useCursorFetch:              Boolean                               = false,
   useServerPrepStmts:          Boolean                               = false,
   maxAllowedPacket:            Int                                   = MySQLConfig.DEFAULT_PACKET_SIZE,
@@ -245,6 +248,26 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
   def setTracer(newTracer: Tracer[F]): MySQLDataSource[F, A] =
     copy(tracer = Some(newTracer))
 
+  /** Sets the telemetry configuration for OpenTelemetry behavior.
+    *
+    * Use this to control how telemetry data is collected and processed,
+    * particularly regarding extraction of metadata from SQL query text.
+    *
+    * @param newTelemetryConfig the telemetry configuration
+    * @return a new MySQLDataSource with the updated telemetry config
+    * @example {{{
+    * // Enable query text extraction (fallback mode)
+    * dataSource.setTelemetryConfig(TelemetryConfig.withQueryTextExtraction)
+    *
+    * // Or use fluent API
+    * dataSource.setTelemetryConfig(
+    *   TelemetryConfig.default.withQueryTextExtraction
+    * )
+    * }}}
+    */
+  def setTelemetryConfig(newTelemetryConfig: TelemetryConfig): MySQLDataSource[F, A] =
+    copy(telemetryConfig = newTelemetryConfig)
+
   /** Sets whether to use cursor-based fetching for result sets.
     * This can improve memory usage for large result sets.
     * @param newUseCursorFetch true to enable cursor-based fetching
@@ -323,6 +346,7 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
       allowPublicKeyRetrieval = allowPublicKeyRetrieval,
       databaseTerm            = databaseTerm,
       tracer                  = tracer,
+      telemetryConfig         = telemetryConfig,
       useCursorFetch          = useCursorFetch,
       useServerPrepStmts      = useServerPrepStmts,
       before                  = Some(before),
@@ -377,6 +401,7 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
       allowPublicKeyRetrieval = allowPublicKeyRetrieval,
       databaseTerm            = databaseTerm,
       tracer                  = tracer,
+      telemetryConfig         = telemetryConfig,
       useCursorFetch          = useCursorFetch,
       useServerPrepStmts      = useServerPrepStmts,
       before                  = Some(before),

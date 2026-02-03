@@ -28,6 +28,7 @@ import ldbc.connector.data.*
 import ldbc.connector.exception.*
 import ldbc.connector.net.*
 import ldbc.connector.net.protocol.*
+import ldbc.connector.telemetry.TelemetryConfig
 
 import ldbc.authentication.plugin.*
 
@@ -80,7 +81,8 @@ object Connection:
     maxAllowedPacket:            Int = MySQLConfig.DEFAULT_PACKET_SIZE,
     databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
     defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]] = None,
-    plugins:                     List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]]
+    plugins:                     List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
+    telemetryConfig:             TelemetryConfig = TelemetryConfig.default
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] = this.default[F, Unit](
     host,
     port,
@@ -98,6 +100,7 @@ object Connection:
     databaseTerm,
     defaultAuthenticationPlugin,
     plugins,
+    telemetryConfig,
     unitBefore,
     unitAfter
   )
@@ -120,7 +123,8 @@ object Connection:
     maxAllowedPacket:            Int = MySQLConfig.DEFAULT_PACKET_SIZE,
     databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
     defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]] = None,
-    plugins:                     List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]]
+    plugins:                     List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
+    telemetryConfig:             TelemetryConfig = TelemetryConfig.default
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] = this.default(
     host,
     port,
@@ -138,6 +142,7 @@ object Connection:
     databaseTerm,
     defaultAuthenticationPlugin,
     plugins,
+    telemetryConfig,
     before,
     after
   )
@@ -159,6 +164,7 @@ object Connection:
     databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
     defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]] = None,
     plugins:                     List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
+    telemetryConfig:             TelemetryConfig = TelemetryConfig.default,
     before:                      Connection[F] => F[A],
     after:                       (A, Connection[F]) => F[Unit]
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] =
@@ -185,6 +191,7 @@ object Connection:
                       databaseTerm,
                       defaultAuthenticationPlugin,
                       plugins,
+                      telemetryConfig,
                       before,
                       after
                     )
@@ -207,6 +214,7 @@ object Connection:
     databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = None,
     defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
     plugins:                     List[AuthenticationPlugin[F]],
+    telemetryConfig:             TelemetryConfig = TelemetryConfig.default,
     acquire:                     Connection[F] => F[A],
     release:                     (A, Connection[F]) => F[Unit]
   ): Resource[F, LdbcConnection[F]] =
@@ -247,7 +255,8 @@ object Connection:
               connectionClosed,
               useCursorFetch,
               useServerPrepStmts,
-              databaseTerm.getOrElse(DatabaseMetaData.DatabaseTerm.CATALOG)
+              databaseTerm.getOrElse(DatabaseMetaData.DatabaseTerm.CATALOG),
+              telemetryConfig
             )
           )
         )(_.close())
@@ -272,6 +281,7 @@ object Connection:
     databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = None,
     defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
     plugins:                     List[AuthenticationPlugin[F]],
+    telemetryConfig:             TelemetryConfig = TelemetryConfig.default,
     acquire:                     Connection[F] => F[A],
     release:                     (A, Connection[F]) => F[Unit]
   )(using ev: Async[F]): Resource[F, LdbcConnection[F]] =
@@ -303,6 +313,7 @@ object Connection:
       databaseTerm,
       defaultAuthenticationPlugin,
       plugins,
+      telemetryConfig,
       acquire,
       release
     )
