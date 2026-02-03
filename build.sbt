@@ -152,8 +152,8 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
       "org.scodec"    %%% "scodec-bits"         % "1.1.38",
       "org.scodec"    %%% "scodec-core"         % "2.2.2",
       "org.scodec"    %%% "scodec-cats"         % "1.2.0",
-      "org.typelevel" %%% "otel4s-core-trace"   % "0.14.0",
-      "org.typelevel" %%% "otel4s-core-metrics" % "0.14.0",
+      "org.typelevel" %%% "otel4s-core-trace"   % "0.15.0",
+      "org.typelevel" %%% "otel4s-core-metrics" % "0.15.0",
       "org.typelevel" %%% "twiddles-core"       % "0.8.0",
       "org.typelevel" %%% "munit-cats-effect"   % "2.1.0" % Test
     )
@@ -273,7 +273,7 @@ lazy val http4sExample = crossProject(JVMPlatform)
       "org.http4s"    %% "http4s-dsl"          % "0.23.33",
       "org.http4s"    %% "http4s-ember-server" % "0.23.33",
       "org.http4s"    %% "http4s-circe"        % "0.23.33",
-      "ch.qos.logback" % "logback-classic"     % "1.5.24",
+      "ch.qos.logback" % "logback-classic"     % "1.5.26",
       "io.circe"      %% "circe-generic"       % "0.14.10"
     )
   )
@@ -297,7 +297,7 @@ lazy val otelExample = crossProject(JVMPlatform)
   .example("otel", "OpenTelemetry example project")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel"   %% "otel4s-oteljava"                           % "0.14.0",
+      "org.typelevel"   %% "otel4s-oteljava"                           % "0.15.0",
       "io.opentelemetry" % "opentelemetry-exporter-otlp"               % "1.58.0" % Runtime,
       "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.58.0" % Runtime
     )
@@ -317,7 +317,7 @@ lazy val zioExample = crossProject(JVMPlatform)
   .example("zio", "ZIO example project")
   .settings(
     libraryDependencies ++= Seq(
-      "dev.zio" %% "zio-http" % "3.7.4"
+      "dev.zio" %% "zio-http" % "3.8.0"
     )
   )
   .dependsOn(connector, dsl, zioInterop)
