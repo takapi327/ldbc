@@ -80,8 +80,8 @@ object QuerySanitizer:
       ""
     )
     PositionalPlaceholderPattern.findFirstIn(stripped).isDefined ||
-      NumericPlaceholderPattern.findFirstIn(stripped).isDefined ||
-      NamedPlaceholderPattern.findFirstIn(stripped).isDefined
+    NumericPlaceholderPattern.findFirstIn(stripped).isDefined ||
+    NamedPlaceholderPattern.findFirstIn(stripped).isDefined
 
   /**
    * Sanitizes SQL query by replacing all literal values with placeholders.
@@ -203,9 +203,9 @@ object QuerySanitizer:
     val fromIdx = upperSql.indexOf(" FROM ")
     if fromIdx < 0 then false
     else
-      val afterFrom = upperSql.substring(fromIdx + 6)
+      val afterFrom      = upperSql.substring(fromIdx + 6)
       val clauseKeywords = List(" WHERE ", " ORDER ", " GROUP ", " HAVING ", " LIMIT ", " UNION ", " SET ", " ON ")
-      val endIdx = clauseKeywords.flatMap { kw =>
+      val endIdx         = clauseKeywords.flatMap { kw =>
         val idx = afterFrom.indexOf(kw)
         if idx >= 0 then Some(idx) else None
       } match
