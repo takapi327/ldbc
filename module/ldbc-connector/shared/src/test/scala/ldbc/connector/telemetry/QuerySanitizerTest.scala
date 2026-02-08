@@ -30,6 +30,34 @@ class QuerySanitizerTest extends FTestPlatform:
     assert(!QuerySanitizer.isParameterizedQuery("SELECT * FROM users WHERE id = 123"))
   }
 
+  test("isParameterizedQuery should ignore ? inside single-quoted string literals") {
+    assert(!QuerySanitizer.isParameterizedQuery("SELECT * FROM users WHERE name = 'What?' AND password = 'secret123'"))
+  }
+
+  test("isParameterizedQuery should ignore ? inside double-quoted string literals") {
+    assert(!QuerySanitizer.isParameterizedQuery("""SELECT * FROM users WHERE name = "What?" AND id = 123"""))
+  }
+
+  test("isParameterizedQuery should detect real placeholder even with string literal containing ?") {
+    assert(QuerySanitizer.isParameterizedQuery("SELECT * FROM users WHERE name = 'What?' AND id = ?"))
+  }
+
+  test("isParameterizedQuery should ignore named placeholder inside string literal") {
+    assert(!QuerySanitizer.isParameterizedQuery("SELECT * FROM users WHERE time = '12:30:00'"))
+  }
+
+  test("isParameterizedQuery should ignore named placeholder in DATETIME string literal") {
+    assert(!QuerySanitizer.isParameterizedQuery("SELECT * FROM events WHERE created_at = '2024-01-01 12:30:00'"))
+  }
+
+  test("isParameterizedQuery should ignore numeric placeholder inside string literal") {
+    assert(!QuerySanitizer.isParameterizedQuery("SELECT * FROM users WHERE note = 'cost is $1'"))
+  }
+
+  test("isParameterizedQuery should ignore colon in URL string literal") {
+    assert(!QuerySanitizer.isParameterizedQuery("INSERT INTO links (url) VALUES ('https://example.com')"))
+  }
+
   // ============================================================
   // sanitize Tests
   // ============================================================
@@ -52,9 +80,24 @@ class QuerySanitizerTest extends FTestPlatform:
     assertEquals(QuerySanitizer.sanitize(sql), expected)
   }
 
-  test("sanitize should handle NULL") {
+  test("sanitize should preserve IS NULL keyword") {
     val sql = "SELECT * FROM users WHERE deleted_at IS NULL"
-    assertEquals(QuerySanitizer.sanitize(sql), "SELECT * FROM users WHERE deleted_at IS ?")
+    assertEquals(QuerySanitizer.sanitize(sql), "SELECT * FROM users WHERE deleted_at IS NULL")
+  }
+
+  test("sanitize should preserve IS NOT NULL keyword") {
+    val sql = "SELECT * FROM users WHERE deleted_at IS NOT NULL"
+    assertEquals(QuerySanitizer.sanitize(sql), "SELECT * FROM users WHERE deleted_at IS NOT NULL")
+  }
+
+  test("sanitize should replace NULL value literal") {
+    val sql = "INSERT INTO users (name, email) VALUES (NULL, NULL)"
+    assertEquals(QuerySanitizer.sanitize(sql), "INSERT INTO users (name, email) VALUES (?, ?)")
+  }
+
+  test("sanitize should replace NULL in equality comparison") {
+    val sql = "SELECT * FROM users WHERE name = NULL"
+    assertEquals(QuerySanitizer.sanitize(sql), "SELECT * FROM users WHERE name = ?")
   }
 
   test("sanitize should replace double-quoted strings") {
@@ -105,6 +148,12 @@ class QuerySanitizerTest extends FTestPlatform:
   test("sanitizeIfNeeded should sanitize non-parameterized queries") {
     val sql      = "SELECT * FROM users WHERE id = 123"
     val expected = "SELECT * FROM users WHERE id = ?"
+    assertEquals(QuerySanitizer.sanitizeIfNeeded(sql), expected)
+  }
+
+  test("sanitizeIfNeeded should sanitize query with ? inside string literal (security: M-2)") {
+    val sql      = "SELECT * FROM users WHERE name = 'What?' AND password = 'secret123'"
+    val expected = "SELECT * FROM users WHERE name = ? AND password = ?"
     assertEquals(QuerySanitizer.sanitizeIfNeeded(sql), expected)
   }
 
@@ -207,6 +256,20 @@ class QuerySanitizerTest extends FTestPlatform:
     assertEquals(QuerySanitizer.extractTableName("SELECT * FROM Users"), Some("Users"))
   }
 
+  test("extractTableName should extract table from multi-column SELECT") {
+    assertEquals(
+      QuerySanitizer.extractTableName("SELECT id, name, email FROM users WHERE active = true"),
+      Some("users")
+    )
+  }
+
+  test("extractTableName should extract table from SELECT with expressions containing commas") {
+    assertEquals(
+      QuerySanitizer.extractTableName("SELECT id, CONCAT(first_name, last_name) FROM users"),
+      Some("users")
+    )
+  }
+
   // ============================================================
   // generateSummary Tests
   // ============================================================
@@ -229,6 +292,13 @@ class QuerySanitizerTest extends FTestPlatform:
 
   test("generateSummary should handle DELETE queries") {
     assertEquals(QuerySanitizer.generateSummary("DELETE FROM orders WHERE id = 1"), "DELETE orders")
+  }
+
+  test("generateSummary should handle multi-column SELECT correctly") {
+    assertEquals(
+      QuerySanitizer.generateSummary("SELECT id, name, email FROM users WHERE active = true"),
+      "SELECT users"
+    )
   }
 
   test("generateSummary with explicit parameters should format correctly") {

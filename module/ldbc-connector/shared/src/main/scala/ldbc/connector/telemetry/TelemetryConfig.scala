@@ -216,6 +216,31 @@ final case class TelemetryConfig(
     )
     SpanNameGenerator.generate(context)
 
+  /**
+   * Resolves the span name for a SQL operation.
+   *
+   * When `extractMetadataFromQueryText` is enabled, generates a dynamic span name
+   * from the SQL query (e.g., "SELECT users"). Otherwise, falls back to the provided
+   * default span name (e.g., "Execute Statement").
+   *
+   * @param sql The SQL query
+   * @param defaultName Fallback span name when metadata extraction is disabled
+   * @param namespace Database namespace
+   * @param serverAddress Server address
+   * @param serverPort Server port
+   * @return Resolved span name
+   */
+  def resolveSpanName(
+    sql:           String,
+    defaultName:   TelemetrySpanName,
+    namespace:     Option[String] = None,
+    serverAddress: Option[String] = None,
+    serverPort:    Option[Int] = None
+  ): String =
+    if extractMetadataFromQueryText then
+      generateSpanName(sql, namespace = namespace, serverAddress = serverAddress, serverPort = serverPort)
+    else defaultName.name
+
 object TelemetryConfig:
 
   /**

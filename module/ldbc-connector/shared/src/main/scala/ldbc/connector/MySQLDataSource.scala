@@ -126,7 +126,8 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
           maxAllowedPacket            = maxAllowedPacket,
           databaseTerm                = databaseTerm,
           defaultAuthenticationPlugin = defaultAuthenticationPlugin,
-          plugins                     = plugins
+          plugins                     = plugins,
+          telemetryConfig             = telemetryConfig
         )
       case (Some(b), None) =>
         Connection.withBeforeAfter(
@@ -147,7 +148,8 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
           maxAllowedPacket            = maxAllowedPacket,
           databaseTerm                = databaseTerm,
           defaultAuthenticationPlugin = defaultAuthenticationPlugin,
-          plugins                     = plugins
+          plugins                     = plugins,
+          telemetryConfig             = telemetryConfig
         )
       case (None, _) =>
         Connection(
@@ -166,7 +168,8 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
           maxAllowedPacket            = maxAllowedPacket,
           databaseTerm                = databaseTerm,
           defaultAuthenticationPlugin = defaultAuthenticationPlugin,
-          plugins                     = plugins
+          plugins                     = plugins,
+          telemetryConfig             = telemetryConfig
         )
 
   /** Sets the hostname or IP address of the MySQL server.

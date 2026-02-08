@@ -49,7 +49,7 @@ object QuerySanitizer:
   private val NumericPattern:       Regex = """\b\d+\.?\d*\b""".r
   private val HexPattern:           Regex = """0[xX][0-9a-fA-F]+""".r
   private val BinaryPattern:        Regex = """0[bB][01]+""".r
-  private val NullPattern:          Regex = """(?i)\bNULL\b""".r
+  private val NullPattern:          Regex = """(?i)(?:IS\s+NOT\s+|IS\s+)?\bNULL\b""".r
   private val BooleanPattern:       Regex = """(?i)\b(?:TRUE|FALSE)\b""".r
 
   // Pattern to extract operation name (preserves original case)
@@ -73,9 +73,15 @@ object QuerySanitizer:
    * @return true if the query contains parameterized placeholders
    */
   def isParameterizedQuery(sql: String): Boolean =
-    PositionalPlaceholderPattern.findFirstIn(sql).isDefined ||
-      NumericPlaceholderPattern.findFirstIn(sql).isDefined ||
-      NamedPlaceholderPattern.findFirstIn(sql).isDefined
+    // Strip string literals first to avoid false positives from
+    // placeholders inside literal values (e.g., 'What?' or "value:name")
+    val stripped = StringLiteralPattern.replaceAllIn(
+      DoubleQuotedPattern.replaceAllIn(sql, ""),
+      ""
+    )
+    PositionalPlaceholderPattern.findFirstIn(stripped).isDefined ||
+    NumericPlaceholderPattern.findFirstIn(stripped).isDefined ||
+    NamedPlaceholderPattern.findFirstIn(stripped).isDefined
 
   /**
    * Sanitizes SQL query by replacing all literal values with placeholders.
@@ -93,10 +99,16 @@ object QuerySanitizer:
       HexPattern,
       BinaryPattern,
       NumericPattern,
-      NullPattern,
       BooleanPattern
     )
-    patterns.foldLeft(sql)((result, pattern) => pattern.replaceAllIn(result, Placeholder))
+    val result = patterns.foldLeft(sql)((result, pattern) => pattern.replaceAllIn(result, Placeholder))
+    // Handle NULL separately: preserve IS NULL / IS NOT NULL, replace standalone NULL with placeholder
+    NullPattern.replaceAllIn(
+      result,
+      m =>
+        if m.matched.trim.toUpperCase.startsWith("IS") then Regex.quoteReplacement(m.matched)
+        else Placeholder
+    )
 
   /**
    * Conditionally sanitizes SQL query based on whether it's parameterized.
@@ -179,8 +191,27 @@ object QuerySanitizer:
   private def containsMultipleTables(sql: String): Boolean =
     val upperSql = sql.toUpperCase
     upperSql.contains(" JOIN ") ||
-    (upperSql.contains(",") && upperSql.contains("FROM")) ||
-    upperSql.contains("(SELECT")
+    upperSql.contains("(SELECT") ||
+    hasCommaInFromClause(upperSql)
+
+  /**
+   * Checks if there is a comma within the FROM clause (between FROM and the next SQL keyword).
+   * This distinguishes `SELECT a, b FROM users` (comma in column list, single table)
+   * from `SELECT * FROM users, orders` (comma in FROM clause, multiple tables).
+   */
+  private def hasCommaInFromClause(upperSql: String): Boolean =
+    val fromIdx = upperSql.indexOf(" FROM ")
+    if fromIdx < 0 then false
+    else
+      val afterFrom      = upperSql.substring(fromIdx + 6)
+      val clauseKeywords = List(" WHERE ", " ORDER ", " GROUP ", " HAVING ", " LIMIT ", " UNION ", " SET ", " ON ")
+      val endIdx         = clauseKeywords.flatMap { kw =>
+        val idx = afterFrom.indexOf(kw)
+        if idx >= 0 then Some(idx) else None
+      } match
+        case Nil     => afterFrom.length
+        case indices => indices.min
+      afterFrom.substring(0, endIdx).contains(",")
 
   /**
    * Generates a low-cardinality query summary for span names (FALLBACK method).
