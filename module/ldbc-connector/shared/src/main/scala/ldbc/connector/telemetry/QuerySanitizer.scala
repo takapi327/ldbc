@@ -73,9 +73,15 @@ object QuerySanitizer:
    * @return true if the query contains parameterized placeholders
    */
   def isParameterizedQuery(sql: String): Boolean =
-    PositionalPlaceholderPattern.findFirstIn(sql).isDefined ||
-      NumericPlaceholderPattern.findFirstIn(sql).isDefined ||
-      NamedPlaceholderPattern.findFirstIn(sql).isDefined
+    // Strip string literals first to avoid false positives from
+    // placeholders inside literal values (e.g., 'What?' or "value:name")
+    val stripped = StringLiteralPattern.replaceAllIn(
+      DoubleQuotedPattern.replaceAllIn(sql, ""),
+      ""
+    )
+    PositionalPlaceholderPattern.findFirstIn(stripped).isDefined ||
+      NumericPlaceholderPattern.findFirstIn(stripped).isDefined ||
+      NamedPlaceholderPattern.findFirstIn(stripped).isDefined
 
   /**
    * Sanitizes SQL query by replacing all literal values with placeholders.

@@ -30,6 +30,26 @@ class QuerySanitizerTest extends FTestPlatform:
     assert(!QuerySanitizer.isParameterizedQuery("SELECT * FROM users WHERE id = 123"))
   }
 
+  test("isParameterizedQuery should ignore ? inside single-quoted string literals") {
+    assert(!QuerySanitizer.isParameterizedQuery("SELECT * FROM users WHERE name = 'What?' AND password = 'secret123'"))
+  }
+
+  test("isParameterizedQuery should ignore ? inside double-quoted string literals") {
+    assert(!QuerySanitizer.isParameterizedQuery("""SELECT * FROM users WHERE name = "What?" AND id = 123"""))
+  }
+
+  test("isParameterizedQuery should detect real placeholder even with string literal containing ?") {
+    assert(QuerySanitizer.isParameterizedQuery("SELECT * FROM users WHERE name = 'What?' AND id = ?"))
+  }
+
+  test("isParameterizedQuery should ignore named placeholder inside string literal") {
+    assert(!QuerySanitizer.isParameterizedQuery("SELECT * FROM users WHERE time = '12:30:00'"))
+  }
+
+  test("isParameterizedQuery should ignore numeric placeholder inside string literal") {
+    assert(!QuerySanitizer.isParameterizedQuery("SELECT * FROM users WHERE note = 'cost is $1'"))
+  }
+
   // ============================================================
   // sanitize Tests
   // ============================================================
@@ -105,6 +125,12 @@ class QuerySanitizerTest extends FTestPlatform:
   test("sanitizeIfNeeded should sanitize non-parameterized queries") {
     val sql      = "SELECT * FROM users WHERE id = 123"
     val expected = "SELECT * FROM users WHERE id = ?"
+    assertEquals(QuerySanitizer.sanitizeIfNeeded(sql), expected)
+  }
+
+  test("sanitizeIfNeeded should sanitize query with ? inside string literal (security: M-2)") {
+    val sql      = "SELECT * FROM users WHERE name = 'What?' AND password = 'secret123'"
+    val expected = "SELECT * FROM users WHERE name = ? AND password = ?"
     assertEquals(QuerySanitizer.sanitizeIfNeeded(sql), expected)
   }
 
