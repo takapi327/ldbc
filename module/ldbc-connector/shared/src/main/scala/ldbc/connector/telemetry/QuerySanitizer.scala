@@ -179,8 +179,27 @@ object QuerySanitizer:
   private def containsMultipleTables(sql: String): Boolean =
     val upperSql = sql.toUpperCase
     upperSql.contains(" JOIN ") ||
-    (upperSql.contains(",") && upperSql.contains("FROM")) ||
-    upperSql.contains("(SELECT")
+    upperSql.contains("(SELECT") ||
+    hasCommaInFromClause(upperSql)
+
+  /**
+   * Checks if there is a comma within the FROM clause (between FROM and the next SQL keyword).
+   * This distinguishes `SELECT a, b FROM users` (comma in column list, single table)
+   * from `SELECT * FROM users, orders` (comma in FROM clause, multiple tables).
+   */
+  private def hasCommaInFromClause(upperSql: String): Boolean =
+    val fromIdx = upperSql.indexOf(" FROM ")
+    if fromIdx < 0 then false
+    else
+      val afterFrom = upperSql.substring(fromIdx + 6)
+      val clauseKeywords = List(" WHERE ", " ORDER ", " GROUP ", " HAVING ", " LIMIT ", " UNION ", " SET ", " ON ")
+      val endIdx = clauseKeywords.flatMap { kw =>
+        val idx = afterFrom.indexOf(kw)
+        if idx >= 0 then Some(idx) else None
+      } match
+        case Nil     => afterFrom.length
+        case indices => indices.min
+      afterFrom.substring(0, endIdx).contains(",")
 
   /**
    * Generates a low-cardinality query summary for span names (FALLBACK method).

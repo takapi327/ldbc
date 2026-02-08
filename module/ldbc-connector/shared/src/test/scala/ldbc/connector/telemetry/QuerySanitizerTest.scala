@@ -207,6 +207,17 @@ class QuerySanitizerTest extends FTestPlatform:
     assertEquals(QuerySanitizer.extractTableName("SELECT * FROM Users"), Some("Users"))
   }
 
+  test("extractTableName should extract table from multi-column SELECT") {
+    assertEquals(QuerySanitizer.extractTableName("SELECT id, name, email FROM users WHERE active = true"), Some("users"))
+  }
+
+  test("extractTableName should extract table from SELECT with expressions containing commas") {
+    assertEquals(
+      QuerySanitizer.extractTableName("SELECT id, CONCAT(first_name, last_name) FROM users"),
+      Some("users")
+    )
+  }
+
   // ============================================================
   // generateSummary Tests
   // ============================================================
@@ -229,6 +240,10 @@ class QuerySanitizerTest extends FTestPlatform:
 
   test("generateSummary should handle DELETE queries") {
     assertEquals(QuerySanitizer.generateSummary("DELETE FROM orders WHERE id = 1"), "DELETE orders")
+  }
+
+  test("generateSummary should handle multi-column SELECT correctly") {
+    assertEquals(QuerySanitizer.generateSummary("SELECT id, name, email FROM users WHERE active = true"), "SELECT users")
   }
 
   test("generateSummary with explicit parameters should format correctly") {
