@@ -46,8 +46,16 @@ class QuerySanitizerTest extends FTestPlatform:
     assert(!QuerySanitizer.isParameterizedQuery("SELECT * FROM users WHERE time = '12:30:00'"))
   }
 
+  test("isParameterizedQuery should ignore named placeholder in DATETIME string literal") {
+    assert(!QuerySanitizer.isParameterizedQuery("SELECT * FROM events WHERE created_at = '2024-01-01 12:30:00'"))
+  }
+
   test("isParameterizedQuery should ignore numeric placeholder inside string literal") {
     assert(!QuerySanitizer.isParameterizedQuery("SELECT * FROM users WHERE note = 'cost is $1'"))
+  }
+
+  test("isParameterizedQuery should ignore colon in URL string literal") {
+    assert(!QuerySanitizer.isParameterizedQuery("INSERT INTO links (url) VALUES ('https://example.com')"))
   }
 
   // ============================================================
@@ -72,9 +80,24 @@ class QuerySanitizerTest extends FTestPlatform:
     assertEquals(QuerySanitizer.sanitize(sql), expected)
   }
 
-  test("sanitize should handle NULL") {
+  test("sanitize should preserve IS NULL keyword") {
     val sql = "SELECT * FROM users WHERE deleted_at IS NULL"
-    assertEquals(QuerySanitizer.sanitize(sql), "SELECT * FROM users WHERE deleted_at IS ?")
+    assertEquals(QuerySanitizer.sanitize(sql), "SELECT * FROM users WHERE deleted_at IS NULL")
+  }
+
+  test("sanitize should preserve IS NOT NULL keyword") {
+    val sql = "SELECT * FROM users WHERE deleted_at IS NOT NULL"
+    assertEquals(QuerySanitizer.sanitize(sql), "SELECT * FROM users WHERE deleted_at IS NOT NULL")
+  }
+
+  test("sanitize should replace NULL value literal") {
+    val sql = "INSERT INTO users (name, email) VALUES (NULL, NULL)"
+    assertEquals(QuerySanitizer.sanitize(sql), "INSERT INTO users (name, email) VALUES (?, ?)")
+  }
+
+  test("sanitize should replace NULL in equality comparison") {
+    val sql = "SELECT * FROM users WHERE name = NULL"
+    assertEquals(QuerySanitizer.sanitize(sql), "SELECT * FROM users WHERE name = ?")
   }
 
   test("sanitize should replace double-quoted strings") {

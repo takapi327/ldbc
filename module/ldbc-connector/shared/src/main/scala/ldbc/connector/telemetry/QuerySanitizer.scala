@@ -49,7 +49,7 @@ object QuerySanitizer:
   private val NumericPattern:       Regex = """\b\d+\.?\d*\b""".r
   private val HexPattern:           Regex = """0[xX][0-9a-fA-F]+""".r
   private val BinaryPattern:        Regex = """0[bB][01]+""".r
-  private val NullPattern:          Regex = """(?i)\bNULL\b""".r
+  private val NullPattern:          Regex = """(?i)(?<!IS )(?<!NOT )\bNULL\b""".r
   private val BooleanPattern:       Regex = """(?i)\b(?:TRUE|FALSE)\b""".r
 
   // Pattern to extract operation name (preserves original case)
