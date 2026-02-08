@@ -17,6 +17,7 @@ and now also more API stability than those older releases.
 
 | Release | Date     | Scala Versions | sbt plugin | Scala.js | Scala Native | Doc Sources     | API (Scaladoc)  |
 |---------|----------|----------------|------------|----------|--------------|-----------------|-----------------|
+| 0.5     | Dec 2025 | 3.3.x          | 1.x        |          |              | [Browse][doc05] | [Browse][api05] |
 | 0.4     | Oct 2025 | 3.3.x          | 1.x        |          |              | [Browse][doc04] | [Browse][api04] |
 | 0.3     | May 2025 | 3.3.x          | 1.x        |          |              | [Browse][doc03] | [Browse][api03] |
 | 0.2     | Mar 2024 | 3.3.x          | 1.x        |          |              | [Browse][doc02] | [Browse][api02] |
@@ -25,7 +26,9 @@ and now also more API stability than those older releases.
 [doc02]: https://takapi327.github.io/ldbc/0.2/
 [doc03]: https://takapi327.github.io/ldbc/0.3/
 [doc04]: https://takapi327.github.io/ldbc/0.4/
+[doc05]: https://takapi327.github.io/ldbc/0.5/
 
+[api05]: https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/0.5.0/index.html
 [api04]: https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/0.4.0/index.html
 [api03]: https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/0.3.3/index.html
 [api02]: https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/0.2.1/index.html

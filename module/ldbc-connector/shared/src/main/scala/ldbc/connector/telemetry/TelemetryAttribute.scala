@@ -114,8 +114,12 @@ object TelemetryAttribute:
     Attribute(AUTH_PLUGIN, plugin)
 
   /**
-   * Batch size for batch operations
-   * Operations are only considered batches when they contain two or more operations
+   * Batch size for batch operations.
+   * Per OpenTelemetry spec: db.operation.batch.size should NOT be set to 1.
+   * Operations are only considered batches when they contain two or more operations.
+   *
+   * @param size The number of operations in the batch
+   * @return List of attributes for batch operations (empty if size < 2)
    */
   def batchSize(size: Long): List[Attribute[?]] =
     if size >= 2 then
@@ -123,7 +127,7 @@ object TelemetryAttribute:
         dbOperationName("BATCH"),
         Attribute(BATCH_SIZE, size)
       )
-    else List(dbOperationName("BATCH"))
+    else List.empty
 
   /**
    * Stored procedure name attribute

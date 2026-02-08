@@ -6,6 +6,8 @@
 
 package ldbc.dsl.codec
 
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.time.*
 
 import scala.compiletime.constValue
@@ -158,6 +160,21 @@ object Codec extends TwiddleSyntax[Codec]:
     override def encode(value: Array[Byte]): Encoder.Encoded = Encoder.Encoded.success(List(value))
     override def decode(index: Int, statement: String): ResultSetIO[Either[Decoder.Error, Array[Byte]]] =
       readCatchError(offset, ResultSetIO.getBytes(index))
+
+  given codecArrayFloat: Codec[Array[Float]] with
+    override def offset:                      Int             = 1
+    override def encode(value: Array[Float]): Encoder.Encoded =
+      Encoder.Encoded.success(List(value.mkString("[", ",", "]")))
+    override def decode(index: Int, statement: String): ResultSetIO[Either[Decoder.Error, Array[Float]]] =
+      readCatchError(
+        offset,
+        ResultSetIO.getBytes(index).map { bytes =>
+          if bytes == null || bytes.isEmpty then Array.empty[Float]
+          else
+            val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
+            Array.fill(bytes.length / 4)(buffer.getFloat())
+        }
+      )
 
   given Codec[LocalTime] with
     override def offset:                   Int             = 1
