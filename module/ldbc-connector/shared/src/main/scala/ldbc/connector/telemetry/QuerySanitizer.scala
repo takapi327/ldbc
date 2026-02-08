@@ -49,7 +49,7 @@ object QuerySanitizer:
   private val NumericPattern:       Regex = """\b\d+\.?\d*\b""".r
   private val HexPattern:           Regex = """0[xX][0-9a-fA-F]+""".r
   private val BinaryPattern:        Regex = """0[bB][01]+""".r
-  private val NullPattern:          Regex = """(?i)(?<!IS )(?<!NOT )\bNULL\b""".r
+  private val NullPattern:          Regex = """(?i)(?:IS\s+NOT\s+|IS\s+)?\bNULL\b""".r
   private val BooleanPattern:       Regex = """(?i)\b(?:TRUE|FALSE)\b""".r
 
   // Pattern to extract operation name (preserves original case)
@@ -99,10 +99,16 @@ object QuerySanitizer:
       HexPattern,
       BinaryPattern,
       NumericPattern,
-      NullPattern,
       BooleanPattern
     )
-    patterns.foldLeft(sql)((result, pattern) => pattern.replaceAllIn(result, Placeholder))
+    val result = patterns.foldLeft(sql)((result, pattern) => pattern.replaceAllIn(result, Placeholder))
+    // Handle NULL separately: preserve IS NULL / IS NOT NULL, replace standalone NULL with placeholder
+    NullPattern.replaceAllIn(
+      result,
+      m =>
+        if m.matched.trim.toUpperCase.startsWith("IS") then Regex.quoteReplacement(m.matched)
+        else Placeholder
+    )
 
   /**
    * Conditionally sanitizes SQL query based on whether it's parameterized.
