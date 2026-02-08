@@ -95,7 +95,8 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
                 )
               case error: ERRPacket =>
                 val exception = error.toException(Some(sql), None, params)
-                span.recordException(exception, error.attributes*) *>
+                span.addAttributes(error.attributes*) *>
+                  span.recordException(exception, error.attributes*) *>
                   span.setStatus(StatusCode.Error, exception.getMessage) *>
                   F.raiseError(exception)
               case result: ColumnsNumberPacket =>
@@ -151,12 +152,14 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
               case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
               case error: ERRPacket =>
                 val exception = error.toException(Some(sql), None, params)
-                span.recordException(exception, error.attributes*) *>
+                span.addAttributes(error.attributes*) *>
+                  span.recordException(exception, error.attributes*) *>
                   span.setStatus(StatusCode.Error, exception.getMessage) *>
                   F.raiseError(exception)
               case eof: EOFPacket =>
                 val exception = new SQLException("Unexpected EOF packet")
-                span.recordException(exception, eof.attribute) *>
+                span.addAttribute(TelemetryAttribute.errorType(exception)) *>
+                  span.recordException(exception, eof.attribute) *>
                   span.setStatus(StatusCode.Error, exception.getMessage) *>
                   F.raiseError(exception)
             }
@@ -206,12 +209,14 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
                         case _: OKPacket      => F.pure(Array.fill(args.length)(Statement.SUCCESS_NO_INFO.toLong))
                         case error: ERRPacket =>
                           val exception = error.toException(Some(sql), None)
-                          span.recordException(exception, error.attributes*) *>
+                          span.addAttributes(error.attributes*) *>
+                            span.recordException(exception, error.attributes*) *>
                             span.setStatus(StatusCode.Error, exception.getMessage) *>
                             F.raiseError(exception)
                         case eof: EOFPacket =>
                           val exception = new SQLException("Unexpected EOF packet")
-                          span.recordException(exception, eof.attribute) *>
+                          span.addAttribute(TelemetryAttribute.errorType(exception)) *>
+                            span.recordException(exception, eof.attribute) *>
                             span.setStatus(StatusCode.Error, exception.getMessage) *>
                             F.raiseError(exception)
                       }
@@ -250,12 +255,14 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
                                     lastInsertId.set(result.lastInsertId) *> F.pure(acc :+ result.affectedRows)
                                   case error: ERRPacket =>
                                     val exception = error.toException("Failed to execute batch", acc)
-                                    span.recordException(exception, error.attributes*) *>
+                                    span.addAttributes(error.attributes*) *>
+                                      span.recordException(exception, error.attributes*) *>
                                       span.setStatus(StatusCode.Error, exception.getMessage) *>
                                       F.raiseError(exception)
                                   case eof: EOFPacket =>
                                     val exception = new SQLException("Unexpected EOF packet")
-                                    span.recordException(exception, eof.attribute) *>
+                                    span.addAttribute(TelemetryAttribute.errorType(exception)) *>
+                                      span.recordException(exception, eof.attribute) *>
                                       span.setStatus(StatusCode.Error, exception.getMessage) *>
                                       F.raiseError(exception)
                                 }
