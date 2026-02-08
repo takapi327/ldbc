@@ -257,7 +257,10 @@ class QuerySanitizerTest extends FTestPlatform:
   }
 
   test("extractTableName should extract table from multi-column SELECT") {
-    assertEquals(QuerySanitizer.extractTableName("SELECT id, name, email FROM users WHERE active = true"), Some("users"))
+    assertEquals(
+      QuerySanitizer.extractTableName("SELECT id, name, email FROM users WHERE active = true"),
+      Some("users")
+    )
   }
 
   test("extractTableName should extract table from SELECT with expressions containing commas") {
@@ -292,7 +295,10 @@ class QuerySanitizerTest extends FTestPlatform:
   }
 
   test("generateSummary should handle multi-column SELECT correctly") {
-    assertEquals(QuerySanitizer.generateSummary("SELECT id, name, email FROM users WHERE active = true"), "SELECT users")
+    assertEquals(
+      QuerySanitizer.generateSummary("SELECT id, name, email FROM users WHERE active = true"),
+      "SELECT users"
+    )
   }
 
   test("generateSummary with explicit parameters should format correctly") {

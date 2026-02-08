@@ -62,7 +62,15 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
   override def executeQuery(): F[ResultSet[F]] =
     checkClosed() *>
       checkNullOrEmptyQuery(sql) *>
-      exchange[F, ResultSet[F]](telemetryConfig.resolveSpanName(sql, TelemetrySpanName.STMT_CALLABLE, protocol.hostInfo.database, Some(protocol.hostInfo.host), Some(protocol.hostInfo.port))) { (span: Span[F]) =>
+      exchange[F, ResultSet[F]](
+        telemetryConfig.resolveSpanName(
+          sql,
+          TelemetrySpanName.STMT_CALLABLE,
+          protocol.hostInfo.database,
+          Some(protocol.hostInfo.host),
+          Some(protocol.hostInfo.port)
+        )
+      ) { (span: Span[F]) =>
         if sql.toUpperCase.startsWith("CALL") then
           executeCallStatement(span).flatMap { resultSets =>
             resultSets.headOption match
@@ -103,7 +111,15 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
   override def executeLargeUpdate(): F[Long] =
     checkClosed() *>
       checkNullOrEmptyQuery(sql) *>
-      exchange[F, Long](telemetryConfig.resolveSpanName(sql, TelemetrySpanName.STMT_CALLABLE, protocol.hostInfo.database, Some(protocol.hostInfo.host), Some(protocol.hostInfo.port))) { (span: Span[F]) =>
+      exchange[F, Long](
+        telemetryConfig.resolveSpanName(
+          sql,
+          TelemetrySpanName.STMT_CALLABLE,
+          protocol.hostInfo.database,
+          Some(protocol.hostInfo.host),
+          Some(protocol.hostInfo.port)
+        )
+      ) { (span: Span[F]) =>
         if sql.toUpperCase.startsWith("CALL") then
           executeCallStatement(span).flatMap { resultSets =>
             resultSets.headOption match
@@ -154,7 +170,15 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
   override def execute(): F[Boolean] =
     checkClosed() *>
       checkNullOrEmptyQuery(sql) *>
-      exchange[F, Boolean](telemetryConfig.resolveSpanName(sql, TelemetrySpanName.STMT_CALLABLE, protocol.hostInfo.database, Some(protocol.hostInfo.host), Some(protocol.hostInfo.port))) { (span: Span[F]) =>
+      exchange[F, Boolean](
+        telemetryConfig.resolveSpanName(
+          sql,
+          TelemetrySpanName.STMT_CALLABLE,
+          protocol.hostInfo.database,
+          Some(protocol.hostInfo.host),
+          Some(protocol.hostInfo.port)
+        )
+      ) { (span: Span[F]) =>
         if sql.toUpperCase.startsWith("CALL") then
           executeCallStatement(span).flatMap { results =>
             moreResults.update(_ => results.nonEmpty) *>

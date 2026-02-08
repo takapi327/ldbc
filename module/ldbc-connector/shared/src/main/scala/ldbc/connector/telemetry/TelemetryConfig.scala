@@ -239,8 +239,7 @@ final case class TelemetryConfig(
   ): String =
     if extractMetadataFromQueryText then
       generateSpanName(sql, namespace = namespace, serverAddress = serverAddress, serverPort = serverPort)
-    else
-      defaultName.name
+    else defaultName.name
 
 object TelemetryConfig:
 
