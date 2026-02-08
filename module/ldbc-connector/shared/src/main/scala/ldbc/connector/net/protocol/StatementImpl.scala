@@ -50,7 +50,7 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
   private val baseAttributes = buildBaseAttributes(protocol)
 
   private def simpleQueryRun(sql: String): F[ResultSet[F]] =
-    exchange[F, ResultSet[F]](TelemetrySpanName.STMT_EXECUTE) { (span: Span[F]) =>
+    exchange[F, ResultSet[F]](telemetryConfig.resolveSpanName(sql, TelemetrySpanName.STMT_EXECUTE, protocol.hostInfo.database, Some(protocol.hostInfo.host), Some(protocol.hostInfo.port))) { (span: Span[F]) =>
       val processedSql    = telemetryConfig.processQueryText(sql)
       val queryAttributes = baseAttributes ++ List(
         TelemetryAttribute.dbQueryText(processedSql)
@@ -216,7 +216,7 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
     executeLargeUpdate(sql).map(_.toInt)
 
   override def executeLargeUpdate(sql: String): F[Long] =
-    checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, Long](TelemetrySpanName.STMT_EXECUTE) {
+    checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, Long](telemetryConfig.resolveSpanName(sql, TelemetrySpanName.STMT_EXECUTE, protocol.hostInfo.database, Some(protocol.hostInfo.host), Some(protocol.hostInfo.port))) {
       (span: Span[F]) =>
         val processedSql    = telemetryConfig.processQueryText(sql)
         val queryAttributes = baseAttributes ++ List(

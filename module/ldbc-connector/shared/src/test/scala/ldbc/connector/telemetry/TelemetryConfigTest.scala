@@ -229,3 +229,25 @@ class TelemetryConfigTest extends FTestPlatform:
     )
     assertEquals(spanName, "PING localhost:3306")
   }
+
+  // ============================================================
+  // resolveSpanName tests
+  // ============================================================
+
+  test("resolveSpanName should use default name when extraction is disabled") {
+    val config   = TelemetryConfig.default
+    val spanName = config.resolveSpanName("SELECT * FROM users", TelemetrySpanName.STMT_EXECUTE)
+    assertEquals(spanName, "Execute Statement")
+  }
+
+  test("resolveSpanName should generate dynamic name when extraction is enabled") {
+    val config   = TelemetryConfig.withQueryTextExtraction
+    val spanName = config.resolveSpanName("SELECT * FROM users", TelemetrySpanName.STMT_EXECUTE)
+    assertEquals(spanName, "SELECT users")
+  }
+
+  test("resolveSpanName should use namespace when extraction enabled but no table") {
+    val config   = TelemetryConfig.withQueryTextExtraction
+    val spanName = config.resolveSpanName("SELECT 1", TelemetrySpanName.STMT_EXECUTE, namespace = Some("mydb"))
+    assertEquals(spanName, "SELECT mydb")
+  }

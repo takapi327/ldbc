@@ -103,7 +103,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
       )
 
   override def executeQuery(): F[ResultSet[F]] =
-    checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, ResultSet[F]](TelemetrySpanName.STMT_EXECUTE_PREPARED) {
+    checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, ResultSet[F]](telemetryConfig.resolveSpanName(sql, TelemetrySpanName.STMT_EXECUTE_PREPARED, protocol.hostInfo.database, Some(protocol.hostInfo.host), Some(protocol.hostInfo.port))) {
       (span: Span[F]) =>
         val processedSql    = telemetryConfig.processQueryText(sql)
         val queryAttributes = baseAttributes ++ List(
@@ -148,7 +148,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
     }
 
   override def executeLargeUpdate(): F[Long] =
-    checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, Long](TelemetrySpanName.STMT_EXECUTE_PREPARED) {
+    checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, Long](telemetryConfig.resolveSpanName(sql, TelemetrySpanName.STMT_EXECUTE_PREPARED, protocol.hostInfo.database, Some(protocol.hostInfo.host), Some(protocol.hostInfo.port))) {
       (span: Span[F]) =>
         params.get.flatMap { params =>
           val processedSql    = telemetryConfig.processQueryText(sql)
