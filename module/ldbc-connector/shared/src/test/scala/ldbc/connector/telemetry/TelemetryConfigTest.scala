@@ -215,3 +215,34 @@ class TelemetryConfigTest extends FTestPlatform:
     val spanName = config.resolveSpanName("SELECT 1", TelemetrySpanName.STMT_EXECUTE, namespace = Some("mydb"))
     assertEquals(spanName, "SELECT mydb")
   }
+
+  // ============================================================
+  // getQuerySummary vs generateSpanName behavior difference tests
+  //
+  // These methods intentionally differ for the "operation only" case:
+  // - getQuerySummary returns the db.query.summary ATTRIBUTE value
+  // - generateSpanName generates a SPAN NAME using SpanNameGenerator's
+  //   priority hierarchy, leveraging namespace/server targets
+  // ============================================================
+
+  test("getQuerySummary should return operation only for query without table") {
+    val config = TelemetryConfig.default
+    val result = config.getQuerySummary("SELECT 1")
+    assertEquals(result, Some("SELECT"))
+  }
+
+  test("generateSpanName should use namespace fallback for query without table") {
+    val config   = TelemetryConfig.default
+    val spanName = config.generateSpanName("SELECT 1", namespace = Some("mydb"))
+    // generateSpanName intentionally does NOT set querySummary when only operation is available,
+    // so it falls through to Priority 2: {operation} {target} = "SELECT mydb"
+    assertEquals(spanName, "SELECT mydb")
+  }
+
+  test("getQuerySummary and generateSpanName should agree when both operation and collection available") {
+    val config  = TelemetryConfig.default
+    val summary = config.getQuerySummary("SELECT * FROM users")
+    val span    = config.generateSpanName("SELECT * FROM users")
+    assertEquals(summary, Some("SELECT users"))
+    assertEquals(span, "SELECT users")
+  }

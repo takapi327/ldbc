@@ -189,13 +189,23 @@ class SpanNameGeneratorTest extends FTestPlatform:
     assertEquals(spanName, "select Users")
   }
 
-  test("fromQuery should use additional context when provided") {
+  test("fromQuery should ignore namespace because querySummary always takes priority") {
     val spanName = SpanNameGenerator.fromQuery(
       sql           = "SELECT 1",
       namespace     = Some("test_db"),
       serverAddress = Some("localhost"),
       serverPort    = Some(3306)
     )
-    // Should still use query summary since it's available
+    // querySummary is always Some in fromQuery (via QuerySanitizer.generateSummary),
+    // so it hits Priority 1 immediately and namespace/server info is unused.
     assertEquals(spanName, "SELECT")
+  }
+
+  test("fromQuery should ignore namespace even when table is available") {
+    val spanName = SpanNameGenerator.fromQuery(
+      sql       = "SELECT * FROM users",
+      namespace = Some("mydb")
+    )
+    // querySummary = Some("SELECT users") → Priority 1, namespace "mydb" is unused
+    assertEquals(spanName, "SELECT users")
   }

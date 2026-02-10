@@ -362,3 +362,78 @@ class QuerySanitizerTest extends FTestPlatform:
     val expected = "SELECT v2, md5hash FROM data WHERE value = ?"
     assertEquals(QuerySanitizer.sanitize(sql), expected)
   }
+
+  // ============================================================
+  // Multi-line SQL tests
+  // ============================================================
+
+  test("sanitize should handle multi-line SQL") {
+    val sql = "SELECT * FROM users\nWHERE id = 123\nAND name = 'John'"
+    val expected = "SELECT * FROM users\nWHERE id = ?\nAND name = ?"
+    assertEquals(QuerySanitizer.sanitize(sql), expected)
+  }
+
+  test("extractOperationName should handle multi-line SQL") {
+    assertEquals(QuerySanitizer.extractOperationName("SELECT *\nFROM users"), "SELECT")
+  }
+
+  test("extractTableName should handle FROM on different line") {
+    assertEquals(
+      QuerySanitizer.extractTableName("SELECT *\nFROM users\nWHERE id = 1"),
+      Some("users")
+    )
+  }
+
+  // ============================================================
+  // SQL comment tests
+  // ============================================================
+
+  test("extractOperationName should return UNKNOWN for line comment at start") {
+    assertEquals(QuerySanitizer.extractOperationName("-- comment\nSELECT * FROM users"), "UNKNOWN")
+  }
+
+  test("extractOperationName should return UNKNOWN for block comment at start") {
+    assertEquals(QuerySanitizer.extractOperationName("/* comment */ SELECT * FROM users"), "UNKNOWN")
+  }
+
+  test("extractOperationName should handle trailing line comment") {
+    assertEquals(QuerySanitizer.extractOperationName("SELECT * FROM users -- get all users"), "SELECT")
+  }
+
+  test("extractTableName should work with trailing line comment") {
+    assertEquals(
+      QuerySanitizer.extractTableName("SELECT * FROM users -- get all users"),
+      Some("users")
+    )
+  }
+
+  test("sanitize should replace literals inside SQL comments") {
+    val sql      = "SELECT * FROM users WHERE id = 123 -- filter by user 456"
+    val expected = "SELECT * FROM users WHERE id = ? -- filter by user ?"
+    assertEquals(QuerySanitizer.sanitize(sql), expected)
+  }
+
+  // ============================================================
+  // CTE (WITH ... AS) tests
+  // ============================================================
+
+  test("extractOperationName should return WITH for CTE") {
+    assertEquals(
+      QuerySanitizer.extractOperationName("WITH active_users AS (SELECT * FROM users WHERE active = true) SELECT * FROM active_users"),
+      "WITH"
+    )
+  }
+
+  test("extractTableName should return None for CTE (contains subquery)") {
+    assertEquals(
+      QuerySanitizer.extractTableName("WITH active_users AS (SELECT * FROM users WHERE active = true) SELECT * FROM active_users"),
+      None
+    )
+  }
+
+  test("generateSummary should return only operation for CTE") {
+    assertEquals(
+      QuerySanitizer.generateSummary("WITH active_users AS (SELECT * FROM users WHERE active = true) SELECT * FROM active_users"),
+      "WITH"
+    )
+  }
