@@ -22,11 +22,16 @@ package ldbc.connector.telemetry
  * extraction when higher-level API metadata is not available.
  *
  * @param extractMetadataFromQueryText
- *   Whether to extract operation name (`db.operation.name`) and collection name
- *   (`db.collection.name`) from query text. Per OpenTelemetry spec v1.39.0,
- *   this SHOULD NOT be done when higher-level API metadata is available.
- *   Default is `false` (spec-compliant).
- *   Set to `true` only when API-level metadata is not available.
+ *   Whether to generate `db.query.summary` from query text for span naming.
+ *   Per OpenTelemetry spec v1.39.0, instrumentations that support query parsing
+ *   SHOULD generate a query summary based on `db.query.text`.
+ *   Default is `true` (spec-compliant: generates dynamic span names, e.g., "SELECT users").
+ *   Set to `false` to use fixed span names from TelemetrySpanName enum.
+ *
+ *   '''Note''': Per OpenTelemetry spec v1.39.0, `db.operation.name` and
+ *   `db.collection.name` attributes SHOULD NOT be extracted from `db.query.text`.
+ *   This flag does NOT affect individual attribute extraction — only span name
+ *   generation via `db.query.summary`.
  *
  * @param sanitizeNonParameterizedQueries
  *   Whether to sanitize non-parameterized queries by replacing literals with `?`.
@@ -42,27 +47,31 @@ package ldbc.connector.telemetry
  * @see [[https://opentelemetry.io/docs/specs/semconv/database/sql/]]
  */
 final case class TelemetryConfig(
-  extractMetadataFromQueryText:    Boolean = false,
+  extractMetadataFromQueryText:    Boolean = true,
   sanitizeNonParameterizedQueries: Boolean = true,
   collapseInClauses:               Boolean = true
 ):
 
   /**
-   * Enables extraction of operation and collection names from query text.
+   * Enables generation of `db.query.summary` from query text for dynamic span naming.
    *
-   * '''Note''': Per OpenTelemetry spec v1.39.0, this SHOULD NOT be used when
-   * higher-level API metadata is available. Use this only as a fallback.
+   * Per OpenTelemetry spec v1.39.0, instrumentations that support query parsing
+   * SHOULD generate a query summary based on `db.query.text`.
    *
-   * @return A new config with query text extraction enabled
+   * '''Note''': This does NOT extract `db.operation.name` or `db.collection.name`
+   * from query text (which is SHOULD NOT per spec). It only affects span name
+   * generation via `db.query.summary`.
+   *
+   * @return A new config with query summary generation enabled
    */
   def withQueryTextExtraction: TelemetryConfig =
     copy(extractMetadataFromQueryText = true)
 
   /**
-   * Disables extraction of operation and collection names from query text.
-   * This is the spec-compliant default behavior.
+   * Disables generation of `db.query.summary` from query text.
+   * Span names will use fixed names from TelemetrySpanName enum.
    *
-   * @return A new config with query text extraction disabled
+   * @return A new config with query summary generation disabled
    */
   def withoutQueryTextExtraction: TelemetryConfig =
     copy(extractMetadataFromQueryText = false)
@@ -124,62 +133,50 @@ final case class TelemetryConfig(
     else sanitized
 
   /**
-   * Extracts operation name from query if extraction is enabled.
+   * Generates a query summary for `db.query.summary` and span naming.
    *
-   * @param sql The SQL query
-   * @param apiOperationName Operation name from higher-level API (preferred)
-   * @return Operation name from API if available, from query if extraction enabled, None otherwise
-   */
-  def getOperationName(sql: String, apiOperationName: Option[String] = None): Option[String] =
-    apiOperationName.orElse {
-      if extractMetadataFromQueryText then Some(QuerySanitizer.extractOperationName(sql))
-      else None
-    }
-
-  /**
-   * Extracts collection (table) name from query if extraction is enabled.
+   * Per OpenTelemetry spec v1.39.0, instrumentations that support query parsing
+   * SHOULD generate a query summary based on `db.query.text`. This is distinct
+   * from `db.operation.name` / `db.collection.name` attributes which SHOULD NOT
+   * be extracted from query text.
    *
-   * @param sql The SQL query
-   * @param apiCollectionName Collection name from higher-level API (preferred)
-   * @return Collection name from API if available, from query if extraction enabled, None otherwise
-   */
-  def getCollectionName(sql: String, apiCollectionName: Option[String] = None): Option[String] =
-    apiCollectionName.orElse {
-      if extractMetadataFromQueryText then QuerySanitizer.extractTableName(sql)
-      else None
-    }
-
-  /**
-   * Generates a query summary according to this configuration.
+   * Priority:
+   * 1. API-provided metadata (operation + collection)
+   * 2. Query text parsing via QuerySanitizer (when `extractMetadataFromQueryText` is enabled)
    *
    * @param sql The SQL query
    * @param apiOperationName Operation name from higher-level API (preferred)
    * @param apiCollectionName Collection name from higher-level API (preferred)
-   * @return Query summary string, or None if extraction is disabled and no API metadata
+   * @return Query summary string, or None if generation is disabled and no API metadata
    */
   def getQuerySummary(
     sql:               String,
     apiOperationName:  Option[String] = None,
     apiCollectionName: Option[String] = None
   ): Option[String] =
-    val operation  = getOperationName(sql, apiOperationName)
-    val collection = getCollectionName(sql, apiCollectionName)
-
-    (operation, collection) match
+    (apiOperationName, apiCollectionName) match
       case (Some(op), Some(col)) => Some(s"$op $col")
       case (Some(op), None)      => Some(op)
       case (None, Some(col))     => Some(col)
-      case (None, None)          => None
+      case (None, None)          =>
+        // Per OTel spec: instrumentations that support query parsing SHOULD
+        // generate a query summary based on db.query.text
+        if extractMetadataFromQueryText then Some(QuerySanitizer.generateSummary(sql))
+        else None
 
   /**
    * Generates a span name according to this configuration.
    *
    * Uses SpanNameGenerator with context built from available metadata.
    * Follows OpenTelemetry priority order:
-   * 1. `{db.query.summary}` (operation + collection) if both available
-   * 2. `{db.operation.name} {target}` if operation and target available
+   * 1. `{db.query.summary}` from API metadata or query text parsing (SHOULD per spec)
+   * 2. `{db.operation.name} {target}` if API-provided operation and target available
    * 3. `{target}` alone
    * 4. `{db.system.name}` as fallback
+   *
+   * '''Note''': Query text parsing for span names (`db.query.summary`) is recommended
+   * by the spec. Individual attributes (`db.operation.name`, `db.collection.name`)
+   * are NOT extracted from query text (SHOULD NOT per spec).
    *
    * @param sql The SQL query
    * @param apiOperationName Operation name from higher-level API
@@ -197,19 +194,29 @@ final case class TelemetryConfig(
     serverAddress:     Option[String] = None,
     serverPort:        Option[Int] = None
   ): String =
-    val operationName  = getOperationName(sql, apiOperationName)
-    val collectionName = getCollectionName(sql, apiCollectionName)
+    // For span name context, extract operation/collection from query text when enabled.
+    // This is part of db.query.summary generation (SHOULD per spec).
+    // Note: this is for span naming only, NOT for db.operation.name/db.collection.name attributes.
+    val operationForSpan = apiOperationName.orElse(
+      if extractMetadataFromQueryText then Some(QuerySanitizer.extractOperationName(sql))
+      else None
+    )
+    val collectionForSpan = apiCollectionName.orElse(
+      if extractMetadataFromQueryText then QuerySanitizer.extractTableName(sql)
+      else None
+    )
 
-    // Only use querySummary (priority 1) when we have both operation and collection
-    // Otherwise, let SpanNameGenerator handle priority 2-4 with namespace/server:port
-    val querySummary = (operationName, collectionName) match
+    // Use querySummary (Priority 1) only when both operation and collection are available,
+    // so that partial information (operation only) can be combined with namespace/server targets
+    // via SpanNameGenerator's Priority 2 hierarchy.
+    val querySummary = (operationForSpan, collectionForSpan) match
       case (Some(op), Some(col)) => Some(s"$op $col")
       case _                     => None
 
     val context = SpanNameGenerator.Context(
       querySummary   = querySummary,
-      operationName  = operationName,
-      collectionName = collectionName,
+      operationName  = operationForSpan,
+      collectionName = collectionForSpan,
       namespace      = namespace,
       serverAddress  = serverAddress,
       serverPort     = serverPort
@@ -246,21 +253,21 @@ object TelemetryConfig:
   /**
    * Default configuration that is compliant with OpenTelemetry spec v1.39.0.
    *
-   * - Query text extraction: disabled (spec-compliant)
+   * - Query summary generation: enabled (SHOULD per spec)
    * - Sanitization: enabled (required by spec)
    * - IN clause collapsing: enabled (recommended)
    */
   val default: TelemetryConfig = TelemetryConfig()
 
   /**
-   * Configuration that enables query text extraction as a fallback.
+   * Configuration that disables `db.query.summary` generation from query text.
    *
-   * Use this when higher-level API metadata is not available and you need
-   * to extract operation/collection names from query text.
+   * Span names will use fixed names from TelemetrySpanName enum
+   * (e.g., "Execute Statement" instead of "SELECT users").
    *
-   * - Query text extraction: enabled (fallback mode)
+   * - Query summary generation: disabled
    * - Sanitization: enabled (required by spec)
    * - IN clause collapsing: enabled (recommended)
    */
-  val withQueryTextExtraction: TelemetryConfig =
-    TelemetryConfig(extractMetadataFromQueryText = true)
+  val withoutQueryTextExtraction: TelemetryConfig =
+    TelemetryConfig(extractMetadataFromQueryText = false)

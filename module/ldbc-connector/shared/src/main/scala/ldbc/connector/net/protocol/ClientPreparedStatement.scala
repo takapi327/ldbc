@@ -79,7 +79,7 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
         val processedSql    = telemetryConfig.processQueryText(sql)
         val queryAttributes = baseAttributes ++ List(
           TelemetryAttribute.dbQueryText(processedSql)
-        ) ++ telemetryConfig.getOperationName(sql).map(TelemetryAttribute.dbOperationName).toList
+        )
 
         span.addAttributes(queryAttributes*) *>
           protocol.resetSequenceId *>
@@ -155,7 +155,7 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
         val processedSql    = telemetryConfig.processQueryText(sql)
         val queryAttributes = baseAttributes ++ List(
           TelemetryAttribute.dbQueryText(processedSql)
-        ) ++ telemetryConfig.getOperationName(sql).map(TelemetryAttribute.dbOperationName).toList
+        )
 
         span.addAttributes(queryAttributes*) *>
           protocol.resetSequenceId *>

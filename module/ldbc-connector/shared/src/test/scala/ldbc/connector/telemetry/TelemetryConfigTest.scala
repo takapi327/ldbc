@@ -14,8 +14,8 @@ class TelemetryConfigTest extends FTestPlatform:
   // Default configuration tests
   // ============================================================
 
-  test("default config should have extractMetadataFromQueryText disabled") {
-    assertEquals(TelemetryConfig.default.extractMetadataFromQueryText, false)
+  test("default config should have extractMetadataFromQueryText enabled") {
+    assertEquals(TelemetryConfig.default.extractMetadataFromQueryText, true)
   }
 
   test("default config should have sanitization enabled") {
@@ -27,15 +27,15 @@ class TelemetryConfigTest extends FTestPlatform:
   }
 
   // ============================================================
-  // withQueryTextExtraction preset tests
+  // withoutQueryTextExtraction preset tests
   // ============================================================
 
-  test("withQueryTextExtraction preset should have extraction enabled") {
-    assertEquals(TelemetryConfig.withQueryTextExtraction.extractMetadataFromQueryText, true)
+  test("withoutQueryTextExtraction preset should have extraction disabled") {
+    assertEquals(TelemetryConfig.withoutQueryTextExtraction.extractMetadataFromQueryText, false)
   }
 
-  test("withQueryTextExtraction preset should keep sanitization enabled") {
-    assertEquals(TelemetryConfig.withQueryTextExtraction.sanitizeNonParameterizedQueries, true)
+  test("withoutQueryTextExtraction preset should keep sanitization enabled") {
+    assertEquals(TelemetryConfig.withoutQueryTextExtraction.sanitizeNonParameterizedQueries, true)
   }
 
   // ============================================================
@@ -43,12 +43,12 @@ class TelemetryConfigTest extends FTestPlatform:
   // ============================================================
 
   test("withQueryTextExtraction method should enable extraction") {
-    val config = TelemetryConfig.default.withQueryTextExtraction
+    val config = TelemetryConfig.withoutQueryTextExtraction.withQueryTextExtraction
     assertEquals(config.extractMetadataFromQueryText, true)
   }
 
   test("withoutQueryTextExtraction method should disable extraction") {
-    val config = TelemetryConfig.withQueryTextExtraction.withoutQueryTextExtraction
+    val config = TelemetryConfig.default.withoutQueryTextExtraction
     assertEquals(config.extractMetadataFromQueryText, false)
   }
 
@@ -112,73 +112,37 @@ class TelemetryConfigTest extends FTestPlatform:
   }
 
   // ============================================================
-  // getOperationName tests
-  // ============================================================
-
-  test("getOperationName should prefer API metadata when available") {
-    val config = TelemetryConfig.withQueryTextExtraction
-    val result = config.getOperationName("SELECT * FROM users", Some("INSERT"))
-    assertEquals(result, Some("INSERT"))
-  }
-
-  test("getOperationName should extract from query when extraction enabled and no API metadata") {
-    val config = TelemetryConfig.withQueryTextExtraction
-    val result = config.getOperationName("SELECT * FROM users")
-    assertEquals(result, Some("SELECT"))
-  }
-
-  test("getOperationName should return None when extraction disabled and no API metadata") {
-    val config = TelemetryConfig.default
-    val result = config.getOperationName("SELECT * FROM users")
-    assertEquals(result, None)
-  }
-
-  // ============================================================
-  // getCollectionName tests
-  // ============================================================
-
-  test("getCollectionName should prefer API metadata when available") {
-    val config = TelemetryConfig.withQueryTextExtraction
-    val result = config.getCollectionName("SELECT * FROM users", Some("orders"))
-    assertEquals(result, Some("orders"))
-  }
-
-  test("getCollectionName should extract from query when extraction enabled and no API metadata") {
-    val config = TelemetryConfig.withQueryTextExtraction
-    val result = config.getCollectionName("SELECT * FROM users")
-    assertEquals(result, Some("users"))
-  }
-
-  test("getCollectionName should return None when extraction disabled and no API metadata") {
-    val config = TelemetryConfig.default
-    val result = config.getCollectionName("SELECT * FROM users")
-    assertEquals(result, None)
-  }
-
-  // ============================================================
   // getQuerySummary tests
+  // Per OTel spec v1.39.0: instrumentations that support query
+  // parsing SHOULD generate a query summary based on db.query.text
   // ============================================================
 
-  test("getQuerySummary should return operation + collection when both available") {
-    val config = TelemetryConfig.withQueryTextExtraction
+  test("getQuerySummary should generate summary from query text when extraction enabled") {
+    val config = TelemetryConfig.default
     val result = config.getQuerySummary("SELECT * FROM users")
     assertEquals(result, Some("SELECT users"))
   }
 
-  test("getQuerySummary should use API metadata when available") {
+  test("getQuerySummary should use API metadata when available (takes priority over query text)") {
     val config = TelemetryConfig.default
     val result = config.getQuerySummary("SELECT * FROM users", Some("INSERT"), Some("orders"))
     assertEquals(result, Some("INSERT orders"))
   }
 
+  test("getQuerySummary should use API metadata even when extraction disabled") {
+    val config = TelemetryConfig.withoutQueryTextExtraction
+    val result = config.getQuerySummary("SELECT * FROM users", Some("INSERT"), Some("orders"))
+    assertEquals(result, Some("INSERT orders"))
+  }
+
   test("getQuerySummary should return None when extraction disabled and no API metadata") {
-    val config = TelemetryConfig.default
+    val config = TelemetryConfig.withoutQueryTextExtraction
     val result = config.getQuerySummary("SELECT * FROM users")
     assertEquals(result, None)
   }
 
-  test("getQuerySummary should return only operation when collection unavailable") {
-    val config = TelemetryConfig.default
+  test("getQuerySummary should return only operation when collection unavailable via API metadata") {
+    val config = TelemetryConfig.withoutQueryTextExtraction
     val result = config.getQuerySummary("SELECT 1", Some("SELECT"))
     assertEquals(result, Some("SELECT"))
   }
@@ -188,13 +152,13 @@ class TelemetryConfigTest extends FTestPlatform:
   // ============================================================
 
   test("generateSpanName should use query summary when extraction enabled") {
-    val config   = TelemetryConfig.withQueryTextExtraction
+    val config   = TelemetryConfig.default
     val spanName = config.generateSpanName("SELECT * FROM users WHERE id = 1")
     assertEquals(spanName, "SELECT users")
   }
 
   test("generateSpanName should use API metadata when available") {
-    val config   = TelemetryConfig.default
+    val config   = TelemetryConfig.withoutQueryTextExtraction
     val spanName = config.generateSpanName(
       sql               = "SELECT * FROM users",
       apiOperationName  = Some("SELECT"),
@@ -204,13 +168,13 @@ class TelemetryConfigTest extends FTestPlatform:
   }
 
   test("generateSpanName should fallback to mysql when extraction disabled and no metadata") {
-    val config   = TelemetryConfig.default
+    val config   = TelemetryConfig.withoutQueryTextExtraction
     val spanName = config.generateSpanName("SELECT * FROM users")
     assertEquals(spanName, "mysql")
   }
 
   test("generateSpanName should use namespace when no collection available") {
-    val config   = TelemetryConfig.default
+    val config   = TelemetryConfig.withoutQueryTextExtraction
     val spanName = config.generateSpanName(
       sql              = "SELECT 1",
       apiOperationName = Some("SELECT"),
@@ -220,7 +184,7 @@ class TelemetryConfigTest extends FTestPlatform:
   }
 
   test("generateSpanName should use server:port as last resort target") {
-    val config   = TelemetryConfig.default
+    val config   = TelemetryConfig.withoutQueryTextExtraction
     val spanName = config.generateSpanName(
       sql              = "SELECT 1",
       apiOperationName = Some("PING"),
@@ -235,19 +199,50 @@ class TelemetryConfigTest extends FTestPlatform:
   // ============================================================
 
   test("resolveSpanName should use default name when extraction is disabled") {
-    val config   = TelemetryConfig.default
+    val config   = TelemetryConfig.withoutQueryTextExtraction
     val spanName = config.resolveSpanName("SELECT * FROM users", TelemetrySpanName.STMT_EXECUTE)
     assertEquals(spanName, "Execute Statement")
   }
 
   test("resolveSpanName should generate dynamic name when extraction is enabled") {
-    val config   = TelemetryConfig.withQueryTextExtraction
+    val config   = TelemetryConfig.default
     val spanName = config.resolveSpanName("SELECT * FROM users", TelemetrySpanName.STMT_EXECUTE)
     assertEquals(spanName, "SELECT users")
   }
 
   test("resolveSpanName should use namespace when extraction enabled but no table") {
-    val config   = TelemetryConfig.withQueryTextExtraction
+    val config   = TelemetryConfig.default
     val spanName = config.resolveSpanName("SELECT 1", TelemetrySpanName.STMT_EXECUTE, namespace = Some("mydb"))
     assertEquals(spanName, "SELECT mydb")
+  }
+
+  // ============================================================
+  // getQuerySummary vs generateSpanName behavior difference tests
+  //
+  // These methods intentionally differ for the "operation only" case:
+  // - getQuerySummary returns the db.query.summary ATTRIBUTE value
+  // - generateSpanName generates a SPAN NAME using SpanNameGenerator's
+  //   priority hierarchy, leveraging namespace/server targets
+  // ============================================================
+
+  test("getQuerySummary should return operation only for query without table") {
+    val config = TelemetryConfig.default
+    val result = config.getQuerySummary("SELECT 1")
+    assertEquals(result, Some("SELECT"))
+  }
+
+  test("generateSpanName should use namespace fallback for query without table") {
+    val config   = TelemetryConfig.default
+    val spanName = config.generateSpanName("SELECT 1", namespace = Some("mydb"))
+    // generateSpanName intentionally does NOT set querySummary when only operation is available,
+    // so it falls through to Priority 2: {operation} {target} = "SELECT mydb"
+    assertEquals(spanName, "SELECT mydb")
+  }
+
+  test("getQuerySummary and generateSpanName should agree when both operation and collection available") {
+    val config  = TelemetryConfig.default
+    val summary = config.getQuerySummary("SELECT * FROM users")
+    val span    = config.generateSpanName("SELECT * FROM users")
+    assertEquals(summary, Some("SELECT users"))
+    assertEquals(span, "SELECT users")
   }

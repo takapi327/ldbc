@@ -97,7 +97,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
             val processedSql    = telemetryConfig.processQueryText(sql)
             val queryAttributes = baseAttributes ++ List(
               TelemetryAttribute.dbQueryText(processedSql)
-            ) ++ telemetryConfig.getOperationName(sql).map(TelemetryAttribute.dbOperationName).toList
+            )
 
             span.addAttributes(queryAttributes*) *>
               protocol.resetSequenceId *>
@@ -146,7 +146,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
             val processedSql    = telemetryConfig.processQueryText(sql)
             val queryAttributes = baseAttributes ++ List(
               TelemetryAttribute.dbQueryText(processedSql)
-            ) ++ telemetryConfig.getOperationName(sql).map(TelemetryAttribute.dbOperationName).toList
+            )
 
             span.addAttributes(queryAttributes*) *>
               sendQuery(buildQuery(sql, params)).flatMap {
@@ -192,7 +192,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
               val processedSql    = telemetryConfig.processQueryText(sql)
               val queryAttributes = baseAttributes ++ List(
                 TelemetryAttribute.dbQueryText(processedSql)
-              ) ++ telemetryConfig.getOperationName(sql).map(TelemetryAttribute.dbOperationName).toList
+              )
 
               span.addAttributes(queryAttributes*) *>
                 sendQuery(buildQuery(sql, params)).flatMap {
@@ -270,7 +270,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                           span.setStatus(StatusCode.Error, exception.getMessage) *>
                           F.raiseError(exception)
                     }
-              case q if q.startsWith("update") || q.startsWith("delete") || q.startsWith("CALL") =>
+              case q if q.startsWith("UPDATE") || q.startsWith("DELETE") || q.startsWith("CALL") =>
                 span.addAttributes(batchAttributes*) *>
                   protocol.resetSequenceId *>
                   protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON) *>
@@ -853,7 +853,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
         val processedSql    = telemetryConfig.processQueryText(sql)
         val queryAttributes = baseAttributes ++ List(
           TelemetryAttribute.dbQueryText(processedSql)
-        ) ++ telemetryConfig.getOperationName(sql).map(TelemetryAttribute.dbOperationName).toList
+        )
 
         span.addAttributes(queryAttributes*) *>
           protocol.resetSequenceId *>
