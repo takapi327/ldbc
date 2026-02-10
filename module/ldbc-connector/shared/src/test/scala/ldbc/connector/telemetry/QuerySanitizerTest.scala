@@ -308,3 +308,57 @@ class QuerySanitizerTest extends FTestPlatform:
   test("generateSummary with explicit parameters should handle None table") {
     assertEquals(QuerySanitizer.generateSummary("SELECT", None), "SELECT")
   }
+
+  // ============================================================
+  // NumericPattern false-positive verification tests
+  // Verify that \b\d+\.?\d*\b does NOT match digits within
+  // column names, table names, or aliases
+  // ============================================================
+
+  test("sanitize should NOT corrupt column names containing digits") {
+    val sql      = "SELECT col1, col2 FROM users WHERE id = 123"
+    val expected = "SELECT col1, col2 FROM users WHERE id = ?"
+    assertEquals(QuerySanitizer.sanitize(sql), expected)
+  }
+
+  test("sanitize should NOT corrupt table names containing digits") {
+    val sql      = "SELECT * FROM table1 WHERE status = 'active'"
+    val expected = "SELECT * FROM table1 WHERE status = ?"
+    assertEquals(QuerySanitizer.sanitize(sql), expected)
+  }
+
+  test("sanitize should NOT corrupt aliases containing digits") {
+    val sql      = "SELECT id AS id1, name AS name2 FROM users WHERE age = 30"
+    val expected = "SELECT id AS id1, name AS name2 FROM users WHERE age = ?"
+    assertEquals(QuerySanitizer.sanitize(sql), expected)
+  }
+
+  test("sanitize should NOT corrupt schema-qualified names with digits") {
+    val sql      = "SELECT * FROM schema1.users WHERE id = 456"
+    val expected = "SELECT * FROM schema1.users WHERE id = ?"
+    assertEquals(QuerySanitizer.sanitize(sql), expected)
+  }
+
+  test("sanitize should NOT corrupt underscore-digit column names") {
+    val sql      = "SELECT user_id1, order_id2 FROM orders WHERE total = 99.99"
+    val expected = "SELECT user_id1, order_id2 FROM orders WHERE total = ?"
+    assertEquals(QuerySanitizer.sanitize(sql), expected)
+  }
+
+  test("sanitize should replace standalone numeric literals in LIMIT/OFFSET") {
+    val sql      = "SELECT * FROM users LIMIT 10 OFFSET 20"
+    val expected = "SELECT * FROM users LIMIT ? OFFSET ?"
+    assertEquals(QuerySanitizer.sanitize(sql), expected)
+  }
+
+  test("sanitize should replace numeric literals in ORDER BY ordinal") {
+    val sql      = "SELECT id, name FROM users ORDER BY 1"
+    val expected = "SELECT id, name FROM users ORDER BY ?"
+    assertEquals(QuerySanitizer.sanitize(sql), expected)
+  }
+
+  test("sanitize should NOT corrupt mixed identifiers like md5hash, v2") {
+    val sql      = "SELECT v2, md5hash FROM data WHERE value = 42"
+    val expected = "SELECT v2, md5hash FROM data WHERE value = ?"
+    assertEquals(QuerySanitizer.sanitize(sql), expected)
+  }
