@@ -270,7 +270,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                           span.setStatus(StatusCode.Error, exception.getMessage) *>
                           F.raiseError(exception)
                     }
-              case q if q.startsWith("update") || q.startsWith("delete") || q.startsWith("CALL") =>
+              case q if q.startsWith("UPDATE") || q.startsWith("DELETE") || q.startsWith("CALL") =>
                 span.addAttributes(batchAttributes*) *>
                   protocol.resetSequenceId *>
                   protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON) *>
