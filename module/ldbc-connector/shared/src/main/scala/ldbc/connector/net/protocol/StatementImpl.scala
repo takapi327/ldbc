@@ -62,7 +62,7 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
       val processedSql    = telemetryConfig.processQueryText(sql)
       val queryAttributes = baseAttributes ++ List(
         TelemetryAttribute.dbQueryText(processedSql)
-      ) ++ telemetryConfig.getOperationName(sql).map(TelemetryAttribute.dbOperationName).toList
+      )
 
       span.addAttributes(queryAttributes*) *>
         protocol.resetSequenceId *>
@@ -236,7 +236,7 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
       val processedSql    = telemetryConfig.processQueryText(sql)
       val queryAttributes = baseAttributes ++ List(
         TelemetryAttribute.dbQueryText(processedSql)
-      ) ++ telemetryConfig.getOperationName(sql).map(TelemetryAttribute.dbOperationName).toList
+      )
 
       span.addAttributes(queryAttributes*) *>
         protocol.resetSequenceId *> (

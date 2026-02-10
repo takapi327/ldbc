@@ -97,7 +97,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
             val processedSql    = telemetryConfig.processQueryText(sql)
             val queryAttributes = baseAttributes ++ List(
               TelemetryAttribute.dbQueryText(processedSql)
-            ) ++ telemetryConfig.getOperationName(sql).map(TelemetryAttribute.dbOperationName).toList
+            )
 
             span.addAttributes(queryAttributes*) *>
               protocol.resetSequenceId *>
@@ -146,7 +146,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
             val processedSql    = telemetryConfig.processQueryText(sql)
             val queryAttributes = baseAttributes ++ List(
               TelemetryAttribute.dbQueryText(processedSql)
-            ) ++ telemetryConfig.getOperationName(sql).map(TelemetryAttribute.dbOperationName).toList
+            )
 
             span.addAttributes(queryAttributes*) *>
               sendQuery(buildQuery(sql, params)).flatMap {
@@ -192,7 +192,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
               val processedSql    = telemetryConfig.processQueryText(sql)
               val queryAttributes = baseAttributes ++ List(
                 TelemetryAttribute.dbQueryText(processedSql)
-              ) ++ telemetryConfig.getOperationName(sql).map(TelemetryAttribute.dbOperationName).toList
+              )
 
               span.addAttributes(queryAttributes*) *>
                 sendQuery(buildQuery(sql, params)).flatMap {
@@ -853,7 +853,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
         val processedSql    = telemetryConfig.processQueryText(sql)
         val queryAttributes = baseAttributes ++ List(
           TelemetryAttribute.dbQueryText(processedSql)
-        ) ++ telemetryConfig.getOperationName(sql).map(TelemetryAttribute.dbOperationName).toList
+        )
 
         span.addAttributes(queryAttributes*) *>
           protocol.resetSequenceId *>

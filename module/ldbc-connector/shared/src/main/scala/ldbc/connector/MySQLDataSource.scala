@@ -259,12 +259,12 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
     * @param newTelemetryConfig the telemetry configuration
     * @return a new MySQLDataSource with the updated telemetry config
     * @example {{{
-    * // Enable query text extraction (fallback mode)
-    * dataSource.setTelemetryConfig(TelemetryConfig.withQueryTextExtraction)
+    * // Disable query text extraction (use fixed span names)
+    * dataSource.setTelemetryConfig(TelemetryConfig.withoutQueryTextExtraction)
     *
     * // Or use fluent API
     * dataSource.setTelemetryConfig(
-    *   TelemetryConfig.default.withQueryTextExtraction
+    *   TelemetryConfig.default.withoutQueryTextExtraction
     * )
     * }}}
     */
