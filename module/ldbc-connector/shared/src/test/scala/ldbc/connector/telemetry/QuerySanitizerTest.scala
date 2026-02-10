@@ -368,7 +368,7 @@ class QuerySanitizerTest extends FTestPlatform:
   // ============================================================
 
   test("sanitize should handle multi-line SQL") {
-    val sql = "SELECT * FROM users\nWHERE id = 123\nAND name = 'John'"
+    val sql      = "SELECT * FROM users\nWHERE id = 123\nAND name = 'John'"
     val expected = "SELECT * FROM users\nWHERE id = ?\nAND name = ?"
     assertEquals(QuerySanitizer.sanitize(sql), expected)
   }
@@ -419,21 +419,27 @@ class QuerySanitizerTest extends FTestPlatform:
 
   test("extractOperationName should return WITH for CTE") {
     assertEquals(
-      QuerySanitizer.extractOperationName("WITH active_users AS (SELECT * FROM users WHERE active = true) SELECT * FROM active_users"),
+      QuerySanitizer.extractOperationName(
+        "WITH active_users AS (SELECT * FROM users WHERE active = true) SELECT * FROM active_users"
+      ),
       "WITH"
     )
   }
 
   test("extractTableName should return None for CTE (contains subquery)") {
     assertEquals(
-      QuerySanitizer.extractTableName("WITH active_users AS (SELECT * FROM users WHERE active = true) SELECT * FROM active_users"),
+      QuerySanitizer.extractTableName(
+        "WITH active_users AS (SELECT * FROM users WHERE active = true) SELECT * FROM active_users"
+      ),
       None
     )
   }
 
   test("generateSummary should return only operation for CTE") {
     assertEquals(
-      QuerySanitizer.generateSummary("WITH active_users AS (SELECT * FROM users WHERE active = true) SELECT * FROM active_users"),
+      QuerySanitizer.generateSummary(
+        "WITH active_users AS (SELECT * FROM users WHERE active = true) SELECT * FROM active_users"
+      ),
       "WITH"
     )
   }
