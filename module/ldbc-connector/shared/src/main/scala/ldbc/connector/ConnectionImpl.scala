@@ -24,6 +24,7 @@ import ldbc.connector.net.*
 import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.protocol.*
+import ldbc.connector.telemetry.TelemetryConfig
 import ldbc.connector.util.StringHelper
 
 private[ldbc] case class ConnectionImpl[F[_]: Tracer: Exchange: UUIDGen](
@@ -35,7 +36,8 @@ private[ldbc] case class ConnectionImpl[F[_]: Tracer: Exchange: UUIDGen](
   connectionClosed:   Ref[F, Boolean],
   useCursorFetch:     Boolean,
   useServerPrepStmts: Boolean,
-  databaseTerm:       DatabaseMetaData.DatabaseTerm = DatabaseMetaData.DatabaseTerm.CATALOG
+  databaseTerm:       DatabaseMetaData.DatabaseTerm = DatabaseMetaData.DatabaseTerm.CATALOG,
+  telemetryConfig:    TelemetryConfig               = TelemetryConfig.default
 )(using ev: Sync[F])
   extends LdbcConnection[F]:
 
@@ -198,7 +200,8 @@ private[ldbc] case class ConnectionImpl[F[_]: Tracer: Exchange: UUIDGen](
       useCursorFetch,
       useServerPrepStmts,
       resultSetType,
-      resultSetConcurrency
+      resultSetConcurrency,
+      telemetryConfig
     )
 
   override def prepareStatement(sql: String, resultSetType: Int, resultSetConcurrency: Int): F[PreparedStatement[F]] =
@@ -262,7 +265,8 @@ private[ldbc] case class ConnectionImpl[F[_]: Tracer: Exchange: UUIDGen](
       useCursorFetch,
       useServerPrepStmts,
       resultSetType,
-      resultSetConcurrency
+      resultSetConcurrency,
+      telemetryConfig
     )
 
   override def prepareStatement(
@@ -392,7 +396,8 @@ private[ldbc] case class ConnectionImpl[F[_]: Tracer: Exchange: UUIDGen](
       useCursorFetch,
       useServerPrepStmts,
       resultSetType,
-      resultSetConcurrency
+      resultSetConcurrency,
+      telemetryConfig
     )
 
   private def buildServerPreparedStatement(
@@ -444,7 +449,8 @@ private[ldbc] case class ConnectionImpl[F[_]: Tracer: Exchange: UUIDGen](
       useCursorFetch,
       useServerPrepStmts,
       resultSetType,
-      resultSetConcurrency
+      resultSetConcurrency,
+      telemetryConfig
     )
 
   private def buildPreparedStatement(
