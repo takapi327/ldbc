@@ -62,7 +62,7 @@ object TelemetryAttribute:
   // ============================================================
 
   // Database operation metrics (Stable)
-  val METRIC_DB_CLIENT_OPERATION_DURATION:    String = "db.client.operation.duration"
+  val METRIC_DB_CLIENT_OPERATION_DURATION:     String = "db.client.operation.duration"
   val METRIC_DB_CLIENT_RESPONSE_RETURNED_ROWS: String = "db.client.response.returned_rows"
 
   // Connection pool metrics (Development)

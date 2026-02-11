@@ -9,6 +9,7 @@ package ldbc.connector.pool
 import scala.concurrent.duration.*
 
 import cats.*
+
 import cats.effect.*
 
 import ldbc.connector.*
@@ -168,4 +169,3 @@ class PoolMetricsTrackerTest extends FTestPlatform:
       assertEquals(metrics.leaks, 100L)
       assertEquals(metrics.totalAcquisitions, 100L)
   }
-

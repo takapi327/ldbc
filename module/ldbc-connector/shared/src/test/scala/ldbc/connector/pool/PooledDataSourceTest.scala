@@ -742,7 +742,7 @@ class PooledDataSourceTest extends FTestPlatform:
     resource.use { datasource =>
       for
         status <- datasource.status
-        _ <- datasource.getConnection.use { conn =>
+        _      <- datasource.getConnection.use { conn =>
                conn.createStatement().flatMap(_.executeQuery("SELECT 1")).void
              }
         metrics <- datasource.metrics
@@ -755,24 +755,25 @@ class PooledDataSourceTest extends FTestPlatform:
   test("PooledDataSource should prioritize databaseMetrics over metricsTracker") {
     val resource = for
       tracker <- Resource.eval(PoolMetricsTracker.inMemory[IO])
-      ds <- PooledDataSource.fromConfig[IO](
+      ds      <- PooledDataSource.fromConfig[IO](
               config.setMinConnections(1).setMaxConnections(3),
-              metricsTracker = Some(tracker),
+              metricsTracker  = Some(tracker),
               databaseMetrics = Some(DatabaseMetrics.noop[IO])
             )
     yield (ds, tracker)
 
-    resource.use { case (datasource, manualTracker) =>
-      for
-        _ <- datasource.getConnection.use { conn =>
-               conn.createStatement().flatMap(_.executeQuery("SELECT 1")).void
-             }
-        // The otel tracker wraps its own in-memory tracker, so the manually-provided
-        // tracker should NOT have recorded anything (databaseMetrics takes priority)
-        manualMetrics <- manualTracker.getMetrics
-        poolMetrics   <- datasource.metrics
-      yield
-        assertEquals(manualMetrics.totalAcquisitions, 0L)
-        assert(poolMetrics.totalAcquisitions >= 1L)
+    resource.use {
+      case (datasource, manualTracker) =>
+        for
+          _ <- datasource.getConnection.use { conn =>
+                 conn.createStatement().flatMap(_.executeQuery("SELECT 1")).void
+               }
+          // The otel tracker wraps its own in-memory tracker, so the manually-provided
+          // tracker should NOT have recorded anything (databaseMetrics takes priority)
+          manualMetrics <- manualTracker.getMetrics
+          poolMetrics   <- datasource.metrics
+        yield
+          assertEquals(manualMetrics.totalAcquisitions, 0L)
+          assert(poolMetrics.totalAcquisitions >= 1L)
     }
   }

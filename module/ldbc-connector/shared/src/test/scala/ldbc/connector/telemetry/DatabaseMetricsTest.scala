@@ -72,7 +72,7 @@ class DatabaseMetricsTest extends FTestPlatform:
   }
 
   test("noop should return Resource.unit for registerPoolStateCallback") {
-    val metrics = DatabaseMetrics.noop[IO]
+    val metrics       = DatabaseMetrics.noop[IO]
     val stateProvider = IO.pure(PoolMetricsState(5L, 3L, 0L))
     metrics.registerPoolStateCallback("test-pool", 2, 10, stateProvider).use_
   }

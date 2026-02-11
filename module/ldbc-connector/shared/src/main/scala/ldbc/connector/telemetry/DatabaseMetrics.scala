@@ -8,9 +8,9 @@ package ldbc.connector.telemetry
 
 import scala.concurrent.duration.FiniteDuration
 
+import cats.syntax.all.*
 import cats.Applicative
 import cats.Monad
-import cats.syntax.all.*
 
 import cats.effect.Resource
 

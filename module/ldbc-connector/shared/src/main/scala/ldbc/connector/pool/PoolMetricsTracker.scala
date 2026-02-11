@@ -176,4 +176,3 @@ object PoolMetricsTracker:
       totalCreations    = cre,
       totalRemovals     = rem
     )
-
