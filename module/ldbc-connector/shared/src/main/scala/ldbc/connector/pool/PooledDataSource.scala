@@ -19,6 +19,7 @@ import cats.effect.syntax.all.*
 import fs2.hashing.Hashing
 import fs2.io.net.*
 
+import org.typelevel.otel4s.metrics.Meter
 import org.typelevel.otel4s.trace.Tracer
 
 import ldbc.sql.DatabaseMetaData
@@ -671,7 +672,7 @@ object PooledDataSource:
   private[connector] def create[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
     config:          MySQLConfig,
     metricsTracker:  Option[PoolMetricsTracker[F]],
-    databaseMetrics: Option[DatabaseMetrics[F]],
+    meter:           Option[Meter[F]],
     idGenerator:     F[String],
     plugins:         List[AuthenticationPlugin[F]],
     before:          Option[Connection[F] => F[A]] = None,
@@ -682,7 +683,7 @@ object PooledDataSource:
     Resource
       .eval(PoolConfigValidator.validate(config))
       .flatMap { _ =>
-        createValidatedPool(config, metricsTracker, databaseMetrics, idGenerator, plugins, before, after)
+        createValidatedPool(config, metricsTracker, meter, idGenerator, plugins, before, after)
       }
       .handleErrorWith { error =>
         Resource.eval(Async[F].raiseError(error))
@@ -691,7 +692,7 @@ object PooledDataSource:
   private def createValidatedPool[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
     config:          MySQLConfig,
     metricsTracker:  Option[PoolMetricsTracker[F]],
-    databaseMetrics: Option[DatabaseMetrics[F]],
+    meter:           Option[Meter[F]],
     idGenerator:     F[String],
     plugins:         List[AuthenticationPlugin[F]],
     before:          Option[Connection[F] => F[A]],
@@ -702,12 +703,14 @@ object PooledDataSource:
       metricsTracker match
         case Some(tracker) => Resource.pure(tracker)
         case None          =>
-          databaseMetrics match
+          meter match
             case Some(_) => Resource.eval(PoolMetricsTracker.inMemory[F])
             case None    => Resource.pure(PoolMetricsTracker.noop[F])
 
-    val resolvedDatabaseMetrics: DatabaseMetrics[F] =
-      databaseMetrics.getOrElse(DatabaseMetrics.noop[F])
+    val databaseMetricsResource: Resource[F, DatabaseMetrics[F]] =
+      meter match
+        case Some(m) => DatabaseMetrics.fromMeter(m)
+        case None    => Resource.pure(DatabaseMetrics.noop[F])
 
     val poolLogger = PoolLogger.console[F](config.debug || config.logPoolState)
 
@@ -783,23 +786,21 @@ object PooledDataSource:
       ).flatten
       backgroundResources.sequence_
 
-    def registerObservableMetrics(pool: PooledDataSource[F]): Resource[F, Unit] =
-      databaseMetrics match
-        case Some(metrics) =>
-          metrics.registerPoolStateCallback(
-            config.poolName,
-            config.minConnections,
-            config.maxConnections,
-            pool.status.map(s => PoolMetricsState(s.idle.toLong, s.active.toLong, s.waiting.toLong))
-          )
-        case None => Resource.unit
+    def registerObservableMetrics(pool: PooledDataSource[F], dbMetrics: DatabaseMetrics[F]): Resource[F, Unit] =
+      dbMetrics.registerPoolStateCallback(
+        config.poolName,
+        config.minConnections,
+        config.maxConnections,
+        pool.status.map(s => PoolMetricsState(s.idle.toLong, s.active.toLong, s.waiting.toLong))
+      )
 
     for
-      tracker <- trackerResource
-      pool    <- Resource.eval(createPool(tracker, resolvedDatabaseMetrics))
-      _       <- registerObservableMetrics(pool)
-      _       <- createMinimumConnections(pool)
-      _       <- createBackgroundResources(pool, tracker)
+      tracker   <- trackerResource
+      dbMetrics <- databaseMetricsResource
+      pool      <- Resource.eval(createPool(tracker, dbMetrics))
+      _         <- registerObservableMetrics(pool, dbMetrics)
+      _         <- createMinimumConnections(pool)
+      _         <- createBackgroundResources(pool, tracker)
     yield pool
 
   /**
@@ -821,12 +822,12 @@ object PooledDataSource:
   def fromConfig[F[_]: Async: Network: Console: Hashing: UUIDGen](
     config:          MySQLConfig,
     metricsTracker:  Option[PoolMetricsTracker[F]] = None,
-    databaseMetrics: Option[DatabaseMetrics[F]] = None,
+    meter:           Option[Meter[F]] = None,
     tracer:          Option[Tracer[F]] = None,
     plugins:         List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]]
   ): Resource[F, PooledDataSource[F]] =
     given Tracer[F] = tracer.getOrElse(Tracer.noop[F])
-    create(config, metricsTracker, databaseMetrics, UUIDGen[F].randomUUID.map(_.toString), plugins)
+    create(config, metricsTracker, meter, UUIDGen[F].randomUUID.map(_.toString), plugins)
 
     /**
    * Creates a PooledDataSource with before/after hooks for each connection use.
@@ -852,11 +853,11 @@ object PooledDataSource:
   def fromConfigWithBeforeAfter[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
     config:          MySQLConfig,
     metricsTracker:  Option[PoolMetricsTracker[F]] = None,
-    databaseMetrics: Option[DatabaseMetrics[F]] = None,
+    meter:           Option[Meter[F]] = None,
     tracer:          Option[Tracer[F]] = None,
     plugins:         List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
     before:          Option[Connection[F] => F[A]] = None,
     after:           Option[(A, Connection[F]) => F[Unit]] = None
   ): Resource[F, PooledDataSource[F]] =
     given Tracer[F] = tracer.getOrElse(Tracer.noop[F])
-    create(config, metricsTracker, databaseMetrics, UUIDGen[F].randomUUID.map(_.toString), plugins, before, after)
+    create(config, metricsTracker, meter, UUIDGen[F].randomUUID.map(_.toString), plugins, before, after)

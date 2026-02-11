@@ -12,8 +12,9 @@ import cats.syntax.all.*
 
 import cats.effect.*
 
+import org.typelevel.otel4s.metrics.Meter
+
 import ldbc.connector.*
-import ldbc.connector.telemetry.DatabaseMetrics
 
 class PooledDataSourceTest extends FTestPlatform:
 
@@ -730,13 +731,13 @@ class PooledDataSourceTest extends FTestPlatform:
   }
 
   // ============================================================
-  // Tests for databaseMetrics integration
+  // Tests for meter integration
   // ============================================================
 
-  test("PooledDataSource should accept databaseMetrics parameter and use otel tracker") {
+  test("PooledDataSource should accept meter parameter and create metrics") {
     val resource = PooledDataSource.fromConfig[IO](
       config.setMinConnections(2).setMaxConnections(5),
-      databaseMetrics = Some(DatabaseMetrics.noop[IO])
+      meter = Some(Meter.noop[IO])
     )
 
     resource.use { datasource =>
@@ -752,13 +753,13 @@ class PooledDataSourceTest extends FTestPlatform:
     }
   }
 
-  test("PooledDataSource should prioritize databaseMetrics over metricsTracker") {
+  test("PooledDataSource should use metricsTracker for internal tracking when both meter and metricsTracker are provided") {
     val resource = for
       tracker <- Resource.eval(PoolMetricsTracker.inMemory[IO])
       ds      <- PooledDataSource.fromConfig[IO](
               config.setMinConnections(1).setMaxConnections(3),
-              metricsTracker  = Some(tracker),
-              databaseMetrics = Some(DatabaseMetrics.noop[IO])
+              metricsTracker = Some(tracker),
+              meter          = Some(Meter.noop[IO])
             )
     yield (ds, tracker)
 
@@ -768,12 +769,11 @@ class PooledDataSourceTest extends FTestPlatform:
           _ <- datasource.getConnection.use { conn =>
                  conn.createStatement().flatMap(_.executeQuery("SELECT 1")).void
                }
-          // The otel tracker wraps its own in-memory tracker, so the manually-provided
-          // tracker should NOT have recorded anything (databaseMetrics takes priority)
+          // metricsTracker is used for internal tracking, meter for OTel — both are independent
           manualMetrics <- manualTracker.getMetrics
           poolMetrics   <- datasource.metrics
         yield
-          assertEquals(manualMetrics.totalAcquisitions, 0L)
+          assert(manualMetrics.totalAcquisitions >= 1L)
           assert(poolMetrics.totalAcquisitions >= 1L)
     }
   }
