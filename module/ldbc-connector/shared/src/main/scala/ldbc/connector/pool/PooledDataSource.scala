@@ -670,13 +670,13 @@ object PooledDataSource:
           )
 
   private[connector] def create[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
-    config:          MySQLConfig,
-    metricsTracker:  Option[PoolMetricsTracker[F]],
-    meter:           Option[Meter[F]],
-    idGenerator:     F[String],
-    plugins:         List[AuthenticationPlugin[F]],
-    before:          Option[Connection[F] => F[A]] = None,
-    after:           Option[(A, Connection[F]) => F[Unit]] = None
+    config:         MySQLConfig,
+    metricsTracker: Option[PoolMetricsTracker[F]],
+    meter:          Option[Meter[F]],
+    idGenerator:    F[String],
+    plugins:        List[AuthenticationPlugin[F]],
+    before:         Option[Connection[F] => F[A]] = None,
+    after:          Option[(A, Connection[F]) => F[Unit]] = None
   )(using Tracer[F]): Resource[F, PooledDataSource[F]] =
 
     // Validate configuration before creating the pool (similar to HikariDataSource)
@@ -690,13 +690,13 @@ object PooledDataSource:
       }
 
   private def createValidatedPool[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
-    config:          MySQLConfig,
-    metricsTracker:  Option[PoolMetricsTracker[F]],
-    meter:           Option[Meter[F]],
-    idGenerator:     F[String],
-    plugins:         List[AuthenticationPlugin[F]],
-    before:          Option[Connection[F] => F[A]],
-    after:           Option[(A, Connection[F]) => F[Unit]]
+    config:         MySQLConfig,
+    metricsTracker: Option[PoolMetricsTracker[F]],
+    meter:          Option[Meter[F]],
+    idGenerator:    F[String],
+    plugins:        List[AuthenticationPlugin[F]],
+    before:         Option[Connection[F] => F[A]],
+    after:          Option[(A, Connection[F]) => F[Unit]]
   )(using Tracer[F]): Resource[F, PooledDataSource[F]] =
 
     val trackerResource: Resource[F, PoolMetricsTracker[F]] =
@@ -820,11 +820,11 @@ object PooledDataSource:
    * @return a Resource that manages the pooled data source lifecycle
    */
   def fromConfig[F[_]: Async: Network: Console: Hashing: UUIDGen](
-    config:          MySQLConfig,
-    metricsTracker:  Option[PoolMetricsTracker[F]] = None,
-    meter:           Option[Meter[F]] = None,
-    tracer:          Option[Tracer[F]] = None,
-    plugins:         List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]]
+    config:         MySQLConfig,
+    metricsTracker: Option[PoolMetricsTracker[F]] = None,
+    meter:          Option[Meter[F]] = None,
+    tracer:         Option[Tracer[F]] = None,
+    plugins:        List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]]
   ): Resource[F, PooledDataSource[F]] =
     given Tracer[F] = tracer.getOrElse(Tracer.noop[F])
     create(config, metricsTracker, meter, UUIDGen[F].randomUUID.map(_.toString), plugins)
@@ -851,13 +851,13 @@ object PooledDataSource:
    * @return a Resource that manages the pooled data source lifecycle
    */
   def fromConfigWithBeforeAfter[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
-    config:          MySQLConfig,
-    metricsTracker:  Option[PoolMetricsTracker[F]] = None,
-    meter:           Option[Meter[F]] = None,
-    tracer:          Option[Tracer[F]] = None,
-    plugins:         List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
-    before:          Option[Connection[F] => F[A]] = None,
-    after:           Option[(A, Connection[F]) => F[Unit]] = None
+    config:         MySQLConfig,
+    metricsTracker: Option[PoolMetricsTracker[F]] = None,
+    meter:          Option[Meter[F]] = None,
+    tracer:         Option[Tracer[F]] = None,
+    plugins:        List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
+    before:         Option[Connection[F] => F[A]] = None,
+    after:          Option[(A, Connection[F]) => F[Unit]] = None
   ): Resource[F, PooledDataSource[F]] =
     given Tracer[F] = tracer.getOrElse(Tracer.noop[F])
     create(config, metricsTracker, meter, UUIDGen[F].randomUUID.map(_.toString), plugins, before, after)

@@ -753,7 +753,9 @@ class PooledDataSourceTest extends FTestPlatform:
     }
   }
 
-  test("PooledDataSource should use metricsTracker for internal tracking when both meter and metricsTracker are provided") {
+  test(
+    "PooledDataSource should use metricsTracker for internal tracking when both meter and metricsTracker are provided"
+  ) {
     val resource = for
       tracker <- Resource.eval(PoolMetricsTracker.inMemory[IO])
       ds      <- PooledDataSource.fromConfig[IO](
