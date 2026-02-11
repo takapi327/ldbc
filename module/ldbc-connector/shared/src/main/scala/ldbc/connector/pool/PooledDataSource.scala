@@ -25,6 +25,7 @@ import ldbc.sql.DatabaseMetaData
 
 import ldbc.connector.*
 import ldbc.connector.exception.SQLException
+import ldbc.connector.telemetry.{ DatabaseMetrics, PoolMetricsState }
 
 import ldbc.authentication.plugin.AuthenticationPlugin
 import ldbc.DataSource
@@ -198,6 +199,8 @@ object PooledDataSource:
     adaptiveSizing:          Boolean                               = true,
     adaptiveInterval:        FiniteDuration                        = 30.seconds,
     metricsTracker:          PoolMetricsTracker[F],
+    databaseMetrics:         DatabaseMetrics[F],
+    poolName:                String,
     poolState:               Ref[F, PoolState[F]],
     idGenerator:             F[String],
     connectionBag:           ConcurrentBag[F, PooledConnection[F]],
@@ -286,6 +289,7 @@ object PooledDataSource:
                               _       <- pooled.useCount.update(_ + 1)
                               endTime <- Clock[F].monotonic
                               _       <- metricsTracker.recordAcquisition(endTime - startTime)
+                              _       <- databaseMetrics.recordConnectionWaitTime(endTime - startTime, poolName)
                               // Start leak detection if configured
                               _ <- leakDetectionThreshold.traverse_ { threshold =>
                                      val leakFiber = Temporal[F]
@@ -316,6 +320,7 @@ object PooledDataSource:
                     for
                       endTime <- Clock[F].monotonic
                       _       <- metricsTracker.recordAcquisition(endTime - startTime)
+                      _       <- databaseMetrics.recordConnectionWaitTime(endTime - startTime, poolName)
                     yield wrapConnection(pooled)
                   }
                 else
@@ -330,6 +335,7 @@ object PooledDataSource:
                         s"active: $activeCount, idle: $idleCount, " +
                         s"waiting: ${ currentState.waitQueue.size })"
                     metricsTracker.recordTimeout() *>
+                      databaseMetrics.recordConnectionTimeout(poolName) *>
                       poolLogger.error(errorMessage) *>
                       Temporal[F].raiseError(new SQLException(errorMessage))
                   }
@@ -381,13 +387,15 @@ object PooledDataSource:
                          connectionBag.requite(pooled) *>
                            poolState.update(s => s.copy(idleConnections = s.idleConnections + pooled.id)) *>
                            Clock[F].monotonic.flatMap { endTime =>
-                             metricsTracker.recordUsage(endTime - startTime)
+                             metricsTracker.recordUsage(endTime - startTime) *>
+                               databaseMetrics.recordConnectionUseTime(endTime - startTime, poolName)
                            }
                        } else
                          // Invalid or expired, remove from pool
                          removeConnection(pooled) *>
                            Clock[F].monotonic.flatMap { endTime =>
-                             metricsTracker.recordUsage(endTime - startTime)
+                             metricsTracker.recordUsage(endTime - startTime) *>
+                               databaseMetrics.recordConnectionUseTime(endTime - startTime, poolName)
                            }
                 yield ()
               case Left(error) =>
@@ -395,13 +403,15 @@ object PooledDataSource:
                 poolLogger.warn(s"Failed to reset connection ${ pooled.id } on release: ${ error.getMessage }") >>
                   removeConnection(pooled) *>
                   Clock[F].monotonic.flatMap { endTime =>
-                    metricsTracker.recordUsage(endTime - startTime)
+                    metricsTracker.recordUsage(endTime - startTime) *>
+                      databaseMetrics.recordConnectionUseTime(endTime - startTime, poolName)
                   }
             }
         case None =>
           // Connection not found - still record the usage time
           Clock[F].monotonic.flatMap { endTime =>
-            metricsTracker.recordUsage(endTime - startTime)
+            metricsTracker.recordUsage(endTime - startTime) *>
+              databaseMetrics.recordConnectionUseTime(endTime - startTime, poolName)
           }
       }
 
@@ -486,6 +496,7 @@ object PooledDataSource:
 
           endTime <- Clock[F].monotonic
           _       <- metricsTracker.recordCreation(endTime - startTime)
+          _       <- databaseMetrics.recordConnectionCreateTime(endTime - startTime, poolName)
         yield pooled
       }
 
@@ -658,43 +669,49 @@ object PooledDataSource:
           )
 
   private[connector] def create[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
-    config:         MySQLConfig,
-    metricsTracker: Option[PoolMetricsTracker[F]],
-    idGenerator:    F[String],
-    plugins:        List[AuthenticationPlugin[F]],
-    before:         Option[Connection[F] => F[A]] = None,
-    after:          Option[(A, Connection[F]) => F[Unit]] = None
+    config:          MySQLConfig,
+    metricsTracker:  Option[PoolMetricsTracker[F]],
+    databaseMetrics: Option[DatabaseMetrics[F]],
+    idGenerator:     F[String],
+    plugins:         List[AuthenticationPlugin[F]],
+    before:          Option[Connection[F] => F[A]] = None,
+    after:           Option[(A, Connection[F]) => F[Unit]] = None
   )(using Tracer[F]): Resource[F, PooledDataSource[F]] =
 
     // Validate configuration before creating the pool (similar to HikariDataSource)
     Resource
       .eval(PoolConfigValidator.validate(config))
       .flatMap { _ =>
-        createValidatedPool(config, metricsTracker, idGenerator, plugins, before, after)
+        createValidatedPool(config, metricsTracker, databaseMetrics, idGenerator, plugins, before, after)
       }
       .handleErrorWith { error =>
         Resource.eval(Async[F].raiseError(error))
       }
 
   private def createValidatedPool[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
-    config:         MySQLConfig,
-    metricsTracker: Option[PoolMetricsTracker[F]],
-    idGenerator:    F[String],
-    plugins:        List[AuthenticationPlugin[F]],
-    before:         Option[Connection[F] => F[A]],
-    after:          Option[(A, Connection[F]) => F[Unit]]
+    config:          MySQLConfig,
+    metricsTracker:  Option[PoolMetricsTracker[F]],
+    databaseMetrics: Option[DatabaseMetrics[F]],
+    idGenerator:     F[String],
+    plugins:         List[AuthenticationPlugin[F]],
+    before:          Option[Connection[F] => F[A]],
+    after:           Option[(A, Connection[F]) => F[Unit]]
   )(using Tracer[F]): Resource[F, PooledDataSource[F]] =
 
-    val tracker           = metricsTracker.getOrElse(PoolMetricsTracker.noop[F])
-    val poolLogger        = PoolLogger.console[F](config.debug || config.logPoolState)
-    val houseKeeper       = HouseKeeper.fromAsync[F](config, tracker)
-    val adaptivePoolSizer = AdaptivePoolSizer.fromAsync[F](config, tracker)
-    val keepaliveExecutor = config.keepaliveTime.map(KeepaliveExecutor.fromAsync[F](_, tracker))
-    val statusReporter    =
-      if config.logPoolState then Some(PoolStatusReporter[F](config.poolStateLogInterval, poolLogger, tracker))
-      else None
+    val trackerResource: Resource[F, PoolMetricsTracker[F]] =
+      metricsTracker match
+        case Some(tracker) => Resource.pure(tracker)
+        case None =>
+          databaseMetrics match
+            case Some(_) => Resource.eval(PoolMetricsTracker.inMemory[F])
+            case None    => Resource.pure(PoolMetricsTracker.noop[F])
 
-    def createPool = for
+    val resolvedDatabaseMetrics: DatabaseMetrics[F] =
+      databaseMetrics.getOrElse(DatabaseMetrics.noop[F])
+
+    val poolLogger = PoolLogger.console[F](config.debug || config.logPoolState)
+
+    def createPool(tracker: PoolMetricsTracker[F], dbMetrics: DatabaseMetrics[F]) = for
       poolState      <- Ref[F].of(PoolState.empty[F])
       connectionBag  <- ConcurrentBag[F, PooledConnection[F]]()
       circuitBreaker <- CircuitBreaker[F](
@@ -727,6 +744,8 @@ object PooledDataSource:
       adaptiveSizing          = config.adaptiveSizing,
       adaptiveInterval        = config.adaptiveInterval,
       metricsTracker          = tracker,
+      databaseMetrics         = dbMetrics,
+      poolName                = config.poolName,
       poolState               = poolState,
       idGenerator             = idGenerator,
       connectionBag           = connectionBag,
@@ -748,7 +767,13 @@ object PooledDataSource:
         }
       )(_ => pool.close) // Close the pool after minimum connections are no longer needed
 
-    def createBackgroundResources(pool: PooledDataSource[F]): Resource[F, Unit] =
+    def createBackgroundResources(pool: PooledDataSource[F], tracker: PoolMetricsTracker[F]): Resource[F, Unit] =
+      val houseKeeper       = HouseKeeper.fromAsync[F](config, tracker)
+      val adaptivePoolSizer = AdaptivePoolSizer.fromAsync[F](config, tracker)
+      val keepaliveExecutor = config.keepaliveTime.map(KeepaliveExecutor.fromAsync[F](_, tracker))
+      val statusReporter    =
+        if config.logPoolState then Some(PoolStatusReporter[F](config.poolStateLogInterval, poolLogger, tracker))
+        else None
       val backgroundResources = List(
         Some(houseKeeper.start(pool)),
         if config.adaptiveSizing then Some(adaptivePoolSizer.start(pool))
@@ -758,10 +783,23 @@ object PooledDataSource:
       ).flatten
       backgroundResources.sequence_
 
+    def registerObservableMetrics(pool: PooledDataSource[F]): Resource[F, Unit] =
+      databaseMetrics match
+        case Some(metrics) =>
+          metrics.registerPoolStateCallback(
+            config.poolName,
+            config.minConnections,
+            config.maxConnections,
+            pool.status.map(s => PoolMetricsState(s.idle.toLong, s.active.toLong, s.waiting.toLong))
+          )
+        case None => Resource.unit
+
     for
-      pool <- Resource.eval(createPool)
-      _    <- createMinimumConnections(pool)
-      _    <- createBackgroundResources(pool)
+      tracker <- trackerResource
+      pool    <- Resource.eval(createPool(tracker, resolvedDatabaseMetrics))
+      _       <- registerObservableMetrics(pool)
+      _       <- createMinimumConnections(pool)
+      _       <- createBackgroundResources(pool, tracker)
     yield pool
 
   /**
@@ -781,13 +819,14 @@ object PooledDataSource:
    * @return a Resource that manages the pooled data source lifecycle
    */
   def fromConfig[F[_]: Async: Network: Console: Hashing: UUIDGen](
-    config:         MySQLConfig,
-    metricsTracker: Option[PoolMetricsTracker[F]] = None,
-    tracer:         Option[Tracer[F]] = None,
-    plugins:        List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]]
+    config:          MySQLConfig,
+    metricsTracker:  Option[PoolMetricsTracker[F]] = None,
+    databaseMetrics: Option[DatabaseMetrics[F]] = None,
+    tracer:          Option[Tracer[F]] = None,
+    plugins:         List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]]
   ): Resource[F, PooledDataSource[F]] =
     given Tracer[F] = tracer.getOrElse(Tracer.noop[F])
-    create(config, metricsTracker, UUIDGen[F].randomUUID.map(_.toString), plugins)
+    create(config, metricsTracker, databaseMetrics, UUIDGen[F].randomUUID.map(_.toString), plugins)
 
     /**
    * Creates a PooledDataSource with before/after hooks for each connection use.
@@ -811,12 +850,13 @@ object PooledDataSource:
    * @return a Resource that manages the pooled data source lifecycle
    */
   def fromConfigWithBeforeAfter[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
-    config:         MySQLConfig,
-    metricsTracker: Option[PoolMetricsTracker[F]] = None,
-    tracer:         Option[Tracer[F]] = None,
-    plugins:        List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
-    before:         Option[Connection[F] => F[A]] = None,
-    after:          Option[(A, Connection[F]) => F[Unit]] = None
+    config:          MySQLConfig,
+    metricsTracker:  Option[PoolMetricsTracker[F]] = None,
+    databaseMetrics: Option[DatabaseMetrics[F]] = None,
+    tracer:          Option[Tracer[F]] = None,
+    plugins:         List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
+    before:          Option[Connection[F] => F[A]] = None,
+    after:           Option[(A, Connection[F]) => F[Unit]] = None
   ): Resource[F, PooledDataSource[F]] =
     given Tracer[F] = tracer.getOrElse(Tracer.noop[F])
-    create(config, metricsTracker, UUIDGen[F].randomUUID.map(_.toString), plugins, before, after)
+    create(config, metricsTracker, databaseMetrics, UUIDGen[F].randomUUID.map(_.toString), plugins, before, after)

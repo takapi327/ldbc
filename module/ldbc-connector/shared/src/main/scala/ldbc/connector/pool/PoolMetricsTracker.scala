@@ -13,32 +13,30 @@ import cats.syntax.all.*
 
 import cats.effect.*
 
-import ldbc.connector.telemetry.DatabaseMetrics
-
 /**
  * Trait for tracking pool metrics.
- * 
+ *
  * @tparam F the effect type
  */
 trait PoolMetricsTracker[F[_]]:
 
   /**
    * Record the time taken to acquire a connection.
-   * 
+   *
    * @param duration the duration of the acquisition
    */
   def recordAcquisition(duration: FiniteDuration): F[Unit]
 
   /**
    * Record the time a connection was used.
-   * 
+   *
    * @param duration the duration of usage
    */
   def recordUsage(duration: FiniteDuration): F[Unit]
 
   /**
    * Record the time taken to create a connection.
-   * 
+   *
    * @param duration the duration of creation
    */
   def recordCreation(duration: FiniteDuration): F[Unit]
@@ -60,7 +58,7 @@ trait PoolMetricsTracker[F[_]]:
 
   /**
    * Update a gauge metric.
-   * 
+   *
    * @param name the name of the gauge
    * @param value the current value
    */
@@ -68,7 +66,7 @@ trait PoolMetricsTracker[F[_]]:
 
   /**
    * Get current metrics snapshot.
-   * 
+   *
    * @return current metrics
    */
   def getMetrics: F[PoolMetrics]
@@ -77,11 +75,11 @@ object PoolMetricsTracker:
 
   /**
    * Creates a no-operation metrics tracker that discards all metrics.
-   * 
+   *
    * This implementation is useful for testing or when metrics collection
    * is not needed. All recording methods return immediately without
    * performing any operations, and `getMetrics` always returns empty metrics.
-   * 
+   *
    * @tparam F the effect type (must have an Applicative instance)
    * @return a PoolMetricsTracker that performs no operations
    */
@@ -97,18 +95,18 @@ object PoolMetricsTracker:
 
   /**
    * Creates an in-memory metrics tracker that stores metrics in memory.
-   * 
+   *
    * This implementation maintains a sliding window of recent duration measurements
    * (up to 100 samples) and counters for various pool events. The metrics are
    * stored using thread-safe references and can be retrieved at any time via
    * the `getMetrics` method.
-   * 
+   *
    * Features:
    * - Tracks acquisition, usage, and creation times with sliding windows
    * - Maintains counters for timeouts, leaks, and pool operations
    * - Stores gauge values for current pool state metrics
    * - Thread-safe for concurrent access
-   * 
+   *
    * @tparam F the effect type (must have a Sync instance)
    * @return an effect that creates a new in-memory PoolMetricsTracker
    */
@@ -179,74 +177,3 @@ object PoolMetricsTracker:
       totalRemovals     = rem
     )
 
-  /**
-   * Creates an OpenTelemetry-integrated metrics tracker.
-   *
-   * This implementation delegates to both the in-memory tracker (for getMetrics)
-   * and the OpenTelemetry metrics (for external observability).
-   *
-   * Static pool configuration metrics (idle.max, idle.min, max) are set on resource
-   * acquisition and subtracted on resource finalization.
-   *
-   * The `pool.waiting` gauge is tracked as a delta and dispatched to
-   * `db.client.connection.pending_requests`.
-   *
-   * @param otelMetrics The OpenTelemetry DatabaseMetrics instance
-   * @param poolName The name of the connection pool
-   * @param minConnections Minimum number of idle connections maintained by the pool
-   * @param maxConnections Maximum number of connections allowed in the pool
-   * @return A Resource containing the tracker
-   */
-  def otel[F[_]: Sync](
-    otelMetrics:    DatabaseMetrics[F],
-    poolName:       String,
-    minConnections: Int = 0,
-    maxConnections: Int = 0
-  ): Resource[F, PoolMetricsTracker[F]] =
-    for
-      inMemoryTracker  <- Resource.eval(inMemory[F])
-      pendingRequestsRef <- Resource.eval(Ref[F].of(0L))
-      _ <- Resource.make(
-             otelMetrics.recordConnectionIdleMax(maxConnections.toLong, poolName) *>
-               otelMetrics.recordConnectionIdleMin(minConnections.toLong, poolName) *>
-               otelMetrics.recordConnectionMax(maxConnections.toLong, poolName)
-           )(_ =>
-             otelMetrics.recordConnectionIdleMax(-maxConnections.toLong, poolName) *>
-               otelMetrics.recordConnectionIdleMin(-minConnections.toLong, poolName) *>
-               otelMetrics.recordConnectionMax(-maxConnections.toLong, poolName)
-           )
-    yield new PoolMetricsTracker[F]:
-      override def recordAcquisition(duration: FiniteDuration): F[Unit] =
-        inMemoryTracker.recordAcquisition(duration) *>
-          otelMetrics.recordConnectionWaitTime(duration, poolName)
-
-      override def recordUsage(duration: FiniteDuration): F[Unit] =
-        inMemoryTracker.recordUsage(duration) *>
-          otelMetrics.recordConnectionUseTime(duration, poolName)
-
-      override def recordCreation(duration: FiniteDuration): F[Unit] =
-        inMemoryTracker.recordCreation(duration) *>
-          otelMetrics.recordConnectionCreateTime(duration, poolName)
-
-      override def recordTimeout(): F[Unit] =
-        inMemoryTracker.recordTimeout() *>
-          otelMetrics.recordConnectionTimeout(poolName)
-
-      override def recordLeak(): F[Unit] =
-        inMemoryTracker.recordLeak()
-
-      override def recordRemoval(): F[Unit] =
-        inMemoryTracker.recordRemoval()
-
-      override def updateGauge(name: String, value: Long): F[Unit] =
-        inMemoryTracker.updateGauge(name, value) *>
-          (if name == "pool.waiting" then
-             pendingRequestsRef.getAndSet(value).flatMap { previous =>
-               val delta = value - previous
-               if delta != 0L then otelMetrics.addConnectionPendingRequests(delta, poolName)
-               else Applicative[F].unit
-             }
-           else Applicative[F].unit)
-
-      override def getMetrics: F[PoolMetrics] =
-        inMemoryTracker.getMetrics

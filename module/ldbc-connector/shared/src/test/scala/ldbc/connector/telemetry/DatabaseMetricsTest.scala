@@ -47,24 +47,6 @@ class DatabaseMetricsTest extends FTestPlatform:
     yield assertEquals(result, ())
   }
 
-  test("noop should return unit for recordConnectionCount") {
-    val metrics = DatabaseMetrics.noop[IO]
-    for result <- metrics.recordConnectionCount(10L, "idle", "test-pool")
-    yield assertEquals(result, ())
-  }
-
-  test("noop should return unit for incrementConnectionCount") {
-    val metrics = DatabaseMetrics.noop[IO]
-    for result <- metrics.incrementConnectionCount("used", "test-pool")
-    yield assertEquals(result, ())
-  }
-
-  test("noop should return unit for decrementConnectionCount") {
-    val metrics = DatabaseMetrics.noop[IO]
-    for result <- metrics.decrementConnectionCount("used", "test-pool")
-    yield assertEquals(result, ())
-  }
-
   test("noop should return unit for recordConnectionCreateTime") {
     val metrics = DatabaseMetrics.noop[IO]
     for result <- metrics.recordConnectionCreateTime(50.millis, "test-pool")
@@ -89,28 +71,10 @@ class DatabaseMetricsTest extends FTestPlatform:
     yield assertEquals(result, ())
   }
 
-  test("noop should return unit for recordConnectionIdleMax") {
+  test("noop should return Resource.unit for registerPoolStateCallback") {
     val metrics = DatabaseMetrics.noop[IO]
-    for result <- metrics.recordConnectionIdleMax(10L, "test-pool")
-    yield assertEquals(result, ())
-  }
-
-  test("noop should return unit for recordConnectionIdleMin") {
-    val metrics = DatabaseMetrics.noop[IO]
-    for result <- metrics.recordConnectionIdleMin(2L, "test-pool")
-    yield assertEquals(result, ())
-  }
-
-  test("noop should return unit for recordConnectionMax") {
-    val metrics = DatabaseMetrics.noop[IO]
-    for result <- metrics.recordConnectionMax(20L, "test-pool")
-    yield assertEquals(result, ())
-  }
-
-  test("noop should return unit for addConnectionPendingRequests") {
-    val metrics = DatabaseMetrics.noop[IO]
-    for result <- metrics.addConnectionPendingRequests(5L, "test-pool")
-    yield assertEquals(result, ())
+    val stateProvider = IO.pure(PoolMetricsState(5L, 3L, 0L))
+    metrics.registerPoolStateCallback("test-pool", 2, 10, stateProvider).use_
   }
 
   // ============================================================
@@ -123,17 +87,10 @@ class DatabaseMetricsTest extends FTestPlatform:
       _ <- metrics.recordOperationDuration(100.millis)
       _ <- metrics.recordOperationDuration(200.millis)
       _ <- metrics.recordReturnedRows(50L)
-      _ <- metrics.recordConnectionCount(5L, "idle", "pool1")
-      _ <- metrics.incrementConnectionCount("used", "pool1")
-      _ <- metrics.decrementConnectionCount("used", "pool1")
       _ <- metrics.recordConnectionCreateTime(10.millis, "pool1")
       _ <- metrics.recordConnectionWaitTime(5.millis, "pool1")
       _ <- metrics.recordConnectionUseTime(100.millis, "pool1")
       _ <- metrics.recordConnectionTimeout("pool1")
-      _ <- metrics.recordConnectionIdleMax(10L, "pool1")
-      _ <- metrics.recordConnectionIdleMin(2L, "pool1")
-      _ <- metrics.recordConnectionMax(20L, "pool1")
-      _ <- metrics.addConnectionPendingRequests(3L, "pool1")
     yield assert(true)
   }
 
@@ -171,7 +128,7 @@ class DatabaseMetricsTest extends FTestPlatform:
     for _ <- IO.parTraverseN(10)((1 to 100).toList) { i =>
                metrics.recordOperationDuration(i.millis) *>
                  metrics.recordReturnedRows(i.toLong) *>
-                 metrics.incrementConnectionCount("used", s"pool-$i")
+                 metrics.recordConnectionCreateTime(i.millis, s"pool-$i")
              }
     yield assert(true)
   }

@@ -20,7 +20,7 @@ import org.typelevel.otel4s.trace.Tracer
 import ldbc.sql.DatabaseMetaData
 
 import ldbc.connector.pool.*
-import ldbc.connector.telemetry.TelemetryConfig
+import ldbc.connector.telemetry.{ DatabaseMetrics, TelemetryConfig }
 
 import ldbc.authentication.plugin.AuthenticationPlugin
 import ldbc.DataSource
@@ -533,11 +533,13 @@ object MySQLDataSource:
    * }}}
    */
   def pooling[F[_]: Async: Network: Console: Hashing: UUIDGen](
-    config:         MySQLConfig,
-    metricsTracker: Option[PoolMetricsTracker[F]] = None,
-    tracer:         Option[Tracer[F]] = None,
-    plugins:        List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]]
-  ): Resource[F, PooledDataSource[F]] = PooledDataSource.fromConfig(config, metricsTracker, tracer, plugins)
+    config:          MySQLConfig,
+    metricsTracker:  Option[PoolMetricsTracker[F]] = None,
+    databaseMetrics: Option[DatabaseMetrics[F]] = None,
+    tracer:          Option[Tracer[F]] = None,
+    plugins:         List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]]
+  ): Resource[F, PooledDataSource[F]] =
+    PooledDataSource.fromConfig(config, metricsTracker, databaseMetrics, tracer, plugins)
 
   /**
    * Creates a pooled DataSource with connection lifecycle hooks.
@@ -589,11 +591,12 @@ object MySQLDataSource:
    * }}}
    */
   def poolingWithBeforeAfter[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
-    config:         MySQLConfig,
-    metricsTracker: Option[PoolMetricsTracker[F]] = None,
-    tracer:         Option[Tracer[F]] = None,
-    plugins:        List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
-    before:         Option[Connection[F] => F[A]] = None,
-    after:          Option[(A, Connection[F]) => F[Unit]] = None
+    config:          MySQLConfig,
+    metricsTracker:  Option[PoolMetricsTracker[F]] = None,
+    databaseMetrics: Option[DatabaseMetrics[F]] = None,
+    tracer:          Option[Tracer[F]] = None,
+    plugins:         List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
+    before:          Option[Connection[F] => F[A]] = None,
+    after:           Option[(A, Connection[F]) => F[Unit]] = None
   ): Resource[F, PooledDataSource[F]] =
-    PooledDataSource.fromConfigWithBeforeAfter(config, metricsTracker, tracer, plugins, before, after)
+    PooledDataSource.fromConfigWithBeforeAfter(config, metricsTracker, databaseMetrics, tracer, plugins, before, after)
