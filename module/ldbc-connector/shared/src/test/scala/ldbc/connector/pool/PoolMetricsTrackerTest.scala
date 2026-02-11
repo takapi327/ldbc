@@ -8,8 +8,6 @@ package ldbc.connector.pool
 
 import scala.concurrent.duration.*
 
-import cats.*
-
 import cats.effect.*
 
 import ldbc.connector.*
