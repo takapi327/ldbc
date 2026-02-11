@@ -15,6 +15,8 @@ import cats.effect.Resource
 import org.typelevel.otel4s.metrics.*
 import org.typelevel.otel4s.Attribute
 
+import TelemetryAttribute.*
+
 /**
  * OpenTelemetry metrics for database operations.
  *
@@ -118,6 +120,38 @@ trait DatabaseMetrics[F[_]]:
    */
   def recordConnectionTimeout(poolName: String): F[Unit]
 
+  /**
+   * Records the maximum number of idle connections allowed.
+   *
+   * @param count Maximum idle connection count
+   * @param poolName Pool name
+   */
+  def recordConnectionIdleMax(count: Long, poolName: String): F[Unit]
+
+  /**
+   * Records the minimum number of idle connections maintained.
+   *
+   * @param count Minimum idle connection count
+   * @param poolName Pool name
+   */
+  def recordConnectionIdleMin(count: Long, poolName: String): F[Unit]
+
+  /**
+   * Records the maximum number of connections allowed.
+   *
+   * @param count Maximum connection count
+   * @param poolName Pool name
+   */
+  def recordConnectionMax(count: Long, poolName: String): F[Unit]
+
+  /**
+   * Adds a delta to the pending requests count.
+   *
+   * @param delta Change in pending requests (positive or negative)
+   * @param poolName Pool name
+   */
+  def addConnectionPendingRequests(delta: Long, poolName: String): F[Unit]
+
 object DatabaseMetrics:
 
   /**
@@ -158,6 +192,14 @@ object DatabaseMetrics:
       Applicative[F].unit
     override def recordConnectionTimeout(poolName: String): F[Unit] =
       Applicative[F].unit
+    override def recordConnectionIdleMax(count: Long, poolName: String): F[Unit] =
+      Applicative[F].unit
+    override def recordConnectionIdleMin(count: Long, poolName: String): F[Unit] =
+      Applicative[F].unit
+    override def recordConnectionMax(count: Long, poolName: String): F[Unit] =
+      Applicative[F].unit
+    override def addConnectionPendingRequests(delta: Long, poolName: String): F[Unit] =
+      Applicative[F].unit
 
   /**
    * Creates a DatabaseMetrics instance from an otel4s Meter.
@@ -170,7 +212,7 @@ object DatabaseMetrics:
       // db.client.operation.duration (Histogram, Required, Stable)
       operationDuration <- Resource.eval(
                              meter
-                               .histogram[Double]("db.client.operation.duration")
+                               .histogram[Double](METRIC_DB_CLIENT_OPERATION_DURATION)
                                .withUnit("s")
                                .withDescription("Duration of database client operations")
                                .withExplicitBucketBoundaries(OperationDurationBuckets)
@@ -180,7 +222,7 @@ object DatabaseMetrics:
       // db.client.response.returned_rows (Histogram, Recommended, Development)
       returnedRows <- Resource.eval(
                         meter
-                          .histogram[Double]("db.client.response.returned_rows")
+                          .histogram[Double](METRIC_DB_CLIENT_RESPONSE_RETURNED_ROWS)
                           .withUnit("{row}")
                           .withDescription("The actual number of records returned by the database operation")
                           .withExplicitBucketBoundaries(ReturnedRowsBuckets)
@@ -191,7 +233,7 @@ object DatabaseMetrics:
       connectionCount <-
         Resource.eval(
           meter
-            .upDownCounter[Long]("db.client.connection.count")
+            .upDownCounter[Long](METRIC_DB_CLIENT_CONNECTION_COUNT)
             .withUnit("{connection}")
             .withDescription("The number of connections that are currently in state described by the state attribute")
             .create
@@ -200,7 +242,7 @@ object DatabaseMetrics:
       // db.client.connection.create_time (Histogram, Recommended, Development)
       connectionCreateTime <- Resource.eval(
                                 meter
-                                  .histogram[Double]("db.client.connection.create_time")
+                                  .histogram[Double](METRIC_DB_CLIENT_CONNECTION_CREATE_TIME)
                                   .withUnit("s")
                                   .withDescription("The time it took to create a new connection")
                                   .create
@@ -209,7 +251,7 @@ object DatabaseMetrics:
       // db.client.connection.wait_time (Histogram, Recommended, Development)
       connectionWaitTime <- Resource.eval(
                               meter
-                                .histogram[Double]("db.client.connection.wait_time")
+                                .histogram[Double](METRIC_DB_CLIENT_CONNECTION_WAIT_TIME)
                                 .withUnit("s")
                                 .withDescription("The time it took to obtain an open connection from the pool")
                                 .create
@@ -218,7 +260,7 @@ object DatabaseMetrics:
       // db.client.connection.use_time (Histogram, Recommended, Development)
       connectionUseTime <- Resource.eval(
                              meter
-                               .histogram[Double]("db.client.connection.use_time")
+                               .histogram[Double](METRIC_DB_CLIENT_CONNECTION_USE_TIME)
                                .withUnit("s")
                                .withDescription("The time between borrowing a connection and returning it to the pool")
                                .create
@@ -228,10 +270,52 @@ object DatabaseMetrics:
       connectionTimeouts <-
         Resource.eval(
           meter
-            .counter[Long]("db.client.connection.timeouts")
+            .counter[Long](METRIC_DB_CLIENT_CONNECTION_TIMEOUTS)
             .withUnit("{timeout}")
             .withDescription(
               "The number of connection timeouts that have occurred trying to obtain a connection from the pool"
+            )
+            .create
+        )
+
+      // db.client.connection.idle.max (UpDownCounter, Recommended, Development)
+      connectionIdleMax <-
+        Resource.eval(
+          meter
+            .upDownCounter[Long](METRIC_DB_CLIENT_CONNECTION_IDLE_MAX)
+            .withUnit("{connection}")
+            .withDescription("The maximum number of idle open connections allowed")
+            .create
+        )
+
+      // db.client.connection.idle.min (UpDownCounter, Recommended, Development)
+      connectionIdleMin <-
+        Resource.eval(
+          meter
+            .upDownCounter[Long](METRIC_DB_CLIENT_CONNECTION_IDLE_MIN)
+            .withUnit("{connection}")
+            .withDescription("The minimum number of idle open connections allowed")
+            .create
+        )
+
+      // db.client.connection.max (UpDownCounter, Recommended, Development)
+      connectionMax <-
+        Resource.eval(
+          meter
+            .upDownCounter[Long](METRIC_DB_CLIENT_CONNECTION_MAX)
+            .withUnit("{connection}")
+            .withDescription("The maximum number of open connections allowed")
+            .create
+        )
+
+      // db.client.connection.pending_requests (UpDownCounter, Recommended, Development)
+      connectionPendingRequests <-
+        Resource.eval(
+          meter
+            .upDownCounter[Long](METRIC_DB_CLIENT_CONNECTION_PENDING_REQUESTS)
+            .withUnit("{request}")
+            .withDescription(
+              "The number of current pending requests for an open connection"
             )
             .create
         )
@@ -242,20 +326,28 @@ object DatabaseMetrics:
       connectionCreateTime,
       connectionWaitTime,
       connectionUseTime,
-      connectionTimeouts
+      connectionTimeouts,
+      connectionIdleMax,
+      connectionIdleMin,
+      connectionMax,
+      connectionPendingRequests
     )
 
 /**
  * Implementation of DatabaseMetrics using otel4s instruments.
  */
 private class DatabaseMetricsImpl[F[_]](
-  operationDuration:    Histogram[F, Double],
-  returnedRows:         Histogram[F, Double],
-  connectionCount:      UpDownCounter[F, Long],
-  connectionCreateTime: Histogram[F, Double],
-  connectionWaitTime:   Histogram[F, Double],
-  connectionUseTime:    Histogram[F, Double],
-  connectionTimeouts:   Counter[F, Long]
+  operationDuration:        Histogram[F, Double],
+  returnedRows:             Histogram[F, Double],
+  connectionCount:          UpDownCounter[F, Long],
+  connectionCreateTime:     Histogram[F, Double],
+  connectionWaitTime:       Histogram[F, Double],
+  connectionUseTime:        Histogram[F, Double],
+  connectionTimeouts:       Counter[F, Long],
+  connectionIdleMax:        UpDownCounter[F, Long],
+  connectionIdleMin:        UpDownCounter[F, Long],
+  connectionMax:            UpDownCounter[F, Long],
+  connectionPendingRequests: UpDownCounter[F, Long]
 ) extends DatabaseMetrics[F]:
 
   private def durationToSeconds(d: FiniteDuration): Double =
@@ -333,5 +425,29 @@ private class DatabaseMetricsImpl[F[_]](
 
   override def recordConnectionTimeout(poolName: String): F[Unit] =
     connectionTimeouts.inc(
+      TelemetryAttribute.dbClientConnectionPoolName(poolName)
+    )
+
+  override def recordConnectionIdleMax(count: Long, poolName: String): F[Unit] =
+    connectionIdleMax.add(
+      count,
+      TelemetryAttribute.dbClientConnectionPoolName(poolName)
+    )
+
+  override def recordConnectionIdleMin(count: Long, poolName: String): F[Unit] =
+    connectionIdleMin.add(
+      count,
+      TelemetryAttribute.dbClientConnectionPoolName(poolName)
+    )
+
+  override def recordConnectionMax(count: Long, poolName: String): F[Unit] =
+    connectionMax.add(
+      count,
+      TelemetryAttribute.dbClientConnectionPoolName(poolName)
+    )
+
+  override def addConnectionPendingRequests(delta: Long, poolName: String): F[Unit] =
+    connectionPendingRequests.add(
+      delta,
       TelemetryAttribute.dbClientConnectionPoolName(poolName)
     )

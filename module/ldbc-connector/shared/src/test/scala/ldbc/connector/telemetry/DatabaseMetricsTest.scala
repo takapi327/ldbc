@@ -89,6 +89,30 @@ class DatabaseMetricsTest extends FTestPlatform:
     yield assertEquals(result, ())
   }
 
+  test("noop should return unit for recordConnectionIdleMax") {
+    val metrics = DatabaseMetrics.noop[IO]
+    for result <- metrics.recordConnectionIdleMax(10L, "test-pool")
+    yield assertEquals(result, ())
+  }
+
+  test("noop should return unit for recordConnectionIdleMin") {
+    val metrics = DatabaseMetrics.noop[IO]
+    for result <- metrics.recordConnectionIdleMin(2L, "test-pool")
+    yield assertEquals(result, ())
+  }
+
+  test("noop should return unit for recordConnectionMax") {
+    val metrics = DatabaseMetrics.noop[IO]
+    for result <- metrics.recordConnectionMax(20L, "test-pool")
+    yield assertEquals(result, ())
+  }
+
+  test("noop should return unit for addConnectionPendingRequests") {
+    val metrics = DatabaseMetrics.noop[IO]
+    for result <- metrics.addConnectionPendingRequests(5L, "test-pool")
+    yield assertEquals(result, ())
+  }
+
   // ============================================================
   // noop with multiple calls tests
   // ============================================================
@@ -106,6 +130,10 @@ class DatabaseMetricsTest extends FTestPlatform:
       _ <- metrics.recordConnectionWaitTime(5.millis, "pool1")
       _ <- metrics.recordConnectionUseTime(100.millis, "pool1")
       _ <- metrics.recordConnectionTimeout("pool1")
+      _ <- metrics.recordConnectionIdleMax(10L, "pool1")
+      _ <- metrics.recordConnectionIdleMin(2L, "pool1")
+      _ <- metrics.recordConnectionMax(20L, "pool1")
+      _ <- metrics.addConnectionPendingRequests(3L, "pool1")
     yield assert(true)
   }
 

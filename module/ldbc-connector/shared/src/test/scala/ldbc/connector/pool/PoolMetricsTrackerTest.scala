@@ -8,12 +8,57 @@ package ldbc.connector.pool
 
 import scala.concurrent.duration.*
 
+import cats.*
 import cats.effect.*
+
+import org.typelevel.otel4s.Attribute
 
 import ldbc.connector.*
 import ldbc.connector.telemetry.DatabaseMetrics
 
 class PoolMetricsTrackerTest extends FTestPlatform:
+
+  /** Test helper that captures calls to static config metrics. */
+  private def testStaticMetrics(
+    idleMaxCalls: Ref[IO, List[Long]],
+    idleMinCalls: Ref[IO, List[Long]],
+    maxCalls:     Ref[IO, List[Long]]
+  ): DatabaseMetrics[IO] = new DatabaseMetrics[IO]:
+    override def recordOperationDuration(duration: FiniteDuration, attributes: Attribute[?]*): IO[Unit] = IO.unit
+    override def recordReturnedRows(rows: Long, attributes: Attribute[?]*): IO[Unit]                    = IO.unit
+    override def recordConnectionCount(count: Long, state: String, poolName: String): IO[Unit]          = IO.unit
+    override def incrementConnectionCount(state: String, poolName: String): IO[Unit]                    = IO.unit
+    override def decrementConnectionCount(state: String, poolName: String): IO[Unit]                    = IO.unit
+    override def recordConnectionCreateTime(duration: FiniteDuration, poolName: String): IO[Unit]       = IO.unit
+    override def recordConnectionWaitTime(duration: FiniteDuration, poolName: String): IO[Unit]         = IO.unit
+    override def recordConnectionUseTime(duration: FiniteDuration, poolName: String): IO[Unit]          = IO.unit
+    override def recordConnectionTimeout(poolName: String): IO[Unit]                                    = IO.unit
+    override def recordConnectionIdleMax(count: Long, poolName: String): IO[Unit] =
+      idleMaxCalls.update(_ :+ count)
+    override def recordConnectionIdleMin(count: Long, poolName: String): IO[Unit] =
+      idleMinCalls.update(_ :+ count)
+    override def recordConnectionMax(count: Long, poolName: String): IO[Unit] =
+      maxCalls.update(_ :+ count)
+    override def addConnectionPendingRequests(delta: Long, poolName: String): IO[Unit] = IO.unit
+
+  /** Test helper that captures calls to addConnectionPendingRequests. */
+  private def testPendingMetrics(
+    pendingCalls: Ref[IO, List[Long]]
+  ): DatabaseMetrics[IO] = new DatabaseMetrics[IO]:
+    override def recordOperationDuration(duration: FiniteDuration, attributes: Attribute[?]*): IO[Unit] = IO.unit
+    override def recordReturnedRows(rows: Long, attributes: Attribute[?]*): IO[Unit]                    = IO.unit
+    override def recordConnectionCount(count: Long, state: String, poolName: String): IO[Unit]          = IO.unit
+    override def incrementConnectionCount(state: String, poolName: String): IO[Unit]                    = IO.unit
+    override def decrementConnectionCount(state: String, poolName: String): IO[Unit]                    = IO.unit
+    override def recordConnectionCreateTime(duration: FiniteDuration, poolName: String): IO[Unit]       = IO.unit
+    override def recordConnectionWaitTime(duration: FiniteDuration, poolName: String): IO[Unit]         = IO.unit
+    override def recordConnectionUseTime(duration: FiniteDuration, poolName: String): IO[Unit]          = IO.unit
+    override def recordConnectionTimeout(poolName: String): IO[Unit]                                    = IO.unit
+    override def recordConnectionIdleMax(count: Long, poolName: String): IO[Unit]                       = IO.unit
+    override def recordConnectionIdleMin(count: Long, poolName: String): IO[Unit]                       = IO.unit
+    override def recordConnectionMax(count: Long, poolName: String): IO[Unit]                           = IO.unit
+    override def addConnectionPendingRequests(delta: Long, poolName: String): IO[Unit] =
+      pendingCalls.update(_ :+ delta)
 
   test("noop tracker should always return empty metrics") {
     val tracker = PoolMetricsTracker.noop[IO]
@@ -275,4 +320,81 @@ class PoolMetricsTrackerTest extends FTestPlatform:
         assertEquals(metrics.totalAcquisitions, 100L)
         assertEquals(metrics.totalReleases, 100L)
     }
+  }
+
+  test("otel tracker should set static pool config metrics on creation") {
+    for
+      idleMaxCalls <- Ref[IO].of(List.empty[Long])
+      idleMinCalls <- Ref[IO].of(List.empty[Long])
+      maxCalls     <- Ref[IO].of(List.empty[Long])
+      otelMetrics = testStaticMetrics(idleMaxCalls, idleMinCalls, maxCalls)
+      _ <- PoolMetricsTracker
+             .otel[IO](otelMetrics, "test-pool", minConnections = 2, maxConnections = 10)
+             .use { _ =>
+               for
+                 idleMax <- idleMaxCalls.get
+                 idleMin <- idleMinCalls.get
+                 max     <- maxCalls.get
+               yield
+                 assertEquals(idleMax, List(10L))
+                 assertEquals(idleMin, List(2L))
+                 assertEquals(max, List(10L))
+             }
+      // After resource release, subtract calls should have been recorded
+      idleMax <- idleMaxCalls.get
+      idleMin <- idleMinCalls.get
+      max     <- maxCalls.get
+    yield
+      assertEquals(idleMax, List(10L, -10L))
+      assertEquals(idleMin, List(2L, -2L))
+      assertEquals(max, List(10L, -10L))
+  }
+
+  test("otel tracker should dispatch pool.waiting gauge to pending_requests as delta") {
+    for
+      pendingCalls <- Ref[IO].of(List.empty[Long])
+      otelMetrics = testPendingMetrics(pendingCalls)
+      _ <- PoolMetricsTracker
+             .otel[IO](otelMetrics, "test-pool")
+             .use { tracker =>
+               for
+                 _ <- tracker.updateGauge("pool.waiting", 3)
+                 _ <- tracker.updateGauge("pool.waiting", 5)
+                 _ <- tracker.updateGauge("pool.waiting", 2)
+                 calls <- pendingCalls.get
+               yield assertEquals(calls, List(3L, 2L, -3L))
+             }
+    yield ()
+  }
+
+  test("otel tracker should not dispatch pending_requests when delta is zero") {
+    for
+      pendingCalls <- Ref[IO].of(List.empty[Long])
+      otelMetrics = testPendingMetrics(pendingCalls)
+      _ <- PoolMetricsTracker
+             .otel[IO](otelMetrics, "test-pool")
+             .use { tracker =>
+               for
+                 _ <- tracker.updateGauge("pool.waiting", 5)
+                 _ <- tracker.updateGauge("pool.waiting", 5) // same value, delta=0
+                 calls <- pendingCalls.get
+               yield assertEquals(calls, List(5L)) // only one call
+             }
+    yield ()
+  }
+
+  test("otel tracker should not dispatch pending_requests for non-waiting gauges") {
+    for
+      pendingCalls <- Ref[IO].of(List.empty[Long])
+      otelMetrics = testPendingMetrics(pendingCalls)
+      _ <- PoolMetricsTracker
+             .otel[IO](otelMetrics, "test-pool")
+             .use { tracker =>
+               for
+                 _ <- tracker.updateGauge("pool.active", 10)
+                 _ <- tracker.updateGauge("pool.idle", 3)
+                 calls <- pendingCalls.get
+               yield assertEquals(calls, List.empty[Long])
+             }
+    yield ()
   }

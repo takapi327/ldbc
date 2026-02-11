@@ -57,6 +57,25 @@ object TelemetryAttribute:
   val DB_CLIENT_CONNECTION_POOL_NAME: String = "db.client.connection.pool.name"
   val DB_CLIENT_CONNECTION_STATE:     String = "db.client.connection.state"
 
+  // ============================================================
+  // Metric Names (Semantic Conventions v1.39.0)
+  // ============================================================
+
+  // Database operation metrics (Stable)
+  val METRIC_DB_CLIENT_OPERATION_DURATION:    String = "db.client.operation.duration"
+  val METRIC_DB_CLIENT_RESPONSE_RETURNED_ROWS: String = "db.client.response.returned_rows"
+
+  // Connection pool metrics (Development)
+  val METRIC_DB_CLIENT_CONNECTION_COUNT:            String = "db.client.connection.count"
+  val METRIC_DB_CLIENT_CONNECTION_CREATE_TIME:      String = "db.client.connection.create_time"
+  val METRIC_DB_CLIENT_CONNECTION_WAIT_TIME:        String = "db.client.connection.wait_time"
+  val METRIC_DB_CLIENT_CONNECTION_USE_TIME:         String = "db.client.connection.use_time"
+  val METRIC_DB_CLIENT_CONNECTION_TIMEOUTS:         String = "db.client.connection.timeouts"
+  val METRIC_DB_CLIENT_CONNECTION_IDLE_MAX:         String = "db.client.connection.idle.max"
+  val METRIC_DB_CLIENT_CONNECTION_IDLE_MIN:         String = "db.client.connection.idle.min"
+  val METRIC_DB_CLIENT_CONNECTION_MAX:              String = "db.client.connection.max"
+  val METRIC_DB_CLIENT_CONNECTION_PENDING_REQUESTS: String = "db.client.connection.pending_requests"
+
   // Schema URL for semantic convention version tracking
   val OTEL_SCHEMA_URL: String = "otel.schema_url"
 

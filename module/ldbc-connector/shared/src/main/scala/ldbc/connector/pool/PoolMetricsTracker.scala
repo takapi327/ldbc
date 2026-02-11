@@ -185,41 +185,68 @@ object PoolMetricsTracker:
    * This implementation delegates to both the in-memory tracker (for getMetrics)
    * and the OpenTelemetry metrics (for external observability).
    *
+   * Static pool configuration metrics (idle.max, idle.min, max) are set on resource
+   * acquisition and subtracted on resource finalization.
+   *
+   * The `pool.waiting` gauge is tracked as a delta and dispatched to
+   * `db.client.connection.pending_requests`.
+   *
    * @param otelMetrics The OpenTelemetry DatabaseMetrics instance
    * @param poolName The name of the connection pool
+   * @param minConnections Minimum number of idle connections maintained by the pool
+   * @param maxConnections Maximum number of connections allowed in the pool
    * @return A Resource containing the tracker
    */
   def otel[F[_]: Sync](
-    otelMetrics: DatabaseMetrics[F],
-    poolName:    String
+    otelMetrics:    DatabaseMetrics[F],
+    poolName:       String,
+    minConnections: Int = 0,
+    maxConnections: Int = 0
   ): Resource[F, PoolMetricsTracker[F]] =
-    Resource.eval(inMemory[F]).map { inMemoryTracker =>
-      new PoolMetricsTracker[F]:
-        override def recordAcquisition(duration: FiniteDuration): F[Unit] =
-          inMemoryTracker.recordAcquisition(duration) *>
-            otelMetrics.recordConnectionWaitTime(duration, poolName)
+    for
+      inMemoryTracker  <- Resource.eval(inMemory[F])
+      pendingRequestsRef <- Resource.eval(Ref[F].of(0L))
+      _ <- Resource.make(
+             otelMetrics.recordConnectionIdleMax(maxConnections.toLong, poolName) *>
+               otelMetrics.recordConnectionIdleMin(minConnections.toLong, poolName) *>
+               otelMetrics.recordConnectionMax(maxConnections.toLong, poolName)
+           )(_ =>
+             otelMetrics.recordConnectionIdleMax(-maxConnections.toLong, poolName) *>
+               otelMetrics.recordConnectionIdleMin(-minConnections.toLong, poolName) *>
+               otelMetrics.recordConnectionMax(-maxConnections.toLong, poolName)
+           )
+    yield new PoolMetricsTracker[F]:
+      override def recordAcquisition(duration: FiniteDuration): F[Unit] =
+        inMemoryTracker.recordAcquisition(duration) *>
+          otelMetrics.recordConnectionWaitTime(duration, poolName)
 
-        override def recordUsage(duration: FiniteDuration): F[Unit] =
-          inMemoryTracker.recordUsage(duration) *>
-            otelMetrics.recordConnectionUseTime(duration, poolName)
+      override def recordUsage(duration: FiniteDuration): F[Unit] =
+        inMemoryTracker.recordUsage(duration) *>
+          otelMetrics.recordConnectionUseTime(duration, poolName)
 
-        override def recordCreation(duration: FiniteDuration): F[Unit] =
-          inMemoryTracker.recordCreation(duration) *>
-            otelMetrics.recordConnectionCreateTime(duration, poolName)
+      override def recordCreation(duration: FiniteDuration): F[Unit] =
+        inMemoryTracker.recordCreation(duration) *>
+          otelMetrics.recordConnectionCreateTime(duration, poolName)
 
-        override def recordTimeout(): F[Unit] =
-          inMemoryTracker.recordTimeout() *>
-            otelMetrics.recordConnectionTimeout(poolName)
+      override def recordTimeout(): F[Unit] =
+        inMemoryTracker.recordTimeout() *>
+          otelMetrics.recordConnectionTimeout(poolName)
 
-        override def recordLeak(): F[Unit] =
-          inMemoryTracker.recordLeak()
+      override def recordLeak(): F[Unit] =
+        inMemoryTracker.recordLeak()
 
-        override def recordRemoval(): F[Unit] =
-          inMemoryTracker.recordRemoval()
+      override def recordRemoval(): F[Unit] =
+        inMemoryTracker.recordRemoval()
 
-        override def updateGauge(name: String, value: Long): F[Unit] =
-          inMemoryTracker.updateGauge(name, value)
+      override def updateGauge(name: String, value: Long): F[Unit] =
+        inMemoryTracker.updateGauge(name, value) *>
+          (if name == "pool.waiting" then
+             pendingRequestsRef.getAndSet(value).flatMap { previous =>
+               val delta = value - previous
+               if delta != 0L then otelMetrics.addConnectionPendingRequests(delta, poolName)
+               else Applicative[F].unit
+             }
+           else Applicative[F].unit)
 
-        override def getMetrics: F[PoolMetrics] =
-          inMemoryTracker.getMetrics
-    }
+      override def getMetrics: F[PoolMetrics] =
+        inMemoryTracker.getMetrics
