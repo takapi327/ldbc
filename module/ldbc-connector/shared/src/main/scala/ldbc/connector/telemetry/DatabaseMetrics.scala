@@ -192,6 +192,7 @@ object DatabaseMetrics:
                                   .histogram[Double](METRIC_DB_CLIENT_CONNECTION_CREATE_TIME)
                                   .withUnit("s")
                                   .withDescription("The time it took to create a new connection")
+                                  .withExplicitBucketBoundaries(OperationDurationBuckets)
                                   .create
                               )
 
@@ -201,6 +202,7 @@ object DatabaseMetrics:
                                 .histogram[Double](METRIC_DB_CLIENT_CONNECTION_WAIT_TIME)
                                 .withUnit("s")
                                 .withDescription("The time it took to obtain an open connection from the pool")
+                                .withExplicitBucketBoundaries(OperationDurationBuckets)
                                 .create
                             )
 
@@ -210,6 +212,7 @@ object DatabaseMetrics:
                                .histogram[Double](METRIC_DB_CLIENT_CONNECTION_USE_TIME)
                                .withUnit("s")
                                .withDescription("The time between borrowing a connection and returning it to the pool")
+                               .withExplicitBucketBoundaries(OperationDurationBuckets)
                                .create
                            )
 
