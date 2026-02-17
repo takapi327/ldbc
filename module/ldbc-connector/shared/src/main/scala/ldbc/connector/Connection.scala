@@ -104,7 +104,7 @@ object Connection:
     telemetryConfig,
     databaseMetrics,
     unitBefore,
-    unitAfter,
+    unitAfter
   )
 
   def withBeforeAfter[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
@@ -148,7 +148,7 @@ object Connection:
     telemetryConfig,
     databaseMetrics,
     before,
-    after,
+    after
   )
 
   def default[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
@@ -171,7 +171,7 @@ object Connection:
     telemetryConfig:             TelemetryConfig = TelemetryConfig.default,
     databaseMetrics:             Option[DatabaseMetrics[F]] = None,
     before:                      Connection[F] => F[A],
-    after:                       (A, Connection[F]) => F[Unit],
+    after:                       (A, Connection[F]) => F[Unit]
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] =
 
     val logger: String => F[Unit] = s => Console[F].println(s"TLS: $s")
@@ -197,9 +197,9 @@ object Connection:
                       defaultAuthenticationPlugin,
                       plugins,
                       telemetryConfig,
-        databaseMetrics,
+                      databaseMetrics,
                       before,
-                      after,
+                      after
                     )
     yield connection
 
@@ -223,7 +223,7 @@ object Connection:
     telemetryConfig:             TelemetryConfig = TelemetryConfig.default,
     databaseMetrics:             Option[DatabaseMetrics[F]] = None,
     acquire:                     Connection[F] => F[A],
-    release:                     (A, Connection[F]) => F[Unit],
+    release:                     (A, Connection[F]) => F[Unit]
   ): Resource[F, LdbcConnection[F]] =
     val resolvedMetrics = databaseMetrics.getOrElse(DatabaseMetrics.noop[F])
     val pluginMap       = plugins.map(plugin => plugin.name.toString -> plugin).toMap
@@ -293,7 +293,7 @@ object Connection:
     telemetryConfig:             TelemetryConfig = TelemetryConfig.default,
     databaseMetrics:             Option[DatabaseMetrics[F]] = None,
     acquire:                     Connection[F] => F[A],
-    release:                     (A, Connection[F]) => F[Unit],
+    release:                     (A, Connection[F]) => F[Unit]
   )(using ev: Async[F]): Resource[F, LdbcConnection[F]] =
 
     def fail[B](msg: String): Resource[F, B] =
@@ -326,5 +326,5 @@ object Connection:
       telemetryConfig,
       databaseMetrics,
       acquire,
-      release,
+      release
     )
