@@ -158,57 +158,56 @@ object DatabaseMetrics:
       stateProvider:  F[PoolMetricsState]
     ): Resource[F, Unit] = Resource.unit[F]
 
-
   /**
    * Implementation of DatabaseMetrics using otel4s instruments.
    */
-  private class Impl[F[_] : Monad](
-                                                   operationDuration: Histogram[F, Double],
-                                                   returnedRows: Histogram[F, Double],
-                                                   connectionCreateTime: Histogram[F, Double],
-                                                   connectionWaitTime: Histogram[F, Double],
-                                                   connectionUseTime: Histogram[F, Double],
-                                                   connectionTimeouts: Counter[F, Long],
-                                                   meter: Meter[F]
-                                                 ) extends DatabaseMetrics[F]:
+  private class Impl[F[_]: Monad](
+    operationDuration:    Histogram[F, Double],
+    returnedRows:         Histogram[F, Double],
+    connectionCreateTime: Histogram[F, Double],
+    connectionWaitTime:   Histogram[F, Double],
+    connectionUseTime:    Histogram[F, Double],
+    connectionTimeouts:   Counter[F, Long],
+    meter:                Meter[F]
+  ) extends DatabaseMetrics[F]:
 
     private def durationToSeconds(d: FiniteDuration): Double =
       d.toNanos.toDouble / 1e9
 
     override def recordOperationDuration(
-                                          duration: FiniteDuration,
-                                          attributes: Attribute[?]*
-                                        ): F[Unit] =
-      operationDuration.record(durationToSeconds(duration), attributes *)
+      duration:   FiniteDuration,
+      attributes: Attribute[?]*
+    ): F[Unit] =
+      operationDuration.record(durationToSeconds(duration), attributes*)
 
     override def recordReturnedRows(
-                                     rows: Long,
-                                     attributes: Attribute[?]*
-                                   ): F[Unit] =
-      returnedRows.record(rows.toDouble, attributes *)
+      rows:       Long,
+      attributes: Attribute[?]*
+    ): F[Unit] =
+      returnedRows.record(rows.toDouble, attributes*)
 
     override def recordConnectionCreateTime(
-                                             duration: FiniteDuration,
-                                             poolName: String
-                                           ): F[Unit] =
+      duration: FiniteDuration,
+      poolName: String
+    ): F[Unit] =
       connectionCreateTime.record(
         durationToSeconds(duration),
         TelemetryAttribute.dbClientConnectionPoolName(poolName)
       )
 
     override def recordConnectionWaitTime(
-                                           duration: FiniteDuration,
-                                           poolName: String
-                                         ): F[Unit] =
+      duration: FiniteDuration,
+      poolName: String
+    ): F[Unit] =
       connectionWaitTime.record(
         durationToSeconds(duration),
         TelemetryAttribute.dbClientConnectionPoolName(poolName)
       )
 
     override def recordConnectionUseTime(
-                                          duration: FiniteDuration,
-                                          poolName: String
-                                        ): F[Unit] =
+      duration: FiniteDuration,
+      poolName: String
+    ): F[Unit] =
       connectionUseTime.record(
         durationToSeconds(duration),
         TelemetryAttribute.dbClientConnectionPoolName(poolName)
@@ -220,14 +219,14 @@ object DatabaseMetrics:
       )
 
     override def registerPoolStateCallback(
-                                            poolName: String,
-                                            minConnections: Int,
-                                            maxConnections: Int,
-                                            stateProvider: F[PoolMetricsState]
-                                          ): Resource[F, Unit] =
+      poolName:       String,
+      minConnections: Int,
+      maxConnections: Int,
+      stateProvider:  F[PoolMetricsState]
+    ): Resource[F, Unit] =
       val poolNameAttr = TelemetryAttribute.dbClientConnectionPoolName(poolName)
-      val stateIdle = TelemetryAttribute.dbClientConnectionState(CONNECTION_STATE_IDLE)
-      val stateUsed = TelemetryAttribute.dbClientConnectionState(CONNECTION_STATE_USED)
+      val stateIdle    = TelemetryAttribute.dbClientConnectionState(CONNECTION_STATE_IDLE)
+      val stateUsed    = TelemetryAttribute.dbClientConnectionState(CONNECTION_STATE_USED)
 
       meter.batchCallback.of(
         meter
