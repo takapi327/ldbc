@@ -123,7 +123,7 @@ object DatabaseMetrics:
    * Bucket boundaries for operation duration histogram.
    * Per OpenTelemetry spec: [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5, 10]
    */
-  val OperationDurationBuckets: BucketBoundaries = BucketBoundaries(
+  val operationDurationBuckets: BucketBoundaries = BucketBoundaries(
     0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0, 5.0, 10.0
   )
 
@@ -131,7 +131,7 @@ object DatabaseMetrics:
    * Bucket boundaries for returned rows histogram.
    * Per OpenTelemetry spec: [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000]
    */
-  val ReturnedRowsBuckets: BucketBoundaries = BucketBoundaries(
+  val returnedRowsBuckets: BucketBoundaries = BucketBoundaries(
     1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000
   )
 
@@ -158,6 +158,114 @@ object DatabaseMetrics:
       stateProvider:  F[PoolMetricsState]
     ): Resource[F, Unit] = Resource.unit[F]
 
+
+  /**
+   * Implementation of DatabaseMetrics using otel4s instruments.
+   */
+  private class Impl[F[_] : Monad](
+                                                   operationDuration: Histogram[F, Double],
+                                                   returnedRows: Histogram[F, Double],
+                                                   connectionCreateTime: Histogram[F, Double],
+                                                   connectionWaitTime: Histogram[F, Double],
+                                                   connectionUseTime: Histogram[F, Double],
+                                                   connectionTimeouts: Counter[F, Long],
+                                                   meter: Meter[F]
+                                                 ) extends DatabaseMetrics[F]:
+
+    private def durationToSeconds(d: FiniteDuration): Double =
+      d.toNanos.toDouble / 1e9
+
+    override def recordOperationDuration(
+                                          duration: FiniteDuration,
+                                          attributes: Attribute[?]*
+                                        ): F[Unit] =
+      operationDuration.record(durationToSeconds(duration), attributes *)
+
+    override def recordReturnedRows(
+                                     rows: Long,
+                                     attributes: Attribute[?]*
+                                   ): F[Unit] =
+      returnedRows.record(rows.toDouble, attributes *)
+
+    override def recordConnectionCreateTime(
+                                             duration: FiniteDuration,
+                                             poolName: String
+                                           ): F[Unit] =
+      connectionCreateTime.record(
+        durationToSeconds(duration),
+        TelemetryAttribute.dbClientConnectionPoolName(poolName)
+      )
+
+    override def recordConnectionWaitTime(
+                                           duration: FiniteDuration,
+                                           poolName: String
+                                         ): F[Unit] =
+      connectionWaitTime.record(
+        durationToSeconds(duration),
+        TelemetryAttribute.dbClientConnectionPoolName(poolName)
+      )
+
+    override def recordConnectionUseTime(
+                                          duration: FiniteDuration,
+                                          poolName: String
+                                        ): F[Unit] =
+      connectionUseTime.record(
+        durationToSeconds(duration),
+        TelemetryAttribute.dbClientConnectionPoolName(poolName)
+      )
+
+    override def recordConnectionTimeout(poolName: String): F[Unit] =
+      connectionTimeouts.inc(
+        TelemetryAttribute.dbClientConnectionPoolName(poolName)
+      )
+
+    override def registerPoolStateCallback(
+                                            poolName: String,
+                                            minConnections: Int,
+                                            maxConnections: Int,
+                                            stateProvider: F[PoolMetricsState]
+                                          ): Resource[F, Unit] =
+      val poolNameAttr = TelemetryAttribute.dbClientConnectionPoolName(poolName)
+      val stateIdle = TelemetryAttribute.dbClientConnectionState(CONNECTION_STATE_IDLE)
+      val stateUsed = TelemetryAttribute.dbClientConnectionState(CONNECTION_STATE_USED)
+
+      meter.batchCallback.of(
+        meter
+          .observableUpDownCounter[Long](METRIC_DB_CLIENT_CONNECTION_COUNT)
+          .withUnit("{connection}")
+          .withDescription("The number of connections that are currently in state described by the state attribute")
+          .createObserver,
+        meter
+          .observableUpDownCounter[Long](METRIC_DB_CLIENT_CONNECTION_IDLE_MAX)
+          .withUnit("{connection}")
+          .withDescription("The maximum number of idle open connections allowed")
+          .createObserver,
+        meter
+          .observableUpDownCounter[Long](METRIC_DB_CLIENT_CONNECTION_IDLE_MIN)
+          .withUnit("{connection}")
+          .withDescription("The minimum number of idle open connections allowed")
+          .createObserver,
+        meter
+          .observableUpDownCounter[Long](METRIC_DB_CLIENT_CONNECTION_MAX)
+          .withUnit("{connection}")
+          .withDescription("The maximum number of open connections allowed")
+          .createObserver,
+        meter
+          .observableUpDownCounter[Long](METRIC_DB_CLIENT_CONNECTION_PENDING_REQUESTS)
+          .withUnit("{request}")
+          .withDescription("The number of current pending requests for an open connection")
+          .createObserver
+      ) { (connCount, idleMax, idleMin, connMax, pendingReqs) =>
+        stateProvider.flatMap { state =>
+          connCount.record(state.idleCount, poolNameAttr, stateIdle) *>
+            connCount.record(state.usedCount, poolNameAttr, stateUsed) *>
+            idleMax.record(maxConnections.toLong, poolNameAttr) *>
+            idleMin.record(minConnections.toLong, poolNameAttr) *>
+            connMax.record(maxConnections.toLong, poolNameAttr) *>
+            pendingReqs.record(state.pendingRequestCount, poolNameAttr)
+        }
+      }
+
   /**
    * Creates a DatabaseMetrics instance from an otel4s Meter.
    *
@@ -172,7 +280,7 @@ object DatabaseMetrics:
                                .histogram[Double](METRIC_DB_CLIENT_OPERATION_DURATION)
                                .withUnit("s")
                                .withDescription("Duration of database client operations")
-                               .withExplicitBucketBoundaries(OperationDurationBuckets)
+                               .withExplicitBucketBoundaries(operationDurationBuckets)
                                .create
                            )
 
@@ -182,7 +290,7 @@ object DatabaseMetrics:
                           .histogram[Double](METRIC_DB_CLIENT_RESPONSE_RETURNED_ROWS)
                           .withUnit("{row}")
                           .withDescription("The actual number of records returned by the database operation")
-                          .withExplicitBucketBoundaries(ReturnedRowsBuckets)
+                          .withExplicitBucketBoundaries(returnedRowsBuckets)
                           .create
                       )
 
@@ -192,7 +300,7 @@ object DatabaseMetrics:
                                   .histogram[Double](METRIC_DB_CLIENT_CONNECTION_CREATE_TIME)
                                   .withUnit("s")
                                   .withDescription("The time it took to create a new connection")
-                                  .withExplicitBucketBoundaries(OperationDurationBuckets)
+                                  .withExplicitBucketBoundaries(operationDurationBuckets)
                                   .create
                               )
 
@@ -202,7 +310,7 @@ object DatabaseMetrics:
                                 .histogram[Double](METRIC_DB_CLIENT_CONNECTION_WAIT_TIME)
                                 .withUnit("s")
                                 .withDescription("The time it took to obtain an open connection from the pool")
-                                .withExplicitBucketBoundaries(OperationDurationBuckets)
+                                .withExplicitBucketBoundaries(operationDurationBuckets)
                                 .create
                             )
 
@@ -212,7 +320,7 @@ object DatabaseMetrics:
                                .histogram[Double](METRIC_DB_CLIENT_CONNECTION_USE_TIME)
                                .withUnit("s")
                                .withDescription("The time between borrowing a connection and returning it to the pool")
-                               .withExplicitBucketBoundaries(OperationDurationBuckets)
+                               .withExplicitBucketBoundaries(operationDurationBuckets)
                                .create
                            )
 
@@ -227,7 +335,7 @@ object DatabaseMetrics:
             )
             .create
         )
-    yield new DatabaseMetricsImpl(
+    yield new Impl(
       operationDuration,
       returnedRows,
       connectionCreateTime,
@@ -236,110 +344,3 @@ object DatabaseMetrics:
       connectionTimeouts,
       meter
     )
-
-/**
- * Implementation of DatabaseMetrics using otel4s instruments.
- */
-private class DatabaseMetricsImpl[F[_]: Monad](
-  operationDuration:    Histogram[F, Double],
-  returnedRows:         Histogram[F, Double],
-  connectionCreateTime: Histogram[F, Double],
-  connectionWaitTime:   Histogram[F, Double],
-  connectionUseTime:    Histogram[F, Double],
-  connectionTimeouts:   Counter[F, Long],
-  meter:                Meter[F]
-) extends DatabaseMetrics[F]:
-
-  private def durationToSeconds(d: FiniteDuration): Double =
-    d.toNanos.toDouble / 1e9
-
-  override def recordOperationDuration(
-    duration:   FiniteDuration,
-    attributes: Attribute[?]*
-  ): F[Unit] =
-    operationDuration.record(durationToSeconds(duration), attributes*)
-
-  override def recordReturnedRows(
-    rows:       Long,
-    attributes: Attribute[?]*
-  ): F[Unit] =
-    returnedRows.record(rows.toDouble, attributes*)
-
-  override def recordConnectionCreateTime(
-    duration: FiniteDuration,
-    poolName: String
-  ): F[Unit] =
-    connectionCreateTime.record(
-      durationToSeconds(duration),
-      TelemetryAttribute.dbClientConnectionPoolName(poolName)
-    )
-
-  override def recordConnectionWaitTime(
-    duration: FiniteDuration,
-    poolName: String
-  ): F[Unit] =
-    connectionWaitTime.record(
-      durationToSeconds(duration),
-      TelemetryAttribute.dbClientConnectionPoolName(poolName)
-    )
-
-  override def recordConnectionUseTime(
-    duration: FiniteDuration,
-    poolName: String
-  ): F[Unit] =
-    connectionUseTime.record(
-      durationToSeconds(duration),
-      TelemetryAttribute.dbClientConnectionPoolName(poolName)
-    )
-
-  override def recordConnectionTimeout(poolName: String): F[Unit] =
-    connectionTimeouts.inc(
-      TelemetryAttribute.dbClientConnectionPoolName(poolName)
-    )
-
-  override def registerPoolStateCallback(
-    poolName:       String,
-    minConnections: Int,
-    maxConnections: Int,
-    stateProvider:  F[PoolMetricsState]
-  ): Resource[F, Unit] =
-    val poolNameAttr = TelemetryAttribute.dbClientConnectionPoolName(poolName)
-    val stateIdle    = TelemetryAttribute.dbClientConnectionState(CONNECTION_STATE_IDLE)
-    val stateUsed    = TelemetryAttribute.dbClientConnectionState(CONNECTION_STATE_USED)
-
-    meter.batchCallback.of(
-      meter
-        .observableUpDownCounter[Long](METRIC_DB_CLIENT_CONNECTION_COUNT)
-        .withUnit("{connection}")
-        .withDescription("The number of connections that are currently in state described by the state attribute")
-        .createObserver,
-      meter
-        .observableUpDownCounter[Long](METRIC_DB_CLIENT_CONNECTION_IDLE_MAX)
-        .withUnit("{connection}")
-        .withDescription("The maximum number of idle open connections allowed")
-        .createObserver,
-      meter
-        .observableUpDownCounter[Long](METRIC_DB_CLIENT_CONNECTION_IDLE_MIN)
-        .withUnit("{connection}")
-        .withDescription("The minimum number of idle open connections allowed")
-        .createObserver,
-      meter
-        .observableUpDownCounter[Long](METRIC_DB_CLIENT_CONNECTION_MAX)
-        .withUnit("{connection}")
-        .withDescription("The maximum number of open connections allowed")
-        .createObserver,
-      meter
-        .observableUpDownCounter[Long](METRIC_DB_CLIENT_CONNECTION_PENDING_REQUESTS)
-        .withUnit("{request}")
-        .withDescription("The number of current pending requests for an open connection")
-        .createObserver
-    ) { (connCount, idleMax, idleMin, connMax, pendingReqs) =>
-      stateProvider.flatMap { state =>
-        connCount.record(state.idleCount, poolNameAttr, stateIdle) *>
-          connCount.record(state.usedCount, poolNameAttr, stateUsed) *>
-          idleMax.record(maxConnections.toLong, poolNameAttr) *>
-          idleMin.record(minConnections.toLong, poolNameAttr) *>
-          connMax.record(maxConnections.toLong, poolNameAttr) *>
-          pendingReqs.record(state.pendingRequestCount, poolNameAttr)
-      }
-    }

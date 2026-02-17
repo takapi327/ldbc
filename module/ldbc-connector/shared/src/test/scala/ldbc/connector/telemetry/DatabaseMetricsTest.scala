@@ -23,12 +23,12 @@ class DatabaseMetricsTest extends FTestPlatform:
 
   test("OperationDurationBuckets should have correct values per OpenTelemetry spec") {
     val expected = BucketBoundaries(0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0, 5.0, 10.0)
-    assertEquals(DatabaseMetrics.OperationDurationBuckets, expected)
+    assertEquals(DatabaseMetrics.operationDurationBuckets, expected)
   }
 
   test("ReturnedRowsBuckets should have correct values per OpenTelemetry spec") {
     val expected = BucketBoundaries(1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000)
-    assertEquals(DatabaseMetrics.ReturnedRowsBuckets, expected)
+    assertEquals(DatabaseMetrics.returnedRowsBuckets, expected)
   }
 
   // ============================================================
