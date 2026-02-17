@@ -258,6 +258,13 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
   def setTracer(newTracer: Tracer[F]): MySQLDataSource[F, A] =
     copy(tracer = Some(newTracer))
 
+  /** Sets the OpenTelemetry meter for database metrics.
+    * @param newMeter the meter instance
+    * @return a new MySQLDataSource with the updated meter
+    */
+  def setMeter(newMeter: Meter[F]): MySQLDataSource[F, A] =
+    copy(meter = Some(newMeter))
+
   /** Sets the telemetry configuration for OpenTelemetry behavior.
     *
     * Use this to control how telemetry data is collected and processed,
