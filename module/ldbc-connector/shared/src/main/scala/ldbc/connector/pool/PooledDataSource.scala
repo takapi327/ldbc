@@ -630,7 +630,8 @@ object PooledDataSource:
             useCursorFetch          = useCursorFetch,
             useServerPrepStmts      = useServerPrepStmts,
             databaseTerm            = databaseTerm,
-            plugins                 = plugins
+            plugins                 = plugins,
+            databaseMetrics         = Some(databaseMetrics)
           )
         case (Some(b), None) =>
           Connection.withBeforeAfter(
@@ -649,7 +650,8 @@ object PooledDataSource:
             useCursorFetch          = useCursorFetch,
             useServerPrepStmts      = useServerPrepStmts,
             databaseTerm            = databaseTerm,
-            plugins                 = plugins
+            plugins                 = plugins,
+            databaseMetrics         = Some(databaseMetrics)
           )
         case (None, _) =>
           Connection(
@@ -666,7 +668,8 @@ object PooledDataSource:
             useCursorFetch          = useCursorFetch,
             useServerPrepStmts      = useServerPrepStmts,
             databaseTerm            = databaseTerm,
-            plugins                 = plugins
+            plugins                 = plugins,
+            databaseMetrics         = Some(databaseMetrics)
           )
 
   private[connector] def create[F[_]: Async: Network: Console: Hashing: UUIDGen, A](

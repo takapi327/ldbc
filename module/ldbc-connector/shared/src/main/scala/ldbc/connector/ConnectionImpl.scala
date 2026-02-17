@@ -24,7 +24,7 @@ import ldbc.connector.net.*
 import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.protocol.*
-import ldbc.connector.telemetry.TelemetryConfig
+import ldbc.connector.telemetry.{ DatabaseMetrics, TelemetryConfig }
 import ldbc.connector.util.StringHelper
 
 private[ldbc] case class ConnectionImpl[F[_]: Tracer: Exchange: UUIDGen](
@@ -37,7 +37,8 @@ private[ldbc] case class ConnectionImpl[F[_]: Tracer: Exchange: UUIDGen](
   useCursorFetch:     Boolean,
   useServerPrepStmts: Boolean,
   databaseTerm:       DatabaseMetaData.DatabaseTerm = DatabaseMetaData.DatabaseTerm.CATALOG,
-  telemetryConfig:    TelemetryConfig               = TelemetryConfig.default
+  telemetryConfig:    TelemetryConfig               = TelemetryConfig.default,
+  databaseMetrics:    DatabaseMetrics[F]
 )(using ev: Sync[F])
   extends LdbcConnection[F]:
 
@@ -201,7 +202,8 @@ private[ldbc] case class ConnectionImpl[F[_]: Tracer: Exchange: UUIDGen](
       useServerPrepStmts,
       resultSetType,
       resultSetConcurrency,
-      telemetryConfig
+      telemetryConfig,
+      databaseMetrics
     )
 
   override def prepareStatement(sql: String, resultSetType: Int, resultSetConcurrency: Int): F[PreparedStatement[F]] =
@@ -266,7 +268,8 @@ private[ldbc] case class ConnectionImpl[F[_]: Tracer: Exchange: UUIDGen](
       useServerPrepStmts,
       resultSetType,
       resultSetConcurrency,
-      telemetryConfig
+      telemetryConfig,
+      databaseMetrics
     )
 
   override def prepareStatement(
@@ -397,7 +400,8 @@ private[ldbc] case class ConnectionImpl[F[_]: Tracer: Exchange: UUIDGen](
       useServerPrepStmts,
       resultSetType,
       resultSetConcurrency,
-      telemetryConfig
+      telemetryConfig,
+      databaseMetrics
     )
 
   private def buildServerPreparedStatement(
@@ -450,7 +454,8 @@ private[ldbc] case class ConnectionImpl[F[_]: Tracer: Exchange: UUIDGen](
       useServerPrepStmts,
       resultSetType,
       resultSetConcurrency,
-      telemetryConfig
+      telemetryConfig,
+      databaseMetrics
     )
 
   private def buildPreparedStatement(

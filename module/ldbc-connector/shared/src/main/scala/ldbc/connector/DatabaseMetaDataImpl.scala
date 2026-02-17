@@ -28,6 +28,7 @@ import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.protocol.*
 import ldbc.connector.net.Protocol
 import ldbc.connector.syntax.*
+import ldbc.connector.telemetry.DatabaseMetrics
 import ldbc.connector.util.StringHelper
 import ldbc.connector.util.Version
 
@@ -1990,7 +1991,8 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
       useCursorFetch,
       useServerPrepStmts,
       ResultSet.TYPE_SCROLL_INSENSITIVE,
-      ResultSet.CONCUR_READ_ONLY
+      ResultSet.CONCUR_READ_ONLY,
+      databaseMetrics = DatabaseMetrics.noop[F]
     )
 
   private def appendJdbcTypeMappingQuery(
