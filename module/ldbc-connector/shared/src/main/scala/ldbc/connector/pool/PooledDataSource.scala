@@ -711,9 +711,7 @@ object PooledDataSource:
             case None    => Resource.pure(PoolMetricsTracker.noop[F])
 
     val databaseMetricsResource: Resource[F, DatabaseMetrics[F]] =
-      meter match
-        case Some(m) => DatabaseMetrics.fromMeter(m)
-        case None    => Resource.pure(DatabaseMetrics.noop[F])
+      DatabaseMetrics.fromMeter(meter.getOrElse(Meter.noop[F]))
 
     val poolLogger = PoolLogger.console[F](config.debug || config.logPoolState)
 

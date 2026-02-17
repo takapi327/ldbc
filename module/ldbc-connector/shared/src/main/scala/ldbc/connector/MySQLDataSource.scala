@@ -21,7 +21,7 @@ import org.typelevel.otel4s.trace.Tracer
 import ldbc.sql.DatabaseMetaData
 
 import ldbc.connector.pool.*
-import ldbc.connector.telemetry.TelemetryConfig
+import ldbc.connector.telemetry.{ DatabaseMetrics, TelemetryConfig }
 
 import ldbc.authentication.plugin.AuthenticationPlugin
 import ldbc.DataSource
@@ -92,6 +92,7 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
   maxAllowedPacket:            Int                                   = MySQLConfig.DEFAULT_PACKET_SIZE,
   defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]]       = None,
   plugins:                     List[AuthenticationPlugin[F]]         = List.empty[AuthenticationPlugin[F]],
+  meter:                       Option[Meter[F]]                      = None,
   before:                      Option[Connection[F] => F[A]]         = None,
   after:                       Option[(A, Connection[F]) => F[Unit]] = None
 ) extends DataSource[F]:
@@ -107,71 +108,76 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
    * @return a Resource that manages a MySQL connection
    */
   override def getConnection: Resource[F, Connection[F]] =
-    (before, after) match
-      case (Some(b), Some(a)) =>
-        Connection.withBeforeAfter(
-          host                        = host,
-          port                        = port,
-          user                        = user,
-          before                      = b,
-          after                       = a,
-          password                    = password,
-          database                    = database,
-          debug                       = debug,
-          ssl                         = ssl,
-          socketOptions               = socketOptions,
-          readTimeout                 = readTimeout,
-          allowPublicKeyRetrieval     = allowPublicKeyRetrieval,
-          useCursorFetch              = useCursorFetch,
-          useServerPrepStmts          = useServerPrepStmts,
-          maxAllowedPacket            = maxAllowedPacket,
-          databaseTerm                = databaseTerm,
-          defaultAuthenticationPlugin = defaultAuthenticationPlugin,
-          plugins                     = plugins,
-          telemetryConfig             = telemetryConfig
-        )
-      case (Some(b), None) =>
-        Connection.withBeforeAfter(
-          host                        = host,
-          port                        = port,
-          user                        = user,
-          before                      = b,
-          after                       = (_, _) => Async[F].unit,
-          password                    = password,
-          database                    = database,
-          debug                       = debug,
-          ssl                         = ssl,
-          socketOptions               = socketOptions,
-          readTimeout                 = readTimeout,
-          allowPublicKeyRetrieval     = allowPublicKeyRetrieval,
-          useCursorFetch              = useCursorFetch,
-          useServerPrepStmts          = useServerPrepStmts,
-          maxAllowedPacket            = maxAllowedPacket,
-          databaseTerm                = databaseTerm,
-          defaultAuthenticationPlugin = defaultAuthenticationPlugin,
-          plugins                     = plugins,
-          telemetryConfig             = telemetryConfig
-        )
-      case (None, _) =>
-        Connection(
-          host                        = host,
-          port                        = port,
-          user                        = user,
-          password                    = password,
-          database                    = database,
-          debug                       = debug,
-          ssl                         = ssl,
-          socketOptions               = socketOptions,
-          readTimeout                 = readTimeout,
-          allowPublicKeyRetrieval     = allowPublicKeyRetrieval,
-          useCursorFetch              = useCursorFetch,
-          useServerPrepStmts          = useServerPrepStmts,
-          maxAllowedPacket            = maxAllowedPacket,
-          databaseTerm                = databaseTerm,
-          defaultAuthenticationPlugin = defaultAuthenticationPlugin,
-          plugins                     = plugins,
-          telemetryConfig             = telemetryConfig
-        )
+    DatabaseMetrics.fromMeter(meter.getOrElse(Meter.noop[F])).flatMap { databaseMetrics =>
+      (before, after) match
+        case (Some(b), Some(a)) =>
+          Connection.withBeforeAfter(
+            host                        = host,
+            port                        = port,
+            user                        = user,
+            before                      = b,
+            after                       = a,
+            password                    = password,
+            database                    = database,
+            debug                       = debug,
+            ssl                         = ssl,
+            socketOptions               = socketOptions,
+            readTimeout                 = readTimeout,
+            allowPublicKeyRetrieval     = allowPublicKeyRetrieval,
+            useCursorFetch              = useCursorFetch,
+            useServerPrepStmts          = useServerPrepStmts,
+            maxAllowedPacket            = maxAllowedPacket,
+            databaseTerm                = databaseTerm,
+            defaultAuthenticationPlugin = defaultAuthenticationPlugin,
+            plugins                     = plugins,
+            telemetryConfig             = telemetryConfig,
+            databaseMetrics             = Some(databaseMetrics)
+          )
+        case (Some(b), None) =>
+          Connection.withBeforeAfter(
+            host                        = host,
+            port                        = port,
+            user                        = user,
+            before                      = b,
+            after                       = (_, _) => Async[F].unit,
+            password                    = password,
+            database                    = database,
+            debug                       = debug,
+            ssl                         = ssl,
+            socketOptions               = socketOptions,
+            readTimeout                 = readTimeout,
+            allowPublicKeyRetrieval     = allowPublicKeyRetrieval,
+            useCursorFetch              = useCursorFetch,
+            useServerPrepStmts          = useServerPrepStmts,
+            maxAllowedPacket            = maxAllowedPacket,
+            databaseTerm                = databaseTerm,
+            defaultAuthenticationPlugin = defaultAuthenticationPlugin,
+            plugins                     = plugins,
+            telemetryConfig             = telemetryConfig,
+            databaseMetrics             = Some(databaseMetrics)
+          )
+        case (None, _) =>
+          Connection(
+            host                        = host,
+            port                        = port,
+            user                        = user,
+            password                    = password,
+            database                    = database,
+            debug                       = debug,
+            ssl                         = ssl,
+            socketOptions               = socketOptions,
+            readTimeout                 = readTimeout,
+            allowPublicKeyRetrieval     = allowPublicKeyRetrieval,
+            useCursorFetch              = useCursorFetch,
+            useServerPrepStmts          = useServerPrepStmts,
+            maxAllowedPacket            = maxAllowedPacket,
+            databaseTerm                = databaseTerm,
+            defaultAuthenticationPlugin = defaultAuthenticationPlugin,
+            plugins                     = plugins,
+            telemetryConfig             = telemetryConfig,
+            databaseMetrics             = Some(databaseMetrics)
+          )
+    }
 
   /** Sets the hostname or IP address of the MySQL server.
     * @param newHost the hostname or IP address
@@ -353,6 +359,7 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
       telemetryConfig         = telemetryConfig,
       useCursorFetch          = useCursorFetch,
       useServerPrepStmts      = useServerPrepStmts,
+      meter                   = meter,
       before                  = Some(before),
       after                   = None
     )
@@ -408,6 +415,7 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
       telemetryConfig         = telemetryConfig,
       useCursorFetch          = useCursorFetch,
       useServerPrepStmts      = useServerPrepStmts,
+      meter                   = meter,
       before                  = Some(before),
       after                   = Some(after)
     )
