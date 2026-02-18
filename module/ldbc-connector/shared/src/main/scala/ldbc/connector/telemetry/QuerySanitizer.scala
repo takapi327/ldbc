@@ -43,6 +43,13 @@ object QuerySanitizer:
    */
   val Placeholder: String = "?"
 
+  /**
+   * Maximum query length for regex-based processing.
+   * Queries exceeding this limit are returned as-is (or truncated for summaries)
+   * to prevent ReDoS attacks from pathological input patterns.
+   */
+  val MAX_QUERY_LENGTH: Int = 10000
+
   // Regex patterns for different literal types
   private val StringLiteralPattern: Regex = """'(?:[^'\\]|\\.)*'""".r
   private val DoubleQuotedPattern:  Regex = """"(?:[^"\\]|\\.)*"""".r
@@ -73,15 +80,17 @@ object QuerySanitizer:
    * @return true if the query contains parameterized placeholders
    */
   def isParameterizedQuery(sql: String): Boolean =
-    // Strip string literals first to avoid false positives from
-    // placeholders inside literal values (e.g., 'What?' or "value:name")
-    val stripped = StringLiteralPattern.replaceAllIn(
-      DoubleQuotedPattern.replaceAllIn(sql, ""),
-      ""
-    )
-    PositionalPlaceholderPattern.findFirstIn(stripped).isDefined ||
-    NumericPlaceholderPattern.findFirstIn(stripped).isDefined ||
-    NamedPlaceholderPattern.findFirstIn(stripped).isDefined
+    if sql.length > MAX_QUERY_LENGTH then false
+    else
+      // Strip string literals first to avoid false positives from
+      // placeholders inside literal values (e.g., 'What?' or "value:name")
+      val stripped = StringLiteralPattern.replaceAllIn(
+        DoubleQuotedPattern.replaceAllIn(sql, ""),
+        ""
+      )
+      PositionalPlaceholderPattern.findFirstIn(stripped).isDefined ||
+      NumericPlaceholderPattern.findFirstIn(stripped).isDefined ||
+      NamedPlaceholderPattern.findFirstIn(stripped).isDefined
 
   /**
    * Sanitizes SQL query by replacing all literal values with placeholders.
@@ -91,24 +100,26 @@ object QuerySanitizer:
    * @return Sanitized query with literals replaced by "?"
    */
   def sanitize(sql: String): String =
-    // Order matters: process string literals first to avoid partial matches
-    // Chain replacements using pipe operator for readability
-    val patterns = List(
-      StringLiteralPattern,
-      DoubleQuotedPattern,
-      HexPattern,
-      BinaryPattern,
-      NumericPattern,
-      BooleanPattern
-    )
-    val result = patterns.foldLeft(sql)((result, pattern) => pattern.replaceAllIn(result, Placeholder))
-    // Handle NULL separately: preserve IS NULL / IS NOT NULL, replace standalone NULL with placeholder
-    NullPattern.replaceAllIn(
-      result,
-      m =>
-        if m.matched.trim.toUpperCase.startsWith("IS") then Regex.quoteReplacement(m.matched)
-        else Placeholder
-    )
+    if sql.length > MAX_QUERY_LENGTH then sql
+    else
+      // Order matters: process string literals first to avoid partial matches
+      // Chain replacements using pipe operator for readability
+      val patterns = List(
+        StringLiteralPattern,
+        DoubleQuotedPattern,
+        HexPattern,
+        BinaryPattern,
+        NumericPattern,
+        BooleanPattern
+      )
+      val result = patterns.foldLeft(sql)((result, pattern) => pattern.replaceAllIn(result, Placeholder))
+      // Handle NULL separately: preserve IS NULL / IS NOT NULL, replace standalone NULL with placeholder
+      NullPattern.replaceAllIn(
+        result,
+        m =>
+          if m.matched.trim.toUpperCase.startsWith("IS") then Regex.quoteReplacement(m.matched)
+          else Placeholder
+      )
 
   /**
    * Conditionally sanitizes SQL query based on whether it's parameterized.
@@ -129,8 +140,10 @@ object QuerySanitizer:
    * @return Query with collapsed IN clauses
    */
   def collapseInClauses(sql: String): String =
-    val inClausePattern = """\bIN\s*\(\s*\?(?:\s*,\s*\?)*\s*\)""".r
-    inClausePattern.replaceAllIn(sql, "IN (?)")
+    if sql.length > MAX_QUERY_LENGTH then sql
+    else
+      val inClausePattern = """\bIN\s*\(\s*\?(?:\s*,\s*\?)*\s*\)""".r
+      inClausePattern.replaceAllIn(sql, "IN (?)")
 
   /**
    * Extracts the SQL operation name from a query (FALLBACK method).
@@ -171,8 +184,9 @@ object QuerySanitizer:
    * @return Optional table name (None for multi-table operations)
    */
   def extractTableName(sql: String): Option[String] =
+    if sql.length > MAX_QUERY_LENGTH then None
     // Check for multi-table operations - return None per OpenTelemetry spec
-    if containsMultipleTables(sql) then None
+    else if containsMultipleTables(sql) then None
     else
       val operationUpper = extractOperationName(sql).toUpperCase
       operationUpper match
