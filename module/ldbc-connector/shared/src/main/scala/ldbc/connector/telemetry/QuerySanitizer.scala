@@ -221,6 +221,7 @@ object QuerySanitizer:
     val upperSql = sql.toUpperCase
     upperSql.contains(" JOIN ") ||
     upperSql.contains("(SELECT") ||
+    (upperSql.startsWith("INSERT") && upperSql.contains(" SELECT ")) ||
     hasCommaInFromClause(upperSql)
 
   /**
@@ -233,7 +234,7 @@ object QuerySanitizer:
     if fromIdx < 0 then false
     else
       val afterFrom      = upperSql.substring(fromIdx + 6)
-      val clauseKeywords = List(" WHERE ", " ORDER ", " GROUP ", " HAVING ", " LIMIT ", " UNION ", " SET ", " ON ")
+      val clauseKeywords = List(" WHERE ", " ORDER ", " GROUP ", " HAVING ", " LIMIT ", " UNION ", " SET ")
       val endIdx         = clauseKeywords.flatMap { kw =>
         val idx = afterFrom.indexOf(kw)
         if idx >= 0 then Some(idx) else None

@@ -271,6 +271,33 @@ class QuerySanitizerTest extends FTestPlatform:
   }
 
   // ============================================================
+  // hasCommaInFromClause boundary tests (B-8)
+  // Verify ON DUPLICATE KEY UPDATE does not break table extraction
+  // ============================================================
+
+  test("extractTableName should handle INSERT ... ON DUPLICATE KEY UPDATE") {
+    val sql = "INSERT INTO users (id, name) VALUES (1, 'test') ON DUPLICATE KEY UPDATE name = 'test'"
+    assertEquals(QuerySanitizer.extractTableName(sql), Some("users"))
+  }
+
+  test("extractTableName should handle SELECT with ON in column alias") {
+    val sql = "SELECT created_on FROM users"
+    assertEquals(QuerySanitizer.extractTableName(sql), Some("users"))
+  }
+
+  test("extractTableName should handle SELECT FROM with comma and ON keyword after") {
+    // " ON " in clauseKeywords could truncate the FROM clause range,
+    // but this is a JOIN query so containsMultipleTables catches it via " JOIN " check first
+    val sql = "SELECT * FROM users JOIN orders ON users.id = orders.user_id"
+    assertEquals(QuerySanitizer.extractTableName(sql), None)
+  }
+
+  test("extractTableName should handle subquery with ON DUPLICATE") {
+    val sql = "INSERT INTO users SELECT id, name FROM source ON DUPLICATE KEY UPDATE name = source.name"
+    assertEquals(QuerySanitizer.extractTableName(sql), None) // contains (SELECT → multi-table
+  }
+
+  // ============================================================
   // generateSummary Tests
   // ============================================================
 
