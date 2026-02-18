@@ -8,6 +8,8 @@ package ldbc.connector
 
 import scala.concurrent.duration.Duration
 
+import cats.syntax.all.*
+
 import cats.effect.*
 import cats.effect.std.Console
 import cats.effect.std.UUIDGen
@@ -98,17 +100,29 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
 ) extends DataSource[F]:
   given Tracer[F] = tracer.getOrElse(Tracer.noop[F])
 
+  private val databaseMetricsRef: Ref[F, Option[DatabaseMetrics[F]]] =
+    Ref.unsafe[F, Option[DatabaseMetrics[F]]](None)
+
+  private def getOrCreateDatabaseMetrics: Resource[F, DatabaseMetrics[F]] =
+    Resource.eval(databaseMetricsRef.get).flatMap {
+      case Some(cached) => Resource.pure(cached)
+      case None =>
+        DatabaseMetrics.fromMeter(meter.getOrElse(Meter.noop[F])).flatTap { metrics =>
+          Resource.eval(databaseMetricsRef.set(Some(metrics)))
+        }
+    }
+
   /**
    * Creates a new connection resource from this DataSource.
-   * 
+   *
    * The connection is managed as a resource, ensuring proper cleanup when the resource
    * is released. If before/after hooks are configured, they will be executed during
    * the connection lifecycle.
-   * 
+   *
    * @return a Resource that manages a MySQL connection
    */
   override def getConnection: Resource[F, Connection[F]] =
-    DatabaseMetrics.fromMeter(meter.getOrElse(Meter.noop[F])).flatMap { databaseMetrics =>
+    getOrCreateDatabaseMetrics.flatMap { databaseMetrics =>
       (before, after) match
         case (Some(b), Some(a)) =>
           Connection.withBeforeAfter(
