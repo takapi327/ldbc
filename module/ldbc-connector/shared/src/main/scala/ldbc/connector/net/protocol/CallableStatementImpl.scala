@@ -79,6 +79,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
         )
 
         for
+          _         <- span.addAttributes(queryAttributes*)
           resultSet <- withDurationMetrics(
                          if sql.toUpperCase.startsWith("CALL") then
                            executeCallStatement(span).flatMap { resultSets =>
@@ -103,8 +104,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                            } <* retrieveOutParams()
                          else
                            params.get.flatMap { params =>
-                             span.addAttributes(queryAttributes*) *>
-                               protocol.resetSequenceId *>
+                             protocol.resetSequenceId *>
                                protocol.send(
                                  ComQueryPacket(
                                    buildQuery(sql, params),
@@ -141,6 +141,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
           TelemetryAttribute.dbQueryText(processedSql)
         )
 
+        span.addAttributes(queryAttributes*) *>
         withDurationMetrics(
           if sql.toUpperCase.startsWith("CALL") then
             executeCallStatement(span).flatMap { resultSets =>
@@ -165,8 +166,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
             } *> retrieveOutParams() *> F.pure(-1L)
           else
             params.get.flatMap { params =>
-              span.addAttributes(queryAttributes*) *>
-                sendQuery(buildQuery(sql, params)).flatMap {
+              sendQuery(buildQuery(sql, params)).flatMap {
                   case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
                   case error: ERRPacket =>
                     val exception = error.toException(Some(sql), None)
