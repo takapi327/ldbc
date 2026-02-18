@@ -345,9 +345,9 @@ class QuerySanitizerTest extends FTestPlatform:
     assertEquals(QuerySanitizer.sanitize(sql), expected)
   }
 
-  test("sanitize should replace standalone numeric literals in LIMIT/OFFSET") {
+  test("sanitize should preserve numeric literals in LIMIT/OFFSET") {
     val sql      = "SELECT * FROM users LIMIT 10 OFFSET 20"
-    val expected = "SELECT * FROM users LIMIT ? OFFSET ?"
+    val expected = "SELECT * FROM users LIMIT 10 OFFSET 20"
     assertEquals(QuerySanitizer.sanitize(sql), expected)
   }
 

@@ -28,7 +28,6 @@ import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.Protocol
 import ldbc.connector.syntax.*
 import ldbc.connector.telemetry.*
-import ldbc.connector.telemetry.DatabaseMetrics
 
 case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
   protocol:                Protocol[F],

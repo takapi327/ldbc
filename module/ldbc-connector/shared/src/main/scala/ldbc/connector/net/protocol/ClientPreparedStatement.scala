@@ -24,7 +24,6 @@ import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.Protocol
 import ldbc.connector.telemetry.*
-import ldbc.connector.telemetry.DatabaseMetrics
 import ldbc.connector.ResultSetImpl
 
 /**

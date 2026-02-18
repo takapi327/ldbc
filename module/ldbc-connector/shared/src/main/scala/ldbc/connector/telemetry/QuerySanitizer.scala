@@ -51,13 +51,14 @@ object QuerySanitizer:
   val MAX_QUERY_LENGTH: Int = 10000
 
   // Regex patterns for different literal types
-  private val STRING_LITERAL_PATTERN: Regex = """'(?:[^'\\]|\\.)*'""".r
-  private val DOUBLE_QUOTED_PATTERN:  Regex = """"(?:[^"\\]|\\.)*"""".r
-  private val NUMERIC_PATTERN:        Regex = """\b\d+\.?\d*\b""".r
-  private val HEX_PATTERN:            Regex = """0[xX][0-9a-fA-F]+""".r
-  private val BINARY_PATTERN:         Regex = """0[bB][01]+""".r
-  private val NULL_PATTERN:           Regex = """(?i)(?:IS\s+NOT\s+|IS\s+)?\bNULL\b""".r
-  private val BOOLEAN_PATTERN:        Regex = """(?i)\b(?:TRUE|FALSE)\b""".r
+  private val STRING_LITERAL_PATTERN:  Regex = """'(?:[^'\\]|\\.)*'""".r
+  private val DOUBLE_QUOTED_PATTERN:   Regex = """"(?:[^"\\]|\\.)*"""".r
+  private val NUMERIC_PATTERN:         Regex = """\b\d+\.?\d*\b""".r
+  private val HEX_PATTERN:             Regex = """0[xX][0-9a-fA-F]+""".r
+  private val BINARY_PATTERN:          Regex = """0[bB][01]+""".r
+  private val NULL_PATTERN:            Regex = """(?i)(?:IS\s+NOT\s+|IS\s+)?\bNULL\b""".r
+  private val BOOLEAN_PATTERN:         Regex = """(?i)\b(?:TRUE|FALSE)\b""".r
+  private val LIMIT_OFFSET_CONTEXT:    Regex = """(?i)\b(?:LIMIT|OFFSET)\s*$""".r
 
   // Pattern to extract operation name (preserves original case)
   private val OPERATION_PATTERN: Regex = """^\s*(\w+)""".r
@@ -103,19 +104,26 @@ object QuerySanitizer:
     if sql.length > MAX_QUERY_LENGTH then sql
     else
       // Order matters: process string literals first to avoid partial matches
-      // Chain replacements using pipe operator for readability
       val patterns = List(
         STRING_LITERAL_PATTERN,
         DOUBLE_QUOTED_PATTERN,
         HEX_PATTERN,
         BINARY_PATTERN,
-        NUMERIC_PATTERN,
         BOOLEAN_PATTERN
       )
       val result = patterns.foldLeft(sql)((result, pattern) => pattern.replaceAllIn(result, PLACEHOLDER))
+      // Handle numeric literals with context awareness:
+      // Preserve values after LIMIT/OFFSET for better observability
+      val resultWithNumerics = NUMERIC_PATTERN.replaceAllIn(
+        result,
+        m =>
+          val prefix = result.substring(0, m.start)
+          if LIMIT_OFFSET_CONTEXT.findFirstIn(prefix).isDefined then Regex.quoteReplacement(m.matched)
+          else PLACEHOLDER
+      )
       // Handle NULL separately: preserve IS NULL / IS NOT NULL, replace standalone NULL with placeholder
       NULL_PATTERN.replaceAllIn(
-        result,
+        resultWithNumerics,
         m =>
           if m.matched.trim.toUpperCase.startsWith("IS") then Regex.quoteReplacement(m.matched)
           else PLACEHOLDER
