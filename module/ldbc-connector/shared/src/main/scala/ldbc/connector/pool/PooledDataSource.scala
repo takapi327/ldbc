@@ -26,7 +26,7 @@ import ldbc.sql.DatabaseMetaData
 
 import ldbc.connector.*
 import ldbc.connector.exception.SQLException
-import ldbc.connector.telemetry.{ DatabaseMetrics, PoolMetricsState }
+import ldbc.connector.telemetry.{ DatabaseMetrics, PoolMetricsState, TelemetryConfig }
 
 import ldbc.authentication.plugin.AuthenticationPlugin
 import ldbc.DataSource
@@ -199,6 +199,7 @@ object PooledDataSource:
     leakDetectionThreshold:  Option[FiniteDuration]                = None,
     adaptiveSizing:          Boolean                               = true,
     adaptiveInterval:        FiniteDuration                        = 30.seconds,
+    telemetryConfig:         TelemetryConfig                       = TelemetryConfig.default,
     metricsTracker:          PoolMetricsTracker[F],
     databaseMetrics:         DatabaseMetrics[F],
     poolName:                String,
@@ -635,6 +636,7 @@ object PooledDataSource:
             useServerPrepStmts      = useServerPrepStmts,
             databaseTerm            = databaseTerm,
             plugins                 = plugins,
+            telemetryConfig         = telemetryConfig,
             databaseMetrics         = Some(databaseMetrics)
           )
         case (Some(b), None) =>
@@ -655,6 +657,7 @@ object PooledDataSource:
             useServerPrepStmts      = useServerPrepStmts,
             databaseTerm            = databaseTerm,
             plugins                 = plugins,
+            telemetryConfig         = telemetryConfig,
             databaseMetrics         = Some(databaseMetrics)
           )
         case (None, _) =>
@@ -673,37 +676,40 @@ object PooledDataSource:
             useServerPrepStmts      = useServerPrepStmts,
             databaseTerm            = databaseTerm,
             plugins                 = plugins,
+            telemetryConfig         = telemetryConfig,
             databaseMetrics         = Some(databaseMetrics)
           )
 
   private[connector] def create[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
-    config:         MySQLConfig,
-    metricsTracker: Option[PoolMetricsTracker[F]],
-    meter:          Option[Meter[F]],
-    idGenerator:    F[String],
-    plugins:        List[AuthenticationPlugin[F]],
-    before:         Option[Connection[F] => F[A]] = None,
-    after:          Option[(A, Connection[F]) => F[Unit]] = None
+    config:          MySQLConfig,
+    metricsTracker:  Option[PoolMetricsTracker[F]],
+    meter:           Option[Meter[F]],
+    idGenerator:     F[String],
+    plugins:         List[AuthenticationPlugin[F]],
+    telemetryConfig: TelemetryConfig = TelemetryConfig.default,
+    before:          Option[Connection[F] => F[A]] = None,
+    after:           Option[(A, Connection[F]) => F[Unit]] = None
   )(using Tracer[F]): Resource[F, PooledDataSource[F]] =
 
     // Validate configuration before creating the pool (similar to HikariDataSource)
     Resource
       .eval(PoolConfigValidator.validate(config))
       .flatMap { _ =>
-        createValidatedPool(config, metricsTracker, meter, idGenerator, plugins, before, after)
+        createValidatedPool(config, metricsTracker, meter, idGenerator, plugins, telemetryConfig, before, after)
       }
       .handleErrorWith { error =>
         Resource.eval(Async[F].raiseError(error))
       }
 
   private def createValidatedPool[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
-    config:         MySQLConfig,
-    metricsTracker: Option[PoolMetricsTracker[F]],
-    meter:          Option[Meter[F]],
-    idGenerator:    F[String],
-    plugins:        List[AuthenticationPlugin[F]],
-    before:         Option[Connection[F] => F[A]],
-    after:          Option[(A, Connection[F]) => F[Unit]]
+    config:          MySQLConfig,
+    metricsTracker:  Option[PoolMetricsTracker[F]],
+    meter:           Option[Meter[F]],
+    idGenerator:     F[String],
+    plugins:         List[AuthenticationPlugin[F]],
+    telemetryConfig: TelemetryConfig,
+    before:          Option[Connection[F] => F[A]],
+    after:           Option[(A, Connection[F]) => F[Unit]]
   )(using Tracer[F]): Resource[F, PooledDataSource[F]] =
 
     val trackerResource: Resource[F, PoolMetricsTracker[F]] =
@@ -751,6 +757,7 @@ object PooledDataSource:
       leakDetectionThreshold  = config.leakDetectionThreshold,
       adaptiveSizing          = config.adaptiveSizing,
       adaptiveInterval        = config.adaptiveInterval,
+      telemetryConfig         = telemetryConfig,
       metricsTracker          = tracker,
       databaseMetrics         = dbMetrics,
       poolName                = config.poolName,
@@ -825,14 +832,15 @@ object PooledDataSource:
    * @return a Resource that manages the pooled data source lifecycle
    */
   def fromConfig[F[_]: Async: Network: Console: Hashing: UUIDGen](
-    config:         MySQLConfig,
-    metricsTracker: Option[PoolMetricsTracker[F]] = None,
-    meter:          Option[Meter[F]] = None,
-    tracer:         Option[Tracer[F]] = None,
-    plugins:        List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]]
+    config:          MySQLConfig,
+    metricsTracker:  Option[PoolMetricsTracker[F]] = None,
+    meter:           Option[Meter[F]] = None,
+    tracer:          Option[Tracer[F]] = None,
+    plugins:         List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
+    telemetryConfig: TelemetryConfig = TelemetryConfig.default
   ): Resource[F, PooledDataSource[F]] =
     given Tracer[F] = tracer.getOrElse(Tracer.noop[F])
-    create(config, metricsTracker, meter, UUIDGen[F].randomUUID.map(_.toString), plugins)
+    create(config, metricsTracker, meter, UUIDGen[F].randomUUID.map(_.toString), plugins, telemetryConfig = telemetryConfig)
 
     /**
    * Creates a PooledDataSource with before/after hooks for each connection use.
@@ -856,13 +864,14 @@ object PooledDataSource:
    * @return a Resource that manages the pooled data source lifecycle
    */
   def fromConfigWithBeforeAfter[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
-    config:         MySQLConfig,
-    metricsTracker: Option[PoolMetricsTracker[F]] = None,
-    meter:          Option[Meter[F]] = None,
-    tracer:         Option[Tracer[F]] = None,
-    plugins:        List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
-    before:         Option[Connection[F] => F[A]] = None,
-    after:          Option[(A, Connection[F]) => F[Unit]] = None
+    config:          MySQLConfig,
+    metricsTracker:  Option[PoolMetricsTracker[F]] = None,
+    meter:           Option[Meter[F]] = None,
+    tracer:          Option[Tracer[F]] = None,
+    plugins:         List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
+    telemetryConfig: TelemetryConfig = TelemetryConfig.default,
+    before:          Option[Connection[F] => F[A]] = None,
+    after:           Option[(A, Connection[F]) => F[Unit]] = None
   ): Resource[F, PooledDataSource[F]] =
     given Tracer[F] = tracer.getOrElse(Tracer.noop[F])
-    create(config, metricsTracker, meter, UUIDGen[F].randomUUID.map(_.toString), plugins, before, after)
+    create(config, metricsTracker, meter, UUIDGen[F].randomUUID.map(_.toString), plugins, telemetryConfig, before, after)

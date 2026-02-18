@@ -549,13 +549,14 @@ object MySQLDataSource:
    * }}}
    */
   def pooling[F[_]: Async: Network: Console: Hashing: UUIDGen](
-    config:         MySQLConfig,
-    metricsTracker: Option[PoolMetricsTracker[F]] = None,
-    meter:          Option[Meter[F]] = None,
-    tracer:         Option[Tracer[F]] = None,
-    plugins:        List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]]
+    config:          MySQLConfig,
+    metricsTracker:  Option[PoolMetricsTracker[F]] = None,
+    meter:           Option[Meter[F]] = None,
+    tracer:          Option[Tracer[F]] = None,
+    plugins:         List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
+    telemetryConfig: TelemetryConfig = TelemetryConfig.default
   ): Resource[F, PooledDataSource[F]] =
-    PooledDataSource.fromConfig(config, metricsTracker, meter, tracer, plugins)
+    PooledDataSource.fromConfig(config, metricsTracker, meter, tracer, plugins, telemetryConfig)
 
   /**
    * Creates a pooled DataSource with connection lifecycle hooks.
@@ -607,12 +608,13 @@ object MySQLDataSource:
    * }}}
    */
   def poolingWithBeforeAfter[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
-    config:         MySQLConfig,
-    metricsTracker: Option[PoolMetricsTracker[F]] = None,
-    meter:          Option[Meter[F]] = None,
-    tracer:         Option[Tracer[F]] = None,
-    plugins:        List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
-    before:         Option[Connection[F] => F[A]] = None,
-    after:          Option[(A, Connection[F]) => F[Unit]] = None
+    config:          MySQLConfig,
+    metricsTracker:  Option[PoolMetricsTracker[F]] = None,
+    meter:           Option[Meter[F]] = None,
+    tracer:          Option[Tracer[F]] = None,
+    plugins:         List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
+    telemetryConfig: TelemetryConfig = TelemetryConfig.default,
+    before:          Option[Connection[F] => F[A]] = None,
+    after:           Option[(A, Connection[F]) => F[Unit]] = None
   ): Resource[F, PooledDataSource[F]] =
-    PooledDataSource.fromConfigWithBeforeAfter(config, metricsTracker, meter, tracer, plugins, before, after)
+    PooledDataSource.fromConfigWithBeforeAfter(config, metricsTracker, meter, tracer, plugins, telemetryConfig, before, after)
