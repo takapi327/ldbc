@@ -107,7 +107,9 @@ private[ldbc] case class ConnectionImpl[F[_]: Tracer: Exchange: UUIDGen](
         useCursorFetch,
         useServerPrepStmts,
         database,
-        databaseTerm
+        databaseTerm,
+        telemetryConfig,
+        databaseMetrics
       ))
     )
 
