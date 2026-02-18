@@ -495,10 +495,14 @@ object PooledDataSource:
                    Temporal[F].raiseError[Unit](new SQLException("Pool reached maximum size"))
                } else Temporal[F].unit
 
-          endTime <- Clock[F].monotonic
-          _       <- metricsTracker.recordCreation(endTime - startTime)
-          _       <- databaseMetrics.recordConnectionCreateTime(endTime - startTime, poolName)
         yield pooled
+      }.guaranteeCase {
+        case Outcome.Canceled() => Temporal[F].unit
+        case _ =>
+          Clock[F].monotonic.flatMap { endTime =>
+            metricsTracker.recordCreation(endTime - startTime) *>
+              databaseMetrics.recordConnectionCreateTime(endTime - startTime, poolName)
+          }
       }
 
     private def resetConnection(conn: Connection[F]): F[Unit] = for

@@ -80,8 +80,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
         )
 
         for
-          startTime <- cats.effect.Clock[F].monotonic
-          resultSet <-
+          resultSet <- withDurationMetrics(
             if sql.toUpperCase.startsWith("CALL") then
               executeCallStatement(span).flatMap { resultSets =>
                 resultSets.headOption match
@@ -111,9 +110,13 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                     ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)
                   ) *>
                   receiveQueryResult()
-              }
-          endTime <- cats.effect.Clock[F].monotonic
-          _       <- databaseMetrics.recordOperationDuration(endTime - startTime, metricsAttributes*)
+              },
+            metricsAttributes*
+          )
+          _ <- resultSet match
+            case rs: ResultSetImpl[F] =>
+              databaseMetrics.recordReturnedRows(rs.records.size.toLong, metricsAttributes*)
+            case _ => F.unit
         yield resultSet
       } <* params.set(SortedMap.empty)
 
@@ -134,52 +137,49 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
           TelemetryAttribute.dbQueryText(processedSql)
         )
 
-        for
-          startTime <- cats.effect.Clock[F].monotonic
-          result    <-
-            if sql.toUpperCase.startsWith("CALL") then
-              executeCallStatement(span).flatMap { resultSets =>
-                resultSets.headOption match
-                  case None =>
-                    for
-                      resultSet <- F.pure(
-                                     ResultSetImpl.empty(
-                                       protocol,
-                                       serverVariables,
-                                       protocol.initialPacket.serverVersion,
-                                       resultSetClosed,
-                                       fetchSize,
-                                       useCursorFetch,
-                                       useServerPrepStmts
-                                     )
+        withDurationMetrics(
+          if sql.toUpperCase.startsWith("CALL") then
+            executeCallStatement(span).flatMap { resultSets =>
+              resultSets.headOption match
+                case None =>
+                  for
+                    resultSet <- F.pure(
+                                   ResultSetImpl.empty(
+                                     protocol,
+                                     serverVariables,
+                                     protocol.initialPacket.serverVersion,
+                                     resultSetClosed,
+                                     fetchSize,
+                                     useCursorFetch,
+                                     useServerPrepStmts
                                    )
-                      _ <- currentResultSet.set(Some(resultSet))
-                    yield resultSet
-                  case Some(resultSet) =>
-                    currentResultSet.update(_ => Some(resultSet)) *> resultSet.pure[F]
-              } *> retrieveOutParams() *> F.pure(-1L)
-            else
-              params.get.flatMap { params =>
-                span.addAttributes(queryAttributes*) *>
-                  sendQuery(buildQuery(sql, params)).flatMap {
-                    case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
-                    case error: ERRPacket =>
-                      val exception = error.toException(Some(sql), None)
-                      span.addAttributes(error.attributes*) *>
-                        span.recordException(exception, error.attributes*) *>
-                        span.setStatus(StatusCode.Error, exception.getMessage) *>
-                        F.raiseError(exception)
-                    case eof: EOFPacket =>
-                      val exception = new SQLException("Unexpected EOF packet")
-                      span.addAttribute(TelemetryAttribute.errorType(exception)) *>
-                        span.recordException(exception, eof.attribute) *>
-                        span.setStatus(StatusCode.Error, exception.getMessage) *>
-                        F.raiseError(exception)
-                  }
-              }
-          endTime <- cats.effect.Clock[F].monotonic
-          _       <- databaseMetrics.recordOperationDuration(endTime - startTime, metricsAttributes*)
-        yield result
+                                 )
+                    _ <- currentResultSet.set(Some(resultSet))
+                  yield resultSet
+                case Some(resultSet) =>
+                  currentResultSet.update(_ => Some(resultSet)) *> resultSet.pure[F]
+            } *> retrieveOutParams() *> F.pure(-1L)
+          else
+            params.get.flatMap { params =>
+              span.addAttributes(queryAttributes*) *>
+                sendQuery(buildQuery(sql, params)).flatMap {
+                  case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
+                  case error: ERRPacket =>
+                    val exception = error.toException(Some(sql), None)
+                    span.addAttributes(error.attributes*) *>
+                      span.recordException(exception, error.attributes*) *>
+                      span.setStatus(StatusCode.Error, exception.getMessage) *>
+                      F.raiseError(exception)
+                  case eof: EOFPacket =>
+                    val exception = new SQLException("Unexpected EOF packet")
+                    span.addAttribute(TelemetryAttribute.errorType(exception)) *>
+                      span.recordException(exception, eof.attribute) *>
+                      span.setStatus(StatusCode.Error, exception.getMessage) *>
+                      F.raiseError(exception)
+                }
+            },
+          metricsAttributes*
+        )
       }
 
   override def execute(): F[Boolean] =
@@ -268,10 +268,8 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
           else
             sql.toUpperCase match
               case q if q.startsWith("INSERT") =>
-                for
-                  startTime <- cats.effect.Clock[F].monotonic
-                  result    <-
-                    span.addAttributes(batchAttributes*) *>
+                withDurationMetrics(
+                  span.addAttributes(batchAttributes*) *>
                       sendQuery(sql.split("VALUES").head + " VALUES" + args.mkString(","))
                         .flatMap {
                           case _: OKPacket      => F.pure(Array.fill(args.length)(Statement.SUCCESS_NO_INFO.toLong))
@@ -287,15 +285,12 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                               span.recordException(exception, eof.attribute) *>
                               span.setStatus(StatusCode.Error, exception.getMessage) *>
                               F.raiseError(exception)
-                        }
-                  endTime <- cats.effect.Clock[F].monotonic
-                  _       <- databaseMetrics.recordOperationDuration(endTime - startTime, metricsAttributes*)
-                yield result
+                        },
+                  metricsAttributes*
+                )
               case q if q.startsWith("UPDATE") || q.startsWith("DELETE") || q.startsWith("CALL") =>
-                for
-                  startTime <- cats.effect.Clock[F].monotonic
-                  result    <-
-                    span.addAttributes(batchAttributes*) *>
+                withDurationMetrics(
+                  span.addAttributes(batchAttributes*) *>
                       protocol.resetSequenceId *>
                       protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON) *>
                       protocol.resetSequenceId *>
@@ -333,10 +328,9 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                         }
                         .map(_.toArray) <*
                       protocol.resetSequenceId <*
-                      protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF)
-                  endTime <- cats.effect.Clock[F].monotonic
-                  _       <- databaseMetrics.recordOperationDuration(endTime - startTime, metricsAttributes*)
-                yield result
+                      protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF),
+                  metricsAttributes*
+                )
               case _ =>
                 F.raiseError(
                   new SQLException("The batch query must be an INSERT, UPDATE, or DELETE, CALL statement.")

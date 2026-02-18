@@ -120,45 +120,45 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
         TelemetryAttribute.dbQueryText(processedSql)
       )
 
-      for
-        startTime   <- Clock[F].monotonic
-        parameter   <- params.get
-        _           <- span.addAttributes(queryAttributes*)
-        columnCount <-
-          protocol.resetSequenceId *>
-            protocol.send(
-              ComStmtExecutePacket(statementId, parameter, resultSetType, resultSetConcurrency, useCursorFetch)
-            ) *>
-            protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
-              case _: OKPacket      => F.pure(ColumnsNumberPacket(0))
-              case error: ERRPacket =>
-                val exception = error.toException(Some(sql), None)
-                span.addAttributes(error.attributes*) *>
-                  span.recordException(exception, error.attributes*) *>
-                  span.setStatus(StatusCode.Error, exception.getMessage) *>
-                  F.raiseError(exception)
-              case result: ColumnsNumberPacket => F.pure(result)
-            }
-        columnDefinitions <-
-          protocol.repeatProcess(
-            columnCount.size,
-            ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags)
-          )
-        resultSetRow <-
-          protocol.readUntilEOF[BinaryProtocolResultSetRowPacket](
-            BinaryProtocolResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions)
-          )
-        _ <- columnDefinitions.headOption match {
-               case None         => F.unit
-               case Some(column) => span.addAttribute(TelemetryAttribute.dbCollectionName(column.table))
-             }
-        _ <- params.set(SortedMap.empty)
-        resultSet = buildResultSet(columnDefinitions, resultSetRow)
-        _       <- currentResultSet.set(Some(resultSet))
-        endTime <- Clock[F].monotonic
-        _       <- databaseMetrics.recordOperationDuration(endTime - startTime, metricsAttributes*)
-        _       <- databaseMetrics.recordReturnedRows(resultSetRow.size.toLong, metricsAttributes*)
-      yield resultSet
+      withDurationMetrics(
+        (for
+          parameter   <- params.get
+          _           <- span.addAttributes(queryAttributes*)
+          columnCount <-
+            protocol.resetSequenceId *>
+              protocol.send(
+                ComStmtExecutePacket(statementId, parameter, resultSetType, resultSetConcurrency, useCursorFetch)
+              ) *>
+              protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
+                case _: OKPacket      => F.pure(ColumnsNumberPacket(0))
+                case error: ERRPacket =>
+                  val exception = error.toException(Some(sql), None)
+                  span.addAttributes(error.attributes*) *>
+                    span.recordException(exception, error.attributes*) *>
+                    span.setStatus(StatusCode.Error, exception.getMessage) *>
+                    F.raiseError(exception)
+                case result: ColumnsNumberPacket => F.pure(result)
+              }
+          columnDefinitions <-
+            protocol.repeatProcess(
+              columnCount.size,
+              ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags)
+            )
+          resultSetRow <-
+            protocol.readUntilEOF[BinaryProtocolResultSetRowPacket](
+              BinaryProtocolResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions)
+            )
+          _ <- columnDefinitions.headOption match {
+                 case None         => F.unit
+                 case Some(column) => span.addAttribute(TelemetryAttribute.dbCollectionName(column.table))
+               }
+          _ <- params.set(SortedMap.empty)
+          resultSet = buildResultSet(columnDefinitions, resultSetRow)
+          _ <- currentResultSet.set(Some(resultSet))
+          _ <- databaseMetrics.recordReturnedRows(resultSetRow.size.toLong, metricsAttributes*)
+        yield resultSet),
+        metricsAttributes*
+      )
     }
 
   override def executeLargeUpdate(): F[Long] =
@@ -177,10 +177,8 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
           TelemetryAttribute.dbQueryText(processedSql)
         )
 
-        for
-          startTime <- Clock[F].monotonic
-          result    <-
-            span.addAttributes(queryAttributes*) *>
+        withDurationMetrics(
+          span.addAttributes(queryAttributes*) *>
               protocol.resetSequenceId *>
               protocol.send(
                 ComStmtExecutePacket(statementId, params, resultSetType, resultSetConcurrency, useCursorFetch)
@@ -199,10 +197,9 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
                     span.recordException(exception, eof.attribute) *>
                     span.setStatus(StatusCode.Error, exception.getMessage) *>
                     F.raiseError(exception)
-              }
-          endTime <- Clock[F].monotonic
-          _       <- databaseMetrics.recordOperationDuration(endTime - startTime, metricsAttributes*)
-        yield result
+              },
+          metricsAttributes*
+        )
       } <* params.set(SortedMap.empty)
     }
 
@@ -234,10 +231,8 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
 
                 if args.isEmpty then F.pure(Array.empty)
                 else
-                  for
-                    startTime <- Clock[F].monotonic
-                    result    <-
-                      span.addAttributes(batchAttributes*) *>
+                  withDurationMetrics(
+                    span.addAttributes(batchAttributes*) *>
                         protocol.resetSequenceId *>
                         protocol.send(
                           ComQueryPacket(
@@ -262,10 +257,9 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
                                 span.recordException(exception, eof.attribute) *>
                                 span.setStatus(StatusCode.Error, exception.getMessage) *>
                                 F.raiseError(exception)
-                          }
-                    endTime <- Clock[F].monotonic
-                    _       <- databaseMetrics.recordOperationDuration(endTime - startTime, metricsAttributes*)
-                  yield result
+                          },
+                    metricsAttributes*
+                  )
               }
           } <* params.set(SortedMap.empty) <* batchedArgs.set(Vector.empty)
         case q if q.startsWith("update") || q.startsWith("delete") =>
@@ -280,10 +274,8 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
 
                   if args.isEmpty then F.pure(Array.empty)
                   else
-                    for
-                      startTime <- Clock[F].monotonic
-                      result    <-
-                        span.addAttributes(batchAttributes*) *>
+                    withDurationMetrics(
+                      span.addAttributes(batchAttributes*) *>
                           protocol.resetSequenceId *>
                           protocol.send(
                             ComQueryPacket(
@@ -317,10 +309,9 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
                                     }
                               yield result
                             }
-                            .map(_.toArray)
-                      endTime <- Clock[F].monotonic
-                      _       <- databaseMetrics.recordOperationDuration(endTime - startTime, metricsAttributes*)
-                    yield result
+                            .map(_.toArray),
+                      metricsAttributes*
+                    )
                 }
             } <*
             protocol.resetSequenceId <*

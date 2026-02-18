@@ -84,10 +84,8 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
           TelemetryAttribute.dbQueryText(processedSql)
         )
 
-        for
-          startTime <- Clock[F].monotonic
-          resultSet <-
-            span.addAttributes(queryAttributes*) *>
+        withDurationMetrics(
+          span.addAttributes(queryAttributes*) *>
               protocol.resetSequenceId *>
               protocol.send(
                 ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)
@@ -141,13 +139,12 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
                                   resultSetConcurrency,
                                   Some(sql)
                                 )
-                    _       <- currentResultSet.set(Some(resultSet))
-                    endTime <- Clock[F].monotonic
-                    _       <- databaseMetrics.recordOperationDuration(endTime - startTime, metricsAttributes*)
-                    _       <- databaseMetrics.recordReturnedRows(resultSetRow.size.toLong, metricsAttributes*)
+                    _ <- currentResultSet.set(Some(resultSet))
+                    _ <- databaseMetrics.recordReturnedRows(resultSetRow.size.toLong, metricsAttributes*)
                   yield resultSet
-              }
-        yield resultSet
+              },
+          metricsAttributes*
+        )
       } <* params.set(SortedMap.empty)
     }
 
@@ -167,10 +164,8 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
           TelemetryAttribute.dbQueryText(processedSql)
         )
 
-        for
-          startTime <- Clock[F].monotonic
-          result    <-
-            span.addAttributes(queryAttributes*) *>
+        withDurationMetrics(
+          span.addAttributes(queryAttributes*) *>
               protocol.resetSequenceId *>
               protocol.send(
                 ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)
@@ -189,10 +184,9 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
                     span.recordException(exception, eof.attribute) *>
                     span.setStatus(StatusCode.Error, exception.getMessage) *>
                     F.raiseError(exception)
-              }
-          endTime <- Clock[F].monotonic
-          _       <- databaseMetrics.recordOperationDuration(endTime - startTime, metricsAttributes*)
-        yield result
+              },
+          metricsAttributes*
+        )
       } <* params.set(SortedMap.empty)
     }
 
@@ -224,10 +218,8 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
 
                 if args.isEmpty then F.pure(Array.empty)
                 else
-                  for
-                    startTime <- Clock[F].monotonic
-                    result    <-
-                      span.addAttributes(batchAttributes*) *>
+                  withDurationMetrics(
+                    span.addAttributes(batchAttributes*) *>
                         protocol.resetSequenceId *>
                         protocol.send(
                           ComQueryPacket(
@@ -252,10 +244,9 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
                                 span.recordException(exception, eof.attribute) *>
                                 span.setStatus(StatusCode.Error, exception.getMessage) *>
                                 F.raiseError(exception)
-                          }
-                    endTime <- Clock[F].monotonic
-                    _       <- databaseMetrics.recordOperationDuration(endTime - startTime, metricsAttributes*)
-                  yield result
+                          },
+                    metricsAttributes*
+                  )
               }
           } <* params.set(SortedMap.empty) <* batchedArgs.set(Vector.empty)
         case q if q.startsWith("update") || q.startsWith("delete") =>
@@ -270,10 +261,8 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
 
                   if args.isEmpty then F.pure(Array.empty)
                   else
-                    for
-                      startTime <- Clock[F].monotonic
-                      result    <-
-                        span.addAttributes(batchAttributes*) *>
+                    withDurationMetrics(
+                      span.addAttributes(batchAttributes*) *>
                           protocol.resetSequenceId *>
                           protocol.send(
                             ComQueryPacket(
@@ -307,10 +296,9 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
                                     }
                               yield result
                             }
-                            .map(_.toArray)
-                      endTime <- Clock[F].monotonic
-                      _       <- databaseMetrics.recordOperationDuration(endTime - startTime, metricsAttributes*)
-                    yield result
+                            .map(_.toArray),
+                      metricsAttributes*
+                    )
                 }
             } <*
             protocol.resetSequenceId <*

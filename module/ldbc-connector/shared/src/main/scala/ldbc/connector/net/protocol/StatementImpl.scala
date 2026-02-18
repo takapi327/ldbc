@@ -12,6 +12,7 @@ import cats.*
 import cats.syntax.all.*
 
 import cats.effect.*
+import cats.effect.syntax.monadCancel.*
 
 import org.typelevel.otel4s.trace.{ Span, StatusCode, Tracer }
 import org.typelevel.otel4s.Attribute
@@ -67,10 +68,8 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
         TelemetryAttribute.dbQueryText(processedSql)
       )
 
-      for
-        startTime <- Clock[F].monotonic
-        resultSet <-
-          span.addAttributes(queryAttributes*) *>
+      withDurationMetrics(
+        span.addAttributes(queryAttributes*) *>
             protocol.resetSequenceId *>
             protocol.send(ComQueryPacket(sql, protocol.initialPacket.capabilityFlags, ListMap.empty)) *>
             protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
@@ -125,13 +124,12 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
                                 resultSetConcurrency,
                                 Some(sql)
                               )
-                  _       <- currentResultSet.set(Some(resultSet))
-                  endTime <- Clock[F].monotonic
-                  _       <- databaseMetrics.recordOperationDuration(endTime - startTime, metricsAttributes*)
-                  _       <- databaseMetrics.recordReturnedRows(resultSetRow.size.toLong, metricsAttributes*)
+                  _ <- currentResultSet.set(Some(resultSet))
+                  _ <- databaseMetrics.recordReturnedRows(resultSetRow.size.toLong, metricsAttributes*)
                 yield resultSet
-            }
-      yield resultSet
+            },
+        metricsAttributes*
+      )
     }
 
   private def buildServerPreparedStatement(sql: String): F[PreparedStatement[F]] =
@@ -250,10 +248,8 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
         TelemetryAttribute.dbQueryText(processedSql)
       )
 
-      for
-        startTime <- Clock[F].monotonic
-        result    <-
-          span.addAttributes(queryAttributes*) *>
+      withDurationMetrics(
+        span.addAttributes(queryAttributes*) *>
             protocol.resetSequenceId *> (
               protocol.send(ComQueryPacket(sql, protocol.initialPacket.capabilityFlags, ListMap.empty)) *>
                 protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
@@ -272,10 +268,9 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
                       span.setStatus(StatusCode.Error, exception.getMessage) *>
                       F.raiseError(exception)
                 }
-            )
-        endTime <- Clock[F].monotonic
-        _       <- databaseMetrics.recordOperationDuration(endTime - startTime, metricsAttributes*)
-      yield result
+            ),
+        metricsAttributes*
+      )
     }
 
   override def close(): F[Unit] = statementClosed.set(true) *> resultSetClosed.set(true)
@@ -305,10 +300,8 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
 
           if args.isEmpty then F.pure(Array.empty)
           else
-            for
-              startTime <- Clock[F].monotonic
-              result    <-
-                span.addAttributes(batchAttributes*) *>
+            withDurationMetrics(
+              span.addAttributes(batchAttributes*) *>
                   protocol.resetSequenceId *>
                   protocol.send(
                     ComQueryPacket(args.mkString(";"), protocol.initialPacket.capabilityFlags, ListMap.empty)
@@ -338,10 +331,9 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
                             }
                       yield result
                     }
-                    .map(_.toArray)
-              endTime <- Clock[F].monotonic
-              _       <- databaseMetrics.recordOperationDuration(endTime - startTime, metricsAttributes*)
-            yield result
+                    .map(_.toArray),
+              metricsAttributes*
+            )
         }
       } <* protocol.resetSequenceId <* protocol.comSetOption(
         EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF
@@ -383,7 +375,7 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
 
 object StatementImpl:
 
-  private[ldbc] trait ShareStatement[F[_]](using F: MonadThrow[F]) extends Statement[F]:
+  private[ldbc] trait ShareStatement[F[_]](using F: Sync[F]) extends Statement[F]:
 
     def statementClosed:   Ref[F, Boolean]
     def connectionClosed:  Ref[F, Boolean]
@@ -396,6 +388,7 @@ object StatementImpl:
     def fetchSize:      Ref[F, Int]
     def useCursorFetch: Boolean
     def resultSetType:  Int
+    def databaseMetrics: DatabaseMetrics[F]
 
     override def getResultSet():        F[Option[ResultSet[F]]] = checkClosed() *> currentResultSet.get
     override def getUpdateCount():      F[Int]                  = checkClosed() *> updateCount.get.map(_.toInt)
@@ -459,3 +452,14 @@ object StatementImpl:
         TelemetryAttribute.serverAddress(protocol.hostInfo.host),
         TelemetryAttribute.serverPort(protocol.hostInfo.port)
       ) ++ protocol.hostInfo.database.map(name => TelemetryAttribute.dbNamespace(name)).toList
+
+    protected def withDurationMetrics[A](operation: F[A], metricsAttributes: Attribute[?]*): F[A] =
+      Clock[F].monotonic.flatMap { startTime =>
+        operation.guaranteeCase {
+          case Outcome.Canceled() => Sync[F].unit
+          case _ =>
+            Clock[F].monotonic.flatMap { endTime =>
+              databaseMetrics.recordOperationDuration(endTime - startTime, metricsAttributes*)
+            }
+        }
+      }

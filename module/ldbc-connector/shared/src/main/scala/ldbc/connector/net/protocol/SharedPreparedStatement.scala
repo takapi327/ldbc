@@ -20,7 +20,7 @@ import ldbc.sql.PreparedStatement
 import ldbc.connector.data.*
 import ldbc.connector.exception.SQLException
 
-private[ldbc] trait SharedPreparedStatement[F[_]: MonadThrow]
+private[ldbc] trait SharedPreparedStatement[F[_]: Sync]
   extends PreparedStatement[F],
           StatementImpl.ShareStatement[F]:
 
