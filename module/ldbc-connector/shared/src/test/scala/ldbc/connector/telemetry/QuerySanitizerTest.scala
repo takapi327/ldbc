@@ -364,6 +364,48 @@ class QuerySanitizerTest extends FTestPlatform:
   }
 
   // ============================================================
+  // BooleanPattern context-awareness tests
+  // Verify that IS TRUE / IS FALSE / IS NOT TRUE / IS NOT FALSE
+  // are preserved as SQL keywords, not replaced with ?
+  // ============================================================
+
+  test("sanitize should preserve IS TRUE as SQL keyword") {
+    val sql      = "SELECT * FROM users WHERE active IS TRUE"
+    val expected = "SELECT * FROM users WHERE active IS TRUE"
+    assertEquals(QuerySanitizer.sanitize(sql), expected)
+  }
+
+  test("sanitize should preserve IS FALSE as SQL keyword") {
+    val sql      = "SELECT * FROM users WHERE deleted IS FALSE"
+    val expected = "SELECT * FROM users WHERE deleted IS FALSE"
+    assertEquals(QuerySanitizer.sanitize(sql), expected)
+  }
+
+  test("sanitize should preserve IS NOT TRUE as SQL keyword") {
+    val sql      = "SELECT * FROM users WHERE active IS NOT TRUE"
+    val expected = "SELECT * FROM users WHERE active IS NOT TRUE"
+    assertEquals(QuerySanitizer.sanitize(sql), expected)
+  }
+
+  test("sanitize should preserve IS NOT FALSE as SQL keyword") {
+    val sql      = "SELECT * FROM users WHERE deleted IS NOT FALSE"
+    val expected = "SELECT * FROM users WHERE deleted IS NOT FALSE"
+    assertEquals(QuerySanitizer.sanitize(sql), expected)
+  }
+
+  test("sanitize should replace standalone TRUE/FALSE boolean literals") {
+    val sql      = "INSERT INTO flags (col) VALUES (TRUE)"
+    val expected = "INSERT INTO flags (col) VALUES (?)"
+    assertEquals(QuerySanitizer.sanitize(sql), expected)
+  }
+
+  test("sanitize should replace TRUE/FALSE in WHERE equality") {
+    val sql      = "SELECT * FROM users WHERE active = TRUE AND deleted = FALSE"
+    val expected = "SELECT * FROM users WHERE active = ? AND deleted = ?"
+    assertEquals(QuerySanitizer.sanitize(sql), expected)
+  }
+
+  // ============================================================
   // Multi-line SQL tests
   // ============================================================
 
