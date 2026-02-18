@@ -715,10 +715,7 @@ object PooledDataSource:
     val trackerResource: Resource[F, PoolMetricsTracker[F]] =
       metricsTracker match
         case Some(tracker) => Resource.pure(tracker)
-        case None          =>
-          meter match
-            case Some(_) => Resource.eval(PoolMetricsTracker.inMemory[F])
-            case None    => Resource.pure(PoolMetricsTracker.noop[F])
+        case None          => Resource.pure(PoolMetricsTracker.noop[F])
 
     val databaseMetricsResource: Resource[F, DatabaseMetrics[F]] =
       DatabaseMetrics.fromMeter(meter.getOrElse(Meter.noop[F]))
