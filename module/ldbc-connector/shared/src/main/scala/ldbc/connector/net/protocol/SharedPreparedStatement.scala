@@ -20,9 +20,7 @@ import ldbc.sql.PreparedStatement
 import ldbc.connector.data.*
 import ldbc.connector.exception.SQLException
 
-private[ldbc] trait SharedPreparedStatement[F[_]: Sync]
-  extends PreparedStatement[F],
-          StatementImpl.ShareStatement[F]:
+private[ldbc] trait SharedPreparedStatement[F[_]: Sync] extends PreparedStatement[F], StatementImpl.ShareStatement[F]:
 
   def params: Ref[F, SortedMap[Int, Parameter]]
 

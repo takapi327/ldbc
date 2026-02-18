@@ -106,7 +106,7 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
   private def getOrCreateDatabaseMetrics: Resource[F, DatabaseMetrics[F]] =
     Resource.eval(databaseMetricsRef.get).flatMap {
       case Some(cached) => Resource.pure(cached)
-      case None =>
+      case None         =>
         DatabaseMetrics.fromMeter(meter.getOrElse(Meter.noop[F])).flatTap { metrics =>
           Resource.eval(databaseMetricsRef.set(Some(metrics)))
         }
@@ -631,4 +631,13 @@ object MySQLDataSource:
     before:          Option[Connection[F] => F[A]] = None,
     after:           Option[(A, Connection[F]) => F[Unit]] = None
   ): Resource[F, PooledDataSource[F]] =
-    PooledDataSource.fromConfigWithBeforeAfter(config, metricsTracker, meter, tracer, plugins, telemetryConfig, before, after)
+    PooledDataSource.fromConfigWithBeforeAfter(
+      config,
+      metricsTracker,
+      meter,
+      tracer,
+      plugins,
+      telemetryConfig,
+      before,
+      after
+    )

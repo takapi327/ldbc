@@ -178,25 +178,25 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
 
         withDurationMetrics(
           span.addAttributes(queryAttributes*) *>
-              protocol.resetSequenceId *>
-              protocol.send(
-                ComStmtExecutePacket(statementId, params, resultSetType, resultSetConcurrency, useCursorFetch)
-              ) *>
-              protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
-                case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
-                case error: ERRPacket =>
-                  val exception = error.toException(Some(sql), None)
-                  span.addAttributes(error.attributes*) *>
-                    span.recordException(exception, error.attributes*) *>
-                    span.setStatus(StatusCode.Error, exception.getMessage) *>
-                    F.raiseError(exception)
-                case eof: EOFPacket =>
-                  val exception = new SQLException("Unexpected EOF packet")
-                  span.addAttribute(TelemetryAttribute.errorType(exception)) *>
-                    span.recordException(exception, eof.attribute) *>
-                    span.setStatus(StatusCode.Error, exception.getMessage) *>
-                    F.raiseError(exception)
-              },
+            protocol.resetSequenceId *>
+            protocol.send(
+              ComStmtExecutePacket(statementId, params, resultSetType, resultSetConcurrency, useCursorFetch)
+            ) *>
+            protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
+              case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
+              case error: ERRPacket =>
+                val exception = error.toException(Some(sql), None)
+                span.addAttributes(error.attributes*) *>
+                  span.recordException(exception, error.attributes*) *>
+                  span.setStatus(StatusCode.Error, exception.getMessage) *>
+                  F.raiseError(exception)
+              case eof: EOFPacket =>
+                val exception = new SQLException("Unexpected EOF packet")
+                span.addAttribute(TelemetryAttribute.errorType(exception)) *>
+                  span.recordException(exception, eof.attribute) *>
+                  span.setStatus(StatusCode.Error, exception.getMessage) *>
+                  F.raiseError(exception)
+            },
           metricsAttributes*
         )
       } <* params.set(SortedMap.empty)
@@ -232,31 +232,31 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
                 else
                   withDurationMetrics(
                     span.addAttributes(batchAttributes*) *>
-                        protocol.resetSequenceId *>
-                        protocol.send(
-                          ComQueryPacket(
-                            sql.split("VALUES").head + " VALUES" + args.mkString(","),
-                            protocol.initialPacket.capabilityFlags,
-                            ListMap.empty
-                          )
-                        ) *>
-                        protocol
-                          .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
-                          .flatMap {
-                            case _: OKPacket      => F.pure(Array.fill(args.length)(Statement.SUCCESS_NO_INFO.toLong))
-                            case error: ERRPacket =>
-                              val exception = error.toException(Some(sql), None)
-                              span.addAttributes(error.attributes*) *>
-                                span.recordException(exception, error.attributes*) *>
-                                span.setStatus(StatusCode.Error, exception.getMessage) *>
-                                F.raiseError(exception)
-                            case eof: EOFPacket =>
-                              val exception = new SQLException("Unexpected EOF packet")
-                              span.addAttribute(TelemetryAttribute.errorType(exception)) *>
-                                span.recordException(exception, eof.attribute) *>
-                                span.setStatus(StatusCode.Error, exception.getMessage) *>
-                                F.raiseError(exception)
-                          },
+                      protocol.resetSequenceId *>
+                      protocol.send(
+                        ComQueryPacket(
+                          sql.split("VALUES").head + " VALUES" + args.mkString(","),
+                          protocol.initialPacket.capabilityFlags,
+                          ListMap.empty
+                        )
+                      ) *>
+                      protocol
+                        .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
+                        .flatMap {
+                          case _: OKPacket      => F.pure(Array.fill(args.length)(Statement.SUCCESS_NO_INFO.toLong))
+                          case error: ERRPacket =>
+                            val exception = error.toException(Some(sql), None)
+                            span.addAttributes(error.attributes*) *>
+                              span.recordException(exception, error.attributes*) *>
+                              span.setStatus(StatusCode.Error, exception.getMessage) *>
+                              F.raiseError(exception)
+                          case eof: EOFPacket =>
+                            val exception = new SQLException("Unexpected EOF packet")
+                            span.addAttribute(TelemetryAttribute.errorType(exception)) *>
+                              span.recordException(exception, eof.attribute) *>
+                              span.setStatus(StatusCode.Error, exception.getMessage) *>
+                              F.raiseError(exception)
+                        },
                     metricsAttributes*
                   )
               }
@@ -275,40 +275,40 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
                   else
                     withDurationMetrics(
                       span.addAttributes(batchAttributes*) *>
-                          protocol.resetSequenceId *>
-                          protocol.send(
-                            ComQueryPacket(
-                              args.mkString(";"),
-                              protocol.initialPacket.capabilityFlags,
-                              ListMap.empty
-                            )
-                          ) *>
-                          args
-                            .foldLeft(F.pure(Vector.empty[Long])) { ($acc, _) =>
-                              for
-                                acc    <- $acc
-                                result <-
-                                  protocol
-                                    .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
-                                    .flatMap {
-                                      case result: OKPacket =>
-                                        lastInsertId.set(result.lastInsertId) *> F.pure(acc :+ result.affectedRows)
-                                      case error: ERRPacket =>
-                                        val exception = error.toException("Failed to execute batch", acc)
-                                        span.addAttributes(error.attributes*) *>
-                                          span.recordException(exception, error.attributes*) *>
-                                          span.setStatus(StatusCode.Error, exception.getMessage) *>
-                                          F.raiseError(exception)
-                                      case eof: EOFPacket =>
-                                        val exception = new SQLException("Unexpected EOF packet")
-                                        span.addAttribute(TelemetryAttribute.errorType(exception)) *>
-                                          span.recordException(exception, eof.attribute) *>
-                                          span.setStatus(StatusCode.Error, exception.getMessage) *>
-                                          F.raiseError(exception)
-                                    }
-                              yield result
-                            }
-                            .map(_.toArray),
+                        protocol.resetSequenceId *>
+                        protocol.send(
+                          ComQueryPacket(
+                            args.mkString(";"),
+                            protocol.initialPacket.capabilityFlags,
+                            ListMap.empty
+                          )
+                        ) *>
+                        args
+                          .foldLeft(F.pure(Vector.empty[Long])) { ($acc, _) =>
+                            for
+                              acc    <- $acc
+                              result <-
+                                protocol
+                                  .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
+                                  .flatMap {
+                                    case result: OKPacket =>
+                                      lastInsertId.set(result.lastInsertId) *> F.pure(acc :+ result.affectedRows)
+                                    case error: ERRPacket =>
+                                      val exception = error.toException("Failed to execute batch", acc)
+                                      span.addAttributes(error.attributes*) *>
+                                        span.recordException(exception, error.attributes*) *>
+                                        span.setStatus(StatusCode.Error, exception.getMessage) *>
+                                        F.raiseError(exception)
+                                    case eof: EOFPacket =>
+                                      val exception = new SQLException("Unexpected EOF packet")
+                                      span.addAttribute(TelemetryAttribute.errorType(exception)) *>
+                                        span.recordException(exception, eof.attribute) *>
+                                        span.setStatus(StatusCode.Error, exception.getMessage) *>
+                                        F.raiseError(exception)
+                                  }
+                            yield result
+                          }
+                          .map(_.toArray),
                       metricsAttributes*
                     )
                 }

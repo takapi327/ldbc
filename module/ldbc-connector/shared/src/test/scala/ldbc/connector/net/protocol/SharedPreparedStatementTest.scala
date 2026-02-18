@@ -16,8 +16,8 @@ import ldbc.sql.ResultSet
 
 import ldbc.connector.data.*
 import ldbc.connector.exception.SQLException
-import ldbc.connector.FTestPlatform
 import ldbc.connector.telemetry.DatabaseMetrics
+import ldbc.connector.FTestPlatform
 
 class SharedPreparedStatementTest extends SharedPreparedStatement[IO], FTestPlatform:
 
