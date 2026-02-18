@@ -142,31 +142,31 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
         )
 
         span.addAttributes(queryAttributes*) *>
-        withDurationMetrics(
-          if sql.toUpperCase.startsWith("CALL") then
-            executeCallStatement(span).flatMap { resultSets =>
-              resultSets.headOption match
-                case None =>
-                  for
-                    resultSet <- F.pure(
-                                   ResultSetImpl.empty(
-                                     protocol,
-                                     serverVariables,
-                                     protocol.initialPacket.serverVersion,
-                                     resultSetClosed,
-                                     fetchSize,
-                                     useCursorFetch,
-                                     useServerPrepStmts
+          withDurationMetrics(
+            if sql.toUpperCase.startsWith("CALL") then
+              executeCallStatement(span).flatMap { resultSets =>
+                resultSets.headOption match
+                  case None =>
+                    for
+                      resultSet <- F.pure(
+                                     ResultSetImpl.empty(
+                                       protocol,
+                                       serverVariables,
+                                       protocol.initialPacket.serverVersion,
+                                       resultSetClosed,
+                                       fetchSize,
+                                       useCursorFetch,
+                                       useServerPrepStmts
+                                     )
                                    )
-                                 )
-                    _ <- currentResultSet.set(Some(resultSet))
-                  yield resultSet
-                case Some(resultSet) =>
-                  currentResultSet.update(_ => Some(resultSet)) *> resultSet.pure[F]
-            } *> retrieveOutParams() *> F.pure(-1L)
-          else
-            params.get.flatMap { params =>
-              sendQuery(buildQuery(sql, params)).flatMap {
+                      _ <- currentResultSet.set(Some(resultSet))
+                    yield resultSet
+                  case Some(resultSet) =>
+                    currentResultSet.update(_ => Some(resultSet)) *> resultSet.pure[F]
+              } *> retrieveOutParams() *> F.pure(-1L)
+            else
+              params.get.flatMap { params =>
+                sendQuery(buildQuery(sql, params)).flatMap {
                   case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
                   case error: ERRPacket =>
                     val exception = error.toException(Some(sql), None)
@@ -181,10 +181,10 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                       span.setStatus(StatusCode.Error, exception.getMessage) *>
                       F.raiseError(exception)
                 }
-            }
-          ,
-          metricsAttributes*
-        )
+              }
+            ,
+            metricsAttributes*
+          )
       }
 
   override def execute(): F[Boolean] =

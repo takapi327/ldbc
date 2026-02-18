@@ -149,4 +149,3 @@ class SpanNameGeneratorTest extends FTestPlatform:
     )
     assertEquals(SpanNameGenerator.generate(ctx), "USE test_db")
   }
-
