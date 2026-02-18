@@ -164,7 +164,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                   sendQuery(buildQuery(sql, params)).flatMap {
                     case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
                     case error: ERRPacket =>
-                      val exception = error.toException(Some(sql), None, params)
+                      val exception = error.toException(Some(sql), None)
                       span.addAttributes(error.attributes*) *>
                         span.recordException(exception, error.attributes*) *>
                         span.setStatus(StatusCode.Error, exception.getMessage) *>
@@ -213,7 +213,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                 sendQuery(buildQuery(sql, params)).flatMap {
                   case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
                   case error: ERRPacket =>
-                    val exception = error.toException(Some(sql), None, params)
+                    val exception = error.toException(Some(sql), None)
                     span.addAttributes(error.attributes*) *>
                       span.recordException(exception, error.attributes*) *>
                       span.setStatus(StatusCode.Error, exception.getMessage) *>
