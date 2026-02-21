@@ -304,23 +304,3 @@ object TelemetryAttribute:
   def schemaUrl: Attribute[String] =
     Attribute(OTEL_SCHEMA_URL, SCHEMA_URL_VALUE)
 
-  // ============================================================
-  // Legacy compatibility (deprecated)
-  // ============================================================
-
-  /**
-   * Batch size for batch operations.
-   * Per OpenTelemetry spec: db.operation.batch.size should NOT be set to 1.
-   * Operations are only considered batches when they contain two or more operations.
-   *
-   * @param size The number of operations in the batch
-   * @return List of attributes for batch operations (empty if size < 2)
-   */
-  @deprecated("Use dbOperationBatchSize instead", "0.7.0")
-  def batchSize(size: Long): List[Attribute[?]] =
-    if size >= 2 then
-      List(
-        dbOperationName(SqlOperation.BATCH),
-        Attribute(DB_OPERATION_BATCH_SIZE, size)
-      )
-    else List.empty
