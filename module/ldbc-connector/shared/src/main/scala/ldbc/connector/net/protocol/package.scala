@@ -22,3 +22,7 @@ package object protocol:
   def exchange[F[_]: Tracer, A](span: TelemetrySpanName)(f: Span[F] => F[A])(using
     exchange: Exchange[F]
   ): F[A] = Tracer[F].span(span.name).use(span => exchange(f(span)))
+
+  def exchange[F[_]: Tracer, A](spanName: String)(f: Span[F] => F[A])(using
+    exchange: Exchange[F]
+  ): F[A] = Tracer[F].span(spanName).use(span => exchange(f(span)))

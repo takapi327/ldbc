@@ -135,7 +135,8 @@ class PoolStateTest extends FTestPlatform:
       totalAcquisitions = 1000,
       totalReleases     = 995,
       totalCreations    = 100,
-      totalRemovals     = 10
+      totalRemovals     = 10,
+      gauges            = Map.empty
     )
 
     val state = PoolState[IO](

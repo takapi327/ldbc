@@ -19,7 +19,7 @@ import ldbc.dsl.codec.Decoder
  * @param params
  *   statement has '?' that the statement has.
  */
-case class Mysql(statement: String, params: List[Parameter.Dynamic]) extends SQL, ParamBinder:
+case class Mysql(statement: String, params: List[Parameter.Dynamic]) extends SQL:
 
   @targetName("combine")
   override def ++(sql: SQL): Mysql =

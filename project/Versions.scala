@@ -3,7 +3,8 @@
   */
 
 object LdbcVersions {
-  val latest = "0.5"
+  val latest = "0.6"
+  val v05    = "0.5"
   val v04    = "0.4"
   val v03    = "0.3"
   val v02    = "0.2"

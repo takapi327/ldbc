@@ -18,8 +18,6 @@ import ldbc.sql.DatabaseMetaData
 
 import ldbc.connector.exception.*
 
-import ldbc.authentication.plugin.MysqlClearPasswordPlugin
-
 class ConnectionTest extends FTestPlatform:
 
   given Tracer[IO] = Tracer.noop[IO]
@@ -66,79 +64,6 @@ class ConnectionTest extends FTestPlatform:
     interceptIO[SQLClientInfoException] {
       connection.use(_ => IO.unit)
     }
-  }
-
-  test("A user using mysql_native_password can establish a connection with the MySQL server.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc_mysql_native_user",
-      password = Some("ldbc_mysql_native_password")
-    )
-    assertIOBoolean(connection.use(_ => IO(true)))
-  }
-
-  test(
-    "Connections to MySQL servers using users with mysql_native_password will succeed if allowPublicKeyRetrieval is enabled for non-SSL connections."
-  ) {
-    val connection = Connection[IO](
-      host                    = "127.0.0.1",
-      port                    = 13306,
-      user                    = "ldbc_mysql_native_user",
-      password                = Some("ldbc_mysql_native_password"),
-      allowPublicKeyRetrieval = true
-    )
-    assertIOBoolean(connection.use(_ => IO(true)))
-  }
-
-  test("Connections to MySQL servers using users with mysql_native_password will succeed for SSL connections.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc_mysql_native_user",
-      password = Some("ldbc_mysql_native_password"),
-      ssl      = SSL.Trusted
-    )
-    assertIOBoolean(connection.use(_ => IO(true)))
-  }
-
-  test("Users using mysql_native_password can establish a connection with the MySQL server by specifying database.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc_mysql_native_user",
-      password = Some("ldbc_mysql_native_password"),
-      database = Some("connector_test")
-    )
-    assertIOBoolean(connection.use(_ => IO(true)))
-  }
-
-  test(
-    "If allowPublicKeyRetrieval is enabled for non-SSL connections, a connection to a MySQL server specifying a database using a user with mysql_native_password will succeed."
-  ) {
-    val connection = Connection[IO](
-      host                    = "127.0.0.1",
-      port                    = 13306,
-      user                    = "ldbc_mysql_native_user",
-      password                = Some("ldbc_mysql_native_password"),
-      database                = Some("connector_test"),
-      allowPublicKeyRetrieval = true
-    )
-    assertIOBoolean(connection.use(_ => IO(true)))
-  }
-
-  test(
-    "A connection to a MySQL server with a database specified using a user with mysql_native_password will succeed with an SSL connection."
-  ) {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc_mysql_native_user",
-      password = Some("ldbc_mysql_native_password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-    assertIOBoolean(connection.use(_ => IO(true)))
   }
 
   test("Connections to MySQL servers using users with sha256_password will fail for non-SSL connections.") {
@@ -269,31 +194,6 @@ class ConnectionTest extends FTestPlatform:
     assertIOBoolean(connection.use(_ => IO(true)))
   }
 
-  test("You can connect to the database by specifying the default authentication plugin.") {
-    val connection = Connection[IO](
-      host                        = "127.0.0.1",
-      port                        = 13306,
-      user                        = "ldbc_mysql_native_user",
-      password                    = Some("ldbc_mysql_native_password"),
-      defaultAuthenticationPlugin = Some(MysqlClearPasswordPlugin[IO]()),
-      ssl                         = SSL.Trusted
-    )
-    assertIOBoolean(connection.use(_ => IO(true)))
-  }
-
-  test(
-    "Using the MySQL Clear Password Plugin when SSL is not enabled causes an SQLInvalidAuthorizationSpecException to occur."
-  ) {
-    val connection = Connection[IO](
-      host                        = "127.0.0.1",
-      port                        = 13306,
-      user                        = "ldbc_mysql_native_user",
-      password                    = Some("ldbc_mysql_native_password"),
-      defaultAuthenticationPlugin = Some(MysqlClearPasswordPlugin[IO]())
-    )
-    interceptIO[SQLInvalidAuthorizationSpecException](connection.use(_ => IO(true)))
-  }
-
   test("Catalog change will change the currently connected Catalog.") {
     val connection = Connection[IO](
       host     = "127.0.0.1",
@@ -372,54 +272,6 @@ class ConnectionTest extends FTestPlatform:
     })
   }
 
-  test("Can change from mysql_native_password user to caching_sha2_password user.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc_mysql_native_user",
-      password = Some("ldbc_mysql_native_password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIOBoolean(
-      connection.use(_.changeUser("ldbc", "password")) *> IO.pure(true),
-      true
-    )
-  }
-
-  test("Can change from mysql_native_password user to sha256_password user.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc_mysql_native_user",
-      password = Some("ldbc_mysql_native_password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIOBoolean(
-      connection.use(_.changeUser("ldbc_sha256_user", "ldbc_sha256_password")) *> IO.pure(true),
-      true
-    )
-  }
-
-  test("Can change from sha256_password user to mysql_native_password user.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc_sha256_user",
-      password = Some("ldbc_sha256_password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIOBoolean(
-      connection.use(_.changeUser("ldbc_mysql_native_user", "ldbc_mysql_native_password")) *> IO.pure(true),
-      true
-    )
-  }
-
   test("Can change from sha256_password user to caching_sha2_password user.") {
     val connection = Connection[IO](
       host     = "127.0.0.1",
@@ -432,22 +284,6 @@ class ConnectionTest extends FTestPlatform:
 
     assertIOBoolean(
       connection.use(_.changeUser("ldbc", "password")) *> IO.pure(true),
-      true
-    )
-  }
-
-  test("Can change from caching_sha2_password user to mysql_native_password user.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIOBoolean(
-      connection.use(_.changeUser("ldbc_mysql_native_user", "ldbc_mysql_native_password")) *> IO.pure(true),
       true
     )
   }
@@ -619,7 +455,7 @@ class ConnectionTest extends FTestPlatform:
 
     assertIO(
       connection.use(_.getMetaData().map(_.getDatabaseProductVersion())),
-      "8.4.0"
+      "9.5.0"
     )
   }
 
@@ -651,7 +487,7 @@ class ConnectionTest extends FTestPlatform:
 
     assertIO(
       connection.use(_.getMetaData().map(_.getDriverVersion())),
-      "ldbc-connector-0.5.0"
+      "ldbc-connector-0.6.0"
     )
   }
 
@@ -756,7 +592,7 @@ class ConnectionTest extends FTestPlatform:
       ssl      = SSL.Trusted
     )
 
-    assertIOBoolean(connection.use(_.getMetaData().map(_.storesUpperCaseQuotedIdentifiers())))
+    assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.storesUpperCaseQuotedIdentifiers())))
   }
 
   test("The stores Lower Case Quoted Identifiers retrieved from DatabaseMetaData matches the specified value.") {
@@ -813,7 +649,7 @@ class ConnectionTest extends FTestPlatform:
 
     assertIO(
       connection.use(_.getMetaData().flatMap(_.getSQLKeywords())),
-      "ACCESSIBLE,ADD,ANALYZE,ASC,BEFORE,CASCADE,CHANGE,CONTINUE,DATABASE,DATABASES,DAY_HOUR,DAY_MICROSECOND,DAY_MINUTE,DAY_SECOND,DELAYED,DESC,DISTINCTROW,DIV,DUAL,ELSEIF,EMPTY,ENCLOSED,ESCAPED,EXIT,EXPLAIN,FIRST_VALUE,FLOAT4,FLOAT8,FORCE,FULLTEXT,GENERATED,GROUPS,HIGH_PRIORITY,HOUR_MICROSECOND,HOUR_MINUTE,HOUR_SECOND,IF,IGNORE,INDEX,INFILE,INT1,INT2,INT3,INT4,INT8,IO_AFTER_GTIDS,IO_BEFORE_GTIDS,ITERATE,JSON_TABLE,KEY,KEYS,KILL,LAG,LAST_VALUE,LEAD,LEAVE,LIMIT,LINEAR,LINES,LOAD,LOCK,LONG,LONGBLOB,LONGTEXT,LOOP,LOW_PRIORITY,MAXVALUE,MEDIUMBLOB,MEDIUMINT,MEDIUMTEXT,MIDDLEINT,MINUTE_MICROSECOND,MINUTE_SECOND,NO_WRITE_TO_BINLOG,NTH_VALUE,NTILE,OPTIMIZE,OPTIMIZER_COSTS,OPTION,OPTIONALLY,OUTFILE,PURGE,READ,READ_WRITE,REGEXP,RENAME,REPEAT,REPLACE,REQUIRE,RESIGNAL,RESTRICT,RLIKE,SCHEMA,SCHEMAS,SECOND_MICROSECOND,SEPARATOR,SHOW,SIGNAL,SPATIAL,SQL_BIG_RESULT,SQL_CALC_FOUND_ROWS,SQL_SMALL_RESULT,SSL,STARTING,STORED,STRAIGHT_JOIN,TERMINATED,TINYBLOB,TINYINT,TINYTEXT,UNDO,UNLOCK,UNSIGNED,USAGE,USE,UTC_DATE,UTC_TIME,UTC_TIMESTAMP,VARBINARY,VARCHARACTER,VIRTUAL,WHILE,WRITE,XOR,YEAR_MONTH,ZEROFILL"
+      "ACCESSIBLE,ADD,ANALYZE,ASC,BEFORE,CASCADE,CHANGE,CONTINUE,DATABASE,DATABASES,DAY_HOUR,DAY_MICROSECOND,DAY_MINUTE,DAY_SECOND,DELAYED,DESC,DISTINCTROW,DIV,DUAL,ELSEIF,EMPTY,ENCLOSED,ESCAPED,EXIT,EXPLAIN,FIRST_VALUE,FLOAT4,FLOAT8,FORCE,FULLTEXT,GENERATED,GROUPS,HIGH_PRIORITY,HOUR_MICROSECOND,HOUR_MINUTE,HOUR_SECOND,IF,IGNORE,INDEX,INFILE,INT1,INT2,INT3,INT4,INT8,IO_AFTER_GTIDS,IO_BEFORE_GTIDS,ITERATE,JSON_TABLE,KEY,KEYS,KILL,LAG,LAST_VALUE,LEAD,LEAVE,LIBRARY,LIMIT,LINEAR,LINES,LOAD,LOCK,LONG,LONGBLOB,LONGTEXT,LOOP,LOW_PRIORITY,MAXVALUE,MEDIUMBLOB,MEDIUMINT,MEDIUMTEXT,MIDDLEINT,MINUTE_MICROSECOND,MINUTE_SECOND,NO_WRITE_TO_BINLOG,NTH_VALUE,NTILE,OPTIMIZE,OPTIMIZER_COSTS,OPTION,OPTIONALLY,OUTFILE,PURGE,READ,READ_WRITE,REGEXP,RENAME,REPEAT,REPLACE,REQUIRE,RESIGNAL,RESTRICT,RLIKE,SCHEMA,SCHEMAS,SECOND_MICROSECOND,SEPARATOR,SHOW,SIGNAL,SPATIAL,SQL_BIG_RESULT,SQL_CALC_FOUND_ROWS,SQL_SMALL_RESULT,SSL,STARTING,STORED,STRAIGHT_JOIN,TERMINATED,TINYBLOB,TINYINT,TINYTEXT,UNDO,UNLOCK,UNSIGNED,USAGE,USE,UTC_DATE,UTC_TIME,UTC_TIMESTAMP,VARBINARY,VARCHARACTER,VIRTUAL,WHILE,WRITE,XOR,YEAR_MONTH,ZEROFILL"
     )
   }
 
@@ -1256,12 +1092,8 @@ class ConnectionTest extends FTestPlatform:
         yield result
       },
       Vector(
-        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: root@localhost, Grantee: ldbc@%, Privilege: SELECT, Is Grantable: null",
-        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: root@localhost, Grantee: ldbc@%, Privilege: SELECT, Is Grantable: null",
-        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: root@localhost, Grantee: ldbc@%, Privilege: SELECT, Is Grantable: null",
-        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: root@localhost, Grantee: ldbc@%, Privilege: INSERT, Is Grantable: null",
-        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: root@localhost, Grantee: ldbc@%, Privilege: INSERT, Is Grantable: null",
-        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: root@localhost, Grantee: ldbc@%, Privilege: INSERT, Is Grantable: null"
+        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: null, Grantee: 'ldbc'@'%', Privilege: SELECT, Is Grantable: NO",
+        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: null, Grantee: 'ldbc'@'%', Privilege: INSERT, Is Grantable: NO"
       )
     )
   }
@@ -1298,7 +1130,7 @@ class ConnectionTest extends FTestPlatform:
         yield result
       },
       Vector(
-        "Scope: 2, Column Name: c1, Data Type: 4, Type Name: int, Column Size: 10, Buffer Length: 65535, Decimal Digits: 0, Pseudo Column: 1"
+        "Scope: 2, Column Name: c1, Data Type: 4, Type Name: INT, Column Size: 10, Buffer Length: 65535, Decimal Digits: 0, Pseudo Column: 1"
       )
     )
   }
