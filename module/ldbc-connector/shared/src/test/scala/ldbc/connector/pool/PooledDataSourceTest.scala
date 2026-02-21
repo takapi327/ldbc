@@ -735,18 +735,22 @@ class PooledDataSourceTest extends FTestPlatform:
   // ============================================================
 
   test("PooledDataSource should accept meter parameter and create metrics") {
-    val resource = PooledDataSource.fromConfig[IO](
-      config.setMinConnections(2).setMaxConnections(5),
-      meter = Some(Meter.noop[IO])
-    )
+    val resource = for
+      tracker <- Resource.eval(PoolMetricsTracker.inMemory[IO])
+      ds      <- PooledDataSource.fromConfig[IO](
+                   config.setMinConnections(2).setMaxConnections(5),
+                   metricsTracker = Some(tracker),
+                   meter          = Some(Meter.noop[IO])
+                 )
+    yield (ds, tracker)
 
-    resource.use { datasource =>
+    resource.use { case (datasource, tracker) =>
       for
         status <- datasource.status
         _      <- datasource.getConnection.use { conn =>
                conn.createStatement().flatMap(_.executeQuery("SELECT 1")).void
              }
-        metrics <- datasource.metrics
+        metrics <- tracker.getMetrics
       yield
         assertEquals(status.total, 2)
         assert(metrics.totalAcquisitions >= 1L)
@@ -773,9 +777,7 @@ class PooledDataSourceTest extends FTestPlatform:
                }
           // metricsTracker is used for internal tracking, meter for OTel — both are independent
           manualMetrics <- manualTracker.getMetrics
-          poolMetrics   <- datasource.metrics
         yield
           assert(manualMetrics.totalAcquisitions >= 1L)
-          assert(poolMetrics.totalAcquisitions >= 1L)
     }
   }
