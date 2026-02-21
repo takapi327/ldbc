@@ -378,6 +378,24 @@ class QuerySanitizerTest extends FTestPlatform:
     assertEquals(QuerySanitizer.sanitize(sql), expected)
   }
 
+  test("sanitize should preserve LIMIT/OFFSET while replacing WHERE literals (B-11)") {
+    val sql      = "SELECT * FROM users WHERE id = 1 LIMIT 10"
+    val expected = "SELECT * FROM users WHERE id = ? LIMIT 10"
+    assertEquals(QuerySanitizer.sanitize(sql), expected)
+  }
+
+  test("sanitize should preserve LIMIT and OFFSET with WHERE and ORDER BY (B-11)") {
+    val sql      = "SELECT * FROM users WHERE age > 25 AND name = 'Alice' ORDER BY id LIMIT 100 OFFSET 50"
+    val expected = "SELECT * FROM users WHERE age > ? AND name = ? ORDER BY id LIMIT 100 OFFSET 50"
+    assertEquals(QuerySanitizer.sanitize(sql), expected)
+  }
+
+  test("sanitize should preserve LIMIT without OFFSET (B-11)") {
+    val sql      = "DELETE FROM logs WHERE created_at < '2024-01-01' LIMIT 1000"
+    val expected = "DELETE FROM logs WHERE created_at < ? LIMIT 1000"
+    assertEquals(QuerySanitizer.sanitize(sql), expected)
+  }
+
   test("sanitize should replace numeric literals in ORDER BY ordinal") {
     val sql      = "SELECT id, name FROM users ORDER BY 1"
     val expected = "SELECT id, name FROM users ORDER BY ?"
