@@ -303,4 +303,3 @@ object TelemetryAttribute:
    */
   def schemaUrl: Attribute[String] =
     Attribute(OTEL_SCHEMA_URL, SCHEMA_URL_VALUE)
-
