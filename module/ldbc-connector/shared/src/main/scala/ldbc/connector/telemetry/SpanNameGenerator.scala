@@ -24,8 +24,8 @@ package ldbc.connector.telemetry
  *
  * == Best Practices ==
  * Per OpenTelemetry spec v1.39.0:
- * - Prefer using `generate(Context)` with metadata from higher-level APIs
- * - Use `fromQuery(sql)` only as a FALLBACK when API metadata is unavailable
+ * - Use `generate(Context)` with metadata from higher-level APIs
+ * - Use `TelemetryConfig.generateSpanName` for query-text-based span naming
  * - Operation and collection names should ideally come from API metadata,
  *   not from parsing query text
  *
@@ -93,38 +93,3 @@ object SpanNameGenerator:
           port <- context.serverPort
         yield s"$addr:$port"
       )
-
-  /**
-   * Generates a span name from SQL query (FALLBACK method).
-   *
-   * '''WARNING''': Per OpenTelemetry spec v1.39.0, operation and collection names
-   * SHOULD NOT be extracted from query text. Use this method only when the
-   * higher-level API does not provide operation metadata directly.
-   *
-   * Prefer using `generate(Context)` with metadata from:
-   * - Prepared statement metadata
-   * - API-level operation type
-   * - Framework-provided context
-   *
-   * @param sql The SQL query
-   * @param namespace Optional database namespace
-   * @param serverAddress Optional server address
-   * @param serverPort Optional server port
-   * @return Generated span name
-   */
-  def fromQuery(
-    sql:           String,
-    namespace:     Option[String] = None,
-    serverAddress: Option[String] = None,
-    serverPort:    Option[Int] = None
-  ): String =
-    val summary = QuerySanitizer.generateSummary(sql)
-    val context = Context(
-      querySummary   = Some(summary),
-      operationName  = Some(QuerySanitizer.extractOperationName(sql)),
-      collectionName = QuerySanitizer.extractTableName(sql),
-      namespace      = namespace,
-      serverAddress  = serverAddress,
-      serverPort     = serverPort
-    )
-    generate(context)

@@ -28,6 +28,7 @@ import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.protocol.*
 import ldbc.connector.net.Protocol
 import ldbc.connector.syntax.*
+import ldbc.connector.telemetry.{ DatabaseMetrics, TelemetryConfig }
 import ldbc.connector.util.StringHelper
 import ldbc.connector.util.Version
 
@@ -42,6 +43,8 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
   useServerPrepStmts:            Boolean,
   database:                      Option[String]                = None,
   databaseTerm:                  DatabaseMetaData.DatabaseTerm = DatabaseMetaData.DatabaseTerm.CATALOG,
+  telemetryConfig:               TelemetryConfig               = TelemetryConfig.default,
+  databaseMetrics:               DatabaseMetrics[F],
   getProceduresReturnsFunctions: Boolean                       = true,
   tinyInt1isBit:                 Boolean                       = true,
   transformedBitIsBoolean:       Boolean                       = false,
@@ -1990,7 +1993,9 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
       useCursorFetch,
       useServerPrepStmts,
       ResultSet.TYPE_SCROLL_INSENSITIVE,
-      ResultSet.CONCUR_READ_ONLY
+      ResultSet.CONCUR_READ_ONLY,
+      telemetryConfig = telemetryConfig,
+      databaseMetrics = databaseMetrics
     )
 
   private def appendJdbcTypeMappingQuery(

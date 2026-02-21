@@ -271,6 +271,33 @@ class QuerySanitizerTest extends FTestPlatform:
   }
 
   // ============================================================
+  // hasCommaInFromClause boundary tests (B-8)
+  // Verify ON DUPLICATE KEY UPDATE does not break table extraction
+  // ============================================================
+
+  test("extractTableName should handle INSERT ... ON DUPLICATE KEY UPDATE") {
+    val sql = "INSERT INTO users (id, name) VALUES (1, 'test') ON DUPLICATE KEY UPDATE name = 'test'"
+    assertEquals(QuerySanitizer.extractTableName(sql), Some("users"))
+  }
+
+  test("extractTableName should handle SELECT with ON in column alias") {
+    val sql = "SELECT created_on FROM users"
+    assertEquals(QuerySanitizer.extractTableName(sql), Some("users"))
+  }
+
+  test("extractTableName should handle SELECT FROM with comma and ON keyword after") {
+    // " ON " in clauseKeywords could truncate the FROM clause range,
+    // but this is a JOIN query so containsMultipleTables catches it via " JOIN " check first
+    val sql = "SELECT * FROM users JOIN orders ON users.id = orders.user_id"
+    assertEquals(QuerySanitizer.extractTableName(sql), None)
+  }
+
+  test("extractTableName should handle subquery with ON DUPLICATE") {
+    val sql = "INSERT INTO users SELECT id, name FROM source ON DUPLICATE KEY UPDATE name = source.name"
+    assertEquals(QuerySanitizer.extractTableName(sql), None) // contains (SELECT → multi-table
+  }
+
+  // ============================================================
   // generateSummary Tests
   // ============================================================
 
@@ -345,9 +372,27 @@ class QuerySanitizerTest extends FTestPlatform:
     assertEquals(QuerySanitizer.sanitize(sql), expected)
   }
 
-  test("sanitize should replace standalone numeric literals in LIMIT/OFFSET") {
+  test("sanitize should preserve numeric literals in LIMIT/OFFSET") {
     val sql      = "SELECT * FROM users LIMIT 10 OFFSET 20"
-    val expected = "SELECT * FROM users LIMIT ? OFFSET ?"
+    val expected = "SELECT * FROM users LIMIT 10 OFFSET 20"
+    assertEquals(QuerySanitizer.sanitize(sql), expected)
+  }
+
+  test("sanitize should preserve LIMIT/OFFSET while replacing WHERE literals (B-11)") {
+    val sql      = "SELECT * FROM users WHERE id = 1 LIMIT 10"
+    val expected = "SELECT * FROM users WHERE id = ? LIMIT 10"
+    assertEquals(QuerySanitizer.sanitize(sql), expected)
+  }
+
+  test("sanitize should preserve LIMIT and OFFSET with WHERE and ORDER BY (B-11)") {
+    val sql      = "SELECT * FROM users WHERE age > 25 AND name = 'Alice' ORDER BY id LIMIT 100 OFFSET 50"
+    val expected = "SELECT * FROM users WHERE age > ? AND name = ? ORDER BY id LIMIT 100 OFFSET 50"
+    assertEquals(QuerySanitizer.sanitize(sql), expected)
+  }
+
+  test("sanitize should preserve LIMIT without OFFSET (B-11)") {
+    val sql      = "DELETE FROM logs WHERE created_at < '2024-01-01' LIMIT 1000"
+    val expected = "DELETE FROM logs WHERE created_at < ? LIMIT 1000"
     assertEquals(QuerySanitizer.sanitize(sql), expected)
   }
 
@@ -360,6 +405,48 @@ class QuerySanitizerTest extends FTestPlatform:
   test("sanitize should NOT corrupt mixed identifiers like md5hash, v2") {
     val sql      = "SELECT v2, md5hash FROM data WHERE value = 42"
     val expected = "SELECT v2, md5hash FROM data WHERE value = ?"
+    assertEquals(QuerySanitizer.sanitize(sql), expected)
+  }
+
+  // ============================================================
+  // BooleanPattern context-awareness tests
+  // Verify that IS TRUE / IS FALSE / IS NOT TRUE / IS NOT FALSE
+  // are preserved as SQL keywords, not replaced with ?
+  // ============================================================
+
+  test("sanitize should preserve IS TRUE as SQL keyword") {
+    val sql      = "SELECT * FROM users WHERE active IS TRUE"
+    val expected = "SELECT * FROM users WHERE active IS TRUE"
+    assertEquals(QuerySanitizer.sanitize(sql), expected)
+  }
+
+  test("sanitize should preserve IS FALSE as SQL keyword") {
+    val sql      = "SELECT * FROM users WHERE deleted IS FALSE"
+    val expected = "SELECT * FROM users WHERE deleted IS FALSE"
+    assertEquals(QuerySanitizer.sanitize(sql), expected)
+  }
+
+  test("sanitize should preserve IS NOT TRUE as SQL keyword") {
+    val sql      = "SELECT * FROM users WHERE active IS NOT TRUE"
+    val expected = "SELECT * FROM users WHERE active IS NOT TRUE"
+    assertEquals(QuerySanitizer.sanitize(sql), expected)
+  }
+
+  test("sanitize should preserve IS NOT FALSE as SQL keyword") {
+    val sql      = "SELECT * FROM users WHERE deleted IS NOT FALSE"
+    val expected = "SELECT * FROM users WHERE deleted IS NOT FALSE"
+    assertEquals(QuerySanitizer.sanitize(sql), expected)
+  }
+
+  test("sanitize should replace standalone TRUE/FALSE boolean literals") {
+    val sql      = "INSERT INTO flags (col) VALUES (TRUE)"
+    val expected = "INSERT INTO flags (col) VALUES (?)"
+    assertEquals(QuerySanitizer.sanitize(sql), expected)
+  }
+
+  test("sanitize should replace TRUE/FALSE in WHERE equality") {
+    val sql      = "SELECT * FROM users WHERE active = TRUE AND deleted = FALSE"
+    val expected = "SELECT * FROM users WHERE active = ? AND deleted = ?"
     assertEquals(QuerySanitizer.sanitize(sql), expected)
   }
 

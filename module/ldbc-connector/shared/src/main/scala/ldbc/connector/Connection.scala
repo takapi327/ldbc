@@ -28,7 +28,7 @@ import ldbc.connector.data.*
 import ldbc.connector.exception.*
 import ldbc.connector.net.*
 import ldbc.connector.net.protocol.*
-import ldbc.connector.telemetry.TelemetryConfig
+import ldbc.connector.telemetry.{ DatabaseMetrics, TelemetryConfig }
 
 import ldbc.authentication.plugin.*
 
@@ -82,7 +82,8 @@ object Connection:
     databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
     defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]] = None,
     plugins:                     List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
-    telemetryConfig:             TelemetryConfig = TelemetryConfig.default
+    telemetryConfig:             TelemetryConfig = TelemetryConfig.default,
+    databaseMetrics:             Option[DatabaseMetrics[F]] = None
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] = this.default[F, Unit](
     host,
     port,
@@ -101,6 +102,7 @@ object Connection:
     defaultAuthenticationPlugin,
     plugins,
     telemetryConfig,
+    databaseMetrics,
     unitBefore,
     unitAfter
   )
@@ -124,7 +126,8 @@ object Connection:
     databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
     defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]] = None,
     plugins:                     List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
-    telemetryConfig:             TelemetryConfig = TelemetryConfig.default
+    telemetryConfig:             TelemetryConfig = TelemetryConfig.default,
+    databaseMetrics:             Option[DatabaseMetrics[F]] = None
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] = this.default(
     host,
     port,
@@ -143,6 +146,7 @@ object Connection:
     defaultAuthenticationPlugin,
     plugins,
     telemetryConfig,
+    databaseMetrics,
     before,
     after
   )
@@ -165,6 +169,7 @@ object Connection:
     defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]] = None,
     plugins:                     List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
     telemetryConfig:             TelemetryConfig = TelemetryConfig.default,
+    databaseMetrics:             Option[DatabaseMetrics[F]] = None,
     before:                      Connection[F] => F[A],
     after:                       (A, Connection[F]) => F[Unit]
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] =
@@ -192,6 +197,7 @@ object Connection:
                       defaultAuthenticationPlugin,
                       plugins,
                       telemetryConfig,
+                      databaseMetrics,
                       before,
                       after
                     )
@@ -215,9 +221,11 @@ object Connection:
     defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
     plugins:                     List[AuthenticationPlugin[F]],
     telemetryConfig:             TelemetryConfig = TelemetryConfig.default,
+    databaseMetrics:             Option[DatabaseMetrics[F]] = None,
     acquire:                     Connection[F] => F[A],
     release:                     (A, Connection[F]) => F[Unit]
   ): Resource[F, LdbcConnection[F]] =
+    val resolvedMetrics = databaseMetrics.getOrElse(DatabaseMetrics.noop[F])
     val pluginMap       = plugins.map(plugin => plugin.name.toString -> plugin).toMap
     val capabilityFlags = defaultCapabilityFlags ++
       (if database.isDefined then Set(CapabilitiesFlags.CLIENT_CONNECT_WITH_DB) else Set.empty) ++
@@ -256,7 +264,8 @@ object Connection:
               useCursorFetch,
               useServerPrepStmts,
               databaseTerm.getOrElse(DatabaseMetaData.DatabaseTerm.CATALOG),
-              telemetryConfig
+              telemetryConfig,
+              resolvedMetrics
             )
           )
         )(_.close())
@@ -282,6 +291,7 @@ object Connection:
     defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
     plugins:                     List[AuthenticationPlugin[F]],
     telemetryConfig:             TelemetryConfig = TelemetryConfig.default,
+    databaseMetrics:             Option[DatabaseMetrics[F]] = None,
     acquire:                     Connection[F] => F[A],
     release:                     (A, Connection[F]) => F[Unit]
   )(using ev: Async[F]): Resource[F, LdbcConnection[F]] =
@@ -314,6 +324,7 @@ object Connection:
       defaultAuthenticationPlugin,
       plugins,
       telemetryConfig,
+      databaseMetrics,
       acquire,
       release
     )

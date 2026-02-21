@@ -41,29 +41,37 @@ object QuerySanitizer:
    * Placeholder character for sanitized values.
    * Per OpenTelemetry spec: "The placeholder value SHOULD be ?"
    */
-  val Placeholder: String = "?"
+  val PLACEHOLDER: String = "?"
+
+  /**
+   * Maximum query length for regex-based processing.
+   * Queries exceeding this limit are returned as-is (or truncated for summaries)
+   * to prevent ReDoS attacks from pathological input patterns.
+   */
+  val MAX_QUERY_LENGTH: Int = 10000
 
   // Regex patterns for different literal types
-  private val StringLiteralPattern: Regex = """'(?:[^'\\]|\\.)*'""".r
-  private val DoubleQuotedPattern:  Regex = """"(?:[^"\\]|\\.)*"""".r
-  private val NumericPattern:       Regex = """\b\d+\.?\d*\b""".r
-  private val HexPattern:           Regex = """0[xX][0-9a-fA-F]+""".r
-  private val BinaryPattern:        Regex = """0[bB][01]+""".r
-  private val NullPattern:          Regex = """(?i)(?:IS\s+NOT\s+|IS\s+)?\bNULL\b""".r
-  private val BooleanPattern:       Regex = """(?i)\b(?:TRUE|FALSE)\b""".r
+  private val STRING_LITERAL_PATTERN: Regex = """'(?:[^'\\]|\\.)*'""".r
+  private val DOUBLE_QUOTED_PATTERN:  Regex = """"(?:[^"\\]|\\.)*"""".r
+  private val NUMERIC_PATTERN:        Regex = """\b\d+\.?\d*\b""".r
+  private val HEX_PATTERN:            Regex = """0[xX][0-9a-fA-F]+""".r
+  private val BINARY_PATTERN:         Regex = """0[bB][01]+""".r
+  private val NULL_PATTERN:           Regex = """(?i)(?:IS\s+NOT\s+|IS\s+)?\bNULL\b""".r
+  private val BOOLEAN_PATTERN:        Regex = """(?i)(?:IS\s+NOT\s+|IS\s+)?\b(?:TRUE|FALSE)\b""".r
+  private val LIMIT_OFFSET_CONTEXT:   Regex = """(?i)\b(?:LIMIT|OFFSET)\s*$""".r
 
   // Pattern to extract operation name (preserves original case)
-  private val OperationPattern: Regex = """^\s*(\w+)""".r
+  private val OPERATION_PATTERN: Regex = """^\s*(\w+)""".r
 
   // Patterns for parameterized query detection
-  private val PositionalPlaceholderPattern: Regex = """\?""".r
-  private val NumericPlaceholderPattern:    Regex = """\$\d+""".r
-  private val NamedPlaceholderPattern:      Regex = """:\w+""".r
+  private val POSITIONAL_PLACEHOLDER_PATTERN: Regex = """\?""".r
+  private val NUMERIC_PLACEHOLDER_PATTERN:    Regex = """\$\d+""".r
+  private val NAMED_PLACEHOLDER_PATTERN:      Regex = """:\w+""".r
 
   // Pattern to extract table name from common SQL statements (case-insensitive)
-  private val SelectFromPattern: Regex = """(?i)\bFROM\s+`?(\w+)`?""".r
-  private val InsertIntoPattern: Regex = """(?i)\bINTO\s+`?(\w+)`?""".r
-  private val UpdatePattern:     Regex = """(?i)\bUPDATE\s+`?(\w+)`?""".r
+  private val SELECT_FROM_PATTERN: Regex = """(?i)\bFROM\s+`?(\w+)`?""".r
+  private val INSERT_INTO_PATTERN: Regex = """(?i)\bINTO\s+`?(\w+)`?""".r
+  private val UPDATE_PATTERN:      Regex = """(?i)\bUPDATE\s+`?(\w+)`?""".r
 
   /**
    * Checks if a query is parameterized (contains placeholders).
@@ -73,15 +81,17 @@ object QuerySanitizer:
    * @return true if the query contains parameterized placeholders
    */
   def isParameterizedQuery(sql: String): Boolean =
-    // Strip string literals first to avoid false positives from
-    // placeholders inside literal values (e.g., 'What?' or "value:name")
-    val stripped = StringLiteralPattern.replaceAllIn(
-      DoubleQuotedPattern.replaceAllIn(sql, ""),
-      ""
-    )
-    PositionalPlaceholderPattern.findFirstIn(stripped).isDefined ||
-    NumericPlaceholderPattern.findFirstIn(stripped).isDefined ||
-    NamedPlaceholderPattern.findFirstIn(stripped).isDefined
+    if sql.length > MAX_QUERY_LENGTH then false
+    else
+      // Strip string literals first to avoid false positives from
+      // placeholders inside literal values (e.g., 'What?' or "value:name")
+      val stripped = STRING_LITERAL_PATTERN.replaceAllIn(
+        DOUBLE_QUOTED_PATTERN.replaceAllIn(sql, ""),
+        ""
+      )
+      POSITIONAL_PLACEHOLDER_PATTERN.findFirstIn(stripped).isDefined ||
+      NUMERIC_PLACEHOLDER_PATTERN.findFirstIn(stripped).isDefined ||
+      NAMED_PLACEHOLDER_PATTERN.findFirstIn(stripped).isDefined
 
   /**
    * Sanitizes SQL query by replacing all literal values with placeholders.
@@ -91,24 +101,40 @@ object QuerySanitizer:
    * @return Sanitized query with literals replaced by "?"
    */
   def sanitize(sql: String): String =
-    // Order matters: process string literals first to avoid partial matches
-    // Chain replacements using pipe operator for readability
-    val patterns = List(
-      StringLiteralPattern,
-      DoubleQuotedPattern,
-      HexPattern,
-      BinaryPattern,
-      NumericPattern,
-      BooleanPattern
-    )
-    val result = patterns.foldLeft(sql)((result, pattern) => pattern.replaceAllIn(result, Placeholder))
-    // Handle NULL separately: preserve IS NULL / IS NOT NULL, replace standalone NULL with placeholder
-    NullPattern.replaceAllIn(
-      result,
-      m =>
-        if m.matched.trim.toUpperCase.startsWith("IS") then Regex.quoteReplacement(m.matched)
-        else Placeholder
-    )
+    if sql.length > MAX_QUERY_LENGTH then sql
+    else
+      // Order matters: process string literals first to avoid partial matches
+      val patterns = List(
+        STRING_LITERAL_PATTERN,
+        DOUBLE_QUOTED_PATTERN,
+        HEX_PATTERN,
+        BINARY_PATTERN
+      )
+      val result = patterns.foldLeft(sql)((result, pattern) => pattern.replaceAllIn(result, PLACEHOLDER))
+      // Handle boolean literals with context awareness:
+      // Preserve IS TRUE / IS FALSE / IS NOT TRUE / IS NOT FALSE as SQL keywords
+      val resultWithBooleans = BOOLEAN_PATTERN.replaceAllIn(
+        result,
+        m =>
+          if m.matched.trim.toUpperCase.startsWith("IS") then Regex.quoteReplacement(m.matched)
+          else PLACEHOLDER
+      )
+      // Handle numeric literals with context awareness:
+      // Preserve values after LIMIT/OFFSET for better observability
+      val resultWithNumerics = NUMERIC_PATTERN.replaceAllIn(
+        resultWithBooleans,
+        m =>
+          val prefix = resultWithBooleans.substring(0, m.start)
+          if LIMIT_OFFSET_CONTEXT.findFirstIn(prefix).isDefined then Regex.quoteReplacement(m.matched)
+          else PLACEHOLDER
+      )
+      // Handle NULL separately: preserve IS NULL / IS NOT NULL, replace standalone NULL with placeholder
+      NULL_PATTERN.replaceAllIn(
+        resultWithNumerics,
+        m =>
+          if m.matched.trim.toUpperCase.startsWith("IS") then Regex.quoteReplacement(m.matched)
+          else PLACEHOLDER
+      )
 
   /**
    * Conditionally sanitizes SQL query based on whether it's parameterized.
@@ -129,8 +155,10 @@ object QuerySanitizer:
    * @return Query with collapsed IN clauses
    */
   def collapseInClauses(sql: String): String =
-    val inClausePattern = """\bIN\s*\(\s*\?(?:\s*,\s*\?)*\s*\)""".r
-    inClausePattern.replaceAllIn(sql, "IN (?)")
+    if sql.length > MAX_QUERY_LENGTH then sql
+    else
+      val inClausePattern = """\bIN\s*\(\s*\?(?:\s*,\s*\?)*\s*\)""".r
+      inClausePattern.replaceAllIn(sql, "IN (?)")
 
   /**
    * Extracts the SQL operation name from a query (FALLBACK method).
@@ -149,7 +177,7 @@ object QuerySanitizer:
    * @return The operation name preserving original case, or "UNKNOWN"
    */
   def extractOperationName(sql: String): String =
-    OperationPattern.findFirstMatchIn(sql.trim) match
+    OPERATION_PATTERN.findFirstMatchIn(sql.trim) match
       case Some(m) => m.group(1) // Preserve original case per OpenTelemetry spec
       case None    => "UNKNOWN"
 
@@ -171,17 +199,18 @@ object QuerySanitizer:
    * @return Optional table name (None for multi-table operations)
    */
   def extractTableName(sql: String): Option[String] =
+    if sql.length > MAX_QUERY_LENGTH then None
     // Check for multi-table operations - return None per OpenTelemetry spec
-    if containsMultipleTables(sql) then None
+    else if containsMultipleTables(sql) then None
     else
       val operationUpper = extractOperationName(sql).toUpperCase
       operationUpper match
         case "SELECT" | "DELETE" =>
-          SelectFromPattern.findFirstMatchIn(sql).map(_.group(1)) // Preserves original case
+          SELECT_FROM_PATTERN.findFirstMatchIn(sql).map(_.group(1)) // Preserves original case
         case "INSERT" =>
-          InsertIntoPattern.findFirstMatchIn(sql).map(_.group(1))
+          INSERT_INTO_PATTERN.findFirstMatchIn(sql).map(_.group(1))
         case "UPDATE" =>
-          UpdatePattern.findFirstMatchIn(sql).map(_.group(1))
+          UPDATE_PATTERN.findFirstMatchIn(sql).map(_.group(1))
         case _ => None
 
   /**
@@ -192,6 +221,7 @@ object QuerySanitizer:
     val upperSql = sql.toUpperCase
     upperSql.contains(" JOIN ") ||
     upperSql.contains("(SELECT") ||
+    (upperSql.startsWith("INSERT") && upperSql.contains(" SELECT ")) ||
     hasCommaInFromClause(upperSql)
 
   /**
@@ -204,7 +234,7 @@ object QuerySanitizer:
     if fromIdx < 0 then false
     else
       val afterFrom      = upperSql.substring(fromIdx + 6)
-      val clauseKeywords = List(" WHERE ", " ORDER ", " GROUP ", " HAVING ", " LIMIT ", " UNION ", " SET ", " ON ")
+      val clauseKeywords = List(" WHERE ", " ORDER ", " GROUP ", " HAVING ", " LIMIT ", " UNION ", " SET ")
       val endIdx         = clauseKeywords.flatMap { kw =>
         val idx = afterFrom.indexOf(kw)
         if idx >= 0 then Some(idx) else None
