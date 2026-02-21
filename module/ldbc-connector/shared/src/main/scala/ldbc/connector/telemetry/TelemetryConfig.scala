@@ -157,7 +157,7 @@ final case class TelemetryConfig(
     (apiOperationName, apiCollectionName) match
       case (Some(op), Some(col)) => Some(s"$op $col")
       case (Some(op), None)      => Some(op)
-      case (None, Some(col))     => Some(col)
+      case (None, Some(_))       => None
       case (None, None)          =>
         // Per OTel spec: instrumentations that support query parsing SHOULD
         // generate a query summary based on db.query.text
