@@ -90,8 +90,7 @@ class PoolMetricsTrackerTest extends FTestPlatform:
       _       <- tracker.updateGauge("idle", 3)
       _       <- tracker.updateGauge("active", 7) // Update existing gauge
       metrics <- tracker.getMetrics
-    yield
-      assertEquals(metrics.gauges, Map("active" -> 7L, "idle" -> 3L))
+    yield assertEquals(metrics.gauges, Map("active" -> 7L, "idle" -> 3L))
   }
 
   test("in-memory tracker should maintain sliding window of duration samples") {
