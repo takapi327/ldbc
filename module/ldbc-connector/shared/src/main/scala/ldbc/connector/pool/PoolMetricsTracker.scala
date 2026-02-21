@@ -165,6 +165,7 @@ object PoolMetricsTracker:
       rel      <- releases.get
       cre      <- creations.get
       rem      <- removals.get
+      gs       <- gauges.get
     yield PoolMetrics(
       acquisitionTime   = average(acqTimes),
       usageTime         = average(useTimes),
@@ -174,5 +175,6 @@ object PoolMetricsTracker:
       totalAcquisitions = acq,
       totalReleases     = rel,
       totalCreations    = cre,
-      totalRemovals     = rem
+      totalRemovals     = rem,
+      gauges            = gs
     )

@@ -22,7 +22,8 @@ class PoolMetricsTest extends FTestPlatform:
       totalAcquisitions = 1000,
       totalReleases     = 995,
       totalCreations    = 100,
-      totalRemovals     = 10
+      totalRemovals     = 10,
+      gauges            = Map.empty
     )
 
     assertEquals(metrics.acquisitionTime, 100.millis)
@@ -60,7 +61,8 @@ class PoolMetricsTest extends FTestPlatform:
       totalAcquisitions = 1000,
       totalReleases     = 995,
       totalCreations    = 100,
-      totalRemovals     = 10
+      totalRemovals     = 10,
+      gauges            = Map.empty
     )
 
     val updated = original.copy(
@@ -95,7 +97,8 @@ class PoolMetricsTest extends FTestPlatform:
       totalAcquisitions = 1000,
       totalReleases     = 995,
       totalCreations    = 100,
-      totalRemovals     = 10
+      totalRemovals     = 10,
+      gauges            = Map.empty
     )
 
     val metrics2 = PoolMetrics(
@@ -107,7 +110,8 @@ class PoolMetricsTest extends FTestPlatform:
       totalAcquisitions = 1000,
       totalReleases     = 995,
       totalCreations    = 100,
-      totalRemovals     = 10
+      totalRemovals     = 10,
+      gauges            = Map.empty
     )
 
     val metrics3 = PoolMetrics(
@@ -119,7 +123,8 @@ class PoolMetricsTest extends FTestPlatform:
       totalAcquisitions = 1000,
       totalReleases     = 995,
       totalCreations    = 100,
-      totalRemovals     = 10
+      totalRemovals     = 10,
+      gauges            = Map.empty
     )
 
     assertEquals(metrics1, metrics2)
@@ -136,7 +141,8 @@ class PoolMetricsTest extends FTestPlatform:
       totalAcquisitions = 0,
       totalReleases     = 0,
       totalCreations    = 0,
-      totalRemovals     = 0
+      totalRemovals     = 0,
+      gauges            = Map.empty
     )
 
     assertEquals(metrics.acquisitionTime, 1000.millis)
@@ -154,7 +160,8 @@ class PoolMetricsTest extends FTestPlatform:
       totalAcquisitions = 1000,
       totalReleases     = 995,
       totalCreations    = 100,
-      totalRemovals     = 10
+      totalRemovals     = 10,
+      gauges            = Map.empty
     )
 
     val str = metrics.toString
@@ -178,7 +185,8 @@ class PoolMetricsTest extends FTestPlatform:
       totalAcquisitions = Long.MaxValue,
       totalReleases     = Long.MaxValue,
       totalCreations    = Long.MaxValue,
-      totalRemovals     = Long.MaxValue
+      totalRemovals     = Long.MaxValue,
+      gauges            = Map.empty
     )
 
     assertEquals(metrics.acquisitionTime, 365.days)
