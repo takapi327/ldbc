@@ -111,7 +111,7 @@ trait ConnectionTest extends CatsEffectSuite:
   test("The Server version retrieved from DatabaseMetaData matches the specified value.") {
     assertIO(
       datasource().getConnection.use(_.getMetaData().map(_.getDatabaseProductVersion())),
-      "9.5.0"
+      "9.6.0"
     )
   }
 

@@ -139,7 +139,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for metaData <- conn.getMetaData()
         yield metaData.getDatabaseProductVersion()
       },
-      "9.5.0"
+      "9.6.0"
     )
   }
 

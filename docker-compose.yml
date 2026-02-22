@@ -1,6 +1,6 @@
 services:
   mysql9.x:
-    image: mysql:9.5.0
+    image: mysql:9.6.0
     container_name: ldbc-mysql9.x
     platform: linux/amd64
     environment:
