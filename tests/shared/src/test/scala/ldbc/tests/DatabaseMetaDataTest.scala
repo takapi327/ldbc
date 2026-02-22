@@ -2084,7 +2084,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for metaData <- conn.getMetaData()
         yield metaData.getDatabaseMinorVersion()
       },
-      5
+      6
     )
   }
 
