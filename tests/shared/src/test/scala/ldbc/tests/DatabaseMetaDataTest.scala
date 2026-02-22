@@ -159,7 +159,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for metaData <- conn.getMetaData()
         yield metaData.getDriverVersion()
       },
-      if prefix == "jdbc" then "mysql-connector-j-9.5.0 (Revision: a7b3c94f50efbddb9f0dd69b3e0d1aaa25305cd6)"
+      if prefix == "jdbc" then "mysql-connector-j-9.6.0 (Revision: fdef61f4af21fa9e0ac334ff0664ec754c164cc0)"
       else "ldbc-connector-0.6.0"
     )
   }
@@ -180,7 +180,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for metaData <- conn.getMetaData()
         yield metaData.getDriverMinorVersion()
       },
-      if prefix == "jdbc" then 5 else 6
+      if prefix == "jdbc" then 6 else 6
     )
   }
 
