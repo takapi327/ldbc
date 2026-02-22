@@ -125,7 +125,7 @@ trait ConnectionTest extends CatsEffectSuite:
   test("The Driver version retrieved from DatabaseMetaData matches the specified value.") {
     assertIO(
       datasource().getConnection.use(_.getMetaData().map(_.getDriverVersion())),
-      if prefix == "jdbc" then "mysql-connector-j-9.5.0 (Revision: a7b3c94f50efbddb9f0dd69b3e0d1aaa25305cd6)"
+      if prefix == "jdbc" then "mysql-connector-j-9.6.0 (Revision: fdef61f4af21fa9e0ac334ff0664ec754c164cc0)"
       else "ldbc-connector-0.6.0"
     )
   }
