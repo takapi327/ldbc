@@ -22,7 +22,7 @@ import cats.effect.std.Console
 import fs2.hashing.Hashing
 import fs2.io.net.Socket
 
-import org.typelevel.otel4s.trace.{ Span, Tracer }
+import org.typelevel.otel4s.trace.{ Span, StatusCode, Tracer }
 import org.typelevel.otel4s.Attribute
 
 import ldbc.connector.authenticator.{ CachingSha2PasswordPlugin, MysqlNativePasswordPlugin, Sha256PasswordPlugin }
@@ -179,7 +179,9 @@ object Protocol:
           socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
             case error: ERRPacket =>
               val ex = error.toException(s"Failed to change schema to '$schema'")
-              span.recordException(ex, error.attributes*) *> ev.raiseError(ex)
+              span.recordException(ex, error.attributes*) *>
+                span.setStatus(StatusCode.Error, ex.getMessage) *>
+                ev.raiseError(ex)
             case ok: OKPacket => ev.unit
           }
       }
@@ -196,8 +198,12 @@ object Protocol:
         span.addAttributes(attributes*) *>
           socket.send(ComPingPacket()) *>
           socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
-            case error: ERRPacket => span.recordException(error.toException, error.attributes*) *> ev.pure(false)
-            case ok: OKPacket     => ev.pure(true)
+            case error: ERRPacket =>
+              val ex = error.toException
+              span.recordException(ex, error.attributes*) *>
+                span.setStatus(StatusCode.Error, ex.getMessage) *>
+                ev.pure(false)
+            case ok: OKPacket => ev.pure(true)
           }
       }
 
@@ -208,7 +214,9 @@ object Protocol:
           socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
             case error: ERRPacket =>
               val ex = error.toException("Failed to execute reset connection")
-              span.recordException(ex, error.attributes*) *> ev.raiseError(ex)
+              span.recordException(ex, error.attributes*) *>
+                span.setStatus(StatusCode.Error, ex.getMessage) *>
+                ev.raiseError(ex)
             case ok: OKPacket => ev.unit
           }
       }
@@ -220,7 +228,9 @@ object Protocol:
           socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
             case error: ERRPacket =>
               val ex = error.toException("Failed to execute set option")
-              span.recordException(ex, error.attributes*) *> ev.raiseError(ex)
+              span.recordException(ex, error.attributes*) *>
+                span.setStatus(StatusCode.Error, ex.getMessage) *>
+                ev.raiseError(ex)
             case eof: EOFPacket => ev.unit
             case ok: OKPacket   => ev.unit
           }
@@ -515,7 +525,11 @@ object Protocol:
               )
             case None =>
               determinatePlugin(initialPacket.authPlugin) match
-                case Left(error) => span.recordException(error) *> ev.raiseError(error) *> socket.send(ComQuitPacket())
+                case Left(error) =>
+                  span.recordException(error) *>
+                    span.setStatus(StatusCode.Error, error.getMessage) *>
+                    ev.raiseError(error) *>
+                    socket.send(ComQuitPacket())
                 case Right(plugin) =>
                   checkRequiresConfidentiality(plugin, span) *> handshake(plugin, username, password) *> readUntilOk(
                     plugin,
@@ -528,7 +542,11 @@ object Protocol:
       exchange[F, Unit](TelemetrySpanName.CHANGE_USER) { (span: Span[F]) =>
         span.addAttributes(attributes*) *> (
           determinatePlugin(initialPacket.authPlugin) match
-            case Left(error)   => span.recordException(error) *> ev.raiseError(error) *> socket.send(ComQuitPacket())
+            case Left(error) =>
+              span.recordException(error) *>
+                span.setStatus(StatusCode.Error, error.getMessage) *>
+                ev.raiseError(error) *>
+                socket.send(ComQuitPacket())
             case Right(plugin) =>
               for
                 hashedPassword <- plugin.hashPassword(password, initialPacket.scrambleBuff)
@@ -550,14 +568,16 @@ object Protocol:
     private def checkRequiresConfidentiality(plugin: AuthenticationPlugin[F], span: Span[F]): F[Unit] =
       if plugin.requiresConfidentiality && !useSSL then
         val error = new SQLInvalidAuthorizationSpecException(
-          s"SSL connection required for plugin “${ plugin.name }”. Check if ‘ssl’ is enabled.",
+          s"SSL connection required for plugin '${ plugin.name }'. Check if 'ssl' is enabled.",
           hint = Some(
             """// You can enable SSL.
               |           MySQLDataSource.build[IO](....).setSSL(SSL.Trusted)
               |""".stripMargin
           )
         )
-        span.recordException(error) *> ev.raiseError(error)
+        span.recordException(error) *>
+          span.setStatus(StatusCode.Error, error.getMessage) *>
+          ev.raiseError(error)
       else ev.unit
 
     private def determinatePlugin(pluginName: String): Either[SQLException, AuthenticationPlugin[F]] =

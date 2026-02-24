@@ -156,6 +156,13 @@ trait DataTypes:
   inline def ENUM[T <: ScalaEnum | Option[ScalaEnum]](using mirror: Mirror.Of[Mirrors.ExtractOption[T]]): Enum[T] =
     Enum(Mirrors.summonLabels[mirror.MirroredElemLabels], isOptional[T])
 
+  inline def VECTOR[T <: Array[Float] | Option[Array[Float]]]: MVector[T] =
+    MVector(None, isOptional[T])
+
+  inline def VECTOR[T <: Array[Float] | Option[Array[Float]]](inline dimension: Int): MVector[T] =
+    inline if dimension < 1 || dimension > 16383 then error("VECTOR dimension must be in range 1 to 16383")
+    else MVector(Some(dimension), isOptional[T])
+
   /** ===== List of Date Data Types ===== */
 
   inline def DATE[T <: String | LocalDate | Option[String | LocalDate]]: Date[T] = Date(isOptional[T])

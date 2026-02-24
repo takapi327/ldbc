@@ -15,7 +15,7 @@ import cats.syntax.all.*
 
 import cats.effect.*
 
-import org.typelevel.otel4s.trace.{ Span, Tracer }
+import org.typelevel.otel4s.trace.{ Span, StatusCode, Tracer }
 import org.typelevel.otel4s.Attribute
 
 import ldbc.sql.{ CallableStatement, DatabaseMetaData, ParameterMetaData, ResultSet, Statement }
@@ -50,102 +50,155 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
   fetchSize:               Ref[F, Int],
   useCursorFetch:          Boolean,
   useServerPrepStmts:      Boolean,
-  resultSetType:           Int = ResultSet.TYPE_FORWARD_ONLY,
-  resultSetConcurrency:    Int = ResultSet.CONCUR_READ_ONLY
+  resultSetType:           Int             = ResultSet.TYPE_FORWARD_ONLY,
+  resultSetConcurrency:    Int             = ResultSet.CONCUR_READ_ONLY,
+  telemetryConfig:         TelemetryConfig = TelemetryConfig.default,
+  databaseMetrics:         DatabaseMetrics[F]
 )(using F: MonadThrow[F])
   extends CallableStatement[F],
           SharedPreparedStatement[F]:
 
-  private val baseAttributes = buildBaseAttributes(protocol)
+  private val baseAttributes    = buildBaseAttributes(protocol)
+  private val metricsAttributes = buildMetricsAttributes(protocol)
 
   override def executeQuery(): F[ResultSet[F]] =
     checkClosed() *>
       checkNullOrEmptyQuery(sql) *>
-      exchange[F, ResultSet[F]](TelemetrySpanName.STMT_CALLABLE) { (span: Span[F]) =>
-        if sql.toUpperCase.startsWith("CALL") then
-          executeCallStatement(span).flatMap { resultSets =>
-            resultSets.headOption match
-              case None =>
-                for
-                  resultSet <- F.pure(
-                                 ResultSetImpl.empty(
-                                   protocol,
-                                   serverVariables,
-                                   protocol.initialPacket.serverVersion,
-                                   resultSetClosed,
-                                   fetchSize,
-                                   useCursorFetch,
-                                   useServerPrepStmts
-                                 )
-                               )
-                  _ <- currentResultSet.set(Some(resultSet))
-                yield resultSet
-              case Some(resultSet) =>
-                currentResultSet.update(_ => Some(resultSet)) *> resultSet.pure[F]
-          } <* retrieveOutParams()
-        else
-          params.get.flatMap { params =>
-            val queryAttributes = baseAttributes ++ List(
-              TelemetryAttribute.dbQueryText(sql)
-            )
+      exchange[F, ResultSet[F]](
+        telemetryConfig.resolveSpanName(
+          sql,
+          TelemetrySpanName.STMT_CALLABLE,
+          protocol.hostInfo.database,
+          Some(protocol.hostInfo.host),
+          Some(protocol.hostInfo.port)
+        )
+      ) { (span: Span[F]) =>
+        val processedSql    = telemetryConfig.processQueryText(sql)
+        val queryAttributes = baseAttributes ++ List(
+          TelemetryAttribute.dbQueryText(processedSql)
+        )
 
-            span.addAttributes(queryAttributes*) *>
-              protocol.resetSequenceId *>
-              protocol.send(
-                ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)
-              ) *>
-              receiveQueryResult()
-          }
+        for
+          _         <- span.addAttributes(queryAttributes*)
+          resultSet <- withDurationMetrics(
+                         if sql.toUpperCase.startsWith("CALL") then
+                           executeCallStatement(span).flatMap { resultSets =>
+                             resultSets.headOption match
+                               case None =>
+                                 for
+                                   resultSet <- F.pure(
+                                                  ResultSetImpl.empty(
+                                                    protocol,
+                                                    serverVariables,
+                                                    protocol.initialPacket.serverVersion,
+                                                    resultSetClosed,
+                                                    fetchSize,
+                                                    useCursorFetch,
+                                                    useServerPrepStmts
+                                                  )
+                                                )
+                                   _ <- currentResultSet.set(Some(resultSet))
+                                 yield resultSet
+                               case Some(resultSet) =>
+                                 currentResultSet.update(_ => Some(resultSet)) *> resultSet.pure[F]
+                           } <* retrieveOutParams()
+                         else
+                           params.get.flatMap { params =>
+                             protocol.resetSequenceId *>
+                               protocol.send(
+                                 ComQueryPacket(
+                                   buildQuery(sql, params),
+                                   protocol.initialPacket.capabilityFlags,
+                                   ListMap.empty
+                                 )
+                               ) *>
+                               receiveQueryResult()
+                           }
+                         ,
+                         metricsAttributes*
+                       )
+          _ <- resultSet match
+                 case rs: ResultSetImpl[F] =>
+                   databaseMetrics.recordReturnedRows(rs.records.size.toLong, metricsAttributes*)
+                 case _ => F.unit
+        yield resultSet
       } <* params.set(SortedMap.empty)
 
   override def executeLargeUpdate(): F[Long] =
     checkClosed() *>
       checkNullOrEmptyQuery(sql) *>
-      exchange[F, Long](TelemetrySpanName.STMT_CALLABLE) { (span: Span[F]) =>
-        if sql.toUpperCase.startsWith("CALL") then
-          executeCallStatement(span).flatMap { resultSets =>
-            resultSets.headOption match
-              case None =>
-                for
-                  resultSet <- F.pure(
-                                 ResultSetImpl.empty(
-                                   protocol,
-                                   serverVariables,
-                                   protocol.initialPacket.serverVersion,
-                                   resultSetClosed,
-                                   fetchSize,
-                                   useCursorFetch,
-                                   useServerPrepStmts
-                                 )
-                               )
-                  _ <- currentResultSet.set(Some(resultSet))
-                yield resultSet
-              case Some(resultSet) =>
-                currentResultSet.update(_ => Some(resultSet)) *> resultSet.pure[F]
-          } *> retrieveOutParams() *> F.pure(-1)
-        else
-          params.get.flatMap { params =>
-            val queryAttributes = baseAttributes ++ List(
-              TelemetryAttribute.dbQueryText(sql)
-            )
+      exchange[F, Long](
+        telemetryConfig.resolveSpanName(
+          sql,
+          TelemetrySpanName.STMT_CALLABLE,
+          protocol.hostInfo.database,
+          Some(protocol.hostInfo.host),
+          Some(protocol.hostInfo.port)
+        )
+      ) { (span: Span[F]) =>
+        val processedSql    = telemetryConfig.processQueryText(sql)
+        val queryAttributes = baseAttributes ++ List(
+          TelemetryAttribute.dbQueryText(processedSql)
+        )
 
-            span.addAttributes(queryAttributes*) *>
-              sendQuery(buildQuery(sql, params)).flatMap {
-                case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
-                case error: ERRPacket =>
-                  val exception = error.toException(Some(sql), None, params)
-                  span.recordException(exception, error.attributes*) *> F.raiseError(exception)
-                case eof: EOFPacket =>
-                  val exception = new SQLException("Unexpected EOF packet")
-                  span.recordException(exception, eof.attribute) *> F.raiseError(exception)
+        span.addAttributes(queryAttributes*) *>
+          withDurationMetrics(
+            if sql.toUpperCase.startsWith("CALL") then
+              executeCallStatement(span).flatMap { resultSets =>
+                resultSets.headOption match
+                  case None =>
+                    for
+                      resultSet <- F.pure(
+                                     ResultSetImpl.empty(
+                                       protocol,
+                                       serverVariables,
+                                       protocol.initialPacket.serverVersion,
+                                       resultSetClosed,
+                                       fetchSize,
+                                       useCursorFetch,
+                                       useServerPrepStmts
+                                     )
+                                   )
+                      _ <- currentResultSet.set(Some(resultSet))
+                    yield resultSet
+                  case Some(resultSet) =>
+                    currentResultSet.update(_ => Some(resultSet)) *> resultSet.pure[F]
+              } *> retrieveOutParams() *> F.pure(-1L)
+            else
+              params.get.flatMap { params =>
+                sendQuery(buildQuery(sql, params)).flatMap {
+                  case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
+                  case error: ERRPacket =>
+                    val exception = error.toException(Some(sql), None)
+                    span.addAttributes(error.attributes*) *>
+                      span.recordException(exception, error.attributes*) *>
+                      span.setStatus(StatusCode.Error, exception.getMessage) *>
+                      F.raiseError(exception)
+                  case eof: EOFPacket =>
+                    val exception = new SQLException("Unexpected EOF packet")
+                    span.addAttribute(TelemetryAttribute.errorType(exception)) *>
+                      span.recordException(exception, eof.attribute) *>
+                      span.setStatus(StatusCode.Error, exception.getMessage) *>
+                      F.raiseError(exception)
+                }
               }
-          }
+            ,
+            metricsAttributes*
+          )
       }
 
   override def execute(): F[Boolean] =
     checkClosed() *>
       checkNullOrEmptyQuery(sql) *>
-      exchange[F, Boolean](TelemetrySpanName.STMT_CALLABLE) { (span: Span[F]) =>
+      exchange[F, Boolean](
+        telemetryConfig.resolveSpanName(
+          sql,
+          TelemetrySpanName.STMT_CALLABLE,
+          protocol.hostInfo.database,
+          Some(protocol.hostInfo.host),
+          Some(protocol.hostInfo.port)
+        )
+      ) { (span: Span[F]) =>
         if sql.toUpperCase.startsWith("CALL") then
           executeCallStatement(span).flatMap { results =>
             moreResults.update(_ => results.nonEmpty) *>
@@ -156,19 +209,26 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
         else
           params.get
             .flatMap { params =>
+              val processedSql    = telemetryConfig.processQueryText(sql)
               val queryAttributes = baseAttributes ++ List(
-                TelemetryAttribute.dbQueryText(sql)
+                TelemetryAttribute.dbQueryText(processedSql)
               )
 
               span.addAttributes(queryAttributes*) *>
                 sendQuery(buildQuery(sql, params)).flatMap {
                   case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
                   case error: ERRPacket =>
-                    val exception = error.toException(Some(sql), None, params)
-                    span.recordException(exception, error.attributes*) *> F.raiseError(exception)
+                    val exception = error.toException(Some(sql), None)
+                    span.addAttributes(error.attributes*) *>
+                      span.recordException(exception, error.attributes*) *>
+                      span.setStatus(StatusCode.Error, exception.getMessage) *>
+                      F.raiseError(exception)
                   case eof: EOFPacket =>
                     val exception = new SQLException("Unexpected EOF packet")
-                    span.recordException(exception, eof.attribute) *> F.raiseError(exception)
+                    span.addAttribute(TelemetryAttribute.errorType(exception)) *>
+                      span.recordException(exception, eof.attribute) *>
+                      span.setStatus(StatusCode.Error, exception.getMessage) *>
+                      F.raiseError(exception)
                 }
             }
             .map(_ => false)
@@ -205,57 +265,77 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
       checkNullOrEmptyQuery(sql) *>
       exchange[F, Array[Long]](TelemetrySpanName.STMT_CALLABLE) { (span: Span[F]) =>
         batchedArgs.get.flatMap { args =>
-          val batchAttributes = baseAttributes ++ TelemetryAttribute.batchSize(args.length.toLong)
+          val batchAttributes = baseAttributes ++
+            List(TelemetryAttribute.dbOperationName(TelemetryAttribute.SqlOperation.BATCH)) ++
+            TelemetryAttribute.dbOperationBatchSize(args.length).toList
 
           if args.isEmpty then F.pure(Array.empty)
           else
             sql.toUpperCase match
               case q if q.startsWith("INSERT") =>
-                span.addAttributes(batchAttributes*) *>
-                  sendQuery(sql.split("VALUES").head + " VALUES" + args.mkString(","))
-                    .flatMap {
-                      case _: OKPacket      => F.pure(Array.fill(args.length)(Statement.SUCCESS_NO_INFO.toLong))
-                      case error: ERRPacket =>
-                        val exception = error.toException(Some(sql), None)
-                        span.recordException(exception, error.attributes*) *> F.raiseError(exception)
-                      case eof: EOFPacket =>
-                        val exception = new SQLException("Unexpected EOF packet")
-                        span.recordException(exception, eof.attribute) *> F.raiseError(exception)
-                    }
-              case q if q.startsWith("update") || q.startsWith("delete") || q.startsWith("CALL") =>
-                span.addAttributes(batchAttributes*) *>
-                  protocol.resetSequenceId *>
-                  protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON) *>
-                  protocol.resetSequenceId *>
-                  protocol.send(
-                    ComQueryPacket(
-                      args.mkString(";"),
-                      protocol.initialPacket.capabilityFlags,
-                      ListMap.empty
-                    )
-                  ) *>
-                  args
-                    .foldLeft(F.pure(Vector.empty[Long])) { ($acc, _) =>
-                      for
-                        acc    <- $acc
-                        result <-
-                          protocol
-                            .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
-                            .flatMap {
-                              case result: OKPacket =>
-                                lastInsertId.set(result.lastInsertId) *> F.pure(acc :+ result.affectedRows)
-                              case error: ERRPacket =>
-                                val exception = error.toException("Failed to execute batch", acc)
-                                span.recordException(exception, error.attributes*) *> F.raiseError(exception)
-                              case eof: EOFPacket =>
-                                val exception = new SQLException("Unexpected EOF packet")
-                                span.recordException(exception, eof.attribute) *> F.raiseError(exception)
-                            }
-                      yield result
-                    }
-                    .map(_.toArray) <*
-                  protocol.resetSequenceId <*
-                  protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF)
+                withDurationMetrics(
+                  span.addAttributes(batchAttributes*) *>
+                    sendQuery(sql.split("VALUES").head + " VALUES" + args.mkString(","))
+                      .flatMap {
+                        case _: OKPacket      => F.pure(Array.fill(args.length)(Statement.SUCCESS_NO_INFO.toLong))
+                        case error: ERRPacket =>
+                          val exception = error.toException(Some(sql), None)
+                          span.addAttributes(error.attributes*) *>
+                            span.recordException(exception, error.attributes*) *>
+                            span.setStatus(StatusCode.Error, exception.getMessage) *>
+                            F.raiseError(exception)
+                        case eof: EOFPacket =>
+                          val exception = new SQLException("Unexpected EOF packet")
+                          span.addAttribute(TelemetryAttribute.errorType(exception)) *>
+                            span.recordException(exception, eof.attribute) *>
+                            span.setStatus(StatusCode.Error, exception.getMessage) *>
+                            F.raiseError(exception)
+                      },
+                  metricsAttributes*
+                )
+              case q if q.startsWith("UPDATE") || q.startsWith("DELETE") || q.startsWith("CALL") =>
+                withDurationMetrics(
+                  span.addAttributes(batchAttributes*) *>
+                    protocol.resetSequenceId *>
+                    protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON) *>
+                    protocol.resetSequenceId *>
+                    protocol.send(
+                      ComQueryPacket(
+                        args.mkString(";"),
+                        protocol.initialPacket.capabilityFlags,
+                        ListMap.empty
+                      )
+                    ) *>
+                    args
+                      .foldLeft(F.pure(Vector.empty[Long])) { ($acc, _) =>
+                        for
+                          acc    <- $acc
+                          result <-
+                            protocol
+                              .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
+                              .flatMap {
+                                case result: OKPacket =>
+                                  lastInsertId.set(result.lastInsertId) *> F.pure(acc :+ result.affectedRows)
+                                case error: ERRPacket =>
+                                  val exception = error.toException("Failed to execute batch", acc)
+                                  span.addAttributes(error.attributes*) *>
+                                    span.recordException(exception, error.attributes*) *>
+                                    span.setStatus(StatusCode.Error, exception.getMessage) *>
+                                    F.raiseError(exception)
+                                case eof: EOFPacket =>
+                                  val exception = new SQLException("Unexpected EOF packet")
+                                  span.addAttribute(TelemetryAttribute.errorType(exception)) *>
+                                    span.recordException(exception, eof.attribute) *>
+                                    span.setStatus(StatusCode.Error, exception.getMessage) *>
+                                    F.raiseError(exception)
+                              }
+                        yield result
+                      }
+                      .map(_.toArray) <*
+                    protocol.resetSequenceId <*
+                    protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF),
+                  metricsAttributes*
+                )
               case _ =>
                 F.raiseError(
                   new SQLException("The batch query must be an INSERT, UPDATE, or DELETE, CALL statement.")
@@ -796,8 +876,9 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
     setInOutParamsOnServer(paramInfo) *>
       setOutParams() *>
       params.get.flatMap { params =>
+        val processedSql    = telemetryConfig.processQueryText(sql)
         val queryAttributes = baseAttributes ++ List(
-          TelemetryAttribute.dbQueryText(sql)
+          TelemetryAttribute.dbQueryText(processedSql)
         )
 
         span.addAttributes(queryAttributes*) *>

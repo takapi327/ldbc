@@ -139,7 +139,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for metaData <- conn.getMetaData()
         yield metaData.getDatabaseProductVersion()
       },
-      "8.4.0"
+      "9.6.0"
     )
   }
 
@@ -159,8 +159,8 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for metaData <- conn.getMetaData()
         yield metaData.getDriverVersion()
       },
-      if prefix == "jdbc" then "mysql-connector-j-8.4.0 (Revision: 1c3f5c149e0bfe31c7fbeb24e2d260cd890972c4)"
-      else "ldbc-connector-0.5.0"
+      if prefix == "jdbc" then "mysql-connector-j-9.6.0 (Revision: fdef61f4af21fa9e0ac334ff0664ec754c164cc0)"
+      else "ldbc-connector-0.6.0"
     )
   }
 
@@ -170,7 +170,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for metaData <- conn.getMetaData()
         yield metaData.getDriverMajorVersion()
       },
-      if prefix == "jdbc" then 8 else 0
+      if prefix == "jdbc" then 9 else 0
     )
   }
 
@@ -180,7 +180,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for metaData <- conn.getMetaData()
         yield metaData.getDriverMinorVersion()
       },
-      if prefix == "jdbc" then 4 else 5
+      if prefix == "jdbc" then 6 else 6
     )
   }
 
@@ -260,7 +260,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for metaData <- conn.getMetaData()
         yield metaData.storesUpperCaseQuotedIdentifiers()
       },
-      true
+      false
     )
   }
 
@@ -302,7 +302,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
           value    <- metaData.getSQLKeywords()
         yield value
       },
-      "ACCESSIBLE,ADD,ANALYZE,ASC,BEFORE,CASCADE,CHANGE,CONTINUE,DATABASE,DATABASES,DAY_HOUR,DAY_MICROSECOND,DAY_MINUTE,DAY_SECOND,DELAYED,DESC,DISTINCTROW,DIV,DUAL,ELSEIF,EMPTY,ENCLOSED,ESCAPED,EXIT,EXPLAIN,FIRST_VALUE,FLOAT4,FLOAT8,FORCE,FULLTEXT,GENERATED,GROUPS,HIGH_PRIORITY,HOUR_MICROSECOND,HOUR_MINUTE,HOUR_SECOND,IF,IGNORE,INDEX,INFILE,INT1,INT2,INT3,INT4,INT8,IO_AFTER_GTIDS,IO_BEFORE_GTIDS,ITERATE,JSON_TABLE,KEY,KEYS,KILL,LAG,LAST_VALUE,LEAD,LEAVE,LIMIT,LINEAR,LINES,LOAD,LOCK,LONG,LONGBLOB,LONGTEXT,LOOP,LOW_PRIORITY,MAXVALUE,MEDIUMBLOB,MEDIUMINT,MEDIUMTEXT,MIDDLEINT,MINUTE_MICROSECOND,MINUTE_SECOND,NO_WRITE_TO_BINLOG,NTH_VALUE,NTILE,OPTIMIZE,OPTIMIZER_COSTS,OPTION,OPTIONALLY,OUTFILE,PURGE,READ,READ_WRITE,REGEXP,RENAME,REPEAT,REPLACE,REQUIRE,RESIGNAL,RESTRICT,RLIKE,SCHEMA,SCHEMAS,SECOND_MICROSECOND,SEPARATOR,SHOW,SIGNAL,SPATIAL,SQL_BIG_RESULT,SQL_CALC_FOUND_ROWS,SQL_SMALL_RESULT,SSL,STARTING,STORED,STRAIGHT_JOIN,TERMINATED,TINYBLOB,TINYINT,TINYTEXT,UNDO,UNLOCK,UNSIGNED,USAGE,USE,UTC_DATE,UTC_TIME,UTC_TIMESTAMP,VARBINARY,VARCHARACTER,VIRTUAL,WHILE,WRITE,XOR,YEAR_MONTH,ZEROFILL"
+      "ACCESSIBLE,ADD,ANALYZE,ASC,BEFORE,CASCADE,CHANGE,CONTINUE,DATABASE,DATABASES,DAY_HOUR,DAY_MICROSECOND,DAY_MINUTE,DAY_SECOND,DELAYED,DESC,DISTINCTROW,DIV,DUAL,ELSEIF,EMPTY,ENCLOSED,ESCAPED,EXIT,EXPLAIN,FIRST_VALUE,FLOAT4,FLOAT8,FORCE,FULLTEXT,GENERATED,GROUPS,HIGH_PRIORITY,HOUR_MICROSECOND,HOUR_MINUTE,HOUR_SECOND,IF,IGNORE,INDEX,INFILE,INT1,INT2,INT3,INT4,INT8,IO_AFTER_GTIDS,IO_BEFORE_GTIDS,ITERATE,JSON_TABLE,KEY,KEYS,KILL,LAG,LAST_VALUE,LEAD,LEAVE,LIBRARY,LIMIT,LINEAR,LINES,LOAD,LOCK,LONG,LONGBLOB,LONGTEXT,LOOP,LOW_PRIORITY,MAXVALUE,MEDIUMBLOB,MEDIUMINT,MEDIUMTEXT,MIDDLEINT,MINUTE_MICROSECOND,MINUTE_SECOND,NO_WRITE_TO_BINLOG,NTH_VALUE,NTILE,OPTIMIZE,OPTIMIZER_COSTS,OPTION,OPTIONALLY,OUTFILE,PURGE,READ,READ_WRITE,REGEXP,RENAME,REPEAT,REPLACE,REQUIRE,RESIGNAL,RESTRICT,RLIKE,SCHEMA,SCHEMAS,SECOND_MICROSECOND,SEPARATOR,SHOW,SIGNAL,SPATIAL,SQL_BIG_RESULT,SQL_CALC_FOUND_ROWS,SQL_SMALL_RESULT,SSL,STARTING,STORED,STRAIGHT_JOIN,TERMINATED,TINYBLOB,TINYINT,TINYTEXT,UNDO,UNLOCK,UNSIGNED,USAGE,USE,UTC_DATE,UTC_TIME,UTC_TIMESTAMP,VARBINARY,VARCHARACTER,VIRTUAL,WHILE,WRITE,XOR,YEAR_MONTH,ZEROFILL"
     )
   }
 
@@ -1264,6 +1264,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         "sys, null, ps_trace_thread, 1, ps_trace_thread",
         "sys, null, ps_truncate_all_tables, 1, ps_truncate_all_tables",
         "sys, null, quote_identifier, 2, quote_identifier",
+        "sys, null, revoke_schema_privileges_from_all_accounts_except, 1, revoke_schema_privileges_from_all_accounts_except",
         "sys, null, statement_performance_analyzer, 1, statement_performance_analyzer",
         "sys, null, sys_get_config, 2, sys_get_config",
         "sys, null, table_exists, 1, table_exists",
@@ -1389,6 +1390,9 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         "sys, null, ps_truncate_all_tables, in_verbose, 1, -7, BIT, 1, 1, 0, 10, 1, null, null, 0, 0, 0, 1, YES",
         "sys, null, quote_identifier, , 5, -1, TEXT, 0, 65535, 0, 10, 1, null, null, 0, 0, 65535, 0, YES",
         "sys, null, quote_identifier, in_identifier, 1, -1, TEXT, 0, 65535, 0, 10, 1, null, null, 0, 0, 65535, 1, YES",
+        "sys, null, revoke_schema_privileges_from_all_accounts_except, in_schema_name, 1, 1, CHAR, 0, 255, 0, 10, 1, null, null, 0, 0, 1020, 1, YES",
+        "sys, null, revoke_schema_privileges_from_all_accounts_except, in_privileges, 1, -1, JSON, 1073741824, 1073741824, 0, 10, 1, null, null, 0, 0, 0, 2, YES",
+        "sys, null, revoke_schema_privileges_from_all_accounts_except, in_exclude_users, 1, -1, JSON, 1073741824, 1073741824, 0, 10, 1, null, null, 0, 0, 0, 3, YES",
         "sys, null, statement_performance_analyzer, in_action, 1, 1, ENUM, 0, 12, 0, 10, 1, null, null, 0, 0, 48, 1, YES",
         "sys, null, statement_performance_analyzer, in_table, 1, 12, VARCHAR, 0, 129, 0, 10, 1, null, null, 0, 0, 516, 2, YES",
         "sys, null, statement_performance_analyzer, in_views, 1, 1, SET, 0, 124, 0, 10, 1, null, null, 0, 0, 496, 3, YES",
@@ -1612,7 +1616,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
             }
         yield result
       },
-      Vector("2, id, -5, bigint, 19, 65535, 0, 1")
+      Vector("2, id, -5, BIGINT, 19, 65535, 0, 1")
     )
   }
 
@@ -2070,7 +2074,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for metaData <- conn.getMetaData()
         yield metaData.getDatabaseMajorVersion()
       },
-      8
+      9
     )
   }
 
@@ -2080,7 +2084,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for metaData <- conn.getMetaData()
         yield metaData.getDatabaseMinorVersion()
       },
-      4
+      6
     )
   }
 
@@ -2100,7 +2104,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for metaData <- conn.getMetaData()
         yield metaData.getJDBCMinorVersion()
       },
-      if prefix == "jdbc" then 2 else 5
+      if prefix == "jdbc" then 2 else 6
     )
   }
 

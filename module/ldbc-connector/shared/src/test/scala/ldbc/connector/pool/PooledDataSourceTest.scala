@@ -12,6 +12,8 @@ import cats.syntax.all.*
 
 import cats.effect.*
 
+import org.typelevel.otel4s.metrics.Meter
+
 import ldbc.connector.*
 
 class PooledDataSourceTest extends FTestPlatform:
@@ -725,5 +727,57 @@ class PooledDataSourceTest extends FTestPlatform:
 
         // Pool should maintain minimum connections
         assert(finalState.connections.size >= 2, "Should maintain minimum connections")
+    }
+  }
+
+  // ============================================================
+  // Tests for meter integration
+  // ============================================================
+
+  test("PooledDataSource should accept meter parameter and create metrics") {
+    val resource = for
+      tracker <- Resource.eval(PoolMetricsTracker.inMemory[IO])
+      ds      <- PooledDataSource.fromConfig[IO](
+              config.setMinConnections(2).setMaxConnections(5),
+              metricsTracker = Some(tracker),
+              meter          = Some(Meter.noop[IO])
+            )
+    yield (ds, tracker)
+
+    resource.use {
+      case (datasource, tracker) =>
+        for
+          status <- datasource.status
+          _      <- datasource.getConnection.use { conn =>
+                 conn.createStatement().flatMap(_.executeQuery("SELECT 1")).void
+               }
+          metrics <- tracker.getMetrics
+        yield
+          assertEquals(status.total, 2)
+          assert(metrics.totalAcquisitions >= 1L)
+    }
+  }
+
+  test(
+    "PooledDataSource should use metricsTracker for internal tracking when both meter and metricsTracker are provided"
+  ) {
+    val resource = for
+      tracker <- Resource.eval(PoolMetricsTracker.inMemory[IO])
+      ds      <- PooledDataSource.fromConfig[IO](
+              config.setMinConnections(1).setMaxConnections(3),
+              metricsTracker = Some(tracker),
+              meter          = Some(Meter.noop[IO])
+            )
+    yield (ds, tracker)
+
+    resource.use {
+      case (datasource, manualTracker) =>
+        for
+          _ <- datasource.getConnection.use { conn =>
+                 conn.createStatement().flatMap(_.executeQuery("SELECT 1")).void
+               }
+          // metricsTracker is used for internal tracking, meter for OTel — both are independent
+          manualMetrics <- manualTracker.getMetrics
+        yield assert(manualMetrics.totalAcquisitions >= 1L)
     }
   }

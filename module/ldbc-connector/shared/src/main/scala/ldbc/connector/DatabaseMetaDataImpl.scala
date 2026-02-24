@@ -28,6 +28,7 @@ import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.protocol.*
 import ldbc.connector.net.Protocol
 import ldbc.connector.syntax.*
+import ldbc.connector.telemetry.{ DatabaseMetrics, TelemetryConfig }
 import ldbc.connector.util.StringHelper
 import ldbc.connector.util.Version
 
@@ -42,6 +43,8 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
   useServerPrepStmts:            Boolean,
   database:                      Option[String]                = None,
   databaseTerm:                  DatabaseMetaData.DatabaseTerm = DatabaseMetaData.DatabaseTerm.CATALOG,
+  telemetryConfig:               TelemetryConfig               = TelemetryConfig.default,
+  databaseMetrics:               DatabaseMetrics[F],
   getProceduresReturnsFunctions: Boolean                       = true,
   tinyInt1isBit:                 Boolean                       = true,
   transformedBitIsBoolean:       Boolean                       = false,
@@ -519,6 +522,20 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
     }
 
   override def getCatalogs(): F[ResultSet[F]] =
+    // Starting with MySQL 9.3.0, it has been changed to reference INFORMATION_SCHEMA.
+    // see: https://dev.mysql.com/doc/relnotes/connector-j/en/news-9-3-0.html
+    protocol.initialPacket.serverVersion.compare(Version(9, 3, 0)) match
+      case 1 => getCatalogsByInformationSchema
+      case _ => getCatalogsByDatabase
+
+  private def getCatalogsByInformationSchema: F[ResultSet[F]] =
+    val query = new StringBuilder("SELECT SCHEMA_NAME AS TABLE_CAT FROM INFORMATION_SCHEMA.SCHEMATA")
+    if databaseTerm != DatabaseMetaData.DatabaseTerm.CATALOG then query.append(" WHERE FALSE")
+    end if
+    query.append(" ORDER BY TABLE_CAT")
+    prepareMetaDataSafeStatement(query.toString()).flatMap(_.executeQuery())
+
+  private def getCatalogsByDatabase: F[ResultSet[F]] =
     (if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then F.pure(List.empty[String])
      else getDatabases(None)).map { dbList =>
       ResultSetImpl(
@@ -656,7 +673,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
     sqlBuf.append(" ELSE CHARACTER_MAXIMUM_LENGTH")
     sqlBuf.append(" END) AS COLUMN_SIZE,")
 
-    sqlBuf.append(DatabaseMetaDataImpl.maxBufferSize)
+    sqlBuf.append(DatabaseMetaDataImpl.MAX_BUFFER_SIZE)
     sqlBuf.append(" AS BUFFER_LENGTH,")
 
     sqlBuf.append("UPPER(CASE")
@@ -852,6 +869,73 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
     tableNamePattern: Option[String]
   ): F[ResultSet[F]] =
 
+    // Starting with MySQL 9.3.0, it has been changed to reference INFORMATION_SCHEMA.
+    // see: https://dev.mysql.com/doc/relnotes/connector-j/en/news-9-3-0.html
+    protocol.initialPacket.serverVersion.compare(Version(9, 3, 0)) match
+      case 1 => getTablePrivilegesByInformationSchema(catalog, schemaPattern, tableNamePattern)
+      case _ => getTablePrivilegesByTablesPriv(catalog, schemaPattern, tableNamePattern)
+
+  private def getTablePrivilegesByInformationSchema(
+    catalog:          Option[String],
+    schemaPattern:    Option[String],
+    tableNamePattern: Option[String]
+  ): F[ResultSet[F]] =
+
+    val db = getDatabase(catalog, schemaPattern)
+
+    val query = new StringBuilder("SELECT")
+    query.append(
+      if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then
+        " TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM,"
+      else " TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM,"
+    )
+    query.append(" TABLE_NAME,")
+    query.append(" NULL AS GRANTOR,")
+    query.append(" GRANTEE,")
+    query.append(" PRIVILEGE_TYPE AS PRIVILEGE,")
+    query.append(" IS_GRANTABLE")
+    query.append(" FROM INFORMATION_SCHEMA.TABLE_PRIVILEGES")
+
+    val condition = new StringBuilder()
+    if db.nonEmpty then
+      condition.append(
+        if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then " TABLE_SCHEMA = ?"
+        else if db.contains("%") || db.contains("_") then " TABLE_SCHEMA LIKE ?"
+        else " TABLE_SCHEMA = ?"
+      )
+    end if
+
+    if tableNamePattern.nonEmpty then
+      if condition.nonEmpty then condition.append(" AND")
+      end if
+
+      if tableNamePattern.contains("%") || tableNamePattern.contains("_") then condition.append(" TABLE_NAME LIKE ?")
+      else condition.append(" TABLE_NAME = ?")
+    end if
+
+    if condition.nonEmpty then
+      query.append(" WHERE")
+      query.append(condition)
+    end if
+
+    prepareMetaDataSafeStatement(query.toString())
+      .flatMap { preparedStatement =>
+        val setting = (db, tableNamePattern) match
+          case (Some(dbValue), Some(tableName)) =>
+            preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, tableName)
+          case (Some(dbValue), None)   => preparedStatement.setString(1, dbValue)
+          case (None, Some(tableName)) => preparedStatement.setString(1, tableName)
+          case _                       => F.unit
+
+        setting *> preparedStatement.executeQuery()
+      }
+
+  private def getTablePrivilegesByTablesPriv(
+    catalog:          Option[String],
+    schemaPattern:    Option[String],
+    tableNamePattern: Option[String]
+  ): F[ResultSet[F]] =
+
     val db = getDatabase(catalog, schemaPattern)
 
     val sqlBuf = new StringBuilder(
@@ -974,6 +1058,59 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
     nullable: Option[Boolean]
   ): F[ResultSet[F]] =
 
+    // Starting with MySQL 9.3.0, it has been changed to reference INFORMATION_SCHEMA.
+    // see: https://dev.mysql.com/doc/relnotes/connector-j/en/news-9-3-0.html
+    protocol.initialPacket.serverVersion.compare(Version(9, 3, 0)) match
+      case 1 => getBestRowIdentifierByInformationSchema(catalog, schema, table)
+      case _ => getBestRowIdentifierByTable(catalog, schema, table)
+
+  private def getBestRowIdentifierByInformationSchema(
+    catalog: Option[String],
+    schema:  Option[String],
+    table:   String
+  ): F[ResultSet[F]] =
+
+    val db = getDatabase(catalog, schema)
+
+    val query = new StringBuilder("SELECT")
+    query.append(" ").append(DatabaseMetaData.bestRowSession).append(" AS SCOPE,")
+    query.append(" COLUMN_NAME,")
+    appendDataTypeClause(query, "COLUMN_TYPE").append(" AS DATA_TYPE,")
+    appendTypeNameClause(query, "COLUMN_TYPE").append(" AS TYPE_NAME,")
+    appendColumnSizeClause(query).append(" AS COLUMN_SIZE,")
+    query.append(" ").append(DatabaseMetaDataImpl.MAX_BUFFER_SIZE).append(" AS BUFFER_LENGTH,")
+    appendDecimalDigitsClause(query).append(" AS DECIMAL_DIGITS,")
+    query.append(" ").append(DatabaseMetaData.bestRowNotPseudo).append(" AS PSEUDO_COLUMN")
+    query.append(" FROM INFORMATION_SCHEMA.COLUMNS")
+
+    val condition = new StringBuilder()
+
+    if db.nonEmpty then condition.append(" TABLE_SCHEMA = ?")
+    end if
+
+    if condition.nonEmpty then condition.append(" AND")
+    end if
+
+    condition.append(" TABLE_NAME = ?")
+    condition.append(" AND COLUMN_KEY = 'PRI'")
+
+    query.append(" WHERE").append(condition)
+
+    prepareMetaDataSafeStatement(query.toString()).flatMap { preparedStatement =>
+      val setting = db match
+        case Some(dbValue) =>
+          preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, table)
+        case None =>
+          preparedStatement.setString(1, table)
+
+      setting *> preparedStatement.executeQuery()
+    }
+
+  private def getBestRowIdentifierByTable(
+    catalog: Option[String],
+    schema:  Option[String],
+    table:   String
+  ): F[ResultSet[F]] =
     val db = getDatabase(catalog, schema)
 
     val sqlBuf = new StringBuilder("SHOW COLUMNS FROM ")
@@ -998,7 +1135,8 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
                   yield (Option(field), Option(`type`)) match
                     case (Some(columnName), Some(value)) =>
                       val (size, decimals, typeName, hasLength) = parseTypeColumn(value)
-                      val mysqlType                             = MysqlType.getByName(typeName.toUpperCase)
+                      val upperTypeName                         = typeName.toUpperCase
+                      val mysqlType                             = MysqlType.getByName(upperTypeName)
                       val dataType                              =
                         if mysqlType == MysqlType.YEAR && !yearIsDateType then SMALLINT
                         else mysqlType.jdbcType
@@ -1008,9 +1146,9 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
                           DatabaseMetaData.bestRowSession,
                           columnName,
                           dataType,
-                          typeName,
+                          upperTypeName,
                           columnSize,
-                          DatabaseMetaDataImpl.maxBufferSize,
+                          DatabaseMetaDataImpl.MAX_BUFFER_SIZE,
                           decimals,
                           DatabaseMetaData.bestRowNotPseudo
                         )
@@ -1093,7 +1231,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
     sqlBuf.append(" THEN ")
     sqlBuf.append(Int.MaxValue)
     sqlBuf.append(" ELSE CHARACTER_MAXIMUM_LENGTH END AS COLUMN_SIZE, ")
-    sqlBuf.append(DatabaseMetaDataImpl.maxBufferSize)
+    sqlBuf.append(DatabaseMetaDataImpl.MAX_BUFFER_SIZE)
     sqlBuf.append(" AS BUFFER_LENGTH,NUMERIC_SCALE AS DECIMAL_DIGITS, ")
     sqlBuf.append(DatabaseMetaData.versionColumnNotPseudo)
     sqlBuf.append(" AS PSEUDO_COLUMN FROM INFORMATION_SCHEMA.COLUMNS WHERE")
@@ -1530,6 +1668,37 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
   override def getDatabaseMinorVersion(): Int = protocol.initialPacket.serverVersion.minor
 
   override def getSchemas(catalog: Option[String], schemaPattern: Option[String]): F[ResultSet[F]] =
+    // Starting with MySQL 9.3.0, it has been changed to reference INFORMATION_SCHEMA.
+    // see: https://dev.mysql.com/doc/relnotes/connector-j/en/news-9-3-0.html
+    protocol.initialPacket.serverVersion.compare(Version(9, 3, 0)) match
+      case 1 => getSchemasByInformationSchema(catalog, schemaPattern)
+      case _ => getSchemasByDatabase(schemaPattern)
+
+  private def getSchemasByInformationSchema(catalog: Option[String], schemaPattern: Option[String]): F[ResultSet[F]] =
+    val db = getDatabase(catalog, schemaPattern)
+
+    val query = new StringBuilder("SELECT")
+    query.append(" SCHEMA_NAME AS TABLE_SCHEM,")
+    query.append(" CATALOG_NAME AS TABLE_CATALOG")
+    query.append(" FROM INFORMATION_SCHEMA.SCHEMATA")
+    query.append(
+      if databaseTerm == DatabaseMetaData.DatabaseTerm.CATALOG then " WHERE FALSE"
+      else
+        db match
+          case None           => ""
+          case Some(dbFilter) =>
+            if dbFilter.contains("%") || dbFilter.contains("_") then " WHERE SCHEMA_NAME LIKE ?"
+            else " WHERE SCHEMA_NAME = ?"
+    )
+    query.append(" ORDER BY TABLE_CATALOG, TABLE_SCHEM")
+    prepareMetaDataSafeStatement(query.toString()).flatMap { preparedStatement =>
+      val setting = db match
+        case Some(dbValue) => preparedStatement.setString(1, dbValue)
+        case None          => F.unit
+      setting *> preparedStatement.executeQuery()
+    }
+
+  private def getSchemasByDatabase(schemaPattern: Option[String]): F[ResultSet[F]] =
     (if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then getDatabases(schemaPattern)
      else F.pure(List.empty[String])).map { dbList =>
       ResultSetImpl(
@@ -1829,7 +1998,9 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
       useCursorFetch,
       useServerPrepStmts,
       ResultSet.TYPE_SCROLL_INSENSITIVE,
-      ResultSet.CONCUR_READ_ONLY
+      ResultSet.CONCUR_READ_ONLY,
+      telemetryConfig = telemetryConfig,
+      databaseMetrics = databaseMetrics
     )
 
   private def appendJdbcTypeMappingQuery(
@@ -1960,8 +2131,8 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
             MysqlType.SMALLINT_UNSIGNED | MysqlType.TINYINT | MysqlType.TINYINT_UNSIGNED =>
             Some("true")
           case MysqlType.DOUBLE | MysqlType.DOUBLE_UNSIGNED | MysqlType.FLOAT | MysqlType.FLOAT_UNSIGNED =>
-            val supportsAutoIncrement = protocol.initialPacket.serverVersion.compare(Version(8, 4, 0)) >= 0
-            if supportsAutoIncrement then Some("true") else Some("false")
+            val isLegacyVersion = protocol.initialPacket.serverVersion.compare(Version(8, 4, 0)) < 0
+            if isLegacyVersion then Some("true") else Some("false")
           case _ => Some("false")
       ),                   // AUTO_INCREMENT
       Some(mysqlType.name) // LOCAL_TYPE_NAME
@@ -2012,7 +2183,136 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
       case FunctionConstant.FUNCTION_NULLABLE         => DatabaseMetaData.functionNullable
       case FunctionConstant.FUNCTION_NULLABLE_UNKNOWN => DatabaseMetaData.functionNullableUnknown
 
+  private def appendDataTypeClause(query: StringBuilder, fullMysqlTypeColumn: String): StringBuilder =
+    query.append(" CASE")
+    MysqlType.values.foreach { mysqlType =>
+      query.append(" WHEN UPPER(DATA_TYPE) = '").append(mysqlType.getName()).append("' THEN")
+      mysqlType match
+        case MysqlType.TINYINT | MysqlType.TINYINT_UNSIGNED =>
+          if tinyInt1isBit then
+            query.append(" IF(LOCATE('ZEROFILL', UPPER(").append(fullMysqlTypeColumn).append(")) = 0")
+            query.append(" AND LOCATE('UNSIGNED', UPPER(").append(fullMysqlTypeColumn).append(")) = 0")
+            query.append(" AND LOCATE('(1)', ").append(fullMysqlTypeColumn).append(") != 0,")
+            query.append(" ").append(if transformedBitIsBoolean then "16" else "-7").append(", -6)")
+          else query.append(" ").append(mysqlType.jdbcType)
+        case MysqlType.YEAR => query.append(" ").append(if yearIsDateType then mysqlType.jdbcType else SMALLINT)
+        case _              => query.append(" ").append(mysqlType.jdbcType)
+    }
+    query.append(" WHEN UPPER(DATA_TYPE) = 'POINT' THEN -2")
+    query.append(" WHEN UPPER(DATA_TYPE) = 'LINESTRING' THEN -2")
+    query.append(" WHEN UPPER(DATA_TYPE) = 'POLYGON' THEN -2")
+    query.append(" WHEN UPPER(DATA_TYPE) = 'MULTIPOINT' THEN -2")
+    query.append(" WHEN UPPER(DATA_TYPE) = 'MULTILINESTRING' THEN -2")
+    query.append(" WHEN UPPER(DATA_TYPE) = 'MULTIPOLYGON' THEN -2")
+    query.append(" WHEN UPPER(DATA_TYPE) = 'GEOMETRYCOLLECTION' THEN -2")
+    query.append(" WHEN UPPER(DATA_TYPE) = 'GEOMCOLLECTION' THEN -2")
+    query.append(" ELSE 1111 END")
+    query
+
+  private def appendTypeNameClause(query: StringBuilder, fullMysqlTypeColumn: String): StringBuilder =
+    query.append(" UPPER(CASE")
+    // BIT vs TINYINT
+    if tinyInt1isBit then
+      query.append(" WHEN UPPER(DATA_TYPE) = 'TINYINT' THEN CASE")
+      query.append(" WHEN LOCATE('ZEROFILL', UPPER(").append(fullMysqlTypeColumn).append(")) = 0")
+      query.append(" AND LOCATE('UNSIGNED', UPPER(").append(fullMysqlTypeColumn).append(")) = 0")
+      query.append(" AND LOCATE('(1)', ").append(fullMysqlTypeColumn).append(") != 0")
+      query.append(" THEN ").append(if transformedBitIsBoolean then "'BOOLEAN'" else "'BIT'")
+      query.append(" WHEN LOCATE('UNSIGNED', UPPER(").append(fullMysqlTypeColumn).append(")) != 0")
+      query.append(" AND LOCATE('UNSIGNED', UPPER(DATA_TYPE)) = 0 THEN 'TINYINT UNSIGNED'")
+      query.append(" ELSE DATA_TYPE END")
+    end if
+    // Unsigned
+    query
+      .append(" WHEN LOCATE('UNSIGNED', UPPER(")
+      .append(fullMysqlTypeColumn)
+      .append(")) != 0 AND LOCATE('UNSIGNED', UPPER(DATA_TYPE)) = 0")
+    query.append(
+      " AND LOCATE('SET', UPPER(DATA_TYPE)) <> 1 AND LOCATE('ENUM', UPPER(DATA_TYPE)) <> 1 THEN CONCAT(DATA_TYPE, ' UNSIGNED')"
+    )
+    // Spatial data types
+    query.append(" WHEN UPPER(DATA_TYPE) = 'POINT' THEN 'GEOMETRY'")
+    query.append(" WHEN UPPER(DATA_TYPE) = 'LINESTRING' THEN 'GEOMETRY'")
+    query.append(" WHEN UPPER(DATA_TYPE) = 'POLYGON' THEN 'GEOMETRY'")
+    query.append(" WHEN UPPER(DATA_TYPE) = 'MULTIPOINT' THEN 'GEOMETRY'")
+    query.append(" WHEN UPPER(DATA_TYPE) = 'MULTILINESTRING' THEN 'GEOMETRY'")
+    query.append(" WHEN UPPER(DATA_TYPE) = 'MULTIPOLYGON' THEN 'GEOMETRY'")
+    query.append(" WHEN UPPER(DATA_TYPE) = 'GEOMETRYCOLLECTION' THEN 'GEOMETRY'")
+    query.append(" WHEN UPPER(DATA_TYPE) = 'GEOMCOLLECTION' THEN 'GEOMETRY'")
+    // Else
+    query.append(" ELSE UPPER(DATA_TYPE) END)")
+    query
+
+  private def appendColumnSizeClause(query: StringBuilder): StringBuilder =
+    val supportsFractSeconds = protocol.initialPacket.serverVersion.compare(Version(5, 6, 4))
+    query.append(" UPPER(CASE")
+    query.append(" WHEN UPPER(DATA_TYPE) = 'YEAR' THEN 4")
+    query.append(" WHEN UPPER(DATA_TYPE) = 'DATE' THEN 10") // '1000-01-01' to '9999-12-31'
+    supportsFractSeconds match
+      case -1 =>
+        query.append(
+          " WHEN UPPER(DATA_TYPE) = 'DATETIME'"
+        ) // '1000-01-01 00:00:00.000000' to '9999-12-31 23:59:59.999999'
+        query.append(
+          " OR UPPER(DATA_TYPE) = 'TIMESTAMP'"
+        ) // '1970-01-01 00:00:01.000000' UTC to '2038-01-19 03:14:07.999999' UTC
+        query.append(" THEN 19 + IF(DATETIME_PRECISION > 0, DATETIME_PRECISION + 1, DATETIME_PRECISION)")
+        query.append(" WHEN UPPER(DATA_TYPE) = 'TIME'") // '-838:59:59.000000' to '838:59:59.000000'
+        query.append(" THEN 8 + IF(DATETIME_PRECISION > 0, DATETIME_PRECISION + 1, DATETIME_PRECISION)")
+      case _ =>
+        query.append(
+          " WHEN UPPER(DATA_TYPE) = 'DATETIME' OR"
+        ) // '1000-01-01 00:00:00.000000' to '9999-12-31 23:59:59.999999'
+        query.append(
+          " UPPER(DATA_TYPE) = 'TIMESTAMP'"
+        ) // '1970-01-01 00:00:01.000000' UTC to '2038-01-19 03:14:07.999999' UTC
+        query.append(" THEN 19")
+        query.append(" WHEN UPPER(DATA_TYPE) = 'TIME' THEN 8") // '-838:59:59.000000' to '838:59:59.000000'
+
+    // BIT vs TINYINT
+    if tinyInt1isBit && !transformedBitIsBoolean then
+      query.append(" WHEN UPPER(DATA_TYPE) = 'TINYINT' AND LOCATE('ZEROFILL', UPPER(COLUMN_TYPE)) = 0")
+      query.append(" AND LOCATE('UNSIGNED', UPPER(COLUMN_TYPE)) = 0 AND LOCATE('(1)', COLUMN_TYPE) != 0 THEN 1")
+    end if
+    // Workaround for Bug#69042 (16712664), "MEDIUMINT PRECISION/TYPE INCORRECT IN INFORMATION_SCHEMA.COLUMNS".
+    // I_S bug returns NUMERIC_PRECISION=7 for MEDIUMINT UNSIGNED when it must be 8.
+    query.append(" WHEN UPPER(DATA_TYPE) = 'MEDIUMINT' AND LOCATE('UNSIGNED', UPPER(COLUMN_TYPE)) != 0 THEN 8")
+    // JSON
+    query.append(
+      " WHEN UPPER(DATA_TYPE) = 'JSON' THEN 1073741824"
+    ) // JSON columns are limited to the value of the max_allowed_packet (1073741824).
+    // Spatial data types
+    query.append(" WHEN UPPER(DATA_TYPE) = 'GEOMETRY' THEN 65535")
+    query.append(" WHEN UPPER(DATA_TYPE) = 'POINT' THEN 65535")
+    query.append(" WHEN UPPER(DATA_TYPE) = 'LINESTRING' THEN 65535")
+    query.append(" WHEN UPPER(DATA_TYPE) = 'POLYGON' THEN 65535")
+    query.append(" WHEN UPPER(DATA_TYPE) = 'MULTIPOINT' THEN 65535")
+    query.append(" WHEN UPPER(DATA_TYPE) = 'MULTILINESTRING' THEN 65535")
+    query.append(" WHEN UPPER(DATA_TYPE) = 'MULTIPOLYGON' THEN 65535")
+    query.append(" WHEN UPPER(DATA_TYPE) = 'GEOMETRYCOLLECTION' THEN 65535")
+    query.append(" WHEN UPPER(DATA_TYPE) = 'GEOMCOLLECTION' THEN 65535")
+    // Else
+    query.append(" WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION")
+    query
+      .append(" WHEN CHARACTER_MAXIMUM_LENGTH > ")
+      .append(Integer.MAX_VALUE)
+      .append(" THEN ")
+      .append(Integer.MAX_VALUE)
+    query.append(" ELSE CHARACTER_MAXIMUM_LENGTH END)")
+    query
+
+  private def appendDecimalDigitsClause(query: StringBuilder): StringBuilder =
+    query.append(" UPPER(CASE")
+    query.append(" WHEN UPPER(DATA_TYPE) = 'DECIMAL' THEN NUMERIC_SCALE")
+    query.append(
+      " WHEN UPPER(DATA_TYPE) = 'FLOAT' OR UPPER(DATA_TYPE) = 'DOUBLE' THEN IF(NUMERIC_SCALE IS NULL, 0, NUMERIC_SCALE)"
+    )
+    query.append(" ELSE NULL END)")
+    query
+
 private[ldbc] object DatabaseMetaDataImpl:
+
+  val MAX_BUFFER_SIZE = 65535
 
   private val SQL2003_KEYWORDS = List(
     "ABS",
@@ -2305,8 +2605,6 @@ private[ldbc] object DatabaseMetaDataImpl:
     "YEAR"
   )
 
-  private val maxBufferSize = 65535
-
   /**
    * Trait that defines the value determined at the time MySQL is used.
    *
@@ -2416,7 +2714,7 @@ private[ldbc] object DatabaseMetaDataImpl:
     override def storesUpperCaseIdentifiers():                  Boolean = false
     override def storesMixedCaseIdentifiers():                  Boolean = !storesLowerCaseIdentifiers()
     override def supportsMixedCaseQuotedIdentifiers():          Boolean = supportsMixedCaseIdentifiers()
-    override def storesUpperCaseQuotedIdentifiers():            Boolean = true
+    override def storesUpperCaseQuotedIdentifiers():            Boolean = false
     override def storesLowerCaseQuotedIdentifiers():            Boolean = storesLowerCaseIdentifiers()
     override def storesMixedCaseQuotedIdentifiers():            Boolean = !storesLowerCaseIdentifiers()
     override def isCatalogAtStart():                            Boolean = true
@@ -2452,7 +2750,7 @@ private[ldbc] object DatabaseMetaDataImpl:
     override def getMaxCatalogNameLength():                     Int     = 32
     override def getMaxRowSize():                               Int     = Int.MaxValue - 8
     override def doesMaxRowSizeIncludeBlobs():                  Boolean = true
-    override def getMaxStatementLength():                       Int     = maxBufferSize - 4
+    override def getMaxStatementLength():                       Int     = MAX_BUFFER_SIZE - 4
     override def getMaxStatements():                            Int     = 0
     override def getMaxTableNameLength():                       Int     = 64
     override def getMaxTablesInSelect():                        Int     = 256

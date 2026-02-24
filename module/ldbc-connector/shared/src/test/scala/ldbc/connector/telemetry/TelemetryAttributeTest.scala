@@ -66,18 +66,100 @@ class TelemetryAttributeTest extends FTestPlatform:
     assertEquals(TelemetryAttribute.dbMysqlAuthPlugin(plugin), Attribute("db.mysql.auth_plugin", plugin))
   }
 
-  test("batchSize should return Some for size >= 2") {
+  test("dbOperationBatchSize should return Some for size >= 2") {
     assertEquals(
-      TelemetryAttribute.batchSize(2L),
-      List(TelemetryAttribute.dbOperationName("BATCH"), Attribute("db.operation.batch.size", 2L))
+      TelemetryAttribute.dbOperationBatchSize(2),
+      Some(Attribute("db.operation.batch.size", 2L))
     )
     assertEquals(
-      TelemetryAttribute.batchSize(100L),
-      List(TelemetryAttribute.dbOperationName("BATCH"), Attribute("db.operation.batch.size", 100L))
+      TelemetryAttribute.dbOperationBatchSize(100),
+      Some(Attribute("db.operation.batch.size", 100L))
     )
   }
 
-  test("batchSize should return None for size < 2") {
-    assertEquals(TelemetryAttribute.batchSize(1L), List(TelemetryAttribute.dbOperationName("BATCH")))
-    assertEquals(TelemetryAttribute.batchSize(0L), List(TelemetryAttribute.dbOperationName("BATCH")))
+  test("dbOperationBatchSize should return None for size < 2") {
+    // Per OpenTelemetry spec: db.operation.batch.size should NOT be set to 1
+    // Operations are only considered batches when they contain two or more operations
+    assertEquals(TelemetryAttribute.dbOperationBatchSize(1), None)
+    assertEquals(TelemetryAttribute.dbOperationBatchSize(0), None)
+  }
+
+  test("SqlOperation should have correct operation names") {
+    assertEquals(TelemetryAttribute.SqlOperation.SELECT, "SELECT")
+    assertEquals(TelemetryAttribute.SqlOperation.INSERT, "INSERT")
+    assertEquals(TelemetryAttribute.SqlOperation.UPDATE, "UPDATE")
+    assertEquals(TelemetryAttribute.SqlOperation.DELETE, "DELETE")
+    assertEquals(TelemetryAttribute.SqlOperation.BATCH, "BATCH")
+  }
+
+  test("dbOperationParameter should return correct attribute with key") {
+    assertEquals(
+      TelemetryAttribute.dbOperationParameter("limit", 100),
+      Attribute("db.operation.parameter.limit", "100")
+    )
+    assertEquals(
+      TelemetryAttribute.dbOperationParameter("offset", 50),
+      Attribute("db.operation.parameter.offset", "50")
+    )
+  }
+
+  test("dbQueryParameter should return correct attribute with key") {
+    assertEquals(
+      TelemetryAttribute.dbQueryParameter("0", "John"),
+      Attribute("db.query.parameter.0", "John")
+    )
+    assertEquals(
+      TelemetryAttribute.dbQueryParameter("userId", 123),
+      Attribute("db.query.parameter.userId", "123")
+    )
+  }
+
+  test("dbResponseStatusCode should return correct attribute for string code") {
+    assertEquals(
+      TelemetryAttribute.dbResponseStatusCode("1045"),
+      Attribute("db.response.status_code", "1045")
+    )
+  }
+
+  test("dbResponseStatusCode should return correct attribute for int code") {
+    assertEquals(
+      TelemetryAttribute.dbResponseStatusCode(1045),
+      Attribute("db.response.status_code", "1045")
+    )
+  }
+
+  test("errorType should return correct attribute from string") {
+    assertEquals(
+      TelemetryAttribute.errorType("CONNECTION_TIMEOUT"),
+      Attribute("error.type", "CONNECTION_TIMEOUT")
+    )
+  }
+
+  test("errorType should return correct attribute from exception") {
+    val exception = new ldbc.connector.exception.SQLException("Test error")
+    assertEquals(
+      TelemetryAttribute.errorType(exception),
+      Attribute("error.type", "ldbc.connector.exception.SQLException")
+    )
+  }
+
+  test("dbStoredProcedureName should return correct attribute") {
+    assertEquals(
+      TelemetryAttribute.dbStoredProcedureName("get_user_by_id"),
+      Attribute("db.stored_procedure.name", "get_user_by_id")
+    )
+  }
+
+  test("dbResponseReturnedRows should return correct attribute") {
+    assertEquals(
+      TelemetryAttribute.dbResponseReturnedRows(42L),
+      Attribute("db.response.returned_rows", 42L)
+    )
+  }
+
+  test("schemaUrl should return correct attribute with v1.39.0") {
+    assertEquals(
+      TelemetryAttribute.schemaUrl,
+      Attribute("otel.schema_url", "https://opentelemetry.io/schemas/1.39.0")
+    )
   }

@@ -13,7 +13,7 @@ import cats.syntax.all.*
 
 import cats.effect.*
 
-import org.typelevel.otel4s.trace.{ Span, Tracer }
+import org.typelevel.otel4s.trace.{ Span, StatusCode, Tracer }
 import org.typelevel.otel4s.Attribute
 
 import ldbc.sql.{ ResultSet, Statement }
@@ -57,21 +57,33 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
   fetchSize:            Ref[F, Int],
   useCursorFetch:       Boolean,
   useServerPrepStmts:   Boolean,
-  resultSetType:        Int = ResultSet.TYPE_FORWARD_ONLY,
-  resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY
+  resultSetType:        Int             = ResultSet.TYPE_FORWARD_ONLY,
+  resultSetConcurrency: Int             = ResultSet.CONCUR_READ_ONLY,
+  telemetryConfig:      TelemetryConfig = TelemetryConfig.default,
+  databaseMetrics:      DatabaseMetrics[F]
 )(using F: MonadThrow[F])
   extends SharedPreparedStatement[F]:
 
-  private val baseAttributes = buildBaseAttributes(protocol)
+  private val baseAttributes    = buildBaseAttributes(protocol)
+  private val metricsAttributes = buildMetricsAttributes(protocol)
 
   override def executeQuery(): F[ResultSet[F]] =
-    checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, ResultSet[F]](TelemetrySpanName.STMT_EXECUTE_PREPARED) {
-      (span: Span[F]) =>
-        params.get.flatMap { params =>
-          val queryAttributes = baseAttributes ++ List(
-            TelemetryAttribute.dbQueryText(sql)
-          )
+    checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, ResultSet[F]](
+      telemetryConfig.resolveSpanName(
+        sql,
+        TelemetrySpanName.STMT_EXECUTE_PREPARED,
+        protocol.hostInfo.database,
+        Some(protocol.hostInfo.host),
+        Some(protocol.hostInfo.port)
+      )
+    ) { (span: Span[F]) =>
+      params.get.flatMap { params =>
+        val processedSql    = telemetryConfig.processQueryText(sql)
+        val queryAttributes = baseAttributes ++ List(
+          TelemetryAttribute.dbQueryText(processedSql)
+        )
 
+        withDurationMetrics(
           span.addAttributes(queryAttributes*) *>
             protocol.resetSequenceId *>
             protocol.send(
@@ -92,8 +104,11 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
                     )
                 )
               case error: ERRPacket =>
-                val exception = error.toException(Some(sql), None, params)
-                span.recordException(exception, error.attributes*) *> F.raiseError(exception)
+                val exception = error.toException(Some(sql), None)
+                span.addAttributes(error.attributes*) *>
+                  span.recordException(exception, error.attributes*) *>
+                  span.setStatus(StatusCode.Error, exception.getMessage) *>
+                  F.raiseError(exception)
               case result: ColumnsNumberPacket =>
                 for
                   columnDefinitions <-
@@ -124,19 +139,31 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
                                 Some(sql)
                               )
                   _ <- currentResultSet.set(Some(resultSet))
+                  _ <- databaseMetrics.recordReturnedRows(resultSetRow.size.toLong, metricsAttributes*)
                 yield resultSet
-            }
-        } <* params.set(SortedMap.empty)
+            },
+          metricsAttributes*
+        )
+      } <* params.set(SortedMap.empty)
     }
 
   override def executeLargeUpdate(): F[Long] =
-    checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, Long](TelemetrySpanName.STMT_EXECUTE_PREPARED) {
-      (span: Span[F]) =>
-        params.get.flatMap { params =>
-          val queryAttributes = baseAttributes ++ List(
-            TelemetryAttribute.dbQueryText(sql)
-          )
+    checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, Long](
+      telemetryConfig.resolveSpanName(
+        sql,
+        TelemetrySpanName.STMT_EXECUTE_PREPARED,
+        protocol.hostInfo.database,
+        Some(protocol.hostInfo.host),
+        Some(protocol.hostInfo.port)
+      )
+    ) { (span: Span[F]) =>
+      params.get.flatMap { params =>
+        val processedSql    = telemetryConfig.processQueryText(sql)
+        val queryAttributes = baseAttributes ++ List(
+          TelemetryAttribute.dbQueryText(processedSql)
+        )
 
+        withDurationMetrics(
           span.addAttributes(queryAttributes*) *>
             protocol.resetSequenceId *>
             protocol.send(
@@ -145,13 +172,21 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
             protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
               case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
               case error: ERRPacket =>
-                val exception = error.toException(Some(sql), None, params)
-                span.recordException(exception, error.attributes*) *> F.raiseError(exception)
+                val exception = error.toException(Some(sql), None)
+                span.addAttributes(error.attributes*) *>
+                  span.recordException(exception, error.attributes*) *>
+                  span.setStatus(StatusCode.Error, exception.getMessage) *>
+                  F.raiseError(exception)
               case eof: EOFPacket =>
                 val exception = new SQLException("Unexpected EOF packet")
-                span.recordException(exception, eof.attribute) *> F.raiseError(exception)
-            }
-        } <* params.set(SortedMap.empty)
+                span.addAttribute(TelemetryAttribute.errorType(exception)) *>
+                  span.recordException(exception, eof.attribute) *>
+                  span.setStatus(StatusCode.Error, exception.getMessage) *>
+                  F.raiseError(exception)
+            },
+          metricsAttributes*
+        )
+      } <* params.set(SortedMap.empty)
     }
 
   override def execute(): F[Boolean] =
@@ -176,30 +211,41 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
           exchange[F, Array[Long]](TelemetrySpanName.STMT_EXECUTE_BATCH_PREPARED) { (span: Span[F]) =>
             protocol.resetSequenceId *>
               batchedArgs.get.flatMap { args =>
-                val batchAttributes = baseAttributes ++ TelemetryAttribute.batchSize(args.length.toLong)
+                val batchAttributes = baseAttributes ++
+                  List(TelemetryAttribute.dbOperationName(TelemetryAttribute.SqlOperation.BATCH)) ++
+                  TelemetryAttribute.dbOperationBatchSize(args.length).toList
 
                 if args.isEmpty then F.pure(Array.empty)
                 else
-                  span.addAttributes(batchAttributes*) *>
-                    protocol.resetSequenceId *>
-                    protocol.send(
-                      ComQueryPacket(
-                        sql.split("VALUES").head + " VALUES" + args.mkString(","),
-                        protocol.initialPacket.capabilityFlags,
-                        ListMap.empty
-                      )
-                    ) *>
-                    protocol
-                      .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
-                      .flatMap {
-                        case _: OKPacket      => F.pure(Array.fill(args.length)(Statement.SUCCESS_NO_INFO.toLong))
-                        case error: ERRPacket =>
-                          val exception = error.toException(Some(sql), None)
-                          span.recordException(exception, error.attributes*) *> F.raiseError(exception)
-                        case eof: EOFPacket =>
-                          val exception = new SQLException("Unexpected EOF packet")
-                          span.recordException(exception, eof.attribute) *> F.raiseError(exception)
-                      }
+                  withDurationMetrics(
+                    span.addAttributes(batchAttributes*) *>
+                      protocol.resetSequenceId *>
+                      protocol.send(
+                        ComQueryPacket(
+                          sql.split("VALUES").head + " VALUES" + args.mkString(","),
+                          protocol.initialPacket.capabilityFlags,
+                          ListMap.empty
+                        )
+                      ) *>
+                      protocol
+                        .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
+                        .flatMap {
+                          case _: OKPacket      => F.pure(Array.fill(args.length)(Statement.SUCCESS_NO_INFO.toLong))
+                          case error: ERRPacket =>
+                            val exception = error.toException(Some(sql), None)
+                            span.addAttributes(error.attributes*) *>
+                              span.recordException(exception, error.attributes*) *>
+                              span.setStatus(StatusCode.Error, exception.getMessage) *>
+                              F.raiseError(exception)
+                          case eof: EOFPacket =>
+                            val exception = new SQLException("Unexpected EOF packet")
+                            span.addAttribute(TelemetryAttribute.errorType(exception)) *>
+                              span.recordException(exception, eof.attribute) *>
+                              span.setStatus(StatusCode.Error, exception.getMessage) *>
+                              F.raiseError(exception)
+                        },
+                    metricsAttributes*
+                  )
               }
           } <* params.set(SortedMap.empty) <* batchedArgs.set(Vector.empty)
         case q if q.startsWith("update") || q.startsWith("delete") =>
@@ -208,39 +254,50 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
             exchange[F, Array[Long]](TelemetrySpanName.STMT_EXECUTE_BATCH_PREPARED) { (span: Span[F]) =>
               protocol.resetSequenceId *>
                 batchedArgs.get.flatMap { args =>
-                  val batchAttributes = baseAttributes ++ TelemetryAttribute.batchSize(args.length.toLong)
+                  val batchAttributes = baseAttributes ++
+                    List(TelemetryAttribute.dbOperationName(TelemetryAttribute.SqlOperation.BATCH)) ++
+                    TelemetryAttribute.dbOperationBatchSize(args.length).toList
 
                   if args.isEmpty then F.pure(Array.empty)
                   else
-                    span.addAttributes(batchAttributes*) *>
-                      protocol.resetSequenceId *>
-                      protocol.send(
-                        ComQueryPacket(
-                          args.mkString(";"),
-                          protocol.initialPacket.capabilityFlags,
-                          ListMap.empty
-                        )
-                      ) *>
-                      args
-                        .foldLeft(F.pure(Vector.empty[Long])) { ($acc, _) =>
-                          for
-                            acc    <- $acc
-                            result <-
-                              protocol
-                                .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
-                                .flatMap {
-                                  case result: OKPacket =>
-                                    lastInsertId.set(result.lastInsertId) *> F.pure(acc :+ result.affectedRows)
-                                  case error: ERRPacket =>
-                                    val exception = error.toException("Failed to execute batch", acc)
-                                    span.recordException(exception, error.attributes*) *> F.raiseError(exception)
-                                  case eof: EOFPacket =>
-                                    val exception = new SQLException("Unexpected EOF packet")
-                                    span.recordException(exception, eof.attribute) *> F.raiseError(exception)
-                                }
-                          yield result
-                        }
-                        .map(_.toArray)
+                    withDurationMetrics(
+                      span.addAttributes(batchAttributes*) *>
+                        protocol.resetSequenceId *>
+                        protocol.send(
+                          ComQueryPacket(
+                            args.mkString(";"),
+                            protocol.initialPacket.capabilityFlags,
+                            ListMap.empty
+                          )
+                        ) *>
+                        args
+                          .foldLeft(F.pure(Vector.empty[Long])) { ($acc, _) =>
+                            for
+                              acc    <- $acc
+                              result <-
+                                protocol
+                                  .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
+                                  .flatMap {
+                                    case result: OKPacket =>
+                                      lastInsertId.set(result.lastInsertId) *> F.pure(acc :+ result.affectedRows)
+                                    case error: ERRPacket =>
+                                      val exception = error.toException("Failed to execute batch", acc)
+                                      span.addAttributes(error.attributes*) *>
+                                        span.recordException(exception, error.attributes*) *>
+                                        span.setStatus(StatusCode.Error, exception.getMessage) *>
+                                        F.raiseError(exception)
+                                    case eof: EOFPacket =>
+                                      val exception = new SQLException("Unexpected EOF packet")
+                                      span.addAttribute(TelemetryAttribute.errorType(exception)) *>
+                                        span.recordException(exception, eof.attribute) *>
+                                        span.setStatus(StatusCode.Error, exception.getMessage) *>
+                                        F.raiseError(exception)
+                                  }
+                            yield result
+                          }
+                          .map(_.toArray),
+                      metricsAttributes*
+                    )
                 }
             } <*
             protocol.resetSequenceId <*

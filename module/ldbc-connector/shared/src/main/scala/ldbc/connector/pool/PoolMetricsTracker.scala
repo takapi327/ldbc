@@ -15,28 +15,28 @@ import cats.effect.*
 
 /**
  * Trait for tracking pool metrics.
- * 
+ *
  * @tparam F the effect type
  */
 trait PoolMetricsTracker[F[_]]:
 
   /**
    * Record the time taken to acquire a connection.
-   * 
+   *
    * @param duration the duration of the acquisition
    */
   def recordAcquisition(duration: FiniteDuration): F[Unit]
 
   /**
    * Record the time a connection was used.
-   * 
+   *
    * @param duration the duration of usage
    */
   def recordUsage(duration: FiniteDuration): F[Unit]
 
   /**
    * Record the time taken to create a connection.
-   * 
+   *
    * @param duration the duration of creation
    */
   def recordCreation(duration: FiniteDuration): F[Unit]
@@ -58,7 +58,7 @@ trait PoolMetricsTracker[F[_]]:
 
   /**
    * Update a gauge metric.
-   * 
+   *
    * @param name the name of the gauge
    * @param value the current value
    */
@@ -66,7 +66,7 @@ trait PoolMetricsTracker[F[_]]:
 
   /**
    * Get current metrics snapshot.
-   * 
+   *
    * @return current metrics
    */
   def getMetrics: F[PoolMetrics]
@@ -75,11 +75,11 @@ object PoolMetricsTracker:
 
   /**
    * Creates a no-operation metrics tracker that discards all metrics.
-   * 
+   *
    * This implementation is useful for testing or when metrics collection
    * is not needed. All recording methods return immediately without
    * performing any operations, and `getMetrics` always returns empty metrics.
-   * 
+   *
    * @tparam F the effect type (must have an Applicative instance)
    * @return a PoolMetricsTracker that performs no operations
    */
@@ -95,18 +95,18 @@ object PoolMetricsTracker:
 
   /**
    * Creates an in-memory metrics tracker that stores metrics in memory.
-   * 
+   *
    * This implementation maintains a sliding window of recent duration measurements
    * (up to 100 samples) and counters for various pool events. The metrics are
    * stored using thread-safe references and can be retrieved at any time via
    * the `getMetrics` method.
-   * 
+   *
    * Features:
    * - Tracks acquisition, usage, and creation times with sliding windows
    * - Maintains counters for timeouts, leaks, and pool operations
    * - Stores gauge values for current pool state metrics
    * - Thread-safe for concurrent access
-   * 
+   *
    * @tparam F the effect type (must have a Sync instance)
    * @return an effect that creates a new in-memory PoolMetricsTracker
    */
@@ -165,6 +165,7 @@ object PoolMetricsTracker:
       rel      <- releases.get
       cre      <- creations.get
       rem      <- removals.get
+      gs       <- gauges.get
     yield PoolMetrics(
       acquisitionTime   = average(acqTimes),
       usageTime         = average(useTimes),
@@ -174,5 +175,6 @@ object PoolMetricsTracker:
       totalAcquisitions = acq,
       totalReleases     = rel,
       totalCreations    = cre,
-      totalRemovals     = rem
+      totalRemovals     = rem,
+      gauges            = gs
     )
