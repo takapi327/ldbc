@@ -1691,7 +1691,12 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
             else " WHERE SCHEMA_NAME = ?"
     )
     query.append(" ORDER BY TABLE_CATALOG, TABLE_SCHEM")
-    prepareMetaDataSafeStatement(query.toString()).flatMap(_.executeQuery())
+    prepareMetaDataSafeStatement(query.toString()).flatMap { preparedStatement =>
+      val setting = db match
+        case Some(dbValue) => preparedStatement.setString(1, dbValue)
+        case None          => F.unit
+      setting *> preparedStatement.executeQuery()
+    }
 
   private def getSchemasByDatabase(schemaPattern: Option[String]): F[ResultSet[F]] =
     (if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then getDatabases(schemaPattern)
