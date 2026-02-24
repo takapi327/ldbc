@@ -51,14 +51,16 @@ object QuerySanitizer:
   val MAX_QUERY_LENGTH: Int = 10000
 
   // Regex patterns for different literal types
-  private val STRING_LITERAL_PATTERN: Regex = """'(?:[^'\\]|\\.)*'""".r
-  private val DOUBLE_QUOTED_PATTERN:  Regex = """"(?:[^"\\]|\\.)*"""".r
-  private val NUMERIC_PATTERN:        Regex = """\b\d+\.?\d*\b""".r
-  private val HEX_PATTERN:            Regex = """0[xX][0-9a-fA-F]+""".r
-  private val BINARY_PATTERN:         Regex = """0[bB][01]+""".r
-  private val NULL_PATTERN:           Regex = """(?i)(?:IS\s+NOT\s+|IS\s+)?\bNULL\b""".r
-  private val BOOLEAN_PATTERN:        Regex = """(?i)(?:IS\s+NOT\s+|IS\s+)?\b(?:TRUE|FALSE)\b""".r
-  private val LIMIT_OFFSET_CONTEXT:   Regex = """(?i)\b(?:LIMIT|OFFSET)\s*$""".r
+  // Supports both backslash escaping (\') and MySQL doubled-quote escaping ('')
+  private val STRING_LITERAL_PATTERN: Regex = """'(?:[^'\\]|\\.|'')*'""".r
+  // Supports both backslash escaping (\") and doubled-quote escaping ("")
+  private val DOUBLE_QUOTED_PATTERN: Regex = """"(?:[^"\\]|\\.|"")*"""".r
+  private val NUMERIC_PATTERN:       Regex = """\b\d+\.?\d*\b""".r
+  private val HEX_PATTERN:           Regex = """0[xX][0-9a-fA-F]+""".r
+  private val BINARY_PATTERN:        Regex = """0[bB][01]+""".r
+  private val NULL_PATTERN:          Regex = """(?i)(?:IS\s+NOT\s+|IS\s+)?\bNULL\b""".r
+  private val BOOLEAN_PATTERN:       Regex = """(?i)(?:IS\s+NOT\s+|IS\s+)?\b(?:TRUE|FALSE)\b""".r
+  private val LIMIT_OFFSET_CONTEXT:  Regex = """(?i)\b(?:LIMIT|OFFSET)\s*$""".r
 
   // Pattern to extract operation name (preserves original case)
   private val OPERATION_PATTERN: Regex = """^\s*(\w+)""".r
