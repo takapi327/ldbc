@@ -530,3 +530,119 @@ class QuerySanitizerTest extends FTestPlatform:
       "WITH"
     )
   }
+
+  // ============================================================
+  // ReDoS (Regular Expression Denial of Service) resistance tests
+  //
+  // These tests verify that pathological inputs do not cause
+  // catastrophic backtracking in regex patterns. Each test must
+  // complete within a reasonable time (the munit default timeout).
+  // ============================================================
+
+  test("ReDoS resistance: STRING_LITERAL_PATTERN with many backslashes (no closing quote)") {
+    // Pathological input: opening quote followed by many backslashes, never closed
+    val malicious = "SELECT * FROM users WHERE name = '" + "\\" * 5000
+    val result    = QuerySanitizer.sanitize(malicious)
+    // Should complete quickly and return some result (not hang)
+    assert(result.nonEmpty)
+  }
+
+  test("ReDoS resistance: STRING_LITERAL_PATTERN with alternating backslash-char pattern") {
+    // Pattern: '\a\b\c\d... repeated - tests alternation in (?:[^'\\]|\\.)*
+    val payload   = (1 to 2500).map(i => s"\\${ ('a' + (i % 26)).toChar }").mkString
+    val malicious = s"SELECT * FROM users WHERE name = '$payload"
+    val result    = QuerySanitizer.sanitize(malicious)
+    assert(result.nonEmpty)
+  }
+
+  test("ReDoS resistance: DOUBLE_QUOTED_PATTERN with many backslashes (no closing quote)") {
+    val malicious = "SELECT * FROM users WHERE name = \"" + "\\" * 5000
+    val result    = QuerySanitizer.sanitize(malicious)
+    assert(result.nonEmpty)
+  }
+
+  test("ReDoS resistance: DOUBLE_QUOTED_PATTERN with alternating backslash-char pattern") {
+    val payload   = (1 to 2500).map(i => s"\\${ ('a' + (i % 26)).toChar }").mkString
+    val malicious = "SELECT * FROM users WHERE name = \"" + payload
+    val result    = QuerySanitizer.sanitize(malicious)
+    assert(result.nonEmpty)
+  }
+
+  test("ReDoS resistance: BOOLEAN_PATTERN with many spaces between IS and NOT") {
+    // Tests (?:IS\s+NOT\s+|IS\s+)? with excessive whitespace
+    val spaces    = " " * 5000
+    val malicious = s"SELECT * FROM users WHERE flag IS${ spaces }NOT${ spaces }TRUE"
+    val result    = QuerySanitizer.sanitize(malicious)
+    assert(result.nonEmpty)
+  }
+
+  test("ReDoS resistance: NULL_PATTERN with many spaces between IS and NOT") {
+    val spaces    = " " * 5000
+    val malicious = s"SELECT * FROM users WHERE col IS${ spaces }NOT${ spaces }NULL"
+    val result    = QuerySanitizer.sanitize(malicious)
+    assert(result.nonEmpty)
+  }
+
+  test("ReDoS resistance: NUMERIC_PATTERN with long digit string") {
+    // Keep total query length under MAX_QUERY_LENGTH (10000)
+    val digits    = "9" * 9000
+    val malicious = s"SELECT * FROM users WHERE id = $digits"
+    val result    = QuerySanitizer.sanitize(malicious)
+    assert(result.contains("?"))
+  }
+
+  test("ReDoS resistance: isParameterizedQuery with many backslashes in string literal") {
+    val malicious = "SELECT * FROM users WHERE name = '" + "\\" * 5000 + "' AND id = ?"
+    val result    = QuerySanitizer.isParameterizedQuery(malicious)
+    // Should complete quickly regardless of result
+    assert(result || !result)
+  }
+
+  test("ReDoS resistance: collapseInClauses with many placeholders") {
+    // Keep under MAX_QUERY_LENGTH (10000) to ensure the regex path is exercised
+    val placeholders = List.fill(1000)("?").mkString(", ")
+    val sql          = s"SELECT * FROM users WHERE id IN ($placeholders)"
+    val result       = QuerySanitizer.collapseInClauses(sql)
+    assertEquals(result, "SELECT * FROM users WHERE id IN (?)")
+  }
+
+  test("ReDoS resistance: sanitize with input near MAX_QUERY_LENGTH") {
+    val padding   = "x" * (QuerySanitizer.MAX_QUERY_LENGTH - 50)
+    val malicious = s"SELECT '$padding' FROM users WHERE id = 123"
+    val result    = QuerySanitizer.sanitize(malicious)
+    assert(result.nonEmpty)
+  }
+
+  test("ReDoS resistance: sanitize with input exceeding MAX_QUERY_LENGTH returns as-is") {
+    val longQuery = "SELECT * FROM users WHERE name = '" + "a" * QuerySanitizer.MAX_QUERY_LENGTH + "'"
+    val result    = QuerySanitizer.sanitize(longQuery)
+    assertEquals(result, longQuery)
+  }
+
+  // ============================================================
+  // MySQL-specific escape style tests
+  //
+  // MySQL supports both backslash escaping (\') and doubled-quote
+  // escaping ('') for single quotes within string literals.
+  // ============================================================
+
+  test("sanitize should handle MySQL doubled single-quote escape style") {
+    // MySQL allows '' to represent a literal single quote inside a string
+    // e.g., 'It''s a test' is a valid MySQL string literal meaning: It's a test
+    val sql      = "SELECT * FROM users WHERE name = 'It''s a test'"
+    val expected = "SELECT * FROM users WHERE name = ?"
+    assertEquals(QuerySanitizer.sanitize(sql), expected)
+  }
+
+  test("sanitize should handle multiple doubled single-quotes") {
+    val sql      = "SELECT * FROM users WHERE bio = 'She said ''hello'' to ''world'''"
+    val expected = "SELECT * FROM users WHERE bio = ?"
+    assertEquals(QuerySanitizer.sanitize(sql), expected)
+  }
+
+  test("sanitize should handle empty string with doubled quotes") {
+    // '' is an empty string in MySQL, not an escape sequence
+    val sql      = "INSERT INTO users (name) VALUES ('')"
+    val expected = "INSERT INTO users (name) VALUES (?)"
+    assertEquals(QuerySanitizer.sanitize(sql), expected)
+  }
