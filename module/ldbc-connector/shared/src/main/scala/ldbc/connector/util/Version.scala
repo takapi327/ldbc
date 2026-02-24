@@ -54,7 +54,7 @@ case class Version(
     if y != 0 then return y
     val z = this.patch.compare(that.patch)
     if z != 0 then return z
-    -1
+    0
 
   override def toString: String = s"$major.$minor.$patch"
 
