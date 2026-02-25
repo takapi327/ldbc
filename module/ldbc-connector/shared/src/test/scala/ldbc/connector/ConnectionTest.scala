@@ -1135,7 +1135,9 @@ class ConnectionTest extends FTestPlatform:
     )
   }
 
-  test("getBestRowIdentifier should return correct COLUMN_SIZE for DATETIME(3) including fractional seconds precision.") {
+  test(
+    "getBestRowIdentifier should return correct COLUMN_SIZE for DATETIME(3) including fractional seconds precision."
+  ) {
     val connection = Connection[IO](
       host         = "127.0.0.1",
       port         = 13306,
@@ -1150,8 +1152,9 @@ class ConnectionTest extends FTestPlatform:
       connection.use { conn =>
         for
           metaData  <- conn.getMetaData()
-          resultSet <- metaData.getBestRowIdentifier(None, Some("connector_test"), "datetime_precision_test", None, None)
-          result    <-
+          resultSet <-
+            metaData.getBestRowIdentifier(None, Some("connector_test"), "datetime_precision_test", None, None)
+          result <-
             Monad[IO].whileM[Vector, String](resultSet.next()) {
               for
                 scope         <- resultSet.getShort("SCOPE")
