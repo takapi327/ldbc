@@ -1620,6 +1620,32 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
     )
   }
 
+  test(s"$prefix: getBestRowIdentifier should return correct COLUMN_SIZE for DATETIME(3)") {
+    assertIO(
+      datasource.getConnection.use { conn =>
+        for
+          metaData  <- conn.getMetaData()
+          resultSet <- metaData.getBestRowIdentifier(None, None, "datetime_precision_test", Some(1), Some(true))
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                scope         <- resultSet.getShort("SCOPE")
+                columnName    <- resultSet.getString("COLUMN_NAME")
+                dataType      <- resultSet.getInt("DATA_TYPE")
+                typeName      <- resultSet.getString("TYPE_NAME")
+                columnSize    <- resultSet.getInt("COLUMN_SIZE")
+                bufferLength  <- resultSet.getInt("BUFFER_LENGTH")
+                decimalDigits <- resultSet.getShort("DECIMAL_DIGITS")
+                pseudoColumn  <- resultSet.getShort("PSEUDO_COLUMN")
+              yield s"$scope, $columnName, $dataType, $typeName, $columnSize, $bufferLength, $decimalDigits, $pseudoColumn"
+            }
+        yield result
+      },
+      // DATETIME(3) COLUMN_SIZE = 19 (base) + 3 (fractional digits) + 1 (decimal point) = 23
+      Vector("2, id, 93, DATETIME, 23, 65535, 0, 1")
+    )
+  }
+
   test(s"$prefix: getVersionColumns") {
     assertIO(
       datasource.getConnection.use { conn =>

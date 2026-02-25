@@ -1135,6 +1135,44 @@ class ConnectionTest extends FTestPlatform:
     )
   }
 
+  test("getBestRowIdentifier should return correct COLUMN_SIZE for DATETIME(3) including fractional seconds precision.") {
+    val connection = Connection[IO](
+      host         = "127.0.0.1",
+      port         = 13306,
+      user         = "ldbc",
+      password     = Some("password"),
+      database     = Some("connector_test"),
+      ssl          = SSL.Trusted,
+      databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
+    )
+
+    assertIO(
+      connection.use { conn =>
+        for
+          metaData  <- conn.getMetaData()
+          resultSet <- metaData.getBestRowIdentifier(None, Some("connector_test"), "datetime_precision_test", None, None)
+          result    <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                scope         <- resultSet.getShort("SCOPE")
+                columnName    <- resultSet.getString("COLUMN_NAME")
+                dataType      <- resultSet.getInt("DATA_TYPE")
+                typeName      <- resultSet.getString("TYPE_NAME")
+                columnSize    <- resultSet.getInt("COLUMN_SIZE")
+                bufferLength  <- resultSet.getInt("BUFFER_LENGTH")
+                decimalDigits <- resultSet.getShort("DECIMAL_DIGITS")
+                pseudoColumn  <- resultSet.getShort("PSEUDO_COLUMN")
+              yield s"Scope: $scope, Column Name: $columnName, Data Type: $dataType, Type Name: $typeName, Column Size: $columnSize, Buffer Length: $bufferLength, Decimal Digits: $decimalDigits, Pseudo Column: $pseudoColumn"
+            }
+        yield result
+      },
+      // DATETIME(3) COLUMN_SIZE = 19 (base) + 3 (fractional digits) + 1 (decimal point) = 23
+      Vector(
+        "Scope: 2, Column Name: id, Data Type: 93, Type Name: DATETIME, Column Size: 23, Buffer Length: 65535, Decimal Digits: 0, Pseudo Column: 1"
+      )
+    )
+  }
+
   test("The result of retrieving version columns information matches the specified value.") {
     val connection = Connection[IO](
       host     = "127.0.0.1",
