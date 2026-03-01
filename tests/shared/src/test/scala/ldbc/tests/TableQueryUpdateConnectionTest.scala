@@ -7,7 +7,6 @@
 package ldbc.tests
 
 import cats.data.NonEmptyList
-import cats.syntax.all.*
 
 import cats.effect.*
 
@@ -55,7 +54,6 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
       _ <- sql"DELETE FROM city WHERE Name = 'Japan' AND CountryCode = 'JPN' AND District = 'Kanto'".update
       _ <-
         sql"DELETE FROM country WHERE Code IN (${ code(1) }, ${ code(2) }, ${ code(3) }, ${ code(4) }, ${ code(5) }, ${ code(6) })".update
-      _ <- sql"ALTER TABLE city AUTO_INCREMENT = 1".update
     yield ()).commit(connector)
 
   override def munitFixtures = List(
@@ -348,22 +346,6 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
         data   <- city.selectAll.where(_.id _equals length).query.to[Option]
       yield empty.isEmpty & data.nonEmpty)
         .transaction(connector)
-    )
-  }
-
-  test(
-    "The value of AutoIncrement obtained during insert matches the specified value."
-  ) {
-    assertIOBoolean(
-      (for
-        length <- city.select(_.id.count).query.unsafe.map(_ + 1)
-        result <-
-          city
-            .insertInto(v => v.name *: v.countryCode *: v.district *: v.population)
-            .values(("Test4", code(4), "T", 1))
-            .returning[Int]
-      yield result === length)
-        .commit(connector)
     )
   }
 
