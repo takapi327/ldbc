@@ -2077,7 +2077,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
         val decimals = `type`.substring(`type`.indexOf(",") + 1, `type`.indexOf(")")).toInt
         (size, decimals, name, true)
       else
-        val size = `type`.substring(`type`.indexOf("(") + 1, `type`.indexOf(",")).toInt
+        val size = `type`.substring(`type`.indexOf("(") + 1, `type`.indexOf(")")).toInt
         (size, 0, name, true)
     else (10, 0, `type`, false)
 
