@@ -28,9 +28,9 @@ class LdbcConnectionPoolDslTest extends ConnectionPoolDslTest:
   override def prefix: "jdbc" | "ldbc" = "ldbc"
 
   override def config: MySQLConfig = MySQLConfig.default
-    .setPort(13306)
-    .setUser("ldbc")
-    .setPassword("password")
+    .setPort(MySQLTestConfig.port)
+    .setUser(MySQLTestConfig.user)
+    .setPassword(MySQLTestConfig.password)
     .setDatabase("world")
     .setSSL(SSL.Trusted)
     .setMinConnections(2)

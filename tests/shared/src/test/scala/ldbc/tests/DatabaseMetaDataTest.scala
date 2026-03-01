@@ -32,10 +32,10 @@ class LdbcDatabaseMetaDataTest extends DatabaseMetaDataTest:
 
 trait DatabaseMetaDataTest extends CatsEffectSuite:
 
-  protected val host:     String = "127.0.0.1"
-  protected val port:     Int    = 13306
-  protected val user:     String = "ldbc"
-  protected val password: String = "password"
+  protected val host:     String = MySQLTestConfig.host
+  protected val port:     Int    = MySQLTestConfig.port
+  protected val user:     String = MySQLTestConfig.user
+  protected val password: String = MySQLTestConfig.password
   protected val database: String = "connector_test"
 
   def prefix:     "jdbc" | "ldbc"
@@ -139,7 +139,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for metaData <- conn.getMetaData()
         yield metaData.getDatabaseProductVersion()
       },
-      "9.6.0"
+      MySQLTestConfig.version
     )
   }
 
@@ -2100,7 +2100,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for metaData <- conn.getMetaData()
         yield metaData.getDatabaseMajorVersion()
       },
-      9
+      MySQLTestConfig.version.split('.')(0).toInt
     )
   }
 
@@ -2110,7 +2110,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for metaData <- conn.getMetaData()
         yield metaData.getDatabaseMinorVersion()
       },
-      6
+      MySQLTestConfig.version.split('.')(1).toInt
     )
   }
 

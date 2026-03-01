@@ -25,18 +25,18 @@ class LdbcServerCursorFetchTest extends ServerCursorFetchTest:
   override def munitIOTimeout: Duration = 80.seconds
 
   override def datasource: DataSource[IO] = MySQLDataSource
-    .build[IO]("127.0.0.1", 13306, "ldbc")
-    .setPassword("password")
+    .build[IO](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+    .setPassword(MySQLTestConfig.password)
     .setDatabase("world")
     .setSSL(SSL.Trusted)
     .setUseCursorFetch(true)
 
 trait ServerCursorFetchTest extends CatsEffectSuite:
 
-  protected val host:     String = "127.0.0.1"
-  protected val port:     Int    = 13306
-  protected val user:     String = "ldbc"
-  protected val password: String = "password"
+  protected val host:     String = MySQLTestConfig.host
+  protected val port:     Int    = MySQLTestConfig.port
+  protected val user:     String = MySQLTestConfig.user
+  protected val password: String = MySQLTestConfig.password
   protected val database: String = "world"
 
   def datasource: DataSource[IO]

@@ -22,10 +22,10 @@ class TransactionTest extends FTestPlatform:
 
   test("Transactions initiated in a session are read-only.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       ssl      = SSL.Trusted
     )
     assertIOBoolean(connection.use { conn =>
@@ -38,10 +38,10 @@ class TransactionTest extends FTestPlatform:
 
   test("Transactions initiated in a session are write-only.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       ssl      = SSL.Trusted
     )
     assertIOBoolean(connection.use { conn =>
@@ -54,10 +54,10 @@ class TransactionTest extends FTestPlatform:
 
   test("Transactions initiated in a session are in auto commit mode.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       ssl      = SSL.Trusted
     )
     assertIOBoolean(connection.use { conn =>
@@ -70,10 +70,10 @@ class TransactionTest extends FTestPlatform:
 
   test("Transactions initiated in a session do not enter autocommit mode.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       ssl      = SSL.Trusted
     )
     assertIOBoolean(connection.use { conn =>
@@ -86,10 +86,10 @@ class TransactionTest extends FTestPlatform:
 
   test("If a transaction initiated in a session is not in autocommit mode, it can be committed manually.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       ssl      = SSL.Trusted
     )
     assertIOBoolean(connection.use { conn =>
@@ -104,10 +104,10 @@ class TransactionTest extends FTestPlatform:
     "If a transaction initiated in a session is in autocommit mode, a manual commit will result in a SQLNonTransientException."
   ) {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       ssl      = SSL.Trusted
     )
     interceptIO[SQLNonTransientException](connection.use { conn =>
@@ -120,10 +120,10 @@ class TransactionTest extends FTestPlatform:
 
   test("If a transaction initiated in a session is not in autocommit mode, it can be rollback manually.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       ssl      = SSL.Trusted
     )
     assertIOBoolean(connection.use { conn =>
@@ -138,10 +138,10 @@ class TransactionTest extends FTestPlatform:
     "If a transaction initiated in a session is in autocommit mode, a manual rollback will result in a SQLNonTransientException."
   ) {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       ssl      = SSL.Trusted
     )
     interceptIO[SQLNonTransientException](connection.use { conn =>
@@ -154,10 +154,10 @@ class TransactionTest extends FTestPlatform:
 
   test("Transaction isolation level becomes READ_UNCOMMITTED.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       ssl      = SSL.Trusted
     )
     assertIOBoolean(connection.use { conn =>
@@ -170,10 +170,10 @@ class TransactionTest extends FTestPlatform:
 
   test("Transaction isolation level becomes READ_COMMITTED.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       ssl      = SSL.Trusted
     )
     assertIOBoolean(connection.use { conn =>
@@ -186,10 +186,10 @@ class TransactionTest extends FTestPlatform:
 
   test("Transaction isolation level becomes SERIALIZABLE.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       ssl      = SSL.Trusted
     )
     assertIOBoolean(connection.use { conn =>
@@ -202,10 +202,10 @@ class TransactionTest extends FTestPlatform:
 
   test("Transaction isolation level becomes REPEATABLE_READ.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       ssl      = SSL.Trusted
     )
     assertIOBoolean(connection.use { conn =>
@@ -218,10 +218,10 @@ class TransactionTest extends FTestPlatform:
 
   test("The update process is reflected by the commit.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -244,10 +244,10 @@ class TransactionTest extends FTestPlatform:
 
   test("The update process is not reflected by the rollback.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )

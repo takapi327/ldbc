@@ -15,10 +15,10 @@ import jdbc.connector.*
 class JdbcCodecTest extends CodecTest:
 
   val ds = new MysqlDataSource()
-  ds.setServerName("127.0.0.1")
-  ds.setPortNumber(13306)
-  ds.setUser("ldbc")
-  ds.setPassword("password")
+  ds.setServerName(MySQLTestConfig.host)
+  ds.setPortNumber(MySQLTestConfig.port)
+  ds.setUser(MySQLTestConfig.user)
+  ds.setPassword(MySQLTestConfig.password)
 
   override def prefix: "jdbc" | "ldbc" = "jdbc"
 

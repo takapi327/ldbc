@@ -27,8 +27,8 @@ class LdbcTableQueryUpdateConnectionTest extends TableQueryUpdateConnectionTest:
   override def prefix: "jdbc" | "ldbc" = "ldbc"
 
   private val datasource = MySQLDataSource
-    .build[IO]("127.0.0.1", 13306, "ldbc")
-    .setPassword("password")
+    .build[IO](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+    .setPassword(MySQLTestConfig.password)
     .setDatabase("world2")
     .setSSL(SSL.Trusted)
 

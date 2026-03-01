@@ -37,10 +37,10 @@ class LdbcConnectionTest extends ConnectionTest:
 
 trait ConnectionTest extends CatsEffectSuite:
 
-  protected val host:     String = "127.0.0.1"
-  protected val port:     Int    = 13306
-  protected val user:     String = "ldbc"
-  protected val password: String = "password"
+  protected val host:     String = MySQLTestConfig.host
+  protected val port:     Int    = MySQLTestConfig.port
+  protected val user:     String = MySQLTestConfig.user
+  protected val password: String = MySQLTestConfig.password
   protected val database: String = "connector_test"
 
   def prefix:                                                     "jdbc" | "ldbc"
@@ -70,7 +70,7 @@ trait ConnectionTest extends CatsEffectSuite:
   test("The URL retrieved from DatabaseMetaData matches the specified value.") {
     assertIO(
       datasource().getConnection.use(_.getMetaData().map(_.getURL())),
-      "jdbc:mysql://127.0.0.1:13306/connector_test"
+      s"jdbc:mysql://${ MySQLTestConfig.host }:${ MySQLTestConfig.port }/connector_test"
     )
   }
 
@@ -111,7 +111,7 @@ trait ConnectionTest extends CatsEffectSuite:
   test("The Server version retrieved from DatabaseMetaData matches the specified value.") {
     assertIO(
       datasource().getConnection.use(_.getMetaData().map(_.getDatabaseProductVersion())),
-      "9.6.0"
+      MySQLTestConfig.version
     )
   }
 
@@ -635,6 +635,7 @@ trait ConnectionTest extends CatsEffectSuite:
   }
 
   test("The result of retrieving type information matches the specified value.") {
+    assume(MySQLTestConfig.isMySql9OrLater, "Type info list includes VECTOR which requires MySQL 9.x")
     assertIO(
       datasource().getConnection.use { conn =>
         for

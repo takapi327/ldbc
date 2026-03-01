@@ -25,8 +25,8 @@ class LdbcCodecTest extends CodecTest:
     ConnectionFixture(
       "connection",
       MySQLDataSource
-        .build[IO]("127.0.0.1", 13306, "ldbc")
-        .setPassword("password")
+        .build[IO](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+        .setPassword(MySQLTestConfig.password)
         .setDatabase("world")
         .setSSL(SSL.Trusted)
     )
@@ -165,6 +165,7 @@ trait CodecTest extends CatsEffectSuite:
   }
 
   test("Encoder and Decoder work properly for data of type MySQL Vector (Array[Float]).") {
+    assume(MySQLTestConfig.isMySql9OrLater, "VECTOR type requires MySQL 9.x")
     val vector = Array(1f, 2f, 3f)
     assertIO(
       (for
@@ -179,6 +180,7 @@ trait CodecTest extends CatsEffectSuite:
   }
 
   test("Encoder and Decoder work properly for data of type MySQL Vector NULL (Option[Array[Float]]).") {
+    assume(MySQLTestConfig.isMySql9OrLater, "VECTOR type requires MySQL 9.x")
     assertIO(
       (for
         _      <- sql"USE codec_test".update

@@ -47,9 +47,9 @@ class MySQLDataSourceTest extends FTestPlatform:
 
   test("setHost should update host value") {
     val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
-    val updated    = dataSource.setHost("127.0.0.1")
+    val updated    = dataSource.setHost(TestConfig.host)
 
-    assertEquals(updated.host, "127.0.0.1")
+    assertEquals(updated.host, TestConfig.host)
     assertEquals(updated.port, dataSource.port)
     assertEquals(updated.user, dataSource.user)
   }
@@ -238,7 +238,7 @@ class MySQLDataSourceTest extends FTestPlatform:
 
   test("chaining multiple setter methods should work correctly") {
     val dataSource = MySQLDataSource[IO, Unit]("localhost", 3306, "root")
-      .setHost("127.0.0.1")
+      .setHost(TestConfig.host)
       .setPort(3307)
       .setUser("testuser")
       .setPassword("testpass")
@@ -250,7 +250,7 @@ class MySQLDataSourceTest extends FTestPlatform:
       .setUseServerPrepStmts(true)
       .setMaxAllowedPacket(1048576)
 
-    assertEquals(dataSource.host, "127.0.0.1")
+    assertEquals(dataSource.host, TestConfig.host)
     assertEquals(dataSource.port, 3307)
     assertEquals(dataSource.user, "testuser")
     assertEquals(dataSource.password, Some("testpass"))
@@ -287,7 +287,7 @@ class MySQLDataSourceTest extends FTestPlatform:
   test("MySQLDataSource.default should create DataSource with default config") {
     val dataSource = MySQLDataSource.default[IO]
 
-    assertEquals(dataSource.host, "127.0.0.1")
+    assertEquals(dataSource.host, TestConfig.host)
     assertEquals(dataSource.port, 3306)
     assertEquals(dataSource.user, "root")
     assertEquals(dataSource.password, None)
