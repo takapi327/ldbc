@@ -6,8 +6,6 @@
 
 package ldbc.connector
 
-import java.util.{ Locale, StringTokenizer }
-
 import scala.collection.immutable.{ ListMap, SortedMap }
 
 import cats.*
@@ -869,18 +867,6 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
     tableNamePattern: Option[String]
   ): F[ResultSet[F]] =
 
-    // Starting with MySQL 9.3.0, it has been changed to reference INFORMATION_SCHEMA.
-    // see: https://dev.mysql.com/doc/relnotes/connector-j/en/news-9-3-0.html
-    protocol.initialPacket.serverVersion.compare(Version(9, 3, 0)) match
-      case 1 => getTablePrivilegesByInformationSchema(catalog, schemaPattern, tableNamePattern)
-      case _ => getTablePrivilegesByTablesPriv(catalog, schemaPattern, tableNamePattern)
-
-  private def getTablePrivilegesByInformationSchema(
-    catalog:          Option[String],
-    schemaPattern:    Option[String],
-    tableNamePattern: Option[String]
-  ): F[ResultSet[F]] =
-
     val db = getDatabase(catalog, schemaPattern)
 
     val query = new StringBuilder("SELECT")
@@ -930,144 +916,12 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
         setting *> preparedStatement.executeQuery()
       }
 
-  private def getTablePrivilegesByTablesPriv(
-    catalog:          Option[String],
-    schemaPattern:    Option[String],
-    tableNamePattern: Option[String]
-  ): F[ResultSet[F]] =
-
-    val db = getDatabase(catalog, schemaPattern)
-
-    val sqlBuf = new StringBuilder(
-      "SELECT host,db,table_name,grantor,user,table_priv FROM mysql.tables_priv"
-    )
-
-    val conditionBuf = new StringBuilder()
-
-    if db.nonEmpty then
-      conditionBuf.append(
-        if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then " db LIKE ?" else " db = ?"
-      )
-    end if
-
-    if tableNamePattern.nonEmpty then
-      if conditionBuf.nonEmpty then conditionBuf.append(" AND")
-      end if
-      conditionBuf.append(" table_name LIKE ?")
-    end if
-
-    if conditionBuf.nonEmpty then
-      sqlBuf.append(" WHERE")
-      sqlBuf.append(conditionBuf)
-    end if
-
-    prepareMetaDataSafeStatement(sqlBuf.toString())
-      .flatMap { preparedStatement =>
-        val setting = (db, tableNamePattern) match
-          case (Some(dbValue), Some(tableName)) =>
-            preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, tableName)
-          case (Some(dbValue), None)   => preparedStatement.setString(1, dbValue)
-          case (None, Some(tableName)) => preparedStatement.setString(1, tableName)
-          case _                       => F.unit
-
-        setting *> preparedStatement.executeQuery()
-      }
-      .flatMap { resultSet =>
-        val keys = resultSet.whileM[Vector, Vector[(Option[String], Option[String], Option[String], String, String)]] {
-          for
-            host    <- resultSet.getString(1).map(Option(_))
-            db      <- resultSet.getString(2).map(Option(_))
-            table   <- resultSet.getString(3).map(Option(_))
-            grantor <- resultSet.getString(4).map(Option(_))
-            user    <- resultSet.getString(5).map(Option(_)).map(_.getOrElse("%"))
-            value   <- resultSet.getString(6).map(Option(_))
-          yield
-            val fullUser = new StringBuilder(user)
-            host.foreach(h => fullUser.append("@").append(h))
-
-            val keys = Vector.newBuilder[(Option[String], Option[String], Option[String], String, String)]
-            value match
-              case Some(value) =>
-                val allPrivileges   = value.toUpperCase(Locale.ENGLISH)
-                val stringTokenizer = new StringTokenizer(allPrivileges, ",")
-
-                while stringTokenizer.hasMoreTokens do
-                  val privilege = stringTokenizer.nextToken().trim
-
-                  keys += ((db, table, grantor, fullUser.toString(), privilege))
-                end while
-              case None => // no privileges
-
-            keys.result()
-        }
-
-        for
-          keys    <- keys.map(_.flatten)
-          records <- keys
-                       .traverse { (db, table, grantor, user, privilege) =>
-                         val columnResults = getColumns(catalog, schemaPattern, table, None)
-                         columnResults.flatMap { columnResult =>
-                           columnResult.whileM[Vector, ResultSetRowPacket] {
-                             val rows = Array(
-                               if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then Some("def")
-                               else db,                                                                   // TABLE_CAT
-                               if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then db else None, // TABLE_SCHEM
-                               table,                                                                     // TABLE_NAME
-                               grantor,                                                                   // GRANTOR
-                               Some(user),                                                                // GRANTEE
-                               Some(privilege),                                                           // PRIVILEGE
-                               None // IS_GRANTABLE
-                             )
-                             F.pure(ResultSetRowPacket(rows))
-                           }
-                         }
-                       }
-                       .map(_.flatten)
-        yield ResultSetImpl(
-          protocol,
-          Vector(
-            "TABLE_CAT",
-            "TABLE_SCHEM",
-            "TABLE_NAME",
-            "GRANTOR",
-            "GRANTEE",
-            "PRIVILEGE",
-            "IS_GRANTABLE"
-          ).map { value =>
-            new ColumnDefinitionPacket:
-              override def table:      String                     = ""
-              override def name:       String                     = value
-              override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
-              override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
-          },
-          records,
-          serverVariables,
-          protocol.initialPacket.serverVersion,
-          resultSetClosed,
-          fetchSize,
-          useCursorFetch,
-          useServerPrepStmts
-        )
-      }
-
   override def getBestRowIdentifier(
     catalog:  Option[String],
     schema:   Option[String],
     table:    String,
     scope:    Option[Int],
     nullable: Option[Boolean]
-  ): F[ResultSet[F]] =
-
-    // Starting with MySQL 9.3.0, it has been changed to reference INFORMATION_SCHEMA.
-    // see: https://dev.mysql.com/doc/relnotes/connector-j/en/news-9-3-0.html
-    protocol.initialPacket.serverVersion.compare(Version(9, 3, 0)) match
-      case 1 => getBestRowIdentifierByInformationSchema(catalog, schema, table)
-      case _ => getBestRowIdentifierByTable(catalog, schema, table)
-
-  private def getBestRowIdentifierByInformationSchema(
-    catalog: Option[String],
-    schema:  Option[String],
-    table:   String
   ): F[ResultSet[F]] =
 
     val db = getDatabase(catalog, schema)
@@ -1104,107 +958,6 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
           preparedStatement.setString(1, table)
 
       setting *> preparedStatement.executeQuery()
-    }
-
-  private def getBestRowIdentifierByTable(
-    catalog: Option[String],
-    schema:  Option[String],
-    table:   String
-  ): F[ResultSet[F]] =
-    val db = getDatabase(catalog, schema)
-
-    val sqlBuf = new StringBuilder("SHOW COLUMNS FROM ")
-    sqlBuf.append(table)
-
-    db match
-      case Some(dbValue) =>
-        sqlBuf.append(" FROM ")
-        sqlBuf.append(dbValue)
-      case None => ()
-
-    prepareMetaDataSafeStatement(sqlBuf.toString()).flatMap { preparedStatement =>
-      preparedStatement.executeQuery().flatMap {
-        case resultSet: ResultSetImpl[F] =>
-          val decodedF =
-            resultSet.whileM[Vector, Option[(Int, String, Int, String, Int, Int, Int, Int)]] {
-              resultSet.getString("Key").flatMap {
-                case key if key.startsWith("PRI") =>
-                  for
-                    field  <- resultSet.getString("Field")
-                    `type` <- resultSet.getString("Type")
-                  yield (Option(field), Option(`type`)) match
-                    case (Some(columnName), Some(value)) =>
-                      val (size, decimals, typeName, hasLength) = parseTypeColumn(value)
-                      val upperTypeName                         = typeName.toUpperCase
-                      val mysqlType                             = MysqlType.getByName(upperTypeName)
-                      val dataType                              =
-                        if mysqlType == MysqlType.YEAR && !yearIsDateType then SMALLINT
-                        else mysqlType.jdbcType
-                      val columnSize = if hasLength then size + decimals else mysqlType.precision.toInt
-                      Some(
-                        (
-                          DatabaseMetaData.bestRowSession,
-                          columnName,
-                          dataType,
-                          upperTypeName,
-                          columnSize,
-                          DatabaseMetaDataImpl.MAX_BUFFER_SIZE,
-                          decimals,
-                          DatabaseMetaData.bestRowNotPseudo
-                        )
-                      )
-                    case _ => None
-                case _ => F.pure(None)
-              }
-            }
-
-          decodedF.map { decoded =>
-            val records = decoded.flatten.map {
-              case (scope, columnName, dataType, typeName, columnSize, bufferLength, decimalDigits, pseudoColumn) =>
-                ResultSetRowPacket(
-                  Array(
-                    Some(scope.toString),
-                    Some(columnName),
-                    Some(dataType.toString),
-                    Some(typeName),
-                    Some(columnSize.toString),
-                    Some(bufferLength.toString),
-                    Some(decimalDigits.toString),
-                    Some(pseudoColumn.toString)
-                  )
-                )
-            }
-            ResultSetImpl(
-              protocol,
-              Vector(
-                "SCOPE",
-                "COLUMN_NAME",
-                "DATA_TYPE",
-                "TYPE_NAME",
-                "COLUMN_SIZE",
-                "BUFFER_LENGTH",
-                "DECIMAL_DIGITS",
-                "PSEUDO_COLUMN"
-              ).map { value =>
-                new ColumnDefinitionPacket:
-                  override def table: String = ""
-
-                  override def name: String = value
-
-                  override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
-
-                  override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
-              },
-              records,
-              serverVariables,
-              protocol.initialPacket.serverVersion,
-              resultSet.isClosed,
-              resultSet.fetchSize,
-              resultSet.useCursorFetch,
-              resultSet.useServerPrepStmts
-            )
-          }
-      }
     }
 
   override def getVersionColumns(catalog: Option[String], schema: Option[String], table: String): F[ResultSet[F]] =
@@ -2063,23 +1816,6 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
       resultSet        <- prepareStatement.executeQuery()
       decoded          <- resultSet.whileM[List, String](resultSet.getString(1))
     yield decoded
-
-  private def parseTypeColumn(`type`: String): (Int, Int, String, Boolean) =
-    if `type`.indexOf("enum") != -1 then
-      val temp      = `type`.substring(`type`.indexOf("(") + 1, `type`.indexOf(")"))
-      val maxLength = temp.split(",").map(_.length - 2).max
-
-      (maxLength, 0, "enum", false)
-    else if `type`.indexOf("(") != -1 then
-      val name = `type`.substring(0, `type`.indexOf("("))
-      if `type`.indexOf(",") != -1 then
-        val size     = `type`.substring(`type`.indexOf("(") + 1, `type`.indexOf(",")).toInt
-        val decimals = `type`.substring(`type`.indexOf(",") + 1, `type`.indexOf(")")).toInt
-        (size, decimals, name, true)
-      else
-        val size = `type`.substring(`type`.indexOf("(") + 1, `type`.indexOf(",")).toInt
-        (size, 0, name, true)
-    else (10, 0, `type`, false)
 
   private def generateUpdateRuleClause(): String =
     "CASE WHEN R.UPDATE_RULE='CASCADE' THEN " + DatabaseMetaData.importedKeyCascade + " WHEN R.UPDATE_RULE='SET NULL' THEN "

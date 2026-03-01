@@ -19,10 +19,10 @@ class PoolStateTest extends FTestPlatform:
   given Tracer[IO] = Tracer.noop[IO]
 
   def connection: Resource[IO, Connection[IO]] = Connection[IO](
-    host     = "127.0.0.1",
-    port     = 13306,
-    user     = "ldbc",
-    password = Some("password"),
+    host     = TestConfig.host,
+    port     = TestConfig.port,
+    user     = TestConfig.user,
+    password = Some(TestConfig.password),
     database = Some("connector_test"),
     ssl      = SSL.Trusted
   )

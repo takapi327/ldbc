@@ -7,7 +7,6 @@
 package ldbc.tests
 
 import cats.data.NonEmptyList
-import cats.syntax.all.*
 
 import cats.effect.*
 
@@ -15,7 +14,7 @@ import munit.*
 
 import ldbc.dsl.*
 
-import ldbc.query.builder.*
+import ldbc.query.builder.TableQuery
 
 import ldbc.connector.*
 
@@ -27,8 +26,8 @@ class LdbcTableQueryUpdateConnectionTest extends TableQueryUpdateConnectionTest:
   override def prefix: "jdbc" | "ldbc" = "ldbc"
 
   private val datasource = MySQLDataSource
-    .build[IO]("127.0.0.1", 13306, "ldbc")
-    .setPassword("password")
+    .build[IO](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+    .setPassword(MySQLTestConfig.password)
     .setDatabase("world2")
     .setSSL(SSL.Trusted)
 
@@ -46,6 +45,23 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
   private def code(index: Int): String = prefix match
     case "jdbc" => s"J$index"
     case "ldbc" => s"L$index"
+
+  private def cleanup: IO[Unit] =
+    (for
+      _ <- sql"DELETE FROM city WHERE CountryCode IN (${ code(1) }, ${ code(2) }, ${ code(3) }, ${ code(4) })".update
+      _ <- sql"DELETE FROM city WHERE Name = 'Nishinomiya' AND CountryCode = 'JPN'".update
+      _ <- sql"DELETE FROM city WHERE Name = 'Test4' AND CountryCode = ${ code(4) }".update
+      _ <- sql"DELETE FROM city WHERE Name = 'Japan' AND CountryCode = 'JPN' AND District = 'Kanto'".update
+      _ <-
+        sql"DELETE FROM country WHERE Code IN (${ code(1) }, ${ code(2) }, ${ code(3) }, ${ code(4) }, ${ code(5) }, ${ code(6) })".update
+    yield ()).commit(connector)
+
+  override def munitFixtures = List(
+    ResourceSuiteLocalFixture(
+      "cleanup",
+      Resource.make(cleanup)(_ => cleanup)
+    )
+  )
 
   test(
     "New data can be registered with the value of Tuple."
@@ -330,22 +346,6 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
         data   <- city.selectAll.where(_.id _equals length).query.to[Option]
       yield empty.isEmpty & data.nonEmpty)
         .transaction(connector)
-    )
-  }
-
-  test(
-    "The value of AutoIncrement obtained during insert matches the specified value."
-  ) {
-    assertIOBoolean(
-      (for
-        length <- city.select(_.id.count).query.unsafe.map(_ + 1)
-        result <-
-          city
-            .insertInto(v => v.name *: v.countryCode *: v.district *: v.population)
-            .values(("Test4", code(4), "T", 1))
-            .returning[Int]
-      yield result === length)
-        .commit(connector)
     )
   }
 

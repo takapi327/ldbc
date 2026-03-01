@@ -27,8 +27,8 @@ import ldbc.Connector
 class LdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
 
   private val datasource = MySQLDataSource
-    .build[IO]("127.0.0.1", 13306, "ldbc")
-    .setPassword("password")
+    .build[IO](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+    .setPassword(MySQLTestConfig.password)
     .setDatabase("world")
     .setSSL(SSL.Trusted)
 
