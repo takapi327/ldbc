@@ -27,6 +27,12 @@ ThisBuild / githubWorkflowBuildPreamble ++= List(dockerRun) ++ nativeBrewInstall
 ThisBuild / nativeBrewInstallCond := Some("matrix.project == 'ldbcNative'")
 ThisBuild / githubWorkflowAddedJobs ++= Seq(sbtScripted.value, sbtCoverageReport.value)
 ThisBuild / githubWorkflowBuildPostamble += dockerStop
+ThisBuild / githubWorkflowBuild ~= { steps =>
+  steps.flatMap {
+    case step if step.name.contains("Test") => Seq(testMySQL9, testMySQL8)
+    case step                               => Seq(step)
+  }
+}
 ThisBuild / githubWorkflowTargetBranches        := Seq("**")
 ThisBuild / githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v")))
 ThisBuild / tlSitePublishBranch                 := None
