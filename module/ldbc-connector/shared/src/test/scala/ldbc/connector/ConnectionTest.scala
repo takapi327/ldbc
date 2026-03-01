@@ -1078,22 +1078,6 @@ class ConnectionTest extends FTestPlatform:
       ssl      = SSL.Trusted
     )
 
-    val expected =
-      if TestConfig.isMySql9OrLater then
-        Vector(
-          "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: null, Grantee: 'ldbc'@'%', Privilege: SELECT, Is Grantable: NO",
-          "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: null, Grantee: 'ldbc'@'%', Privilege: INSERT, Is Grantable: NO"
-        )
-      else
-        Vector(
-          "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: root@localhost, Grantee: ldbc@%, Privilege: SELECT, Is Grantable: null",
-          "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: root@localhost, Grantee: ldbc@%, Privilege: SELECT, Is Grantable: null",
-          "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: root@localhost, Grantee: ldbc@%, Privilege: SELECT, Is Grantable: null",
-          "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: root@localhost, Grantee: ldbc@%, Privilege: INSERT, Is Grantable: null",
-          "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: root@localhost, Grantee: ldbc@%, Privilege: INSERT, Is Grantable: null",
-          "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: root@localhost, Grantee: ldbc@%, Privilege: INSERT, Is Grantable: null"
-        )
-
     assertIO(
       connection.use { conn =>
         for
@@ -1113,7 +1097,10 @@ class ConnectionTest extends FTestPlatform:
             }
         yield result
       },
-      expected
+      Vector(
+        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: null, Grantee: 'ldbc'@'%', Privilege: SELECT, Is Grantable: NO",
+        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: null, Grantee: 'ldbc'@'%', Privilege: INSERT, Is Grantable: NO"
+      )
     )
   }
 
