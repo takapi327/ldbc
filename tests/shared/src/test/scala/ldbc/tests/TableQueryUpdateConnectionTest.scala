@@ -53,7 +53,8 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
       _ <- sql"DELETE FROM city WHERE Name = 'Nishinomiya' AND CountryCode = 'JPN'".update
       _ <- sql"DELETE FROM city WHERE Name = 'Test4' AND CountryCode = ${ code(4) }".update
       _ <- sql"DELETE FROM city WHERE Name = 'Japan' AND CountryCode = 'JPN' AND District = 'Kanto'".update
-      _ <- sql"DELETE FROM country WHERE Code IN (${ code(1) }, ${ code(2) }, ${ code(3) }, ${ code(4) }, ${ code(5) }, ${ code(6) })".update
+      _ <-
+        sql"DELETE FROM country WHERE Code IN (${ code(1) }, ${ code(2) }, ${ code(3) }, ${ code(4) }, ${ code(5) }, ${ code(6) })".update
     yield ()).commit(connector)
 
   override def munitFixtures = List(
