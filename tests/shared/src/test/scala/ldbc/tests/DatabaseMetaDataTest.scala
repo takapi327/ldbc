@@ -1791,6 +1791,11 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
   }
 
   test(s"$prefix: getBestRowIdentifier should return correct COLUMN_SIZE for DATETIME(3)") {
+    val expected = if MySQLTestConfig.isMySql9OrLater then
+      Vector("2, id, 93, DATETIME, 23, 65535, 0, 1")
+    else
+      Vector("2, id, 93, DATETIME, 3, 65535, 0, 1")
+    
     assertIO(
       datasource.getConnection.use { conn =>
         for
@@ -1811,8 +1816,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
             }
         yield result
       },
-      // DATETIME(3) COLUMN_SIZE = 19 (base) + 3 (fractional digits) + 1 (decimal point) = 23
-      Vector("2, id, 93, DATETIME, 23, 65535, 0, 1")
+      expected
     )
   }
 
