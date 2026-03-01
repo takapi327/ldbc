@@ -295,6 +295,11 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
   }
 
   test(s"$prefix: getSQLKeywords") {
+    val expected = if MySQLTestConfig.isMySql9OrLater then
+      "ACCESSIBLE,ADD,ANALYZE,ASC,BEFORE,CASCADE,CHANGE,CONTINUE,DATABASE,DATABASES,DAY_HOUR,DAY_MICROSECOND,DAY_MINUTE,DAY_SECOND,DELAYED,DESC,DISTINCTROW,DIV,DUAL,ELSEIF,EMPTY,ENCLOSED,ESCAPED,EXIT,EXPLAIN,FIRST_VALUE,FLOAT4,FLOAT8,FORCE,FULLTEXT,GENERATED,GROUPS,HIGH_PRIORITY,HOUR_MICROSECOND,HOUR_MINUTE,HOUR_SECOND,IF,IGNORE,INDEX,INFILE,INT1,INT2,INT3,INT4,INT8,IO_AFTER_GTIDS,IO_BEFORE_GTIDS,ITERATE,JSON_TABLE,KEY,KEYS,KILL,LAG,LAST_VALUE,LEAD,LEAVE,LIBRARY,LIMIT,LINEAR,LINES,LOAD,LOCK,LONG,LONGBLOB,LONGTEXT,LOOP,LOW_PRIORITY,MAXVALUE,MEDIUMBLOB,MEDIUMINT,MEDIUMTEXT,MIDDLEINT,MINUTE_MICROSECOND,MINUTE_SECOND,NO_WRITE_TO_BINLOG,NTH_VALUE,NTILE,OPTIMIZE,OPTIMIZER_COSTS,OPTION,OPTIONALLY,OUTFILE,PURGE,READ,READ_WRITE,REGEXP,RENAME,REPEAT,REPLACE,REQUIRE,RESIGNAL,RESTRICT,RLIKE,SCHEMA,SCHEMAS,SECOND_MICROSECOND,SEPARATOR,SHOW,SIGNAL,SPATIAL,SQL_BIG_RESULT,SQL_CALC_FOUND_ROWS,SQL_SMALL_RESULT,SSL,STARTING,STORED,STRAIGHT_JOIN,TERMINATED,TINYBLOB,TINYINT,TINYTEXT,UNDO,UNLOCK,UNSIGNED,USAGE,USE,UTC_DATE,UTC_TIME,UTC_TIMESTAMP,VARBINARY,VARCHARACTER,VIRTUAL,WHILE,WRITE,XOR,YEAR_MONTH,ZEROFILL"
+    else
+      "ACCESSIBLE,ADD,ANALYZE,ASC,BEFORE,CASCADE,CHANGE,CONTINUE,DATABASE,DATABASES,DAY_HOUR,DAY_MICROSECOND,DAY_MINUTE,DAY_SECOND,DELAYED,DESC,DISTINCTROW,DIV,DUAL,ELSEIF,EMPTY,ENCLOSED,ESCAPED,EXIT,EXPLAIN,FIRST_VALUE,FLOAT4,FLOAT8,FORCE,FULLTEXT,GENERATED,GROUPS,HIGH_PRIORITY,HOUR_MICROSECOND,HOUR_MINUTE,HOUR_SECOND,IF,IGNORE,INDEX,INFILE,INT1,INT2,INT3,INT4,INT8,IO_AFTER_GTIDS,IO_BEFORE_GTIDS,ITERATE,JSON_TABLE,KEY,KEYS,KILL,LAG,LAST_VALUE,LEAD,LEAVE,LIMIT,LINEAR,LINES,LOAD,LOCK,LONG,LONGBLOB,LONGTEXT,LOOP,LOW_PRIORITY,MAXVALUE,MEDIUMBLOB,MEDIUMINT,MEDIUMTEXT,MIDDLEINT,MINUTE_MICROSECOND,MINUTE_SECOND,NO_WRITE_TO_BINLOG,NTH_VALUE,NTILE,OPTIMIZE,OPTIMIZER_COSTS,OPTION,OPTIONALLY,OUTFILE,PURGE,READ,READ_WRITE,REGEXP,RENAME,REPEAT,REPLACE,REQUIRE,RESIGNAL,RESTRICT,RLIKE,SCHEMA,SCHEMAS,SECOND_MICROSECOND,SEPARATOR,SHOW,SIGNAL,SPATIAL,SQL_BIG_RESULT,SQL_CALC_FOUND_ROWS,SQL_SMALL_RESULT,SSL,STARTING,STORED,STRAIGHT_JOIN,TERMINATED,TINYBLOB,TINYINT,TINYTEXT,UNDO,UNLOCK,UNSIGNED,USAGE,USE,UTC_DATE,UTC_TIME,UTC_TIMESTAMP,VARBINARY,VARCHARACTER,VIRTUAL,WHILE,WRITE,XOR,YEAR_MONTH,ZEROFILL"
+
     assertIO(
       datasource.getConnection.use { conn =>
         for
@@ -302,7 +307,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
           value    <- metaData.getSQLKeywords()
         yield value
       },
-      "ACCESSIBLE,ADD,ANALYZE,ASC,BEFORE,CASCADE,CHANGE,CONTINUE,DATABASE,DATABASES,DAY_HOUR,DAY_MICROSECOND,DAY_MINUTE,DAY_SECOND,DELAYED,DESC,DISTINCTROW,DIV,DUAL,ELSEIF,EMPTY,ENCLOSED,ESCAPED,EXIT,EXPLAIN,FIRST_VALUE,FLOAT4,FLOAT8,FORCE,FULLTEXT,GENERATED,GROUPS,HIGH_PRIORITY,HOUR_MICROSECOND,HOUR_MINUTE,HOUR_SECOND,IF,IGNORE,INDEX,INFILE,INT1,INT2,INT3,INT4,INT8,IO_AFTER_GTIDS,IO_BEFORE_GTIDS,ITERATE,JSON_TABLE,KEY,KEYS,KILL,LAG,LAST_VALUE,LEAD,LEAVE,LIBRARY,LIMIT,LINEAR,LINES,LOAD,LOCK,LONG,LONGBLOB,LONGTEXT,LOOP,LOW_PRIORITY,MAXVALUE,MEDIUMBLOB,MEDIUMINT,MEDIUMTEXT,MIDDLEINT,MINUTE_MICROSECOND,MINUTE_SECOND,NO_WRITE_TO_BINLOG,NTH_VALUE,NTILE,OPTIMIZE,OPTIMIZER_COSTS,OPTION,OPTIONALLY,OUTFILE,PURGE,READ,READ_WRITE,REGEXP,RENAME,REPEAT,REPLACE,REQUIRE,RESIGNAL,RESTRICT,RLIKE,SCHEMA,SCHEMAS,SECOND_MICROSECOND,SEPARATOR,SHOW,SIGNAL,SPATIAL,SQL_BIG_RESULT,SQL_CALC_FOUND_ROWS,SQL_SMALL_RESULT,SSL,STARTING,STORED,STRAIGHT_JOIN,TERMINATED,TINYBLOB,TINYINT,TINYTEXT,UNDO,UNLOCK,UNSIGNED,USAGE,USE,UTC_DATE,UTC_TIME,UTC_TIMESTAMP,VARBINARY,VARCHARACTER,VIRTUAL,WHILE,WRITE,XOR,YEAR_MONTH,ZEROFILL"
+      expected
     )
   }
 
@@ -1197,22 +1202,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
   }
 
   test(s"$prefix: getProcedures") {
-    assertIO(
-      datasource.getConnection.use { conn =>
-        for
-          metaData  <- conn.getMetaData()
-          resultSet <- metaData.getProcedures(None, None, None)
-          result    <- Monad[IO].whileM[List, String](resultSet.next()) {
-                      for
-                        procedureCat   <- resultSet.getString("PROCEDURE_CAT")
-                        procedureSchem <- resultSet.getString("PROCEDURE_SCHEM")
-                        procedureName  <- resultSet.getString("PROCEDURE_NAME")
-                        procedureType  <- resultSet.getShort("PROCEDURE_TYPE")
-                        specificName   <- resultSet.getString("SPECIFIC_NAME")
-                      yield s"$procedureCat, $procedureSchem, $procedureName, $procedureType, $specificName"
-                    }
-        yield result
-      },
+    val expected = if MySQLTestConfig.isMySql9OrLater then
       List(
         "connector_test, null, demoSp, 1, demoSp",
         "connector_test, null, func1, 2, func1",
@@ -1272,41 +1262,88 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         "sys, null, version_minor, 2, version_minor",
         "sys, null, version_patch, 2, version_patch"
       )
-    )
-  }
+    else
+      List(
+        "connector_test, null, demoSp, 1, demoSp",
+        "connector_test, null, func1, 2, func1",
+        "connector_test, null, func2, 2, func2",
+        "connector_test, null, getPrice, 2, getPrice",
+        "connector_test, null, proc1, 1, proc1",
+        "connector_test, null, proc2, 1, proc2",
+        "connector_test, null, proc3, 1, proc3",
+        "connector_test, null, proc4, 1, proc4",
+        "sys, null, create_synonym_db, 1, create_synonym_db",
+        "sys, null, diagnostics, 1, diagnostics",
+        "sys, null, execute_prepared_stmt, 1, execute_prepared_stmt",
+        "sys, null, extract_schema_from_file_name, 2, extract_schema_from_file_name",
+        "sys, null, extract_table_from_file_name, 2, extract_table_from_file_name",
+        "sys, null, format_bytes, 2, format_bytes",
+        "sys, null, format_path, 2, format_path",
+        "sys, null, format_statement, 2, format_statement",
+        "sys, null, format_time, 2, format_time",
+        "sys, null, list_add, 2, list_add",
+        "sys, null, list_drop, 2, list_drop",
+        "sys, null, ps_is_account_enabled, 2, ps_is_account_enabled",
+        "sys, null, ps_is_consumer_enabled, 2, ps_is_consumer_enabled",
+        "sys, null, ps_is_instrument_default_enabled, 2, ps_is_instrument_default_enabled",
+        "sys, null, ps_is_instrument_default_timed, 2, ps_is_instrument_default_timed",
+        "sys, null, ps_is_thread_instrumented, 2, ps_is_thread_instrumented",
+        "sys, null, ps_setup_disable_background_threads, 1, ps_setup_disable_background_threads",
+        "sys, null, ps_setup_disable_consumer, 1, ps_setup_disable_consumer",
+        "sys, null, ps_setup_disable_instrument, 1, ps_setup_disable_instrument",
+        "sys, null, ps_setup_disable_thread, 1, ps_setup_disable_thread",
+        "sys, null, ps_setup_enable_background_threads, 1, ps_setup_enable_background_threads",
+        "sys, null, ps_setup_enable_consumer, 1, ps_setup_enable_consumer",
+        "sys, null, ps_setup_enable_instrument, 1, ps_setup_enable_instrument",
+        "sys, null, ps_setup_enable_thread, 1, ps_setup_enable_thread",
+        "sys, null, ps_setup_reload_saved, 1, ps_setup_reload_saved",
+        "sys, null, ps_setup_reset_to_default, 1, ps_setup_reset_to_default",
+        "sys, null, ps_setup_save, 1, ps_setup_save",
+        "sys, null, ps_setup_show_disabled, 1, ps_setup_show_disabled",
+        "sys, null, ps_setup_show_disabled_consumers, 1, ps_setup_show_disabled_consumers",
+        "sys, null, ps_setup_show_disabled_instruments, 1, ps_setup_show_disabled_instruments",
+        "sys, null, ps_setup_show_enabled, 1, ps_setup_show_enabled",
+        "sys, null, ps_setup_show_enabled_consumers, 1, ps_setup_show_enabled_consumers",
+        "sys, null, ps_setup_show_enabled_instruments, 1, ps_setup_show_enabled_instruments",
+        "sys, null, ps_statement_avg_latency_histogram, 1, ps_statement_avg_latency_histogram",
+        "sys, null, ps_thread_account, 2, ps_thread_account",
+        "sys, null, ps_thread_id, 2, ps_thread_id",
+        "sys, null, ps_thread_stack, 2, ps_thread_stack",
+        "sys, null, ps_thread_trx_info, 2, ps_thread_trx_info",
+        "sys, null, ps_trace_statement_digest, 1, ps_trace_statement_digest",
+        "sys, null, ps_trace_thread, 1, ps_trace_thread",
+        "sys, null, ps_truncate_all_tables, 1, ps_truncate_all_tables",
+        "sys, null, quote_identifier, 2, quote_identifier",
+        "sys, null, statement_performance_analyzer, 1, statement_performance_analyzer",
+        "sys, null, sys_get_config, 2, sys_get_config",
+        "sys, null, table_exists, 1, table_exists",
+        "sys, null, version_major, 2, version_major",
+        "sys, null, version_minor, 2, version_minor",
+        "sys, null, version_patch, 2, version_patch"
+      )
 
-  test(s"$prefix: getProcedureColumns") {
     assertIO(
       datasource.getConnection.use { conn =>
         for
           metaData  <- conn.getMetaData()
-          resultSet <- metaData.getProcedureColumns(None, None, None, None)
-          result    <-
-            Monad[IO].whileM[List, String](resultSet.next()) {
-              for
-                procedureCat    <- resultSet.getString("PROCEDURE_CAT")
-                procedureSchem  <- resultSet.getString("PROCEDURE_SCHEM")
-                procedureName   <- resultSet.getString("PROCEDURE_NAME")
-                columnName      <- resultSet.getString("COLUMN_NAME")
-                columnType      <- resultSet.getInt("COLUMN_TYPE")
-                dataType        <- resultSet.getInt("DATA_TYPE")
-                typeName        <- resultSet.getString("TYPE_NAME")
-                precision       <- resultSet.getInt("PRECISION")
-                length          <- resultSet.getInt("LENGTH")
-                scale           <- resultSet.getInt("SCALE")
-                radix           <- resultSet.getInt("RADIX")
-                nullable        <- resultSet.getInt("NULLABLE")
-                remarks         <- resultSet.getString("REMARKS")
-                columnDef       <- resultSet.getString("COLUMN_DEF")
-                sqlDataType     <- resultSet.getInt("SQL_DATA_TYPE")
-                sqlDatetimeSub  <- resultSet.getInt("SQL_DATETIME_SUB")
-                charOctetLength <- resultSet.getInt("CHAR_OCTET_LENGTH")
-                ordinalPosition <- resultSet.getInt("ORDINAL_POSITION")
-                isNullable      <- resultSet.getString("IS_NULLABLE")
-              yield s"$procedureCat, $procedureSchem, $procedureName, $columnName, $columnType, $dataType, $typeName, $precision, $length, $scale, $radix, $nullable, $remarks, $columnDef, $sqlDataType, $sqlDatetimeSub, $charOctetLength, $ordinalPosition, $isNullable"
-            }
+          resultSet <- metaData.getProcedures(None, None, None)
+          result    <- Monad[IO].whileM[List, String](resultSet.next()) {
+                      for
+                        procedureCat   <- resultSet.getString("PROCEDURE_CAT")
+                        procedureSchem <- resultSet.getString("PROCEDURE_SCHEM")
+                        procedureName  <- resultSet.getString("PROCEDURE_NAME")
+                        procedureType  <- resultSet.getShort("PROCEDURE_TYPE")
+                        specificName   <- resultSet.getString("SPECIFIC_NAME")
+                      yield s"$procedureCat, $procedureSchem, $procedureName, $procedureType, $specificName"
+                    }
         yield result
       },
+      expected
+    )
+  }
+
+  test(s"$prefix: getProcedureColumns") {
+    val expected = if MySQLTestConfig.isMySql9OrLater then
       List(
         "connector_test, null, demoSp, inputParam, 1, 12, VARCHAR, 0, 255, 0, 10, 1, null, null, 0, 0, 1020, 1, YES",
         "connector_test, null, demoSp, inOutParam, 2, 4, INT, 10, 10, 0, 10, 1, null, null, 0, 0, 0, 2, YES",
@@ -1406,6 +1443,136 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         "sys, null, version_minor, , 5, -6, TINYINT UNSIGNED, 3, 3, 0, 10, 1, null, null, 0, 0, 0, 0, YES",
         "sys, null, version_patch, , 5, -6, TINYINT UNSIGNED, 3, 3, 0, 10, 1, null, null, 0, 0, 0, 0, YES"
       )
+    else
+      List(
+        "connector_test, null, demoSp, inputParam, 1, 12, VARCHAR, 0, 255, 0, 10, 1, null, null, 0, 0, 1020, 1, YES",
+        "connector_test, null, demoSp, inOutParam, 2, 4, INT, 10, 10, 0, 10, 1, null, null, 0, 0, 0, 2, YES",
+        "connector_test, null, func1, , 5, 4, INT, 10, 10, 0, 10, 1, null, null, 0, 0, 0, 0, YES",
+        "connector_test, null, func2, , 5, 12, VARCHAR, 0, 12, 0, 10, 1, null, null, 0, 0, 48, 0, YES",
+        "connector_test, null, getPrice, , 5, 4, INT, 10, 10, 0, 10, 1, null, null, 0, 0, 0, 0, YES",
+        "connector_test, null, getPrice, price, 1, 4, INT, 10, 10, 0, 10, 1, null, null, 0, 0, 0, 1, YES",
+        "connector_test, null, proc2, param, 1, 4, INT, 10, 10, 0, 10, 1, null, null, 0, 0, 0, 1, YES",
+        "connector_test, null, proc3, param1, 1, 4, INT, 10, 10, 0, 10, 1, null, null, 0, 0, 0, 1, YES",
+        "connector_test, null, proc3, param2, 1, 12, VARCHAR, 0, 8, 0, 10, 1, null, null, 0, 0, 32, 2, YES",
+        "connector_test, null, proc4, param1, 4, 4, INT, 10, 10, 0, 10, 1, null, null, 0, 0, 0, 1, YES",
+        "connector_test, null, proc4, param2, 4, 12, VARCHAR, 0, 8, 0, 10, 1, null, null, 0, 0, 32, 2, YES",
+        "sys, null, create_synonym_db, in_db_name, 1, 12, VARCHAR, 0, 64, 0, 10, 1, null, null, 0, 0, 256, 1, YES",
+        "sys, null, create_synonym_db, in_synonym, 1, 12, VARCHAR, 0, 64, 0, 10, 1, null, null, 0, 0, 256, 2, YES",
+        "sys, null, diagnostics, in_max_runtime, 1, 4, INT UNSIGNED, 10, 10, 0, 10, 1, null, null, 0, 0, 0, 1, YES",
+        "sys, null, diagnostics, in_interval, 1, 4, INT UNSIGNED, 10, 10, 0, 10, 1, null, null, 0, 0, 0, 2, YES",
+        "sys, null, diagnostics, in_auto_config, 1, 1, ENUM, 0, 7, 0, 10, 1, null, null, 0, 0, 28, 3, YES",
+        "sys, null, execute_prepared_stmt, in_query, 1, -1, LONGTEXT, 0, 2147483647, 0, 10, 1, null, null, 0, 0, 2147483647, 1, YES",
+        "sys, null, extract_schema_from_file_name, , 5, 12, VARCHAR, 0, 64, 0, 10, 1, null, null, 0, 0, 256, 0, YES",
+        "sys, null, extract_schema_from_file_name, path, 1, 12, VARCHAR, 0, 512, 0, 10, 1, null, null, 0, 0, 2048, 1, YES",
+        "sys, null, extract_table_from_file_name, , 5, 12, VARCHAR, 0, 64, 0, 10, 1, null, null, 0, 0, 256, 0, YES",
+        "sys, null, extract_table_from_file_name, path, 1, 12, VARCHAR, 0, 512, 0, 10, 1, null, null, 0, 0, 2048, 1, YES",
+        "sys, null, format_bytes, , 5, -1, TEXT, 0, 65535, 0, 10, 1, null, null, 0, 0, 65535, 0, YES",
+        "sys, null, format_bytes, bytes, 1, -1, TEXT, 0, 65535, 0, 10, 1, null, null, 0, 0, 65535, 1, YES",
+        "sys, null, format_path, , 5, 12, VARCHAR, 0, 512, 0, 10, 1, null, null, 0, 0, 2048, 0, YES",
+        "sys, null, format_path, in_path, 1, 12, VARCHAR, 0, 512, 0, 10, 1, null, null, 0, 0, 2048, 1, YES",
+        "sys, null, format_statement, , 5, -1, LONGTEXT, 0, 2147483647, 0, 10, 1, null, null, 0, 0, 2147483647, 0, YES",
+        "sys, null, format_statement, statement, 1, -1, LONGTEXT, 0, 2147483647, 0, 10, 1, null, null, 0, 0, 2147483647, 1, YES",
+        "sys, null, format_time, , 5, -1, TEXT, 0, 65535, 0, 10, 1, null, null, 0, 0, 65535, 0, YES",
+        "sys, null, format_time, picoseconds, 1, -1, TEXT, 0, 65535, 0, 10, 1, null, null, 0, 0, 65535, 1, YES",
+        "sys, null, list_add, , 5, -1, TEXT, 0, 65535, 0, 10, 1, null, null, 0, 0, 65535, 0, YES",
+        "sys, null, list_add, in_list, 1, -1, TEXT, 0, 65535, 0, 10, 1, null, null, 0, 0, 65535, 1, YES",
+        "sys, null, list_add, in_add_value, 1, -1, TEXT, 0, 65535, 0, 10, 1, null, null, 0, 0, 65535, 2, YES",
+        "sys, null, list_drop, , 5, -1, TEXT, 0, 65535, 0, 10, 1, null, null, 0, 0, 65535, 0, YES",
+        "sys, null, list_drop, in_list, 1, -1, TEXT, 0, 65535, 0, 10, 1, null, null, 0, 0, 65535, 1, YES",
+        "sys, null, list_drop, in_drop_value, 1, -1, TEXT, 0, 65535, 0, 10, 1, null, null, 0, 0, 65535, 2, YES",
+        "sys, null, ps_is_account_enabled, , 5, 1, ENUM, 0, 3, 0, 10, 1, null, null, 0, 0, 12, 0, YES",
+        "sys, null, ps_is_account_enabled, in_host, 1, 12, VARCHAR, 0, 255, 0, 10, 1, null, null, 0, 0, 1020, 1, YES",
+        "sys, null, ps_is_account_enabled, in_user, 1, 12, VARCHAR, 0, 32, 0, 10, 1, null, null, 0, 0, 128, 2, YES",
+        "sys, null, ps_is_consumer_enabled, , 5, 1, ENUM, 0, 3, 0, 10, 1, null, null, 0, 0, 12, 0, YES",
+        "sys, null, ps_is_consumer_enabled, in_consumer, 1, 12, VARCHAR, 0, 64, 0, 10, 1, null, null, 0, 0, 256, 1, YES",
+        "sys, null, ps_is_instrument_default_enabled, , 5, 1, ENUM, 0, 3, 0, 10, 1, null, null, 0, 0, 12, 0, YES",
+        "sys, null, ps_is_instrument_default_enabled, in_instrument, 1, 12, VARCHAR, 0, 128, 0, 10, 1, null, null, 0, 0, 512, 1, YES",
+        "sys, null, ps_is_instrument_default_timed, , 5, 1, ENUM, 0, 3, 0, 10, 1, null, null, 0, 0, 12, 0, YES",
+        "sys, null, ps_is_instrument_default_timed, in_instrument, 1, 12, VARCHAR, 0, 128, 0, 10, 1, null, null, 0, 0, 512, 1, YES",
+        "sys, null, ps_is_thread_instrumented, , 5, 1, ENUM, 0, 7, 0, 10, 1, null, null, 0, 0, 28, 0, YES",
+        "sys, null, ps_is_thread_instrumented, in_connection_id, 1, -5, BIGINT UNSIGNED, 20, 20, 0, 10, 1, null, null, 0, 0, 0, 1, YES",
+        "sys, null, ps_setup_disable_consumer, consumer, 1, 12, VARCHAR, 0, 128, 0, 10, 1, null, null, 0, 0, 512, 1, YES",
+        "sys, null, ps_setup_disable_instrument, in_pattern, 1, 12, VARCHAR, 0, 128, 0, 10, 1, null, null, 0, 0, 512, 1, YES",
+        "sys, null, ps_setup_disable_thread, in_connection_id, 1, -5, BIGINT, 19, 19, 0, 10, 1, null, null, 0, 0, 0, 1, YES",
+        "sys, null, ps_setup_enable_consumer, consumer, 1, 12, VARCHAR, 0, 128, 0, 10, 1, null, null, 0, 0, 512, 1, YES",
+        "sys, null, ps_setup_enable_instrument, in_pattern, 1, 12, VARCHAR, 0, 128, 0, 10, 1, null, null, 0, 0, 512, 1, YES",
+        "sys, null, ps_setup_enable_thread, in_connection_id, 1, -5, BIGINT, 19, 19, 0, 10, 1, null, null, 0, 0, 0, 1, YES",
+        "sys, null, ps_setup_reset_to_default, in_verbose, 1, -7, BIT, 1, 1, 0, 10, 1, null, null, 0, 0, 0, 1, YES",
+        "sys, null, ps_setup_save, in_timeout, 1, 4, INT, 10, 10, 0, 10, 1, null, null, 0, 0, 0, 1, YES",
+        "sys, null, ps_setup_show_disabled, in_show_instruments, 1, -7, BIT, 1, 1, 0, 10, 1, null, null, 0, 0, 0, 1, YES",
+        "sys, null, ps_setup_show_disabled, in_show_threads, 1, -7, BIT, 1, 1, 0, 10, 1, null, null, 0, 0, 0, 2, YES",
+        "sys, null, ps_setup_show_enabled, in_show_instruments, 1, -7, BIT, 1, 1, 0, 10, 1, null, null, 0, 0, 0, 1, YES",
+        "sys, null, ps_setup_show_enabled, in_show_threads, 1, -7, BIT, 1, 1, 0, 10, 1, null, null, 0, 0, 0, 2, YES",
+        "sys, null, ps_thread_account, , 5, -1, TEXT, 0, 65535, 0, 10, 1, null, null, 0, 0, 65535, 0, YES",
+        "sys, null, ps_thread_account, in_thread_id, 1, -5, BIGINT UNSIGNED, 20, 20, 0, 10, 1, null, null, 0, 0, 0, 1, YES",
+        "sys, null, ps_thread_id, , 5, -5, BIGINT UNSIGNED, 20, 20, 0, 10, 1, null, null, 0, 0, 0, 0, YES",
+        "sys, null, ps_thread_id, in_connection_id, 1, -5, BIGINT UNSIGNED, 20, 20, 0, 10, 1, null, null, 0, 0, 0, 1, YES",
+        "sys, null, ps_thread_stack, , 5, -1, LONGTEXT, 0, 2147483647, 0, 10, 1, null, null, 0, 0, 2147483647, 0, YES",
+        "sys, null, ps_thread_stack, thd_id, 1, -5, BIGINT UNSIGNED, 20, 20, 0, 10, 1, null, null, 0, 0, 0, 1, YES",
+        "sys, null, ps_thread_stack, debug, 1, -7, BIT, 1, 1, 0, 10, 1, null, null, 0, 0, 0, 2, YES",
+        "sys, null, ps_thread_trx_info, , 5, -1, LONGTEXT, 0, 2147483647, 0, 10, 1, null, null, 0, 0, 2147483647, 0, YES",
+        "sys, null, ps_thread_trx_info, in_thread_id, 1, -5, BIGINT UNSIGNED, 20, 20, 0, 10, 1, null, null, 0, 0, 0, 1, YES",
+        "sys, null, ps_trace_statement_digest, in_digest, 1, 12, VARCHAR, 0, 64, 0, 10, 1, null, null, 0, 0, 256, 1, YES",
+        "sys, null, ps_trace_statement_digest, in_runtime, 1, 4, INT, 10, 10, 0, 10, 1, null, null, 0, 0, 0, 2, YES",
+        "sys, null, ps_trace_statement_digest, in_interval, 1, 3, DECIMAL, 2, 2, 2, 10, 1, null, null, 0, 0, 0, 3, YES",
+        "sys, null, ps_trace_statement_digest, in_start_fresh, 1, -7, BIT, 1, 1, 0, 10, 1, null, null, 0, 0, 0, 4, YES",
+        "sys, null, ps_trace_statement_digest, in_auto_enable, 1, -7, BIT, 1, 1, 0, 10, 1, null, null, 0, 0, 0, 5, YES",
+        "sys, null, ps_trace_thread, in_thread_id, 1, -5, BIGINT UNSIGNED, 20, 20, 0, 10, 1, null, null, 0, 0, 0, 1, YES",
+        "sys, null, ps_trace_thread, in_outfile, 1, 12, VARCHAR, 0, 255, 0, 10, 1, null, null, 0, 0, 1020, 2, YES",
+        "sys, null, ps_trace_thread, in_max_runtime, 1, 3, DECIMAL, 20, 20, 2, 10, 1, null, null, 0, 0, 0, 3, YES",
+        "sys, null, ps_trace_thread, in_interval, 1, 3, DECIMAL, 20, 20, 2, 10, 1, null, null, 0, 0, 0, 4, YES",
+        "sys, null, ps_trace_thread, in_start_fresh, 1, -7, BIT, 1, 1, 0, 10, 1, null, null, 0, 0, 0, 5, YES",
+        "sys, null, ps_trace_thread, in_auto_setup, 1, -7, BIT, 1, 1, 0, 10, 1, null, null, 0, 0, 0, 6, YES",
+        "sys, null, ps_trace_thread, in_debug, 1, -7, BIT, 1, 1, 0, 10, 1, null, null, 0, 0, 0, 7, YES",
+        "sys, null, ps_truncate_all_tables, in_verbose, 1, -7, BIT, 1, 1, 0, 10, 1, null, null, 0, 0, 0, 1, YES",
+        "sys, null, quote_identifier, , 5, -1, TEXT, 0, 65535, 0, 10, 1, null, null, 0, 0, 65535, 0, YES",
+        "sys, null, quote_identifier, in_identifier, 1, -1, TEXT, 0, 65535, 0, 10, 1, null, null, 0, 0, 65535, 1, YES",
+        "sys, null, statement_performance_analyzer, in_action, 1, 1, ENUM, 0, 12, 0, 10, 1, null, null, 0, 0, 48, 1, YES",
+        "sys, null, statement_performance_analyzer, in_table, 1, 12, VARCHAR, 0, 129, 0, 10, 1, null, null, 0, 0, 516, 2, YES",
+        "sys, null, statement_performance_analyzer, in_views, 1, 1, SET, 0, 124, 0, 10, 1, null, null, 0, 0, 496, 3, YES",
+        "sys, null, sys_get_config, , 5, 12, VARCHAR, 0, 128, 0, 10, 1, null, null, 0, 0, 512, 0, YES",
+        "sys, null, sys_get_config, in_variable_name, 1, 12, VARCHAR, 0, 128, 0, 10, 1, null, null, 0, 0, 512, 1, YES",
+        "sys, null, sys_get_config, in_default_value, 1, 12, VARCHAR, 0, 128, 0, 10, 1, null, null, 0, 0, 512, 2, YES",
+        "sys, null, table_exists, in_db, 1, 12, VARCHAR, 0, 64, 0, 10, 1, null, null, 0, 0, 256, 1, YES",
+        "sys, null, table_exists, in_table, 1, 12, VARCHAR, 0, 64, 0, 10, 1, null, null, 0, 0, 256, 2, YES",
+        "sys, null, table_exists, out_exists, 4, 1, ENUM, 0, 10, 0, 10, 1, null, null, 0, 0, 40, 3, YES",
+        "sys, null, version_major, , 5, -6, TINYINT UNSIGNED, 3, 3, 0, 10, 1, null, null, 0, 0, 0, 0, YES",
+        "sys, null, version_minor, , 5, -6, TINYINT UNSIGNED, 3, 3, 0, 10, 1, null, null, 0, 0, 0, 0, YES",
+        "sys, null, version_patch, , 5, -6, TINYINT UNSIGNED, 3, 3, 0, 10, 1, null, null, 0, 0, 0, 0, YES"
+      )
+
+    assertIO(
+      datasource.getConnection.use { conn =>
+        for
+          metaData  <- conn.getMetaData()
+          resultSet <- metaData.getProcedureColumns(None, None, None, None)
+          result    <-
+            Monad[IO].whileM[List, String](resultSet.next()) {
+              for
+                procedureCat    <- resultSet.getString("PROCEDURE_CAT")
+                procedureSchem  <- resultSet.getString("PROCEDURE_SCHEM")
+                procedureName   <- resultSet.getString("PROCEDURE_NAME")
+                columnName      <- resultSet.getString("COLUMN_NAME")
+                columnType      <- resultSet.getInt("COLUMN_TYPE")
+                dataType        <- resultSet.getInt("DATA_TYPE")
+                typeName        <- resultSet.getString("TYPE_NAME")
+                precision       <- resultSet.getInt("PRECISION")
+                length          <- resultSet.getInt("LENGTH")
+                scale           <- resultSet.getInt("SCALE")
+                radix           <- resultSet.getInt("RADIX")
+                nullable        <- resultSet.getInt("NULLABLE")
+                remarks         <- resultSet.getString("REMARKS")
+                columnDef       <- resultSet.getString("COLUMN_DEF")
+                sqlDataType     <- resultSet.getInt("SQL_DATA_TYPE")
+                sqlDatetimeSub  <- resultSet.getInt("SQL_DATETIME_SUB")
+                charOctetLength <- resultSet.getInt("CHAR_OCTET_LENGTH")
+                ordinalPosition <- resultSet.getInt("ORDINAL_POSITION")
+                isNullable      <- resultSet.getString("IS_NULLABLE")
+              yield s"$procedureCat, $procedureSchem, $procedureName, $columnName, $columnType, $dataType, $typeName, $precision, $length, $scale, $radix, $nullable, $remarks, $columnDef, $sqlDataType, $sqlDatetimeSub, $charOctetLength, $ordinalPosition, $isNullable"
+            }
+        yield result
+      },
+      expected
     )
   }
 
