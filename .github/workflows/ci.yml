@@ -139,7 +139,16 @@ jobs:
         if: matrix.project == 'ldbcNative'
         run: sbt 'project ${{ matrix.project }}' '++ ${{ matrix.scala }}' Test/nativeLink
 
-      - name: Test
+      - name: Test (MySQL 9.x)
+        env:
+          MYSQL_PORT: 13306
+          MYSQL_VERSION: 9.6.0
+        run: sbt 'project ${{ matrix.project }}' '++ ${{ matrix.scala }}' test
+
+      - name: Test (MySQL 8.x)
+        env:
+          MYSQL_PORT: 13307
+          MYSQL_VERSION: 8.4.7
         run: sbt 'project ${{ matrix.project }}' '++ ${{ matrix.scala }}' test
 
       - name: Check binary compatibility
