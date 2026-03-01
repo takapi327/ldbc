@@ -1154,16 +1154,6 @@ class ConnectionTest extends FTestPlatform:
       databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
     )
 
-    val expected =
-      if TestConfig.isMySql9OrLater then
-        Vector(
-          "Scope: 2, Column Name: id, Data Type: 93, Type Name: DATETIME, Column Size: 23, Buffer Length: 65535, Decimal Digits: 0, Pseudo Column: 1"
-        )
-      else
-        Vector(
-          "Scope: 2, Column Name: id, Data Type: 93, Type Name: DATETIME, Column Size: 3, Buffer Length: 65535, Decimal Digits: 0, Pseudo Column: 1"
-        )
-
     assertIO(
       connection.use { conn =>
         for
@@ -1185,7 +1175,9 @@ class ConnectionTest extends FTestPlatform:
             }
         yield result
       },
-      expected
+      Vector(
+        "Scope: 2, Column Name: id, Data Type: 93, Type Name: DATETIME, Column Size: 23, Buffer Length: 65535, Decimal Digits: 0, Pseudo Column: 1"
+      )
     )
   }
 
