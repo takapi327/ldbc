@@ -13,7 +13,7 @@ import cats.effect.*
 
 import munit.*
 
-import ldbc.dsl.*
+import ldbc.dsl.DBIO
 
 import ldbc.schema.*
 
@@ -46,6 +46,22 @@ trait TableSchemaUpdateConnectionTest extends CatsEffectSuite:
   private def code(index: Int): String = prefix match
     case "jdbc" => s"J$index"
     case "ldbc" => s"L$index"
+
+  private def cleanup: IO[Unit] =
+    (for
+      _ <- sql"DELETE FROM city WHERE CountryCode IN (${ code(1) }, ${ code(2) }, ${ code(3) }, ${ code(4) })".update
+      _ <- sql"DELETE FROM city WHERE Name = 'Nishinomiya' AND CountryCode = 'JPN'".update
+      _ <- sql"DELETE FROM city WHERE Name = 'Test4' AND CountryCode = ${ code(4) }".update
+      _ <- sql"DELETE FROM city WHERE Name = 'Japan' AND CountryCode = 'JPN' AND District = 'Kanto'".update
+      _ <- sql"DELETE FROM country WHERE Code IN (${ code(1) }, ${ code(2) }, ${ code(3) }, ${ code(4) }, ${ code(5) }, ${ code(6) })".update
+    yield ()).commit(connector)
+
+  override def munitFixtures = List(
+    ResourceSuiteLocalFixture(
+      "cleanup",
+      Resource.make(cleanup)(_ => cleanup)
+    )
+  )
 
   test(
     "New data can be registered with the value of Tuple."
