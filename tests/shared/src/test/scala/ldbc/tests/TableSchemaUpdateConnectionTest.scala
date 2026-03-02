@@ -340,10 +340,9 @@ trait TableSchemaUpdateConnectionTest extends CatsEffectSuite:
   ) {
     assertIOBoolean(
       (for
-        length <- city.select(_.id.count).query.unsafe.map(_ + 1)
-        empty  <- city.selectAll.where(_.id _equals length).query.to[Option]
-        _      <- city.insert((length, "Nishinomiya", "JPN", "Hyogo", 0)).onDuplicateKeyUpdate(_.name).update
-        data   <- city.selectAll.where(_.id _equals length).query.to[Option]
+        empty <- city.selectAll.where(_.name _equals "Nishinomiya").query.to[Option]
+        _     <- city.insert((9999, "Nishinomiya", "JPN", "Hyogo", 0)).onDuplicateKeyUpdate(_.name).update
+        data  <- city.selectAll.where(_.id _equals 9999).query.to[Option]
       yield empty.isEmpty & data.nonEmpty)
         .transaction(connector)
     )
