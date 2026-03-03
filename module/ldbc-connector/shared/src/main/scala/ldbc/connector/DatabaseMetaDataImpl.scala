@@ -2243,31 +2243,21 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
     query.append(" ELSE UPPER(DATA_TYPE) END)")
     query
 
+  // This method is only called from getBestRowIdentifierByInformationSchema,
+  // which is guarded by version > 9.3.0, so fractional seconds are always supported.
   private def appendColumnSizeClause(query: StringBuilder): StringBuilder =
-    val supportsFractSeconds = protocol.initialPacket.serverVersion.compare(Version(5, 6, 4))
     query.append(" UPPER(CASE")
     query.append(" WHEN UPPER(DATA_TYPE) = 'YEAR' THEN 4")
     query.append(" WHEN UPPER(DATA_TYPE) = 'DATE' THEN 10") // '1000-01-01' to '9999-12-31'
-    supportsFractSeconds match
-      case -1 =>
-        query.append(
-          " WHEN UPPER(DATA_TYPE) = 'DATETIME'"
-        ) // '1000-01-01 00:00:00.000000' to '9999-12-31 23:59:59.999999'
-        query.append(
-          " OR UPPER(DATA_TYPE) = 'TIMESTAMP'"
-        ) // '1970-01-01 00:00:01.000000' UTC to '2038-01-19 03:14:07.999999' UTC
-        query.append(" THEN 19 + IF(DATETIME_PRECISION > 0, DATETIME_PRECISION + 1, DATETIME_PRECISION)")
-        query.append(" WHEN UPPER(DATA_TYPE) = 'TIME'") // '-838:59:59.000000' to '838:59:59.000000'
-        query.append(" THEN 8 + IF(DATETIME_PRECISION > 0, DATETIME_PRECISION + 1, DATETIME_PRECISION)")
-      case _ =>
-        query.append(
-          " WHEN UPPER(DATA_TYPE) = 'DATETIME' OR"
-        ) // '1000-01-01 00:00:00.000000' to '9999-12-31 23:59:59.999999'
-        query.append(
-          " UPPER(DATA_TYPE) = 'TIMESTAMP'"
-        ) // '1970-01-01 00:00:01.000000' UTC to '2038-01-19 03:14:07.999999' UTC
-        query.append(" THEN 19")
-        query.append(" WHEN UPPER(DATA_TYPE) = 'TIME' THEN 8") // '-838:59:59.000000' to '838:59:59.000000'
+    query.append(
+      " WHEN UPPER(DATA_TYPE) = 'DATETIME'"
+    ) // '1000-01-01 00:00:00.000000' to '9999-12-31 23:59:59.999999'
+    query.append(
+      " OR UPPER(DATA_TYPE) = 'TIMESTAMP'"
+    ) // '1970-01-01 00:00:01.000000' UTC to '2038-01-19 03:14:07.999999' UTC
+    query.append(" THEN 19 + IF(DATETIME_PRECISION > 0, DATETIME_PRECISION + 1, DATETIME_PRECISION)")
+    query.append(" WHEN UPPER(DATA_TYPE) = 'TIME'") // '-838:59:59.000000' to '838:59:59.000000'
+    query.append(" THEN 8 + IF(DATETIME_PRECISION > 0, DATETIME_PRECISION + 1, DATETIME_PRECISION)")
 
     // BIT vs TINYINT
     if tinyInt1isBit && !transformedBitIsBoolean then
