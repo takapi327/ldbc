@@ -22,11 +22,11 @@ import ldbc.Connector
 class JdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
 
   val ds = new MysqlDataSource()
-  ds.setServerName("127.0.0.1")
-  ds.setPortNumber(13306)
+  ds.setServerName(MySQLTestConfig.host)
+  ds.setPortNumber(MySQLTestConfig.port)
   ds.setDatabaseName("world")
-  ds.setUser("ldbc")
-  ds.setPassword("password")
+  ds.setUser(MySQLTestConfig.user)
+  ds.setPassword(MySQLTestConfig.password)
 
   override def connector: Connector[IO] =
     Connector.fromDataSource[IO](ds, ExecutionContexts.synchronous)

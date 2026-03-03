@@ -23,10 +23,10 @@ class ServerPreparedStatementQueryTest extends FTestPlatform:
   given Tracer[IO] = Tracer.noop[IO]
 
   private val connection = Connection[IO](
-    host     = "127.0.0.1",
-    port     = 13306,
-    user     = "ldbc",
-    password = Some("password"),
+    host     = TestConfig.host,
+    port     = TestConfig.port,
+    user     = TestConfig.user,
+    password = Some(TestConfig.password),
     database = Some("connector_test"),
     ssl      = SSL.Trusted
   )
@@ -755,6 +755,7 @@ class ServerPreparedStatementQueryTest extends FTestPlatform:
   }
 
   test("Server PreparedStatement should be able to retrieve VECTOR type records.") {
+    assume(TestConfig.isMySql9OrLater, "VECTOR type requires MySQL 9.x")
     assertIO(
       connection.use { conn =>
         for

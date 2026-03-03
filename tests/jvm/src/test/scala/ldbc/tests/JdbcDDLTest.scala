@@ -17,11 +17,11 @@ import ldbc.Connector
 class JdbcDDLTest extends DDLTest:
 
   val ds = new MysqlDataSource()
-  ds.setServerName("127.0.0.1")
-  ds.setPortNumber(13306)
+  ds.setServerName(MySQLTestConfig.host)
+  ds.setPortNumber(MySQLTestConfig.port)
   ds.setDatabaseName("connector_test")
-  ds.setUser("ldbc")
-  ds.setPassword("password")
+  ds.setUser(MySQLTestConfig.user)
+  ds.setPassword(MySQLTestConfig.password)
 
   override def connector: Connector[IO] =
     Connector.fromDataSource[IO](ds, ExecutionContexts.synchronous)
