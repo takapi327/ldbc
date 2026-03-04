@@ -203,6 +203,24 @@ def isActive: Column[Boolean] = boolean() // BOOLEAN型
 def uniqueId: Column[BigInt] = serial() // SERIAL型（自動増分のBIGINT UNSIGNED）
 ```
 
+### VECTOR型
+
+MySQL 9.0以降で利用可能な `VECTOR` 型をサポートしています。ベクトル検索やAIの埋め込みベクトルの格納に使用できます。
+
+```scala 3
+class EmbeddingTable extends Table[Embedding]("embeddings"):
+  def id:        Column[Long]         = bigint().autoIncrement.primaryKey
+  def embedding: Column[Array[Float]] = column[Array[Float]]("embedding", VECTOR(1536))
+
+  override def * = (id *: embedding).to[Embedding]
+```
+
+次元数を省略することも可能です：
+
+```scala 3
+def embedding: Column[Array[Float]] = column[Array[Float]]("embedding", VECTOR())
+```
+
 ## デフォルト値の設定
 
 カラムにデフォルト値を設定する方法：

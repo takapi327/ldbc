@@ -3,302 +3,237 @@
   laika.metadata.language = en
 %}
 
-# Migration Notes (from 0.4.x to 0.5.x)
+# Migration Notes (from 0.5.x to 0.6.x)
 
 ## Packages
-
-**Newly Added Packages**
-
-| Module / Platform                | JVM | Scala Native | Scala.js | Scaladoc                                                                                                                                                              |
-|----------------------------------|:---:|:------------:|:--------:|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `ldbc-zio-interop`               |  ✅  |      ❌       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-zio-interop_3)               |
-| `ldbc-authentication-plugin`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-authentication-plugin_3)     |
-| `ldbc-aws-authentication-plugin` |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-aws-authentication-plugin_3) |
-
-**Deprecated Packages**
-
-| Module / Platform    | JVM | Scala Native | Scala.js |  
-|----------------------|:---:|:------------:|:--------:|
-| `ldbc-hikari`        |  ✅  |      ❌       |    ❌     | 
 
 **All Packages**
 
 | Module / Platform                | JVM | Scala Native | Scala.js | Scaladoc                                                                                                                                                              |
 |----------------------------------|:---:|:------------:|:--------:|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `ldbc-sql`                       |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-sql_3)                       |
-| `ldbc-core`                      |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-core_3)                      |
-| `ldbc-connector`                 |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-connector_3)                 |
-| `jdbc-connector`                 |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/jdbc-connector_3)                 |
-| `ldbc-dsl`                       |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3)                       |
-| `ldbc-statement`                 |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-statement_3)                 |
-| `ldbc-query-builder`             |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-query-builder_3)             |
-| `ldbc-schema`                    |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-schema_3)                    |
-| `ldbc-codegen`                   |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-codegen_3)                   |
-| `ldbc-plugin`                    |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-plugin_2.12_1.0)             |
-| `ldbc-zio-interop`               |  ✅  |      ❌       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-zio-interop_3)               |
-| `ldbc-authentication-plugin`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-authentication-plugin_3)     |
-| `ldbc-aws-authentication-plugin` |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-aws-authentication-plugin_3) |
+| `ldbc-sql`                       |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-sql_3)                       |
+| `ldbc-core`                      |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-core_3)                      |
+| `ldbc-connector`                 |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-connector_3)                 |
+| `jdbc-connector`                 |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/jdbc-connector_3)                 |
+| `ldbc-dsl`                       |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3)                       |
+| `ldbc-statement`                 |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-statement_3)                 |
+| `ldbc-query-builder`             |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-query-builder_3)             |
+| `ldbc-schema`                    |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-schema_3)                    |
+| `ldbc-codegen`                   |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-codegen_3)                   |
+| `ldbc-plugin`                    |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-plugin_2.12_1.0)             |
+| `ldbc-zio-interop`               |  ✅  |      ❌       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-zio-interop_3)               |
+| `ldbc-authentication-plugin`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-authentication-plugin_3)     |
+| `ldbc-aws-authentication-plugin` |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-aws-authentication-plugin_3) |
 
 ## 🎯 Major Changes
 
-### 1. ZIO Ecosystem Support
+### 1. Significant Expansion of OpenTelemetry Telemetry
 
-Starting with 0.5.0, ldbc makes it easier to use ZIO.
+0.6.0 greatly enhances telemetry support compliant with OpenTelemetry Semantic Conventions v1.39.0.
+
+#### Addition of TelemetryConfig
+
+`TelemetryConfig` has been added to provide fine-grained control over telemetry behavior.
 
 ```scala
-libraryDependencies += "io.github.takapi327" %% "ldbc-zio-interop" % "0.5.0"
+import ldbc.connector.telemetry.TelemetryConfig
+
+// Default configuration (spec-compliant)
+val config = TelemetryConfig.default
+
+// Disable query summary generation
+val noSummaryConfig = TelemetryConfig.withoutQueryTextExtraction
+
+// Custom configuration
+val customConfig = TelemetryConfig.default
+  .withoutQueryTextExtraction   // Disable automatic db.query.summary generation
+  .withoutSanitization          // Disable query sanitization (caution: may expose sensitive data)
+  .withoutInClauseCollapsing    // Disable IN clause collapsing
 ```
 
-**Usage Example:**
-```scala
-import zio.*
-import ldbc.zio.interop.*
-import ldbc.connector.*
-import ldbc.dsl.*
+| Option | Default | Description |
+|--------|:-------:|-------------|
+| `extractMetadataFromQueryText` | `true` | Generate `db.query.summary` from query text for span naming |
+| `sanitizeNonParameterizedQueries` | `true` | Replace literals with `?` in non-parameterized queries (required by spec) |
+| `collapseInClauses` | `true` | Collapse `IN (?, ?, ?)` to `IN (?)` to reduce cardinality |
 
-object Main extends ZIOAppDefault:
-  
-  private val datasource =
-    MySQLDataSource
-      .build[Task](
-        host = "127.0.0.1",
-        port = 3306,
-        user = "ldbc"
-      )
-      .setPassword("password")
-      .setDatabase("world")
+#### Addition of DatabaseMetrics and Meter
 
-  private val program =
-    for
-      connection <- datasource.getConnection
-      connector = Connector.fromConnection(connection)
-      result     <- sql"SELECT 1".query[Int].to[List].readOnly(connector)
-    yield result
-
-  override def run = program
-```
-
-### 2. Enhanced Authentication Plugins
-
-New authentication plugin modules have been added. These plugins are implemented in pure Scala3 and are available on all platforms (JVM, JS, Native).
-
-#### MySQL Clear Password Authentication
+Connection pool metrics (wait time, use time, timeout count) can now be recorded via OpenTelemetry's `Meter`.
 
 ```scala
-libraryDependencies += "io.github.takapi327" %% "ldbc-authentication-plugin" % "0.5.0"
-```
-
-```scala
-import ldbc.connector.*
-import ldbc.authentication.plugin.*
-
-val datasource = MySQLDataSource
-  .build[IO](
-    host = "localhost",
-    port = 3306,
-    user = "cleartext-user"
-  )
-  .setPassword("plaintext-password")
-  .setDatabase("mydb")
-  .setDefaultAuthenticationPlugin(MysqlClearPasswordPlugin)
-```
-
-#### AWS Aurora IAM Authentication
-
-```scala
-libraryDependencies += "io.github.takapi327" %% "ldbc-aws-authentication-plugin" % "0.5.0"
-```
-
-```scala
-import ldbc.amazon.plugin.AwsIamAuthenticationPlugin
+import org.typelevel.otel4s.metrics.Meter
 import ldbc.connector.*
 
-val hostname = "aurora-instance.cluster-xxx.region.rds.amazonaws.com"
-val username = "iam-user"
-val config = MySQLConfig.default
-  .setHost(hostname)
-  .setUser(username)
-  .setDatabase("mydb")
-  .setSSL(SSL.Trusted)  // SSL is required for IAM authentication
-
-val plugin = AwsIamAuthenticationPlugin.default[IO]("ap-northeast-1", hostname, username)
-
-MySQLDataSource.pooling[IO](config, plugins = List(plugin)).use { datasource =>
-  val connector = Connector.fromDataSource(datasource)
-  // Query execution
+// Inject Meter to enable pool metrics
+MySQLDataSource.pooling[IO](
+  config = mysqlConfig,
+  meter  = Some(summon[Meter[IO]])
+).use { pool =>
+  // Pool wait time, use time, and timeouts are automatically recorded
+  pool.getConnection.use { conn => ... }
 }
 ```
 
-### 3. Deprecation of ldbc-hikari
+#### New Methods on MySQLDataSource
 
-`ldbc-hikari` is officially deprecated in 0.5.0. Please use the built-in connection pool.
+`setMeter` and `setTelemetryConfig` have been added to `MySQLDataSource`.
 
-**Deprecated API:**
 ```scala
-// No longer available
-import ldbc.hikari.*
-```
-
-**Recommended Approach:**
-```scala
+import org.typelevel.otel4s.metrics.Meter
 import ldbc.connector.*
+import ldbc.connector.telemetry.TelemetryConfig
 
-val poolConfig = MySQLConfig.default
-  .setHost("localhost")
-  .setPort(3306)
-  .setUser("user")
-  .setPassword("password")
-  .setDatabase("mydb")
-  .setMinConnections(5)
-  .setMaxConnections(20)
-
-MySQLDataSource.pooling[IO](poolConfig).use { pool =>
-  val connector = Connector.fromDataSource(pool)
-  // Query execution
-}
-```
-
-### 4. Security Enhancements
-
-#### Enhanced SQL Parameter Escaping
-
-String parameter escaping has been improved, strengthening protection against SQL injection attacks.
-
-#### SSRF Attack Protection
-
-Endpoint validation has been added during data source configuration.
-
-```scala
-// Unsafe endpoints are automatically detected and rejected
 val datasource = MySQLDataSource
-  .build[IO]("suspicious-host", 3306, "user")
+  .build[IO](host = "localhost", port = 3306, user = "ldbc")
   .setPassword("password")
   .setDatabase("mydb")
+  .setMeter(summon[Meter[IO]])
+  .setTelemetryConfig(TelemetryConfig.default.withoutQueryTextExtraction)
 ```
 
-### 5. Performance Optimizations
+#### pooling Method Signature Change
 
-#### Maximum Packet Size Configuration
+`meter` and `telemetryConfig` parameters have been added to `MySQLDataSource.pooling` and `MySQLDataSource.poolingWithBeforeAfter`. Existing code calling them without these arguments remains valid due to default values, but update is required when using metrics.
 
-Compatibility with MySQL server's `max_allowed_packet` setting has been improved.
+**Before (0.5.x):**
+```scala
+MySQLDataSource.pooling[IO](
+  config         = mysqlConfig,
+  metricsTracker = Some(tracker),
+  tracer         = Some(tracer)
+).use { pool => ... }
+```
+
+**After (0.6.x):**
+```scala
+MySQLDataSource.pooling[IO](
+  config          = mysqlConfig,
+  metricsTracker  = Some(tracker),
+  meter           = Some(summon[Meter[IO]]),
+  tracer          = Some(tracer),
+  telemetryConfig = TelemetryConfig.default
+).use { pool => ... }
+```
+
+#### TelemetryAttribute Key Name Changes (Breaking Change)
+
+`TelemetryAttribute` constant names have been updated to align with Semantic Conventions v1.39.0. Updates are required if you reference `TelemetryAttribute` directly.
+
+| Old (0.5.x) | New (0.6.x) |
+|-------------|-------------|
+| `DB_SYSTEM` | `DB_SYSTEM_NAME` |
+| `DB_OPERATION` | `DB_OPERATION_NAME` |
+| `DB_QUERY` | `DB_QUERY_TEXT` |
+| `STATUS_CODE` | `DB_RESPONSE_STATUS_CODE` |
+| `VERSION` | `DB_MYSQL_VERSION` |
+| `THREAD_ID` | `DB_MYSQL_THREAD_ID` |
+| `AUTH_PLUGIN` | `DB_MYSQL_AUTH_PLUGIN` |
+
+### 2. Enhanced MySQL 9.x Support
+
+MySQL 9.x is officially supported starting from 0.6.0. Internal behavior automatically adapts based on the connected MySQL version.
+
+#### getCatalogs Change for MySQL 9.3.0+
+
+For MySQL 9.3.0 and later, the internal implementation of `getCatalogs()` switches from the `mysql` system table to `INFORMATION_SCHEMA.SCHEMATA`. There is no impact on user code, but when connecting to MySQL 9.3+, SELECT privileges on `INFORMATION_SCHEMA` are required.
+
+#### getTablePrivileges Change
+
+The internal implementation of `DatabaseMetaData.getTablePrivileges()` has been changed from `mysql.tables_priv` to `INFORMATION_SCHEMA.TABLE_PRIVILEGES`.
+
+### 3. Schema: VECTOR Type Added
+
+A `DataType` representing MySQL's `VECTOR` type has been added to the `ldbc-schema` module.
 
 ```scala
-val datasource = MySQLDataSource
-  .build[IO]("localhost", 3306, "user")
-  .setPassword("password")
-  .setDatabase("mydb")
-  .setMaxPacketSize(16777216)  // 16MB (match MySQL server configuration)
+import ldbc.schema.*
+
+class EmbeddingTable extends Table[Embedding]("embeddings"):
+  def id:        Column[Long]         = column[Long]("id")
+  def embedding: Column[Array[Float]] = column[Array[Float]]("embedding", VECTOR(1536))
+
+  override def * = (id *: embedding).to[Embedding]
 ```
 
-#### Connection Pool Concurrency Improvements
+### 4. Improved Error Tracing
 
-Connection pool state management has been improved with atomic checks, enhancing stability in concurrent environments.
-
-### 6. API Improvements
-
-#### File-based Query Execution
-
-A new `updateRaws` method has been added, allowing SQL queries to be read from files and executed:
-
-```scala
-import ldbc.dsl.*
-import fs2.io.file.{ Files, Path }
-import fs2.text
-
-private def readFile(filename: String): IO[String] =
-  Files[IO]
-    .readAll(Path(filename))
-    .through(text.utf8.decode)
-    .compile
-    .string
-
-for
-  sql <- readFile("hoge.sql")
-  _ <- DBIO.updateRaws(sql).commit(connector)
-yield ()
-```
+`span.setStatus(StatusCode.Error, message)` is now automatically set when an error occurs in the Protocol layer. Error spans are correctly displayed in distributed tracing tools (Jaeger, Zipkin, etc.). No changes to user code are required.
 
 ## Migration Guide
 
-### Migration from ldbc-hikari
+### Update TelemetryAttribute Constant Names
 
-**Before Migration (0.4.x):**
+If you are using `TelemetryAttribute` constants directly, update them to the new key names.
+
+**Before (0.5.x):**
 ```scala
-libraryDependencies ++= Seq(
-  "io.github.takapi327" %% "ldbc-dsl" % "0.4.0",
-  "io.github.takapi327" %% "ldbc-hikari" % "0.4.0"
-)
+import ldbc.connector.telemetry.TelemetryAttribute
 
-import ldbc.hikari.*
+val attr = Attribute(TelemetryAttribute.DB_SYSTEM, "mysql")
+val op   = Attribute(TelemetryAttribute.DB_OPERATION, "SELECT")
+```
 
-val hikariConfig = Configuration.default
-  .setJdbcUrl("jdbc:mysql://localhost:3306/mydb")
-  .setUsername("user")
-  .setPassword("password")
-  .setMaximumPoolSize(20)
+**After (0.6.x):**
+```scala
+import ldbc.connector.telemetry.TelemetryAttribute
 
-HikariDataSource.fromHikariConfig[IO](hikariConfig).use { pool =>
-  // Usage
+val attr = Attribute(TelemetryAttribute.DB_SYSTEM_NAME, "mysql")
+val op   = Attribute(TelemetryAttribute.DB_OPERATION_NAME, "SELECT")
+```
+
+### Enable OTel Metrics
+
+To collect connection pool metrics, pass a `Meter` instance.
+
+```scala
+import cats.effect.IO
+import org.typelevel.otel4s.metrics.Meter
+import ldbc.connector.*
+import ldbc.connector.telemetry.TelemetryConfig
+
+// otel4s setup (example)
+OtelJava.global[IO].use { otel =>
+  otel.meterProvider.get("ldbc").flatMap { meter =>
+    MySQLDataSource.pooling[IO](
+      config          = mysqlConfig,
+      meter           = Some(meter),
+      telemetryConfig = TelemetryConfig.default
+    ).use { pool =>
+      pool.getConnection.use { conn =>
+        // Metrics such as db.client.connection.wait_duration are recorded
+        sql"SELECT 1".query[Int].to[List].readOnly(Connector.fromDataSource(pool))
+      }
+    }
+  }
 }
 ```
 
-**After Migration (0.5.x):**
+### Customize Telemetry Configuration
+
+Use `TelemetryConfig` to control whether query text is included in span names or to manage sanitization.
+
 ```scala
-libraryDependencies ++= Seq(
-  "io.github.takapi327" %% "ldbc-connector" % "0.5.0",
-  "io.github.takapi327" %% "ldbc-dsl" % "0.5.0"
-)
+import ldbc.connector.telemetry.TelemetryConfig
 
-import ldbc.connector.*
+// Use fixed span names (no query text parsing)
+val config = TelemetryConfig.withoutQueryTextExtraction
 
-val config = MySQLConfig.default
-  .setHost("localhost")
-  .setPort(3306)
-  .setUser("user")
-  .setPassword("password")
-  .setDatabase("mydb")
-  .setMaxConnections(20)
-
-MySQLDataSource.pooling[IO](config).use { pool =>
-  val connector = Connector.fromDataSource(pool)
-  // Usage
-}
-```
-
-### Adding ZIO Integration
-
-**Cats Effect Based (Traditional):**
-```scala
-import cats.effect.*
-import ldbc.connector.*
-
-val program: IO[List[User]] = 
-  datasource.getConnection.use { connection =>
-    val connector = Connector.fromConnection(connection)
-    sql"SELECT * FROM users".query[User].to[List].readOnly(connector)
-  }
-```
-
-**ZIO Based (New):**
-```scala
-import zio.*
-import ldbc.zio.interop.*
-
-val program: Task[List[User]] = 
-  datasource.getConnection.use { connection =>
-    val connector = Connector.fromConnection(connection)
-    sql"SELECT * FROM users".query[User].to[List].readOnly(connector)
-  }
+// Disable all (recommended for development/debugging only)
+val debugConfig = TelemetryConfig.default
+  .withoutQueryTextExtraction
+  .withoutSanitization
+  .withoutInClauseCollapsing
 ```
 
 ## Summary
 
-Migration to 0.5.x provides the following benefits:
+Migration to 0.6.x provides the following benefits:
 
-1. **Complete ZIO Ecosystem Support**: Natural integration in ZIO-based applications
-2. **Enhanced Security**: SSRF attack protection, improved SQL escaping
-3. **Simplified AWS Integration**: Easy configuration for Aurora IAM authentication
-4. **Performance Improvements**: Maximum packet size support, improved pool concurrency
-5. **Enhanced Developer Experience**: New APIs, binary compatibility checks
+1. **Enhanced OpenTelemetry Spec Compliance**: Attribute key names and behavior aligned with Semantic Conventions v1.39.0
+2. **Visible Pool Metrics**: Collect connection wait time, use time, and timeout count as OTel metrics
+3. **Official MySQL 9.x Support**: Automatically adapts to API changes in MySQL 9.3+
+4. **New VECTOR Type**: Handle MySQL's `VECTOR` type directly in schema definitions
+5. **Improved Error Tracing**: Span error status is accurately displayed in distributed tracing tools
 
-Migration work mainly involves updating library dependencies and small API changes, allowing for gradual migration.
+Most changes are backward compatible. Updates are only required if you directly use `TelemetryAttribute` constant names.
