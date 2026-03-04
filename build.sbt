@@ -352,7 +352,8 @@ lazy val docs = (project in file("docs"))
       "SCALA_VERSION" -> scalaVersion.value,
       "MYSQL_VERSION" -> "9.6.0"
     ),
-    laikaTheme := LaikaSettings.helium.value,
+    laikaTheme   := LaikaSettings.helium.value,
+    laikaConfig  := LaikaConfig.defaults.withRawContent,
     // Modify tlSite task to run the LLM docs script after the site is generated
     tlSite := {
       tlSite.value
