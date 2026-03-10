@@ -262,7 +262,7 @@ lazy val benchmark = (project in file("benchmark"))
     libraryDependencies ++= Seq(
       "org.scala-lang"     %% "scala3-compiler"   % scala3,
       "com.mysql"           % "mysql-connector-j" % "9.6.0",
-      "org.tpolecat"       %% "doobie-core"       % "1.0.0-RC10",
+      "org.tpolecat"       %% "doobie-core"       % "1.0.0-RC12",
       "org.tpolecat"       %% "doobie-core"       % "1.0.0-RC12",
       "com.typesafe.slick" %% "slick"             % "3.6.1",
       "com.zaxxer"          % "HikariCP"          % "7.0.2"
