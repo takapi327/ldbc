@@ -141,13 +141,13 @@ ldbc provides not only plain queries but also type-safe database connections usi
 The first step is to set up dependencies.
 
 ```scala
-libraryDependencies += "io.github.takapi327" %% "ldbc-query-builder" % "${version}"
+libraryDependencies += "@ORGANIZATION@" %% "ldbc-query-builder" % "@VERSION@"
 ```
 
 For Cross-Platform projects (JVM, JS, and/or Native):
 
 ```scala
-libraryDependencies += "io.github.takapi327" %%% "ldbc-query-builder" % "${version}"
+libraryDependencies += "@ORGANIZATION@" %%% "ldbc-query-builder" % "@VERSION@"
 ```
 
 ldbc uses classes to construct queries.
