@@ -19,9 +19,9 @@ libraryDependencies ++= Seq(
   "@ORGANIZATION@" %% "ldbc-connector" % "@VERSION@",
 
   // OpenTelemetry Java SDK backend
-  "org.typelevel"    %% "otel4s-oteljava"                           % "0.15.0",
-  "io.opentelemetry"  % "opentelemetry-exporter-otlp"               % "1.58.0" % Runtime,
-  "io.opentelemetry"  % "opentelemetry-sdk-extension-autoconfigure" % "1.58.0" % Runtime,
+  "org.typelevel"    %% "otel4s-oteljava"                           % "0.15.1",
+  "io.opentelemetry"  % "opentelemetry-exporter-otlp"               % "1.59.0" % Runtime,
+  "io.opentelemetry"  % "opentelemetry-sdk-extension-autoconfigure" % "1.59.0" % Runtime,
 )
 ```
 
