@@ -255,7 +255,7 @@ lazy val benchmark = (project in file("benchmark"))
     libraryDependencies ++= Seq(
       "org.scala-lang"     %% "scala3-compiler"   % scala3,
       "com.mysql"           % "mysql-connector-j" % "8.4.0",
-      "org.tpolecat"       %% "doobie-core"       % "1.0.0-RC10",
+      "org.tpolecat"       %% "doobie-core"       % "1.0.0-RC12",
       "com.typesafe.slick" %% "slick"             % "3.6.1",
       "com.zaxxer"          % "HikariCP"          % "7.0.2"
     )
@@ -296,9 +296,15 @@ lazy val otelExample = crossProject(JVMPlatform)
   .example("otel", "OpenTelemetry example project")
   .settings(
     libraryDependencies ++= Seq(
+<<<<<<< update/otel4s-core-trace-0.15.2
       "org.typelevel"   %% "otel4s-oteljava"                           % "0.15.2",
       "io.opentelemetry" % "opentelemetry-exporter-otlp"               % "1.59.0" % Runtime,
       "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.59.0" % Runtime
+=======
+      "org.typelevel"   %% "otel4s-oteljava"                           % "0.15.1",
+      "io.opentelemetry" % "opentelemetry-exporter-otlp"               % "1.60.1" % Runtime,
+      "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.60.1" % Runtime
+>>>>>>> master
     )
   )
   .settings(
@@ -316,7 +322,7 @@ lazy val zioExample = crossProject(JVMPlatform)
   .example("zio", "ZIO example project")
   .settings(
     libraryDependencies ++= Seq(
-      "dev.zio" %% "zio-http" % "3.8.1"
+      "dev.zio" %% "zio-http" % "3.9.0"
     )
   )
   .dependsOn(connector, dsl, zioInterop)
