@@ -304,8 +304,8 @@ lazy val otelExample = crossProject(JVMPlatform)
   .settings(
     libraryDependencies ++= Seq(
       "org.typelevel"   %% "otel4s-oteljava"                           % "0.15.1",
-      "io.opentelemetry" % "opentelemetry-exporter-otlp"               % "1.59.0" % Runtime,
-      "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.59.0" % Runtime
+      "io.opentelemetry" % "opentelemetry-exporter-otlp"               % "1.60.1" % Runtime,
+      "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.60.1" % Runtime
     )
   )
   .settings(
@@ -323,7 +323,7 @@ lazy val zioExample = crossProject(JVMPlatform)
   .example("zio", "ZIO example project")
   .settings(
     libraryDependencies ++= Seq(
-      "dev.zio" %% "zio-http" % "3.8.1"
+      "dev.zio" %% "zio-http" % "3.9.0"
     )
   )
   .dependsOn(connector, dsl, zioInterop)
