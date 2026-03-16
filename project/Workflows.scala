@@ -42,6 +42,24 @@ object Workflows {
     name     = Some("Stop MySQL on Docker")
   )
 
+  val testMySQL9: WorkflowStep.Sbt = WorkflowStep.Sbt(
+    commands = List("test"),
+    name     = Some("Test (MySQL 9.x)"),
+    env      = Map(
+      "MYSQL_PORT"    -> "13306",
+      "MYSQL_VERSION" -> "9.6.0"
+    )
+  )
+
+  val testMySQL8: WorkflowStep.Sbt = WorkflowStep.Sbt(
+    commands = List("test"),
+    name     = Some("Test (MySQL 8.x)"),
+    env      = Map(
+      "MYSQL_PORT"    -> "13307",
+      "MYSQL_VERSION" -> "8.4.7"
+    )
+  )
+
   val sbtCoverageReport: Def.Initialize[WorkflowJob] = Def.setting(
     WorkflowJob(
       id     = "coverage",

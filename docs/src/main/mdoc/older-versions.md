@@ -12,7 +12,7 @@ Older Versions
 Documentation for versions 0.1 through 0.2 is no longer available on this site,
 but you can still browse the documentation sources and scaladoc as linked in the table below.
 
-It's strongly recommended to upgrade to the latest release (0.3), which has increased functionality and robustness
+It's strongly recommended to upgrade to the latest release (0.6), which has increased functionality and robustness
 and now also more API stability than those older releases.
 
 | Release | Date     | Scala Versions | sbt plugin | Scala.js | Scala Native | Doc Sources     | API (Scaladoc)  |

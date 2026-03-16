@@ -60,13 +60,11 @@ class CharsetMappingTest extends FTestPlatform:
   test("MysqlCharset.isOkayForVersion should correctly check version compatibility") {
     val charset = MysqlCharset("test", 1, 0, List.empty, Version(5, 0, 0))
 
-    // Version.compare has a bug: it returns -1 for equal versions instead of 0
-    // So Version(5,0,0).compare(Version(5,0,0)) returns -1
-    // isOkayForVersion returns false for -1, true for 0 and 1
-    // This means equal versions are treated as "not okay"
+    // Version.compare returns 0 for equal versions
+    // isOkayForVersion returns true for case 0 (equal)
     assert(
-      !charset.isOkayForVersion(Version(5, 0, 0)),
-      "Should not be okay for same version due to Version.compare bug"
+      charset.isOkayForVersion(Version(5, 0, 0)),
+      "Should be okay for same version"
     )
     assert(!charset.isOkayForVersion(Version(5, 1, 0)), "Should not be okay for newer version")
     assert(!charset.isOkayForVersion(Version(6, 0, 0)), "Should not be okay for major newer version")
@@ -205,8 +203,12 @@ class CharsetMappingTest extends FTestPlatform:
     }
 
     val gb18030WithNewVersion = CharsetMapping.getStaticMysqlCharsetForJavaEncoding("GB18030", Some(Version(5, 7, 4)))
-    // Version 5.7.4 equals minimum version, but Version.compare returns -1, so isOkayForVersion returns false
-    assertEquals(gb18030WithNewVersion, None)
+    // Version 5.7.4 equals minimum version, Version.compare returns 0, so isOkayForVersion returns true
+    if isGB18030Supported then {
+      assertEquals(gb18030WithNewVersion, Some("gb18030"))
+    } else {
+      assertEquals(gb18030WithNewVersion, None)
+    }
 
     // Test without version - should work correctly
     val utf8NoVersion = CharsetMapping.getStaticMysqlCharsetForJavaEncoding("UTF-8", None)

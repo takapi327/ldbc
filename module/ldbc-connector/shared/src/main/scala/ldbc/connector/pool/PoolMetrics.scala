@@ -20,6 +20,7 @@ import scala.concurrent.duration.*
  * @param totalReleases total number of releases
  * @param totalCreations total number of connections created
  * @param totalRemovals total number of connections removed
+ * @param gauges current gauge values (e.g., pool.total, pool.active, pool.idle, pool.waiting)
  */
 case class PoolMetrics(
   acquisitionTime:   FiniteDuration,
@@ -30,7 +31,8 @@ case class PoolMetrics(
   totalAcquisitions: Long,
   totalReleases:     Long,
   totalCreations:    Long,
-  totalRemovals:     Long
+  totalRemovals:     Long,
+  gauges:            Map[String, Long]
 )
 
 object PoolMetrics:
@@ -51,5 +53,6 @@ object PoolMetrics:
     totalAcquisitions = 0,
     totalReleases     = 0,
     totalCreations    = 0,
-    totalRemovals     = 0
+    totalRemovals     = 0,
+    gauges            = Map.empty
   )

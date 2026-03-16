@@ -27,6 +27,12 @@ ThisBuild / githubWorkflowBuildPreamble ++= List(dockerRun) ++ nativeBrewInstall
 ThisBuild / nativeBrewInstallCond := Some("matrix.project == 'ldbcNative'")
 ThisBuild / githubWorkflowAddedJobs ++= Seq(sbtScripted.value, sbtCoverageReport.value)
 ThisBuild / githubWorkflowBuildPostamble += dockerStop
+ThisBuild / githubWorkflowBuild ~= { steps =>
+  steps.flatMap {
+    case step if step.name.contains("Test") => Seq(testMySQL9, testMySQL8)
+    case step                               => Seq(step)
+  }
+}
 ThisBuild / githubWorkflowTargetBranches        := Seq("**")
 ThisBuild / githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v")))
 ThisBuild / tlSitePublishBranch                 := None
@@ -154,7 +160,8 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
       "org.scodec"    %%% "scodec-bits"       % "1.2.4",
       "org.scodec"    %%% "scodec-core"       % "2.3.1",
       "org.scodec"    %%% "scodec-cats"       % "1.3.0-RC1",
-      "org.typelevel" %%% "otel4s-core-trace" % "0.15-ca28b04-SNAPSHOT",
+      "org.typelevel" %%% "otel4s-core-trace"   % "0.16.0-M1",
+      "org.typelevel" %%% "otel4s-core-metrics" % "0.16.0-M1",
       "org.typelevel" %%% "twiddles-core"     % "0.9.0",
       "org.typelevel" %%% "munit-cats-effect" % "2.2.0-RC1" % Test
     )
@@ -230,7 +237,7 @@ lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .defaultSettings
   .jvmSettings(
     Test / fork                       := true,
-    libraryDependencies += "com.mysql" % "mysql-connector-j" % "9.5.0" % Test
+    libraryDependencies += "com.mysql" % "mysql-connector-j" % "9.6.0" % Test
   )
   .jvmConfigure(_ dependsOn jdbcConnector.jvm)
   .jsSettings(
@@ -256,8 +263,8 @@ lazy val benchmark = (project in file("benchmark"))
   .settings(
     libraryDependencies ++= Seq(
       "org.scala-lang"     %% "scala3-compiler"   % scala3,
-      "com.mysql"           % "mysql-connector-j" % "9.5.0",
-      "org.tpolecat"       %% "doobie-core"       % "1.0.0-RC10",
+      "com.mysql"           % "mysql-connector-j" % "9.6.0",
+      "org.tpolecat"       %% "doobie-core"       % "1.0.0-RC12",
       "com.typesafe.slick" %% "slick"             % "3.6.1",
       "com.zaxxer"          % "HikariCP"          % "7.0.2"
     )
@@ -274,7 +281,7 @@ lazy val http4sExample = crossProject(JVMPlatform)
       "org.http4s"    %% "http4s-dsl"          % "0.23.33",
       "org.http4s"    %% "http4s-ember-server" % "0.23.33",
       "org.http4s"    %% "http4s-circe"        % "0.23.33",
-      "ch.qos.logback" % "logback-classic"     % "1.5.24",
+      "ch.qos.logback" % "logback-classic"     % "1.5.32",
       "io.circe"      %% "circe-generic"       % "0.14.10"
     )
   )
@@ -287,7 +294,7 @@ lazy val hikariCPExample = crossProject(JVMPlatform)
   .settings(
     libraryDependencies ++= Seq(
       "com.zaxxer" % "HikariCP"          % "7.0.2",
-      "com.mysql"  % "mysql-connector-j" % "9.5.0"
+      "com.mysql"  % "mysql-connector-j" % "9.6.0"
     )
   )
   .dependsOn(jdbcConnector, dsl)
@@ -298,9 +305,9 @@ lazy val otelExample = crossProject(JVMPlatform)
   .example("otel", "OpenTelemetry example project")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel"   %% "otel4s-oteljava"                           % "0.15-f5df7b3-SNAPSHOT",
-      "io.opentelemetry" % "opentelemetry-exporter-otlp"               % "1.58.0" % Runtime,
-      "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.58.0" % Runtime
+      "org.typelevel"   %% "otel4s-oteljava"                           % "0.16.0-M1",
+      "io.opentelemetry" % "opentelemetry-exporter-otlp"               % "1.60.1" % Runtime,
+      "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.60.1" % Runtime
     )
   )
   .settings(
@@ -318,7 +325,7 @@ lazy val zioExample = crossProject(JVMPlatform)
   .example("zio", "ZIO example project")
   .settings(
     libraryDependencies ++= Seq(
-      "dev.zio" %% "zio-http" % "3.7.4"
+      "dev.zio" %% "zio-http" % "3.10.0"
     )
   )
   .dependsOn(connector, dsl, zioInterop)
@@ -345,9 +352,10 @@ lazy val docs = (project in file("docs"))
     mdocVariables ++= Map(
       "ORGANIZATION"  -> organization.value,
       "SCALA_VERSION" -> scalaVersion.value,
-      "MYSQL_VERSION" -> "9.5.0"
+      "MYSQL_VERSION" -> "9.6.0"
     ),
-    laikaTheme := LaikaSettings.helium.value,
+    laikaTheme  := LaikaSettings.helium.value,
+    laikaConfig := LaikaConfig.defaults.withRawContent,
     // Modify tlSite task to run the LLM docs script after the site is generated
     tlSite := {
       tlSite.value

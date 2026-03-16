@@ -17,7 +17,7 @@ class MySQLConfigTest extends FTestPlatform:
   test("MySQLConfig.default should have correct default values") {
     val config = MySQLConfig.default
 
-    assertEquals(config.host, "127.0.0.1")
+    assertEquals(config.host, TestConfig.host)
     assertEquals(config.port, 3306)
     assertEquals(config.user, "root")
     assertEquals(config.password, None)

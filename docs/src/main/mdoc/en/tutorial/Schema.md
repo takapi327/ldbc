@@ -203,6 +203,24 @@ def isActive: Column[Boolean] = boolean() // BOOLEAN type
 def uniqueId: Column[BigInt] = serial() // SERIAL type (auto-increment BIGINT UNSIGNED)
 ```
 
+### VECTOR Type
+
+The `VECTOR` type is supported for MySQL 9.0 and later. It can be used for storing AI embedding vectors and vector search use cases.
+
+```scala 3
+class EmbeddingTable extends Table[Embedding]("embeddings"):
+  def id:        Column[Long]         = bigint().autoIncrement.primaryKey
+  def embedding: Column[Array[Float]] = column[Array[Float]]("embedding", VECTOR(1536))
+
+  override def * = (id *: embedding).to[Embedding]
+```
+
+The dimension can also be omitted:
+
+```scala 3
+def embedding: Column[Array[Float]] = column[Array[Float]]("embedding", VECTOR())
+```
+
 ## Setting Default Values
 
 How to set default values for columns:

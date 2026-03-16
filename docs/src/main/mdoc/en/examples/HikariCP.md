@@ -16,7 +16,7 @@ First, add the necessary dependencies to build.sbt:
 
 ```scala
 libraryDependencies ++= Seq(
-  "com.mysql" % "mysql-connector-j" % "9.5.0",
+  "com.mysql" % "mysql-connector-j" % "9.6.0",
   "com.zaxxer" % "HikariCP" % "6.2.1"
 )
 ```

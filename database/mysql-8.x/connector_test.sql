@@ -258,3 +258,8 @@ CREATE TABLE `privileges_table` (
 
 GRANT SELECT, INSERT ON `connector_test`.`privileges_table` TO 'ldbc'@'%';
 GRANT SELECT(`c1`, `c2`), INSERT(`c1`, `c2`) ON `connector_test`.`privileges_table` TO 'ldbc'@'%';
+
+CREATE TABLE `datetime_precision_test` (
+  `id` DATETIME(3) NOT NULL,
+  PRIMARY KEY (`id`)
+);

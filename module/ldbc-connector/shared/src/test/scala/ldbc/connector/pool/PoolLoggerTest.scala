@@ -27,7 +27,8 @@ class PoolLoggerTest extends CatsEffectSuite:
       totalAcquisitions = 100,
       totalReleases     = 98,
       totalCreations    = 10,
-      totalRemovals     = 0
+      totalRemovals     = 0,
+      gauges            = Map.empty
     )
 
     for
@@ -77,7 +78,8 @@ class PoolLoggerTest extends CatsEffectSuite:
       totalAcquisitions = 1000,
       totalReleases     = 995,
       totalCreations    = 15,
-      totalRemovals     = 5
+      totalRemovals     = 5,
+      gauges            = Map.empty
     )
 
     logger.logPoolState("production-pool", status, Some(metrics))

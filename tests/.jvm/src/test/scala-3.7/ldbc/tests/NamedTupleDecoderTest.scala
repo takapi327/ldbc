@@ -22,17 +22,17 @@ import jdbc.connector.{ ConnectionProvider as JdbcProvider, * }
 class LdbcNamedTupleDecoderTest extends NamedTupleDecoderTest:
   override def connection: Provider[IO] =
     LdbcProvider
-      .default[IO]("127.0.0.1", 13306, "ldbc", "password", "world")
+      .default[IO](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user, MySQLTestConfig.password, "world")
       .setSSL(SSL.Trusted)
 
 class JdbcNamedTupleDecoderTest extends NamedTupleDecoderTest:
 
   val ds = new MysqlDataSource()
-  ds.setServerName("127.0.0.1")
-  ds.setPortNumber(13306)
+  ds.setServerName(MySQLTestConfig.host)
+  ds.setPortNumber(MySQLTestConfig.port)
   ds.setDatabaseName("world")
-  ds.setUser("ldbc")
-  ds.setPassword("password")
+  ds.setUser(MySQLTestConfig.user)
+  ds.setPassword(MySQLTestConfig.password)
 
   override def connection: Provider[IO] =
     JdbcProvider.fromDataSource(ds, ExecutionContexts.synchronous)
