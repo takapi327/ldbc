@@ -18,8 +18,6 @@ import ldbc.sql.DatabaseMetaData
 
 import ldbc.connector.exception.*
 
-import ldbc.authentication.plugin.MysqlClearPasswordPlugin
-
 class ConnectionTest extends FTestPlatform:
 
   given Tracer[IO] = Tracer.noop[IO]
@@ -27,7 +25,7 @@ class ConnectionTest extends FTestPlatform:
   test("Passing an empty string to host causes SQLException") {
     val connection = Connection[IO](
       host = "",
-      port = 13306,
+      port = TestConfig.port,
       user = "root"
     )
     interceptIO[SQLClientInfoException] {
@@ -38,7 +36,7 @@ class ConnectionTest extends FTestPlatform:
   test("UnknownHostException occurs when invalid host is passed") {
     val connection = Connection[IO](
       host = "host",
-      port = 13306,
+      port = TestConfig.port,
       user = "root"
     )
     interceptIO[UnknownHostException] {
@@ -48,7 +46,7 @@ class ConnectionTest extends FTestPlatform:
 
   test("Passing a negative value to Port causes SQLException") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
+      host = TestConfig.host,
       port = -1,
       user = "root"
     )
@@ -59,7 +57,7 @@ class ConnectionTest extends FTestPlatform:
 
   test("SQLException occurs when passing more than 65535 values to Port") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
+      host = TestConfig.host,
       port = 65536,
       user = "root"
     )
@@ -68,83 +66,10 @@ class ConnectionTest extends FTestPlatform:
     }
   }
 
-  test("A user using mysql_native_password can establish a connection with the MySQL server.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc_mysql_native_user",
-      password = Some("ldbc_mysql_native_password")
-    )
-    assertIOBoolean(connection.use(_ => IO(true)))
-  }
-
-  test(
-    "Connections to MySQL servers using users with mysql_native_password will succeed if allowPublicKeyRetrieval is enabled for non-SSL connections."
-  ) {
-    val connection = Connection[IO](
-      host                    = "127.0.0.1",
-      port                    = 13306,
-      user                    = "ldbc_mysql_native_user",
-      password                = Some("ldbc_mysql_native_password"),
-      allowPublicKeyRetrieval = true
-    )
-    assertIOBoolean(connection.use(_ => IO(true)))
-  }
-
-  test("Connections to MySQL servers using users with mysql_native_password will succeed for SSL connections.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc_mysql_native_user",
-      password = Some("ldbc_mysql_native_password"),
-      ssl      = SSL.Trusted
-    )
-    assertIOBoolean(connection.use(_ => IO(true)))
-  }
-
-  test("Users using mysql_native_password can establish a connection with the MySQL server by specifying database.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc_mysql_native_user",
-      password = Some("ldbc_mysql_native_password"),
-      database = Some("connector_test")
-    )
-    assertIOBoolean(connection.use(_ => IO(true)))
-  }
-
-  test(
-    "If allowPublicKeyRetrieval is enabled for non-SSL connections, a connection to a MySQL server specifying a database using a user with mysql_native_password will succeed."
-  ) {
-    val connection = Connection[IO](
-      host                    = "127.0.0.1",
-      port                    = 13306,
-      user                    = "ldbc_mysql_native_user",
-      password                = Some("ldbc_mysql_native_password"),
-      database                = Some("connector_test"),
-      allowPublicKeyRetrieval = true
-    )
-    assertIOBoolean(connection.use(_ => IO(true)))
-  }
-
-  test(
-    "A connection to a MySQL server with a database specified using a user with mysql_native_password will succeed with an SSL connection."
-  ) {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc_mysql_native_user",
-      password = Some("ldbc_mysql_native_password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-    assertIOBoolean(connection.use(_ => IO(true)))
-  }
-
   test("Connections to MySQL servers using users with sha256_password will fail for non-SSL connections.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
+      host     = TestConfig.host,
+      port     = TestConfig.port,
       user     = "ldbc_sha256_user",
       password = Some("ldbc_sha256_password")
     )
@@ -157,8 +82,8 @@ class ConnectionTest extends FTestPlatform:
     "Connections to MySQL servers using users with sha256_password will succeed if allowPublicKeyRetrieval is enabled for non-SSL connections."
   ) {
     val connection = Connection[IO](
-      host                    = "127.0.0.1",
-      port                    = 13306,
+      host                    = TestConfig.host,
+      port                    = TestConfig.port,
       user                    = "ldbc_sha256_user",
       password                = Some("ldbc_sha256_password"),
       allowPublicKeyRetrieval = true
@@ -168,8 +93,8 @@ class ConnectionTest extends FTestPlatform:
 
   test("Connections to MySQL servers using users with sha256_password will succeed for SSL connections.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
+      host     = TestConfig.host,
+      port     = TestConfig.port,
       user     = "ldbc_sha256_user",
       password = Some("ldbc_sha256_password"),
       ssl      = SSL.Trusted
@@ -181,8 +106,8 @@ class ConnectionTest extends FTestPlatform:
     "If allowPublicKeyRetrieval is enabled for non-SSL connections, a connection to a MySQL server specifying a database using a user with sha256_password will succeed."
   ) {
     val connection = Connection[IO](
-      host                    = "127.0.0.1",
-      port                    = 13306,
+      host                    = TestConfig.host,
+      port                    = TestConfig.port,
       user                    = "ldbc_sha256_user",
       password                = Some("ldbc_sha256_password"),
       database                = Some("connector_test"),
@@ -195,8 +120,8 @@ class ConnectionTest extends FTestPlatform:
     "A connection to a MySQL server with a database specified using a user with sha256_password will succeed with an SSL connection."
   ) {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
+      host     = TestConfig.host,
+      port     = TestConfig.port,
       user     = "ldbc_sha256_user",
       password = Some("ldbc_sha256_password"),
       database = Some("connector_test"),
@@ -209,10 +134,10 @@ class ConnectionTest extends FTestPlatform:
     "Connections to MySQL servers using users with caching_sha2_password will succeed if allowPublicKeyRetrieval is enabled for non-SSL connections."
   ) {
     val connection = Connection[IO](
-      host                    = "127.0.0.1",
-      port                    = 13306,
-      user                    = "ldbc",
-      password                = Some("password"),
+      host                    = TestConfig.host,
+      port                    = TestConfig.port,
+      user                    = TestConfig.user,
+      password                = Some(TestConfig.password),
       allowPublicKeyRetrieval = true
     )
     assertIOBoolean(connection.use(_ => IO(true)))
@@ -220,10 +145,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("Connections to MySQL servers using users with caching_sha2_password will succeed for SSL connections.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       ssl      = SSL.Trusted
     )
     assertIOBoolean(connection.use(_ => IO(true)))
@@ -233,10 +158,10 @@ class ConnectionTest extends FTestPlatform:
     "If the login information of a user using caching_sha2_password is cached, the connection to the MySQL server will succeed even for non-SSL connections."
   ) {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password")
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password)
     )
     assertIOBoolean(connection.use(_ => IO(true)))
   }
@@ -245,10 +170,10 @@ class ConnectionTest extends FTestPlatform:
     "If allowPublicKeyRetrieval is enabled for non-SSL connections, a connection to a MySQL server specifying a database using a user with caching_sha2_password will succeed."
   ) {
     val connection = Connection[IO](
-      host                    = "127.0.0.1",
-      port                    = 13306,
-      user                    = "ldbc",
-      password                = Some("password"),
+      host                    = TestConfig.host,
+      port                    = TestConfig.port,
+      user                    = TestConfig.user,
+      password                = Some(TestConfig.password),
       database                = Some("connector_test"),
       allowPublicKeyRetrieval = true
     )
@@ -259,47 +184,22 @@ class ConnectionTest extends FTestPlatform:
     "A connection to a MySQL server with a database specified using a user with caching_sha2_password will succeed with an SSL connection."
   ) {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
     assertIOBoolean(connection.use(_ => IO(true)))
   }
 
-  test("You can connect to the database by specifying the default authentication plugin.") {
-    val connection = Connection[IO](
-      host                        = "127.0.0.1",
-      port                        = 13306,
-      user                        = "ldbc_mysql_native_user",
-      password                    = Some("ldbc_mysql_native_password"),
-      defaultAuthenticationPlugin = Some(MysqlClearPasswordPlugin[IO]()),
-      ssl                         = SSL.Trusted
-    )
-    assertIOBoolean(connection.use(_ => IO(true)))
-  }
-
-  test(
-    "Using the MySQL Clear Password Plugin when SSL is not enabled causes an SQLInvalidAuthorizationSpecException to occur."
-  ) {
-    val connection = Connection[IO](
-      host                        = "127.0.0.1",
-      port                        = 13306,
-      user                        = "ldbc_mysql_native_user",
-      password                    = Some("ldbc_mysql_native_password"),
-      defaultAuthenticationPlugin = Some(MysqlClearPasswordPlugin[IO]())
-    )
-    interceptIO[SQLInvalidAuthorizationSpecException](connection.use(_ => IO(true)))
-  }
-
   test("Catalog change will change the currently connected Catalog.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -314,10 +214,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("Statistics of the MySQL server can be obtained.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -330,10 +230,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The connection is valid.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -343,10 +243,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("Connection state reset succeeds.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -356,10 +256,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("If multi-querying is not enabled, ERRPacketException is raised when multi-querying is performed.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -372,58 +272,10 @@ class ConnectionTest extends FTestPlatform:
     })
   }
 
-  test("Can change from mysql_native_password user to caching_sha2_password user.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc_mysql_native_user",
-      password = Some("ldbc_mysql_native_password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIOBoolean(
-      connection.use(_.changeUser("ldbc", "password")) *> IO.pure(true),
-      true
-    )
-  }
-
-  test("Can change from mysql_native_password user to sha256_password user.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc_mysql_native_user",
-      password = Some("ldbc_mysql_native_password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIOBoolean(
-      connection.use(_.changeUser("ldbc_sha256_user", "ldbc_sha256_password")) *> IO.pure(true),
-      true
-    )
-  }
-
-  test("Can change from sha256_password user to mysql_native_password user.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc_sha256_user",
-      password = Some("ldbc_sha256_password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIOBoolean(
-      connection.use(_.changeUser("ldbc_mysql_native_user", "ldbc_mysql_native_password")) *> IO.pure(true),
-      true
-    )
-  }
-
   test("Can change from sha256_password user to caching_sha2_password user.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
+      host     = TestConfig.host,
+      port     = TestConfig.port,
       user     = "ldbc_sha256_user",
       password = Some("ldbc_sha256_password"),
       database = Some("connector_test"),
@@ -432,32 +284,16 @@ class ConnectionTest extends FTestPlatform:
 
     assertIOBoolean(
       connection.use(_.changeUser("ldbc", "password")) *> IO.pure(true),
-      true
-    )
-  }
-
-  test("Can change from caching_sha2_password user to mysql_native_password user.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIOBoolean(
-      connection.use(_.changeUser("ldbc_mysql_native_user", "ldbc_mysql_native_password")) *> IO.pure(true),
       true
     )
   }
 
   test("Can change from caching_sha2_password user to sha256_password user.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -470,10 +306,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The allProceduresAreCallable method of DatabaseMetaData is always false.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -483,10 +319,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The allTablesAreSelectable method of DatabaseMetaData is always false.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -496,26 +332,26 @@ class ConnectionTest extends FTestPlatform:
 
   test("The URL retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
 
     assertIO(
       connection.use(_.getMetaData().map(_.getURL())),
-      "jdbc:mysql://127.0.0.1:13306/connector_test"
+      s"jdbc:mysql://${ TestConfig.host }:${ TestConfig.port }/connector_test"
     )
   }
 
   test("The User name retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -528,10 +364,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The isReadOnly method of DatabaseMetaData is always false.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -541,10 +377,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The nullsAreSortedHigh method of DatabaseMetaData is always false.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -554,10 +390,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The nullsAreSortedLow method of DatabaseMetaData is always true.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -567,10 +403,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The nullsAreSortedAtStart method of DatabaseMetaData is always false.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -580,10 +416,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The nullsAreSortedAtEnd method of DatabaseMetaData is always false.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -593,10 +429,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The getDatabaseProductName method of DatabaseMetaData is always MySQL.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -609,26 +445,26 @@ class ConnectionTest extends FTestPlatform:
 
   test("The Server version retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
 
     assertIO(
       connection.use(_.getMetaData().map(_.getDatabaseProductVersion())),
-      "8.4.0"
+      TestConfig.version
     )
   }
 
   test("The getDriverName method of DatabaseMetaData is always MySQL Connector/L.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -641,26 +477,26 @@ class ConnectionTest extends FTestPlatform:
 
   test("The Driver version retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
 
     assertIO(
       connection.use(_.getMetaData().map(_.getDriverVersion())),
-      "ldbc-connector-0.5.0"
+      "ldbc-connector-0.6.0"
     )
   }
 
   test("The usesLocalFiles method of DatabaseMetaData is always false.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -670,10 +506,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The usesLocalFilePerTable method of DatabaseMetaData is always false.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -683,10 +519,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The supports Mixed Case Identifiers retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -696,10 +532,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The storesUpperCaseIdentifiers method of DatabaseMetaData is always false.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -709,10 +545,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The stores Lower Case Identifiers retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -722,10 +558,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The stores Mixed Case Identifiers retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -735,10 +571,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The supports Mixed Case Quoted Identifiers retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -748,23 +584,23 @@ class ConnectionTest extends FTestPlatform:
 
   test("The storesUpperCaseQuotedIdentifiers method of DatabaseMetaData is always true.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
 
-    assertIOBoolean(connection.use(_.getMetaData().map(_.storesUpperCaseQuotedIdentifiers())))
+    assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.storesUpperCaseQuotedIdentifiers())))
   }
 
   test("The stores Lower Case Quoted Identifiers retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -774,10 +610,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The stores Mixed Case Quoted Identifiers retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -787,10 +623,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The Identifier Quote String retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -803,26 +639,32 @@ class ConnectionTest extends FTestPlatform:
 
   test("The SQL Keywords retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
 
+    val expected =
+      if TestConfig.isMySql9OrLater then
+        "ACCESSIBLE,ADD,ANALYZE,ASC,BEFORE,CASCADE,CHANGE,CONTINUE,DATABASE,DATABASES,DAY_HOUR,DAY_MICROSECOND,DAY_MINUTE,DAY_SECOND,DELAYED,DESC,DISTINCTROW,DIV,DUAL,ELSEIF,EMPTY,ENCLOSED,ESCAPED,EXIT,EXPLAIN,FIRST_VALUE,FLOAT4,FLOAT8,FORCE,FULLTEXT,GENERATED,GROUPS,HIGH_PRIORITY,HOUR_MICROSECOND,HOUR_MINUTE,HOUR_SECOND,IF,IGNORE,INDEX,INFILE,INT1,INT2,INT3,INT4,INT8,IO_AFTER_GTIDS,IO_BEFORE_GTIDS,ITERATE,JSON_TABLE,KEY,KEYS,KILL,LAG,LAST_VALUE,LEAD,LEAVE,LIBRARY,LIMIT,LINEAR,LINES,LOAD,LOCK,LONG,LONGBLOB,LONGTEXT,LOOP,LOW_PRIORITY,MAXVALUE,MEDIUMBLOB,MEDIUMINT,MEDIUMTEXT,MIDDLEINT,MINUTE_MICROSECOND,MINUTE_SECOND,NO_WRITE_TO_BINLOG,NTH_VALUE,NTILE,OPTIMIZE,OPTIMIZER_COSTS,OPTION,OPTIONALLY,OUTFILE,PURGE,READ,READ_WRITE,REGEXP,RENAME,REPEAT,REPLACE,REQUIRE,RESIGNAL,RESTRICT,RLIKE,SCHEMA,SCHEMAS,SECOND_MICROSECOND,SEPARATOR,SHOW,SIGNAL,SPATIAL,SQL_BIG_RESULT,SQL_CALC_FOUND_ROWS,SQL_SMALL_RESULT,SSL,STARTING,STORED,STRAIGHT_JOIN,TERMINATED,TINYBLOB,TINYINT,TINYTEXT,UNDO,UNLOCK,UNSIGNED,USAGE,USE,UTC_DATE,UTC_TIME,UTC_TIMESTAMP,VARBINARY,VARCHARACTER,VIRTUAL,WHILE,WRITE,XOR,YEAR_MONTH,ZEROFILL"
+      else
+        "ACCESSIBLE,ADD,ANALYZE,ASC,BEFORE,CASCADE,CHANGE,CONTINUE,DATABASE,DATABASES,DAY_HOUR,DAY_MICROSECOND,DAY_MINUTE,DAY_SECOND,DELAYED,DESC,DISTINCTROW,DIV,DUAL,ELSEIF,EMPTY,ENCLOSED,ESCAPED,EXIT,EXPLAIN,FIRST_VALUE,FLOAT4,FLOAT8,FORCE,FULLTEXT,GENERATED,GROUPS,HIGH_PRIORITY,HOUR_MICROSECOND,HOUR_MINUTE,HOUR_SECOND,IF,IGNORE,INDEX,INFILE,INT1,INT2,INT3,INT4,INT8,IO_AFTER_GTIDS,IO_BEFORE_GTIDS,ITERATE,JSON_TABLE,KEY,KEYS,KILL,LAG,LAST_VALUE,LEAD,LEAVE,LIMIT,LINEAR,LINES,LOAD,LOCK,LONG,LONGBLOB,LONGTEXT,LOOP,LOW_PRIORITY,MAXVALUE,MEDIUMBLOB,MEDIUMINT,MEDIUMTEXT,MIDDLEINT,MINUTE_MICROSECOND,MINUTE_SECOND,NO_WRITE_TO_BINLOG,NTH_VALUE,NTILE,OPTIMIZE,OPTIMIZER_COSTS,OPTION,OPTIONALLY,OUTFILE,PURGE,READ,READ_WRITE,REGEXP,RENAME,REPEAT,REPLACE,REQUIRE,RESIGNAL,RESTRICT,RLIKE,SCHEMA,SCHEMAS,SECOND_MICROSECOND,SEPARATOR,SHOW,SIGNAL,SPATIAL,SQL_BIG_RESULT,SQL_CALC_FOUND_ROWS,SQL_SMALL_RESULT,SSL,STARTING,STORED,STRAIGHT_JOIN,TERMINATED,TINYBLOB,TINYINT,TINYTEXT,UNDO,UNLOCK,UNSIGNED,USAGE,USE,UTC_DATE,UTC_TIME,UTC_TIMESTAMP,VARBINARY,VARCHARACTER,VIRTUAL,WHILE,WRITE,XOR,YEAR_MONTH,ZEROFILL"
+
     assertIO(
       connection.use(_.getMetaData().flatMap(_.getSQLKeywords())),
-      "ACCESSIBLE,ADD,ANALYZE,ASC,BEFORE,CASCADE,CHANGE,CONTINUE,DATABASE,DATABASES,DAY_HOUR,DAY_MICROSECOND,DAY_MINUTE,DAY_SECOND,DELAYED,DESC,DISTINCTROW,DIV,DUAL,ELSEIF,EMPTY,ENCLOSED,ESCAPED,EXIT,EXPLAIN,FIRST_VALUE,FLOAT4,FLOAT8,FORCE,FULLTEXT,GENERATED,GROUPS,HIGH_PRIORITY,HOUR_MICROSECOND,HOUR_MINUTE,HOUR_SECOND,IF,IGNORE,INDEX,INFILE,INT1,INT2,INT3,INT4,INT8,IO_AFTER_GTIDS,IO_BEFORE_GTIDS,ITERATE,JSON_TABLE,KEY,KEYS,KILL,LAG,LAST_VALUE,LEAD,LEAVE,LIMIT,LINEAR,LINES,LOAD,LOCK,LONG,LONGBLOB,LONGTEXT,LOOP,LOW_PRIORITY,MAXVALUE,MEDIUMBLOB,MEDIUMINT,MEDIUMTEXT,MIDDLEINT,MINUTE_MICROSECOND,MINUTE_SECOND,NO_WRITE_TO_BINLOG,NTH_VALUE,NTILE,OPTIMIZE,OPTIMIZER_COSTS,OPTION,OPTIONALLY,OUTFILE,PURGE,READ,READ_WRITE,REGEXP,RENAME,REPEAT,REPLACE,REQUIRE,RESIGNAL,RESTRICT,RLIKE,SCHEMA,SCHEMAS,SECOND_MICROSECOND,SEPARATOR,SHOW,SIGNAL,SPATIAL,SQL_BIG_RESULT,SQL_CALC_FOUND_ROWS,SQL_SMALL_RESULT,SSL,STARTING,STORED,STRAIGHT_JOIN,TERMINATED,TINYBLOB,TINYINT,TINYTEXT,UNDO,UNLOCK,UNSIGNED,USAGE,USE,UTC_DATE,UTC_TIME,UTC_TIMESTAMP,VARBINARY,VARCHARACTER,VIRTUAL,WHILE,WRITE,XOR,YEAR_MONTH,ZEROFILL"
+      expected
     )
   }
 
   test("The Numeric Functions retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -835,10 +677,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The String Functions retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -854,10 +696,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The System Functions retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -870,10 +712,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The Time Date Functions retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -888,10 +730,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The Search String Escape retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -904,10 +746,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The Extra Name Characters retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -920,10 +762,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The result of retrieving procedure information matches the specified value.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -953,10 +795,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The result of retrieving procedure columns information matches the specified value.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -987,10 +829,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The result of retrieving tables information matches the specified value.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -1025,10 +867,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The result of retrieving schemas information matches the specified value.") {
     val connection = Connection[IO](
-      host         = "127.0.0.1",
-      port         = 13306,
-      user         = "ldbc",
-      password     = Some("password"),
+      host         = TestConfig.host,
+      port         = TestConfig.port,
+      user         = TestConfig.user,
+      password     = Some(TestConfig.password),
       database     = Some("connector_test"),
       ssl          = SSL.Trusted,
       databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
@@ -1065,10 +907,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The result of retrieving catalogs information matches the specified value.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -1102,10 +944,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The result of retrieving tableTypes information matches the specified value.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -1133,10 +975,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The result of retrieving columns information matches the specified value.") {
     val connection = Connection[IO](
-      host         = "127.0.0.1",
-      port         = 13306,
-      user         = "ldbc",
-      password     = Some("password"),
+      host         = TestConfig.host,
+      port         = TestConfig.port,
+      user         = TestConfig.user,
+      password     = Some(TestConfig.password),
       database     = Some("connector_test"),
       ssl          = SSL.Trusted,
       databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
@@ -1188,10 +1030,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The result of retrieving column privileges information matches the specified value.") {
     val connection = Connection[IO](
-      host         = "127.0.0.1",
-      port         = 13306,
-      user         = "ldbc",
-      password     = Some("password"),
+      host         = TestConfig.host,
+      port         = TestConfig.port,
+      user         = TestConfig.user,
+      password     = Some(TestConfig.password),
       database     = Some("connector_test"),
       ssl          = SSL.Trusted,
       databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
@@ -1228,10 +1070,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The result of retrieving table privileges information matches the specified value.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -1256,22 +1098,18 @@ class ConnectionTest extends FTestPlatform:
         yield result
       },
       Vector(
-        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: root@localhost, Grantee: ldbc@%, Privilege: SELECT, Is Grantable: null",
-        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: root@localhost, Grantee: ldbc@%, Privilege: SELECT, Is Grantable: null",
-        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: root@localhost, Grantee: ldbc@%, Privilege: SELECT, Is Grantable: null",
-        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: root@localhost, Grantee: ldbc@%, Privilege: INSERT, Is Grantable: null",
-        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: root@localhost, Grantee: ldbc@%, Privilege: INSERT, Is Grantable: null",
-        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: root@localhost, Grantee: ldbc@%, Privilege: INSERT, Is Grantable: null"
+        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: null, Grantee: 'ldbc'@'%', Privilege: SELECT, Is Grantable: NO",
+        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Grantor: null, Grantee: 'ldbc'@'%', Privilege: INSERT, Is Grantable: NO"
       )
     )
   }
 
   test("The result of retrieving best row identifier information matches the specified value.") {
     val connection = Connection[IO](
-      host         = "127.0.0.1",
-      port         = 13306,
-      user         = "ldbc",
-      password     = Some("password"),
+      host         = TestConfig.host,
+      port         = TestConfig.port,
+      user         = TestConfig.user,
+      password     = Some(TestConfig.password),
       database     = Some("connector_test"),
       ssl          = SSL.Trusted,
       databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
@@ -1298,17 +1136,57 @@ class ConnectionTest extends FTestPlatform:
         yield result
       },
       Vector(
-        "Scope: 2, Column Name: c1, Data Type: 4, Type Name: int, Column Size: 10, Buffer Length: 65535, Decimal Digits: 0, Pseudo Column: 1"
+        "Scope: 2, Column Name: c1, Data Type: 4, Type Name: INT, Column Size: 10, Buffer Length: 65535, Decimal Digits: 0, Pseudo Column: 1"
+      )
+    )
+  }
+
+  test(
+    "getBestRowIdentifier should return correct COLUMN_SIZE for DATETIME(3) including fractional seconds precision."
+  ) {
+    val connection = Connection[IO](
+      host         = TestConfig.host,
+      port         = TestConfig.port,
+      user         = TestConfig.user,
+      password     = Some(TestConfig.password),
+      database     = Some("connector_test"),
+      ssl          = SSL.Trusted,
+      databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
+    )
+
+    assertIO(
+      connection.use { conn =>
+        for
+          metaData  <- conn.getMetaData()
+          resultSet <-
+            metaData.getBestRowIdentifier(None, Some("connector_test"), "datetime_precision_test", None, None)
+          result <-
+            Monad[IO].whileM[Vector, String](resultSet.next()) {
+              for
+                scope         <- resultSet.getShort("SCOPE")
+                columnName    <- resultSet.getString("COLUMN_NAME")
+                dataType      <- resultSet.getInt("DATA_TYPE")
+                typeName      <- resultSet.getString("TYPE_NAME")
+                columnSize    <- resultSet.getInt("COLUMN_SIZE")
+                bufferLength  <- resultSet.getInt("BUFFER_LENGTH")
+                decimalDigits <- resultSet.getShort("DECIMAL_DIGITS")
+                pseudoColumn  <- resultSet.getShort("PSEUDO_COLUMN")
+              yield s"Scope: $scope, Column Name: $columnName, Data Type: $dataType, Type Name: $typeName, Column Size: $columnSize, Buffer Length: $bufferLength, Decimal Digits: $decimalDigits, Pseudo Column: $pseudoColumn"
+            }
+        yield result
+      },
+      Vector(
+        "Scope: 2, Column Name: id, Data Type: 93, Type Name: DATETIME, Column Size: 23, Buffer Length: 65535, Decimal Digits: 0, Pseudo Column: 1"
       )
     )
   }
 
   test("The result of retrieving version columns information matches the specified value.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -1341,10 +1219,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The result of retrieving primary key information matches the specified value.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       database = Some("connector_test"),
       ssl      = SSL.Trusted
     )
@@ -1375,10 +1253,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The result of retrieving imported key information matches the specified value.") {
     val connection = Connection[IO](
-      host         = "127.0.0.1",
-      port         = 13306,
-      user         = "ldbc",
-      password     = Some("password"),
+      host         = TestConfig.host,
+      port         = TestConfig.port,
+      user         = TestConfig.user,
+      password     = Some(TestConfig.password),
       database     = Some("connector_test"),
       ssl          = SSL.Trusted,
       databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
@@ -1418,10 +1296,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The result of retrieving exported key information matches the specified value.") {
     val connection = Connection[IO](
-      host         = "127.0.0.1",
-      port         = 13306,
-      user         = "ldbc",
-      password     = Some("password"),
+      host         = TestConfig.host,
+      port         = TestConfig.port,
+      user         = TestConfig.user,
+      password     = Some(TestConfig.password),
       database     = Some("connector_test"),
       ssl          = SSL.Trusted,
       databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
@@ -1461,10 +1339,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The result of retrieving cross reference information matches the specified value.") {
     val connection = Connection[IO](
-      host         = "127.0.0.1",
-      port         = 13306,
-      user         = "ldbc",
-      password     = Some("password"),
+      host         = TestConfig.host,
+      port         = TestConfig.port,
+      user         = TestConfig.user,
+      password     = Some(TestConfig.password),
       database     = Some("connector_test"),
       ssl          = SSL.Trusted,
       databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
@@ -1504,11 +1382,12 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The result of retrieving type information matches the specified value.") {
+    assume(TestConfig.isMySql9OrLater, "Type info list includes VECTOR which requires MySQL 9.x")
     val connection = Connection[IO](
-      host         = "127.0.0.1",
-      port         = 13306,
-      user         = "ldbc",
-      password     = Some("password"),
+      host         = TestConfig.host,
+      port         = TestConfig.port,
+      user         = TestConfig.user,
+      password     = Some(TestConfig.password),
       database     = Some("connector_test"),
       ssl          = SSL.Trusted,
       databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
@@ -1595,10 +1474,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The result of retrieving index information matches the specified value.") {
     val connection = Connection[IO](
-      host         = "127.0.0.1",
-      port         = 13306,
-      user         = "ldbc",
-      password     = Some("password"),
+      host         = TestConfig.host,
+      port         = TestConfig.port,
+      user         = TestConfig.user,
+      password     = Some(TestConfig.password),
       database     = Some("connector_test"),
       ssl          = SSL.Trusted,
       databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
@@ -1637,10 +1516,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The result of retrieving function information matches the specified value.") {
     val connection = Connection[IO](
-      host         = "127.0.0.1",
-      port         = 13306,
-      user         = "ldbc",
-      password     = Some("password"),
+      host         = TestConfig.host,
+      port         = TestConfig.port,
+      user         = TestConfig.user,
+      password     = Some(TestConfig.password),
       ssl          = SSL.Trusted,
       databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
     )
@@ -1691,10 +1570,10 @@ class ConnectionTest extends FTestPlatform:
 
   test("The result of retrieving function column information matches the specified value.") {
     val connection = Connection[IO](
-      host         = "127.0.0.1",
-      port         = 13306,
-      user         = "ldbc",
-      password     = Some("password"),
+      host         = TestConfig.host,
+      port         = TestConfig.port,
+      user         = TestConfig.user,
+      password     = Some(TestConfig.password),
       ssl          = SSL.Trusted,
       databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
     )
@@ -1779,10 +1658,10 @@ class ConnectionTest extends FTestPlatform:
       yield ()
 
     val connection = Connection.withBeforeAfter[IO, Int](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
+      host     = TestConfig.host,
+      port     = TestConfig.port,
+      user     = TestConfig.user,
+      password = Some(TestConfig.password),
       before   = before,
       after    = (_, connection) => after(connection)
     )

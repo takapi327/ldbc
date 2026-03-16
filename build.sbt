@@ -27,6 +27,12 @@ ThisBuild / githubWorkflowBuildPreamble ++= List(dockerRun) ++ nativeBrewInstall
 ThisBuild / nativeBrewInstallCond := Some("matrix.project == 'ldbcNative'")
 ThisBuild / githubWorkflowAddedJobs ++= Seq(sbtScripted.value, sbtCoverageReport.value)
 ThisBuild / githubWorkflowBuildPostamble += dockerStop
+ThisBuild / githubWorkflowBuild ~= { steps =>
+  steps.flatMap {
+    case step if step.name.contains("Test") => Seq(testMySQL9, testMySQL8)
+    case step                               => Seq(step)
+  }
+}
 ThisBuild / githubWorkflowTargetBranches        := Seq("**")
 ThisBuild / githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v")))
 ThisBuild / tlSitePublishBranch                 := None
@@ -147,14 +153,15 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     scalacOptions += "-Ykind-projector:underscores",
     libraryDependencies ++= Seq(
-      "co.fs2"        %%% "fs2-core"          % "3.12.2",
-      "co.fs2"        %%% "fs2-io"            % "3.12.2",
-      "org.scodec"    %%% "scodec-bits"       % "1.1.38",
-      "org.scodec"    %%% "scodec-core"       % "2.2.2",
-      "org.scodec"    %%% "scodec-cats"       % "1.2.0",
-      "org.typelevel" %%% "otel4s-core-trace" % "0.15.2",
-      "org.typelevel" %%% "twiddles-core"     % "0.8.0",
-      "org.typelevel" %%% "munit-cats-effect" % "2.1.0" % Test
+      "co.fs2"        %%% "fs2-core"            % "3.12.2",
+      "co.fs2"        %%% "fs2-io"              % "3.12.2",
+      "org.scodec"    %%% "scodec-bits"         % "1.1.38",
+      "org.scodec"    %%% "scodec-core"         % "2.2.2",
+      "org.scodec"    %%% "scodec-cats"         % "1.2.0",
+      "org.typelevel" %%% "otel4s-core-trace"   % "0.15.2",
+      "org.typelevel" %%% "otel4s-core-metrics" % "0.15.2",
+      "org.typelevel" %%% "twiddles-core"       % "0.8.0",
+      "org.typelevel" %%% "munit-cats-effect"   % "2.1.0" % Test
     )
   )
   .jsSettings(
@@ -228,7 +235,7 @@ lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .defaultSettings
   .jvmSettings(
     Test / fork                       := true,
-    libraryDependencies += "com.mysql" % "mysql-connector-j" % "8.4.0" % Test
+    libraryDependencies += "com.mysql" % "mysql-connector-j" % "9.6.0" % Test
   )
   .jvmConfigure(_ dependsOn jdbcConnector.jvm)
   .jsSettings(
@@ -254,7 +261,7 @@ lazy val benchmark = (project in file("benchmark"))
   .settings(
     libraryDependencies ++= Seq(
       "org.scala-lang"     %% "scala3-compiler"   % scala3,
-      "com.mysql"           % "mysql-connector-j" % "8.4.0",
+      "com.mysql"           % "mysql-connector-j" % "9.6.0",
       "org.tpolecat"       %% "doobie-core"       % "1.0.0-RC12",
       "com.typesafe.slick" %% "slick"             % "3.6.1",
       "com.zaxxer"          % "HikariCP"          % "7.0.2"
@@ -285,7 +292,7 @@ lazy val hikariCPExample = crossProject(JVMPlatform)
   .settings(
     libraryDependencies ++= Seq(
       "com.zaxxer" % "HikariCP"          % "7.0.2",
-      "com.mysql"  % "mysql-connector-j" % "8.4.0"
+      "com.mysql"  % "mysql-connector-j" % "9.6.0"
     )
   )
   .dependsOn(jdbcConnector, dsl)
@@ -343,9 +350,10 @@ lazy val docs = (project in file("docs"))
     mdocVariables ++= Map(
       "ORGANIZATION"  -> organization.value,
       "SCALA_VERSION" -> scalaVersion.value,
-      "MYSQL_VERSION" -> "8.4.0"
+      "MYSQL_VERSION" -> "9.6.0"
     ),
-    laikaTheme := LaikaSettings.helium.value,
+    laikaTheme  := LaikaSettings.helium.value,
+    laikaConfig := LaikaConfig.defaults.withRawContent,
     // Modify tlSite task to run the LLM docs script after the site is generated
     tlSite := {
       tlSite.value

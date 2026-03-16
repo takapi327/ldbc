@@ -70,6 +70,8 @@ CREATE TABLE `all_types`(
   `set_null` SET('a', 'b', 'c') NULL,
   `json` JSON NOT NULL,
   `json_null` JSON NULL,
+  `bool` BOOLEAN NOT NULL,
+  `bool_null` BOOLEAN NULL,
   `geometry` GEOMETRY NOT NULL,
   `geometry_null` GEOMETRY NULL,
   `point` POINT NOT NULL,
@@ -154,6 +156,8 @@ INSERT INTO `all_types` VALUES (
   'a,b',
   NULL,
   '{"a": 1}',
+  NULL,
+  TRUE,
   NULL,
   ST_GeomFromText('POINT(1 1)'),
   NULL,
@@ -254,3 +258,8 @@ CREATE TABLE `privileges_table` (
 
 GRANT SELECT, INSERT ON `connector_test`.`privileges_table` TO 'ldbc'@'%';
 GRANT SELECT(`c1`, `c2`), INSERT(`c1`, `c2`) ON `connector_test`.`privileges_table` TO 'ldbc'@'%';
+
+CREATE TABLE `datetime_precision_test` (
+  `id` DATETIME(3) NOT NULL,
+  PRIMARY KEY (`id`)
+);

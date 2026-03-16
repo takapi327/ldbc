@@ -30,10 +30,10 @@ class LdbcStreamQueryTest extends StreamQueryTest:
 
 trait StreamQueryTest extends CatsEffectSuite:
 
-  protected val host:     String = "127.0.0.1"
-  protected val port:     Int    = 13306
-  protected val user:     String = "ldbc"
-  protected val password: String = "password"
+  protected val host:     String = MySQLTestConfig.host
+  protected val port:     Int    = MySQLTestConfig.port
+  protected val user:     String = MySQLTestConfig.user
+  protected val password: String = MySQLTestConfig.password
   protected val database: String = "world"
 
   def connector: Connector[IO]

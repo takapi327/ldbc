@@ -17,11 +17,11 @@ import ldbc.Connector
 class JdbcTableSchemaSelectConnectionTest extends TableSchemaSelectConnectionTest:
 
   val ds = new MysqlDataSource()
-  ds.setServerName("127.0.0.1")
-  ds.setPortNumber(13306)
+  ds.setServerName(MySQLTestConfig.host)
+  ds.setPortNumber(MySQLTestConfig.port)
   ds.setDatabaseName("world")
-  ds.setUser("ldbc")
-  ds.setPassword("password")
+  ds.setUser(MySQLTestConfig.user)
+  ds.setPassword(MySQLTestConfig.password)
 
   override def prefix: "jdbc" | "ldbc" = "jdbc"
 

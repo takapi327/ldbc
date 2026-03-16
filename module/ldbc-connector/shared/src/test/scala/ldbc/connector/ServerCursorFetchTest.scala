@@ -22,11 +22,11 @@ class ServerCursorFetchTest extends FTestPlatform:
 
   private val datasource = MySQLDataSource
     .build[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc"
+      host = TestConfig.host,
+      port = TestConfig.port,
+      user = TestConfig.user
     )
-    .setPassword("password")
+    .setPassword(TestConfig.password)
     .setDatabase("world")
     .setUseCursorFetch(true)
     .setSSL(SSL.None)
