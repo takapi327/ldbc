@@ -290,6 +290,8 @@ object Connection:
     databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = None,
     defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
     plugins:                     List[AuthenticationPlugin[F]],
+    telemetryConfig:             TelemetryConfig = TelemetryConfig.default,
+    databaseMetrics:             Option[DatabaseMetrics[F]] = None,
     acquire:                     Connection[F] => F[A],
     release:                     (A, Connection[F]) => F[Unit]
   )(using ev: Async[F]): Resource[F, LdbcConnection[F]] =
@@ -321,6 +323,8 @@ object Connection:
       databaseTerm,
       defaultAuthenticationPlugin,
       plugins,
+      telemetryConfig,
+      databaseMetrics,
       acquire,
       release
     )
