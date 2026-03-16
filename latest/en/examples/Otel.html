@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.5</a>
+      <a class="text-link menu-toggle" href="#">Version 0.6</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -155,6 +155,7 @@
     <li class="level2 nav-leaf"><a href="../reference/Connector.html">Connector</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Performance.html">Performance</a></li>
     <li class="level2 nav-leaf"><a href="../reference/AuthenticationPlugin.html">Authentication Plugin</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Telemetry.html">Telemetry</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Pooling.html">Connection pooling</a></li>
   </ul>
   
@@ -168,17 +169,15 @@
   <p class="header"><a href="#">OpenTelemetry</a></p>
 
   <ul class="nav-list">
-    <li class="level1 nav-leaf"><a href="#what-is-opentelemetry">What is OpenTelemetry?</a></li>
     <li class="level1 nav-leaf"><a href="#required-dependencies">Required Dependencies</a></li>
-    <li class="level1 nav-leaf"><a href="#opentelemetry-configuration-in-ldbc">OpenTelemetry Configuration in ldbc</a></li>
-    <li class="level1 nav-leaf"><a href="#configuration-via-environment-variables">Configuration via Environment Variables</a></li>
-    <li class="level1 nav-node"><a href="#practical-example-ldbc-application-with-opentelemetry">Practical Example: ldbc Application with OpenTelemetry</a></li>
+    <li class="level1 nav-leaf"><a href="#basic-setup">Basic Setup</a></li>
+    <li class="level1 nav-leaf"><a href="#connection-pool-with-metrics">Connection Pool with Metrics</a></li>
+    <li class="level1 nav-leaf"><a href="#customization-with-telemetryconfig">Customization with TelemetryConfig</a></li>
+    <li class="level1 nav-node"><a href="#practical-example-jaeger-prometheus-grafana">Practical Example: Jaeger + Prometheus + Grafana</a></li>
     <li class="level2 nav-leaf"><a href="#project-structure">Project Structure</a></li>
     <li class="level2 nav-leaf"><a href="#main-scala">Main.scala</a></li>
     <li class="level2 nav-leaf"><a href="#docker-compose-yaml">docker-compose.yaml</a></li>
     <li class="level2 nav-leaf"><a href="#execution-steps">Execution Steps</a></li>
-    <li class="level1 nav-leaf"><a href="#trace-details">Trace Details</a></li>
-    <li class="level1 nav-leaf"><a href="#trace-customization-options">Trace Customization Options</a></li>
     <li class="level1 nav-leaf"><a href="#summary">Summary</a></li>
   </ul>
 
@@ -189,102 +188,114 @@
   <main class="content">
 
     <h1 id="observability-with-opentelemetry" class="title">Observability with OpenTelemetry</h1>
-    <p>This page explains how to achieve observability through database query tracing, metrics collection, and logging by integrating ldbc with OpenTelemetry.</p>
-    
-    <h2 id="what-is-opentelemetry" class="section"><a class="anchor-link left" href="#what-is-opentelemetry"><i class="icofont-laika link">&#xef71;</i></a>What is OpenTelemetry?</h2>
-    <p><a href="https://opentelemetry.io/">OpenTelemetry</a> is an open-source framework for implementing application observability. It provides features such as distributed tracing, metrics collection, and logging, enabling an integrated approach to monitoring and analyzing application performance and behavior.</p>
-    <p>By integrating with OpenTelemetry, ldbc can benefit from:</p>
-    <ul>
-      <li>Tracking database query execution time and processing</li>
-      <li>Measuring query performance</li>
-      <li>Error detection and diagnosis</li>
-      <li>System-wide visualization and monitoring</li>
-    </ul>
+    <p>This page explains how to achieve observability through database query tracing and metrics collection by integrating ldbc with OpenTelemetry.</p>
+    <p>For detailed API references (span attribute list, TelemetryConfig, metrics specification, etc.), see the <a href="../reference/Telemetry.html">Telemetry Reference</a>.</p>
     
     <h2 id="required-dependencies" class="section"><a class="anchor-link left" href="#required-dependencies"><i class="icofont-laika link">&#xef71;</i></a>Required Dependencies</h2>
-    <p>To use OpenTelemetry with ldbc, you need to add the following dependencies to your project:</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> ++= </span><span class="type-name">Seq</span><span>(
+    <p>Add the following dependencies to your project to use OpenTelemetry with ldbc:</p>
+    <pre><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> ++= </span><span class="type-name">Seq</span><span>(
+  </span><span class="comment">// ldbc connector (includes otel4s-core)
+</span><span>  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.6.0&quot;</span><span>,
+
   </span><span class="comment">// otel4s library (Scala wrapper for OpenTelemetry)
-</span><span>  </span><span class="string-literal">&quot;org.typelevel&quot;</span><span> %% </span><span class="string-literal">&quot;otel4s-oteljava&quot;</span><span> % </span><span class="string-literal">&quot;0.11.2&quot;</span><span>,
-  
+</span><span>  </span><span class="string-literal">&quot;org.typelevel&quot;</span><span>    %% </span><span class="string-literal">&quot;otel4s-oteljava&quot;</span><span>                           % </span><span class="string-literal">&quot;0.15.1&quot;</span><span>,
+
   </span><span class="comment">// OpenTelemetry exporter (for data transmission)
-</span><span>  </span><span class="string-literal">&quot;io.opentelemetry&quot;</span><span> % </span><span class="string-literal">&quot;opentelemetry-exporter-otlp&quot;</span><span> % </span><span class="string-literal">&quot;1.48.0&quot;</span><span> % </span><span class="type-name">Runtime</span><span>,
-  
-  </span><span class="comment">// Auto-configuration functionality (configuration via environment variables and system properties)
-</span><span>  </span><span class="string-literal">&quot;io.opentelemetry&quot;</span><span> % </span><span class="string-literal">&quot;opentelemetry-sdk-extension-autoconfigure&quot;</span><span> % </span><span class="string-literal">&quot;1.48.0&quot;</span><span> % </span><span class="type-name">Runtime</span><span>,
+</span><span>  </span><span class="string-literal">&quot;io.opentelemetry&quot;</span><span>  % </span><span class="string-literal">&quot;opentelemetry-exporter-otlp&quot;</span><span>               % </span><span class="string-literal">&quot;1.59.0&quot;</span><span> % </span><span class="type-name">Runtime</span><span>,
+
+  </span><span class="comment">// Auto-configuration (configuration via environment variables and system properties)
+</span><span>  </span><span class="string-literal">&quot;io.opentelemetry&quot;</span><span>  % </span><span class="string-literal">&quot;opentelemetry-sdk-extension-autoconfigure&quot;</span><span> % </span><span class="string-literal">&quot;1.59.0&quot;</span><span> % </span><span class="type-name">Runtime</span><span>,
 )</span></code></pre>
     
-    <h2 id="opentelemetry-configuration-in-ldbc" class="section"><a class="anchor-link left" href="#opentelemetry-configuration-in-ldbc"><i class="icofont-laika link">&#xef71;</i></a>OpenTelemetry Configuration in ldbc</h2>
-    <p>ldbc provides a <code>setTracer</code> method in ConnectionProvider where you can configure the OpenTelemetry Tracer.</p>
-    <p>Basic configuration steps are as follows:</p>
-    <ol class="arabic">
-      <li>Initialize OpenTelemetry</li>
-      <li>Obtain a TracerProvider</li>
-      <li>Configure it in the ConnectionProvider</li>
-    </ol>
-    <p>Here&#39;s a basic configuration example:</p>
+    <h2 id="basic-setup" class="section"><a class="anchor-link left" href="#basic-setup"><i class="icofont-laika link">&#xef71;</i></a>Basic Setup</h2>
+    <p>Configure both <code>setTracer</code> and <code>setMeter</code> on <code>MySQLDataSource</code> to enable tracing and metrics collection.</p>
     <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.*
 </span><span class="keyword">import</span><span> </span><span class="identifier">io</span><span>.</span><span class="identifier">opentelemetry</span><span>.</span><span class="identifier">api</span><span>.</span><span class="type-name">GlobalOpenTelemetry</span><span>
 </span><span class="keyword">import</span><span> </span><span class="identifier">org</span><span>.</span><span class="identifier">typelevel</span><span>.</span><span class="identifier">otel4s</span><span>.</span><span class="identifier">oteljava</span><span>.</span><span class="type-name">OtelJava</span><span>
 </span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
 </span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.*
 
-</span><span class="comment">// Service name (trace identifier)
 </span><span class="keyword">val</span><span> </span><span class="identifier">serviceName</span><span> = </span><span class="string-literal">&quot;my-ldbc-app&quot;</span><span>
 
-</span><span class="comment">// Resource configuration
 </span><span class="keyword">val</span><span> </span><span class="identifier">resource</span><span>: </span><span class="type-name">Resource</span><span>[</span><span class="type-name">IO</span><span>, </span><span class="type-name">Connector</span><span>[</span><span class="type-name">IO</span><span>]] =
   </span><span class="keyword">for</span><span>
-    </span><span class="comment">// Create otel4s instance from GlobalOpenTelemetry
-</span><span>    </span><span class="identifier">otel</span><span> &lt;- </span><span class="type-name">Resource</span><span>
-      .</span><span class="identifier">eval</span><span>(</span><span class="type-name">IO</span><span>.</span><span class="identifier">delay</span><span>(</span><span class="type-name">GlobalOpenTelemetry</span><span>.</span><span class="identifier">get</span><span>))
-      .</span><span class="identifier">evalMap</span><span>(</span><span class="type-name">OtelJava</span><span>.</span><span class="identifier">forAsync</span><span>[</span><span class="type-name">IO</span><span>])
-    
-    </span><span class="comment">// Get TracerProvider with service name
-</span><span>    </span><span class="identifier">tracer</span><span> &lt;- </span><span class="type-name">Resource</span><span>.</span><span class="identifier">eval</span><span>(</span><span class="identifier">otel</span><span>.</span><span class="identifier">tracerProvider</span><span>.</span><span class="identifier">get</span><span>(</span><span class="identifier">serviceName</span><span>))
-    
-    </span><span class="comment">// Configure database connection and set TracerProvider
-</span><span>    </span><span class="identifier">datasource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
-      .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;user&quot;</span><span>)
-      .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
-      .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;database&quot;</span><span>)
-      .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)
-      .</span><span class="identifier">setTracer</span><span>(</span><span class="identifier">tracer</span><span>)  </span><span class="comment">// Set OpenTelemetry Tracer
-</span><span>  </span><span class="keyword">yield</span><span> </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
+    </span><span class="identifier">otel</span><span>   &lt;- </span><span class="type-name">Resource</span><span>
+                .</span><span class="identifier">eval</span><span>(</span><span class="type-name">IO</span><span>.</span><span class="identifier">delay</span><span>(</span><span class="type-name">GlobalOpenTelemetry</span><span>.</span><span class="identifier">get</span><span>))
+                .</span><span class="identifier">evalMap</span><span>(</span><span class="type-name">OtelJava</span><span>.</span><span class="identifier">forAsync</span><span>[</span><span class="type-name">IO</span><span>])
+    </span><span class="identifier">tracer</span><span> &lt;- </span><span class="type-name">Resource</span><span>.</span><span class="identifier">eval</span><span>(</span><span class="identifier">otel</span><span>.</span><span class="identifier">tracerProvider</span><span>.</span><span class="identifier">get</span><span>(</span><span class="identifier">serviceName</span><span>))
+    </span><span class="identifier">meter</span><span>  &lt;- </span><span class="type-name">Resource</span><span>.</span><span class="identifier">eval</span><span>(</span><span class="identifier">otel</span><span>.</span><span class="identifier">meterProvider</span><span>.</span><span class="identifier">get</span><span>(</span><span class="identifier">serviceName</span><span>))
+    </span><span class="identifier">datasource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+                   .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;user&quot;</span><span>)
+                   .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+                   .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;mydb&quot;</span><span>)
+                   .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)
+                   .</span><span class="identifier">setTracer</span><span>(</span><span class="identifier">tracer</span><span>)
+                   .</span><span class="identifier">setMeter</span><span>(</span><span class="identifier">meter</span><span>)
+  </span><span class="keyword">yield</span><span> </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
 
-</span><span class="comment">// Execute query using the resource
 </span><span class="keyword">val</span><span> </span><span class="identifier">program</span><span> = </span><span class="identifier">resource</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">connector</span><span> =&gt;
   </span><span class="string-literal">sql&quot;SELECT * FROM users&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
 }</span></code></pre>
+    <p>You can also use tracing-only or metrics-only:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Tracing only
+</span><span class="keyword">val</span><span> </span><span class="identifier">tracingOnly</span><span> = </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;user&quot;</span><span>)
+  .</span><span class="identifier">setTracer</span><span>(</span><span class="identifier">tracer</span><span>)
+
+</span><span class="comment">// Metrics only
+</span><span class="keyword">val</span><span> </span><span class="identifier">metricsOnly</span><span> = </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;user&quot;</span><span>)
+  .</span><span class="identifier">setMeter</span><span>(</span><span class="identifier">meter</span><span>)</span></code></pre>
     
-    <h2 id="configuration-via-environment-variables" class="section"><a class="anchor-link left" href="#configuration-via-environment-variables"><i class="icofont-laika link">&#xef71;</i></a>Configuration via Environment Variables</h2>
-    <p>OpenTelemetry can be configured using system properties or environment variables. You can customize OpenTelemetry behavior by setting the following system properties when starting your application:</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span>java -Dotel.java.global-autoconfigure.enabled=</span><span class="boolean-literal">true</span><span> \
-     -Dotel.service.name=ldbc-app \
-     -Dotel.traces.exporter=otlp \
-     -Dotel.metrics.exporter=none \
-     -Dotel.exporter.otlp.endpoint=http://localhost:</span><span class="number-literal">4317</span><span> \
-     -jar your-application.jar</span></code></pre>
-    <p>For SBT execution, you can configure it as follows:</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">javaOptions</span><span> ++= </span><span class="type-name">Seq</span><span>(
-  </span><span class="string-literal">&quot;-Dotel.java.global-autoconfigure.enabled=true&quot;</span><span>,
-  </span><span class="string-literal">&quot;-Dotel.service.name=ldbc-app&quot;</span><span>,
-  </span><span class="string-literal">&quot;-Dotel.traces.exporter=otlp&quot;</span><span>,
-  </span><span class="string-literal">&quot;-Dotel.metrics.exporter=none&quot;</span><span>
+    <h2 id="connection-pool-with-metrics" class="section"><a class="anchor-link left" href="#connection-pool-with-metrics"><i class="icofont-laika link">&#xef71;</i></a>Connection Pool with Metrics</h2>
+    <p>When using connection pooling, pass <code>meter</code> to the <code>pooling</code> method to automatically collect pool metrics (connection wait time, use time, timeout count, etc.).</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">pool</span><span> = </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](
+  </span><span class="identifier">config</span><span> = </span><span class="type-name">MySQLConfig</span><span>.</span><span class="identifier">default</span><span>
+    .</span><span class="identifier">setHost</span><span>(</span><span class="string-literal">&quot;127.0.0.1&quot;</span><span>)
+    .</span><span class="identifier">setPort</span><span>(</span><span class="number-literal">3306</span><span>)
+    .</span><span class="identifier">setUser</span><span>(</span><span class="string-literal">&quot;user&quot;</span><span>)
+    .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+    .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;mydb&quot;</span><span>),
+  </span><span class="identifier">meter</span><span>  = </span><span class="type-name">Some</span><span>(</span><span class="identifier">meter</span><span>),
+  </span><span class="identifier">tracer</span><span> = </span><span class="type-name">Some</span><span>(</span><span class="identifier">tracer</span><span>)
 )</span></code></pre>
+    <p>For the full list of pool metrics, see <a href="../reference/Telemetry.html">Telemetry Reference - Connection Pool Metrics</a>.</p>
     
-    <h2 id="practical-example-ldbc-application-with-opentelemetry" class="section"><a class="anchor-link left" href="#practical-example-ldbc-application-with-opentelemetry"><i class="icofont-laika link">&#xef71;</i></a>Practical Example: ldbc Application with OpenTelemetry</h2>
-    <p>Here&#39;s a complete example of setting up an observability environment using Docker Compose with Jaeger and Prometheus, and sending trace data from an ldbc application.</p>
+    <h2 id="customization-with-telemetryconfig" class="section"><a class="anchor-link left" href="#customization-with-telemetryconfig"><i class="icofont-laika link">&#xef71;</i></a>Customization with TelemetryConfig</h2>
+    <p>Use <code>TelemetryConfig</code> to control telemetry behavior.</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.</span><span class="identifier">telemetry</span><span>.</span><span class="type-name">TelemetryConfig</span><span>
+
+</span><span class="comment">// Default (spec-compliant, all features enabled)
+</span><span class="keyword">val</span><span> </span><span class="identifier">config</span><span> = </span><span class="type-name">TelemetryConfig</span><span>.</span><span class="identifier">default</span><span>
+
+</span><span class="comment">// Use fixed span names (no query text parsing)
+</span><span class="keyword">val</span><span> </span><span class="identifier">fixedSpanName</span><span> = </span><span class="type-name">TelemetryConfig</span><span>.</span><span class="identifier">withoutQueryTextExtraction</span><span>
+
+</span><span class="comment">// Custom configuration
+</span><span class="keyword">val</span><span> </span><span class="identifier">custom</span><span> = </span><span class="type-name">TelemetryConfig</span><span>.</span><span class="identifier">default</span><span>
+  .</span><span class="identifier">withoutQueryTextExtraction</span><span>    </span><span class="comment">// Use fixed span names like &quot;Execute Statement&quot;
+</span><span>  .</span><span class="identifier">withoutSanitization</span><span>           </span><span class="comment">// Disable query sanitization (caution: may expose sensitive data)
+</span><span>  .</span><span class="identifier">withoutInClauseCollapsing</span><span>     </span><span class="comment">// Do not collapse IN (?, ?, ?) to IN (?)</span></code></pre>
+    <p>Apply <code>TelemetryConfig</code> to the data source:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">datasource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;user&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;mydb&quot;</span><span>)
+  .</span><span class="identifier">setTracer</span><span>(</span><span class="identifier">tracer</span><span>)
+  .</span><span class="identifier">setMeter</span><span>(</span><span class="identifier">meter</span><span>)
+  .</span><span class="identifier">setTelemetryConfig</span><span>(</span><span class="type-name">TelemetryConfig</span><span>.</span><span class="identifier">withoutQueryTextExtraction</span><span>)</span></code></pre>
+    
+    <h2 id="practical-example-jaeger-prometheus-grafana" class="section"><a class="anchor-link left" href="#practical-example-jaeger-prometheus-grafana"><i class="icofont-laika link">&#xef71;</i></a>Practical Example: Jaeger + Prometheus + Grafana</h2>
+    <p>A complete example of building an observability environment with Docker Compose (Jaeger, Prometheus, Grafana) and sending traces and metrics from an ldbc application.</p>
     
     <h3 id="project-structure" class="section"><a class="anchor-link left" href="#project-structure"><i class="icofont-laika link">&#xef71;</i></a>Project Structure</h3>
-    <p>Assume the following project structure:</p>
     <pre><code>otel-example/
 ├── src/
 │   └── main/
 │       └── scala/
 │           └── Main.scala
 ├── database/
-│   └── xxx.sql
+│   └── init.sql
 ├── dependencies/
 │   ├── jaeger/
 │   │   └── jaeger-ui.json
@@ -295,7 +306,6 @@
 └── docker-compose.yaml</code></pre>
     
     <h3 id="main-scala" class="section"><a class="anchor-link left" href="#main-scala"><i class="icofont-laika link">&#xef71;</i></a>Main.scala</h3>
-    <p>Here&#39;s the main application code:</p>
     <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.*
 </span><span class="keyword">import</span><span> </span><span class="identifier">io</span><span>.</span><span class="identifier">opentelemetry</span><span>.</span><span class="identifier">api</span><span>.</span><span class="type-name">GlobalOpenTelemetry</span><span>
 </span><span class="keyword">import</span><span> </span><span class="identifier">org</span><span>.</span><span class="identifier">typelevel</span><span>.</span><span class="identifier">otel4s</span><span>.</span><span class="identifier">oteljava</span><span>.</span><span class="type-name">OtelJava</span><span>
@@ -306,41 +316,40 @@
 
   </span><span class="keyword">private</span><span> </span><span class="keyword">val</span><span> </span><span class="identifier">serviceName</span><span> = </span><span class="string-literal">&quot;ldbc-otel-example&quot;</span><span>
 
-  </span><span class="keyword">private</span><span> </span><span class="keyword">val</span><span> </span><span class="identifier">base</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
-    .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;127.0.0.1&quot;</span><span>, </span><span class="number-literal">13307</span><span>, </span><span class="string-literal">&quot;ldbc&quot;</span><span>)
-    .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
-    .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;world&quot;</span><span>)
-    .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)
-
-  </span><span class="keyword">private</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">setupTracing</span><span>: </span><span class="type-name">Resource</span><span>[</span><span class="type-name">IO</span><span>, </span><span class="type-name">Connector</span><span>[</span><span class="type-name">IO</span><span>]] =
+  </span><span class="keyword">private</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">setupObservability</span><span>: </span><span class="type-name">Resource</span><span>[</span><span class="type-name">IO</span><span>, </span><span class="type-name">Connector</span><span>[</span><span class="type-name">IO</span><span>]] =
     </span><span class="keyword">for</span><span>
-      </span><span class="identifier">otel</span><span> &lt;- </span><span class="type-name">Resource</span><span>
-        .</span><span class="identifier">eval</span><span>(</span><span class="type-name">IO</span><span>.</span><span class="identifier">delay</span><span>(</span><span class="type-name">GlobalOpenTelemetry</span><span>.</span><span class="identifier">get</span><span>))
-        .</span><span class="identifier">evalMap</span><span>(</span><span class="type-name">OtelJava</span><span>.</span><span class="identifier">forAsync</span><span>[</span><span class="type-name">IO</span><span>])
+      </span><span class="identifier">otel</span><span>   &lt;- </span><span class="type-name">Resource</span><span>
+                  .</span><span class="identifier">eval</span><span>(</span><span class="type-name">IO</span><span>.</span><span class="identifier">delay</span><span>(</span><span class="type-name">GlobalOpenTelemetry</span><span>.</span><span class="identifier">get</span><span>))
+                  .</span><span class="identifier">evalMap</span><span>(</span><span class="type-name">OtelJava</span><span>.</span><span class="identifier">forAsync</span><span>[</span><span class="type-name">IO</span><span>])
       </span><span class="identifier">tracer</span><span> &lt;- </span><span class="type-name">Resource</span><span>.</span><span class="identifier">eval</span><span>(</span><span class="identifier">otel</span><span>.</span><span class="identifier">tracerProvider</span><span>.</span><span class="identifier">get</span><span>(</span><span class="identifier">serviceName</span><span>))
-      </span><span class="identifier">datasource</span><span> &lt;- </span><span class="type-name">Resource</span><span>.</span><span class="identifier">eval</span><span>(</span><span class="type-name">IO</span><span>.</span><span class="identifier">delay</span><span>(</span><span class="identifier">base</span><span>.</span><span class="identifier">setTracer</span><span>(</span><span class="identifier">tracer</span><span>)))
+      </span><span class="identifier">meter</span><span>  &lt;- </span><span class="type-name">Resource</span><span>.</span><span class="identifier">eval</span><span>(</span><span class="identifier">otel</span><span>.</span><span class="identifier">meterProvider</span><span>.</span><span class="identifier">get</span><span>(</span><span class="identifier">serviceName</span><span>))
+      </span><span class="identifier">datasource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+                     .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;127.0.0.1&quot;</span><span>, </span><span class="number-literal">13306</span><span>, </span><span class="string-literal">&quot;ldbc&quot;</span><span>)
+                     .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+                     .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;world&quot;</span><span>)
+                     .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)
+                     .</span><span class="identifier">setTracer</span><span>(</span><span class="identifier">tracer</span><span>)
+                     .</span><span class="identifier">setMeter</span><span>(</span><span class="identifier">meter</span><span>)
     </span><span class="keyword">yield</span><span> </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
 
   </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">run</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">Unit</span><span>] =
-    </span><span class="identifier">setupTracing</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">connector</span><span> =&gt;
+    </span><span class="identifier">setupObservability</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">connector</span><span> =&gt;
       </span><span class="string-literal">sql&quot;SELECT name FROM city&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>).</span><span class="identifier">flatMap</span><span> { </span><span class="identifier">cities</span><span> =&gt;
         </span><span class="type-name">IO</span><span>.</span><span class="identifier">println</span><span>(</span><span class="identifier">cities</span><span>)
       }
     }</span></code></pre>
     
     <h3 id="docker-compose-yaml" class="section"><a class="anchor-link left" href="#docker-compose-yaml"><i class="icofont-laika link">&#xef71;</i></a>docker-compose.yaml</h3>
-    <p>Use the following Docker Compose configuration for the observability environment:</p>
     <pre><code class="nohighlight"><span class="attribute-name">services</span><span>:
   </span><span class="attribute-name">database</span><span>:
-    </span><span class="attribute-name">image</span><span>: </span><span class="string-literal">mysql:8.0.41</span><span>
+    </span><span class="attribute-name">image</span><span>: </span><span class="string-literal">mysql:9.6.0</span><span>
     </span><span class="attribute-name">container_name</span><span>: </span><span class="string-literal">ldbc-otel-example</span><span>
     </span><span class="attribute-name">ports</span><span>:
-      - </span><span class="number-literal">13307</span><span>:3306
+      - </span><span class="number-literal">13306</span><span>:3306
     </span><span class="attribute-name">networks</span><span>:
       - </span><span class="string-literal">static-network</span><span>
     </span><span class="attribute-name">volumes</span><span>:
       - </span><span class="string-literal">./database:/docker-entrypoint-initdb.d</span><span>
-      - </span><span class="string-literal">./database/my.cnf:/etc/database/conf.d/my.cn</span><span>
     </span><span class="attribute-name">environment</span><span>:
       </span><span class="attribute-name">MYSQL_USER</span><span>: </span><span class="string-literal">&#39;ldbc&#39;</span><span>
       </span><span class="attribute-name">MYSQL_PASSWORD</span><span>: </span><span class="string-literal">&#39;password&#39;</span><span>
@@ -372,8 +381,8 @@
     </span><span class="attribute-name">ports</span><span>:
       - </span><span class="string-literal">&quot;16685:16685&quot;</span><span> </span><span class="comment"># GRPC
 </span><span>      - </span><span class="string-literal">&quot;16686:16686&quot;</span><span> </span><span class="comment"># UI
-</span><span>      - </span><span class="string-literal">&quot;4317:4317&quot;</span><span> </span><span class="comment"># OTLP gRPC receiver
-</span><span>      - </span><span class="string-literal">&quot;4318:4318&quot;</span><span> </span><span class="comment"># OTLP http receiver
+</span><span>      - </span><span class="string-literal">&quot;4317:4317&quot;</span><span>   </span><span class="comment"># OTLP gRPC receiver
+</span><span>      - </span><span class="string-literal">&quot;4318:4318&quot;</span><span>   </span><span class="comment"># OTLP HTTP receiver
 </span><span>    </span><span class="attribute-name">networks</span><span>:
       - </span><span class="string-literal">static-network</span><span>
 
@@ -396,46 +405,42 @@
     
     <h3 id="execution-steps" class="section"><a class="anchor-link left" href="#execution-steps"><i class="icofont-laika link">&#xef71;</i></a>Execution Steps</h3>
     <ol class="arabic">
-      <li>First, start the observability environment with Docker Compose:</li>
+      <li>Start the observability environment with Docker Compose:</li>
     </ol>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">cd</span><span> otel-example
 docker-compose up -d</span></code></pre>
     <ol class="arabic">
-      <li>Then, run the application with the following Java options:</li>
+      <li>Run the application with the following Java options:</li>
     </ol>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span>sbt -Dotel.java.global-autoconfigure.enabled=</span><span class="boolean-literal">true</span><span> \
     -Dotel.service.name=ldbc-otel-example \
-    -Dotel.metrics.exporter=none \
+    -Dotel.traces.exporter=otlp \
+    -Dotel.metrics.exporter=otlp \
+    -Dotel.exporter.otlp.endpoint=http://localhost:</span><span class="number-literal">4317</span><span> \
     run</span></code></pre>
+    <p>For <code>build.sbt</code> configuration:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">javaOptions</span><span> ++= </span><span class="type-name">Seq</span><span>(
+  </span><span class="string-literal">&quot;-Dotel.java.global-autoconfigure.enabled=true&quot;</span><span>,
+  </span><span class="string-literal">&quot;-Dotel.service.name=ldbc-otel-example&quot;</span><span>,
+  </span><span class="string-literal">&quot;-Dotel.traces.exporter=otlp&quot;</span><span>,
+  </span><span class="string-literal">&quot;-Dotel.metrics.exporter=otlp&quot;</span><span>,
+  </span><span class="string-literal">&quot;-Dotel.exporter.otlp.endpoint=http://localhost:4317&quot;</span><span>
+)</span></code></pre>
     <ol class="arabic">
       <li>After running the application, access the Jaeger UI (<a href="http://localhost:16686"><a href="http://localhost:16686">http://localhost:16686</a></a>) to view traces:</li>
     </ol>
     <p><img src="../../img/jaeger_ui.png" alt="Jaeger UI"></p>
-    <p>You can also check traces in the Grafana UI (<a href="http://localhost:3000"><a href="http://localhost:3000">http://localhost:3000</a></a>):</p>
+    <p>You can also check traces and metrics in the Grafana UI (<a href="http://localhost:3000"><a href="http://localhost:3000">http://localhost:3000</a></a>):</p>
     <p><img src="../../img/grafana_ui.png" alt="Grafana UI"></p>
     
-    <h2 id="trace-details" class="section"><a class="anchor-link left" href="#trace-details"><i class="icofont-laika link">&#xef71;</i></a>Trace Details</h2>
-    <p>ldbc&#39;s OpenTelemetry integration records the following information in traces:</p>
-    <ul>
-      <li><strong>Query execution time</strong>: Time taken for database queries</li>
-      <li><strong>SQL statements</strong>: Content of executed SQL queries</li>
-      <li><strong>Query parameters</strong>: Parameter values passed to queries (safely recorded)</li>
-      <li><strong>Connection information</strong>: Server and database name connection details</li>
-      <li><strong>Error information</strong>: Detailed information when errors occur</li>
-    </ul>
-    
-    <h2 id="trace-customization-options" class="section"><a class="anchor-link left" href="#trace-customization-options"><i class="icofont-laika link">&#xef71;</i></a>Trace Customization Options</h2>
-    <p>ldbc&#39;s OpenTelemetry integration allows for additional customization such as:</p>
-    <ul>
-      <li><strong>Sampling rate configuration</strong>: Trace only a portion of queries instead of all</li>
-      <li><strong>Attribute filtering</strong>: Exclude sensitive information from traces</li>
-      <li><strong>Custom trace exporters</strong>: Send to tracing systems other than Jaeger</li>
-    </ul>
-    <p>These settings can be configured through OpenTelemetry configuration files or system properties.</p>
-    
     <h2 id="summary" class="section"><a class="anchor-link left" href="#summary"><i class="icofont-laika link">&#xef71;</i></a>Summary</h2>
-    <p>Combining ldbc with OpenTelemetry enables detailed visualization and monitoring of database operations. Using the methods introduced in this guide makes it easier to identify application performance issues, discover bottlenecks, and perform troubleshooting.</p>
-    <p>In production environments, you may need to adjust settings according to security requirements and environment specifics. We recommend referring to the official OpenTelemetry documentation to find the optimal configuration.</p>
+    <p>Combining ldbc with OpenTelemetry enables detailed visualization and monitoring of database operations.</p>
+    <ul>
+      <li><strong>Tracing</strong>: Record query execution time, error details, and span attributes via <code>setTracer</code></li>
+      <li><strong>Metrics</strong>: Record query duration, returned row counts, and pool state via <code>setMeter</code></li>
+      <li><strong>TelemetryConfig</strong>: Customize query sanitization and span name generation behavior</li>
+    </ul>
+    <p>For detailed span attributes and metrics specifications, see the <a href="../reference/Telemetry.html">Telemetry Reference</a>.</p>
 
     
 <hr class="footer-rule"/>

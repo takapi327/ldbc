@@ -14,7 +14,7 @@ First, add the necessary dependencies to build.sbt:
 
 ```scala
 libraryDependencies ++= Seq(
-  "com.mysql" % "mysql-connector-j" % "8.4.0",
+  "com.mysql" % "mysql-connector-j" % "9.6.0",
   "com.zaxxer" % "HikariCP" % "6.2.1"
 )
 ```
@@ -285,47 +285,33 @@ In actual application development, you can combine these basic patterns to imple
 
 # Observability with OpenTelemetry
 
-This page explains how to achieve observability through database query tracing, metrics collection, and logging by integrating ldbc with OpenTelemetry.
+This page explains how to achieve observability through database query tracing and metrics collection by integrating ldbc with OpenTelemetry.
 
-## What is OpenTelemetry?
-
-[OpenTelemetry](https://opentelemetry.io/) is an open-source framework for implementing application observability. It provides features such as distributed tracing, metrics collection, and logging, enabling an integrated approach to monitoring and analyzing application performance and behavior.
-
-By integrating with OpenTelemetry, ldbc can benefit from:
-
-- Tracking database query execution time and processing
-- Measuring query performance
-- Error detection and diagnosis
-- System-wide visualization and monitoring
+For detailed API references (span attribute list, TelemetryConfig, metrics specification, etc.), see the [Telemetry Reference](../reference/Telemetry.md).
 
 ## Required Dependencies
 
-To use OpenTelemetry with ldbc, you need to add the following dependencies to your project:
+Add the following dependencies to your project to use OpenTelemetry with ldbc:
 
 ```scala
 libraryDependencies ++= Seq(
+  // ldbc connector (includes otel4s-core)
+  "io.github.takapi327" %% "ldbc-connector" % "0.6.0",
+
   // otel4s library (Scala wrapper for OpenTelemetry)
-  "org.typelevel" %% "otel4s-oteljava" % "0.11.2",
-  
+  "org.typelevel"    %% "otel4s-oteljava"                           % "0.15.1",
+
   // OpenTelemetry exporter (for data transmission)
-  "io.opentelemetry" % "opentelemetry-exporter-otlp" % "1.48.0" % Runtime,
-  
-  // Auto-configuration functionality (configuration via environment variables and system properties)
-  "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.48.0" % Runtime,
+  "io.opentelemetry"  % "opentelemetry-exporter-otlp"               % "1.59.0" % Runtime,
+
+  // Auto-configuration (configuration via environment variables and system properties)
+  "io.opentelemetry"  % "opentelemetry-sdk-extension-autoconfigure" % "1.59.0" % Runtime,
 )
 ```
 
-## OpenTelemetry Configuration in ldbc
+## Basic Setup
 
-ldbc provides a `setTracer` method in ConnectionProvider where you can configure the OpenTelemetry Tracer.
-
-Basic configuration steps are as follows:
-
-1. Initialize OpenTelemetry
-2. Obtain a TracerProvider
-3. Configure it in the ConnectionProvider
-
-Here's a basic configuration example:
+Configure both `setTracer` and `setMeter` on `MySQLDataSource` to enable tracing and metrics collection.
 
 ```scala
 import cats.effect.*
@@ -334,66 +320,99 @@ import org.typelevel.otel4s.oteljava.OtelJava
 import ldbc.connector.*
 import ldbc.dsl.*
 
-// Service name (trace identifier)
 val serviceName = "my-ldbc-app"
 
-// Resource configuration
 val resource: Resource[IO, Connector[IO]] =
   for
-    // Create otel4s instance from GlobalOpenTelemetry
-    otel <- Resource
-      .eval(IO.delay(GlobalOpenTelemetry.get))
-      .evalMap(OtelJava.forAsync[IO])
-    
-    // Get TracerProvider with service name
+    otel   <- Resource
+                .eval(IO.delay(GlobalOpenTelemetry.get))
+                .evalMap(OtelJava.forAsync[IO])
     tracer <- Resource.eval(otel.tracerProvider.get(serviceName))
-    
-    // Configure database connection and set TracerProvider
+    meter  <- Resource.eval(otel.meterProvider.get(serviceName))
     datasource = MySQLDataSource
-      .build[IO]("localhost", 3306, "user")
-      .setPassword("password")
-      .setDatabase("database")
-      .setSSL(SSL.Trusted)
-      .setTracer(tracer)  // Set OpenTelemetry Tracer
+                   .build[IO]("localhost", 3306, "user")
+                   .setPassword("password")
+                   .setDatabase("mydb")
+                   .setSSL(SSL.Trusted)
+                   .setTracer(tracer)
+                   .setMeter(meter)
   yield Connector.fromDataSource(datasource)
 
-// Execute query using the resource
 val program = resource.use { connector =>
   sql"SELECT * FROM users".query[String].to[List].readOnly(connector)
 }
 ```
 
-## Configuration via Environment Variables
-
-OpenTelemetry can be configured using system properties or environment variables. You can customize OpenTelemetry behavior by setting the following system properties when starting your application:
-
-```shell
-java -Dotel.java.global-autoconfigure.enabled=true \
-     -Dotel.service.name=ldbc-app \
-     -Dotel.traces.exporter=otlp \
-     -Dotel.metrics.exporter=none \
-     -Dotel.exporter.otlp.endpoint=http://localhost:4317 \
-     -jar your-application.jar
-```
-
-For SBT execution, you can configure it as follows:
+You can also use tracing-only or metrics-only:
 
 ```scala
-javaOptions ++= Seq(
-  "-Dotel.java.global-autoconfigure.enabled=true",
-  "-Dotel.service.name=ldbc-app",
-  "-Dotel.traces.exporter=otlp",
-  "-Dotel.metrics.exporter=none"
+// Tracing only
+val tracingOnly = MySQLDataSource.build[IO]("localhost", 3306, "user")
+  .setTracer(tracer)
+
+// Metrics only
+val metricsOnly = MySQLDataSource.build[IO]("localhost", 3306, "user")
+  .setMeter(meter)
+```
+
+## Connection Pool with Metrics
+
+When using connection pooling, pass `meter` to the `pooling` method to automatically collect pool metrics (connection wait time, use time, timeout count, etc.).
+
+```scala
+import ldbc.connector.*
+
+val pool = MySQLDataSource.pooling[IO](
+  config = MySQLConfig.default
+    .setHost("127.0.0.1")
+    .setPort(3306)
+    .setUser("user")
+    .setPassword("password")
+    .setDatabase("mydb"),
+  meter  = Some(meter),
+  tracer = Some(tracer)
 )
 ```
 
-## Practical Example: ldbc Application with OpenTelemetry
+For the full list of pool metrics, see [Telemetry Reference - Connection Pool Metrics](../reference/Telemetry.md).
 
-Here's a complete example of setting up an observability environment using Docker Compose with Jaeger and Prometheus, and sending trace data from an ldbc application.
+## Customization with TelemetryConfig
+
+Use `TelemetryConfig` to control telemetry behavior.
+
+```scala
+import ldbc.connector.telemetry.TelemetryConfig
+
+// Default (spec-compliant, all features enabled)
+val config = TelemetryConfig.default
+
+// Use fixed span names (no query text parsing)
+val fixedSpanName = TelemetryConfig.withoutQueryTextExtraction
+
+// Custom configuration
+val custom = TelemetryConfig.default
+  .withoutQueryTextExtraction    // Use fixed span names like "Execute Statement"
+  .withoutSanitization           // Disable query sanitization (caution: may expose sensitive data)
+  .withoutInClauseCollapsing     // Do not collapse IN (?, ?, ?) to IN (?)
+```
+
+Apply `TelemetryConfig` to the data source:
+
+```scala
+val datasource = MySQLDataSource
+  .build[IO]("localhost", 3306, "user")
+  .setPassword("password")
+  .setDatabase("mydb")
+  .setTracer(tracer)
+  .setMeter(meter)
+  .setTelemetryConfig(TelemetryConfig.withoutQueryTextExtraction)
+```
+
+## Practical Example: Jaeger + Prometheus + Grafana
+
+A complete example of building an observability environment with Docker Compose (Jaeger, Prometheus, Grafana) and sending traces and metrics from an ldbc application.
 
 ### Project Structure
-
-Assume the following project structure:
 
 ```
 otel-example/
@@ -402,7 +421,7 @@ otel-example/
 │       └── scala/
 │           └── Main.scala
 ├── database/
-│   └── xxx.sql
+│   └── init.sql
 ├── dependencies/
 │   ├── jaeger/
 │   │   └── jaeger-ui.json
@@ -415,8 +434,6 @@ otel-example/
 
 ### Main.scala
 
-Here's the main application code:
-
 ```scala
 import cats.effect.*
 import io.opentelemetry.api.GlobalOpenTelemetry
@@ -428,23 +445,24 @@ object Main extends IOApp.Simple:
 
   private val serviceName = "ldbc-otel-example"
 
-  private val base = MySQLDataSource
-    .build[IO]("127.0.0.1", 13307, "ldbc")
-    .setPassword("password")
-    .setDatabase("world")
-    .setSSL(SSL.Trusted)
-
-  private def setupTracing: Resource[IO, Connector[IO]] =
+  private def setupObservability: Resource[IO, Connector[IO]] =
     for
-      otel <- Resource
-        .eval(IO.delay(GlobalOpenTelemetry.get))
-        .evalMap(OtelJava.forAsync[IO])
+      otel   <- Resource
+                  .eval(IO.delay(GlobalOpenTelemetry.get))
+                  .evalMap(OtelJava.forAsync[IO])
       tracer <- Resource.eval(otel.tracerProvider.get(serviceName))
-      datasource <- Resource.eval(IO.delay(base.setTracer(tracer)))
+      meter  <- Resource.eval(otel.meterProvider.get(serviceName))
+      datasource = MySQLDataSource
+                     .build[IO]("127.0.0.1", 13306, "ldbc")
+                     .setPassword("password")
+                     .setDatabase("world")
+                     .setSSL(SSL.Trusted)
+                     .setTracer(tracer)
+                     .setMeter(meter)
     yield Connector.fromDataSource(datasource)
 
   override def run: IO[Unit] =
-    setupTracing.use { connector =>
+    setupObservability.use { connector =>
       sql"SELECT name FROM city".query[String].to[List].readOnly(connector).flatMap { cities =>
         IO.println(cities)
       }
@@ -453,20 +471,17 @@ object Main extends IOApp.Simple:
 
 ### docker-compose.yaml
 
-Use the following Docker Compose configuration for the observability environment:
-
 ```yaml
 services:
   database:
-    image: mysql:8.0.41
+    image: mysql:9.6.0
     container_name: ldbc-otel-example
     ports:
-      - 13307:3306
+      - 13306:3306
     networks:
       - static-network
     volumes:
       - ./database:/docker-entrypoint-initdb.d
-      - ./database/my.cnf:/etc/database/conf.d/my.cn
     environment:
       MYSQL_USER: 'ldbc'
       MYSQL_PASSWORD: 'password'
@@ -498,8 +513,8 @@ services:
     ports:
       - "16685:16685" # GRPC
       - "16686:16686" # UI
-      - "4317:4317" # OTLP gRPC receiver
-      - "4318:4318" # OTLP http receiver
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
     networks:
       - static-network
 
@@ -523,55 +538,53 @@ networks:
 
 ### Execution Steps
 
-1. First, start the observability environment with Docker Compose:
+1. Start the observability environment with Docker Compose:
 
 ```bash
 cd otel-example
 docker-compose up -d
 ```
 
-2. Then, run the application with the following Java options:
+2. Run the application with the following Java options:
 
 ```bash
 sbt -Dotel.java.global-autoconfigure.enabled=true \
     -Dotel.service.name=ldbc-otel-example \
-    -Dotel.metrics.exporter=none \
+    -Dotel.traces.exporter=otlp \
+    -Dotel.metrics.exporter=otlp \
+    -Dotel.exporter.otlp.endpoint=http://localhost:4317 \
     run
+```
+
+For `build.sbt` configuration:
+
+```scala
+javaOptions ++= Seq(
+  "-Dotel.java.global-autoconfigure.enabled=true",
+  "-Dotel.service.name=ldbc-otel-example",
+  "-Dotel.traces.exporter=otlp",
+  "-Dotel.metrics.exporter=otlp",
+  "-Dotel.exporter.otlp.endpoint=http://localhost:4317"
+)
 ```
 
 3. After running the application, access the Jaeger UI ([http://localhost:16686](http://localhost:16686)) to view traces:
 
 ![Jaeger UI](../../../img/jaeger_ui.png)
 
-You can also check traces in the Grafana UI ([http://localhost:3000](http://localhost:3000)):
+You can also check traces and metrics in the Grafana UI ([http://localhost:3000](http://localhost:3000)):
 
 ![Grafana UI](../../../img/grafana_ui.png)
 
-## Trace Details
-
-ldbc's OpenTelemetry integration records the following information in traces:
-
-- **Query execution time**: Time taken for database queries
-- **SQL statements**: Content of executed SQL queries
-- **Query parameters**: Parameter values passed to queries (safely recorded)
-- **Connection information**: Server and database name connection details
-- **Error information**: Detailed information when errors occur
-
-## Trace Customization Options
-
-ldbc's OpenTelemetry integration allows for additional customization such as:
-
-- **Sampling rate configuration**: Trace only a portion of queries instead of all
-- **Attribute filtering**: Exclude sensitive information from traces
-- **Custom trace exporters**: Send to tracing systems other than Jaeger
-
-These settings can be configured through OpenTelemetry configuration files or system properties.
-
 ## Summary
 
-Combining ldbc with OpenTelemetry enables detailed visualization and monitoring of database operations. Using the methods introduced in this guide makes it easier to identify application performance issues, discover bottlenecks, and perform troubleshooting.
+Combining ldbc with OpenTelemetry enables detailed visualization and monitoring of database operations.
 
-In production environments, you may need to adjust settings according to security requirements and environment specifics. We recommend referring to the official OpenTelemetry documentation to find the optimal configuration.
+- **Tracing**: Record query execution time, error details, and span attributes via `setTracer`
+- **Metrics**: Record query duration, returned row counts, and pool state via `setMeter`
+- **TelemetryConfig**: Customize query sanitization and span name generation behavior
+
+For detailed span attributes and metrics specifications, see the [Telemetry Reference](../reference/Telemetry.md).
 
 
 
@@ -625,21 +638,21 @@ That said, if you find yourself confused or frustrated by this documentation or 
 
 ## Quick Start
 
-The current version is **0.5.3**, compatible with **Scala 3.3.7**.
+The current version is **0.6.0**, compatible with **Scala 3.3.7**.
 
 ```scala
 libraryDependencies ++= Seq(
 
   // Start with this one
-  "io.github.takapi327" %% "ldbc-dsl" % "0.5.3",
+  "io.github.takapi327" %% "ldbc-dsl" % "0.6.0",
   
   // Choose the connector you want to use
-  "io.github.takapi327" %% "jdbc-connector" % "0.5.3", // Java connector (supported platform: JVM)
-  "io.github.takapi327" %% "ldbc-connector" % "0.5.3", // Scala connector (supported platforms: JVM, JS, Native)
+  "io.github.takapi327" %% "jdbc-connector" % "0.6.0", // Java connector (supported platform: JVM)
+  "io.github.takapi327" %% "ldbc-connector" % "0.6.0", // Scala connector (supported platforms: JVM, JS, Native)
 
   // And add these as needed
-  "io.github.takapi327" %% "ldbc-query-builder" % "0.5.3", // Type-safe query building
-  "io.github.takapi327" %% "ldbc-schema"        % "0.5.3", // Database schema construction
+  "io.github.takapi327" %% "ldbc-query-builder" % "0.6.0", // Type-safe query building
+  "io.github.takapi327" %% "ldbc-schema"        % "0.6.0", // Database schema construction
 )
 ```
 
@@ -655,305 +668,573 @@ libraryDependencies ++= Seq(
 
 
 
-# Migration Notes (from 0.4.x to 0.5.x)
+# Migration Notes (from 0.5.x to 0.6.x)
 
 ## Packages
-
-**Newly Added Packages**
-
-| Module / Platform                | JVM | Scala Native | Scala.js | Scaladoc                                                                                                                                                              |
-|----------------------------------|:---:|:------------:|:--------:|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `ldbc-zio-interop`               |  ✅  |      ❌       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-zio-interop_3)               |
-| `ldbc-authentication-plugin`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-authentication-plugin_3)     |
-| `ldbc-aws-authentication-plugin` |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-aws-authentication-plugin_3) |
-
-**Deprecated Packages**
-
-| Module / Platform    | JVM | Scala Native | Scala.js |  
-|----------------------|:---:|:------------:|:--------:|
-| `ldbc-hikari`        |  ✅  |      ❌       |    ❌     | 
 
 **All Packages**
 
 | Module / Platform                | JVM | Scala Native | Scala.js | Scaladoc                                                                                                                                                              |
 |----------------------------------|:---:|:------------:|:--------:|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `ldbc-sql`                       |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-sql_3)                       |
-| `ldbc-core`                      |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-core_3)                      |
-| `ldbc-connector`                 |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-connector_3)                 |
-| `jdbc-connector`                 |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/jdbc-connector_3)                 |
-| `ldbc-dsl`                       |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3)                       |
-| `ldbc-statement`                 |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-statement_3)                 |
-| `ldbc-query-builder`             |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-query-builder_3)             |
-| `ldbc-schema`                    |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-schema_3)                    |
-| `ldbc-codegen`                   |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-codegen_3)                   |
-| `ldbc-plugin`                    |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-plugin_2.12_1.0)             |
-| `ldbc-zio-interop`               |  ✅  |      ❌       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-zio-interop_3)               |
-| `ldbc-authentication-plugin`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-authentication-plugin_3)     |
-| `ldbc-aws-authentication-plugin` |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-aws-authentication-plugin_3) |
+| `ldbc-sql`                       |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-sql_3)                       |
+| `ldbc-core`                      |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-core_3)                      |
+| `ldbc-connector`                 |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-connector_3)                 |
+| `jdbc-connector`                 |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/jdbc-connector_3)                 |
+| `ldbc-dsl`                       |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3)                       |
+| `ldbc-statement`                 |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-statement_3)                 |
+| `ldbc-query-builder`             |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-query-builder_3)             |
+| `ldbc-schema`                    |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-schema_3)                    |
+| `ldbc-codegen`                   |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-codegen_3)                   |
+| `ldbc-plugin`                    |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-plugin_2.12_1.0)             |
+| `ldbc-zio-interop`               |  ✅  |      ❌       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-zio-interop_3)               |
+| `ldbc-authentication-plugin`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-authentication-plugin_3)     |
+| `ldbc-aws-authentication-plugin` |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-aws-authentication-plugin_3) |
 
 ## 🎯 Major Changes
 
-### 1. ZIO Ecosystem Support
+### 1. Significant Expansion of OpenTelemetry Telemetry
 
-Starting with 0.5.0, ldbc makes it easier to use ZIO.
+0.6.0 greatly enhances telemetry support compliant with OpenTelemetry Semantic Conventions v1.39.0.
+
+#### Addition of TelemetryConfig
+
+`TelemetryConfig` has been added to provide fine-grained control over telemetry behavior.
 
 ```scala
-libraryDependencies += "io.github.takapi327" %% "ldbc-zio-interop" % "0.5.0"
+import ldbc.connector.telemetry.TelemetryConfig
+
+// Default configuration (spec-compliant)
+val config = TelemetryConfig.default
+
+// Disable query summary generation
+val noSummaryConfig = TelemetryConfig.withoutQueryTextExtraction
+
+// Custom configuration
+val customConfig = TelemetryConfig.default
+  .withoutQueryTextExtraction   // Disable automatic db.query.summary generation
+  .withoutSanitization          // Disable query sanitization (caution: may expose sensitive data)
+  .withoutInClauseCollapsing    // Disable IN clause collapsing
 ```
 
-**Usage Example:**
-```scala
-import zio.*
-import ldbc.zio.interop.*
-import ldbc.connector.*
-import ldbc.dsl.*
+| Option                            | Default | Description                                                               |
+|-----------------------------------|:-------:|---------------------------------------------------------------------------|
+| `extractMetadataFromQueryText`    | `true`  | Generate `db.query.summary` from query text for span naming               |
+| `sanitizeNonParameterizedQueries` | `true`  | Replace literals with `?` in non-parameterized queries (required by spec) |
+| `collapseInClauses`               | `true`  | Collapse `IN (?, ?, ?)` to `IN (?)` to reduce cardinality                 |
 
-object Main extends ZIOAppDefault:
-  
-  private val datasource =
-    MySQLDataSource
-      .build[Task](
-        host = "127.0.0.1",
-        port = 3306,
-        user = "ldbc"
-      )
-      .setPassword("password")
-      .setDatabase("world")
+#### Addition of DatabaseMetrics and Meter
 
-  private val program =
-    for
-      connection <- datasource.getConnection
-      connector = Connector.fromConnection(connection)
-      result     <- sql"SELECT 1".query[Int].to[List].readOnly(connector)
-    yield result
-
-  override def run = program
-```
-
-### 2. Enhanced Authentication Plugins
-
-New authentication plugin modules have been added. These plugins are implemented in pure Scala3 and are available on all platforms (JVM, JS, Native).
-
-#### MySQL Clear Password Authentication
+Connection pool metrics (wait time, use time, timeout count) can now be recorded via OpenTelemetry's `Meter`.
 
 ```scala
-libraryDependencies += "io.github.takapi327" %% "ldbc-authentication-plugin" % "0.5.0"
-```
-
-```scala
-import ldbc.connector.*
-import ldbc.authentication.plugin.*
-
-val datasource = MySQLDataSource
-  .build[IO](
-    host = "localhost",
-    port = 3306,
-    user = "cleartext-user"
-  )
-  .setPassword("plaintext-password")
-  .setDatabase("mydb")
-  .setDefaultAuthenticationPlugin(MysqlClearPasswordPlugin)
-```
-
-#### AWS Aurora IAM Authentication
-
-```scala
-libraryDependencies += "io.github.takapi327" %% "ldbc-aws-authentication-plugin" % "0.5.0"
-```
-
-```scala
-import ldbc.amazon.plugin.AwsIamAuthenticationPlugin
+import org.typelevel.otel4s.metrics.Meter
 import ldbc.connector.*
 
-val hostname = "aurora-instance.cluster-xxx.region.rds.amazonaws.com"
-val username = "iam-user"
-val config = MySQLConfig.default
-  .setHost(hostname)
-  .setUser(username)
-  .setDatabase("mydb")
-  .setSSL(SSL.Trusted)  // SSL is required for IAM authentication
-
-val plugin = AwsIamAuthenticationPlugin.default[IO]("ap-northeast-1", hostname, username)
-
-MySQLDataSource.pooling[IO](config, plugins = List(plugin)).use { datasource =>
-  val connector = Connector.fromDataSource(datasource)
-  // Query execution
+// Inject Meter to enable pool metrics
+MySQLDataSource.pooling[IO](
+  config = mysqlConfig,
+  meter  = Some(summon[Meter[IO]])
+).use { pool =>
+  // Pool wait time, use time, and timeouts are automatically recorded
+  pool.getConnection.use { conn => ... }
 }
 ```
 
-### 3. Deprecation of ldbc-hikari
+#### New Methods on MySQLDataSource
 
-`ldbc-hikari` is officially deprecated in 0.5.0. Please use the built-in connection pool.
+`setMeter` and `setTelemetryConfig` have been added to `MySQLDataSource`.
 
-**Deprecated API:**
 ```scala
-// No longer available
-import ldbc.hikari.*
-```
-
-**Recommended Approach:**
-```scala
+import org.typelevel.otel4s.metrics.Meter
 import ldbc.connector.*
+import ldbc.connector.telemetry.TelemetryConfig
 
-val poolConfig = MySQLConfig.default
-  .setHost("localhost")
-  .setPort(3306)
-  .setUser("user")
-  .setPassword("password")
-  .setDatabase("mydb")
-  .setMinConnections(5)
-  .setMaxConnections(20)
-
-MySQLDataSource.pooling[IO](poolConfig).use { pool =>
-  val connector = Connector.fromDataSource(pool)
-  // Query execution
-}
-```
-
-### 4. Security Enhancements
-
-#### Enhanced SQL Parameter Escaping
-
-String parameter escaping has been improved, strengthening protection against SQL injection attacks.
-
-#### SSRF Attack Protection
-
-Endpoint validation has been added during data source configuration.
-
-```scala
-// Unsafe endpoints are automatically detected and rejected
 val datasource = MySQLDataSource
-  .build[IO]("suspicious-host", 3306, "user")
+  .build[IO](host = "localhost", port = 3306, user = "ldbc")
   .setPassword("password")
   .setDatabase("mydb")
+  .setMeter(summon[Meter[IO]])
+  .setTelemetryConfig(TelemetryConfig.default.withoutQueryTextExtraction)
 ```
 
-### 5. Performance Optimizations
+#### pooling Method Signature Change
 
-#### Maximum Packet Size Configuration
+`meter` and `telemetryConfig` parameters have been added to `MySQLDataSource.pooling` and `MySQLDataSource.poolingWithBeforeAfter`. Existing code calling them without these arguments remains valid due to default values, but update is required when using metrics.
 
-Compatibility with MySQL server's `max_allowed_packet` setting has been improved.
+**Before (0.5.x):**
+```scala
+MySQLDataSource.pooling[IO](
+  config         = mysqlConfig,
+  metricsTracker = Some(tracker),
+  tracer         = Some(tracer)
+).use { pool => ... }
+```
+
+**After (0.6.x):**
+```scala
+MySQLDataSource.pooling[IO](
+  config          = mysqlConfig,
+  metricsTracker  = Some(tracker),
+  meter           = Some(summon[Meter[IO]]),
+  tracer          = Some(tracer),
+  telemetryConfig = TelemetryConfig.default
+).use { pool => ... }
+```
+
+#### TelemetryAttribute Key Name Changes (Breaking Change)
+
+`TelemetryAttribute` constant names have been updated to align with Semantic Conventions v1.39.0. Updates are required if you reference `TelemetryAttribute` directly.
+
+| Old (0.5.x)    | New (0.6.x)               |
+|----------------|---------------------------|
+| `DB_SYSTEM`    | `DB_SYSTEM_NAME`          |
+| `DB_OPERATION` | `DB_OPERATION_NAME`       |
+| `DB_QUERY`     | `DB_QUERY_TEXT`           |
+| `STATUS_CODE`  | `DB_RESPONSE_STATUS_CODE` |
+| `VERSION`      | `DB_MYSQL_VERSION`        |
+| `THREAD_ID`    | `DB_MYSQL_THREAD_ID`      |
+| `AUTH_PLUGIN`  | `DB_MYSQL_AUTH_PLUGIN`    |
+
+### 2. Enhanced MySQL 9.x Support
+
+MySQL 9.x is officially supported starting from 0.6.0. Internal behavior automatically adapts based on the connected MySQL version.
+
+#### getCatalogs Change for MySQL 9.3.0+
+
+For MySQL 9.3.0 and later, the internal implementation of `getCatalogs()` switches from the `mysql` system table to `INFORMATION_SCHEMA.SCHEMATA`. There is no impact on user code, but when connecting to MySQL 9.3+, SELECT privileges on `INFORMATION_SCHEMA` are required.
+
+#### getTablePrivileges Change
+
+The internal implementation of `DatabaseMetaData.getTablePrivileges()` has been changed from `mysql.tables_priv` to `INFORMATION_SCHEMA.TABLE_PRIVILEGES`.
+
+### 3. Schema: VECTOR Type Added
+
+A `DataType` representing MySQL's `VECTOR` type has been added to the `ldbc-schema` module.
 
 ```scala
-val datasource = MySQLDataSource
-  .build[IO]("localhost", 3306, "user")
-  .setPassword("password")
-  .setDatabase("mydb")
-  .setMaxPacketSize(16777216)  // 16MB (match MySQL server configuration)
+import ldbc.schema.*
+
+class EmbeddingTable extends Table[Embedding]("embeddings"):
+  def id:        Column[Long]         = column[Long]("id")
+  def embedding: Column[Array[Float]] = column[Array[Float]]("embedding", VECTOR(1536))
+
+  override def * = (id *: embedding).to[Embedding]
 ```
 
-#### Connection Pool Concurrency Improvements
+### 4. Improved Error Tracing
 
-Connection pool state management has been improved with atomic checks, enhancing stability in concurrent environments.
+`span.setStatus(StatusCode.Error, message)` is now automatically set when an error occurs in the Protocol layer. Error spans are correctly displayed in distributed tracing tools (Jaeger, Zipkin, etc.). No changes to user code are required.
 
-### 6. API Improvements
+### 5. Sample Grafana Dashboard
 
-#### File-based Query Execution
+A Grafana dashboard is provided to quickly visualize connection pool observability. Requires a Prometheus data source.
 
-A new `updateRaws` method has been added, allowing SQL queries to be read from files and executed:
+**Panels included in the dashboard:**
+- DB Operation Duration (p50 / p95 / p99)
+- Connection Pool Status (Active / Idle / Pending / Wait Time p99 / Pool Usage %)
+- Connection Pool Breakdown (time series graph)
+- Latency Distribution (average Wait / Create / Use)
+- Connection Timeouts (15-minute window)
+- Connection Wait Time Heatmap
 
-```scala
-import ldbc.dsl.*
-import fs2.io.file.{ Files, Path }
-import fs2.text
+<img src="../img/dashboard.png" alt="Grafana Dashboard" width="600" />
 
-private def readFile(filename: String): IO[String] =
-  Files[IO]
-    .readAll(Path(filename))
-    .through(text.utf8.decode)
-    .compile
-    .string
+You can create the dashboard shown above by importing the following JSON into Grafana.
 
-for
-  sql <- readFile("hoge.sql")
-  _ <- DBIO.updateRaws(sql).commit(connector)
-yield ()
-```
+<details>
+<summary>Show dashboard JSON (click to expand)</summary>
+
+<pre><code class="language-json">{
+  "__inputs": [
+    {
+      "name": "DS_PROMETHEUS",
+      "label": "Prometheus",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    }
+  ],
+  "__elements": {},
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "10.0.0"
+    },
+    {
+      "type": "datasource",
+      "id": "prometheus",
+      "name": "Prometheus",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "gauge",
+      "name": "Gauge",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "heatmap",
+      "name": "Heatmap",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "alertlist",
+      "name": "Alert list",
+      "version": ""
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations &amp; Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "MySQL Connection Pool observability dashboard using OpenTelemetry Semantic Conventions (db.client.* metrics). Requires OTel Java Agent or manual OTel instrumentation with Prometheus exporter.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [
+    {
+      "title": "OTel DB Metrics Spec",
+      "url": "https://opentelemetry.io/docs/specs/semconv/db/database-metrics/",
+      "type": "link",
+      "icon": "external link",
+      "targetBlank": true
+    }
+  ],
+  "liveNow": false,
+  "panels": [
+    {
+      "id": 102,
+      "type": "row",
+      "title": "DB Operation Duration (OTel Stable)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "type": "gauge",
+      "id": 50,
+      "title": "Operation Duration — p50",
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 1 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "histogram_quantile(0.50, sum by (le) (increase(db_client_operation_duration_seconds_bucket{db_system_name=\"mysql\", job=~\"${job}\"}[$__range])))",
+          "refId": "A", "editorMode": "code", "range": false, "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s", "decimals": 2, "min": 0, "max": 0.1,
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 0.01 },
+            { "color": "orange", "value": 0.05 },
+            { "color": "red", "value": 0.1 }
+          ]}
+        }, "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "showThresholdLabels": false, "showThresholdMarkers": true, "orientation": "auto" }
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "type": "gauge",
+      "id": 51,
+      "title": "Operation Duration — p95",
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 1 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "histogram_quantile(0.95, sum by (le) (increase(db_client_operation_duration_seconds_bucket{db_system_name=\"mysql\", job=~\"${job}\"}[$__range])))",
+          "refId": "A", "editorMode": "code", "range": false, "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s", "decimals": 2, "min": 0, "max": 0.1,
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 0.01 },
+            { "color": "orange", "value": 0.05 },
+            { "color": "red", "value": 0.1 }
+          ]}
+        }, "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "showThresholdLabels": false, "showThresholdMarkers": true, "orientation": "auto" }
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "type": "gauge",
+      "id": 52,
+      "title": "Operation Duration — p99",
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 1 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "histogram_quantile(0.99, sum by (le) (increase(db_client_operation_duration_seconds_bucket{db_system_name=\"mysql\", job=~\"${job}\"}[$__range])))",
+          "refId": "A", "editorMode": "code", "range": false, "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s", "decimals": 2, "min": 0, "max": 0.1,
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 0.01 },
+            { "color": "orange", "value": 0.05 },
+            { "color": "red", "value": 0.1 }
+          ]}
+        }, "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "showThresholdLabels": false, "showThresholdMarkers": true, "orientation": "auto" }
+    },
+    {
+      "id": 100,
+      "type": "row",
+      "title": "Connection Pool Status",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 8 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 1, "title": "Active (used)", "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 5, "w": 5, "x": 0, "y": 9 },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }, "expr": "db_client_connection_count{db_client_connection_state=\"used\", db_client_connection_pool_name=~\"${pool_name}\", job=~\"${job}\"}", "legendFormat": "{{db_client_connection_pool_name}}", "refId": "A", "editorMode": "code", "range": true }],
+      "description": "db.client.connection.count{db.client.connection.state=used}",
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "area", "colorMode": "value" },
+      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "light-blue" }, "unit": "short" }, "overrides": [] }
+    },
+    {
+      "id": 2, "title": "Idle", "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 5, "w": 5, "x": 5, "y": 9 },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }, "expr": "db_client_connection_count{db_client_connection_state=\"idle\", db_client_connection_pool_name=~\"${pool_name}\", job=~\"${job}\"}", "legendFormat": "{{db_client_connection_pool_name}}", "refId": "A", "editorMode": "code", "range": true }],
+      "description": "db.client.connection.count{db.client.connection.state=idle}",
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "area", "colorMode": "value" },
+      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "green" }, "unit": "short" }, "overrides": [] }
+    },
+    {
+      "id": 3, "title": "Pending Requests", "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 5, "w": 5, "x": 10, "y": 9 },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }, "expr": "db_client_connection_pending_requests{db_client_connection_pool_name=~\"${pool_name}\", job=~\"${job}\"}", "legendFormat": "{{db_client_connection_pool_name}}", "refId": "A", "editorMode": "code", "range": true }],
+      "description": "db.client.connection.pending_requests",
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "area", "colorMode": "value" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 3 }] }, "unit": "short" }, "overrides": [] }
+    },
+    {
+      "id": 4, "title": "Wait Time p99", "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 5, "w": 5, "x": 15, "y": 9 },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }, "expr": "histogram_quantile(0.99, sum by (le) (rate(db_client_connection_wait_time_seconds_bucket{db_client_connection_pool_name=~\"${pool_name}\", job=~\"${job}\"}[$__rate_interval])))", "legendFormat": "p99", "refId": "A", "editorMode": "code", "range": true, "interval": "1m" }],
+      "description": "db.client.connection.wait_time (p99)",
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "area", "colorMode": "value" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "purple", "value": null }, { "color": "yellow", "value": 0.03 }, { "color": "red", "value": 0.1 }] }, "unit": "s", "decimals": 3 }, "overrides": [] }
+    },
+    {
+      "id": 5, "title": "Pool Usage", "type": "gauge",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 5, "w": 4, "x": 20, "y": 9 },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }, "expr": "db_client_connection_count{db_client_connection_state=\"used\", db_client_connection_pool_name=~\"${pool_name}\", job=~\"${job}\"} / ignoring(db_client_connection_state) db_client_connection_max{db_client_connection_pool_name=~\"${pool_name}\", job=~\"${job}\"}", "legendFormat": "{{db_client_connection_pool_name}}", "refId": "A", "editorMode": "code", "range": false, "instant": true }],
+      "description": "active / max",
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "showThresholdLabels": false, "showThresholdMarkers": true },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 0.7 }, { "color": "red", "value": 0.9 }] }, "unit": "percentunit", "min": 0, "max": 1 }, "overrides": [] }
+    },
+    {
+      "id": 6, "title": "Connection Pool Breakdown", "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 14 },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }, "expr": "db_client_connection_count{db_client_connection_state=\"used\", db_client_connection_pool_name=~\"${pool_name}\", job=~\"${job}\"}", "legendFormat": "Used (active)", "refId": "A", "editorMode": "code", "range": true },
+        { "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }, "expr": "db_client_connection_count{db_client_connection_state=\"idle\", db_client_connection_pool_name=~\"${pool_name}\", job=~\"${job}\"}", "legendFormat": "Idle", "refId": "B", "editorMode": "code", "range": true },
+        { "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }, "expr": "db_client_connection_pending_requests{db_client_connection_pool_name=~\"${pool_name}\", job=~\"${job}\"}", "legendFormat": "Pending", "refId": "C", "editorMode": "code", "range": true },
+        { "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }, "expr": "db_client_connection_max{db_client_connection_pool_name=~\"${pool_name}\", job=~\"${job}\"}", "legendFormat": "Max (limit)", "refId": "D", "editorMode": "code", "range": true }
+      ],
+      "description": "db.client.connection.count by state + max",
+      "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["lastNotNull"] } },
+      "fieldConfig": {
+        "defaults": { "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 30, "stacking": { "mode": "normal", "group": "A" }, "lineWidth": 1, "showPoints": "never", "gradientMode": "opacity", "axisLabel": "connections", "spanNulls": true }, "unit": "short", "color": { "mode": "palette-classic" } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Used (active)" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "light-blue" } }] },
+          { "matcher": { "id": "byName", "options": "Idle" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }] },
+          { "matcher": { "id": "byName", "options": "Pending" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "orange" } }] },
+          { "matcher": { "id": "byName", "options": "Max (limit)" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }, { "id": "custom.fillOpacity", "value": 0 }, { "id": "custom.stacking", "value": { "mode": "none" } }, { "id": "custom.lineStyle", "value": { "fill": "dash", "dash": [10, 10] } }, { "id": "custom.lineWidth", "value": 2 }] }
+        ]
+      }
+    },
+    {
+      "id": 7, "title": "Latency Distribution", "type": "bargauge",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 14 },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }, "expr": "increase(db_client_connection_wait_time_seconds_sum{db_client_connection_pool_name=~\"${pool_name}\", job=~\"${job}\"}[$__range]) / increase(db_client_connection_wait_time_seconds_count{db_client_connection_pool_name=~\"${pool_name}\", job=~\"${job}\"}[$__range])", "legendFormat": "Wait — {{db_client_connection_pool_name}}", "refId": "A", "editorMode": "code", "range": false, "instant": true },
+        { "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }, "expr": "increase(db_client_connection_create_time_seconds_sum{db_client_connection_pool_name=~\"${pool_name}\", job=~\"${job}\"}[$__range]) / increase(db_client_connection_create_time_seconds_count{db_client_connection_pool_name=~\"${pool_name}\", job=~\"${job}\"}[$__range])", "legendFormat": "Create — {{db_client_connection_pool_name}}", "refId": "B", "editorMode": "code", "range": false, "instant": true },
+        { "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }, "expr": "increase(db_client_connection_use_time_seconds_sum{db_client_connection_pool_name=~\"${pool_name}\", job=~\"${job}\"}[$__range]) / increase(db_client_connection_use_time_seconds_count{db_client_connection_pool_name=~\"${pool_name}\", job=~\"${job}\"}[$__range])", "legendFormat": "Use — {{db_client_connection_pool_name}}", "refId": "C", "editorMode": "code", "range": false, "instant": true }
+      ],
+      "description": "Average latency over selected period\ndb.client.connection.{wait_time, create_time, use_time}",
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "orientation": "horizontal", "displayMode": "gradient", "showUnfilled": true, "minVizWidth": 8, "minVizHeight": 16, "valueMode": "color" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "s", "decimals": 4, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 0.05 }, { "color": "red", "value": 0.5 }] } }, "overrides": [] }
+    },
+    {
+      "id": 8, "title": "Connection Timeouts", "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 23 },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }, "expr": "increase(db_client_connection_timeouts_total{db_client_connection_pool_name=~\"${pool_name}\", job=~\"${job}\"}[15m])", "legendFormat": "Timeouts — {{db_client_connection_pool_name}}", "refId": "A", "editorMode": "code", "range": true, "instant": false, "interval": "15m" }],
+      "description": "db.client.connection.timeouts\nTimeout count per 15m window",
+      "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["sum", "lastNotNull"] } },
+      "fieldConfig": { "defaults": { "custom": { "drawStyle": "bars", "lineWidth": 1, "fillOpacity": 60, "showPoints": "never", "stacking": { "mode": "none" }, "gradientMode": "scheme" }, "unit": "short", "color": { "mode": "fixed", "fixedColor": "red" }, "noValue": "0" }, "overrides": [] }
+    },
+    {
+      "id": 9, "title": "Connection Wait Time Heatmap", "type": "heatmap",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 23 },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }, "expr": "sum by (le) (increase(db_client_connection_wait_time_seconds_bucket{db_client_connection_pool_name=~\"${pool_name}\", job=~\"${job}\"}[15m]))", "legendFormat": "{{le}}", "refId": "A", "editorMode": "code", "range": true, "instant": false, "format": "heatmap", "interval": "15m" }],
+      "description": "db.client.connection.wait_time bucket distribution",
+      "options": { "calculate": true, "color": { "mode": "scheme", "scheme": "Oranges", "fill": "orange", "reverse": false, "exponent": 0.5, "steps": 32 }, "yAxis": { "unit": "s", "reverse": false, "max": 0.1, "decimals": 0 }, "cellGap": 1, "tooltip": { "show": true, "yHistogram": true }, "legend": { "show": true }, "calculation": { "xBuckets": { "mode": "size" }, "yBuckets": { "mode": "size" } } },
+      "fieldConfig": { "defaults": { "custom": { "scaleDistribution": { "type": "log", "log": 2 } } }, "overrides": [] }
+    },
+    {
+      "id": 10, "title": "Alert History", "type": "alertlist",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 32 },
+      "targets": [],
+      "description": "",
+      "options": { "viewMode": "list", "groupMode": "default", "groupBy": [], "maxItems": 10, "sortOrder": 3, "dashboardAlerts": true, "alertName": "", "alertInstanceLabelFilter": "", "stateFilter": { "firing": true, "pending": true, "noData": true, "normal": true, "error": true }, "folder": "", "tags": [] }
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["mysql", "opentelemetry", "connection-pool", "otel", "db-client"],
+  "templating": {
+    "list": [
+      { "current": { "selected": false, "text": "Prometheus", "value": "Prometheus" }, "hide": 0, "includeAll": false, "multi": false, "name": "DS_PROMETHEUS", "options": [], "query": "prometheus", "refresh": 1, "regex": "", "skipUrlSync": false, "type": "datasource" },
+      { "allValue": "", "current": { "selected": true, "text": ["All"], "value": ["$__all"] }, "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }, "definition": "label_values(db_client_connection_count, db_client_connection_pool_name)", "hide": 0, "includeAll": true, "label": "Pool Name", "multi": true, "name": "pool_name", "options": [], "query": { "query": "label_values(db_client_connection_count, db_client_connection_pool_name)", "refId": "StandardVariableQuery" }, "refresh": 2, "regex": "", "skipUrlSync": false, "sort": 1, "type": "query" },
+      { "allValue": "", "current": { "selected": true, "text": ["All"], "value": ["$__all"] }, "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }, "definition": "label_values(db_client_connection_count, job)", "hide": 0, "includeAll": true, "label": "Job", "multi": true, "name": "job", "options": [], "query": { "query": "label_values(db_client_connection_count, job)", "refId": "StandardVariableQuery" }, "refresh": 2, "regex": "", "skipUrlSync": false, "sort": 1, "type": "query" }
+    ]
+  },
+  "time": { "from": "now-30m", "to": "now" },
+  "timepicker": { "refresh_intervals": ["5s", "10s", "30s", "1m", "5m"] },
+  "timezone": "",
+  "title": "MySQL Connection Pool — Observability (OpenTelemetry)",
+  "uid": "mysql-pool-otel",
+  "version": 1,
+  "weekStart": ""
+}</code></pre>
+
+</details>
 
 ## Migration Guide
 
-### Migration from ldbc-hikari
+### Update TelemetryAttribute Constant Names
 
-**Before Migration (0.4.x):**
+If you are using `TelemetryAttribute` constants directly, update them to the new key names.
+
+**Before (0.5.x):**
 ```scala
-libraryDependencies ++= Seq(
-  "io.github.takapi327" %% "ldbc-dsl" % "0.4.0",
-  "io.github.takapi327" %% "ldbc-hikari" % "0.4.0"
-)
+import ldbc.connector.telemetry.TelemetryAttribute
 
-import ldbc.hikari.*
+val attr = Attribute(TelemetryAttribute.DB_SYSTEM, "mysql")
+val op   = Attribute(TelemetryAttribute.DB_OPERATION, "SELECT")
+```
 
-val hikariConfig = Configuration.default
-  .setJdbcUrl("jdbc:mysql://localhost:3306/mydb")
-  .setUsername("user")
-  .setPassword("password")
-  .setMaximumPoolSize(20)
+**After (0.6.x):**
+```scala
+import ldbc.connector.telemetry.TelemetryAttribute
 
-HikariDataSource.fromHikariConfig[IO](hikariConfig).use { pool =>
-  // Usage
+val attr = Attribute(TelemetryAttribute.DB_SYSTEM_NAME, "mysql")
+val op   = Attribute(TelemetryAttribute.DB_OPERATION_NAME, "SELECT")
+```
+
+### Enable OTel Metrics
+
+To collect connection pool metrics, pass a `Meter` instance.
+
+```scala
+import cats.effect.IO
+import org.typelevel.otel4s.metrics.Meter
+import ldbc.connector.*
+import ldbc.connector.telemetry.TelemetryConfig
+
+// otel4s setup (example)
+OtelJava.global[IO].use { otel =>
+  otel.meterProvider.get("ldbc").flatMap { meter =>
+    MySQLDataSource.pooling[IO](
+      config          = mysqlConfig,
+      meter           = Some(meter),
+      telemetryConfig = TelemetryConfig.default
+    ).use { pool =>
+      pool.getConnection.use { conn =>
+        // Metrics such as db.client.connection.wait_duration are recorded
+        sql"SELECT 1".query[Int].to[List].readOnly(Connector.fromDataSource(pool))
+      }
+    }
+  }
 }
 ```
 
-**After Migration (0.5.x):**
+### Customize Telemetry Configuration
+
+Use `TelemetryConfig` to control whether query text is included in span names or to manage sanitization.
+
 ```scala
-libraryDependencies ++= Seq(
-  "io.github.takapi327" %% "ldbc-connector" % "0.5.0",
-  "io.github.takapi327" %% "ldbc-dsl" % "0.5.0"
-)
+import ldbc.connector.telemetry.TelemetryConfig
 
-import ldbc.connector.*
+// Use fixed span names (no query text parsing)
+val config = TelemetryConfig.withoutQueryTextExtraction
 
-val config = MySQLConfig.default
-  .setHost("localhost")
-  .setPort(3306)
-  .setUser("user")
-  .setPassword("password")
-  .setDatabase("mydb")
-  .setMaxConnections(20)
-
-MySQLDataSource.pooling[IO](config).use { pool =>
-  val connector = Connector.fromDataSource(pool)
-  // Usage
-}
-```
-
-### Adding ZIO Integration
-
-**Cats Effect Based (Traditional):**
-```scala
-import cats.effect.*
-import ldbc.connector.*
-
-val program: IO[List[User]] = 
-  datasource.getConnection.use { connection =>
-    val connector = Connector.fromConnection(connection)
-    sql"SELECT * FROM users".query[User].to[List].readOnly(connector)
-  }
-```
-
-**ZIO Based (New):**
-```scala
-import zio.*
-import ldbc.zio.interop.*
-
-val program: Task[List[User]] = 
-  datasource.getConnection.use { connection =>
-    val connector = Connector.fromConnection(connection)
-    sql"SELECT * FROM users".query[User].to[List].readOnly(connector)
-  }
+// Disable all (recommended for development/debugging only)
+val debugConfig = TelemetryConfig.default
+  .withoutQueryTextExtraction
+  .withoutSanitization
+  .withoutInClauseCollapsing
 ```
 
 ## Summary
 
-Migration to 0.5.x provides the following benefits:
+Migration to 0.6.x provides the following benefits:
 
-1. **Complete ZIO Ecosystem Support**: Natural integration in ZIO-based applications
-2. **Enhanced Security**: SSRF attack protection, improved SQL escaping
-3. **Simplified AWS Integration**: Easy configuration for Aurora IAM authentication
-4. **Performance Improvements**: Maximum packet size support, improved pool concurrency
-5. **Enhanced Developer Experience**: New APIs, binary compatibility checks
+1. **Enhanced OpenTelemetry Spec Compliance**: Attribute key names and behavior aligned with Semantic Conventions v1.39.0
+2. **Visible Pool Metrics**: Collect connection wait time, use time, and timeout count as OTel metrics
+3. **Official MySQL 9.x Support**: Automatically adapts to API changes in MySQL 9.3+
+4. **New VECTOR Type**: Handle MySQL's `VECTOR` type directly in schema definitions
+5. **Improved Error Tracing**: Span error status is accurately displayed in distributed tracing tools
 
-Migration work mainly involves updating library dependencies and small API changes, allowing for gradual migration.
+Most changes are backward compatible. Updates are only required if you directly use `TelemetryAttribute` constant names.
 
 
 
@@ -982,7 +1263,7 @@ val provider =
 This feature is only available when using `ldbc-connector`.
 
 ```scala 3
-libraryDependencies += "io.github.takapi327" %% "ldbc-connector" % "0.5.3"
+libraryDependencies += "io.github.takapi327" %% "ldbc-connector" % "0.6.0"
 ```
 
 @:@
@@ -1841,8 +2122,8 @@ If you want to use the traditional connector written in Java, set the following 
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "io.github.takapi327" %% "jdbc-connector" % "0.5.3",
-  "com.mysql" % "mysql-connector-j" % "8.4.0"
+  "io.github.takapi327" %% "jdbc-connector" % "0.6.0",
+  "com.mysql" % "mysql-connector-j" % "9.6.0"
 )
 ```
 
@@ -1852,7 +2133,7 @@ If you want to use the new connector written in Scala, set the following depende
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "io.github.takapi327" %% "ldbc-connector" % "0.5.3"
+  "io.github.takapi327" %% "ldbc-connector" % "0.6.0"
 )
 ```
 
@@ -1862,7 +2143,7 @@ To use ldbc with Scala.js or Scala Native, set the dependencies as follows:
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "io.github.takapi327" %%% "ldbc-connector" % "0.5.3"
+  "io.github.takapi327" %%% "ldbc-connector" % "0.6.0"
 )
 ```
 
@@ -1872,7 +2153,7 @@ To use the plain DSL, set the following dependencies:
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "io.github.takapi327" %% "ldbc-dsl" % "0.5.3"
+  "io.github.takapi327" %% "ldbc-dsl" % "0.6.0"
 )
 ```
 
@@ -1894,7 +2175,7 @@ To use the query builder, set the following dependencies:
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "io.github.takapi327" %% "ldbc-query-builder" % "0.5.3"
+  "io.github.takapi327" %% "ldbc-query-builder" % "0.6.0"
 )
 ```
 
@@ -1921,7 +2202,7 @@ To use schema definition and model mapping, set the following dependencies:
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "io.github.takapi327" %% "ldbc-schema" % "0.5.3"
+  "io.github.takapi327" %% "ldbc-schema" % "0.6.0"
 )
 ```
 
@@ -2047,12 +2328,12 @@ When using each authentication plugin, add the corresponding dependencies:
 
 **MySQL Clear Password Authentication:**
 ```scala
-libraryDependencies += "io.github.takapi327" %% "ldbc-authentication-plugin" % "0.5.3"
+libraryDependencies += "io.github.takapi327" %% "ldbc-authentication-plugin" % "0.6.0"
 ```
 
 **AWS Aurora IAM Authentication:**
 ```scala
-libraryDependencies += "io.github.takapi327" %% "ldbc-aws-authentication-plugin" % "0.5.3"
+libraryDependencies += "io.github.takapi327" %% "ldbc-aws-authentication-plugin" % "0.6.0"
 ```
 
 ## Authentication Plugin Customization
@@ -2184,13 +2465,13 @@ To use it, you need to set up the following dependency in your project:
 **JVM**
 
 ```scala 3
-libraryDependencies += "io.github.takapi327" %% "ldbc-connector" % "0.5.3"
+libraryDependencies += "io.github.takapi327" %% "ldbc-connector" % "0.6.0"
 ```
 
 **JS/Native**
 
 ```scala 3
-libraryDependencies += "io.github.takapi327" %%% "ldbc-connector" % "0.5.3"
+libraryDependencies += "io.github.takapi327" %%% "ldbc-connector" % "0.6.0"
 ```
 
 **Supported Versions**
@@ -3737,6 +4018,313 @@ ldbc-connector is a choice that can maximize its characteristics particularly in
 
 
 
+# Telemetry (Tracing and Metrics)
+
+ldbc supports distributed tracing and metrics collection compliant with [OpenTelemetry Semantic Conventions](https://opentelemetry.io/docs/specs/semconv/db/). Internally it uses [otel4s](https://typelevel.org/otel4s/), and works on all platforms: JVM, JS, and Native.
+
+When no OpenTelemetry backend is connected, tracing and metrics automatically become no-ops with zero performance impact.
+
+## Dependencies
+
+ldbc-connector depends only on `otel4s-core` (the abstract API). To actually collect and export telemetry data, you need to add a backend implementation.
+
+```scala
+libraryDependencies ++= Seq(
+  // ldbc connector (includes otel4s-core)
+  "io.github.takapi327" %% "ldbc-connector" % "0.6.0",
+
+  // OpenTelemetry Java SDK backend
+  "org.typelevel"    %% "otel4s-oteljava"                           % "0.15.1",
+  "io.opentelemetry"  % "opentelemetry-exporter-otlp"               % "1.59.0" % Runtime,
+  "io.opentelemetry"  % "opentelemetry-sdk-extension-autoconfigure" % "1.59.0" % Runtime,
+)
+```
+
+## Setup
+
+Set `Tracer[F]` and `Meter[F]` on `MySQLDataSource`.
+
+```scala
+import cats.effect.*
+import io.opentelemetry.api.GlobalOpenTelemetry
+import org.typelevel.otel4s.oteljava.OtelJava
+import ldbc.connector.*
+
+object Main extends IOApp.Simple:
+
+  override def run: IO[Unit] =
+    val resource = for
+      otel   <- Resource
+                   .eval(IO.delay(GlobalOpenTelemetry.get))
+                   .evalMap(OtelJava.forAsync[IO])
+      tracer <- Resource.eval(otel.tracerProvider.get("my-app"))
+      meter  <- Resource.eval(otel.meterProvider.get("my-app"))
+      datasource = MySQLDataSource
+                     .build[IO]("127.0.0.1", 3306, "user")
+                     .setPassword("password")
+                     .setDatabase("mydb")
+                     .setTracer(tracer)
+                     .setMeter(meter)
+      connection <- datasource.getConnection
+    yield connection
+
+    resource.use { conn =>
+      conn.createStatement().flatMap(_.executeQuery("SELECT 1")).void
+    }
+```
+
+When using connection pooling, pass `meter` to the `pooling` method.
+
+```scala
+val pool = MySQLDataSource.pooling[IO](
+  config = MySQLConfig.default
+    .setHost("127.0.0.1")
+    .setPort(3306)
+    .setUser("user")
+    .setPassword("password")
+    .setDatabase("mydb"),
+  meter  = Some(meter),
+  tracer = Some(tracer)
+)
+```
+
+## Tracing
+
+### Overview
+
+ldbc generates an OpenTelemetry span for each database operation. Spans are created through the `exchange` mechanism, which works in conjunction with a `Mutex` to guarantee serialization of MySQL protocol operations.
+
+### Span Names
+
+Span names are generated following the OpenTelemetry Semantic Conventions priority:
+
+1. `db.query.summary` if available (e.g., `SELECT users`)
+2. `{db.operation.name} {target}` (e.g., `SELECT users`)
+3. `{target}` only
+4. Fallback: `mysql`
+
+When `extractMetadataFromQueryText` in `TelemetryConfig` is `true` (default), operation names and table names are automatically extracted from SQL to generate dynamic span names. When `false`, fixed span names like `Execute Statement` are used.
+
+The following is a list of the main spans generated by ldbc:
+
+| Span Name                          | Description                                           |
+|------------------------------------|-------------------------------------------------------|
+| `{operation} {table}`              | `Dynamically generated from SQL (e.g., SELECT users)` |
+| `Execute Statement`                | `Statement execution in fixed span name mode`         |
+| `Execute Prepared Statement`       | `PreparedStatement execution in fixed span name mode` |
+| `Execute Statement Batch`          | `Statement batch execution`                           |
+| `Execute Prepared Statement Batch` | `PreparedStatement batch execution`                   |
+| `Callable Statement`               | `CallableStatement execution`                         |
+| `Create Connection`                | `Connection establishment`                            |
+| `Close Connection`                 | `Connection close`                                    |
+| `Deallocate Prepared Statement`    | `Server-side PreparedStatement deallocation`          |
+| `Commit`                           | `Transaction commit`                                  |
+| `Rollback`                         | `Transaction rollback`                                |
+
+### Span Attributes
+
+Each span is annotated with the following attributes:
+
+| Attribute                 | Requirement Level        | Description                    | Example                            |
+|---------------------------|--------------------------|--------------------------------|------------------------------------|
+| `db.system.name`          | `Required`               | `DBMS name`                    | `mysql`                            |
+| `server.address`          | `Recommended`            | `Hostname`                     | `127.0.0.1`                        |
+| `server.port`             | `Conditionally Required` | `Port number`                  | `3306`                             |
+| `db.namespace`            | `Conditionally Required` | `Database name`                | `mydb`                             |
+| `db.query.text`           | `Opt-In`                 | `Executed SQL`                 | `SELECT * FROM users WHERE id = ?` |
+| `db.collection.name`      | `Conditionally Required` | `Table name`                   | `users`                            |
+| `db.operation.name`       | `Conditionally Required` | `Operation name`               | `SELECT`                           |
+| `db.operation.batch.size` | `Conditionally Required` | `Batch size (2 or more)`       | `10`                               |
+| `db.mysql.thread_id`      | —                        | `MySQL thread ID`              | `42`                               |
+| `db.mysql.version`        | —                        | `MySQL server version`         | `8.0.32`                           |
+| `error.type`              | `Conditionally Required` | `Error type (on failure only)` | `SQLException`                     |
+
+### Error Recording
+
+When a database operation fails, the following is recorded on the span:
+
+- The span status is set to `Error`
+- The `error.type` attribute records the error class name
+- `recordException` records the stack trace as a span event
+- For MySQL `ERRPacket` responses, the error code and SQLState are also recorded as attributes
+
+### TelemetryConfig
+
+Use `TelemetryConfig` to customize telemetry behavior.
+
+```scala
+import ldbc.connector.telemetry.TelemetryConfig
+
+// Default settings (all enabled)
+val default = TelemetryConfig.default
+
+// Disable metadata extraction from SQL (use fixed span names)
+val fixed = TelemetryConfig.withoutQueryTextExtraction
+
+// Individual settings
+val custom = TelemetryConfig.default
+  .withoutQueryTextExtraction      // Use fixed span names
+  .withoutSanitization             // Disable query text sanitization
+  .withoutInClauseCollapsing       // Disable IN clause collapsing
+```
+
+| Setting                           | Default | Description                                                                         |
+|-----------------------------------|---------|-------------------------------------------------------------------------------------|
+| `extractMetadataFromQueryText`    | `true`  | `Extract operation name and table name from SQL to dynamically generate span names` |
+| `sanitizeNonParameterizedQueries` | `true`  | `Replace literal values in non-parameterized queries with ?`                        |
+| `collapseInClauses`               | `true`  | `Collapse IN (?, ?, ?) to IN (?)`                                                   |
+
+#### Query Sanitization
+
+When `sanitizeNonParameterizedQueries` is enabled, string literals, numbers, NULL values, etc. in the SQL recorded in the `db.query.text` attribute are replaced with `?`. This prevents sensitive data from being included in traces.
+
+```
+-- Original SQL
+SELECT * FROM users WHERE name = 'Alice' AND age > 25
+
+-- After sanitization (value recorded in db.query.text)
+SELECT * FROM users WHERE name = ? AND age > ?
+```
+
+#### IN Clause Collapsing
+
+When `collapseInClauses` is enabled, span cardinality is kept low even when the number of parameters in IN clauses varies.
+
+```
+-- Original SQL
+SELECT * FROM users WHERE id IN (?, ?, ?, ?)
+
+-- After collapsing
+SELECT * FROM users WHERE id IN (?)
+```
+
+## Metrics
+
+### Overview
+
+ldbc collects metrics compliant with the [OpenTelemetry Database Metrics Semantic Conventions](https://opentelemetry.io/docs/specs/semconv/db/database-metrics/). Metrics are divided into two categories: **operation metrics** and **connection pool metrics**.
+
+### Operation Metrics
+
+Automatically recorded for all `Statement`, `PreparedStatement`, and `CallableStatement` executions.
+
+#### db.client.operation.duration
+
+| Item                  | Details                                          |
+|-----------------------|--------------------------------------------------|
+| **Instrument Type**   | `Histogram`                                      |
+| **Unit**              | `s (seconds)`                                    |
+| **Stability**         | `Stable`                                         |
+| **Description**       | `Duration of database client operations`         |
+| **Bucket Boundaries** | `[0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5, 10]` |
+
+Recorded for all of `executeQuery`, `executeUpdate`, and `executeBatch`. Cancelled operations are not recorded.
+
+#### db.client.response.returned_rows
+
+| Item                  | Details                                                         |
+|-----------------------|-----------------------------------------------------------------|
+| **Instrument Type**   | `Histogram`                                                     |
+| **Unit**              | `{row}`                                                         |
+| **Stability**         | `Development`                                                   |
+| **Description**       | `Number of rows returned by the query`                          |
+| **Bucket Boundaries** | `[1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000]` |
+
+Recorded only for `executeQuery`-type methods. Not recorded for `executeUpdate` or `executeBatch`.
+
+@:callout(warning)
+
+**Limitation with Cursor Fetch**
+
+When `useCursorFetch=true`, a `StreamingResultSet` is used and rows are fetched incrementally in units of `fetchSize`. In this case, `db.client.response.returned_rows` records only the number of rows from the initial fetch. Rows fetched subsequently via `next()` calls are not included.
+
+This is because the OpenTelemetry Semantic Conventions do not provide clear guidance for streaming/cursor-based ResultSets. Neither MySQL Connector/J nor the official OpenTelemetry JDBC instrumentation implement `db.client.response.returned_rows` at all, making this an industry-wide unresolved issue.
+
+When `useCursorFetch=false` (the default), all rows are fetched at once and an accurate value is recorded.
+
+@:@
+
+#### Metrics Attributes
+
+Operation metrics are annotated with the following low-cardinality attributes. Unlike trace attributes, high-cardinality attributes such as `db.query.text` and `db.mysql.thread_id` are excluded to keep metrics aggregation costs manageable.
+
+| Attribute        | Description     | Example     |
+|------------------|-----------------|-------------|
+| `db.system.name` | `DBMS name`     | `mysql`     |
+| `server.address` | `Hostname`      | `127.0.0.1` |
+| `server.port`    | `Port number`   | `3306`      |
+| `db.namespace`   | `Database name` | `mydb`      |
+
+### Connection Pool Metrics
+
+Recorded only when using connection pooling (`PooledDataSource`). All metrics carry the `db.client.connection.pool.name` attribute.
+
+#### Histogram Metrics
+
+| Metric Name                        | Unit | Description                                            |
+|------------------------------------|------|--------------------------------------------------------|
+| `db.client.connection.create_time` | `s`  | `Time taken to create a new physical connection`       |
+| `db.client.connection.wait_time`   | `s`  | `Time waiting to acquire a connection from the pool`   |
+| `db.client.connection.use_time`    | `s`  | `Time between borrowing a connection and returning it` |
+
+#### Counter Metrics
+
+| Metric Name                     | Unit        | Description                                 |
+|---------------------------------|-------------|---------------------------------------------|
+| `db.client.connection.timeouts` | `{timeout}` | `Number of connection acquisition timeouts` |
+
+#### Gauge Metrics (Observable)
+
+The following metrics are reported at export time via OTel's `BatchCallback`.
+
+| Metric Name                             | Unit           | Description                                                  |
+|-----------------------------------------|----------------|--------------------------------------------------------------|
+| `db.client.connection.count`            | `{connection}` | `Current number of connections (state attribute: idle/used)` |
+| `db.client.connection.idle.max`         | `{connection}` | `Maximum allowed number of idle connections`                 |
+| `db.client.connection.idle.min`         | `{connection}` | `Minimum number of idle connections maintained`              |
+| `db.client.connection.max`              | `{connection}` | `Maximum allowed number of connections`                      |
+| `db.client.connection.pending_requests` | `{request}`    | `Number of requests waiting for a connection`                |
+
+## Differences Between Traces and Metrics
+
+ldbc uses different attributes for traces and metrics. This follows OpenTelemetry best practices to properly manage metrics cardinality.
+
+| Attribute            | Traces | Metrics | Reason                                |
+|----------------------|--------|---------|---------------------------------------|
+| `db.system.name`     | ✅      | ✅       | `Low cardinality`                     |
+| `server.address`     | ✅      | ✅       | `Low cardinality`                     |
+| `server.port`        | ✅      | ✅       | `Low cardinality`                     |
+| `db.namespace`       | ✅      | ✅       | `Low cardinality`                     |
+| `db.query.text`      | ✅      | ❌       | `High cardinality, differs per query` |
+| `db.collection.name` | ✅      | ❌       | `Sufficient as a span attribute`      |
+| `db.mysql.thread_id` | ✅      | ❌       | `Varies per connection`               |
+| `db.mysql.version`   | ✅      | ❌       | `Version info is sufficient in spans` |
+| `error.type`         | ✅      | ❌       | `Error details are tracked in spans`  |
+
+## Selective Use of Tracer/Meter
+
+`Tracer` and `Meter` can be used independently.
+
+```scala
+// Tracing only (no metrics)
+val ds = MySQLDataSource.build[IO]("localhost", 3306, "user")
+  .setTracer(tracer)
+
+// Metrics only (no tracing)
+val ds = MySQLDataSource.build[IO]("localhost", 3306, "user")
+  .setMeter(meter)
+
+// Both
+val ds = MySQLDataSource.build[IO]("localhost", 3306, "user")
+  .setTracer(tracer)
+  .setMeter(meter)
+
+// Neither (no-op, zero performance impact)
+val ds = MySQLDataSource.build[IO]("localhost", 3306, "user")
+```
+
+
+
 # Reference
 
 This section describes the core abstractions and mechanical details of ldbc.
@@ -3782,8 +4370,8 @@ The JDBC connector establishes connections using standard JDBC drivers. It's rec
 First, add the necessary dependencies. When using the jdbc connector, you need to add the MySQL connector as well.
 
 ```scala
-//> dep "io.github.takapi327::jdbc-connector:0.5.3"
-//> dep "com.mysql":"mysql-connector-j":"8.4.0"
+//> dep "io.github.takapi327::jdbc-connector:0.6.0"
+//> dep "com.mysql":"mysql-connector-j":"9.6.0"
 ```
 
 ### Connection using DataSource
@@ -3865,7 +4453,7 @@ The ldbc connector is an optimized connector developed by ldbc, offering more co
 First, add the necessary dependency.
 
 ```scala
-//> dep "io.github.takapi327::ldbc-connector:0.5.3"
+//> dep "io.github.takapi327::ldbc-connector:0.6.0"
 ```
 
 ### Connection with Basic Configuration
@@ -5246,7 +5834,7 @@ In this chapter, we'll explain methods for building type-safe queries.
 You need to set up the following dependency in your project:
 
 ```scala
-//> using dep "io.github.takapi327::ldbc-query-builder:0.5.3"
+//> using dep "io.github.takapi327::ldbc-query-builder:0.6.0"
 ```
 
 ## Basic Usage
@@ -5825,7 +6413,7 @@ Code generation is a powerful tool for automating repetitive tasks and reducing 
 You need to set up the following dependency in your project. Add it to `project/plugins.sbt`.
 
 ```scala
-addSbtPlugin("io.github.takapi327" % "ldbc-plugin" % "0.5.3")
+addSbtPlugin("io.github.takapi327" % "ldbc-plugin" % "0.6.0")
 ```
 
 ### Enabling the Plugin
@@ -6269,7 +6857,7 @@ This chapter explains how to handle database schemas in Scala code, particularly
 You need to set up the following dependency in your project:
 
 ```scala
-//> using dep "io.github.takapi327::ldbc-schema:0.5.3"
+//> using dep "io.github.takapi327::ldbc-schema:0.6.0"
 ```
 
 The following code examples assume these imports:
@@ -6454,6 +7042,24 @@ Other special data types:
 ```scala 3
 def isActive: Column[Boolean] = boolean() // BOOLEAN type
 def uniqueId: Column[BigInt] = serial() // SERIAL type (auto-increment BIGINT UNSIGNED)
+```
+
+### VECTOR Type
+
+The `VECTOR` type is supported for MySQL 9.0 and later. It can be used for storing AI embedding vectors and vector search use cases.
+
+```scala 3
+class EmbeddingTable extends Table[Embedding]("embeddings"):
+  def id:        Column[Long]         = bigint().autoIncrement.primaryKey
+  def embedding: Column[Array[Float]] = column[Array[Float]]("embedding", VECTOR(1536))
+
+  override def * = (id *: embedding).to[Embedding]
+```
+
+The dimension can also be omitted:
+
+```scala 3
+def embedding: Column[Array[Float]] = column[Array[Float]]("embedding", VECTOR())
 ```
 
 ## Setting Default Values
@@ -7208,7 +7814,7 @@ First, start a MySQL database using Docker. Create the following docker-compose.
 ```yaml
 services:
   mysql:
-    image: mysql:8.4.0
+    image: mysql:9.6.0
     container_name: ldbc
     ports:
       - 13306:3306
@@ -7312,8 +7918,8 @@ Add the following code to `FirstSteps.scala`:
 
 ```scala
 //> using scala "3.3.7"
-//> using dep "io.github.takapi327::ldbc-dsl:0.5.3"
-//> using dep "io.github.takapi327::ldbc-connector:0.5.3"
+//> using dep "io.github.takapi327::ldbc-dsl:0.6.0"
+//> using dep "io.github.takapi327::ldbc-connector:0.6.0"
 
 import cats.effect.*
 import cats.syntax.all.*
@@ -7355,7 +7961,7 @@ If you see "Value retrieved from database: 42", you've succeeded! This doesn't a
 We also provide a Scala CLI script that automatically handles all the setup:
 
 ```bash
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/00-Setup.scala --dependency io.github.takapi327::ldbc-dsl:0.5.3 --dependency io.github.takapi327::ldbc-connector:0.5.3
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/00-Setup.scala --dependency io.github.takapi327::ldbc-dsl:0.6.0 --dependency io.github.takapi327::ldbc-connector:0.6.0
 ```
 
 ## Next Steps
@@ -7424,7 +8030,7 @@ When you run this program, it will return the result `Some(2)` from the database
 This program can be easily executed using Scala CLI:
 
 ```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/02-Program.scala --dependency io.github.takapi327::ldbc-dsl:0.5.3 --dependency io.github.takapi327::ldbc-connector:0.5.3
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/02-Program.scala --dependency io.github.takapi327::ldbc-dsl:0.6.0 --dependency io.github.takapi327::ldbc-connector:0.6.0
 ```
 
 ## Second Program: Combining Multiple Queries
@@ -7457,7 +8063,7 @@ The execution result will look like `(List(1), Some(2), 3)`. This is a tuple con
 **Execute with Scala CLI**
 
 ```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/03-Program.scala --dependency io.github.takapi327::ldbc-dsl:0.5.3 --dependency io.github.takapi327::ldbc-connector:0.5.3
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/03-Program.scala --dependency io.github.takapi327::ldbc-dsl:0.6.0 --dependency io.github.takapi327::ldbc-connector:0.6.0
 ```
 
 ## Third Program: Data Update Operations
@@ -7486,7 +8092,7 @@ The `commit` method automatically enables `AutoCommit` and commits the transacti
 **Execute with Scala CLI**
 
 ```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/04-Program.scala --dependency io.github.takapi327::ldbc-dsl:0.5.3 --dependency io.github.takapi327::ldbc-connector:0.5.3
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/04-Program.scala --dependency io.github.takapi327::ldbc-dsl:0.6.0 --dependency io.github.takapi327::ldbc-connector:0.6.0
 ```
 
 ## Transaction Control

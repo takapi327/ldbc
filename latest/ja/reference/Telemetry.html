@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="Typelevel Laika + Helium Theme" />
+  <title>テレメトリ</title>
+  
+  <meta name="author" content="ldbc contributors"/>
+  
+  <meta name="author" content="Takahiko Tominaga"/>
+  
+  
+  <meta name="description" content="Documentation for ldbc"/>
+  
+  
+  
+  <link rel="icon" sizes="32x32" type="image/png" href="https://typelevel.org/img/favicon.png"/>
+  
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700">
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Mono:500">
+  
+  <link rel="stylesheet" type="text/css" href="../../helium/site/icofont.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../helium/site/laika-helium.css" />
+    <link rel="stylesheet" type="text/css" href="../../css/site.css" />
+  <script src="../../helium/site/laika-helium.js"></script>
+    <script src="../../helium/site/laika-versions.js"></script>
+  <script>initVersions("../../../", "/ja/reference/Telemetry.html", "latest", null);</script>
+  
+  <script> /* for avoiding page load transitions */ </script>
+</head>
+
+<body>
+
+<header id="top-bar" class="light-default dark-default">
+
+  <div class="row">
+    <a id="nav-icon">
+      <i class="icofont-laika navigationMenu" title="Navigation">&#xefa2;</i>
+    </a>
+    
+    <div class="menu-container version-menu">
+      <a class="text-link menu-toggle" href="#">Version 0.6</a>
+      <nav class="menu-content">
+        <ul class="nav-list">
+          <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <a class="image-link" href="https://typelevel.org"><img src="https://typelevel.org/img/logo.svg"></a>
+
+  <div class="row links">
+    
+    <a class="icon-link svg-link" href="https://github.com/takapi327/ldbc"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>  
+
+</header>
+
+<nav id="sidebar">
+
+  <div class="row">
+    
+    <a class="icon-link svg-link" href="https://github.com/takapi327/ldbc"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>
+
+  
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="../">ldbc</a></li>
+    <li class="level1 nav-leaf"><a href="../migration-notes.html">マイグレーションノート</a></li>
+    <li class="level1 nav-header">チュートリアル</li>
+    <li class="level2 nav-leaf"><a href="../tutorial/">はじめに</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Setup.html">セットアップ</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Connection.html">コネクション</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Simple-Program.html">シンプルプログラム</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Database-Operations.html">データベース操作</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Parameterized-Queries.html">パラメータ</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Selecting-Data.html">データ選択</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Updating-Data.html">データ更新</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Error-Handling.html">エラーハンドリング</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Logging.html">ロギング</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Custom-Data-Type.html">カスタム データ型</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Query-Builder.html">クエリビルダー</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Schema.html">スキーマ</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Schema-Code-Generation.html">スキーマコード生成</a></li>
+    <li class="level1 nav-header">Examples</li>
+    <li class="level2 nav-leaf"><a href="../examples/">はじめに</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/Http4s.html">Http4s</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/HikariCP.html">HikariCP</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/Otel.html">OpenTelemetry</a></li>
+    <li class="level1 nav-header">QA</li>
+    <li class="level2 nav-leaf"><a href="../qa/">はじめに</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/What-is-ldbc.html">Q: ldbcとは何ですか？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Which-dependencies-should-I-set.html">Q: どの依存関係を設定すればよいですか？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/What-is-the-difference-between-a-Java-connect-and-a-Scala-connector.html">Q: JavaのコネクトとScalaのコネクタの違いは何ですか？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-define-complex-queries-with-plain-queries.html">Q: プレーンクエリで複雑なクエリを定義する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-my-own-type.html">Q: 独自の型を使うにはどうすればいいですか？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-nested-models.html">Q: ネストしたモデルを使うにはどうすればいいですか？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-perform-DDL-with-schema.html">Q: スキーマを使用したDDLを実行する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-change-column-names-in-Query-Builder.html">Q: クエリビルダーでカラム名を変更する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-change-the-format-of-column-names-using-the-schema.html">Q: スキーマを使用したカラム名のフォーマットを変更する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-add-processing-before-and-after-the-connection-is-established.html">Q: コネクション確立の前後に処理を追加する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Implicit-search-problem-too-large.html">Q: `Implicit search problem too large.`が発生する場合の対処方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-use-scala-connector-connection-pool.html">Q: Scalaコネクタでコネクションプールを使用する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Is-there-a-way-to-stream-query-results-asynchronously.html">Q: クエリの結果を非同期でストリーミングする方法はありますか？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Is-there-a-function-to-limit-the-number-of-concurrent-queries.html">Q: 同時実行のクエリ数を制限する機能はありますか？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-handle-multiple-databases.html">Q: 複数のデータベース（マルチテナント環境）を扱う方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-use-with-ZIO.html">Q: ZIOで使用する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-the-Enum-type.html">Q: Enum型の使い方は？</a></li>
+    <li class="level1 nav-header">Reference</li>
+    <li class="level2 nav-leaf"><a href="index.html">はじめに</a></li>
+    <li class="level2 nav-leaf"><a href="Connector.html">コネクタ</a></li>
+    <li class="level2 nav-leaf"><a href="Performance.html">パフォーマンス</a></li>
+    <li class="level2 nav-leaf"><a href="AuthenticationPlugin.html">認証プラグイン</a></li>
+    <li class="level2 active nav-leaf"><a href="#">テレメトリ</a></li>
+    <li class="level2 nav-leaf"><a href="Pooling.html">コネクションプーリング</a></li>
+  </ul>
+  
+
+</nav>
+
+<div id="container">
+
+  
+<nav id="page-nav">
+  <p class="header"><a href="#">テレメトリ</a></p>
+
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="#依存関係">依存関係</a></li>
+    <li class="level1 nav-leaf"><a href="#セットアップ">セットアップ</a></li>
+    <li class="level1 nav-node"><a href="#トレーシング">トレーシング</a></li>
+    <li class="level2 nav-leaf"><a href="#概要-1">概要</a></li>
+    <li class="level2 nav-leaf"><a href="#スパン名">スパン名</a></li>
+    <li class="level2 nav-leaf"><a href="#スパン属性">スパン属性</a></li>
+    <li class="level2 nav-leaf"><a href="#エラー記録">エラー記録</a></li>
+    <li class="level2 nav-leaf"><a href="#telemetryconfig">TelemetryConfig</a></li>
+    <li class="level1 nav-node"><a href="#メトリクス">メトリクス</a></li>
+    <li class="level2 nav-leaf"><a href="#概要-2">概要</a></li>
+    <li class="level2 nav-leaf"><a href="#オペレーションメトリクス">オペレーションメトリクス</a></li>
+    <li class="level2 nav-leaf"><a href="#コネクションプールメトリクス">コネクションプールメトリクス</a></li>
+    <li class="level1 nav-leaf"><a href="#トレースとメトリクスの違い">トレースとメトリクスの違い</a></li>
+    <li class="level1 nav-leaf"><a href="#tracer-meterの選択的使用">Tracer/Meterの選択的使用</a></li>
+  </ul>
+
+  <p class="footer"></p>
+</nav>
+
+
+  <main class="content">
+
+    <h1 id="テレメトリ-トレースとメトリクス" class="title">テレメトリ（トレースとメトリクス）</h1>
+    <p>ldbcは<a href="https://opentelemetry.io/docs/specs/semconv/db/">OpenTelemetry Semantic Conventions</a>に準拠した分散トレーシングとメトリクス収集をサポートしています。内部では<a href="https://typelevel.org/otel4s/">otel4s</a>を使用しており、JVM・JS・Native のすべてのプラットフォームで動作します。</p>
+    <p>OpenTelemetryバックエンドを接続しない場合、トレースとメトリクスは自動的にno-op（何もしない）となり、パフォーマンスへの影響はありません。</p>
+    
+    <h2 id="依存関係" class="section"><a class="anchor-link left" href="#依存関係"><i class="icofont-laika link">&#xef71;</i></a>依存関係</h2>
+    <p>ldbc-connectorは<code>otel4s-core</code>（抽象API）のみに依存しています。実際にテレメトリデータを収集・送信するには、バックエンド実装を追加する必要があります。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> ++= </span><span class="type-name">Seq</span><span>(
+  </span><span class="comment">// ldbcコネクタ（otel4s-coreを含む）
+</span><span>  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.6.0&quot;</span><span>,
+
+  </span><span class="comment">// OpenTelemetry Java SDKバックエンド
+</span><span>  </span><span class="string-literal">&quot;org.typelevel&quot;</span><span>    %% </span><span class="string-literal">&quot;otel4s-oteljava&quot;</span><span>                           % </span><span class="string-literal">&quot;0.15.1&quot;</span><span>,
+  </span><span class="string-literal">&quot;io.opentelemetry&quot;</span><span>  % </span><span class="string-literal">&quot;opentelemetry-exporter-otlp&quot;</span><span>               % </span><span class="string-literal">&quot;1.59.0&quot;</span><span> % </span><span class="type-name">Runtime</span><span>,
+  </span><span class="string-literal">&quot;io.opentelemetry&quot;</span><span>  % </span><span class="string-literal">&quot;opentelemetry-sdk-extension-autoconfigure&quot;</span><span> % </span><span class="string-literal">&quot;1.59.0&quot;</span><span> % </span><span class="type-name">Runtime</span><span>,
+)</span></code></pre>
+    
+    <h2 id="セットアップ" class="section"><a class="anchor-link left" href="#セットアップ"><i class="icofont-laika link">&#xef71;</i></a>セットアップ</h2>
+    <p><code>Tracer[F]</code>と<code>Meter[F]</code>を<code>MySQLDataSource</code>に設定します。</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">io</span><span>.</span><span class="identifier">opentelemetry</span><span>.</span><span class="identifier">api</span><span>.</span><span class="type-name">GlobalOpenTelemetry</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">org</span><span>.</span><span class="identifier">typelevel</span><span>.</span><span class="identifier">otel4s</span><span>.</span><span class="identifier">oteljava</span><span>.</span><span class="type-name">OtelJava</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+
+</span><span class="keyword">object</span><span> </span><span class="type-name">Main</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">IOApp</span><span>.</span><span class="type-name">Simple</span><span>:
+
+  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">run</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">Unit</span><span>] =
+    </span><span class="keyword">val</span><span> </span><span class="identifier">resource</span><span> = </span><span class="keyword">for</span><span>
+      </span><span class="identifier">otel</span><span>   &lt;- </span><span class="type-name">Resource</span><span>
+                   .</span><span class="identifier">eval</span><span>(</span><span class="type-name">IO</span><span>.</span><span class="identifier">delay</span><span>(</span><span class="type-name">GlobalOpenTelemetry</span><span>.</span><span class="identifier">get</span><span>))
+                   .</span><span class="identifier">evalMap</span><span>(</span><span class="type-name">OtelJava</span><span>.</span><span class="identifier">forAsync</span><span>[</span><span class="type-name">IO</span><span>])
+      </span><span class="identifier">tracer</span><span> &lt;- </span><span class="type-name">Resource</span><span>.</span><span class="identifier">eval</span><span>(</span><span class="identifier">otel</span><span>.</span><span class="identifier">tracerProvider</span><span>.</span><span class="identifier">get</span><span>(</span><span class="string-literal">&quot;my-app&quot;</span><span>))
+      </span><span class="identifier">meter</span><span>  &lt;- </span><span class="type-name">Resource</span><span>.</span><span class="identifier">eval</span><span>(</span><span class="identifier">otel</span><span>.</span><span class="identifier">meterProvider</span><span>.</span><span class="identifier">get</span><span>(</span><span class="string-literal">&quot;my-app&quot;</span><span>))
+      </span><span class="identifier">datasource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+                     .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;127.0.0.1&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;user&quot;</span><span>)
+                     .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+                     .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;mydb&quot;</span><span>)
+                     .</span><span class="identifier">setTracer</span><span>(</span><span class="identifier">tracer</span><span>)
+                     .</span><span class="identifier">setMeter</span><span>(</span><span class="identifier">meter</span><span>)
+      </span><span class="identifier">connection</span><span> &lt;- </span><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>
+    </span><span class="keyword">yield</span><span> </span><span class="identifier">connection</span><span>
+
+    </span><span class="identifier">resource</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+      </span><span class="identifier">conn</span><span>.</span><span class="identifier">createStatement</span><span>().</span><span class="identifier">flatMap</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">executeQuery</span><span>(</span><span class="string-literal">&quot;SELECT 1&quot;</span><span>)).</span><span class="identifier">void</span><span>
+    }</span></code></pre>
+    <p>コネクションプーリング使用時は<code>meter</code>を<code>pooling</code>メソッドに渡します。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">pool</span><span> = </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](
+  </span><span class="identifier">config</span><span> = </span><span class="type-name">MySQLConfig</span><span>.</span><span class="identifier">default</span><span>
+    .</span><span class="identifier">setHost</span><span>(</span><span class="string-literal">&quot;127.0.0.1&quot;</span><span>)
+    .</span><span class="identifier">setPort</span><span>(</span><span class="number-literal">3306</span><span>)
+    .</span><span class="identifier">setUser</span><span>(</span><span class="string-literal">&quot;user&quot;</span><span>)
+    .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+    .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;mydb&quot;</span><span>),
+  </span><span class="identifier">meter</span><span>  = </span><span class="type-name">Some</span><span>(</span><span class="identifier">meter</span><span>),
+  </span><span class="identifier">tracer</span><span> = </span><span class="type-name">Some</span><span>(</span><span class="identifier">tracer</span><span>)
+)</span></code></pre>
+    
+    <h2 id="トレーシング" class="section"><a class="anchor-link left" href="#トレーシング"><i class="icofont-laika link">&#xef71;</i></a>トレーシング</h2>
+    
+    <h3 id="概要-1" class="section"><a class="anchor-link left" href="#概要-1"><i class="icofont-laika link">&#xef71;</i></a>概要</h3>
+    <p>ldbcは、データベース操作ごとにOpenTelemetryスパンを生成します。スパンは<code>exchange</code>機構を通じて作成され、MySQL プロトコルの直列性を保証する<code>Mutex</code>と連携しています。</p>
+    
+    <h3 id="スパン名" class="section"><a class="anchor-link left" href="#スパン名"><i class="icofont-laika link">&#xef71;</i></a>スパン名</h3>
+    <p>スパン名はOpenTelemetry Semantic Conventionsの優先順位に従って生成されます：</p>
+    <ol class="arabic">
+      <li><code>db.query.summary</code>が利用可能な場合（例: <code>SELECT users</code>）</li>
+      <li><code>{db.operation.name} {target}</code>（例: <code>SELECT users</code>）</li>
+      <li><code>{target}</code>のみ</li>
+      <li>フォールバック: <code>mysql</code></li>
+    </ol>
+    <p><code>TelemetryConfig</code>の<code>extractMetadataFromQueryText</code>が<code>true</code>（デフォルト）の場合、SQLからオペレーション名とテーブル名を自動抽出し、動的なスパン名を生成します。<code>false</code>の場合は<code>Execute Statement</code>のような固定のスパン名を使用します。</p>
+    <p>以下はldbcが生成する主なスパンの一覧です：</p>
+    <table>
+      <thead>
+        <tr>
+          <th>スパン名</th>
+          <th>説明</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>{operation} {table}</code></td>
+          <td><code>SQL文から動的に生成（例:</code>SELECT users<code>）</code></td>
+        </tr>
+        <tr>
+          <td><code>Execute Statement</code></td>
+          <td><code>固定スパン名モード時のStatement実行</code></td>
+        </tr>
+        <tr>
+          <td><code>Execute Prepared Statement</code></td>
+          <td><code>固定スパン名モード時のPreparedStatement実行</code></td>
+        </tr>
+        <tr>
+          <td><code>Execute Statement Batch</code></td>
+          <td><code>Statementのバッチ実行</code></td>
+        </tr>
+        <tr>
+          <td><code>Execute Prepared Statement Batch</code></td>
+          <td><code>PreparedStatementのバッチ実行</code></td>
+        </tr>
+        <tr>
+          <td><code>Callable Statement</code></td>
+          <td><code>CallableStatementの実行</code></td>
+        </tr>
+        <tr>
+          <td><code>Create Connection</code></td>
+          <td><code>コネクション確立</code></td>
+        </tr>
+        <tr>
+          <td><code>Close Connection</code></td>
+          <td><code>コネクション切断</code></td>
+        </tr>
+        <tr>
+          <td><code>Deallocate Prepared Statement</code></td>
+          <td><code>サーバー側PreparedStatementの解放</code></td>
+        </tr>
+        <tr>
+          <td><code>Commit</code></td>
+          <td><code>トランザクションコミット</code></td>
+        </tr>
+        <tr>
+          <td><code>Rollback</code></td>
+          <td><code>トランザクションロールバック</code></td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <h3 id="スパン属性" class="section"><a class="anchor-link left" href="#スパン属性"><i class="icofont-laika link">&#xef71;</i></a>スパン属性</h3>
+    <p>各スパンには以下の属性が付与されます：</p>
+    <table>
+      <thead>
+        <tr>
+          <th>属性</th>
+          <th>要求レベル</th>
+          <th>説明</th>
+          <th>値の例</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>db.system.name</code></td>
+          <td><code>Required</code></td>
+          <td><code>DBMS名</code></td>
+          <td><code>mysql</code></td>
+        </tr>
+        <tr>
+          <td><code>server.address</code></td>
+          <td><code>Recommended</code></td>
+          <td><code>ホスト名</code></td>
+          <td><code>127.0.0.1</code></td>
+        </tr>
+        <tr>
+          <td><code>server.port</code></td>
+          <td><code>Conditionally Required</code></td>
+          <td><code>ポート番号</code></td>
+          <td><code>3306</code></td>
+        </tr>
+        <tr>
+          <td><code>db.namespace</code></td>
+          <td><code>Conditionally Required</code></td>
+          <td><code>データベース名</code></td>
+          <td><code>mydb</code></td>
+        </tr>
+        <tr>
+          <td><code>db.query.text</code></td>
+          <td><code>Opt-In</code></td>
+          <td><code>実行されたSQL</code></td>
+          <td><code>SELECT * FROM users WHERE id = ?</code></td>
+        </tr>
+        <tr>
+          <td><code>db.collection.name</code></td>
+          <td><code>Conditionally Required</code></td>
+          <td><code>テーブル名</code></td>
+          <td><code>users</code></td>
+        </tr>
+        <tr>
+          <td><code>db.operation.name</code></td>
+          <td><code>Conditionally Required</code></td>
+          <td><code>操作名</code></td>
+          <td><code>SELECT</code></td>
+        </tr>
+        <tr>
+          <td><code>db.operation.batch.size</code></td>
+          <td><code>Conditionally Required</code></td>
+          <td><code>バッチサイズ（2以上）</code></td>
+          <td><code>10</code></td>
+        </tr>
+        <tr>
+          <td><code>db.mysql.thread_id</code></td>
+          <td>—</td>
+          <td><code>MySQLスレッドID</code></td>
+          <td><code>42</code></td>
+        </tr>
+        <tr>
+          <td><code>db.mysql.version</code></td>
+          <td>—</td>
+          <td><code>MySQLサーバーバージョン</code></td>
+          <td><code>8.0.32</code></td>
+        </tr>
+        <tr>
+          <td><code>error.type</code></td>
+          <td><code>Conditionally Required</code></td>
+          <td><code>エラー種別（失敗時のみ）</code></td>
+          <td><code>SQLException</code></td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <h3 id="エラー記録" class="section"><a class="anchor-link left" href="#エラー記録"><i class="icofont-laika link">&#xef71;</i></a>エラー記録</h3>
+    <p>データベース操作でエラーが発生した場合、スパンには以下が記録されます：</p>
+    <ul>
+      <li>スパンのステータスが<code>Error</code>に設定される</li>
+      <li><code>error.type</code>属性にエラーの型名が記録される</li>
+      <li><code>recordException</code>によりスタックトレースがスパンイベントとして記録される</li>
+      <li>MySQLからの<code>ERRPacket</code>の場合、エラーコードやSQLStateも属性として記録される</li>
+    </ul>
+    
+    <h3 id="telemetryconfig" class="section"><a class="anchor-link left" href="#telemetryconfig"><i class="icofont-laika link">&#xef71;</i></a>TelemetryConfig</h3>
+    <p><code>TelemetryConfig</code>を使用して、テレメトリの動作をカスタマイズできます。</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.</span><span class="identifier">telemetry</span><span>.</span><span class="type-name">TelemetryConfig</span><span>
+
+</span><span class="comment">// デフォルト設定（すべて有効）
+</span><span class="keyword">val</span><span> </span><span class="identifier">default</span><span> = </span><span class="type-name">TelemetryConfig</span><span>.</span><span class="identifier">default</span><span>
+
+</span><span class="comment">// SQLからのメタデータ抽出を無効にする（固定スパン名を使用）
+</span><span class="keyword">val</span><span> </span><span class="identifier">fixed</span><span> = </span><span class="type-name">TelemetryConfig</span><span>.</span><span class="identifier">withoutQueryTextExtraction</span><span>
+
+</span><span class="comment">// 個別設定
+</span><span class="keyword">val</span><span> </span><span class="identifier">custom</span><span> = </span><span class="type-name">TelemetryConfig</span><span>.</span><span class="identifier">default</span><span>
+  .</span><span class="identifier">withoutQueryTextExtraction</span><span>      </span><span class="comment">// 固定スパン名を使用
+</span><span>  .</span><span class="identifier">withoutSanitization</span><span>             </span><span class="comment">// クエリテキストのサニタイズを無効化
+</span><span>  .</span><span class="identifier">withoutInClauseCollapsing</span><span>       </span><span class="comment">// IN句の折りたたみを無効化</span></code></pre>
+    <table>
+      <thead>
+        <tr>
+          <th>設定</th>
+          <th>デフォルト</th>
+          <th>説明</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>extractMetadataFromQueryText</code></td>
+          <td><code>true</code></td>
+          <td><code>SQLからオペレーション名・テーブル名を抽出してスパン名を動的に生成する</code></td>
+        </tr>
+        <tr>
+          <td><code>sanitizeNonParameterizedQueries</code></td>
+          <td><code>true</code></td>
+          <td><code>パラメータ化されていないクエリのリテラル値を</code>?<code>に置換する</code></td>
+        </tr>
+        <tr>
+          <td><code>collapseInClauses</code></td>
+          <td><code>true</code></td>
+          <td><code>IN (?, ?, ?)</code>を<code>IN (?)</code>に折りたたむ</td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <h4 id="クエリのサニタイズ" class="section"><a class="anchor-link left" href="#クエリのサニタイズ"><i class="icofont-laika link">&#xef71;</i></a>クエリのサニタイズ</h4>
+    <p><code>sanitizeNonParameterizedQueries</code>が有効な場合、<code>db.query.text</code>属性に記録されるSQLから文字列リテラル、数値、NULL等が<code>?</code>に置換されます。これにより、センシティブなデータがトレースに含まれることを防ぎます。</p>
+    <pre><code>-- 元のSQL
+SELECT * FROM users WHERE name = &#39;Alice&#39; AND age &gt; 25
+
+-- サニタイズ後（db.query.text に記録される値）
+SELECT * FROM users WHERE name = ? AND age &gt; ?</code></pre>
+    
+    <h4 id="in句の折りたたみ" class="section"><a class="anchor-link left" href="#in句の折りたたみ"><i class="icofont-laika link">&#xef71;</i></a>IN句の折りたたみ</h4>
+    <p><code>collapseInClauses</code>が有効な場合、IN句のパラメータ数が可変でもスパンのカーディナリティを抑えます。</p>
+    <pre><code>-- 元のSQL
+SELECT * FROM users WHERE id IN (?, ?, ?, ?)
+
+-- 折りたたみ後
+SELECT * FROM users WHERE id IN (?)</code></pre>
+    
+    <h2 id="メトリクス" class="section"><a class="anchor-link left" href="#メトリクス"><i class="icofont-laika link">&#xef71;</i></a>メトリクス</h2>
+    
+    <h3 id="概要-2" class="section"><a class="anchor-link left" href="#概要-2"><i class="icofont-laika link">&#xef71;</i></a>概要</h3>
+    <p>ldbcは<a href="https://opentelemetry.io/docs/specs/semconv/db/database-metrics/">OpenTelemetry Database Metrics Semantic Conventions</a>に準拠したメトリクスを収集します。メトリクスは<strong>オペレーションメトリクス</strong>と<strong>コネクションプールメトリクス</strong>の2種類に分かれます。</p>
+    
+    <h3 id="オペレーションメトリクス" class="section"><a class="anchor-link left" href="#オペレーションメトリクス"><i class="icofont-laika link">&#xef71;</i></a>オペレーションメトリクス</h3>
+    <p>全ての<code>Statement</code>、<code>PreparedStatement</code>、<code>CallableStatement</code>の実行で自動的に記録されます。</p>
+    
+    <h4 id="db-client-operation-duration" class="section"><a class="anchor-link left" href="#db-client-operation-duration"><i class="icofont-laika link">&#xef71;</i></a>db.client.operation.duration</h4>
+    <table>
+      <thead>
+        <tr>
+          <th>項目</th>
+          <th>内容</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Instrument型</strong></td>
+          <td><code>Histogram</code></td>
+        </tr>
+        <tr>
+          <td><strong>単位</strong></td>
+          <td><code>s（秒）</code></td>
+        </tr>
+        <tr>
+          <td><strong>安定性</strong></td>
+          <td><code>Stable</code></td>
+        </tr>
+        <tr>
+          <td><strong>説明</strong></td>
+          <td><code>データベースクライアント操作の所要時間</code></td>
+        </tr>
+        <tr>
+          <td><strong>バケット境界</strong></td>
+          <td><code>[0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5, 10]</code></td>
+        </tr>
+      </tbody>
+    </table>
+    <p><code>executeQuery</code>、<code>executeUpdate</code>、<code>executeBatch</code>のすべてで記録されます。キャンセルされた操作は記録されません。</p>
+    
+    <h4 id="db-client-response-returned_rows" class="section"><a class="anchor-link left" href="#db-client-response-returned_rows"><i class="icofont-laika link">&#xef71;</i></a>db.client.response.returned_rows</h4>
+    <table>
+      <thead>
+        <tr>
+          <th>項目</th>
+          <th>内容</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Instrument型</strong></td>
+          <td><code>Histogram</code></td>
+        </tr>
+        <tr>
+          <td><strong>単位</strong></td>
+          <td><code>{row}</code></td>
+        </tr>
+        <tr>
+          <td><strong>安定性</strong></td>
+          <td><code>Development</code></td>
+        </tr>
+        <tr>
+          <td><strong>説明</strong></td>
+          <td><code>クエリによって返された行数</code></td>
+        </tr>
+        <tr>
+          <td><strong>バケット境界</strong></td>
+          <td><code>[1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000]</code></td>
+        </tr>
+      </tbody>
+    </table>
+    <p><code>executeQuery</code>系のメソッドでのみ記録されます。<code>executeUpdate</code>や<code>executeBatch</code>では記録されません。</p>
+    <div class="callout warning">
+      <i class="icofont-laika warning">&#xf026;</i>
+      <p><strong>カーソルフェッチ使用時の制限事項</strong></p>
+      <p><code>useCursorFetch=true</code>の場合、<code>StreamingResultSet</code>が使用され行は<code>fetchSize</code>単位で逐次取得されます。この場合、<code>db.client.response.returned_rows</code>には初回フェッチ分の行数のみが記録されます。<code>next()</code>呼び出しで後続フェッチされた行は含まれません。</p>
+      <p>これはOpenTelemetry Semantic Conventionsがストリーミング/カーソルベースのResultSetに対する明確なガイダンスを提供していないことに起因します。MySQL Connector/JおよびOpenTelemetry公式JDBCインストルメンテーションはいずれも<code>db.client.response.returned_rows</code>自体を未実装であり、業界全体で未解決の課題です。</p>
+      <p><code>useCursorFetch=false</code>（デフォルト）の場合は全行が一度に取得されるため、正確な値が記録されます。</p>
+    </div>
+    
+    <h4 id="メトリクス属性" class="section"><a class="anchor-link left" href="#メトリクス属性"><i class="icofont-laika link">&#xef71;</i></a>メトリクス属性</h4>
+    <p>オペレーションメトリクスには以下の低カーディナリティ属性が付与されます。トレース属性とは異なり、メトリクスの集約コストを抑えるため高カーディナリティな属性（<code>db.query.text</code>、<code>db.mysql.thread_id</code>等）は除外されています。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>属性</th>
+          <th>説明</th>
+          <th>値の例</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>db.system.name</code></td>
+          <td><code>DBMS名</code></td>
+          <td><code>mysql</code></td>
+        </tr>
+        <tr>
+          <td><code>server.address</code></td>
+          <td><code>ホスト名</code></td>
+          <td><code>127.0.0.1</code></td>
+        </tr>
+        <tr>
+          <td><code>server.port</code></td>
+          <td><code>ポート番号</code></td>
+          <td><code>3306</code></td>
+        </tr>
+        <tr>
+          <td><code>db.namespace</code></td>
+          <td><code>データベース名</code></td>
+          <td><code>mydb</code></td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <h3 id="コネクションプールメトリクス" class="section"><a class="anchor-link left" href="#コネクションプールメトリクス"><i class="icofont-laika link">&#xef71;</i></a>コネクションプールメトリクス</h3>
+    <p>コネクションプーリング（<code>PooledDataSource</code>）使用時にのみ記録されます。すべてのメトリクスは<code>db.client.connection.pool.name</code>属性を持ちます。</p>
+    
+    <h4 id="histogram-メトリクス" class="section"><a class="anchor-link left" href="#histogram-メトリクス"><i class="icofont-laika link">&#xef71;</i></a>Histogram メトリクス</h4>
+    <table>
+      <thead>
+        <tr>
+          <th>メトリクス名</th>
+          <th>単位</th>
+          <th>説明</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>db.client.connection.create_time</code></td>
+          <td><code>s</code></td>
+          <td><code>新しい物理コネクションの作成にかかった時間</code></td>
+        </tr>
+        <tr>
+          <td><code>db.client.connection.wait_time</code></td>
+          <td><code>s</code></td>
+          <td><code>プールからコネクションを取得するまでの待ち時間</code></td>
+        </tr>
+        <tr>
+          <td><code>db.client.connection.use_time</code></td>
+          <td><code>s</code></td>
+          <td><code>コネクションが借りられてから返却されるまでの時間</code></td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <h4 id="counter-メトリクス" class="section"><a class="anchor-link left" href="#counter-メトリクス"><i class="icofont-laika link">&#xef71;</i></a>Counter メトリクス</h4>
+    <table>
+      <thead>
+        <tr>
+          <th>メトリクス名</th>
+          <th>単位</th>
+          <th>説明</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>db.client.connection.timeouts</code></td>
+          <td><code>{timeout}</code></td>
+          <td><code>コネクション取得のタイムアウト発生回数</code></td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <h4 id="ゲージメトリクス-observable" class="section"><a class="anchor-link left" href="#ゲージメトリクス-observable"><i class="icofont-laika link">&#xef71;</i></a>ゲージメトリクス（Observable）</h4>
+    <p>以下のメトリクスはOTelの<code>BatchCallback</code>を通じてエクスポート時に報告されます。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>メトリクス名</th>
+          <th>単位</th>
+          <th>説明</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>db.client.connection.count</code></td>
+          <td><code>{connection}</code></td>
+          <td><code>現在のコネクション数（</code>state<code>属性:</code>idle<code>/</code>used<code>）</code></td>
+        </tr>
+        <tr>
+          <td><code>db.client.connection.idle.max</code></td>
+          <td><code>{connection}</code></td>
+          <td><code>アイドルコネクションの最大許容数</code></td>
+        </tr>
+        <tr>
+          <td><code>db.client.connection.idle.min</code></td>
+          <td><code>{connection}</code></td>
+          <td><code>アイドルコネクションの最小維持数</code></td>
+        </tr>
+        <tr>
+          <td><code>db.client.connection.max</code></td>
+          <td><code>{connection}</code></td>
+          <td><code>コネクションの最大許容数</code></td>
+        </tr>
+        <tr>
+          <td><code>db.client.connection.pending_requests</code></td>
+          <td><code>{request}</code></td>
+          <td><code>コネクション取得待ちのリクエスト数</code></td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <h2 id="トレースとメトリクスの違い" class="section"><a class="anchor-link left" href="#トレースとメトリクスの違い"><i class="icofont-laika link">&#xef71;</i></a>トレースとメトリクスの違い</h2>
+    <p>ldbcではトレースとメトリクスで異なる属性を使用しています。これはOpenTelemetryのベストプラクティスに従い、メトリクスのカーディナリティを適切に管理するためです。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>属性</th>
+          <th>トレース</th>
+          <th>メトリクス</th>
+          <th>理由</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>db.system.name</code></td>
+          <td>✅</td>
+          <td>✅</td>
+          <td><code>低カーディナリティ</code></td>
+        </tr>
+        <tr>
+          <td><code>server.address</code></td>
+          <td>✅</td>
+          <td>✅</td>
+          <td><code>低カーディナリティ</code></td>
+        </tr>
+        <tr>
+          <td><code>server.port</code></td>
+          <td>✅</td>
+          <td>✅</td>
+          <td><code>低カーディナリティ</code></td>
+        </tr>
+        <tr>
+          <td><code>db.namespace</code></td>
+          <td>✅</td>
+          <td>✅</td>
+          <td><code>低カーディナリティ</code></td>
+        </tr>
+        <tr>
+          <td><code>db.query.text</code></td>
+          <td>✅</td>
+          <td>❌</td>
+          <td><code>クエリごとに異なる高カーディナリティ</code></td>
+        </tr>
+        <tr>
+          <td><code>db.collection.name</code></td>
+          <td>✅</td>
+          <td>❌</td>
+          <td><code>テーブル名はスパン属性として十分</code></td>
+        </tr>
+        <tr>
+          <td><code>db.mysql.thread_id</code></td>
+          <td>✅</td>
+          <td>❌</td>
+          <td><code>コネクションごとに変動する</code></td>
+        </tr>
+        <tr>
+          <td><code>db.mysql.version</code></td>
+          <td>✅</td>
+          <td>❌</td>
+          <td><code>バージョン情報はスパンで十分</code></td>
+        </tr>
+        <tr>
+          <td><code>error.type</code></td>
+          <td>✅</td>
+          <td>❌</td>
+          <td><code>エラーの詳細はスパンで追跡</code></td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <h2 id="tracer-meterの選択的使用" class="section"><a class="anchor-link left" href="#tracer-meterの選択的使用"><i class="icofont-laika link">&#xef71;</i></a>Tracer/Meterの選択的使用</h2>
+    <p><code>Tracer</code>と<code>Meter</code>は独立して使用できます。</p>
+    <pre><code class="nohighlight"><span class="comment">// トレースのみ（メトリクスなし）
+</span><span class="keyword">val</span><span> </span><span class="identifier">ds</span><span> = </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;user&quot;</span><span>)
+  .</span><span class="identifier">setTracer</span><span>(</span><span class="identifier">tracer</span><span>)
+
+</span><span class="comment">// メトリクスのみ（トレースなし）
+</span><span class="keyword">val</span><span> </span><span class="identifier">ds</span><span> = </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;user&quot;</span><span>)
+  .</span><span class="identifier">setMeter</span><span>(</span><span class="identifier">meter</span><span>)
+
+</span><span class="comment">// 両方
+</span><span class="keyword">val</span><span> </span><span class="identifier">ds</span><span> = </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;user&quot;</span><span>)
+  .</span><span class="identifier">setTracer</span><span>(</span><span class="identifier">tracer</span><span>)
+  .</span><span class="identifier">setMeter</span><span>(</span><span class="identifier">meter</span><span>)
+
+</span><span class="comment">// どちらも設定しない（no-op、パフォーマンス影響なし）
+</span><span class="keyword">val</span><span> </span><span class="identifier">ds</span><span> = </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;user&quot;</span><span>)</span></code></pre>
+
+    
+<hr class="footer-rule"/>
+<footer>
+  ldbc is a <a href="https://typelevel.org/">Typelevel</a> project distributed under the <a href="https://img.shields.io/badge/license-MIT-green">MIT</a> license.
+</footer>
+
+
+  </main>
+
+</div>
+
+</body>
+
+</html>

@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.5</a>
+      <a class="text-link menu-toggle" href="#">Version 0.6</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -155,6 +155,7 @@
     <li class="level2 nav-leaf"><a href="../reference/Connector.html">Connector</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Performance.html">Performance</a></li>
     <li class="level2 nav-leaf"><a href="../reference/AuthenticationPlugin.html">Authentication Plugin</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Telemetry.html">Telemetry</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Pooling.html">Connection pooling</a></li>
   </ul>
   
@@ -181,7 +182,8 @@
     <li class="level1 nav-leaf"><a href="#string-column-definitions">String Column Definitions</a></li>
     <li class="level1 nav-leaf"><a href="#binary-column-definitions">Binary Column Definitions</a></li>
     <li class="level1 nav-leaf"><a href="#date-and-time-column-definitions">Date and Time Column Definitions</a></li>
-    <li class="level1 nav-leaf"><a href="#enum-type-and-special-data-types">ENUM Type and Special Data Types</a></li>
+    <li class="level1 nav-node"><a href="#enum-type-and-special-data-types">ENUM Type and Special Data Types</a></li>
+    <li class="level2 nav-leaf"><a href="#vector-type">VECTOR Type</a></li>
     <li class="level1 nav-leaf"><a href="#setting-default-values">Setting Default Values</a></li>
     <li class="level1 nav-node"><a href="#primary-keys-foreign-keys-and-indexes">Primary Keys, Foreign Keys, and Indexes</a></li>
     <li class="level2 nav-leaf"><a href="#single-column-primary-key">Single-Column Primary Key</a></li>
@@ -214,7 +216,7 @@
     
     <h2 id="preparation" class="section"><a class="anchor-link left" href="#preparation"><i class="icofont-laika link">&#xef71;</i></a>Preparation</h2>
     <p>You need to set up the following dependency in your project:</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">//&gt; using dep &quot;io.github.takapi327::ldbc-schema:0.5.3&quot;</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">//&gt; using dep &quot;io.github.takapi327::ldbc-schema:0.6.0&quot;</span></code></pre>
     <p>The following code examples assume these imports:</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">schema</span><span>.*</span></code></pre>
     
@@ -349,6 +351,16 @@
     <p>Other special data types:</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">def</span><span> </span><span class="declaration-name">isActive</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Boolean</span><span>] = </span><span class="identifier">boolean</span><span>() </span><span class="comment">// BOOLEAN type
 </span><span class="keyword">def</span><span> </span><span class="declaration-name">uniqueId</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">BigInt</span><span>] = </span><span class="identifier">serial</span><span>() </span><span class="comment">// SERIAL type (auto-increment BIGINT UNSIGNED)</span></code></pre>
+    
+    <h3 id="vector-type" class="section"><a class="anchor-link left" href="#vector-type"><i class="icofont-laika link">&#xef71;</i></a>VECTOR Type</h3>
+    <p>The <code>VECTOR</code> type is supported for MySQL 9.0 and later. It can be used for storing AI embedding vectors and vector search use cases.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">class</span><span> </span><span class="type-name">EmbeddingTable</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">Embedding</span><span>](</span><span class="string-literal">&quot;embeddings&quot;</span><span>):
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">id</span><span>:        </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>]         = </span><span class="identifier">bigint</span><span>().</span><span class="identifier">autoIncrement</span><span>.</span><span class="identifier">primaryKey</span><span>
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">embedding</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Array</span><span>[</span><span class="type-name">Float</span><span>]] = </span><span class="identifier">column</span><span>[</span><span class="type-name">Array</span><span>[</span><span class="type-name">Float</span><span>]](</span><span class="string-literal">&quot;embedding&quot;</span><span>, </span><span class="type-name">VECTOR</span><span>(</span><span class="number-literal">1536</span><span>))
+
+  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> * = (</span><span class="identifier">id</span><span> *: </span><span class="identifier">embedding</span><span>).</span><span class="identifier">to</span><span>[</span><span class="type-name">Embedding</span><span>]</span></code></pre>
+    <p>The dimension can also be omitted:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">def</span><span> </span><span class="declaration-name">embedding</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Array</span><span>[</span><span class="type-name">Float</span><span>]] = </span><span class="identifier">column</span><span>[</span><span class="type-name">Array</span><span>[</span><span class="type-name">Float</span><span>]](</span><span class="string-literal">&quot;embedding&quot;</span><span>, </span><span class="type-name">VECTOR</span><span>())</span></code></pre>
     
     <h2 id="setting-default-values" class="section"><a class="anchor-link left" href="#setting-default-values"><i class="icofont-laika link">&#xef71;</i></a>Setting Default Values</h2>
     <p>How to set default values for columns:</p>

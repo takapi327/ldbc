@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.5</a>
+      <a class="text-link menu-toggle" href="#">Version 0.6</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../older-versions.html">Older Versions</a></li>
@@ -155,6 +155,7 @@
     <li class="level2 nav-leaf"><a href="reference/Connector.html">コネクタ</a></li>
     <li class="level2 nav-leaf"><a href="reference/Performance.html">パフォーマンス</a></li>
     <li class="level2 nav-leaf"><a href="reference/AuthenticationPlugin.html">認証プラグイン</a></li>
+    <li class="level2 nav-leaf"><a href="reference/Telemetry.html">テレメトリ</a></li>
     <li class="level2 nav-leaf"><a href="reference/Pooling.html">コネクションプーリング</a></li>
   </ul>
   
@@ -170,15 +171,15 @@
   <ul class="nav-list">
     <li class="level1 nav-leaf"><a href="#パッケージ">パッケージ</a></li>
     <li class="level1 nav-node"><a href="#主要な変更点">🎯 主要な変更点</a></li>
-    <li class="level2 nav-leaf"><a href="#_1-zioエコシステムサポートの追加">1. ZIOエコシステムサポートの追加</a></li>
-    <li class="level2 nav-leaf"><a href="#_2-認証プラグインの強化">2. 認証プラグインの強化</a></li>
-    <li class="level2 nav-leaf"><a href="#_3-ldbc-hikariの廃止">3. ldbc-hikariの廃止</a></li>
-    <li class="level2 nav-leaf"><a href="#_4-セキュリティ強化">4. セキュリティ強化</a></li>
-    <li class="level2 nav-leaf"><a href="#_5-パフォーマンス最適化">5. パフォーマンス最適化</a></li>
-    <li class="level2 nav-leaf"><a href="#_6-api-の改善">6. API の改善</a></li>
+    <li class="level2 nav-leaf"><a href="#_1-opentelemetry-テレメトリの大幅拡充">1. OpenTelemetry テレメトリの大幅拡充</a></li>
+    <li class="level2 nav-leaf"><a href="#_2-mysql-9-x-サポートの強化">2. MySQL 9.x サポートの強化</a></li>
+    <li class="level2 nav-leaf"><a href="#_3-スキーマ-vector-型の追加">3. スキーマ: VECTOR 型の追加</a></li>
+    <li class="level2 nav-leaf"><a href="#_4-エラートレーシングの改善">4. エラートレーシングの改善</a></li>
+    <li class="level2 nav-leaf"><a href="#_5-サンプル-grafana-ダッシュボード">5. サンプル Grafana ダッシュボード</a></li>
     <li class="level1 nav-node"><a href="#移行ガイド">移行ガイド</a></li>
-    <li class="level2 nav-leaf"><a href="#ldbc-hikariからの移行">ldbc-hikariからの移行</a></li>
-    <li class="level2 nav-leaf"><a href="#zio統合の追加">ZIO統合の追加</a></li>
+    <li class="level2 nav-leaf"><a href="#telemetryattribute-の定数名を更新する">TelemetryAttribute の定数名を更新する</a></li>
+    <li class="level2 nav-leaf"><a href="#otel-メトリクスを有効化する">OTel メトリクスを有効化する</a></li>
+    <li class="level2 nav-leaf"><a href="#テレメトリ設定をカスタマイズする">テレメトリ設定をカスタマイズする</a></li>
     <li class="level1 nav-leaf"><a href="#まとめ">まとめ</a></li>
   </ul>
 
@@ -188,63 +189,9 @@
 
   <main class="content">
 
-    <h1 id="マイグレーションノート-0-4-xから0-5-xへの移行" class="title">マイグレーションノート (0.4.xから0.5.xへの移行)</h1>
+    <h1 id="マイグレーションノート-0-5-xから0-6-xへの移行" class="title">マイグレーションノート (0.5.xから0.6.xへの移行)</h1>
     
     <h2 id="パッケージ" class="section"><a class="anchor-link left" href="#パッケージ"><i class="icofont-laika link">&#xef71;</i></a>パッケージ</h2>
-    <p><strong>新しく追加されたパッケージ</strong></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Module / Platform</th>
-          <th>JVM</th>
-          <th>Scala Native</th>
-          <th>Scala.js</th>
-          <th>Scaladoc</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><code>ldbc-zio-interop</code></td>
-          <td>✅</td>
-          <td>❌</td>
-          <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-zio-interop_3"><img src="https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
-        </tr>
-        <tr>
-          <td><code>ldbc-authentication-plugin</code></td>
-          <td>✅</td>
-          <td>✅</td>
-          <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-authentication-plugin_3"><img src="https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
-        </tr>
-        <tr>
-          <td><code>ldbc-aws-authentication-plugin</code></td>
-          <td>✅</td>
-          <td>✅</td>
-          <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-aws-authentication-plugin_3"><img src="https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
-        </tr>
-      </tbody>
-    </table>
-    <p><strong>廃止されたパッケージ</strong></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Module / Platform</th>
-          <th>JVM</th>
-          <th>Scala Native</th>
-          <th>Scala.js</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><code>ldbc-hikari</code></td>
-          <td>✅</td>
-          <td>❌</td>
-          <td>❌</td>
-        </tr>
-      </tbody>
-    </table>
     <p><strong>全てのパッケージ</strong></p>
     <table>
       <thead>
@@ -262,304 +209,640 @@
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-sql_3"><img src="https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-sql_3"><img src="https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-core</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-core_3"><img src="https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-core_3"><img src="https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-connector</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-connector_3"><img src="https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-connector_3"><img src="https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>jdbc-connector</code></td>
           <td>✅</td>
           <td>❌</td>
           <td>❌</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/jdbc-connector_3"><img src="https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/jdbc-connector_3"><img src="https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-dsl</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3"><img src="https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3"><img src="https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-statement</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-statement_3"><img src="https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-statement_3"><img src="https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-query-builder</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-query-builder_3"><img src="https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-query-builder_3"><img src="https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-schema</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-schema_3"><img src="https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-schema_3"><img src="https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-codegen</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-codegen_3"><img src="https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-codegen_3"><img src="https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-plugin</code></td>
           <td>✅</td>
           <td>❌</td>
           <td>❌</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-plugin_2.12_1.0"><img src="https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-plugin_2.12_1.0"><img src="https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-zio-interop</code></td>
           <td>✅</td>
           <td>❌</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-zio-interop_3"><img src="https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-zio-interop_3"><img src="https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-authentication-plugin</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-authentication-plugin_3"><img src="https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-authentication-plugin_3"><img src="https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-aws-authentication-plugin</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-aws-authentication-plugin_3"><img src="https://img.shields.io/badge/javadoc-0.5.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-aws-authentication-plugin_3"><img src="https://img.shields.io/badge/javadoc-0.6.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
       </tbody>
     </table>
     
     <h2 id="主要な変更点" class="section"><a class="anchor-link left" href="#主要な変更点"><i class="icofont-laika link">&#xef71;</i></a>🎯 主要な変更点</h2>
     
-    <h3 id="_1-zioエコシステムサポートの追加" class="section"><a class="anchor-link left" href="#_1-zioエコシステムサポートの追加"><i class="icofont-laika link">&#xef71;</i></a>1. ZIOエコシステムサポートの追加</h3>
-    <p>0.5.0から、ldbcでZIOをより簡単に使用できるようになりました。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-zio-interop&quot;</span><span> % </span><span class="string-literal">&quot;0.5.0&quot;</span></code></pre>
-    <p><strong>使用例:</strong></p>
-    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">zio</span><span>.*
-</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">zio</span><span>.</span><span class="identifier">interop</span><span>.*
-</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
-</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.*
-
-</span><span class="keyword">object</span><span> </span><span class="type-name">Main</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">ZIOAppDefault</span><span>:
-  
-  </span><span class="keyword">private</span><span> </span><span class="keyword">val</span><span> </span><span class="identifier">datasource</span><span> =
-    </span><span class="type-name">MySQLDataSource</span><span>
-      .</span><span class="identifier">build</span><span>[</span><span class="type-name">Task</span><span>](
-        </span><span class="identifier">host</span><span> = </span><span class="string-literal">&quot;127.0.0.1&quot;</span><span>,
-        </span><span class="identifier">port</span><span> = </span><span class="number-literal">3306</span><span>,
-        </span><span class="identifier">user</span><span> = </span><span class="string-literal">&quot;ldbc&quot;</span><span>
-      )
-      .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
-      .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;world&quot;</span><span>)
-
-  </span><span class="keyword">private</span><span> </span><span class="keyword">val</span><span> </span><span class="identifier">program</span><span> =
-    </span><span class="keyword">for</span><span>
-      </span><span class="identifier">connection</span><span> &lt;- </span><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>
-      </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromConnection</span><span>(</span><span class="identifier">connection</span><span>)
-      </span><span class="identifier">result</span><span>     &lt;- </span><span class="string-literal">sql&quot;SELECT 1&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">Int</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
-    </span><span class="keyword">yield</span><span> </span><span class="identifier">result</span><span>
-
-  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">run</span><span> = </span><span class="identifier">program</span></code></pre>
+    <h3 id="_1-opentelemetry-テレメトリの大幅拡充" class="section"><a class="anchor-link left" href="#_1-opentelemetry-テレメトリの大幅拡充"><i class="icofont-laika link">&#xef71;</i></a>1. OpenTelemetry テレメトリの大幅拡充</h3>
+    <p>0.6.0 では OpenTelemetry Semantic Conventions v1.39.0 に準拠したテレメトリサポートが大幅に強化されました。</p>
     
-    <h3 id="_2-認証プラグインの強化" class="section"><a class="anchor-link left" href="#_2-認証プラグインの強化"><i class="icofont-laika link">&#xef71;</i></a>2. 認証プラグインの強化</h3>
-    <p>新しい認証プラグインモジュールが追加されました。これらのプラグインはPure Scala3で実装され、全てのプラットフォーム（JVM、JS、Native）で利用可能です。</p>
-    
-    <h4 id="mysql-clear-password認証" class="section"><a class="anchor-link left" href="#mysql-clear-password認証"><i class="icofont-laika link">&#xef71;</i></a>MySQL Clear Password認証</h4>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-authentication-plugin&quot;</span><span> % </span><span class="string-literal">&quot;0.5.0&quot;</span></code></pre>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
-</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">authentication</span><span>.</span><span class="identifier">plugin</span><span>.*
+    <h4 id="telemetryconfig-の追加" class="section"><a class="anchor-link left" href="#telemetryconfig-の追加"><i class="icofont-laika link">&#xef71;</i></a>TelemetryConfig の追加</h4>
+    <p>テレメトリの動作を細かく制御できる <code>TelemetryConfig</code> が追加されました。</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.</span><span class="identifier">telemetry</span><span>.</span><span class="type-name">TelemetryConfig</span><span>
 
-</span><span class="keyword">val</span><span> </span><span class="identifier">datasource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
-  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](
-    </span><span class="identifier">host</span><span> = </span><span class="string-literal">&quot;localhost&quot;</span><span>,
-    </span><span class="identifier">port</span><span> = </span><span class="number-literal">3306</span><span>,
-    </span><span class="identifier">user</span><span> = </span><span class="string-literal">&quot;cleartext-user&quot;</span><span>
-  )
-  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;plaintext-password&quot;</span><span>)
-  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;mydb&quot;</span><span>)
-  .</span><span class="identifier">setDefaultAuthenticationPlugin</span><span>(</span><span class="type-name">MysqlClearPasswordPlugin</span><span>)</span></code></pre>
+</span><span class="comment">// デフォルト設定（仕様準拠）
+</span><span class="keyword">val</span><span> </span><span class="identifier">config</span><span> = </span><span class="type-name">TelemetryConfig</span><span>.</span><span class="identifier">default</span><span>
+
+</span><span class="comment">// クエリサマリー生成を無効化
+</span><span class="keyword">val</span><span> </span><span class="identifier">noSummaryConfig</span><span> = </span><span class="type-name">TelemetryConfig</span><span>.</span><span class="identifier">withoutQueryTextExtraction</span><span>
+
+</span><span class="comment">// 個別に設定を変更
+</span><span class="keyword">val</span><span> </span><span class="identifier">customConfig</span><span> = </span><span class="type-name">TelemetryConfig</span><span>.</span><span class="identifier">default</span><span>
+  .</span><span class="identifier">withoutQueryTextExtraction</span><span>   </span><span class="comment">// db.query.summary の自動生成を無効化
+</span><span>  .</span><span class="identifier">withoutSanitization</span><span>          </span><span class="comment">// クエリのサニタイズを無効化（機密データ露出に注意）
+</span><span>  .</span><span class="identifier">withoutInClauseCollapsing</span><span>    </span><span class="comment">// IN句の圧縮を無効化</span></code></pre>
+    <table>
+      <thead>
+        <tr>
+          <th>オプション</th>
+          <th>デフォルト</th>
+          <th>説明</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>extractMetadataFromQueryText</code></td>
+          <td><code>true</code></td>
+          <td>クエリテキストから <code>db.query.summary</code> を生成してスパン名に使用する</td>
+        </tr>
+        <tr>
+          <td><code>sanitizeNonParameterizedQueries</code></td>
+          <td><code>true</code></td>
+          <td>非パラメータ化クエリのリテラルを <code>?</code> に置換する（仕様で必須）</td>
+        </tr>
+        <tr>
+          <td><code>collapseInClauses</code></td>
+          <td><code>true</code></td>
+          <td><code>IN (?, ?, ?)</code> を <code>IN (?)</code> に圧縮してカーディナリティを抑制する</td>
+        </tr>
+      </tbody>
+    </table>
     
-    <h4 id="aws-aurora-iam認証" class="section"><a class="anchor-link left" href="#aws-aurora-iam認証"><i class="icofont-laika link">&#xef71;</i></a>AWS Aurora IAM認証</h4>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-aws-authentication-plugin&quot;</span><span> % </span><span class="string-literal">&quot;0.5.0&quot;</span></code></pre>
-    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">amazon</span><span>.</span><span class="identifier">plugin</span><span>.</span><span class="type-name">AwsIamAuthenticationPlugin</span><span>
+    <h4 id="databasemetrics-と-meter-の追加" class="section"><a class="anchor-link left" href="#databasemetrics-と-meter-の追加"><i class="icofont-laika link">&#xef71;</i></a>DatabaseMetrics と Meter の追加</h4>
+    <p>接続プールのメトリクス（待機時間・使用時間・タイムアウト件数）を OpenTelemetry の <code>Meter</code> 経由で記録できるようになりました。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">org</span><span>.</span><span class="identifier">typelevel</span><span>.</span><span class="identifier">otel4s</span><span>.</span><span class="identifier">metrics</span><span>.</span><span class="type-name">Meter</span><span>
 </span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
 
-</span><span class="keyword">val</span><span> </span><span class="identifier">hostname</span><span> = </span><span class="string-literal">&quot;aurora-instance.cluster-xxx.region.rds.amazonaws.com&quot;</span><span>
-</span><span class="keyword">val</span><span> </span><span class="identifier">username</span><span> = </span><span class="string-literal">&quot;iam-user&quot;</span><span>
-</span><span class="keyword">val</span><span> </span><span class="identifier">config</span><span> = </span><span class="type-name">MySQLConfig</span><span>.</span><span class="identifier">default</span><span>
-  .</span><span class="identifier">setHost</span><span>(</span><span class="identifier">hostname</span><span>)
-  .</span><span class="identifier">setUser</span><span>(</span><span class="identifier">username</span><span>)
-  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;mydb&quot;</span><span>)
-  .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)  </span><span class="comment">// IAM認証にはSSLが必要
-</span><span>
-</span><span class="keyword">val</span><span> </span><span class="identifier">plugin</span><span> = </span><span class="type-name">AwsIamAuthenticationPlugin</span><span>.</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;ap-northeast-1&quot;</span><span>, </span><span class="identifier">hostname</span><span>, </span><span class="identifier">username</span><span>)
+</span><span class="comment">// Meter を注入してプールメトリクスを有効化
+</span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](
+  </span><span class="identifier">config</span><span>  = </span><span class="identifier">mysqlConfig</span><span>,
+  </span><span class="identifier">meter</span><span>   = </span><span class="type-name">Some</span><span>(</span><span class="identifier">summon</span><span>[</span><span class="type-name">Meter</span><span>[</span><span class="type-name">IO</span><span>]])
+).</span><span class="identifier">use</span><span> { </span><span class="identifier">pool</span><span> =&gt;
+  </span><span class="comment">// プールの待機時間・使用時間・タイムアウトが自動記録される
+</span><span>  </span><span class="identifier">pool</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt; ... }
+}</span></code></pre>
+    
+    <h4 id="mysqldatasource-への新メソッド" class="section"><a class="anchor-link left" href="#mysqldatasource-への新メソッド"><i class="icofont-laika link">&#xef71;</i></a>MySQLDataSource への新メソッド</h4>
+    <p><code>MySQLDataSource</code> に <code>setMeter</code> と <code>setTelemetryConfig</code> が追加されました。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">org</span><span>.</span><span class="identifier">typelevel</span><span>.</span><span class="identifier">otel4s</span><span>.</span><span class="identifier">metrics</span><span>.</span><span class="type-name">Meter</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.</span><span class="identifier">telemetry</span><span>.</span><span class="type-name">TelemetryConfig</span><span>
 
-</span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">config</span><span>, </span><span class="identifier">plugins</span><span> = </span><span class="type-name">List</span><span>(</span><span class="identifier">plugin</span><span>)).</span><span class="identifier">use</span><span> { </span><span class="identifier">datasource</span><span> =&gt;
-  </span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
-  </span><span class="comment">// クエリ実行
-</span><span>}</span></code></pre>
-    
-    <h3 id="_3-ldbc-hikariの廃止" class="section"><a class="anchor-link left" href="#_3-ldbc-hikariの廃止"><i class="icofont-laika link">&#xef71;</i></a>3. ldbc-hikariの廃止</h3>
-    <p><code>ldbc-hikari</code>は0.5.0で正式に廃止されました。組み込みのコネクションプールを使用してください。</p>
-    <p><strong>廃止されたAPI:</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// 使用不可
-</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">hikari</span><span>.*</span></code></pre>
-    <p><strong>推奨される方法:</strong></p>
-    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
-
-</span><span class="keyword">val</span><span> </span><span class="identifier">poolConfig</span><span> = </span><span class="type-name">MySQLConfig</span><span>.</span><span class="identifier">default</span><span>
-  .</span><span class="identifier">setHost</span><span>(</span><span class="string-literal">&quot;localhost&quot;</span><span>)
-  .</span><span class="identifier">setPort</span><span>(</span><span class="number-literal">3306</span><span>)
-  .</span><span class="identifier">setUser</span><span>(</span><span class="string-literal">&quot;user&quot;</span><span>)
-  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
-  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;mydb&quot;</span><span>)
-  .</span><span class="identifier">setMinConnections</span><span>(</span><span class="number-literal">5</span><span>)
-  .</span><span class="identifier">setMaxConnections</span><span>(</span><span class="number-literal">20</span><span>)
-
-</span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">poolConfig</span><span>).</span><span class="identifier">use</span><span> { </span><span class="identifier">pool</span><span> =&gt;
-  </span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">pool</span><span>)
-  </span><span class="comment">// クエリ実行
-</span><span>}</span></code></pre>
-    
-    <h3 id="_4-セキュリティ強化" class="section"><a class="anchor-link left" href="#_4-セキュリティ強化"><i class="icofont-laika link">&#xef71;</i></a>4. セキュリティ強化</h3>
-    
-    <h4 id="sqlパラメータのエスケープ処理強化" class="section"><a class="anchor-link left" href="#sqlパラメータのエスケープ処理強化"><i class="icofont-laika link">&#xef71;</i></a>SQLパラメータのエスケープ処理強化</h4>
-    <p>文字列パラメータのエスケープ処理が改善され、SQLインジェクション攻撃への対策が強化されました。</p>
-    
-    <h4 id="ssrf攻撃対策" class="section"><a class="anchor-link left" href="#ssrf攻撃対策"><i class="icofont-laika link">&#xef71;</i></a>SSRF攻撃対策</h4>
-    <p>データソース設定時のエンドポイント検証が追加されました。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// 安全でないエンドポイントは自動的に検出・拒否される
 </span><span class="keyword">val</span><span> </span><span class="identifier">datasource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
-  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;suspicious-host&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;user&quot;</span><span>)
-  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
-  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;mydb&quot;</span><span>)</span></code></pre>
-    
-    <h3 id="_5-パフォーマンス最適化" class="section"><a class="anchor-link left" href="#_5-パフォーマンス最適化"><i class="icofont-laika link">&#xef71;</i></a>5. パフォーマンス最適化</h3>
-    
-    <h4 id="最大パケットサイズの設定" class="section"><a class="anchor-link left" href="#最大パケットサイズの設定"><i class="icofont-laika link">&#xef71;</i></a>最大パケットサイズの設定</h4>
-    <p>MySQLサーバーの<code>max_allowed_packet</code>設定との互換性が改善されました。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">datasource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
-  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;user&quot;</span><span>)
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">host</span><span> = </span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="identifier">port</span><span> = </span><span class="number-literal">3306</span><span>, </span><span class="identifier">user</span><span> = </span><span class="string-literal">&quot;ldbc&quot;</span><span>)
   .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
   .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;mydb&quot;</span><span>)
-  .</span><span class="identifier">setMaxPacketSize</span><span>(</span><span class="number-literal">16777216</span><span>)  </span><span class="comment">// 16MB（MySQLサーバー設定と合わせる）</span></code></pre>
+  .</span><span class="identifier">setMeter</span><span>(</span><span class="identifier">summon</span><span>[</span><span class="type-name">Meter</span><span>[</span><span class="type-name">IO</span><span>]])
+  .</span><span class="identifier">setTelemetryConfig</span><span>(</span><span class="type-name">TelemetryConfig</span><span>.</span><span class="identifier">default</span><span>.</span><span class="identifier">withoutQueryTextExtraction</span><span>)</span></code></pre>
     
-    <h4 id="コネクションプールの同時性改善" class="section"><a class="anchor-link left" href="#コネクションプールの同時性改善"><i class="icofont-laika link">&#xef71;</i></a>コネクションプールの同時性改善</h4>
-    <p>コネクションプールの状態管理がアトミックチェックにより改善され、並行環境での安定性が向上しました。</p>
+    <h4 id="pooling-メソッドのシグネチャ変更" class="section"><a class="anchor-link left" href="#pooling-メソッドのシグネチャ変更"><i class="icofont-laika link">&#xef71;</i></a>pooling メソッドのシグネチャ変更</h4>
+    <p><code>MySQLDataSource.pooling</code> と <code>MySQLDataSource.poolingWithBeforeAfter</code> に <code>meter</code> と <code>telemetryConfig</code> パラメータが追加されました。既存のコードは引数なしで呼び出せるため後方互換性はありますが、メトリクスを使用する場合は更新が必要です。</p>
+    <p><strong>移行前 (0.5.x):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](
+  </span><span class="identifier">config</span><span>         = </span><span class="identifier">mysqlConfig</span><span>,
+  </span><span class="identifier">metricsTracker</span><span> = </span><span class="type-name">Some</span><span>(</span><span class="identifier">tracker</span><span>),
+  </span><span class="identifier">tracer</span><span>         = </span><span class="type-name">Some</span><span>(</span><span class="identifier">tracer</span><span>)
+).</span><span class="identifier">use</span><span> { </span><span class="identifier">pool</span><span> =&gt; ... }</span></code></pre>
+    <p><strong>移行後 (0.6.x):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](
+  </span><span class="identifier">config</span><span>          = </span><span class="identifier">mysqlConfig</span><span>,
+  </span><span class="identifier">metricsTracker</span><span>  = </span><span class="type-name">Some</span><span>(</span><span class="identifier">tracker</span><span>),
+  </span><span class="identifier">meter</span><span>           = </span><span class="type-name">Some</span><span>(</span><span class="identifier">summon</span><span>[</span><span class="type-name">Meter</span><span>[</span><span class="type-name">IO</span><span>]]),
+  </span><span class="identifier">tracer</span><span>          = </span><span class="type-name">Some</span><span>(</span><span class="identifier">tracer</span><span>),
+  </span><span class="identifier">telemetryConfig</span><span> = </span><span class="type-name">TelemetryConfig</span><span>.</span><span class="identifier">default</span><span>
+).</span><span class="identifier">use</span><span> { </span><span class="identifier">pool</span><span> =&gt; ... }</span></code></pre>
     
-    <h3 id="_6-api-の改善" class="section"><a class="anchor-link left" href="#_6-api-の改善"><i class="icofont-laika link">&#xef71;</i></a>6. API の改善</h3>
+    <h4 id="telemetryattribute-のキー名変更-破壊的変更" class="section"><a class="anchor-link left" href="#telemetryattribute-のキー名変更-破壊的変更"><i class="icofont-laika link">&#xef71;</i></a>TelemetryAttribute のキー名変更（破壊的変更）</h4>
+    <p><code>TelemetryAttribute</code> の定数名が Semantic Conventions v1.39.0 に合わせて変更されました。<code>TelemetryAttribute</code> を直接参照している場合は更新が必要です。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>旧 (0.5.x)</th>
+          <th>新 (0.6.x)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>DB_SYSTEM</code></td>
+          <td><code>DB_SYSTEM_NAME</code></td>
+        </tr>
+        <tr>
+          <td><code>DB_OPERATION</code></td>
+          <td><code>DB_OPERATION_NAME</code></td>
+        </tr>
+        <tr>
+          <td><code>DB_QUERY</code></td>
+          <td><code>DB_QUERY_TEXT</code></td>
+        </tr>
+        <tr>
+          <td><code>STATUS_CODE</code></td>
+          <td><code>DB_RESPONSE_STATUS_CODE</code></td>
+        </tr>
+        <tr>
+          <td><code>VERSION</code></td>
+          <td><code>DB_MYSQL_VERSION</code></td>
+        </tr>
+        <tr>
+          <td><code>THREAD_ID</code></td>
+          <td><code>DB_MYSQL_THREAD_ID</code></td>
+        </tr>
+        <tr>
+          <td><code>AUTH_PLUGIN</code></td>
+          <td><code>DB_MYSQL_AUTH_PLUGIN</code></td>
+        </tr>
+      </tbody>
+    </table>
     
-    <h4 id="ファイルからのクエリ実行" class="section"><a class="anchor-link left" href="#ファイルからのクエリ実行"><i class="icofont-laika link">&#xef71;</i></a>ファイルからのクエリ実行</h4>
-    <p>新しい<code>updateRaws</code>メソッドが追加され、ファイルからSQLクエリを読み込んで実行できるようになりました：</p>
-    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.*
-</span><span class="keyword">import</span><span> </span><span class="identifier">fs2</span><span>.</span><span class="identifier">io</span><span>.</span><span class="identifier">file</span><span>.{ </span><span class="type-name">Files</span><span>, </span><span class="type-name">Path</span><span> }
-</span><span class="keyword">import</span><span> </span><span class="identifier">fs2</span><span>.</span><span class="identifier">text</span><span>
+    <h3 id="_2-mysql-9-x-サポートの強化" class="section"><a class="anchor-link left" href="#_2-mysql-9-x-サポートの強化"><i class="icofont-laika link">&#xef71;</i></a>2. MySQL 9.x サポートの強化</h3>
+    <p>0.6.0 から MySQL 9.x が正式にサポートされます。接続先の MySQL バージョンに応じて内部の挙動が自動的に切り替わります。</p>
+    
+    <h4 id="mysql-9-3-0-以降の-getcatalogs-変更" class="section"><a class="anchor-link left" href="#mysql-9-3-0-以降の-getcatalogs-変更"><i class="icofont-laika link">&#xef71;</i></a>MySQL 9.3.0 以降の getCatalogs 変更</h4>
+    <p>MySQL 9.3.0 以降では <code>getCatalogs()</code> の内部実装が <code>mysql</code> システムテーブルから <code>INFORMATION_SCHEMA.SCHEMATA</code> に切り替わります。ユーザーコードへの影響はありませんが、MySQL 9.3+ に接続している場合は <code>INFORMATION_SCHEMA</code> への SELECT 権限が必要になります。</p>
+    
+    <h4 id="gettableprivileges-の変更" class="section"><a class="anchor-link left" href="#gettableprivileges-の変更"><i class="icofont-laika link">&#xef71;</i></a>getTablePrivileges の変更</h4>
+    <p><code>DatabaseMetaData.getTablePrivileges()</code> の内部実装が <code>mysql.tables_priv</code> から <code>INFORMATION_SCHEMA.TABLE_PRIVILEGES</code> に変更されました。</p>
+    
+    <h3 id="_3-スキーマ-vector-型の追加" class="section"><a class="anchor-link left" href="#_3-スキーマ-vector-型の追加"><i class="icofont-laika link">&#xef71;</i></a>3. スキーマ: VECTOR 型の追加</h3>
+    <p><code>ldbc-schema</code> モジュールに MySQL の <code>VECTOR</code> 型を表す <code>DataType</code> が追加されました。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">schema</span><span>.*
 
-</span><span class="keyword">private</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">readFile</span><span>(</span><span class="identifier">filename</span><span>: </span><span class="type-name">String</span><span>): </span><span class="type-name">IO</span><span>[</span><span class="type-name">String</span><span>] =
-  </span><span class="type-name">Files</span><span>[</span><span class="type-name">IO</span><span>]
-    .</span><span class="identifier">readAll</span><span>(</span><span class="type-name">Path</span><span>(</span><span class="identifier">filename</span><span>))
-    .</span><span class="identifier">through</span><span>(</span><span class="identifier">text</span><span>.</span><span class="identifier">utf8</span><span>.</span><span class="identifier">decode</span><span>)
-    .</span><span class="identifier">compile</span><span>
-    .</span><span class="identifier">string</span><span>
+</span><span class="keyword">class</span><span> </span><span class="type-name">EmbeddingTable</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">Embedding</span><span>](</span><span class="string-literal">&quot;embeddings&quot;</span><span>):
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">id</span><span>:        </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>]         = </span><span class="identifier">column</span><span>[</span><span class="type-name">Long</span><span>](</span><span class="string-literal">&quot;id&quot;</span><span>)
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">embedding</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Array</span><span>[</span><span class="type-name">Float</span><span>]] = </span><span class="identifier">column</span><span>[</span><span class="type-name">Array</span><span>[</span><span class="type-name">Float</span><span>]](</span><span class="string-literal">&quot;embedding&quot;</span><span>, </span><span class="type-name">VECTOR</span><span>(</span><span class="number-literal">1536</span><span>))
 
-</span><span class="keyword">for</span><span>
-  </span><span class="identifier">sql</span><span> &lt;- </span><span class="identifier">readFile</span><span>(</span><span class="string-literal">&quot;hoge.sql&quot;</span><span>)
-  </span><span class="identifier">_</span><span> &lt;- </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">updateRaws</span><span>(</span><span class="identifier">sql</span><span>).</span><span class="identifier">commit</span><span>(</span><span class="identifier">connector</span><span>)
-</span><span class="keyword">yield</span><span> ()</span></code></pre>
+  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> * = (</span><span class="identifier">id</span><span> *: </span><span class="identifier">embedding</span><span>).</span><span class="identifier">to</span><span>[</span><span class="type-name">Embedding</span><span>]</span></code></pre>
+    
+    <h3 id="_4-エラートレーシングの改善" class="section"><a class="anchor-link left" href="#_4-エラートレーシングの改善"><i class="icofont-laika link">&#xef71;</i></a>4. エラートレーシングの改善</h3>
+    <p>Protocol 層でエラー発生時に <code>span.setStatus(StatusCode.Error, message)</code> が自動設定されるようになりました。分散トレーシングツール（Jaeger、Zipkin 等）でエラースパンが正しく表示されます。ユーザーコードへの変更は不要です。</p>
+    
+    <h3 id="_5-サンプル-grafana-ダッシュボード" class="section"><a class="anchor-link left" href="#_5-サンプル-grafana-ダッシュボード"><i class="icofont-laika link">&#xef71;</i></a>5. サンプル Grafana ダッシュボード</h3>
+    <p>コネクションプールの可観測性を素早く確認できる Grafana ダッシュボードを提供しています。Prometheus データソースが必要です。</p>
+    <p><strong>ダッシュボードに含まれるパネル:</strong></p>
+    <ul>
+      <li>DB Operation Duration（p50 / p95 / p99）</li>
+      <li>Connection Pool Status（Active / Idle / Pending / Wait Time p99 / Pool Usage %）</li>
+      <li>Connection Pool Breakdown（時系列グラフ）</li>
+      <li>Latency Distribution（Wait / Create / Use の平均）</li>
+      <li>Connection Timeouts（15分ウィンドウ）</li>
+      <li>Connection Wait Time Heatmap</li>
+    </ul>
+    <img src="../img/dashboard.png" alt="Grafana ダッシュボード" width="600"/>
+    <p>以下の JSON を Grafana にインポートすることで、上記のダッシュボードを作成できます。</p>
+    <details>
+    <summary>ダッシュボード JSON を表示（クリックで展開）</summary>
+    
+    <pre><code class="language-json">{
+  &quot;__inputs&quot;: [
+    {
+      &quot;name&quot;: &quot;DS_PROMETHEUS&quot;,
+      &quot;label&quot;: &quot;Prometheus&quot;,
+      &quot;description&quot;: &quot;&quot;,
+      &quot;type&quot;: &quot;datasource&quot;,
+      &quot;pluginId&quot;: &quot;prometheus&quot;,
+      &quot;pluginName&quot;: &quot;Prometheus&quot;
+    }
+  ],
+  &quot;__elements&quot;: {},
+  &quot;__requires&quot;: [
+    {
+      &quot;type&quot;: &quot;grafana&quot;,
+      &quot;id&quot;: &quot;grafana&quot;,
+      &quot;name&quot;: &quot;Grafana&quot;,
+      &quot;version&quot;: &quot;10.0.0&quot;
+    },
+    {
+      &quot;type&quot;: &quot;datasource&quot;,
+      &quot;id&quot;: &quot;prometheus&quot;,
+      &quot;name&quot;: &quot;Prometheus&quot;,
+      &quot;version&quot;: &quot;1.0.0&quot;
+    },
+    {
+      &quot;type&quot;: &quot;panel&quot;,
+      &quot;id&quot;: &quot;stat&quot;,
+      &quot;name&quot;: &quot;Stat&quot;,
+      &quot;version&quot;: &quot;&quot;
+    },
+    {
+      &quot;type&quot;: &quot;panel&quot;,
+      &quot;id&quot;: &quot;gauge&quot;,
+      &quot;name&quot;: &quot;Gauge&quot;,
+      &quot;version&quot;: &quot;&quot;
+    },
+    {
+      &quot;type&quot;: &quot;panel&quot;,
+      &quot;id&quot;: &quot;timeseries&quot;,
+      &quot;name&quot;: &quot;Time series&quot;,
+      &quot;version&quot;: &quot;&quot;
+    },
+    {
+      &quot;type&quot;: &quot;panel&quot;,
+      &quot;id&quot;: &quot;heatmap&quot;,
+      &quot;name&quot;: &quot;Heatmap&quot;,
+      &quot;version&quot;: &quot;&quot;
+    },
+    {
+      &quot;type&quot;: &quot;panel&quot;,
+      &quot;id&quot;: &quot;alertlist&quot;,
+      &quot;name&quot;: &quot;Alert list&quot;,
+      &quot;version&quot;: &quot;&quot;
+    }
+  ],
+  &quot;annotations&quot;: {
+    &quot;list&quot;: [
+      {
+        &quot;builtIn&quot;: 1,
+        &quot;datasource&quot;: {
+          &quot;type&quot;: &quot;grafana&quot;,
+          &quot;uid&quot;: &quot;-- Grafana --&quot;
+        },
+        &quot;enable&quot;: true,
+        &quot;hide&quot;: true,
+        &quot;iconColor&quot;: &quot;rgba(0, 211, 255, 1)&quot;,
+        &quot;name&quot;: &quot;Annotations &amp; Alerts&quot;,
+        &quot;type&quot;: &quot;dashboard&quot;
+      }
+    ]
+  },
+  &quot;description&quot;: &quot;MySQL Connection Pool observability dashboard using OpenTelemetry Semantic Conventions (db.client.* metrics). Requires OTel Java Agent or manual OTel instrumentation with Prometheus exporter.&quot;,
+  &quot;editable&quot;: true,
+  &quot;fiscalYearStartMonth&quot;: 0,
+  &quot;graphTooltip&quot;: 1,
+  &quot;id&quot;: null,
+  &quot;links&quot;: [
+    {
+      &quot;title&quot;: &quot;OTel DB Metrics Spec&quot;,
+      &quot;url&quot;: &quot;https://opentelemetry.io/docs/specs/semconv/db/database-metrics/&quot;,
+      &quot;type&quot;: &quot;link&quot;,
+      &quot;icon&quot;: &quot;external link&quot;,
+      &quot;targetBlank&quot;: true
+    }
+  ],
+  &quot;liveNow&quot;: false,
+  &quot;panels&quot;: [
+    {
+      &quot;id&quot;: 102,
+      &quot;type&quot;: &quot;row&quot;,
+      &quot;title&quot;: &quot;DB Operation Duration (OTel Stable)&quot;,
+      &quot;gridPos&quot;: { &quot;h&quot;: 1, &quot;w&quot;: 24, &quot;x&quot;: 0, &quot;y&quot;: 0 },
+      &quot;collapsed&quot;: false,
+      &quot;panels&quot;: []
+    },
+    {
+      &quot;datasource&quot;: { &quot;type&quot;: &quot;prometheus&quot;, &quot;uid&quot;: &quot;${DS_PROMETHEUS}&quot; },
+      &quot;type&quot;: &quot;gauge&quot;,
+      &quot;id&quot;: 50,
+      &quot;title&quot;: &quot;Operation Duration — p50&quot;,
+      &quot;gridPos&quot;: { &quot;h&quot;: 7, &quot;w&quot;: 8, &quot;x&quot;: 0, &quot;y&quot;: 1 },
+      &quot;targets&quot;: [
+        {
+          &quot;datasource&quot;: { &quot;type&quot;: &quot;prometheus&quot;, &quot;uid&quot;: &quot;${DS_PROMETHEUS}&quot; },
+          &quot;expr&quot;: &quot;histogram_quantile(0.50, sum by (le) (increase(db_client_operation_duration_seconds_bucket{db_system_name=\&quot;mysql\&quot;, job=~\&quot;${job}\&quot;}[$__range])))&quot;,
+          &quot;refId&quot;: &quot;A&quot;, &quot;editorMode&quot;: &quot;code&quot;, &quot;range&quot;: false, &quot;instant&quot;: true
+        }
+      ],
+      &quot;fieldConfig&quot;: {
+        &quot;defaults&quot;: {
+          &quot;unit&quot;: &quot;s&quot;, &quot;decimals&quot;: 2, &quot;min&quot;: 0, &quot;max&quot;: 0.1,
+          &quot;color&quot;: { &quot;mode&quot;: &quot;thresholds&quot; },
+          &quot;thresholds&quot;: { &quot;mode&quot;: &quot;absolute&quot;, &quot;steps&quot;: [
+            { &quot;color&quot;: &quot;green&quot;, &quot;value&quot;: null },
+            { &quot;color&quot;: &quot;yellow&quot;, &quot;value&quot;: 0.01 },
+            { &quot;color&quot;: &quot;orange&quot;, &quot;value&quot;: 0.05 },
+            { &quot;color&quot;: &quot;red&quot;, &quot;value&quot;: 0.1 }
+          ]}
+        }, &quot;overrides&quot;: []
+      },
+      &quot;options&quot;: { &quot;reduceOptions&quot;: { &quot;calcs&quot;: [&quot;lastNotNull&quot;], &quot;fields&quot;: &quot;&quot;, &quot;values&quot;: false }, &quot;showThresholdLabels&quot;: false, &quot;showThresholdMarkers&quot;: true, &quot;orientation&quot;: &quot;auto&quot; }
+    },
+    {
+      &quot;datasource&quot;: { &quot;type&quot;: &quot;prometheus&quot;, &quot;uid&quot;: &quot;${DS_PROMETHEUS}&quot; },
+      &quot;type&quot;: &quot;gauge&quot;,
+      &quot;id&quot;: 51,
+      &quot;title&quot;: &quot;Operation Duration — p95&quot;,
+      &quot;gridPos&quot;: { &quot;h&quot;: 7, &quot;w&quot;: 8, &quot;x&quot;: 8, &quot;y&quot;: 1 },
+      &quot;targets&quot;: [
+        {
+          &quot;datasource&quot;: { &quot;type&quot;: &quot;prometheus&quot;, &quot;uid&quot;: &quot;${DS_PROMETHEUS}&quot; },
+          &quot;expr&quot;: &quot;histogram_quantile(0.95, sum by (le) (increase(db_client_operation_duration_seconds_bucket{db_system_name=\&quot;mysql\&quot;, job=~\&quot;${job}\&quot;}[$__range])))&quot;,
+          &quot;refId&quot;: &quot;A&quot;, &quot;editorMode&quot;: &quot;code&quot;, &quot;range&quot;: false, &quot;instant&quot;: true
+        }
+      ],
+      &quot;fieldConfig&quot;: {
+        &quot;defaults&quot;: {
+          &quot;unit&quot;: &quot;s&quot;, &quot;decimals&quot;: 2, &quot;min&quot;: 0, &quot;max&quot;: 0.1,
+          &quot;color&quot;: { &quot;mode&quot;: &quot;thresholds&quot; },
+          &quot;thresholds&quot;: { &quot;mode&quot;: &quot;absolute&quot;, &quot;steps&quot;: [
+            { &quot;color&quot;: &quot;green&quot;, &quot;value&quot;: null },
+            { &quot;color&quot;: &quot;yellow&quot;, &quot;value&quot;: 0.01 },
+            { &quot;color&quot;: &quot;orange&quot;, &quot;value&quot;: 0.05 },
+            { &quot;color&quot;: &quot;red&quot;, &quot;value&quot;: 0.1 }
+          ]}
+        }, &quot;overrides&quot;: []
+      },
+      &quot;options&quot;: { &quot;reduceOptions&quot;: { &quot;calcs&quot;: [&quot;lastNotNull&quot;], &quot;fields&quot;: &quot;&quot;, &quot;values&quot;: false }, &quot;showThresholdLabels&quot;: false, &quot;showThresholdMarkers&quot;: true, &quot;orientation&quot;: &quot;auto&quot; }
+    },
+    {
+      &quot;datasource&quot;: { &quot;type&quot;: &quot;prometheus&quot;, &quot;uid&quot;: &quot;${DS_PROMETHEUS}&quot; },
+      &quot;type&quot;: &quot;gauge&quot;,
+      &quot;id&quot;: 52,
+      &quot;title&quot;: &quot;Operation Duration — p99&quot;,
+      &quot;gridPos&quot;: { &quot;h&quot;: 7, &quot;w&quot;: 8, &quot;x&quot;: 16, &quot;y&quot;: 1 },
+      &quot;targets&quot;: [
+        {
+          &quot;datasource&quot;: { &quot;type&quot;: &quot;prometheus&quot;, &quot;uid&quot;: &quot;${DS_PROMETHEUS}&quot; },
+          &quot;expr&quot;: &quot;histogram_quantile(0.99, sum by (le) (increase(db_client_operation_duration_seconds_bucket{db_system_name=\&quot;mysql\&quot;, job=~\&quot;${job}\&quot;}[$__range])))&quot;,
+          &quot;refId&quot;: &quot;A&quot;, &quot;editorMode&quot;: &quot;code&quot;, &quot;range&quot;: false, &quot;instant&quot;: true
+        }
+      ],
+      &quot;fieldConfig&quot;: {
+        &quot;defaults&quot;: {
+          &quot;unit&quot;: &quot;s&quot;, &quot;decimals&quot;: 2, &quot;min&quot;: 0, &quot;max&quot;: 0.1,
+          &quot;color&quot;: { &quot;mode&quot;: &quot;thresholds&quot; },
+          &quot;thresholds&quot;: { &quot;mode&quot;: &quot;absolute&quot;, &quot;steps&quot;: [
+            { &quot;color&quot;: &quot;green&quot;, &quot;value&quot;: null },
+            { &quot;color&quot;: &quot;yellow&quot;, &quot;value&quot;: 0.01 },
+            { &quot;color&quot;: &quot;orange&quot;, &quot;value&quot;: 0.05 },
+            { &quot;color&quot;: &quot;red&quot;, &quot;value&quot;: 0.1 }
+          ]}
+        }, &quot;overrides&quot;: []
+      },
+      &quot;options&quot;: { &quot;reduceOptions&quot;: { &quot;calcs&quot;: [&quot;lastNotNull&quot;], &quot;fields&quot;: &quot;&quot;, &quot;values&quot;: false }, &quot;showThresholdLabels&quot;: false, &quot;showThresholdMarkers&quot;: true, &quot;orientation&quot;: &quot;auto&quot; }
+    },
+    {
+      &quot;id&quot;: 100,
+      &quot;type&quot;: &quot;row&quot;,
+      &quot;title&quot;: &quot;Connection Pool Status&quot;,
+      &quot;gridPos&quot;: { &quot;h&quot;: 1, &quot;w&quot;: 24, &quot;x&quot;: 0, &quot;y&quot;: 8 },
+      &quot;collapsed&quot;: false,
+      &quot;panels&quot;: []
+    },
+    {
+      &quot;id&quot;: 1, &quot;title&quot;: &quot;Active (used)&quot;, &quot;type&quot;: &quot;stat&quot;,
+      &quot;datasource&quot;: { &quot;type&quot;: &quot;prometheus&quot;, &quot;uid&quot;: &quot;${DS_PROMETHEUS}&quot; },
+      &quot;gridPos&quot;: { &quot;h&quot;: 5, &quot;w&quot;: 5, &quot;x&quot;: 0, &quot;y&quot;: 9 },
+      &quot;targets&quot;: [{ &quot;datasource&quot;: { &quot;type&quot;: &quot;prometheus&quot;, &quot;uid&quot;: &quot;${DS_PROMETHEUS}&quot; }, &quot;expr&quot;: &quot;db_client_connection_count{db_client_connection_state=\&quot;used\&quot;, db_client_connection_pool_name=~\&quot;${pool_name}\&quot;, job=~\&quot;${job}\&quot;}&quot;, &quot;legendFormat&quot;: &quot;{{db_client_connection_pool_name}}&quot;, &quot;refId&quot;: &quot;A&quot;, &quot;editorMode&quot;: &quot;code&quot;, &quot;range&quot;: true }],
+      &quot;description&quot;: &quot;db.client.connection.count{db.client.connection.state=used}&quot;,
+      &quot;options&quot;: { &quot;reduceOptions&quot;: { &quot;calcs&quot;: [&quot;lastNotNull&quot;] }, &quot;graphMode&quot;: &quot;area&quot;, &quot;colorMode&quot;: &quot;value&quot; },
+      &quot;fieldConfig&quot;: { &quot;defaults&quot;: { &quot;color&quot;: { &quot;mode&quot;: &quot;fixed&quot;, &quot;fixedColor&quot;: &quot;light-blue&quot; }, &quot;unit&quot;: &quot;short&quot; }, &quot;overrides&quot;: [] }
+    },
+    {
+      &quot;id&quot;: 2, &quot;title&quot;: &quot;Idle&quot;, &quot;type&quot;: &quot;stat&quot;,
+      &quot;datasource&quot;: { &quot;type&quot;: &quot;prometheus&quot;, &quot;uid&quot;: &quot;${DS_PROMETHEUS}&quot; },
+      &quot;gridPos&quot;: { &quot;h&quot;: 5, &quot;w&quot;: 5, &quot;x&quot;: 5, &quot;y&quot;: 9 },
+      &quot;targets&quot;: [{ &quot;datasource&quot;: { &quot;type&quot;: &quot;prometheus&quot;, &quot;uid&quot;: &quot;${DS_PROMETHEUS}&quot; }, &quot;expr&quot;: &quot;db_client_connection_count{db_client_connection_state=\&quot;idle\&quot;, db_client_connection_pool_name=~\&quot;${pool_name}\&quot;, job=~\&quot;${job}\&quot;}&quot;, &quot;legendFormat&quot;: &quot;{{db_client_connection_pool_name}}&quot;, &quot;refId&quot;: &quot;A&quot;, &quot;editorMode&quot;: &quot;code&quot;, &quot;range&quot;: true }],
+      &quot;description&quot;: &quot;db.client.connection.count{db.client.connection.state=idle}&quot;,
+      &quot;options&quot;: { &quot;reduceOptions&quot;: { &quot;calcs&quot;: [&quot;lastNotNull&quot;] }, &quot;graphMode&quot;: &quot;area&quot;, &quot;colorMode&quot;: &quot;value&quot; },
+      &quot;fieldConfig&quot;: { &quot;defaults&quot;: { &quot;color&quot;: { &quot;mode&quot;: &quot;fixed&quot;, &quot;fixedColor&quot;: &quot;green&quot; }, &quot;unit&quot;: &quot;short&quot; }, &quot;overrides&quot;: [] }
+    },
+    {
+      &quot;id&quot;: 3, &quot;title&quot;: &quot;Pending Requests&quot;, &quot;type&quot;: &quot;stat&quot;,
+      &quot;datasource&quot;: { &quot;type&quot;: &quot;prometheus&quot;, &quot;uid&quot;: &quot;${DS_PROMETHEUS}&quot; },
+      &quot;gridPos&quot;: { &quot;h&quot;: 5, &quot;w&quot;: 5, &quot;x&quot;: 10, &quot;y&quot;: 9 },
+      &quot;targets&quot;: [{ &quot;datasource&quot;: { &quot;type&quot;: &quot;prometheus&quot;, &quot;uid&quot;: &quot;${DS_PROMETHEUS}&quot; }, &quot;expr&quot;: &quot;db_client_connection_pending_requests{db_client_connection_pool_name=~\&quot;${pool_name}\&quot;, job=~\&quot;${job}\&quot;}&quot;, &quot;legendFormat&quot;: &quot;{{db_client_connection_pool_name}}&quot;, &quot;refId&quot;: &quot;A&quot;, &quot;editorMode&quot;: &quot;code&quot;, &quot;range&quot;: true }],
+      &quot;description&quot;: &quot;db.client.connection.pending_requests\n0以外が持続する場合はプール枯渇の前兆&quot;,
+      &quot;options&quot;: { &quot;reduceOptions&quot;: { &quot;calcs&quot;: [&quot;lastNotNull&quot;] }, &quot;graphMode&quot;: &quot;area&quot;, &quot;colorMode&quot;: &quot;value&quot; },
+      &quot;fieldConfig&quot;: { &quot;defaults&quot;: { &quot;color&quot;: { &quot;mode&quot;: &quot;thresholds&quot; }, &quot;thresholds&quot;: { &quot;mode&quot;: &quot;absolute&quot;, &quot;steps&quot;: [{ &quot;color&quot;: &quot;green&quot;, &quot;value&quot;: null }, { &quot;color&quot;: &quot;yellow&quot;, &quot;value&quot;: 1 }, { &quot;color&quot;: &quot;red&quot;, &quot;value&quot;: 3 }] }, &quot;unit&quot;: &quot;short&quot; }, &quot;overrides&quot;: [] }
+    },
+    {
+      &quot;id&quot;: 4, &quot;title&quot;: &quot;Wait Time p99&quot;, &quot;type&quot;: &quot;stat&quot;,
+      &quot;datasource&quot;: { &quot;type&quot;: &quot;prometheus&quot;, &quot;uid&quot;: &quot;${DS_PROMETHEUS}&quot; },
+      &quot;gridPos&quot;: { &quot;h&quot;: 5, &quot;w&quot;: 5, &quot;x&quot;: 15, &quot;y&quot;: 9 },
+      &quot;targets&quot;: [{ &quot;datasource&quot;: { &quot;type&quot;: &quot;prometheus&quot;, &quot;uid&quot;: &quot;${DS_PROMETHEUS}&quot; }, &quot;expr&quot;: &quot;histogram_quantile(0.99, sum by (le) (rate(db_client_connection_wait_time_seconds_bucket{db_client_connection_pool_name=~\&quot;${pool_name}\&quot;, job=~\&quot;${job}\&quot;}[$__rate_interval])))&quot;, &quot;legendFormat&quot;: &quot;p99&quot;, &quot;refId&quot;: &quot;A&quot;, &quot;editorMode&quot;: &quot;code&quot;, &quot;range&quot;: true, &quot;interval&quot;: &quot;1m&quot; }],
+      &quot;description&quot;: &quot;db.client.connection.wait_time (p99)&quot;,
+      &quot;options&quot;: { &quot;reduceOptions&quot;: { &quot;calcs&quot;: [&quot;lastNotNull&quot;] }, &quot;graphMode&quot;: &quot;area&quot;, &quot;colorMode&quot;: &quot;value&quot; },
+      &quot;fieldConfig&quot;: { &quot;defaults&quot;: { &quot;color&quot;: { &quot;mode&quot;: &quot;thresholds&quot; }, &quot;thresholds&quot;: { &quot;mode&quot;: &quot;absolute&quot;, &quot;steps&quot;: [{ &quot;color&quot;: &quot;purple&quot;, &quot;value&quot;: null }, { &quot;color&quot;: &quot;yellow&quot;, &quot;value&quot;: 0.03 }, { &quot;color&quot;: &quot;red&quot;, &quot;value&quot;: 0.1 }] }, &quot;unit&quot;: &quot;s&quot;, &quot;decimals&quot;: 3 }, &quot;overrides&quot;: [] }
+    },
+    {
+      &quot;id&quot;: 5, &quot;title&quot;: &quot;Pool Usage&quot;, &quot;type&quot;: &quot;gauge&quot;,
+      &quot;datasource&quot;: { &quot;type&quot;: &quot;prometheus&quot;, &quot;uid&quot;: &quot;${DS_PROMETHEUS}&quot; },
+      &quot;gridPos&quot;: { &quot;h&quot;: 5, &quot;w&quot;: 4, &quot;x&quot;: 20, &quot;y&quot;: 9 },
+      &quot;targets&quot;: [{ &quot;datasource&quot;: { &quot;type&quot;: &quot;prometheus&quot;, &quot;uid&quot;: &quot;${DS_PROMETHEUS}&quot; }, &quot;expr&quot;: &quot;db_client_connection_count{db_client_connection_state=\&quot;used\&quot;, db_client_connection_pool_name=~\&quot;${pool_name}\&quot;, job=~\&quot;${job}\&quot;} / ignoring(db_client_connection_state) db_client_connection_max{db_client_connection_pool_name=~\&quot;${pool_name}\&quot;, job=~\&quot;${job}\&quot;}&quot;, &quot;legendFormat&quot;: &quot;{{db_client_connection_pool_name}}&quot;, &quot;refId&quot;: &quot;A&quot;, &quot;editorMode&quot;: &quot;code&quot;, &quot;range&quot;: false, &quot;instant&quot;: true }],
+      &quot;description&quot;: &quot;active / max&quot;,
+      &quot;options&quot;: { &quot;reduceOptions&quot;: { &quot;calcs&quot;: [&quot;lastNotNull&quot;] }, &quot;showThresholdLabels&quot;: false, &quot;showThresholdMarkers&quot;: true },
+      &quot;fieldConfig&quot;: { &quot;defaults&quot;: { &quot;color&quot;: { &quot;mode&quot;: &quot;thresholds&quot; }, &quot;thresholds&quot;: { &quot;mode&quot;: &quot;absolute&quot;, &quot;steps&quot;: [{ &quot;color&quot;: &quot;green&quot;, &quot;value&quot;: null }, { &quot;color&quot;: &quot;yellow&quot;, &quot;value&quot;: 0.7 }, { &quot;color&quot;: &quot;red&quot;, &quot;value&quot;: 0.9 }] }, &quot;unit&quot;: &quot;percentunit&quot;, &quot;min&quot;: 0, &quot;max&quot;: 1 }, &quot;overrides&quot;: [] }
+    },
+    {
+      &quot;id&quot;: 6, &quot;title&quot;: &quot;Connection Pool Breakdown&quot;, &quot;type&quot;: &quot;timeseries&quot;,
+      &quot;datasource&quot;: { &quot;type&quot;: &quot;prometheus&quot;, &quot;uid&quot;: &quot;${DS_PROMETHEUS}&quot; },
+      &quot;gridPos&quot;: { &quot;h&quot;: 9, &quot;w&quot;: 12, &quot;x&quot;: 0, &quot;y&quot;: 14 },
+      &quot;targets&quot;: [
+        { &quot;datasource&quot;: { &quot;type&quot;: &quot;prometheus&quot;, &quot;uid&quot;: &quot;${DS_PROMETHEUS}&quot; }, &quot;expr&quot;: &quot;db_client_connection_count{db_client_connection_state=\&quot;used\&quot;, db_client_connection_pool_name=~\&quot;${pool_name}\&quot;, job=~\&quot;${job}\&quot;}&quot;, &quot;legendFormat&quot;: &quot;Used (active)&quot;, &quot;refId&quot;: &quot;A&quot;, &quot;editorMode&quot;: &quot;code&quot;, &quot;range&quot;: true },
+        { &quot;datasource&quot;: { &quot;type&quot;: &quot;prometheus&quot;, &quot;uid&quot;: &quot;${DS_PROMETHEUS}&quot; }, &quot;expr&quot;: &quot;db_client_connection_count{db_client_connection_state=\&quot;idle\&quot;, db_client_connection_pool_name=~\&quot;${pool_name}\&quot;, job=~\&quot;${job}\&quot;}&quot;, &quot;legendFormat&quot;: &quot;Idle&quot;, &quot;refId&quot;: &quot;B&quot;, &quot;editorMode&quot;: &quot;code&quot;, &quot;range&quot;: true },
+        { &quot;datasource&quot;: { &quot;type&quot;: &quot;prometheus&quot;, &quot;uid&quot;: &quot;${DS_PROMETHEUS}&quot; }, &quot;expr&quot;: &quot;db_client_connection_pending_requests{db_client_connection_pool_name=~\&quot;${pool_name}\&quot;, job=~\&quot;${job}\&quot;}&quot;, &quot;legendFormat&quot;: &quot;Pending&quot;, &quot;refId&quot;: &quot;C&quot;, &quot;editorMode&quot;: &quot;code&quot;, &quot;range&quot;: true },
+        { &quot;datasource&quot;: { &quot;type&quot;: &quot;prometheus&quot;, &quot;uid&quot;: &quot;${DS_PROMETHEUS}&quot; }, &quot;expr&quot;: &quot;db_client_connection_max{db_client_connection_pool_name=~\&quot;${pool_name}\&quot;, job=~\&quot;${job}\&quot;}&quot;, &quot;legendFormat&quot;: &quot;Max (limit)&quot;, &quot;refId&quot;: &quot;D&quot;, &quot;editorMode&quot;: &quot;code&quot;, &quot;range&quot;: true }
+      ],
+      &quot;description&quot;: &quot;db.client.connection.count by state + max&quot;,
+      &quot;options&quot;: { &quot;tooltip&quot;: { &quot;mode&quot;: &quot;multi&quot;, &quot;sort&quot;: &quot;desc&quot; }, &quot;legend&quot;: { &quot;displayMode&quot;: &quot;list&quot;, &quot;placement&quot;: &quot;bottom&quot;, &quot;calcs&quot;: [&quot;lastNotNull&quot;] } },
+      &quot;fieldConfig&quot;: {
+        &quot;defaults&quot;: { &quot;custom&quot;: { &quot;drawStyle&quot;: &quot;line&quot;, &quot;lineInterpolation&quot;: &quot;smooth&quot;, &quot;fillOpacity&quot;: 30, &quot;stacking&quot;: { &quot;mode&quot;: &quot;normal&quot;, &quot;group&quot;: &quot;A&quot; }, &quot;lineWidth&quot;: 1, &quot;showPoints&quot;: &quot;never&quot;, &quot;gradientMode&quot;: &quot;opacity&quot;, &quot;axisLabel&quot;: &quot;connections&quot;, &quot;spanNulls&quot;: true }, &quot;unit&quot;: &quot;short&quot;, &quot;color&quot;: { &quot;mode&quot;: &quot;palette-classic&quot; } },
+        &quot;overrides&quot;: [
+          { &quot;matcher&quot;: { &quot;id&quot;: &quot;byName&quot;, &quot;options&quot;: &quot;Used (active)&quot; }, &quot;properties&quot;: [{ &quot;id&quot;: &quot;color&quot;, &quot;value&quot;: { &quot;mode&quot;: &quot;fixed&quot;, &quot;fixedColor&quot;: &quot;light-blue&quot; } }] },
+          { &quot;matcher&quot;: { &quot;id&quot;: &quot;byName&quot;, &quot;options&quot;: &quot;Idle&quot; }, &quot;properties&quot;: [{ &quot;id&quot;: &quot;color&quot;, &quot;value&quot;: { &quot;mode&quot;: &quot;fixed&quot;, &quot;fixedColor&quot;: &quot;green&quot; } }] },
+          { &quot;matcher&quot;: { &quot;id&quot;: &quot;byName&quot;, &quot;options&quot;: &quot;Pending&quot; }, &quot;properties&quot;: [{ &quot;id&quot;: &quot;color&quot;, &quot;value&quot;: { &quot;mode&quot;: &quot;fixed&quot;, &quot;fixedColor&quot;: &quot;orange&quot; } }] },
+          { &quot;matcher&quot;: { &quot;id&quot;: &quot;byName&quot;, &quot;options&quot;: &quot;Max (limit)&quot; }, &quot;properties&quot;: [{ &quot;id&quot;: &quot;color&quot;, &quot;value&quot;: { &quot;mode&quot;: &quot;fixed&quot;, &quot;fixedColor&quot;: &quot;red&quot; } }, { &quot;id&quot;: &quot;custom.fillOpacity&quot;, &quot;value&quot;: 0 }, { &quot;id&quot;: &quot;custom.stacking&quot;, &quot;value&quot;: { &quot;mode&quot;: &quot;none&quot; } }, { &quot;id&quot;: &quot;custom.lineStyle&quot;, &quot;value&quot;: { &quot;fill&quot;: &quot;dash&quot;, &quot;dash&quot;: [10, 10] } }, { &quot;id&quot;: &quot;custom.lineWidth&quot;, &quot;value&quot;: 2 }] }
+        ]
+      }
+    },
+    {
+      &quot;id&quot;: 7, &quot;title&quot;: &quot;Latency Distribution&quot;, &quot;type&quot;: &quot;bargauge&quot;,
+      &quot;datasource&quot;: { &quot;type&quot;: &quot;prometheus&quot;, &quot;uid&quot;: &quot;${DS_PROMETHEUS}&quot; },
+      &quot;gridPos&quot;: { &quot;h&quot;: 9, &quot;w&quot;: 12, &quot;x&quot;: 12, &quot;y&quot;: 14 },
+      &quot;targets&quot;: [
+        { &quot;datasource&quot;: { &quot;type&quot;: &quot;prometheus&quot;, &quot;uid&quot;: &quot;${DS_PROMETHEUS}&quot; }, &quot;expr&quot;: &quot;increase(db_client_connection_wait_time_seconds_sum{db_client_connection_pool_name=~\&quot;${pool_name}\&quot;, job=~\&quot;${job}\&quot;}[$__range]) / increase(db_client_connection_wait_time_seconds_count{db_client_connection_pool_name=~\&quot;${pool_name}\&quot;, job=~\&quot;${job}\&quot;}[$__range])&quot;, &quot;legendFormat&quot;: &quot;Wait — {{db_client_connection_pool_name}}&quot;, &quot;refId&quot;: &quot;A&quot;, &quot;editorMode&quot;: &quot;code&quot;, &quot;range&quot;: false, &quot;instant&quot;: true },
+        { &quot;datasource&quot;: { &quot;type&quot;: &quot;prometheus&quot;, &quot;uid&quot;: &quot;${DS_PROMETHEUS}&quot; }, &quot;expr&quot;: &quot;increase(db_client_connection_create_time_seconds_sum{db_client_connection_pool_name=~\&quot;${pool_name}\&quot;, job=~\&quot;${job}\&quot;}[$__range]) / increase(db_client_connection_create_time_seconds_count{db_client_connection_pool_name=~\&quot;${pool_name}\&quot;, job=~\&quot;${job}\&quot;}[$__range])&quot;, &quot;legendFormat&quot;: &quot;Create — {{db_client_connection_pool_name}}&quot;, &quot;refId&quot;: &quot;B&quot;, &quot;editorMode&quot;: &quot;code&quot;, &quot;range&quot;: false, &quot;instant&quot;: true },
+        { &quot;datasource&quot;: { &quot;type&quot;: &quot;prometheus&quot;, &quot;uid&quot;: &quot;${DS_PROMETHEUS}&quot; }, &quot;expr&quot;: &quot;increase(db_client_connection_use_time_seconds_sum{db_client_connection_pool_name=~\&quot;${pool_name}\&quot;, job=~\&quot;${job}\&quot;}[$__range]) / increase(db_client_connection_use_time_seconds_count{db_client_connection_pool_name=~\&quot;${pool_name}\&quot;, job=~\&quot;${job}\&quot;}[$__range])&quot;, &quot;legendFormat&quot;: &quot;Use — {{db_client_connection_pool_name}}&quot;, &quot;refId&quot;: &quot;C&quot;, &quot;editorMode&quot;: &quot;code&quot;, &quot;range&quot;: false, &quot;instant&quot;: true }
+      ],
+      &quot;description&quot;: &quot;選択期間内の平均レイテンシ\ndb.client.connection.{wait_time, create_time, use_time}&quot;,
+      &quot;options&quot;: { &quot;reduceOptions&quot;: { &quot;calcs&quot;: [&quot;lastNotNull&quot;], &quot;fields&quot;: &quot;&quot;, &quot;values&quot;: false }, &quot;orientation&quot;: &quot;horizontal&quot;, &quot;displayMode&quot;: &quot;gradient&quot;, &quot;showUnfilled&quot;: true, &quot;minVizWidth&quot;: 8, &quot;minVizHeight&quot;: 16, &quot;valueMode&quot;: &quot;color&quot; },
+      &quot;fieldConfig&quot;: { &quot;defaults&quot;: { &quot;color&quot;: { &quot;mode&quot;: &quot;palette-classic&quot; }, &quot;unit&quot;: &quot;s&quot;, &quot;decimals&quot;: 4, &quot;thresholds&quot;: { &quot;mode&quot;: &quot;absolute&quot;, &quot;steps&quot;: [{ &quot;color&quot;: &quot;green&quot;, &quot;value&quot;: null }, { &quot;color&quot;: &quot;yellow&quot;, &quot;value&quot;: 0.05 }, { &quot;color&quot;: &quot;red&quot;, &quot;value&quot;: 0.5 }] } }, &quot;overrides&quot;: [] }
+    },
+    {
+      &quot;id&quot;: 8, &quot;title&quot;: &quot;Connection Timeouts&quot;, &quot;type&quot;: &quot;timeseries&quot;,
+      &quot;datasource&quot;: { &quot;type&quot;: &quot;prometheus&quot;, &quot;uid&quot;: &quot;${DS_PROMETHEUS}&quot; },
+      &quot;gridPos&quot;: { &quot;h&quot;: 8, &quot;w&quot;: 12, &quot;x&quot;: 0, &quot;y&quot;: 23 },
+      &quot;targets&quot;: [{ &quot;datasource&quot;: { &quot;type&quot;: &quot;prometheus&quot;, &quot;uid&quot;: &quot;${DS_PROMETHEUS}&quot; }, &quot;expr&quot;: &quot;increase(db_client_connection_timeouts_total{db_client_connection_pool_name=~\&quot;${pool_name}\&quot;, job=~\&quot;${job}\&quot;}[15m])&quot;, &quot;legendFormat&quot;: &quot;Timeouts — {{db_client_connection_pool_name}}&quot;, &quot;refId&quot;: &quot;A&quot;, &quot;editorMode&quot;: &quot;code&quot;, &quot;range&quot;: true, &quot;instant&quot;: false, &quot;interval&quot;: &quot;15m&quot; }],
+      &quot;description&quot;: &quot;db.client.connection.timeouts\n15分間のタイムアウト発生数&quot;,
+      &quot;options&quot;: { &quot;tooltip&quot;: { &quot;mode&quot;: &quot;multi&quot;, &quot;sort&quot;: &quot;desc&quot; }, &quot;legend&quot;: { &quot;displayMode&quot;: &quot;list&quot;, &quot;placement&quot;: &quot;bottom&quot;, &quot;calcs&quot;: [&quot;sum&quot;, &quot;lastNotNull&quot;] } },
+      &quot;fieldConfig&quot;: { &quot;defaults&quot;: { &quot;custom&quot;: { &quot;drawStyle&quot;: &quot;bars&quot;, &quot;lineWidth&quot;: 1, &quot;fillOpacity&quot;: 60, &quot;showPoints&quot;: &quot;never&quot;, &quot;stacking&quot;: { &quot;mode&quot;: &quot;none&quot; }, &quot;gradientMode&quot;: &quot;scheme&quot; }, &quot;unit&quot;: &quot;short&quot;, &quot;color&quot;: { &quot;mode&quot;: &quot;fixed&quot;, &quot;fixedColor&quot;: &quot;red&quot; }, &quot;noValue&quot;: &quot;0&quot; }, &quot;overrides&quot;: [] }
+    },
+    {
+      &quot;id&quot;: 9, &quot;title&quot;: &quot;Connection Wait Time Heatmap&quot;, &quot;type&quot;: &quot;heatmap&quot;,
+      &quot;datasource&quot;: { &quot;type&quot;: &quot;prometheus&quot;, &quot;uid&quot;: &quot;${DS_PROMETHEUS}&quot; },
+      &quot;gridPos&quot;: { &quot;h&quot;: 8, &quot;w&quot;: 12, &quot;x&quot;: 12, &quot;y&quot;: 23 },
+      &quot;targets&quot;: [{ &quot;datasource&quot;: { &quot;type&quot;: &quot;prometheus&quot;, &quot;uid&quot;: &quot;${DS_PROMETHEUS}&quot; }, &quot;expr&quot;: &quot;sum by (le) (increase(db_client_connection_wait_time_seconds_bucket{db_client_connection_pool_name=~\&quot;${pool_name}\&quot;, job=~\&quot;${job}\&quot;}[15m]))&quot;, &quot;legendFormat&quot;: &quot;{{le}}&quot;, &quot;refId&quot;: &quot;A&quot;, &quot;editorMode&quot;: &quot;code&quot;, &quot;range&quot;: true, &quot;instant&quot;: false, &quot;format&quot;: &quot;heatmap&quot;, &quot;interval&quot;: &quot;15m&quot; }],
+      &quot;description&quot;: &quot;db.client.connection.wait_time bucket distribution&quot;,
+      &quot;options&quot;: { &quot;calculate&quot;: true, &quot;color&quot;: { &quot;mode&quot;: &quot;scheme&quot;, &quot;scheme&quot;: &quot;Oranges&quot;, &quot;fill&quot;: &quot;orange&quot;, &quot;reverse&quot;: false, &quot;exponent&quot;: 0.5, &quot;steps&quot;: 32 }, &quot;yAxis&quot;: { &quot;unit&quot;: &quot;s&quot;, &quot;reverse&quot;: false, &quot;max&quot;: 0.1, &quot;decimals&quot;: 0 }, &quot;cellGap&quot;: 1, &quot;tooltip&quot;: { &quot;show&quot;: true, &quot;yHistogram&quot;: true }, &quot;legend&quot;: { &quot;show&quot;: true }, &quot;calculation&quot;: { &quot;xBuckets&quot;: { &quot;mode&quot;: &quot;size&quot; }, &quot;yBuckets&quot;: { &quot;mode&quot;: &quot;size&quot; } } },
+      &quot;fieldConfig&quot;: { &quot;defaults&quot;: { &quot;custom&quot;: { &quot;scaleDistribution&quot;: { &quot;type&quot;: &quot;log&quot;, &quot;log&quot;: 2 } } }, &quot;overrides&quot;: [] }
+    },
+    {
+      &quot;id&quot;: 10, &quot;title&quot;: &quot;Alert History&quot;, &quot;type&quot;: &quot;alertlist&quot;,
+      &quot;datasource&quot;: { &quot;type&quot;: &quot;prometheus&quot;, &quot;uid&quot;: &quot;${DS_PROMETHEUS}&quot; },
+      &quot;gridPos&quot;: { &quot;h&quot;: 8, &quot;w&quot;: 24, &quot;x&quot;: 0, &quot;y&quot;: 32 },
+      &quot;targets&quot;: [],
+      &quot;description&quot;: &quot;&quot;,
+      &quot;options&quot;: { &quot;viewMode&quot;: &quot;list&quot;, &quot;groupMode&quot;: &quot;default&quot;, &quot;groupBy&quot;: [], &quot;maxItems&quot;: 10, &quot;sortOrder&quot;: 3, &quot;dashboardAlerts&quot;: true, &quot;alertName&quot;: &quot;&quot;, &quot;alertInstanceLabelFilter&quot;: &quot;&quot;, &quot;stateFilter&quot;: { &quot;firing&quot;: true, &quot;pending&quot;: true, &quot;noData&quot;: true, &quot;normal&quot;: true, &quot;error&quot;: true }, &quot;folder&quot;: &quot;&quot;, &quot;tags&quot;: [] }
+    }
+  ],
+  &quot;refresh&quot;: &quot;10s&quot;,
+  &quot;schemaVersion&quot;: 38,
+  &quot;style&quot;: &quot;dark&quot;,
+  &quot;tags&quot;: [&quot;mysql&quot;, &quot;opentelemetry&quot;, &quot;connection-pool&quot;, &quot;otel&quot;, &quot;db-client&quot;],
+  &quot;templating&quot;: {
+    &quot;list&quot;: [
+      { &quot;current&quot;: { &quot;selected&quot;: false, &quot;text&quot;: &quot;Prometheus&quot;, &quot;value&quot;: &quot;Prometheus&quot; }, &quot;hide&quot;: 0, &quot;includeAll&quot;: false, &quot;multi&quot;: false, &quot;name&quot;: &quot;DS_PROMETHEUS&quot;, &quot;options&quot;: [], &quot;query&quot;: &quot;prometheus&quot;, &quot;refresh&quot;: 1, &quot;regex&quot;: &quot;&quot;, &quot;skipUrlSync&quot;: false, &quot;type&quot;: &quot;datasource&quot; },
+      { &quot;allValue&quot;: &quot;&quot;, &quot;current&quot;: { &quot;selected&quot;: true, &quot;text&quot;: [&quot;All&quot;], &quot;value&quot;: [&quot;$__all&quot;] }, &quot;datasource&quot;: { &quot;type&quot;: &quot;prometheus&quot;, &quot;uid&quot;: &quot;${DS_PROMETHEUS}&quot; }, &quot;definition&quot;: &quot;label_values(db_client_connection_count, db_client_connection_pool_name)&quot;, &quot;hide&quot;: 0, &quot;includeAll&quot;: true, &quot;label&quot;: &quot;Pool Name&quot;, &quot;multi&quot;: true, &quot;name&quot;: &quot;pool_name&quot;, &quot;options&quot;: [], &quot;query&quot;: { &quot;query&quot;: &quot;label_values(db_client_connection_count, db_client_connection_pool_name)&quot;, &quot;refId&quot;: &quot;StandardVariableQuery&quot; }, &quot;refresh&quot;: 2, &quot;regex&quot;: &quot;&quot;, &quot;skipUrlSync&quot;: false, &quot;sort&quot;: 1, &quot;type&quot;: &quot;query&quot; },
+      { &quot;allValue&quot;: &quot;&quot;, &quot;current&quot;: { &quot;selected&quot;: true, &quot;text&quot;: [&quot;All&quot;], &quot;value&quot;: [&quot;$__all&quot;] }, &quot;datasource&quot;: { &quot;type&quot;: &quot;prometheus&quot;, &quot;uid&quot;: &quot;${DS_PROMETHEUS}&quot; }, &quot;definition&quot;: &quot;label_values(db_client_connection_count, job)&quot;, &quot;hide&quot;: 0, &quot;includeAll&quot;: true, &quot;label&quot;: &quot;Job&quot;, &quot;multi&quot;: true, &quot;name&quot;: &quot;job&quot;, &quot;options&quot;: [], &quot;query&quot;: { &quot;query&quot;: &quot;label_values(db_client_connection_count, job)&quot;, &quot;refId&quot;: &quot;StandardVariableQuery&quot; }, &quot;refresh&quot;: 2, &quot;regex&quot;: &quot;&quot;, &quot;skipUrlSync&quot;: false, &quot;sort&quot;: 1, &quot;type&quot;: &quot;query&quot; }
+    ]
+  },
+  &quot;time&quot;: { &quot;from&quot;: &quot;now-30m&quot;, &quot;to&quot;: &quot;now&quot; },
+  &quot;timepicker&quot;: { &quot;refresh_intervals&quot;: [&quot;5s&quot;, &quot;10s&quot;, &quot;30s&quot;, &quot;1m&quot;, &quot;5m&quot;] },
+  &quot;timezone&quot;: &quot;&quot;,
+  &quot;title&quot;: &quot;MySQL Connection Pool — Observability (OpenTelemetry)&quot;,
+  &quot;uid&quot;: &quot;mysql-pool-otel&quot;,
+  &quot;version&quot;: 1,
+  &quot;weekStart&quot;: &quot;&quot;
+}</code></pre>
+    
+    </details>
     
     <h2 id="移行ガイド" class="section"><a class="anchor-link left" href="#移行ガイド"><i class="icofont-laika link">&#xef71;</i></a>移行ガイド</h2>
     
-    <h3 id="ldbc-hikariからの移行" class="section"><a class="anchor-link left" href="#ldbc-hikariからの移行"><i class="icofont-laika link">&#xef71;</i></a>ldbc-hikariからの移行</h3>
-    <p><strong>移行前 (0.4.x):</strong></p>
-    <pre><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> ++= </span><span class="type-name">Seq</span><span>(
-  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-dsl&quot;</span><span> % </span><span class="string-literal">&quot;0.4.0&quot;</span><span>,
-  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-hikari&quot;</span><span> % </span><span class="string-literal">&quot;0.4.0&quot;</span><span>
-)
+    <h3 id="telemetryattribute-の定数名を更新する" class="section"><a class="anchor-link left" href="#telemetryattribute-の定数名を更新する"><i class="icofont-laika link">&#xef71;</i></a>TelemetryAttribute の定数名を更新する</h3>
+    <p><code>TelemetryAttribute</code> の定数を直接使用している場合は、新しいキー名に更新してください。</p>
+    <p><strong>移行前 (0.5.x):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.</span><span class="identifier">telemetry</span><span>.</span><span class="type-name">TelemetryAttribute</span><span>
 
-</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">hikari</span><span>.*
+</span><span class="keyword">val</span><span> </span><span class="identifier">attr</span><span> = </span><span class="type-name">Attribute</span><span>(</span><span class="type-name">TelemetryAttribute</span><span>.</span><span class="type-name">DB_SYSTEM</span><span>, </span><span class="string-literal">&quot;mysql&quot;</span><span>)
+</span><span class="keyword">val</span><span> </span><span class="identifier">op</span><span>   = </span><span class="type-name">Attribute</span><span>(</span><span class="type-name">TelemetryAttribute</span><span>.</span><span class="type-name">DB_OPERATION</span><span>, </span><span class="string-literal">&quot;SELECT&quot;</span><span>)</span></code></pre>
+    <p><strong>移行後 (0.6.x):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.</span><span class="identifier">telemetry</span><span>.</span><span class="type-name">TelemetryAttribute</span><span>
 
-</span><span class="keyword">val</span><span> </span><span class="identifier">hikariConfig</span><span> = </span><span class="type-name">Configuration</span><span>.</span><span class="identifier">default</span><span>
-  .</span><span class="identifier">setJdbcUrl</span><span>(</span><span class="string-literal">&quot;jdbc:mysql://localhost:3306/mydb&quot;</span><span>)
-  .</span><span class="identifier">setUsername</span><span>(</span><span class="string-literal">&quot;user&quot;</span><span>)
-  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
-  .</span><span class="identifier">setMaximumPoolSize</span><span>(</span><span class="number-literal">20</span><span>)
-
-</span><span class="type-name">HikariDataSource</span><span>.</span><span class="identifier">fromHikariConfig</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">hikariConfig</span><span>).</span><span class="identifier">use</span><span> { </span><span class="identifier">pool</span><span> =&gt;
-  </span><span class="comment">// 使用
-</span><span>}</span></code></pre>
-    <p><strong>移行後 (0.5.x):</strong></p>
-    <pre><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> ++= </span><span class="type-name">Seq</span><span>(
-  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.5.0&quot;</span><span>,
-  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-dsl&quot;</span><span> % </span><span class="string-literal">&quot;0.5.0&quot;</span><span>
-)
-
-</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
-
-</span><span class="keyword">val</span><span> </span><span class="identifier">config</span><span> = </span><span class="type-name">MySQLConfig</span><span>.</span><span class="identifier">default</span><span>
-  .</span><span class="identifier">setHost</span><span>(</span><span class="string-literal">&quot;localhost&quot;</span><span>)
-  .</span><span class="identifier">setPort</span><span>(</span><span class="number-literal">3306</span><span>)
-  .</span><span class="identifier">setUser</span><span>(</span><span class="string-literal">&quot;user&quot;</span><span>)
-  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
-  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;mydb&quot;</span><span>)
-  .</span><span class="identifier">setMaxConnections</span><span>(</span><span class="number-literal">20</span><span>)
-
-</span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">config</span><span>).</span><span class="identifier">use</span><span> { </span><span class="identifier">pool</span><span> =&gt;
-  </span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">pool</span><span>)
-  </span><span class="comment">// 使用
-</span><span>}</span></code></pre>
+</span><span class="keyword">val</span><span> </span><span class="identifier">attr</span><span> = </span><span class="type-name">Attribute</span><span>(</span><span class="type-name">TelemetryAttribute</span><span>.</span><span class="type-name">DB_SYSTEM_NAME</span><span>, </span><span class="string-literal">&quot;mysql&quot;</span><span>)
+</span><span class="keyword">val</span><span> </span><span class="identifier">op</span><span>   = </span><span class="type-name">Attribute</span><span>(</span><span class="type-name">TelemetryAttribute</span><span>.</span><span class="type-name">DB_OPERATION_NAME</span><span>, </span><span class="string-literal">&quot;SELECT&quot;</span><span>)</span></code></pre>
     
-    <h3 id="zio統合の追加" class="section"><a class="anchor-link left" href="#zio統合の追加"><i class="icofont-laika link">&#xef71;</i></a>ZIO統合の追加</h3>
-    <p><strong>Cats Effectベース (従来):</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.*
+    <h3 id="otel-メトリクスを有効化する" class="section"><a class="anchor-link left" href="#otel-メトリクスを有効化する"><i class="icofont-laika link">&#xef71;</i></a>OTel メトリクスを有効化する</h3>
+    <p>接続プールのメトリクスを収集したい場合は、<code>Meter</code> インスタンスを渡してください。</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="type-name">IO</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">org</span><span>.</span><span class="identifier">typelevel</span><span>.</span><span class="identifier">otel4s</span><span>.</span><span class="identifier">metrics</span><span>.</span><span class="type-name">Meter</span><span>
 </span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.</span><span class="identifier">telemetry</span><span>.</span><span class="type-name">TelemetryConfig</span><span>
 
-</span><span class="keyword">val</span><span> </span><span class="identifier">program</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">List</span><span>[</span><span class="type-name">User</span><span>]] = 
-  </span><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">connection</span><span> =&gt;
-    </span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromConnection</span><span>(</span><span class="identifier">connection</span><span>)
-    </span><span class="string-literal">sql&quot;SELECT * FROM users&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
-  }</span></code></pre>
-    <p><strong>ZIOベース (新規):</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">zio</span><span>.*
-</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">zio</span><span>.</span><span class="identifier">interop</span><span>.*
+</span><span class="comment">// otel4s のセットアップ（例）
+</span><span class="type-name">OtelJava</span><span>.</span><span class="identifier">global</span><span>[</span><span class="type-name">IO</span><span>].</span><span class="identifier">use</span><span> { </span><span class="identifier">otel</span><span> =&gt;
+  </span><span class="identifier">otel</span><span>.</span><span class="identifier">meterProvider</span><span>.</span><span class="identifier">get</span><span>(</span><span class="string-literal">&quot;ldbc&quot;</span><span>).</span><span class="identifier">flatMap</span><span> { </span><span class="identifier">meter</span><span> =&gt;
+    </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](
+      </span><span class="identifier">config</span><span>          = </span><span class="identifier">mysqlConfig</span><span>,
+      </span><span class="identifier">meter</span><span>           = </span><span class="type-name">Some</span><span>(</span><span class="identifier">meter</span><span>),
+      </span><span class="identifier">telemetryConfig</span><span> = </span><span class="type-name">TelemetryConfig</span><span>.</span><span class="identifier">default</span><span>
+    ).</span><span class="identifier">use</span><span> { </span><span class="identifier">pool</span><span> =&gt;
+      </span><span class="identifier">pool</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+        </span><span class="comment">// db.client.connection.wait_duration などのメトリクスが記録される
+</span><span>        </span><span class="string-literal">sql&quot;SELECT 1&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">Int</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">pool</span><span>))
+      }
+    }
+  }
+}</span></code></pre>
+    
+    <h3 id="テレメトリ設定をカスタマイズする" class="section"><a class="anchor-link left" href="#テレメトリ設定をカスタマイズする"><i class="icofont-laika link">&#xef71;</i></a>テレメトリ設定をカスタマイズする</h3>
+    <p>クエリテキストをスパン名に含めたくない場合や、サニタイズを制御したい場合は <code>TelemetryConfig</code> を設定してください。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.</span><span class="identifier">telemetry</span><span>.</span><span class="type-name">TelemetryConfig</span><span>
 
-</span><span class="keyword">val</span><span> </span><span class="identifier">program</span><span>: </span><span class="type-name">Task</span><span>[</span><span class="type-name">List</span><span>[</span><span class="type-name">User</span><span>]] = 
-  </span><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">connection</span><span> =&gt;
-    </span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromConnection</span><span>(</span><span class="identifier">connection</span><span>)
-    </span><span class="string-literal">sql&quot;SELECT * FROM users&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
-  }</span></code></pre>
+</span><span class="comment">// スパン名を固定名にする（クエリテキストを解析しない）
+</span><span class="keyword">val</span><span> </span><span class="identifier">config</span><span> = </span><span class="type-name">TelemetryConfig</span><span>.</span><span class="identifier">withoutQueryTextExtraction</span><span>
+
+</span><span class="comment">// 全て無効化（開発・デバッグ用途のみ推奨）
+</span><span class="keyword">val</span><span> </span><span class="identifier">debugConfig</span><span> = </span><span class="type-name">TelemetryConfig</span><span>.</span><span class="identifier">default</span><span>
+  .</span><span class="identifier">withoutQueryTextExtraction</span><span>
+  .</span><span class="identifier">withoutSanitization</span><span>
+  .</span><span class="identifier">withoutInClauseCollapsing</span></code></pre>
     
     <h2 id="まとめ" class="section"><a class="anchor-link left" href="#まとめ"><i class="icofont-laika link">&#xef71;</i></a>まとめ</h2>
-    <p>0.5.x への移行により、以下のメリットが得られます：</p>
+    <p>0.6.x への移行により、以下のメリットが得られます：</p>
     <ol class="arabic">
-      <li><strong>ZIOエコシステムの完全サポート</strong>: ZIOベースアプリケーションでの自然な統合</li>
-      <li><strong>強化されたセキュリティ</strong>: SSRF攻撃対策、SQLエスケープ処理の改善</li>
-      <li><strong>AWS統合の簡素化</strong>: Aurora IAM認証の簡単な設定</li>
-      <li><strong>パフォーマンスの向上</strong>: 最大パケットサイズ対応、プール並行性改善</li>
-      <li><strong>開発者体験の向上</strong>: 新しいAPI、バイナリ互換性チェック</li>
+      <li><strong>OpenTelemetry 仕様準拠の強化</strong>: Semantic Conventions v1.39.0 に準拠した属性キー名と動作</li>
+      <li><strong>プールメトリクスの可視化</strong>: 接続待機時間・使用時間・タイムアウト件数を OTel メトリクスとして収集可能</li>
+      <li><strong>MySQL 9.x の正式サポート</strong>: MySQL 9.3+ の API 変更に自動追従</li>
+      <li><strong>新しい VECTOR 型</strong>: MySQL の <code>VECTOR</code> 型をスキーマ定義で直接扱える</li>
+      <li><strong>エラートレーシングの改善</strong>: スパンのエラー状態が分散トレーシングツールで正確に表示される</li>
     </ol>
-    <p>移行作業は主にライブラリ依存関係の更新とAPIの小さな変更で完了し、段階的な移行が可能です。</p>
+    <p>ほとんどの変更は後方互換性があります。<code>TelemetryAttribute</code> の定数名を直接使用している場合のみ更新が必要です。</p>
 
     
 <hr class="footer-rule"/>

@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.5</a>
+      <a class="text-link menu-toggle" href="#">Version 0.6</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -155,6 +155,7 @@
     <li class="level2 nav-leaf"><a href="../reference/Connector.html">コネクタ</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Performance.html">パフォーマンス</a></li>
     <li class="level2 nav-leaf"><a href="../reference/AuthenticationPlugin.html">認証プラグイン</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Telemetry.html">テレメトリ</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Pooling.html">コネクションプーリング</a></li>
   </ul>
   
@@ -181,7 +182,8 @@
     <li class="level1 nav-leaf"><a href="#文字列型カラムの定義">文字列型カラムの定義</a></li>
     <li class="level1 nav-leaf"><a href="#バイナリ型カラムの定義">バイナリ型カラムの定義</a></li>
     <li class="level1 nav-leaf"><a href="#日付-時間型カラムの定義">日付・時間型カラムの定義</a></li>
-    <li class="level1 nav-leaf"><a href="#enum型と特殊データ型">ENUM型と特殊データ型</a></li>
+    <li class="level1 nav-node"><a href="#enum型と特殊データ型">ENUM型と特殊データ型</a></li>
+    <li class="level2 nav-leaf"><a href="#vector型">VECTOR型</a></li>
     <li class="level1 nav-leaf"><a href="#デフォルト値の設定">デフォルト値の設定</a></li>
     <li class="level1 nav-node"><a href="#主キー-外部キー-インデックス">主キー・外部キー・インデックス</a></li>
     <li class="level2 nav-leaf"><a href="#単一カラムの主キー">単一カラムの主キー</a></li>
@@ -214,7 +216,7 @@
     
     <h2 id="準備" class="section"><a class="anchor-link left" href="#準備"><i class="icofont-laika link">&#xef71;</i></a>準備</h2>
     <p>プロジェクトに以下の依存関係を設定する必要があります。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">//&gt; using dep &quot;io.github.takapi327::ldbc-schema:0.5.3&quot;</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">//&gt; using dep &quot;io.github.takapi327::ldbc-schema:0.6.0&quot;</span></code></pre>
     <p>以下のコード例では、以下のimportを想定しています。</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">schema</span><span>.*</span></code></pre>
     
@@ -349,6 +351,16 @@
     <p>その他の特殊データ型：</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">def</span><span> </span><span class="declaration-name">isActive</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Boolean</span><span>] = </span><span class="identifier">boolean</span><span>() </span><span class="comment">// BOOLEAN型
 </span><span class="keyword">def</span><span> </span><span class="declaration-name">uniqueId</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">BigInt</span><span>] = </span><span class="identifier">serial</span><span>() </span><span class="comment">// SERIAL型（自動増分のBIGINT UNSIGNED）</span></code></pre>
+    
+    <h3 id="vector型" class="section"><a class="anchor-link left" href="#vector型"><i class="icofont-laika link">&#xef71;</i></a>VECTOR型</h3>
+    <p>MySQL 9.0以降で利用可能な <code>VECTOR</code> 型をサポートしています。ベクトル検索やAIの埋め込みベクトルの格納に使用できます。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">class</span><span> </span><span class="type-name">EmbeddingTable</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">Embedding</span><span>](</span><span class="string-literal">&quot;embeddings&quot;</span><span>):
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">id</span><span>:        </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>]         = </span><span class="identifier">bigint</span><span>().</span><span class="identifier">autoIncrement</span><span>.</span><span class="identifier">primaryKey</span><span>
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">embedding</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Array</span><span>[</span><span class="type-name">Float</span><span>]] = </span><span class="identifier">column</span><span>[</span><span class="type-name">Array</span><span>[</span><span class="type-name">Float</span><span>]](</span><span class="string-literal">&quot;embedding&quot;</span><span>, </span><span class="type-name">VECTOR</span><span>(</span><span class="number-literal">1536</span><span>))
+
+  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> * = (</span><span class="identifier">id</span><span> *: </span><span class="identifier">embedding</span><span>).</span><span class="identifier">to</span><span>[</span><span class="type-name">Embedding</span><span>]</span></code></pre>
+    <p>次元数を省略することも可能です：</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">def</span><span> </span><span class="declaration-name">embedding</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Array</span><span>[</span><span class="type-name">Float</span><span>]] = </span><span class="identifier">column</span><span>[</span><span class="type-name">Array</span><span>[</span><span class="type-name">Float</span><span>]](</span><span class="string-literal">&quot;embedding&quot;</span><span>, </span><span class="type-name">VECTOR</span><span>())</span></code></pre>
     
     <h2 id="デフォルト値の設定" class="section"><a class="anchor-link left" href="#デフォルト値の設定"><i class="icofont-laika link">&#xef71;</i></a>デフォルト値の設定</h2>
     <p>カラムにデフォルト値を設定する方法：</p>
