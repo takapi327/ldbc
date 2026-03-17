@@ -107,6 +107,8 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.3.0",
+      "io.circe" %%% "circe-core" % "0.14.15",
+      "org.virtuslab" %%% "scala-yaml" % "0.0.7",
       "org.typelevel"          %%% "munit-cats-effect"        % "2.1.0" % Test
     )
   )
@@ -115,9 +117,6 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
       "io.circe" %%% "circe-generic" % "0.14.15",
       "io.circe" %%% "circe-yaml"    % "0.16.1"
     )
-  )
-  .platformsSettings(JSPlatform, NativePlatform)(
-    libraryDependencies += "com.armanbilge" %%% "circe-scala-yaml" % "0.0.4"
   )
   .dependsOn(schema)
 
