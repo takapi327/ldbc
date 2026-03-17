@@ -11,6 +11,7 @@ import scala.util.control.NoStackTrace
 import cats.syntax.either.*
 
 import io.circe.*
+
 import org.virtuslab.yaml.*
 import org.virtuslab.yaml.Node.*
 
@@ -105,7 +106,11 @@ object Parser:
    * @return
    */
   def parse(str: String): Parser =
-    str.asNode.leftMap(e => ParsingFailure(e.msg, WrappedYamlError(e))).flatMap(yamlToJson).flatMap(_.as[Parser]).valueOr(throw _)
+    str.asNode
+      .leftMap(e => ParsingFailure(e.msg, WrappedYamlError(e)))
+      .flatMap(yamlToJson)
+      .flatMap(_.as[Parser])
+      .valueOr(throw _)
 
   final case class WrappedYamlError(error: YamlError) extends Exception with NoStackTrace:
     override def getMessage(): String = error.msg
@@ -117,7 +122,7 @@ object Parser:
       // TODO
       case Tag.int | Tag.float =>
         JsonNumber.fromString(node.value).map(Json.fromJsonNumber).toRight {
-          val msg = s"Invalid numeric string ${node.value}"
+          val msg = s"Invalid numeric string ${ node.value }"
           ParsingFailure(msg, new NumberFormatException(msg))
         }
       case Tag.boolean =>
@@ -125,37 +130,38 @@ object Parser:
           .construct(node)
           .leftMap(e => ParsingFailure(e.msg, WrappedYamlError(e)))
           .map(Json.fromBoolean)
-      case Tag.nullTag => Right(Json.Null)
+      case Tag.nullTag      => Right(Json.Null)
       case CustomTag(other) =>
         Right(Json.fromJsonObject(JsonObject.singleton(other.stripPrefix("!"), Json.fromString(node.value))))
       case other => Right(Json.fromString(node.value))
 
     def convertKeyNode(node: Node) = node match
       case scalar: ScalarNode => Right(scalar.value)
-      case _ => Left(ParsingFailure("Only string keys can be represented in JSON", null))
+      case _                  => Left(ParsingFailure("Only string keys can be represented in JSON", null))
 
-    if node == null then
-      Right(Json.False)
-    else node match
-      case mapping: MappingNode =>
-        mapping.mappings
-          .foldLeft(
-            Either.right[ParsingFailure, JsonObject](JsonObject.empty)
-          ) { case (objEither, (keyNode, valueNode)) =>
-            for
-              obj <- objEither
-              key <- convertKeyNode(keyNode)
-              value <- yamlToJson(valueNode)
-            yield obj.add(key, value)
-          }
-          .map(Json.fromJsonObject)
-      case sequence: SequenceNode =>
-        sequence.nodes
-          .foldLeft(Either.right[ParsingFailure, List[Json]](List.empty[Json])) { (arrEither, node) =>
-            for
-              arr <- arrEither
-              value <- yamlToJson(node)
-            yield value :: arr
-          }
-          .map(arr => Json.fromValues(arr.reverse))
-      case scalar: ScalarNode => convertScalarNode(scalar)
+    if node == null then Right(Json.False)
+    else
+      node match
+        case mapping: MappingNode =>
+          mapping.mappings
+            .foldLeft(
+              Either.right[ParsingFailure, JsonObject](JsonObject.empty)
+            ) {
+              case (objEither, (keyNode, valueNode)) =>
+                for
+                  obj   <- objEither
+                  key   <- convertKeyNode(keyNode)
+                  value <- yamlToJson(valueNode)
+                yield obj.add(key, value)
+            }
+            .map(Json.fromJsonObject)
+        case sequence: SequenceNode =>
+          sequence.nodes
+            .foldLeft(Either.right[ParsingFailure, List[Json]](List.empty[Json])) { (arrEither, node) =>
+              for
+                arr   <- arrEither
+                value <- yamlToJson(node)
+              yield value :: arr
+            }
+            .map(arr => Json.fromValues(arr.reverse))
+        case scalar: ScalarNode => convertScalarNode(scalar)
