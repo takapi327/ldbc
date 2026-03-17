@@ -160,7 +160,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         yield metaData.getDriverVersion()
       },
       if prefix == "jdbc" then "mysql-connector-j-9.6.0 (Revision: fdef61f4af21fa9e0ac334ff0664ec754c164cc0)"
-      else "ldbc-connector-0.6.0"
+      else "ldbc-connector-0.7.0"
     )
   }
 
