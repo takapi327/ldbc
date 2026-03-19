@@ -60,7 +60,7 @@ lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "cats-free"   % "2.13.0",
-      "org.typelevel" %%% "cats-effect" % "3.7.0-RC1"
+      "org.typelevel" %%% "cats-effect" % "3.7.0"
     )
   )
   .dependsOn(sql)
@@ -71,8 +71,8 @@ lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "twiddles-core"     % "0.9.0",
-      "co.fs2"        %%% "fs2-core"          % "3.13.0-M7",
-      "org.typelevel" %%% "munit-cats-effect" % "2.2.0-RC1" % Test
+      "co.fs2"        %%% "fs2-core"          % "3.13.0",
+      "org.typelevel" %%% "munit-cats-effect" % "2.2.0" % Test
     )
   )
   .dependsOn(core)
@@ -111,7 +111,7 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
       "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.4.0",
       "io.circe"               %%% "circe-core"               % "0.14.15",
       "org.virtuslab"          %%% "scala-yaml"               % "0.3.1",
-      "org.typelevel"          %%% "munit-cats-effect"        % "2.2.0-RC1" % Test
+      "org.typelevel"          %%% "munit-cats-effect"        % "2.2.0" % Test
     )
   )
   .jvmSettings(
@@ -154,15 +154,15 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     scalacOptions += "-Ykind-projector:underscores",
     libraryDependencies ++= Seq(
-      "co.fs2"        %%% "fs2-core"            % "3.13.0-M7",
-      "co.fs2"        %%% "fs2-io"              % "3.13.0-M7",
+      "co.fs2"        %%% "fs2-core"            % "3.13.0",
+      "co.fs2"        %%% "fs2-io"              % "3.13.0",
       "org.scodec"    %%% "scodec-bits"         % "1.2.4",
       "org.scodec"    %%% "scodec-core"         % "2.3.1",
       "org.scodec"    %%% "scodec-cats"         % "1.3.0-RC1",
       "org.typelevel" %%% "otel4s-core-trace"   % "0.16.0-M1",
       "org.typelevel" %%% "otel4s-core-metrics" % "0.16.0-M1",
       "org.typelevel" %%% "twiddles-core"       % "0.9.0",
-      "org.typelevel" %%% "munit-cats-effect"   % "2.2.0-RC1" % Test
+      "org.typelevel" %%% "munit-cats-effect"   % "2.2.0" % Test
     )
   )
   .jsSettings(
@@ -177,10 +177,10 @@ lazy val awsAuthenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativeP
   .module("aws-authentication-plugin", "Project for the plugin used with Aurora IAM authentication")
   .settings(
     libraryDependencies ++= Seq(
-      "co.fs2"            %%% "fs2-core"          % "3.13.0-M7",
-      "co.fs2"            %%% "fs2-io"            % "3.13.0-M7",
+      "co.fs2"            %%% "fs2-core"          % "3.13.0",
+      "co.fs2"            %%% "fs2-io"            % "3.13.0",
       "io.github.cquiroz" %%% "scala-java-time"   % "2.6.0",
-      "org.typelevel"     %%% "munit-cats-effect" % "2.2.0-RC1" % Test
+      "org.typelevel"     %%% "munit-cats-effect" % "2.2.0" % Test
     )
   )
   .jsSettings(
@@ -224,7 +224,7 @@ lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     crossScalaVersions                      := Seq(scala3, scala37),
     name                                    := "tests",
     description                             := "Projects for testing",
-    libraryDependencies += "org.typelevel" %%% "munit-cats-effect" % "2.2.0-RC1",
+    libraryDependencies += "org.typelevel" %%% "munit-cats-effect" % "2.2.0",
     Test / unmanagedSourceDirectories ++= {
       val sourceDir = (Test / sourceDirectory).value
       CrossVersion.partialVersion(scalaVersion.value) match {
