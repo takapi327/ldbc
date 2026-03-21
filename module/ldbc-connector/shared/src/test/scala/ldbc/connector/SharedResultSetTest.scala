@@ -28,11 +28,11 @@ class SharedResultSetTest extends FTestPlatform:
     val version:              Version,
     val isClosed:             Ref[F, Boolean],
     val fetchSize:            Ref[F, Int],
-    val useCursorFetch:       Boolean        = false,
-    val useServerPrepStmts:   Boolean        = false,
-    val resultSetType:        Int            = ResultSet.TYPE_FORWARD_ONLY,
-    val resultSetConcurrency: Int            = ResultSet.CONCUR_READ_ONLY,
-    val statement:            Option[String] = None,
+    val useCursorFetch:       Boolean            = false,
+    val useServerPrepStmts:   Boolean            = false,
+    val resultSetType:        Int                = ResultSet.TYPE_FORWARD_ONLY,
+    val resultSetConcurrency: Int                = ResultSet.CONCUR_READ_ONLY,
+    val statement:            Option[String]     = None,
     val decoder:              ColumnValueDecoder = TextColumnValueDecoder
   )(using F: Async[F])
     extends SharedResultSet[F]:

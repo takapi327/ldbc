@@ -36,12 +36,12 @@ class SharedPreparedStatementTest extends SharedPreparedStatement[IO], FTestPlat
   override val statementClosed:   Ref[IO, Boolean]               = Ref.unsafe[IO, Boolean](false)
   override val updateCount:       Ref[IO, Long]                  = Ref.unsafe[IO, Long](0L)
 
-  override def protocol:          Protocol[IO]    = null.asInstanceOf[Protocol[IO]]
-  override def serverVariables:   Map[String, String] = Map.empty
-  override def fetchSize:         Ref[IO, Int]    = Ref.unsafe[IO, Int](0)
-  override def useCursorFetch:    Boolean         = false
-  override def useServerPrepStmts: Boolean        = false
-  override def resultSetType:     Int             = ResultSet.TYPE_FORWARD_ONLY
+  override def protocol:           Protocol[IO]        = null.asInstanceOf[Protocol[IO]]
+  override def serverVariables:    Map[String, String] = Map.empty
+  override def fetchSize:          Ref[IO, Int]        = Ref.unsafe[IO, Int](0)
+  override def useCursorFetch:     Boolean             = false
+  override def useServerPrepStmts: Boolean             = false
+  override def resultSetType:      Int                 = ResultSet.TYPE_FORWARD_ONLY
 
   // Implementation of required methods from Statement
   override def clearBatch():       IO[Unit]          = IO.unit
