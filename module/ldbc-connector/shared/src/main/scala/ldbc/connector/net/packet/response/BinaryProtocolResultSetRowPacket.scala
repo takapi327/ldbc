@@ -12,7 +12,7 @@ package response
  *
  * Stores the entire row as raw bytes starting after the 0x00 status byte
  * (i.e., beginning with the null bitmap).
- * Column values are decoded lazily by extractBinaryColumn on get*() calls.
+ * Column values are extracted lazily by BinaryColumnValueDecoder on get*() calls.
  */
 case class BinaryProtocolResultSetRowPacket(rawBytes: Array[Byte]) extends ResultSetRowPacket:
   override def isTextProtocol: Boolean = false

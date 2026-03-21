@@ -61,3 +61,37 @@ private[ldbc] object TextColumnValueDecoder extends ColumnValueDecoder:
 
   override def decodeTimestamp(bytes: Array[Byte], charset: String, columnType: ColumnDataType): LocalDateTime =
     LocalDateTime.parse(asString(bytes, charset), localDateTimeFormatter(6))
+
+  override def extractColumn(bytes: Array[Byte], index: Int, columnTypes: Vector[ColumnDataType]): Option[Array[Byte]] =
+    val NULL = 0xfb
+    var offset = 0
+    var col    = 0
+    while col < index do
+      val lenByte = bytes(offset) & 0xff
+      if lenByte == NULL then offset += 1
+      else
+        val (_, totalWidth) = readLengthEncoded(bytes, offset)
+        offset += totalWidth
+      col += 1
+
+    val lenByte = bytes(offset) & 0xff
+    if lenByte == NULL then None
+    else
+      val (dataLen, _) = readLengthEncoded(bytes, offset)
+      val headerSize   = if lenByte <= 250 then 1 else if lenByte == 252 then 3 else if lenByte == 253 then 4 else 9
+      Some(bytes.slice(offset + headerSize, offset + headerSize + dataLen))
+
+  private def readLengthEncoded(bytes: Array[Byte], offset: Int): (Int, Int) =
+    val lenByte = bytes(offset) & 0xff
+    if lenByte <= 250 then
+      (lenByte, 1 + lenByte)
+    else if lenByte == 252 then
+      val len = (bytes(offset + 1) & 0xff) | ((bytes(offset + 2) & 0xff) << 8)
+      (len, 3 + len)
+    else if lenByte == 253 then
+      val len =
+        (bytes(offset + 1) & 0xff) | ((bytes(offset + 2) & 0xff) << 8) | ((bytes(offset + 3) & 0xff) << 16)
+      (len, 4 + len)
+    else
+      val len = (0 until 8).foldLeft(0L)((acc, i) => acc | ((bytes(offset + 1 + i) & 0xffL) << (i * 8))).toInt
+      (len, 9 + len)

@@ -18,7 +18,7 @@ import java.time.*
  *   - `bytes` is never empty due to a NULL value; NULL columns are handled as `Option` at the
  *     call site and these methods are only invoked for non-NULL values.
  *   - `bytes` contains data only, without any length-encoded prefix
- *     (equivalent to the output of `ResultSetRowPacket.extractBinaryFieldData`).
+ *     (equivalent to the output of `BinaryColumnValueDecoder.extractBinaryFieldData`).
  *   - Implementations may return `null` for date/time types when the server sends a
  *     zero-date (`0000-00-00`) encoded as a 0-length field.
  */
@@ -217,3 +217,21 @@ private[ldbc] trait ColumnValueDecoder:
    * @return the decoded `LocalDateTime`, or `null` for zero-datetime values
    */
   def decodeTimestamp(bytes: Array[Byte], charset: String, columnType: ColumnDataType): LocalDateTime
+
+  /**
+   * Extracts the raw data bytes for the column at `index` (0-based) from a row's raw bytes.
+   *
+   * Implementations handle their respective wire-protocol format:
+   *   - Text protocol: length-encoded strings, NULL represented as 0xFB
+   *   - Binary protocol: fixed or variable-width fields after the null bitmap, NULL indicated by null bitmap
+   *
+   * The returned bytes contain field data only, without any length-encoded prefix.
+   * This method is called before any `decode*` method; decode methods are only invoked
+   * on non-NULL values (when `Some` is returned here).
+   *
+   * @param bytes       raw bytes of the entire row packet (no protocol framing)
+   * @param index       0-based column index
+   * @param columnTypes column types for all columns in the result set (used by binary protocol for field widths)
+   * @return `None` for NULL columns, `Some(fieldBytes)` for non-NULL columns
+   */
+  def extractColumn(bytes: Array[Byte], index: Int, columnTypes: Vector[ColumnDataType]): Option[Array[Byte]]

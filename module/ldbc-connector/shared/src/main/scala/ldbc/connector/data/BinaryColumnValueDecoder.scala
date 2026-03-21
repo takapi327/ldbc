@@ -149,3 +149,59 @@ private[ldbc] object BinaryColumnValueDecoder extends ColumnValueDecoder:
           ((bytes(10) & 0xff) << 16) | ((bytes(11) & 0xff) << 24)
         LocalTime.of(hour, minute, second, microsecond * 1000)
       case _ => null
+
+  override def extractColumn(bytes: Array[Byte], index: Int, columnTypes: Vector[ColumnDataType]): Option[Array[Byte]] =
+    val nullBitmapSize = (columnTypes.length + 7 + 2) / 8
+
+    val isNull = (bytes((index + 2) / 8) & (1 << ((index + 2) % 8))) != 0
+
+    if isNull then None
+    else
+      var offset = nullBitmapSize
+      var col    = 0
+      while col < index do
+        val nullBit = (bytes((col + 2) / 8) & (1 << ((col + 2) % 8))) != 0
+        if !nullBit then
+          offset += binaryFieldTotalWidth(bytes, offset, columnTypes(col))
+        col += 1
+
+      Some(extractBinaryFieldData(bytes, offset, columnTypes(index)))
+
+  private def binaryFieldTotalWidth(bytes: Array[Byte], offset: Int, columnType: ColumnDataType): Int =
+    columnType match
+      case MYSQL_TYPE_TINY                                       => 1
+      case MYSQL_TYPE_SHORT | MYSQL_TYPE_YEAR                    => 2
+      case MYSQL_TYPE_LONG | MYSQL_TYPE_INT24 | MYSQL_TYPE_FLOAT => 4
+      case MYSQL_TYPE_LONGLONG | MYSQL_TYPE_DOUBLE               => 8
+      case _ =>
+        val lenByte = bytes(offset) & 0xff
+        if lenByte <= 250 then 1 + lenByte
+        else if lenByte == 252 then
+          3 + ((bytes(offset + 1) & 0xff) | ((bytes(offset + 2) & 0xff) << 8))
+        else if lenByte == 253 then
+          4 + ((bytes(offset + 1) & 0xff) | ((bytes(offset + 2) & 0xff) << 8) |
+            ((bytes(offset + 3) & 0xff) << 16))
+        else
+          9 + (0 until 8).foldLeft(0L)((acc, i) => acc | ((bytes(offset + 1 + i) & 0xffL) << (i * 8))).toInt
+
+  private def extractBinaryFieldData(bytes: Array[Byte], offset: Int, columnType: ColumnDataType): Array[Byte] =
+    columnType match
+      case MYSQL_TYPE_TINY                                       => bytes.slice(offset, offset + 1)
+      case MYSQL_TYPE_SHORT | MYSQL_TYPE_YEAR                    => bytes.slice(offset, offset + 2)
+      case MYSQL_TYPE_LONG | MYSQL_TYPE_INT24 | MYSQL_TYPE_FLOAT => bytes.slice(offset, offset + 4)
+      case MYSQL_TYPE_LONGLONG | MYSQL_TYPE_DOUBLE               => bytes.slice(offset, offset + 8)
+      case _ =>
+        val lenByte = bytes(offset) & 0xff
+        if lenByte <= 250 then
+          bytes.slice(offset + 1, offset + 1 + lenByte)
+        else if lenByte == 252 then
+          val len = (bytes(offset + 1) & 0xff) | ((bytes(offset + 2) & 0xff) << 8)
+          bytes.slice(offset + 3, offset + 3 + len)
+        else if lenByte == 253 then
+          val len = (bytes(offset + 1) & 0xff) | ((bytes(offset + 2) & 0xff) << 8) |
+            ((bytes(offset + 3) & 0xff) << 16)
+          bytes.slice(offset + 4, offset + 4 + len)
+        else
+          val len =
+            (0 until 8).foldLeft(0L)((acc, i) => acc | ((bytes(offset + 1 + i) & 0xffL) << (i * 8))).toInt
+          bytes.slice(offset + 9, offset + 9 + len)
