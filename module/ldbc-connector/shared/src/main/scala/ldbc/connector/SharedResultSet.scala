@@ -40,8 +40,8 @@ private[ldbc] trait SharedResultSet[F[_]](using ev: MonadThrow[F]) extends Resul
   protected final var currentCursor:          Int                        = 0
   protected final var currentRow:             Option[ResultSetRowPacket] = records.headOption
 
-  private lazy val charsets:     Vector[String]     = columns.map(_.charset)
-  private lazy val columnTypes:  Vector[ColumnDataType] = columns.map(_.columnType)
+  private lazy val charsets:    Vector[String]         = columns.map(_.charset)
+  private lazy val columnTypes: Vector[ColumnDataType] = columns.map(_.columnType)
 
   override def close(): F[Unit] = isClosed.set(true)
 

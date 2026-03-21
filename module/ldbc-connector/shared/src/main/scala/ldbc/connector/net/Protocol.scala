@@ -288,11 +288,12 @@ object Protocol:
               resultSetRow <- readUntilEOF[ResultSetRowPacket](
                                 textResultSetRowDecoder(initialPacket.capabilityFlags)
                               )
-            yield columnDefinitions.zipWithIndex.flatMap { case (col, i) =>
-              resultSetRow.headOption.map { row =>
-                val fieldBytes = ResultSetRowPacket.extractTextColumn(row.rawBytes, i)
-                col.name -> fieldBytes.map(b => new String(b, col.charset)).getOrElse("")
-              }
+            yield columnDefinitions.zipWithIndex.flatMap {
+              case (col, i) =>
+                resultSetRow.headOption.map { row =>
+                  val fieldBytes = ResultSetRowPacket.extractTextColumn(row.rawBytes, i)
+                  col.name -> fieldBytes.map(b => new String(b, col.charset)).getOrElse("")
+                }
             }.toMap
         }
 

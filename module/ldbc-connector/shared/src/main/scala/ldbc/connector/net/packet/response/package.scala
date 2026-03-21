@@ -32,7 +32,7 @@ package object response:
       firstByte match
         case EOFPacket.STATUS => EOFPacket.decoder(capabilityFlags).decode(bits.drop(8))
         case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags).decode(bits.drop(8))
-        case _ =>
+        case _                =>
           Attempt.Successful(DecodeResult(ResultSetRowPacket.TextImpl(bits.toByteArray), BitVector.empty))
 
   /**

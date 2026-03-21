@@ -51,8 +51,7 @@ object ResultSetRowPacket:
       case None    => Array(0xfb.toByte)
       case Some(s) =>
         val data = s.getBytes("UTF-8")
-        if data.length <= 250 then
-          Array((data.length & 0xff).toByte) ++ data
+        if data.length <= 250 then Array((data.length & 0xff).toByte) ++ data
         else if data.length <= 65535 then
           Array(0xfc.toByte, (data.length & 0xff).toByte, ((data.length >> 8) & 0xff).toByte) ++ data
         else
@@ -71,8 +70,7 @@ object ResultSetRowPacket:
    */
   def readLengthEncoded(bytes: Array[Byte], offset: Int): (Int, Int) =
     val lenByte = bytes(offset) & 0xff
-    if lenByte <= 250 then
-      (lenByte, 1 + lenByte)
+    if lenByte <= 250 then (lenByte, 1 + lenByte)
     else if lenByte == 252 then
       val len = (bytes(offset + 1) & 0xff) | ((bytes(offset + 2) & 0xff) << 8)
       (len, 3 + len)
@@ -96,8 +94,7 @@ object ResultSetRowPacket:
     var col    = 0
     while col < columnIndex do
       val lenByte = bytes(offset) & 0xff
-      if lenByte == NULL then
-        offset += 1
+      if lenByte == NULL then offset += 1
       else
         val (_, totalWidth) = readLengthEncoded(bytes, offset)
         offset += totalWidth
@@ -109,4 +106,3 @@ object ResultSetRowPacket:
       val (dataLen, _) = readLengthEncoded(bytes, offset)
       val headerSize   = if lenByte <= 250 then 1 else if lenByte == 252 then 3 else if lenByte == 253 then 4 else 9
       Some(bytes.slice(offset + headerSize, offset + headerSize + dataLen))
-

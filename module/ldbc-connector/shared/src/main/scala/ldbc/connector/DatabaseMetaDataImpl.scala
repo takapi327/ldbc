@@ -145,7 +145,8 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
           yield resultSetRow
             .flatMap { row =>
               columnDefinitions.indices.flatMap { i =>
-                ResultSetRowPacket.extractTextColumn(row.rawBytes, i)
+                ResultSetRowPacket
+                  .extractTextColumn(row.rawBytes, i)
                   .map(b => new String(b, "UTF-8"))
               }
             }
@@ -552,7 +553,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
             override def name:       String                     = value
             override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
             override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
-            override def charset: String = "UTF-8"
+            override def charset:    String                     = "UTF-8"
         },
         dbList.map(name => ResultSetRowPacket.fromStrings(Some(name))).toVector,
         serverVariables,
@@ -575,7 +576,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
             override def name:       String                     = "TABLE_TYPE"
             override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
             override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
-            override def charset: String = "UTF-8"
+            override def charset:    String                     = "UTF-8"
         ),
         TableType.values
           .filterNot(_ == TableType.UNKNOWN)
@@ -817,7 +818,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
                 override def name:       String                     = value
                 override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
                 override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
-                override def charset: String = "UTF-8"
+                override def charset:    String                     = "UTF-8"
             ),
             resultSet.records,
             serverVariables,
@@ -1297,7 +1298,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
             override def name:       String                     = value
             override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
             override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
-            override def charset: String = "UTF-8"
+            override def charset:    String                     = "UTF-8"
         },
         types,
         serverVariables,
@@ -1478,7 +1479,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
             override def name:       String                     = value
             override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
             override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
-            override def charset: String = "UTF-8"
+            override def charset:    String                     = "UTF-8"
         },
         dbList.map(name => ResultSetRowPacket.fromStrings(Some("def"), Some(name))).toVector,
         serverVariables,
@@ -1914,7 +1915,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
             override def name:       String                     = value
             override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
             override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
-            override def charset: String = "UTF-8"
+            override def charset:    String                     = "UTF-8"
         },
         Vector.empty,
         serverVariables,

@@ -63,7 +63,7 @@ private[ldbc] object TextColumnValueDecoder extends ColumnValueDecoder:
     LocalDateTime.parse(asString(bytes, charset), localDateTimeFormatter(6))
 
   override def extractColumn(bytes: Array[Byte], index: Int, columnTypes: Vector[ColumnDataType]): Option[Array[Byte]] =
-    val NULL = 0xfb
+    val NULL   = 0xfb
     var offset = 0
     var col    = 0
     while col < index do
@@ -83,8 +83,7 @@ private[ldbc] object TextColumnValueDecoder extends ColumnValueDecoder:
 
   private def readLengthEncoded(bytes: Array[Byte], offset: Int): (Int, Int) =
     val lenByte = bytes(offset) & 0xff
-    if lenByte <= 250 then
-      (lenByte, 1 + lenByte)
+    if lenByte <= 250 then (lenByte, 1 + lenByte)
     else if lenByte == 252 then
       val len = (bytes(offset + 1) & 0xff) | ((bytes(offset + 2) & 0xff) << 8)
       (len, 3 + len)

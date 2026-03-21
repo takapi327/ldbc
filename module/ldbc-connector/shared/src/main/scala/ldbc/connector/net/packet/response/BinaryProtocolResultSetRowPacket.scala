@@ -16,4 +16,4 @@ package response
  */
 case class BinaryProtocolResultSetRowPacket(rawBytes: Array[Byte]) extends ResultSetRowPacket:
   override def isTextProtocol: Boolean = false
-  override def toString: String        = "Binary Protocol ResultSet Row"
+  override def toString:       String  = "Binary Protocol ResultSet Row"

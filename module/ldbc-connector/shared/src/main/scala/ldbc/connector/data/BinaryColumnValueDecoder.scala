@@ -41,7 +41,7 @@ private[ldbc] object BinaryColumnValueDecoder extends ColumnValueDecoder:
   override def decodeBoolean(bytes: Array[Byte], charset: String, columnType: ColumnDataType): Boolean =
     columnType match
       case MYSQL_TYPE_BOOL => bytes(0) != 0
-      case _ =>
+      case _               =>
         new String(bytes, charset) match
           case "true" | "1" => true
           case _            => false
@@ -161,8 +161,7 @@ private[ldbc] object BinaryColumnValueDecoder extends ColumnValueDecoder:
       var col    = 0
       while col < index do
         val nullBit = (bytes((col + 2) / 8) & (1 << ((col + 2) % 8))) != 0
-        if !nullBit then
-          offset += binaryFieldTotalWidth(bytes, offset, columnTypes(col))
+        if !nullBit then offset += binaryFieldTotalWidth(bytes, offset, columnTypes(col))
         col += 1
 
       Some(extractBinaryFieldData(bytes, offset, columnTypes(index)))
@@ -173,16 +172,14 @@ private[ldbc] object BinaryColumnValueDecoder extends ColumnValueDecoder:
       case MYSQL_TYPE_SHORT | MYSQL_TYPE_YEAR                    => 2
       case MYSQL_TYPE_LONG | MYSQL_TYPE_INT24 | MYSQL_TYPE_FLOAT => 4
       case MYSQL_TYPE_LONGLONG | MYSQL_TYPE_DOUBLE               => 8
-      case _ =>
+      case _                                                     =>
         val lenByte = bytes(offset) & 0xff
         if lenByte <= 250 then 1 + lenByte
-        else if lenByte == 252 then
-          3 + ((bytes(offset + 1) & 0xff) | ((bytes(offset + 2) & 0xff) << 8))
+        else if lenByte == 252 then 3 + ((bytes(offset + 1) & 0xff) | ((bytes(offset + 2) & 0xff) << 8))
         else if lenByte == 253 then
           4 + ((bytes(offset + 1) & 0xff) | ((bytes(offset + 2) & 0xff) << 8) |
             ((bytes(offset + 3) & 0xff) << 16))
-        else
-          9 + (0 until 8).foldLeft(0L)((acc, i) => acc | ((bytes(offset + 1 + i) & 0xffL) << (i * 8))).toInt
+        else 9 + (0 until 8).foldLeft(0L)((acc, i) => acc | ((bytes(offset + 1 + i) & 0xffL) << (i * 8))).toInt
 
   private def extractBinaryFieldData(bytes: Array[Byte], offset: Int, columnType: ColumnDataType): Array[Byte] =
     columnType match
@@ -190,10 +187,9 @@ private[ldbc] object BinaryColumnValueDecoder extends ColumnValueDecoder:
       case MYSQL_TYPE_SHORT | MYSQL_TYPE_YEAR                    => bytes.slice(offset, offset + 2)
       case MYSQL_TYPE_LONG | MYSQL_TYPE_INT24 | MYSQL_TYPE_FLOAT => bytes.slice(offset, offset + 4)
       case MYSQL_TYPE_LONGLONG | MYSQL_TYPE_DOUBLE               => bytes.slice(offset, offset + 8)
-      case _ =>
+      case _                                                     =>
         val lenByte = bytes(offset) & 0xff
-        if lenByte <= 250 then
-          bytes.slice(offset + 1, offset + 1 + lenByte)
+        if lenByte <= 250 then bytes.slice(offset + 1, offset + 1 + lenByte)
         else if lenByte == 252 then
           val len = (bytes(offset + 1) & 0xff) | ((bytes(offset + 2) & 0xff) << 8)
           bytes.slice(offset + 3, offset + 3 + len)
