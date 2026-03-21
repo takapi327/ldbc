@@ -40,7 +40,7 @@ private[ldbc] object BinaryColumnValueDecoder extends ColumnValueDecoder:
 
   override def decodeBoolean(bytes: Array[Byte], charset: String, columnType: ColumnDataType): Boolean =
     columnType match
-      case MYSQL_TYPE_BOOL | MYSQL_TYPE_TINY => bytes(0) != 0
+      case MYSQL_TYPE_BOOL | MYSQL_TYPE_TINY  => bytes(0) != 0
       case MYSQL_TYPE_SHORT | MYSQL_TYPE_YEAR => le(bytes).getShort != 0
       case MYSQL_TYPE_LONG | MYSQL_TYPE_INT24 => le(bytes).getInt != 0
       case MYSQL_TYPE_LONGLONG                => le(bytes).getLong != 0L
