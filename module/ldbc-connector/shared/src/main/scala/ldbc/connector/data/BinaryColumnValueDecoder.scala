@@ -30,9 +30,9 @@ private[ldbc] object BinaryColumnValueDecoder extends ColumnValueDecoder:
   override def decodeString(bytes: Array[Byte], charset: String, columnType: ColumnDataType): String =
     columnType match
       case MYSQL_TYPE_TINY                    => (bytes(0) & 0xff).toString
-      case MYSQL_TYPE_SHORT | MYSQL_TYPE_YEAR => le(bytes).getShort.toString
-      case MYSQL_TYPE_LONG | MYSQL_TYPE_INT24 => le(bytes).getInt.toString
-      case MYSQL_TYPE_LONGLONG                => le(bytes).getLong.toString
+      case MYSQL_TYPE_SHORT | MYSQL_TYPE_YEAR => (le(bytes).getShort & 0xffff).toString
+      case MYSQL_TYPE_LONG | MYSQL_TYPE_INT24 => (le(bytes).getInt & 0xffffffffL).toString
+      case MYSQL_TYPE_LONGLONG                => BigInt(1, bytes.reverse).toString
       case MYSQL_TYPE_FLOAT                   => le(bytes).getFloat.toString
       case MYSQL_TYPE_DOUBLE                  => le(bytes).getDouble.toString
       case MYSQL_TYPE_BOOL                    => (bytes(0) != 0).toString
@@ -40,8 +40,13 @@ private[ldbc] object BinaryColumnValueDecoder extends ColumnValueDecoder:
 
   override def decodeBoolean(bytes: Array[Byte], charset: String, columnType: ColumnDataType): Boolean =
     columnType match
-      case MYSQL_TYPE_BOOL => bytes(0) != 0
-      case _               =>
+      case MYSQL_TYPE_BOOL | MYSQL_TYPE_TINY => bytes(0) != 0
+      case MYSQL_TYPE_SHORT | MYSQL_TYPE_YEAR => le(bytes).getShort != 0
+      case MYSQL_TYPE_LONG | MYSQL_TYPE_INT24 => le(bytes).getInt != 0
+      case MYSQL_TYPE_LONGLONG                => le(bytes).getLong != 0L
+      case MYSQL_TYPE_FLOAT                   => le(bytes).getFloat != 0f
+      case MYSQL_TYPE_DOUBLE                  => le(bytes).getDouble != 0.0
+      case _                                  =>
         new String(bytes, charset) match
           case "true" | "1" => true
           case _            => false
@@ -49,6 +54,7 @@ private[ldbc] object BinaryColumnValueDecoder extends ColumnValueDecoder:
   override def decodeByte(bytes: Array[Byte], charset: String, columnType: ColumnDataType): Byte =
     columnType match
       case MYSQL_TYPE_TINY => bytes(0)
+      case MYSQL_TYPE_BIT  => bytes.last
       case _               => new String(bytes, charset).toByte
 
   override def decodeShort(bytes: Array[Byte], charset: String, columnType: ColumnDataType): Short =
@@ -60,7 +66,7 @@ private[ldbc] object BinaryColumnValueDecoder extends ColumnValueDecoder:
   override def decodeInt(bytes: Array[Byte], charset: String, columnType: ColumnDataType): Int =
     columnType match
       case MYSQL_TYPE_TINY                    => bytes(0) & 0xff
-      case MYSQL_TYPE_SHORT | MYSQL_TYPE_YEAR => le(bytes).getShort.toInt
+      case MYSQL_TYPE_SHORT | MYSQL_TYPE_YEAR => le(bytes).getShort & 0xffff
       case MYSQL_TYPE_LONG | MYSQL_TYPE_INT24 => le(bytes).getInt
       case MYSQL_TYPE_LONGLONG                => le(bytes).getLong.toInt
       case _                                  => new String(bytes, charset).toInt
@@ -68,8 +74,8 @@ private[ldbc] object BinaryColumnValueDecoder extends ColumnValueDecoder:
   override def decodeLong(bytes: Array[Byte], charset: String, columnType: ColumnDataType): Long =
     columnType match
       case MYSQL_TYPE_TINY                    => (bytes(0) & 0xff).toLong
-      case MYSQL_TYPE_SHORT | MYSQL_TYPE_YEAR => le(bytes).getShort.toLong
-      case MYSQL_TYPE_LONG | MYSQL_TYPE_INT24 => le(bytes).getInt.toLong
+      case MYSQL_TYPE_SHORT | MYSQL_TYPE_YEAR => le(bytes).getShort & 0xffffL
+      case MYSQL_TYPE_LONG | MYSQL_TYPE_INT24 => le(bytes).getInt & 0xffffffffL
       case MYSQL_TYPE_LONGLONG                => le(bytes).getLong
       case _                                  => new String(bytes, charset).toLong
 
