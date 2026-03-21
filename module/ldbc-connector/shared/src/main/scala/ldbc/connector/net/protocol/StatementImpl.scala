@@ -365,9 +365,7 @@ object StatementImpl:
         case Statement.RETURN_GENERATED_KEYS =>
           for
             lastInsertId <- lastInsertId.get
-            ascii    = lastInsertId.toString.getBytes("UTF-8")
-            rawBytes = Array((ascii.length & 0xff).toByte) ++ ascii
-            record   = ResultSetRowPacket.TextImpl(rawBytes)
+            record = ResultSetRowPacket.fromStrings(Some(lastInsertId.toString))
             resultSet = ResultSetImpl(
                           protocol,
                           Vector(new ColumnDefinitionPacket:
