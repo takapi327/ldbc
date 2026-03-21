@@ -134,6 +134,7 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
                                 fetchSize,
                                 useCursorFetch,
                                 useServerPrepStmts,
+                                TextColumnValueDecoder,
                                 resultSetType,
                                 resultSetConcurrency,
                                 Some(sql)

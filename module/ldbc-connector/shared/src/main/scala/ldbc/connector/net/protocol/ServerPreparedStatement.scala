@@ -84,6 +84,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
         fetchSize,
         useCursorFetch,
         useServerPrepStmts,
+        BinaryColumnValueDecoder,
         resultSetType,
         resultSetConcurrency,
         Some(sql)
@@ -99,6 +100,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
         fetchSize,
         useCursorFetch,
         useServerPrepStmts,
+        BinaryColumnValueDecoder,
         resultSetType,
         resultSetConcurrency,
         Some(sql)

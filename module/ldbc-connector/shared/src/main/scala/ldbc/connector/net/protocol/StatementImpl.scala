@@ -119,6 +119,7 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
                               fetchSize,
                               useCursorFetch,
                               useServerPrepStmts,
+                              TextColumnValueDecoder,
                               resultSetType,
                               resultSetConcurrency,
                               Some(sql)
@@ -381,7 +382,8 @@ object StatementImpl:
                           resultSetClosed,
                           fetchSize,
                           useCursorFetch,
-                          useServerPrepStmts
+                          useServerPrepStmts,
+                          TextColumnValueDecoder
                         )
             _ <- currentResultSet.set(Some(resultSet))
           yield resultSet

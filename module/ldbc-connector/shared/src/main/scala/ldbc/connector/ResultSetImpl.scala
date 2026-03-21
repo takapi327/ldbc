@@ -16,6 +16,7 @@ import cats.effect.Ref
 
 import ldbc.sql.ResultSet
 
+import ldbc.connector.data.{ ColumnValueDecoder, TextColumnValueDecoder }
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.Protocol
 import ldbc.connector.util.Version
@@ -33,6 +34,7 @@ private[ldbc] case class ResultSetImpl[F[_]](
   fetchSize:            Ref[F, Int],
   useCursorFetch:       Boolean,
   useServerPrepStmts:   Boolean,
+  decoder:              ColumnValueDecoder,
   resultSetType:        Int            = ResultSet.TYPE_FORWARD_ONLY,
   resultSetConcurrency: Int            = ResultSet.CONCUR_READ_ONLY,
   statement:            Option[String] = None
@@ -70,7 +72,8 @@ private[ldbc] object ResultSetImpl:
     isClosed:           Ref[F, Boolean],
     fetchSize:          Ref[F, Int],
     useCursorFetch:     Boolean,
-    useServerPrepStmts: Boolean
+    useServerPrepStmts: Boolean,
+    decoder:            ColumnValueDecoder
   ): ResultSetImpl[F] =
     ResultSetImpl[F](
       protocol,
@@ -82,6 +85,7 @@ private[ldbc] object ResultSetImpl:
       fetchSize,
       useCursorFetch,
       useServerPrepStmts,
+      decoder,
       ResultSet.TYPE_FORWARD_ONLY
     )
 
@@ -92,7 +96,8 @@ private[ldbc] object ResultSetImpl:
     isClosed:           Ref[F, Boolean],
     fetchSize:          Ref[F, Int],
     useCursorFetch:     Boolean,
-    useServerPrepStmts: Boolean
+    useServerPrepStmts: Boolean,
+    decoder:            ColumnValueDecoder = TextColumnValueDecoder
   ): ResultSetImpl[F] =
     this.apply[F](
       protocol,
@@ -103,5 +108,6 @@ private[ldbc] object ResultSetImpl:
       isClosed,
       fetchSize,
       useCursorFetch,
-      useServerPrepStmts
+      useServerPrepStmts,
+      decoder
     )

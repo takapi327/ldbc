@@ -636,6 +636,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                         fetchSize,
                         useCursorFetch,
                         useServerPrepStmts,
+                        TextColumnValueDecoder,
                         resultSetType,
                         resultSetConcurrency
                       )
@@ -679,6 +680,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                         fetchSize,
                         useCursorFetch,
                         useServerPrepStmts,
+                        TextColumnValueDecoder,
                         resultSetType,
                         resultSetConcurrency
                       )
