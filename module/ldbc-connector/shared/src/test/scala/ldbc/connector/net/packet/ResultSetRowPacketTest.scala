@@ -15,20 +15,12 @@ import ldbc.connector.net.packet.response.*
 
 class ResultSetRowPacketTest extends FTestPlatform:
 
-  private def buildTestColumnDefinition(characterSet: Int, columnType: ColumnDataType): ColumnDefinition41Packet =
-    ColumnDefinition41Packet("", "", "", "", "", "", 0, characterSet, 0L, columnType, Seq.empty, 0)
+  test("ResultSetRowPacket rawBytes and isTextProtocol") {
+    val rawBytes  = Array[Byte](0x01, '1'.toByte)
+    val rowPacket = ResultSetRowPacket.TextImpl(rawBytes)
 
-  test("ResultSetRowPacket creation and properties") {
-    val values    = Array[Option[String]](Some("1"), Some("John"), Some("Doe"), None, Some("30"))
-    val rowPacket = ResultSetRowPacket(values)
-
-    assertEquals(rowPacket.values, values)
-    assertEquals(rowPacket.values.length, 5)
-    assertEquals(rowPacket.values(0), Some("1"))
-    assertEquals(rowPacket.values(1), Some("John"))
-    assertEquals(rowPacket.values(2), Some("Doe"))
-    assertEquals(rowPacket.values(3), None)
-    assertEquals(rowPacket.values(4), Some("30"))
+    assert(rowPacket.rawBytes.sameElements(rawBytes))
+    assertEquals(rowPacket.isTextProtocol, true)
     assertEquals(rowPacket.toString, "ProtocolText::ResultSetRow")
   }
 
@@ -52,29 +44,36 @@ class ResultSetRowPacketTest extends FTestPlatform:
       '0' // fifth column: value "30"
     )
 
-    val bitVector         = BitVector(packetBytes)
-    val capabilityFlags   = Set(CapabilitiesFlags.CLIENT_PROTOCOL_41)
-    val columnDefinitions = Vector(
-      buildTestColumnDefinition(11, ColumnDataType.MYSQL_TYPE_LONG),
-      buildTestColumnDefinition(45, ColumnDataType.MYSQL_TYPE_VARCHAR),
-      buildTestColumnDefinition(45, ColumnDataType.MYSQL_TYPE_VARCHAR),
-      buildTestColumnDefinition(45, ColumnDataType.MYSQL_TYPE_VARCHAR),
-      buildTestColumnDefinition(11, ColumnDataType.MYSQL_TYPE_LONG)
-    )
+    val bitVector       = BitVector(packetBytes)
+    val capabilityFlags = Set(CapabilitiesFlags.CLIENT_PROTOCOL_41)
 
-    val result = ResultSetRowPacket.decoder(capabilityFlags, columnDefinitions).decode(bitVector)
+    val result = textResultSetRowDecoder(capabilityFlags).decode(bitVector)
 
     assert(result.isSuccessful)
     result match {
       case Attempt.Successful(decoded) =>
         decoded.value match {
           case rowPacket: ResultSetRowPacket =>
-            assertEquals(rowPacket.values.length, 5)
-            assertEquals(rowPacket.values(0), Some("1"))
-            assertEquals(rowPacket.values(1), Some("John"))
-            assertEquals(rowPacket.values(2), Some("Doe"))
-            assertEquals(rowPacket.values(3), None)
-            assertEquals(rowPacket.values(4), Some("30"))
+            assert(rowPacket.isTextProtocol)
+            assert(rowPacket.rawBytes.sameElements(packetBytes))
+            // Verify column extraction
+            assertEquals(
+              ResultSetRowPacket.extractTextColumn(rowPacket.rawBytes, 0).map(new String(_, "UTF-8")),
+              Some("1")
+            )
+            assertEquals(
+              ResultSetRowPacket.extractTextColumn(rowPacket.rawBytes, 1).map(new String(_, "UTF-8")),
+              Some("John")
+            )
+            assertEquals(
+              ResultSetRowPacket.extractTextColumn(rowPacket.rawBytes, 2).map(new String(_, "UTF-8")),
+              Some("Doe")
+            )
+            assertEquals(ResultSetRowPacket.extractTextColumn(rowPacket.rawBytes, 3), None)
+            assertEquals(
+              ResultSetRowPacket.extractTextColumn(rowPacket.rawBytes, 4).map(new String(_, "UTF-8")),
+              Some("30")
+            )
           case _ => fail("Expected ResultSetRowPacket but got something else")
         }
       case _ => fail("Decoding failed")
@@ -92,27 +91,29 @@ class ResultSetRowPacketTest extends FTestPlatform:
       Array[Byte](0x03, '1', '0', '0') // value "100"
     )
 
-    val bitVector         = BitVector(packetBytes)
-    val capabilityFlags   = Set(CapabilitiesFlags.CLIENT_PROTOCOL_41)
-    val columnDefinitions = Vector(
-      buildTestColumnDefinition(11, ColumnDataType.MYSQL_TYPE_LONG),
-      buildTestColumnDefinition(11, ColumnDataType.MYSQL_TYPE_BIT),
-      buildTestColumnDefinition(11, ColumnDataType.MYSQL_TYPE_BIT),
-      buildTestColumnDefinition(11, ColumnDataType.MYSQL_TYPE_LONG)
-    )
+    val bitVector       = BitVector(packetBytes)
+    val capabilityFlags = Set(CapabilitiesFlags.CLIENT_PROTOCOL_41)
 
-    val result = ResultSetRowPacket.decoder(capabilityFlags, columnDefinitions).decode(bitVector)
+    val result = textResultSetRowDecoder(capabilityFlags).decode(bitVector)
 
     assert(result.isSuccessful)
     result match {
       case Attempt.Successful(decoded) =>
         decoded.value match {
           case rowPacket: ResultSetRowPacket =>
-            assertEquals(rowPacket.values.length, 4)
-            assertEquals(rowPacket.values(0), Some("1"))
-            assertEquals(rowPacket.values(1), Some(longString))
-            assertEquals(rowPacket.values(2), None)
-            assertEquals(rowPacket.values(3), Some("100"))
+            assertEquals(
+              ResultSetRowPacket.extractTextColumn(rowPacket.rawBytes, 0).map(new String(_, "UTF-8")),
+              Some("1")
+            )
+            assertEquals(
+              ResultSetRowPacket.extractTextColumn(rowPacket.rawBytes, 1).map(new String(_, "UTF-8")),
+              Some(longString)
+            )
+            assertEquals(ResultSetRowPacket.extractTextColumn(rowPacket.rawBytes, 2), None)
+            assertEquals(
+              ResultSetRowPacket.extractTextColumn(rowPacket.rawBytes, 3).map(new String(_, "UTF-8")),
+              Some("100")
+            )
           case _ => fail("Expected ResultSetRowPacket but got something else")
         }
       case _ => fail("Decoding failed")
@@ -131,21 +132,21 @@ class ResultSetRowPacketTest extends FTestPlatform:
     val bitVector       = BitVector(packetBytes)
     val capabilityFlags = Set(CapabilitiesFlags.CLIENT_PROTOCOL_41)
 
-    val columnDefinitions = Vector(
-      buildTestColumnDefinition(11, ColumnDataType.MYSQL_TYPE_LONG),
-      buildTestColumnDefinition(45, ColumnDataType.MYSQL_TYPE_VARCHAR)
-    )
-
-    val result = ResultSetRowPacket.decoder(capabilityFlags, columnDefinitions).decode(bitVector)
+    val result = textResultSetRowDecoder(capabilityFlags).decode(bitVector)
 
     assert(result.isSuccessful)
     result match {
       case Attempt.Successful(decoded) =>
         decoded.value match {
           case rowPacket: ResultSetRowPacket =>
-            assertEquals(rowPacket.values.length, 2)
-            assertEquals(rowPacket.values(0), Some("1"))
-            assertEquals(rowPacket.values(1), Some(japaneseText))
+            assertEquals(
+              ResultSetRowPacket.extractTextColumn(rowPacket.rawBytes, 0).map(new String(_, "UTF-8")),
+              Some("1")
+            )
+            assertEquals(
+              ResultSetRowPacket.extractTextColumn(rowPacket.rawBytes, 1).map(new String(_, "UTF-8")),
+              Some(japaneseText)
+            )
           case _ => fail("Expected ResultSetRowPacket but got something else")
         }
       case _ => fail("Decoding failed")

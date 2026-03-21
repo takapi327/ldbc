@@ -45,7 +45,7 @@ class StreamingResultSetTest extends FTestPlatform:
     )
     // Track protocol interactions
     val sentPackets           = ListBuffer.empty[RequestPacket]
-    val mockResponses         = ListBuffer.empty[Vector[BinaryProtocolResultSetRowPacket]]
+    val mockResponses         = ListBuffer.empty[Vector[ResultSetRowPacket]]
     var responseIndex         = 0
     var resetSequenceIdCalled = 0
     var closeStmtCalled       = false
@@ -59,7 +59,7 @@ class StreamingResultSetTest extends FTestPlatform:
     var currentCursor:      Int                        = 0
     var currentRow:         Option[ResultSetRowPacket] = None
 
-    def addMockResponse(response: Vector[BinaryProtocolResultSetRowPacket]): Unit = {
+    def addMockResponse(response: Vector[ResultSetRowPacket]): Unit = {
       mockResponses += response
     }
 
@@ -81,7 +81,7 @@ class StreamingResultSetTest extends FTestPlatform:
       sentPackets += ComStmtFetchPacket(testStatementId, size)
 
       if responseIndex < mockResponses.length then {
-        val resultSetRow = mockResponses(responseIndex)
+        val resultSetRow: Vector[ResultSetRowPacket] = mockResponses(responseIndex)
         rows               = resultSetRow
         currentCursor      = 0
         currentRow         = None
@@ -121,8 +121,12 @@ class StreamingResultSetTest extends FTestPlatform:
     // Simulate getString
     def getString(columnIndex: Int): F[String] = Async[F].delay {
       currentRow match {
-        case Some(row) => row.values(columnIndex - 1).getOrElse("")
-        case None      => ""
+        case Some(row) =>
+          ResultSetRowPacket
+            .extractTextColumn(row.rawBytes, columnIndex - 1)
+            .map(new String(_, "UTF-8"))
+            .getOrElse("")
+        case None => ""
       }
     }
   }
@@ -159,12 +163,19 @@ class StreamingResultSetTest extends FTestPlatform:
     )
   )
 
-  // Helper to create binary protocol result set rows
-  def createBinaryRows(values: Vector[(String, String)]): Vector[BinaryProtocolResultSetRowPacket] = {
-    values.map {
-      case (id, name) =>
-        BinaryProtocolResultSetRowPacket(Array(Some(id), Some(name)))
-    }
+  /** Build a text-protocol ResultSetRowPacket from Option[String] values. */
+  def mkTextRow(values: Option[String]*): ResultSetRowPacket =
+    val bytes = values.flatMap {
+      case None    => Array(0xfb.toByte)
+      case Some(s) =>
+        val data = s.getBytes("UTF-8")
+        Array((data.length & 0xff).toByte) ++ data
+    }.toArray
+    ResultSetRowPacket.TextImpl(bytes)
+
+  // Helper to create result set rows for mock responses (text protocol format)
+  def createBinaryRows(values: Vector[(String, String)]): Vector[ResultSetRowPacket] = {
+    values.map { case (id, name) => mkTextRow(Some(id), Some(name)) }
   }
 
   test("next() should fetch rows based on fetch size") {

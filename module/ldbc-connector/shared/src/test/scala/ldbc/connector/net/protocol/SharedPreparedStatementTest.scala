@@ -16,6 +16,7 @@ import ldbc.sql.ResultSet
 
 import ldbc.connector.data.*
 import ldbc.connector.exception.SQLException
+import ldbc.connector.net.Protocol
 import ldbc.connector.telemetry.DatabaseMetrics
 import ldbc.connector.FTestPlatform
 
@@ -31,12 +32,16 @@ class SharedPreparedStatementTest extends SharedPreparedStatement[IO], FTestPlat
   override val currentResultSet:  Ref[IO, Option[ResultSet[IO]]] = Ref.unsafe[IO, Option[ResultSet[IO]]](None)
   override val lastInsertId:      Ref[IO, Long]                  = Ref.unsafe[IO, Long](0L)
   override val moreResults:       Ref[IO, Boolean]               = Ref.unsafe[IO, Boolean](false)
+  override val resultSetClosed:   Ref[IO, Boolean]               = Ref.unsafe[IO, Boolean](false)
   override val statementClosed:   Ref[IO, Boolean]               = Ref.unsafe[IO, Boolean](false)
   override val updateCount:       Ref[IO, Long]                  = Ref.unsafe[IO, Long](0L)
 
-  override def fetchSize:      Ref[IO, Int] = Ref.unsafe[IO, Int](0)
-  override def useCursorFetch: Boolean      = false
-  override def resultSetType:  Int          = ResultSet.TYPE_FORWARD_ONLY
+  override def protocol:          Protocol[IO]    = null.asInstanceOf[Protocol[IO]]
+  override def serverVariables:   Map[String, String] = Map.empty
+  override def fetchSize:         Ref[IO, Int]    = Ref.unsafe[IO, Int](0)
+  override def useCursorFetch:    Boolean         = false
+  override def useServerPrepStmts: Boolean        = false
+  override def resultSetType:     Int             = ResultSet.TYPE_FORWARD_ONLY
 
   // Implementation of required methods from Statement
   override def clearBatch():       IO[Unit]          = IO.unit

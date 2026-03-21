@@ -20,6 +20,25 @@ import ldbc.connector.util.Version
 
 class ResultSetTest extends FTestPlatform:
 
+  /** Build a text-protocol ResultSetRowPacket from Option[String] values. */
+  def mkTextRow(values: Option[String]*): ResultSetRowPacket =
+    val bytes = values.flatMap {
+      case None    => Array(0xfb.toByte)
+      case Some(s) =>
+        val data = s.getBytes("UTF-8")
+        if data.length <= 250 then Array((data.length & 0xff).toByte) ++ data
+        else if data.length <= 65535 then
+          Array(0xfc.toByte, (data.length & 0xff).toByte, ((data.length >> 8) & 0xff).toByte) ++ data
+        else
+          Array(
+            0xfd.toByte,
+            (data.length & 0xff).toByte,
+            ((data.length >> 8) & 0xff).toByte,
+            ((data.length >> 16) & 0xff).toByte
+          ) ++ data
+    }.toArray
+    ResultSetRowPacket.TextImpl(bytes)
+
   test("SQLException occurs when accessing the ResultSet after closing it.") {
     for
       resultSet <- buildResultSet(Vector.empty, Vector.empty, Version(0, 0, 0))
@@ -38,7 +57,7 @@ class ResultSetTest extends FTestPlatform:
                        column("c2", ColumnDataType.MYSQL_TYPE_LONG),
                        column("c3", ColumnDataType.MYSQL_TYPE_LONG)
                      ),
-                     Vector(ResultSetRowPacket(Array(Some("1"), Some("2"), None))),
+                     Vector(mkTextRow(Some("1"), Some("2"), None)),
                      Version(0, 0, 0)
                    )
       hasNext <- resultSet.next()
@@ -57,7 +76,7 @@ class ResultSetTest extends FTestPlatform:
                        column("c2", ColumnDataType.MYSQL_TYPE_LONGLONG),
                        column("c3", ColumnDataType.MYSQL_TYPE_LONGLONG)
                      ),
-                     Vector(ResultSetRowPacket(Array(Some("1"), Some("2"), None))),
+                     Vector(mkTextRow(Some("1"), Some("2"), None)),
                      Version(0, 0, 0)
                    )
       result <- collectRows(resultSet) { rs =>
@@ -78,7 +97,7 @@ class ResultSetTest extends FTestPlatform:
                        column("c2", ColumnDataType.MYSQL_TYPE_DOUBLE),
                        column("c3", ColumnDataType.MYSQL_TYPE_DOUBLE)
                      ),
-                     Vector(ResultSetRowPacket(Array(Some("1.1"), Some("2.2"), None))),
+                     Vector(mkTextRow(Some("1.1"), Some("2.2"), None)),
                      Version(0, 0, 0)
                    )
       result <- collectRows(resultSet) { rs =>
@@ -99,7 +118,7 @@ class ResultSetTest extends FTestPlatform:
                        column("c2", ColumnDataType.MYSQL_TYPE_STRING),
                        column("c3", ColumnDataType.MYSQL_TYPE_STRING)
                      ),
-                     Vector(ResultSetRowPacket(Array(Some("1"), Some("2"), None))),
+                     Vector(mkTextRow(Some("1"), Some("2"), None)),
                      Version(0, 0, 0)
                    )
       result <- collectRows(resultSet) { rs =>
@@ -120,7 +139,7 @@ class ResultSetTest extends FTestPlatform:
                        column("c2", ColumnDataType.MYSQL_TYPE_TINY),
                        column("c3", ColumnDataType.MYSQL_TYPE_TINY)
                      ),
-                     Vector(ResultSetRowPacket(Array(Some("1"), Some("0"), None))),
+                     Vector(mkTextRow(Some("1"), Some("0"), None)),
                      Version(0, 0, 0)
                    )
       result <- collectRows(resultSet) { rs =>
@@ -141,7 +160,7 @@ class ResultSetTest extends FTestPlatform:
                        column("c2", ColumnDataType.MYSQL_TYPE_TINY),
                        column("c3", ColumnDataType.MYSQL_TYPE_TINY)
                      ),
-                     Vector(ResultSetRowPacket(Array(Some("1"), Some("2"), None))),
+                     Vector(mkTextRow(Some("1"), Some("2"), None)),
                      Version(0, 0, 0)
                    )
       result <- collectRows(resultSet) { rs =>
@@ -162,7 +181,7 @@ class ResultSetTest extends FTestPlatform:
                        column("c2", ColumnDataType.MYSQL_TYPE_SHORT),
                        column("c3", ColumnDataType.MYSQL_TYPE_SHORT)
                      ),
-                     Vector(ResultSetRowPacket(Array(Some("1"), Some("2"), None))),
+                     Vector(mkTextRow(Some("1"), Some("2"), None)),
                      Version(0, 0, 0)
                    )
       result <- collectRows(resultSet) { rs =>
@@ -183,7 +202,7 @@ class ResultSetTest extends FTestPlatform:
                        column("c2", ColumnDataType.MYSQL_TYPE_FLOAT),
                        column("c3", ColumnDataType.MYSQL_TYPE_FLOAT)
                      ),
-                     Vector(ResultSetRowPacket(Array(Some("1.1"), Some("2.2"), None))),
+                     Vector(mkTextRow(Some("1.1"), Some("2.2"), None)),
                      Version(0, 0, 0)
                    )
       result <- collectRows(resultSet) { rs =>
@@ -204,7 +223,7 @@ class ResultSetTest extends FTestPlatform:
                        column("c2", ColumnDataType.MYSQL_TYPE_DECIMAL),
                        column("c3", ColumnDataType.MYSQL_TYPE_DECIMAL)
                      ),
-                     Vector(ResultSetRowPacket(Array(Some("1.1"), Some("2.2"), None))),
+                     Vector(mkTextRow(Some("1.1"), Some("2.2"), None)),
                      Version(0, 0, 0)
                    )
       result <- collectRows(resultSet) { rs =>
@@ -225,7 +244,7 @@ class ResultSetTest extends FTestPlatform:
                        column("c2", ColumnDataType.MYSQL_TYPE_DATE),
                        column("c3", ColumnDataType.MYSQL_TYPE_DATE)
                      ),
-                     Vector(ResultSetRowPacket(Array(Some("2023-01-01"), Some("2023-01-02"), None))),
+                     Vector(mkTextRow(Some("2023-01-01"), Some("2023-01-02"), None)),
                      Version(0, 0, 0)
                    )
       result <- collectRows(resultSet) { rs =>
@@ -246,7 +265,7 @@ class ResultSetTest extends FTestPlatform:
                        column("c2", ColumnDataType.MYSQL_TYPE_TIME),
                        column("c3", ColumnDataType.MYSQL_TYPE_TIME)
                      ),
-                     Vector(ResultSetRowPacket(Array(Some("12:34:56"), Some("12:34:57"), None))),
+                     Vector(mkTextRow(Some("12:34:56"), Some("12:34:57"), None)),
                      Version(0, 0, 0)
                    )
       result <- collectRows(resultSet) { rs =>
@@ -267,7 +286,7 @@ class ResultSetTest extends FTestPlatform:
                        column("c2", ColumnDataType.MYSQL_TYPE_TIMESTAMP),
                        column("c3", ColumnDataType.MYSQL_TYPE_TIMESTAMP)
                      ),
-                     Vector(ResultSetRowPacket(Array(Some("2023-01-01 12:34:56"), Some("2023-01-02 12:34:57"), None))),
+                     Vector(mkTextRow(Some("2023-01-01 12:34:56"), Some("2023-01-02 12:34:57"), None)),
                      Version(0, 0, 0)
                    )
       result <- collectRows(resultSet) { rs =>
@@ -291,7 +310,7 @@ class ResultSetTest extends FTestPlatform:
                        column("c2", ColumnDataType.MYSQL_TYPE_TIMESTAMP),
                        column("c3", ColumnDataType.MYSQL_TYPE_TIMESTAMP)
                      ),
-                     Vector(ResultSetRowPacket(Array(Some("2023-01-01 12:34:56"), Some("2023-01-02 12:34:57"), None))),
+                     Vector(mkTextRow(Some("2023-01-01 12:34:56"), Some("2023-01-02 12:34:57"), None)),
                      Version(0, 0, 0)
                    )
       result <- collectRows(resultSet) { rs =>
@@ -316,10 +335,10 @@ class ResultSetTest extends FTestPlatform:
                        column("c3", ColumnDataType.MYSQL_TYPE_LONG)
                      ),
                      Vector(
-                       ResultSetRowPacket(Array(Some("1"), Some("2"), None)),
-                       ResultSetRowPacket(Array(Some("3"), Some("4"), None)),
-                       ResultSetRowPacket(Array(Some("5"), Some("6"), None)),
-                       ResultSetRowPacket(Array(Some("7"), Some("8"), None))
+                       mkTextRow(Some("1"), Some("2"), None),
+                       mkTextRow(Some("3"), Some("4"), None),
+                       mkTextRow(Some("5"), Some("6"), None),
+                       mkTextRow(Some("7"), Some("8"), None)
                      ),
                      Version(0, 0, 0)
                    )
@@ -343,7 +362,7 @@ class ResultSetTest extends FTestPlatform:
                        column("c2", ColumnDataType.MYSQL_TYPE_TINY, Some("t")),
                        column("c3", ColumnDataType.MYSQL_TYPE_TINY, Some("t"))
                      ),
-                     Vector(ResultSetRowPacket(Array(Some("1"), Some("0"), None))),
+                     Vector(mkTextRow(Some("1"), Some("0"), None)),
                      Version(0, 0, 0)
                    )
       result <- collectRows(resultSet) { rs =>
@@ -667,7 +686,7 @@ class ResultSetTest extends FTestPlatform:
     for
       resultSet <- buildResultSet(
                      Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
-                     Vector(ResultSetRowPacket(Array(Some("2023-01-01 12:34:56")))),
+                     Vector(mkTextRow(Some("2023-01-01 12:34:56"))),
                      Version(0, 0, 0)
                    )
       _             <- resultSet.isBeforeFirst().map(assert(_))
@@ -682,7 +701,7 @@ class ResultSetTest extends FTestPlatform:
     for
       resultSet <- buildResultSet(
                      Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
-                     Vector(ResultSetRowPacket(Array(Some("2023-01-01 12:34:56")))),
+                     Vector(mkTextRow(Some("2023-01-01 12:34:56"))),
                      Version(0, 0, 0)
                    )
       initialAfterLast <- resultSet.isAfterLast()
@@ -699,7 +718,7 @@ class ResultSetTest extends FTestPlatform:
     for
       resultSet <- buildResultSet(
                      Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
-                     Vector(ResultSetRowPacket(Array(Some("2023-01-01 12:34:56")))),
+                     Vector(mkTextRow(Some("2023-01-01 12:34:56"))),
                      Version(0, 0, 0)
                    )
       initialIsFirst <- resultSet.isFirst()
@@ -716,7 +735,7 @@ class ResultSetTest extends FTestPlatform:
     for
       resultSet <- buildResultSet(
                      Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
-                     Vector(ResultSetRowPacket(Array(Some("2023-01-01 12:34:56")))),
+                     Vector(mkTextRow(Some("2023-01-01 12:34:56"))),
                      Version(0, 0, 0)
                    )
       initialIsLast <- resultSet.isLast()
@@ -733,7 +752,7 @@ class ResultSetTest extends FTestPlatform:
     for
       resultSet <- buildResultSet(
                      Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
-                     Vector(ResultSetRowPacket(Array(Some("2023-01-01 12:34:56")))),
+                     Vector(mkTextRow(Some("2023-01-01 12:34:56"))),
                      Version(0, 0, 0),
                      ResultSet.TYPE_SCROLL_INSENSITIVE,
                      ResultSet.CONCUR_READ_ONLY
@@ -773,7 +792,7 @@ class ResultSetTest extends FTestPlatform:
     for
       resultSet <- buildResultSet(
                      Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
-                     Vector(ResultSetRowPacket(Array(Some("2023-01-01 12:34:56")))),
+                     Vector(mkTextRow(Some("2023-01-01 12:34:56"))),
                      Version(0, 0, 0),
                      ResultSet.TYPE_SCROLL_INSENSITIVE,
                      ResultSet.CONCUR_READ_ONLY
@@ -814,7 +833,7 @@ class ResultSetTest extends FTestPlatform:
     for
       resultSet <- buildResultSet(
                      Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
-                     Vector(ResultSetRowPacket(Array(Some("2023-01-01 12:34:56")))),
+                     Vector(mkTextRow(Some("2023-01-01 12:34:56"))),
                      Version(0, 0, 0),
                      ResultSet.TYPE_SCROLL_INSENSITIVE,
                      ResultSet.CONCUR_READ_ONLY
@@ -863,8 +882,8 @@ class ResultSetTest extends FTestPlatform:
       resultSet <- buildResultSet(
                      Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
                      Vector(
-                       ResultSetRowPacket(Array(Some("2023-01-01 12:34:56"))),
-                       ResultSetRowPacket(Array(Some("2023-01-01 12:34:56")))
+                       mkTextRow(Some("2023-01-01 12:34:56")),
+                       mkTextRow(Some("2023-01-01 12:34:56"))
                      ),
                      Version(0, 0, 0),
                      ResultSet.TYPE_SCROLL_INSENSITIVE,
@@ -912,7 +931,7 @@ class ResultSetTest extends FTestPlatform:
     for
       resultSet <- buildResultSet(
                      Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
-                     Vector(ResultSetRowPacket(Array(Some("1"))), ResultSetRowPacket(Array(Some("2")))),
+                     Vector(mkTextRow(Some("1")), mkTextRow(Some("2"))),
                      Version(0, 0, 0),
                      ResultSet.TYPE_SCROLL_INSENSITIVE,
                      ResultSet.CONCUR_READ_ONLY
@@ -967,7 +986,7 @@ class ResultSetTest extends FTestPlatform:
     for
       resultSet <- buildResultSet(
                      Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
-                     Vector(ResultSetRowPacket(Array(Some("1"))), ResultSetRowPacket(Array(Some("2")))),
+                     Vector(mkTextRow(Some("1")), mkTextRow(Some("2"))),
                      Version(0, 0, 0),
                      ResultSet.TYPE_SCROLL_INSENSITIVE,
                      ResultSet.CONCUR_READ_ONLY
@@ -1018,7 +1037,7 @@ class ResultSetTest extends FTestPlatform:
     for
       resultSet <- buildResultSet(
                      Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
-                     Vector(ResultSetRowPacket(Array(Some("1"))), ResultSetRowPacket(Array(Some("2")))),
+                     Vector(mkTextRow(Some("1")), mkTextRow(Some("2"))),
                      Version(0, 0, 0),
                      ResultSet.TYPE_SCROLL_INSENSITIVE,
                      ResultSet.CONCUR_READ_ONLY
@@ -1079,6 +1098,7 @@ class ResultSetTest extends FTestPlatform:
       fetchSize,
       useCursorFetch     = false,
       useServerPrepStmts = false,
+      TextColumnValueDecoder,
       resultSetType,
       resultSetConcurrency
     )
