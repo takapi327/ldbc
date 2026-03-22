@@ -163,20 +163,9 @@ class StreamingResultSetTest extends FTestPlatform:
     )
   )
 
-  /** Build a text-protocol ResultSetRowPacket from Option[String] values. */
-  def mkTextRow(values: Option[String]*): ResultSetRowPacket =
-    val bytes = values.flatMap {
-      case None    => Array(0xfb.toByte)
-      case Some(s) =>
-        val data = s.getBytes("UTF-8")
-        Array((data.length & 0xff).toByte) ++ data
-    }.toArray
-    ResultSetRowPacket.TextImpl(bytes)
-
   // Helper to create result set rows for mock responses (text protocol format)
-  def createBinaryRows(values: Vector[(String, String)]): Vector[ResultSetRowPacket] = {
-    values.map { case (id, name) => mkTextRow(Some(id), Some(name)) }
-  }
+  def createBinaryRows(values: Vector[(String, String)]): Vector[ResultSetRowPacket] =
+    values.map { case (id, name) => ResultSetRowPacket.fromStrings(Some(id), Some(name)) }
 
   test("next() should fetch rows based on fetch size") {
     for

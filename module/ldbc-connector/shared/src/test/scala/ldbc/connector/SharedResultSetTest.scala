@@ -122,29 +122,10 @@ class SharedResultSetTest extends FTestPlatform:
     )
   )
 
-  /** Build a text-protocol ResultSetRowPacket from Option[String] values. */
-  def mkTextRow(values: Option[String]*): ResultSetRowPacket =
-    val bytes = values.flatMap {
-      case None    => Array(0xfb.toByte)
-      case Some(s) =>
-        val data = s.getBytes("UTF-8")
-        if data.length <= 250 then Array((data.length & 0xff).toByte) ++ data
-        else if data.length <= 65535 then
-          Array(0xfc.toByte, (data.length & 0xff).toByte, ((data.length >> 8) & 0xff).toByte) ++ data
-        else
-          Array(
-            0xfd.toByte,
-            (data.length & 0xff).toByte,
-            ((data.length >> 8) & 0xff).toByte,
-            ((data.length >> 16) & 0xff).toByte
-          ) ++ data
-    }.toArray
-    ResultSetRowPacket.TextImpl(bytes)
-
   def createTestRecords: Vector[ResultSetRowPacket] = Vector(
-    mkTextRow(Some("1"), Some("Alice"), Some("25"), Some("1"), Some("2023-01-01 10:00:00")),
-    mkTextRow(Some("2"), Some("Bob"), None, Some("0"), Some("2023-01-02 11:00:00")),
-    mkTextRow(Some("3"), Some("Charlie"), Some("30"), Some("true"), Some("2023-01-03 12:00:00"))
+    ResultSetRowPacket.fromStrings(Some("1"), Some("Alice"), Some("25"), Some("1"), Some("2023-01-01 10:00:00")),
+    ResultSetRowPacket.fromStrings(Some("2"), Some("Bob"), None, Some("0"), Some("2023-01-02 11:00:00")),
+    ResultSetRowPacket.fromStrings(Some("3"), Some("Charlie"), Some("30"), Some("true"), Some("2023-01-03 12:00:00"))
   )
 
   def createEmptyRecords: Vector[ResultSetRowPacket] = Vector.empty
@@ -600,7 +581,7 @@ class SharedResultSetTest extends FTestPlatform:
       fetchSize <- Ref.of[IO, Int](0)
       // Create custom records with byte values
       byteRecords = Vector(
-                      mkTextRow(Some("65"), Some("A"), Some("-128"), Some("127"))
+                      ResultSetRowPacket.fromStrings(Some("65"), Some("A"), Some("-128"), Some("127"))
                     )
       byteColumns = Vector(
                       ColumnDefinition41Packet(
@@ -712,7 +693,7 @@ class SharedResultSetTest extends FTestPlatform:
       fetchSize <- Ref.of[IO, Int](0)
       // Create records with various data types
       dataRecords = Vector(
-                      mkTextRow(
+                      ResultSetRowPacket.fromStrings(
                         Some("123"),        // short
                         Some("456789"),     // long
                         Some("3.14"),       // float
