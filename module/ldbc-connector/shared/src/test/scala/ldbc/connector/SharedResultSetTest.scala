@@ -28,11 +28,12 @@ class SharedResultSetTest extends FTestPlatform:
     val version:              Version,
     val isClosed:             Ref[F, Boolean],
     val fetchSize:            Ref[F, Int],
-    val useCursorFetch:       Boolean        = false,
-    val useServerPrepStmts:   Boolean        = false,
-    val resultSetType:        Int            = ResultSet.TYPE_FORWARD_ONLY,
-    val resultSetConcurrency: Int            = ResultSet.CONCUR_READ_ONLY,
-    val statement:            Option[String] = None
+    val useCursorFetch:       Boolean            = false,
+    val useServerPrepStmts:   Boolean            = false,
+    val resultSetType:        Int                = ResultSet.TYPE_FORWARD_ONLY,
+    val resultSetConcurrency: Int                = ResultSet.CONCUR_READ_ONLY,
+    val statement:            Option[String]     = None,
+    val decoder:              ColumnValueDecoder = TextColumnValueDecoder
   )(using F: Async[F])
     extends SharedResultSet[F]:
     // Mock protocol for testing
@@ -122,9 +123,9 @@ class SharedResultSetTest extends FTestPlatform:
   )
 
   def createTestRecords: Vector[ResultSetRowPacket] = Vector(
-    ResultSetRowPacket(Array(Some("1"), Some("Alice"), Some("25"), Some("1"), Some("2023-01-01 10:00:00"))),
-    ResultSetRowPacket(Array(Some("2"), Some("Bob"), None, Some("0"), Some("2023-01-02 11:00:00"))),
-    ResultSetRowPacket(Array(Some("3"), Some("Charlie"), Some("30"), Some("true"), Some("2023-01-03 12:00:00")))
+    ResultSetRowPacket.fromStrings(Some("1"), Some("Alice"), Some("25"), Some("1"), Some("2023-01-01 10:00:00")),
+    ResultSetRowPacket.fromStrings(Some("2"), Some("Bob"), None, Some("0"), Some("2023-01-02 11:00:00")),
+    ResultSetRowPacket.fromStrings(Some("3"), Some("Charlie"), Some("30"), Some("true"), Some("2023-01-03 12:00:00"))
   )
 
   def createEmptyRecords: Vector[ResultSetRowPacket] = Vector.empty
@@ -580,7 +581,7 @@ class SharedResultSetTest extends FTestPlatform:
       fetchSize <- Ref.of[IO, Int](0)
       // Create custom records with byte values
       byteRecords = Vector(
-                      ResultSetRowPacket(Array(Some("65"), Some("A"), Some("-128"), Some("127")))
+                      ResultSetRowPacket.fromStrings(Some("65"), Some("A"), Some("-128"), Some("127"))
                     )
       byteColumns = Vector(
                       ColumnDefinition41Packet(
@@ -692,17 +693,15 @@ class SharedResultSetTest extends FTestPlatform:
       fetchSize <- Ref.of[IO, Int](0)
       // Create records with various data types
       dataRecords = Vector(
-                      ResultSetRowPacket(
-                        Array(
-                          Some("123"),        // short
-                          Some("456789"),     // long
-                          Some("3.14"),       // float
-                          Some("2.71828"),    // double
-                          Some("Hello"),      // bytes
-                          Some("2023-05-15"), // date
-                          Some("14:30:25"),   // time
-                          Some("1234.5678")   // bigdecimal
-                        )
+                      ResultSetRowPacket.fromStrings(
+                        Some("123"),        // short
+                        Some("456789"),     // long
+                        Some("3.14"),       // float
+                        Some("2.71828"),    // double
+                        Some("Hello"),      // bytes
+                        Some("2023-05-15"), // date
+                        Some("14:30:25"),   // time
+                        Some("1234.5678")   // bigdecimal
                       )
                     )
       dataColumns = Vector(

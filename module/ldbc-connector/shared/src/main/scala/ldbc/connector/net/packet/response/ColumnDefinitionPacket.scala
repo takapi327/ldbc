@@ -29,6 +29,13 @@ trait ColumnDefinitionPacket extends ResponsePacket:
   /** ColumnDefinitionFlags is a bitset of column definition flags. */
   def flags: Seq[ColumnDefinitionFlags]
 
+  /**
+   * Java charset name for this column, derived from the column's collation index.
+   *
+   * Used to decode raw field bytes into strings when reading result set rows.
+   */
+  def charset: String
+
   /** Full name with table and column names connected by dots */
   def fullName: String = table + "." + name
 
