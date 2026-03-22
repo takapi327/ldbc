@@ -20,7 +20,6 @@ import ldbc.connector.util.Version
 
 class ResultSetTest extends FTestPlatform:
 
-
   test("SQLException occurs when accessing the ResultSet after closing it.") {
     for
       resultSet <- buildResultSet(Vector.empty, Vector.empty, Version(0, 0, 0))
@@ -268,7 +267,9 @@ class ResultSetTest extends FTestPlatform:
                        column("c2", ColumnDataType.MYSQL_TYPE_TIMESTAMP),
                        column("c3", ColumnDataType.MYSQL_TYPE_TIMESTAMP)
                      ),
-                     Vector(ResultSetRowPacket.fromStrings(Some("2023-01-01 12:34:56"), Some("2023-01-02 12:34:57"), None)),
+                     Vector(
+                       ResultSetRowPacket.fromStrings(Some("2023-01-01 12:34:56"), Some("2023-01-02 12:34:57"), None)
+                     ),
                      Version(0, 0, 0)
                    )
       result <- collectRows(resultSet) { rs =>
@@ -292,7 +293,9 @@ class ResultSetTest extends FTestPlatform:
                        column("c2", ColumnDataType.MYSQL_TYPE_TIMESTAMP),
                        column("c3", ColumnDataType.MYSQL_TYPE_TIMESTAMP)
                      ),
-                     Vector(ResultSetRowPacket.fromStrings(Some("2023-01-01 12:34:56"), Some("2023-01-02 12:34:57"), None)),
+                     Vector(
+                       ResultSetRowPacket.fromStrings(Some("2023-01-01 12:34:56"), Some("2023-01-02 12:34:57"), None)
+                     ),
                      Version(0, 0, 0)
                    )
       result <- collectRows(resultSet) { rs =>
