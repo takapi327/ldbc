@@ -85,7 +85,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
                 textResultSetRowDecoder(protocol.initialPacket.capabilityFlags)
               )
           yield resultSetRow.headOption
-            .flatMap(row => ResultSetRowPacket.extractTextColumn(row.rawBytes, 0))
+            .flatMap(row => TextColumnValueDecoder.extractColumn(row.rawBytes, 0, Vector.empty))
             .map(b => new String(b, "UTF-8"))
             .getOrElse("")
       }
@@ -145,8 +145,8 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
           yield resultSetRow
             .flatMap { row =>
               columnDefinitions.indices.flatMap { i =>
-                ResultSetRowPacket
-                  .extractTextColumn(row.rawBytes, i)
+                TextColumnValueDecoder
+                  .extractColumn(row.rawBytes, i, Vector.empty)
                   .map(b => new String(b, "UTF-8"))
               }
             }

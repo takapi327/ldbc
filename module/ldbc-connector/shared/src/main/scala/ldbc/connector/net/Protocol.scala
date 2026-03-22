@@ -291,7 +291,7 @@ object Protocol:
             yield columnDefinitions.zipWithIndex.flatMap {
               case (col, i) =>
                 resultSetRow.headOption.map { row =>
-                  val fieldBytes = ResultSetRowPacket.extractTextColumn(row.rawBytes, i)
+                  val fieldBytes = TextColumnValueDecoder.extractColumn(row.rawBytes, i, Vector.empty)
                   col.name -> fieldBytes.map(b => new String(b, col.charset)).getOrElse("")
                 }
             }.toMap

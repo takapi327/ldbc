@@ -56,20 +56,20 @@ class ResultSetRowPacketTest extends FTestPlatform:
             assert(rowPacket.rawBytes.sameElements(packetBytes))
             // Verify column extraction
             assertEquals(
-              ResultSetRowPacket.extractTextColumn(rowPacket.rawBytes, 0).map(new String(_, "UTF-8")),
+              TextColumnValueDecoder.extractColumn(rowPacket.rawBytes, 0, Vector.empty).map(new String(_, "UTF-8")),
               Some("1")
             )
             assertEquals(
-              ResultSetRowPacket.extractTextColumn(rowPacket.rawBytes, 1).map(new String(_, "UTF-8")),
+              TextColumnValueDecoder.extractColumn(rowPacket.rawBytes, 1, Vector.empty).map(new String(_, "UTF-8")),
               Some("John")
             )
             assertEquals(
-              ResultSetRowPacket.extractTextColumn(rowPacket.rawBytes, 2).map(new String(_, "UTF-8")),
+              TextColumnValueDecoder.extractColumn(rowPacket.rawBytes, 2, Vector.empty).map(new String(_, "UTF-8")),
               Some("Doe")
             )
-            assertEquals(ResultSetRowPacket.extractTextColumn(rowPacket.rawBytes, 3), None)
+            assertEquals(TextColumnValueDecoder.extractColumn(rowPacket.rawBytes, 3, Vector.empty), None)
             assertEquals(
-              ResultSetRowPacket.extractTextColumn(rowPacket.rawBytes, 4).map(new String(_, "UTF-8")),
+              TextColumnValueDecoder.extractColumn(rowPacket.rawBytes, 4, Vector.empty).map(new String(_, "UTF-8")),
               Some("30")
             )
           case _ => fail("Expected ResultSetRowPacket but got something else")
@@ -100,16 +100,16 @@ class ResultSetRowPacketTest extends FTestPlatform:
         decoded.value match {
           case rowPacket: ResultSetRowPacket =>
             assertEquals(
-              ResultSetRowPacket.extractTextColumn(rowPacket.rawBytes, 0).map(new String(_, "UTF-8")),
+              TextColumnValueDecoder.extractColumn(rowPacket.rawBytes, 0, Vector.empty).map(new String(_, "UTF-8")),
               Some("1")
             )
             assertEquals(
-              ResultSetRowPacket.extractTextColumn(rowPacket.rawBytes, 1).map(new String(_, "UTF-8")),
+              TextColumnValueDecoder.extractColumn(rowPacket.rawBytes, 1, Vector.empty).map(new String(_, "UTF-8")),
               Some(longString)
             )
-            assertEquals(ResultSetRowPacket.extractTextColumn(rowPacket.rawBytes, 2), None)
+            assertEquals(TextColumnValueDecoder.extractColumn(rowPacket.rawBytes, 2, Vector.empty), None)
             assertEquals(
-              ResultSetRowPacket.extractTextColumn(rowPacket.rawBytes, 3).map(new String(_, "UTF-8")),
+              TextColumnValueDecoder.extractColumn(rowPacket.rawBytes, 3, Vector.empty).map(new String(_, "UTF-8")),
               Some("100")
             )
           case _ => fail("Expected ResultSetRowPacket but got something else")
@@ -138,11 +138,11 @@ class ResultSetRowPacketTest extends FTestPlatform:
         decoded.value match {
           case rowPacket: ResultSetRowPacket =>
             assertEquals(
-              ResultSetRowPacket.extractTextColumn(rowPacket.rawBytes, 0).map(new String(_, "UTF-8")),
+              TextColumnValueDecoder.extractColumn(rowPacket.rawBytes, 0, Vector.empty).map(new String(_, "UTF-8")),
               Some("1")
             )
             assertEquals(
-              ResultSetRowPacket.extractTextColumn(rowPacket.rawBytes, 1).map(new String(_, "UTF-8")),
+              TextColumnValueDecoder.extractColumn(rowPacket.rawBytes, 1, Vector.empty).map(new String(_, "UTF-8")),
               Some(japaneseText)
             )
           case _ => fail("Expected ResultSetRowPacket but got something else")

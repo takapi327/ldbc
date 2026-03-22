@@ -28,8 +28,6 @@ trait ResultSetRowPacket extends ResponsePacket:
 
 object ResultSetRowPacket:
 
-  private val NULL = 0xfb
-
   private[ldbc] case class TextImpl(rawBytes: Array[Byte]) extends ResultSetRowPacket
 
   /**
@@ -59,46 +57,3 @@ object ResultSetRowPacket:
           ) ++ data
     }.toArray
     TextImpl(bytes)
-
-  /**
-   * Reads a length-encoded integer at the given offset and returns
-   * (dataLength, totalFieldWidth) where totalFieldWidth = prefix bytes + dataLength.
-   */
-  def readLengthEncoded(bytes: Array[Byte], offset: Int): (Int, Int) =
-    val lenByte = bytes(offset) & 0xff
-    if lenByte <= 250 then (lenByte, 1 + lenByte)
-    else if lenByte == 252 then
-      val len = (bytes(offset + 1) & 0xff) | ((bytes(offset + 2) & 0xff) << 8)
-      (len, 3 + len)
-    else if lenByte == 253 then
-      val len =
-        (bytes(offset + 1) & 0xff) | ((bytes(offset + 2) & 0xff) << 8) | ((bytes(offset + 3) & 0xff) << 16)
-      (len, 4 + len)
-    else // 254: 8-byte length (practically unused for row data)
-      val len = (0 until 8).foldLeft(0L)((acc, i) => acc | ((bytes(offset + 1 + i) & 0xffL) << (i * 8))).toInt
-      (len, 9 + len)
-
-  /**
-   * Extracts the raw data bytes for the column at columnIndex (0-based) from a text protocol row.
-   *
-   * rawBytes layout: [len1][field1_data][len2][field2_data][0xfb=NULL][len4][field4_data]...
-   *
-   * @return None for NULL, Some(bytes) for non-NULL (data only, without length prefix)
-   */
-  def extractTextColumn(bytes: Array[Byte], columnIndex: Int): Option[Array[Byte]] =
-    var offset = 0
-    var col    = 0
-    while col < columnIndex do
-      val lenByte = bytes(offset) & 0xff
-      if lenByte == NULL then offset += 1
-      else
-        val (_, totalWidth) = readLengthEncoded(bytes, offset)
-        offset += totalWidth
-      col += 1
-
-    val lenByte = bytes(offset) & 0xff
-    if lenByte == NULL then None
-    else
-      val (dataLen, _) = readLengthEncoded(bytes, offset)
-      val headerSize   = if lenByte <= 250 then 1 else if lenByte == 252 then 3 else if lenByte == 253 then 4 else 9
-      Some(bytes.slice(offset + headerSize, offset + headerSize + dataLen))

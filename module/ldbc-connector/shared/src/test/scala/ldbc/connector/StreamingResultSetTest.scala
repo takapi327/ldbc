@@ -122,8 +122,8 @@ class StreamingResultSetTest extends FTestPlatform:
     def getString(columnIndex: Int): F[String] = Async[F].delay {
       currentRow match {
         case Some(row) =>
-          ResultSetRowPacket
-            .extractTextColumn(row.rawBytes, columnIndex - 1)
+          TextColumnValueDecoder
+            .extractColumn(row.rawBytes, columnIndex - 1, Vector.empty)
             .map(new String(_, "UTF-8"))
             .getOrElse("")
         case None => ""
