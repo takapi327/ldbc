@@ -15,12 +15,11 @@ import ldbc.connector.net.packet.response.*
 
 class ResultSetRowPacketTest extends FTestPlatform:
 
-  test("ResultSetRowPacket rawBytes and isTextProtocol") {
+  test("ResultSetRowPacket rawBytes and toString") {
     val rawBytes  = Array[Byte](0x01, '1'.toByte)
     val rowPacket = ResultSetRowPacket.TextImpl(rawBytes)
 
     assert(rowPacket.rawBytes.sameElements(rawBytes))
-    assertEquals(rowPacket.isTextProtocol, true)
     assertEquals(rowPacket.toString, "ProtocolText::ResultSetRow")
   }
 
@@ -54,7 +53,6 @@ class ResultSetRowPacketTest extends FTestPlatform:
       case Attempt.Successful(decoded) =>
         decoded.value match {
           case rowPacket: ResultSetRowPacket =>
-            assert(rowPacket.isTextProtocol)
             assert(rowPacket.rawBytes.sameElements(packetBytes))
             // Verify column extraction
             assertEquals(

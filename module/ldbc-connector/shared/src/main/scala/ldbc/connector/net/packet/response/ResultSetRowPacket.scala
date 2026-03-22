@@ -24,17 +24,13 @@ trait ResultSetRowPacket extends ResponsePacket:
   /** The raw bytes of the entire row packet (without protocol framing). */
   def rawBytes: Array[Byte]
 
-  /** True if this row was received via the text protocol; false for binary protocol. */
-  def isTextProtocol: Boolean
-
   override def toString: String = "ProtocolText::ResultSetRow"
 
 object ResultSetRowPacket:
 
   private val NULL = 0xfb
 
-  private[ldbc] case class TextImpl(rawBytes: Array[Byte]) extends ResultSetRowPacket:
-    override def isTextProtocol: Boolean = true
+  private[ldbc] case class TextImpl(rawBytes: Array[Byte]) extends ResultSetRowPacket
 
   /**
    * Builds a text protocol row from string column values.
