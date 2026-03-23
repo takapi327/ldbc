@@ -403,10 +403,10 @@ class BinaryColumnValueDecoderTest extends FTestPlatform:
     // Column 1 (bit 3): null — bitmap = 0x08
     // Column 2 (bit 4): not null
     val columnTypes = Vector(MYSQL_TYPE_TINY, MYSQL_TYPE_SHORT, MYSQL_TYPE_TINY)
-    val bytes = Array[Byte](
-      0x08,       // null bitmap: column 1 is null (bit 3)
-      10,         // column 0 data (TINY = 1 byte)
-      99          // column 2 data (TINY = 1 byte); column 1 skipped because null
+    val bytes       = Array[Byte](
+      0x08, // null bitmap: column 1 is null (bit 3)
+      10,   // column 0 data (TINY = 1 byte)
+      99    // column 2 data (TINY = 1 byte); column 1 skipped because null
     )
     val col0 = BinaryColumnValueDecoder.extractColumn(bytes, 0, columnTypes)
     val col1 = BinaryColumnValueDecoder.extractColumn(bytes, 1, columnTypes)
@@ -423,8 +423,8 @@ class BinaryColumnValueDecoderTest extends FTestPlatform:
     // 3 columns: TINY(1), LONG(4), SHORT(2)
     // Null bitmap size = (3+7+2)/8 = 1 byte. All non-null => bitmap = 0x00.
     val columnTypes = Vector(MYSQL_TYPE_TINY, MYSQL_TYPE_LONG, MYSQL_TYPE_SHORT)
-    val tinyData    = Array[Byte](0x0a)              // 10
-    val longData    = leInt(305419896)                // 0x12345678
+    val tinyData    = Array[Byte](0x0a) // 10
+    val longData    = leInt(305419896)  // 0x12345678
     val shortData   = leShort(1000)
     val bytes       = Array.concat(Array[Byte](0x00), tinyData, longData, shortData)
 
@@ -452,10 +452,10 @@ class BinaryColumnValueDecoderTest extends FTestPlatform:
     val textBytes   = text.getBytes(charset)
     // length-encoded: length prefix (1 byte for len<=250) + data
     val bytes = Array.concat(
-      Array[Byte](0x00),                        // null bitmap
-      Array[Byte](42),                           // column 0: TINY
-      Array[Byte](textBytes.length.toByte),      // column 1 length prefix
-      textBytes                                  // column 1 data
+      Array[Byte](0x00),                    // null bitmap
+      Array[Byte](42),                      // column 0: TINY
+      Array[Byte](textBytes.length.toByte), // column 1 length prefix
+      textBytes                             // column 1 data
     )
 
     val col1 = BinaryColumnValueDecoder.extractColumn(bytes, 1, columnTypes)
@@ -488,8 +488,8 @@ class BinaryColumnValueDecoderTest extends FTestPlatform:
     // bit positions: col0=bit2, col1=bit3, ..., col5=bit7, col6=bit0 of byte 1
     // Null column 6: second bitmap byte has bit 0 set => 0x01
     val bytes = Array.concat(
-      Array[Byte](0x00, 0x01),             // null bitmap: column 6 is null
-      Array[Byte](1, 2, 3, 4, 5, 6)       // data for columns 0-5 (column 6 is null, no data)
+      Array[Byte](0x00, 0x01),      // null bitmap: column 6 is null
+      Array[Byte](1, 2, 3, 4, 5, 6) // data for columns 0-5 (column 6 is null, no data)
     )
 
     for i <- 0 until 6 do
