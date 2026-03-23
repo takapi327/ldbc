@@ -326,6 +326,12 @@ private[ldbc] trait SharedResultSet[F[_]](using ev: MonadThrow[F]) extends Resul
    * Extracts the raw field bytes from rawBytes and applies the appropriate decoder
    * based on the row's protocol type (text or binary).
    *
+   * Column index validation is performed eagerly before decoding.
+   * Decode errors are captured via `MonadThrow.catchNonFatal` and translated
+   * to `SQLException` with appropriate SQL states following the MySQL Connector/J convention:
+   *   - `S1009`: column index out of range
+   *   - `22018`: value conversion / parse failure
+   *
    * @param index the 1-based column index
    * @param extract a function selecting the decode method from ColumnValueDecoder
    * @param defaultValue the default value to return for null columns
@@ -336,7 +342,15 @@ private[ldbc] trait SharedResultSet[F[_]](using ev: MonadThrow[F]) extends Resul
     extract:      ColumnValueDecoder => (Array[Byte], String, ColumnDataType) => T,
     defaultValue: T
   ): F[T] =
-    try {
+    if index < 1 || index > columns.length then
+      ev.raiseError(
+        new SQLException(
+          s"Column index $index is out of range. Number of columns: ${ columns.length }.",
+          sqlState = Some("S1009"),
+          sql = statement
+        )
+      )
+    else
       val col        = columns(index - 1)
       val charset    = charsets(index - 1)
       val fieldBytes = currentRow.flatMap(row => decoder.extractColumn(row.rawBytes, index - 1, columnTypes))
@@ -347,18 +361,20 @@ private[ldbc] trait SharedResultSet[F[_]](using ev: MonadThrow[F]) extends Resul
           ev.pure(defaultValue)
         case Some(bytes) =>
           lastColumnReadNullable = false
-          val decoded = Option(extract(decoder)(bytes, charset, col.columnType))
-          decoded match
-            case None        => ev.pure(defaultValue)
-            case Some(value) => ev.pure(value)
-    } catch
-      case _ =>
-        ev.raiseError(
-          new SQLException(
-            s"Column index $index does not exist in the ResultSet.",
-            sql = statement
-          )
-        )
+          ev.catchNonFatal(Option(extract(decoder)(bytes, charset, col.columnType)))
+            .flatMap {
+              case None        => ev.pure(defaultValue)
+              case Some(value) => ev.pure(value)
+            }
+            .handleErrorWith { e =>
+              ev.raiseError(
+                new SQLException(
+                  s"Cannot convert column $index value to the requested type: ${ e.getMessage }",
+                  sqlState = Some("22018"),
+                  sql = statement
+                )
+              )
+            }
 
   /**
    * Finds the column index by column name or alias.
