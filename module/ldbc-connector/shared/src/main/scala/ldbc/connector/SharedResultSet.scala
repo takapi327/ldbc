@@ -347,7 +347,7 @@ private[ldbc] trait SharedResultSet[F[_]](using ev: MonadThrow[F]) extends Resul
         new SQLException(
           s"Column index $index is out of range. Number of columns: ${ columns.length }.",
           sqlState = Some("S1009"),
-          sql = statement
+          sql      = statement
         )
       )
     else
@@ -371,7 +371,7 @@ private[ldbc] trait SharedResultSet[F[_]](using ev: MonadThrow[F]) extends Resul
                 new SQLException(
                   s"Cannot convert column $index value to the requested type: ${ e.getMessage }",
                   sqlState = Some("22018"),
-                  sql = statement
+                  sql      = statement
                 )
               )
             }
