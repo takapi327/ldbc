@@ -40,8 +40,10 @@ private[ldbc] trait SharedResultSet[F[_]](using ev: MonadThrow[F]) extends Resul
   protected final var currentCursor:          Int                        = 0
   protected final var currentRow:             Option[ResultSetRowPacket] = records.headOption
 
-  private lazy val charsets:    Vector[String]         = columns.map(_.charset)
-  private lazy val columnTypes: Vector[ColumnDataType] = columns.map(_.columnType)
+  private lazy val charsets:      Vector[String]         = columns.map(_.charset)
+  private lazy val columnTypes:   Vector[ColumnDataType] = columns.map(_.columnType)
+  private lazy val unsignedFlags: Vector[Boolean]        =
+    columns.map(_.flags.contains(ColumnDefinitionFlags.UNSIGNED_FLAG))
 
   override def close(): F[Unit] = isClosed.set(true)
 
@@ -339,7 +341,7 @@ private[ldbc] trait SharedResultSet[F[_]](using ev: MonadThrow[F]) extends Resul
    */
   private def rowDecode[T](
     index:        Int,
-    extract:      ColumnValueDecoder => (Array[Byte], String, ColumnDataType) => T,
+    extract:      ColumnValueDecoder => (Array[Byte], String, ColumnDataType, Boolean) => T,
     defaultValue: T
   ): F[T] =
     if index < 1 || index > columns.length then
@@ -353,6 +355,7 @@ private[ldbc] trait SharedResultSet[F[_]](using ev: MonadThrow[F]) extends Resul
     else
       val col        = columns(index - 1)
       val charset    = charsets(index - 1)
+      val isUnsigned = unsignedFlags(index - 1)
       val fieldBytes = currentRow.flatMap(row => decoder.extractColumn(row.rawBytes, index - 1, columnTypes))
 
       fieldBytes match
@@ -361,7 +364,7 @@ private[ldbc] trait SharedResultSet[F[_]](using ev: MonadThrow[F]) extends Resul
           ev.pure(defaultValue)
         case Some(bytes) =>
           lastColumnReadNullable = false
-          ev.catchNonFatal(Option(extract(decoder)(bytes, charset, col.columnType)))
+          ev.catchNonFatal(Option(extract(decoder)(bytes, charset, col.columnType, isUnsigned)))
             .flatMap {
               case None        => ev.pure(defaultValue)
               case Some(value) => ev.pure(value)
