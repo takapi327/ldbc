@@ -6,6 +6,7 @@
 
 package ldbc.connector.data
 
+import java.math.MathContext
 import java.nio.{ ByteBuffer, ByteOrder }
 import java.time.*
 
@@ -27,13 +28,28 @@ private[ldbc] object BinaryColumnValueDecoder extends ColumnValueDecoder:
   private def le(bytes: Array[Byte]): ByteBuffer =
     ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
 
+  /**
+   * Portable Float-to-String conversion that produces consistent output across JVM and Scala.js.
+   *
+   * On Scala.js, `Float.toString` delegates to JavaScript's string coercion which prints floats
+   * as if they were doubles, exposing the precision loss (e.g., `3.14f.toString` → `"3.140000104904175"`).
+   * This is documented as "as-designed" in Scala.js (issue #106) and the official docs recommend
+   * using `String.format()` for portable float formatting.
+   *
+   * Uses `BigDecimal` with `MathContext.DECIMAL32` (7 significant digits) to match IEEE 754
+   * single-precision float's decimal precision, then strips trailing zeros.
+   */
+  private def floatToString(f: Float): String =
+    if f.isNaN || f.isInfinite then f.toString
+    else BigDecimal(f.toDouble, MathContext.DECIMAL32).bigDecimal.stripTrailingZeros().toPlainString
+
   override def decodeString(bytes: Array[Byte], charset: String, columnType: ColumnDataType): String =
     columnType match
       case MYSQL_TYPE_TINY                    => (bytes(0) & 0xff).toString
       case MYSQL_TYPE_SHORT | MYSQL_TYPE_YEAR => (le(bytes).getShort & 0xffff).toString
       case MYSQL_TYPE_LONG | MYSQL_TYPE_INT24 => (le(bytes).getInt & 0xffffffffL).toString
       case MYSQL_TYPE_LONGLONG                => BigInt(1, bytes.reverse).toString
-      case MYSQL_TYPE_FLOAT                   => le(bytes).getFloat.toString
+      case MYSQL_TYPE_FLOAT                   => floatToString(le(bytes).getFloat)
       case MYSQL_TYPE_DOUBLE                  => le(bytes).getDouble.toString
       case MYSQL_TYPE_BOOL                    => (bytes(0) != 0).toString
       case _                                  => new String(bytes, charset)
