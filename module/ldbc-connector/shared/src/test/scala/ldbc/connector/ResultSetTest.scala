@@ -505,7 +505,7 @@ class ResultSetTest extends FTestPlatform:
     for
       resultSet <- buildResultSet(
                      Vector(
-                       column("c1", ColumnDataType.MYSQL_TYPE_LONG, isSigned = true),
+                       column("c1", ColumnDataType.MYSQL_TYPE_LONG, isUnsigned = true),
                        column("c2", ColumnDataType.MYSQL_TYPE_DOUBLE),
                        column("c3", ColumnDataType.MYSQL_TYPE_STRING)
                      ),
@@ -514,9 +514,9 @@ class ResultSetTest extends FTestPlatform:
                    )
       resultSetMetaData <- resultSet.getMetaData()
     yield
-      assertEquals(resultSetMetaData.isSigned(1), true)
-      assertEquals(resultSetMetaData.isSigned(2), false)
-      assertEquals(resultSetMetaData.isSigned(3), false)
+      assertEquals(resultSetMetaData.isSigned(1), false) // UNSIGNED_FLAG set → not signed
+      assertEquals(resultSetMetaData.isSigned(2), true)  // no UNSIGNED_FLAG → signed
+      assertEquals(resultSetMetaData.isSigned(3), true)  // no UNSIGNED_FLAG → signed
   }
 
   test("The column is nullable obtained from the meta-information of ResultSet matches the specified value.") {
@@ -1094,12 +1094,12 @@ class ResultSetTest extends FTestPlatform:
     table:      Option[String] = None,
     alias:      Option[String] = None,
     useScale:   Boolean = false,
-    isSigned:   Boolean = false,
+    isUnsigned: Boolean = false,
     isNullable: Boolean = true,
     isAutoInc:  Boolean = false
   ): ColumnDefinitionPacket =
     val flags = Seq(
-      if isSigned then Some(ColumnDefinitionFlags.UNSIGNED_FLAG) else None,
+      if isUnsigned then Some(ColumnDefinitionFlags.UNSIGNED_FLAG) else None,
       if isNullable then None else Some(ColumnDefinitionFlags.NOT_NULL_FLAG),
       if isAutoInc then Some(ColumnDefinitionFlags.AUTO_INCREMENT_FLAG) else None
     ).flatten
