@@ -48,7 +48,7 @@ services:
       retries: 10
 
   localstack:
-    image: localstack/localstack:latest
+    image: localstack/localstack:4.14.0
     platform: linux/amd64
     container_name: ldbc-localstack
     ports:
