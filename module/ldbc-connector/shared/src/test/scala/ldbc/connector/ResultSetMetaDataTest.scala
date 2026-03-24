@@ -130,8 +130,8 @@ class ResultSetMetaDataTest extends FTestPlatform:
     val columns  = Vector(unsignedColumn, signedColumn)
     val metaData = ResultSetMetaDataImpl(columns, Map("character_set_client" -> "utf8mb4"), Version(8, 0, 25))
 
-    assert(metaData.isSigned(1))  // Has UNSIGNED_FLAG
-    assert(!metaData.isSigned(2)) // Does not have UNSIGNED_FLAG
+    assert(!metaData.isSigned(1)) // Has UNSIGNED_FLAG → not signed
+    assert(metaData.isSigned(2))  // Does not have UNSIGNED_FLAG → signed
   }
 
   test("getColumnDisplaySize should return clamped length") {
