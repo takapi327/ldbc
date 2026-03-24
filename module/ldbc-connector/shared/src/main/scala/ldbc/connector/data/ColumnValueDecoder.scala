@@ -35,7 +35,7 @@ private[ldbc] trait ColumnValueDecoder:
    * @param columnType MySQL column type reported in the column definition packet
    * @return the decoded string value
    */
-  def decodeString(bytes: Array[Byte], charset: String, columnType: ColumnDataType): String
+  def decodeString(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): String
 
   /**
    * Decodes the field bytes as a `Boolean`.
@@ -48,7 +48,7 @@ private[ldbc] trait ColumnValueDecoder:
    * @param columnType MySQL column type reported in the column definition packet
    * @return the decoded boolean value
    */
-  def decodeBoolean(bytes: Array[Byte], charset: String, columnType: ColumnDataType): Boolean
+  def decodeBoolean(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): Boolean
 
   /**
    * Decodes the field bytes as a `Byte`.
@@ -62,7 +62,7 @@ private[ldbc] trait ColumnValueDecoder:
    * @param columnType MySQL column type reported in the column definition packet
    * @return the decoded byte value
    */
-  def decodeByte(bytes: Array[Byte], charset: String, columnType: ColumnDataType): Byte
+  def decodeByte(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): Byte
 
   /**
    * Decodes the field bytes as a `Short`.
@@ -76,7 +76,7 @@ private[ldbc] trait ColumnValueDecoder:
    * @param columnType MySQL column type reported in the column definition packet
    * @return the decoded short value
    */
-  def decodeShort(bytes: Array[Byte], charset: String, columnType: ColumnDataType): Short
+  def decodeShort(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): Short
 
   /**
    * Decodes the field bytes as an `Int`.
@@ -93,7 +93,7 @@ private[ldbc] trait ColumnValueDecoder:
    * @param columnType MySQL column type reported in the column definition packet
    * @return the decoded int value
    */
-  def decodeInt(bytes: Array[Byte], charset: String, columnType: ColumnDataType): Int
+  def decodeInt(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): Int
 
   /**
    * Decodes the field bytes as a `Long`.
@@ -110,7 +110,7 @@ private[ldbc] trait ColumnValueDecoder:
    * @param columnType MySQL column type reported in the column definition packet
    * @return the decoded long value
    */
-  def decodeLong(bytes: Array[Byte], charset: String, columnType: ColumnDataType): Long
+  def decodeLong(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): Long
 
   /**
    * Decodes the field bytes as a `Float`.
@@ -123,7 +123,7 @@ private[ldbc] trait ColumnValueDecoder:
    * @param columnType MySQL column type reported in the column definition packet
    * @return the decoded float value
    */
-  def decodeFloat(bytes: Array[Byte], charset: String, columnType: ColumnDataType): Float
+  def decodeFloat(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): Float
 
   /**
    * Decodes the field bytes as a `Double`.
@@ -137,7 +137,7 @@ private[ldbc] trait ColumnValueDecoder:
    * @param columnType MySQL column type reported in the column definition packet
    * @return the decoded double value
    */
-  def decodeDouble(bytes: Array[Byte], charset: String, columnType: ColumnDataType): Double
+  def decodeDouble(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): Double
 
   /**
    * Decodes the field bytes as a `BigDecimal`.
@@ -151,7 +151,7 @@ private[ldbc] trait ColumnValueDecoder:
    * @param columnType MySQL column type reported in the column definition packet
    * @return the decoded BigDecimal value
    */
-  def decodeBigDecimal(bytes: Array[Byte], charset: String, columnType: ColumnDataType): BigDecimal
+  def decodeBigDecimal(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): BigDecimal
 
   /**
    * Returns the raw field bytes as-is, or re-encodes the string representation for text protocol.
@@ -165,7 +165,7 @@ private[ldbc] trait ColumnValueDecoder:
    * @param columnType MySQL column type reported in the column definition packet
    * @return the field bytes
    */
-  def decodeBytes(bytes: Array[Byte], charset: String, columnType: ColumnDataType): Array[Byte]
+  def decodeBytes(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): Array[Byte]
 
   /**
    * Decodes the field bytes as a `LocalDate`.
@@ -180,7 +180,7 @@ private[ldbc] trait ColumnValueDecoder:
    * @param columnType MySQL column type reported in the column definition packet
    * @return the decoded `LocalDate`, or `null` for zero-date values
    */
-  def decodeDate(bytes: Array[Byte], charset: String, columnType: ColumnDataType): LocalDate
+  def decodeDate(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): LocalDate
 
   /**
    * Decodes the field bytes as a `LocalTime`.
@@ -199,7 +199,7 @@ private[ldbc] trait ColumnValueDecoder:
    * @param columnType MySQL column type reported in the column definition packet
    * @return the decoded `LocalTime`, or `null` for zero-time values
    */
-  def decodeTime(bytes: Array[Byte], charset: String, columnType: ColumnDataType): LocalTime
+  def decodeTime(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): LocalTime
 
   /**
    * Decodes the field bytes as a `LocalDateTime`.
@@ -216,7 +216,7 @@ private[ldbc] trait ColumnValueDecoder:
    * @param columnType MySQL column type reported in the column definition packet
    * @return the decoded `LocalDateTime`, or `null` for zero-datetime values
    */
-  def decodeTimestamp(bytes: Array[Byte], charset: String, columnType: ColumnDataType): LocalDateTime
+  def decodeTimestamp(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): LocalDateTime
 
   /**
    * Extracts the raw data bytes for the column at `index` (0-based) from a row's raw bytes.

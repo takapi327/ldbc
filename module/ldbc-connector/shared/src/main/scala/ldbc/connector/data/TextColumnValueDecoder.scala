@@ -19,47 +19,47 @@ private[ldbc] object TextColumnValueDecoder extends ColumnValueDecoder:
   private def asString(bytes: Array[Byte], charset: String): String =
     new String(bytes, charset)
 
-  override def decodeString(bytes: Array[Byte], charset: String, columnType: ColumnDataType): String =
+  override def decodeString(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): String =
     asString(bytes, charset)
 
-  override def decodeBoolean(bytes: Array[Byte], charset: String, columnType: ColumnDataType): Boolean =
+  override def decodeBoolean(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): Boolean =
     asString(bytes, charset) match
       case "true" | "1" => true
       case _            => false
 
-  override def decodeByte(bytes: Array[Byte], charset: String, columnType: ColumnDataType): Byte =
+  override def decodeByte(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): Byte =
     val str = asString(bytes, charset)
     if str.length == 1 && !str.forall(_.isDigit) then str.getBytes().head
     else str.toByte
 
-  override def decodeShort(bytes: Array[Byte], charset: String, columnType: ColumnDataType): Short =
+  override def decodeShort(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): Short =
     asString(bytes, charset).toShort
 
-  override def decodeInt(bytes: Array[Byte], charset: String, columnType: ColumnDataType): Int =
+  override def decodeInt(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): Int =
     asString(bytes, charset).toInt
 
-  override def decodeLong(bytes: Array[Byte], charset: String, columnType: ColumnDataType): Long =
+  override def decodeLong(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): Long =
     asString(bytes, charset).toLong
 
-  override def decodeFloat(bytes: Array[Byte], charset: String, columnType: ColumnDataType): Float =
+  override def decodeFloat(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): Float =
     asString(bytes, charset).toFloat
 
-  override def decodeDouble(bytes: Array[Byte], charset: String, columnType: ColumnDataType): Double =
+  override def decodeDouble(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): Double =
     asString(bytes, charset).toDouble
 
-  override def decodeBigDecimal(bytes: Array[Byte], charset: String, columnType: ColumnDataType): BigDecimal =
+  override def decodeBigDecimal(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): BigDecimal =
     BigDecimal(asString(bytes, charset))
 
-  override def decodeBytes(bytes: Array[Byte], charset: String, columnType: ColumnDataType): Array[Byte] =
+  override def decodeBytes(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): Array[Byte] =
     asString(bytes, charset).getBytes(charset)
 
-  override def decodeDate(bytes: Array[Byte], charset: String, columnType: ColumnDataType): LocalDate =
+  override def decodeDate(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): LocalDate =
     LocalDate.parse(asString(bytes, charset), localDateFormatter)
 
-  override def decodeTime(bytes: Array[Byte], charset: String, columnType: ColumnDataType): LocalTime =
+  override def decodeTime(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): LocalTime =
     LocalTime.parse(asString(bytes, charset), timeFormatter(6))
 
-  override def decodeTimestamp(bytes: Array[Byte], charset: String, columnType: ColumnDataType): LocalDateTime =
+  override def decodeTimestamp(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): LocalDateTime =
     LocalDateTime.parse(asString(bytes, charset), localDateTimeFormatter(6))
 
   override def extractColumn(bytes: Array[Byte], index: Int, columnTypes: Vector[ColumnDataType]): Option[Array[Byte]] =
