@@ -277,7 +277,10 @@ class BinaryColumnValueDecoderTest extends FTestPlatform:
   }
 
   test("decodeInt for string fallback") {
-    assertEquals(BinaryColumnValueDecoder.decodeInt("99999".getBytes(charset), charset, MYSQL_TYPE_VARCHAR, false), 99999)
+    assertEquals(
+      BinaryColumnValueDecoder.decodeInt("99999".getBytes(charset), charset, MYSQL_TYPE_VARCHAR, false),
+      99999
+    )
   }
 
   // =========================================================================
@@ -529,7 +532,7 @@ class BinaryColumnValueDecoderTest extends FTestPlatform:
     val columnTypes = Vector(MYSQL_TYPE_TINY, MYSQL_TYPE_VARCHAR)
     val text        = "hello"
     val textBytes   = text.getBytes(charset)
-    val bytes = Array.concat(
+    val bytes       = Array.concat(
       Array[Byte](0x00),
       Array[Byte](42),
       Array[Byte](textBytes.length.toByte),
@@ -555,7 +558,7 @@ class BinaryColumnValueDecoderTest extends FTestPlatform:
 
   test("extractColumn null bitmap spans multiple bytes") {
     val columnTypes = Vector.fill(7)(MYSQL_TYPE_TINY)
-    val bytes = Array.concat(
+    val bytes       = Array.concat(
       Array[Byte](0x00, 0x01),
       Array[Byte](1, 2, 3, 4, 5, 6)
     )

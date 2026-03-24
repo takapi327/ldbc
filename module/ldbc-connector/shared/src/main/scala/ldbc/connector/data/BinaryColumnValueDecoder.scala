@@ -43,7 +43,12 @@ private[ldbc] object BinaryColumnValueDecoder extends ColumnValueDecoder:
     if f.isNaN || f.isInfinite then f.toString
     else BigDecimal(f.toDouble, MathContext.DECIMAL32).bigDecimal.stripTrailingZeros().toPlainString
 
-  override def decodeString(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): String =
+  override def decodeString(
+    bytes:      Array[Byte],
+    charset:    String,
+    columnType: ColumnDataType,
+    isUnsigned: Boolean
+  ): String =
     columnType match
       case MYSQL_TYPE_TINY =>
         if isUnsigned then (bytes(0) & 0xff).toString
@@ -62,7 +67,12 @@ private[ldbc] object BinaryColumnValueDecoder extends ColumnValueDecoder:
       case MYSQL_TYPE_BOOL   => (bytes(0) != 0).toString
       case _                 => new String(bytes, charset)
 
-  override def decodeBoolean(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): Boolean =
+  override def decodeBoolean(
+    bytes:      Array[Byte],
+    charset:    String,
+    columnType: ColumnDataType,
+    isUnsigned: Boolean
+  ): Boolean =
     columnType match
       case MYSQL_TYPE_BOOL | MYSQL_TYPE_TINY  => bytes(0) != 0
       case MYSQL_TYPE_SHORT | MYSQL_TYPE_YEAR => le(bytes).getShort != 0
@@ -81,7 +91,12 @@ private[ldbc] object BinaryColumnValueDecoder extends ColumnValueDecoder:
       case MYSQL_TYPE_BIT  => bytes.last
       case _               => new String(bytes, charset).toByte
 
-  override def decodeShort(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): Short =
+  override def decodeShort(
+    bytes:      Array[Byte],
+    charset:    String,
+    columnType: ColumnDataType,
+    isUnsigned: Boolean
+  ): Short =
     columnType match
       case MYSQL_TYPE_TINY =>
         if isUnsigned then (bytes(0) & 0xff).toShort
@@ -129,24 +144,49 @@ private[ldbc] object BinaryColumnValueDecoder extends ColumnValueDecoder:
         else le(bytes).getLong
       case _ => new String(bytes, charset).toLong
 
-  override def decodeFloat(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): Float =
+  override def decodeFloat(
+    bytes:      Array[Byte],
+    charset:    String,
+    columnType: ColumnDataType,
+    isUnsigned: Boolean
+  ): Float =
     columnType match
       case MYSQL_TYPE_FLOAT => le(bytes).getFloat
       case _                => new String(bytes, charset).toFloat
 
-  override def decodeDouble(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): Double =
+  override def decodeDouble(
+    bytes:      Array[Byte],
+    charset:    String,
+    columnType: ColumnDataType,
+    isUnsigned: Boolean
+  ): Double =
     columnType match
       case MYSQL_TYPE_DOUBLE => le(bytes).getDouble
       case MYSQL_TYPE_FLOAT  => le(bytes).getFloat.toDouble
       case _                 => new String(bytes, charset).toDouble
 
-  override def decodeBigDecimal(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): BigDecimal =
+  override def decodeBigDecimal(
+    bytes:      Array[Byte],
+    charset:    String,
+    columnType: ColumnDataType,
+    isUnsigned: Boolean
+  ): BigDecimal =
     BigDecimal(new String(bytes, charset))
 
-  override def decodeBytes(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): Array[Byte] =
+  override def decodeBytes(
+    bytes:      Array[Byte],
+    charset:    String,
+    columnType: ColumnDataType,
+    isUnsigned: Boolean
+  ): Array[Byte] =
     bytes
 
-  override def decodeDate(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): LocalDate =
+  override def decodeDate(
+    bytes:      Array[Byte],
+    charset:    String,
+    columnType: ColumnDataType,
+    isUnsigned: Boolean
+  ): LocalDate =
     // Follows package.scala timestamp4 layout: year(2LE) + month(1) + day(1)
     // bytes.length == 0 means MySQL sent "0000-00-00" (zero date)
     bytes.length match
@@ -158,7 +198,12 @@ private[ldbc] object BinaryColumnValueDecoder extends ColumnValueDecoder:
         LocalDate.of(year, month, day)
       case _ => null
 
-  override def decodeTimestamp(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): LocalDateTime =
+  override def decodeTimestamp(
+    bytes:      Array[Byte],
+    charset:    String,
+    columnType: ColumnDataType,
+    isUnsigned: Boolean
+  ): LocalDateTime =
     // Follows package.scala timestamp4/7/11 layouts
     bytes.length match
       case 0 => null
@@ -187,7 +232,12 @@ private[ldbc] object BinaryColumnValueDecoder extends ColumnValueDecoder:
         LocalDateTime.of(year, month, day, hour, minute, second, microsecond * 1000)
       case _ => null
 
-  override def decodeTime(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): LocalTime =
+  override def decodeTime(
+    bytes:      Array[Byte],
+    charset:    String,
+    columnType: ColumnDataType,
+    isUnsigned: Boolean
+  ): LocalTime =
     // Follows package.scala time8/12 layouts: isNeg(1) + days(4LE) + hour(1) + min(1) + sec(1)
     // Note: days field is ignored (same as existing package.scala behavior)
     bytes.length match

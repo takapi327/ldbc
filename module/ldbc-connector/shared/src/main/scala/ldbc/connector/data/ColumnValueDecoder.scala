@@ -216,7 +216,12 @@ private[ldbc] trait ColumnValueDecoder:
    * @param columnType MySQL column type reported in the column definition packet
    * @return the decoded `LocalDateTime`, or `null` for zero-datetime values
    */
-  def decodeTimestamp(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): LocalDateTime
+  def decodeTimestamp(
+    bytes:      Array[Byte],
+    charset:    String,
+    columnType: ColumnDataType,
+    isUnsigned: Boolean
+  ): LocalDateTime
 
   /**
    * Extracts the raw data bytes for the column at `index` (0-based) from a row's raw bytes.
