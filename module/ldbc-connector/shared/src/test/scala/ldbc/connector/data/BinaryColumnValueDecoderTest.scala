@@ -11,6 +11,7 @@ import java.time.*
 
 import ldbc.connector.*
 import ldbc.connector.data.ColumnDataType.*
+import ldbc.connector.exception.SQLDataException
 
 class BinaryColumnValueDecoderTest extends FTestPlatform:
 
@@ -407,8 +408,10 @@ class BinaryColumnValueDecoderTest extends FTestPlatform:
     assertEquals(BinaryColumnValueDecoder.decodeDate(bytes, charset, MYSQL_TYPE_DATE, false), LocalDate.of(2026, 3, 23))
   }
 
-  test("decodeDate returns null for unexpected length") {
-    assertEquals(BinaryColumnValueDecoder.decodeDate(Array[Byte](1, 2), charset, MYSQL_TYPE_DATE, false), null)
+  test("decodeDate throws for unexpected length") {
+    intercept[SQLDataException] {
+      BinaryColumnValueDecoder.decodeDate(Array[Byte](1, 2), charset, MYSQL_TYPE_DATE, false)
+    }
   }
 
   // =========================================================================
@@ -446,11 +449,10 @@ class BinaryColumnValueDecoderTest extends FTestPlatform:
     )
   }
 
-  test("decodeTimestamp returns null for unexpected length") {
-    assertEquals(
-      BinaryColumnValueDecoder.decodeTimestamp(Array[Byte](1, 2, 3), charset, MYSQL_TYPE_TIMESTAMP, false),
-      null
-    )
+  test("decodeTimestamp throws for unexpected length") {
+    intercept[SQLDataException] {
+      BinaryColumnValueDecoder.decodeTimestamp(Array[Byte](1, 2, 3), charset, MYSQL_TYPE_TIMESTAMP, false)
+    }
   }
 
   // =========================================================================
@@ -474,8 +476,10 @@ class BinaryColumnValueDecoderTest extends FTestPlatform:
     )
   }
 
-  test("decodeTime returns null for unexpected length") {
-    assertEquals(BinaryColumnValueDecoder.decodeTime(Array[Byte](1, 2, 3), charset, MYSQL_TYPE_TIME, false), null)
+  test("decodeTime throws for unexpected length") {
+    intercept[SQLDataException] {
+      BinaryColumnValueDecoder.decodeTime(Array[Byte](1, 2, 3), charset, MYSQL_TYPE_TIME, false)
+    }
   }
 
   // =========================================================================

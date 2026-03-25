@@ -66,7 +66,7 @@ class TextColumnValueDecoderTest extends FTestPlatform:
   // decodeByte
   // =========================================================================
 
-  // ---- TINYINT column: numeric parse path (Connector/J createFromLong) ----
+  // ---- TINYINT column: numeric parse path ----
 
   test("decodeByte for TINYINT parses numeric string") {
     assertEquals(TextColumnValueDecoder.decodeByte(bytes("42"), charset, MYSQL_TYPE_TINY, false), 42.toByte)
@@ -90,14 +90,14 @@ class TextColumnValueDecoderTest extends FTestPlatform:
     }
   }
 
-  // ---- CHAR/VARCHAR column: raw byte path (Connector/J createFromBytes) ----
+  // ---- CHAR/VARCHAR column: raw byte path ----
 
   test("decodeByte for VARCHAR returns first byte of character") {
     assertEquals(TextColumnValueDecoder.decodeByte(bytes("A"), charset, MYSQL_TYPE_VARCHAR, false), 65.toByte)
   }
 
   test("decodeByte for VARCHAR returns first byte of multi-char string") {
-    // Connector/J returns first byte regardless (with jdbcCompliantTruncation, would throw for len > 1)
+    // Returns first byte of the multi-char string
     assertEquals(TextColumnValueDecoder.decodeByte(bytes("AB"), charset, MYSQL_TYPE_VARCHAR, false), 65.toByte)
   }
 
