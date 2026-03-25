@@ -146,7 +146,10 @@ class TextColumnValueDecoderTest extends FTestPlatform:
   // =========================================================================
 
   test("decodeLong parses positive value") {
-    assertEquals(TextColumnValueDecoder.decodeLong(bytes("1234567890123"), charset, MYSQL_TYPE_LONGLONG, false), 1234567890123L)
+    assertEquals(
+      TextColumnValueDecoder.decodeLong(bytes("1234567890123"), charset, MYSQL_TYPE_LONGLONG, false),
+      1234567890123L
+    )
   }
 
   test("decodeLong parses negative value") {
@@ -187,7 +190,10 @@ class TextColumnValueDecoderTest extends FTestPlatform:
   // =========================================================================
 
   test("decodeDouble parses value") {
-    assertEquals(TextColumnValueDecoder.decodeDouble(bytes("3.141592653589793"), charset, MYSQL_TYPE_DOUBLE, false), 3.141592653589793)
+    assertEquals(
+      TextColumnValueDecoder.decodeDouble(bytes("3.141592653589793"), charset, MYSQL_TYPE_DOUBLE, false),
+      3.141592653589793
+    )
   }
 
   test("decodeDouble parses integer string") {
