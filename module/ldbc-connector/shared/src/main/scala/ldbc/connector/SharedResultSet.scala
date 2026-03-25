@@ -330,7 +330,7 @@ private[ldbc] trait SharedResultSet[F[_]](using ev: MonadThrow[F]) extends Resul
    *
    * Column index validation is performed eagerly before decoding.
    * Decode errors are captured via `MonadThrow.catchNonFatal` and translated
-   * to `SQLException` with appropriate SQL states following the MySQL Connector/J convention:
+   * to `SQLException` with appropriate SQL states:
    *   - `S1009`: column index out of range
    *   - `22018`: value conversion / parse failure
    *

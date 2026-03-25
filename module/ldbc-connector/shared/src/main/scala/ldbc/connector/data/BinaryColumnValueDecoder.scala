@@ -11,6 +11,7 @@ import java.nio.{ ByteBuffer, ByteOrder }
 import java.time.*
 
 import ldbc.connector.data.ColumnDataType.*
+import ldbc.connector.exception.SQLDataException
 
 /**
  * Binary protocol implementation of ColumnValueDecoder.
@@ -187,8 +188,8 @@ private[ldbc] object BinaryColumnValueDecoder extends ColumnValueDecoder:
     columnType: ColumnDataType,
     isUnsigned: Boolean
   ): LocalDate =
-    // Follows package.scala timestamp4 layout: year(2LE) + month(1) + day(1)
-    // bytes.length == 0 means MySQL sent "0000-00-00" (zero date)
+    // Follows MySQL binary protocol DATE layout: year(2LE) + month(1) + day(1)
+    // Accepted lengths: 0 (zero-date "0000-00-00") or 4.
     bytes.length match
       case 0 => null
       case 4 =>
@@ -196,7 +197,8 @@ private[ldbc] object BinaryColumnValueDecoder extends ColumnValueDecoder:
         val month = bytes(2) & 0xff
         val day   = bytes(3) & 0xff
         LocalDate.of(year, month, day)
-      case _ => null
+      case len =>
+        throw new SQLDataException(s"Invalid length $len for DATE field. Expected 0 or 4.", sqlState = Some("S1009"))
 
   override def decodeTimestamp(
     bytes:      Array[Byte],
@@ -230,7 +232,8 @@ private[ldbc] object BinaryColumnValueDecoder extends ColumnValueDecoder:
         val microsecond = (bytes(7) & 0xff) | ((bytes(8) & 0xff) << 8) |
           ((bytes(9) & 0xff) << 16) | ((bytes(10) & 0xff) << 24)
         LocalDateTime.of(year, month, day, hour, minute, second, microsecond * 1000)
-      case _ => null
+      case len =>
+        throw new SQLDataException(s"Invalid length $len for TIMESTAMP field. Expected 0, 4, 7, or 11.", sqlState = Some("S1009"))
 
   override def decodeTime(
     bytes:      Array[Byte],
@@ -254,7 +257,8 @@ private[ldbc] object BinaryColumnValueDecoder extends ColumnValueDecoder:
         val microsecond = (bytes(8) & 0xff) | ((bytes(9) & 0xff) << 8) |
           ((bytes(10) & 0xff) << 16) | ((bytes(11) & 0xff) << 24)
         LocalTime.of(hour, minute, second, microsecond * 1000)
-      case _ => null
+      case len =>
+        throw new SQLDataException(s"Invalid length $len for TIME field. Expected 0, 8, or 12.", sqlState = Some("S1009"))
 
   override def extractColumn(bytes: Array[Byte], index: Int, columnTypes: Vector[ColumnDataType]): Option[Array[Byte]] =
     val nullBitmapSize = (columnTypes.length + 7 + 2) / 8
