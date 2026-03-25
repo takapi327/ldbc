@@ -233,7 +233,10 @@ private[ldbc] object BinaryColumnValueDecoder extends ColumnValueDecoder:
           ((bytes(9) & 0xff) << 16) | ((bytes(10) & 0xff) << 24)
         LocalDateTime.of(year, month, day, hour, minute, second, microsecond * 1000)
       case len =>
-        throw new SQLDataException(s"Invalid length $len for TIMESTAMP field. Expected 0, 4, 7, or 11.", sqlState = Some("S1009"))
+        throw new SQLDataException(
+          s"Invalid length $len for TIMESTAMP field. Expected 0, 4, 7, or 11.",
+          sqlState = Some("S1009")
+        )
 
   override def decodeTime(
     bytes:      Array[Byte],
@@ -258,7 +261,10 @@ private[ldbc] object BinaryColumnValueDecoder extends ColumnValueDecoder:
           ((bytes(10) & 0xff) << 16) | ((bytes(11) & 0xff) << 24)
         LocalTime.of(hour, minute, second, microsecond * 1000)
       case len =>
-        throw new SQLDataException(s"Invalid length $len for TIME field. Expected 0, 8, or 12.", sqlState = Some("S1009"))
+        throw new SQLDataException(
+          s"Invalid length $len for TIME field. Expected 0, 8, or 12.",
+          sqlState = Some("S1009")
+        )
 
   override def extractColumn(bytes: Array[Byte], index: Int, columnTypes: Vector[ColumnDataType]): Option[Array[Byte]] =
     val nullBitmapSize = (columnTypes.length + 7 + 2) / 8
