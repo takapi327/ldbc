@@ -86,7 +86,7 @@ private[ldbc] object TextColumnValueDecoder extends ColumnValueDecoder:
     columnType: ColumnDataType,
     isUnsigned: Boolean
   ): Array[Byte] =
-    asString(bytes, charset).getBytes(charset)
+    bytes
 
   override def decodeDate(
     bytes:      Array[Byte],
