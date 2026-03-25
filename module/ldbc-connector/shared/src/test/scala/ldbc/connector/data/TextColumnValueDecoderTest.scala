@@ -66,35 +66,44 @@ class TextColumnValueDecoderTest extends FTestPlatform:
   // decodeByte
   // =========================================================================
 
-  test("decodeByte parses numeric string") {
+  // ---- TINYINT column: numeric parse path (Connector/J createFromLong) ----
+
+  test("decodeByte for TINYINT parses numeric string") {
     assertEquals(TextColumnValueDecoder.decodeByte(bytes("42"), charset, MYSQL_TYPE_TINY, false), 42.toByte)
   }
 
-  test("decodeByte parses negative numeric string") {
+  test("decodeByte for TINYINT parses negative value") {
     assertEquals(TextColumnValueDecoder.decodeByte(bytes("-1"), charset, MYSQL_TYPE_TINY, false), -1.toByte)
   }
 
-  test("decodeByte parses max byte value") {
+  test("decodeByte for TINYINT parses max byte value") {
     assertEquals(TextColumnValueDecoder.decodeByte(bytes("127"), charset, MYSQL_TYPE_TINY, false), 127.toByte)
   }
 
-  test("decodeByte parses min byte value") {
+  test("decodeByte for TINYINT parses min byte value") {
     assertEquals(TextColumnValueDecoder.decodeByte(bytes("-128"), charset, MYSQL_TYPE_TINY, false), -128.toByte)
   }
 
-  test("decodeByte returns byte value of single non-digit character") {
-    // Single non-digit character → getBytes().head
-    assertEquals(TextColumnValueDecoder.decodeByte(bytes("A"), charset, MYSQL_TYPE_TINY, false), 65.toByte)
-  }
-
-  test("decodeByte parses single digit character as number") {
-    assertEquals(TextColumnValueDecoder.decodeByte(bytes("5"), charset, MYSQL_TYPE_TINY, false), 5.toByte)
-  }
-
-  test("decodeByte throws for overflow value") {
+  test("decodeByte for TINYINT throws for overflow value") {
     intercept[NumberFormatException] {
       TextColumnValueDecoder.decodeByte(bytes("128"), charset, MYSQL_TYPE_TINY, false)
     }
+  }
+
+  // ---- CHAR/VARCHAR column: raw byte path (Connector/J createFromBytes) ----
+
+  test("decodeByte for VARCHAR returns first byte of character") {
+    assertEquals(TextColumnValueDecoder.decodeByte(bytes("A"), charset, MYSQL_TYPE_VARCHAR, false), 65.toByte)
+  }
+
+  test("decodeByte for VARCHAR returns first byte of multi-char string") {
+    // Connector/J returns first byte regardless (with jdbcCompliantTruncation, would throw for len > 1)
+    assertEquals(TextColumnValueDecoder.decodeByte(bytes("AB"), charset, MYSQL_TYPE_VARCHAR, false), 65.toByte)
+  }
+
+  test("decodeByte for VARCHAR with digit character returns byte value of '5' (53)") {
+    // '5' as character → ASCII 53, NOT numeric 5
+    assertEquals(TextColumnValueDecoder.decodeByte(bytes("5"), charset, MYSQL_TYPE_VARCHAR, false), 53.toByte)
   }
 
   // =========================================================================

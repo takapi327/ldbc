@@ -38,9 +38,15 @@ private[ldbc] object TextColumnValueDecoder extends ColumnValueDecoder:
       case _            => false
 
   override def decodeByte(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): Byte =
-    val str = asString(bytes, charset)
-    if str.length == 1 && !str.forall(_.isDigit) then str.getBytes().head
-    else str.toByte
+    columnType match
+      case ColumnDataType.MYSQL_TYPE_TINY =>
+        // Numeric column: parse as number, cast to byte (Connector/J createFromLong path)
+        asString(bytes, charset).toByte
+      case _ =>
+        // String/other columns: return first byte of string representation (Connector/J createFromBytes path)
+        val str      = asString(bytes, charset)
+        val strBytes = str.getBytes()
+        strBytes(0)
 
   override def decodeShort(
     bytes:      Array[Byte],
