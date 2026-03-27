@@ -286,14 +286,15 @@ object Protocol:
                   ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags)
                 )
               resultSetRow <- readUntilEOF[ResultSetRowPacket](
-                                ResultSetRowPacket.decoder(initialPacket.capabilityFlags, columnDefinitions)
+                                textResultSetRowDecoder(initialPacket.capabilityFlags)
                               )
-            yield columnDefinitions
-              .zip(resultSetRow.flatMap(_.values))
-              .map {
-                case (columnDefinition, resultSetRow) => columnDefinition.name -> resultSetRow.getOrElse("")
-              }
-              .toMap
+            yield columnDefinitions.zipWithIndex.flatMap {
+              case (col, i) =>
+                resultSetRow.headOption.map { row =>
+                  val fieldBytes = TextColumnValueDecoder.extractColumn(row.rawBytes, i, Vector.empty)
+                  col.name -> fieldBytes.map(b => new String(b, col.charset)).getOrElse("")
+                }
+            }.toMap
         }
 
     /**
