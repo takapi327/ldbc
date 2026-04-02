@@ -30,7 +30,7 @@ trait EncryptPasswordPlugin:
     (0 until length).map(pos => (from(pos) ^ scramble(pos % scrambleLength)).toByte).toArray
 
   private def encryptWithRSAPublicKey(input: Array[Byte], publicKey: String): Array[Byte] =
-    Zone { implicit zone =>
+    Zone.acquire { implicit zone =>
       val publicKeyCStr = toCString(publicKey)
       val bio           = BIO_new_mem_buf(publicKeyCStr, publicKey.length)
       if bio == null then throw new RuntimeException("Failed to create a new memory BIO.")
@@ -54,17 +54,17 @@ trait EncryptPasswordPlugin:
         throw new RuntimeException("Failed to set MGF1 hash function.")
       }
 
-      val inputBuf = alloc[UByte](input.length.toULong)
+      val inputBuf = alloc[UByte](input.length)
       for i <- input.indices do !(inputBuf + i) = input(i).toUByte
 
       val outLen = stackalloc[CSize]()
-      !outLen = 0.toULong
+      !outLen = 0.toCSize
 
-      if EVP_PKEY_encrypt(ctx, null, outLen, inputBuf, input.length.toULong) <= 0 then
+      if EVP_PKEY_encrypt(ctx, null, outLen, inputBuf, input.length.toCSize) <= 0 then
         throw new RuntimeException("Failed to obtain the output buffer size required for encryption.")
 
       val encryptedBuf = alloc[UByte](!outLen)
-      if EVP_PKEY_encrypt(ctx, encryptedBuf, outLen, inputBuf, input.length.toULong) <= 0 then
+      if EVP_PKEY_encrypt(ctx, encryptedBuf, outLen, inputBuf, input.length.toCSize) <= 0 then
         throw new RuntimeException("Encryption failed.")
 
       val result = Array.fill[Byte]((!outLen).toInt)(0)
