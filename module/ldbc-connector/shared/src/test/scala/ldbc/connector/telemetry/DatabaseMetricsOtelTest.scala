@@ -14,8 +14,8 @@ import org.typelevel.otel4s.sdk.metrics.data.{ MetricPoints, PointData }
 import org.typelevel.otel4s.sdk.testkit.OpenTelemetrySdkTestkit
 import org.typelevel.otel4s.semconv.attributes.DbAttributes
 import org.typelevel.otel4s.semconv.experimental.attributes.DbExperimentalAttributes
-import org.typelevel.otel4s.semconv.metrics.DbMetrics
 import org.typelevel.otel4s.semconv.experimental.metrics.DbExperimentalMetrics
+import org.typelevel.otel4s.semconv.metrics.DbMetrics
 
 import ldbc.connector.*
 

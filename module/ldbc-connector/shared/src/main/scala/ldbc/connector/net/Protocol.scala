@@ -22,9 +22,9 @@ import cats.effect.std.Console
 import fs2.hashing.Hashing
 import fs2.io.net.Socket
 
+import org.typelevel.otel4s.semconv.attributes.{ DbAttributes, ServerAttributes }
 import org.typelevel.otel4s.trace.{ Span, StatusCode, Tracer }
 import org.typelevel.otel4s.Attribute
-import org.typelevel.otel4s.semconv.attributes.{ DbAttributes, ServerAttributes }
 
 import ldbc.connector.authenticator.{ CachingSha2PasswordPlugin, MysqlNativePasswordPlugin, Sha256PasswordPlugin }
 import ldbc.connector.data.*

@@ -15,10 +15,10 @@ import cats.Monad
 import cats.effect.Resource
 
 import org.typelevel.otel4s.metrics.*
-import org.typelevel.otel4s.Attribute
 import org.typelevel.otel4s.semconv.experimental.attributes.DbExperimentalAttributes
-import org.typelevel.otel4s.semconv.metrics.DbMetrics
 import org.typelevel.otel4s.semconv.experimental.metrics.DbExperimentalMetrics
+import org.typelevel.otel4s.semconv.metrics.DbMetrics
+import org.typelevel.otel4s.Attribute
 
 /**
  * OpenTelemetry metrics for database operations.
@@ -227,11 +227,11 @@ object DatabaseMetrics:
     ): Resource[F, Unit] =
       val poolNameAttr = DbExperimentalAttributes.DbClientConnectionPoolName(poolName)
       val stateIdle    = DbExperimentalAttributes.DbClientConnectionState(
-                           DbExperimentalAttributes.DbClientConnectionStateValue.Idle.value
-                         )
-      val stateUsed    = DbExperimentalAttributes.DbClientConnectionState(
-                           DbExperimentalAttributes.DbClientConnectionStateValue.Used.value
-                         )
+        DbExperimentalAttributes.DbClientConnectionStateValue.Idle.value
+      )
+      val stateUsed = DbExperimentalAttributes.DbClientConnectionState(
+        DbExperimentalAttributes.DbClientConnectionStateValue.Used.value
+      )
 
       meter.batchCallback.of(
         meter

@@ -6,8 +6,8 @@
 
 package ldbc.connector.telemetry
 
-import org.typelevel.otel4s.Attribute
 import org.typelevel.otel4s.semconv.attributes.DbAttributes
+import org.typelevel.otel4s.Attribute
 
 /**
  * ldbc-specific telemetry attributes.

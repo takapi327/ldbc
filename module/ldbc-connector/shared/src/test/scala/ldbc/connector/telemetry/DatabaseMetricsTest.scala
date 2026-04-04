@@ -11,8 +11,8 @@ import scala.concurrent.duration.*
 import cats.effect.*
 
 import org.typelevel.otel4s.metrics.BucketBoundaries
-import org.typelevel.otel4s.Attribute
 import org.typelevel.otel4s.semconv.attributes.DbAttributes
+import org.typelevel.otel4s.Attribute
 
 import ldbc.connector.*
 

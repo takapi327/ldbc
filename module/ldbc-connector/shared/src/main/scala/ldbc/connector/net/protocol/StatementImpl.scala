@@ -14,9 +14,9 @@ import cats.syntax.all.*
 import cats.effect.*
 import cats.effect.syntax.monadCancel.*
 
+import org.typelevel.otel4s.semconv.attributes.{ DbAttributes, ErrorAttributes, ServerAttributes }
 import org.typelevel.otel4s.trace.{ Span, StatusCode, Tracer }
 import org.typelevel.otel4s.Attribute
-import org.typelevel.otel4s.semconv.attributes.{ DbAttributes, ErrorAttributes, ServerAttributes }
 
 import ldbc.sql.{ PreparedStatement, ResultSet, Statement }
 

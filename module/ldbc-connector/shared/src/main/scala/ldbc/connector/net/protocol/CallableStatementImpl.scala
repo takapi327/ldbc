@@ -15,9 +15,9 @@ import cats.syntax.all.*
 
 import cats.effect.*
 
+import org.typelevel.otel4s.semconv.attributes.{ DbAttributes, ErrorAttributes }
 import org.typelevel.otel4s.trace.{ Span, StatusCode, Tracer }
 import org.typelevel.otel4s.Attribute
-import org.typelevel.otel4s.semconv.attributes.{ DbAttributes, ErrorAttributes }
 
 import ldbc.sql.{ CallableStatement, DatabaseMetaData, ParameterMetaData, ResultSet, Statement }
 
