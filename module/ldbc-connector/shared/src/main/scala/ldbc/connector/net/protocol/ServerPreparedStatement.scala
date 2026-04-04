@@ -15,6 +15,7 @@ import cats.effect.*
 
 import org.typelevel.otel4s.trace.{ Span, StatusCode, Tracer }
 import org.typelevel.otel4s.Attribute
+import org.typelevel.otel4s.semconv.attributes.{ DbAttributes, ErrorAttributes }
 
 import ldbc.sql.{ ResultSet, Statement }
 
@@ -118,7 +119,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
     ) { (span: Span[F]) =>
       val processedSql    = telemetryConfig.processQueryText(sql)
       val queryAttributes = baseAttributes ++ List(
-        TelemetryAttribute.dbQueryText(processedSql)
+        DbAttributes.DbQueryText(processedSql)
       )
 
       withDurationMetrics(
@@ -151,7 +152,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
             )
           _ <- columnDefinitions.headOption match {
                  case None         => F.unit
-                 case Some(column) => span.addAttribute(TelemetryAttribute.dbCollectionName(column.table))
+                 case Some(column) => span.addAttribute(DbAttributes.DbCollectionName(column.table))
                }
           _ <- params.set(SortedMap.empty)
           resultSet = buildResultSet(columnDefinitions, resultSetRow)
@@ -175,7 +176,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
       params.get.flatMap { params =>
         val processedSql    = telemetryConfig.processQueryText(sql)
         val queryAttributes = baseAttributes ++ List(
-          TelemetryAttribute.dbQueryText(processedSql)
+          DbAttributes.DbQueryText(processedSql)
         )
 
         withDurationMetrics(
@@ -194,7 +195,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
                   F.raiseError(exception)
               case eof: EOFPacket =>
                 val exception = new SQLException("Unexpected EOF packet")
-                span.addAttribute(TelemetryAttribute.errorType(exception)) *>
+                span.addAttribute(ErrorAttributes.ErrorType(exception.getClass.getName)) *>
                   span.recordException(exception, eof.attribute) *>
                   span.setStatus(StatusCode.Error, exception.getMessage) *>
                   F.raiseError(exception)
@@ -227,7 +228,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
             protocol.resetSequenceId *>
               batchedArgs.get.flatMap { args =>
                 val batchAttributes = baseAttributes ++
-                  List(TelemetryAttribute.dbOperationName(TelemetryAttribute.SqlOperation.BATCH)) ++
+                  List(DbAttributes.DbOperationName(TelemetryAttribute.SqlOperation.BATCH)) ++
                   TelemetryAttribute.dbOperationBatchSize(args.length).toList
 
                 if args.isEmpty then F.pure(Array.empty)
@@ -254,7 +255,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
                               F.raiseError(exception)
                           case eof: EOFPacket =>
                             val exception = new SQLException("Unexpected EOF packet")
-                            span.addAttribute(TelemetryAttribute.errorType(exception)) *>
+                            span.addAttribute(ErrorAttributes.ErrorType(exception.getClass.getName)) *>
                               span.recordException(exception, eof.attribute) *>
                               span.setStatus(StatusCode.Error, exception.getMessage) *>
                               F.raiseError(exception)
@@ -270,7 +271,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
               protocol.resetSequenceId *>
                 batchedArgs.get.flatMap { args =>
                   val batchAttributes = baseAttributes ++
-                    List(TelemetryAttribute.dbOperationName(TelemetryAttribute.SqlOperation.BATCH)) ++
+                    List(DbAttributes.DbOperationName(TelemetryAttribute.SqlOperation.BATCH)) ++
                     TelemetryAttribute.dbOperationBatchSize(args.length).toList
 
                   if args.isEmpty then F.pure(Array.empty)
@@ -303,7 +304,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
                                         F.raiseError(exception)
                                     case eof: EOFPacket =>
                                       val exception = new SQLException("Unexpected EOF packet")
-                                      span.addAttribute(TelemetryAttribute.errorType(exception)) *>
+                                      span.addAttribute(ErrorAttributes.ErrorType(exception.getClass.getName)) *>
                                         span.recordException(exception, eof.attribute) *>
                                         span.setStatus(StatusCode.Error, exception.getMessage) *>
                                         F.raiseError(exception)
@@ -328,7 +329,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
   override def close(): F[Unit] =
     exchange[F, Unit](TelemetrySpanName.STMT_DEALLOCATE_PREPARED) { (span: Span[F]) =>
       val closeAttributes = baseAttributes ++ List(
-        TelemetryAttribute.dbOperationName("CLOSE")
+        DbAttributes.DbOperationName("CLOSE")
       )
 
       span.addAttributes(closeAttributes*) *> protocol.resetSequenceId *> protocol.send(

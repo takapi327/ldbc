@@ -16,8 +16,9 @@ import cats.effect.Resource
 
 import org.typelevel.otel4s.metrics.*
 import org.typelevel.otel4s.Attribute
-
-import TelemetryAttribute.*
+import org.typelevel.otel4s.semconv.experimental.attributes.DbExperimentalAttributes
+import org.typelevel.otel4s.semconv.metrics.DbMetrics
+import org.typelevel.otel4s.semconv.experimental.metrics.DbExperimentalMetrics
 
 /**
  * OpenTelemetry metrics for database operations.
@@ -192,7 +193,7 @@ object DatabaseMetrics:
     ): F[Unit] =
       connectionCreateTime.record(
         durationToSeconds(duration),
-        TelemetryAttribute.dbClientConnectionPoolName(poolName)
+        DbExperimentalAttributes.DbClientConnectionPoolName(poolName)
       )
 
     override def recordConnectionWaitTime(
@@ -201,7 +202,7 @@ object DatabaseMetrics:
     ): F[Unit] =
       connectionWaitTime.record(
         durationToSeconds(duration),
-        TelemetryAttribute.dbClientConnectionPoolName(poolName)
+        DbExperimentalAttributes.DbClientConnectionPoolName(poolName)
       )
 
     override def recordConnectionUseTime(
@@ -210,12 +211,12 @@ object DatabaseMetrics:
     ): F[Unit] =
       connectionUseTime.record(
         durationToSeconds(duration),
-        TelemetryAttribute.dbClientConnectionPoolName(poolName)
+        DbExperimentalAttributes.DbClientConnectionPoolName(poolName)
       )
 
     override def recordConnectionTimeout(poolName: String): F[Unit] =
       connectionTimeouts.inc(
-        TelemetryAttribute.dbClientConnectionPoolName(poolName)
+        DbExperimentalAttributes.DbClientConnectionPoolName(poolName)
       )
 
     override def registerPoolStateCallback(
@@ -224,35 +225,39 @@ object DatabaseMetrics:
       maxConnections: Int,
       stateProvider:  F[PoolMetricsState]
     ): Resource[F, Unit] =
-      val poolNameAttr = TelemetryAttribute.dbClientConnectionPoolName(poolName)
-      val stateIdle    = TelemetryAttribute.dbClientConnectionState(CONNECTION_STATE_IDLE)
-      val stateUsed    = TelemetryAttribute.dbClientConnectionState(CONNECTION_STATE_USED)
+      val poolNameAttr = DbExperimentalAttributes.DbClientConnectionPoolName(poolName)
+      val stateIdle    = DbExperimentalAttributes.DbClientConnectionState(
+                           DbExperimentalAttributes.DbClientConnectionStateValue.Idle.value
+                         )
+      val stateUsed    = DbExperimentalAttributes.DbClientConnectionState(
+                           DbExperimentalAttributes.DbClientConnectionStateValue.Used.value
+                         )
 
       meter.batchCallback.of(
         meter
-          .observableUpDownCounter[Long](METRIC_DB_CLIENT_CONNECTION_COUNT)
-          .withUnit("{connection}")
-          .withDescription("The number of connections that are currently in state described by the state attribute")
+          .observableUpDownCounter[Long](DbExperimentalMetrics.ClientConnectionCount.name)
+          .withUnit(DbExperimentalMetrics.ClientConnectionCount.unit)
+          .withDescription(DbExperimentalMetrics.ClientConnectionCount.description)
           .createObserver,
         meter
-          .observableUpDownCounter[Long](METRIC_DB_CLIENT_CONNECTION_IDLE_MAX)
-          .withUnit("{connection}")
-          .withDescription("The maximum number of idle open connections allowed")
+          .observableUpDownCounter[Long](DbExperimentalMetrics.ClientConnectionIdleMax.name)
+          .withUnit(DbExperimentalMetrics.ClientConnectionIdleMax.unit)
+          .withDescription(DbExperimentalMetrics.ClientConnectionIdleMax.description)
           .createObserver,
         meter
-          .observableUpDownCounter[Long](METRIC_DB_CLIENT_CONNECTION_IDLE_MIN)
-          .withUnit("{connection}")
-          .withDescription("The minimum number of idle open connections allowed")
+          .observableUpDownCounter[Long](DbExperimentalMetrics.ClientConnectionIdleMin.name)
+          .withUnit(DbExperimentalMetrics.ClientConnectionIdleMin.unit)
+          .withDescription(DbExperimentalMetrics.ClientConnectionIdleMin.description)
           .createObserver,
         meter
-          .observableUpDownCounter[Long](METRIC_DB_CLIENT_CONNECTION_MAX)
-          .withUnit("{connection}")
-          .withDescription("The maximum number of open connections allowed")
+          .observableUpDownCounter[Long](DbExperimentalMetrics.ClientConnectionMax.name)
+          .withUnit(DbExperimentalMetrics.ClientConnectionMax.unit)
+          .withDescription(DbExperimentalMetrics.ClientConnectionMax.description)
           .createObserver,
         meter
-          .observableUpDownCounter[Long](METRIC_DB_CLIENT_CONNECTION_PENDING_REQUESTS)
-          .withUnit("{request}")
-          .withDescription("The number of current pending requests for an open connection")
+          .observableUpDownCounter[Long](DbExperimentalMetrics.ClientConnectionPendingRequests.name)
+          .withUnit(DbExperimentalMetrics.ClientConnectionPendingRequests.unit)
+          .withDescription(DbExperimentalMetrics.ClientConnectionPendingRequests.description)
           .createObserver
       ) { (connCount, idleMax, idleMin, connMax, pendingReqs) =>
         stateProvider.flatMap { state =>
@@ -272,68 +277,43 @@ object DatabaseMetrics:
    * @return Resource containing the metrics instance
    */
   def fromMeter[F[_]: Monad](meter: Meter[F]): Resource[F, DatabaseMetrics[F]] =
+    given Meter[F] = meter
     for
       // db.client.operation.duration (Histogram, Required, Stable)
       operationDuration <- Resource.eval(
-                             meter
-                               .histogram[Double](METRIC_DB_CLIENT_OPERATION_DURATION)
-                               .withUnit("s")
-                               .withDescription("Duration of database client operations")
-                               .withExplicitBucketBoundaries(operationDurationBuckets)
-                               .create
+                             DbMetrics.ClientOperationDuration.create[F, Double](operationDurationBuckets)
                            )
 
       // db.client.response.returned_rows (Histogram, Recommended, Development)
       returnedRows <- Resource.eval(
-                        meter
-                          .histogram[Double](METRIC_DB_CLIENT_RESPONSE_RETURNED_ROWS)
-                          .withUnit("{row}")
-                          .withDescription("The actual number of records returned by the database operation")
-                          .withExplicitBucketBoundaries(returnedRowsBuckets)
-                          .create
+                        DbExperimentalMetrics.ClientResponseReturnedRows.create[F, Double](returnedRowsBuckets)
                       )
 
       // db.client.connection.create_time (Histogram, Recommended, Development)
       connectionCreateTime <- Resource.eval(
-                                meter
-                                  .histogram[Double](METRIC_DB_CLIENT_CONNECTION_CREATE_TIME)
-                                  .withUnit("s")
-                                  .withDescription("The time it took to create a new connection")
-                                  .withExplicitBucketBoundaries(operationDurationBuckets)
-                                  .create
+                                DbExperimentalMetrics.ClientConnectionCreateTime.create[F, Double](
+                                  operationDurationBuckets
+                                )
                               )
 
       // db.client.connection.wait_time (Histogram, Recommended, Development)
       connectionWaitTime <- Resource.eval(
-                              meter
-                                .histogram[Double](METRIC_DB_CLIENT_CONNECTION_WAIT_TIME)
-                                .withUnit("s")
-                                .withDescription("The time it took to obtain an open connection from the pool")
-                                .withExplicitBucketBoundaries(operationDurationBuckets)
-                                .create
+                              DbExperimentalMetrics.ClientConnectionWaitTime.create[F, Double](
+                                operationDurationBuckets
+                              )
                             )
 
       // db.client.connection.use_time (Histogram, Recommended, Development)
       connectionUseTime <- Resource.eval(
-                             meter
-                               .histogram[Double](METRIC_DB_CLIENT_CONNECTION_USE_TIME)
-                               .withUnit("s")
-                               .withDescription("The time between borrowing a connection and returning it to the pool")
-                               .withExplicitBucketBoundaries(operationDurationBuckets)
-                               .create
+                             DbExperimentalMetrics.ClientConnectionUseTime.create[F, Double](
+                               operationDurationBuckets
+                             )
                            )
 
       // db.client.connection.timeouts (Counter, Recommended, Development)
-      connectionTimeouts <-
-        Resource.eval(
-          meter
-            .counter[Long](METRIC_DB_CLIENT_CONNECTION_TIMEOUTS)
-            .withUnit("{timeout}")
-            .withDescription(
-              "The number of connection timeouts that have occurred trying to obtain a connection from the pool"
-            )
-            .create
-        )
+      connectionTimeouts <- Resource.eval(
+                              DbExperimentalMetrics.ClientConnectionTimeouts.create[F, Long]
+                            )
     yield new Impl(
       operationDuration,
       returnedRows,

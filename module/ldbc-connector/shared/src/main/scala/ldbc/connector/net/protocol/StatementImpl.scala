@@ -16,6 +16,7 @@ import cats.effect.syntax.monadCancel.*
 
 import org.typelevel.otel4s.trace.{ Span, StatusCode, Tracer }
 import org.typelevel.otel4s.Attribute
+import org.typelevel.otel4s.semconv.attributes.{ DbAttributes, ErrorAttributes, ServerAttributes }
 
 import ldbc.sql.{ PreparedStatement, ResultSet, Statement }
 
@@ -64,7 +65,7 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
     ) { (span: Span[F]) =>
       val processedSql    = telemetryConfig.processQueryText(sql)
       val queryAttributes = baseAttributes ++ List(
-        TelemetryAttribute.dbQueryText(processedSql)
+        DbAttributes.DbQueryText(processedSql)
       )
 
       withDurationMetrics(
@@ -107,7 +108,7 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
                   )
                 _ <- columnDefinitions.headOption match {
                        case None         => F.unit
-                       case Some(column) => span.addAttribute(TelemetryAttribute.dbCollectionName(column.table))
+                       case Some(column) => span.addAttribute(DbAttributes.DbCollectionName(column.table))
                      }
                 resultSet = ResultSetImpl(
                               protocol,
@@ -245,7 +246,7 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
     ) { (span: Span[F]) =>
       val processedSql    = telemetryConfig.processQueryText(sql)
       val queryAttributes = baseAttributes ++ List(
-        TelemetryAttribute.dbQueryText(processedSql)
+        DbAttributes.DbQueryText(processedSql)
       )
 
       withDurationMetrics(
@@ -263,7 +264,7 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
                     F.raiseError(exception)
                 case eof: EOFPacket =>
                   val exception = new SQLException("Unexpected EOF packet")
-                  span.addAttribute(TelemetryAttribute.errorType(exception)) *>
+                  span.addAttribute(ErrorAttributes.ErrorType(exception.getClass.getName)) *>
                     span.recordException(exception, eof.attribute) *>
                     span.setStatus(StatusCode.Error, exception.getMessage) *>
                     F.raiseError(exception)
@@ -295,7 +296,7 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
       exchange[F, Array[Long]](TelemetrySpanName.STMT_EXECUTE_BATCH) { (span: Span[F]) =>
         batchedArgs.get.flatMap { args =>
           val batchAttributes = baseAttributes ++
-            List(TelemetryAttribute.dbOperationName(TelemetryAttribute.SqlOperation.BATCH)) ++
+            List(DbAttributes.DbOperationName(TelemetryAttribute.SqlOperation.BATCH)) ++
             TelemetryAttribute.dbOperationBatchSize(args.length).toList
 
           if args.isEmpty then F.pure(Array.empty)
@@ -324,7 +325,7 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
                                 F.raiseError(exception)
                             case eof: EOFPacket =>
                               val exception = new SQLException("Unexpected EOF packet")
-                              span.addAttribute(TelemetryAttribute.errorType(exception)) *>
+                              span.addAttribute(ErrorAttributes.ErrorType(exception.getClass.getName)) *>
                                 span.recordException(exception, eof.attribute) *>
                                 span.setStatus(StatusCode.Error, exception.getMessage) *>
                                 F.raiseError(exception)
@@ -437,12 +438,12 @@ object StatementImpl:
 
     protected def buildBaseAttributes(protocol: Protocol[F]): List[Attribute[?]] =
       List[Attribute[?]](
-        TelemetryAttribute.dbSystemName,
-        TelemetryAttribute.serverAddress(protocol.hostInfo.host),
-        TelemetryAttribute.serverPort(protocol.hostInfo.port),
+        DbAttributes.DbSystemName(DbAttributes.DbSystemNameValue.Mysql.value),
+        ServerAttributes.ServerAddress(protocol.hostInfo.host),
+        ServerAttributes.ServerPort(protocol.hostInfo.port.toLong),
         TelemetryAttribute.dbMysqlVersion(protocol.initialPacket.serverVersion.toString),
         TelemetryAttribute.dbMysqlThreadId(protocol.initialPacket.threadId)
-      ) ++ protocol.hostInfo.database.map(name => TelemetryAttribute.dbNamespace(name)).toList
+      ) ++ protocol.hostInfo.database.map(name => DbAttributes.DbNamespace(name)).toList
 
     /**
      * Low-cardinality attributes suitable for metrics.
@@ -451,10 +452,10 @@ object StatementImpl:
      */
     protected def buildMetricsAttributes(protocol: Protocol[F]): List[Attribute[?]] =
       List[Attribute[?]](
-        TelemetryAttribute.dbSystemName,
-        TelemetryAttribute.serverAddress(protocol.hostInfo.host),
-        TelemetryAttribute.serverPort(protocol.hostInfo.port)
-      ) ++ protocol.hostInfo.database.map(name => TelemetryAttribute.dbNamespace(name)).toList
+        DbAttributes.DbSystemName(DbAttributes.DbSystemNameValue.Mysql.value),
+        ServerAttributes.ServerAddress(protocol.hostInfo.host),
+        ServerAttributes.ServerPort(protocol.hostInfo.port.toLong)
+      ) ++ protocol.hostInfo.database.map(name => DbAttributes.DbNamespace(name)).toList
 
     protected def withDurationMetrics[A](operation: F[A], metricsAttributes: Attribute[?]*): F[A] =
       Clock[F].monotonic.flatMap { startTime =>

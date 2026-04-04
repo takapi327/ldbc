@@ -24,6 +24,7 @@ import fs2.io.net.Socket
 
 import org.typelevel.otel4s.trace.{ Span, StatusCode, Tracer }
 import org.typelevel.otel4s.Attribute
+import org.typelevel.otel4s.semconv.attributes.{ DbAttributes, ServerAttributes }
 
 import ldbc.connector.authenticator.{ CachingSha2PasswordPlugin, MysqlNativePasswordPlugin, Sha256PasswordPlugin }
 import ldbc.connector.data.*
@@ -154,13 +155,13 @@ object Protocol:
     extends Protocol[F]:
 
     private val attributes = List(
-      TelemetryAttribute.dbSystemName,
-      TelemetryAttribute.serverAddress(hostInfo.host),
-      TelemetryAttribute.serverPort(hostInfo.port),
+      DbAttributes.DbSystemName(DbAttributes.DbSystemNameValue.Mysql.value),
+      ServerAttributes.ServerAddress(hostInfo.host),
+      ServerAttributes.ServerPort(hostInfo.port.toLong),
       TelemetryAttribute.dbMysqlVersion(initialPacket.serverVersion.toString),
       TelemetryAttribute.dbMysqlThreadId(initialPacket.threadId)
     ) ++ hostInfo.database
-      .map(db => TelemetryAttribute.dbNamespace(db))
+      .map(db => DbAttributes.DbNamespace(db))
       .toList
 
     override def receive[P <: ResponsePacket](decoder: Decoder[P]): F[P] = socket.receive(decoder)
@@ -174,7 +175,7 @@ object Protocol:
 
     override def comInitDB(schema: String): F[Unit] =
       exchange[F, Unit](TelemetrySpanName.CHANGE_DATABASE) { (span: Span[F]) =>
-        span.addAttributes((attributes ++ List(TelemetryAttribute.dbNamespace(schema)))*) *>
+        span.addAttributes((attributes ++ List(DbAttributes.DbNamespace(schema)))*) *>
           socket.send(ComInitDBPacket(schema)) *>
           socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
             case error: ERRPacket =>
