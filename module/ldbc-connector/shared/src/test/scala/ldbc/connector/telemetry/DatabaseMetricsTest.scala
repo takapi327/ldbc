@@ -12,6 +12,7 @@ import cats.effect.*
 
 import org.typelevel.otel4s.metrics.BucketBoundaries
 import org.typelevel.otel4s.Attribute
+import org.typelevel.otel4s.semconv.attributes.DbAttributes
 
 import ldbc.connector.*
 
@@ -102,9 +103,9 @@ class DatabaseMetricsTest extends FTestPlatform:
     val metrics = DatabaseMetrics.noop[IO]
     for result <- metrics.recordOperationDuration(
                     100.millis,
-                    TelemetryAttribute.dbSystemName,
-                    TelemetryAttribute.dbNamespace("test_db"),
-                    TelemetryAttribute.dbOperationName("SELECT")
+                    DbAttributes.DbSystemName(DbAttributes.DbSystemNameValue.Mysql.value),
+                    DbAttributes.DbNamespace("test_db"),
+                    DbAttributes.DbOperationName("SELECT")
                   )
     yield assertEquals(result, ())
   }
@@ -113,8 +114,8 @@ class DatabaseMetricsTest extends FTestPlatform:
     val metrics = DatabaseMetrics.noop[IO]
     for result <- metrics.recordReturnedRows(
                     42L,
-                    TelemetryAttribute.dbSystemName,
-                    TelemetryAttribute.dbCollectionName("users")
+                    DbAttributes.DbSystemName(DbAttributes.DbSystemNameValue.Mysql.value),
+                    DbAttributes.DbCollectionName("users")
                   )
     yield assertEquals(result, ())
   }
