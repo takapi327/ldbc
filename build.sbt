@@ -152,20 +152,20 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     scalacOptions += "-Ykind-projector:underscores",
     libraryDependencies ++= Seq(
-      "co.fs2"        %%% "fs2-core"            % "3.12.2",
-      "co.fs2"        %%% "fs2-io"              % "3.12.2",
-      "org.scodec"    %%% "scodec-bits"         % "1.1.38",
-      "org.scodec"    %%% "scodec-core"         % "2.2.2",
-      "org.scodec"    %%% "scodec-cats"         % "1.2.0",
-      "org.typelevel" %%% "otel4s-core-trace"                      % "0.15.2",
-      "org.typelevel" %%% "otel4s-core-metrics"                     % "0.15.2",
-      "org.typelevel" %%% "otel4s-semconv"                          % "0.15.2",
-      "org.typelevel" %%% "otel4s-semconv-experimental"             % "0.15.2",
-      "org.typelevel" %%% "otel4s-semconv-metrics"                  % "0.15.2",
-      "org.typelevel" %%% "otel4s-semconv-metrics-experimental"     % "0.15.2",
-      "org.typelevel" %%% "twiddles-core"                           % "0.8.0",
-      "org.typelevel" %%% "munit-cats-effect"   % "2.1.0"  % Test,
-      "org.typelevel" %%% "otel4s-sdk-testkit"  % "0.17.0" % Test
+      "co.fs2"        %%% "fs2-core"                            % "3.12.2",
+      "co.fs2"        %%% "fs2-io"                              % "3.12.2",
+      "org.scodec"    %%% "scodec-bits"                         % "1.1.38",
+      "org.scodec"    %%% "scodec-core"                         % "2.2.2",
+      "org.scodec"    %%% "scodec-cats"                         % "1.2.0",
+      "org.typelevel" %%% "otel4s-core-trace"                   % "0.15.2",
+      "org.typelevel" %%% "otel4s-core-metrics"                 % "0.15.2",
+      "org.typelevel" %%% "otel4s-semconv"                      % "0.15.2",
+      "org.typelevel" %%% "otel4s-semconv-experimental"         % "0.15.2",
+      "org.typelevel" %%% "otel4s-semconv-metrics"              % "0.15.2",
+      "org.typelevel" %%% "otel4s-semconv-metrics-experimental" % "0.15.2",
+      "org.typelevel" %%% "twiddles-core"                       % "0.8.0",
+      "org.typelevel" %%% "munit-cats-effect"                   % "2.1.0"  % Test,
+      "org.typelevel" %%% "otel4s-sdk-testkit"                  % "0.17.0" % Test
     )
   )
   .jsSettings(
