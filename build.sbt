@@ -160,7 +160,8 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
       "org.typelevel" %%% "otel4s-core-trace"   % "0.15.2",
       "org.typelevel" %%% "otel4s-core-metrics" % "0.15.2",
       "org.typelevel" %%% "twiddles-core"       % "0.8.0",
-      "org.typelevel" %%% "munit-cats-effect"   % "2.1.0" % Test
+      "org.typelevel" %%% "munit-cats-effect"   % "2.1.0"  % Test,
+      "org.typelevel" %%% "otel4s-sdk-testkit"  % "0.17.0" % Test
     )
   )
   .jsSettings(
