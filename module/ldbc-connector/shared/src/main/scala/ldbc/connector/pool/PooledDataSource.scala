@@ -19,25 +19,26 @@ import cats.effect.syntax.all.*
 import fs2.hashing.Hashing
 import fs2.io.net.*
 
-import org.typelevel.otel4s.metrics.Meter
-import org.typelevel.otel4s.trace.Tracer
+import org.typelevel.otel4s.metrics.*
+import org.typelevel.otel4s.trace.*
 
 import ldbc.sql.DatabaseMetaData
 
 import ldbc.connector.*
 import ldbc.connector.exception.SQLException
-import ldbc.connector.telemetry.{ DatabaseMetrics, PoolMetricsState, TelemetryConfig }
+import ldbc.connector.telemetry.*
 
 import ldbc.authentication.plugin.AuthenticationPlugin
+import ldbc.build.Version
 import ldbc.DataSource
 
 /**
  * A DataSource implementation that manages a pool of reusable database connections.
- * 
+ *
  * PooledDataSource extends the basic [[ldbc.DataSource]] interface to provide connection
  * pooling capabilities, which significantly improve performance by reusing existing
  * connections rather than creating new ones for each request.
- * 
+ *
  * Key features include:
  * - Connection reuse to minimize the overhead of connection establishment
  * - Configurable pool size with minimum and maximum connections
@@ -46,12 +47,12 @@ import ldbc.DataSource
  * - Leak detection to identify connections not properly returned to the pool
  * - Adaptive sizing to dynamically adjust pool size based on load
  * - Comprehensive metrics tracking for monitoring pool health
- * 
+ *
  * The pool maintains connections in different states:
  * - Available: Ready for use
  * - In-use: Currently borrowed by a client
  * - Invalid: Failed validation and awaiting removal
- * 
+ *
  * @tparam F the effect type (e.g., IO) that wraps asynchronous operations
  */
 trait PooledDataSource[F[_]] extends DataSource[F]:
@@ -106,21 +107,21 @@ trait PooledDataSource[F[_]] extends DataSource[F]:
 
   /**
    * Returns the current status of the pool.
-   * 
+   *
    * @return a PoolStatus containing information about available, in-use, and total connections
    */
   def status: F[PoolStatus]
 
   /**
    * Returns comprehensive metrics about pool performance.
-   * 
+   *
    * @return a PoolMetrics object with detailed statistics
    */
   def metrics: F[PoolMetrics]
 
   /**
    * Gracefully shuts down the pool, closing all connections.
-   * 
+   *
    * This method will:
    * - Stop accepting new connection requests
    * - Wait for in-use connections to be returned
@@ -131,7 +132,7 @@ trait PooledDataSource[F[_]] extends DataSource[F]:
 
   /**
    * Creates a new pooled connection.
-   * 
+   *
    * @return a new PooledConnection wrapped in the effect type
    */
   def createNewConnection(): F[PooledConnection[F]]
@@ -144,28 +145,28 @@ trait PooledDataSource[F[_]] extends DataSource[F]:
   /**
    * Creates a new connection specifically for pool initialization.
    * Unlike createNewConnection, this creates connections in idle state.
-   * 
+   *
    * @return a new PooledConnection in idle state
    */
   def createNewConnectionForPool(): F[PooledConnection[F]]
 
   /**
    * Returns a connection to the pool for reuse.
-   * 
+   *
    * @param pooled the connection to return to the pool
    */
   def returnToPool(pooled: PooledConnection[F]): F[Unit]
 
   /**
    * Removes a connection from the pool permanently.
-   * 
+   *
    * @param pooled the connection to remove
    */
   def removeConnection(pooled: PooledConnection[F]): F[Unit]
 
   /**
    * Validates that a connection is still healthy and usable.
-   * 
+   *
    * @param conn the connection to validate
    * @return true if the connection is valid, false otherwise
    */
@@ -815,14 +816,14 @@ object PooledDataSource:
 
   /**
    * Creates a PooledDataSource from a MySQL configuration.
-   * 
+   *
    * This is the primary way to create a connection pool. The pool will be initialized
    * with the settings specified in the configuration, including minimum and maximum
    * connection counts, timeouts, and maintenance intervals.
-   * 
+   *
    * The returned Resource ensures proper lifecycle management - the pool will be
    * properly initialized when acquired and cleanly shut down when released.
-   * 
+   *
    * @param config the MySQL configuration containing all pool settings
    * @param metricsTracker optional tracker for collecting pool metrics (defaults to in-memory tracker)
    * @param tracer optional OpenTelemetry tracer for distributed tracing (defaults to no-op tracer)
@@ -847,18 +848,43 @@ object PooledDataSource:
       telemetryConfig = telemetryConfig
     )
 
+  def withTraced[F[_]: Async: Network: Console: Hashing: UUIDGen: TracerProvider: MeterProvider](
+    config:          MySQLConfig,
+    metricsTracker:  Option[PoolMetricsTracker[F]] = None,
+    plugins:         List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
+    telemetryConfig: TelemetryConfig = TelemetryConfig.default
+  ): Resource[F, PooledDataSource[F]] =
+    for
+      given Tracer[F] <- Resource.eval(TracerProvider[F].tracer("ldbc").withVersion(Version.current).get)
+      meter           <- Resource.eval(
+                 MeterProvider[F]
+                   .meter("ldbc")
+                   .withVersion(Version.current)
+                   .withSchemaUrl(TelemetryAttribute.SCHEMA_URL_VALUE)
+                   .get
+               )
+      pool <- create(
+                config,
+                metricsTracker,
+                Some(meter),
+                UUIDGen[F].randomUUID.map(_.toString),
+                plugins,
+                telemetryConfig = telemetryConfig
+              )
+    yield pool
+
     /**
    * Creates a PooledDataSource with before/after hooks for each connection use.
-   * 
+   *
    * This variant allows you to specify callbacks that will be executed before
    * and after each connection is used. This is useful for:
    * - Setting up connection-specific state (e.g., session variables)
    * - Logging or auditing connection usage
    * - Cleaning up after connection use
-   * 
+   *
    * The before hook is called after acquiring a connection but before returning it
    * to the client. The after hook is called when the connection is returned to the pool.
-   * 
+   *
    * @param config the MySQL configuration containing all pool settings
    * @param metricsTracker optional tracker for collecting pool metrics (defaults to in-memory tracker)
    * @param tracer optional OpenTelemetry tracer for distributed tracing (defaults to no-op tracer)
@@ -889,3 +915,32 @@ object PooledDataSource:
       before,
       after
     )
+
+  def withTracedBeforeAfter[F[_]: Async: Network: Console: Hashing: UUIDGen: TracerProvider: MeterProvider, A](
+    config:          MySQLConfig,
+    metricsTracker:  Option[PoolMetricsTracker[F]] = None,
+    plugins:         List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
+    telemetryConfig: TelemetryConfig = TelemetryConfig.default,
+    before:          Option[Connection[F] => F[A]] = None,
+    after:           Option[(A, Connection[F]) => F[Unit]] = None
+  ): Resource[F, PooledDataSource[F]] =
+    for
+      given Tracer[F] <- Resource.eval(TracerProvider[F].tracer("ldbc").withVersion(Version.current).get)
+      meter           <- Resource.eval(
+                 MeterProvider[F]
+                   .meter("ldbc")
+                   .withVersion(Version.current)
+                   .withSchemaUrl(TelemetryAttribute.SCHEMA_URL_VALUE)
+                   .get
+               )
+      pool <- create(
+                config,
+                metricsTracker,
+                Some(meter),
+                UUIDGen[F].randomUUID.map(_.toString),
+                plugins,
+                telemetryConfig,
+                before,
+                after
+              )
+    yield pool
