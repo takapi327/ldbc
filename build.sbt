@@ -166,7 +166,15 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
       "org.typelevel" %%% "twiddles-core"                       % "0.8.0",
       "org.typelevel" %%% "munit-cats-effect"                   % "2.1.0"  % Test,
       "org.typelevel" %%% "otel4s-sdk-testkit"                  % "0.17.0" % Test
-    )
+    ),
+    (Compile / sourceGenerators) += Def.task {
+      Generator.version(
+        version      = version.value,
+        scalaVersion = scalaVersion.value,
+        sbtVersion   = sbtVersion.value,
+        dir          = (Compile / sourceManaged).value
+      )
+    }.taskValue
   )
   .jsSettings(
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
