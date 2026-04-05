@@ -257,11 +257,26 @@ object PooledDataSource:
         }.flatten >>
         poolLogger.info("Connection pool closed successfully")
 
+    /**
+     * Acquires a connection from the pool, recording the start time for wait-time metrics.
+     *
+     * @return a connection from the pool
+     */
     private def acquire: F[Connection[F]] = for
       startTime <- Clock[F].monotonic
       result    <- acquireConnectionWithStartTime(startTime)
     yield result
 
+    /**
+     * Core acquisition logic that attempts to borrow a connection from the bag, validating it,
+     * or creating a new one if the pool has not reached its maximum size.
+     * Raises [[ldbc.connector.exception.SQLException]] if all connections are in use and a
+     * new connection cannot be created within [[connectionTimeout]].
+     *
+     * @param startTime monotonic timestamp captured at the beginning of the acquisition attempt,
+     *                  used to calculate connection wait time
+     * @return a healthy [[Connection]] ready for use
+     */
     private def acquireConnectionWithStartTime(startTime: FiniteDuration): F[Connection[F]] =
       poolState.get.flatMap { state =>
         if state.closed then Temporal[F].raiseError(new SQLException("Pool is closed"))
@@ -346,11 +361,25 @@ object PooledDataSource:
           }
       }
 
+    /**
+     * Releases a connection back to the pool, recording the start time for use-time metrics.
+     *
+     * @param conn the connection being released
+     */
     private def release(conn: Connection[F]): F[Unit] = for
       startTime <- Clock[F].monotonic
       _         <- releaseConnectionWithStartTime(conn, startTime)
     yield ()
 
+    /**
+     * Core release logic that validates, resets, and returns a connection to the bag, or removes
+     * it from the pool if it is invalid or has exceeded its maximum lifetime.
+     * Connection use-time is recorded regardless of outcome.
+     *
+     * @param conn      the connection being released
+     * @param startTime monotonic timestamp captured at the beginning of the release operation,
+     *                  used to calculate connection use time
+     */
     private def releaseConnectionWithStartTime(conn: Connection[F], startTime: FiniteDuration): F[Unit] =
       // Extract the pooled connection from proxy if wrapped
       val pooledF: F[Option[PooledConnection[F]]] = conn match {
@@ -423,6 +452,14 @@ object PooledDataSource:
       result    <- createNewConnectionWithStartTime(startTime)
     yield result
 
+    /**
+     * Creates a new connection in [[ConnectionState.InUse]] state with an initial use count of 1,
+     * intended for immediate use by a caller that requested a connection when none was available.
+     *
+     * @param startTime monotonic timestamp captured at the beginning of the creation attempt,
+     *                  used to calculate connection creation time
+     * @return the newly created [[PooledConnection]]
+     */
     private def createNewConnectionWithStartTime(startTime: FiniteDuration): F[PooledConnection[F]] =
       createNewConnectionWithState(startTime, ConnectionState.InUse, 1L)
 
@@ -431,6 +468,18 @@ object PooledDataSource:
       result    <- createNewConnectionWithState(startTime, ConnectionState.Idle, 0L)
     yield result
 
+    /**
+     * Creates a new physical connection, wraps it in a [[PooledConnection]], registers it in
+     * the pool state and the concurrent bag, and records creation-time metrics.
+     * A [[CircuitBreaker]] protects against cascading failures during connection establishment.
+     *
+     * @param startTime      monotonic timestamp captured at the beginning of the creation attempt,
+     *                       used to calculate connection creation time
+     * @param initialState   the [[ConnectionState]] the new connection should start in
+     *                       (`InUse` for on-demand connections, `Idle` for pool pre-warming)
+     * @param initialUseCount the initial value for the connection's use counter
+     * @return the newly created and registered [[PooledConnection]]
+     */
     private def createNewConnectionWithState(
       startTime:       FiniteDuration,
       initialState:    ConnectionState,
@@ -508,6 +557,15 @@ object PooledDataSource:
             }
         }
 
+    /**
+     * Resets a connection to a clean state before returning it to the pool.
+     *
+     * Restores auto-commit mode and rolls back any uncommitted transaction.
+     * Both operations are attempted and their errors are swallowed so that
+     * a reset failure does not prevent the connection from being processed further.
+     *
+     * @param conn the connection to reset
+     */
     private def resetConnection(conn: Connection[F]): F[Unit] = for
       _ <- conn.setAutoCommit(true).attempt.void
       _ <- conn.rollback().attempt.void
@@ -554,6 +612,13 @@ object PooledDataSource:
               false
             }
 
+    /**
+     * Executes a custom test query against the given connection to verify it is alive.
+     *
+     * @param conn  the connection to test
+     * @param query the SQL query to execute (e.g. `"SELECT 1"`)
+     * @return `true` if the query executes successfully, `false` on any error
+     */
     private def executeTestQuery(conn: Connection[F], query: String): F[Boolean] =
       conn
         .createStatement()
@@ -562,6 +627,16 @@ object PooledDataSource:
         }
         .handleError(_ => false)
 
+    /**
+     * Determines whether a connection should be validated before being used or returned to the pool.
+     *
+     * When [[aliveBypassWindow]] is zero, validation is always performed. Otherwise, validation is
+     * skipped if the connection was last used within the bypass window, reducing round-trip overhead
+     * for frequently reused connections.
+     *
+     * @param pooled the connection to check
+     * @return `true` if validation should be performed, `false` if it can be skipped
+     */
     private def needsValidation(pooled: PooledConnection[F]): F[Boolean] =
       if aliveBypassWindow.toMillis == 0 then
         // Bypass disabled, always validate
@@ -573,6 +648,15 @@ object PooledDataSource:
           elapsed = now - lastUsed
         yield elapsed > aliveBypassWindow.toMillis
 
+    /**
+     * Checks whether a connection has exceeded its maximum lifetime ([[maxLifetime]]).
+     *
+     * Expired connections are removed from the pool rather than being returned for reuse,
+     * ensuring that stale connections are periodically refreshed.
+     *
+     * @param pooled the connection to check
+     * @return `true` if the connection has lived longer than [[maxLifetime]], `false` otherwise
+     */
     private def isExpired(pooled: PooledConnection[F]): F[Boolean] =
       Clock[F].realTime.map { now =>
         val age = now.toMillis - pooled.createdAt
@@ -618,6 +702,18 @@ object PooledDataSource:
         case proxy: ProxyConnection[F] => proxy.pooled.connection
         case _                         => conn
 
+    /**
+     * Builds the [[Resource]] used to create a new physical [[Connection]].
+     *
+     * Selects the appropriate [[Connection]] factory depending on whether `before`/`after`
+     * lifecycle hooks are configured:
+     * - Both hooks present: uses [[Connection.withBeforeAfter]] with both callbacks.
+     * - Only `before` present: uses [[Connection.withBeforeAfter]] with a no-op `after`.
+     * - No `before`: uses the standard [[Connection]] factory.
+     *
+     * In all cases the [[TelemetryConfig]] and [[DatabaseMetrics]] are forwarded to the
+     * underlying connection so that per-statement observability is preserved.
+     */
     private def connection: Resource[F, Connection[F]] =
       (before, after) match
         case (Some(b), Some(a)) =>
@@ -682,6 +778,27 @@ object PooledDataSource:
             databaseMetrics         = Some(databaseMetrics)
           )
 
+  /**
+   * Internal factory method that validates the provided [[MySQLConfig]] and then delegates
+   * to [[createValidatedPool]] to build the fully-initialized [[PooledDataSource]].
+   *
+   * This method is package-private (`private[connector]`) and is intended to be called only
+   * from higher-level factory methods such as [[fromConfig]] and [[withTraced]].
+   *
+   * @param config          the [[MySQLConfig]] containing all pool and connection settings
+   * @param metricsTracker  optional [[PoolMetricsTracker]]; falls back to a no-op tracker if absent
+   * @param meter           optional [[org.typelevel.otel4s.metrics.Meter]] for OpenTelemetry metrics;
+   *                        falls back to a no-op meter if absent
+   * @param idGenerator     an effect that produces a unique string identifier for each new connection
+   * @param plugins         additional [[ldbc.authentication.plugin.AuthenticationPlugin]]s to register
+   * @param telemetryConfig tracing and metrics configuration; defaults to [[TelemetryConfig.default]]
+   * @param before          optional callback executed after acquiring a connection but before handing it
+   *                        to the caller; the returned value `A` is passed to `after`
+   * @param after           optional callback executed when the connection is returned to the pool
+   * @tparam F the effect type
+   * @tparam A the type produced by the `before` callback and consumed by the `after` callback
+   * @return a [[cats.effect.Resource]] that manages the full pool lifecycle
+   */
   private[connector] def create[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
     config:          MySQLConfig,
     metricsTracker:  Option[PoolMetricsTracker[F]],
@@ -703,6 +820,33 @@ object PooledDataSource:
         Resource.eval(Async[F].raiseError(error))
       }
 
+  /**
+   * Builds and fully initializes a [[PooledDataSource]] after configuration has already been
+   * validated by [[create]].
+   *
+   * This method performs the following steps inside the returned [[cats.effect.Resource]]:
+   *  1. Resolves the [[PoolMetricsTracker]] (provided or no-op).
+   *  2. Creates [[DatabaseMetrics]] from the provided [[org.typelevel.otel4s.metrics.Meter]]
+   *     (or a no-op meter).
+   *  3. Allocates the mutable [[PoolState]], [[ConcurrentBag]], and [[CircuitBreaker]].
+   *  4. Registers observable OpenTelemetry gauges for pool state metrics.
+   *  5. Pre-warms the pool by creating the configured minimum number of connections.
+   *  6. Starts background maintenance tasks (house-keeper, adaptive sizer, keepalive, status
+   *     reporter) as long-lived fibers scoped to the resource.
+   *
+   * @param config          the validated [[MySQLConfig]]
+   * @param metricsTracker  optional [[PoolMetricsTracker]]; falls back to no-op if absent
+   * @param meter           optional [[org.typelevel.otel4s.metrics.Meter]]; falls back to no-op if absent
+   * @param idGenerator     an effect that produces a unique string identifier for each new connection
+   * @param plugins         additional authentication plugins to register on each connection
+   * @param telemetryConfig tracing and metrics configuration
+   * @param before          optional pre-use connection callback
+   * @param after           optional post-use connection callback
+   * @tparam F the effect type
+   * @tparam A the type produced by the `before` callback
+   * @return a [[cats.effect.Resource]] whose acquisition initializes the pool and whose release
+   *         closes all connections and cancels background tasks
+   */
   private def createValidatedPool[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
     config:          MySQLConfig,
     metricsTracker:  Option[PoolMetricsTracker[F]],
@@ -848,6 +992,32 @@ object PooledDataSource:
       telemetryConfig = telemetryConfig
     )
 
+  /**
+   * Creates a [[PooledDataSource]] with OpenTelemetry distributed tracing and metrics enabled.
+   *
+   * A [[org.typelevel.otel4s.trace.Tracer]] and a [[org.typelevel.otel4s.metrics.Meter]] are
+   * acquired from the implicit [[org.typelevel.otel4s.trace.TracerProvider]] and
+   * [[org.typelevel.otel4s.metrics.MeterProvider]] in scope. Both are registered under the
+   * `"ldbc"` instrumentation scope with the current library version and the OpenTelemetry
+   * semantic-convention schema URL.
+   *
+   * @param config          the [[MySQLConfig]] containing all pool and connection settings
+   * @param metricsTracker  optional [[PoolMetricsTracker]]; falls back to a no-op tracker if absent
+   * @param plugins         additional [[ldbc.authentication.plugin.AuthenticationPlugin]]s to register
+   * @param telemetryConfig tracing and metrics configuration; defaults to [[TelemetryConfig.default]]
+   * @tparam F the effect type, requiring [[cats.effect.Async]], [[fs2.io.net.Network]],
+   *           [[cats.effect.std.Console]], [[cats.effect.std.Hashing]],
+   *           [[cats.effect.std.UUIDGen]], [[org.typelevel.otel4s.trace.TracerProvider]],
+   *           and [[org.typelevel.otel4s.metrics.MeterProvider]]
+   * @return a [[cats.effect.Resource]] that manages the full pool lifecycle with observability enabled
+   *
+   * @example {{{
+   * // Given TracerProvider[IO] and MeterProvider[IO] in scope:
+   * PooledDataSource.withTraced[IO](MySQLConfig.default).use { pool =>
+   *   pool.getConnection.use { conn => ... }
+   * }
+   * }}}
+   */
   def withTraced[F[_]: Async: Network: Console: Hashing: UUIDGen: TracerProvider: MeterProvider](
     config:          MySQLConfig,
     metricsTracker:  Option[PoolMetricsTracker[F]] = None,
@@ -916,6 +1086,33 @@ object PooledDataSource:
       after
     )
 
+  /**
+   * Creates a [[PooledDataSource]] with OpenTelemetry tracing and metrics enabled, plus
+   * optional `before`/`after` lifecycle hooks for each connection use.
+   *
+   * Combines the observability setup of [[withTraced]] with the hook mechanism of
+   * [[fromConfigWithBeforeAfter]]. A [[org.typelevel.otel4s.trace.Tracer]] and a
+   * [[org.typelevel.otel4s.metrics.Meter]] are acquired from the implicit providers in scope.
+   *
+   * The `before` callback is invoked after a connection is acquired from the pool but before
+   * it is handed to the caller. Its result of type `A` is forwarded to the `after` callback,
+   * which is invoked when the connection is returned to the pool.
+   *
+   * @param config          the [[MySQLConfig]] containing all pool and connection settings
+   * @param metricsTracker  optional [[PoolMetricsTracker]]; falls back to a no-op tracker if absent
+   * @param plugins         additional [[ldbc.authentication.plugin.AuthenticationPlugin]]s to register
+   * @param telemetryConfig tracing and metrics configuration; defaults to [[TelemetryConfig.default]]
+   * @param before          optional callback executed before handing a connection to the caller;
+   *                        the value it returns is passed to `after`
+   * @param after           optional callback executed when the connection is returned to the pool
+   * @tparam F the effect type, requiring [[cats.effect.Async]], [[fs2.io.net.Network]],
+   *           [[cats.effect.std.Console]], [[cats.effect.std.Hashing]],
+   *           [[cats.effect.std.UUIDGen]], [[org.typelevel.otel4s.trace.TracerProvider]],
+   *           and [[org.typelevel.otel4s.metrics.MeterProvider]]
+   * @tparam A the type produced by `before` and consumed by `after`
+   * @return a [[cats.effect.Resource]] that manages the full pool lifecycle with observability
+   *         and per-connection hooks enabled
+   */
   def withTracedBeforeAfter[F[_]: Async: Network: Console: Hashing: UUIDGen: TracerProvider: MeterProvider, A](
     config:          MySQLConfig,
     metricsTracker:  Option[PoolMetricsTracker[F]] = None,
