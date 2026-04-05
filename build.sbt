@@ -14,11 +14,11 @@ import Workflows.*
 
 ThisBuild / tlBaseVersion              := LdbcVersions.latest
 ThisBuild / tlFatalWarnings            := true
+ThisBuild / tlJdkRelease               := None
 ThisBuild / projectName                := "ldbc"
 ThisBuild / scalaVersion               := scala3
-ThisBuild / crossScalaVersions         := Seq(scala3, scala37)
+ThisBuild / crossScalaVersions         := Seq(scala3, scala38)
 ThisBuild / githubWorkflowJavaVersions := Seq(
-  JavaSpec.corretto(java11),
   JavaSpec.corretto(java17),
   JavaSpec.corretto(java21),
   JavaSpec.corretto(java25)
@@ -232,7 +232,7 @@ lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
   .in(file("tests"))
   .settings(
-    crossScalaVersions                      := Seq(scala3, scala37),
+    crossScalaVersions                      := Seq(scala3, scala38),
     name                                    := "tests",
     description                             := "Projects for testing",
     libraryDependencies += "org.typelevel" %%% "munit-cats-effect" % "2.1.0",
