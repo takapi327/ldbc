@@ -19,6 +19,9 @@ import cats.*
 import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
+import org.typelevel.otel4s.metrics.MeterProvider
+import org.typelevel.otel4s.trace.TracerProvider
+
 import ldbc.sql.ResultSet
 
 import ldbc.connector.*
@@ -81,6 +84,9 @@ class Select:
 
     // プール作成前に少し待機して、初期化の安定性を向上
     Thread.sleep(1000)
+
+    given TracerProvider[IO] = TracerProvider.noop[IO]
+    given MeterProvider[IO]  = MeterProvider.noop[IO]
 
     datasource = MySQLDataSource.pooling[IO](poolConfig).allocated.unsafeRunSync()
 
