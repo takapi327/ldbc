@@ -12,6 +12,10 @@ import cats.effect.*
 
 import org.typelevel.otel4s.sdk.metrics.data.{ MetricPoints, PointData }
 import org.typelevel.otel4s.sdk.testkit.OpenTelemetrySdkTestkit
+import org.typelevel.otel4s.semconv.attributes.DbAttributes
+import org.typelevel.otel4s.semconv.experimental.attributes.DbExperimentalAttributes
+import org.typelevel.otel4s.semconv.experimental.metrics.DbExperimentalMetrics
+import org.typelevel.otel4s.semconv.metrics.DbMetrics
 
 import ldbc.connector.*
 
@@ -30,18 +34,18 @@ class DatabaseMetricsOtelTest extends FTestPlatform:
         _     <- DatabaseMetrics.fromMeter(meter).use { metrics =>
                metrics.recordOperationDuration(
                  100.millis,
-                 TelemetryAttribute.dbSystemName,
-                 TelemetryAttribute.dbNamespace("test_db"),
-                 TelemetryAttribute.dbOperationName("SELECT")
+                 DbAttributes.DbSystemName(DbAttributes.DbSystemNameValue.Mysql.value),
+                 DbAttributes.DbNamespace("test_db"),
+                 DbAttributes.DbOperationName("SELECT")
                )
              }
         collected <- testkit.collectMetrics
-        metric = collected.find(_.name == TelemetryAttribute.METRIC_DB_CLIENT_OPERATION_DURATION)
+        metric = collected.find(_.name == DbMetrics.ClientOperationDuration.name)
       yield metric match
-        case None    => fail(s"'${ TelemetryAttribute.METRIC_DB_CLIENT_OPERATION_DURATION }' should be recorded")
+        case None    => fail(s"'${ DbMetrics.ClientOperationDuration.name }' should be recorded")
         case Some(m) =>
-          assertEquals(m.unit, Some("s"))
-          assertEquals(m.description, Some("Duration of database client operations"))
+          assertEquals(m.unit, Some(DbMetrics.ClientOperationDuration.unit))
+          assertEquals(m.description, Some(DbMetrics.ClientOperationDuration.description))
           m.data match
             case _: MetricPoints.Histogram => ()
             case other                     => fail(s"Expected Histogram but got ${ other.getClass.getSimpleName }")
@@ -56,9 +60,9 @@ class DatabaseMetricsOtelTest extends FTestPlatform:
                metrics.recordOperationDuration(250.millis)
              }
         collected <- testkit.collectMetrics
-        metric = collected.find(_.name == TelemetryAttribute.METRIC_DB_CLIENT_OPERATION_DURATION)
+        metric = collected.find(_.name == DbMetrics.ClientOperationDuration.name)
       yield metric match
-        case None    => fail(s"'${ TelemetryAttribute.METRIC_DB_CLIENT_OPERATION_DURATION }' should be recorded")
+        case None    => fail(s"'${ DbMetrics.ClientOperationDuration.name }' should be recorded")
         case Some(m) =>
           m.data match
             case h: MetricPoints.Histogram =>
@@ -81,9 +85,9 @@ class DatabaseMetricsOtelTest extends FTestPlatform:
                  metrics.recordOperationDuration(300.millis)
              }
         collected <- testkit.collectMetrics
-        metric = collected.find(_.name == TelemetryAttribute.METRIC_DB_CLIENT_OPERATION_DURATION)
+        metric = collected.find(_.name == DbMetrics.ClientOperationDuration.name)
       yield metric match
-        case None    => fail(s"'${ TelemetryAttribute.METRIC_DB_CLIENT_OPERATION_DURATION }' should be recorded")
+        case None    => fail(s"'${ DbMetrics.ClientOperationDuration.name }' should be recorded")
         case Some(m) =>
           m.data match
             case h: MetricPoints.Histogram =>
@@ -105,15 +109,18 @@ class DatabaseMetricsOtelTest extends FTestPlatform:
       for
         meter <- testkit.meterProvider.get("ldbc")
         _     <- DatabaseMetrics.fromMeter(meter).use { metrics =>
-               metrics.recordReturnedRows(42L, TelemetryAttribute.dbSystemName)
+               metrics.recordReturnedRows(
+                 42L,
+                 DbAttributes.DbSystemName(DbAttributes.DbSystemNameValue.Mysql.value)
+               )
              }
         collected <- testkit.collectMetrics
-        metric = collected.find(_.name == TelemetryAttribute.METRIC_DB_CLIENT_RESPONSE_RETURNED_ROWS)
+        metric = collected.find(_.name == DbExperimentalMetrics.ClientResponseReturnedRows.name)
       yield metric match
-        case None    => fail(s"'${ TelemetryAttribute.METRIC_DB_CLIENT_RESPONSE_RETURNED_ROWS }' should be recorded")
+        case None    => fail(s"'${ DbExperimentalMetrics.ClientResponseReturnedRows.name }' should be recorded")
         case Some(m) =>
-          assertEquals(m.unit, Some("{row}"))
-          assertEquals(m.description, Some("The actual number of records returned by the database operation"))
+          assertEquals(m.unit, Some(DbExperimentalMetrics.ClientResponseReturnedRows.unit))
+          assertEquals(m.description, Some(DbExperimentalMetrics.ClientResponseReturnedRows.description))
           m.data match
             case _: MetricPoints.Histogram => ()
             case other                     => fail(s"Expected Histogram but got ${ other.getClass.getSimpleName }")
@@ -128,9 +135,9 @@ class DatabaseMetricsOtelTest extends FTestPlatform:
                metrics.recordReturnedRows(100L)
              }
         collected <- testkit.collectMetrics
-        metric = collected.find(_.name == TelemetryAttribute.METRIC_DB_CLIENT_RESPONSE_RETURNED_ROWS)
+        metric = collected.find(_.name == DbExperimentalMetrics.ClientResponseReturnedRows.name)
       yield metric match
-        case None    => fail(s"'${ TelemetryAttribute.METRIC_DB_CLIENT_RESPONSE_RETURNED_ROWS }' should be recorded")
+        case None    => fail(s"'${ DbExperimentalMetrics.ClientResponseReturnedRows.name }' should be recorded")
         case Some(m) =>
           m.data match
             case h: MetricPoints.Histogram =>
@@ -155,12 +162,12 @@ class DatabaseMetricsOtelTest extends FTestPlatform:
                metrics.recordConnectionCreateTime(50.millis, poolName)
              }
         collected <- testkit.collectMetrics
-        metric = collected.find(_.name == TelemetryAttribute.METRIC_DB_CLIENT_CONNECTION_CREATE_TIME)
+        metric = collected.find(_.name == DbExperimentalMetrics.ClientConnectionCreateTime.name)
       yield metric match
-        case None    => fail(s"'${ TelemetryAttribute.METRIC_DB_CLIENT_CONNECTION_CREATE_TIME }' should be recorded")
+        case None    => fail(s"'${ DbExperimentalMetrics.ClientConnectionCreateTime.name }' should be recorded")
         case Some(m) =>
-          assertEquals(m.unit, Some("s"))
-          assertEquals(m.description, Some("The time it took to create a new connection"))
+          assertEquals(m.unit, Some(DbExperimentalMetrics.ClientConnectionCreateTime.unit))
+          assertEquals(m.description, Some(DbExperimentalMetrics.ClientConnectionCreateTime.description))
           m.data match
             case _: MetricPoints.Histogram => ()
             case other                     => fail(s"Expected Histogram but got ${ other.getClass.getSimpleName }")
@@ -175,9 +182,9 @@ class DatabaseMetricsOtelTest extends FTestPlatform:
                metrics.recordConnectionCreateTime(50.millis, poolName)
              }
         collected <- testkit.collectMetrics
-        metric = collected.find(_.name == TelemetryAttribute.METRIC_DB_CLIENT_CONNECTION_CREATE_TIME)
+        metric = collected.find(_.name == DbExperimentalMetrics.ClientConnectionCreateTime.name)
       yield metric match
-        case None    => fail(s"'${ TelemetryAttribute.METRIC_DB_CLIENT_CONNECTION_CREATE_TIME }' should be recorded")
+        case None    => fail(s"'${ DbExperimentalMetrics.ClientConnectionCreateTime.name }' should be recorded")
         case Some(m) =>
           m.data match
             case h: MetricPoints.Histogram =>
@@ -186,9 +193,7 @@ class DatabaseMetricsOtelTest extends FTestPlatform:
                 case None        => fail("Histogram stats should be defined")
                 case Some(stats) =>
                   assertEqualsDouble(stats.sum, 0.05, 0.0001)
-                  val poolAttr = point.attributes.get(
-                    org.typelevel.otel4s.AttributeKey.string(TelemetryAttribute.DB_CLIENT_CONNECTION_POOL_NAME)
-                  )
+                  val poolAttr = point.attributes.get(DbExperimentalAttributes.DbClientConnectionPoolName)
                   assertEquals(poolAttr.map(_.value), Some(poolName))
             case other => fail(s"Expected Histogram but got ${ other.getClass.getSimpleName }")
     }
@@ -206,12 +211,12 @@ class DatabaseMetricsOtelTest extends FTestPlatform:
                metrics.recordConnectionWaitTime(25.millis, poolName)
              }
         collected <- testkit.collectMetrics
-        metric = collected.find(_.name == TelemetryAttribute.METRIC_DB_CLIENT_CONNECTION_WAIT_TIME)
+        metric = collected.find(_.name == DbExperimentalMetrics.ClientConnectionWaitTime.name)
       yield metric match
-        case None    => fail(s"'${ TelemetryAttribute.METRIC_DB_CLIENT_CONNECTION_WAIT_TIME }' should be recorded")
+        case None    => fail(s"'${ DbExperimentalMetrics.ClientConnectionWaitTime.name }' should be recorded")
         case Some(m) =>
-          assertEquals(m.unit, Some("s"))
-          assertEquals(m.description, Some("The time it took to obtain an open connection from the pool"))
+          assertEquals(m.unit, Some(DbExperimentalMetrics.ClientConnectionWaitTime.unit))
+          assertEquals(m.description, Some(DbExperimentalMetrics.ClientConnectionWaitTime.description))
           m.data match
             case _: MetricPoints.Histogram => ()
             case other                     => fail(s"Expected Histogram but got ${ other.getClass.getSimpleName }")
@@ -230,12 +235,12 @@ class DatabaseMetricsOtelTest extends FTestPlatform:
                metrics.recordConnectionUseTime(200.millis, poolName)
              }
         collected <- testkit.collectMetrics
-        metric = collected.find(_.name == TelemetryAttribute.METRIC_DB_CLIENT_CONNECTION_USE_TIME)
+        metric = collected.find(_.name == DbExperimentalMetrics.ClientConnectionUseTime.name)
       yield metric match
-        case None    => fail(s"'${ TelemetryAttribute.METRIC_DB_CLIENT_CONNECTION_USE_TIME }' should be recorded")
+        case None    => fail(s"'${ DbExperimentalMetrics.ClientConnectionUseTime.name }' should be recorded")
         case Some(m) =>
-          assertEquals(m.unit, Some("s"))
-          assertEquals(m.description, Some("The time between borrowing a connection and returning it to the pool"))
+          assertEquals(m.unit, Some(DbExperimentalMetrics.ClientConnectionUseTime.unit))
+          assertEquals(m.description, Some(DbExperimentalMetrics.ClientConnectionUseTime.description))
           m.data match
             case _: MetricPoints.Histogram => ()
             case other                     => fail(s"Expected Histogram but got ${ other.getClass.getSimpleName }")
@@ -254,15 +259,12 @@ class DatabaseMetricsOtelTest extends FTestPlatform:
                metrics.recordConnectionTimeout(poolName)
              }
         collected <- testkit.collectMetrics
-        metric = collected.find(_.name == TelemetryAttribute.METRIC_DB_CLIENT_CONNECTION_TIMEOUTS)
+        metric = collected.find(_.name == DbExperimentalMetrics.ClientConnectionTimeouts.name)
       yield metric match
-        case None    => fail(s"'${ TelemetryAttribute.METRIC_DB_CLIENT_CONNECTION_TIMEOUTS }' should be recorded")
+        case None    => fail(s"'${ DbExperimentalMetrics.ClientConnectionTimeouts.name }' should be recorded")
         case Some(m) =>
-          assertEquals(m.unit, Some("{timeout}"))
-          assertEquals(
-            m.description,
-            Some("The number of connection timeouts that have occurred trying to obtain a connection from the pool")
-          )
+          assertEquals(m.unit, Some(DbExperimentalMetrics.ClientConnectionTimeouts.unit))
+          assertEquals(m.description, Some(DbExperimentalMetrics.ClientConnectionTimeouts.description))
           m.data match
             case s: MetricPoints.Sum => assert(s.monotonic, "connection timeouts counter should be monotonic")
             case other               => fail(s"Expected Sum but got ${ other.getClass.getSimpleName }")
@@ -279,9 +281,9 @@ class DatabaseMetricsOtelTest extends FTestPlatform:
                  metrics.recordConnectionTimeout(poolName)
              }
         collected <- testkit.collectMetrics
-        metric = collected.find(_.name == TelemetryAttribute.METRIC_DB_CLIENT_CONNECTION_TIMEOUTS)
+        metric = collected.find(_.name == DbExperimentalMetrics.ClientConnectionTimeouts.name)
       yield metric match
-        case None    => fail(s"'${ TelemetryAttribute.METRIC_DB_CLIENT_CONNECTION_TIMEOUTS }' should be recorded")
+        case None    => fail(s"'${ DbExperimentalMetrics.ClientConnectionTimeouts.name }' should be recorded")
         case Some(m) =>
           m.data match
             case s: MetricPoints.Sum =>
@@ -311,10 +313,10 @@ class DatabaseMetricsOtelTest extends FTestPlatform:
                          )
                          .surround(testkit.collectMetrics)
                      }
-        countMetric = collected.find(_.name == TelemetryAttribute.METRIC_DB_CLIENT_CONNECTION_COUNT)
+        countMetric = collected.find(_.name == DbExperimentalMetrics.ClientConnectionCount.name)
       yield countMetric match
-        case None    => fail(s"'${ TelemetryAttribute.METRIC_DB_CLIENT_CONNECTION_COUNT }' should be recorded")
-        case Some(m) => assertEquals(m.unit, Some("{connection}"))
+        case None    => fail(s"'${ DbExperimentalMetrics.ClientConnectionCount.name }' should be recorded")
+        case Some(m) => assertEquals(m.unit, Some(DbExperimentalMetrics.ClientConnectionCount.unit))
     }
   }
 
@@ -333,10 +335,10 @@ class DatabaseMetricsOtelTest extends FTestPlatform:
                          )
                          .surround(testkit.collectMetrics)
                      }
-        maxMetric = collected.find(_.name == TelemetryAttribute.METRIC_DB_CLIENT_CONNECTION_MAX)
+        maxMetric = collected.find(_.name == DbExperimentalMetrics.ClientConnectionMax.name)
       yield maxMetric match
-        case None    => fail(s"'${ TelemetryAttribute.METRIC_DB_CLIENT_CONNECTION_MAX }' should be recorded")
-        case Some(m) => assertEquals(m.unit, Some("{connection}"))
+        case None    => fail(s"'${ DbExperimentalMetrics.ClientConnectionMax.name }' should be recorded")
+        case Some(m) => assertEquals(m.unit, Some(DbExperimentalMetrics.ClientConnectionMax.unit))
     }
   }
 
@@ -347,12 +349,12 @@ class DatabaseMetricsOtelTest extends FTestPlatform:
   test("fromMeter should register all expected metric instruments") {
     OpenTelemetrySdkTestkit.inMemory[IO]().use { testkit =>
       val expectedMetricNames = Set(
-        TelemetryAttribute.METRIC_DB_CLIENT_OPERATION_DURATION,
-        TelemetryAttribute.METRIC_DB_CLIENT_RESPONSE_RETURNED_ROWS,
-        TelemetryAttribute.METRIC_DB_CLIENT_CONNECTION_CREATE_TIME,
-        TelemetryAttribute.METRIC_DB_CLIENT_CONNECTION_WAIT_TIME,
-        TelemetryAttribute.METRIC_DB_CLIENT_CONNECTION_USE_TIME,
-        TelemetryAttribute.METRIC_DB_CLIENT_CONNECTION_TIMEOUTS
+        DbMetrics.ClientOperationDuration.name,
+        DbExperimentalMetrics.ClientResponseReturnedRows.name,
+        DbExperimentalMetrics.ClientConnectionCreateTime.name,
+        DbExperimentalMetrics.ClientConnectionWaitTime.name,
+        DbExperimentalMetrics.ClientConnectionUseTime.name,
+        DbExperimentalMetrics.ClientConnectionTimeouts.name
       )
       for
         meter <- testkit.meterProvider.get("ldbc")
