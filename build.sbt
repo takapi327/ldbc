@@ -14,17 +14,15 @@ import Workflows.*
 
 ThisBuild / tlBaseVersion              := LdbcVersions.latest
 ThisBuild / tlFatalWarnings            := true
-ThisBuild / tlJdkRelease               := None
+ThisBuild / tlJdkRelease               := Some(11)
 ThisBuild / projectName                := "ldbc"
 ThisBuild / scalaVersion               := scala3
 ThisBuild / crossScalaVersions         := Seq(scala3, scala38)
 ThisBuild / githubWorkflowJavaVersions := Seq(
-  JavaSpec.corretto(java11),
   JavaSpec.corretto(java17),
   JavaSpec.corretto(java21),
   JavaSpec.corretto(java25)
 )
-ThisBuild / githubWorkflowBuildMatrixExclusions += MatrixExclude(Map("java" -> s"corretto@$java11", "scala" -> scala38))
 ThisBuild / githubWorkflowBuildPreamble ++= List(dockerRun) ++ nativeBrewInstallWorkflowSteps.value
 ThisBuild / nativeBrewInstallCond := Some("matrix.project == 'ldbcNative'")
 ThisBuild / githubWorkflowAddedJobs ++= Seq(sbtScripted.value, sbtCoverageReport.value)
