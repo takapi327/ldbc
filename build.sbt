@@ -14,7 +14,7 @@ import Workflows.*
 
 ThisBuild / tlBaseVersion              := LdbcVersions.latest
 ThisBuild / tlFatalWarnings            := true
-ThisBuild / tlJdkRelease               := Some(11)
+ThisBuild / tlJdkRelease               := None
 ThisBuild / projectName                := "ldbc"
 ThisBuild / scalaVersion               := scala3
 ThisBuild / crossScalaVersions         := Seq(scala3, scala38)
