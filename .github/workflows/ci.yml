@@ -28,7 +28,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-22.04]
-        scala: [3.3.7, 3.7.4]
+        scala: [3.3.7, 3.8.3]
         java:
           - corretto@11
           - corretto@17
@@ -42,11 +42,11 @@ jobs:
             java: corretto@21
           - project: ldbcJS
             java: corretto@25
-          - scala: 3.7.4
+          - scala: 3.8.3
             java: corretto@17
-          - scala: 3.7.4
+          - scala: 3.8.3
             java: corretto@21
-          - scala: 3.7.4
+          - scala: 3.8.3
             java: corretto@25
           - project: ldbcNative
             java: corretto@17
@@ -54,6 +54,8 @@ jobs:
             java: corretto@21
           - project: ldbcNative
             java: corretto@25
+          - java: corretto@11
+            scala: 3.8.3
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
@@ -273,36 +275,6 @@ jobs:
           name: target-${{ matrix.os }}-${{ matrix.java }}-3.3.7-ldbcJVM
 
       - name: Inflate target directories (3.3.7, ldbcJVM)
-        run: |
-          tar xf targets.tar
-          rm targets.tar
-
-      - name: Download target directories (3.7.4, ldbcJS)
-        uses: actions/download-artifact@v6
-        with:
-          name: target-${{ matrix.os }}-${{ matrix.java }}-3.7.4-ldbcJS
-
-      - name: Inflate target directories (3.7.4, ldbcJS)
-        run: |
-          tar xf targets.tar
-          rm targets.tar
-
-      - name: Download target directories (3.7.4, ldbcNative)
-        uses: actions/download-artifact@v6
-        with:
-          name: target-${{ matrix.os }}-${{ matrix.java }}-3.7.4-ldbcNative
-
-      - name: Inflate target directories (3.7.4, ldbcNative)
-        run: |
-          tar xf targets.tar
-          rm targets.tar
-
-      - name: Download target directories (3.7.4, ldbcJVM)
-        uses: actions/download-artifact@v6
-        with:
-          name: target-${{ matrix.os }}-${{ matrix.java }}-3.7.4-ldbcJVM
-
-      - name: Inflate target directories (3.7.4, ldbcJVM)
         run: |
           tar xf targets.tar
           rm targets.tar
@@ -590,7 +562,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-22.04]
-        scala: [3.3.7, 3.7.4]
+        scala: [3.3.7, 3.8.3]
         java: [corretto@25]
     runs-on: ${{ matrix.os }}
     steps:
