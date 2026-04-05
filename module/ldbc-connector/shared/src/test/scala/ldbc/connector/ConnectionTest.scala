@@ -487,7 +487,7 @@ class ConnectionTest extends FTestPlatform:
 
     assertIO(
       connection.use(_.getMetaData().map(_.getDriverVersion())),
-      "ldbc-connector-0.6.0"
+      "ldbc-connector-0.7.0"
     )
   }
 

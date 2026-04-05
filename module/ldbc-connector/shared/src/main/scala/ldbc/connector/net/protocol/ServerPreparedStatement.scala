@@ -13,6 +13,7 @@ import cats.syntax.all.*
 
 import cats.effect.*
 
+import org.typelevel.otel4s.semconv.attributes.{ DbAttributes, ErrorAttributes }
 import org.typelevel.otel4s.trace.{ Span, StatusCode, Tracer }
 import org.typelevel.otel4s.Attribute
 
@@ -84,6 +85,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
         fetchSize,
         useCursorFetch,
         useServerPrepStmts,
+        BinaryColumnValueDecoder,
         resultSetType,
         resultSetConcurrency,
         Some(sql)
@@ -99,6 +101,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
         fetchSize,
         useCursorFetch,
         useServerPrepStmts,
+        BinaryColumnValueDecoder,
         resultSetType,
         resultSetConcurrency,
         Some(sql)
@@ -116,7 +119,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
     ) { (span: Span[F]) =>
       val processedSql    = telemetryConfig.processQueryText(sql)
       val queryAttributes = baseAttributes ++ List(
-        TelemetryAttribute.dbQueryText(processedSql)
+        DbAttributes.DbQueryText(processedSql)
       )
 
       withDurationMetrics(
@@ -144,12 +147,12 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
               ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags)
             )
           resultSetRow <-
-            protocol.readUntilEOF[BinaryProtocolResultSetRowPacket](
-              BinaryProtocolResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions)
+            protocol.readUntilEOF[ResultSetRowPacket](
+              binaryResultSetRowDecoder(protocol.initialPacket.capabilityFlags)
             )
           _ <- columnDefinitions.headOption match {
                  case None         => F.unit
-                 case Some(column) => span.addAttribute(TelemetryAttribute.dbCollectionName(column.table))
+                 case Some(column) => span.addAttribute(DbAttributes.DbCollectionName(column.table))
                }
           _ <- params.set(SortedMap.empty)
           resultSet = buildResultSet(columnDefinitions, resultSetRow)
@@ -173,7 +176,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
       params.get.flatMap { params =>
         val processedSql    = telemetryConfig.processQueryText(sql)
         val queryAttributes = baseAttributes ++ List(
-          TelemetryAttribute.dbQueryText(processedSql)
+          DbAttributes.DbQueryText(processedSql)
         )
 
         withDurationMetrics(
@@ -192,7 +195,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
                   F.raiseError(exception)
               case eof: EOFPacket =>
                 val exception = new SQLException("Unexpected EOF packet")
-                span.addAttribute(TelemetryAttribute.errorType(exception)) *>
+                span.addAttribute(ErrorAttributes.ErrorType(exception.getClass.getName)) *>
                   span.recordException(exception, eof.attribute) *>
                   span.setStatus(StatusCode.Error, exception.getMessage) *>
                   F.raiseError(exception)
@@ -225,7 +228,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
             protocol.resetSequenceId *>
               batchedArgs.get.flatMap { args =>
                 val batchAttributes = baseAttributes ++
-                  List(TelemetryAttribute.dbOperationName(TelemetryAttribute.SqlOperation.BATCH)) ++
+                  List(DbAttributes.DbOperationName(TelemetryAttribute.SqlOperation.BATCH)) ++
                   TelemetryAttribute.dbOperationBatchSize(args.length).toList
 
                 if args.isEmpty then F.pure(Array.empty)
@@ -252,7 +255,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
                               F.raiseError(exception)
                           case eof: EOFPacket =>
                             val exception = new SQLException("Unexpected EOF packet")
-                            span.addAttribute(TelemetryAttribute.errorType(exception)) *>
+                            span.addAttribute(ErrorAttributes.ErrorType(exception.getClass.getName)) *>
                               span.recordException(exception, eof.attribute) *>
                               span.setStatus(StatusCode.Error, exception.getMessage) *>
                               F.raiseError(exception)
@@ -268,7 +271,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
               protocol.resetSequenceId *>
                 batchedArgs.get.flatMap { args =>
                   val batchAttributes = baseAttributes ++
-                    List(TelemetryAttribute.dbOperationName(TelemetryAttribute.SqlOperation.BATCH)) ++
+                    List(DbAttributes.DbOperationName(TelemetryAttribute.SqlOperation.BATCH)) ++
                     TelemetryAttribute.dbOperationBatchSize(args.length).toList
 
                   if args.isEmpty then F.pure(Array.empty)
@@ -301,7 +304,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
                                         F.raiseError(exception)
                                     case eof: EOFPacket =>
                                       val exception = new SQLException("Unexpected EOF packet")
-                                      span.addAttribute(TelemetryAttribute.errorType(exception)) *>
+                                      span.addAttribute(ErrorAttributes.ErrorType(exception.getClass.getName)) *>
                                         span.recordException(exception, eof.attribute) *>
                                         span.setStatus(StatusCode.Error, exception.getMessage) *>
                                         F.raiseError(exception)
@@ -323,41 +326,10 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
           )
     )
 
-  override def getGeneratedKeys(): F[ResultSet[F]] =
-    autoGeneratedKeys.get.flatMap {
-      case Statement.RETURN_GENERATED_KEYS =>
-        for
-          lastInsertId <- lastInsertId.get
-          record    = ResultSetRowPacket(Array(Some(lastInsertId.toString)))
-          resultSet = ResultSetImpl(
-                        protocol,
-                        Vector(new ColumnDefinitionPacket:
-                          override def table:      String                     = ""
-                          override def name:       String                     = "GENERATED_KEYS"
-                          override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_LONGLONG
-                          override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty),
-                        Vector(record),
-                        serverVariables,
-                        protocol.initialPacket.serverVersion,
-                        resultSetClosed,
-                        fetchSize,
-                        useCursorFetch,
-                        useServerPrepStmts
-                      )
-          _ <- currentResultSet.set(Some(resultSet))
-        yield resultSet
-      case Statement.NO_GENERATED_KEYS =>
-        F.raiseError(
-          new SQLException(
-            "Generated keys not requested. You need to specify Statement.RETURN_GENERATED_KEYS to Statement.executeUpdate(), Statement.executeLargeUpdate() or Connection.prepareStatement()."
-          )
-        )
-    }
-
   override def close(): F[Unit] =
     exchange[F, Unit](TelemetrySpanName.STMT_DEALLOCATE_PREPARED) { (span: Span[F]) =>
       val closeAttributes = baseAttributes ++ List(
-        TelemetryAttribute.dbOperationName("CLOSE")
+        DbAttributes.DbOperationName("CLOSE")
       )
 
       span.addAttributes(closeAttributes*) *> protocol.resetSequenceId *> protocol.send(

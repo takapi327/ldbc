@@ -12,6 +12,9 @@ import cats.effect.std.{ Console, Env }
 import io.circe.*
 import io.circe.syntax.*
 
+import org.typelevel.otel4s.metrics.MeterProvider
+import org.typelevel.otel4s.trace.TracerProvider
+
 import ldbc.dsl.*
 
 import ldbc.connector.*
@@ -86,6 +89,8 @@ object Main extends ResourceApp.Forever:
                   })
       config = MySQLConfig.default.setHost(hostname).setUser(username).setDatabase("world").setSSL(SSL.Trusted)
       plugin = AwsIamAuthenticationPlugin.default[IO]("ap-northeast-1", hostname, username)
+      given TracerProvider[IO] = TracerProvider.noop[IO]
+      given MeterProvider[IO]  = MeterProvider.noop[IO]
       datasource <- MySQLDataSource.pooling[IO](config, plugins = List(plugin))
       connector = Connector.fromDataSource(datasource, Some(logHandler))
       _ <- EmberServerBuilder

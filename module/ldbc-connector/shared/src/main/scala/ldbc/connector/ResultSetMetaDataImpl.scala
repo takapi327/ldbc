@@ -49,7 +49,7 @@ private[ldbc] class ResultSetMetaDataImpl(
     else ResultSetMetaData.columnNullable
 
   override def isSigned(column: Int): Boolean =
-    unsafeFindByIndex(column).flags.contains(ColumnDefinitionFlags.UNSIGNED_FLAG)
+    !unsafeFindByIndex(column).flags.contains(ColumnDefinitionFlags.UNSIGNED_FLAG)
 
   override def getColumnDisplaySize(column: Int): Int = clampedGetLength(unsafeFindByIndex(column))
 
