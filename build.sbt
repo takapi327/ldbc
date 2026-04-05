@@ -16,13 +16,14 @@ ThisBuild / tlBaseVersion              := LdbcVersions.latest
 ThisBuild / tlFatalWarnings            := true
 ThisBuild / projectName                := "ldbc"
 ThisBuild / scalaVersion               := scala3
-ThisBuild / crossScalaVersions         := Seq(scala3, scala37)
+ThisBuild / crossScalaVersions         := Seq(scala3, scala38)
 ThisBuild / githubWorkflowJavaVersions := Seq(
   JavaSpec.corretto(java11),
   JavaSpec.corretto(java17),
   JavaSpec.corretto(java21),
   JavaSpec.corretto(java25)
 )
+ThisBuild / githubWorkflowBuildMatrixExclusions += MatrixExclude(Map("java" -> s"corretto@$java11", "scala" -> scala38))
 ThisBuild / githubWorkflowBuildPreamble ++= List(dockerRun) ++ nativeBrewInstallWorkflowSteps.value
 ThisBuild / nativeBrewInstallCond := Some("matrix.project == 'ldbcNative'")
 ThisBuild / githubWorkflowAddedJobs ++= Seq(sbtScripted.value, sbtCoverageReport.value)
@@ -224,7 +225,7 @@ lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
   .in(file("tests"))
   .settings(
-    crossScalaVersions                      := Seq(scala3, scala37),
+    crossScalaVersions                      := Seq(scala3, scala38),
     name                                    := "tests",
     description                             := "Projects for testing",
     libraryDependencies += "org.typelevel" %%% "munit-cats-effect" % "2.1.0",
