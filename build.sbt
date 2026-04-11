@@ -14,11 +14,11 @@ import Workflows.*
 
 ThisBuild / tlBaseVersion              := LdbcVersions.latest
 ThisBuild / tlFatalWarnings            := true
+ThisBuild / tlJdkRelease               := None
 ThisBuild / projectName                := "ldbc"
 ThisBuild / scalaVersion               := scala3
-ThisBuild / crossScalaVersions         := Seq(scala3, scala37)
+ThisBuild / crossScalaVersions         := Seq(scala3, scala38)
 ThisBuild / githubWorkflowJavaVersions := Seq(
-  JavaSpec.corretto(java11),
   JavaSpec.corretto(java17),
   JavaSpec.corretto(java21),
   JavaSpec.corretto(java25)
@@ -154,16 +154,29 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     scalacOptions += "-Ykind-projector:underscores",
     libraryDependencies ++= Seq(
-      "co.fs2"        %%% "fs2-core"            % "3.13.0",
-      "co.fs2"        %%% "fs2-io"              % "3.13.0",
-      "org.scodec"    %%% "scodec-bits"         % "1.2.4",
-      "org.scodec"    %%% "scodec-core"         % "2.3.1",
-      "org.scodec"    %%% "scodec-cats"         % "1.3.0-RC1",
-      "org.typelevel" %%% "otel4s-core-trace"   % "0.16.0-M1",
-      "org.typelevel" %%% "otel4s-core-metrics" % "0.16.0-M1",
-      "org.typelevel" %%% "twiddles-core"       % "0.9.0",
-      "org.typelevel" %%% "munit-cats-effect"   % "2.2.0" % Test
-    )
+      "co.fs2"        %%% "fs2-core"                            % "3.13.0",
+      "co.fs2"        %%% "fs2-io"                              % "3.13.0",
+      "org.scodec"    %%% "scodec-bits"                         % "1.2.4",
+      "org.scodec"    %%% "scodec-core"                         % "2.3.1",
+      "org.scodec"    %%% "scodec-cats"                         % "1.3.0-RC1",
+      "org.typelevel" %%% "otel4s-core-trace"                   % "0.16.0-M1",
+      "org.typelevel" %%% "otel4s-core-metrics"                 % "0.16.0-M1",
+      "org.typelevel" %%% "otel4s-semconv"                      % "0.16.0-M1",
+      "org.typelevel" %%% "otel4s-semconv-experimental"         % "0.16.0-M1",
+      "org.typelevel" %%% "otel4s-semconv-metrics"              % "0.16.0-M1",
+      "org.typelevel" %%% "otel4s-semconv-metrics-experimental" % "0.16.0-M1",
+      "org.typelevel" %%% "twiddles-core"                       % "0.9.0",
+      "org.typelevel" %%% "munit-cats-effect"                   % "2.2.0"  % Test,
+      "org.typelevel" %%% "otel4s-sdk-testkit"                  % "0.17.0" % Test
+    ),
+    (Compile / sourceGenerators) += Def.task {
+      Generator.version(
+        version      = version.value,
+        scalaVersion = scalaVersion.value,
+        sbtVersion   = sbtVersion.value,
+        dir          = (Compile / sourceManaged).value
+      )
+    }.taskValue
   )
   .jsSettings(
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
@@ -221,7 +234,7 @@ lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
   .in(file("tests"))
   .settings(
-    crossScalaVersions                      := Seq(scala3, scala37),
+    crossScalaVersions                      := Seq(scala3, scala38),
     name                                    := "tests",
     description                             := "Projects for testing",
     libraryDependencies += "org.typelevel" %%% "munit-cats-effect" % "2.2.0",
@@ -324,7 +337,7 @@ lazy val zioExample = crossProject(JVMPlatform)
   .example("zio", "ZIO example project")
   .settings(
     libraryDependencies ++= Seq(
-      "dev.zio" %% "zio-http" % "3.10.0"
+      "dev.zio" %% "zio-http" % "3.10.1"
     )
   )
   .dependsOn(connector, dsl, zioInterop)

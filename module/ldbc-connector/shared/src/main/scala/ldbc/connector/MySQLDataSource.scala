@@ -17,27 +17,29 @@ import cats.effect.std.UUIDGen
 import fs2.hashing.Hashing
 import fs2.io.net.*
 
-import org.typelevel.otel4s.metrics.Meter
-import org.typelevel.otel4s.trace.Tracer
+import org.typelevel.otel4s.metrics.*
+import org.typelevel.otel4s.trace.*
 
 import ldbc.sql.DatabaseMetaData
 
 import ldbc.connector.pool.*
 import ldbc.connector.telemetry.{ DatabaseMetrics, TelemetryConfig }
+import ldbc.connector.telemetry.TelemetryAttribute
 
 import ldbc.authentication.plugin.AuthenticationPlugin
+import ldbc.build.Version
 import ldbc.DataSource
 
 /**
  * A DataSource implementation for MySQL connections using the pure Scala MySQL wire protocol.
- * 
+ *
  * This DataSource provides connection pooling capabilities and manages MySQL connections
  * with support for SSL, authentication, prepared statements, and various connection options.
  * It also supports lifecycle hooks that can be executed before and after connection acquisition.
- * 
+ *
  * @tparam F the effect type (e.g., IO, Task) that must have Async, Network, Console, Hashing, and UUIDGen capabilities
  * @tparam A the type of value returned by the before hook
- * 
+ *
  * @param host the hostname or IP address of the MySQL server
  * @param port the port number on which the MySQL server is listening
  * @param user the username for authenticating with the MySQL server
@@ -58,7 +60,7 @@ import ldbc.DataSource
  * @param plugins Additional authentication plugins used for communication with the server
  * @param before optional hook to execute before a connection is acquired
  * @param after optional hook to execute after a connection is used
- * 
+ *
  * @example {{{
  * val dataSource = MySQLDataSource[IO, Unit](
  *   host = "localhost",
@@ -68,7 +70,7 @@ import ldbc.DataSource
  *   database = Some("mydatabase"),
  *   ssl = SSL.Trusted
  * )
- * 
+ *
  * // With lifecycle hooks
  * val dataSourceWithHooks = dataSource
  *   .withBefore(conn => IO.println("Connection acquired"))
@@ -98,11 +100,27 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
   before:                      Option[Connection[F] => F[A]]         = None,
   after:                       Option[(A, Connection[F]) => F[Unit]] = None
 ) extends DataSource[F]:
+
+  /** The OpenTelemetry tracer used for distributed tracing. Falls back to a no-op tracer if none is provided. */
   given Tracer[F] = tracer.getOrElse(Tracer.noop[F])
 
+  /**
+   * A mutable reference holding the cached [[DatabaseMetrics]] instance.
+   *
+   * The metrics instance is created lazily on first use and reused across all connections
+   * to avoid unnecessary allocations.
+   */
   private val databaseMetricsRef: Ref[F, Option[DatabaseMetrics[F]]] =
     Ref.unsafe[F, Option[DatabaseMetrics[F]]](None)
 
+  /**
+   * Returns the cached [[DatabaseMetrics]] instance, creating it if it does not yet exist.
+   *
+   * On the first call, a new [[DatabaseMetrics]] is created from the configured [[org.typelevel.otel4s.metrics.Meter]]
+   * (or a no-op meter if none is provided) and stored in [[databaseMetricsRef]] for subsequent calls.
+   *
+   * @return a [[cats.effect.Resource]] providing the shared [[DatabaseMetrics]] instance
+   */
   private def getOrCreateDatabaseMetrics: Resource[F, DatabaseMetrics[F]] =
     Resource.eval(databaseMetricsRef.get).flatMap {
       case Some(cached) => Resource.pure(cached)
@@ -316,7 +334,7 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
     copy(useServerPrepStmts = newUseServerPrepStmts)
 
   /** Sets the maximum allowed packet size for network communication.
-   * 
+   *
    * @param maxAllowedPacket the maximum packet size in bytes (1,024 to 16,777,215)
    * @return a new MySQLDataSource with the updated packet size limit
    * @throws IllegalArgumentException if the value is outside the valid range
@@ -343,7 +361,7 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
 
   /**
    * Sets whether to authentication plugin to be used for communication with the server.
-   * 
+   *
    * @param p1
    *   The authentication plugin used for communication with the server
    * @param pn
@@ -355,10 +373,10 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
 
   /**
    * Adds a before hook that will be executed when a connection is acquired.
-   * 
+   *
    * The before hook receives the connection and can perform initialization tasks
    * or return a value that will be passed to the after hook.
-   * 
+   *
    * @tparam B the type of value returned by the before hook
    * @param before the function to execute before using a connection
    * @return a new MySQLDataSource with the before hook configured
@@ -387,10 +405,10 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
 
   /**
    * Adds an after hook that will be executed when a connection is released.
-   * 
+   *
    * The after hook receives the value returned by the before hook (if any) and
    * the connection, allowing cleanup or finalization tasks.
-   * 
+   *
    * @param after the function to execute after using a connection
    * @return a new MySQLDataSource with the after hook configured
    */
@@ -399,17 +417,17 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
 
   /**
    * Adds both before and after hooks for connection lifecycle management.
-   * 
+   *
    * This is a convenience method that combines withBefore and withAfter, allowing
    * you to set up both hooks in a single call. The before hook is executed when
    * a connection is acquired, and the after hook is executed when it's released.
-   * 
+   *
    * @tparam B the type of value returned by the before hook
    * @param before the function to execute before using a connection
    * @param after the function to execute after using a connection
    * @return a new MySQLDataSource with both hooks configured
-   * 
-   * @example {{{  
+   *
+   * @example {{{
    * val dataSourceWithHooks = dataSource.withBeforeAfter(
    *   before = conn => IO.println("Starting transaction").as(System.currentTimeMillis),
    *   after = (startTime, conn) => IO.println(s"Completed in ${System.currentTimeMillis - startTime}ms")
@@ -448,10 +466,10 @@ object MySQLDataSource:
 
   /**
    * Creates a MySQLDataSource from a MySQLConfig instance.
-   * 
+   *
    * This factory method simplifies DataSource creation by using a pre-configured
    * MySQLConfig object containing all connection parameters.
-   * 
+   *
    * @tparam F the effect type with required type class instances
    * @param config the MySQLConfig containing connection parameters
    * @return a new MySQLDataSource configured according to the provided config
@@ -476,13 +494,13 @@ object MySQLDataSource:
 
   /**
    * Creates a MySQLDataSource with default configuration.
-   * 
+   *
    * Uses the default MySQLConfig which connects to:
    * - host: "127.0.0.1"
    * - port: 3306
    * - user: "root"
    * - no password
-   * 
+   *
    * @tparam F the effect type with required type class instances
    * @return a new MySQLDataSource with default settings
    */
@@ -491,17 +509,17 @@ object MySQLDataSource:
 
   /**
    * Creates a MySQLDataSource with minimal required parameters.
-   * 
+   *
    * This is a convenience factory method for creating a DataSource with just
    * the essential connection parameters. Other settings will use their defaults.
-   * 
+   *
    * @tparam F the effect type with required type class instances
    * @param host the hostname or IP address of the MySQL server
    * @param port the port number on which the MySQL server is listening
    * @param user the username for authenticating with the MySQL server
    * @return a new MySQLDataSource with the specified parameters
-   * 
-   * @example {{{  
+   *
+   * @example {{{
    * val dataSource = MySQLDataSource.build[IO](
    *   host = "localhost",
    *   port = 3306,
@@ -521,12 +539,69 @@ object MySQLDataSource:
     )
 
   /**
+   * Creates a MySQLDataSource with OpenTelemetry tracing and metrics enabled.
+   *
+   * This factory method acquires a [[org.typelevel.otel4s.trace.Tracer]] and a
+   * [[org.typelevel.otel4s.metrics.Meter]] from the implicit [[org.typelevel.otel4s.trace.TracerProvider]]
+   * and [[org.typelevel.otel4s.metrics.MeterProvider]] in scope, then constructs a
+   * [[MySQLDataSource]] configured to emit distributed traces and OpenTelemetry metrics
+   * for every database operation.
+   *
+   * Both the tracer and the meter are registered under the `"ldbc"` instrumentation scope
+   * with the current library version and the OpenTelemetry semantic-convention schema URL.
+   *
+   * @tparam F the effect type, requiring [[cats.effect.Async]], [[fs2.io.net.Network]],
+   *           [[cats.effect.std.Console]], [[cats.effect.std.Hashing]],
+   *           [[cats.effect.std.UUIDGen]], [[org.typelevel.otel4s.trace.TracerProvider]],
+   *           and [[org.typelevel.otel4s.metrics.MeterProvider]]
+   * @param config the [[MySQLConfig]] holding host, port, credentials, and other connection settings
+   * @return an effect that resolves to a [[MySQLDataSource]] with tracing and metrics enabled
+   *
+   * @example {{{
+   * import org.typelevel.otel4s.trace.TracerProvider
+   * import org.typelevel.otel4s.metrics.MeterProvider
+   *
+   * // Given TracerProvider[IO] and MeterProvider[IO] in scope:
+   * val dataSource: IO[MySQLDataSource[IO, Unit]] =
+   *   MySQLDataSource.withTraced[IO](MySQLConfig.default)
+   * }}}
+   */
+  def withTraced[F[_]: Async: Network: Console: Hashing: UUIDGen: TracerProvider: MeterProvider](
+    config: MySQLConfig
+  ): F[MySQLDataSource[F, Unit]] =
+    for
+      tracer <- TracerProvider[F].tracer("ldbc").withVersion(Version.current).get
+      meter  <- MeterProvider[F]
+                 .meter("ldbc")
+                 .withVersion(Version.current)
+                 .withSchemaUrl(TelemetryAttribute.SCHEMA_URL_VALUE)
+                 .get
+    yield MySQLDataSource(
+      host                    = config.host,
+      port                    = config.port,
+      user                    = config.user,
+      password                = config.password,
+      database                = config.database,
+      debug                   = config.debug,
+      ssl                     = config.ssl,
+      socketOptions           = config.socketOptions,
+      readTimeout             = config.readTimeout,
+      allowPublicKeyRetrieval = config.allowPublicKeyRetrieval,
+      databaseTerm            = config.databaseTerm,
+      tracer                  = Some(tracer),
+      useCursorFetch          = config.useCursorFetch,
+      useServerPrepStmts      = config.useServerPrepStmts,
+      maxAllowedPacket        = config.maxAllowedPacket,
+      meter                   = Some(meter)
+    )
+
+  /**
    * Creates a pooled DataSource from a MySQL configuration.
-   * 
+   *
    * This factory method creates a connection pool that manages multiple MySQL connections,
    * providing efficient connection reuse and automatic connection lifecycle management.
    * The pool implements various optimization strategies including:
-   * 
+   *
    * - Connection pooling with configurable min/max sizes
    * - Automatic connection validation and health checks
    * - Connection timeout and idle timeout management
@@ -534,16 +609,15 @@ object MySQLDataSource:
    * - Background maintenance tasks for pool health
    * - Optional adaptive sizing based on load patterns
    * - Comprehensive metrics tracking
-   * 
+   *
    * The returned Resource ensures proper pool initialization and shutdown. When the
    * resource is released, all connections are closed and background tasks are cancelled.
-   * 
+   *
    * @param config the MySQL configuration containing pool settings
    * @param metricsTracker optional tracker for pool metrics (defaults to in-memory)
-   * @param tracer optional OpenTelemetry tracer for distributed tracing (defaults to no-op tracer)
    * @tparam F the effect type with required type class instances
    * @return a Resource managing the pooled data source lifecycle
-   * 
+   *
    * @example {{{
    * val poolConfig = MySQLConfig.default
    *   .setHost("localhost")
@@ -554,7 +628,7 @@ object MySQLDataSource:
    *   .setMinConnections(5)
    *   .setMaxConnections(20)
    *   .setConnectionTimeout(30.seconds)
-   * 
+   *
    * MySQLDataSource.pooling[IO](poolConfig).use { pool =>
    *   pool.getConnection.use { conn =>
    *     // Use connection
@@ -562,38 +636,44 @@ object MySQLDataSource:
    * }
    * }}}
    */
-  def pooling[F[_]: Async: Network: Console: Hashing: UUIDGen](
+  def pooling[F[_]: Async: Network: Console: Hashing: UUIDGen: TracerProvider: MeterProvider](
     config:          MySQLConfig,
     metricsTracker:  Option[PoolMetricsTracker[F]] = None,
-    meter:           Option[Meter[F]] = None,
-    tracer:          Option[Tracer[F]] = None,
     plugins:         List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
     telemetryConfig: TelemetryConfig = TelemetryConfig.default
   ): Resource[F, PooledDataSource[F]] =
-    PooledDataSource.fromConfig(config, metricsTracker, meter, tracer, plugins, telemetryConfig)
+    for
+      tracer <- Resource.eval(TracerProvider[F].tracer("ldbc").withVersion(Version.current).get)
+      meter  <- Resource.eval(
+                 MeterProvider[F]
+                   .meter("ldbc")
+                   .withVersion(Version.current)
+                   .withSchemaUrl(TelemetryAttribute.SCHEMA_URL_VALUE)
+                   .get
+               )
+      pool <- PooledDataSource.fromConfig(config, metricsTracker, Some(meter), Some(tracer), plugins, telemetryConfig)
+    yield pool
 
   /**
    * Creates a pooled DataSource with connection lifecycle hooks.
-   * 
+   *
    * This variant of the pooling factory method allows you to specify callbacks that
    * will be executed before and after each connection is acquired from the pool.
    * This is particularly useful for:
-   * 
+   *
    * - Setting session-specific variables or configuration
    * - Implementing connection-level auditing or logging
    * - Preparing the connection state before use
    * - Cleaning up resources after connection use
    * - Implementing custom connection validation logic
-   * 
+   *
    * The before hook is called after a connection is acquired from the pool but before
    * it's returned to the client. The after hook is called when the connection is
    * returned to the pool. These hooks are executed for every connection acquisition,
    * not just when new connections are created.
-   * 
+   *
    * @param config the MySQL configuration containing pool settings
    * @param metricsTracker optional tracker for pool metrics (defaults to in-memory)
-   * @param tracer optional OpenTelemetry tracer for distributed tracing (defaults to no-op tracer)
-   * @param before optional callback executed when acquiring a connection from the pool
    * @param after optional callback executed when returning a connection to the pool
    * @tparam F the effect type with required type class instances
    * @tparam A the type returned by the before callback and passed to after
@@ -621,23 +701,31 @@ object MySQLDataSource:
    * }
    * }}}
    */
-  def poolingWithBeforeAfter[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
+  def poolingWithBeforeAfter[F[_]: Async: Network: Console: Hashing: UUIDGen: TracerProvider: MeterProvider, A](
     config:          MySQLConfig,
     metricsTracker:  Option[PoolMetricsTracker[F]] = None,
-    meter:           Option[Meter[F]] = None,
-    tracer:          Option[Tracer[F]] = None,
     plugins:         List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
     telemetryConfig: TelemetryConfig = TelemetryConfig.default,
     before:          Option[Connection[F] => F[A]] = None,
     after:           Option[(A, Connection[F]) => F[Unit]] = None
   ): Resource[F, PooledDataSource[F]] =
-    PooledDataSource.fromConfigWithBeforeAfter(
-      config,
-      metricsTracker,
-      meter,
-      tracer,
-      plugins,
-      telemetryConfig,
-      before,
-      after
-    )
+    for
+      tracer <- Resource.eval(TracerProvider[F].tracer("ldbc").withVersion(Version.current).get)
+      meter  <- Resource.eval(
+                 MeterProvider[F]
+                   .meter("ldbc")
+                   .withVersion(Version.current)
+                   .withSchemaUrl(TelemetryAttribute.SCHEMA_URL_VALUE)
+                   .get
+               )
+      pool <- PooledDataSource.fromConfigWithBeforeAfter(
+                config,
+                metricsTracker,
+                Some(meter),
+                Some(tracer),
+                plugins,
+                telemetryConfig,
+                before,
+                after
+              )
+    yield pool
