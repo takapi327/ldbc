@@ -42,13 +42,15 @@ ThisBuild / mimaBinaryIssueFilters ++= List(
     "ldbc.connector.net.packet.response.BinaryProtocolResultSetRowPacket.decodeValue"
   )
 )
+// for Otel4s
+ThisBuild / resolvers += Resolver.sonatypeCentralSnapshots
 
 lazy val sql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("sql", "JDBC API wrapped project with Effect System")
   .platformsSettings(JSPlatform, NativePlatform)(
     libraryDependencies ++= Seq(
-      "io.github.cquiroz" %%% "scala-java-time" % "2.5.0"
+      "io.github.cquiroz" %%% "scala-java-time" % "2.6.0"
     )
   )
 
@@ -57,8 +59,8 @@ lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .module("core", "Core project for ldbc")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-free"   % "2.10.0",
-      "org.typelevel" %%% "cats-effect" % "3.6.2"
+      "org.typelevel" %%% "cats-free"   % "2.13.0",
+      "org.typelevel" %%% "cats-effect" % "3.7.0"
     )
   )
   .dependsOn(sql)
@@ -68,9 +70,9 @@ lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .module("dsl", "Projects that provide a way to connect to the database")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "twiddles-core"     % "0.8.0",
-      "co.fs2"        %%% "fs2-core"          % "3.12.2",
-      "org.typelevel" %%% "munit-cats-effect" % "2.1.0" % Test
+      "org.typelevel" %%% "twiddles-core"     % "0.9.0",
+      "co.fs2"        %%% "fs2-core"          % "3.13.0",
+      "org.typelevel" %%% "munit-cats-effect" % "2.2.0" % Test
     )
   )
   .dependsOn(core)
@@ -106,10 +108,10 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .module("codegen", "Project to generate code from Sql")
   .settings(
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.3.0",
-      "io.circe"               %%% "circe-core"               % "0.14.8",
-      "org.virtuslab"          %%% "scala-yaml"               % "0.0.7",
-      "org.typelevel"          %%% "munit-cats-effect"        % "2.1.0" % Test
+      "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.4.0",
+      "io.circe"               %%% "circe-core"               % "0.14.15",
+      "org.virtuslab"          %%% "scala-yaml"               % "0.3.1",
+      "org.typelevel"          %%% "munit-cats-effect"        % "2.2.0" % Test
     )
   )
   .jvmSettings(
@@ -136,8 +138,8 @@ lazy val authenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativePlat
   .module("authentication-plugin", "MySQL authentication plugin written in pure Scala3")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-core"   % "2.10.0",
-      "org.scodec"    %%% "scodec-bits" % "1.1.38"
+      "org.typelevel" %%% "cats-core"   % "2.12.0",
+      "org.scodec"    %%% "scodec-bits" % "1.2.4"
     )
   )
   .jsSettings(
@@ -152,19 +154,19 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     scalacOptions += "-Ykind-projector:underscores",
     libraryDependencies ++= Seq(
-      "co.fs2"        %%% "fs2-core"                            % "3.12.2",
-      "co.fs2"        %%% "fs2-io"                              % "3.12.2",
-      "org.scodec"    %%% "scodec-bits"                         % "1.1.38",
-      "org.scodec"    %%% "scodec-core"                         % "2.2.2",
-      "org.scodec"    %%% "scodec-cats"                         % "1.2.0",
-      "org.typelevel" %%% "otel4s-core-trace"                   % "0.15.2",
-      "org.typelevel" %%% "otel4s-core-metrics"                 % "0.15.2",
-      "org.typelevel" %%% "otel4s-semconv"                      % "0.15.2",
-      "org.typelevel" %%% "otel4s-semconv-experimental"         % "0.15.2",
-      "org.typelevel" %%% "otel4s-semconv-metrics"              % "0.15.2",
-      "org.typelevel" %%% "otel4s-semconv-metrics-experimental" % "0.15.2",
-      "org.typelevel" %%% "twiddles-core"                       % "0.8.0",
-      "org.typelevel" %%% "munit-cats-effect"                   % "2.1.0"  % Test,
+      "co.fs2"        %%% "fs2-core"                            % "3.13.0",
+      "co.fs2"        %%% "fs2-io"                              % "3.13.0",
+      "org.scodec"    %%% "scodec-bits"                         % "1.2.4",
+      "org.scodec"    %%% "scodec-core"                         % "2.3.1",
+      "org.scodec"    %%% "scodec-cats"                         % "1.3.0-RC1",
+      "org.typelevel" %%% "otel4s-core-trace"                   % "0.16.0-M1",
+      "org.typelevel" %%% "otel4s-core-metrics"                 % "0.16.0-M1",
+      "org.typelevel" %%% "otel4s-semconv"                      % "0.16.0-M1",
+      "org.typelevel" %%% "otel4s-semconv-experimental"         % "0.16.0-M1",
+      "org.typelevel" %%% "otel4s-semconv-metrics"              % "0.16.0-M1",
+      "org.typelevel" %%% "otel4s-semconv-metrics-experimental" % "0.16.0-M1",
+      "org.typelevel" %%% "twiddles-core"                       % "0.9.0",
+      "org.typelevel" %%% "munit-cats-effect"                   % "2.2.0"  % Test,
       "org.typelevel" %%% "otel4s-sdk-testkit"                  % "0.17.0" % Test
     ),
     (Compile / sourceGenerators) += Def.task {
@@ -188,10 +190,10 @@ lazy val awsAuthenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativeP
   .module("aws-authentication-plugin", "Project for the plugin used with Aurora IAM authentication")
   .settings(
     libraryDependencies ++= Seq(
-      "co.fs2"            %%% "fs2-core"          % "3.12.2",
-      "co.fs2"            %%% "fs2-io"            % "3.12.2",
-      "io.github.cquiroz" %%% "scala-java-time"   % "2.5.0",
-      "org.typelevel"     %%% "munit-cats-effect" % "2.1.0" % Test
+      "co.fs2"            %%% "fs2-core"          % "3.13.0",
+      "co.fs2"            %%% "fs2-io"            % "3.13.0",
+      "io.github.cquiroz" %%% "scala-java-time"   % "2.6.0",
+      "org.typelevel"     %%% "munit-cats-effect" % "2.2.0" % Test
     )
   )
   .jsSettings(
@@ -235,7 +237,7 @@ lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     crossScalaVersions                      := Seq(scala3, scala38),
     name                                    := "tests",
     description                             := "Projects for testing",
-    libraryDependencies += "org.typelevel" %%% "munit-cats-effect" % "2.1.0",
+    libraryDependencies += "org.typelevel" %%% "munit-cats-effect" % "2.2.0",
     Test / unmanagedSourceDirectories ++= {
       val sourceDir = (Test / sourceDirectory).value
       CrossVersion.partialVersion(scalaVersion.value) match {
@@ -315,7 +317,7 @@ lazy val otelExample = crossProject(JVMPlatform)
   .example("otel", "OpenTelemetry example project")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel"   %% "otel4s-oteljava"                           % "0.15.2",
+      "org.typelevel"   %% "otel4s-oteljava"                           % "0.16.0-M1",
       "io.opentelemetry" % "opentelemetry-exporter-otlp"               % "1.60.1" % Runtime,
       "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.60.1" % Runtime
     )

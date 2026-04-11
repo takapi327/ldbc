@@ -14,6 +14,7 @@ import javax.net.ssl.SSLContext
 
 import cats.effect.*
 
+import fs2.io.file.Path
 import fs2.io.net.Network
 
 class SSLPlatformTest extends FTestPlatform:
@@ -34,7 +35,7 @@ class SSLPlatformTest extends FTestPlatform:
   test("SSL.fromKeyStoreFile") {
     val classLoader   = getClass.getClassLoader
     val resource      = classLoader.getResource("keystore.jks")
-    val keyStorePath  = Paths.get(resource.toURI)
+    val keyStorePath  = Path.fromNioPath(Paths.get(resource.toURI))
     val storePassword = "password".toCharArray
     val keyPassword   = "password".toCharArray
 
