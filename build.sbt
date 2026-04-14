@@ -215,6 +215,11 @@ lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
 lazy val testkit = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("testkit", "Core test utilities for ldbc users")
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel" %%% "munit-cats-effect" % "2.1.0" % Test
+    )
+  )
   .jsSettings(
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
   )
@@ -235,7 +240,7 @@ lazy val testkitMunit = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
   .nativeSettings(Test / nativeBrewFormulas += "s2n")
-  .dependsOn(testkit)
+  .dependsOn(testkit, dsl % Test)
 
 lazy val zioInterop = crossProject(JVMPlatform, JSPlatform)
   .crossType(CrossType.Pure)
