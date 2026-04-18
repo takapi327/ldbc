@@ -19,7 +19,7 @@ import ldbc.sql.Connection
 private[testkit] class TestConnection[F[_]: Applicative](underlying: Connection[F])
   extends Connection[F]:
 
-  export underlying.*
+  export underlying.{ commit as _, setAutoCommit as _, * }
 
   // Prevent actual commits so the test transaction can be rolled back
   override def commit(): F[Unit] = Applicative[F].unit

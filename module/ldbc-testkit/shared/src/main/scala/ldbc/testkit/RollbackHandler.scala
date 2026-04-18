@@ -6,6 +6,8 @@
 
 package ldbc.testkit
 
+import cats.syntax.functor.*
+
 import cats.effect.kernel.{ Async, Resource }
 
 import ldbc.Connector
