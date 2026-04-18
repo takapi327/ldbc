@@ -213,7 +213,7 @@ lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
   }.taskValue)
 
 lazy val testkit = crossProject(JVMPlatform, JSPlatform, NativePlatform)
-  .crossType(CrossType.Pure)
+  .crossType(CrossType.Full)
   .module("testkit", "Core test utilities for ldbc users")
   .settings(
     libraryDependencies ++= Seq(
@@ -228,7 +228,7 @@ lazy val testkit = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .dependsOn(connector)
 
 lazy val testkitMunit = crossProject(JVMPlatform, JSPlatform, NativePlatform)
-  .crossType(CrossType.Pure)
+  .crossType(CrossType.Full)
   .module("testkit-munit", "MUnit integration for ldbc-testkit")
   .settings(
     libraryDependencies ++= Seq(
@@ -384,6 +384,13 @@ lazy val awsIamAuthExample = crossProject(JVMPlatform)
   )
   .dependsOn(connector, awsAuthenticationPlugin, dsl)
 
+lazy val testkitExample = crossProject(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .withoutSuffixFor(JVMPlatform)
+  .example("testkit", "ldbc-testkit usage example")
+  .settings(name := "testkit-example")
+  .dependsOn(connector, dsl, testkitMunit)
+
 lazy val docs = (project in file("docs"))
   .settings(
     description              := "Documentation for ldbc",
@@ -487,7 +494,8 @@ lazy val examples = Seq(
   hikariCPExample,
   otelExample,
   zioExample,
-  awsIamAuthExample
+  awsIamAuthExample,
+  testkitExample
 )
 
 lazy val ldbc = tlCrossRootProject
