@@ -36,9 +36,7 @@ class UserRepositoryTest extends LdbcSuite:
         name  VARCHAR(255) NOT NULL,
         email VARCHAR(255) NOT NULL UNIQUE
       )""".update.commit(connector).void
-    )(_ =>
-      sql"DROP TABLE IF EXISTS users".update.commit(connector).void
-    )
+    )(_ => sql"DROP TABLE IF EXISTS users".update.commit(connector).void)
   )
 
   override def munitFixtures = List(tableFixture)

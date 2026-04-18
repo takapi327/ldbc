@@ -35,9 +35,7 @@ class RollbackHandlerTest extends LdbcSuite:
       sql"CREATE TABLE ldbc_rollback_handler_test (id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, value VARCHAR(255) NOT NULL)".update
         .commit(connector)
         .void
-    )(_ =>
-      sql"DROP TABLE IF EXISTS ldbc_rollback_handler_test".update.commit(connector).void
-    )
+    )(_ => sql"DROP TABLE IF EXISTS ldbc_rollback_handler_test".update.commit(connector).void)
   )
 
   override def munitFixtures = List(tableFixture)
