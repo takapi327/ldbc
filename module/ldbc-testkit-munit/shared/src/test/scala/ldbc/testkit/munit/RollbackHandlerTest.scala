@@ -13,7 +13,7 @@ import munit.*
 
 import ldbc.dsl.*
 
-import ldbc.connector.{ Connector as LdbcConnector, MySQLDataSource, SSL }
+import ldbc.connector.{ MySQLDataSource, SSL }
 
 import ldbc.testkit.RollbackHandler
 
@@ -32,16 +32,11 @@ class RollbackHandlerTest extends LdbcSuite:
   private val tableFixture = ResourceSuiteLocalFixture(
     "table-setup",
     Resource.make(
-      dataSource.getConnection.use { conn =>
-        sql"CREATE TABLE ldbc_rollback_handler_test (id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, value VARCHAR(255) NOT NULL)".update
-          .commit(LdbcConnector.fromConnection(conn))
-      }
+      sql"CREATE TABLE ldbc_rollback_handler_test (id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, value VARCHAR(255) NOT NULL)".update
+        .commit(connector)
+        .void
     )(_ =>
-      dataSource.getConnection.use { conn =>
-        sql"DROP TABLE IF EXISTS ldbc_rollback_handler_test".update
-          .commit(LdbcConnector.fromConnection(conn))
-          .void
-      }
+      sql"DROP TABLE IF EXISTS ldbc_rollback_handler_test".update.commit(connector).void
     )
   )
 
@@ -53,12 +48,10 @@ class RollbackHandlerTest extends LdbcSuite:
              sql"INSERT INTO ldbc_rollback_handler_test (value) VALUES ('ephemeral')".update
                .commit(connector)
            }
-      count <- dataSource.getConnection.use { conn =>
-                 sql"SELECT COUNT(*) FROM ldbc_rollback_handler_test WHERE value = 'ephemeral'"
-                   .query[Int]
-                   .to[Option]
-                   .readOnly(LdbcConnector.fromConnection(conn))
-               }
+      count <- sql"SELECT COUNT(*) FROM ldbc_rollback_handler_test WHERE value = 'ephemeral'"
+                 .query[Int]
+                 .to[Option]
+                 .readOnly(connector)
     yield assertEquals(count, Some(0))
   }
 
@@ -72,12 +65,10 @@ class RollbackHandlerTest extends LdbcSuite:
                  IO.raiseError(new RuntimeException("intentional error"))
              }
              .attempt
-      count <- dataSource.getConnection.use { conn =>
-                 sql"SELECT COUNT(*) FROM ldbc_rollback_handler_test WHERE value = 'ephemeral_error'"
-                   .query[Int]
-                   .to[Option]
-                   .readOnly(LdbcConnector.fromConnection(conn))
-               }
+      count <- sql"SELECT COUNT(*) FROM ldbc_rollback_handler_test WHERE value = 'ephemeral_error'"
+                 .query[Int]
+                 .to[Option]
+                 .readOnly(connector)
     yield assertEquals(count, Some(0))
   }
 

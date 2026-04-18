@@ -50,6 +50,12 @@ trait LdbcSuite extends CatsEffectSuite:
   def dataSource: MySQLDataSource[IO, Unit]
 
   /**
+   * A [[Connector]] backed by [[dataSource]].
+   * Each SQL operation acquires its own connection automatically.
+   */
+  def connector: Connector[IO] = LdbcConnector.fromDataSource(dataSource)
+
+  /**
    * Registers a test that runs inside a transaction which is automatically rolled back
    * on completion, regardless of success or failure.
    *

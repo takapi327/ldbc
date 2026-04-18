@@ -11,7 +11,7 @@ import cats.effect.IO
 
 import ldbc.dsl.*
 
-import ldbc.connector.{ Connector, MySQLDataSource, SSL }
+import ldbc.connector.{ MySQLDataSource, SSL }
 
 import ldbc.testkit.munit.*
 
@@ -31,19 +31,13 @@ class UserRepositoryTest extends LdbcSuite:
   private val tableFixture = ResourceSuiteLocalFixture(
     "users-table",
     Resource.make(
-      dataSource.getConnection.use { conn =>
-        sql"""CREATE TABLE users (
-          id    BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
-          name  VARCHAR(255) NOT NULL,
-          email VARCHAR(255) NOT NULL UNIQUE
-        )""".update.commit(Connector.fromConnection(conn))
-      }
+      sql"""CREATE TABLE users (
+        id    BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        name  VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL UNIQUE
+      )""".update.commit(connector).void
     )(_ =>
-      dataSource.getConnection.use { conn =>
-        sql"DROP TABLE IF EXISTS users".update
-          .commit(Connector.fromConnection(conn))
-          .void
-      }
+      sql"DROP TABLE IF EXISTS users".update.commit(connector).void
     )
   )
 
