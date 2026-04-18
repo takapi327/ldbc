@@ -83,9 +83,7 @@ trait LdbcSuite extends CatsEffectSuite:
    */
   def persistentTest(name: String)(body: Connector[IO] => IO[Unit]): Unit =
     test(name) {
-      dataSource.getConnection.use { connection =>
-        body(LdbcConnector.fromConnection[IO](connection))
-      }
+      body(connector)
     }
 
   /**
