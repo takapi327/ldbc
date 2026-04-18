@@ -40,6 +40,7 @@ class RollbackHandlerTest extends LdbcSuite:
       dataSource.getConnection.use { conn =>
         sql"DROP TABLE IF EXISTS ldbc_rollback_handler_test".update
           .commit(LdbcConnector.fromConnection(conn))
+          .void
       }
     )
   )
