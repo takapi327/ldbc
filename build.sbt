@@ -388,7 +388,6 @@ lazy val testkitExample = crossProject(JVMPlatform)
   .crossType(CrossType.Pure)
   .withoutSuffixFor(JVMPlatform)
   .example("testkit", "ldbc-testkit usage example")
-  .settings(name := "testkit-example")
   .dependsOn(connector, dsl, testkitMunit)
 
 lazy val docs = (project in file("docs"))
