@@ -16,8 +16,7 @@ import ldbc.sql.Connection
  * Used by [[RollbackHandler]] to prevent actual database commits during tests,
  * ensuring all changes can be rolled back after each test.
  */
-private[testkit] class TestConnection[F[_]: Applicative](underlying: Connection[F])
-  extends Connection[F]:
+private[testkit] class TestConnection[F[_]: Applicative](underlying: Connection[F]) extends Connection[F]:
 
   export underlying.{ commit as _, setAutoCommit as _, * }
 

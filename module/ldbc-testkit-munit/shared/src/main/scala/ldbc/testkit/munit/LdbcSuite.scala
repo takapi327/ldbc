@@ -10,9 +10,10 @@ import cats.effect.IO
 
 import munit.CatsEffectSuite
 
-import ldbc.Connector
 import ldbc.connector.{ Connector as LdbcConnector, MySQLDataSource }
+
 import ldbc.testkit.RollbackHandler
+import ldbc.Connector
 
 /**
  * Base trait for ldbc integration tests using MUnit.

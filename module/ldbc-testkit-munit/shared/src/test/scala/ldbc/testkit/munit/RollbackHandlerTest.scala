@@ -6,8 +6,8 @@
 
 package ldbc.testkit.munit
 
-import cats.effect.IO
 import cats.effect.kernel.Resource
+import cats.effect.IO
 
 import munit.*
 
@@ -33,14 +33,12 @@ class RollbackHandlerTest extends LdbcSuite:
     "table-setup",
     Resource.make(
       dataSource.getConnection.use { conn =>
-        sql"CREATE TABLE ldbc_rollback_handler_test (id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, value VARCHAR(255) NOT NULL)"
-          .update
+        sql"CREATE TABLE ldbc_rollback_handler_test (id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, value VARCHAR(255) NOT NULL)".update
           .commit(LdbcConnector.fromConnection(conn))
       }
     )(_ =>
       dataSource.getConnection.use { conn =>
-        sql"DROP TABLE IF EXISTS ldbc_rollback_handler_test"
-          .update
+        sql"DROP TABLE IF EXISTS ldbc_rollback_handler_test".update
           .commit(LdbcConnector.fromConnection(conn))
       }
     )
@@ -51,40 +49,40 @@ class RollbackHandlerTest extends LdbcSuite:
   test("changes are rolled back on resource release") {
     for
       _ <- RollbackHandler.resource[IO](dataSource).use { connector =>
-        sql"INSERT INTO ldbc_rollback_handler_test (value) VALUES ('ephemeral')"
-          .update
-          .commit(connector)
-      }
+             sql"INSERT INTO ldbc_rollback_handler_test (value) VALUES ('ephemeral')".update
+               .commit(connector)
+           }
       count <- dataSource.getConnection.use { conn =>
-        sql"SELECT COUNT(*) FROM ldbc_rollback_handler_test WHERE value = 'ephemeral'"
-          .query[Int]
-          .to[Option]
-          .readOnly(LdbcConnector.fromConnection(conn))
-      }
+                 sql"SELECT COUNT(*) FROM ldbc_rollback_handler_test WHERE value = 'ephemeral'"
+                   .query[Int]
+                   .to[Option]
+                   .readOnly(LdbcConnector.fromConnection(conn))
+               }
     yield assertEquals(count, Some(0))
   }
 
   test("rollback occurs even when the resource body raises an error") {
     for
-      _ <- RollbackHandler.resource[IO](dataSource).use { connector =>
-        sql"INSERT INTO ldbc_rollback_handler_test (value) VALUES ('ephemeral_error')"
-          .update
-          .commit(connector) *>
-          IO.raiseError(new RuntimeException("intentional error"))
-      }.attempt
+      _ <- RollbackHandler
+             .resource[IO](dataSource)
+             .use { connector =>
+               sql"INSERT INTO ldbc_rollback_handler_test (value) VALUES ('ephemeral_error')".update
+                 .commit(connector) *>
+                 IO.raiseError(new RuntimeException("intentional error"))
+             }
+             .attempt
       count <- dataSource.getConnection.use { conn =>
-        sql"SELECT COUNT(*) FROM ldbc_rollback_handler_test WHERE value = 'ephemeral_error'"
-          .query[Int]
-          .to[Option]
-          .readOnly(LdbcConnector.fromConnection(conn))
-      }
+                 sql"SELECT COUNT(*) FROM ldbc_rollback_handler_test WHERE value = 'ephemeral_error'"
+                   .query[Int]
+                   .to[Option]
+                   .readOnly(LdbcConnector.fromConnection(conn))
+               }
     yield assertEquals(count, Some(0))
   }
 
   ephemeralTest("data inserted in ephemeralTest is visible within the test body") { connector =>
     for
-      _ <- sql"INSERT INTO ldbc_rollback_handler_test (value) VALUES ('visible_within')"
-             .update
+      _ <- sql"INSERT INTO ldbc_rollback_handler_test (value) VALUES ('visible_within')".update
              .commit(connector)
       count <- sql"SELECT COUNT(*) FROM ldbc_rollback_handler_test WHERE value = 'visible_within'"
                  .query[Int]

@@ -10,8 +10,9 @@ import cats.syntax.functor.*
 
 import cats.effect.kernel.{ Async, Resource }
 
-import ldbc.Connector
 import ldbc.connector.{ Connector as LdbcConnector, MySQLDataSource }
+
+import ldbc.Connector
 
 /**
  * Provides a [[Connector]] backed by a [[TestConnection]] that automatically rolls back
@@ -34,8 +35,10 @@ object RollbackHandler:
   def resource[F[_]: Async](dataSource: MySQLDataSource[F, ?]): Resource[F, Connector[F]] =
     dataSource.getConnection.flatMap { rawConnection =>
       Resource.make(
-        rawConnection.setAutoCommit(false).as(
-          LdbcConnector.fromConnection[F](new TestConnection[F](rawConnection))
-        )
+        rawConnection
+          .setAutoCommit(false)
+          .as(
+            LdbcConnector.fromConnection[F](new TestConnection[F](rawConnection))
+          )
       )(_ => rawConnection.rollback())
     }
