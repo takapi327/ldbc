@@ -212,6 +212,36 @@ lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
     )
   }.taskValue)
 
+lazy val testkit = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Full)
+  .module("testkit", "Core test utilities for ldbc users")
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel" %%% "munit-cats-effect" % "2.1.0" % Test
+    )
+  )
+  .jsSettings(
+    Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
+  )
+  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
+  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .dependsOn(connector)
+
+lazy val testkitMunit = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Full)
+  .module("testkit-munit", "MUnit integration for ldbc-testkit")
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel" %%% "munit-cats-effect" % "2.1.0"
+    )
+  )
+  .jsSettings(
+    Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
+  )
+  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
+  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .dependsOn(testkit, dsl % Test)
+
 lazy val zioInterop = crossProject(JVMPlatform, JSPlatform)
   .crossType(CrossType.Pure)
   .module("zio-interop", "Projects that provide a way to connect to the database for ZIO")
@@ -354,6 +384,12 @@ lazy val awsIamAuthExample = crossProject(JVMPlatform)
   )
   .dependsOn(connector, awsAuthenticationPlugin, dsl)
 
+lazy val testkitExample = crossProject(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .withoutSuffixFor(JVMPlatform)
+  .example("testkit", "ldbc-testkit usage example")
+  .dependsOn(connector, dsl, testkitMunit)
+
 lazy val docs = (project in file("docs"))
   .settings(
     description              := "Documentation for ldbc",
@@ -457,7 +493,8 @@ lazy val examples = Seq(
   hikariCPExample,
   otelExample,
   zioExample,
-  awsIamAuthExample
+  awsIamAuthExample,
+  testkitExample
 )
 
 lazy val ldbc = tlCrossRootProject
@@ -473,6 +510,8 @@ lazy val ldbc = tlCrossRootProject
     queryBuilder,
     schema,
     codegen,
+    testkit,
+    testkitMunit,
     zioInterop,
     authenticationPlugin,
     awsAuthenticationPlugin,

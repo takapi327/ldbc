@@ -126,6 +126,36 @@ val userQuery = TableQuery[UserTable]
 // userQuery.statement is generated as "SELECT id, name, email FROM user WHERE email = ?"
 ```
 
+### Testing
+
+To write integration tests for repositories that use ldbc, set the following dependencies:
+
+**ldbc-testkit** (framework-agnostic core)
+
+```scala 3
+libraryDependencies ++= Seq(
+  "@ORGANIZATION@" %% "ldbc-testkit" % "@VERSION@" % Test
+)
+```
+
+**ldbc-testkit-munit** (MUnit integration)
+
+```scala 3
+libraryDependencies ++= Seq(
+  "@ORGANIZATION@" %% "ldbc-testkit-munit" % "@VERSION@" % Test
+)
+```
+
+Both modules work on JVM, Scala.js, and Scala Native platforms:
+
+```scala 3
+libraryDependencies ++= Seq(
+  "@ORGANIZATION@" %%% "ldbc-testkit-munit" % "@VERSION@" % Test
+)
+```
+
+`ldbc-testkit-munit` provides `LdbcSuite`, a base trait that extends MUnit's `CatsEffectSuite` and offers `ephemeralTest` (auto-rollback after each test) and `persistentTest` (actual commits, for DDL).
+
 ## References
 - [How to use Query Builder](/en/tutorial/Query-Builder.md)
 - [Schema Definition Details](/en/tutorial/Schema.md)
