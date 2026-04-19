@@ -223,6 +223,33 @@ class HelperFunctionsSyntaxTest extends CatsEffectSuite with HelperFunctionsSynt
     assertEquals(sql.statement, "ORDER BY name,id")
   }
 
+  test("paginate with limit only should create LIMIT clause") {
+    val sql = paginate(20)
+    assertEquals(sql.statement, "LIMIT ?")
+    assertEquals(sql.params.size, 1)
+  }
+
+  test("paginate with limit and offset should create LIMIT OFFSET clause") {
+    val sql = paginate(20, 40)
+    assertEquals(sql.statement, "LIMIT ? OFFSET ?")
+    assertEquals(sql.params.size, 2)
+  }
+
+  test("paginate with offset 0 should omit OFFSET") {
+    val sql = paginate(20, 0)
+    assertEquals(sql.statement, "LIMIT ?")
+    assertEquals(sql.params.size, 1)
+  }
+
+  test("paginate can be chained with orderBy") {
+    val query = sql"SELECT * FROM user " ++
+      orderBy(sql"`created_at` DESC") ++
+      sql" " ++
+      paginate(20, 40)
+    assertEquals(query.statement, "SELECT * FROM user ORDER BY `created_at` DESC LIMIT ? OFFSET ?")
+    assertEquals(query.params.size, 2)
+  }
+
   test("Complex query composition using multiple helper functions") {
     val table      = sc("users")
     val conditions = List(
