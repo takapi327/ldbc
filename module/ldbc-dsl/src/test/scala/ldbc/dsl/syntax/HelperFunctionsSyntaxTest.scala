@@ -144,6 +144,30 @@ class HelperFunctionsSyntaxTest extends CatsEffectSuite with HelperFunctionsSynt
     assertEquals(sql.statement, "((a = 1) OR (b = 2))")
   }
 
+  test("when with true condition should return the fragment") {
+    val limit = 20
+    val sql   = when(limit > 0)(sql" LIMIT $limit")
+    assertEquals(sql.statement, " LIMIT ?")
+    assertEquals(sql.params.size, 1)
+  }
+
+  test("when with false condition should return empty sql") {
+    val limit = 0
+    val sql   = when(limit > 0)(sql" LIMIT $limit")
+    assertEquals(sql.statement, "")
+    assertEquals(sql.params.size, 0)
+  }
+
+  test("when can be chained with ++ for multiple optional clauses") {
+    val limit  = 20
+    val offset = 0
+    val query  = sql"SELECT * FROM user" ++
+      when(limit > 0)(sql" LIMIT $limit") ++
+      when(offset > 0)(sql" OFFSET $offset")
+    assertEquals(query.statement, "SELECT * FROM user LIMIT ?")
+    assertEquals(query.params.size, 1)
+  }
+
   test("whereAnd with NonEmptyList should create WHERE AND clause") {
     val sql = whereAnd(NonEmptyList.of(sql"active = true", sql"age > 18"))
     assertEquals(sql.statement, "WHERE (active = true) AND (age > 18)")
