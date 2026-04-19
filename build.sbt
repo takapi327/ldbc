@@ -14,11 +14,11 @@ import Workflows.*
 
 ThisBuild / tlBaseVersion              := LdbcVersions.latest
 ThisBuild / tlFatalWarnings            := true
+ThisBuild / tlJdkRelease               := None
 ThisBuild / projectName                := "ldbc"
 ThisBuild / scalaVersion               := scala3
-ThisBuild / crossScalaVersions         := Seq(scala3, scala37)
+ThisBuild / crossScalaVersions         := Seq(scala3, scala38)
 ThisBuild / githubWorkflowJavaVersions := Seq(
-  JavaSpec.corretto(java11),
   JavaSpec.corretto(java17),
   JavaSpec.corretto(java21),
   JavaSpec.corretto(java25)
@@ -107,6 +107,8 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.3.0",
+      "io.circe"               %%% "circe-core"               % "0.14.8",
+      "org.virtuslab"          %%% "scala-yaml"               % "0.0.7",
       "org.typelevel"          %%% "munit-cats-effect"        % "2.1.0" % Test
     )
   )
@@ -115,9 +117,6 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
       "io.circe" %%% "circe-generic" % "0.14.15",
       "io.circe" %%% "circe-yaml"    % "0.16.1"
     )
-  )
-  .platformsSettings(JSPlatform, NativePlatform)(
-    libraryDependencies += "com.armanbilge" %%% "circe-scala-yaml" % "0.0.4"
   )
   .dependsOn(schema)
 
@@ -153,16 +152,29 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     scalacOptions += "-Ykind-projector:underscores",
     libraryDependencies ++= Seq(
-      "co.fs2"        %%% "fs2-core"            % "3.12.2",
-      "co.fs2"        %%% "fs2-io"              % "3.12.2",
-      "org.scodec"    %%% "scodec-bits"         % "1.1.38",
-      "org.scodec"    %%% "scodec-core"         % "2.2.2",
-      "org.scodec"    %%% "scodec-cats"         % "1.2.0",
-      "org.typelevel" %%% "otel4s-core-trace"   % "0.15.2",
-      "org.typelevel" %%% "otel4s-core-metrics" % "0.15.2",
-      "org.typelevel" %%% "twiddles-core"       % "0.8.0",
-      "org.typelevel" %%% "munit-cats-effect"   % "2.1.0" % Test
-    )
+      "co.fs2"        %%% "fs2-core"                            % "3.12.2",
+      "co.fs2"        %%% "fs2-io"                              % "3.12.2",
+      "org.scodec"    %%% "scodec-bits"                         % "1.1.38",
+      "org.scodec"    %%% "scodec-core"                         % "2.2.2",
+      "org.scodec"    %%% "scodec-cats"                         % "1.2.0",
+      "org.typelevel" %%% "otel4s-core-trace"                   % "0.15.2",
+      "org.typelevel" %%% "otel4s-core-metrics"                 % "0.15.2",
+      "org.typelevel" %%% "otel4s-semconv"                      % "0.15.2",
+      "org.typelevel" %%% "otel4s-semconv-experimental"         % "0.15.2",
+      "org.typelevel" %%% "otel4s-semconv-metrics"              % "0.15.2",
+      "org.typelevel" %%% "otel4s-semconv-metrics-experimental" % "0.15.2",
+      "org.typelevel" %%% "twiddles-core"                       % "0.8.0",
+      "org.typelevel" %%% "munit-cats-effect"                   % "2.1.0"  % Test,
+      "org.typelevel" %%% "otel4s-sdk-testkit"                  % "0.17.0" % Test
+    ),
+    (Compile / sourceGenerators) += Def.task {
+      Generator.version(
+        version      = version.value,
+        scalaVersion = scalaVersion.value,
+        sbtVersion   = sbtVersion.value,
+        dir          = (Compile / sourceManaged).value
+      )
+    }.taskValue
   )
   .jsSettings(
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
@@ -200,6 +212,36 @@ lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
     )
   }.taskValue)
 
+lazy val testkit = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Full)
+  .module("testkit", "Core test utilities for ldbc users")
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel" %%% "munit-cats-effect" % "2.1.0" % Test
+    )
+  )
+  .jsSettings(
+    Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
+  )
+  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
+  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .dependsOn(connector)
+
+lazy val testkitMunit = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Full)
+  .module("testkit-munit", "MUnit integration for ldbc-testkit")
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel" %%% "munit-cats-effect" % "2.1.0"
+    )
+  )
+  .jsSettings(
+    Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
+  )
+  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
+  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .dependsOn(testkit, dsl % Test)
+
 lazy val zioInterop = crossProject(JVMPlatform, JSPlatform)
   .crossType(CrossType.Pure)
   .module("zio-interop", "Projects that provide a way to connect to the database for ZIO")
@@ -220,7 +262,7 @@ lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
   .in(file("tests"))
   .settings(
-    crossScalaVersions                      := Seq(scala3, scala37),
+    crossScalaVersions                      := Seq(scala3, scala38),
     name                                    := "tests",
     description                             := "Projects for testing",
     libraryDependencies += "org.typelevel" %%% "munit-cats-effect" % "2.1.0",
@@ -342,6 +384,12 @@ lazy val awsIamAuthExample = crossProject(JVMPlatform)
   )
   .dependsOn(connector, awsAuthenticationPlugin, dsl)
 
+lazy val testkitExample = crossProject(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .withoutSuffixFor(JVMPlatform)
+  .example("testkit", "ldbc-testkit usage example")
+  .dependsOn(connector, dsl, testkitMunit)
+
 lazy val docs = (project in file("docs"))
   .settings(
     description              := "Documentation for ldbc",
@@ -445,7 +493,8 @@ lazy val examples = Seq(
   hikariCPExample,
   otelExample,
   zioExample,
-  awsIamAuthExample
+  awsIamAuthExample,
+  testkitExample
 )
 
 lazy val ldbc = tlCrossRootProject
@@ -461,6 +510,8 @@ lazy val ldbc = tlCrossRootProject
     queryBuilder,
     schema,
     codegen,
+    testkit,
+    testkitMunit,
     zioInterop,
     authenticationPlugin,
     awsAuthenticationPlugin,

@@ -28,28 +28,18 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-22.04]
-        scala: [3.3.7, 3.7.4]
-        java:
-          - corretto@11
-          - corretto@17
-          - corretto@21
-          - corretto@25
+        scala: [3.3.7, 3.8.3]
+        java: [corretto@17, corretto@21, corretto@25]
         project: [ldbcJS, ldbcNative, ldbcJVM]
         exclude:
           - project: ldbcJS
-            java: corretto@17
-          - project: ldbcJS
             java: corretto@21
           - project: ldbcJS
             java: corretto@25
-          - scala: 3.7.4
-            java: corretto@17
-          - scala: 3.7.4
+          - scala: 3.8.3
             java: corretto@21
-          - scala: 3.7.4
+          - scala: 3.8.3
             java: corretto@25
-          - project: ldbcNative
-            java: corretto@17
           - project: ldbcNative
             java: corretto@21
           - project: ldbcNative
@@ -64,19 +54,6 @@ jobs:
 
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
-
-      - name: Setup Java (corretto@11)
-        id: setup-java-corretto-11
-        if: matrix.java == 'corretto@11'
-        uses: actions/setup-java@v5
-        with:
-          distribution: corretto
-          java-version: 11
-          cache: sbt
-
-      - name: sbt update
-        if: matrix.java == 'corretto@11' && steps.setup-java-corretto-11.outputs.cache-hit == 'false'
-        run: sbt +update
 
       - name: Setup Java (corretto@17)
         id: setup-java-corretto-17
@@ -128,7 +105,7 @@ jobs:
         run: sbt githubWorkflowCheck
 
       - name: Check headers and formatting
-        if: matrix.java == 'corretto@11' && matrix.os == 'ubuntu-22.04'
+        if: matrix.java == 'corretto@17' && matrix.os == 'ubuntu-22.04'
         run: sbt 'project ${{ matrix.project }}' '++ ${{ matrix.scala }}' headerCheckAll scalafmtCheckAll 'project /' scalafmtSbtCheck
 
       - name: scalaJSLink
@@ -152,11 +129,11 @@ jobs:
         run: sbt 'project ${{ matrix.project }}' '++ ${{ matrix.scala }}' test
 
       - name: Check binary compatibility
-        if: matrix.java == 'corretto@11' && matrix.os == 'ubuntu-22.04'
+        if: matrix.java == 'corretto@17' && matrix.os == 'ubuntu-22.04'
         run: sbt 'project ${{ matrix.project }}' '++ ${{ matrix.scala }}' mimaReportBinaryIssues
 
       - name: Generate API documentation
-        if: matrix.java == 'corretto@11' && matrix.os == 'ubuntu-22.04'
+        if: matrix.java == 'corretto@17' && matrix.os == 'ubuntu-22.04'
         run: sbt 'project ${{ matrix.project }}' '++ ${{ matrix.scala }}' doc
 
       - name: Stop MySQL on Docker
@@ -164,11 +141,11 @@ jobs:
 
       - name: Make target directories
         if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
-        run: mkdir -p module/ldbc-query-builder/.js/target module/ldbc-codegen/native/target module/jdbc-connector/.jvm/target module/ldbc-authentication-plugin/native/target module/ldbc-query-builder/.native/target module/ldbc-codegen/jvm/target module/ldbc-query-builder/.jvm/target module/ldbc-dsl/.native/target module/ldbc-connector/js/target module/ldbc-codegen/js/target module/ldbc-zio-interop/.jvm/target module/ldbc-core/.native/target module/ldbc-sql/.js/target module/ldbc-authentication-plugin/js/target module/ldbc-aws-authentication-plugin/jvm/target module/ldbc-statement/.native/target module/ldbc-core/.js/target module/ldbc-schema/.js/target module/ldbc-sql/.native/target module/ldbc-zio-interop/.js/target module/ldbc-schema/.native/target module/ldbc-statement/.jvm/target module/ldbc-core/.jvm/target module/ldbc-dsl/.js/target module/ldbc-sql/.jvm/target module/ldbc-authentication-plugin/jvm/target module/ldbc-statement/.js/target module/ldbc-connector/native/target module/ldbc-connector/jvm/target module/ldbc-schema/.jvm/target plugin/target module/ldbc-aws-authentication-plugin/native/target module/ldbc-dsl/.jvm/target module/ldbc-aws-authentication-plugin/js/target project/target
+        run: mkdir -p module/ldbc-query-builder/.js/target module/ldbc-codegen/native/target module/jdbc-connector/.jvm/target module/ldbc-authentication-plugin/native/target module/ldbc-query-builder/.native/target module/ldbc-codegen/jvm/target module/ldbc-query-builder/.jvm/target module/ldbc-dsl/.native/target module/ldbc-testkit/native/target module/ldbc-connector/js/target module/ldbc-codegen/js/target module/ldbc-testkit/js/target module/ldbc-zio-interop/.jvm/target module/ldbc-core/.native/target module/ldbc-sql/.js/target module/ldbc-authentication-plugin/js/target module/ldbc-aws-authentication-plugin/jvm/target module/ldbc-statement/.native/target module/ldbc-core/.js/target module/ldbc-schema/.js/target module/ldbc-sql/.native/target module/ldbc-testkit-munit/js/target module/ldbc-zio-interop/.js/target module/ldbc-schema/.native/target module/ldbc-statement/.jvm/target module/ldbc-testkit-munit/jvm/target module/ldbc-core/.jvm/target module/ldbc-dsl/.js/target module/ldbc-sql/.jvm/target module/ldbc-authentication-plugin/jvm/target module/ldbc-statement/.js/target module/ldbc-connector/native/target module/ldbc-connector/jvm/target module/ldbc-schema/.jvm/target plugin/target module/ldbc-aws-authentication-plugin/native/target module/ldbc-testkit/jvm/target module/ldbc-dsl/.jvm/target module/ldbc-aws-authentication-plugin/js/target module/ldbc-testkit-munit/native/target project/target
 
       - name: Compress target directories
         if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
-        run: tar cf targets.tar module/ldbc-query-builder/.js/target module/ldbc-codegen/native/target module/jdbc-connector/.jvm/target module/ldbc-authentication-plugin/native/target module/ldbc-query-builder/.native/target module/ldbc-codegen/jvm/target module/ldbc-query-builder/.jvm/target module/ldbc-dsl/.native/target module/ldbc-connector/js/target module/ldbc-codegen/js/target module/ldbc-zio-interop/.jvm/target module/ldbc-core/.native/target module/ldbc-sql/.js/target module/ldbc-authentication-plugin/js/target module/ldbc-aws-authentication-plugin/jvm/target module/ldbc-statement/.native/target module/ldbc-core/.js/target module/ldbc-schema/.js/target module/ldbc-sql/.native/target module/ldbc-zio-interop/.js/target module/ldbc-schema/.native/target module/ldbc-statement/.jvm/target module/ldbc-core/.jvm/target module/ldbc-dsl/.js/target module/ldbc-sql/.jvm/target module/ldbc-authentication-plugin/jvm/target module/ldbc-statement/.js/target module/ldbc-connector/native/target module/ldbc-connector/jvm/target module/ldbc-schema/.jvm/target plugin/target module/ldbc-aws-authentication-plugin/native/target module/ldbc-dsl/.jvm/target module/ldbc-aws-authentication-plugin/js/target project/target
+        run: tar cf targets.tar module/ldbc-query-builder/.js/target module/ldbc-codegen/native/target module/jdbc-connector/.jvm/target module/ldbc-authentication-plugin/native/target module/ldbc-query-builder/.native/target module/ldbc-codegen/jvm/target module/ldbc-query-builder/.jvm/target module/ldbc-dsl/.native/target module/ldbc-testkit/native/target module/ldbc-connector/js/target module/ldbc-codegen/js/target module/ldbc-testkit/js/target module/ldbc-zio-interop/.jvm/target module/ldbc-core/.native/target module/ldbc-sql/.js/target module/ldbc-authentication-plugin/js/target module/ldbc-aws-authentication-plugin/jvm/target module/ldbc-statement/.native/target module/ldbc-core/.js/target module/ldbc-schema/.js/target module/ldbc-sql/.native/target module/ldbc-testkit-munit/js/target module/ldbc-zio-interop/.js/target module/ldbc-schema/.native/target module/ldbc-statement/.jvm/target module/ldbc-testkit-munit/jvm/target module/ldbc-core/.jvm/target module/ldbc-dsl/.js/target module/ldbc-sql/.jvm/target module/ldbc-authentication-plugin/jvm/target module/ldbc-statement/.js/target module/ldbc-connector/native/target module/ldbc-connector/jvm/target module/ldbc-schema/.jvm/target plugin/target module/ldbc-aws-authentication-plugin/native/target module/ldbc-testkit/jvm/target module/ldbc-dsl/.jvm/target module/ldbc-aws-authentication-plugin/js/target module/ldbc-testkit-munit/native/target project/target
 
       - name: Upload target directories
         if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
@@ -184,7 +161,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-22.04]
-        java: [corretto@11]
+        java: [corretto@17]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
@@ -194,19 +171,6 @@ jobs:
 
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
-
-      - name: Setup Java (corretto@11)
-        id: setup-java-corretto-11
-        if: matrix.java == 'corretto@11'
-        uses: actions/setup-java@v5
-        with:
-          distribution: corretto
-          java-version: 11
-          cache: sbt
-
-      - name: sbt update
-        if: matrix.java == 'corretto@11' && steps.setup-java-corretto-11.outputs.cache-hit == 'false'
-        run: sbt +update
 
       - name: Setup Java (corretto@17)
         id: setup-java-corretto-17
@@ -277,32 +241,32 @@ jobs:
           tar xf targets.tar
           rm targets.tar
 
-      - name: Download target directories (3.7.4, ldbcJS)
+      - name: Download target directories (3.8.3, ldbcJS)
         uses: actions/download-artifact@v6
         with:
-          name: target-${{ matrix.os }}-${{ matrix.java }}-3.7.4-ldbcJS
+          name: target-${{ matrix.os }}-${{ matrix.java }}-3.8.3-ldbcJS
 
-      - name: Inflate target directories (3.7.4, ldbcJS)
+      - name: Inflate target directories (3.8.3, ldbcJS)
         run: |
           tar xf targets.tar
           rm targets.tar
 
-      - name: Download target directories (3.7.4, ldbcNative)
+      - name: Download target directories (3.8.3, ldbcNative)
         uses: actions/download-artifact@v6
         with:
-          name: target-${{ matrix.os }}-${{ matrix.java }}-3.7.4-ldbcNative
+          name: target-${{ matrix.os }}-${{ matrix.java }}-3.8.3-ldbcNative
 
-      - name: Inflate target directories (3.7.4, ldbcNative)
+      - name: Inflate target directories (3.8.3, ldbcNative)
         run: |
           tar xf targets.tar
           rm targets.tar
 
-      - name: Download target directories (3.7.4, ldbcJVM)
+      - name: Download target directories (3.8.3, ldbcJVM)
         uses: actions/download-artifact@v6
         with:
-          name: target-${{ matrix.os }}-${{ matrix.java }}-3.7.4-ldbcJVM
+          name: target-${{ matrix.os }}-${{ matrix.java }}-3.8.3-ldbcJVM
 
-      - name: Inflate target directories (3.7.4, ldbcJVM)
+      - name: Inflate target directories (3.8.3, ldbcJVM)
         run: |
           tar xf targets.tar
           rm targets.tar
@@ -337,7 +301,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-22.04]
-        java: [corretto@11]
+        java: [corretto@17]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
@@ -347,19 +311,6 @@ jobs:
 
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
-
-      - name: Setup Java (corretto@11)
-        id: setup-java-corretto-11
-        if: matrix.java == 'corretto@11'
-        uses: actions/setup-java@v5
-        with:
-          distribution: corretto
-          java-version: 11
-          cache: sbt
-
-      - name: sbt update
-        if: matrix.java == 'corretto@11' && steps.setup-java-corretto-11.outputs.cache-hit == 'false'
-        run: sbt +update
 
       - name: Setup Java (corretto@17)
         id: setup-java-corretto-17
@@ -403,7 +354,7 @@ jobs:
       - name: Submit Dependencies
         uses: scalacenter/sbt-dependency-submission@v2
         with:
-          modules-ignore: ldbcjs_3 ldbcjs_3 otel_3 mcp-ldbc-document-server_sjs1_3 docs_3 docs_3 zio_3 ldbcnative_3 ldbcnative_3 ldbcjvm_3 ldbcjvm_3 hikaricp_3 tests_sjs1_3 tests_sjs1_3 http4s_3 aws-iam-auth_3 tests_3 tests_3 benchmark_3 benchmark_3 tests_native0.4_3 tests_native0.4_3
+          modules-ignore: ldbcjs_3 ldbcjs_3 testkit_3 otel_3 mcp-ldbc-document-server_sjs1_3 docs_3 docs_3 zio_3 ldbcnative_3 ldbcnative_3 ldbcjvm_3 ldbcjvm_3 hikaricp_3 tests_sjs1_3 tests_sjs1_3 http4s_3 aws-iam-auth_3 tests_3 tests_3 benchmark_3 benchmark_3 tests_native0.4_3 tests_native0.4_3
           configs-ignore: test scala-tool scala-doc-tool test-internal
 
   validate-steward:
@@ -436,7 +387,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-22.04]
-        java: [corretto@11]
+        java: [corretto@17]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
@@ -446,19 +397,6 @@ jobs:
 
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
-
-      - name: Setup Java (corretto@11)
-        id: setup-java-corretto-11
-        if: matrix.java == 'corretto@11'
-        uses: actions/setup-java@v5
-        with:
-          distribution: corretto
-          java-version: 11
-          cache: sbt
-
-      - name: sbt update
-        if: matrix.java == 'corretto@11' && steps.setup-java-corretto-11.outputs.cache-hit == 'false'
-        run: sbt +update
 
       - name: Setup Java (corretto@17)
         id: setup-java-corretto-17
@@ -516,7 +454,7 @@ jobs:
       matrix:
         os: [ubuntu-22.04]
         scala: [3.3.7]
-        java: [temurin@11, temurin@17, temurin@21]
+        java: [temurin@17, temurin@21]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
@@ -526,19 +464,6 @@ jobs:
 
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
-
-      - name: Setup Java (corretto@11)
-        id: setup-java-corretto-11
-        if: matrix.java == 'corretto@11'
-        uses: actions/setup-java@v5
-        with:
-          distribution: corretto
-          java-version: 11
-          cache: sbt
-
-      - name: sbt update
-        if: matrix.java == 'corretto@11' && steps.setup-java-corretto-11.outputs.cache-hit == 'false'
-        run: sbt +update
 
       - name: Setup Java (corretto@17)
         id: setup-java-corretto-17
@@ -590,7 +515,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-22.04]
-        scala: [3.3.7, 3.7.4]
+        scala: [3.3.7, 3.8.3]
         java: [corretto@25]
     runs-on: ${{ matrix.os }}
     steps:
