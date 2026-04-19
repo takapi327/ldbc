@@ -24,8 +24,27 @@ trait HelperFunctionsSyntax extends StringContextSyntax:
    *   sql"SELECT * FROM $table WHERE id = ${1L}"
    *   // SELECT * FROM table WHERE id = ?
    * }}}
+   *
+   * @note This is not safe for user input. Use [[ident]] instead.
    */
+  @deprecated("Use ident() for safe identifier escaping with backticks.", "0.7.x")
   def sc(value: String): Parameter.Static = Parameter.Static(value)
+
+  /**
+   * Function for safely embedding a SQL identifier (table name, column name, etc.) by escaping it
+   * with backticks. Backtick characters in the name are escaped, and NULL characters are removed.
+   * Safe to use with user input, unlike [[sc]].
+   * {{{
+   *   sql"SELECT * FROM ${ident("users")}"
+   *   // SELECT * FROM `users`
+   *
+   *   sql"SELECT ${ident("created_at")} FROM ${ident(tableName)}"
+   *   // SELECT `created_at` FROM `user_table`
+   * }}}
+   */
+  def ident(name: String): Parameter.Static =
+    val escaped = name.replace("`", "\\`").replace("\u0000", "")
+    Parameter.Static(s"`$escaped`")
 
   // The following helper functions for building SQL models are rewritten from doobie fragments for ldbc SQL models.
   // see: https://github.com/tpolecat/doobie/blob/main/modules/core/src/main/scala/doobie/util/fragments.scala
