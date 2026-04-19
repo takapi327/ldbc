@@ -37,7 +37,7 @@ class HelperFunctionsSyntaxTest extends CatsEffectSuite with HelperFunctionsSynt
   }
 
   test("ident function should be usable in SQL interpolation") {
-    val query = sql"SELECT ${ident("name")} FROM ${ident("users")} WHERE id = ${ 1L }"
+    val query = sql"SELECT ${ ident("name") } FROM ${ ident("users") } WHERE id = ${ 1L }"
     assertEquals(query.statement, "SELECT `name` FROM `users` WHERE id = ?")
     assertEquals(query.params.size, 1)
   }
