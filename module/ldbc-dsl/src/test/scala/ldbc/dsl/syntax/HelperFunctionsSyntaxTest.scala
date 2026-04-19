@@ -16,16 +16,40 @@ import ldbc.dsl.codec.{ Codec, Encoder }
 
 class HelperFunctionsSyntaxTest extends CatsEffectSuite with HelperFunctionsSyntax:
 
+  @annotation.nowarn("msg=deprecated")
+  private def scLegacy(value: String): Parameter.Static = sc(value)
+
   test("sc function should create static parameter") {
-    val table = sc("users")
+    val table = scLegacy("users")
     assertEquals(table, Parameter.Static("users"))
   }
 
   test("sc function should be usable in SQL interpolation") {
-    val table = sc("users")
+    val table = scLegacy("users")
     val sql   = sql"SELECT * FROM $table WHERE id = ${ 1L }"
     assertEquals(sql.statement, "SELECT * FROM users WHERE id = ?")
     assertEquals(sql.params.size, 1)
+  }
+
+  test("ident function should wrap identifier with backticks") {
+    val col = ident("created_at")
+    assertEquals(col, Parameter.Static("`created_at`"))
+  }
+
+  test("ident function should be usable in SQL interpolation") {
+    val query = sql"SELECT ${ident("name")} FROM ${ident("users")} WHERE id = ${ 1L }"
+    assertEquals(query.statement, "SELECT `name` FROM `users` WHERE id = ?")
+    assertEquals(query.params.size, 1)
+  }
+
+  test("ident function should escape backtick characters") {
+    val col = ident("bad`name")
+    assertEquals(col, Parameter.Static("`bad\\`name`"))
+  }
+
+  test("ident function should remove NULL characters") {
+    val col = ident("bad\u0000name")
+    assertEquals(col, Parameter.Static("`badname`"))
   }
 
   test("values function with List should create VALUES clause") {
@@ -251,7 +275,7 @@ class HelperFunctionsSyntaxTest extends CatsEffectSuite with HelperFunctionsSynt
   }
 
   test("Complex query composition using multiple helper functions") {
-    val table      = sc("users")
+    val table      = ident("users")
     val conditions = List(
       Some(sql"active = ${ true }"),
       Some(sql"age >= ${ 18 }"),
@@ -265,7 +289,7 @@ class HelperFunctionsSyntaxTest extends CatsEffectSuite with HelperFunctionsSynt
 
     assertEquals(
       query.statement,
-      "SELECT * FROM users WHERE (active = ?) AND (age >= ?) ORDER BY created_at DESC"
+      "SELECT * FROM `users` WHERE (active = ?) AND (age >= ?) ORDER BY created_at DESC"
     )
     assertEquals(query.params.size, 2)
   }
