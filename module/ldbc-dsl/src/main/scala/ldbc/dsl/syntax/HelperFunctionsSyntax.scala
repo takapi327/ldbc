@@ -102,6 +102,16 @@ trait HelperFunctionsSyntax extends StringContextSyntax:
   def orFallbackFalse[M[_]: Foldable](ss: M[SQL]): Mysql =
     orOpt(ss).getOrElse(sql"FALSE")
 
+  /** Returns `frag` if `cond` is true, otherwise the empty sql.
+   * {{{
+   *   sql"SELECT * FROM user" ++ when(limit > 0)(sql" LIMIT $limit")
+   *   // if limit > 0: SELECT * FROM user LIMIT ?
+   *   // if limit <= 0: SELECT * FROM user
+   * }}}
+   */
+  def when(cond: Boolean)(frag: Mysql): Mysql =
+    if cond then frag else Mysql("", Nil)
+
   /** Returns `WHERE s1 AND s2 AND ... sn`. */
   def whereAnd(s1: SQL, ss: SQL*): Mysql =
     whereAnd(NonEmptyList(s1, ss.toList))
