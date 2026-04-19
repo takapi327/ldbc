@@ -185,6 +185,19 @@ trait HelperFunctionsSyntax extends StringContextSyntax:
   def orderByOpt(s1: Option[SQL], s2: Option[SQL], ss: Option[SQL]*): Mysql =
     orderByOpt((s1 :: s2 :: ss.toList).flatten)
 
+  /** Returns `LIMIT limit OFFSET offset`, or `LIMIT limit` if offset is 0.
+   * {{{
+   *   sql"SELECT * FROM user " ++ paginate(20, 40)
+   *   // SELECT * FROM user LIMIT ? OFFSET ?
+   *
+   *   sql"SELECT * FROM user " ++ paginate(20)
+   *   // SELECT * FROM user LIMIT ?
+   * }}}
+   */
+  def paginate(limit: Int, offset: Int = 0): Mysql =
+    if offset > 0 then sql"LIMIT $limit OFFSET $offset"
+    else sql"LIMIT $limit"
+
   implicit def toDBIO[A](dbio: DBIO[A]): DBIO.Ops[A] = new DBIO.Ops(dbio)
 
   implicit val syncDBIO: Sync[DBIO] = DBIO.syncDBIO
