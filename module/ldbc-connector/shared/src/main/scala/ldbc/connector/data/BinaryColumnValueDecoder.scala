@@ -30,7 +30,7 @@ private[ldbc] object BinaryColumnValueDecoder extends ColumnValueDecoder:
     ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
 
   /**
-   * Portable Float-to-String conversion that produces consistent output across JVM and Scala.js.
+   * Portable Float-to-String conversion that produces consistent output across JVM, Scala.js, and Scala Native.
    *
    * On Scala.js, `Float.toString` delegates to JavaScript's string coercion which prints floats
    * as if they were doubles, exposing the precision loss (e.g., `3.14f.toString` → `"3.140000104904175"`).
@@ -39,10 +39,13 @@ private[ldbc] object BinaryColumnValueDecoder extends ColumnValueDecoder:
    *
    * Uses `BigDecimal` with `MathContext.DECIMAL32` (7 significant digits) to match IEEE 754
    * single-precision float's decimal precision, then strips trailing zeros.
+   *
+   * Note: `toString` is used instead of `toPlainString` because `toPlainString` has a bug in
+   * Scala Native where it discards the integer part of the result (e.g., `3.14` → `"0.14"`).
    */
   private def floatToString(f: Float): String =
     if f.isNaN || f.isInfinite then f.toString
-    else BigDecimal(f.toDouble, MathContext.DECIMAL32).bigDecimal.stripTrailingZeros().toPlainString
+    else BigDecimal(f.toDouble, MathContext.DECIMAL32).bigDecimal.stripTrailingZeros().toString
 
   override def decodeString(
     bytes:      Array[Byte],
