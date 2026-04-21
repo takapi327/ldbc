@@ -214,15 +214,45 @@ lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
     )
   }.taskValue)
 
+lazy val testkit = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Full)
+  .module("testkit", "Core test utilities for ldbc users")
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel" %%% "munit-cats-effect" % "2.1.0" % Test
+    )
+  )
+  .jsSettings(
+    Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
+  )
+  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
+  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .dependsOn(connector)
+
+lazy val testkitMunit = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Full)
+  .module("testkit-munit", "MUnit integration for ldbc-testkit")
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel" %%% "munit-cats-effect" % "2.1.0"
+    )
+  )
+  .jsSettings(
+    Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
+  )
+  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
+  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .dependsOn(testkit, dsl % Test)
+
 lazy val zioInterop = crossProject(JVMPlatform, JSPlatform)
   .crossType(CrossType.Pure)
   .module("zio-interop", "Projects that provide a way to connect to the database for ZIO")
   .settings(
     libraryDependencies ++= Seq(
-      "dev.zio" %%% "zio"              % "2.1.24",
+      "dev.zio" %%% "zio"              % "2.1.25",
       "dev.zio" %%% "zio-interop-cats" % "23.1.0.13",
-      "dev.zio" %%% "zio-test"         % "2.1.24" % Test,
-      "dev.zio" %%% "zio-test-sbt"     % "2.1.24" % Test
+      "dev.zio" %%% "zio-test"         % "2.1.25" % Test,
+      "dev.zio" %%% "zio-test-sbt"     % "2.1.25" % Test
     )
   )
   .jsSettings(
@@ -290,9 +320,9 @@ lazy val http4sExample = crossProject(JVMPlatform)
   .example("http4s", "Http4s example project")
   .settings(
     libraryDependencies ++= Seq(
-      "org.http4s"    %% "http4s-dsl"          % "0.23.33",
-      "org.http4s"    %% "http4s-ember-server" % "0.23.33",
-      "org.http4s"    %% "http4s-circe"        % "0.23.33",
+      "org.http4s"    %% "http4s-dsl"          % "0.23.34",
+      "org.http4s"    %% "http4s-ember-server" % "0.23.34",
+      "org.http4s"    %% "http4s-circe"        % "0.23.34",
       "ch.qos.logback" % "logback-classic"     % "1.5.32",
       "io.circe"      %% "circe-generic"       % "0.14.10"
     )
@@ -318,8 +348,8 @@ lazy val otelExample = crossProject(JVMPlatform)
   .settings(
     libraryDependencies ++= Seq(
       "org.typelevel"   %% "otel4s-oteljava"                           % "0.16.0-M1",
-      "io.opentelemetry" % "opentelemetry-exporter-otlp"               % "1.60.1" % Runtime,
-      "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.60.1" % Runtime
+      "io.opentelemetry" % "opentelemetry-exporter-otlp"               % "1.61.0" % Runtime,
+      "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.61.0" % Runtime
     )
   )
   .settings(
@@ -348,13 +378,19 @@ lazy val awsIamAuthExample = crossProject(JVMPlatform)
   .example("aws-iam-auth", "Aws Iam Authentication example project")
   .settings(
     libraryDependencies ++= Seq(
-      "org.http4s" %% "http4s-dsl"          % "0.23.33",
-      "org.http4s" %% "http4s-ember-server" % "0.23.33",
-      "org.http4s" %% "http4s-circe"        % "0.23.33",
+      "org.http4s" %% "http4s-dsl"          % "0.23.34",
+      "org.http4s" %% "http4s-ember-server" % "0.23.34",
+      "org.http4s" %% "http4s-circe"        % "0.23.34",
       "io.circe"   %% "circe-generic"       % "0.14.10"
     )
   )
   .dependsOn(connector, awsAuthenticationPlugin, dsl)
+
+lazy val testkitExample = crossProject(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .withoutSuffixFor(JVMPlatform)
+  .example("testkit", "ldbc-testkit usage example")
+  .dependsOn(connector, dsl, testkitMunit)
 
 lazy val docs = (project in file("docs"))
   .settings(
@@ -459,7 +495,8 @@ lazy val examples = Seq(
   hikariCPExample,
   otelExample,
   zioExample,
-  awsIamAuthExample
+  awsIamAuthExample,
+  testkitExample
 )
 
 lazy val ldbc = tlCrossRootProject
@@ -475,6 +512,8 @@ lazy val ldbc = tlCrossRootProject
     queryBuilder,
     schema,
     codegen,
+    testkit,
+    testkitMunit,
     zioInterop,
     authenticationPlugin,
     awsAuthenticationPlugin,

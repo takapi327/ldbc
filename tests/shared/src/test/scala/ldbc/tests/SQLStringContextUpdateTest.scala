@@ -43,8 +43,8 @@ trait SQLStringContextUpdateTest extends CatsEffectSuite:
     .fixture
 
   final val table = prefix match
-    case "jdbc" => sc("`jdbc_sql_string_context_table`")
-    case "ldbc" => sc("`ldbc_sql_string_context_table`")
+    case "jdbc" => ident("jdbc_sql_string_context_table")
+    case "ldbc" => ident("ldbc_sql_string_context_table")
 
   override def munitFixtures = List(connectionFixture)
 

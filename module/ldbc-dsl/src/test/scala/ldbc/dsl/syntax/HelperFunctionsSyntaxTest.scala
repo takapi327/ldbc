@@ -16,16 +16,40 @@ import ldbc.dsl.codec.{ Codec, Encoder }
 
 class HelperFunctionsSyntaxTest extends CatsEffectSuite with HelperFunctionsSyntax:
 
+  @annotation.nowarn("msg=deprecated")
+  private def scLegacy(value: String): Parameter.Static = sc(value)
+
   test("sc function should create static parameter") {
-    val table = sc("users")
+    val table = scLegacy("users")
     assertEquals(table, Parameter.Static("users"))
   }
 
   test("sc function should be usable in SQL interpolation") {
-    val table = sc("users")
+    val table = scLegacy("users")
     val sql   = sql"SELECT * FROM $table WHERE id = ${ 1L }"
     assertEquals(sql.statement, "SELECT * FROM users WHERE id = ?")
     assertEquals(sql.params.size, 1)
+  }
+
+  test("ident function should wrap identifier with backticks") {
+    val col = ident("created_at")
+    assertEquals(col, Parameter.Static("`created_at`"))
+  }
+
+  test("ident function should be usable in SQL interpolation") {
+    val query = sql"SELECT ${ ident("name") } FROM ${ ident("users") } WHERE id = ${ 1L }"
+    assertEquals(query.statement, "SELECT `name` FROM `users` WHERE id = ?")
+    assertEquals(query.params.size, 1)
+  }
+
+  test("ident function should escape backtick characters") {
+    val col = ident("bad`name")
+    assertEquals(col, Parameter.Static("`bad\\`name`"))
+  }
+
+  test("ident function should remove NULL characters") {
+    val col = ident("bad\u0000name")
+    assertEquals(col, Parameter.Static("`badname`"))
   }
 
   test("values function with List should create VALUES clause") {
@@ -144,6 +168,30 @@ class HelperFunctionsSyntaxTest extends CatsEffectSuite with HelperFunctionsSynt
     assertEquals(sql.statement, "((a = 1) OR (b = 2))")
   }
 
+  test("when with true condition should return the fragment") {
+    val limit = 20
+    val sql   = when(limit > 0)(sql" LIMIT $limit")
+    assertEquals(sql.statement, " LIMIT ?")
+    assertEquals(sql.params.size, 1)
+  }
+
+  test("when with false condition should return empty sql") {
+    val limit = 0
+    val sql   = when(limit > 0)(sql" LIMIT $limit")
+    assertEquals(sql.statement, "")
+    assertEquals(sql.params.size, 0)
+  }
+
+  test("when can be chained with ++ for multiple optional clauses") {
+    val limit  = 20
+    val offset = 0
+    val query  = sql"SELECT * FROM user" ++
+      when(limit > 0)(sql" LIMIT $limit") ++
+      when(offset > 0)(sql" OFFSET $offset")
+    assertEquals(query.statement, "SELECT * FROM user LIMIT ?")
+    assertEquals(query.params.size, 1)
+  }
+
   test("whereAnd with NonEmptyList should create WHERE AND clause") {
     val sql = whereAnd(NonEmptyList.of(sql"active = true", sql"age > 18"))
     assertEquals(sql.statement, "WHERE (active = true) AND (age > 18)")
@@ -199,8 +247,35 @@ class HelperFunctionsSyntaxTest extends CatsEffectSuite with HelperFunctionsSynt
     assertEquals(sql.statement, "ORDER BY name,id")
   }
 
+  test("paginate with limit only should create LIMIT clause") {
+    val sql = paginate(20)
+    assertEquals(sql.statement, "LIMIT ?")
+    assertEquals(sql.params.size, 1)
+  }
+
+  test("paginate with limit and offset should create LIMIT OFFSET clause") {
+    val sql = paginate(20, 40)
+    assertEquals(sql.statement, "LIMIT ? OFFSET ?")
+    assertEquals(sql.params.size, 2)
+  }
+
+  test("paginate with offset 0 should omit OFFSET") {
+    val sql = paginate(20, 0)
+    assertEquals(sql.statement, "LIMIT ?")
+    assertEquals(sql.params.size, 1)
+  }
+
+  test("paginate can be chained with orderBy") {
+    val query = sql"SELECT * FROM user " ++
+      orderBy(sql"`created_at` DESC") ++
+      sql" " ++
+      paginate(20, 40)
+    assertEquals(query.statement, "SELECT * FROM user ORDER BY `created_at` DESC LIMIT ? OFFSET ?")
+    assertEquals(query.params.size, 2)
+  }
+
   test("Complex query composition using multiple helper functions") {
-    val table      = sc("users")
+    val table      = ident("users")
     val conditions = List(
       Some(sql"active = ${ true }"),
       Some(sql"age >= ${ 18 }"),
@@ -214,7 +289,7 @@ class HelperFunctionsSyntaxTest extends CatsEffectSuite with HelperFunctionsSynt
 
     assertEquals(
       query.statement,
-      "SELECT * FROM users WHERE (active = ?) AND (age >= ?) ORDER BY created_at DESC"
+      "SELECT * FROM `users` WHERE (active = ?) AND (age >= ?) ORDER BY created_at DESC"
     )
     assertEquals(query.params.size, 2)
   }

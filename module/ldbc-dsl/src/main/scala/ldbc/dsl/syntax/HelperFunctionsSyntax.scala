@@ -24,8 +24,27 @@ trait HelperFunctionsSyntax extends StringContextSyntax:
    *   sql"SELECT * FROM $table WHERE id = ${1L}"
    *   // SELECT * FROM table WHERE id = ?
    * }}}
+   *
+   * @note This is not safe for user input. Use [[ident]] instead.
    */
+  @deprecated("Use ident() for safe identifier escaping with backticks.", "0.7.x")
   def sc(value: String): Parameter.Static = Parameter.Static(value)
+
+  /**
+   * Function for safely embedding a SQL identifier (table name, column name, etc.) by escaping it
+   * with backticks. Backtick characters in the name are escaped, and NULL characters are removed.
+   * Safe to use with user input, unlike [[sc]].
+   * {{{
+   *   sql"SELECT * FROM ${ident("users")}"
+   *   // SELECT * FROM `users`
+   *
+   *   sql"SELECT ${ident("created_at")} FROM ${ident(tableName)}"
+   *   // SELECT `created_at` FROM `user_table`
+   * }}}
+   */
+  def ident(name: String): Parameter.Static =
+    val escaped = name.replace("`", "\\`").replace("\u0000", "")
+    Parameter.Static(s"`$escaped`")
 
   // The following helper functions for building SQL models are rewritten from doobie fragments for ldbc SQL models.
   // see: https://github.com/tpolecat/doobie/blob/main/modules/core/src/main/scala/doobie/util/fragments.scala
@@ -102,6 +121,16 @@ trait HelperFunctionsSyntax extends StringContextSyntax:
   def orFallbackFalse[M[_]: Foldable](ss: M[SQL]): Mysql =
     orOpt(ss).getOrElse(sql"FALSE")
 
+  /** Returns `frag` if `cond` is true, otherwise the empty sql.
+   * {{{
+   *   sql"SELECT * FROM user" ++ when(limit > 0)(sql" LIMIT $limit")
+   *   // if limit > 0: SELECT * FROM user LIMIT ?
+   *   // if limit <= 0: SELECT * FROM user
+   * }}}
+   */
+  def when(cond: Boolean)(frag: Mysql): Mysql =
+    if cond then frag else Mysql("", Nil)
+
   /** Returns `WHERE s1 AND s2 AND ... sn`. */
   def whereAnd(s1: SQL, ss: SQL*): Mysql =
     whereAnd(NonEmptyList(s1, ss.toList))
@@ -174,6 +203,19 @@ trait HelperFunctionsSyntax extends StringContextSyntax:
   /** Returns `ORDER BY s1, s2, ... sn` for defined `s`, if any, otherwise the empty sql. */
   def orderByOpt(s1: Option[SQL], s2: Option[SQL], ss: Option[SQL]*): Mysql =
     orderByOpt((s1 :: s2 :: ss.toList).flatten)
+
+  /** Returns `LIMIT limit OFFSET offset`, or `LIMIT limit` if offset is 0.
+   * {{{
+   *   sql"SELECT * FROM user " ++ paginate(20, 40)
+   *   // SELECT * FROM user LIMIT ? OFFSET ?
+   *
+   *   sql"SELECT * FROM user " ++ paginate(20)
+   *   // SELECT * FROM user LIMIT ?
+   * }}}
+   */
+  def paginate(limit: Int, offset: Int = 0): Mysql =
+    if offset > 0 then sql"LIMIT $limit OFFSET $offset"
+    else sql"LIMIT $limit"
 
   implicit def toDBIO[A](dbio: DBIO[A]): DBIO.Ops[A] = new DBIO.Ops(dbio)
 
