@@ -219,7 +219,7 @@ lazy val testkit = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .module("testkit", "Core test utilities for ldbc users")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "munit-cats-effect" % "2.1.0" % Test
+      "org.typelevel" %%% "munit-cats-effect" % "2.2.0" % Test
     )
   )
   .jsSettings(
@@ -234,7 +234,7 @@ lazy val testkitMunit = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .module("testkit-munit", "MUnit integration for ldbc-testkit")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "munit-cats-effect" % "2.1.0"
+      "org.typelevel" %%% "munit-cats-effect" % "2.2.0"
     )
   )
   .jsSettings(
