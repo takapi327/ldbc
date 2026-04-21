@@ -159,12 +159,12 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
       "org.scodec"    %%% "scodec-bits"                         % "1.2.4",
       "org.scodec"    %%% "scodec-core"                         % "2.3.1",
       "org.scodec"    %%% "scodec-cats"                         % "1.3.0-RC1",
-      "org.typelevel" %%% "otel4s-core-trace"                   % "0.16.0-M1",
-      "org.typelevel" %%% "otel4s-core-metrics"                 % "0.16.0-M1",
-      "org.typelevel" %%% "otel4s-semconv"                      % "0.16.0-M1",
-      "org.typelevel" %%% "otel4s-semconv-experimental"         % "0.16.0-M1",
-      "org.typelevel" %%% "otel4s-semconv-metrics"              % "0.16.0-M1",
-      "org.typelevel" %%% "otel4s-semconv-metrics-experimental" % "0.16.0-M1",
+      "org.typelevel" %%% "otel4s-core-trace"                   % "0.16.0",
+      "org.typelevel" %%% "otel4s-core-metrics"                 % "0.16.0",
+      "org.typelevel" %%% "otel4s-semconv"                      % "0.16.0",
+      "org.typelevel" %%% "otel4s-semconv-experimental"         % "0.16.0",
+      "org.typelevel" %%% "otel4s-semconv-metrics"              % "0.16.0",
+      "org.typelevel" %%% "otel4s-semconv-metrics-experimental" % "0.16.0",
       "org.typelevel" %%% "twiddles-core"                       % "0.9.0",
       "org.typelevel" %%% "munit-cats-effect"                   % "2.2.0"  % Test,
       "org.typelevel" %%% "otel4s-sdk-testkit"                  % "0.18.0" % Test
@@ -347,7 +347,7 @@ lazy val otelExample = crossProject(JVMPlatform)
   .example("otel", "OpenTelemetry example project")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel"   %% "otel4s-oteljava"                           % "0.16.0-M1",
+      "org.typelevel"   %% "otel4s-oteljava"                           % "0.16.0",
       "io.opentelemetry" % "opentelemetry-exporter-otlp"               % "1.61.0" % Runtime,
       "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.61.0" % Runtime
     )
