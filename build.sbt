@@ -42,8 +42,6 @@ ThisBuild / mimaBinaryIssueFilters ++= List(
     "ldbc.connector.net.packet.response.BinaryProtocolResultSetRowPacket.decodeValue"
   )
 )
-// for Otel4s
-ThisBuild / resolvers += Resolver.sonatypeCentralSnapshots
 
 lazy val sql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
