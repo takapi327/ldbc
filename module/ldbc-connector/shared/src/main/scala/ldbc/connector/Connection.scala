@@ -329,7 +329,7 @@ object Connection:
       release
     )
 
-  @deprecated("0.X.0", "Use fromNetwork instead")
+  @deprecated("Use fromNetwork instead", "0.7.0")
   def fromSocketGroup[F[_]: Tracer: Console: Hashing: UUIDGen, A](
     socketGroup:                 SocketGroup[F],
     host:                        String,
