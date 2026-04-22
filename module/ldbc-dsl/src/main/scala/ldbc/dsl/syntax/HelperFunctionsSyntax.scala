@@ -43,7 +43,7 @@ trait HelperFunctionsSyntax extends StringContextSyntax:
    * }}}
    */
   def ident(name: String): Parameter.Static =
-    val escaped = name.replace("`", "\\`").replace("\u0000", "")
+    val escaped = name.filter(_ != '\u0000').replace("`", "\\`")
     Parameter.Static(s"`$escaped`")
 
   // The following helper functions for building SQL models are rewritten from doobie fragments for ldbc SQL models.
@@ -214,8 +214,9 @@ trait HelperFunctionsSyntax extends StringContextSyntax:
    * }}}
    */
   def paginate(limit: Int, offset: Int = 0): Mysql =
-    if offset > 0 then sql"LIMIT $limit OFFSET $offset"
-    else sql"LIMIT $limit"
+    if offset > 0 then
+      Mysql("LIMIT ? OFFSET ?", List(Parameter.Dynamic.Success(limit), Parameter.Dynamic.Success(offset)))
+    else Mysql("LIMIT ?", List(Parameter.Dynamic.Success(limit)))
 
   implicit def toDBIO[A](dbio: DBIO[A]): DBIO.Ops[A] = new DBIO.Ops(dbio)
 
