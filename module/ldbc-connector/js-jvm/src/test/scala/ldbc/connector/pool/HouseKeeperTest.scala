@@ -14,10 +14,6 @@ import cats.effect.*
 
 import ldbc.connector.*
 
-/**
- * TODO: Once multithreading support becomes available with the update to Scala Native 0.5.x, we will add tests to Scala Native as well.
- * see: https://github.com/takapi327/ldbc/issues/536
- */
 class HouseKeeperTest extends FTestPlatform:
 
   private val config = MySQLConfig.default
