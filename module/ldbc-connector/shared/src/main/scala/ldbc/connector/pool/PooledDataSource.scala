@@ -236,10 +236,9 @@ object PooledDataSource:
     override def metrics: F[PoolMetrics] = metricsTracker.getMetrics
 
     override def close: F[Unit] =
-      poolLogger.info(
-        s"Closing connection pool (host: $host:$port${ database.map(d => s", database: $d").getOrElse("") })"
-      ) >>
-        poolState.modify { state =>
+      poolState.modify { state =>
+        if state.closed then (state, Temporal[F].unit)
+        else
           val newState = state.copy(closed = true)
           val closeAll = state.connections.traverse_ { pooled =>
             pooled.finalizer.attempt.flatMap {
@@ -253,9 +252,12 @@ object PooledDataSource:
           val failWaiters = state.waitQueue.traverse_ { deferred =>
             deferred.complete(Left(new SQLException("Pool closed"))).attempt.void
           }
-          (newState, closeAll *> failWaiters)
-        }.flatten >>
-        poolLogger.info("Connection pool closed successfully")
+          val effect =
+            poolLogger.info(
+              s"Closing connection pool (host: $host:$port${ database.map(d => s", database: $d").getOrElse("") })"
+            ) >> closeAll *> failWaiters >> poolLogger.info("Connection pool closed successfully")
+          (newState, effect)
+      }.flatten
 
     /**
      * Acquires a connection from the pool, recording the start time for wait-time metrics.
