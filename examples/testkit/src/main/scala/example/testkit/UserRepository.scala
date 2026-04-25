@@ -14,6 +14,7 @@ import ldbc.Connector
 
 trait UserRepository[F[_]]:
   def findAll():                           F[List[User]]
+  def findAllOrderByName():                F[List[User]]
   def findById(id: Long):                  F[Option[User]]
   def create(name: String, email: String): F[Long]
   def delete(id:   Long):                  F[Unit]
@@ -22,6 +23,12 @@ class UserRepositoryImpl(connector: Connector[IO]) extends UserRepository[IO]:
 
   override def findAll(): IO[List[User]] =
     sql"SELECT id, name, email FROM users"
+      .query[User]
+      .to[List]
+      .readOnly(connector)
+
+  override def findAllOrderByName(): IO[List[User]] =
+    sql"SELECT id, name, email FROM users ORDER BY name ASC"
       .query[User]
       .to[List]
       .readOnly(connector)

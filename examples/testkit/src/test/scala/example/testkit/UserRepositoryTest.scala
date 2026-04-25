@@ -102,3 +102,30 @@ class UserRepositoryTest extends LdbcSuite:
       List("Bob", "Alice")
     )
   }
+
+  ephemeralTest("assertRowsUnordered で重複する名前が含まれる場合も正しく検証できる") { connector =>
+    val repo = UserRepositoryImpl(connector)
+    // email は UNIQUE 制約があるため name だけ重複させる
+    assertRowsUnordered(
+      for
+        _      <- repo.create("Alice", "alice1@example.com")
+        _      <- repo.create("Alice", "alice2@example.com")
+        _      <- repo.create("Bob", "bob@example.com")
+        result <- repo.findAll()
+      yield result.map(_.name),
+      List("Bob", "Alice", "Alice")
+    )
+  }
+
+  ephemeralTest("assertRowsOrdered で ORDER BY 結果の順序を検証できる") { connector =>
+    val repo = UserRepositoryImpl(connector)
+    assertRowsOrdered(
+      for
+        _      <- repo.create("Carol", "carol@example.com")
+        _      <- repo.create("Alice", "alice@example.com")
+        _      <- repo.create("Bob", "bob@example.com")
+        result <- repo.findAllOrderByName()
+      yield result.map(_.name),
+      List("Alice", "Bob", "Carol")
+    )
+  }
