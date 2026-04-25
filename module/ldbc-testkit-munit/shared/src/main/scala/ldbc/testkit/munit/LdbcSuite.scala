@@ -115,7 +115,10 @@ trait LdbcSuite extends CatsEffectSuite:
    * }}}
    */
   def assertRowsUnordered[A](fa: IO[List[A]], expected: List[A]): IO[Unit] =
-    assertIO(fa.map(_.groupBy(identity).view.mapValues(_.size).toMap), expected.groupBy(identity).view.mapValues(_.size).toMap)
+    assertIO(
+      fa.map(_.groupBy(identity).view.mapValues(_.size).toMap),
+      expected.groupBy(identity).view.mapValues(_.size).toMap
+    )
 
   /**
    * Asserts that the result of `fa` contains exactly the same elements as `expected`
