@@ -248,20 +248,41 @@ private[ldbc] object BinaryColumnValueDecoder extends ColumnValueDecoder:
     isUnsigned: Boolean
   ): LocalTime =
     // Follows package.scala time8/12 layouts: isNeg(1) + days(4LE) + hour(1) + min(1) + sec(1)
-    // Note: days field is ignored (same as existing package.scala behavior)
+    // MySQL TIME represents a duration in the range -838:59:59 ~ 838:59:59.
+    // LocalTime can only represent 00:00:00 ~ 23:59:59, so negative values and values
+    // with days >= 1 (i.e. >= 24 hours) are rejected with an exception, consistent with
+    // MySQL Connector/J's LocalTimeValueFactory behaviour.
     bytes.length match
       case 0 => null
       case 8 =>
+        val isNeg  = bytes(0) != 0
+        val days   = (bytes(1) & 0xff) | ((bytes(2) & 0xff) << 8) | ((bytes(3) & 0xff) << 16) | ((bytes(4) & 0xff) << 24)
         val hour   = bytes(5) & 0xff
         val minute = bytes(6) & 0xff
         val second = bytes(7) & 0xff
+        if isNeg || days > 0 then
+          val sign   = if isNeg then "-" else ""
+          val totalH = days * 24 + hour
+          throw new SQLDataException(
+            s"TIME value '$sign${totalH}:${ "%02d".format(minute) }:${ "%02d".format(second) }' is out of LocalTime range. Use Duration to retrieve TIME values outside 00:00:00 ~ 23:59:59.",
+            sqlState = Some("22007")
+          )
         LocalTime.of(hour, minute, second)
       case 12 =>
+        val isNeg       = bytes(0) != 0
+        val days        = (bytes(1) & 0xff) | ((bytes(2) & 0xff) << 8) | ((bytes(3) & 0xff) << 16) | ((bytes(4) & 0xff) << 24)
         val hour        = bytes(5) & 0xff
         val minute      = bytes(6) & 0xff
         val second      = bytes(7) & 0xff
         val microsecond = (bytes(8) & 0xff) | ((bytes(9) & 0xff) << 8) |
           ((bytes(10) & 0xff) << 16) | ((bytes(11) & 0xff) << 24)
+        if isNeg || days > 0 then
+          val sign   = if isNeg then "-" else ""
+          val totalH = days * 24 + hour
+          throw new SQLDataException(
+            s"TIME value '$sign${totalH}:${ "%02d".format(minute) }:${ "%02d".format(second) }' is out of LocalTime range. Use Duration to retrieve TIME values outside 00:00:00 ~ 23:59:59.",
+            sqlState = Some("22007")
+          )
         LocalTime.of(hour, minute, second, microsecond * 1000)
       case len =>
         throw new SQLDataException(
