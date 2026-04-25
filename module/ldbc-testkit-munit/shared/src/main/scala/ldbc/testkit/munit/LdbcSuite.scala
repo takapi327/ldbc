@@ -108,11 +108,22 @@ trait LdbcSuite extends CatsEffectSuite:
 
   /**
    * Asserts that the result of `fa` contains the same elements as `expected`,
-   * regardless of order.
+   * regardless of order. Duplicate elements are taken into account.
    *
    * @example {{{
    * assertRowsUnordered(repo.findAll(), List(user1, user2, user3))
    * }}}
    */
   def assertRowsUnordered[A](fa: IO[List[A]], expected: List[A]): IO[Unit] =
-    assertIO(fa.map(_.toSet), expected.toSet)
+    assertIO(fa.map(_.groupBy(identity).view.mapValues(_.size).toMap), expected.groupBy(identity).view.mapValues(_.size).toMap)
+
+  /**
+   * Asserts that the result of `fa` contains exactly the same elements as `expected`
+   * in the same order. Use this when the query result has a meaningful order (e.g. ORDER BY).
+   *
+   * @example {{{
+   * assertRowsOrdered(repo.findAllOrderByName(), List(alice, bob, carol))
+   * }}}
+   */
+  def assertRowsOrdered[A](fa: IO[List[A]], expected: List[A]): IO[Unit] =
+    assertIO(fa, expected)
