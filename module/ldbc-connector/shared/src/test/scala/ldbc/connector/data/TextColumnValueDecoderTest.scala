@@ -10,6 +10,7 @@ import java.time.*
 
 import ldbc.connector.*
 import ldbc.connector.data.ColumnDataType.*
+import ldbc.connector.exception.SQLDataException
 
 class TextColumnValueDecoderTest extends FTestPlatform:
 
@@ -92,18 +93,20 @@ class TextColumnValueDecoderTest extends FTestPlatform:
 
   // ---- CHAR/VARCHAR column: raw byte path ----
 
-  test("decodeByte for VARCHAR returns first byte of character") {
+  test("decodeByte for VARCHAR returns the single byte when string encodes to exactly 1 byte") {
     assertEquals(TextColumnValueDecoder.decodeByte(bytes("A"), charset, MYSQL_TYPE_VARCHAR, false), 65.toByte)
   }
 
-  test("decodeByte for VARCHAR returns first byte of multi-char string") {
-    // Returns first byte of the multi-char string
-    assertEquals(TextColumnValueDecoder.decodeByte(bytes("AB"), charset, MYSQL_TYPE_VARCHAR, false), 65.toByte)
+  test("decodeByte for VARCHAR throws for multi-char string") {
+    intercept[SQLDataException] {
+      TextColumnValueDecoder.decodeByte(bytes("AB"), charset, MYSQL_TYPE_VARCHAR, false)
+    }
   }
 
-  test("decodeByte for VARCHAR with digit character returns byte value of '5' (53)") {
-    // '5' as character → ASCII 53, NOT numeric 5
-    assertEquals(TextColumnValueDecoder.decodeByte(bytes("5"), charset, MYSQL_TYPE_VARCHAR, false), 53.toByte)
+  test("decodeByte for VARCHAR throws for numeric string longer than 1 byte") {
+    intercept[SQLDataException] {
+      TextColumnValueDecoder.decodeByte(bytes("127"), charset, MYSQL_TYPE_VARCHAR, false)
+    }
   }
 
   // =========================================================================

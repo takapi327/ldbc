@@ -191,8 +191,6 @@ private[ldbc] object BinaryColumnValueDecoder extends ColumnValueDecoder:
     columnType: ColumnDataType,
     isUnsigned: Boolean
   ): LocalDate =
-    // Follows MySQL binary protocol DATE layout: year(2LE) + month(1) + day(1)
-    // Accepted lengths: 0 (zero-date "0000-00-00") or 4.
     bytes.length match
       case 0 => null
       case 4 =>
@@ -209,7 +207,6 @@ private[ldbc] object BinaryColumnValueDecoder extends ColumnValueDecoder:
     columnType: ColumnDataType,
     isUnsigned: Boolean
   ): LocalDateTime =
-    // Follows package.scala timestamp4/7/11 layouts
     bytes.length match
       case 0 => null
       case 4 =>
