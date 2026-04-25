@@ -247,11 +247,6 @@ private[ldbc] object BinaryColumnValueDecoder extends ColumnValueDecoder:
     columnType: ColumnDataType,
     isUnsigned: Boolean
   ): LocalTime =
-    // Follows package.scala time8/12 layouts: isNeg(1) + days(4LE) + hour(1) + min(1) + sec(1)
-    // MySQL TIME represents a duration in the range -838:59:59 ~ 838:59:59.
-    // LocalTime can only represent 00:00:00 ~ 23:59:59, so negative values and values
-    // with days >= 1 (i.e. >= 24 hours) are rejected with an exception, consistent with
-    // MySQL Connector/J's LocalTimeValueFactory behaviour.
     bytes.length match
       case 0 => null
       case 8 =>
