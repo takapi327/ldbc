@@ -27,7 +27,7 @@ trait HelperFunctionsSyntax extends StringContextSyntax:
    *
    * @note This is not safe for user input. Use [[ident]] instead.
    */
-  @deprecated("Use ident() for safe identifier escaping with backticks.", "0.7.x")
+  @deprecated("Use ident() for safe identifier escaping with backticks.", "0.7.0")
   def sc(value: String): Parameter.Static = Parameter.Static(value)
 
   /**
