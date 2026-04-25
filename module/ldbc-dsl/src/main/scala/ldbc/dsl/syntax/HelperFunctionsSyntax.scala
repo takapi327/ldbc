@@ -204,7 +204,7 @@ trait HelperFunctionsSyntax extends StringContextSyntax:
   def orderByOpt(s1: Option[SQL], s2: Option[SQL], ss: Option[SQL]*): Mysql =
     orderByOpt((s1 :: s2 :: ss.toList).flatten)
 
-  /** Returns `LIMIT limit OFFSET offset`, or `LIMIT limit` if offset is 0.
+  /** Returns `LIMIT limit OFFSET offset`, or `LIMIT limit` if offset is 0 or omitted.
    * {{{
    *   sql"SELECT * FROM user " ++ paginate(20, 40)
    *   // SELECT * FROM user LIMIT ? OFFSET ?
@@ -212,8 +212,12 @@ trait HelperFunctionsSyntax extends StringContextSyntax:
    *   sql"SELECT * FROM user " ++ paginate(20)
    *   // SELECT * FROM user LIMIT ?
    * }}}
+   *
+   * @throws IllegalArgumentException if `limit` or `offset` is negative
    */
   def paginate(limit: Int, offset: Int = 0): Mysql =
+    require(limit >= 0, s"limit must be non-negative, but was $limit")
+    require(offset >= 0, s"offset must be non-negative, but was $offset")
     if offset > 0 then
       Mysql("LIMIT ? OFFSET ?", List(Parameter.Dynamic.Success(limit), Parameter.Dynamic.Success(offset)))
     else Mysql("LIMIT ?", List(Parameter.Dynamic.Success(limit)))
