@@ -9,6 +9,7 @@ package ldbc.connector.data
 import java.time.*
 
 import ldbc.connector.data.Formatter.*
+import ldbc.connector.exception.SQLDataException
 
 /**
  * Text protocol implementation of ColumnValueDecoder.
@@ -40,12 +41,15 @@ private[ldbc] object TextColumnValueDecoder extends ColumnValueDecoder:
   override def decodeByte(bytes: Array[Byte], charset: String, columnType: ColumnDataType, isUnsigned: Boolean): Byte =
     columnType match
       case ColumnDataType.MYSQL_TYPE_TINY =>
-        // Numeric column: parse as number, cast to byte
         asString(bytes, charset).toByte
       case _ =>
-        // String/other columns: return first byte of string representation
         val str      = asString(bytes, charset)
-        val strBytes = str.getBytes()
+        val strBytes = str.getBytes(charset)
+        if strBytes.length != 1 then
+          throw new SQLDataException(
+            s"Value '$str' is too large to convert to Byte.",
+            sqlState = Some("22003")
+          )
         strBytes(0)
 
   override def decodeShort(
