@@ -265,6 +265,18 @@ class HelperFunctionsSyntaxTest extends CatsEffectSuite with HelperFunctionsSynt
     assertEquals(sql.params.size, 1)
   }
 
+  test("paginate with negative limit throws IllegalArgumentException") {
+    intercept[IllegalArgumentException] {
+      paginate(-1)
+    }
+  }
+
+  test("paginate with negative offset throws IllegalArgumentException") {
+    intercept[IllegalArgumentException] {
+      paginate(20, -1)
+    }
+  }
+
   test("paginate can be chained with orderBy") {
     val query = sql"SELECT * FROM user " ++
       orderBy(sql"`created_at` DESC") ++
