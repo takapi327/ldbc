@@ -98,14 +98,12 @@ class TextColumnValueDecoderTest extends FTestPlatform:
   }
 
   test("decodeByte for VARCHAR throws for multi-char string") {
-    // Connector/J behaviour: throws when encoded bytes length != 1
     intercept[SQLDataException] {
       TextColumnValueDecoder.decodeByte(bytes("AB"), charset, MYSQL_TYPE_VARCHAR, false)
     }
   }
 
   test("decodeByte for VARCHAR throws for numeric string longer than 1 byte") {
-    // "127" encodes to 3 bytes → exception, consistent with Connector/J
     intercept[SQLDataException] {
       TextColumnValueDecoder.decodeByte(bytes("127"), charset, MYSQL_TYPE_VARCHAR, false)
     }
