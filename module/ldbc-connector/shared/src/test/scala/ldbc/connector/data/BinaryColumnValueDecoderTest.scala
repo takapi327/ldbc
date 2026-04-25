@@ -590,7 +590,34 @@ class BinaryColumnValueDecoderTest extends FTestPlatform:
     )
   }
 
-  test("decodeTime with negative flag is ignored in hour/min/sec extraction") {
+  test("decodeTime throws for negative TIME value (8-byte)") {
+    // isNeg=1, days=0, hour=1, min=2, sec=3 → "-01:02:03" is out of LocalTime range
     val bytes = Array[Byte](1, 0, 0, 0, 0, 1, 2, 3)
-    assertEquals(BinaryColumnValueDecoder.decodeTime(bytes, charset, MYSQL_TYPE_TIME, false), LocalTime.of(1, 2, 3))
+    intercept[SQLDataException] {
+      BinaryColumnValueDecoder.decodeTime(bytes, charset, MYSQL_TYPE_TIME, false)
+    }
+  }
+
+  test("decodeTime throws for TIME value with days >= 1 (8-byte)") {
+    // isNeg=0, days=1, hour=4, min=0, sec=0 → "28:00:00" is out of LocalTime range
+    val bytes = Array[Byte](0, 1, 0, 0, 0, 4, 0, 0)
+    intercept[SQLDataException] {
+      BinaryColumnValueDecoder.decodeTime(bytes, charset, MYSQL_TYPE_TIME, false)
+    }
+  }
+
+  test("decodeTime throws for negative TIME value (12-byte)") {
+    // isNeg=1, days=0, hour=1, min=2, sec=3, microsecond=0 → "-01:02:03"
+    val bytes = Array[Byte](1, 0, 0, 0, 0, 1, 2, 3, 0, 0, 0, 0)
+    intercept[SQLDataException] {
+      BinaryColumnValueDecoder.decodeTime(bytes, charset, MYSQL_TYPE_TIME, false)
+    }
+  }
+
+  test("decodeTime throws for TIME value with days >= 1 (12-byte)") {
+    // isNeg=0, days=2, hour=3, min=0, sec=0 → "51:00:00"
+    val bytes = Array[Byte](0, 2, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0)
+    intercept[SQLDataException] {
+      BinaryColumnValueDecoder.decodeTime(bytes, charset, MYSQL_TYPE_TIME, false)
+    }
   }
