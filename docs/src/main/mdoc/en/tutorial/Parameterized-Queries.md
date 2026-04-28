@@ -14,7 +14,7 @@ In ldbc, we strongly recommend using parameterized queries to prevent SQL inject
 In ldbc, there are two main ways to embed parameters in SQL statements:
 
 1. **Dynamic parameters** - Used as regular parameters, processed by `PreparedStatement` to prevent SQL injection attacks
-2. **Static parameters** - Directly embedded as part of the SQL statement (e.g., table names, column names, etc.)
+2. **Identifier escaping** - Safely embeds table names and column names in backticks using the `ident` function
 
 ## Adding Dynamic Parameters
 
@@ -185,13 +185,11 @@ val emailFilter = emailOpt.map(email => sql"email = $email")
 val query = sql"SELECT * FROM user " ++ whereAndOpt(nameFilter, emailFilter)
 ```
 
-## Static Parameters
+## Identifier Escaping
 
-Sometimes you may want to parameterize structural parts of the SQL statement, such as column names or table names. In such cases, you can use "static parameters" which directly embed values into the SQL statement.
+Sometimes you may want to parameterize structural parts of the SQL statement, such as column names or table names. In such cases, use the `ident` function.
 
-While dynamic parameters (regular `$value`) are processed by `PreparedStatement` and replaced with `?` in the query string, static parameters are directly embedded as strings.
-
-To use static parameters, use the `sc` function:
+While dynamic parameters (regular `$value`) are processed by `PreparedStatement` and replaced with `?` in the query string, `ident` wraps identifiers in backticks and embeds them directly into the SQL statement. It also removes NUL characters, allowing identifiers to be handled safely.
 
 ```scala
 val column = "name"
@@ -200,29 +198,75 @@ val table = "user"
 // Treating as a dynamic parameter would result in "SELECT ? FROM user"
 // sql"SELECT $column FROM user".query[String].to[List]
 
-// Treating as a static parameter results in "SELECT name FROM user"
-sql"SELECT ${sc(column)} FROM ${sc(table)}".query[String].to[List]
+// Using ident results in "SELECT `name` FROM `user`"
+sql"SELECT ${ident(column)} FROM ${ident(table)}".query[String].to[List]
 ```
 
-In this example, the generated SQL is `SELECT name FROM user`.
-
-> **Warning**: `sc(...)` does not escape the passed string, so passing unvalidated data such as user input directly poses a risk of SQL injection attacks. Use static parameters only from safe parts of your application (constants, configurations, etc.).
-
-Common use cases for static parameters:
+Common use cases for `ident`:
 
 ```scala
-// Dynamic sort order
-val sortColumn = "created_at" 
-val sortDirection = "DESC"
+// Dynamic column selection
+val sortColumn = "created_at"
 
-sql"SELECT * FROM user ORDER BY ${sc(sortColumn)} ${sc(sortDirection)}"
+sql"SELECT * FROM user ORDER BY ${ident(sortColumn)} DESC"
 
 // Dynamic table selection
 val schema = "public"
 val table = "user"
 
-sql"SELECT * FROM ${sc(schema)}.${sc(table)}"
+sql"SELECT * FROM ${ident(schema)}.${ident(table)}"
 ```
+
+> **Note**: While `ident` escapes with backticks, it is recommended to use it only with trusted values (constants, configuration values, etc.). Avoid using user input directly as identifiers.
+
+## Conditional SQL Fragments
+
+When you want to conditionally append a SQL fragment, use the `when` function.
+
+```scala
+val limit: Option[Int] = Some(10)
+
+sql"SELECT name, email FROM user" ++ when(limit.isDefined)(sql" LIMIT ${limit.get}")
+```
+
+`when(condition)(fragment)` appends `fragment` only when `condition` is `true`. When `false`, it produces an empty fragment.
+
+You can combine multiple conditions:
+
+```scala
+val nameFilter: Option[String] = Some("Alice")
+val activeOnly: Boolean = true
+
+val query =
+  sql"SELECT * FROM user" ++
+  when(nameFilter.isDefined)(sql" WHERE name = ${nameFilter.get}") ++
+  when(activeOnly)(sql" AND active = true")
+```
+
+## Pagination
+
+For list queries that commonly require `LIMIT` / `OFFSET`, use the `paginate` function for concise pagination.
+
+```scala
+// Specify both limit and offset
+sql"SELECT name, email FROM user " ++ paginate(limit = 20, offset = 40)
+// → SELECT name, email FROM user LIMIT ? OFFSET ?
+
+// Specify limit only
+sql"SELECT name, email FROM user " ++ paginate(limit = 20)
+// → SELECT name, email FROM user LIMIT ?
+```
+
+Example calculating offset from a page number:
+
+```scala
+val pageSize = 20
+val page     = 3  // 1-based
+
+sql"SELECT name, email FROM user ORDER BY id " ++ paginate(limit = pageSize, offset = (page - 1) * pageSize)
+```
+
+> **Note**: Passing a negative value for `limit` or `offset` throws an `IllegalArgumentException`.
 
 ## Next Steps
 
