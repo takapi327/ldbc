@@ -9,7 +9,8 @@ package ldbc.schema
 class TableTest extends munit.FunSuite:
 
   test("Successful generation of Table") {
-    assertEquals(compileErrors("""
+    assertEquals(
+      compileErrors("""
       import ldbc.schema.*
 
       case class User(id: Long, name: String, age: Int)
@@ -20,7 +21,9 @@ class TableTest extends munit.FunSuite:
         def age: Column[Int] = int("age")
 
         override def * = (id *: name *: age).to[User]
-    """), "")
+    """),
+      ""
+    )
   }
 
   test("Setting AUTO_INCREMENT to a non-numeric type results in a compile error") {
@@ -54,7 +57,8 @@ class TableTest extends munit.FunSuite:
   }
 
   test("Foreign key constraints can be set between the same type without any problem.") {
-    assertEquals(compileErrors("""
+    assertEquals(
+      compileErrors("""
       import ldbc.schema.*
 
       case class Test(id: Long, subId: Long)
@@ -79,7 +83,9 @@ class TableTest extends munit.FunSuite:
           INDEX_KEY(subId),
           CONSTRAINT("fk_id", FOREIGN_KEY(subId, REFERENCE(subTest)(_.id)))
         )
-    """), "")
+    """),
+      ""
+    )
   }
 
   test("Setting foreign key constraints between different types results in a compile error.") {
@@ -112,7 +118,8 @@ class TableTest extends munit.FunSuite:
   }
 
   test("Compound foreign keys of the same type can be compiled without error.") {
-    assertEquals(compileErrors("""
+    assertEquals(
+      compileErrors("""
       import ldbc.schema.*
 
       case class Test(id: Long, subId: Long, subCategory: Short)
@@ -139,5 +146,7 @@ class TableTest extends munit.FunSuite:
           INDEX_KEY(subId),
           CONSTRAINT("fk_id", FOREIGN_KEY(subId *: subCategory, REFERENCE(subTest)(s => s.id *: s.category)))
         )
-    """), "")
+    """),
+      ""
+    )
   }

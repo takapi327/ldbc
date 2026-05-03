@@ -32,7 +32,9 @@ class ColumnImplTest extends munit.FunSuite:
     )
   }
 
-  test("The query string of the Column model generated with only label and DataType and comment matches the specified string.") {
+  test(
+    "The query string of the Column model generated with only label and DataType and comment matches the specified string."
+  ) {
     assertEquals(
       column[Long](
         "id",
@@ -60,11 +62,15 @@ class ColumnImplTest extends munit.FunSuite:
     assertEquals(column[BigInt]("id", SERIAL).statement, "`id` SERIAL")
   }
 
-  test("The query string of the Column model generated with only label and DataType and attributes matches the specified string.") {
+  test(
+    "The query string of the Column model generated with only label and DataType and attributes matches the specified string."
+  ) {
     assertEquals(column[Long]("id", BIGINT, AutoInc[Long]()).statement, "`id` BIGINT NOT NULL AUTO_INCREMENT")
   }
 
-  test("The query string of the Column model generated with only label and DataType and attributes and comment matches the specified string.") {
+  test(
+    "The query string of the Column model generated with only label and DataType and attributes and comment matches the specified string."
+  ) {
     assertEquals(
       column[Long](
         "id",

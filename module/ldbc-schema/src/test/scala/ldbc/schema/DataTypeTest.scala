@@ -121,7 +121,10 @@ trait DataTypeTest extends munit.FunSuite:
     assertEquals(MEDIUMINT[Int].DEFAULT(1).queryString, "MEDIUMINT NOT NULL DEFAULT 1")
     assertEquals(MEDIUMINT[Int].DEFAULT(1).UNSIGNED.queryString, "MEDIUMINT UNSIGNED NOT NULL DEFAULT 1")
     assertEquals(MEDIUMINT[Int].DEFAULT(1).ZEROFILL.queryString, "MEDIUMINT ZEROFILL NOT NULL DEFAULT 1")
-    assertEquals(MEDIUMINT[Int].DEFAULT(1).UNSIGNED.ZEROFILL.queryString, "MEDIUMINT UNSIGNED ZEROFILL NOT NULL DEFAULT 1")
+    assertEquals(
+      MEDIUMINT[Int].DEFAULT(1).UNSIGNED.ZEROFILL.queryString,
+      "MEDIUMINT UNSIGNED ZEROFILL NOT NULL DEFAULT 1"
+    )
     assertEquals(MEDIUMINT[Option[Int]].queryString, "MEDIUMINT NULL")
     assertEquals(MEDIUMINT[Option[Int]].UNSIGNED.queryString, "MEDIUMINT UNSIGNED NULL")
     assertEquals(MEDIUMINT[Option[Int]].ZEROFILL.queryString, "MEDIUMINT ZEROFILL NULL")
@@ -162,7 +165,10 @@ trait DataTypeTest extends munit.FunSuite:
     assertEquals(INT[Int](255).DEFAULT(1).queryString, "INT(255) NOT NULL DEFAULT 1")
     assertEquals(INT[Int](255).DEFAULT(1).UNSIGNED.queryString, "INT(255) UNSIGNED NOT NULL DEFAULT 1")
     assertEquals(INT[Int](255).DEFAULT(1).ZEROFILL.queryString, "INT(255) ZEROFILL NOT NULL DEFAULT 1")
-    assertEquals(INT[Int](255).DEFAULT(1).UNSIGNED.ZEROFILL.queryString, "INT(255) UNSIGNED ZEROFILL NOT NULL DEFAULT 1")
+    assertEquals(
+      INT[Int](255).DEFAULT(1).UNSIGNED.ZEROFILL.queryString,
+      "INT(255) UNSIGNED ZEROFILL NOT NULL DEFAULT 1"
+    )
     assertEquals(INT[Option[Int]](0).queryString, "INT(0) NULL")
     assertEquals(INT[Option[Int]](0).UNSIGNED.queryString, "INT(0) UNSIGNED NULL")
     assertEquals(INT[Option[Int]](0).ZEROFILL.queryString, "INT(0) ZEROFILL NULL")
@@ -195,7 +201,10 @@ trait DataTypeTest extends munit.FunSuite:
     assertEquals(INT[Option[Int]].DEFAULT(Some(2)).queryString, "INT NULL DEFAULT 2")
     assertEquals(INT[Option[Int]].DEFAULT(None).UNSIGNED.queryString, "INT UNSIGNED NULL DEFAULT NULL")
     assertEquals(INT[Option[Int]].DEFAULT(None).ZEROFILL.queryString, "INT ZEROFILL NULL DEFAULT NULL")
-    assertEquals(INT[Option[Int]].DEFAULT(None).UNSIGNED.ZEROFILL.queryString, "INT UNSIGNED ZEROFILL NULL DEFAULT NULL")
+    assertEquals(
+      INT[Option[Int]].DEFAULT(None).UNSIGNED.ZEROFILL.queryString,
+      "INT UNSIGNED ZEROFILL NULL DEFAULT NULL"
+    )
   }
 
   test("The query string generated from the Bigint DataType model matches the specified one.") {
@@ -307,7 +316,10 @@ trait DataTypeTest extends munit.FunSuite:
     assertEquals(DECIMAL[Option[BigDecimal]](10, 7).queryString, "DECIMAL(10, 7) NULL")
     assertEquals(DECIMAL[Option[BigDecimal]](10, 7).UNSIGNED.queryString, "DECIMAL(10, 7) UNSIGNED NULL")
     assertEquals(DECIMAL[Option[BigDecimal]](10, 7).ZEROFILL.queryString, "DECIMAL(10, 7) ZEROFILL NULL")
-    assertEquals(DECIMAL[Option[BigDecimal]](10, 7).UNSIGNED.ZEROFILL.queryString, "DECIMAL(10, 7) UNSIGNED ZEROFILL NULL")
+    assertEquals(
+      DECIMAL[Option[BigDecimal]](10, 7).UNSIGNED.ZEROFILL.queryString,
+      "DECIMAL(10, 7) UNSIGNED ZEROFILL NULL"
+    )
     assertEquals(DECIMAL[Option[BigDecimal]](10, 7).DEFAULT(None).queryString, "DECIMAL(10, 7) NULL DEFAULT NULL")
     assertEquals(
       DECIMAL[Option[BigDecimal]](10, 7)
@@ -377,7 +389,9 @@ trait DataTypeTest extends munit.FunSuite:
     assertEquals(CHAR[Option[String]](0).DEFAULT(Some("test")).queryString, "CHAR(0) NULL DEFAULT 'test'")
   }
 
-  test("The query string generated from the Char DataType model with CHARACTER_SET and COLLATE matches the specified one.") {
+  test(
+    "The query string generated from the Char DataType model with CHARACTER_SET and COLLATE matches the specified one."
+  ) {
     val charType    = DataType.CChar[String](10, false, None, None, None)
     val withCharSet = charType.CHARACTER_SET(Character.utf8mb4)
     assertEquals(withCharSet.queryString, "CHAR(10) CHARACTER SET utf8mb4 NOT NULL")
@@ -404,7 +418,9 @@ trait DataTypeTest extends munit.FunSuite:
     )
   }
 
-  test("The query string generated from the Varchar DataType model with CHARACTER_SET and COLLATE matches the specified one.") {
+  test(
+    "The query string generated from the Varchar DataType model with CHARACTER_SET and COLLATE matches the specified one."
+  ) {
     val varcharType = DataType.Varchar[String](50, false, None, None, None)
     val withCharSet = varcharType.CHARACTER_SET(Character.utf8mb4)
     assertEquals(withCharSet.queryString, "VARCHAR(50) CHARACTER SET utf8mb4 NOT NULL")
@@ -416,14 +432,19 @@ trait DataTypeTest extends munit.FunSuite:
     assertEquals(withBoth.queryString, "VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL")
 
     val withDefault = withBoth.DEFAULT("test")
-    assertEquals(withDefault.queryString, "VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT 'test'")
+    assertEquals(
+      withDefault.queryString,
+      "VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT 'test'"
+    )
 
     val optionalWithBoth =
       VARCHAR[Option[String]](100).CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_general_ci)
     assertEquals(optionalWithBoth.queryString, "VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL")
   }
 
-  test("The query string generated from the Binary DataType model with CHARACTER_SET and COLLATE matches the specified one.") {
+  test(
+    "The query string generated from the Binary DataType model with CHARACTER_SET and COLLATE matches the specified one."
+  ) {
     val binaryType  = DataType.Binary[Array[Byte]](10, false, None, None, None)
     val withCharSet = binaryType.CHARACTER_SET(Character.binary)
     assertEquals(withCharSet.queryString, "BINARY(10) CHARACTER SET binary NOT NULL")
@@ -438,7 +459,9 @@ trait DataTypeTest extends munit.FunSuite:
     assertEquals(optionalWithBoth.queryString, "BINARY(15) CHARACTER SET binary COLLATE binary NULL")
   }
 
-  test("The query string generated from the Varbinary DataType model with CHARACTER_SET and COLLATE matches the specified one.") {
+  test(
+    "The query string generated from the Varbinary DataType model with CHARACTER_SET and COLLATE matches the specified one."
+  ) {
     val varbinaryType = DataType.Varbinary[Array[Byte]](50, false, None, None, None)
     val withCharSet   = varbinaryType.CHARACTER_SET(Character.binary)
     assertEquals(withCharSet.queryString, "VARBINARY(50) CHARACTER SET binary NOT NULL")
@@ -453,7 +476,9 @@ trait DataTypeTest extends munit.FunSuite:
     assertEquals(optionalWithBoth.queryString, "VARBINARY(100) CHARACTER SET binary COLLATE binary NULL")
   }
 
-  test("The query string generated from the TinyText DataType model with CHARACTER_SET and COLLATE matches the specified one.") {
+  test(
+    "The query string generated from the TinyText DataType model with CHARACTER_SET and COLLATE matches the specified one."
+  ) {
     val tinytextType = DataType.TinyText[String](false, None, None, None)
     val withCharSet  = tinytextType.CHARACTER_SET(Character.utf8mb4)
     assertEquals(withCharSet.queryString, "TINYTEXT CHARACTER SET utf8mb4 NOT NULL")
@@ -475,7 +500,9 @@ trait DataTypeTest extends munit.FunSuite:
     )
   }
 
-  test("The query string generated from the Text DataType model with CHARACTER_SET and COLLATE matches the specified one.") {
+  test(
+    "The query string generated from the Text DataType model with CHARACTER_SET and COLLATE matches the specified one."
+  ) {
     val textType    = DataType.Text[String](false, None, None, None)
     val withCharSet = textType.CHARACTER_SET(Character.utf8mb4)
     assertEquals(withCharSet.queryString, "TEXT CHARACTER SET utf8mb4 NOT NULL")
@@ -496,7 +523,9 @@ trait DataTypeTest extends munit.FunSuite:
     )
   }
 
-  test("The query string generated from the MediumText DataType model with CHARACTER_SET and COLLATE matches the specified one.") {
+  test(
+    "The query string generated from the MediumText DataType model with CHARACTER_SET and COLLATE matches the specified one."
+  ) {
     val mediumtextType = DataType.MediumText[String](false, None, None, None)
     val withCharSet    = mediumtextType.CHARACTER_SET(Character.utf8mb4)
     assertEquals(withCharSet.queryString, "MEDIUMTEXT CHARACTER SET utf8mb4 NOT NULL")
@@ -518,7 +547,9 @@ trait DataTypeTest extends munit.FunSuite:
     )
   }
 
-  test("The query string generated from the LongText DataType model with CHARACTER_SET and COLLATE matches the specified one.") {
+  test(
+    "The query string generated from the LongText DataType model with CHARACTER_SET and COLLATE matches the specified one."
+  ) {
     val longtextType = DataType.LongText[String](false, None, None, None)
     val withCharSet  = longtextType.CHARACTER_SET(Character.utf8mb4)
     assertEquals(withCharSet.queryString, "LONGTEXT CHARACTER SET utf8mb4 NOT NULL")
@@ -567,7 +598,9 @@ trait DataTypeTest extends munit.FunSuite:
     )
   }
 
-  test("The query string generated from the Enum DataType model with CHARACTER_SET and COLLATE matches the specified one.") {
+  test(
+    "The query string generated from the Enum DataType model with CHARACTER_SET and COLLATE matches the specified one."
+  ) {
     enum Status:
       case Active, InActive
 

@@ -9,7 +9,8 @@ package ldbc.schema
 class DataTypesTest extends munit.FunSuite:
 
   test("Successful generation of BIT") {
-    assertEquals(compileErrors("""
+    assertEquals(
+      compileErrors("""
       import ldbc.schema.*
       import ldbc.schema.DataType.*
 
@@ -17,7 +18,9 @@ class DataTypesTest extends munit.FunSuite:
       val p2: Bit[Short] = BIT[Short](64)
       val p3: Bit[Byte]  = BIT[Byte]
       val p4: Bit[Short] = BIT[Short]
-    """), "")
+    """),
+      ""
+    )
   }
 
   test("If length is lower than 1 at the time of BIT generation, an error occurs.") {
@@ -39,7 +42,8 @@ class DataTypesTest extends munit.FunSuite:
   }
 
   test("Successful generation of TINYINT") {
-    assertEquals(compileErrors("""
+    assertEquals(
+      compileErrors("""
       import ldbc.schema.*
       import ldbc.schema.DataType.*
 
@@ -47,7 +51,9 @@ class DataTypesTest extends munit.FunSuite:
       val p2: Tinyint[Byte] = TINYINT[Byte](255)
       val p3: Tinyint[Byte] = TINYINT[Byte]
       val p4: Tinyint[Byte] = TINYINT[Byte]
-    """), "")
+    """),
+      ""
+    )
   }
 
   test("If length is lower than 0 at the time of TINYINT generation, an error occurs.") {
@@ -69,7 +75,8 @@ class DataTypesTest extends munit.FunSuite:
   }
 
   test("Successful generation of SMALLINT") {
-    assertEquals(compileErrors("""
+    assertEquals(
+      compileErrors("""
       import ldbc.schema.*
       import ldbc.schema.DataType.*
 
@@ -77,7 +84,9 @@ class DataTypesTest extends munit.FunSuite:
       val p2: Smallint[Short] = SMALLINT[Short](255)
       val p3: Smallint[Short] = SMALLINT[Short]
       val p4: Smallint[Short] = SMALLINT[Short]
-    """), "")
+    """),
+      ""
+    )
   }
 
   test("If length is lower than 0 at the time of SMALLINT generation, an error occurs.") {
@@ -99,7 +108,8 @@ class DataTypesTest extends munit.FunSuite:
   }
 
   test("Successful generation of MEDIUMINT") {
-    assertEquals(compileErrors("""
+    assertEquals(
+      compileErrors("""
       import ldbc.schema.*
       import ldbc.schema.DataType.*
 
@@ -107,7 +117,9 @@ class DataTypesTest extends munit.FunSuite:
       val p2: Mediumint[Int] = MEDIUMINT[Int](255)
       val p3: Mediumint[Int] = MEDIUMINT[Int]
       val p4: Mediumint[Int] = MEDIUMINT[Int]
-    """), "")
+    """),
+      ""
+    )
   }
 
   test("If length is lower than 0 at the time of MEDIUMINT generation, an error occurs.") {
@@ -129,14 +141,17 @@ class DataTypesTest extends munit.FunSuite:
   }
 
   test("Successful generation of INT") {
-    assertEquals(compileErrors("""
+    assertEquals(
+      compileErrors("""
       import ldbc.schema.DataType.*
 
       val p1: Integer[Int] = INT[Int](1)
       val p2: Integer[Int] = INT[Int](255)
       val p3: Integer[Int] = INT[Int]
       val p4: Integer[Int] = INT[Int]
-    """), "")
+    """),
+      ""
+    )
   }
 
   test("If length is lower than 0 at the time of INT generation, an error occurs.") {
@@ -158,7 +173,8 @@ class DataTypesTest extends munit.FunSuite:
   }
 
   test("Successful generation of BIGINT") {
-    assertEquals(compileErrors("""
+    assertEquals(
+      compileErrors("""
       import ldbc.schema.*
       import ldbc.schema.DataType.*
 
@@ -166,7 +182,9 @@ class DataTypesTest extends munit.FunSuite:
       val p2: Bigint[Long] = BIGINT[Long](255)
       val p3: Bigint[Long] = BIGINT[Long]
       val p4: Bigint[Long] = BIGINT[Long]
-    """), "")
+    """),
+      ""
+    )
   }
 
   test("If length is lower than 0 at the time of BIGINT generation, an error occurs.") {
@@ -188,13 +206,16 @@ class DataTypesTest extends munit.FunSuite:
   }
 
   test("Successful generation of DECIMAL") {
-    assertEquals(compileErrors("""
+    assertEquals(
+      compileErrors("""
       import ldbc.schema.*
       import ldbc.schema.DataType.*
 
       val p1: Decimal[BigDecimal] = DECIMAL[BigDecimal](0, 0)
       val p2: Decimal[BigDecimal] = DECIMAL[BigDecimal](65)
-    """), "")
+    """),
+      ""
+    )
   }
 
   test("If accuracy is lower than 0 at the time of DECIMAL generation, an error occurs.") {
@@ -225,13 +246,16 @@ class DataTypesTest extends munit.FunSuite:
   }
 
   test("Successful generation of FLOAT") {
-    assertEquals(compileErrors("""
+    assertEquals(
+      compileErrors("""
       import ldbc.schema.*
       import ldbc.schema.DataType.*
 
       val p1: CFloat[Float] = FLOAT[Float](0)
       val p2: CFloat[Float] = FLOAT[Float](24)
-    """), "")
+    """),
+      ""
+    )
   }
 
   test("If accuracy is lower than 0 at the time of FLOAT generation, an error occurs.") {
@@ -253,13 +277,16 @@ class DataTypesTest extends munit.FunSuite:
   }
 
   test("Successful generation of DOUBLE") {
-    assertEquals(compileErrors("""
+    assertEquals(
+      compileErrors("""
       import ldbc.schema.*
       import ldbc.schema.DataType.*
 
       val p1: CFloat[Double] = DOUBLE[Double](24)
       val p2: CFloat[Double] = DOUBLE[Double](53)
-    """), "")
+    """),
+      ""
+    )
   }
 
   test("If accuracy is lower than 24 at the time of DOUBLE generation, an error occurs.") {
@@ -281,13 +308,16 @@ class DataTypesTest extends munit.FunSuite:
   }
 
   test("Successful generation of CHAR") {
-    assertEquals(compileErrors("""
+    assertEquals(
+      compileErrors("""
       import ldbc.schema.*
       import ldbc.schema.DataType.*
 
       val p1: CChar[String] = CHAR[String](0)
       val p2: CChar[String] = CHAR[String](255)
-    """), "")
+    """),
+      ""
+    )
   }
 
   test("If length is lower than 0 at the time of CHAR generation, an error occurs.") {
@@ -308,13 +338,16 @@ class DataTypesTest extends munit.FunSuite:
   }
 
   test("Successful generation of VARCHAR") {
-    assertEquals(compileErrors("""
+    assertEquals(
+      compileErrors("""
       import ldbc.schema.*
       import ldbc.schema.DataType.*
 
       val p1: Varchar[String] = VARCHAR[String](0)
       val p2: Varchar[String] = VARCHAR[String](255)
-    """), "")
+    """),
+      ""
+    )
   }
 
   test("If length is lower than 0 at the time of VARCHAR generation, an error occurs.") {
@@ -336,13 +369,16 @@ class DataTypesTest extends munit.FunSuite:
   }
 
   test("Successful generation of BINARY") {
-    assertEquals(compileErrors("""
+    assertEquals(
+      compileErrors("""
       import ldbc.schema.*
       import ldbc.schema.DataType.*
 
       val p1: Binary[Array[Byte]] = BINARY[Array[Byte]](0)
       val p2: Binary[Array[Byte]] = BINARY[Array[Byte]](255)
-    """), "")
+    """),
+      ""
+    )
   }
 
   test("If length is lower than 0 at the time of BINARY generation, an error occurs.") {
@@ -364,13 +400,16 @@ class DataTypesTest extends munit.FunSuite:
   }
 
   test("Successful generation of VARBINARY") {
-    assertEquals(compileErrors("""
+    assertEquals(
+      compileErrors("""
       import ldbc.schema.*
       import ldbc.schema.DataType.*
 
       val p1: Varbinary[Array[Byte]] = VARBINARY[Array[Byte]](0)
       val p2: Varbinary[Array[Byte]] = VARBINARY[Array[Byte]](255)
-    """), "")
+    """),
+      ""
+    )
   }
 
   test("If length is lower than 0 at the time of VARBINARY generation, an error occurs.") {
@@ -383,13 +422,16 @@ class DataTypesTest extends munit.FunSuite:
   }
 
   test("Successful generation of BLOB") {
-    assertEquals(compileErrors("""
+    assertEquals(
+      compileErrors("""
       import ldbc.schema.*
       import ldbc.schema.DataType.*
 
       val p1: Blob[Array[Byte]] = BLOB[Array[Byte]](0)
       val p2: Blob[Array[Byte]] = BLOB[Array[Byte]](4294967295L)
-    """), "")
+    """),
+      ""
+    )
   }
 
   test("If length is lower than 0 at the time of BLOB generation, an error occurs.") {
@@ -411,7 +453,8 @@ class DataTypesTest extends munit.FunSuite:
   }
 
   test("The DATE type must be passed a string in the format YYYY-MM-DD, ranging from '1000-01-01' to '9999-12-31'.") {
-    assertEquals(compileErrors("""
+    assertEquals(
+      compileErrors("""
       import ldbc.schema.*
       import ldbc.schema.DataType.*
 
@@ -419,10 +462,14 @@ class DataTypesTest extends munit.FunSuite:
       val p2: Date[java.time.LocalDate] = DATE.DEFAULT("9999-12-31")
       val p3: Date[java.time.LocalDate] = DATE.DEFAULT("2023-10-22")
       val p4: Date[java.time.LocalDate] = DATE.DEFAULT(0)
-    """), "")
+    """),
+      ""
+    )
   }
 
-  test("Passing a string of type DATE in YYYY-MM-DD format other than the range from '1000-01-01' to '9999-12-31' will result in a compile error.") {
+  test(
+    "Passing a string of type DATE in YYYY-MM-DD format other than the range from '1000-01-01' to '9999-12-31' will result in a compile error."
+  ) {
     assert(compileErrors("""
       import ldbc.schema.*
       import ldbc.schema.DataType.*
@@ -436,8 +483,11 @@ class DataTypesTest extends munit.FunSuite:
     """).nonEmpty)
   }
 
-  test("The DATETIME type must be passed a string in the format YYYY-MM-DD hh:mm:ss, ranging from '1000-01-01 00:00:00' to '9999-12-31 23:59:59'.") {
-    assertEquals(compileErrors("""
+  test(
+    "The DATETIME type must be passed a string in the format YYYY-MM-DD hh:mm:ss, ranging from '1000-01-01 00:00:00' to '9999-12-31 23:59:59'."
+  ) {
+    assertEquals(
+      compileErrors("""
       import ldbc.schema.*
       import ldbc.schema.DataType.*
 
@@ -445,10 +495,14 @@ class DataTypesTest extends munit.FunSuite:
       val p2: DateTime[java.time.LocalDateTime] = DATETIME.DEFAULT("9999-12-31 23:59:59")
       val p3: DateTime[java.time.LocalDateTime] = DATETIME.DEFAULT("2023-10-22 16:04:22")
       val p4: DateTime[java.time.LocalDateTime] = DATETIME.DEFAULT(0)
-    """), "")
+    """),
+      ""
+    )
   }
 
-  test("Passing a string of type DATETIME in YYYY-MM-DD hh:mm:ss format other than the range from '1000-01-01 00:00:00' to '9999-12-31 23:59:59' will result in a compile error.") {
+  test(
+    "Passing a string of type DATETIME in YYYY-MM-DD hh:mm:ss format other than the range from '1000-01-01 00:00:00' to '9999-12-31 23:59:59' will result in a compile error."
+  ) {
     assert(compileErrors("""
       import ldbc.schema.*
       import ldbc.schema.DataType.*
@@ -461,8 +515,11 @@ class DataTypesTest extends munit.FunSuite:
     """).nonEmpty)
   }
 
-  test("The TIMESTAMP type must be passed a string in the format YYYY-MM-DD hh:mm:ss, ranging from '1000-01-01 00:00:00' to '9999-12-31 23:59:59'.") {
-    assertEquals(compileErrors("""
+  test(
+    "The TIMESTAMP type must be passed a string in the format YYYY-MM-DD hh:mm:ss, ranging from '1000-01-01 00:00:00' to '9999-12-31 23:59:59'."
+  ) {
+    assertEquals(
+      compileErrors("""
       import ldbc.schema.*
       import ldbc.schema.DataType.*
 
@@ -470,10 +527,14 @@ class DataTypesTest extends munit.FunSuite:
       val p2: TimeStamp[java.time.LocalDateTime] = TIMESTAMP.DEFAULT("9999-12-31 23:59:59")
       val p3: TimeStamp[java.time.LocalDateTime] = TIMESTAMP.DEFAULT("2023-10-22 16:04:22")
       val p4: TimeStamp[java.time.LocalDateTime] = TIMESTAMP.DEFAULT(0)
-    """), "")
+    """),
+      ""
+    )
   }
 
-  test("Passing a string of type TIMESTAMP in YYYY-MM-DD hh:mm:ss format other than the range from '1000-01-01 00:00:00' to '9999-12-31 23:59:59' will result in a compile error.") {
+  test(
+    "Passing a string of type TIMESTAMP in YYYY-MM-DD hh:mm:ss format other than the range from '1000-01-01 00:00:00' to '9999-12-31 23:59:59' will result in a compile error."
+  ) {
     assert(compileErrors("""
       import ldbc.schema.*
       import ldbc.schema.DataType.*
@@ -486,8 +547,11 @@ class DataTypesTest extends munit.FunSuite:
     """).nonEmpty)
   }
 
-  test("A string in hh:mm:ss or hhh:mm:ss format and in the range from '-838:59:59' to '838:59:59' must be passed to the TIME type.") {
-    assertEquals(compileErrors("""
+  test(
+    "A string in hh:mm:ss or hhh:mm:ss format and in the range from '-838:59:59' to '838:59:59' must be passed to the TIME type."
+  ) {
+    assertEquals(
+      compileErrors("""
       import ldbc.schema.*
       import ldbc.schema.DataType.*
 
@@ -495,10 +559,14 @@ class DataTypesTest extends munit.FunSuite:
       val p2: Time[java.time.LocalTime] = TIME.DEFAULT("838:59:59")
       val p3: Time[java.time.LocalTime] = TIME.DEFAULT("60:59:59")
       val p4: Time[java.time.LocalTime] = TIME.DEFAULT(0)
-    """), "")
+    """),
+      ""
+    )
   }
 
-  test("Passing a string of type TIME in hh:mm:ss or hhh:mm:ss format other than the range from '-838:59:59' to '838:59:59' will result in a compile error.") {
+  test(
+    "Passing a string of type TIME in hh:mm:ss or hhh:mm:ss format other than the range from '-838:59:59' to '838:59:59' will result in a compile error."
+  ) {
     assert(compileErrors("""
       import ldbc.schema.*
       import ldbc.schema.DataType.*
@@ -510,18 +578,25 @@ class DataTypesTest extends munit.FunSuite:
     """).nonEmpty)
   }
 
-  test("The default value can be passed to the YEAR type as 0 or a value greater than or equal to 1901 or less than or equal to 2155.") {
-    assertEquals(compileErrors("""
+  test(
+    "The default value can be passed to the YEAR type as 0 or a value greater than or equal to 1901 or less than or equal to 2155."
+  ) {
+    assertEquals(
+      compileErrors("""
       import ldbc.schema.*
       import ldbc.schema.DataType.*
 
       val p1: Year[java.time.Year] = YEAR.DEFAULT(0)
       val p2: Year[java.time.Year] = YEAR.DEFAULT(1901)
       val p3: Year[java.time.Year] = YEAR.DEFAULT(2155)
-    """), "")
+    """),
+      ""
+    )
   }
 
-  test("If a value other than 0 or a value in the range 1901-2155 is passed, a default value of type Year will result in an error.") {
+  test(
+    "If a value other than 0 or a value in the range 1901-2155 is passed, a default value of type Year will result in an error."
+  ) {
     assert(compileErrors("""
       import ldbc.schema.*
       import ldbc.schema.DataType.*

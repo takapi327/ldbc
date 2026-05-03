@@ -9,12 +9,15 @@ package ldbc.schema
 class DataTypeCompileTest extends munit.FunSuite:
 
   test("Successful TINYBLOB compile") {
-    assertEquals(compileErrors("""
+    assertEquals(
+      compileErrors("""
         import ldbc.schema.*
         import ldbc.schema.DataType.*
 
         val p1: Tinyblob[Option[Array[Byte]]] = TINYBLOB[Option[Array[Byte]]]().DEFAULT(None)
-        """), "")
+        """),
+      ""
+    )
   }
 
   test("Fails TINYBLOB compile") {
@@ -28,12 +31,15 @@ class DataTypeCompileTest extends munit.FunSuite:
   }
 
   test("Successful BLOB compile") {
-    assertEquals(compileErrors("""
+    assertEquals(
+      compileErrors("""
         import ldbc.schema.*
         import ldbc.schema.DataType.*
 
         val p1: Blob[Option[Array[Byte]]] = BLOB[Option[Array[Byte]]]().DEFAULT(None)
-        """), "")
+        """),
+      ""
+    )
   }
 
   test("Fails BLOB compile") {
@@ -47,12 +53,15 @@ class DataTypeCompileTest extends munit.FunSuite:
   }
 
   test("Successful MEDIUMBLOB compile") {
-    assertEquals(compileErrors("""
+    assertEquals(
+      compileErrors("""
         import ldbc.schema.*
         import ldbc.schema.DataType.*
 
         val p1: Mediumblob[Option[Array[Byte]]] = MEDIUMBLOB[Option[Array[Byte]]]().DEFAULT(None)
-        """), "")
+        """),
+      ""
+    )
   }
 
   test("Fails MEDIUMBLOB compile") {
@@ -66,12 +75,15 @@ class DataTypeCompileTest extends munit.FunSuite:
   }
 
   test("Successful LONGBLOB compile") {
-    assertEquals(compileErrors("""
+    assertEquals(
+      compileErrors("""
         import ldbc.schema.*
         import ldbc.schema.DataType.*
 
         val p1: LongBlob[Option[Array[Byte]]] = LONGBLOB[Option[Array[Byte]]]().DEFAULT(None)
-        """), "")
+        """),
+      ""
+    )
   }
 
   test("Fails LONGBLOB compile") {
@@ -85,12 +97,15 @@ class DataTypeCompileTest extends munit.FunSuite:
   }
 
   test("Successful TINYTEXT compile") {
-    assertEquals(compileErrors("""
+    assertEquals(
+      compileErrors("""
         import ldbc.schema.*
         import ldbc.schema.DataType.*
 
         val p1: TinyText[Option[String]] = TINYTEXT[Option[String]]().DEFAULT(None)
-        """), "")
+        """),
+      ""
+    )
   }
 
   test("Fails TINYTEXT compile") {
@@ -104,12 +119,15 @@ class DataTypeCompileTest extends munit.FunSuite:
   }
 
   test("Successful TEXT compile") {
-    assertEquals(compileErrors("""
+    assertEquals(
+      compileErrors("""
         import ldbc.schema.*
         import ldbc.schema.DataType.*
 
         val p1: Text[Option[String]] = TEXT[Option[String]]().DEFAULT(None)
-        """), "")
+        """),
+      ""
+    )
   }
 
   test("Fails TEXT compile") {
@@ -123,12 +141,15 @@ class DataTypeCompileTest extends munit.FunSuite:
   }
 
   test("Successful MEDIUMTEXT compile") {
-    assertEquals(compileErrors("""
+    assertEquals(
+      compileErrors("""
         import ldbc.schema.*
         import ldbc.schema.DataType.*
 
         val p1: MediumText[Option[String]] = MEDIUMTEXT[Option[String]]().DEFAULT(None)
-        """), "")
+        """),
+      ""
+    )
   }
 
   test("Fails MEDIUMTEXT compile") {
@@ -142,12 +163,15 @@ class DataTypeCompileTest extends munit.FunSuite:
   }
 
   test("Successful LONGTEXT compile") {
-    assertEquals(compileErrors("""
+    assertEquals(
+      compileErrors("""
         import ldbc.schema.*
         import ldbc.schema.DataType.*
 
         val p1: LongText[Option[String]] = LONGTEXT[Option[String]]().DEFAULT(None)
-        """), "")
+        """),
+      ""
+    )
   }
 
   test("Fails LONGTEXT compile") {

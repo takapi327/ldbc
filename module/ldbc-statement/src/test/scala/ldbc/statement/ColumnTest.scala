@@ -23,42 +23,54 @@ class ColumnTest extends munit.FunSuite:
   private val name1 = Column.Impl[String]("name")
   private val name2 = Column.Impl[Option[String]]("name")
 
-  test("The string of the expression syntax that constructs the match with the specified value matches the specified string.") {
+  test(
+    "The string of the expression syntax that constructs the match with the specified value matches the specified string."
+  ) {
     assertEquals((id1 === 1L).statement, "`id` = ?")
     assertEquals((id1 === 1L).NOT.statement, "NOT `id` = ?")
     assertEquals((id2 === 1L).statement, "`id` = ?")
     assertEquals((id2 === 1L).NOT.statement, "NOT `id` = ?")
   }
 
-  test("The string constructed by the expression syntax that determines if it is greater than or equal to the specified value matches the specified string.") {
+  test(
+    "The string constructed by the expression syntax that determines if it is greater than or equal to the specified value matches the specified string."
+  ) {
     assertEquals((id1 >= 1L).statement, "`id` >= ?")
     assertEquals((id1 >= 1L).NOT.statement, "NOT `id` >= ?")
     assertEquals((id2 >= 1L).statement, "`id` >= ?")
     assertEquals((id2 >= 1L).NOT.statement, "NOT `id` >= ?")
   }
 
-  test("The string constructed by the expression syntax that determines whether the specified value is exceeded matches the specified string.") {
+  test(
+    "The string constructed by the expression syntax that determines whether the specified value is exceeded matches the specified string."
+  ) {
     assertEquals((id1 > 1L).statement, "`id` > ?")
     assertEquals((id1 > 1L).NOT.statement, "NOT `id` > ?")
     assertEquals((id2 > 1L).statement, "`id` > ?")
     assertEquals((id2 > 1L).NOT.statement, "NOT `id` > ?")
   }
 
-  test("The string constructed by the expression syntax that determines if it is less than or equal to the specified value matches the specified string.") {
+  test(
+    "The string constructed by the expression syntax that determines if it is less than or equal to the specified value matches the specified string."
+  ) {
     assertEquals((id1 <= 1L).statement, "`id` <= ?")
     assertEquals((id1 <= 1L).NOT.statement, "NOT `id` <= ?")
     assertEquals((id2 <= 1L).statement, "`id` <= ?")
     assertEquals((id2 <= 1L).NOT.statement, "NOT `id` <= ?")
   }
 
-  test("The string constructed by the expression syntax that determines if it is less than the specified value matches the specified string.") {
+  test(
+    "The string constructed by the expression syntax that determines if it is less than the specified value matches the specified string."
+  ) {
     assertEquals((id1 < 1L).statement, "`id` < ?")
     assertEquals((id1 < 1L).NOT.statement, "NOT `id` < ?")
     assertEquals((id2 < 1L).statement, "`id` < ?")
     assertEquals((id2 < 1L).NOT.statement, "NOT `id` < ?")
   }
 
-  test("The string constructed by the expression syntax that determines whether the specified value match or not matches the specified string.") {
+  test(
+    "The string constructed by the expression syntax that determines whether the specified value match or not matches the specified string."
+  ) {
     assertEquals((id1 <> 1L).statement, "`id` <> ?")
     assertEquals((id1 <> 1L).NOT.statement, "NOT `id` <> ?")
     assertEquals((id1 !== 1L).statement, "`id` != ?")
@@ -69,7 +81,9 @@ class ColumnTest extends munit.FunSuite:
     assertEquals((id2 !== 1L).NOT.statement, "NOT `id` != ?")
   }
 
-  test("The string constructed by the expression syntax that determines whether it is a Boolean value that can be TRUE, FALSE, or UNKNOWN matches the specified string.") {
+  test(
+    "The string constructed by the expression syntax that determines whether it is a Boolean value that can be TRUE, FALSE, or UNKNOWN matches the specified string."
+  ) {
     assertEquals((id1 IS "TRUE").statement, "`id` IS TRUE")
     assertEquals((id1 IS "FALSE").NOT.statement, "`id` IS NOT FALSE")
     assertEquals((id2 IS "TRUE").statement, "`id` IS TRUE")
@@ -77,28 +91,36 @@ class ColumnTest extends munit.FunSuite:
     assertEquals((id2 IS "UNKNOWN").NOT.statement, "`id` IS NOT UNKNOWN")
   }
 
-  test("NULL - The string constructed by the expression syntax to determine safe equivalence matches the specified string.") {
+  test(
+    "NULL - The string constructed by the expression syntax to determine safe equivalence matches the specified string."
+  ) {
     assertEquals((id1 <=> 1L).statement, "`id` <=> ?")
     assertEquals((id1 <=> 1L).NOT.statement, "NOT `id` <=> ?")
     assertEquals((id2 <=> 1L).statement, "`id` <=> ?")
     assertEquals((id2 <=> 1L).NOT.statement, "NOT `id` <=> ?")
   }
 
-  test("The string constructed by the expression syntax that determines whether it contains at least one of the specified values matches the specified string.") {
+  test(
+    "The string constructed by the expression syntax that determines whether it contains at least one of the specified values matches the specified string."
+  ) {
     assertEquals((id1 IN (1L, 2L)).statement, "`id` IN (?, ?)")
     assertEquals((id1 IN (1L, 2L)).NOT.statement, "`id` NOT IN (?, ?)")
     assertEquals((id2 IN (1L, 2L)).statement, "`id` IN (?, ?)")
     assertEquals((id2 IN (1L, 2L, 3L)).NOT.statement, "`id` NOT IN (?, ?, ?)")
   }
 
-  test("The string constructed by the expression syntax that determines whether the value falls within the specified range matches the specified string.") {
+  test(
+    "The string constructed by the expression syntax that determines whether the value falls within the specified range matches the specified string."
+  ) {
     assertEquals((id1 BETWEEN (1L, 10L)).statement, "`id` BETWEEN ? AND ?")
     assertEquals((id1 BETWEEN (1L, 10L)).NOT.statement, "`id` NOT BETWEEN ? AND ?")
     assertEquals((id2 BETWEEN (1L, 10L)).statement, "`id` BETWEEN ? AND ?")
     assertEquals((id2 BETWEEN (1L, 10L)).NOT.statement, "`id` NOT BETWEEN ? AND ?")
   }
 
-  test("The string constructed by the expression syntax that determines whether it contains a matching string matches the specified string.") {
+  test(
+    "The string constructed by the expression syntax that determines whether it contains a matching string matches the specified string."
+  ) {
     assertEquals((name1 LIKE "ldbc").statement, "`name` LIKE ?")
     assertEquals((name1 LIKE "ldbc").NOT.statement, "NOT `name` LIKE ?")
     assertEquals((name2 LIKE "ldbc").statement, "`name` LIKE ?")
@@ -109,21 +131,27 @@ class ColumnTest extends munit.FunSuite:
     assertEquals((name2 LIKE_ESCAPE ("T%", "$")).NOT.statement, "NOT `name` LIKE ? ESCAPE ?")
   }
 
-  test("The string constructed by the expression syntax that determines whether it matches the regular expression pattern matches the specified string.") {
+  test(
+    "The string constructed by the expression syntax that determines whether it matches the regular expression pattern matches the specified string."
+  ) {
     assertEquals((name1 REGEXP "^[A-D]'").statement, "`name` REGEXP ?")
     assertEquals((name1 REGEXP "^[A-D]'").NOT.statement, "NOT `name` REGEXP ?")
     assertEquals((name2 REGEXP "^[A-D]'").statement, "`name` REGEXP ?")
     assertEquals((name2 REGEXP "^[A-D]'").NOT.statement, "NOT `name` REGEXP ?")
   }
 
-  test("The string constructed by the expression syntax that performs the integer division operation to determine if it matches matches the specified string.") {
+  test(
+    "The string constructed by the expression syntax that performs the integer division operation to determine if it matches matches the specified string."
+  ) {
     assertEquals((id1 DIV (5L, 10L)).statement, "`id` DIV ? = ?")
     assertEquals((id1 DIV (5L, 10L)).NOT.statement, "NOT `id` DIV ? = ?")
     assertEquals((id2 DIV (5L, 10L)).statement, "`id` DIV ? = ?")
     assertEquals((id2 DIV (5L, 10L)).NOT.statement, "NOT `id` DIV ? = ?")
   }
 
-  test("The string constructed by the expression syntax that performs the operation to find the remainder and determines whether it matches matches the specified string.") {
+  test(
+    "The string constructed by the expression syntax that performs the operation to find the remainder and determines whether it matches matches the specified string."
+  ) {
     assertEquals((id1 MOD (5L, 0L)).statement, "`id` MOD ? = ?")
     assertEquals((id1 MOD (5L, 0L)).NOT.statement, "NOT `id` MOD ? = ?")
     assertEquals((id1 % (5L, 0L)).statement, "`id` % ? = ?")
@@ -134,7 +162,9 @@ class ColumnTest extends munit.FunSuite:
     assertEquals((id2 % (5L, 0L)).NOT.statement, "NOT `id` % ? = ?")
   }
 
-  test("The string constructed by the expression syntax that performs the bit XOR operation to determine if it matches matches the specified string.") {
+  test(
+    "The string constructed by the expression syntax that performs the bit XOR operation to determine if it matches matches the specified string."
+  ) {
     assertEquals((id1 MOD (5L, 0L)).statement, "`id` MOD ? = ?")
     assertEquals((id1 MOD (5L, 0L)).NOT.statement, "NOT `id` MOD ? = ?")
     assertEquals((id1 % (5L, 0L)).statement, "`id` % ? = ?")
@@ -145,7 +175,9 @@ class ColumnTest extends munit.FunSuite:
     assertEquals((id2 % (5L, 0L)).NOT.statement, "NOT `id` % ? = ?")
   }
 
-  test("The string constructed by the expression syntax that performs the left shift operation to determine if it matches matches the specified string.") {
+  test(
+    "The string constructed by the expression syntax that performs the left shift operation to determine if it matches matches the specified string."
+  ) {
     assertEquals((id1 << 1L).statement, "`id` << ?")
     assertEquals((id1 << 1L).NOT.statement, "NOT `id` << ?")
     assertEquals((id2 << 1L).statement, "`id` << ?")

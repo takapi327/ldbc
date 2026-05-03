@@ -127,7 +127,10 @@ class KeyTest extends munit.FunSuite:
       testTable.id *: testTable.subId,
       Some(Index.IndexOption(Some(1), Some(Index.Type.BTREE), Some("parser"), None, None, None))
     )
-    assertEquals(key.queryString, "FULLTEXT `key_id` (`id`, `sub_id`) KEY_BLOCK_SIZE = 1 USING BTREE WITH PARSER parser")
+    assertEquals(
+      key.queryString,
+      "FULLTEXT `key_id` (`id`, `sub_id`) KEY_BLOCK_SIZE = 1 USING BTREE WITH PARSER parser"
+    )
   }
 
   test("[6] The query string of the generated Fulltext model matches the specified string.") {
