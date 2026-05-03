@@ -6,33 +6,30 @@
 
 package ldbc.statement
 
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
+class SchemaTest extends munit.FunSuite:
 
-class SchemaTest extends AnyFlatSpec with Matchers:
-
-  "Schema.DDL" should "store a single statement" in {
+  test("Schema.DDL should store a single statement") {
     val ddl = Schema.DDL("CREATE TABLE test")
-    ddl.statements should be(List("CREATE TABLE test"))
+    assertEquals(ddl.statements, List("CREATE TABLE test"))
   }
 
-  it should "concatenate two DDLs" in {
+  test("Schema.DDL should concatenate two DDLs") {
     val ddl1     = Schema.DDL("CREATE TABLE test1")
     val ddl2     = Schema.DDL("CREATE TABLE test2")
     val combined = ddl1 ++ ddl2
-    combined.statements should be(List("CREATE TABLE test1", "CREATE TABLE test2"))
+    assertEquals(combined.statements, List("CREATE TABLE test1", "CREATE TABLE test2"))
   }
 
-  "Schema.empty" should "create an empty schema with empty statements" in {
+  test("Schema.empty should create an empty schema with empty statements") {
     val schema = Schema.empty
-    schema.create.statements should be(List(""))
-    schema.createIfNotExists.statements should be(List(""))
-    schema.drop.statements should be(List(""))
-    schema.dropIfExists.statements should be(List(""))
-    schema.truncate.statements should be(List(""))
+    assertEquals(schema.create.statements, List(""))
+    assertEquals(schema.createIfNotExists.statements, List(""))
+    assertEquals(schema.drop.statements, List(""))
+    assertEquals(schema.dropIfExists.statements, List(""))
+    assertEquals(schema.truncate.statements, List(""))
   }
 
-  "Schema.apply" should "create a schema with provided DDL statements" in {
+  test("Schema.apply should create a schema with provided DDL statements") {
     val create            = Schema.DDL("CREATE TABLE test")
     val createIfNotExists = Schema.DDL("CREATE TABLE IF NOT EXISTS test")
     val drop              = Schema.DDL("DROP TABLE test")
@@ -41,14 +38,14 @@ class SchemaTest extends AnyFlatSpec with Matchers:
 
     val schema = Schema(create, createIfNotExists, drop, dropIfExists, truncate)
 
-    schema.create.statements should be(List("CREATE TABLE test"))
-    schema.createIfNotExists.statements should be(List("CREATE TABLE IF NOT EXISTS test"))
-    schema.drop.statements should be(List("DROP TABLE test"))
-    schema.dropIfExists.statements should be(List("DROP TABLE IF EXISTS test"))
-    schema.truncate.statements should be(List("TRUNCATE TABLE test"))
+    assertEquals(schema.create.statements, List("CREATE TABLE test"))
+    assertEquals(schema.createIfNotExists.statements, List("CREATE TABLE IF NOT EXISTS test"))
+    assertEquals(schema.drop.statements, List("DROP TABLE test"))
+    assertEquals(schema.dropIfExists.statements, List("DROP TABLE IF EXISTS test"))
+    assertEquals(schema.truncate.statements, List("TRUNCATE TABLE test"))
   }
 
-  "Schema++" should "concatenate two schemas correctly" in {
+  test("Schema++ should concatenate two schemas correctly") {
     val schema1 = Schema(
       Schema.DDL("CREATE TABLE test1"),
       Schema.DDL("CREATE TABLE IF NOT EXISTS test1"),
@@ -67,16 +64,17 @@ class SchemaTest extends AnyFlatSpec with Matchers:
 
     val combined = schema1 ++ schema2
 
-    combined.create.statements should be(List("CREATE TABLE test1", "CREATE TABLE test2"))
-    combined.createIfNotExists.statements should be(
+    assertEquals(combined.create.statements, List("CREATE TABLE test1", "CREATE TABLE test2"))
+    assertEquals(
+      combined.createIfNotExists.statements,
       List("CREATE TABLE IF NOT EXISTS test1", "CREATE TABLE IF NOT EXISTS test2")
     )
-    combined.drop.statements should be(List("DROP TABLE test1", "DROP TABLE test2"))
-    combined.dropIfExists.statements should be(List("DROP TABLE IF EXISTS test1", "DROP TABLE IF EXISTS test2"))
-    combined.truncate.statements should be(List("TRUNCATE TABLE test1", "TRUNCATE TABLE test2"))
+    assertEquals(combined.drop.statements, List("DROP TABLE test1", "DROP TABLE test2"))
+    assertEquals(combined.dropIfExists.statements, List("DROP TABLE IF EXISTS test1", "DROP TABLE IF EXISTS test2"))
+    assertEquals(combined.truncate.statements, List("TRUNCATE TABLE test1", "TRUNCATE TABLE test2"))
   }
 
-  "Schema methods" should "return the correct DDL statements" in {
+  test("Schema methods should return the correct DDL statements") {
     val schema = Schema(
       Schema.DDL("CREATE TABLE test"),
       Schema.DDL("CREATE TABLE IF NOT EXISTS test"),
@@ -85,18 +83,18 @@ class SchemaTest extends AnyFlatSpec with Matchers:
       Schema.DDL("TRUNCATE TABLE test")
     )
 
-    schema.create.statements should be(List("CREATE TABLE test"))
-    schema.createIfNotExists.statements should be(List("CREATE TABLE IF NOT EXISTS test"))
-    schema.drop.statements should be(List("DROP TABLE test"))
-    schema.dropIfExists.statements should be(List("DROP TABLE IF EXISTS test"))
-    schema.truncate.statements should be(List("TRUNCATE TABLE test"))
+    assertEquals(schema.create.statements, List("CREATE TABLE test"))
+    assertEquals(schema.createIfNotExists.statements, List("CREATE TABLE IF NOT EXISTS test"))
+    assertEquals(schema.drop.statements, List("DROP TABLE test"))
+    assertEquals(schema.dropIfExists.statements, List("DROP TABLE IF EXISTS test"))
+    assertEquals(schema.truncate.statements, List("TRUNCATE TABLE test"))
   }
 
-  "Multiple DDL concatenation" should "work correctly" in {
+  test("Multiple DDL concatenation should work correctly") {
     val ddl1 = Schema.DDL("CREATE TABLE test1")
     val ddl2 = Schema.DDL("CREATE TABLE test2")
     val ddl3 = Schema.DDL("CREATE TABLE test3")
 
     val combined = ddl1 ++ ddl2 ++ ddl3
-    combined.statements should be(List("CREATE TABLE test1", "CREATE TABLE test2", "CREATE TABLE test3"))
+    assertEquals(combined.statements, List("CREATE TABLE test1", "CREATE TABLE test2", "CREATE TABLE test3"))
   }

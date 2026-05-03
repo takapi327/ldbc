@@ -6,10 +6,7 @@
 
 package ldbc.schema
 
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
-
-class ReferenceTest extends AnyFlatSpec, Matchers:
+class ReferenceTest extends munit.FunSuite:
   case class User(id: Long, name: String, age: Int)
 
   class UserTable extends Table[User]("user"):
@@ -21,74 +18,74 @@ class ReferenceTest extends AnyFlatSpec, Matchers:
 
   val userTable = new UserTable
 
-  it should "generate basic reference query string" in {
+  test("generate basic reference query string") {
     val reference = Reference(userTable, userTable.id, None, None)
-    reference.queryString should be("REFERENCES `user` (`id`)")
+    assertEquals(reference.queryString, "REFERENCES `user` (`id`)")
   }
 
-  it should "generate reference with ON DELETE RESTRICT" in {
+  test("generate reference with ON DELETE RESTRICT") {
     val reference = Reference(userTable, userTable.id, None, None)
       .onDelete(Reference.ReferenceOption.RESTRICT)
-    reference.queryString should be("REFERENCES `user` (`id`) ON DELETE RESTRICT")
+    assertEquals(reference.queryString, "REFERENCES `user` (`id`) ON DELETE RESTRICT")
   }
 
-  it should "generate reference with ON DELETE CASCADE" in {
+  test("generate reference with ON DELETE CASCADE") {
     val reference = Reference(userTable, userTable.id, None, None)
       .onDelete(Reference.ReferenceOption.CASCADE)
-    reference.queryString should be("REFERENCES `user` (`id`) ON DELETE CASCADE")
+    assertEquals(reference.queryString, "REFERENCES `user` (`id`) ON DELETE CASCADE")
   }
 
-  it should "generate reference with ON DELETE SET NULL" in {
+  test("generate reference with ON DELETE SET NULL") {
     val reference = Reference(userTable, userTable.id, None, None)
       .onDelete(Reference.ReferenceOption.SET_NULL)
-    reference.queryString should be("REFERENCES `user` (`id`) ON DELETE SET NULL")
+    assertEquals(reference.queryString, "REFERENCES `user` (`id`) ON DELETE SET NULL")
   }
 
-  it should "generate reference with ON DELETE NO ACTION" in {
+  test("generate reference with ON DELETE NO ACTION") {
     val reference = Reference(userTable, userTable.id, None, None)
       .onDelete(Reference.ReferenceOption.NO_ACTION)
-    reference.queryString should be("REFERENCES `user` (`id`) ON DELETE NO ACTION")
+    assertEquals(reference.queryString, "REFERENCES `user` (`id`) ON DELETE NO ACTION")
   }
 
-  it should "generate reference with ON DELETE SET DEFAULT" in {
+  test("generate reference with ON DELETE SET DEFAULT") {
     val reference = Reference(userTable, userTable.id, None, None)
       .onDelete(Reference.ReferenceOption.SET_DEFAULT)
-    reference.queryString should be("REFERENCES `user` (`id`) ON DELETE SET DEFAULT")
+    assertEquals(reference.queryString, "REFERENCES `user` (`id`) ON DELETE SET DEFAULT")
   }
 
-  it should "generate reference with ON UPDATE RESTRICT" in {
+  test("generate reference with ON UPDATE RESTRICT") {
     val reference = Reference(userTable, userTable.id, None, None)
       .onUpdate(Reference.ReferenceOption.RESTRICT)
-    reference.queryString should be("REFERENCES `user` (`id`) ON UPDATE RESTRICT")
+    assertEquals(reference.queryString, "REFERENCES `user` (`id`) ON UPDATE RESTRICT")
   }
 
-  it should "generate reference with ON UPDATE CASCADE" in {
+  test("generate reference with ON UPDATE CASCADE") {
     val reference = Reference(userTable, userTable.id, None, None)
       .onUpdate(Reference.ReferenceOption.CASCADE)
-    reference.queryString should be("REFERENCES `user` (`id`) ON UPDATE CASCADE")
+    assertEquals(reference.queryString, "REFERENCES `user` (`id`) ON UPDATE CASCADE")
   }
 
-  it should "generate reference with ON UPDATE SET NULL" in {
+  test("generate reference with ON UPDATE SET NULL") {
     val reference = Reference(userTable, userTable.id, None, None)
       .onUpdate(Reference.ReferenceOption.SET_NULL)
-    reference.queryString should be("REFERENCES `user` (`id`) ON UPDATE SET NULL")
+    assertEquals(reference.queryString, "REFERENCES `user` (`id`) ON UPDATE SET NULL")
   }
 
-  it should "generate reference with ON UPDATE NO ACTION" in {
+  test("generate reference with ON UPDATE NO ACTION") {
     val reference = Reference(userTable, userTable.id, None, None)
       .onUpdate(Reference.ReferenceOption.NO_ACTION)
-    reference.queryString should be("REFERENCES `user` (`id`) ON UPDATE NO ACTION")
+    assertEquals(reference.queryString, "REFERENCES `user` (`id`) ON UPDATE NO ACTION")
   }
 
-  it should "generate reference with ON UPDATE SET DEFAULT" in {
+  test("generate reference with ON UPDATE SET DEFAULT") {
     val reference = Reference(userTable, userTable.id, None, None)
       .onUpdate(Reference.ReferenceOption.SET_DEFAULT)
-    reference.queryString should be("REFERENCES `user` (`id`) ON UPDATE SET DEFAULT")
+    assertEquals(reference.queryString, "REFERENCES `user` (`id`) ON UPDATE SET DEFAULT")
   }
 
-  it should "generate reference with both ON DELETE and ON UPDATE constraints" in {
+  test("generate reference with both ON DELETE and ON UPDATE constraints") {
     val reference = Reference(userTable, userTable.id, None, None)
       .onDelete(Reference.ReferenceOption.RESTRICT)
       .onUpdate(Reference.ReferenceOption.CASCADE)
-    reference.queryString should be("REFERENCES `user` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE")
+    assertEquals(reference.queryString, "REFERENCES `user` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE")
   }

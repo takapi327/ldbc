@@ -6,12 +6,10 @@
 
 package ldbc.schema
 
-import org.scalatest.flatspec.AnyFlatSpec
+class TableTest extends munit.FunSuite:
 
-class TableTest extends AnyFlatSpec:
-
-  it should "Successful generation of Table" in {
-    assertCompiles("""
+  test("Successful generation of Table") {
+    assertEquals(compileErrors("""
       import ldbc.schema.*
 
       case class User(id: Long, name: String, age: Int)
@@ -22,11 +20,11 @@ class TableTest extends AnyFlatSpec:
         def age: Column[Int] = int("age")
 
         override def * = (id *: name *: age).to[User]
-    """.stripMargin)
+    """), "")
   }
 
-  it should "Setting AUTO_INCREMENT to a non-numeric type results in a compile error" in {
-    assertDoesNotCompile("""
+  test("Setting AUTO_INCREMENT to a non-numeric type results in a compile error") {
+    assert(compileErrors("""
       import ldbc.schema.*
 
       case class User(id: Long, name: String, age: Int)
@@ -37,11 +35,11 @@ class TableTest extends AnyFlatSpec:
         def age: Column[Int] = int("age")
 
         override def * = (id *: name *: age).to[User]
-    """.stripMargin)
+    """).nonEmpty)
   }
 
-  it should "Setting Collate to anything other than a string type results in a compile error." in {
-    assertDoesNotCompile("""
+  test("Setting Collate to anything other than a string type results in a compile error.") {
+    assert(compileErrors("""
       import ldbc.schema.*
 
       case class User(id: Long, name: String, age: Int)
@@ -52,11 +50,11 @@ class TableTest extends AnyFlatSpec:
         def age: Column[Int] = column[Int]("age", INT)
 
         override def * = (id *: name *: age).to[User]
-    """.stripMargin)
+    """).nonEmpty)
   }
 
-  it should "Foreign key constraints can be set between the same type without any problem." in {
-    assertCompiles("""
+  test("Foreign key constraints can be set between the same type without any problem.") {
+    assertEquals(compileErrors("""
       import ldbc.schema.*
 
       case class Test(id: Long, subId: Long)
@@ -81,11 +79,11 @@ class TableTest extends AnyFlatSpec:
           INDEX_KEY(subId),
           CONSTRAINT("fk_id", FOREIGN_KEY(subId, REFERENCE(subTest)(_.id)))
         )
-    """.stripMargin)
+    """), "")
   }
 
-  it should "Setting foreign key constraints between different types results in a compile error." in {
-    assertDoesNotCompile("""
+  test("Setting foreign key constraints between different types results in a compile error.") {
+    assert(compileErrors("""
       import ldbc.schema.*
 
       case class Test(id: Long, subId: Long)
@@ -110,11 +108,11 @@ class TableTest extends AnyFlatSpec:
           INDEX_KEY(subId),
           CONSTRAINT("fk_id", FOREIGN_KEY(subId, REFERENCE(subTest)(_.test)))
         )
-    """.stripMargin)
+    """).nonEmpty)
   }
 
-  it should "Compound foreign keys of the same type can be compiled without error." in {
-    assertCompiles("""
+  test("Compound foreign keys of the same type can be compiled without error.") {
+    assertEquals(compileErrors("""
       import ldbc.schema.*
 
       case class Test(id: Long, subId: Long, subCategory: Short)
@@ -141,5 +139,5 @@ class TableTest extends AnyFlatSpec:
           INDEX_KEY(subId),
           CONSTRAINT("fk_id", FOREIGN_KEY(subId *: subCategory, REFERENCE(subTest)(s => s.id *: s.category)))
         )
-    """.stripMargin)
+    """), "")
   }
