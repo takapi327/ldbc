@@ -14,9 +14,9 @@ import Workflows.*
 
 ThisBuild / tlBaseVersion              := LdbcVersions.latest
 ThisBuild / tlFatalWarnings            := true
-// munit 1.3.0 supports scala-native 0.5.11; override munit-cats-effect's transitive munit 1.2.4
-ThisBuild / dependencyOverrides += "org.scalameta" % "munit_native0.5_3" % "1.3.0"
+// Scala Native test-interface has strict versioning; suppress eviction errors across versions
 ThisBuild / libraryDependencySchemes += "org.scala-native" % "test-interface_native0.5_3" % VersionScheme.Always
+ThisBuild / evictionErrorLevel         := util.Level.Warn
 ThisBuild / tlJdkRelease               := None
 ThisBuild / projectName                := "ldbc"
 ThisBuild / scalaVersion               := scala3
