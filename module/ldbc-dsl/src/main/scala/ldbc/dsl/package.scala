@@ -6,8 +6,6 @@
 
 package ldbc
 
-import ldbc.dsl.syntax.*
-
 /**
  * Top-level imports provide aliases for the most commonly used types and modules. A typical starting set of imports
  * might look something like this.
@@ -17,6 +15,6 @@ import ldbc.dsl.syntax.*
  *   import ldbc.dsl.*
  * }}}
  */
-package object dsl extends HelperFunctionsSyntax:
+package object dsl extends ldbc.dsl.syntax.HelperFunctionsSyntax:
 
   export ldbc.DBIO
