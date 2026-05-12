@@ -6,23 +6,20 @@
 
 package ldbc.schema
 
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
+private case class AliasTestModel(id: Long, subId: String, status: Int)
 
-class AliasTest extends AnyFlatSpec, Matchers:
+class AliasTest extends munit.FunSuite:
 
-  case class Test(id: Long, subId: String, status: Int)
-
-  class TestTable extends Table[Test]("test"):
+  class TestTable extends Table[AliasTestModel]("test"):
     def id:     Column[Long]   = column[Long]("id", BIGINT)
     def subId:  Column[String] = column[String]("sub_id", VARCHAR(255))
     def status: Column[Int]    = column[Int]("status", INT)
 
-    override def * = (id *: subId *: status).to[Test]
+    override def * = (id *: subId *: status).to[AliasTestModel]
 
   val testTable = new TestTable
 
-  it should "PRIMARY_KEY call succeeds" in {
+  test("PRIMARY_KEY call succeeds") {
     val p1 = PRIMARY_KEY[Long]
     val p2 = PRIMARY_KEY(testTable.subId)
     val p3 = PRIMARY_KEY(testTable.id *: testTable.subId)
@@ -33,14 +30,14 @@ class AliasTest extends AnyFlatSpec, Matchers:
       testTable.id *: testTable.subId
     )
 
-    assert(p1.queryString === "PRIMARY KEY")
-    assert(p2.queryString === "PRIMARY KEY (`sub_id`)")
-    assert(p3.queryString === "PRIMARY KEY (`id`, `sub_id`)")
-    assert(p4.queryString === "PRIMARY KEY (`id`, `sub_id`) USING BTREE")
-    assert(p5.queryString === "PRIMARY KEY (`id`, `sub_id`) USING BTREE KEY_BLOCK_SIZE = 1")
+    assertEquals(p1.queryString, "PRIMARY KEY")
+    assertEquals(p2.queryString, "PRIMARY KEY (`sub_id`)")
+    assertEquals(p3.queryString, "PRIMARY KEY (`id`, `sub_id`)")
+    assertEquals(p4.queryString, "PRIMARY KEY (`id`, `sub_id`) USING BTREE")
+    assertEquals(p5.queryString, "PRIMARY KEY (`id`, `sub_id`) USING BTREE KEY_BLOCK_SIZE = 1")
   }
 
-  it should "UNIQUE_KEY call succeeds" in {
+  test("UNIQUE_KEY call succeeds") {
     val p1 = UNIQUE_KEY[Long]
     val p2 = UNIQUE_KEY(testTable.subId)
     val p3 = UNIQUE_KEY(testTable.id *: testTable.subId)
@@ -55,16 +52,16 @@ class AliasTest extends AnyFlatSpec, Matchers:
     )
     val p7 = UNIQUE_KEY(None, None, None, testTable.id *: testTable.subId)
 
-    assert(p1.queryString === "UNIQUE KEY")
-    assert(p2.queryString === "UNIQUE KEY (`sub_id`)")
-    assert(p3.queryString === "UNIQUE KEY (`id`, `sub_id`)")
-    assert(p4.queryString === "UNIQUE KEY `index` (`id`, `sub_id`)")
-    assert(p5.queryString === "UNIQUE KEY `index` (`id`, `sub_id`) USING BTREE")
-    assert(p6.queryString === "UNIQUE KEY `index` (`id`, `sub_id`) USING BTREE KEY_BLOCK_SIZE = 1")
-    assert(p7.queryString === "UNIQUE KEY (`id`, `sub_id`)")
+    assertEquals(p1.queryString, "UNIQUE KEY")
+    assertEquals(p2.queryString, "UNIQUE KEY (`sub_id`)")
+    assertEquals(p3.queryString, "UNIQUE KEY (`id`, `sub_id`)")
+    assertEquals(p4.queryString, "UNIQUE KEY `index` (`id`, `sub_id`)")
+    assertEquals(p5.queryString, "UNIQUE KEY `index` (`id`, `sub_id`) USING BTREE")
+    assertEquals(p6.queryString, "UNIQUE KEY `index` (`id`, `sub_id`) USING BTREE KEY_BLOCK_SIZE = 1")
+    assertEquals(p7.queryString, "UNIQUE KEY (`id`, `sub_id`)")
   }
 
-  it should "INDEX_KEY call succeeds" in {
+  test("INDEX_KEY call succeeds") {
     val p1 = INDEX_KEY(testTable.subId)
     val p2 = INDEX_KEY(testTable.id *: testTable.subId)
     val p3 = INDEX_KEY(None, None, None, testTable.id *: testTable.subId)
@@ -84,15 +81,15 @@ class AliasTest extends AnyFlatSpec, Matchers:
       testTable.id *: testTable.subId
     )
 
-    assert(p1.queryString === "INDEX (`sub_id`)")
-    assert(p2.queryString === "INDEX (`id`, `sub_id`)")
-    assert(p3.queryString === "INDEX (`id`, `sub_id`)")
-    assert(p4.queryString === "INDEX `index` (`id`, `sub_id`)")
-    assert(p5.queryString === "INDEX `index` (`id`, `sub_id`) USING BTREE")
-    assert(p6.queryString === "INDEX `index` (`id`, `sub_id`) USING BTREE KEY_BLOCK_SIZE = 1")
+    assertEquals(p1.queryString, "INDEX (`sub_id`)")
+    assertEquals(p2.queryString, "INDEX (`id`, `sub_id`)")
+    assertEquals(p3.queryString, "INDEX (`id`, `sub_id`)")
+    assertEquals(p4.queryString, "INDEX `index` (`id`, `sub_id`)")
+    assertEquals(p5.queryString, "INDEX `index` (`id`, `sub_id`) USING BTREE")
+    assertEquals(p6.queryString, "INDEX `index` (`id`, `sub_id`) USING BTREE KEY_BLOCK_SIZE = 1")
   }
 
-  it should "FOREIGN_KEY call succeeds" in {
+  test("FOREIGN_KEY call succeeds") {
 
     case class SubTest(id: String, status: Int)
 
@@ -110,6 +107,6 @@ class AliasTest extends AnyFlatSpec, Matchers:
       REFERENCE(subTest)(s => s.id *: s.status)
     )
 
-    assert(p1.queryString === "FOREIGN KEY (`sub_id`) REFERENCES `sub_test` (`id`)")
-    assert(p2.queryString === "FOREIGN KEY (`sub_id`, `status`) REFERENCES `sub_test` (`id`, `status`)")
+    assertEquals(p1.queryString, "FOREIGN KEY (`sub_id`) REFERENCES `sub_test` (`id`)")
+    assertEquals(p2.queryString, "FOREIGN KEY (`sub_id`, `status`) REFERENCES `sub_test` (`id`, `status`)")
   }

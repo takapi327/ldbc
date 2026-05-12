@@ -6,12 +6,10 @@
 
 package ldbc.statement
 
-import org.scalatest.flatspec.AnyFlatSpec
-
 import ldbc.dsl.*
 import ldbc.dsl.codec.{ Codec, Decoder, Encoder }
 
-class WhereTest extends AnyFlatSpec:
+class WhereTest extends munit.FunSuite:
 
   // Simple table representation for testing
   case class TestTable()
@@ -37,222 +35,222 @@ class WhereTest extends AnyFlatSpec:
   def nameEquals(value:     String): Expression = Expression.MatchCondition("name", false, value)(using Encoder[String])
   def ageGreaterThan(value: Int):    Expression = Expression.Over("age", false, value)(using Encoder[Int])
 
-  "Where.Q" should "add AND conditions" in {
+  test("Where.Q should add AND conditions") {
     val query  = createQuery[String]("SELECT name FROM users", Nil)
     val result = query.and(_ => idEquals(1L))
 
-    assert(result.statement === "SELECT name FROM users WHERE id = ?")
-    assert(result.params.size === 1)
+    assertEquals(result.statement, "SELECT name FROM users WHERE id = ?")
+    assertEquals(result.params.size, 1)
 
     val result2 = result.and(_ => nameEquals("John"))
-    assert(result2.statement === "SELECT name FROM users WHERE id = ? AND name = ?")
-    assert(result2.params.size === 2)
+    assertEquals(result2.statement, "SELECT name FROM users WHERE id = ? AND name = ?")
+    assertEquals(result2.params.size, 2)
   }
 
-  it should "add OR conditions" in {
+  test("Where.Q should add OR conditions") {
     val query  = createQuery[String]("SELECT name FROM users", Nil)
     val result = query.and(_ => idEquals(1L))
 
     val result2 = result.or(_ => nameEquals("John"))
-    assert(result2.statement === "SELECT name FROM users WHERE id = ? OR name = ?")
-    assert(result2.params.size === 2)
+    assertEquals(result2.statement, "SELECT name FROM users WHERE id = ? OR name = ?")
+    assertEquals(result2.params.size, 2)
   }
 
-  it should "add XOR conditions" in {
+  test("Where.Q should add XOR conditions") {
     val query  = createQuery[String]("SELECT name FROM users", Nil)
     val result = query.and(_ => idEquals(1L))
 
     val result2 = result.xor(_ => nameEquals("John"))
-    assert(result2.statement === "SELECT name FROM users WHERE id = ? XOR name = ?")
-    assert(result2.params.size === 2)
+    assertEquals(result2.statement, "SELECT name FROM users WHERE id = ? XOR name = ?")
+    assertEquals(result2.params.size, 2)
   }
 
-  it should "support && alias for AND" in {
+  test("Where.Q should support && alias for AND") {
     val query  = createQuery[String]("SELECT name FROM users", Nil)
     val result = query.and(_ => idEquals(1L))
 
     val result2 = result.&&(_ => nameEquals("John"))
-    assert(result2.statement === "SELECT name FROM users WHERE id = ? && name = ?")
-    assert(result2.params.size === 2)
+    assertEquals(result2.statement, "SELECT name FROM users WHERE id = ? && name = ?")
+    assertEquals(result2.params.size, 2)
   }
 
-  it should "support || alias for OR" in {
+  test("Where.Q should support || alias for OR") {
     val query  = createQuery[String]("SELECT name FROM users", Nil)
     val result = query.and(_ => idEquals(1L))
 
     val result2 = result.||(_ => nameEquals("John"))
-    assert(result2.statement === "SELECT name FROM users WHERE id = ? || name = ?")
-    assert(result2.params.size === 2)
+    assertEquals(result2.statement, "SELECT name FROM users WHERE id = ? || name = ?")
+    assertEquals(result2.params.size, 2)
   }
 
-  it should "handle optional AND conditions with andOpt(function)" in {
+  test("Where.Q should handle optional AND conditions with andOpt(function)") {
     val query        = createQuery[String]("SELECT name FROM users", Nil)
     val initialQuery = query.and(_ => idEquals(1L))
 
     // With Some value
     val someOption: Option[String] = Some("John")
     val result1 = initialQuery.andOpt(_ => someOption.map(value => nameEquals(value)))
-    assert(result1.statement === "SELECT name FROM users WHERE id = ? AND name = ?")
-    assert(result1.params.size === 2)
+    assertEquals(result1.statement, "SELECT name FROM users WHERE id = ? AND name = ?")
+    assertEquals(result1.params.size, 2)
 
     // With None value
     val noneOption: Option[String] = None
     val result2 = initialQuery.andOpt(_ => noneOption.map(value => nameEquals(value)))
-    assert(result2.statement === "SELECT name FROM users WHERE id = ?")
-    assert(result2.params.size === 1)
+    assertEquals(result2.statement, "SELECT name FROM users WHERE id = ?")
+    assertEquals(result2.params.size, 1)
   }
 
-  it should "handle optional AND conditions with andOpt(option)(function)" in {
+  test("Where.Q should handle optional AND conditions with andOpt(option)(function)") {
     val query        = createQuery[String]("SELECT name FROM users", Nil)
     val initialQuery = query.and(_ => idEquals(1L))
 
     // With Some value
     val someOption: Option[String] = Some("John")
     val result1 = initialQuery.andOpt(someOption)((_, value) => nameEquals(value))
-    assert(result1.statement === "SELECT name FROM users WHERE id = ? AND name = ?")
-    assert(result1.params.size === 2)
+    assertEquals(result1.statement, "SELECT name FROM users WHERE id = ? AND name = ?")
+    assertEquals(result1.params.size, 2)
 
     // With None value
     val noneOption: Option[String] = None
     val result2 = initialQuery.andOpt(noneOption)((_, value) => nameEquals(value))
-    assert(result2.statement === "SELECT name FROM users WHERE id = ?")
-    assert(result2.params.size === 1)
+    assertEquals(result2.statement, "SELECT name FROM users WHERE id = ?")
+    assertEquals(result2.params.size, 1)
   }
 
-  it should "handle optional OR conditions with orOpt(function)" in {
+  test("Where.Q should handle optional OR conditions with orOpt(function)") {
     val query        = createQuery[String]("SELECT name FROM users", Nil)
     val initialQuery = query.and(_ => idEquals(1L))
 
     // With Some value
     val someOption: Option[String] = Some("John")
     val result1 = initialQuery.orOpt(_ => someOption.map(value => nameEquals(value)))
-    assert(result1.statement === "SELECT name FROM users WHERE id = ? OR name = ?")
-    assert(result1.params.size === 2)
+    assertEquals(result1.statement, "SELECT name FROM users WHERE id = ? OR name = ?")
+    assertEquals(result1.params.size, 2)
 
     // With None value
     val noneOption: Option[String] = None
     val result2 = initialQuery.orOpt(_ => noneOption.map(value => nameEquals(value)))
-    assert(result2.statement === "SELECT name FROM users WHERE id = ?")
-    assert(result2.params.size === 1)
+    assertEquals(result2.statement, "SELECT name FROM users WHERE id = ?")
+    assertEquals(result2.params.size, 1)
   }
 
-  it should "handle optional OR conditions with orOpt(option)(function)" in {
+  test("Where.Q should handle optional OR conditions with orOpt(option)(function)") {
     val query        = createQuery[String]("SELECT name FROM users", Nil)
     val initialQuery = query.and(_ => idEquals(1L))
 
     // With Some value
     val someOption: Option[String] = Some("John")
     val result1 = initialQuery.orOpt(someOption)((_, value) => nameEquals(value))
-    assert(result1.statement === "SELECT name FROM users WHERE id = ? OR name = ?")
-    assert(result1.params.size === 2)
+    assertEquals(result1.statement, "SELECT name FROM users WHERE id = ? OR name = ?")
+    assertEquals(result1.params.size, 2)
 
     // With None value
     val noneOption: Option[String] = None
     val result2 = initialQuery.orOpt(noneOption)((_, value) => nameEquals(value))
-    assert(result2.statement === "SELECT name FROM users WHERE id = ?")
-    assert(result2.params.size === 1)
+    assertEquals(result2.statement, "SELECT name FROM users WHERE id = ?")
+    assertEquals(result2.params.size, 1)
   }
 
-  it should "handle optional XOR conditions with xorOpt(function)" in {
+  test("Where.Q should handle optional XOR conditions with xorOpt(function)") {
     val query        = createQuery[String]("SELECT name FROM users", Nil)
     val initialQuery = query.and(_ => idEquals(1L))
 
     // With Some value
     val someOption: Option[String] = Some("John")
     val result1 = initialQuery.xorOpt(_ => someOption.map(value => nameEquals(value)))
-    assert(result1.statement === "SELECT name FROM users WHERE id = ? XOR name = ?")
-    assert(result1.params.size === 2)
+    assertEquals(result1.statement, "SELECT name FROM users WHERE id = ? XOR name = ?")
+    assertEquals(result1.params.size, 2)
 
     // With None value
     val noneOption: Option[String] = None
     val result2 = initialQuery.xorOpt(_ => noneOption.map(value => nameEquals(value)))
-    assert(result2.statement === "SELECT name FROM users WHERE id = ?")
-    assert(result2.params.size === 1)
+    assertEquals(result2.statement, "SELECT name FROM users WHERE id = ?")
+    assertEquals(result2.params.size, 1)
   }
 
-  it should "handle optional XOR conditions with xorOpt(option)(function)" in {
+  test("Where.Q should handle optional XOR conditions with xorOpt(option)(function)") {
     val query        = createQuery[String]("SELECT name FROM users", Nil)
     val initialQuery = query.and(_ => idEquals(1L))
 
     // With Some value
     val someOption: Option[String] = Some("John")
     val result1 = initialQuery.xorOpt(someOption)((_, value) => nameEquals(value))
-    assert(result1.statement === "SELECT name FROM users WHERE id = ? XOR name = ?")
-    assert(result1.params.size === 2)
+    assertEquals(result1.statement, "SELECT name FROM users WHERE id = ? XOR name = ?")
+    assertEquals(result1.params.size, 2)
 
     // With None value
     val noneOption: Option[String] = None
     val result2 = initialQuery.xorOpt(noneOption)((_, value) => nameEquals(value))
-    assert(result2.statement === "SELECT name FROM users WHERE id = ?")
-    assert(result2.params.size === 1)
+    assertEquals(result2.statement, "SELECT name FROM users WHERE id = ?")
+    assertEquals(result2.params.size, 1)
   }
 
-  it should "conditionally add AND based on boolean parameter" in {
+  test("Where.Q should conditionally add AND based on boolean parameter") {
     val query        = createQuery[String]("SELECT name FROM users", Nil)
     val initialQuery = query.and(_ => idEquals(1L))
 
     val result1 = initialQuery.and(_ => nameEquals("John"), true)
-    assert(result1.statement === "SELECT name FROM users WHERE id = ? AND name = ?")
-    assert(result1.params.size === 2)
+    assertEquals(result1.statement, "SELECT name FROM users WHERE id = ? AND name = ?")
+    assertEquals(result1.params.size, 2)
 
     val result2 = initialQuery.and(_ => nameEquals("John"), false)
-    assert(result2.statement === "SELECT name FROM users WHERE id = ?")
-    assert(result2.params.size === 1)
+    assertEquals(result2.statement, "SELECT name FROM users WHERE id = ?")
+    assertEquals(result2.params.size, 1)
   }
 
-  it should "conditionally add OR based on boolean parameter" in {
+  test("Where.Q should conditionally add OR based on boolean parameter") {
     val query        = createQuery[String]("SELECT name FROM users", Nil)
     val initialQuery = query.and(_ => idEquals(1L))
 
     val result1 = initialQuery.or(_ => nameEquals("John"), true)
-    assert(result1.statement === "SELECT name FROM users WHERE id = ? OR name = ?")
-    assert(result1.params.size === 2)
+    assertEquals(result1.statement, "SELECT name FROM users WHERE id = ? OR name = ?")
+    assertEquals(result1.params.size, 2)
 
     val result2 = initialQuery.or(_ => nameEquals("John"), false)
-    assert(result2.statement === "SELECT name FROM users WHERE id = ?")
-    assert(result2.params.size === 1)
+    assertEquals(result2.statement, "SELECT name FROM users WHERE id = ?")
+    assertEquals(result2.params.size, 1)
   }
 
-  it should "conditionally add XOR based on boolean parameter" in {
+  test("Where.Q should conditionally add XOR based on boolean parameter") {
     val query        = createQuery[String]("SELECT name FROM users", Nil)
     val initialQuery = query.and(_ => idEquals(1L))
 
     val result1 = initialQuery.xor(_ => nameEquals("John"), true)
-    assert(result1.statement === "SELECT name FROM users WHERE id = ? XOR name = ?")
-    assert(result1.params.size === 2)
+    assertEquals(result1.statement, "SELECT name FROM users WHERE id = ? XOR name = ?")
+    assertEquals(result1.params.size, 2)
 
     val result2 = initialQuery.xor(_ => nameEquals("John"), false)
-    assert(result2.statement === "SELECT name FROM users WHERE id = ?")
-    assert(result2.params.size === 1)
+    assertEquals(result2.statement, "SELECT name FROM users WHERE id = ?")
+    assertEquals(result2.params.size, 1)
   }
 
-  it should "conditionally add && based on boolean parameter" in {
+  test("Where.Q should conditionally add && based on boolean parameter") {
     val query        = createQuery[String]("SELECT name FROM users", Nil)
     val initialQuery = query.and(_ => idEquals(1L))
 
     val result1 = initialQuery.&&(_ => nameEquals("John"), true)
-    assert(result1.statement === "SELECT name FROM users WHERE id = ? && name = ?")
-    assert(result1.params.size === 2)
+    assertEquals(result1.statement, "SELECT name FROM users WHERE id = ? && name = ?")
+    assertEquals(result1.params.size, 2)
 
     val result2 = initialQuery.&&(_ => nameEquals("John"), false)
-    assert(result2.statement === "SELECT name FROM users WHERE id = ?")
-    assert(result2.params.size === 1)
+    assertEquals(result2.statement, "SELECT name FROM users WHERE id = ?")
+    assertEquals(result2.params.size, 1)
   }
 
-  it should "conditionally add || based on boolean parameter" in {
+  test("Where.Q should conditionally add || based on boolean parameter") {
     val query        = createQuery[String]("SELECT name FROM users", Nil)
     val initialQuery = query.and(_ => idEquals(1L))
 
     val result1 = initialQuery.||(_ => nameEquals("John"), true)
-    assert(result1.statement === "SELECT name FROM users WHERE id = ? || name = ?")
-    assert(result1.params.size === 2)
+    assertEquals(result1.statement, "SELECT name FROM users WHERE id = ? || name = ?")
+    assertEquals(result1.params.size, 2)
 
     val result2 = initialQuery.||(_ => nameEquals("John"), false)
-    assert(result2.statement === "SELECT name FROM users WHERE id = ?")
-    assert(result2.params.size === 1)
+    assertEquals(result2.statement, "SELECT name FROM users WHERE id = ?")
+    assertEquals(result2.params.size, 1)
   }
 
-  it should "chain multiple conditions together" in {
+  test("Where.Q should chain multiple conditions together") {
     val query = createQuery[String]("SELECT name FROM users", Nil)
 
     val result = query
@@ -260,89 +258,89 @@ class WhereTest extends AnyFlatSpec:
       .and(_ => nameEquals("John"))
       .or(_ => ageGreaterThan(30))
 
-    assert(result.statement === "SELECT name FROM users WHERE id = ? AND name = ? OR age > ?")
-    assert(result.params.size === 3)
+    assertEquals(result.statement, "SELECT name FROM users WHERE id = ? AND name = ? OR age > ?")
+    assertEquals(result.params.size, 3)
   }
 
-  it should "generate groupBy correctly" in {
+  test("Where.Q should generate groupBy correctly") {
     val query        = createQuery[String]("SELECT name FROM users", Nil)
     val initialQuery = query.and(_ => idEquals(1L))
 
     val groupedQuery = initialQuery.groupBy(_ => Column.Impl[String]("department"))
-    assert(groupedQuery.statement === "SELECT name FROM users WHERE id = ? GROUP BY `department`")
-    assert(groupedQuery.params.size === 1)
+    assertEquals(groupedQuery.statement, "SELECT name FROM users WHERE id = ? GROUP BY `department`")
+    assertEquals(groupedQuery.params.size, 1)
 
     val aliasedColumn       = Column.Impl[String]("department").as("dept")
     val groupedByAliasQuery = initialQuery.groupBy(_ => aliasedColumn)
-    assert(groupedByAliasQuery.statement === "SELECT name FROM users WHERE id = ? GROUP BY dept")
-    assert(groupedByAliasQuery.params.size === 1)
+    assertEquals(groupedByAliasQuery.statement, "SELECT name FROM users WHERE id = ? GROUP BY dept")
+    assertEquals(groupedByAliasQuery.params.size, 1)
   }
 
-  "Where.C" should "add AND conditions" in {
+  test("Where.C should add AND conditions") {
     val command = createCommand("DELETE FROM users", Nil)
     val result  = command.and(_ => idEquals(1L))
 
-    assert(result.statement === "DELETE FROM users WHERE id = ?")
-    assert(result.params.size === 1)
+    assertEquals(result.statement, "DELETE FROM users WHERE id = ?")
+    assertEquals(result.params.size, 1)
 
     val result2 = result.and(_ => nameEquals("John"))
-    assert(result2.statement === "DELETE FROM users WHERE id = ? AND name = ?")
-    assert(result2.params.size === 2)
+    assertEquals(result2.statement, "DELETE FROM users WHERE id = ? AND name = ?")
+    assertEquals(result2.params.size, 2)
   }
 
-  it should "add OR conditions" in {
+  test("Where.C should add OR conditions") {
     val command = createCommand("DELETE FROM users", Nil)
     val result  = command.and(_ => idEquals(1L))
 
     val result2 = result.or(_ => nameEquals("John"))
-    assert(result2.statement === "DELETE FROM users WHERE id = ? OR name = ?")
-    assert(result2.params.size === 2)
+    assertEquals(result2.statement, "DELETE FROM users WHERE id = ? OR name = ?")
+    assertEquals(result2.params.size, 2)
   }
 
-  it should "add XOR conditions" in {
+  test("Where.C should add XOR conditions") {
     val command = createCommand("DELETE FROM users", Nil)
     val result  = command.and(_ => idEquals(1L))
 
     val result2 = result.xor(_ => nameEquals("John"))
-    assert(result2.statement === "DELETE FROM users WHERE id = ? XOR name = ?")
-    assert(result2.params.size === 2)
+    assertEquals(result2.statement, "DELETE FROM users WHERE id = ? XOR name = ?")
+    assertEquals(result2.params.size, 2)
   }
 
-  it should "support && alias for AND" in {
+  test("Where.C should support && alias for AND") {
     val command = createCommand("DELETE FROM users", Nil)
     val result  = command.and(_ => idEquals(1L))
 
     val result2 = result.&&(_ => nameEquals("John"))
-    assert(result2.statement === "DELETE FROM users WHERE id = ? && name = ?")
-    assert(result2.params.size === 2)
+    assertEquals(result2.statement, "DELETE FROM users WHERE id = ? && name = ?")
+    assertEquals(result2.params.size, 2)
   }
 
-  it should "support || alias for OR" in {
+  test("Where.C should support || alias for OR") {
     val command = createCommand("DELETE FROM users", Nil)
     val result  = command.and(_ => idEquals(1L))
 
     val result2 = result.||(_ => nameEquals("John"))
-    assert(result2.statement === "DELETE FROM users WHERE id = ? || name = ?")
-    assert(result2.params.size === 2)
+    assertEquals(result2.statement, "DELETE FROM users WHERE id = ? || name = ?")
+    assertEquals(result2.params.size, 2)
   }
 
-  it should "handle optional conditions and boolean flags similar to Where.Q" in {
+  test("Where.C should handle optional conditions and boolean flags similar to Where.Q") {
     val command        = createCommand("UPDATE users SET active = true", Nil)
     val initialCommand = command.and(_ => idEquals(1L))
 
     // Test andOpt with function
     val someNameOption: Option[String] = Some("John")
     val result1 = initialCommand.andOpt(_ => someNameOption.map(value => nameEquals(value)))
-    assert(result1.statement === "UPDATE users SET active = true WHERE id = ? AND name = ?")
-    assert(result1.params.size === 2)
+    assertEquals(result1.statement, "UPDATE users SET active = true WHERE id = ? AND name = ?")
+    assertEquals(result1.params.size, 2)
 
     // Test conditional with boolean flag
     val result2 = initialCommand.or(_ => ageGreaterThan(30), false)
-    assert(result2.statement === "UPDATE users SET active = true WHERE id = ?")
-    assert(result2.params.size === 1)
+    assertEquals(result2.statement, "UPDATE users SET active = true WHERE id = ?")
+    assertEquals(result2.params.size, 1)
   }
 
-  it should "chain multiple conditions together" in {
+  test("Where.C should chain multiple conditions together") {
     val command = createCommand("UPDATE users SET active = false", Nil)
 
     val result = command
@@ -350,6 +348,6 @@ class WhereTest extends AnyFlatSpec:
       .and(_ => nameEquals("John"))
       .or(_ => ageGreaterThan(30))
 
-    assert(result.statement === "UPDATE users SET active = false WHERE id = ? AND name = ? OR age > ?")
-    assert(result.params.size === 3)
+    assertEquals(result.statement, "UPDATE users SET active = false WHERE id = ? AND name = ? OR age > ?")
+    assertEquals(result.params.size, 3)
   }
