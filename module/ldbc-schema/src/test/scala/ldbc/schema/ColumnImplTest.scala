@@ -6,8 +6,6 @@
 
 package ldbc.schema
 
-import org.scalatest.flatspec.AnyFlatSpec
-
 import ldbc.dsl.codec.{ Decoder, Encoder }
 
 import ldbc.statement.Column
@@ -15,7 +13,7 @@ import ldbc.statement.Column
 import ldbc.schema.attribute.*
 import ldbc.schema.DataType.*
 
-class ColumnImplTest extends AnyFlatSpec:
+class ColumnImplTest extends munit.FunSuite:
 
   private def column[A](name: String, dataType: DataType[A], attributes: Attribute[A]*)(using
     decoder: Decoder[A],
@@ -23,58 +21,69 @@ class ColumnImplTest extends AnyFlatSpec:
   ): Column[A] =
     ColumnImpl[A](s"`$name`", None, decoder, encoder, Some(dataType), attributes.toList)
 
-  it should "The query string of the Column model generated with only label and DataType matches the specified string." in {
-    assert(column[Long]("id", BIGINT).statement === "`id` BIGINT NOT NULL")
-    assert(
+  test("The query string of the Column model generated with only label and DataType matches the specified string.") {
+    assertEquals(column[Long]("id", BIGINT).statement, "`id` BIGINT NOT NULL")
+    assertEquals(
       column[String](
         "name",
         VARCHAR(255).CHARACTER_SET(Character.ascii)
-      ).statement === "`name` VARCHAR(255) CHARACTER SET ascii NOT NULL"
+      ).statement,
+      "`name` VARCHAR(255) CHARACTER SET ascii NOT NULL"
     )
   }
 
-  it should "The query string of the Column model generated with only label and DataType and comment matches the specified string." in {
-    assert(
+  test(
+    "The query string of the Column model generated with only label and DataType and comment matches the specified string."
+  ) {
+    assertEquals(
       column[Long](
         "id",
         BIGINT,
         COMMENT("identifier")
-      ).statement === "`id` BIGINT NOT NULL COMMENT 'identifier'"
+      ).statement,
+      "`id` BIGINT NOT NULL COMMENT 'identifier'"
     )
-    assert(
+    assertEquals(
       column[String](
         "name",
         VARCHAR(255).CHARACTER_SET(Character.ascii),
         COMMENT("name")
-      ).statement === "`name` VARCHAR(255) CHARACTER SET ascii NOT NULL COMMENT 'name'"
+      ).statement,
+      "`name` VARCHAR(255) CHARACTER SET ascii NOT NULL COMMENT 'name'"
     )
-    assert(
+    assertEquals(
       column[String](
         "name",
         VARCHAR(255).CHARACTER_SET(Character.ascii).COLLATE(Collate.ascii_bin),
         COMMENT("name")
-      ).statement === "`name` VARCHAR(255) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT 'name'"
+      ).statement,
+      "`name` VARCHAR(255) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT 'name'"
     )
-    assert(column[BigInt]("id", SERIAL).statement === "`id` SERIAL")
+    assertEquals(column[BigInt]("id", SERIAL).statement, "`id` SERIAL")
   }
 
-  it should "The query string of the Column model generated with only label and DataType and attributes matches the specified string." in {
-    assert(column[Long]("id", BIGINT, AutoInc[Long]()).statement === "`id` BIGINT NOT NULL AUTO_INCREMENT")
+  test(
+    "The query string of the Column model generated with only label and DataType and attributes matches the specified string."
+  ) {
+    assertEquals(column[Long]("id", BIGINT, AutoInc[Long]()).statement, "`id` BIGINT NOT NULL AUTO_INCREMENT")
   }
 
-  it should "The query string of the Column model generated with only label and DataType and attributes and comment matches the specified string." in {
-    assert(
+  test(
+    "The query string of the Column model generated with only label and DataType and attributes and comment matches the specified string."
+  ) {
+    assertEquals(
       column[Long](
         "id",
         BIGINT,
         AUTO_INCREMENT,
         COMMENT("identifier")
-      ).statement === "`id` BIGINT NOT NULL AUTO_INCREMENT COMMENT 'identifier'"
+      ).statement,
+      "`id` BIGINT NOT NULL AUTO_INCREMENT COMMENT 'identifier'"
     )
   }
 
-  it should "The query string of the column with all Attributes set matches the specified string." in {
-    assert(
+  test("The query string of the column with all Attributes set matches the specified string.") {
+    assertEquals(
       column[String](
         "name",
         VARCHAR(255).CHARACTER_SET(Character.ascii),
@@ -84,6 +93,7 @@ class ColumnImplTest extends AnyFlatSpec:
         COLUMN_FORMAT.FIXED,
         Collate.ascii_bin,
         STORAGE.MEMORY
-      ).statement === "`name` VARCHAR(255) CHARACTER SET ascii NOT NULL COMMENT 'name' UNIQUE KEY /*!80023 VISIBLE */ /*!50606 COLUMN_FORMAT FIXED */ COLLATE ascii_bin /*!50606 STORAGE MEMORY */"
+      ).statement,
+      "`name` VARCHAR(255) CHARACTER SET ascii NOT NULL COMMENT 'name' UNIQUE KEY /*!80023 VISIBLE */ /*!50606 COLUMN_FORMAT FIXED */ COLLATE ascii_bin /*!50606 STORAGE MEMORY */"
     )
   }

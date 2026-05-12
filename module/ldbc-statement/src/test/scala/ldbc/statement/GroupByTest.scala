@@ -6,26 +6,24 @@
 
 package ldbc.statement
 
-import org.scalatest.flatspec.AnyFlatSpec
-
 import ldbc.dsl.*
 
-class GroupByTest extends AnyFlatSpec:
+class GroupByTest extends munit.FunSuite:
 
   case class Table()
 
-  it should "construct basic GroupBy statement correctly" in {
+  test("construct basic GroupBy statement correctly") {
     val groupBy = GroupBy[Table, Int](
       Table(),
       Column[Int]("country_code"),
       "SELECT SUM(population) FROM cities GROUP BY country_code",
       List()
     )
-    assert(groupBy.statement === "SELECT SUM(population) FROM cities GROUP BY country_code")
+    assertEquals(groupBy.statement, "SELECT SUM(population) FROM cities GROUP BY country_code")
     assert(groupBy.params.isEmpty)
   }
 
-  it should "combine GroupBy statement with SQL using ++ operator" in {
+  test("combine GroupBy statement with SQL using ++ operator") {
     val groupBy = GroupBy[Table, String](
       Table(),
       Column[String]("category"),
@@ -33,11 +31,11 @@ class GroupByTest extends AnyFlatSpec:
       List()
     )
     val combined = groupBy ++ sql" ORDER BY COUNT(*) DESC"
-    assert(combined.statement === "SELECT category, COUNT(*) FROM products GROUP BY category ORDER BY COUNT(*) DESC")
+    assertEquals(combined.statement, "SELECT category, COUNT(*) FROM products GROUP BY category ORDER BY COUNT(*) DESC")
     assert(combined.params.isEmpty)
   }
 
-  it should "chain GroupBy with having" in {
+  test("chain GroupBy with having") {
     val groupBy = GroupBy[Table, Int](
       Table(),
       Column[Int]("country_code"),
@@ -47,13 +45,14 @@ class GroupByTest extends AnyFlatSpec:
 
     val having = groupBy.having(_ => Expression.Over("AVG(population)", false, 1000000))
 
-    assert(
-      having.statement === "SELECT country_code, AVG(population) FROM cities GROUP BY country_code HAVING AVG(population) > ?"
+    assertEquals(
+      having.statement,
+      "SELECT country_code, AVG(population) FROM cities GROUP BY country_code HAVING AVG(population) > ?"
     )
-    assert(having.params.length === 1)
+    assertEquals(having.params.length, 1)
   }
 
-  it should "chain GroupBy with limit" in {
+  test("chain GroupBy with limit") {
     val groupBy = GroupBy[Table, Int](
       Table(),
       Column[Int]("department_id"),
@@ -63,11 +62,11 @@ class GroupByTest extends AnyFlatSpec:
 
     val limited = groupBy.limit(5)
 
-    assert(limited.statement === "SELECT department_id, SUM(salary) FROM employees GROUP BY department_id LIMIT ?")
-    assert(limited.params.length === 1)
+    assertEquals(limited.statement, "SELECT department_id, SUM(salary) FROM employees GROUP BY department_id LIMIT ?")
+    assertEquals(limited.params.length, 1)
   }
 
-  it should "chain GroupBy with limit and offset" in {
+  test("chain GroupBy with limit and offset") {
     val groupBy = GroupBy[Table, Int](
       Table(),
       Column[Int]("year"),
@@ -77,11 +76,11 @@ class GroupByTest extends AnyFlatSpec:
 
     val limitedWithOffset = groupBy.limit(10).offset(5)
 
-    assert(limitedWithOffset.statement === "SELECT year, COUNT(*) FROM sales GROUP BY year LIMIT ? OFFSET ?")
-    assert(limitedWithOffset.params.length === 2)
+    assertEquals(limitedWithOffset.statement, "SELECT year, COUNT(*) FROM sales GROUP BY year LIMIT ? OFFSET ?")
+    assertEquals(limitedWithOffset.params.length, 2)
   }
 
-  it should "chain GroupBy with orderBy" in {
+  test("chain GroupBy with orderBy") {
     val groupBy = GroupBy[Table, String](
       Table(),
       Column[String]("product_category"),
@@ -91,13 +90,14 @@ class GroupByTest extends AnyFlatSpec:
 
     val ordered = groupBy.orderBy(_ => OrderBy.Order.desc(Column[Double]("SUM(revenue)")))
 
-    assert(
-      ordered.statement === "SELECT product_category, SUM(revenue) FROM sales GROUP BY product_category ORDER BY `SUM(revenue)` DESC"
+    assertEquals(
+      ordered.statement,
+      "SELECT product_category, SUM(revenue) FROM sales GROUP BY product_category ORDER BY `SUM(revenue)` DESC"
     )
     assert(ordered.params.isEmpty)
   }
 
-  it should "chain GroupBy with having, orderBy and limit" in {
+  test("chain GroupBy with having, orderBy and limit") {
     val groupBy = GroupBy[Table, String](
       Table(),
       Column[String]("region"),
@@ -112,13 +112,14 @@ class GroupByTest extends AnyFlatSpec:
       .orderBy(_ => OrderBy.Order.desc(Column[Int]("customer_count")))
       .limit(5)
 
-    assert(
-      result.statement === "SELECT region, COUNT(*) as customer_count FROM customers GROUP BY region HAVING COUNT(*) > ? ORDER BY `customer_count` DESC LIMIT ?"
+    assertEquals(
+      result.statement,
+      "SELECT region, COUNT(*) as customer_count FROM customers GROUP BY region HAVING COUNT(*) > ? ORDER BY `customer_count` DESC LIMIT ?"
     )
-    assert(result.params.length === 2)
+    assertEquals(result.params.length, 2)
   }
 
-  it should "use column aliases in GroupBy correctly" in {
+  test("use column aliases in GroupBy correctly") {
     val column  = Column[String]("department").as("dept_name")
     val groupBy = GroupBy[Table, String](
       Table(),
@@ -127,10 +128,10 @@ class GroupByTest extends AnyFlatSpec:
       List()
     )
 
-    assert(groupBy.statement === "SELECT dept_name, AVG(salary) FROM employees GROUP BY dept_name")
+    assertEquals(groupBy.statement, "SELECT dept_name, AVG(salary) FROM employees GROUP BY dept_name")
   }
 
-  it should "handle parameters in having clauses properly" in {
+  test("handle parameters in having clauses properly") {
     val groupBy = GroupBy[Table, Int](
       Table(),
       Column[Int]("age_group"),
@@ -141,6 +142,6 @@ class GroupByTest extends AnyFlatSpec:
     val minCount = 50
     val having   = groupBy.having(_ => Expression.Over("COUNT(*)", false, minCount))
 
-    assert(having.statement === "SELECT age_group, COUNT(*) FROM users GROUP BY age_group HAVING COUNT(*) > ?")
-    assert(having.params.length === 1)
+    assertEquals(having.statement, "SELECT age_group, COUNT(*) FROM users GROUP BY age_group HAVING COUNT(*) > ?")
+    assertEquals(having.params.length, 1)
   }

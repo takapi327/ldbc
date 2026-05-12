@@ -6,26 +6,24 @@
 
 package ldbc.statement
 
-import org.scalatest.flatspec.AnyFlatSpec
-
 import ldbc.dsl.*
 
-class OrderByTest extends AnyFlatSpec:
+class OrderByTest extends munit.FunSuite:
 
   case class Table()
 
-  it should "construct basic OrderBy statement correctly" in {
+  test("construct basic OrderBy statement correctly") {
     val orderBy = OrderBy[Table, Int](
       Table(),
       Column[Int]("id"),
       "SELECT id FROM table_name ORDER BY id ASC",
       List()
     )
-    assert(orderBy.statement === "SELECT id FROM table_name ORDER BY id ASC")
+    assertEquals(orderBy.statement, "SELECT id FROM table_name ORDER BY id ASC")
     assert(orderBy.params.isEmpty)
   }
 
-  it should "combine OrderBy statement with SQL using ++ operator" in {
+  test("combine OrderBy statement with SQL using ++ operator") {
     val orderBy = OrderBy[Table, String](
       Table(),
       Column[String]("name"),
@@ -33,32 +31,32 @@ class OrderByTest extends AnyFlatSpec:
       List()
     )
     val combined = orderBy ++ sql" LIMIT ${ 10 }"
-    assert(combined.statement === "SELECT name FROM table_name ORDER BY name DESC LIMIT ?")
-    assert(combined.params.length === 1)
+    assertEquals(combined.statement, "SELECT name FROM table_name ORDER BY name DESC LIMIT ?")
+    assertEquals(combined.params.length, 1)
   }
 
-  it should "create ascending order expression correctly" in {
+  test("create ascending order expression correctly") {
     val column = Column[Int]("id")
     val order  = OrderBy.Order.asc(column)
-    assert(order.statement === "`id` ASC")
+    assertEquals(order.statement, "`id` ASC")
   }
 
-  it should "create descending order expression correctly" in {
+  test("create descending order expression correctly") {
     val column = Column[Int]("id")
     val order  = OrderBy.Order.desc(column)
-    assert(order.statement === "`id` DESC")
+    assertEquals(order.statement, "`id` DESC")
   }
 
-  it should "use column alias in order expression when available" in {
+  test("use column alias in order expression when available") {
     val column    = Column[Int]("id").as("user_id")
     val ascOrder  = OrderBy.Order.asc(column)
     val descOrder = OrderBy.Order.desc(column)
 
-    assert(ascOrder.statement === "user_id ASC")
-    assert(descOrder.statement === "user_id DESC")
+    assertEquals(ascOrder.statement, "user_id ASC")
+    assertEquals(descOrder.statement, "user_id DESC")
   }
 
-  it should "combine multiple order expressions using Applicative" in {
+  test("combine multiple order expressions using Applicative") {
     val idColumn   = Column[Int]("id")
     val nameColumn = Column[String]("name")
 
@@ -66,10 +64,10 @@ class OrderByTest extends AnyFlatSpec:
     import cats.syntax.apply.*
 
     val combinedOrder = (OrderBy.Order.asc(idColumn), OrderBy.Order.desc(nameColumn)).tupled
-    assert(combinedOrder.statement === "`id` ASC, `name` DESC")
+    assertEquals(combinedOrder.statement, "`id` ASC, `name` DESC")
   }
 
-  it should "chain OrderBy with limit" in {
+  test("chain OrderBy with limit") {
     val orderBy = OrderBy[Table, Int](
       Table(),
       Column[Int]("id"),
@@ -79,11 +77,11 @@ class OrderByTest extends AnyFlatSpec:
 
     val limited = orderBy.limit(5)
 
-    assert(limited.statement === "SELECT id FROM table_name ORDER BY `id` ASC LIMIT ?")
-    assert(limited.params.length === 1)
+    assertEquals(limited.statement, "SELECT id FROM table_name ORDER BY `id` ASC LIMIT ?")
+    assertEquals(limited.params.length, 1)
   }
 
-  it should "chain OrderBy with limit and offset" in {
+  test("chain OrderBy with limit and offset") {
     val orderBy = OrderBy[Table, Int](
       Table(),
       Column[Int]("id"),
@@ -93,6 +91,6 @@ class OrderByTest extends AnyFlatSpec:
 
     val limitedWithOffset = orderBy.limit(10).offset(5)
 
-    assert(limitedWithOffset.statement === "SELECT id FROM table_name ORDER BY `id` ASC LIMIT ? OFFSET ?")
-    assert(limitedWithOffset.params.length === 2)
+    assertEquals(limitedWithOffset.statement, "SELECT id FROM table_name ORDER BY `id` ASC LIMIT ? OFFSET ?")
+    assertEquals(limitedWithOffset.params.length, 2)
   }
