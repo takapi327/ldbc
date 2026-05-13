@@ -243,10 +243,10 @@ lazy val zioInterop = crossProject(JVMPlatform, JSPlatform)
   .module("zio-interop", "Projects that provide a way to connect to the database for ZIO")
   .settings(
     libraryDependencies ++= Seq(
-      "dev.zio" %%% "zio"              % "2.1.25",
+      "dev.zio" %%% "zio"              % "2.1.26",
       "dev.zio" %%% "zio-interop-cats" % "23.1.0.13",
-      "dev.zio" %%% "zio-test"         % "2.1.25" % Test,
-      "dev.zio" %%% "zio-test-sbt"     % "2.1.25" % Test
+      "dev.zio" %%% "zio-test"         % "2.1.26" % Test,
+      "dev.zio" %%% "zio-test-sbt"     % "2.1.26" % Test
     )
   )
   .jsSettings(
