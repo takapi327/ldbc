@@ -6,287 +6,285 @@
 
 package ldbc.statement
 
-import org.scalatest.flatspec.AnyFlatSpec
-
 import ldbc.dsl.*
 import ldbc.dsl.codec.{ Codec, Encoder }
 
-class ExpressionTest extends AnyFlatSpec:
+class ExpressionTest extends munit.FunSuite:
 
-  "Expression.MatchCondition" should "construct the correct SQL statement" in {
+  test("Expression.MatchCondition should construct the correct SQL statement") {
     val expr = Expression.MatchCondition("id", false, 1L)(using Encoder[Long])
-    assert(expr.statement === "id = ?")
-    assert(expr.parameter.size === 1)
+    assertEquals(expr.statement, "id = ?")
+    assertEquals(expr.parameter.size, 1)
 
     val notExpr = expr.NOT
-    assert(notExpr.statement === "NOT id = ?")
-    assert(notExpr.parameter.size === 1)
+    assertEquals(notExpr.statement, "NOT id = ?")
+    assertEquals(notExpr.parameter.size, 1)
   }
 
-  "Expression.OrMore" should "construct the correct SQL statement" in {
+  test("Expression.OrMore should construct the correct SQL statement") {
     val expr = Expression.OrMore("id", false, 1L)(using Encoder[Long])
-    assert(expr.statement === "id >= ?")
-    assert(expr.parameter.size === 1)
+    assertEquals(expr.statement, "id >= ?")
+    assertEquals(expr.parameter.size, 1)
 
     val notExpr = expr.NOT
-    assert(notExpr.statement === "NOT id >= ?")
-    assert(notExpr.parameter.size === 1)
+    assertEquals(notExpr.statement, "NOT id >= ?")
+    assertEquals(notExpr.parameter.size, 1)
   }
 
-  "Expression.Over" should "construct the correct SQL statement" in {
+  test("Expression.Over should construct the correct SQL statement") {
     val expr = Expression.Over("id", false, 1L)(using Encoder[Long])
-    assert(expr.statement === "id > ?")
-    assert(expr.parameter.size === 1)
+    assertEquals(expr.statement, "id > ?")
+    assertEquals(expr.parameter.size, 1)
 
     val notExpr = expr.NOT
-    assert(notExpr.statement === "NOT id > ?")
-    assert(notExpr.parameter.size === 1)
+    assertEquals(notExpr.statement, "NOT id > ?")
+    assertEquals(notExpr.parameter.size, 1)
   }
 
-  "Expression.LessThanOrEqualTo" should "construct the correct SQL statement" in {
+  test("Expression.LessThanOrEqualTo should construct the correct SQL statement") {
     val expr = Expression.LessThanOrEqualTo("id", false, 1L)(using Encoder[Long])
-    assert(expr.statement === "id <= ?")
-    assert(expr.parameter.size === 1)
+    assertEquals(expr.statement, "id <= ?")
+    assertEquals(expr.parameter.size, 1)
 
     val notExpr = expr.NOT
-    assert(notExpr.statement === "NOT id <= ?")
-    assert(notExpr.parameter.size === 1)
+    assertEquals(notExpr.statement, "NOT id <= ?")
+    assertEquals(notExpr.parameter.size, 1)
   }
 
-  "Expression.LessThan" should "construct the correct SQL statement" in {
+  test("Expression.LessThan should construct the correct SQL statement") {
     val expr = Expression.LessThan("id", false, 1L)(using Encoder[Long])
-    assert(expr.statement === "id < ?")
-    assert(expr.parameter.size === 1)
+    assertEquals(expr.statement, "id < ?")
+    assertEquals(expr.parameter.size, 1)
 
     val notExpr = expr.NOT
-    assert(notExpr.statement === "NOT id < ?")
-    assert(notExpr.parameter.size === 1)
+    assertEquals(notExpr.statement, "NOT id < ?")
+    assertEquals(notExpr.parameter.size, 1)
   }
 
-  "Expression.NotEqual" should "construct the correct SQL statement" in {
+  test("Expression.NotEqual should construct the correct SQL statement") {
     val expr = Expression.NotEqual("<>", "id", false, 1L)(using Encoder[Long])
-    assert(expr.statement === "id <> ?")
-    assert(expr.parameter.size === 1)
+    assertEquals(expr.statement, "id <> ?")
+    assertEquals(expr.parameter.size, 1)
 
     val notExpr = expr.NOT
-    assert(notExpr.statement === "NOT id <> ?")
-    assert(notExpr.parameter.size === 1)
+    assertEquals(notExpr.statement, "NOT id <> ?")
+    assertEquals(notExpr.parameter.size, 1)
   }
 
-  "Expression.Is" should "construct the correct SQL statement" in {
+  test("Expression.Is should construct the correct SQL statement") {
     val expr = Expression.Is("id", false, "TRUE")
-    assert(expr.statement === "id IS TRUE")
+    assertEquals(expr.statement, "id IS TRUE")
     assert(expr.parameter.isEmpty)
 
     val notExpr = expr.NOT
-    assert(notExpr.statement === "id IS NOT TRUE")
+    assertEquals(notExpr.statement, "id IS NOT TRUE")
     assert(notExpr.parameter.isEmpty)
 
     val nullExpr = Expression.Is("id", false, "NULL")
-    assert(nullExpr.statement === "id IS NULL")
+    assertEquals(nullExpr.statement, "id IS NULL")
 
     val notNullExpr = Expression.Is("id", true, "NULL")
-    assert(notNullExpr.statement === "id IS NOT NULL")
+    assertEquals(notNullExpr.statement, "id IS NOT NULL")
   }
 
-  "Expression.NullSafeEqual" should "construct the correct SQL statement" in {
+  test("Expression.NullSafeEqual should construct the correct SQL statement") {
     val expr = Expression.NullSafeEqual("id", false, 1L)(using Encoder[Long])
-    assert(expr.statement === "id <=> ?")
-    assert(expr.parameter.size === 1)
+    assertEquals(expr.statement, "id <=> ?")
+    assertEquals(expr.parameter.size, 1)
 
     val notExpr = expr.NOT
-    assert(notExpr.statement === "NOT id <=> ?")
-    assert(notExpr.parameter.size === 1)
+    assertEquals(notExpr.statement, "NOT id <=> ?")
+    assertEquals(notExpr.parameter.size, 1)
   }
 
-  "Expression.In" should "construct the correct SQL statement" in {
+  test("Expression.In should construct the correct SQL statement") {
     val expr = Expression.In("id", false, 1L, 2L, 3L)(using Encoder[Long])
-    assert(expr.statement === "id IN (?, ?, ?)")
-    assert(expr.parameter.size === 3)
+    assertEquals(expr.statement, "id IN (?, ?, ?)")
+    assertEquals(expr.parameter.size, 3)
 
     val notExpr = expr.NOT
-    assert(notExpr.statement === "id NOT IN (?, ?, ?)")
-    assert(notExpr.parameter.size === 3)
+    assertEquals(notExpr.statement, "id NOT IN (?, ?, ?)")
+    assertEquals(notExpr.parameter.size, 3)
   }
 
-  "Expression.Between" should "construct the correct SQL statement" in {
+  test("Expression.Between should construct the correct SQL statement") {
     val expr = Expression.Between("id", false, 1L, 10L)(using Encoder[Long])
-    assert(expr.statement === "id BETWEEN ? AND ?")
-    assert(expr.parameter.size === 2)
+    assertEquals(expr.statement, "id BETWEEN ? AND ?")
+    assertEquals(expr.parameter.size, 2)
 
     val notExpr = expr.NOT
-    assert(notExpr.statement === "id NOT BETWEEN ? AND ?")
-    assert(notExpr.parameter.size === 2)
+    assertEquals(notExpr.statement, "id NOT BETWEEN ? AND ?")
+    assertEquals(notExpr.parameter.size, 2)
   }
 
-  "Expression.Like" should "construct the correct SQL statement" in {
+  test("Expression.Like should construct the correct SQL statement") {
     val expr = Expression.Like("name", false, "%test%")(using Encoder[String])
-    assert(expr.statement === "name LIKE ?")
-    assert(expr.parameter.size === 1)
+    assertEquals(expr.statement, "name LIKE ?")
+    assertEquals(expr.parameter.size, 1)
 
     val notExpr = expr.NOT
-    assert(notExpr.statement === "NOT name LIKE ?")
-    assert(notExpr.parameter.size === 1)
+    assertEquals(notExpr.statement, "NOT name LIKE ?")
+    assertEquals(notExpr.parameter.size, 1)
   }
 
-  "Expression.LikeEscape" should "construct the correct SQL statement" in {
+  test("Expression.LikeEscape should construct the correct SQL statement") {
     val expr = Expression.LikeEscape("name", false, "T%", "$")(using Encoder[String])
-    assert(expr.statement === "name LIKE ? ESCAPE ?")
-    assert(expr.parameter.size === 2)
+    assertEquals(expr.statement, "name LIKE ? ESCAPE ?")
+    assertEquals(expr.parameter.size, 2)
 
     val notExpr = expr.NOT
-    assert(notExpr.statement === "NOT name LIKE ? ESCAPE ?")
-    assert(notExpr.parameter.size === 2)
+    assertEquals(notExpr.statement, "NOT name LIKE ? ESCAPE ?")
+    assertEquals(notExpr.parameter.size, 2)
   }
 
-  "Expression.Regexp" should "construct the correct SQL statement" in {
+  test("Expression.Regexp should construct the correct SQL statement") {
     val expr = Expression.Regexp("name", false, "^[A-Z].*")(using Encoder[String])
-    assert(expr.statement === "name REGEXP ?")
-    assert(expr.parameter.size === 1)
+    assertEquals(expr.statement, "name REGEXP ?")
+    assertEquals(expr.parameter.size, 1)
 
     val notExpr = expr.NOT
-    assert(notExpr.statement === "NOT name REGEXP ?")
-    assert(notExpr.parameter.size === 1)
+    assertEquals(notExpr.statement, "NOT name REGEXP ?")
+    assertEquals(notExpr.parameter.size, 1)
   }
 
-  "Expression.Div" should "construct the correct SQL statement" in {
+  test("Expression.Div should construct the correct SQL statement") {
     val expr = Expression.Div("id", false, 5L, 2L)(using Encoder[Long])
-    assert(expr.statement === "id DIV ? = ?")
-    assert(expr.parameter.size === 2)
+    assertEquals(expr.statement, "id DIV ? = ?")
+    assertEquals(expr.parameter.size, 2)
 
     val notExpr = expr.NOT
-    assert(notExpr.statement === "NOT id DIV ? = ?")
-    assert(notExpr.parameter.size === 2)
+    assertEquals(notExpr.statement, "NOT id DIV ? = ?")
+    assertEquals(notExpr.parameter.size, 2)
   }
 
-  "Expression.Mod" should "construct the correct SQL statement" in {
+  test("Expression.Mod should construct the correct SQL statement") {
     val expr = Expression.Mod("MOD", "id", false, 5L, 2L)(using Encoder[Long])
-    assert(expr.statement === "id MOD ? = ?")
-    assert(expr.parameter.size === 2)
+    assertEquals(expr.statement, "id MOD ? = ?")
+    assertEquals(expr.parameter.size, 2)
 
     val notExpr = expr.NOT
-    assert(notExpr.statement === "NOT id MOD ? = ?")
-    assert(notExpr.parameter.size === 2)
+    assertEquals(notExpr.statement, "NOT id MOD ? = ?")
+    assertEquals(notExpr.parameter.size, 2)
 
     val modExpr = Expression.Mod("%", "id", false, 5L, 2L)(using Encoder[Long])
-    assert(modExpr.statement === "id % ? = ?")
+    assertEquals(modExpr.statement, "id % ? = ?")
   }
 
-  "Expression.LeftShift" should "construct the correct SQL statement" in {
+  test("Expression.LeftShift should construct the correct SQL statement") {
     val expr = Expression.LeftShift("id", false, 2L)(using Encoder[Long])
-    assert(expr.statement === "id << ?")
-    assert(expr.parameter.size === 1)
+    assertEquals(expr.statement, "id << ?")
+    assertEquals(expr.parameter.size, 1)
 
     val notExpr = expr.NOT
-    assert(notExpr.statement === "NOT id << ?")
-    assert(notExpr.parameter.size === 1)
+    assertEquals(notExpr.statement, "NOT id << ?")
+    assertEquals(notExpr.parameter.size, 1)
   }
 
-  "Expression.RightShift" should "construct the correct SQL statement" in {
+  test("Expression.RightShift should construct the correct SQL statement") {
     val expr = Expression.RightShift("id", false, 2L)(using Encoder[Long])
-    assert(expr.statement === "id >> ?")
-    assert(expr.parameter.size === 1)
+    assertEquals(expr.statement, "id >> ?")
+    assertEquals(expr.parameter.size, 1)
 
     val notExpr = expr.NOT
-    assert(notExpr.statement === "NOT id >> ?")
-    assert(notExpr.parameter.size === 1)
+    assertEquals(notExpr.statement, "NOT id >> ?")
+    assertEquals(notExpr.parameter.size, 1)
   }
 
-  "Expression.BitXOR" should "construct the correct SQL statement" in {
+  test("Expression.BitXOR should construct the correct SQL statement") {
     val expr = Expression.BitXOR("id", false, 5L)(using Encoder[Long])
-    assert(expr.statement === "id ^ ?")
-    assert(expr.parameter.size === 1)
+    assertEquals(expr.statement, "id ^ ?")
+    assertEquals(expr.parameter.size, 1)
 
     val notExpr = expr.NOT
-    assert(notExpr.statement === "NOT id ^ ?")
-    assert(notExpr.parameter.size === 1)
+    assertEquals(notExpr.statement, "NOT id ^ ?")
+    assertEquals(notExpr.parameter.size, 1)
   }
 
-  "Expression.BitFlip" should "construct the correct SQL statement" in {
+  test("Expression.BitFlip should construct the correct SQL statement") {
     val expr = Expression.BitFlip("id", false, 5L)(using Encoder[Long])
-    assert(expr.statement === "~id = ?")
-    assert(expr.parameter.size === 1)
+    assertEquals(expr.statement, "~id = ?")
+    assertEquals(expr.parameter.size, 1)
 
     val notExpr = expr.NOT
-    assert(notExpr.statement === "NOT ~id = ?")
-    assert(notExpr.parameter.size === 1)
+    assertEquals(notExpr.statement, "NOT ~id = ?")
+    assertEquals(notExpr.parameter.size, 1)
   }
 
-  "Expression.SubQuery" should "construct the correct SQL statement" in {
+  test("Expression.SubQuery should construct the correct SQL statement") {
     val subQuery = sql"SELECT id FROM users WHERE active = true"
     val expr     = Expression.SubQuery("=", "id", subQuery)
-    assert(expr.statement === "id = (SELECT id FROM users WHERE active = true)")
+    assertEquals(expr.statement, "id = (SELECT id FROM users WHERE active = true)")
   }
 
-  "Expression.JoinQuery" should "construct the correct SQL statement" in {
+  test("Expression.JoinQuery should construct the correct SQL statement") {
     val leftCol  = Column.Impl[Long]("customer_id")
     val rightCol = Column.Impl[Long]("order_id")
 
     val expr = Expression.JoinQuery("=", leftCol, rightCol)
-    assert(expr.statement === "`customer_id` = `order_id`")
+    assertEquals(expr.statement, "`customer_id` = `order_id`")
     assert(expr.parameter.isEmpty)
 
     val leftAliased  = leftCol.as("c")
     val rightAliased = rightCol.as("o")
 
     val aliasedExpr = Expression.JoinQuery("=", leftAliased, rightAliased)
-    assert(aliasedExpr.statement === "c = o")
+    assertEquals(aliasedExpr.statement, "c = o")
   }
 
-  "Expression.Pair" should "combine expressions with logical operators" in {
+  test("Expression.Pair should combine expressions with logical operators") {
     val expr1 = Expression.MatchCondition("id", false, 1L)(using Encoder[Long])
     val expr2 = Expression.Like("name", false, "test%")(using Encoder[String])
 
     // AND
     val andExpr = Expression.Pair(" AND ", expr1, expr2)
-    assert(andExpr.statement === "(id = ? AND name LIKE ?)")
-    assert(andExpr.parameter.size === 2)
+    assertEquals(andExpr.statement, "(id = ? AND name LIKE ?)")
+    assertEquals(andExpr.parameter.size, 2)
 
     // OR
     val orExpr = Expression.Pair(" OR ", expr1, expr2)
-    assert(orExpr.statement === "(id = ? OR name LIKE ?)")
-    assert(orExpr.parameter.size === 2)
+    assertEquals(orExpr.statement, "(id = ? OR name LIKE ?)")
+    assertEquals(orExpr.parameter.size, 2)
 
     // XOR
     val xorExpr = Expression.Pair(" XOR ", expr1, expr2)
-    assert(xorExpr.statement === "(id = ? XOR name LIKE ?)")
-    assert(xorExpr.parameter.size === 2)
+    assertEquals(xorExpr.statement, "(id = ? XOR name LIKE ?)")
+    assertEquals(xorExpr.parameter.size, 2)
 
     // Complex nesting
     val expr3       = Expression.In("age", false, 20, 30, 40)(using Encoder[Int])
     val nestedAnd   = Expression.Pair(" AND ", expr1, expr2)
     val complexExpr = Expression.Pair(" OR ", nestedAnd, expr3)
 
-    assert(complexExpr.statement === "(id = ? AND name LIKE ? OR age IN (?, ?, ?))")
-    assert(complexExpr.parameter.size === 5)
+    assertEquals(complexExpr.statement, "(id = ? AND name LIKE ? OR age IN (?, ?, ?))")
+    assertEquals(complexExpr.parameter.size, 5)
   }
 
-  "Expression" should "support logical operators" in {
+  test("Expression should support logical operators") {
     val expr1 = Expression.MatchCondition("id", false, 1L)(using Encoder[Long])
     val expr2 = Expression.Like("name", false, "test%")(using Encoder[String])
     val expr3 = Expression.In("age", false, 20, 30, 40)(using Encoder[Int])
 
     // AND operator
     val andExpr = expr1 and expr2
-    assert(andExpr.statement === "(id = ? AND name LIKE ?)")
+    assertEquals(andExpr.statement, "(id = ? AND name LIKE ?)")
 
     // && operator alias
     val andExpr2 = expr1 && expr2
-    assert(andExpr2.statement === "(id = ? AND name LIKE ?)")
+    assertEquals(andExpr2.statement, "(id = ? AND name LIKE ?)")
 
     // OR operator
     val orExpr = expr1 or expr2
-    assert(orExpr.statement === "(id = ? OR name LIKE ?)")
+    assertEquals(orExpr.statement, "(id = ? OR name LIKE ?)")
 
     // || operator alias
     val orExpr2 = expr1 || expr2
-    assert(orExpr2.statement === "(id = ? OR name LIKE ?)")
+    assertEquals(orExpr2.statement, "(id = ? OR name LIKE ?)")
 
     // XOR operator
     val xorExpr = expr1 xor expr2
-    assert(xorExpr.statement === "(id = ? XOR name LIKE ?)")
+    assertEquals(xorExpr.statement, "(id = ? XOR name LIKE ?)")
 
     // Complex combinations
     val complex = (expr1 && expr2) || expr3
-    assert(complex.statement === "(id = ? AND name LIKE ? OR age IN (?, ?, ?))")
+    assertEquals(complex.statement, "(id = ? AND name LIKE ? OR age IN (?, ?, ?))")
   }

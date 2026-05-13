@@ -8,15 +8,13 @@ package ldbc.schema
 
 import java.time.{ LocalDate, LocalDateTime, LocalTime, Year }
 
-import org.scalatest.flatspec.AnyFlatSpec
-
 import ldbc.dsl.codec.Codec
 
 import ldbc.statement.Column
 
 import ldbc.schema.DataType.*
 
-class TableCreateStatementTest extends AnyFlatSpec:
+class TableCreateStatementTest extends munit.FunSuite:
 
   enum Status:
     case OK, ERROR
@@ -93,91 +91,118 @@ class TableCreateStatementTest extends AnyFlatSpec:
 
   private val allDataTypes = TableQuery[AllDataTypesTable]
 
-  it should "The query string of the Column model generated with only label and DataType matches the specified string." in {
-    assert(
-      allDataTypes.table.c1.statement === "`c1` SMALLINT UNSIGNED NULL AUTO_INCREMENT"
+  test("The query string of the Column model generated with only label and DataType matches the specified string.") {
+    assertEquals(
+      allDataTypes.table.c1.statement,
+      "`c1` SMALLINT UNSIGNED NULL AUTO_INCREMENT"
     )
-    assert(
-      allDataTypes.table.c2.statement === "`c2` SMALLINT NULL DEFAULT -1000"
+    assertEquals(
+      allDataTypes.table.c2.statement,
+      "`c2` SMALLINT NULL DEFAULT -1000"
     )
-    assert(
-      allDataTypes.table.c3.statement === "`c3` MEDIUMINT UNSIGNED NULL DEFAULT 100000"
+    assertEquals(
+      allDataTypes.table.c3.statement,
+      "`c3` MEDIUMINT UNSIGNED NULL DEFAULT 100000"
     )
-    assert(
-      allDataTypes.table.c4.statement === "`c4` INT NULL DEFAULT 42"
+    assertEquals(
+      allDataTypes.table.c4.statement,
+      "`c4` INT NULL DEFAULT 42"
     )
-    assert(
-      allDataTypes.table.c5.statement === "`c5` BIGINT NOT NULL DEFAULT 9999999999"
+    assertEquals(
+      allDataTypes.table.c5.statement,
+      "`c5` BIGINT NOT NULL DEFAULT 9999999999"
     )
-    assert(
-      allDataTypes.table.c6.statement === "`c6` DECIMAL(10, 2) NULL DEFAULT '123.45'"
+    assertEquals(
+      allDataTypes.table.c6.statement,
+      "`c6` DECIMAL(10, 2) NULL DEFAULT '123.45'"
     )
-    assert(
-      allDataTypes.table.c7.statement === "`c7` FLOAT(10) NULL"
+    assertEquals(
+      allDataTypes.table.c7.statement,
+      "`c7` FLOAT(10) NULL"
     )
-    assert(
-      allDataTypes.table.c8.statement === "`c8` FLOAT(10) NULL DEFAULT 2.71828"
+    assertEquals(
+      allDataTypes.table.c8.statement,
+      "`c8` FLOAT(10) NULL DEFAULT 2.71828"
     )
-    assert(
-      allDataTypes.table.c9.statement === "`c9` BIT NULL"
+    assertEquals(
+      allDataTypes.table.c9.statement,
+      "`c9` BIT NULL"
     )
-    assert(
-      allDataTypes.table.c10.statement === "`c10` CHAR(50) NULL DEFAULT 'FIXED'"
+    assertEquals(
+      allDataTypes.table.c10.statement,
+      "`c10` CHAR(50) NULL DEFAULT 'FIXED'"
     )
-    assert(
-      allDataTypes.table.c11.statement === "`c11` VARCHAR(255) NULL DEFAULT NULL"
+    assertEquals(
+      allDataTypes.table.c11.statement,
+      "`c11` VARCHAR(255) NULL DEFAULT NULL"
     )
-    assert(
-      allDataTypes.table.c12.statement === "`c12` BINARY(10) NULL"
+    assertEquals(
+      allDataTypes.table.c12.statement,
+      "`c12` BINARY(10) NULL"
     )
-    assert(
-      allDataTypes.table.c13.statement === "`c13` VARBINARY(255) NOT NULL"
+    assertEquals(
+      allDataTypes.table.c13.statement,
+      "`c13` VARBINARY(255) NOT NULL"
     )
-    assert(
-      allDataTypes.table.c14.statement === "`c14` TINYTEXT CHARACTER SET utf8mb4 NULL"
+    assertEquals(
+      allDataTypes.table.c14.statement,
+      "`c14` TINYTEXT CHARACTER SET utf8mb4 NULL"
     )
-    assert(
-      allDataTypes.table.c15.statement === "`c15` TEXT COLLATE utf8mb4_unicode_ci NULL"
+    assertEquals(
+      allDataTypes.table.c15.statement,
+      "`c15` TEXT COLLATE utf8mb4_unicode_ci NULL"
     )
-    assert(
-      allDataTypes.table.c16.statement === "`c16` MEDIUMTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL"
+    assertEquals(
+      allDataTypes.table.c16.statement,
+      "`c16` MEDIUMTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL"
     )
-    assert(
-      allDataTypes.table.c17.statement === "`c17` LONGTEXT NOT NULL DEFAULT ''"
+    assertEquals(
+      allDataTypes.table.c17.statement,
+      "`c17` LONGTEXT NOT NULL DEFAULT ''"
     )
-    assert(
-      allDataTypes.table.c18.statement === "`c18` TINYBLOB NOT NULL"
+    assertEquals(
+      allDataTypes.table.c18.statement,
+      "`c18` TINYBLOB NOT NULL"
     )
-    assert(
-      allDataTypes.table.c19.statement === "`c19` BLOB NULL DEFAULT NULL"
+    assertEquals(
+      allDataTypes.table.c19.statement,
+      "`c19` BLOB NULL DEFAULT NULL"
     )
-    assert(
-      allDataTypes.table.c20.statement === "`c20` MEDIUMBLOB NULL"
+    assertEquals(
+      allDataTypes.table.c20.statement,
+      "`c20` MEDIUMBLOB NULL"
     )
-    assert(
-      allDataTypes.table.c21.statement === "`c21` LONGBLOB NULL"
+    assertEquals(
+      allDataTypes.table.c21.statement,
+      "`c21` LONGBLOB NULL"
     )
-    assert(
-      allDataTypes.table.c22.statement === "`c22` DATE NULL DEFAULT '2025-02-15'"
+    assertEquals(
+      allDataTypes.table.c22.statement,
+      "`c22` DATE NULL DEFAULT '2025-02-15'"
     )
-    assert(
-      allDataTypes.table.c23.statement === "`c23` TIME NULL DEFAULT '12:00'"
+    assertEquals(
+      allDataTypes.table.c23.statement,
+      "`c23` TIME NULL DEFAULT '12:00'"
     )
-    assert(
-      allDataTypes.table.c24.statement === "`c24` DATETIME NULL DEFAULT CURRENT_TIMESTAMP"
+    assertEquals(
+      allDataTypes.table.c24.statement,
+      "`c24` DATETIME NULL DEFAULT CURRENT_TIMESTAMP"
     )
-    assert(
-      allDataTypes.table.c25.statement === "`c25` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
+    assertEquals(
+      allDataTypes.table.c25.statement,
+      "`c25` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
     )
-    assert(
-      allDataTypes.table.c26.statement === "`c26` YEAR NULL DEFAULT '2025'"
+    assertEquals(
+      allDataTypes.table.c26.statement,
+      "`c26` YEAR NULL DEFAULT '2025'"
     )
-    assert(
-      allDataTypes.table.c27.statement === "`c27` ENUM('OK','ERROR') NOT NULL DEFAULT 'OK'"
+    assertEquals(
+      allDataTypes.table.c27.statement,
+      "`c27` ENUM('OK','ERROR') NOT NULL DEFAULT 'OK'"
     )
   }
 
-  it should "The CREATE statement generated by Table matches the specified value." in {
+  test("The CREATE statement generated by Table matches the specified value.") {
     assert(
       allDataTypes.schema.createIfNotExists.statements.headOption.contains(
         """CREATE TABLE IF NOT EXISTS `all_data_types` (
