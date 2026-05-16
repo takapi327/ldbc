@@ -116,6 +116,6 @@ private[ldbc] trait SharedPreparedStatement[F[_]: Sync] extends PreparedStatemen
     original.trim.toLowerCase match
       case q if q.startsWith("insert") =>
         val bindQuery = buildQuery(original, params)
-        bindQuery.split("VALUES").last
+        bindQuery.split("(?i)VALUES").last
       case q if q.startsWith("update") || q.startsWith("delete") => buildQuery(original, params)
       case _ => throw new IllegalArgumentException("The batch query must be an INSERT, UPDATE, or DELETE statement.")
