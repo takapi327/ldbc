@@ -190,7 +190,18 @@ case class ClientPreparedStatement[F[_]: Exchange: Tracer: Sync](
     }
 
   override def execute(): F[Boolean] =
-    if sql.toUpperCase.startsWith("SELECT") then
+    val trimmedUpper = sql.trim.toUpperCase
+    if trimmedUpper.startsWith("SELECT") ||
+       trimmedUpper.startsWith("SHOW") ||
+       trimmedUpper.startsWith("DESC") ||
+       trimmedUpper.startsWith("EXPLAIN") ||
+       trimmedUpper.startsWith("WITH") ||
+       trimmedUpper.startsWith("TABLE") ||
+       trimmedUpper.startsWith("OPTIMIZE") ||
+       trimmedUpper.startsWith("CHECK") ||
+       trimmedUpper.startsWith("REPAIR") ||
+       trimmedUpper.startsWith("ANALYZE") ||
+       trimmedUpper.startsWith("(") then
       executeQuery().flatMap {
         case resultSet: ResultSetImpl[F] => resultSet.hasRows()
         case _                           => F.pure(false)
