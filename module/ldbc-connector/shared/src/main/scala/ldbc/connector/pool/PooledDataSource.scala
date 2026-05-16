@@ -527,11 +527,12 @@ object PooledDataSource:
 
           validation
             .timeout(validationTimeout)
-            .handleError { error =>
-              poolLogger.debug(
-                s"Connection validation failed or timed out after $validationTimeout: ${ error.getMessage }"
-              )
-              false
+            .handleErrorWith { error =>
+              poolLogger
+                .debug(
+                  s"Connection validation failed or timed out after $validationTimeout: ${ error.getMessage }"
+                )
+                .as(false)
             }
 
         case None =>
@@ -546,11 +547,12 @@ object PooledDataSource:
 
           validation
             .timeout(validationTimeout)
-            .handleError { error =>
-              poolLogger.debug(
-                s"Connection validation failed or timed out after $validationTimeout: ${ error.getMessage }"
-              )
-              false
+            .handleErrorWith { error =>
+              poolLogger
+                .debug(
+                  s"Connection validation failed or timed out after $validationTimeout: ${ error.getMessage }"
+                )
+                .as(false)
             }
 
     private def executeTestQuery(conn: Connection[F], query: String): F[Boolean] =
