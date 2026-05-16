@@ -97,7 +97,7 @@ object Parameter:
 
   def string(value: String): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_STRING
-    override def sql: String =
+    override def sql:            String         =
       val sb = new StringBuilder("'")
       value.foreach {
         case '\u0000' => sb.append("\\0")

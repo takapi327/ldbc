@@ -281,7 +281,7 @@ class SharedPreparedStatementTest extends SharedPreparedStatement[IO], FTestPlat
     // Correct: escapes \ first → \\ then escapes ' → \\\'
     //   Result: '\\\''
     val input    = "\\'"
-    val expected = "'\\\\\\''"  // '\\\''  in the actual string
+    val expected = "'\\\\\\''" // '\\\''  in the actual string
     IO(assertEquals(Parameter.string(input).sql, expected))
   }
 
