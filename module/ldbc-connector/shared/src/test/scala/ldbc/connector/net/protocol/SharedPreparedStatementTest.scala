@@ -244,6 +244,29 @@ class SharedPreparedStatementTest extends SharedPreparedStatement[IO], FTestPlat
     } yield ()
   }
 
+  test("Bug #711: buildBatchQuery should handle INSERT with lowercase 'values' keyword") {
+    for {
+      _      <- resetParams
+      _      <- setInt(1, 100)
+      _      <- setString(2, "John")
+      result <- params.get.map(p => buildBatchQuery("INSERT INTO users (id, name) values (?, ?)", p))
+      // split("VALUES") does not match lowercase "values", so .last returns the entire query string
+      // This assertion FAILS with the current (buggy) implementation
+      _      <- IO(assertEquals(result, " (100, 'John')"))
+    } yield ()
+  }
+
+  test("Bug #711: buildBatchQuery should handle INSERT with mixed-case 'Values' keyword") {
+    for {
+      _      <- resetParams
+      _      <- setInt(1, 100)
+      _      <- setString(2, "John")
+      result <- params.get.map(p => buildBatchQuery("INSERT INTO users (id, name) Values (?, ?)", p))
+      // This assertion FAILS with the current (buggy) implementation
+      _      <- IO(assertEquals(result, " (100, 'John')"))
+    } yield ()
+  }
+
   test("buildBatchQuery should handle UPDATE statements correctly") {
     for {
       _      <- resetParams
