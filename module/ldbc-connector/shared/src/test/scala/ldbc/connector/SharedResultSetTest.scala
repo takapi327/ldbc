@@ -427,6 +427,38 @@ class SharedResultSetTest extends FTestPlatform:
     }
   }
 
+  test("Bug #715: isFirst should return false when cursor is past the first row") {
+    // isFirst() is implemented as `currentCursor > 0`, which is true for every row
+    // from row 1 onwards. The JDBC spec requires it to return true ONLY on row 1.
+    for
+      protocol  <- IO(createMockProtocol[IO])
+      isClosed  <- Ref.of[IO, Boolean](false)
+      fetchSize <- Ref.of[IO, Int](0)
+      rs = new TestSharedResultSet[IO](
+             protocol,
+             createTestColumns,
+             createTestRecords,
+             Map.empty,
+             Version(8, 0, 0),
+             isClosed,
+             fetchSize
+           )
+      // Move to row 1
+      _        <- rs.next()
+      isFirst1 <- rs.isFirst()
+      // Move to row 2
+      _        <- rs.next()
+      isFirst2 <- rs.isFirst()
+      // Move to row 3
+      _        <- rs.next()
+      isFirst3 <- rs.isFirst()
+    yield {
+      assertEquals(isFirst1, true, "isFirst() should be true on row 1")
+      assertEquals(isFirst2, false, "Bug #715: isFirst() should be false on row 2, but returns true with `currentCursor > 0`")
+      assertEquals(isFirst3, false, "Bug #715: isFirst() should be false on row 3, but returns true with `currentCursor > 0`")
+    }
+  }
+
   test("absolute with positive and negative positions") {
     for
       protocol  <- IO(createMockProtocol[IO])
