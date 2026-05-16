@@ -454,8 +454,16 @@ class SharedResultSetTest extends FTestPlatform:
       isFirst3 <- rs.isFirst()
     yield {
       assertEquals(isFirst1, true, "isFirst() should be true on row 1")
-      assertEquals(isFirst2, false, "Bug #715: isFirst() should be false on row 2, but returns true with `currentCursor > 0`")
-      assertEquals(isFirst3, false, "Bug #715: isFirst() should be false on row 3, but returns true with `currentCursor > 0`")
+      assertEquals(
+        isFirst2,
+        false,
+        "Bug #715: isFirst() should be false on row 2, but returns true with `currentCursor > 0`"
+      )
+      assertEquals(
+        isFirst3,
+        false,
+        "Bug #715: isFirst() should be false on row 3, but returns true with `currentCursor > 0`"
+      )
     }
   }
 
