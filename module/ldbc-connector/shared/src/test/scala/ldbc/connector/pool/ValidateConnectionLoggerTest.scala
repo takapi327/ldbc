@@ -13,8 +13,9 @@ import cats.effect.std.Console
 
 import munit.CatsEffectSuite
 
-import ldbc.connector.MySQLConfig
 import ldbc.sql.*
+
+import ldbc.connector.MySQLConfig
 
 /**
  * Regression tests for bug #710:
@@ -33,12 +34,12 @@ class ValidateConnectionLoggerTest extends CatsEffectSuite:
 
   /** A Console[IO] that records every println call to a Ref for later assertion. */
   private class RecordingConsole(ref: Ref[IO, List[String]]) extends Console[IO]:
-    override def print[A](a: A)(implicit S: cats.Show[A]): IO[Unit]   = IO.unit
-    override def println[A](a: A)(implicit S: cats.Show[A]): IO[Unit] = ref.update(_ :+ S.show(a))
-    override def error[A](a: A)(implicit S: cats.Show[A]): IO[Unit]   = IO.unit
-    override def errorln[A](a: A)(implicit S: cats.Show[A]): IO[Unit] = IO.unit
-    override def readLine: IO[String]                                  = IO.pure("")
-    override def readLineWithCharset(charset: Charset): IO[String]    = IO.pure("")
+    override def print[A](a:                  A)(implicit S: cats.Show[A]): IO[Unit]   = IO.unit
+    override def println[A](a:                A)(implicit S: cats.Show[A]): IO[Unit]   = ref.update(_ :+ S.show(a))
+    override def error[A](a:                  A)(implicit S: cats.Show[A]): IO[Unit]   = IO.unit
+    override def errorln[A](a:                A)(implicit S: cats.Show[A]): IO[Unit]   = IO.unit
+    override def readLine:                                                  IO[String] = IO.pure("")
+    override def readLineWithCharset(charset: Charset):                     IO[String] = IO.pure("")
 
   /**
    * A mock Connection[IO] whose isClosed() returns false but isValid() raises the given error.
@@ -47,34 +48,34 @@ class ValidateConnectionLoggerTest extends CatsEffectSuite:
   private def failingConnection(cause: Throwable): Connection[IO] =
     new Connection[IO]:
       private def stub[A]: IO[A] = IO.raiseError(new NotImplementedError("not used in validateConnection"))
-      def createStatement(): IO[Statement[IO]]                                                                     = stub
-      def prepareStatement(sql: String): IO[PreparedStatement[IO]]                                                = stub
-      def prepareCall(sql: String): IO[CallableStatement[IO]]                                                     = stub
-      def nativeSQL(sql: String): IO[String]                                                                      = stub
-      def setAutoCommit(autoCommit: Boolean): IO[Unit]                                                            = stub
-      def getAutoCommit(): IO[Boolean]                                                                             = stub
-      def commit(): IO[Unit]                                                                                       = stub
-      def rollback(): IO[Unit]                                                                                     = stub
-      def close(): IO[Unit]                                                                                        = IO.unit
-      def isClosed(): IO[Boolean]                                                                                  = IO.pure(false)
-      def getMetaData(): IO[DatabaseMetaData[IO]]                                                                 = stub
-      def setReadOnly(isReadOnly: Boolean): IO[Unit]                                                              = stub
-      def isReadOnly: IO[Boolean]                                                                                  = stub
-      def setCatalog(catalog: String): IO[Unit]                                                                    = stub
-      def getCatalog(): IO[String]                                                                                 = stub
-      def setTransactionIsolation(level: Int): IO[Unit]                                                           = stub
-      def getTransactionIsolation(): IO[Int]                                                                       = stub
-      def createStatement(resultSetType: Int, resultSetConcurrency: Int): IO[Statement[IO]]                       = stub
+      def createStatement():                                              IO[Statement[IO]]         = stub
+      def prepareStatement(sql:          String):                         IO[PreparedStatement[IO]] = stub
+      def prepareCall(sql:               String):                         IO[CallableStatement[IO]] = stub
+      def nativeSQL(sql:                 String):                         IO[String]                = stub
+      def setAutoCommit(autoCommit:      Boolean):                        IO[Unit]                  = stub
+      def getAutoCommit():                                                IO[Boolean]               = stub
+      def commit():                                                       IO[Unit]                  = stub
+      def rollback():                                                     IO[Unit]                  = stub
+      def close():                                                        IO[Unit]                  = IO.unit
+      def isClosed():                                                     IO[Boolean]               = IO.pure(false)
+      def getMetaData():                                                  IO[DatabaseMetaData[IO]]  = stub
+      def setReadOnly(isReadOnly:        Boolean):                        IO[Unit]                  = stub
+      def isReadOnly:                                                     IO[Boolean]               = stub
+      def setCatalog(catalog:            String):                         IO[Unit]                  = stub
+      def getCatalog():                                                   IO[String]                = stub
+      def setTransactionIsolation(level: Int):                            IO[Unit]                  = stub
+      def getTransactionIsolation():                                      IO[Int]                   = stub
+      def createStatement(resultSetType: Int, resultSetConcurrency: Int): IO[Statement[IO]]         = stub
       def prepareStatement(sql: String, resultSetType: Int, resultSetConcurrency: Int): IO[PreparedStatement[IO]] = stub
-      def prepareCall(sql: String, resultSetType: Int, resultSetConcurrency: Int): IO[CallableStatement[IO]]      = stub
-      def prepareStatement(sql: String, autoGeneratedKeys: Int): IO[PreparedStatement[IO]]                        = stub
-      def setSchema(schema: String): IO[Unit]                                                                      = stub
-      def getSchema(): IO[String]                                                                                  = stub
-      def isValid(timeout: Int): IO[Boolean]                                                                      = IO.raiseError(cause)
-      def setSavepoint(): IO[Savepoint]                                                                            = stub
-      def setSavepoint(name: String): IO[Savepoint]                                                               = stub
-      def rollback(savepoint: Savepoint): IO[Unit]                                                                 = stub
-      def releaseSavepoint(savepoint: Savepoint): IO[Unit]                                                        = stub
+      def prepareCall(sql:      String, resultSetType: Int, resultSetConcurrency: Int): IO[CallableStatement[IO]] = stub
+      def prepareStatement(sql:       String, autoGeneratedKeys: Int): IO[PreparedStatement[IO]] = stub
+      def setSchema(schema:           String):                         IO[Unit]                  = stub
+      def getSchema():                                                 IO[String]                = stub
+      def isValid(timeout:            Int):                            IO[Boolean]               = IO.raiseError(cause)
+      def setSavepoint():                                              IO[Savepoint]             = stub
+      def setSavepoint(name:          String):                         IO[Savepoint]             = stub
+      def rollback(savepoint:         Savepoint):                      IO[Unit]                  = stub
+      def releaseSavepoint(savepoint: Savepoint):                      IO[Unit]                  = stub
 
   /**
    * MySQLConfig with minConnections=0 so that no actual MySQL connection is established
