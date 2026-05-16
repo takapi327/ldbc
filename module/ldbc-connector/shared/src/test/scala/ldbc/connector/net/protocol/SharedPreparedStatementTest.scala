@@ -252,7 +252,7 @@ class SharedPreparedStatementTest extends SharedPreparedStatement[IO], FTestPlat
       result <- params.get.map(p => buildBatchQuery("INSERT INTO users (id, name) values (?, ?)", p))
       // split("VALUES") does not match lowercase "values", so .last returns the entire query string
       // This assertion FAILS with the current (buggy) implementation
-      _      <- IO(assertEquals(result, " (100, 'John')"))
+      _ <- IO(assertEquals(result, " (100, 'John')"))
     } yield ()
   }
 
@@ -263,7 +263,7 @@ class SharedPreparedStatementTest extends SharedPreparedStatement[IO], FTestPlat
       _      <- setString(2, "John")
       result <- params.get.map(p => buildBatchQuery("INSERT INTO users (id, name) Values (?, ?)", p))
       // This assertion FAILS with the current (buggy) implementation
-      _      <- IO(assertEquals(result, " (100, 'John')"))
+      _ <- IO(assertEquals(result, " (100, 'John')"))
     } yield ()
   }
 
