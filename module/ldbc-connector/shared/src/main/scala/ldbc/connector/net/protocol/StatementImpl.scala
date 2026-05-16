@@ -278,16 +278,17 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
     checkClosed() *> checkNullOrEmptyQuery(sql) *> {
       val trimmedUpper = sql.trim.toUpperCase
       if trimmedUpper.startsWith("SELECT") ||
-         trimmedUpper.startsWith("SHOW") ||
-         trimmedUpper.startsWith("DESC") ||
-         trimmedUpper.startsWith("EXPLAIN") ||
-         trimmedUpper.startsWith("WITH") ||
-         trimmedUpper.startsWith("TABLE") ||
-         trimmedUpper.startsWith("OPTIMIZE") ||
-         trimmedUpper.startsWith("CHECK") ||
-         trimmedUpper.startsWith("REPAIR") ||
-         trimmedUpper.startsWith("ANALYZE") ||
-         trimmedUpper.startsWith("(") then
+        trimmedUpper.startsWith("SHOW") ||
+        trimmedUpper.startsWith("DESC") ||
+        trimmedUpper.startsWith("EXPLAIN") ||
+        trimmedUpper.startsWith("WITH") ||
+        trimmedUpper.startsWith("TABLE") ||
+        trimmedUpper.startsWith("OPTIMIZE") ||
+        trimmedUpper.startsWith("CHECK") ||
+        trimmedUpper.startsWith("REPAIR") ||
+        trimmedUpper.startsWith("ANALYZE") ||
+        trimmedUpper.startsWith("(")
+      then
         executeQuery(sql).flatMap {
           case resultSet: ResultSetImpl[F] => resultSet.hasRows()
           case _                           => F.pure(false)
