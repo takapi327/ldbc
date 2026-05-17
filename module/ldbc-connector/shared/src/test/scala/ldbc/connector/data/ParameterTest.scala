@@ -162,9 +162,9 @@ class ParameterTest extends FTestPlatform:
     val emptyStringParam = Parameter.string("")
     assertEquals(emptyStringParam.toString, "''")
 
-    // Test string with quotes
+    // Test string with quotes (single quote is escaped as \' per MySQL text protocol)
     val quotedStringParam = Parameter.string("test'quotes")
-    assertEquals(quotedStringParam.toString, "'test''quotes'")
+    assertEquals(quotedStringParam.toString, "'test\\'quotes'")
 
     // Test zero values
     assertEquals(Parameter.byte(0).toString, "0")
@@ -246,13 +246,13 @@ class ParameterTest extends FTestPlatform:
   }
 
   test("String parameter special cases") {
-    // Multiline string
+    // Multiline string: newlines are escaped as \n per MySQL text protocol
     val multilineString = "line1\nline2\nline3"
-    assertEquals(Parameter.string(multilineString).toString, s"'$multilineString'")
+    assertEquals(Parameter.string(multilineString).toString, "'line1\\nline2\\nline3'")
 
-    // String with special characters
+    // String with special characters: \r, \n, \b are escaped; \t is not in MySQL's escape list
     val specialChars = "\t\r\n\b"
-    assertEquals(Parameter.string(specialChars).toString, s"'$specialChars'")
+    assertEquals(Parameter.string(specialChars).toString, "'\t\\r\\n\\b'")
 
     // Unicode string
     val unicodeString = "Hello 世界 🌍"
