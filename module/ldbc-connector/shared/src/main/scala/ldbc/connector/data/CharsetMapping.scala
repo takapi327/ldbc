@@ -500,10 +500,7 @@ case class MysqlCharset(
   minimumVersion:  Version
 ):
 
-  def isOkayForVersion(version: Version): Boolean = minimumVersion.compare(version) match
-    case -1 => false
-    case 0  => true
-    case 1  => true
+  def isOkayForVersion(version: Version): Boolean = minimumVersion.compare(version) <= 0
 
   override def toString: String = s"[charsetName=$charsetName,mblen=$mblen]"
 

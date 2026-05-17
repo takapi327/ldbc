@@ -67,7 +67,8 @@ object ComStmtExecutePacket:
 
   val encoder: Encoder[ComStmtExecutePacket] = Encoder { comStmtExecute =>
     val types = comStmtExecute.params.values.foldLeft(BitVector.empty) { (acc, param) =>
-      acc |+| uint24L.encode(param.columnDataType.code.toInt).require
+      acc |+| uint16L.encode(param.columnDataType.code.toInt).require |+|
+        uint8L.encode(0x00).require // unsigned flag: 0x80 for unsigned, 0x00 for signed
     }
 
     val values = comStmtExecute.params.values.foldLeft(BitVector.empty) { (acc, param) =>
