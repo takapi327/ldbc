@@ -66,9 +66,36 @@ class CharsetMappingTest extends FTestPlatform:
       charset.isOkayForVersion(Version(5, 0, 0)),
       "Should be okay for same version"
     )
-    assert(!charset.isOkayForVersion(Version(5, 1, 0)), "Should not be okay for newer version")
-    assert(!charset.isOkayForVersion(Version(6, 0, 0)), "Should not be okay for major newer version")
-    assert(charset.isOkayForVersion(Version(4, 9, 0)), "Should be okay for older version")
+    assert(charset.isOkayForVersion(Version(5, 1, 0)), "Should be okay for newer server version")
+    assert(charset.isOkayForVersion(Version(6, 0, 0)), "Should be okay for major newer server version")
+    assert(!charset.isOkayForVersion(Version(4, 9, 0)), "Should NOT be okay for older server version")
+  }
+
+  test("Bug #719: isOkayForVersion should return true when server version meets the minimum requirement") {
+    // gb18030 requires MySQL >= 5.7.4.
+    // On MySQL 8.0, minimumVersion(5,7,4).compare(8,0,x) = -1
+    // The buggy implementation returns false for -1, so gb18030 is wrongly rejected on MySQL 8.0.
+    val gb18030 = MysqlCharset("gb18030", 4, 0, List("GB18030"), Version(5, 7, 4))
+
+    // Server is newer than minimum → charset should be available
+    assert(
+      gb18030.isOkayForVersion(Version(8, 0, 0)),
+      "Bug #719: gb18030 should be okay on MySQL 8.0 (server newer than minimumVersion 5.7.4)"
+    )
+    assert(
+      gb18030.isOkayForVersion(Version(5, 7, 4)),
+      "gb18030 should be okay on MySQL 5.7.4 (exact minimum version)"
+    )
+
+    // Server is older than minimum → charset should NOT be available
+    assert(
+      !gb18030.isOkayForVersion(Version(5, 5, 0)),
+      "Bug #719: gb18030 should NOT be okay on MySQL 5.5 (server older than minimumVersion 5.7.4)"
+    )
+    assert(
+      !gb18030.isOkayForVersion(Version(5, 7, 3)),
+      "gb18030 should NOT be okay on MySQL 5.7.3 (one patch below minimumVersion)"
+    )
   }
 
   test("MysqlCharset.toString should return formatted string") {
@@ -183,10 +210,9 @@ class CharsetMappingTest extends FTestPlatform:
     }
 
     val gb18030WithOldVersion = CharsetMapping.getStaticMysqlCharsetForJavaEncoding("GB18030", Some(Version(5, 6, 0)))
-    // gb18030 requires version 5.7.4
-    // minimumVersion(5.7.4) > version(5.6.0) returns 1, isOkayForVersion returns true
-    // Note: GB18030 charset may not be available in Scala.js environment
-    // Check if GB18030 charset is supported in the current runtime
+    // gb18030 requires minimumVersion 5.7.4; server 5.6.0 is too old → should return None
+    assertEquals(gb18030WithOldVersion, None)
+
     val isGB18030Supported =
       try {
         java.nio.charset.Charset.forName("GB18030")
@@ -194,13 +220,6 @@ class CharsetMappingTest extends FTestPlatform:
       } catch {
         case _: Exception => false
       }
-
-    if isGB18030Supported then {
-      assertEquals(gb18030WithOldVersion, Some("gb18030"))
-    } else {
-      // In environments where GB18030 is not supported (like some Scala.js runtimes)
-      assertEquals(gb18030WithOldVersion, None)
-    }
 
     val gb18030WithNewVersion = CharsetMapping.getStaticMysqlCharsetForJavaEncoding("GB18030", Some(Version(5, 7, 4)))
     // Version 5.7.4 equals minimum version, Version.compare returns 0, so isOkayForVersion returns true
