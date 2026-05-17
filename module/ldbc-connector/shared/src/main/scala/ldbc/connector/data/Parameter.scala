@@ -97,8 +97,21 @@ object Parameter:
 
   def string(value: String): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_STRING
-    override def sql:            String         = "'" + value.replaceAll("'", "''").replaceAll("\\\\", "\\\\\\\\") + "'"
-    override def encode:         BitVector      =
+    override def sql:            String         =
+      val sb = new StringBuilder("'")
+      value.foreach {
+        case '\u0000' => sb.append("\\0")
+        case '\n'     => sb.append("\\n")
+        case '\r'     => sb.append("\\r")
+        case '\\'     => sb.append("\\\\")
+        case '\''     => sb.append("\\'")
+        case '"'      => sb.append("\\\"")
+        case '\u001a' => sb.append("\\Z")
+        case '\b'     => sb.append("\\b")
+        case c        => sb.append(c)
+      }
+      sb.append("'").toString
+    override def encode: BitVector =
       val bytes = value.getBytes
       BitVector(bytes.length) |+| BitVector(copyOf(bytes, bytes.length))
 
