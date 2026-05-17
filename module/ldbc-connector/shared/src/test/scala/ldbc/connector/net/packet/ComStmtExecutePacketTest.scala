@@ -21,7 +21,9 @@ class ComStmtExecutePacketTest extends FTestPlatform:
     assertEquals(encoded.take(8).toByte().toInt & 0xff, CommandId.COM_STMT_EXECUTE)
   }
 
-  test("Bug #714: parameter types should be encoded as uint16L (type) + uint8L (unsigned flag) per MySQL binary protocol spec") {
+  test(
+    "Bug #714: parameter types should be encoded as uint16L (type) + uint8L (unsigned flag) per MySQL binary protocol spec"
+  ) {
     // The MySQL binary protocol specifies each parameter descriptor as:
     //   - 2 bytes (uint16L): type code
     //   - 1 byte  (uint8L) : unsigned flag (0x80 = unsigned, 0x00 = signed)
