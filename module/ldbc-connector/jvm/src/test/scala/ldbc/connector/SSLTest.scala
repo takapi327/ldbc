@@ -66,7 +66,7 @@ class SSLTest extends FTestPlatform:
     // because withTLSParameters creates a new anonymous SSL that only overrides tlsParameters
     // and falls through to the trait default (false) for fallbackOk instead of outer.fallbackOk.
     val customParams = TLSParameters(serverNames = Some(List(new SNIHostName("test-server"))))
-    val ssl = SSL.Trusted.withFallback(true).withTLSParameters(customParams)
+    val ssl          = SSL.Trusted.withFallback(true).withTLSParameters(customParams)
     assertEquals(ssl.tlsParameters, customParams)
     assertEquals(ssl.fallbackOk, true, "fallbackOk should be preserved after chaining withTLSParameters")
   }
@@ -76,7 +76,7 @@ class SSLTest extends FTestPlatform:
     // because withFallback creates a new anonymous SSL that only overrides fallbackOk
     // and falls through to the trait default (TLSParameters.Default) for tlsParameters.
     val customParams = TLSParameters(serverNames = Some(List(new SNIHostName("test-server"))))
-    val ssl = SSL.Trusted.withTLSParameters(customParams).withFallback(true)
+    val ssl          = SSL.Trusted.withTLSParameters(customParams).withFallback(true)
     assertEquals(ssl.fallbackOk, true)
     assertEquals(ssl.tlsParameters, customParams, "tlsParameters should be preserved after chaining withFallback")
   }

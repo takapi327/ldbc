@@ -29,13 +29,13 @@ trait SSL:
   def withTLSParameters(_tlsParameters: TLSParameters): SSL =
     new SSL:
       override def tlsParameters: TLSParameters = _tlsParameters
-      override def fallbackOk:    Boolean        = outer.fallbackOk
+      override def fallbackOk:    Boolean       = outer.fallbackOk
       override def tlsContext[F[_]: Network](using ev: ApplicativeError[F, Throwable]): Resource[F, TLSContext[F]] =
         outer.tlsContext
 
   def withFallback(_fallbackOk: Boolean): SSL =
     new SSL:
-      override def fallbackOk:    Boolean        = _fallbackOk
+      override def fallbackOk:    Boolean       = _fallbackOk
       override def tlsParameters: TLSParameters = outer.tlsParameters
       override def tlsContext[F[_]: Network](implicit ev: ApplicativeError[F, Throwable]): Resource[F, TLSContext[F]] =
         outer.tlsContext
