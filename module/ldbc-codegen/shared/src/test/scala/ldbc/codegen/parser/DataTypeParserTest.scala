@@ -8,6 +8,8 @@ package ldbc.codegen.parser
 
 import munit.CatsEffectSuite
 
+import ldbc.codegen.model.DataType
+
 class DataTypeParserTest extends CatsEffectSuite, DataTypeParser:
 
   override def fileName: String = "test.sql"
@@ -350,6 +352,12 @@ class DataTypeParserTest extends CatsEffectSuite, DataTypeParser:
     assert(parseAll(mediumblobType, "mediumblob").successful)
     assert(parseAll(mediumblobType, "Mediumblob").successful)
     assert(parseAll(mediumblobType, "MEDIUMBLOB").successful)
+  }
+
+  test("MEDIUMBLOB data type parsing should produce DataType.MEDIUMBLOB not DataType.TINYBLOB") {
+    val result = parseAll(mediumblobType, "MEDIUMBLOB")
+    assert(result.successful)
+    assertEquals(result.get, DataType.MEDIUMBLOB())
   }
 
   test("MEDIUMBLOB data type parsing test fails.") {
