@@ -452,7 +452,7 @@ trait DataTypeParser extends SqlParser:
 
   private[ldbc] def mediumblobType: Parser[DataType] =
     customError(
-      caseSensitivity("mediumblob") ^^ (_ => DataType.TINYBLOB()),
+      caseSensitivity("mediumblob") ^^ (_ => DataType.MEDIUMBLOB()),
       input => s"""
         |===============================================================================
         |Failed to parse mediumblob data type.
