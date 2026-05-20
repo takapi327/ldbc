@@ -303,38 +303,41 @@ class CircuitBreakerTest extends FTestPlatform:
     }
   }
 
-  test("CircuitBreaker HalfOpen: concurrent success should not reset failure's exponential backoff") {
+  test("CircuitBreaker Probing: concurrent requests should be rejected while one fiber is probing") {
     val config = CircuitBreaker.Config(
-      maxFailures              = 1,
-      resetTimeout             = 10.millis,
-      exponentialBackoffFactor = 2.0
+      maxFailures  = 1,
+      resetTimeout = 10.millis
     )
 
     CircuitBreaker[IO](config).flatMap { cb =>
       for
-        latch   <- Deferred[IO, Unit]
-        started <- Deferred[IO, Unit]
+        latch        <- Deferred[IO, Unit]
+        started      <- Deferred[IO, Unit]
         // Open the circuit
-        _       <- cb.protect(IO.raiseError(new Exception("fail"))).attempt
+        _            <- cb.protect(IO.raiseError(new Exception("fail"))).attempt
         // Wait for reset timeout to expire
-        _       <- IO.sleep(20.millis)
-        // Fiber 1: signals when it has entered the HalfOpen action, then waits for latch.
-        // Simulates a slow request that is still in-flight during HalfOpen.
-        f1      <- cb.protect(started.complete(()) >> latch.get >> IO.pure(())).start
-        // Wait until fiber 1 has started executing (past the Open -> HalfOpen state transition)
-        _       <- started.get
-        // Fiber 2: state is now HalfOpen, so it also enters and fails immediately.
-        // This should set state=Open with doubled backoff timeout (20ms).
-        _       <- cb.protect(IO.raiseError(new Exception("half-open fail"))).attempt
-        // Release fiber 1: it will succeed and call reset(), erasing fiber 2's backoff escalation.
-        _       <- latch.complete(())
-        _       <- f1.join
-        // State should remain Open (kept by fiber 2's failure) with doubled backoff.
-        finalState      <- cb.state
-        // Immediate retry should be blocked because the doubled backoff has not elapsed yet.
-        immediateResult <- cb.protect(IO.pure("test")).attempt
+        _            <- IO.sleep(20.millis)
+        // Fiber 1: signals when it has entered the Probing action, then waits for latch.
+        // This holds the Probing slot and keeps state=Probing while waiting.
+        f1           <- cb.protect(started.complete(()) >> latch.get >> IO.pure(())).start
+        // Wait until fiber 1 has claimed the Probing slot (state=Probing)
+        _            <- started.get
+        // Fiber 2: state is now Probing, so it should be rejected immediately (fail fast).
+        fiber2Result <- cb.protect(IO.raiseError(new Exception("concurrent attempt"))).attempt
+        // Release fiber 1 to succeed and close the circuit
+        _            <- latch.complete(())
+        _            <- f1.join
+        finalState   <- cb.state
+        // After the successful probe, normal requests should pass through
+        afterResult  <- cb.protect(IO.pure("recovered")).attempt
       yield
-        assertEquals(finalState, CircuitBreaker.State.Open)
-        assert(immediateResult.isLeft, "Circuit breaker should remain open due to exponential backoff")
+        // Fiber 2 must be rejected with "circuit breaker is open" while probing is in progress
+        assert(fiber2Result.isLeft, "Concurrent request should be rejected while probing")
+        fiber2Result.left.foreach { err =>
+          assert(err.getMessage.contains("Circuit breaker is open"), s"Unexpected error: ${err.getMessage}")
+        }
+        // After fiber 1's successful probe the circuit should be closed
+        assertEquals(finalState, CircuitBreaker.State.Closed)
+        assert(afterResult.isRight, "Requests should succeed after circuit is closed")
     }
   }
