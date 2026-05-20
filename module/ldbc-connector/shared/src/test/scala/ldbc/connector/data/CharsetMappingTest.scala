@@ -339,3 +339,13 @@ class CharsetMappingTest extends FTestPlatform:
     assertEquals(cp1252, Some("latin1"))
     assertEquals(iso88591, Some("latin1"))
   }
+
+  test("Bug #733: cp850 should be a single-byte charset with mblen=1") {
+    val cp850 = CharsetMapping.getStaticMysqlCharsetByName("cp850")
+    assert(cp850.isDefined, "cp850 charset should exist in CharsetMapping")
+    assertEquals(
+      cp850.get.mblen,
+      1,
+      "cp850 is a single-byte charset (IBM PC Latin 1); mblen should be 1, not 2"
+    )
+  }
