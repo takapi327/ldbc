@@ -185,6 +185,21 @@ class DataTypeParserTest extends CatsEffectSuite, DataTypeParser:
     assert(parseAll(doubleType, "REAL UNSIGNED ZEROFILL").successful)
   }
 
+  test("Bug #717: DOUBLE data type parsing should produce DataType.DOUBLE, not DataType.FLOAT.") {
+    val result1 = parseAll(doubleType, "DOUBLE")
+    val result2 = parseAll(doubleType, "DOUBLE(24, 24)")
+    val result3 = parseAll(doubleType, "REAL")
+    val result4 = parseAll(doubleType, "REAL(24, 24)")
+    assert(result1.successful)
+    assert(result2.successful)
+    assert(result3.successful)
+    assert(result4.successful)
+    assert(result1.get.isInstanceOf[DataType.DOUBLE], s"Expected DataType.DOUBLE but got ${result1.get.getClass.getSimpleName}")
+    assert(result2.get.isInstanceOf[DataType.DOUBLE], s"Expected DataType.DOUBLE but got ${result2.get.getClass.getSimpleName}")
+    assert(result3.get.isInstanceOf[DataType.DOUBLE], s"Expected DataType.DOUBLE but got ${result3.get.getClass.getSimpleName}")
+    assert(result4.get.isInstanceOf[DataType.DOUBLE], s"Expected DataType.DOUBLE but got ${result4.get.getClass.getSimpleName}")
+  }
+
   test("DOUBLE data type parsing test fails.") {
     assert(!parseAll(doubleType, "failed").successful)
     assert(!parseAll(doubleType, "double(23, 24)").successful)
