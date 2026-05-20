@@ -508,8 +508,10 @@ object PooledDataSource:
         }
 
     private def resetConnection(conn: Connection[F]): F[Unit] = for
-      _ <- conn.setAutoCommit(true).attempt.void
+      // Rollback must come first: in MySQL, calling setAutoCommit(true) during an active
+      // transaction implicitly commits it, making the subsequent rollback() a no-op.
       _ <- conn.rollback().attempt.void
+      _ <- conn.setAutoCommit(true).attempt.void
     // clearWarnings is not available in ldbc Connection interface
     // _ <- conn.clearWarnings().attempt.void
     yield ()
