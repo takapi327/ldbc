@@ -107,13 +107,15 @@ object CircuitBreaker:
           checkIfShouldTransitionToHalfOpen.flatMap { shouldTransition =>
             if shouldTransition then
               // Atomically claim the HalfOpen transition: only the first fiber wins
-              stateRef.modify {
-                case State.Open => (State.HalfOpen, true)
-                case other      => (other, false)
-              }.flatMap {
-                case true  => protect(action)
-                case false => Temporal[F].raiseError(new SQLException("Circuit breaker is open"))
-              }
+              stateRef
+                .modify {
+                  case State.Open => (State.HalfOpen, true)
+                  case other      => (other, false)
+                }
+                .flatMap {
+                  case true  => protect(action)
+                  case false => Temporal[F].raiseError(new SQLException("Circuit breaker is open"))
+                }
             else
               // Still open, fail fast
               Temporal[F].raiseError(
@@ -123,43 +125,45 @@ object CircuitBreaker:
 
         case State.HalfOpen | State.Probing =>
           // Atomically claim the single test slot: only one fiber transitions to Probing
-          stateRef.modify {
-            case State.HalfOpen => (State.Probing, true)
-            case other          => (other, false)
-          }.flatMap {
-            case false =>
-              // Another fiber is already probing, fail fast
-              Temporal[F].raiseError(new SQLException("Circuit breaker is open"))
-            case true =>
-              action
-                .handleErrorWith { error =>
-                  // Failed again, back to open with increased timeout
-                  stateRef.set(State.Open) *>
-                    failuresRef.set(0) *>
-                    currentResetTimeoutRef.get.flatMap { currentTimeout =>
-                      val newTimeout = FiniteDuration(
-                        (currentTimeout.toNanos * config.exponentialBackoffFactor).toLong
-                          .min(config.maxResetTimeout.toNanos),
-                        TimeUnit.NANOSECONDS
-                      )
-                      currentResetTimeoutRef.set(newTimeout)
-                    } *>
-                    Clock[F].realTime.flatMap(now => lastFailureTimeRef.set(now.toMillis)) *>
-                    Temporal[F].raiseError[A](error)
-                }
-                .flatMap { result =>
-                  // Success, close the circuit
-                  reset.as(result)
-                }
-                .guarantee {
-                  // On cancellation, restore Probing -> HalfOpen so the next fiber can retry.
-                  // On success or failure, state is already Closed / Open, so this is a no-op.
-                  stateRef.modify {
-                    case State.Probing => (State.HalfOpen, ())
-                    case other         => (other, ())
-                  }.void
-                }
-          }
+          stateRef
+            .modify {
+              case State.HalfOpen => (State.Probing, true)
+              case other          => (other, false)
+            }
+            .flatMap {
+              case false =>
+                // Another fiber is already probing, fail fast
+                Temporal[F].raiseError(new SQLException("Circuit breaker is open"))
+              case true =>
+                action
+                  .handleErrorWith { error =>
+                    // Failed again, back to open with increased timeout
+                    stateRef.set(State.Open) *>
+                      failuresRef.set(0) *>
+                      currentResetTimeoutRef.get.flatMap { currentTimeout =>
+                        val newTimeout = FiniteDuration(
+                          (currentTimeout.toNanos * config.exponentialBackoffFactor).toLong
+                            .min(config.maxResetTimeout.toNanos),
+                          TimeUnit.NANOSECONDS
+                        )
+                        currentResetTimeoutRef.set(newTimeout)
+                      } *>
+                      Clock[F].realTime.flatMap(now => lastFailureTimeRef.set(now.toMillis)) *>
+                      Temporal[F].raiseError[A](error)
+                  }
+                  .flatMap { result =>
+                    // Success, close the circuit
+                    reset.as(result)
+                  }
+                  .guarantee {
+                    // On cancellation, restore Probing -> HalfOpen so the next fiber can retry.
+                    // On success or failure, state is already Closed / Open, so this is a no-op.
+                    stateRef.modify {
+                      case State.Probing => (State.HalfOpen, ())
+                      case other         => (other, ())
+                    }.void
+                  }
+            }
       }
 
     private def recordFailure: F[Unit] =
