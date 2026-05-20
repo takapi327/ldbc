@@ -270,3 +270,71 @@ class CircuitBreakerTest extends FTestPlatform:
       assertIO(cb.state, CircuitBreaker.State.Closed)
     }
   }
+
+  test("CircuitBreaker HalfOpen: only one concurrent fiber should be allowed as test request") {
+    val config = CircuitBreaker.Config(
+      maxFailures  = 1,
+      resetTimeout = 10.millis
+    )
+
+    CircuitBreaker[IO](config).flatMap { cb =>
+      for
+        counter <- Ref[IO].of(0)
+        gate    <- Deferred[IO, Unit]
+        // Open the circuit
+        _       <- cb.protect(IO.raiseError(new Exception("fail"))).attempt
+        // Wait for reset timeout to expire
+        _       <- IO.sleep(20.millis)
+        // Fire 10 concurrent fibers.
+        // Each action increments counter before blocking at gate.
+        // This measures how many fibers actually entered the HalfOpen test action.
+        fibers  <- (1 to 10).toList.traverse { _ =>
+                     cb.protect(counter.update(_ + 1) >> gate.get).attempt.start
+                   }
+        // Give all fibers time to start and enter the action
+        _       <- IO.sleep(50.millis)
+        // Release all waiting fibers
+        _       <- gate.complete(())
+        _       <- fibers.traverse_(_.join)
+        count   <- counter.get
+      yield
+        // With the bug, multiple fibers enter HalfOpen simultaneously, so count > 1
+        assertEquals(count, 1, s"Only 1 fiber should enter HalfOpen as test request, but $count did")
+    }
+  }
+
+  test("CircuitBreaker HalfOpen: concurrent success should not reset failure's exponential backoff") {
+    val config = CircuitBreaker.Config(
+      maxFailures              = 1,
+      resetTimeout             = 10.millis,
+      exponentialBackoffFactor = 2.0
+    )
+
+    CircuitBreaker[IO](config).flatMap { cb =>
+      for
+        latch   <- Deferred[IO, Unit]
+        started <- Deferred[IO, Unit]
+        // Open the circuit
+        _       <- cb.protect(IO.raiseError(new Exception("fail"))).attempt
+        // Wait for reset timeout to expire
+        _       <- IO.sleep(20.millis)
+        // Fiber 1: signals when it has entered the HalfOpen action, then waits for latch.
+        // Simulates a slow request that is still in-flight during HalfOpen.
+        f1      <- cb.protect(started.complete(()) >> latch.get >> IO.pure(())).start
+        // Wait until fiber 1 has started executing (past the Open -> HalfOpen state transition)
+        _       <- started.get
+        // Fiber 2: state is now HalfOpen, so it also enters and fails immediately.
+        // This should set state=Open with doubled backoff timeout (20ms).
+        _       <- cb.protect(IO.raiseError(new Exception("half-open fail"))).attempt
+        // Release fiber 1: it will succeed and call reset(), erasing fiber 2's backoff escalation.
+        _       <- latch.complete(())
+        _       <- f1.join
+        // State should remain Open (kept by fiber 2's failure) with doubled backoff.
+        finalState      <- cb.state
+        // Immediate retry should be blocked because the doubled backoff has not elapsed yet.
+        immediateResult <- cb.protect(IO.pure("test")).attempt
+      yield
+        assertEquals(finalState, CircuitBreaker.State.Open)
+        assert(immediateResult.isLeft, "Circuit breaker should remain open due to exponential backoff")
+    }
+  }
