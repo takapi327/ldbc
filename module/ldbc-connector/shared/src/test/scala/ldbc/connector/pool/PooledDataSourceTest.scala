@@ -773,9 +773,12 @@ class PooledDataSourceTest extends FTestPlatform:
         // TEMPORARY TABLE is session-scoped, so it persists across pool return/re-acquisition
         // on the same physical connection.
         _ <- datasource.getConnection.use { conn =>
-               conn.createStatement().flatMap(
-                 _.executeUpdate("CREATE TEMPORARY TABLE reset_conn_test (id INT)")
-               ).void
+               conn
+                 .createStatement()
+                 .flatMap(
+                   _.executeUpdate("CREATE TEMPORARY TABLE reset_conn_test (id INT)")
+                 )
+                 .void
              }
 
         // Step 2: Start a transaction, insert a row, then return the connection to the pool
