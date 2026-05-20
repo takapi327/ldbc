@@ -758,6 +758,57 @@ class PooledDataSourceTest extends FTestPlatform:
     }
   }
 
+  test("PooledDataSource resetConnection should rollback pending transaction before restoring autocommit") {
+    // Regression test for: resetConnection calls setAutoCommit(true) before rollback().
+    // In MySQL, enabling autocommit during an active transaction implicitly commits it,
+    // so the subsequent rollback() becomes a no-op and uncommitted data is persisted.
+    // The correct order is: rollback() first, then setAutoCommit(true).
+    val resource = PooledDataSource.fromConfig[IO](
+      config.setMinConnections(1).setMaxConnections(1)
+    )
+
+    resource.use { datasource =>
+      for
+        // Step 1: Create a temporary table with autocommit ON.
+        // TEMPORARY TABLE is session-scoped, so it persists across pool return/re-acquisition
+        // on the same physical connection.
+        _ <- datasource.getConnection.use { conn =>
+               conn.createStatement().flatMap(
+                 _.executeUpdate("CREATE TEMPORARY TABLE reset_conn_test (id INT)")
+               ).void
+             }
+
+        // Step 2: Start a transaction, insert a row, then return the connection to the pool
+        // WITHOUT an explicit commit or rollback.
+        // resetConnection is called internally on pool return:
+        //   Bug:  setAutoCommit(true) → commits the INSERT, then rollback() is a no-op
+        //   Fix:  rollback() → discards the INSERT, then setAutoCommit(true) restores mode
+        _ <- datasource.getConnection.use { conn =>
+               for
+                 _    <- conn.setAutoCommit(false)
+                 stmt <- conn.createStatement()
+                 _    <- stmt.executeUpdate("INSERT INTO reset_conn_test VALUES (1)")
+               yield ()
+               // connection returned here without explicit rollback
+             }
+
+        // Step 3: Re-acquire the same physical connection and verify the INSERT was rolled back.
+        count <- datasource.getConnection.use { conn =>
+                   for
+                     stmt  <- conn.createStatement()
+                     rs    <- stmt.executeQuery("SELECT COUNT(*) FROM reset_conn_test")
+                     _     <- rs.next()
+                     count <- rs.getInt(1)
+                   yield count
+                 }
+      yield assertEquals(
+        count,
+        0,
+        "Pending transaction must be rolled back when connection is returned to pool"
+      )
+    }
+  }
+
   test(
     "PooledDataSource should use metricsTracker for internal tracking when both meter and metricsTracker are provided"
   ) {
