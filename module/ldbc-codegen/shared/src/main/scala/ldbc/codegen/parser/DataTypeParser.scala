@@ -268,7 +268,7 @@ trait DataTypeParser extends SqlParser:
           case n ~ unsigned ~ zerofill =>
             n match
               case Some(m ~ _ ~ d) => DataType.DOUBLE(m, unsigned.isDefined, zerofill.isDefined)
-              case None            => DataType.DOUBLE(10, unsigned.isDefined, zerofill.isDefined)
+              case None            => DataType.DOUBLE(53, unsigned.isDefined, zerofill.isDefined)
         },
       input =>
         s"""
