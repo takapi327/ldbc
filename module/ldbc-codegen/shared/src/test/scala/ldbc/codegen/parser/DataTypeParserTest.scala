@@ -194,10 +194,22 @@ class DataTypeParserTest extends CatsEffectSuite, DataTypeParser:
     assert(result2.successful)
     assert(result3.successful)
     assert(result4.successful)
-    assert(result1.get.isInstanceOf[DataType.DOUBLE], s"Expected DataType.DOUBLE but got ${result1.get.getClass.getSimpleName}")
-    assert(result2.get.isInstanceOf[DataType.DOUBLE], s"Expected DataType.DOUBLE but got ${result2.get.getClass.getSimpleName}")
-    assert(result3.get.isInstanceOf[DataType.DOUBLE], s"Expected DataType.DOUBLE but got ${result3.get.getClass.getSimpleName}")
-    assert(result4.get.isInstanceOf[DataType.DOUBLE], s"Expected DataType.DOUBLE but got ${result4.get.getClass.getSimpleName}")
+    assert(
+      result1.get.isInstanceOf[DataType.DOUBLE],
+      s"Expected DataType.DOUBLE but got ${ result1.get.getClass.getSimpleName }"
+    )
+    assert(
+      result2.get.isInstanceOf[DataType.DOUBLE],
+      s"Expected DataType.DOUBLE but got ${ result2.get.getClass.getSimpleName }"
+    )
+    assert(
+      result3.get.isInstanceOf[DataType.DOUBLE],
+      s"Expected DataType.DOUBLE but got ${ result3.get.getClass.getSimpleName }"
+    )
+    assert(
+      result4.get.isInstanceOf[DataType.DOUBLE],
+      s"Expected DataType.DOUBLE but got ${ result4.get.getClass.getSimpleName }"
+    )
   }
 
   test("DOUBLE data type parsing test fails.") {
