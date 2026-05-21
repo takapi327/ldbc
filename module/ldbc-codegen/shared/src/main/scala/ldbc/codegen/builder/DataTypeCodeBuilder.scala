@@ -35,6 +35,8 @@ case class DataTypeCodeBuilder(scalaType: String, formatter: Naming):
         )
       case data: DataType.FLOAT =>
         s"${ data.name }[$scalaType](${ data.accuracy })" + buildNumberDataType(data.unsigned, data.zerofill)
+      case data: DataType.DOUBLE =>
+        s"${ data.name }[$scalaType](${ data.accuracy })" + buildNumberDataType(data.unsigned, data.zerofill)
       case data: DataType.StringDataType =>
         s"${ data.name }[$scalaType](${ data.length })" + buildCharacterSet(data.character, data.collate)
       case data: DataType.BINARY    => s"${ data.name }[$scalaType](${ data.length })"

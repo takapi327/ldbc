@@ -110,6 +110,12 @@ object DataType:
     override val scalaType:  ScalaType      = ScalaType.Float
     override val scalaTypes: Seq[ScalaType] = Seq(ScalaType.Float, ScalaType.Double)
 
+  case class DOUBLE(accuracy: Int, unsigned: Boolean, zerofill: Boolean) extends DataType:
+    override val name:       String         = "DOUBLE"
+    override val sqlType:    Int            = Types.DOUBLE
+    override val scalaType:  ScalaType      = ScalaType.Double
+    override val scalaTypes: Seq[ScalaType] = Seq(ScalaType.Double, ScalaType.Float)
+
   case class CHAR(length: Int, character: Option[String], collate: Option[String]) extends StringDataType:
     override val name:       String         = "CHAR"
     override val sqlType:    Int            = Types.CHAR
