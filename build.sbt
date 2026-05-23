@@ -303,7 +303,7 @@ lazy val otelExample = crossProject(JVMPlatform)
   .example("otel", "OpenTelemetry example project")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel"   %% "otel4s-oteljava"                           % "0.15.2",
+      "org.typelevel"   %% "otel4s-oteljava"                           % "0.16.0",
       "io.opentelemetry" % "opentelemetry-exporter-otlp"               % "1.61.0" % Runtime,
       "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.61.0" % Runtime
     )
