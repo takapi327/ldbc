@@ -277,14 +277,26 @@ private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
   override def close(): F[Unit] = statementClosed.set(true) *> resultSetClosed.set(true)
 
   override def execute(sql: String): F[Boolean] =
-    checkClosed() *> checkNullOrEmptyQuery(sql) *> (
-      if sql.toUpperCase.startsWith("SELECT") then
+    checkClosed() *> checkNullOrEmptyQuery(sql) *> {
+      val trimmedUpper = sql.trim.toUpperCase
+      if trimmedUpper.startsWith("SELECT") ||
+        trimmedUpper.startsWith("SHOW") ||
+        trimmedUpper.startsWith("DESC") ||
+        trimmedUpper.startsWith("EXPLAIN") ||
+        trimmedUpper.startsWith("WITH") ||
+        trimmedUpper.startsWith("TABLE") ||
+        trimmedUpper.startsWith("OPTIMIZE") ||
+        trimmedUpper.startsWith("CHECK") ||
+        trimmedUpper.startsWith("REPAIR") ||
+        trimmedUpper.startsWith("ANALYZE") ||
+        trimmedUpper.startsWith("(")
+      then
         executeQuery(sql).flatMap {
           case resultSet: ResultSetImpl[F] => resultSet.hasRows()
           case _                           => F.pure(false)
         }
       else executeUpdate(sql).map(_ => false)
-    )
+    }
 
   override def addBatch(sql: String): F[Unit] = batchedArgs.update(_ :+ sql)
 

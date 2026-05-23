@@ -121,7 +121,7 @@ trait DataTypes:
     else CChar(length, isOptional[T])
 
   inline def VARCHAR[T <: String | Option[String]](inline length: Int): Varchar[T] =
-    inline if length < 0 || length > 255 then error("The length of the VARCHAR must be in the range 0 to 255.")
+    inline if length < 0 || length > 65535 then error("The length of the VARCHAR must be in the range 0 to 65535.")
     else Varchar(length, isOptional[T])
 
   inline def BINARY[T <: Array[Byte] | Option[Array[Byte]]](inline length: Int): Binary[T] =

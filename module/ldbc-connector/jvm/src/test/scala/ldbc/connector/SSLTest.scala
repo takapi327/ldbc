@@ -61,6 +61,26 @@ class SSLTest extends FTestPlatform:
     assertEquals(ssl.fallbackOk, true)
   }
 
+  test("Bug #718: withTLSParameters should preserve fallbackOk when chained after withFallback") {
+    // withFallback(true).withTLSParameters(customParams) silently resets fallbackOk to false
+    // because withTLSParameters creates a new anonymous SSL that only overrides tlsParameters
+    // and falls through to the trait default (false) for fallbackOk instead of outer.fallbackOk.
+    val customParams = TLSParameters(serverNames = Some(List(new SNIHostName("test-server"))))
+    val ssl          = SSL.Trusted.withFallback(true).withTLSParameters(customParams)
+    assertEquals(ssl.tlsParameters, customParams)
+    assertEquals(ssl.fallbackOk, true, "fallbackOk should be preserved after chaining withTLSParameters")
+  }
+
+  test("Bug #718: withFallback should preserve tlsParameters when chained after withTLSParameters") {
+    // withTLSParameters(customParams).withFallback(true) silently resets tlsParameters to Default
+    // because withFallback creates a new anonymous SSL that only overrides fallbackOk
+    // and falls through to the trait default (TLSParameters.Default) for tlsParameters.
+    val customParams = TLSParameters(serverNames = Some(List(new SNIHostName("test-server"))))
+    val ssl          = SSL.Trusted.withTLSParameters(customParams).withFallback(true)
+    assertEquals(ssl.fallbackOk, true)
+    assertEquals(ssl.tlsParameters, customParams, "tlsParameters should be preserved after chaining withFallback")
+  }
+
   test("toSSLNegotiationOptions should return None for SSL.None") {
     assertIO(
       SSL.None.toSSLNegotiationOptions[IO](None).use(IO.pure),

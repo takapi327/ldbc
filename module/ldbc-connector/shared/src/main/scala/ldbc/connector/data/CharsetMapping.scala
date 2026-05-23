@@ -90,7 +90,7 @@ object CharsetMapping:
       MysqlCharset(MYSQL_CHARSET_NAME_latin7, 1, 0, List("ISO-8859-13")),
       MysqlCharset(MYSQL_CHARSET_NAME_hebrew, 1, 0, List("ISO8859_8")),
       MysqlCharset(MYSQL_CHARSET_NAME_latin5, 1, 0, List("ISO8859_9")),
-      MysqlCharset(MYSQL_CHARSET_NAME_cp850, 2, 0, List("Cp850", "Cp437")),
+      MysqlCharset(MYSQL_CHARSET_NAME_cp850, 1, 0, List("Cp850", "Cp437")),
       MysqlCharset(MYSQL_CHARSET_NAME_cp852, 1, 0, List("Cp852")),
       MysqlCharset(MYSQL_CHARSET_NAME_keybcs2, 1, 0, List("Cp852")),
       MysqlCharset(MYSQL_CHARSET_NAME_cp866, 1, 0, List("Cp866")),
@@ -500,10 +500,7 @@ case class MysqlCharset(
   minimumVersion:  Version
 ):
 
-  def isOkayForVersion(version: Version): Boolean = minimumVersion.compare(version) match
-    case -1 => false
-    case 0  => true
-    case 1  => true
+  def isOkayForVersion(version: Version): Boolean = minimumVersion.compare(version) <= 0
 
   override def toString: String = s"[charsetName=$charsetName,mblen=$mblen]"
 

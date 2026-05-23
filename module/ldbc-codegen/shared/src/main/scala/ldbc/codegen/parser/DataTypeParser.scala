@@ -267,8 +267,8 @@ trait DataTypeParser extends SqlParser:
         opt(unsigned) ~ opt(zerofill) ^^ {
           case n ~ unsigned ~ zerofill =>
             n match
-              case Some(m ~ _ ~ d) => DataType.FLOAT(m, unsigned.isDefined, zerofill.isDefined)
-              case None            => DataType.FLOAT(10, unsigned.isDefined, zerofill.isDefined)
+              case Some(m ~ _ ~ d) => DataType.DOUBLE(m, unsigned.isDefined, zerofill.isDefined)
+              case None            => DataType.DOUBLE(53, unsigned.isDefined, zerofill.isDefined)
         },
       input =>
         s"""
@@ -452,7 +452,7 @@ trait DataTypeParser extends SqlParser:
 
   private[ldbc] def mediumblobType: Parser[DataType] =
     customError(
-      caseSensitivity("mediumblob") ^^ (_ => DataType.TINYBLOB()),
+      caseSensitivity("mediumblob") ^^ (_ => DataType.MEDIUMBLOB()),
       input => s"""
         |===============================================================================
         |Failed to parse mediumblob data type.

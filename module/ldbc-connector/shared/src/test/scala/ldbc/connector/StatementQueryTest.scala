@@ -688,3 +688,173 @@ class StatementQueryTest extends FTestPlatform:
       0
     )
   }
+
+  // ---------------------------------------------------------------------------
+  // Bug #712: execute() throws MatchError for result-set-returning statements
+  // that do not begin with "SELECT"
+  // ---------------------------------------------------------------------------
+
+  test("Bug #712: Statement.execute should return true for SHOW DATABASES") {
+    // execute() checks sql.toUpperCase.startsWith("SELECT") only.
+    // "SHOW DATABASES" does not start with SELECT, so it is routed to executeUpdate(),
+    // which cannot handle a result-set response → MatchError.
+    // This test FAILS with the current (buggy) implementation.
+    assertIOBoolean(
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          hasResult <- statement.execute("SHOW DATABASES")
+        yield hasResult
+      }
+    )
+  }
+
+  test("Bug #712: Statement.execute should return true for DESCRIBE") {
+    // Same root cause: "DESCRIBE" does not start with "SELECT".
+    // This test FAILS with the current (buggy) implementation.
+    assertIOBoolean(
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          hasResult <- statement.execute("DESCRIBE `connector_test`.`all_types`")
+        yield hasResult
+      }
+    )
+  }
+
+  test("Bug #712: Statement.execute should return true for EXPLAIN") {
+    // Same root cause: "EXPLAIN" does not start with "SELECT".
+    // This test FAILS with the current (buggy) implementation.
+    assertIOBoolean(
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          hasResult <- statement.execute("EXPLAIN SELECT 1")
+        yield hasResult
+      }
+    )
+  }
+
+  test("Bug #712: Statement.execute should return true for SELECT with leading whitespace") {
+    // "  SELECT 1".toUpperCase.startsWith("SELECT") is false because of the leading spaces,
+    // so it is incorrectly routed to executeUpdate() → MatchError.
+    // This test FAILS with the current (buggy) implementation.
+    assertIOBoolean(
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          hasResult <- statement.execute("  SELECT 1")
+        yield hasResult
+      }
+    )
+  }
+
+  test("Bug #712: Statement.execute should return true for parenthesized SELECT") {
+    // "( SELECT 1 )".toUpperCase.startsWith("SELECT") is false,
+    // so it is incorrectly routed to executeUpdate() → MatchError.
+    // This test FAILS with the current (buggy) implementation.
+    assertIOBoolean(
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          hasResult <- statement.execute("( SELECT 1 )")
+        yield hasResult
+      }
+    )
+  }
+
+  test("Statement.execute should return true for CTE (WITH ... SELECT)") {
+    assertIOBoolean(
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          hasResult <- statement.execute("WITH cte AS (SELECT 1 AS n) SELECT n FROM cte")
+        yield hasResult
+      }
+    )
+  }
+
+  // ---------------------------------------------------------------------------
+  // Result-set-returning statements: missing keyword coverage investigation
+  // Each test would throw MatchError (or return wrong result) if the keyword
+  // is not routed to executeQuery() in execute().
+  // ---------------------------------------------------------------------------
+
+  test("Statement.execute should return true for DESC (abbreviation of DESCRIBE)") {
+    // DESC is the short form of DESCRIBE. startsWith("DESCRIBE") does NOT catch
+    // "DESC tablename", so without "DESC" in the routing it hits executeUpdate() → MatchError.
+    assertIOBoolean(
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          hasResult <- statement.execute("DESC `connector_test`.`all_types`")
+        yield hasResult
+      }
+    )
+  }
+
+  test("Statement.execute should return true for TABLE statement (MySQL 8.0.19+)") {
+    // TABLE tbl is equivalent to SELECT * FROM tbl ORDER BY primary key.
+    // Without "TABLE" in the routing it hits executeUpdate() → MatchError.
+    assertIOBoolean(
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          _         <- statement.executeUpdate("USE `connector_test`")
+          hasResult <- statement.execute("TABLE `all_types`")
+        yield hasResult
+      }
+    )
+  }
+
+  test("Statement.execute should return true for OPTIMIZE TABLE") {
+    // OPTIMIZE TABLE returns a result set (Table/Op/Msg_type/Msg_text rows).
+    // Without "OPTIMIZE" in the routing it hits executeUpdate() → MatchError.
+    assertIOBoolean(
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          hasResult <- statement.execute("OPTIMIZE TABLE `connector_test`.`all_types`")
+        yield hasResult
+      }
+    )
+  }
+
+  test("Statement.execute should return true for CHECK TABLE") {
+    // CHECK TABLE returns a result set (Table/Op/Msg_type/Msg_text rows).
+    // Without "CHECK" in the routing it hits executeUpdate() → MatchError.
+    assertIOBoolean(
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          hasResult <- statement.execute("CHECK TABLE `connector_test`.`all_types`")
+        yield hasResult
+      }
+    )
+  }
+
+  test("Statement.execute should return true for REPAIR TABLE") {
+    // REPAIR TABLE returns a result set (Table/Op/Msg_type/Msg_text rows).
+    // Without "REPAIR" in the routing it hits executeUpdate() → MatchError.
+    assertIOBoolean(
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          hasResult <- statement.execute("REPAIR TABLE `connector_test`.`all_types`")
+        yield hasResult
+      }
+    )
+  }
+
+  test("Statement.execute should return true for ANALYZE TABLE") {
+    // ANALYZE TABLE returns a result set (Table/Op/Msg_type/Msg_text rows).
+    // Without "ANALYZE" in the routing it hits executeUpdate() → MatchError.
+    assertIOBoolean(
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          hasResult <- statement.execute("ANALYZE TABLE `connector_test`.`all_types`")
+        yield hasResult
+      }
+    )
+  }

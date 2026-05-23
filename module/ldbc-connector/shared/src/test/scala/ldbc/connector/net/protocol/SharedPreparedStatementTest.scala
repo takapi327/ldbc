@@ -249,6 +249,29 @@ class SharedPreparedStatementTest extends SharedPreparedStatement[IO], FTestPlat
     } yield ()
   }
 
+  test("Bug #711: buildBatchQuery should handle INSERT with lowercase 'values' keyword") {
+    for {
+      _      <- resetParams
+      _      <- setInt(1, 100)
+      _      <- setString(2, "John")
+      result <- params.get.map(p => buildBatchQuery("INSERT INTO users (id, name) values (?, ?)", p))
+      // split("VALUES") does not match lowercase "values", so .last returns the entire query string
+      // This assertion FAILS with the current (buggy) implementation
+      _ <- IO(assertEquals(result, " (100, 'John')"))
+    } yield ()
+  }
+
+  test("Bug #711: buildBatchQuery should handle INSERT with mixed-case 'Values' keyword") {
+    for {
+      _      <- resetParams
+      _      <- setInt(1, 100)
+      _      <- setString(2, "John")
+      result <- params.get.map(p => buildBatchQuery("INSERT INTO users (id, name) Values (?, ?)", p))
+      // This assertion FAILS with the current (buggy) implementation
+      _ <- IO(assertEquals(result, " (100, 'John')"))
+    } yield ()
+  }
+
   test("buildBatchQuery should handle UPDATE statements correctly") {
     for {
       _      <- resetParams
@@ -273,6 +296,57 @@ class SharedPreparedStatementTest extends SharedPreparedStatement[IO], FTestPlat
              )
            )
     } yield ()
+  }
+
+  // ---------------------------------------------------------------------------
+  // Bug #716: Parameter.string SQL escaping is incomplete and misordered
+  // ---------------------------------------------------------------------------
+
+  test("Bug #716: Parameter.string should escape backslash before single quote") {
+    // Input: \'  (backslash followed by single quote)
+    // Current (buggy): escapes ' first → \'' then escapes \ → \\''
+    //   Result: '\\'''  — leaves an unescaped quote, enabling injection
+    // Correct: escapes \ first → \\ then escapes ' → \\\'
+    //   Result: '\\\''
+    val input    = "\\'"
+    val expected = "'\\\\\\''" // '\\\''  in the actual string
+    IO(assertEquals(Parameter.string(input).sql, expected))
+  }
+
+  test("Bug #716: Parameter.string should escape NUL character") {
+    val input    = "a\u0000b"
+    val expected = "'a\\0b'"
+    IO(assertEquals(Parameter.string(input).sql, expected))
+  }
+
+  test("Bug #716: Parameter.string should escape newline") {
+    val input    = "a\nb"
+    val expected = "'a\\nb'"
+    IO(assertEquals(Parameter.string(input).sql, expected))
+  }
+
+  test("Bug #716: Parameter.string should escape carriage return") {
+    val input    = "a\rb"
+    val expected = "'a\\rb'"
+    IO(assertEquals(Parameter.string(input).sql, expected))
+  }
+
+  test("Bug #716: Parameter.string should escape double quote") {
+    val input    = "a\"b"
+    val expected = "'a\\\"b'"
+    IO(assertEquals(Parameter.string(input).sql, expected))
+  }
+
+  test("Bug #716: Parameter.string should escape Ctrl-Z") {
+    val input    = "a\u001ab"
+    val expected = "'a\\Zb'"
+    IO(assertEquals(Parameter.string(input).sql, expected))
+  }
+
+  test("Bug #716: Parameter.string should escape backspace") {
+    val input    = "a\bb"
+    val expected = "'a\\bb'"
+    IO(assertEquals(Parameter.string(input).sql, expected))
   }
 
   override def executeQuery(): IO[ResultSet[IO]] =

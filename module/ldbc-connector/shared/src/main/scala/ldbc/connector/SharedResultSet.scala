@@ -178,7 +178,7 @@ private[ldbc] trait SharedResultSet[F[_]](using ev: MonadThrow[F]) extends Resul
     ev.pure(currentCursor > records.length && records.nonEmpty)
 
   override def isFirst(): F[Boolean] =
-    ev.pure(currentCursor > 0)
+    ev.pure(currentCursor == 1 && records.nonEmpty)
 
   override def isLast(): F[Boolean] =
     ev.pure(currentCursor == records.length)

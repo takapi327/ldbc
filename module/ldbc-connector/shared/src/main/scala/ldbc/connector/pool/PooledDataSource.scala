@@ -569,8 +569,10 @@ object PooledDataSource:
      * @param conn the connection to reset
      */
     private def resetConnection(conn: Connection[F]): F[Unit] = for
-      _ <- conn.setAutoCommit(true).attempt.void
+      // Rollback must come first: in MySQL, calling setAutoCommit(true) during an active
+      // transaction implicitly commits it, making the subsequent rollback() a no-op.
       _ <- conn.rollback().attempt.void
+      _ <- conn.setAutoCommit(true).attempt.void
     // clearWarnings is not available in ldbc Connection interface
     // _ <- conn.clearWarnings().attempt.void
     yield ()
@@ -588,11 +590,12 @@ object PooledDataSource:
 
           validation
             .timeout(validationTimeout)
-            .handleError { error =>
-              poolLogger.debug(
-                s"Connection validation failed or timed out after $validationTimeout: ${ error.getMessage }"
-              )
-              false
+            .handleErrorWith { error =>
+              poolLogger
+                .debug(
+                  s"Connection validation failed or timed out after $validationTimeout: ${ error.getMessage }"
+                )
+                .as(false)
             }
 
         case None =>
@@ -607,11 +610,12 @@ object PooledDataSource:
 
           validation
             .timeout(validationTimeout)
-            .handleError { error =>
-              poolLogger.debug(
-                s"Connection validation failed or timed out after $validationTimeout: ${ error.getMessage }"
-              )
-              false
+            .handleErrorWith { error =>
+              poolLogger
+                .debug(
+                  s"Connection validation failed or timed out after $validationTimeout: ${ error.getMessage }"
+                )
+                .as(false)
             }
 
     /**

@@ -270,3 +270,74 @@ class CircuitBreakerTest extends FTestPlatform:
       assertIO(cb.state, CircuitBreaker.State.Closed)
     }
   }
+
+  test("CircuitBreaker HalfOpen: only one concurrent fiber should be allowed as test request") {
+    val config = CircuitBreaker.Config(
+      maxFailures  = 1,
+      resetTimeout = 10.millis
+    )
+
+    CircuitBreaker[IO](config).flatMap { cb =>
+      for
+        counter <- Ref[IO].of(0)
+        gate    <- Deferred[IO, Unit]
+        // Open the circuit
+        _ <- cb.protect(IO.raiseError(new Exception("fail"))).attempt
+        // Wait for reset timeout to expire
+        _ <- IO.sleep(20.millis)
+        // Fire 10 concurrent fibers.
+        // Each action increments counter before blocking at gate.
+        // This measures how many fibers actually entered the HalfOpen test action.
+        fibers <- (1 to 10).toList.traverse { _ =>
+                    cb.protect(counter.update(_ + 1) >> gate.get).attempt.start
+                  }
+        // Give all fibers time to start and enter the action
+        _ <- IO.sleep(50.millis)
+        // Release all waiting fibers
+        _     <- gate.complete(())
+        _     <- fibers.traverse_(_.join)
+        count <- counter.get
+      yield
+        // With the bug, multiple fibers enter HalfOpen simultaneously, so count > 1
+        assertEquals(count, 1, s"Only 1 fiber should enter HalfOpen as test request, but $count did")
+    }
+  }
+
+  test("CircuitBreaker Probing: concurrent requests should be rejected while one fiber is probing") {
+    val config = CircuitBreaker.Config(
+      maxFailures  = 1,
+      resetTimeout = 10.millis
+    )
+
+    CircuitBreaker[IO](config).flatMap { cb =>
+      for
+        latch   <- Deferred[IO, Unit]
+        started <- Deferred[IO, Unit]
+        // Open the circuit
+        _ <- cb.protect(IO.raiseError(new Exception("fail"))).attempt
+        // Wait for reset timeout to expire
+        _ <- IO.sleep(20.millis)
+        // Fiber 1: signals when it has entered the Probing action, then waits for latch.
+        // This holds the Probing slot and keeps state=Probing while waiting.
+        f1 <- cb.protect(started.complete(()) >> latch.get >> IO.pure(())).start
+        // Wait until fiber 1 has claimed the Probing slot (state=Probing)
+        _ <- started.get
+        // Fiber 2: state is now Probing, so it should be rejected immediately (fail fast).
+        fiber2Result <- cb.protect(IO.raiseError(new Exception("concurrent attempt"))).attempt
+        // Release fiber 1 to succeed and close the circuit
+        _          <- latch.complete(())
+        _          <- f1.join
+        finalState <- cb.state
+        // After the successful probe, normal requests should pass through
+        afterResult <- cb.protect(IO.pure("recovered")).attempt
+      yield
+        // Fiber 2 must be rejected with "circuit breaker is open" while probing is in progress
+        assert(fiber2Result.isLeft, "Concurrent request should be rejected while probing")
+        fiber2Result.left.foreach { err =>
+          assert(err.getMessage.contains("Circuit breaker is open"), s"Unexpected error: ${ err.getMessage }")
+        }
+        // After fiber 1's successful probe the circuit should be closed
+        assertEquals(finalState, CircuitBreaker.State.Closed)
+        assert(afterResult.isRight, "Requests should succeed after circuit is closed")
+    }
+  }
