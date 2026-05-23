@@ -359,17 +359,18 @@ class DataTypesTest extends munit.FunSuite:
     """).nonEmpty)
   }
 
-  it should "If the length at the time of VARCHAR generation is greater than 65535, an error occurs." in {
-    assertDoesNotCompile("""
+  test("If the length at the time of VARCHAR generation is greater than 65535, an error occurs.") {
+    assert(compileErrors("""
       import ldbc.schema.*
       import ldbc.schema.DataType.*
 
       val p: Varchar[String] = VARCHAR[String](65536)
-    """.stripMargin)
+    """).nonEmpty)
   }
 
-  it should "Bug #720: VARCHAR length up to 65535 should be valid." in {
-    assertCompiles("""
+  test("Bug #720: VARCHAR length up to 65535 should be valid.") {
+    assertEquals(
+      compileErrors("""
       import ldbc.schema.*
       import ldbc.schema.DataType.*
 
@@ -377,16 +378,18 @@ class DataTypesTest extends munit.FunSuite:
       val p2: Varchar[String] = VARCHAR[String](500)
       val p3: Varchar[String] = VARCHAR[String](1000)
       val p4: Varchar[String] = VARCHAR[String](65535)
-    """.stripMargin)
+    """),
+      ""
+    )
   }
 
-  it should "Bug #720: VARCHAR length greater than 65535 should cause a compile error." in {
-    assertDoesNotCompile("""
+  test("Bug #720: VARCHAR length greater than 65535 should cause a compile error.") {
+    assert(compileErrors("""
       import ldbc.schema.*
       import ldbc.schema.DataType.*
 
       val p: Varchar[String] = VARCHAR[String](65536)
-    """.stripMargin)
+    """).nonEmpty)
   }
 
   test("Successful generation of BINARY") {
