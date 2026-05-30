@@ -34,6 +34,15 @@ For a Pull Request to be considered at all it has to meet these requirements:
 
 If these requirements are not met then the code should not be merged into `master`, or even reviewed - regardless of how good or important it is. No exceptions.
 
+## AI Usage Policy
+
+You may use AI to contribute, but it must never waste a maintainer's time or make their work unpleasant.
+
+To enforce this, and regardless of whether AI was actually used, a maintainer may:
+
+- Close your PR without notice and block your account.
+- Close a non-compliant account's PR and use its contents freely. That account retains no rights to them.
+
 ## Work In Progress
 
 It is ok to work on a public feature branch in the GitHub repository. Something that can sometimes be useful for early feedback etc. If so then it is preferable to name the branch accordingly. This can be done by either prefix the name with ``wip-`` as in ‘Work In Progress’, or use hierarchical names like ``wip/..``, ``feature/..`` or ``topic/..``. Either way is fine as long as it is clear that it is work in progress and not ready for merge. This work can temporarily have a lower standard. However, to be merged into `master` it will have to go through the regular process outlined above, with Pull Request, review etc..
