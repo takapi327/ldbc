@@ -12,13 +12,16 @@ import ProjectKeys.*
 import ScalaVersions.*
 import Workflows.*
 
-ThisBuild / tlBaseVersion              := LdbcVersions.latest
-ThisBuild / tlFatalWarnings            := true
-ThisBuild / projectName                := "ldbc"
-ThisBuild / scalaVersion               := scala3
-ThisBuild / crossScalaVersions         := Seq(scala3, scala37)
-ThisBuild / githubWorkflowJavaVersions := Seq(
-  JavaSpec.corretto(java11),
+ThisBuild / tlBaseVersion   := LdbcVersions.latest
+ThisBuild / tlFatalWarnings := true
+// Scala Native test-interface has strict versioning; suppress eviction errors across versions
+ThisBuild / libraryDependencySchemes += "org.scala-native" % "test-interface_native0.5_3" % VersionScheme.Always
+ThisBuild / evictionErrorLevel                            := sbt.util.Level.Warn
+ThisBuild / tlJdkRelease                                  := None
+ThisBuild / projectName                                   := "ldbc"
+ThisBuild / scalaVersion                                  := scala3
+ThisBuild / crossScalaVersions                            := Seq(scala3, scala38)
+ThisBuild / githubWorkflowJavaVersions                    := Seq(
   JavaSpec.corretto(java17),
   JavaSpec.corretto(java21),
   JavaSpec.corretto(java25)
@@ -48,7 +51,7 @@ lazy val sql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .module("sql", "JDBC API wrapped project with Effect System")
   .platformsSettings(JSPlatform, NativePlatform)(
     libraryDependencies ++= Seq(
-      "io.github.cquiroz" %%% "scala-java-time" % "2.5.0"
+      "io.github.cquiroz" %%% "scala-java-time" % "2.6.0"
     )
   )
 
@@ -57,8 +60,8 @@ lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .module("core", "Core project for ldbc")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-free"   % "2.10.0",
-      "org.typelevel" %%% "cats-effect" % "3.6.2"
+      "org.typelevel" %%% "cats-free"   % "2.13.0",
+      "org.typelevel" %%% "cats-effect" % "3.7.0"
     )
   )
   .dependsOn(sql)
@@ -68,9 +71,9 @@ lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .module("dsl", "Projects that provide a way to connect to the database")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "twiddles-core"     % "0.8.0",
-      "co.fs2"        %%% "fs2-core"          % "3.12.2",
-      "org.typelevel" %%% "munit-cats-effect" % "2.1.0" % Test
+      "org.typelevel" %%% "twiddles-core"     % "0.9.0",
+      "co.fs2"        %%% "fs2-core"          % "3.13.0",
+      "org.typelevel" %%% "munit-cats-effect" % "2.2.0" % Test
     )
   )
   .dependsOn(core)
@@ -78,11 +81,6 @@ lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
 lazy val statement = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("statement", "Project for building type-safe statements")
-  .settings(
-    libraryDependencies ++= Seq(
-      "org.scalatest" %%% "scalatest" % "3.2.18" % Test
-    )
-  )
   .dependsOn(dsl)
   .platformsEnablePlugins(JVMPlatform, JSPlatform, NativePlatform)(
     spray.boilerplate.BoilerplatePlugin
@@ -91,13 +89,11 @@ lazy val statement = crossProject(JVMPlatform, JSPlatform, NativePlatform)
 lazy val queryBuilder = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("query-builder", "Project to build type-safe queries")
-  .settings(libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.18" % Test)
   .dependsOn(statement)
 
 lazy val schema = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("schema", "Type safety schema construction project")
-  .settings(libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.18" % Test)
   .settings(Test / scalacOptions -= "-Werror")
   .dependsOn(statement)
 
@@ -106,8 +102,10 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .module("codegen", "Project to generate code from Sql")
   .settings(
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.3.0",
-      "org.typelevel"          %%% "munit-cats-effect"        % "2.1.0" % Test
+      "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.4.0",
+      "io.circe"               %%% "circe-core"               % "0.14.15",
+      "org.virtuslab"          %%% "scala-yaml"               % "0.3.1",
+      "org.typelevel"          %%% "munit-cats-effect"        % "2.2.0" % Test
     )
   )
   .jvmSettings(
@@ -115,9 +113,6 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
       "io.circe" %%% "circe-generic" % "0.14.15",
       "io.circe" %%% "circe-yaml"    % "0.16.1"
     )
-  )
-  .platformsSettings(JSPlatform, NativePlatform)(
-    libraryDependencies += "com.armanbilge" %%% "circe-scala-yaml" % "0.0.4"
   )
   .dependsOn(schema)
 
@@ -137,8 +132,8 @@ lazy val authenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativePlat
   .module("authentication-plugin", "MySQL authentication plugin written in pure Scala3")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-core"   % "2.10.0",
-      "org.scodec"    %%% "scodec-bits" % "1.1.38"
+      "org.typelevel" %%% "cats-core"   % "2.12.0",
+      "org.scodec"    %%% "scodec-bits" % "1.2.4"
     )
   )
   .jsSettings(
@@ -153,16 +148,29 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     scalacOptions += "-Ykind-projector:underscores",
     libraryDependencies ++= Seq(
-      "co.fs2"        %%% "fs2-core"            % "3.12.2",
-      "co.fs2"        %%% "fs2-io"              % "3.12.2",
-      "org.scodec"    %%% "scodec-bits"         % "1.1.38",
-      "org.scodec"    %%% "scodec-core"         % "2.2.2",
-      "org.scodec"    %%% "scodec-cats"         % "1.2.0",
-      "org.typelevel" %%% "otel4s-core-trace"   % "0.15.2",
-      "org.typelevel" %%% "otel4s-core-metrics" % "0.15.2",
-      "org.typelevel" %%% "twiddles-core"       % "0.8.0",
-      "org.typelevel" %%% "munit-cats-effect"   % "2.1.0" % Test
-    )
+      "co.fs2"        %%% "fs2-core"                            % "3.13.0",
+      "co.fs2"        %%% "fs2-io"                              % "3.13.0",
+      "org.scodec"    %%% "scodec-bits"                         % "1.2.4",
+      "org.scodec"    %%% "scodec-core"                         % "2.3.1",
+      "org.scodec"    %%% "scodec-cats"                         % "1.3.0",
+      "org.typelevel" %%% "otel4s-core-trace"                   % "0.16.0",
+      "org.typelevel" %%% "otel4s-core-metrics"                 % "0.16.0",
+      "org.typelevel" %%% "otel4s-semconv"                      % "0.16.0",
+      "org.typelevel" %%% "otel4s-semconv-experimental"         % "0.16.0",
+      "org.typelevel" %%% "otel4s-semconv-metrics"              % "0.16.0",
+      "org.typelevel" %%% "otel4s-semconv-metrics-experimental" % "0.16.0",
+      "org.typelevel" %%% "twiddles-core"                       % "0.9.0",
+      "org.typelevel" %%% "munit-cats-effect"                   % "2.2.0"  % Test,
+      "org.typelevel" %%% "otel4s-sdk-testkit"                  % "0.18.0" % Test
+    ),
+    (Compile / sourceGenerators) += Def.task {
+      Generator.version(
+        version      = version.value,
+        scalaVersion = scalaVersion.value,
+        sbtVersion   = sbtVersion.value,
+        dir          = (Compile / sourceManaged).value
+      )
+    }.taskValue
   )
   .jsSettings(
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
@@ -176,10 +184,10 @@ lazy val awsAuthenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativeP
   .module("aws-authentication-plugin", "Project for the plugin used with Aurora IAM authentication")
   .settings(
     libraryDependencies ++= Seq(
-      "co.fs2"            %%% "fs2-core"          % "3.12.2",
-      "co.fs2"            %%% "fs2-io"            % "3.12.2",
-      "io.github.cquiroz" %%% "scala-java-time"   % "2.5.0",
-      "org.typelevel"     %%% "munit-cats-effect" % "2.1.0" % Test
+      "co.fs2"            %%% "fs2-core"          % "3.13.0",
+      "co.fs2"            %%% "fs2-io"            % "3.13.0",
+      "io.github.cquiroz" %%% "scala-java-time"   % "2.6.0",
+      "org.typelevel"     %%% "munit-cats-effect" % "2.2.0" % Test
     )
   )
   .jsSettings(
@@ -199,6 +207,36 @@ lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
       dir          = (Compile / sourceManaged).value
     )
   }.taskValue)
+
+lazy val testkit = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Full)
+  .module("testkit", "Core test utilities for ldbc users")
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel" %%% "munit-cats-effect" % "2.2.0" % Test
+    )
+  )
+  .jsSettings(
+    Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
+  )
+  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
+  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .dependsOn(connector)
+
+lazy val testkitMunit = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Full)
+  .module("testkit-munit", "MUnit integration for ldbc-testkit")
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel" %%% "munit-cats-effect" % "2.2.0"
+    )
+  )
+  .jsSettings(
+    Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
+  )
+  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
+  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .dependsOn(testkit, dsl % Test)
 
 lazy val zioInterop = crossProject(JVMPlatform, JSPlatform)
   .crossType(CrossType.Pure)
@@ -220,10 +258,10 @@ lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
   .in(file("tests"))
   .settings(
-    crossScalaVersions                      := Seq(scala3, scala37),
+    crossScalaVersions                      := Seq(scala3, scala38),
     name                                    := "tests",
     description                             := "Projects for testing",
-    libraryDependencies += "org.typelevel" %%% "munit-cats-effect" % "2.1.0",
+    libraryDependencies += "org.typelevel" %%% "munit-cats-effect" % "2.2.0",
     Test / unmanagedSourceDirectories ++= {
       val sourceDir = (Test / sourceDirectory).value
       CrossVersion.partialVersion(scalaVersion.value) match {
@@ -303,9 +341,9 @@ lazy val otelExample = crossProject(JVMPlatform)
   .example("otel", "OpenTelemetry example project")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel"   %% "otel4s-oteljava"                           % "0.15.2",
-      "io.opentelemetry" % "opentelemetry-exporter-otlp"               % "1.61.0" % Runtime,
-      "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.61.0" % Runtime
+      "org.typelevel"   %% "otel4s-oteljava"                           % "0.16.0",
+      "io.opentelemetry" % "opentelemetry-exporter-otlp"               % "1.62.0" % Runtime,
+      "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.62.0" % Runtime
     )
   )
   .settings(
@@ -341,6 +379,12 @@ lazy val awsIamAuthExample = crossProject(JVMPlatform)
     )
   )
   .dependsOn(connector, awsAuthenticationPlugin, dsl)
+
+lazy val testkitExample = crossProject(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .withoutSuffixFor(JVMPlatform)
+  .example("testkit", "ldbc-testkit usage example")
+  .dependsOn(connector, dsl, testkitMunit)
 
 lazy val docs = (project in file("docs"))
   .settings(
@@ -445,7 +489,8 @@ lazy val examples = Seq(
   hikariCPExample,
   otelExample,
   zioExample,
-  awsIamAuthExample
+  awsIamAuthExample,
+  testkitExample
 )
 
 lazy val ldbc = tlCrossRootProject
@@ -461,6 +506,8 @@ lazy val ldbc = tlCrossRootProject
     queryBuilder,
     schema,
     codegen,
+    testkit,
+    testkitMunit,
     zioInterop,
     authenticationPlugin,
     awsAuthenticationPlugin,

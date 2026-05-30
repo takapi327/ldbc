@@ -13,6 +13,7 @@ import cats.effect.Ref
 
 import ldbc.sql.ResultSet
 
+import ldbc.connector.data.ColumnValueDecoder
 import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.Protocol
@@ -29,6 +30,7 @@ private[ldbc] case class StreamingResultSet[F[_]](
   fetchSize:            Ref[F, Int],
   useCursorFetch:       Boolean,
   useServerPrepStmts:   Boolean,
+  decoder:              ColumnValueDecoder,
   resultSetType:        Int            = ResultSet.TYPE_FORWARD_ONLY,
   resultSetConcurrency: Int            = ResultSet.CONCUR_READ_ONLY,
   statement:            Option[String] = None
@@ -48,8 +50,8 @@ private[ldbc] case class StreamingResultSet[F[_]](
   private def fetchRow(size: Int): F[Unit] =
     protocol.resetSequenceId *> protocol.send(ComStmtFetchPacket(statementId, size)) *>
       protocol
-        .readUntilEOF[BinaryProtocolResultSetRowPacket](
-          BinaryProtocolResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columns)
+        .readUntilEOF[ResultSetRowPacket](
+          binaryResultSetRowDecoder(protocol.initialPacket.capabilityFlags)
         )
         .map { resultSetRow =>
           rows               = resultSetRow

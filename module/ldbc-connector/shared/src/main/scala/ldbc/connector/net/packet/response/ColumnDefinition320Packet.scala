@@ -57,6 +57,8 @@ case class ColumnDefinition320Packet(
   decimals:    Int
 ) extends ColumnDefinitionPacket:
 
+  override def charset: String = "UTF-8"
+
   override def toString: String = "Protocol::ColumnDefinition41"
 
 object ColumnDefinition320Packet:

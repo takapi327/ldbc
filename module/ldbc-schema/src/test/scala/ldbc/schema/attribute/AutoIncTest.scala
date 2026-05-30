@@ -6,33 +6,29 @@
 
 package ldbc.schema.attribute
 
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
+class AutoIncTest extends munit.FunSuite:
 
-class AutoIncTest extends AnyFlatSpec with Matchers {
-
-  "AutoInc" should "be instantiated with type parameter" in {
+  test("AutoInc should be instantiated with type parameter") {
     val autoIncInt    = AutoInc[Int]()
     val autoIncString = AutoInc[String]()
     val autoIncLong   = AutoInc[Long]()
 
-    autoIncInt shouldBe a[AutoInc[_]]
-    autoIncString shouldBe a[AutoInc[_]]
-    autoIncLong shouldBe a[AutoInc[_]]
+    assert(autoIncInt.isInstanceOf[AutoInc[_]])
+    assert(autoIncString.isInstanceOf[AutoInc[_]])
+    assert(autoIncLong.isInstanceOf[AutoInc[_]])
   }
 
-  it should "return 'AUTO_INCREMENT' from queryString method" in {
+  test("AutoInc should return 'AUTO_INCREMENT' from queryString method") {
     val autoInc = AutoInc[Int]()
-    autoInc.queryString should be("AUTO_INCREMENT")
+    assertEquals(autoInc.queryString, "AUTO_INCREMENT")
   }
 
-  it should "return 'AUTO_INCREMENT' from toString method" in {
+  test("AutoInc should return 'AUTO_INCREMENT' from toString method") {
     val autoInc = AutoInc[String]()
-    autoInc.toString should be("AUTO_INCREMENT")
+    assertEquals(autoInc.toString, "AUTO_INCREMENT")
   }
 
-  it should "be an Attribute" in {
+  test("AutoInc should be an Attribute") {
     val autoInc = AutoInc[Double]()
-    autoInc shouldBe a[Attribute[_]]
+    assert(autoInc.isInstanceOf[Attribute[_]])
   }
-}

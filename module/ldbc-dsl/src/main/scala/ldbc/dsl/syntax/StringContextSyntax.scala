@@ -6,8 +6,6 @@
 
 package ldbc.dsl.syntax
 
-import ldbc.dsl.*
-
 /**
  * Trait for generating SQL models from string completion knowledge.
  */
@@ -15,22 +13,22 @@ trait StringContextSyntax:
 
   extension (sc: StringContext)
 
-    def p(args: Parameter.Dynamic*): Mysql =
+    def p(args: ldbc.dsl.Parameter.Dynamic*): ldbc.dsl.Mysql =
       val strings     = sc.parts.iterator
       val expressions = args.iterator
-      Mysql(strings.mkString("?"), expressions.toList)
+      ldbc.dsl.Mysql(strings.mkString("?"), expressions.toList)
 
-    def sql(args: Parameter*): Mysql =
+    def sql(args: ldbc.dsl.Parameter*): ldbc.dsl.Mysql =
       val query = sc.parts.iterator.mkString("?")
 
       // If it is Static, the value is replaced with the ? If it is a Parameter.Binder, it is replaced with ? and create a list of Parameter.Binders.
-      val (expressions, parameters) = args.foldLeft((query, List.empty[Parameter.Dynamic])) {
-        case ((query, parameters), s: Parameter.Static) =>
+      val (expressions, parameters) = args.foldLeft((query, List.empty[ldbc.dsl.Parameter.Dynamic])) {
+        case ((query, parameters), s: ldbc.dsl.Parameter.Static) =>
           (query.replaceFirst("\\?", s.toString), parameters)
-        case ((query, parameters), p: Parameter.Dynamic) =>
+        case ((query, parameters), p: ldbc.dsl.Parameter.Dynamic) =>
           (query, parameters :+ p)
         case ((query, parameters), _) =>
           (query, parameters)
       }
 
-      Mysql(expressions, parameters)
+      ldbc.dsl.Mysql(expressions, parameters)

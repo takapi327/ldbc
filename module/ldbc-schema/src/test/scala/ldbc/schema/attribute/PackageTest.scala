@@ -6,47 +6,44 @@
 
 package ldbc.schema.attribute
 
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
+class PackageTest extends munit.FunSuite:
 
-class PackageTest extends AnyFlatSpec, Matchers:
-
-  it should "generate proper query string for Comment attribute" in {
+  test("generate proper query string for Comment attribute") {
     val comment = Comment[String]("This is a comment")
-    comment.queryString should be("COMMENT 'This is a comment'")
+    assertEquals(comment.queryString, "COMMENT 'This is a comment'")
   }
 
-  it should "generate proper query string for Visible attribute" in {
+  test("generate proper query string for Visible attribute") {
     val visible = Visible[String]()
-    visible.queryString should be("/*!80023 VISIBLE */")
+    assertEquals(visible.queryString, "/*!80023 VISIBLE */")
   }
 
-  it should "generate proper query string for InVisible attribute" in {
+  test("generate proper query string for InVisible attribute") {
     val invisible = InVisible[String]()
-    invisible.queryString should be("/*!80023 INVISIBLE */")
+    assertEquals(invisible.queryString, "/*!80023 INVISIBLE */")
   }
 
-  it should "generate proper query string for ColumnFormat.Fixed attribute" in {
+  test("generate proper query string for ColumnFormat.Fixed attribute") {
     val fixed = ColumnFormat.Fixed[String]()
-    fixed.queryString should be("/*!50606 COLUMN_FORMAT FIXED */")
+    assertEquals(fixed.queryString, "/*!50606 COLUMN_FORMAT FIXED */")
   }
 
-  it should "generate proper query string for ColumnFormat.Dynamic attribute" in {
+  test("generate proper query string for ColumnFormat.Dynamic attribute") {
     val dynamic = ColumnFormat.Dynamic[String]()
-    dynamic.queryString should be("/*!50606 COLUMN_FORMAT DYNAMIC */")
+    assertEquals(dynamic.queryString, "/*!50606 COLUMN_FORMAT DYNAMIC */")
   }
 
-  it should "generate proper query string for ColumnFormat.Default attribute" in {
+  test("generate proper query string for ColumnFormat.Default attribute") {
     val default = ColumnFormat.Default[String]()
-    default.queryString should be("/*!50606 COLUMN_FORMAT DEFAULT */")
+    assertEquals(default.queryString, "/*!50606 COLUMN_FORMAT DEFAULT */")
   }
 
-  it should "generate proper query string for Storage.Disk attribute" in {
+  test("generate proper query string for Storage.Disk attribute") {
     val disk = Storage.Disk[String]()
-    disk.queryString should be("/*!50606 STORAGE DISK */")
+    assertEquals(disk.queryString, "/*!50606 STORAGE DISK */")
   }
 
-  it should "generate proper query string for Storage.Memory attribute" in {
+  test("generate proper query string for Storage.Memory attribute") {
     val memory = Storage.Memory[String]()
-    memory.queryString should be("/*!50606 STORAGE MEMORY */")
+    assertEquals(memory.queryString, "/*!50606 STORAGE MEMORY */")
   }

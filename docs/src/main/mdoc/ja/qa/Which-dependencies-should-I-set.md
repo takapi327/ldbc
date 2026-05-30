@@ -126,6 +126,36 @@ val userQuery = TableQuery[UserTable]
 // userQuery.statementは "SELECT id, name, email FROM user WHERE email = ?" として生成される
 ```
 
+### テスト
+
+ldbcを使用するRepositoryの結合テストを書くには、以下の依存関係を設定します。
+
+**ldbc-testkit**（フレームワーク非依存のコア）
+
+```scala 3
+libraryDependencies ++= Seq(
+  "@ORGANIZATION@" %% "ldbc-testkit" % "@VERSION@" % Test
+)
+```
+
+**ldbc-testkit-munit**（MUnit統合）
+
+```scala 3
+libraryDependencies ++= Seq(
+  "@ORGANIZATION@" %% "ldbc-testkit-munit" % "@VERSION@" % Test
+)
+```
+
+いずれのモジュールもJVM、Scala.js、Scala Nativeで動作します。
+
+```scala 3
+libraryDependencies ++= Seq(
+  "@ORGANIZATION@" %%% "ldbc-testkit-munit" % "@VERSION@" % Test
+)
+```
+
+`ldbc-testkit-munit`はMUnitの`CatsEffectSuite`を継承した`LdbcSuite`トレイトを提供します。`ephemeralTest`（テスト終了後に自動ロールバック）と`persistentTest`（DDLなど実際のコミットが必要な場合）を使ってRepositoryのテストを簡潔に記述できます。
+
 ## 参考資料
 - [クエリビルダーの使い方](/ja/tutorial/Query-Builder.md)
 - [スキーマ定義の詳細](/ja/tutorial/Schema.md)

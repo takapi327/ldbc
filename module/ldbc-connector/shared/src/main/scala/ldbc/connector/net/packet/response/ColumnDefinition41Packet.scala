@@ -84,6 +84,8 @@ case class ColumnDefinition41Packet(
   decimals:     Int
 ) extends ColumnDefinitionPacket:
 
+  override def charset: String = CharsetMapping.getJavaCharsetFromCollationIndex(characterSet)
+
   override def toString: String = "Protocol::ColumnDefinition41"
 
 object ColumnDefinition41Packet:

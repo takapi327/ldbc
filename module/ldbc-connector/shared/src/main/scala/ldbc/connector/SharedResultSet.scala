@@ -15,8 +15,7 @@ import cats.effect.Ref
 
 import ldbc.sql.{ ResultSet, ResultSetMetaData }
 
-import ldbc.connector.data.CharsetMapping
-import ldbc.connector.data.Formatter.*
+import ldbc.connector.data.*
 import ldbc.connector.exception.SQLException
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.Protocol
@@ -35,99 +34,56 @@ private[ldbc] trait SharedResultSet[F[_]](using ev: MonadThrow[F]) extends Resul
   def resultSetType:        Int
   def resultSetConcurrency: Int
   def statement:            Option[String]
+  def decoder:              ColumnValueDecoder
 
   protected final var lastColumnReadNullable: Boolean                    = false
   protected final var currentCursor:          Int                        = 0
   protected final var currentRow:             Option[ResultSetRowPacket] = records.headOption
 
-  private lazy val charsets: Vector[String] = columns.map {
-    case _: ColumnDefinition320Packet     => "UTF-8"
-    case column: ColumnDefinition41Packet => CharsetMapping.getJavaCharsetFromCollationIndex(column.characterSet)
-  }
+  private lazy val charsets:      Vector[String]         = columns.map(_.charset)
+  private lazy val columnTypes:   Vector[ColumnDataType] = columns.map(_.columnType)
+  private lazy val unsignedFlags: Vector[Boolean]        =
+    columns.map(_.flags.contains(ColumnDefinitionFlags.UNSIGNED_FLAG))
 
   override def close(): F[Unit] = isClosed.set(true)
 
   override def wasNull(): F[Boolean] = ev.pure(lastColumnReadNullable)
 
   override def getString(columnIndex: Int): F[String] =
-    checkClosed() *> rowDecode[String](columnIndex, identity, null)
+    checkClosed() *> rowDecode[String](columnIndex, _.decodeString, null)
 
   override def getBoolean(columnIndex: Int): F[Boolean] =
-    checkClosed() *> rowDecode[Boolean](
-      columnIndex,
-      {
-        case "true" | "1" => true
-        case _            => false
-      },
-      false
-    )
+    checkClosed() *> rowDecode[Boolean](columnIndex, _.decodeBoolean, false)
 
   override def getByte(columnIndex: Int): F[Byte] =
-    checkClosed() *> rowDecode[Byte](
-      columnIndex,
-      str => {
-        if str.length == 1 && !str.forall(_.isDigit) then str.getBytes().head
-        else str.toByte
-      },
-      0
-    )
+    checkClosed() *> rowDecode[Byte](columnIndex, _.decodeByte, 0)
 
   override def getShort(columnIndex: Int): F[Short] =
-    checkClosed() *> rowDecode[Short](columnIndex, _.toShort, 0)
+    checkClosed() *> rowDecode[Short](columnIndex, _.decodeShort, 0)
 
   override def getInt(columnIndex: Int): F[Int] =
-    checkClosed() *> rowDecode[Int](columnIndex, _.toInt, 0)
+    checkClosed() *> rowDecode[Int](columnIndex, _.decodeInt, 0)
 
   override def getLong(columnIndex: Int): F[Long] =
-    checkClosed() *> rowDecode[Long](
-      columnIndex,
-      _.toLong,
-      0L
-    )
+    checkClosed() *> rowDecode[Long](columnIndex, _.decodeLong, 0L)
 
   override def getFloat(columnIndex: Int): F[Float] =
-    checkClosed() *> rowDecode[Float](
-      columnIndex,
-      _.toFloat,
-      0f
-    )
+    checkClosed() *> rowDecode[Float](columnIndex, _.decodeFloat, 0f)
 
   override def getDouble(columnIndex: Int): F[Double] =
-    checkClosed() *> rowDecode[Double](
-      columnIndex,
-      _.toDouble,
-      0.0
-    )
+    checkClosed() *> rowDecode[Double](columnIndex, _.decodeDouble, 0.0)
 
-  override def getBytes(columnIndex: Int): F[Array[Byte]] = {
-    val charset = charsets(columnIndex - 1)
-    checkClosed() *> rowDecode[Array[Byte]](
-      columnIndex,
-      _.getBytes(charset),
-      null
-    )
-  }
+  override def getBytes(columnIndex: Int): F[Array[Byte]] =
+    checkClosed() *> rowDecode[Array[Byte]](columnIndex, _.decodeBytes, null)
 
   override def getDate(columnIndex: Int): F[LocalDate] =
-    checkClosed() *> rowDecode[LocalDate](
-      columnIndex,
-      str => LocalDate.parse(str, localDateFormatter),
-      null
-    )
+    checkClosed() *> rowDecode[LocalDate](columnIndex, _.decodeDate, null)
 
   override def getTime(columnIndex: Int): F[LocalTime] =
-    checkClosed() *> rowDecode[LocalTime](
-      columnIndex,
-      str => LocalTime.parse(str, timeFormatter(6)),
-      null
-    )
+    checkClosed() *> rowDecode[LocalTime](columnIndex, _.decodeTime, null)
 
   override def getTimestamp(columnIndex: Int): F[LocalDateTime] =
-    checkClosed() *> rowDecode[LocalDateTime](
-      columnIndex,
-      str => LocalDateTime.parse(str, localDateTimeFormatter(6)),
-      null
-    )
+    checkClosed() *> rowDecode[LocalDateTime](columnIndex, _.decodeTimestamp, null)
 
   override def getString(columnLabel: String): F[String] =
     for
@@ -207,11 +163,7 @@ private[ldbc] trait SharedResultSet[F[_]](using ev: MonadThrow[F]) extends Resul
     }
 
   override def getBigDecimal(columnIndex: Int): F[BigDecimal] =
-    checkClosed() *> rowDecode[BigDecimal](
-      columnIndex,
-      str => BigDecimal(str),
-      null
-    )
+    checkClosed() *> rowDecode[BigDecimal](columnIndex, _.decodeBigDecimal, null)
 
   override def getBigDecimal(columnLabel: String): F[BigDecimal] =
     for
@@ -373,36 +325,59 @@ private[ldbc] trait SharedResultSet[F[_]](using ev: MonadThrow[F]) extends Resul
 
   /**
    * Decodes a value from the current row at the specified column index.
-   * Handles null values and type conversion errors appropriately.
+   * Extracts the raw field bytes from rawBytes and applies the appropriate decoder
+   * based on the row's protocol type (text or binary).
+   *
+   * Column index validation is performed eagerly before decoding.
+   * Decode errors are captured via `MonadThrow.catchNonFatal` and translated
+   * to `SQLException` with appropriate SQL states:
+   *   - `S1009`: column index out of range
+   *   - `22018`: value conversion / parse failure
    *
    * @param index the 1-based column index
-   * @param decode the function to decode the string value to the target type
+   * @param extract a function selecting the decode method from ColumnValueDecoder
    * @param defaultValue the default value to return for null columns
    * @return the decoded value or default value for null columns
    */
-  private def rowDecode[T](index: Int, decode: String => T, defaultValue: T): F[T] =
-    try {
-      val decoded = for
-        row     <- currentRow
-        value   <- row.values(index - 1)
-        decoded <- Option(decode(value))
-      yield decoded
+  private def rowDecode[T](
+    index:        Int,
+    extract:      ColumnValueDecoder => (Array[Byte], String, ColumnDataType, Boolean) => T,
+    defaultValue: T
+  ): F[T] =
+    if index < 1 || index > columns.length then
+      ev.raiseError(
+        new SQLException(
+          s"Column index $index is out of range. Number of columns: ${ columns.length }.",
+          sqlState = Some("S1009"),
+          sql      = statement
+        )
+      )
+    else
+      val col        = columns(index - 1)
+      val charset    = charsets(index - 1)
+      val isUnsigned = unsignedFlags(index - 1)
+      val fieldBytes = currentRow.flatMap(row => decoder.extractColumn(row.rawBytes, index - 1, columnTypes))
 
-      decoded match
+      fieldBytes match
         case None =>
           lastColumnReadNullable = true
           ev.pure(defaultValue)
-        case Some(decodedValue) =>
+        case Some(bytes) =>
           lastColumnReadNullable = false
-          ev.pure(decodedValue)
-    } catch
-      case _ =>
-        ev.raiseError(
-          new SQLException(
-            s"Column index $index does not exist in the ResultSet.",
-            sql = statement
-          )
-        )
+          ev.catchNonFatal(Option(extract(decoder)(bytes, charset, col.columnType, isUnsigned)))
+            .flatMap {
+              case None        => ev.pure(defaultValue)
+              case Some(value) => ev.pure(value)
+            }
+            .handleErrorWith { e =>
+              ev.raiseError(
+                new SQLException(
+                  s"Cannot convert column $index value to the requested type: ${ e.getMessage }",
+                  sqlState = Some("22018"),
+                  sql      = statement
+                )
+              )
+            }
 
   /**
    * Finds the column index by column name or alias.
