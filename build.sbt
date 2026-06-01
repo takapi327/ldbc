@@ -12,16 +12,12 @@ import ProjectKeys.*
 import ScalaVersions.*
 import Workflows.*
 
-ThisBuild / tlBaseVersion   := LdbcVersions.latest
-ThisBuild / tlFatalWarnings := true
-// Scala Native test-interface has strict versioning; suppress eviction errors across versions
-ThisBuild / libraryDependencySchemes += "org.scala-native" % "test-interface_native0.5_3" % VersionScheme.Always
-ThisBuild / evictionErrorLevel                            := sbt.util.Level.Warn
-ThisBuild / tlJdkRelease                                  := None
-ThisBuild / projectName                                   := "ldbc"
-ThisBuild / scalaVersion                                  := scala3
-ThisBuild / crossScalaVersions                            := Seq(scala3, scala38)
-ThisBuild / githubWorkflowJavaVersions                    := Seq(
+ThisBuild / tlBaseVersion              := LdbcVersions.latest
+ThisBuild / tlFatalWarnings            := true
+ThisBuild / projectName                := "ldbc"
+ThisBuild / scalaVersion               := scala3
+ThisBuild / crossScalaVersions         := Seq(scala3, scala38)
+ThisBuild / githubWorkflowJavaVersions := Seq(
   JavaSpec.corretto(java17),
   JavaSpec.corretto(java21),
   JavaSpec.corretto(java25)
