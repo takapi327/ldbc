@@ -166,7 +166,7 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
       "org.typelevel" %%% "otel4s-semconv-metrics-experimental" % "1.0.0",
       "org.typelevel" %%% "twiddles-core"                       % "0.9.1",
       "org.typelevel" %%% "munit-cats-effect"                   % "2.2.0"  % Test,
-      "org.typelevel" %%% "otel4s-sdk-testkit"                  % "0.18.0" % Test
+      "org.typelevel" %%% "otel4s-sdk-testkit"                  % "0.19.0" % Test
     ),
     (Compile / sourceGenerators) += Def.task {
       Generator.version(
