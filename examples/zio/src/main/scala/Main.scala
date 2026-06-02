@@ -4,6 +4,9 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
+import org.typelevel.otel4s.metrics.MeterProvider
+import org.typelevel.otel4s.trace.TracerProvider
+
 import ldbc.dsl.*
 
 import ldbc.connector.*
@@ -26,6 +29,9 @@ object Main extends ZIOAppDefault:
     .setSSL(SSL.Trusted)
     .setMinConnections(5)
     .setMaxConnections(10)
+
+  given TracerProvider[Task] = TracerProvider.noop[Task]
+  given MeterProvider[Task]  = MeterProvider.noop[Task]
 
   private val connectorLayer: ZLayer[Any, Throwable, Connector[Task]] =
     ZLayer.scoped {

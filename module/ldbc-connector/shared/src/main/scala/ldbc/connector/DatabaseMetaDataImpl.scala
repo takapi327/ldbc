@@ -82,9 +82,12 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
               )
             resultSetRow <-
               protocol.readUntilEOF[ResultSetRowPacket](
-                ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions)
+                textResultSetRowDecoder(protocol.initialPacket.capabilityFlags)
               )
-          yield resultSetRow.headOption.flatMap(_.values.headOption).flatten.getOrElse("")
+          yield resultSetRow.headOption
+            .flatMap(row => TextColumnValueDecoder.extractColumn(row.rawBytes, 0, Vector.empty))
+            .map(b => new String(b, "UTF-8"))
+            .getOrElse("")
       }
 
   override def getDatabaseProductVersion(): String = protocol.initialPacket.serverVersion.toString
@@ -137,10 +140,16 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
               )
             resultSetRow <-
               protocol.readUntilEOF[ResultSetRowPacket](
-                ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions)
+                textResultSetRowDecoder(protocol.initialPacket.capabilityFlags)
               )
           yield resultSetRow
-            .flatMap(_.values.flatten)
+            .flatMap { row =>
+              columnDefinitions.indices.flatMap { i =>
+                TextColumnValueDecoder
+                  .extractColumn(row.rawBytes, i, Vector.empty)
+                  .map(b => new String(b, "UTF-8"))
+              }
+            }
             .filterNot(DatabaseMetaDataImpl.SQL2003_KEYWORDS.contains)
             .mkString(",")
       }
@@ -544,14 +553,16 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
             override def name:       String                     = value
             override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
             override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
+            override def charset:    String                     = "UTF-8"
         },
-        dbList.map(name => ResultSetRowPacket(Array(Some(name)))).toVector,
+        dbList.map(name => ResultSetRowPacket.fromStrings(Some(name))).toVector,
         serverVariables,
         protocol.initialPacket.serverVersion,
         resultSetClosed,
         fetchSize,
         useCursorFetch,
-        useServerPrepStmts
+        useServerPrepStmts,
+        TextColumnValueDecoder
       )
     }
 
@@ -565,17 +576,19 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
             override def name:       String                     = "TABLE_TYPE"
             override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
             override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
+            override def charset:    String                     = "UTF-8"
         ),
         TableType.values
           .filterNot(_ == TableType.UNKNOWN)
-          .map(tableType => ResultSetRowPacket(Array(Some(tableType.name))))
+          .map(tableType => ResultSetRowPacket.fromStrings(Some(tableType.name)))
           .toVector,
         serverVariables,
         protocol.initialPacket.serverVersion,
         resultSetClosed,
         fetchSize,
         useCursorFetch,
-        useServerPrepStmts
+        useServerPrepStmts,
+        TextColumnValueDecoder
       )
     )
 
@@ -805,6 +818,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
                 override def name:       String                     = value
                 override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
                 override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
+                override def charset:    String                     = "UTF-8"
             ),
             resultSet.records,
             serverVariables,
@@ -812,7 +826,8 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
             resultSet.isClosed,
             resultSet.fetchSize,
             resultSet.useCursorFetch,
-            resultSet.useServerPrepStmts
+            resultSet.useServerPrepStmts,
+            TextColumnValueDecoder
           )
       }
 
@@ -1209,50 +1224,50 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
 
   override def getTypeInfo(): F[ResultSet[F]] =
     val types = Vector(
-      ResultSetRowPacket(getTypeInfo("BIT")),
-      ResultSetRowPacket(getTypeInfo("TINYINT")),
-      ResultSetRowPacket(getTypeInfo("TINYINT UNSIGNED")),
-      ResultSetRowPacket(getTypeInfo("BIGINT")),
-      ResultSetRowPacket(getTypeInfo("BIGINT UNSIGNED")),
-      ResultSetRowPacket(getTypeInfo("LONG VARBINARY")),
-      ResultSetRowPacket(getTypeInfo("MEDIUMBLOB")),
-      ResultSetRowPacket(getTypeInfo("LONGBLOB")),
-      ResultSetRowPacket(getTypeInfo("BLOB")),
-      ResultSetRowPacket(getTypeInfo("VECTOR")),
-      ResultSetRowPacket(getTypeInfo("VARBINARY")),
-      ResultSetRowPacket(getTypeInfo("TINYBLOB")),
-      ResultSetRowPacket(getTypeInfo("BINARY")),
-      ResultSetRowPacket(getTypeInfo("LONG VARCHAR")),
-      ResultSetRowPacket(getTypeInfo("MEDIUMTEXT")),
-      ResultSetRowPacket(getTypeInfo("LONGTEXT")),
-      ResultSetRowPacket(getTypeInfo("TEXT")),
-      ResultSetRowPacket(getTypeInfo("CHAR")),
-      ResultSetRowPacket(getTypeInfo("ENUM")),
-      ResultSetRowPacket(getTypeInfo("SET")),
-      ResultSetRowPacket(getTypeInfo("DECIMAL")),
-      ResultSetRowPacket(getTypeInfo("NUMERIC")),
-      ResultSetRowPacket(getTypeInfo("INTEGER")),
-      ResultSetRowPacket(getTypeInfo("INT")),
-      ResultSetRowPacket(getTypeInfo("MEDIUMINT")),
-      ResultSetRowPacket(getTypeInfo("INTEGER UNSIGNED")),
-      ResultSetRowPacket(getTypeInfo("INT UNSIGNED")),
-      ResultSetRowPacket(getTypeInfo("MEDIUMINT UNSIGNED")),
-      ResultSetRowPacket(getTypeInfo("SMALLINT")),
-      ResultSetRowPacket(getTypeInfo("SMALLINT UNSIGNED")),
-      ResultSetRowPacket(getTypeInfo("FLOAT")),
-      ResultSetRowPacket(getTypeInfo("DOUBLE")),
-      ResultSetRowPacket(getTypeInfo("DOUBLE PRECISION")),
-      ResultSetRowPacket(getTypeInfo("REAL")),
-      ResultSetRowPacket(getTypeInfo("DOUBLE UNSIGNED")),
-      ResultSetRowPacket(getTypeInfo("DOUBLE PRECISION UNSIGNED")),
-      ResultSetRowPacket(getTypeInfo("VARCHAR")),
-      ResultSetRowPacket(getTypeInfo("TINYTEXT")),
-      ResultSetRowPacket(getTypeInfo("BOOL")),
-      ResultSetRowPacket(getTypeInfo("DATE")),
-      ResultSetRowPacket(getTypeInfo("YEAR")),
-      ResultSetRowPacket(getTypeInfo("TIME")),
-      ResultSetRowPacket(getTypeInfo("DATETIME")),
-      ResultSetRowPacket(getTypeInfo("TIMESTAMP"))
+      ResultSetRowPacket.fromStrings(getTypeInfo("BIT")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("TINYINT")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("TINYINT UNSIGNED")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("BIGINT")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("BIGINT UNSIGNED")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("LONG VARBINARY")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("MEDIUMBLOB")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("LONGBLOB")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("BLOB")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("VECTOR")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("VARBINARY")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("TINYBLOB")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("BINARY")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("LONG VARCHAR")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("MEDIUMTEXT")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("LONGTEXT")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("TEXT")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("CHAR")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("ENUM")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("SET")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("DECIMAL")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("NUMERIC")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("INTEGER")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("INT")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("MEDIUMINT")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("INTEGER UNSIGNED")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("INT UNSIGNED")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("MEDIUMINT UNSIGNED")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("SMALLINT")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("SMALLINT UNSIGNED")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("FLOAT")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("DOUBLE")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("DOUBLE PRECISION")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("REAL")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("DOUBLE UNSIGNED")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("DOUBLE PRECISION UNSIGNED")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("VARCHAR")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("TINYTEXT")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("BOOL")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("DATE")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("YEAR")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("TIME")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("DATETIME")*),
+      ResultSetRowPacket.fromStrings(getTypeInfo("TIMESTAMP")*)
     )
 
     F.pure(
@@ -1283,6 +1298,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
             override def name:       String                     = value
             override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
             override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
+            override def charset:    String                     = "UTF-8"
         },
         types,
         serverVariables,
@@ -1290,7 +1306,8 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
         resultSetClosed,
         fetchSize,
         useCursorFetch,
-        useServerPrepStmts
+        useServerPrepStmts,
+        TextColumnValueDecoder
       )
     )
 
@@ -1462,14 +1479,16 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
             override def name:       String                     = value
             override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
             override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
+            override def charset:    String                     = "UTF-8"
         },
-        dbList.map(name => ResultSetRowPacket(Array(Some("def"), Some(name)))).toVector,
+        dbList.map(name => ResultSetRowPacket.fromStrings(Some("def"), Some(name))).toVector,
         serverVariables,
         protocol.initialPacket.serverVersion,
         resultSetClosed,
         fetchSize,
         useCursorFetch,
-        useServerPrepStmts
+        useServerPrepStmts,
+        TextColumnValueDecoder
       )
     }
 
@@ -1896,6 +1915,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
             override def name:       String                     = value
             override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
             override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
+            override def charset:    String                     = "UTF-8"
         },
         Vector.empty,
         serverVariables,
@@ -1903,7 +1923,8 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
         resultSetClosed,
         fetchSize,
         useCursorFetch,
-        useServerPrepStmts
+        useServerPrepStmts,
+        TextColumnValueDecoder
       )
     )
 

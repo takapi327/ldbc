@@ -15,6 +15,7 @@ import cats.syntax.all.*
 
 import cats.effect.*
 
+import org.typelevel.otel4s.semconv.attributes.{ DbAttributes, ErrorAttributes }
 import org.typelevel.otel4s.trace.{ Span, StatusCode, Tracer }
 import org.typelevel.otel4s.Attribute
 
@@ -75,7 +76,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
       ) { (span: Span[F]) =>
         val processedSql    = telemetryConfig.processQueryText(sql)
         val queryAttributes = baseAttributes ++ List(
-          TelemetryAttribute.dbQueryText(processedSql)
+          DbAttributes.DbQueryText(processedSql)
         )
 
         for
@@ -138,7 +139,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
       ) { (span: Span[F]) =>
         val processedSql    = telemetryConfig.processQueryText(sql)
         val queryAttributes = baseAttributes ++ List(
-          TelemetryAttribute.dbQueryText(processedSql)
+          DbAttributes.DbQueryText(processedSql)
         )
 
         span.addAttributes(queryAttributes*) *>
@@ -176,7 +177,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                       F.raiseError(exception)
                   case eof: EOFPacket =>
                     val exception = new SQLException("Unexpected EOF packet")
-                    span.addAttribute(TelemetryAttribute.errorType(exception)) *>
+                    span.addAttribute(ErrorAttributes.ErrorType(exception.getClass.getName)) *>
                       span.recordException(exception, eof.attribute) *>
                       span.setStatus(StatusCode.Error, exception.getMessage) *>
                       F.raiseError(exception)
@@ -211,7 +212,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
             .flatMap { params =>
               val processedSql    = telemetryConfig.processQueryText(sql)
               val queryAttributes = baseAttributes ++ List(
-                TelemetryAttribute.dbQueryText(processedSql)
+                DbAttributes.DbQueryText(processedSql)
               )
 
               span.addAttributes(queryAttributes*) *>
@@ -225,7 +226,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                       F.raiseError(exception)
                   case eof: EOFPacket =>
                     val exception = new SQLException("Unexpected EOF packet")
-                    span.addAttribute(TelemetryAttribute.errorType(exception)) *>
+                    span.addAttribute(ErrorAttributes.ErrorType(exception.getClass.getName)) *>
                       span.recordException(exception, eof.attribute) *>
                       span.setStatus(StatusCode.Error, exception.getMessage) *>
                       F.raiseError(exception)
@@ -266,7 +267,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
       exchange[F, Array[Long]](TelemetrySpanName.STMT_CALLABLE) { (span: Span[F]) =>
         batchedArgs.get.flatMap { args =>
           val batchAttributes = baseAttributes ++
-            List(TelemetryAttribute.dbOperationName(TelemetryAttribute.SqlOperation.BATCH)) ++
+            List(DbAttributes.DbOperationName(TelemetryAttribute.SqlOperation.BATCH)) ++
             TelemetryAttribute.dbOperationBatchSize(args.length).toList
 
           if args.isEmpty then F.pure(Array.empty)
@@ -286,7 +287,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                             F.raiseError(exception)
                         case eof: EOFPacket =>
                           val exception = new SQLException("Unexpected EOF packet")
-                          span.addAttribute(TelemetryAttribute.errorType(exception)) *>
+                          span.addAttribute(ErrorAttributes.ErrorType(exception.getClass.getName)) *>
                             span.recordException(exception, eof.attribute) *>
                             span.setStatus(StatusCode.Error, exception.getMessage) *>
                             F.raiseError(exception)
@@ -324,7 +325,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                                     F.raiseError(exception)
                                 case eof: EOFPacket =>
                                   val exception = new SQLException("Unexpected EOF packet")
-                                  span.addAttribute(TelemetryAttribute.errorType(exception)) *>
+                                  span.addAttribute(ErrorAttributes.ErrorType(exception.getClass.getName)) *>
                                     span.recordException(exception, eof.attribute) *>
                                     span.setStatus(StatusCode.Error, exception.getMessage) *>
                                     F.raiseError(exception)
@@ -342,38 +343,6 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                 )
         }
       } <* params.set(SortedMap.empty) <* batchedArgs.set(Vector.empty)
-
-  override def getGeneratedKeys(): F[ResultSet[F]] =
-    autoGeneratedKeys.get.flatMap {
-      case Statement.RETURN_GENERATED_KEYS =>
-        for
-          lastInsertId <- lastInsertId.get
-          resultSet    <- F.pure(
-                         ResultSetImpl(
-                           protocol,
-                           Vector(new ColumnDefinitionPacket:
-                             override def table:      String                     = ""
-                             override def name:       String                     = "GENERATED_KEYS"
-                             override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_LONGLONG
-                             override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty),
-                           Vector(ResultSetRowPacket(Array(Some(lastInsertId.toString)))),
-                           serverVariables,
-                           protocol.initialPacket.serverVersion,
-                           resultSetClosed,
-                           fetchSize,
-                           useCursorFetch,
-                           useServerPrepStmts
-                         )
-                       )
-          _ <- currentResultSet.set(Some(resultSet))
-        yield resultSet
-      case Statement.NO_GENERATED_KEYS =>
-        F.raiseError(
-          new SQLException(
-            "Generated keys not requested. You need to specify Statement.RETURN_GENERATED_KEYS to Statement.executeUpdate(), Statement.executeLargeUpdate() or Connection.prepareStatement()."
-          )
-        )
-    }
 
   override def close(): F[Unit] = statementClosed.set(true) *> resultSetClosed.set(true)
 
@@ -656,7 +625,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
             )
           resultSetRow <-
             protocol.readUntilEOF[ResultSetRowPacket](
-              ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions)
+              textResultSetRowDecoder(protocol.initialPacket.capabilityFlags)
             )
           resultSet = ResultSetImpl(
                         protocol,
@@ -668,6 +637,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                         fetchSize,
                         useCursorFetch,
                         useServerPrepStmts,
+                        TextColumnValueDecoder,
                         resultSetType,
                         resultSetConcurrency
                       )
@@ -699,7 +669,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
               ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags)
             )
           resultSetRow <- protocol.readUntilEOF[ResultSetRowPacket](
-                            ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions)
+                            textResultSetRowDecoder(protocol.initialPacket.capabilityFlags)
                           )
           resultSet = ResultSetImpl(
                         protocol,
@@ -711,6 +681,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                         fetchSize,
                         useCursorFetch,
                         useServerPrepStmts,
+                        TextColumnValueDecoder,
                         resultSetType,
                         resultSetConcurrency
                       )
@@ -878,7 +849,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
       params.get.flatMap { params =>
         val processedSql    = telemetryConfig.processQueryText(sql)
         val queryAttributes = baseAttributes ++ List(
-          TelemetryAttribute.dbQueryText(processedSql)
+          DbAttributes.DbQueryText(processedSql)
         )
 
         span.addAttributes(queryAttributes*) *>

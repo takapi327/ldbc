@@ -7,89 +7,12 @@
 package ldbc.connector.net.packet
 package response
 
-import scodec.*
-import scodec.codecs.*
-import scodec.interop.cats.*
-
-import cats.syntax.all.*
-
-import ldbc.connector.data.CapabilitiesFlags
-import ldbc.connector.data.CharsetMapping
-import ldbc.connector.data.ColumnDataType.*
-import ldbc.connector.data.Formatter.*
-
-case class BinaryProtocolResultSetRowPacket(values: Array[Option[String]]) extends ResultSetRowPacket:
-
+/**
+ * A row packet received via the MySQL binary protocol.
+ *
+ * Stores the entire row as raw bytes starting after the 0x00 status byte
+ * (i.e., beginning with the null bitmap).
+ * Column values are extracted lazily by BinaryColumnValueDecoder on get*() calls.
+ */
+case class BinaryProtocolResultSetRowPacket(rawBytes: Array[Byte]) extends ResultSetRowPacket:
   override def toString: String = "Binary Protocol ResultSet Row"
-
-object BinaryProtocolResultSetRowPacket:
-
-  private def precomputeCharsets(columns: Vector[ColumnDefinitionPacket]): Array[String] =
-    columns.map {
-      case _: ColumnDefinition320Packet     => "UTF-8"
-      case column: ColumnDefinition41Packet =>
-        CharsetMapping.getJavaCharsetFromCollationIndex(column.characterSet)
-    }.toArray
-
-  def decodeValue(column: ColumnDefinitionPacket, charset: String, isColumnNull: Boolean): Decoder[Option[String]] =
-    if isColumnNull then provide(None)
-    else
-      column.columnType match
-        case MYSQL_TYPE_STRING | MYSQL_TYPE_VARCHAR | MYSQL_TYPE_VAR_STRING | MYSQL_TYPE_ENUM | MYSQL_TYPE_SET |
-          MYSQL_TYPE_DECIMAL | MYSQL_TYPE_NEWDECIMAL =>
-          lengthEncodedIntDecoder.flatMap(length => bytes(length.toInt)).map { byteVector =>
-            Some(new String(byteVector.toArray, charset))
-          }
-        case MYSQL_TYPE_LONG_BLOB | MYSQL_TYPE_MEDIUM_BLOB | MYSQL_TYPE_BLOB | MYSQL_TYPE_TINY_BLOB |
-          MYSQL_TYPE_GEOMETRY | MYSQL_TYPE_BIT =>
-          lengthEncodedIntDecoder.flatMap(length => bytes(length.toInt)).map { byteVector =>
-            Some(new String(byteVector.toArray, charset))
-          }
-        case MYSQL_TYPE_LONGLONG                => bytes(8).map(byte => BigInt(1, byte.reverse.toArray).toString.some)
-        case MYSQL_TYPE_LONG | MYSQL_TYPE_INT24 => uint32L.map(_.toString.some)
-        case MYSQL_TYPE_SHORT | MYSQL_TYPE_YEAR => uint16L.map(_.toString.some)
-        case MYSQL_TYPE_TINY                    => uint8L.map(_.toString.some)
-        case MYSQL_TYPE_DOUBLE                  => doubleL.map(_.toString.some)
-        case MYSQL_TYPE_FLOAT                   => floatL.map(_.toString.some)
-        case MYSQL_TYPE_DATE                    =>
-          timestamp.map(_.map(localDateTime => localDateFormatter.format(localDateTime.toLocalDate)))
-        case MYSQL_TYPE_DATETIME | MYSQL_TYPE_TIMESTAMP => timestamp.map(_.map(localDateTimeFormatter(0).format(_)))
-        case MYSQL_TYPE_TIME                            => time.map(_.map(timeFormatter(0).format(_)))
-        case MYSQL_TYPE_NEWDATE                         =>
-          timestamp.map(_.map(localDateTime => localDateFormatter.format(localDateTime.toLocalDate)))
-        case MYSQL_TYPE_TIMESTAMP2 => timestamp.map(_.map(localDateTimeFormatter(0).format(_)))
-        case MYSQL_TYPE_DATETIME2  => timestamp.map(_.map(localDateTimeFormatter(0).format(_)))
-        case MYSQL_TYPE_TIME2      => time.map(_.map(timeFormatter(0).format(_)))
-        case MYSQL_TYPE_JSON       =>
-          lengthEncodedIntDecoder.flatMap(length => bytes(length.toInt)).map(_.decodeUtf8Lenient.some)
-        case MYSQL_TYPE_BOOL   => uint8L.map(value => (value != 0).toString.some)
-        case MYSQL_TYPE_VECTOR =>
-          lengthEncodedIntDecoder.flatMap(length => bytes(length.toInt)).map { byteVector =>
-            Some(new String(byteVector.toArray, charset))
-          }
-        case MYSQL_TYPE_TYPED_ARRAY =>
-          lengthEncodedIntDecoder.flatMap(length => bytes(length.toInt)).map { byteVector =>
-            Some(new String(byteVector.toArray, charset))
-          }
-        case MYSQL_TYPE_NULL    => provide(None)
-        case MYSQL_TYPE_INVALID =>
-          throw new RuntimeException(s"Unsupported column type: ${ column.columnType }")
-
-  def decoder(
-    capabilityFlags: Set[CapabilitiesFlags],
-    columns:         Vector[ColumnDefinitionPacket]
-  ): Decoder[BinaryProtocolResultSetRowPacket | EOFPacket | ERRPacket] =
-    uint8L.flatMap {
-      case EOFPacket.STATUS => EOFPacket.decoder(capabilityFlags)
-      case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags)
-      case OKPacket.STATUS  =>
-        val precomputedCharsets = precomputeCharsets(columns)
-        for
-          nullBitmapBytes <- bytes((columns.length + 7 + 2) / 8)
-          values          <- columns.zipWithIndex.traverse {
-                      case (column, index) =>
-                        val isColumnNull = (nullBitmapBytes((index + 2) / 8) & (1 << ((index + 2) % 8))) != 0
-                        decodeValue(column, precomputedCharsets(index), isColumnNull)
-                    }
-        yield BinaryProtocolResultSetRowPacket(values.toArray)
-    }

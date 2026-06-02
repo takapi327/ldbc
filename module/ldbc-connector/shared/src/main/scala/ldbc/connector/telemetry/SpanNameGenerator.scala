@@ -6,6 +6,8 @@
 
 package ldbc.connector.telemetry
 
+import org.typelevel.otel4s.semconv.attributes.DbAttributes
+
 /**
  * Generates span names according to OpenTelemetry database semantic conventions v1.39.0.
  *
@@ -78,7 +80,7 @@ object SpanNameGenerator:
             target match
               case Some(t) => t
               // Priority 4: fallback to system name
-              case None => TelemetryAttribute.DB_SYSTEM_MYSQL
+              case None => DbAttributes.DbSystemNameValue.Mysql.value
 
   /**
    * Resolves the target according to the hierarchy.

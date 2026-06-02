@@ -184,8 +184,8 @@ class ResultSetMetaDataImplTest extends FTestPlatform:
     )
 
     val metaData = ResultSetMetaDataImpl(columns, Map.empty, Version(8, 0, 0))
-    assert(metaData.isSigned(1))  // Has UNSIGNED_FLAG, so isSigned returns true
-    assert(!metaData.isSigned(2)) // No UNSIGNED_FLAG, so isSigned returns false
+    assert(!metaData.isSigned(1)) // Has UNSIGNED_FLAG → not signed
+    assert(metaData.isSigned(2))  // No UNSIGNED_FLAG → signed
   }
 
   test("getColumnDisplaySize should handle different column lengths") {
