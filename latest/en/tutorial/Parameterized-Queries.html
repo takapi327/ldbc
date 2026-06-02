@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.6</a>
+      <a class="text-link menu-toggle" href="#">Version 0.7</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -177,7 +177,9 @@
     <li class="level2 nav-leaf"><a href="#handling-in-clauses">Handling IN Clauses</a></li>
     <li class="level2 nav-leaf"><a href="#other-helper-functions">Other Helper Functions</a></li>
     <li class="level2 nav-leaf"><a href="#optional-conditions">Optional Conditions</a></li>
-    <li class="level1 nav-leaf"><a href="#static-parameters">Static Parameters</a></li>
+    <li class="level1 nav-leaf"><a href="#identifier-escaping">Identifier Escaping</a></li>
+    <li class="level1 nav-leaf"><a href="#conditional-sql-fragments">Conditional SQL Fragments</a></li>
+    <li class="level1 nav-leaf"><a href="#pagination">Pagination</a></li>
     <li class="level1 nav-leaf"><a href="#next-steps">Next Steps</a></li>
   </ul>
 
@@ -195,7 +197,7 @@
     <p>In ldbc, there are two main ways to embed parameters in SQL statements:</p>
     <ol class="arabic">
       <li><strong>Dynamic parameters</strong> - Used as regular parameters, processed by <code>PreparedStatement</code> to prevent SQL injection attacks</li>
-      <li><strong>Static parameters</strong> - Directly embedded as part of the SQL statement (e.g., table names, column names, etc.)</li>
+      <li><strong>Identifier escaping</strong> - Safely embeds table names and column names in backticks using the <code>ident</code> function</li>
     </ol>
     
     <h2 id="adding-dynamic-parameters" class="section"><a class="anchor-link left" href="#adding-dynamic-parameters"><i class="icofont-laika link">&#xef71;</i></a>Adding Dynamic Parameters</h2>
@@ -312,32 +314,60 @@
 </span><span class="comment">// Since nameFilter is Some(...) and emailFilter is None, the WHERE clause will only contain &quot;name = ?&quot;
 </span><span class="keyword">val</span><span> </span><span class="identifier">query</span><span> = </span><span class="string-literal">sql&quot;SELECT * FROM user &quot;</span><span> ++ </span><span class="identifier">whereAndOpt</span><span>(</span><span class="identifier">nameFilter</span><span>, </span><span class="identifier">emailFilter</span><span>)</span></code></pre>
     
-    <h2 id="static-parameters" class="section"><a class="anchor-link left" href="#static-parameters"><i class="icofont-laika link">&#xef71;</i></a>Static Parameters</h2>
-    <p>Sometimes you may want to parameterize structural parts of the SQL statement, such as column names or table names. In such cases, you can use &quot;static parameters&quot; which directly embed values into the SQL statement.</p>
-    <p>While dynamic parameters (regular <code>$value</code>) are processed by <code>PreparedStatement</code> and replaced with <code>?</code> in the query string, static parameters are directly embedded as strings.</p>
-    <p>To use static parameters, use the <code>sc</code> function:</p>
+    <h2 id="identifier-escaping" class="section"><a class="anchor-link left" href="#identifier-escaping"><i class="icofont-laika link">&#xef71;</i></a>Identifier Escaping</h2>
+    <p>Sometimes you may want to parameterize structural parts of the SQL statement, such as column names or table names. In such cases, use the <code>ident</code> function.</p>
+    <p>While dynamic parameters (regular <code>$value</code>) are processed by <code>PreparedStatement</code> and replaced with <code>?</code> in the query string, <code>ident</code> wraps identifiers in backticks and embeds them directly into the SQL statement. It also removes NUL characters, allowing identifiers to be handled safely.</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">column</span><span> = </span><span class="string-literal">&quot;name&quot;</span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">table</span><span> = </span><span class="string-literal">&quot;user&quot;</span><span>
 
 </span><span class="comment">// Treating as a dynamic parameter would result in &quot;SELECT ? FROM user&quot;
 // sql&quot;SELECT $column FROM user&quot;.query[String].to[List]
 </span><span>
-</span><span class="comment">// Treating as a static parameter results in &quot;SELECT name FROM user&quot;
-</span><span class="string-literal">sql&quot;SELECT </span><span class="substitution">${sc(column)}</span><span class="string-literal"> FROM </span><span class="substitution">${sc(table)}</span><span class="string-literal">&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]</span></code></pre>
-    <p>In this example, the generated SQL is <code>SELECT name FROM user</code>.</p>
-    <blockquote><strong>Warning</strong>: <code>sc(...)</code> does not escape the passed string, so passing unvalidated data such as user input directly poses a risk of SQL injection attacks. Use static parameters only from safe parts of your application (constants, configurations, etc.).</blockquote>
-    <p>Common use cases for static parameters:</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Dynamic sort order
-</span><span class="keyword">val</span><span> </span><span class="identifier">sortColumn</span><span> = </span><span class="string-literal">&quot;created_at&quot;</span><span> 
-</span><span class="keyword">val</span><span> </span><span class="identifier">sortDirection</span><span> = </span><span class="string-literal">&quot;DESC&quot;</span><span>
+</span><span class="comment">// Using ident results in &quot;SELECT `name` FROM `user`&quot;
+</span><span class="string-literal">sql&quot;SELECT </span><span class="substitution">${ident(column)}</span><span class="string-literal"> FROM </span><span class="substitution">${ident(table)}</span><span class="string-literal">&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]</span></code></pre>
+    <p>Common use cases for <code>ident</code>:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Dynamic column selection
+</span><span class="keyword">val</span><span> </span><span class="identifier">sortColumn</span><span> = </span><span class="string-literal">&quot;created_at&quot;</span><span>
 
-</span><span class="string-literal">sql&quot;SELECT * FROM user ORDER BY </span><span class="substitution">${sc(sortColumn)}</span><span class="string-literal"> </span><span class="substitution">${sc(sortDirection)}</span><span class="string-literal">&quot;</span><span>
+</span><span class="string-literal">sql&quot;SELECT * FROM user ORDER BY </span><span class="substitution">${ident(sortColumn)}</span><span class="string-literal"> DESC&quot;</span><span>
 
 </span><span class="comment">// Dynamic table selection
 </span><span class="keyword">val</span><span> </span><span class="identifier">schema</span><span> = </span><span class="string-literal">&quot;public&quot;</span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">table</span><span> = </span><span class="string-literal">&quot;user&quot;</span><span>
 
-</span><span class="string-literal">sql&quot;SELECT * FROM </span><span class="substitution">${sc(schema)}</span><span class="string-literal">.</span><span class="substitution">${sc(table)}</span><span class="string-literal">&quot;</span></code></pre>
+</span><span class="string-literal">sql&quot;SELECT * FROM </span><span class="substitution">${ident(schema)}</span><span class="string-literal">.</span><span class="substitution">${ident(table)}</span><span class="string-literal">&quot;</span></code></pre>
+    <blockquote><strong>Note</strong>: While <code>ident</code> escapes with backticks, it is recommended to use it only with trusted values (constants, configuration values, etc.). Avoid using user input directly as identifiers.</blockquote>
+    
+    <h2 id="conditional-sql-fragments" class="section"><a class="anchor-link left" href="#conditional-sql-fragments"><i class="icofont-laika link">&#xef71;</i></a>Conditional SQL Fragments</h2>
+    <p>When you want to conditionally append a SQL fragment, use the <code>when</code> function.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">limit</span><span>: </span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>] = </span><span class="type-name">Some</span><span>(</span><span class="number-literal">10</span><span>)
+
+</span><span class="string-literal">sql&quot;SELECT name, email FROM user&quot;</span><span> ++ </span><span class="identifier">when</span><span>(</span><span class="identifier">limit</span><span>.</span><span class="identifier">isDefined</span><span>)(</span><span class="string-literal">sql&quot; LIMIT </span><span class="substitution">${limit.get}</span><span class="string-literal">&quot;</span><span>)</span></code></pre>
+    <p><code>when(condition)(fragment)</code> appends <code>fragment</code> only when <code>condition</code> is <code>true</code>. When <code>false</code>, it produces an empty fragment.</p>
+    <p>You can combine multiple conditions:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">nameFilter</span><span>: </span><span class="type-name">Option</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="type-name">Some</span><span>(</span><span class="string-literal">&quot;Alice&quot;</span><span>)
+</span><span class="keyword">val</span><span> </span><span class="identifier">activeOnly</span><span>: </span><span class="type-name">Boolean</span><span> = </span><span class="boolean-literal">true</span><span>
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">query</span><span> =
+  </span><span class="string-literal">sql&quot;SELECT * FROM user&quot;</span><span> ++
+  </span><span class="identifier">when</span><span>(</span><span class="identifier">nameFilter</span><span>.</span><span class="identifier">isDefined</span><span>)(</span><span class="string-literal">sql&quot; WHERE name = </span><span class="substitution">${nameFilter.get}</span><span class="string-literal">&quot;</span><span>) ++
+  </span><span class="identifier">when</span><span>(</span><span class="identifier">activeOnly</span><span>)(</span><span class="string-literal">sql&quot; AND active = true&quot;</span><span>)</span></code></pre>
+    
+    <h2 id="pagination" class="section"><a class="anchor-link left" href="#pagination"><i class="icofont-laika link">&#xef71;</i></a>Pagination</h2>
+    <p>For list queries that commonly require <code>LIMIT</code> / <code>OFFSET</code>, use the <code>paginate</code> function for concise pagination.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Specify both limit and offset
+</span><span class="string-literal">sql&quot;SELECT name, email FROM user &quot;</span><span> ++ </span><span class="identifier">paginate</span><span>(</span><span class="identifier">limit</span><span> = </span><span class="number-literal">20</span><span>, </span><span class="identifier">offset</span><span> = </span><span class="number-literal">40</span><span>)
+</span><span class="comment">// → SELECT name, email FROM user LIMIT ? OFFSET ?
+</span><span>
+</span><span class="comment">// Specify limit only
+</span><span class="string-literal">sql&quot;SELECT name, email FROM user &quot;</span><span> ++ </span><span class="identifier">paginate</span><span>(</span><span class="identifier">limit</span><span> = </span><span class="number-literal">20</span><span>)
+</span><span class="comment">// → SELECT name, email FROM user LIMIT ?</span></code></pre>
+    <p>Example calculating offset from a page number:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">pageSize</span><span> = </span><span class="number-literal">20</span><span>
+</span><span class="keyword">val</span><span> </span><span class="identifier">page</span><span>     = </span><span class="number-literal">3</span><span>  </span><span class="comment">// 1-based
+</span><span>
+</span><span class="string-literal">sql&quot;SELECT name, email FROM user ORDER BY id &quot;</span><span> ++ </span><span class="identifier">paginate</span><span>(</span><span class="identifier">limit</span><span> = </span><span class="identifier">pageSize</span><span>, </span><span class="identifier">offset</span><span> = (</span><span class="identifier">page</span><span> - </span><span class="number-literal">1</span><span>) * </span><span class="identifier">pageSize</span><span>)</span></code></pre>
+    <blockquote><strong>Note</strong>: Passing a negative value for <code>limit</code> or <code>offset</code> throws an <code>IllegalArgumentException</code>.</blockquote>
     
     <h2 id="next-steps" class="section"><a class="anchor-link left" href="#next-steps"><i class="icofont-laika link">&#xef71;</i></a>Next Steps</h2>
     <p>Now you understand how to use parameterized queries. With the ability to handle parameters, you can build more complex and practical database queries.</p>

@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.6</a>
+      <a class="text-link menu-toggle" href="#">Version 0.7</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -214,18 +214,6 @@
     
     <h2 id="概要" class="section"><a class="anchor-link left" href="#概要"><i class="icofont-laika link">&#xef71;</i></a>概要</h2>
     <p>ldbc-connectorは、高性能で安全なデータベースコネクションプーリングを提供する、Cats Effect向けに設計されたライブラリです。JVMの伝統的なスレッドベースのプーリング（HikariCPなど）とは異なり、Cats Effectのファイバーベースの並行性モデルを最大限に活用した設計となっています。</p>
-    <div class="callout warning">
-      <i class="icofont-laika warning">&#xf026;</i>
-      <p><strong>Scala Native 0.4.x での制限事項</strong></p>
-      <p>現在のScala Native 0.4.xはシングルスレッド実行のみをサポートしています。ldbc-connectorのコネクションプーリング機能はマルチスレッド前提で設計されているため、Scala Native 0.4.xで使用する場合、以下のような問題が発生する可能性があります：</p>
-      <ul>
-        <li>並行接続の管理が正しく動作しない</li>
-        <li>バックグラウンドタスク（HouseKeeper、AdaptivePoolSizer等）が期待通りに実行されない</li>
-        <li>同時接続数が実質的に1に制限される</li>
-        <li>デッドロックや予期しない動作が発生する可能性がある</li>
-      </ul>
-      <p>Scala Native 0.5.xではマルチスレッドがサポートされる予定ですが、それまではScala Nativeでコネクションプーリングを使用することは推奨されません。代わりに、接続ごとに新しいコネクションを作成して使用することをお勧めします。</p>
-    </div>
     
     <h2 id="アーキテクチャ概要" class="section"><a class="anchor-link left" href="#アーキテクチャ概要"><i class="icofont-laika link">&#xef71;</i></a>アーキテクチャ概要</h2>
     <p><img src="../../img/pooling/ConnectionPoolWithCircuitBreaker.svg" alt="Connection Pool Architecture"></p>
