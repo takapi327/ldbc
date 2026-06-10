@@ -128,7 +128,7 @@ lazy val authenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativePlat
   .module("authentication-plugin", "MySQL authentication plugin written in pure Scala3")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-core"   % "2.12.0",
+      "org.typelevel" %%% "cats-core"   % "2.13.0",
       "org.scodec"    %%% "scodec-bits" % "1.2.4"
     )
   )
