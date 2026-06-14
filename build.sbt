@@ -129,7 +129,7 @@ lazy val authenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativePlat
   .settings(
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "cats-core"   % "2.13.0",
-      "org.scodec"    %%% "scodec-bits" % "1.2.4"
+      "org.scodec"    %%% "scodec-bits" % "1.2.5"
     )
   )
   .jsSettings(
@@ -146,7 +146,7 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     libraryDependencies ++= Seq(
       "co.fs2"        %%% "fs2-core"                            % "3.13.0",
       "co.fs2"        %%% "fs2-io"                              % "3.13.0",
-      "org.scodec"    %%% "scodec-bits"                         % "1.2.4",
+      "org.scodec"    %%% "scodec-bits"                         % "1.2.5",
       "org.scodec"    %%% "scodec-core"                         % "2.3.3",
       "org.scodec"    %%% "scodec-cats"                         % "1.3.0",
       "org.typelevel" %%% "otel4s-core-trace"                   % "0.16.0",
