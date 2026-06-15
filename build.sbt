@@ -307,7 +307,7 @@ lazy val benchmark = (project in file("benchmark"))
       "com.mysql"           % "mysql-connector-j" % "9.6.0",
       "org.tpolecat"       %% "doobie-core"       % "1.0.0-RC12",
       "com.typesafe.slick" %% "slick"             % "3.6.1",
-      "com.zaxxer"          % "HikariCP"          % "7.0.2"
+      "com.zaxxer"          % "HikariCP"          % "7.1.0"
     )
   )
   .dependsOn(jdbcConnector.jvm, connector.jvm, queryBuilder.jvm)
@@ -334,7 +334,7 @@ lazy val hikariCPExample = crossProject(JVMPlatform)
   .example("hikariCP", "HikariCP example project")
   .settings(
     libraryDependencies ++= Seq(
-      "com.zaxxer" % "HikariCP"          % "7.0.2",
+      "com.zaxxer" % "HikariCP"          % "7.1.0",
       "com.mysql"  % "mysql-connector-j" % "9.6.0"
     )
   )
