@@ -76,7 +76,7 @@ lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .module("dsl", "Projects that provide a way to connect to the database")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "twiddles-core"     % "0.9.1",
+      "org.typelevel" %%% "twiddles-core"     % "0.10.0",
       "co.fs2"        %%% "fs2-core"          % "3.13.0",
       "org.typelevel" %%% "munit-cats-effect" % "2.2.0" % Test
     )
@@ -164,7 +164,7 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
       "org.typelevel" %%% "otel4s-semconv-experimental"         % "1.0.0",
       "org.typelevel" %%% "otel4s-semconv-metrics"              % "1.0.0",
       "org.typelevel" %%% "otel4s-semconv-metrics-experimental" % "1.0.0",
-      "org.typelevel" %%% "twiddles-core"                       % "0.9.1",
+      "org.typelevel" %%% "twiddles-core"                       % "0.10.0",
       "org.typelevel" %%% "munit-cats-effect"                   % "2.2.0"  % Test,
       "org.typelevel" %%% "otel4s-sdk-testkit"                  % "0.19.0" % Test
     ),
