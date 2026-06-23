@@ -136,7 +136,15 @@ lazy val authenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativePlat
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
   )
   .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
-  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .nativeSettings(
+    Test / nativeBrewFormulas += "s2n",
+    // Workaround for https://github.com/takapi327/ldbc/issues/765:
+    // libcrypto (OpenSSL) creates threads during initialization that are not registered with
+    // Scala Native's Immix GC, causing SIGSEGV on startup. Since this module has no native
+    // test sources, skipping test execution has no functional impact.
+    // Remove once scala-native/scala-native#4951 is resolved.
+    Test / test := {}
+  )
 
 lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
