@@ -4,8 +4,9 @@
  *  please view the LICENSE file that was distributed with this source code.
  */
 
-import com.typesafe.tools.mima.core.*
 import scala.scalanative.build.*
+
+import com.typesafe.tools.mima.core.*
 import BuildSettings.*
 import Implicits.*
 import JavaVersions.*
@@ -23,8 +24,10 @@ ThisBuild / githubWorkflowJavaVersions := Seq(
   JavaSpec.corretto(java21),
   JavaSpec.corretto(java25)
 )
-ThisBuild / nativeConfig                 ~= { _.withGC(GC.boehm) }
-ThisBuild / githubWorkflowBuildPreamble ++= List(dockerRun) ++ nativeBrewInstallWorkflowSteps.value ++ List(installBoehmGC)
+ThisBuild / nativeConfig ~= { _.withGC(GC.boehm) }
+ThisBuild / githubWorkflowBuildPreamble ++= List(dockerRun) ++ nativeBrewInstallWorkflowSteps.value ++ List(
+  installBoehmGC
+)
 ThisBuild / nativeBrewInstallCond := Some("matrix.project == 'ldbcNative'")
 ThisBuild / githubWorkflowAddedJobs ++= Seq(sbtScripted.value, sbtCoverageReport.value)
 ThisBuild / githubWorkflowBuildPostamble += dockerStop
