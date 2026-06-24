@@ -5,6 +5,7 @@
  */
 
 import com.typesafe.tools.mima.core.*
+import scala.scalanative.build.*
 import BuildSettings.*
 import Implicits.*
 import JavaVersions.*
@@ -22,7 +23,8 @@ ThisBuild / githubWorkflowJavaVersions := Seq(
   JavaSpec.corretto(java21),
   JavaSpec.corretto(java25)
 )
-ThisBuild / githubWorkflowBuildPreamble ++= List(dockerRun) ++ nativeBrewInstallWorkflowSteps.value
+ThisBuild / nativeConfig                 ~= { _.withGC(GC.boehm) }
+ThisBuild / githubWorkflowBuildPreamble ++= List(dockerRun) ++ nativeBrewInstallWorkflowSteps.value ++ List(installBoehmGC)
 ThisBuild / nativeBrewInstallCond := Some("matrix.project == 'ldbcNative'")
 ThisBuild / githubWorkflowAddedJobs ++= Seq(sbtScripted.value, sbtCoverageReport.value)
 ThisBuild / githubWorkflowBuildPostamble += dockerStop
@@ -136,15 +138,7 @@ lazy val authenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativePlat
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
   )
   .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
-  .nativeSettings(
-    Test / nativeBrewFormulas += "s2n",
-    // Workaround for https://github.com/takapi327/ldbc/issues/765:
-    // libcrypto (OpenSSL) creates threads during initialization that are not registered with
-    // Scala Native's Immix GC, causing SIGSEGV on startup. Since this module has no native
-    // test sources, skipping test execution has no functional impact.
-    // Remove once scala-native/scala-native#4951 is resolved.
-    Test / test := {}
-  )
+  .nativeSettings(Test / nativeBrewFormulas += "s2n")
 
 lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
