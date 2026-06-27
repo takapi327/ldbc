@@ -22,6 +22,15 @@ ThisBuild / githubWorkflowJavaVersions := Seq(
   JavaSpec.corretto(java21),
   JavaSpec.corretto(java25)
 )
+// Run ldbcNative on ubuntu-24.04 (OpenSSL 3.0.13) to avoid the SIGSEGV caused by
+// ubuntu-22.04's OpenSSL 3.0.2-0ubuntu1.25 creating threads before Scala Native initializes.
+// See https://github.com/takapi327/ldbc/issues/765
+ThisBuild / githubWorkflowOSes := Seq("ubuntu-22.04", "ubuntu-24.04")
+ThisBuild / githubWorkflowBuildMatrixExclusions ++= Seq(
+  MatrixExclude(Map("os" -> "ubuntu-24.04", "project" -> "ldbcJVM")),
+  MatrixExclude(Map("os" -> "ubuntu-24.04", "project" -> "ldbcJS")),
+  MatrixExclude(Map("os" -> "ubuntu-22.04", "project" -> "ldbcNative"))
+)
 ThisBuild / githubWorkflowBuildPreamble ++= List(dockerRun) ++ nativeBrewInstallWorkflowSteps.value
 ThisBuild / nativeBrewInstallCond := Some("matrix.project == 'ldbcNative'")
 ThisBuild / githubWorkflowAddedJobs ++= Seq(sbtScripted.value, sbtCoverageReport.value)
@@ -136,12 +145,7 @@ lazy val authenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativePlat
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
   )
   .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
-  .nativeSettings(
-    Test / nativeBrewFormulas += "s2n",
-    // Prevent OpenSSL from auto-loading its config (which activates FIPS and creates threads)
-    // before the Scala Native runtime initializes, causing SIGSEGV. See https://github.com/takapi327/ldbc/issues/765
-    Test / envVars += "OPENSSL_NO_AUTOLOAD_CONFIG" -> "1"
-  )
+  .nativeSettings(Test / nativeBrewFormulas += "s2n")
 
 lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
@@ -177,12 +181,7 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
   )
   .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
-  .nativeSettings(
-    Test / nativeBrewFormulas += "s2n",
-    // Prevent OpenSSL from auto-loading its config (which activates FIPS and creates threads)
-    // before the Scala Native runtime initializes, causing SIGSEGV. See https://github.com/takapi327/ldbc/issues/765
-    Test / envVars += "OPENSSL_NO_AUTOLOAD_CONFIG" -> "1"
-  )
+  .nativeSettings(Test / nativeBrewFormulas += "s2n")
   .dependsOn(core, authenticationPlugin)
 
 lazy val awsAuthenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativePlatform)
@@ -200,12 +199,7 @@ lazy val awsAuthenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativeP
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
   )
   .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
-  .nativeSettings(
-    Test / nativeBrewFormulas += "s2n",
-    // Prevent OpenSSL from auto-loading its config (which activates FIPS and creates threads)
-    // before the Scala Native runtime initializes, causing SIGSEGV. See https://github.com/takapi327/ldbc/issues/765
-    Test / envVars += "OPENSSL_NO_AUTOLOAD_CONFIG" -> "1"
-  )
+  .nativeSettings(Test / nativeBrewFormulas += "s2n")
   .dependsOn(authenticationPlugin)
 
 lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
@@ -231,12 +225,7 @@ lazy val testkit = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
   )
   .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
-  .nativeSettings(
-    Test / nativeBrewFormulas += "s2n",
-    // Prevent OpenSSL from auto-loading its config (which activates FIPS and creates threads)
-    // before the Scala Native runtime initializes, causing SIGSEGV. See https://github.com/takapi327/ldbc/issues/765
-    Test / envVars += "OPENSSL_NO_AUTOLOAD_CONFIG" -> "1"
-  )
+  .nativeSettings(Test / nativeBrewFormulas += "s2n")
   .dependsOn(connector)
 
 lazy val testkitMunit = crossProject(JVMPlatform, JSPlatform, NativePlatform)
@@ -251,12 +240,7 @@ lazy val testkitMunit = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
   )
   .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
-  .nativeSettings(
-    Test / nativeBrewFormulas += "s2n",
-    // Prevent OpenSSL from auto-loading its config (which activates FIPS and creates threads)
-    // before the Scala Native runtime initializes, causing SIGSEGV. See https://github.com/takapi327/ldbc/issues/765
-    Test / envVars += "OPENSSL_NO_AUTOLOAD_CONFIG" -> "1"
-  )
+  .nativeSettings(Test / nativeBrewFormulas += "s2n")
   .dependsOn(testkit, dsl % Test)
 
 lazy val zioInterop = crossProject(JVMPlatform, JSPlatform)
@@ -307,12 +291,7 @@ lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     }
   )
   .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
-  .nativeSettings(
-    Test / nativeBrewFormulas += "s2n",
-    // Prevent OpenSSL from auto-loading its config (which activates FIPS and creates threads)
-    // before the Scala Native runtime initializes, causing SIGSEGV. See https://github.com/takapi327/ldbc/issues/765
-    Test / envVars += "OPENSSL_NO_AUTOLOAD_CONFIG" -> "1"
-  )
+  .nativeSettings(Test / nativeBrewFormulas += "s2n")
   .dependsOn(connector, queryBuilder, schema)
   .enablePlugins(NoPublishPlugin)
 
