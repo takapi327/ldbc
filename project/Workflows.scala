@@ -32,12 +32,6 @@ object Workflows {
     )
   )
 
-  val installBoehmGC: WorkflowStep.Run = WorkflowStep.Run(
-    commands = List("sudo apt-get install -y libgc-dev"),
-    name     = Some("Install Boehm GC library (ubuntu)"),
-    cond     = Some("(matrix.project == 'ldbcNative') && startsWith(matrix.os, 'ubuntu')")
-  )
-
   val dockerRun: WorkflowStep.Run = WorkflowStep.Run(
     commands = List("docker compose up -d"),
     name     = Some("Start up MySQL on Docker")
