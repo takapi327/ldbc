@@ -22,6 +22,15 @@ ThisBuild / githubWorkflowJavaVersions := Seq(
   JavaSpec.corretto(java21),
   JavaSpec.corretto(java25)
 )
+// Run ldbcNative on ubuntu-24.04 (OpenSSL 3.0.13) to avoid the SIGSEGV caused by
+// ubuntu-22.04's OpenSSL 3.0.2-0ubuntu1.25 creating threads before Scala Native initializes.
+// See https://github.com/takapi327/ldbc/issues/765
+ThisBuild / githubWorkflowOSes := Seq("ubuntu-22.04", "ubuntu-24.04")
+ThisBuild / githubWorkflowBuildMatrixExclusions ++= Seq(
+  MatrixExclude(Map("os" -> "ubuntu-24.04", "project" -> "ldbcJVM")),
+  MatrixExclude(Map("os" -> "ubuntu-24.04", "project" -> "ldbcJS")),
+  MatrixExclude(Map("os" -> "ubuntu-22.04", "project" -> "ldbcNative"))
+)
 ThisBuild / githubWorkflowBuildPreamble ++= List(dockerRun) ++ nativeBrewInstallWorkflowSteps.value
 ThisBuild / nativeBrewInstallCond := Some("matrix.project == 'ldbcNative'")
 ThisBuild / githubWorkflowAddedJobs ++= Seq(sbtScripted.value, sbtCoverageReport.value)
