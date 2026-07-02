@@ -322,7 +322,7 @@ lazy val http4sExample = crossProject(JVMPlatform)
       "org.http4s"    %% "http4s-dsl"          % "0.23.34",
       "org.http4s"    %% "http4s-ember-server" % "0.23.34",
       "org.http4s"    %% "http4s-circe"        % "0.23.34",
-      "ch.qos.logback" % "logback-classic"     % "1.5.34",
+      "ch.qos.logback" % "logback-classic"     % "1.5.37",
       "io.circe"      %% "circe-generic"       % "0.14.10"
     )
   )
