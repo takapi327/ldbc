@@ -108,14 +108,14 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.4.0",
-      "io.circe"               %%% "circe-core"               % "0.14.15",
-      "org.virtuslab"          %%% "scala-yaml"               % "0.3.1",
+      "io.circe"               %%% "circe-core"               % "0.14.16",
+      "org.virtuslab"          %%% "scala-yaml"               % "0.3.2",
       "org.typelevel"          %%% "munit-cats-effect"        % "2.2.0" % Test
     )
   )
   .jvmSettings(
     libraryDependencies ++= Seq(
-      "io.circe" %%% "circe-generic" % "0.14.15",
+      "io.circe" %%% "circe-generic" % "0.14.16",
       "io.circe" %%% "circe-yaml"    % "0.16.1"
     )
   )
@@ -322,7 +322,7 @@ lazy val http4sExample = crossProject(JVMPlatform)
       "org.http4s"    %% "http4s-dsl"          % "0.23.34",
       "org.http4s"    %% "http4s-ember-server" % "0.23.34",
       "org.http4s"    %% "http4s-circe"        % "0.23.34",
-      "ch.qos.logback" % "logback-classic"     % "1.5.34",
+      "ch.qos.logback" % "logback-classic"     % "1.5.37",
       "io.circe"      %% "circe-generic"       % "0.14.10"
     )
   )
@@ -366,7 +366,7 @@ lazy val zioExample = crossProject(JVMPlatform)
   .example("zio", "ZIO example project")
   .settings(
     libraryDependencies ++= Seq(
-      "dev.zio" %% "zio-http" % "3.11.2"
+      "dev.zio" %% "zio-http" % "3.11.3"
     )
   )
   .dependsOn(connector, dsl, zioInterop)
