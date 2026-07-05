@@ -48,7 +48,12 @@ ThisBuild / mimaBinaryIssueFilters ++= List(
   ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.connector.net.packet.response.ResultSetRowPacket.decoder"),
   ProblemFilters.exclude[DirectMissingMethodProblem](
     "ldbc.connector.net.packet.response.BinaryProtocolResultSetRowPacket.decodeValue"
-  )
+  ),
+  // New Statement methods introduced in line with MySQL Connector/J 9.7.0 (WL #17215)
+  ProblemFilters.exclude[ReversedMissingMethodProblem]("ldbc.sql.Statement.enquoteLiteral"),
+  ProblemFilters.exclude[ReversedMissingMethodProblem]("ldbc.sql.Statement.enquoteIdentifier"),
+  ProblemFilters.exclude[ReversedMissingMethodProblem]("ldbc.sql.Statement.enquoteNCharLiteral"),
+  ProblemFilters.exclude[ReversedMissingMethodProblem]("ldbc.sql.Statement.isSimpleIdentifier")
 )
 
 lazy val sql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
@@ -278,7 +283,7 @@ lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .defaultSettings
   .jvmSettings(
     Test / fork                       := true,
-    libraryDependencies += "com.mysql" % "mysql-connector-j" % "9.6.0" % Test
+    libraryDependencies += "com.mysql" % "mysql-connector-j" % "9.7.0" % Test
   )
   .jvmConfigure(_ dependsOn jdbcConnector.jvm)
   .jsSettings(
@@ -304,7 +309,7 @@ lazy val benchmark = (project in file("benchmark"))
   .settings(
     libraryDependencies ++= Seq(
       "org.scala-lang"     %% "scala3-compiler"   % scala3,
-      "com.mysql"           % "mysql-connector-j" % "9.6.0",
+      "com.mysql"           % "mysql-connector-j" % "9.7.0",
       "org.tpolecat"       %% "doobie-core"       % "1.0.0-RC12",
       "com.typesafe.slick" %% "slick"             % "3.6.1",
       "com.zaxxer"          % "HikariCP"          % "7.1.0"
@@ -335,7 +340,7 @@ lazy val hikariCPExample = crossProject(JVMPlatform)
   .settings(
     libraryDependencies ++= Seq(
       "com.zaxxer" % "HikariCP"          % "7.1.0",
-      "com.mysql"  % "mysql-connector-j" % "9.6.0"
+      "com.mysql"  % "mysql-connector-j" % "9.7.0"
     )
   )
   .dependsOn(jdbcConnector, dsl)
@@ -399,7 +404,7 @@ lazy val docs = (project in file("docs"))
     mdocVariables ++= Map(
       "ORGANIZATION"  -> organization.value,
       "SCALA_VERSION" -> scalaVersion.value,
-      "MYSQL_VERSION" -> "9.6.0"
+      "MYSQL_VERSION" -> "9.7.0"
     ),
     laikaTheme  := LaikaSettings.helium.value,
     laikaConfig := LaikaConfig.defaults.withRawContent,
