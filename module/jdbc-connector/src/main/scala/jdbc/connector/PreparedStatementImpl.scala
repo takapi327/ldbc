@@ -108,3 +108,15 @@ private[jdbc] open class PreparedStatementImpl[F[_]: Sync](statement: java.sql.P
 
   override def executeLargeBatch(): F[Array[Long]] =
     Sync[F].blocking(statement.executeLargeBatch())
+
+  override def enquoteLiteral(value: String): F[String] =
+    Sync[F].blocking(Enquoting.enquoteLiteral(statement, value))
+
+  override def enquoteIdentifier(identifier: String, alwaysQuote: Boolean): F[String] =
+    Sync[F].blocking(Enquoting.enquoteIdentifier(statement, identifier, alwaysQuote))
+
+  override def enquoteNCharLiteral(value: String): F[String] =
+    Sync[F].blocking(Enquoting.enquoteNCharLiteral(statement, value))
+
+  override def isSimpleIdentifier(identifier: String): F[Boolean] =
+    Sync[F].blocking(Enquoting.isSimpleIdentifier(statement, identifier))
