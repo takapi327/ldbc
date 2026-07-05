@@ -17,8 +17,8 @@ import com.mysql.cj.jdbc.MysqlDataSource
 import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
-import doobie.*
-import doobie.implicits.*
+import org.typelevel.doobie.*
+import org.typelevel.doobie.implicits.*
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
