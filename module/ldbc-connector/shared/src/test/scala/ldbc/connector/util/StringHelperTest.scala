@@ -51,7 +51,7 @@ class StringHelperTest extends FunSuite:
       asq <- bools
       bse <- bools
     do
-      val ctx           = s"ansiQuotes=$asq, backslashEscapes=$bse"
+      val ctx            = s"ansiQuotes=$asq, backslashEscapes=$bse"
       def enq(v: String) = StringHelper.enquoteLiteral(v, asq, bse)
       assertEquals(enq(""), "''", ctx)
       assertEquals(enq(" "), "' '", ctx)
@@ -67,7 +67,7 @@ class StringHelperTest extends FunSuite:
       asq <- bools
       bse <- bools
     do
-      val ctx           = s"ansiQuotes=$asq, backslashEscapes=$bse"
+      val ctx            = s"ansiQuotes=$asq, backslashEscapes=$bse"
       def enq(v: String) = StringHelper.enquoteLiteral(v, asq, bse)
       assertEquals(enq("'"), "''''", ctx)
       assertEquals(enq("\\'"), if bse then "'\\''" else "'\\'''", ctx)
@@ -105,7 +105,7 @@ class StringHelperTest extends FunSuite:
       asq <- bools
       bse <- bools
     do
-      val ctx           = s"ansiQuotes=$asq, backslashEscapes=$bse"
+      val ctx            = s"ansiQuotes=$asq, backslashEscapes=$bse"
       def enq(v: String) = StringHelper.enquoteLiteral(v, asq, bse)
       assertEquals(enq("\""), "'\"'", ctx)
       assertEquals(enq("\\\""), "'\\\"'", ctx)
@@ -182,7 +182,7 @@ class StringHelperTest extends FunSuite:
 
   test("enquoteNCharLiteral: raw values") {
     for bse <- bools do
-      val ctx           = s"backslashEscapes=$bse"
+      val ctx            = s"backslashEscapes=$bse"
       def enq(v: String) = StringHelper.enquoteNCharLiteral(v, bse)
       assertEquals(enq(""), "N''", ctx)
       assertEquals(enq(" "), "N' '", ctx)
@@ -200,7 +200,7 @@ class StringHelperTest extends FunSuite:
 
   test("enquoteNCharLiteral: values already in N'...' form") {
     for bse <- bools do
-      val ctx           = s"backslashEscapes=$bse"
+      val ctx            = s"backslashEscapes=$bse"
       def enq(v: String) = StringHelper.enquoteNCharLiteral(v, bse)
       assertEquals(enq("N'abc'"), "N'abc'", ctx)
       assertEquals(enq("n'abc'"), "N'abc'", ctx)
@@ -214,7 +214,7 @@ class StringHelperTest extends FunSuite:
 
   test("enquoteNCharLiteral: double quotes are never valid NCHAR literal delimiters") {
     for bse <- bools do
-      val ctx           = s"backslashEscapes=$bse"
+      val ctx            = s"backslashEscapes=$bse"
       def enq(v: String) = StringHelper.enquoteNCharLiteral(v, bse)
       assertEquals(enq("\""), "N'\"'", ctx)
       assertEquals(enq("\\\""), "N'\\\"'", ctx)
