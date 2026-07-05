@@ -59,6 +59,44 @@ trait ConnectionTest extends CatsEffectSuite:
     assertIOBoolean(datasource().getConnection.use(_.isValid(0)))
   }
 
+  test("Statement.enquoteLiteral quotes a string literal and doubles single quotes.") {
+    assertIO(
+      datasource().getConnection.use(_.createStatement().flatMap { stmt =>
+        for
+          simple <- stmt.enquoteLiteral("abc")
+          quoted <- stmt.enquoteLiteral("G'Day")
+        yield (simple, quoted)
+      }),
+      ("'abc'", "'G''Day'")
+    )
+  }
+
+  test("Statement.enquoteIdentifier returns a simple identifier unquoted.") {
+    assertIO(
+      datasource().getConnection.use(_.createStatement().flatMap(_.enquoteIdentifier("abc", false))),
+      "abc"
+    )
+  }
+
+  test("Statement.enquoteNCharLiteral prefixes the quoted value with N.") {
+    assertIO(
+      datasource().getConnection.use(_.createStatement().flatMap(_.enquoteNCharLiteral("G'Day"))),
+      "N'G''Day'"
+    )
+  }
+
+  test("Statement.isSimpleIdentifier distinguishes simple identifiers.") {
+    assertIO(
+      datasource().getConnection.use(_.createStatement().flatMap { stmt =>
+        for
+          simple    <- stmt.isSimpleIdentifier("abc")
+          notSimple <- stmt.isSimpleIdentifier("ab cd")
+        yield (simple, notSimple)
+      }),
+      (true, false)
+    )
+  }
+
   test("The allProceduresAreCallable method of DatabaseMetaData is always false.") {
     assertIOBoolean(datasource().getConnection.use(_.getMetaData().map(meta => !meta.allProceduresAreCallable())))
   }
@@ -125,7 +163,7 @@ trait ConnectionTest extends CatsEffectSuite:
   test("The Driver version retrieved from DatabaseMetaData matches the specified value.") {
     assertIO(
       datasource().getConnection.use(_.getMetaData().map(_.getDriverVersion())),
-      if prefix == "jdbc" then "mysql-connector-j-9.6.0 (Revision: fdef61f4af21fa9e0ac334ff0664ec754c164cc0)"
+      if prefix == "jdbc" then "mysql-connector-j-9.7.0 (Revision: 0aade1f13bcc98faf7dda5c02e782481eb291f62)"
       else "ldbc-connector-0.7.0"
     )
   }
