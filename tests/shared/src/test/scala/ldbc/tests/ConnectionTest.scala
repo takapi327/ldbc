@@ -164,7 +164,7 @@ trait ConnectionTest extends CatsEffectSuite:
     assertIO(
       datasource().getConnection.use(_.getMetaData().map(_.getDriverVersion())),
       if prefix == "jdbc" then "mysql-connector-j-9.7.0 (Revision: 0aade1f13bcc98faf7dda5c02e782481eb291f62)"
-      else "ldbc-connector-0.7.0"
+      else "ldbc-connector-0.8.0"
     )
   }
 
