@@ -511,6 +511,22 @@ object MySQLConfig:
     maxAllowedPacket:        Int                                   = DEFAULT_PACKET_SIZE
   ) extends MySQLConfig:
 
+    /**
+     * Returns a string representation of this configuration without exposing sensitive information.
+     *
+     * The password is intentionally redacted (rendered as `***` when set) so that it is never
+     * leaked through logs, exception messages, or crash reports. Non-sensitive settings useful
+     * for debugging are retained.
+     *
+     * @return a secure string representation of the configuration
+     */
+    override def toString: String =
+      s"MySQLConfig(host=$host, port=$port, user=$user, password=${ password.fold("None")(_ => "***") }, " +
+        s"database=$database, debug=$debug, ssl=$ssl, allowPublicKeyRetrieval=$allowPublicKeyRetrieval, " +
+        s"useCursorFetch=$useCursorFetch, useServerPrepStmts=$useServerPrepStmts, " +
+        s"minConnections=$minConnections, maxConnections=$maxConnections, poolName=$poolName, " +
+        s"maxAllowedPacket=$maxAllowedPacket)"
+
     override def setHost(host:                   String):             MySQLConfig = copy(host = host)
     override def setPort(port:                   Int):                MySQLConfig = copy(port = port)
     override def setUser(user:                   String):             MySQLConfig = copy(user = user)

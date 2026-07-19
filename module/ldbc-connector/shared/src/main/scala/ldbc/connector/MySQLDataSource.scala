@@ -101,6 +101,20 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
   after:                       Option[(A, Connection[F]) => F[Unit]] = None
 ) extends DataSource[F]:
 
+  /**
+   * Returns a string representation of this DataSource without exposing sensitive information.
+   *
+   * The password is intentionally redacted (rendered as `***` when set) so that it is never
+   * leaked through logs, exception messages, or crash reports. Non-sensitive connection settings
+   * useful for debugging are retained.
+   *
+   * @return a secure string representation of the DataSource
+   */
+  override def toString: String =
+    s"MySQLDataSource(host=$host, port=$port, user=$user, password=${ password.fold("None")(_ => "***") }, " +
+      s"database=$database, debug=$debug, ssl=$ssl, allowPublicKeyRetrieval=$allowPublicKeyRetrieval, " +
+      s"useCursorFetch=$useCursorFetch, useServerPrepStmts=$useServerPrepStmts, maxAllowedPacket=$maxAllowedPacket)"
+
   /** The OpenTelemetry tracer used for distributed tracing. Falls back to a no-op tracer if none is provided. */
   given Tracer[F] = tracer.getOrElse(Tracer.noop[F])
 
