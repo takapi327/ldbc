@@ -31,4 +31,22 @@ final case class AwsBasicCredentials(
   providerName:        Option[String],
   accountId:           Option[String],
   expirationTime:      Option[Instant]
-) extends AwsCredentials
+) extends AwsCredentials:
+
+  /**
+   * Returns a string representation of these credentials without exposing sensitive information.
+   *
+   * The secret access key is intentionally omitted from the string representation for security.
+   * Only the access key ID, provider name, and account ID are included.
+   *
+   * @return A secure string representation of the credentials
+   */
+  override def toString: String =
+    val builder = new StringBuilder()
+    builder.append("AwsBasicCredentials(")
+    builder.append(s"accessKeyId=$accessKeyId")
+    providerName.foreach(v => builder.append(s", providerName=$v"))
+    accountId.foreach(v => builder.append(s", accountId=$v"))
+    builder.append(")")
+
+    builder.result()
