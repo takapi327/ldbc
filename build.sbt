@@ -322,7 +322,7 @@ lazy val http4sExample = crossProject(JVMPlatform)
       "org.http4s"    %% "http4s-dsl"          % "0.23.36",
       "org.http4s"    %% "http4s-ember-server" % "0.23.36",
       "org.http4s"    %% "http4s-circe"        % "0.23.36",
-      "ch.qos.logback" % "logback-classic"     % "1.5.37",
+      "ch.qos.logback" % "logback-classic"     % "1.5.38",
       "io.circe"      %% "circe-generic"       % "0.14.10"
     )
   )
@@ -347,8 +347,8 @@ lazy val otelExample = crossProject(JVMPlatform)
   .settings(
     libraryDependencies ++= Seq(
       "org.typelevel"   %% "otel4s-oteljava"                           % "1.0.1",
-      "io.opentelemetry" % "opentelemetry-exporter-otlp"               % "1.63.0" % Runtime,
-      "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.63.0" % Runtime
+      "io.opentelemetry" % "opentelemetry-exporter-otlp"               % "1.64.0" % Runtime,
+      "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.64.0" % Runtime
     )
   )
   .settings(
