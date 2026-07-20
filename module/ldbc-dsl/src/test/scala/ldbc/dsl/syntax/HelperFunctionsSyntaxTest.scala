@@ -42,9 +42,9 @@ class HelperFunctionsSyntaxTest extends CatsEffectSuite with HelperFunctionsSynt
     assertEquals(query.params.size, 1)
   }
 
-  test("ident function should escape backtick characters") {
+  test("ident function should escape backtick characters by doubling them") {
     val col = ident("bad`name")
-    assertEquals(col, Parameter.Static("`bad\\`name`"))
+    assertEquals(col, Parameter.Static("`bad``name`"))
   }
 
   test("ident function should remove NULL characters") {

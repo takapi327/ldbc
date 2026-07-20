@@ -31,7 +31,8 @@ trait HelperFunctionsSyntax extends StringContextSyntax:
 
   /**
    * Function for safely embedding a SQL identifier (table name, column name, etc.) by escaping it
-   * with backticks. Backtick characters in the name are escaped, and NULL characters are removed.
+   * with backticks. Backtick characters in the name are escaped by doubling them (the only correct
+   * escaping inside a MySQL backtick-quoted identifier), and NULL characters are removed.
    * Safe to use with user input, unlike [[sc]].
    * {{{
    *   sql"SELECT * FROM ${ident("users")}"
@@ -42,7 +43,7 @@ trait HelperFunctionsSyntax extends StringContextSyntax:
    * }}}
    */
   def ident(name: String): ldbc.dsl.Parameter.Static =
-    val escaped = name.filter(_ != '\u0000').replace("`", "\\`")
+    val escaped = name.filter(_ != '\u0000').replace("`", "``")
     ldbc.dsl.Parameter.Static(s"`$escaped`")
 
   // The following helper functions for building SQL models are rewritten from doobie fragments for ldbc SQL models.
