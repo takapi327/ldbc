@@ -24,7 +24,10 @@ trait StringContextSyntax:
       // If it is Static, the value is replaced with the ? If it is a Parameter.Binder, it is replaced with ? and create a list of Parameter.Binders.
       val (expressions, parameters) = args.foldLeft((query, List.empty[ldbc.dsl.Parameter.Dynamic])) {
         case ((query, parameters), s: ldbc.dsl.Parameter.Static) =>
-          (query.replaceFirst("\\?", s.toString), parameters)
+          // quoteReplacement so that backslashes / dollar signs in the static value (e.g. an escaped
+          // identifier from `ident`) are inserted verbatim instead of being treated as regex
+          // replacement metacharacters.
+          (query.replaceFirst("\\?", java.util.regex.Matcher.quoteReplacement(s.toString)), parameters)
         case ((query, parameters), p: ldbc.dsl.Parameter.Dynamic) =>
           (query, parameters :+ p)
         case ((query, parameters), _) =>
