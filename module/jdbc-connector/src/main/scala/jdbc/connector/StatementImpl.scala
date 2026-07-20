@@ -61,3 +61,46 @@ private[jdbc] case class StatementImpl[F[_]: Sync](statement: java.sql.Statement
 
   override def executeLargeBatch(): F[Array[Long]] =
     Sync[F].blocking(statement.executeLargeBatch())
+
+  override def enquoteLiteral(value: String): F[String] =
+    Sync[F].blocking(Enquoting.enquoteLiteral(statement, value))
+
+  override def enquoteIdentifier(identifier: String, alwaysQuote: Boolean): F[String] =
+    Sync[F].blocking(Enquoting.enquoteIdentifier(statement, identifier, alwaysQuote))
+
+  override def enquoteNCharLiteral(value: String): F[String] =
+    Sync[F].blocking(Enquoting.enquoteNCharLiteral(statement, value))
+
+  override def isSimpleIdentifier(identifier: String): F[Boolean] =
+    Sync[F].blocking(Enquoting.isSimpleIdentifier(statement, identifier))
+
+/**
+ * `java.sql.Statement` gained the enquote methods in Java 9 (JDBC 4.3), while this module is
+ * compiled against the Java 8 API, so they must be invoked reflectively through the
+ * `java.sql.Statement` interface.
+ */
+private[connector] object Enquoting:
+
+  private def method(name: String, parameterTypes: Class[?]*): java.lang.reflect.Method =
+    classOf[java.sql.Statement].getMethod(name, parameterTypes*)
+
+  private lazy val enquoteLiteralMethod      = method("enquoteLiteral", classOf[String])
+  private lazy val enquoteIdentifierMethod   = method("enquoteIdentifier", classOf[String], java.lang.Boolean.TYPE)
+  private lazy val enquoteNCharLiteralMethod = method("enquoteNCharLiteral", classOf[String])
+  private lazy val isSimpleIdentifierMethod  = method("isSimpleIdentifier", classOf[String])
+
+  private def invoke[A](statement: java.sql.Statement, method: java.lang.reflect.Method, args: AnyRef*): A =
+    try method.invoke(statement, args*).asInstanceOf[A]
+    catch case e: java.lang.reflect.InvocationTargetException => throw e.getCause
+
+  def enquoteLiteral(statement: java.sql.Statement, value: String): String =
+    invoke[String](statement, enquoteLiteralMethod, value)
+
+  def enquoteIdentifier(statement: java.sql.Statement, identifier: String, alwaysQuote: Boolean): String =
+    invoke[String](statement, enquoteIdentifierMethod, identifier, java.lang.Boolean.valueOf(alwaysQuote))
+
+  def enquoteNCharLiteral(statement: java.sql.Statement, value: String): String =
+    invoke[String](statement, enquoteNCharLiteralMethod, value)
+
+  def isSimpleIdentifier(statement: java.sql.Statement, identifier: String): Boolean =
+    invoke[java.lang.Boolean](statement, isSimpleIdentifierMethod, identifier).booleanValue()
