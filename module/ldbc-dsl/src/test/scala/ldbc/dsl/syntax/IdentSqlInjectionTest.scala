@@ -32,8 +32,8 @@ class IdentSqlInjectionTest extends CatsEffectSuite with HelperFunctionsSyntax:
    */
   private def parseBacktickIdentifier(sql: String, start: Int): (String, Int) =
     require(sql.charAt(start) == '`', "expected opening backtick")
-    val sb = new StringBuilder
-    var i  = start + 1
+    val sb     = new StringBuilder
+    var i      = start + 1
     var closed = false
     while i < sql.length && !closed do
       sql.charAt(i) match
