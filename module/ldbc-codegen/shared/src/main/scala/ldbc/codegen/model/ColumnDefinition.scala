@@ -19,7 +19,8 @@ case class ColumnDefinition(
 
   val _attributes: String = attributes.fold("")(attributes =>
     val result = attributes.flatMap {
-      case attribute: CommentSet                              => Some(s"COMMENT(\"${ attribute.message }\")")
+      case attribute: CommentSet =>
+        Some(s"COMMENT(\"${ ScalaCode.escapeString(attribute.message) }\")")
       case attribute: ColumnDefinition.Attribute.Key          => Some(s"${ attribute.kind }")
       case attribute: ColumnDefinition.Attribute.Visible      => Some(s"${ attribute.kind }")
       case attribute: ColumnDefinition.Attribute.Collate      => Some(s"Collate.${ attribute.set }")
@@ -64,7 +65,7 @@ object ColumnDefinition:
        */
       case class Value(value: String | Int | Double | Boolean) extends Default:
         private val str = value match
-          case v: String => s"\"$v\""
+          case v: String => s"\"${ ScalaCode.escapeString(v) }\""
           case v         => v
 
         override def toCode(isOptional: Boolean): String =

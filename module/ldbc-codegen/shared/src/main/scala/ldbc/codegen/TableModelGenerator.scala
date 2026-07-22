@@ -147,7 +147,7 @@ private[ldbc] object TableModelGenerator:
       case ScalaType.Enum(types) =>
         val enumName = formatter.format(column.name)
         Some(s"""enum $enumName:
-           |    case ${ types.mkString(", ") }
+           |    case ${ types.map(ScalaCode.enumMember).mkString(", ") }
            |  object $enumName:
            |    given ldbc.dsl.codec.Codec[$enumName] = ldbc.dsl.codec.Codec.derivedEnum[$enumName]
            |""".stripMargin)
