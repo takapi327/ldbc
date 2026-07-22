@@ -19,7 +19,7 @@ case class ColumnDefinition(
 
   val _attributes: String = attributes.fold("")(attributes =>
     val result = attributes.flatMap {
-      case attribute: CommentSet                              =>
+      case attribute: CommentSet =>
         Some(s"COMMENT(\"${ ScalaCode.escapeString(attribute.message) }\")")
       case attribute: ColumnDefinition.Attribute.Key          => Some(s"${ attribute.kind }")
       case attribute: ColumnDefinition.Attribute.Visible      => Some(s"${ attribute.kind }")
