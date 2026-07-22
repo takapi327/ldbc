@@ -104,11 +104,11 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                                  currentResultSet.update(_ => Some(resultSet)) *> resultSet.pure[F]
                            } <* retrieveOutParams()
                          else
-                           params.get.flatMap { params =>
+                           (params.get, protocol.noBackslashEscapes).flatMapN { (params, noBackslashEscapes) =>
                              protocol.resetSequenceId *>
                                protocol.send(
                                  ComQueryPacket(
-                                   buildQuery(sql, params),
+                                   QueryRenderer.build(sql, params, noBackslashEscapes),
                                    protocol.initialPacket.capabilityFlags,
                                    ListMap.empty
                                  )
@@ -166,8 +166,8 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                     currentResultSet.update(_ => Some(resultSet)) *> resultSet.pure[F]
               } *> retrieveOutParams() *> F.pure(-1L)
             else
-              params.get.flatMap { params =>
-                sendQuery(buildQuery(sql, params)).flatMap {
+              (params.get, protocol.noBackslashEscapes).flatMapN { (params, noBackslashEscapes) =>
+                sendQuery(QueryRenderer.build(sql, params, noBackslashEscapes)).flatMap {
                   case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
                   case error: ERRPacket =>
                     val exception = error.toException(Some(sql), None)
@@ -208,15 +208,15 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
               F.pure(results.nonEmpty)
           } <* retrieveOutParams()
         else
-          params.get
-            .flatMap { params =>
+          (params.get, protocol.noBackslashEscapes)
+            .flatMapN { (params, noBackslashEscapes) =>
               val processedSql    = telemetryConfig.processQueryText(sql)
               val queryAttributes = baseAttributes ++ List(
                 DbAttributes.DbQueryText(processedSql)
               )
 
               span.addAttributes(queryAttributes*) *>
-                sendQuery(buildQuery(sql, params)).flatMap {
+                sendQuery(QueryRenderer.build(sql, params, noBackslashEscapes)).flatMap {
                   case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
                   case error: ERRPacket =>
                     val exception = error.toException(Some(sql), None)
@@ -254,8 +254,8 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
             setInOutParamsOnServer(paramInfo) *> setOutParams()
           case _ => F.unit
       ) *>
-      params.get.flatMap { params =>
-        batchedArgs.update(_ :+ buildBatchQuery(sql, params))
+      (params.get, protocol.noBackslashEscapes).flatMapN { (params, noBackslashEscapes) =>
+        batchedArgs.update(_ :+ QueryRenderer.buildBatch(sql, params, noBackslashEscapes))
       } *>
       params.set(SortedMap.empty)
 
@@ -367,8 +367,9 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
               queryBuf.append(inOutParameterName)
               queryBuf.append("=")
 
-              params.get.flatMap { params =>
-                val sql = queryBuf.toString ++ params.get(param.index).fold("NULL")(_.sql)
+              (params.get, protocol.noBackslashEscapes).flatMapN { (params, noBackslashEscapes) =>
+                val sql = queryBuf.toString ++
+                  params.get(param.index).fold("NULL")(QueryRenderer.render(_, noBackslashEscapes))
                 sendQuery(sql).flatMap {
                   case _: OKPacket      => F.unit
                   case error: ERRPacket => F.raiseError(error.toException(Some(sql), None))
@@ -726,8 +727,9 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
           queryBuf.append(inOutParameterName)
           queryBuf.append("=")
 
-          acc *> params.get.flatMap { params =>
-            val sql = queryBuf.toString ++ params.get(param.index).fold("NULL")(_.sql)
+          acc *> (params.get, protocol.noBackslashEscapes).flatMapN { (params, noBackslashEscapes) =>
+            val sql = queryBuf.toString ++
+              params.get(param.index).fold("NULL")(QueryRenderer.render(_, noBackslashEscapes))
             sendQuery(sql).flatMap {
               case _: OKPacket      => F.unit
               case error: ERRPacket => F.raiseError(error.toException(Some(sql), None))
@@ -846,7 +848,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
   private def executeCallStatement(span: Span[F]): F[Vector[ResultSetImpl[F]]] =
     setInOutParamsOnServer(paramInfo) *>
       setOutParams() *>
-      params.get.flatMap { params =>
+      (params.get, protocol.noBackslashEscapes).flatMapN { (params, noBackslashEscapes) =>
         val processedSql    = telemetryConfig.processQueryText(sql)
         val queryAttributes = baseAttributes ++ List(
           DbAttributes.DbQueryText(processedSql)
@@ -855,7 +857,11 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
         span.addAttributes(queryAttributes*) *>
           protocol.resetSequenceId *>
           protocol.send(
-            ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)
+            ComQueryPacket(
+              QueryRenderer.build(sql, params, noBackslashEscapes),
+              protocol.initialPacket.capabilityFlags,
+              ListMap.empty
+            )
           ) *>
           receiveUntilOkPacket(Vector.empty)
       }
