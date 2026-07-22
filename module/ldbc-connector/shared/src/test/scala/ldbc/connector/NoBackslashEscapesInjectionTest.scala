@@ -48,7 +48,7 @@ class NoBackslashEscapesInjectionTest extends FTestPlatform:
       for
         setStmt <- conn.createStatement()
         _       <- setStmt.executeUpdate("SET SESSION sql_mode = 'NO_BACKSLASH_ESCAPES'")
-        ps <- conn.clientPreparedStatement(
+        ps      <- conn.clientPreparedStatement(
                 "SELECT cnt FROM (SELECT 1 AS cnt, 'admin' AS name) t WHERE t.name = ?"
               )
         rs   <- ps.setString(1, payload) *> ps.executeQuery()

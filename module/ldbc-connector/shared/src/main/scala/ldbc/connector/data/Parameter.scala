@@ -104,7 +104,7 @@ object Parameter:
 
   private[ldbc] final case class BigIntParameter(value: BigInt) extends Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_STRING
-    override def encode: BitVector =
+    override def encode:         BitVector      =
       val bytes = value.toString.getBytes
       BitVector(bytes.length) |+| BitVector(copyOf(bytes, bytes.length))
     override def toString: String = value.toString
@@ -121,14 +121,14 @@ object Parameter:
 
   private[ldbc] final case class BigDecimalParameter(value: BigDecimal) extends Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_NEWDECIMAL
-    override def encode: BitVector =
+    override def encode:         BitVector      =
       val bytes = value.toString.getBytes
       BitVector(bytes.length) |+| BitVector(copyOf(bytes, bytes.length))
     override def toString: String = value.toString
 
   private[ldbc] final case class StringParameter(value: String) extends Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_STRING
-    override def encode: BitVector =
+    override def encode:         BitVector      =
       val bytes = value.getBytes
       BitVector(bytes.length) |+| BitVector(copyOf(bytes, bytes.length))
     override def toString: String = s"'$value'"
@@ -173,7 +173,7 @@ object Parameter:
   private[ldbc] final case class DateParameter(value: LocalDate) extends Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_DATE
     override def toString:       String         = "'" + localDateFormatter.format(value) + "'"
-    override def encode: BitVector =
+    override def encode:         BitVector      =
       val year  = value.getYear
       val month = value.getMonthValue
       val day   = value.getDayOfMonth
@@ -237,7 +237,7 @@ object Parameter:
 
   private[ldbc] final case class RawParameter(value: String) extends Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_STRING
-    override def encode: BitVector =
+    override def encode:         BitVector      =
       val bytes = value.getBytes
       BitVector(bytes.length) |+| BitVector(copyOf(bytes, bytes.length))
     override def toString: String = value
