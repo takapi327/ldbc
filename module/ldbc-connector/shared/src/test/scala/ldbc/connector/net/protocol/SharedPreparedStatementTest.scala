@@ -362,6 +362,56 @@ class SharedPreparedStatementTest extends SharedPreparedStatement[IO], FTestPlat
     IO(assertEquals(QueryRenderer.render(Parameter.string(input), noBackslashEscapes = false), expected))
   }
 
+  test("enquoteLiteral should quote a value and double single quotes") {
+    for
+      simple <- enquoteLiteral("abc")
+      quote  <- enquoteLiteral("G'Day")
+      nul    <- enquoteLiteral(null)
+    yield
+      assertEquals(simple, "'abc'")
+      assertEquals(quote, "'G''Day'")
+      assertEquals(nul, "NULL")
+  }
+
+  test("enquoteIdentifier should return simple identifiers unquoted unless alwaysQuote is set") {
+    for
+      plain    <- enquoteIdentifier("abc", false)
+      quoted   <- enquoteIdentifier("abc", true)
+      spaced   <- enquoteIdentifier("ab cd", false)
+      reserved <- enquoteIdentifier("SELECT", false)
+    yield
+      assertEquals(plain, "abc")
+      assertEquals(quoted, "`abc`")
+      assertEquals(spaced, "`ab cd`")
+      assertEquals(reserved, "`SELECT`")
+  }
+
+  test("enquoteIdentifier should fail for a null identifier") {
+    interceptIO[SQLException](enquoteIdentifier(null, false))
+  }
+
+  test("enquoteNCharLiteral should prefix the quoted value with N") {
+    for
+      simple <- enquoteNCharLiteral("abc")
+      quote  <- enquoteNCharLiteral("G'Day")
+      nul    <- enquoteNCharLiteral(null)
+    yield
+      assertEquals(simple, "N'abc'")
+      assertEquals(quote, "N'G''Day'")
+      assertEquals(nul, "NULL")
+  }
+
+  test("isSimpleIdentifier should identify simple identifiers") {
+    for
+      simple   <- isSimpleIdentifier("abc")
+      spaced   <- isSimpleIdentifier("ab cd")
+      reserved <- isSimpleIdentifier("SELECT")
+    yield
+      assert(simple)
+      assert(!spaced)
+      assert(!reserved)
+  }
+
   override def executeQuery(): IO[ResultSet[IO]] =
     IO.raiseError(new UnsupportedOperationException("Not implemented for test"))
 

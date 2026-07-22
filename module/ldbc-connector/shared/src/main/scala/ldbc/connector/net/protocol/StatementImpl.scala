@@ -26,6 +26,7 @@ import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.Protocol
 import ldbc.connector.telemetry.*
+import ldbc.connector.util.StringHelper
 import ldbc.connector.ResultSetImpl
 
 private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer: Sync](
@@ -431,6 +432,30 @@ object StatementImpl:
     override def setFetchSize(rows: Int): F[Unit] = fetchSize.set(rows)
 
     override def getFetchSize(): F[Int] = fetchSize.get
+
+    override def enquoteLiteral(value: String): F[String] =
+      if value == null then F.pure("NULL")
+      else F.pure(StringHelper.enquoteLiteral(value, ansiQuotesEnabled, backslashEscapesEnabled))
+
+    override def enquoteIdentifier(identifier: String, alwaysQuote: Boolean): F[String] =
+      if identifier == null then F.raiseError(new SQLException("Value 'null' is not a valid identifier."))
+      else if StringHelper.isSimpleIdentifier(identifier) then
+        val quoteChar = if ansiQuotesEnabled then '"' else '`'
+        F.pure(if alwaysQuote then s"$quoteChar$identifier$quoteChar" else identifier)
+      else F.pure(StringHelper.enquoteIdentifier(identifier, ansiQuotesEnabled))
+
+    override def enquoteNCharLiteral(value: String): F[String] =
+      if value == null then F.pure("NULL")
+      else F.pure(StringHelper.enquoteNCharLiteral(value, backslashEscapesEnabled))
+
+    override def isSimpleIdentifier(identifier: String): F[Boolean] =
+      F.pure(StringHelper.isSimpleIdentifier(identifier))
+
+    private def sqlMode: String = serverVariables.getOrElse("sql_mode", "")
+
+    private def ansiQuotesEnabled: Boolean = sqlMode.contains("ANSI_QUOTES")
+
+    private def backslashEscapesEnabled: Boolean = !sqlMode.contains("NO_BACKSLASH_ESCAPES")
 
     protected def checkClosed(): F[Unit] =
       isClosed().ifM(
