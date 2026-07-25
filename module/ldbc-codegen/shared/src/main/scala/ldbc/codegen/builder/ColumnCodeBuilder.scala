@@ -54,9 +54,10 @@ case class ColumnCodeBuilder(formatter: Naming):
           case ScalaType.Enum(_) =>
             default match
               case ColumnDefinition.Attribute.Default.Value(value) =>
-                val name = formatter.format(column.name)
-                if column.isOptional then s".DEFAULT(Some($name.$value))"
-                else s".DEFAULT($name.$value)"
+                val name   = formatter.format(column.name)
+                val member = ScalaCode.enumMember(value.toString)
+                if column.isOptional then s".DEFAULT(Some($name.$member))"
+                else s".DEFAULT($name.$member)"
               case _ => default.toCode(column.isOptional)
           case _ => default.toCode(column.isOptional)
       )
