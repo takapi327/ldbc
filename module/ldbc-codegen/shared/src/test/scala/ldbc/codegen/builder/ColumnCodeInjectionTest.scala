@@ -26,7 +26,6 @@ class ColumnCodeInjectionTest extends CatsEffectSuite:
   test("COMMENT must escape the message into a valid Scala string literal") {
     val column = ColumnDefinition("c1", DataType.VARCHAR(255, None, None), Some(List(CommentSet("a\"); evil(); (\""))))
     val code   = builder.build(column, None)
-    // The quote must be escaped so the message stays inside the COMMENT("...") string literal.
     assert(code.contains("COMMENT(\"a\\\"); evil(); (\\\"\")"), code)
     assert(!code.contains("COMMENT(\"a\"); evil"), code)
   }
