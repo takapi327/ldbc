@@ -6,8 +6,8 @@
 
 package ldbc.connector.net
 
-import scodec.Decoder
 import scodec.bits.ByteVector
+import scodec.Decoder
 
 import cats.effect.*
 
@@ -17,15 +17,15 @@ import org.typelevel.otel4s.trace.Tracer
 
 import munit.CatsEffectSuite
 
-import ldbc.authentication.plugin.MysqlClearPasswordPlugin
-
 import ldbc.connector.authenticator.MysqlNativePasswordPlugin
 import ldbc.connector.data.{ CapabilitiesFlags, ServerStatusFlags }
-import ldbc.connector.util.Version
 import ldbc.connector.net.packet.{ RequestPacket, ResponsePacket }
 import ldbc.connector.net.packet.request.AuthSwitchResponsePacket
 import ldbc.connector.net.packet.response.{ AuthSwitchRequestPacket, InitialPacket, OKPacket }
 import ldbc.connector.net.protocol.Exchange
+import ldbc.connector.util.Version
+
+import ldbc.authentication.plugin.MysqlClearPasswordPlugin
 
 /**
  * Verification test for the security finding: the confidentiality guard is applied only on the
@@ -48,13 +48,15 @@ class AuthDowngradeTest extends CatsEffectSuite:
     toReceive: Ref[IO, List[ResponsePacket]]
   ) extends PacketSocket[IO]:
     override def receive[P <: ResponsePacket](decoder: Decoder[P]): IO[P] =
-      toReceive.modify {
-        case head :: tail => (tail, Some(head))
-        case Nil          => (Nil, None)
-      }.flatMap {
-        case Some(packet) => IO.pure(packet.asInstanceOf[P])
-        case None         => IO.raiseError(new RuntimeException("scripted socket exhausted"))
-      }
+      toReceive
+        .modify {
+          case head :: tail => (tail, Some(head))
+          case Nil          => (Nil, None)
+        }
+        .flatMap {
+          case Some(packet) => IO.pure(packet.asInstanceOf[P])
+          case None         => IO.raiseError(new RuntimeException("scripted socket exhausted"))
+        }
     override def send(request: RequestPacket): IO[Unit] = sent.update(_ :+ request)
 
   private val initialPacket = InitialPacket(
@@ -92,7 +94,7 @@ class AuthDowngradeTest extends CatsEffectSuite:
                    capabilityFlags             = Set.empty[CapabilitiesFlags],
                    sequenceIdRef               = null,
                    defaultAuthenticationPlugin = None,
-                   plugins = Map(
+                   plugins                     = Map(
                      "mysql_native_password" -> MysqlNativePasswordPlugin[IO](),
                      "mysql_clear_password"  -> MysqlClearPasswordPlugin[IO]()
                    )
@@ -106,13 +108,14 @@ class AuthDowngradeTest extends CatsEffectSuite:
       }
       (result, leaked)
 
-    program.map { case (result, leaked) =>
-      assert(!leaked, "cleartext password was sent over a non-SSL connection")
-      assert(result.isLeft, s"expected authentication to fail (SSL required), but got $result")
-      assert(
-        result.left.exists(_.getMessage.contains("SSL connection required")),
-        s"expected an 'SSL connection required' error, got $result"
-      )
+    program.map {
+      case (result, leaked) =>
+        assert(!leaked, "cleartext password was sent over a non-SSL connection")
+        assert(result.isLeft, s"expected authentication to fail (SSL required), but got $result")
+        assert(
+          result.left.exists(_.getMessage.contains("SSL connection required")),
+          s"expected an 'SSL connection required' error, got $result"
+        )
     }
   }
 
@@ -132,17 +135,18 @@ class AuthDowngradeTest extends CatsEffectSuite:
                    capabilityFlags             = Set.empty[CapabilitiesFlags],
                    sequenceIdRef               = null,
                    defaultAuthenticationPlugin = None,
-                   plugins = Map("mysql_clear_password" -> MysqlClearPasswordPlugin[IO]())
+                   plugins                     = Map("mysql_clear_password" -> MysqlClearPasswordPlugin[IO]())
                  )
       result <- protocol.changeUser("user", "secret").attempt
       sends  <- sent.get
     yield (result, sends)
 
-    program.map { case (result, sends) =>
-      assert(sends.isEmpty, s"expected no packet to be sent, but sent: $sends")
-      assert(
-        result.left.exists(_.getMessage.contains("SSL connection required")),
-        s"expected an 'SSL connection required' error, got $result"
-      )
+    program.map {
+      case (result, sends) =>
+        assert(sends.isEmpty, s"expected no packet to be sent, but sent: $sends")
+        assert(
+          result.left.exists(_.getMessage.contains("SSL connection required")),
+          s"expected an 'SSL connection required' error, got $result"
+        )
     }
   }
