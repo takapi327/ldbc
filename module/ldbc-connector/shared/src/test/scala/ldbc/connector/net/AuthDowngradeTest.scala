@@ -79,9 +79,7 @@ class AuthDowngradeTest extends CatsEffectSuite:
       sent               <- Ref[IO].of(Vector.empty[RequestPacket])
       toReceive          <- Ref[IO].of(
                      List[ResponsePacket](
-                       // server forces a switch to the cleartext plugin ...
                        AuthSwitchRequestPacket(0xfe, "mysql_clear_password", Array.fill[Byte](20)(2)),
-                       // ... then would accept the harvested cleartext.
                        OKPacket(0x00, 0L, 0L, Set.empty[ServerStatusFlags], None, None, None, None)
                      )
                    )
@@ -111,6 +109,37 @@ class AuthDowngradeTest extends CatsEffectSuite:
     program.map { case (result, leaked) =>
       assert(!leaked, "cleartext password was sent over a non-SSL connection")
       assert(result.isLeft, s"expected authentication to fail (SSL required), but got $result")
+      assert(
+        result.left.exists(_.getMessage.contains("SSL connection required")),
+        s"expected an 'SSL connection required' error, got $result"
+      )
+    }
+  }
+
+  test("changeUser to a confidentiality-requiring plugin over a non-SSL connection must be rejected") {
+    val clearTextInitialPacket = initialPacket.copy(authPlugin = "mysql_clear_password")
+
+    val program = for
+      given Exchange[IO] <- Exchange[IO]
+      sent               <- Ref[IO].of(Vector.empty[RequestPacket])
+      toReceive          <- Ref[IO].of(List.empty[ResponsePacket])
+      protocol = Protocol.Impl[IO](
+                   initialPacket               = clearTextInitialPacket,
+                   hostInfo                    = hostInfo,
+                   socket                      = new ScriptedSocket(sent, toReceive),
+                   useSSL                      = false,
+                   allowPublicKeyRetrieval     = false,
+                   capabilityFlags             = Set.empty[CapabilitiesFlags],
+                   sequenceIdRef               = null,
+                   defaultAuthenticationPlugin = None,
+                   plugins = Map("mysql_clear_password" -> MysqlClearPasswordPlugin[IO]())
+                 )
+      result <- protocol.changeUser("user", "secret").attempt
+      sends  <- sent.get
+    yield (result, sends)
+
+    program.map { case (result, sends) =>
+      assert(sends.isEmpty, s"expected no packet to be sent, but sent: $sends")
       assert(
         result.left.exists(_.getMessage.contains("SSL connection required")),
         s"expected an 'SSL connection required' error, got $result"
