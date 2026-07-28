@@ -308,6 +308,7 @@ object Protocol:
     private def readUntilOk(
       plugin:       AuthenticationPlugin[F],
       password:     String,
+      span:         Span[F],
       scrambleBuff: Option[Array[Byte]] = None
     ): F[Unit] =
       socket.receive(AuthenticationPacket.decoder(initialPacket.capabilityFlags)).flatMap {
@@ -322,14 +323,15 @@ object Protocol:
                 scrambleBuff.getOrElse(initialPacket.scrambleBuff)
               ) *> readUntilOk(
                 plugin,
-                password
+                password,
+                span
               )
             case plugin: Sha256PasswordPlugin[F] =>
               sha256Authentication(
                 plugin,
                 password,
                 scrambleBuff.getOrElse(initialPacket.scrambleBuff)
-              ) *> readUntilOk(plugin, password)
+              ) *> readUntilOk(plugin, password, span)
             case unknown =>
               ev.raiseError(
                 new SQLInvalidAuthorizationSpecException(
@@ -342,8 +344,8 @@ object Protocol:
                   )
                 )
               )
-        case more: AuthMoreDataPacket        => readUntilOk(plugin, password)
-        case packet: AuthSwitchRequestPacket => changeAuthenticationMethod(packet, password)
+        case more: AuthMoreDataPacket        => readUntilOk(plugin, password, span)
+        case packet: AuthSwitchRequestPacket => changeAuthenticationMethod(packet, password, span)
         case _: OKPacket                     => ev.unit
         case error: ERRPacket                =>
           ev.raiseError(
@@ -374,34 +376,41 @@ object Protocol:
      * @param switchRequestPacket
      * Authentication method Switch Request Packet
      */
-    private def changeAuthenticationMethod(switchRequestPacket: AuthSwitchRequestPacket, password: String): F[Unit] =
-      determinatePlugin(switchRequestPacket.pluginName) match
-        case Left(error)                                 => ev.raiseError(error) *> socket.send(ComQuitPacket())
-        case Right(plugin: CachingSha2PasswordPlugin[F]) =>
+    private def changeAuthenticationMethod(
+      switchRequestPacket: AuthSwitchRequestPacket,
+      password:            String,
+      span:                Span[F]
+    ): F[Unit] =
+      resolveAuthPlugin(switchRequestPacket.pluginName, span).flatMap {
+        case plugin: CachingSha2PasswordPlugin[F] =>
           for
             hashedPassword <- plugin.hashPassword(password, switchRequestPacket.pluginProvidedData)
             _              <- socket.send(AuthSwitchResponsePacket(hashedPassword))
             _              <- readUntilOk(
                    plugin,
                    password,
+                   span,
                    Some(switchRequestPacket.pluginProvidedData)
                  )
           yield ()
-        case Right(plugin: Sha256PasswordPlugin[F]) =>
+        case plugin: Sha256PasswordPlugin[F] =>
           sha256Authentication(plugin, password, switchRequestPacket.pluginProvidedData) *> readUntilOk(
             plugin,
-            password
+            password,
+            span
           )
-        case Right(plugin) =>
+        case plugin =>
           for
             hashedPassword <- plugin.hashPassword(password, switchRequestPacket.pluginProvidedData)
             _              <- socket.send(AuthSwitchResponsePacket(hashedPassword))
             _              <- readUntilOk(
                    plugin,
                    password,
+                   span,
                    Some(switchRequestPacket.pluginProvidedData)
                  )
           yield ()
+      }
 
     /**
      * Plain text handshake
@@ -513,59 +522,56 @@ object Protocol:
 
     override def startAuthentication(username: String, password: String): F[Unit] =
       exchange[F, Unit](TelemetrySpanName.CONNECTION_CREATE) { (span: Span[F]) =>
+        val resolvedPlugin: F[AuthenticationPlugin[F]] =
+          defaultAuthenticationPlugin match
+            case Some(plugin) => checkRequiresConfidentiality(plugin, span).as(plugin)
+            case None         => resolveAuthPlugin(initialPacket.authPlugin, span)
         span.addAttributes(
           (attributes ++ List(
             TelemetryAttribute.dbMysqlAuthPlugin(initialPacket.authPlugin),
             Attribute("username", username)
           ))*
-        ) *> (
-          defaultAuthenticationPlugin match
-            case Some(plugin) =>
-              checkRequiresConfidentiality(plugin, span) *> handshake(plugin, username, password) *> readUntilOk(
-                plugin,
-                password
-              )
-            case None =>
-              determinatePlugin(initialPacket.authPlugin) match
-                case Left(error) =>
-                  span.recordException(error) *>
-                    span.setStatus(StatusCode.Error, error.getMessage) *>
-                    ev.raiseError(error) *>
-                    socket.send(ComQuitPacket())
-                case Right(plugin) =>
-                  checkRequiresConfidentiality(plugin, span) *> handshake(plugin, username, password) *> readUntilOk(
-                    plugin,
-                    password
-                  )
+        ) *> resolvedPlugin.flatMap(plugin =>
+          handshake(plugin, username, password) *> readUntilOk(plugin, password, span)
         )
       }
 
     override def changeUser(user: String, password: String): F[Unit] =
       exchange[F, Unit](TelemetrySpanName.CHANGE_USER) { (span: Span[F]) =>
-        span.addAttributes(attributes*) *> (
-          determinatePlugin(initialPacket.authPlugin) match
-            case Left(error) =>
-              span.recordException(error) *>
-                span.setStatus(StatusCode.Error, error.getMessage) *>
-                ev.raiseError(error) *>
-                socket.send(ComQuitPacket())
-            case Right(plugin) =>
-              for
-                hashedPassword <- plugin.hashPassword(password, initialPacket.scrambleBuff)
-                _              <- socket.send(
-                       ComChangeUserPacket(
-                         capabilityFlags,
-                         user,
-                         hostInfo.database,
-                         initialPacket.characterSet,
-                         initialPacket.authPlugin,
-                         hashedPassword
-                       )
-                     )
-                _ <- readUntilOk(plugin, password)
-              yield ()
+        span.addAttributes(attributes*) *> resolveAuthPlugin(initialPacket.authPlugin, span).flatMap(plugin =>
+          for
+            hashedPassword <- plugin.hashPassword(password, initialPacket.scrambleBuff)
+            _              <- socket.send(
+                   ComChangeUserPacket(
+                     capabilityFlags,
+                     user,
+                     hostInfo.database,
+                     initialPacket.characterSet,
+                     initialPacket.authPlugin,
+                     hashedPassword
+                   )
+                 )
+            _ <- readUntilOk(plugin, password, span)
+          yield ()
         )
       }
+
+    /**
+     * Resolves the authentication plugin the server asked for by name and immediately enforces the
+     * confidentiality guard, before any authentication response is generated. This runs on every
+     * plugin (re)selection — initial handshake, Change User, and a server-driven AuthSwitchRequest —
+     * so a plugin that transmits credentials in cleartext can never be used over a non-SSL
+     * connection. Fails closed (sends ComQuit, then raises) on an unknown plugin.
+     */
+    private def resolveAuthPlugin(pluginName: String, span: Span[F]): F[AuthenticationPlugin[F]] =
+      determinatePlugin(pluginName) match
+        case Left(error) =>
+          span.recordException(error) *>
+            span.setStatus(StatusCode.Error, error.getMessage) *>
+            socket.send(ComQuitPacket()) *>
+            ev.raiseError(error)
+        case Right(plugin) =>
+          checkRequiresConfidentiality(plugin, span).as(plugin)
 
     private def checkRequiresConfidentiality(plugin: AuthenticationPlugin[F], span: Span[F]): F[Unit] =
       if plugin.requiresConfidentiality && !useSSL then

@@ -38,9 +38,9 @@ class IdentSqlInjectionTest extends CatsEffectSuite with HelperFunctionsSyntax:
     while i < sql.length && !closed do
       sql.charAt(i) match
         case '`' if i + 1 < sql.length && sql.charAt(i + 1) == '`' =>
-          sb.append('`'); i += 2 // escaped backtick
+          sb.append('`'); i += 2
         case '`' =>
-          closed = true; i += 1 // closing backtick
+          closed = true; i += 1
         case c =>
           sb.append(c); i += 1
     (sb.result(), i)
@@ -51,7 +51,6 @@ class IdentSqlInjectionTest extends CatsEffectSuite with HelperFunctionsSyntax:
     val query     = sql"SELECT * FROM ${ ident(malicious) }"
     val statement = query.statement
 
-    // Locate the identifier that follows "FROM ".
     val fromIdx = statement.indexOf("FROM `")
     assert(fromIdx >= 0, s"expected a backtick identifier after FROM in: $statement")
     val identStart = fromIdx + "FROM ".length
@@ -59,8 +58,6 @@ class IdentSqlInjectionTest extends CatsEffectSuite with HelperFunctionsSyntax:
     val (decoded, afterIdx) = parseBacktickIdentifier(statement, identStart)
     val trailing            = statement.substring(afterIdx)
 
-    // Secure expectation: the MySQL parser must see the ENTIRE malicious string as the identifier,
-    // leaving no executable SQL after it.
     assertEquals(
       decoded,
       malicious,
@@ -74,7 +71,6 @@ class IdentSqlInjectionTest extends CatsEffectSuite with HelperFunctionsSyntax:
   }
 
   test("ident() escapes a backtick by doubling it, not with a backslash") {
-    // At the Parameter.Static level the escaped form must double the backtick.
     val col = ident("a`b")
     assertEquals(col, Parameter.Static("`a``b`"))
   }

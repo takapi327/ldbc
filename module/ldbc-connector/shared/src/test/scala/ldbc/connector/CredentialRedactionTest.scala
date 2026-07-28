@@ -29,11 +29,8 @@ class CredentialRedactionTest extends FTestPlatform:
 
     val rendered = dataSource.toString
 
-    // Non-sensitive connection fields remain visible for debugging.
     assert(rendered.contains("localhost"))
     assert(rendered.contains("myuser"))
-
-    // The password MUST NOT appear in any string representation.
     assert(!rendered.contains(secret), s"password leaked in toString: $rendered")
   }
 
