@@ -271,6 +271,11 @@ class TableQueryTest extends munit.FunSuite:
     assertEquals(query.selectAll.statement, "SELECT test.`p1`, test.`p2`, test.`p3` FROM test")
   }
 
+  test("Tuple insert encodes values through the entity mapping.") {
+    assertEquals(query.insert((1L, "p2", Some("p3"))).params.size, 3)
+    assertEquals(query.insert((1L, "p2", Some("p3")), (2L, "p2", None)).params.size, 6)
+  }
+
   test("The insert query statement generated from Table is equal to the specified query statement.") {
     assertEquals(
       query.insert((1L, "p2", Some("p3"))).statement,
