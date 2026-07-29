@@ -36,10 +36,7 @@ class AwsCredentialsToStringTest extends CatsEffectSuite:
 
     val rendered = credentials.toString
 
-    // The access key ID is public and may appear.
     assert(rendered.contains(testAccessKeyId))
-
-    // The secret access key MUST NOT appear in any string representation.
     assert(
       !rendered.contains(testSecretAccessKey),
       s"secretAccessKey leaked in toString: $rendered"
