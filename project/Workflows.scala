@@ -37,6 +37,12 @@ object Workflows {
     name     = Some("Start up MySQL on Docker")
   )
 
+  val brewUpdate: WorkflowStep.Run = WorkflowStep.Run(
+    commands = List("/home/linuxbrew/.linuxbrew/bin/brew update"),
+    name     = Some("Update Homebrew"),
+    cond     = Some("matrix.project == 'ldbcNative'")
+  )
+
   val dockerStop: WorkflowStep.Run = WorkflowStep.Run(
     commands = List("docker compose down"),
     name     = Some("Stop MySQL on Docker")

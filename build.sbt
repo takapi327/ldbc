@@ -31,7 +31,7 @@ ThisBuild / githubWorkflowBuildMatrixExclusions ++= Seq(
   MatrixExclude(Map("os" -> "ubuntu-24.04", "project" -> "ldbcJS")),
   MatrixExclude(Map("os" -> "ubuntu-22.04", "project" -> "ldbcNative"))
 )
-ThisBuild / githubWorkflowBuildPreamble ++= List(dockerRun) ++ nativeBrewInstallWorkflowSteps.value
+ThisBuild / githubWorkflowBuildPreamble ++= List(dockerRun, brewUpdate) ++ nativeBrewInstallWorkflowSteps.value
 ThisBuild / nativeBrewInstallCond := Some("matrix.project == 'ldbcNative'")
 ThisBuild / githubWorkflowAddedJobs ++= Seq(sbtScripted.value, sbtCoverageReport.value)
 ThisBuild / githubWorkflowBuildPostamble += dockerStop
@@ -81,7 +81,7 @@ lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .module("dsl", "Projects that provide a way to connect to the database")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "twiddles-core"     % "0.10.0",
+      "org.typelevel" %%% "twiddles-core"     % "1.1.0",
       "co.fs2"        %%% "fs2-core"          % "3.13.0",
       "org.typelevel" %%% "munit-cats-effect" % "2.2.0" % Test
     )
@@ -114,7 +114,7 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.4.0",
       "io.circe"               %%% "circe-core"               % "0.14.16",
-      "org.virtuslab"          %%% "scala-yaml"               % "0.3.2",
+      "org.virtuslab"          %%% "scala-yaml"               % "0.3.3",
       "org.typelevel"          %%% "munit-cats-effect"        % "2.2.0" % Test
     )
   )
@@ -169,7 +169,7 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
       "org.typelevel" %%% "otel4s-semconv-experimental"         % "1.0.1",
       "org.typelevel" %%% "otel4s-semconv-metrics"              % "1.0.1",
       "org.typelevel" %%% "otel4s-semconv-metrics-experimental" % "1.0.1",
-      "org.typelevel" %%% "twiddles-core"                       % "0.10.0",
+      "org.typelevel" %%% "twiddles-core"                       % "1.1.0",
       "org.typelevel" %%% "munit-cats-effect"                   % "2.2.0"  % Test,
       "org.typelevel" %%% "otel4s-sdk-testkit"                  % "0.19.0" % Test
     ),
