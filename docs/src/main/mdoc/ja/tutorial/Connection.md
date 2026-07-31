@@ -156,7 +156,7 @@ val datasource = MySQLDataSource
   .build[IO]("localhost", 3306, "ldbc")
   .setPassword("password")
   .setDatabase("world")
-  .setSSL(SSL.Trusted) // SSL接続を有効化
+  .setSSL(SSL.Trusted) // 開発 / 自己署名専用 — 下記の注意を参照
 
 // コネクションを使用する
 val program = datasource.getConnection.use { connection =>
@@ -164,13 +164,15 @@ val program = datasource.getConnection.use { connection =>
 }
 ```
 
+> **⚠️ セキュリティ注意:** `SSL.Trusted` は**すべての証明書を信頼**します。通信は暗号化されますが、サーバーの検証を行わないため **中間者攻撃(MITM)を防げません**。開発や自己署名証明書でのみ使用してください。**本番では `SSL.System`**(CA署名証明書をシステムトラストストアで検証)を使用してください。
+
 ldbcはfs2が提供するすべてのTLSモードをサポートしています。以下は、利用可能なSSLモードのリストです：
 
 | モード                            | プラットフォーム        | 詳細                                                                                 |
 |--------------------------------|-----------------|------------------------------------------------------------------------------------|
 | `SSL.None`                     | `JVM/JS/Native` | `ldbcはSSLを要求しません。これがデフォルトです。`                                                      |
-| `SSL.Trusted`                  | `JVM/JS/Native` | `SSL経由で接続し、すべての証明書を信頼する。``自己署名証明書を使用している場合などに使用する。`                                |
-| `SSL.System`                   | `JVM/JS/Native` | `SSL経由で接続し、システムデフォルトのSSLContextを使用して証明書を検証する。``CAで署名された証明書を使用している場合は、これを使用してください。` |
+| `SSL.Trusted`                  | `JVM/JS/Native` | `SSL経由で接続し、すべての証明書を信頼する（検証なし・MITMを防げない）。開発 / 自己署名専用。`                                |
+| `SSL.System`                   | `JVM/JS/Native` | `SSL経由で接続し、サーバー証明書をシステムトラストストアで検証する。本番推奨（CA署名証明書）。` |
 | `SSL.fromSSLContext(…)`	       | `JVM`           | `既存のSSLContextを使ってSSLで接続する。`                                                       |
 | `SSL.fromKeyStoreFile(…)`	     | `JVM`           | `指定したキーストア・ファイルを使ってSSLで接続する。`                                                      |
 | `SSL.fromKeyStoreResource(…)`	 | `JVM`           | `指定されたキーストア・クラスパス・リソースを使用して SSL 接続します。`                                            |
