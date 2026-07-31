@@ -174,7 +174,7 @@ final class ContainerCredentialsProvider[F[_]: Files: Env: Concurrent](
     normalized == "::1" ||
     normalized == "0:0:0:0:0:0:0:1" ||
     normalized.startsWith("127.") ||
-    ContainerCredentialsProvider.MetadataHosts.contains(normalized)
+    ContainerCredentialsProvider.metadataHosts.contains(normalized)
 
   /**
    * Loads the authorization token from environment variables or file.
@@ -489,7 +489,7 @@ object ContainerCredentialsProvider:
    * ECS and EKS Pod Identity container metadata hosts that are permitted as plain HTTP credential
    * destinations even though they are not loopback addresses.
    */
-  private val MetadataHosts: Set[String] =
+  private val metadataHosts: Set[String] =
     Set("169.254.170.2", "169.254.170.23", "fd00:ec2::23")
 
   /**
