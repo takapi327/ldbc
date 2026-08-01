@@ -531,3 +531,125 @@ class ContainerCredentialsProviderTest extends CatsEffectSuite:
           assertEquals(request.headers("Authorization"), "direct-token")
         case None => fail("Expected captured request")
   }
+
+  /**
+   * A poisoned AWS_CONTAINER_CREDENTIALS_FULL_URI pointing at an attacker-controlled non-loopback host
+   * over plain HTTP must be rejected before any request is made, so the authorization token is never
+   * transmitted to that host.
+   */
+  test("reject FULL_URI with non-loopback HTTP host and never send the token") {
+    val envVars = Map(
+      "AWS_CONTAINER_CREDENTIALS_FULL_URI" -> "http://attacker.example/creds",
+      "AWS_CONTAINER_AUTHORIZATION_TOKEN"  -> authToken
+    )
+
+    given Env[IO] = mockEnv(envVars)
+
+    val requestCapture = Ref.unsafe[IO, Option[MockRequest]](None)
+    val httpClient     = mockHttpClient(validJsonResponse, captureRequest = Some(requestCapture))
+    val provider       = ContainerCredentialsProvider.create[IO](httpClient)
+
+    for
+      result   <- provider.resolveCredentials().attempt
+      captured <- requestCapture.get
+    yield
+      result match
+        case Left(ex: SdkClientException) => assert(ex.getMessage.contains("invalid host"))
+        case Left(ex)                     => fail(s"Expected SdkClientException, got $ex")
+        case Right(_)                     => fail("Expected rejection of attacker FULL_URI host")
+
+      assertEquals(captured, None, "Authorization token must not be sent to a rejected host")
+  }
+
+  /**
+   * A link-local IP outside the ECS/EKS metadata allowlist over plain HTTP must also be rejected.
+   */
+  test("reject FULL_URI with arbitrary link-local HTTP host") {
+    val envVars = Map(
+      "AWS_CONTAINER_CREDENTIALS_FULL_URI" -> "http://169.254.1.1/creds",
+      "AWS_CONTAINER_AUTHORIZATION_TOKEN"  -> authToken
+    )
+
+    given Env[IO] = mockEnv(envVars)
+
+    val requestCapture = Ref.unsafe[IO, Option[MockRequest]](None)
+    val httpClient     = mockHttpClient(validJsonResponse, captureRequest = Some(requestCapture))
+    val provider       = ContainerCredentialsProvider.create[IO](httpClient)
+
+    for
+      result   <- provider.resolveCredentials().attempt
+      captured <- requestCapture.get
+    yield
+      assert(result.isLeft, "Expected rejection of non-allowlisted link-local host")
+      assertEquals(captured, None, "Authorization token must not be sent to a rejected host")
+  }
+
+  /**
+   * A FULL_URI over HTTPS to an arbitrary host is permitted (the token is protected by TLS), matching
+   * the AWS SDK rule that bypasses the host allowlist when the scheme is HTTPS.
+   */
+  test("accept FULL_URI over HTTPS to an arbitrary host") {
+    val envVars = Map(
+      "AWS_CONTAINER_CREDENTIALS_FULL_URI" -> "https://example.com/creds",
+      "AWS_CONTAINER_AUTHORIZATION_TOKEN"  -> authToken
+    )
+
+    given Env[IO] = mockEnv(envVars)
+
+    val requestCapture = Ref.unsafe[IO, Option[MockRequest]](None)
+    val httpClient     = mockHttpClient(validJsonResponse, captureRequest = Some(requestCapture))
+    val provider       = ContainerCredentialsProvider.create[IO](httpClient)
+
+    for
+      result   <- provider.resolveCredentials().attempt
+      captured <- requestCapture.get
+    yield
+      assert(result.isRight, s"Expected HTTPS FULL_URI to be accepted, got $result")
+      assertEquals(captured.map(_.uri.toString), Some("https://example.com/creds"))
+  }
+
+  /**
+   * A FULL_URI over plain HTTP to a loopback host is permitted, matching the AWS SDK loopback allowance.
+   */
+  test("accept FULL_URI over HTTP to a loopback host") {
+    val envVars = Map(
+      "AWS_CONTAINER_CREDENTIALS_FULL_URI" -> "http://127.0.0.1/creds",
+      "AWS_CONTAINER_AUTHORIZATION_TOKEN"  -> authToken
+    )
+
+    given Env[IO] = mockEnv(envVars)
+
+    val requestCapture = Ref.unsafe[IO, Option[MockRequest]](None)
+    val httpClient     = mockHttpClient(validJsonResponse, captureRequest = Some(requestCapture))
+    val provider       = ContainerCredentialsProvider.create[IO](httpClient)
+
+    for
+      result   <- provider.resolveCredentials().attempt
+      captured <- requestCapture.get
+    yield
+      assert(result.isRight, s"Expected loopback FULL_URI to be accepted, got $result")
+      assertEquals(captured.map(_.uri.toString), Some("http://127.0.0.1/creds"))
+  }
+
+  /**
+   * The EKS Pod Identity IPv4 metadata endpoint over plain HTTP is permitted via the metadata allowlist.
+   */
+  test("accept FULL_URI to the EKS Pod Identity metadata host") {
+    val envVars = Map(
+      "AWS_CONTAINER_CREDENTIALS_FULL_URI" -> eksEndpoint,
+      "AWS_CONTAINER_AUTHORIZATION_TOKEN"  -> authToken
+    )
+
+    given Env[IO] = mockEnv(envVars)
+
+    val requestCapture = Ref.unsafe[IO, Option[MockRequest]](None)
+    val httpClient     = mockHttpClient(validJsonResponse, captureRequest = Some(requestCapture))
+    val provider       = ContainerCredentialsProvider.create[IO](httpClient)
+
+    for
+      result   <- provider.resolveCredentials().attempt
+      captured <- requestCapture.get
+    yield
+      assert(result.isRight, s"Expected EKS metadata FULL_URI to be accepted, got $result")
+      assertEquals(captured.map(_.uri.toString), Some(eksEndpoint))
+  }

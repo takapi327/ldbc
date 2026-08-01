@@ -110,23 +110,71 @@ final class ContainerCredentialsProvider[F[_]: Files: Env: Concurrent](
       directToken <- Env[F].get("AWS_CONTAINER_AUTHORIZATION_TOKEN")
       tokenFile   <- Env[F].get("AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE")
       token       <- loadAuthorizationToken(directToken, tokenFile)
-    yield (relativeUri, fullUri) match {
-      case (Some(relative), _) =>
-        Some(
-          ContainerCredentialsConfig(
-            endpointUri        = s"http://169.254.170.2$relative",
-            authorizationToken = token
-          )
+      config      <- (relativeUri, fullUri) match {
+                  case (Some(relative), _) =>
+                    Concurrent[F].pure(
+                      Some(
+                        ContainerCredentialsConfig(
+                          endpointUri        = s"http://169.254.170.2$relative",
+                          authorizationToken = token
+                        )
+                      )
+                    )
+                  case (_, Some(full)) =>
+                    validateFullUri(full).as(
+                      Some(
+                        ContainerCredentialsConfig(
+                          endpointUri        = full,
+                          authorizationToken = token
+                        )
+                      )
+                    )
+                  case _ => Concurrent[F].pure(None)
+                }
+    yield config
+
+  /**
+   * Validates the `AWS_CONTAINER_CREDENTIALS_FULL_URI` destination before the authorization token is
+   * attached, so a poisoned environment variable cannot cause the token to be sent to an untrusted host.
+   *
+   * Accepts the URI when its scheme is HTTPS, or when its host is a loopback address or one of the ECS/EKS
+   * container metadata endpoints; otherwise fails with an [[SdkClientException]]. This mirrors the host
+   * guard implemented by the official AWS SDKs.
+   *
+   * @param fullUri The raw value of `AWS_CONTAINER_CREDENTIALS_FULL_URI`
+   * @return F[Unit] Success if the destination is permitted, failure otherwise
+   */
+  private def validateFullUri(fullUri: String): F[Unit] =
+    val uri     = URI.create(fullUri)
+    val isHttps = Option(uri.getScheme).exists(_.equalsIgnoreCase("https"))
+    val host    = Option(uri.getHost).getOrElse("")
+    if isHttps || isAllowedHost(host) then Concurrent[F].unit
+    else
+      Concurrent[F].raiseError(
+        new SdkClientException(
+          s"The full URI ($fullUri) contained within environment variable " +
+            "AWS_CONTAINER_CREDENTIALS_FULL_URI has an invalid host. Host should resolve to " +
+            "a loopback address or have the full URI be HTTPS."
         )
-      case (_, Some(full)) =>
-        Some(
-          ContainerCredentialsConfig(
-            endpointUri        = full,
-            authorizationToken = token
-          )
-        )
-      case _ => None
-    }
+      )
+
+  /**
+   * Determines whether the given host is a loopback address or an ECS/EKS container metadata endpoint,
+   * and is therefore permitted as a plain HTTP credential destination.
+   *
+   * @param host The URI host component
+   * @return true if the host is permitted for a plain HTTP credential request
+   */
+  private def isAllowedHost(host: String): Boolean =
+    // A string check is used instead of the AWS SDK's InetAddress-based DNS resolution because there is no
+    // loopback/DNS API that is portable across JVM/JS/Native; this fails closed, rejecting a hostname that
+    // merely resolves to loopback rather than trusting it.
+    val normalized = host.toLowerCase.stripPrefix("[").stripSuffix("]")
+    normalized == "localhost" ||
+    normalized == "::1" ||
+    normalized == "0:0:0:0:0:0:0:1" ||
+    normalized.startsWith("127.") ||
+    ContainerCredentialsProvider.metadataHosts.contains(normalized)
 
   /**
    * Loads the authorization token from environment variables or file.
@@ -436,6 +484,13 @@ private object ContainerCredentialsResponse:
     )
 
 object ContainerCredentialsProvider:
+
+  /**
+   * ECS and EKS Pod Identity container metadata hosts that are permitted as plain HTTP credential
+   * destinations even though they are not loopback addresses.
+   */
+  private val metadataHosts: Set[String] =
+    Set("169.254.170.2", "169.254.170.23", "fd00:ec2::23")
 
   /**
    * Creates a new Container credentials provider with custom HTTP client.
