@@ -209,7 +209,7 @@
   )
   .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;plaintext-password&quot;</span><span>)
   .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;mydb&quot;</span><span>)
-  .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)  </span><span class="comment">// セキュリティのためSSL必須
+  .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">System</span><span>)  </span><span class="comment">// 平文パスワードを保護するため証明書を検証する(本番。開発の自己署名は SSL.Trusted)
 </span><span>  .</span><span class="identifier">setDefaultAuthenticationPlugin</span><span>(</span><span class="type-name">MysqlClearPasswordPlugin</span><span>)</span></code></pre>
     <p><strong>注意</strong>: セキュリティ上の理由から、Clear Password認証使用時はSSL/TLS接続が必須です。</p>
     
@@ -225,7 +225,7 @@
   .</span><span class="identifier">setHost</span><span>(</span><span class="identifier">hostname</span><span>)
   .</span><span class="identifier">setUser</span><span>(</span><span class="identifier">username</span><span>)
   .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;production&quot;</span><span>)
-  .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)  </span><span class="comment">// IAM認証にはSSL必須
+  .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">System</span><span>)  </span><span class="comment">// IAMトークンを保護するため証明書を検証する(Aurora はCA署名証明書)
 </span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">awsPlugin</span><span> = </span><span class="type-name">AwsIamAuthenticationPlugin</span><span>.</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;ap-northeast-1&quot;</span><span>, </span><span class="identifier">hostname</span><span>, </span><span class="identifier">username</span><span>)
 
@@ -246,9 +246,9 @@
     <h3 id="必要な依存関係" class="section"><a class="anchor-link left" href="#必要な依存関係"><i class="icofont-laika link">&#xef71;</i></a>必要な依存関係</h3>
     <p>各認証プラグインを使用する場合は、対応する依存関係を追加してください：</p>
     <p><strong>MySQL Clear Password認証:</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-authentication-plugin&quot;</span><span> % </span><span class="string-literal">&quot;0.7.0&quot;</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-authentication-plugin&quot;</span><span> % </span><span class="string-literal">&quot;0.7.1&quot;</span></code></pre>
     <p><strong>AWS Aurora IAM認証:</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-aws-authentication-plugin&quot;</span><span> % </span><span class="string-literal">&quot;0.7.0&quot;</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-aws-authentication-plugin&quot;</span><span> % </span><span class="string-literal">&quot;0.7.1&quot;</span></code></pre>
     
     <h2 id="認証プラグインのカスタマイズ" class="section"><a class="anchor-link left" href="#認証プラグインのカスタマイズ"><i class="icofont-laika link">&#xef71;</i></a>認証プラグインのカスタマイズ</h2>
     <p>ldbcでは独自の認証プラグインを組み込むことが可能となっています。

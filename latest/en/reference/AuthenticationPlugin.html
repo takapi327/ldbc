@@ -209,7 +209,7 @@
   )
   .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;plaintext-password&quot;</span><span>)
   .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;mydb&quot;</span><span>)
-  .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)  </span><span class="comment">// SSL required for security
+  .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">System</span><span>)  </span><span class="comment">// Verify the server certificate to protect the cleartext password (production; use SSL.Trusted for self-signed dev)
 </span><span>  .</span><span class="identifier">setDefaultAuthenticationPlugin</span><span>(</span><span class="type-name">MysqlClearPasswordPlugin</span><span>)</span></code></pre>
     <p><strong>Note</strong>: For security reasons, SSL/TLS connection is required when using Clear Password authentication.</p>
     
@@ -225,7 +225,7 @@
   .</span><span class="identifier">setHost</span><span>(</span><span class="identifier">hostname</span><span>)
   .</span><span class="identifier">setUser</span><span>(</span><span class="identifier">username</span><span>)
   .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;production&quot;</span><span>)
-  .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)  </span><span class="comment">// SSL required for IAM authentication
+  .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">System</span><span>)  </span><span class="comment">// Verify the server certificate to protect the IAM token (Aurora uses a CA-signed certificate)
 </span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">awsPlugin</span><span> = </span><span class="type-name">AwsIamAuthenticationPlugin</span><span>.</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;ap-northeast-1&quot;</span><span>, </span><span class="identifier">hostname</span><span>, </span><span class="identifier">username</span><span>)
 
@@ -246,9 +246,9 @@
     <h3 id="required-dependencies" class="section"><a class="anchor-link left" href="#required-dependencies"><i class="icofont-laika link">&#xef71;</i></a>Required Dependencies</h3>
     <p>When using each authentication plugin, add the corresponding dependencies:</p>
     <p><strong>MySQL Clear Password Authentication:</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-authentication-plugin&quot;</span><span> % </span><span class="string-literal">&quot;0.7.0&quot;</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-authentication-plugin&quot;</span><span> % </span><span class="string-literal">&quot;0.7.1&quot;</span></code></pre>
     <p><strong>AWS Aurora IAM Authentication:</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-aws-authentication-plugin&quot;</span><span> % </span><span class="string-literal">&quot;0.7.0&quot;</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-aws-authentication-plugin&quot;</span><span> % </span><span class="string-literal">&quot;0.7.1&quot;</span></code></pre>
     
     <h2 id="authentication-plugin-customization" class="section"><a class="anchor-link left" href="#authentication-plugin-customization"><i class="icofont-laika link">&#xef71;</i></a>Authentication Plugin Customization</h2>
     <p>ldbc allows you to integrate custom authentication plugins.

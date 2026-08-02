@@ -296,7 +296,7 @@ Add the following dependencies to your project to use OpenTelemetry with ldbc:
 ```scala
 libraryDependencies ++= Seq(
   // ldbc connector (includes otel4s-core)
-  "io.github.takapi327" %% "ldbc-connector" % "0.7.0",
+  "io.github.takapi327" %% "ldbc-connector" % "0.7.1",
 
   // otel4s library (Scala wrapper for OpenTelemetry)
   "org.typelevel"    %% "otel4s-oteljava"                           % "0.15.1",
@@ -638,21 +638,21 @@ That said, if you find yourself confused or frustrated by this documentation or 
 
 ## Quick Start
 
-The current version is **0.7.0**, compatible with **Scala 3.3.7**.
+The current version is **0.7.1**, compatible with **Scala 3.3.8**.
 
 ```scala
 libraryDependencies ++= Seq(
 
   // Start with this one
-  "io.github.takapi327" %% "ldbc-dsl" % "0.7.0",
+  "io.github.takapi327" %% "ldbc-dsl" % "0.7.1",
   
   // Choose the connector you want to use
-  "io.github.takapi327" %% "jdbc-connector" % "0.7.0", // Java connector (supported platform: JVM)
-  "io.github.takapi327" %% "ldbc-connector" % "0.7.0", // Scala connector (supported platforms: JVM, JS, Native)
+  "io.github.takapi327" %% "jdbc-connector" % "0.7.1", // Java connector (supported platform: JVM)
+  "io.github.takapi327" %% "ldbc-connector" % "0.7.1", // Scala connector (supported platforms: JVM, JS, Native)
 
   // And add these as needed
-  "io.github.takapi327" %% "ldbc-query-builder" % "0.7.0", // Type-safe query building
-  "io.github.takapi327" %% "ldbc-schema"        % "0.7.0", // Database schema construction
+  "io.github.takapi327" %% "ldbc-query-builder" % "0.7.1", // Type-safe query building
+  "io.github.takapi327" %% "ldbc-schema"        % "0.7.1", // Database schema construction
 )
 ```
 
@@ -676,21 +676,21 @@ libraryDependencies ++= Seq(
 
 | Module / Platform                | JVM | Scala Native | Scala.js | Scaladoc                                                                                                                                                              |
 |----------------------------------|:---:|:------------:|:--------:|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `ldbc-sql`                       |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.7.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-sql_3)                       |
-| `ldbc-core`                      |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.7.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-core_3)                      |
-| `ldbc-connector`                 |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.7.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-connector_3)                 |
-| `jdbc-connector`                 |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.7.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/jdbc-connector_3)                 |
-| `ldbc-dsl`                       |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.7.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3)                       |
-| `ldbc-statement`                 |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.7.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-statement_3)                 |
-| `ldbc-query-builder`             |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.7.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-query-builder_3)             |
-| `ldbc-schema`                    |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.7.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-schema_3)                    |
-| `ldbc-codegen`                   |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.7.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-codegen_3)                   |
-| `ldbc-plugin`                    |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.7.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-plugin_2.12_1.0)             |
-| `ldbc-testkit`                   |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.7.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-testkit_3)                   |
-| `ldbc-testkit-munit`             |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.7.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-testkit-munit_3)             |
-| `ldbc-zio-interop`               |  ✅  |      ❌       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.7.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-zio-interop_3)               |
-| `ldbc-authentication-plugin`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.7.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-authentication-plugin_3)     |
-| `ldbc-aws-authentication-plugin` |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.7.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-aws-authentication-plugin_3) |
+| `ldbc-sql`                       |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-sql_3)                       |
+| `ldbc-core`                      |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-core_3)                      |
+| `ldbc-connector`                 |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-connector_3)                 |
+| `jdbc-connector`                 |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/jdbc-connector_3)                 |
+| `ldbc-dsl`                       |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3)                       |
+| `ldbc-statement`                 |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-statement_3)                 |
+| `ldbc-query-builder`             |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-query-builder_3)             |
+| `ldbc-schema`                    |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-schema_3)                    |
+| `ldbc-codegen`                   |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-codegen_3)                   |
+| `ldbc-plugin`                    |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-plugin_2.12_1.0)             |
+| `ldbc-testkit`                   |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-testkit_3)                   |
+| `ldbc-testkit-munit`             |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-testkit-munit_3)             |
+| `ldbc-zio-interop`               |  ✅  |      ❌       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-zio-interop_3)               |
+| `ldbc-authentication-plugin`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-authentication-plugin_3)     |
+| `ldbc-aws-authentication-plugin` |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-aws-authentication-plugin_3) |
 
 ## 🎯 Key Changes
 
@@ -913,10 +913,10 @@ You can migrate existing rollback logic to `ldbc-testkit`.
 **Add dependencies to `build.sbt`:**
 ```scala
 // Framework-agnostic
-libraryDependencies += "io.github.takapi327" %% "ldbc-testkit" % "0.7.0" % Test
+libraryDependencies += "io.github.takapi327" %% "ldbc-testkit" % "0.7.1" % Test
 
 // MUnit integration
-libraryDependencies += "io.github.takapi327" %% "ldbc-testkit-munit" % "0.7.0" % Test
+libraryDependencies += "io.github.takapi327" %% "ldbc-testkit-munit" % "0.7.1" % Test
 ```
 
 **After (0.7.x):**
@@ -972,7 +972,7 @@ val provider =
 This feature is only available when using `ldbc-connector`.
 
 ```scala 3
-libraryDependencies += "io.github.takapi327" %% "ldbc-connector" % "0.7.0"
+libraryDependencies += "io.github.takapi327" %% "ldbc-connector" % "0.7.1"
 ```
 
 @:@
@@ -1831,7 +1831,7 @@ If you want to use the traditional connector written in Java, set the following 
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "io.github.takapi327" %% "jdbc-connector" % "0.7.0",
+  "io.github.takapi327" %% "jdbc-connector" % "0.7.1",
   "com.mysql" % "mysql-connector-j" % "9.6.0"
 )
 ```
@@ -1842,7 +1842,7 @@ If you want to use the new connector written in Scala, set the following depende
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "io.github.takapi327" %% "ldbc-connector" % "0.7.0"
+  "io.github.takapi327" %% "ldbc-connector" % "0.7.1"
 )
 ```
 
@@ -1852,7 +1852,7 @@ To use ldbc with Scala.js or Scala Native, set the dependencies as follows:
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "io.github.takapi327" %%% "ldbc-connector" % "0.7.0"
+  "io.github.takapi327" %%% "ldbc-connector" % "0.7.1"
 )
 ```
 
@@ -1862,7 +1862,7 @@ To use the plain DSL, set the following dependencies:
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "io.github.takapi327" %% "ldbc-dsl" % "0.7.0"
+  "io.github.takapi327" %% "ldbc-dsl" % "0.7.1"
 )
 ```
 
@@ -1884,7 +1884,7 @@ To use the query builder, set the following dependencies:
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "io.github.takapi327" %% "ldbc-query-builder" % "0.7.0"
+  "io.github.takapi327" %% "ldbc-query-builder" % "0.7.1"
 )
 ```
 
@@ -1911,7 +1911,7 @@ To use schema definition and model mapping, set the following dependencies:
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "io.github.takapi327" %% "ldbc-schema" % "0.7.0"
+  "io.github.takapi327" %% "ldbc-schema" % "0.7.1"
 )
 ```
 
@@ -1944,7 +1944,7 @@ To write integration tests for repositories that use ldbc, set the following dep
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "io.github.takapi327" %% "ldbc-testkit" % "0.7.0" % Test
+  "io.github.takapi327" %% "ldbc-testkit" % "0.7.1" % Test
 )
 ```
 
@@ -1952,7 +1952,7 @@ libraryDependencies ++= Seq(
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "io.github.takapi327" %% "ldbc-testkit-munit" % "0.7.0" % Test
+  "io.github.takapi327" %% "ldbc-testkit-munit" % "0.7.1" % Test
 )
 ```
 
@@ -1960,7 +1960,7 @@ Both modules work on JVM, Scala.js, and Scala Native platforms:
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "io.github.takapi327" %%% "ldbc-testkit-munit" % "0.7.0" % Test
+  "io.github.takapi327" %%% "ldbc-testkit-munit" % "0.7.1" % Test
 )
 ```
 
@@ -2017,7 +2017,7 @@ val datasource = MySQLDataSource
   )
   .setPassword("plaintext-password")
   .setDatabase("mydb")
-  .setSSL(SSL.Trusted)  // SSL required for security
+  .setSSL(SSL.System)  // Verify the server certificate to protect the cleartext password (production; use SSL.Trusted for self-signed dev)
   .setDefaultAuthenticationPlugin(MysqlClearPasswordPlugin)
 ```
 
@@ -2038,7 +2038,7 @@ val config = MySQLConfig.default
   .setHost(hostname)
   .setUser(username)
   .setDatabase("production")
-  .setSSL(SSL.Trusted)  // SSL required for IAM authentication
+  .setSSL(SSL.System)  // Verify the server certificate to protect the IAM token (Aurora uses a CA-signed certificate)
 
 val awsPlugin = AwsIamAuthenticationPlugin.default[IO]("ap-northeast-1", hostname, username)
 
@@ -2067,12 +2067,12 @@ When using each authentication plugin, add the corresponding dependencies:
 
 **MySQL Clear Password Authentication:**
 ```scala
-libraryDependencies += "io.github.takapi327" %% "ldbc-authentication-plugin" % "0.7.0"
+libraryDependencies += "io.github.takapi327" %% "ldbc-authentication-plugin" % "0.7.1"
 ```
 
 **AWS Aurora IAM Authentication:**
 ```scala
-libraryDependencies += "io.github.takapi327" %% "ldbc-aws-authentication-plugin" % "0.7.0"
+libraryDependencies += "io.github.takapi327" %% "ldbc-aws-authentication-plugin" % "0.7.1"
 ```
 
 ## Authentication Plugin Customization
@@ -2204,13 +2204,13 @@ To use it, you need to set up the following dependency in your project:
 **JVM**
 
 ```scala 3
-libraryDependencies += "io.github.takapi327" %% "ldbc-connector" % "0.7.0"
+libraryDependencies += "io.github.takapi327" %% "ldbc-connector" % "0.7.1"
 ```
 
 **JS/Native**
 
 ```scala 3
-libraryDependencies += "io.github.takapi327" %%% "ldbc-connector" % "0.7.0"
+libraryDependencies += "io.github.takapi327" %%% "ldbc-connector" % "0.7.1"
 ```
 
 **Supported Versions**
@@ -3755,7 +3755,7 @@ ldbc-connector depends only on `otel4s-core` (the abstract API). To actually col
 ```scala
 libraryDependencies ++= Seq(
   // ldbc connector (includes otel4s-core)
-  "io.github.takapi327" %% "ldbc-connector" % "0.7.0",
+  "io.github.takapi327" %% "ldbc-connector" % "0.7.1",
 
   // OpenTelemetry Java SDK backend
   "org.typelevel"    %% "otel4s-oteljava"                           % "0.15.1",
@@ -4094,7 +4094,7 @@ The JDBC connector establishes connections using standard JDBC drivers. It's rec
 First, add the necessary dependencies. When using the jdbc connector, you need to add the MySQL connector as well.
 
 ```scala
-//> dep "io.github.takapi327::jdbc-connector:0.7.0"
+//> dep "io.github.takapi327::jdbc-connector:0.7.1"
 //> dep "com.mysql":"mysql-connector-j":"9.6.0"
 ```
 
@@ -4177,7 +4177,7 @@ The ldbc connector is an optimized connector developed by ldbc, offering more co
 First, add the necessary dependency.
 
 ```scala
-//> dep "io.github.takapi327::ldbc-connector:0.7.0"
+//> dep "io.github.takapi327::ldbc-connector:0.7.1"
 ```
 
 ### Connection with Basic Configuration
@@ -4214,7 +4214,7 @@ import ldbc.connector.*
 
 val datasource = MySQLDataSource
   .default[IO]("localhost", 3306, "ldbc", "password", "world")
-  .setSSL(SSL.Trusted) // Enable SSL connection
+  .setSSL(SSL.Trusted) // Development / self-signed only — see the note below
 
 // Use the connection
 val program = datasource.getConnection.use { connection =>
@@ -4222,13 +4222,15 @@ val program = datasource.getConnection.use { connection =>
 }
 ```
 
+> **⚠️ Security note:** `SSL.Trusted` trusts **all** certificates — it encrypts the connection but does **not** verify the server, so it does not protect against man-in-the-middle attacks. Use it only for development or self-signed certificates. **In production, use `SSL.System`** (a CA-signed certificate verified against the system trust store).
+
 ldbc supports all TLS modes provided by fs2. Below is a list of available SSL modes:
 
 | Mode                           | Platform        | Details                                                                                                                                    |
 |--------------------------------|-----------------|--------------------------------------------------------------------------------------------------------------------------------------------|
 | `SSL.None`                     | `JVM/JS/Native` | `ldbc will not request SSL. This is the default.`                                                                                          |
-| `SSL.Trusted`                  | `JVM/JS/Native` | `Connect via SSL and trust all certificates.` `Use this if you're running with a self-signed certificate, for instance.`                   |
-| `SSL.System`                   | `JVM/JS/Native` | `Connect via SSL and use the system default SSLContext to verify certificates.` `Use this if you're running with a CA-signed certificate.` |
+| `SSL.Trusted`                  | `JVM/JS/Native` | `Connect via SSL and trust ALL certificates — no verification, not protected against man-in-the-middle attacks. Development / self-signed only.` |
+| `SSL.System`                   | `JVM/JS/Native` | `Connect via SSL and verify the server certificate against the system trust store. Recommended for production (CA-signed certificate).` |
 | `SSL.fromSSLContext(…)`	       | `JVM`           | `Connect via SSL using an existing SSLContext.`                                                                                            |
 | `SSL.fromKeyStoreFile(…)`	     | `JVM`           | `Connect via SSL using a specified keystore file.`                                                                                         |
 | `SSL.fromKeyStoreResource(…)`	 | `JVM`           | `Connect via SSL using a specified keystore classpath resource.`                                                                           |
@@ -5592,7 +5594,7 @@ In this chapter, we'll explain methods for building type-safe queries.
 You need to set up the following dependency in your project:
 
 ```scala
-//> using dep "io.github.takapi327::ldbc-query-builder:0.7.0"
+//> using dep "io.github.takapi327::ldbc-query-builder:0.7.1"
 ```
 
 ## Basic Usage
@@ -6171,7 +6173,7 @@ Code generation is a powerful tool for automating repetitive tasks and reducing 
 You need to set up the following dependency in your project. Add it to `project/plugins.sbt`.
 
 ```scala
-addSbtPlugin("io.github.takapi327" % "ldbc-plugin" % "0.7.0")
+addSbtPlugin("io.github.takapi327" % "ldbc-plugin" % "0.7.1")
 ```
 
 ### Enabling the Plugin
@@ -6615,7 +6617,7 @@ This chapter explains how to handle database schemas in Scala code, particularly
 You need to set up the following dependency in your project:
 
 ```scala
-//> using dep "io.github.takapi327::ldbc-schema:0.7.0"
+//> using dep "io.github.takapi327::ldbc-schema:0.7.1"
 ```
 
 The following code examples assume these imports:
@@ -7675,9 +7677,9 @@ touch FirstSteps.scala
 Add the following code to `FirstSteps.scala`:
 
 ```scala
-//> using scala "3.3.7"
-//> using dep "io.github.takapi327::ldbc-dsl:0.7.0"
-//> using dep "io.github.takapi327::ldbc-connector:0.7.0"
+//> using scala "3.3.8"
+//> using dep "io.github.takapi327::ldbc-dsl:0.7.1"
+//> using dep "io.github.takapi327::ldbc-connector:0.7.1"
 
 import cats.effect.*
 import cats.syntax.all.*
@@ -7719,7 +7721,7 @@ If you see "Value retrieved from database: 42", you've succeeded! This doesn't a
 We also provide a Scala CLI script that automatically handles all the setup:
 
 ```bash
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/00-Setup.scala --dependency io.github.takapi327::ldbc-dsl:0.7.0 --dependency io.github.takapi327::ldbc-connector:0.7.0
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/00-Setup.scala --dependency io.github.takapi327::ldbc-dsl:0.7.1 --dependency io.github.takapi327::ldbc-connector:0.7.1
 ```
 
 ## Next Steps
@@ -7788,7 +7790,7 @@ When you run this program, it will return the result `Some(2)` from the database
 This program can be easily executed using Scala CLI:
 
 ```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/02-Program.scala --dependency io.github.takapi327::ldbc-dsl:0.7.0 --dependency io.github.takapi327::ldbc-connector:0.7.0
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/02-Program.scala --dependency io.github.takapi327::ldbc-dsl:0.7.1 --dependency io.github.takapi327::ldbc-connector:0.7.1
 ```
 
 ## Second Program: Combining Multiple Queries
@@ -7821,7 +7823,7 @@ The execution result will look like `(List(1), Some(2), 3)`. This is a tuple con
 **Execute with Scala CLI**
 
 ```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/03-Program.scala --dependency io.github.takapi327::ldbc-dsl:0.7.0 --dependency io.github.takapi327::ldbc-connector:0.7.0
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/03-Program.scala --dependency io.github.takapi327::ldbc-dsl:0.7.1 --dependency io.github.takapi327::ldbc-connector:0.7.1
 ```
 
 ## Third Program: Data Update Operations
@@ -7850,7 +7852,7 @@ The `commit` method automatically enables `AutoCommit` and commits the transacti
 **Execute with Scala CLI**
 
 ```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/04-Program.scala --dependency io.github.takapi327::ldbc-dsl:0.7.0 --dependency io.github.takapi327::ldbc-connector:0.7.0
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/04-Program.scala --dependency io.github.takapi327::ldbc-dsl:0.7.1 --dependency io.github.takapi327::ldbc-connector:0.7.1
 ```
 
 ## Transaction Control

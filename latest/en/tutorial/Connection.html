@@ -229,7 +229,7 @@
     
     <h3 id="adding-dependencies-1" class="section"><a class="anchor-link left" href="#adding-dependencies-1"><i class="icofont-laika link">&#xef71;</i></a>Adding Dependencies</h3>
     <p>First, add the necessary dependencies. When using the jdbc connector, you need to add the MySQL connector as well.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">//&gt; dep &quot;io.github.takapi327::jdbc-connector:0.7.0&quot;
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">//&gt; dep &quot;io.github.takapi327::jdbc-connector:0.7.1&quot;
 //&gt; dep &quot;com.mysql&quot;:&quot;mysql-connector-j&quot;:&quot;9.6.0&quot;</span></code></pre>
     
     <h3 id="connection-using-datasource" class="section"><a class="anchor-link left" href="#connection-using-datasource"><i class="icofont-laika link">&#xef71;</i></a>Connection using DataSource</h3>
@@ -295,7 +295,7 @@
     
     <h3 id="adding-dependencies-2" class="section"><a class="anchor-link left" href="#adding-dependencies-2"><i class="icofont-laika link">&#xef71;</i></a>Adding Dependencies</h3>
     <p>First, add the necessary dependency.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">//&gt; dep &quot;io.github.takapi327::ldbc-connector:0.7.0&quot;</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">//&gt; dep &quot;io.github.takapi327::ldbc-connector:0.7.1&quot;</span></code></pre>
     
     <h3 id="connection-with-basic-configuration" class="section"><a class="anchor-link left" href="#connection-with-basic-configuration"><i class="icofont-laika link">&#xef71;</i></a>Connection with Basic Configuration</h3>
     <p>Let&#39;s start with the simplest configuration:</p>
@@ -322,12 +322,13 @@
 
 </span><span class="keyword">val</span><span> </span><span class="identifier">datasource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
   .</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;ldbc&quot;</span><span>, </span><span class="string-literal">&quot;password&quot;</span><span>, </span><span class="string-literal">&quot;world&quot;</span><span>)
-  .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>) </span><span class="comment">// Enable SSL connection
+  .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>) </span><span class="comment">// Development / self-signed only — see the note below
 </span><span>
 </span><span class="comment">// Use the connection
 </span><span class="keyword">val</span><span> </span><span class="identifier">program</span><span> = </span><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">connection</span><span> =&gt;
   </span><span class="identifier">connection</span><span>.</span><span class="identifier">execute</span><span>(</span><span class="string-literal">&quot;SELECT 1&quot;</span><span>)
 }</span></code></pre>
+    <blockquote><strong>⚠️ Security note:</strong> <code>SSL.Trusted</code> trusts <strong>all</strong> certificates — it encrypts the connection but does <strong>not</strong> verify the server, so it does not protect against man-in-the-middle attacks. Use it only for development or self-signed certificates. <strong>In production, use <code>SSL.System</code></strong> (a CA-signed certificate verified against the system trust store).</blockquote>
     <p>ldbc supports all TLS modes provided by fs2. Below is a list of available SSL modes:</p>
     <table>
       <thead>
@@ -346,12 +347,12 @@
         <tr>
           <td><code>SSL.Trusted</code></td>
           <td><code>JVM/JS/Native</code></td>
-          <td><code>Connect via SSL and trust all certificates.</code> <code>Use this if you&#39;re running with a self-signed certificate, for instance.</code></td>
+          <td><code>Connect via SSL and trust ALL certificates — no verification, not protected against man-in-the-middle attacks. Development / self-signed only.</code></td>
         </tr>
         <tr>
           <td><code>SSL.System</code></td>
           <td><code>JVM/JS/Native</code></td>
-          <td><code>Connect via SSL and use the system default SSLContext to verify certificates.</code> <code>Use this if you&#39;re running with a CA-signed certificate.</code></td>
+          <td><code>Connect via SSL and verify the server certificate against the system trust store. Recommended for production (CA-signed certificate).</code></td>
         </tr>
         <tr>
           <td><code>SSL.fromSSLContext(…)</code></td>
