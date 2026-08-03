@@ -103,6 +103,10 @@ jobs:
       - name: Start up MySQL on Docker
         run: docker compose up -d
 
+      - name: Update Homebrew
+        if: matrix.project == 'ldbcNative'
+        run: /home/linuxbrew/.linuxbrew/bin/brew update
+
       - name: Install brew formulae (ubuntu)
         if: (matrix.project == 'ldbcNative') && startsWith(matrix.os, 'ubuntu')
         run: /home/linuxbrew/.linuxbrew/bin/brew install s2n

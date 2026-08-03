@@ -33,7 +33,7 @@ val datasource = MySQLDataSource
   )
   .setPassword("plaintext-password")
   .setDatabase("mydb")
-  .setSSL(SSL.Trusted)  // SSL required for security
+  .setSSL(SSL.System)  // Verify the server certificate to protect the cleartext password (production; use SSL.Trusted for self-signed dev)
   .setDefaultAuthenticationPlugin(MysqlClearPasswordPlugin)
 ```
 
@@ -54,7 +54,7 @@ val config = MySQLConfig.default
   .setHost(hostname)
   .setUser(username)
   .setDatabase("production")
-  .setSSL(SSL.Trusted)  // SSL required for IAM authentication
+  .setSSL(SSL.System)  // Verify the server certificate to protect the IAM token (Aurora uses a CA-signed certificate)
 
 val awsPlugin = AwsIamAuthenticationPlugin.default[IO]("ap-northeast-1", hostname, username)
 

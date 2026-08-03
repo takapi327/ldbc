@@ -54,12 +54,21 @@ object SSL extends SSLPlatform:
     def tlsContext[F[_]: Network](using ae: ApplicativeError[F, Throwable]): Resource[F, TLSContext[F]] =
       Resource.eval(ae.raiseError(new Exception("SSL.None: cannot create a TLSContext.")))
 
-  /** `SSL` which trusts all certificates. */
+  /**
+   * `SSL` which trusts all certificates.
+   *
+   * The server certificate is NOT verified, so this provides encryption but no authentication and
+   * does not protect against man-in-the-middle attacks. Use it only for development or with
+   * self-signed certificates; use [[System]] in production.
+   */
   object Trusted extends SSL:
     def tlsContext[F[_]: Network](using ae: ApplicativeError[F, Throwable]): Resource[F, TLSContext[F]] =
       Network[F].tlsContext.insecureResource
 
-  /** `SSL` from the system default `SSLContext`. */
+  /**
+   * `SSL` from the system default `SSLContext`, verifying the server certificate against the system
+   * trust store. Use this in production with a CA-signed certificate.
+   */
   object System extends SSL:
     def tlsContext[F[_]: Network](using ae: ApplicativeError[F, Throwable]): Resource[F, TLSContext[F]] =
       Network[F].tlsContext.systemResource

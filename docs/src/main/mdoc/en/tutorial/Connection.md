@@ -156,7 +156,7 @@ import ldbc.connector.*
 
 val datasource = MySQLDataSource
   .default[IO]("localhost", 3306, "ldbc", "password", "world")
-  .setSSL(SSL.Trusted) // Enable SSL connection
+  .setSSL(SSL.Trusted) // Development / self-signed only — see the note below
 
 // Use the connection
 val program = datasource.getConnection.use { connection =>
@@ -164,13 +164,15 @@ val program = datasource.getConnection.use { connection =>
 }
 ```
 
+> **⚠️ Security note:** `SSL.Trusted` trusts **all** certificates — it encrypts the connection but does **not** verify the server, so it does not protect against man-in-the-middle attacks. Use it only for development or self-signed certificates. **In production, use `SSL.System`** (a CA-signed certificate verified against the system trust store).
+
 ldbc supports all TLS modes provided by fs2. Below is a list of available SSL modes:
 
 | Mode                           | Platform        | Details                                                                                                                                    |
 |--------------------------------|-----------------|--------------------------------------------------------------------------------------------------------------------------------------------|
 | `SSL.None`                     | `JVM/JS/Native` | `ldbc will not request SSL. This is the default.`                                                                                          |
-| `SSL.Trusted`                  | `JVM/JS/Native` | `Connect via SSL and trust all certificates.` `Use this if you're running with a self-signed certificate, for instance.`                   |
-| `SSL.System`                   | `JVM/JS/Native` | `Connect via SSL and use the system default SSLContext to verify certificates.` `Use this if you're running with a CA-signed certificate.` |
+| `SSL.Trusted`                  | `JVM/JS/Native` | `Connect via SSL and trust ALL certificates — no verification, not protected against man-in-the-middle attacks. Development / self-signed only.` |
+| `SSL.System`                   | `JVM/JS/Native` | `Connect via SSL and verify the server certificate against the system trust store. Recommended for production (CA-signed certificate).` |
 | `SSL.fromSSLContext(…)`	       | `JVM`           | `Connect via SSL using an existing SSLContext.`                                                                                            |
 | `SSL.fromKeyStoreFile(…)`	     | `JVM`           | `Connect via SSL using a specified keystore file.`                                                                                         |
 | `SSL.fromKeyStoreResource(…)`	 | `JVM`           | `Connect via SSL using a specified keystore classpath resource.`                                                                           |
