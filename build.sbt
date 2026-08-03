@@ -31,7 +31,7 @@ ThisBuild / githubWorkflowBuildMatrixExclusions ++= Seq(
   MatrixExclude(Map("os" -> "ubuntu-24.04", "project" -> "ldbcJS")),
   MatrixExclude(Map("os" -> "ubuntu-22.04", "project" -> "ldbcNative"))
 )
-ThisBuild / githubWorkflowBuildPreamble ++= List(dockerRun) ++ nativeBrewInstallWorkflowSteps.value
+ThisBuild / githubWorkflowBuildPreamble ++= List(dockerRun, brewUpdate) ++ nativeBrewInstallWorkflowSteps.value
 ThisBuild / nativeBrewInstallCond := Some("matrix.project == 'ldbcNative'")
 ThisBuild / githubWorkflowAddedJobs ++= Seq(sbtScripted.value, sbtCoverageReport.value)
 ThisBuild / githubWorkflowBuildPostamble += dockerStop
@@ -109,7 +109,7 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.4.0",
       "io.circe"               %%% "circe-core"               % "0.14.16",
-      "org.virtuslab"          %%% "scala-yaml"               % "0.3.2",
+      "org.virtuslab"          %%% "scala-yaml"               % "0.3.3",
       "org.typelevel"          %%% "munit-cats-effect"        % "2.2.0" % Test
     )
   )
@@ -322,7 +322,7 @@ lazy val http4sExample = crossProject(JVMPlatform)
       "org.http4s"    %% "http4s-dsl"          % "0.23.36",
       "org.http4s"    %% "http4s-ember-server" % "0.23.36",
       "org.http4s"    %% "http4s-circe"        % "0.23.36",
-      "ch.qos.logback" % "logback-classic"     % "1.5.38",
+      "ch.qos.logback" % "logback-classic"     % "1.6.1",
       "io.circe"      %% "circe-generic"       % "0.14.10"
     )
   )

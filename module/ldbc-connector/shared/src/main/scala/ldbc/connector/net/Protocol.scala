@@ -578,8 +578,9 @@ object Protocol:
         val error = new SQLInvalidAuthorizationSpecException(
           s"SSL connection required for plugin '${ plugin.name }'. Check if 'ssl' is enabled.",
           hint = Some(
-            """// You can enable SSL.
-              |           MySQLDataSource.build[IO](....).setSSL(SSL.Trusted)
+            """// You can enable SSL. Use SSL.System to verify the server certificate;
+              |// SSL.Trusted (trust-all) is for development / self-signed certificates only.
+              |           MySQLDataSource.build[IO](....).setSSL(SSL.System)
               |""".stripMargin
           )
         )
