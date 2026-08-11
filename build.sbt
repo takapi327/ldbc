@@ -76,6 +76,13 @@ lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .dependsOn(sql)
 
+lazy val fx = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Full)
+  .module("fx", "Effect-agnostic core effect type (Fx); bridges to cats-effect / ZIO / Future")
+  .settings(
+    libraryDependencies += "org.scalameta" %%% "munit" % "1.2.4" % Test
+  )
+
 lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("dsl", "Projects that provide a way to connect to the database")
@@ -312,10 +319,11 @@ lazy val benchmark = (project in file("benchmark"))
       "com.mysql"           % "mysql-connector-j" % "9.7.0",
       "org.typelevel"      %% "doobie-core"       % "1.0.0-RC13",
       "com.typesafe.slick" %% "slick"             % "3.6.1",
-      "com.zaxxer"          % "HikariCP"          % "7.1.0"
+      "com.zaxxer"          % "HikariCP"          % "7.1.0",
+      "dev.zio"            %% "zio"               % "2.1.26"
     )
   )
-  .dependsOn(jdbcConnector.jvm, connector.jvm, queryBuilder.jvm)
+  .dependsOn(jdbcConnector.jvm, connector.jvm, queryBuilder.jvm, fx.jvm, pool.jvm)
   .enablePlugins(JmhPlugin, AutomateHeaderPlugin, NoPublishPlugin)
 
 lazy val http4sExample = crossProject(JVMPlatform)
@@ -509,6 +517,7 @@ lazy val ldbc = tlCrossRootProject
   .aggregate(
     sql,
     core,
+    fx,
     jdbcConnector,
     connector,
     dsl,
