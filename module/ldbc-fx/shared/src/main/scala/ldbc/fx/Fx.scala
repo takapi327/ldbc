@@ -59,9 +59,12 @@ sealed trait Fx[+A]:
    * frontends ([[ldbc.fx.Fx]] bridged to cats-effect / ZIO / Future) call it internally.
    *
    * @param cb invoked at most once with `Right(a)` on success or `Left(t)` on failure
+   * @param rt the runtime the continuations run on; defaults to [[FxRuntime.current]] so a nested run
+   *           started during interpretation inherits the enclosing run's runtime
    * @return a [[Fx.Canceler]] that requests interruption and runs any open `bracket` finalizers
    */
-  def unsafeRun(cb: Either[Throwable, A] => Unit): Fx.Canceler = Fx.run(this, cb)
+  def unsafeRun(cb: Either[Throwable, A] => Unit)(using rt: FxRuntime = FxRuntime.current): Fx.Canceler =
+    Fx.run(this, cb, rt)
 
 /** Constructors and the runtime for [[Fx]]. */
 object Fx:
@@ -189,7 +192,7 @@ object Fx:
    * @return an effect that produces `()` after `d`
    */
   def sleep(d: FiniteDuration): Fx[Unit] = Async[Unit] { cb =>
-    FxRuntime.scheduleOnce(d.toNanos, () => cb(Right(())))
+    FxRuntime.current.scheduleOnce(d.toNanos, () => cb(Right(())))
   }
 
   /**
@@ -293,7 +296,7 @@ object Fx:
     case Right(a) => Pure(a)
     case Left(t)  => Err(t)
 
-  private def run[A](start: Fx[A], cb: Either[Throwable, A] => Unit): Canceler =
+  private def run[A](start: Fx[A], cb: Either[Throwable, A] => Unit, rt: FxRuntime): Canceler =
     val cancelled        = new AtomicBoolean(false)
     val done             = new AtomicBoolean(false)
     val currentCanceler  = new AtomicReference[Canceler](Canceler.noop)
@@ -327,6 +330,17 @@ object Fx:
       fs.foreach(_())
 
     /**
+     * Resumes `task` on `rt`'s compute pool with `rt` re-installed as [[FxRuntime.current]]. Used
+     * by the resume points that must leave their current thread — auto-cede (off the completing
+     * thread), `Blocking` / `Interruptible` (off their dedicated threads). The `Async` completion
+     * resumes inline instead (see its case): routing every async resume through a pool hop regresses
+     * synchronization-heavy paths (pool `Deferred`/`Mutex`) with no benefit, so only the points that
+     * genuinely need to move threads hop.
+     */
+    def resumeOn(task: () => Unit): Unit =
+      rt.executeCompute(() => FxRuntime.withRuntime(rt)(task()))
+
+    /**
      * Trampolined interpreter. Suspends (returns) on `Async`/`Blocking`; the completion callback
      * resumes by re-invoking `loop()`. Only one thread drives `loop()` at a time — the hand-off
      * across threads is arbitrated by the CAS on `cbState`.
@@ -341,7 +355,7 @@ object Fx:
           return
         iters += 1
         if iters >= cedeAt then
-          FxRuntime.executeCompute(() => loop())
+          resumeOn(() => loop())
           return
         cur match
           case Pure(a) =>
@@ -379,7 +393,7 @@ object Fx:
             cur = Uncancelable(
               acquire.asInstanceOf[Fx[Any]].map { res =>
                 val ran             = new AtomicBoolean(false)
-                val rel: () => Unit = () => if ran.compareAndSet(false, true) then { r(res).unsafeRun(_ => ()); () }
+                val rel: () => Unit = () => if ran.compareAndSet(false, true) then { r(res).unsafeRun(_ => ())(using rt); () }
                 cancelFinalizers.add(rel)
                 (res, rel)
               }
@@ -394,13 +408,13 @@ object Fx:
             val cbState       = new AtomicReference[AnyRef](null)
             val capturedStack = stack
             val maskedHere    = maskDepth.get() > 0
-            FxRuntime.executeBlocking { () =>
+            rt.executeBlocking { () =>
               val result: Either[Throwable, Any] = try Right(th())
               catch { case NonFatal(e) => Left(e) }
               if once.compareAndSet(false, true) then
                 if !cbState.compareAndSet(null, result.asInstanceOf[AnyRef]) then
                   if !cancelled.get() || maskedHere then
-                    cur = fromResult(result); stack = capturedStack; loop()
+                    cur = fromResult(result); stack = capturedStack; resumeOn(() => loop())
                   else
                     executing.set(false)
                     drainFinalizers()
@@ -413,14 +427,14 @@ object Fx:
             val capturedStack = stack
             val maskedHere    = maskDepth.get() > 0
             val cancelerSlot  = new AtomicReference[Canceler](Canceler.noop)
-            val interruptCanceler = FxRuntime.executeInterruptible { () =>
+            val interruptCanceler = rt.executeInterruptible { () =>
               val result: Either[Throwable, Any] = try Right(th())
               catch { case NonFatal(e) => Left(e) }
               if once.compareAndSet(false, true) then
                 if !cbState.compareAndSet(null, result.asInstanceOf[AnyRef]) then
                   currentCanceler.compareAndSet(cancelerSlot.get(), Canceler.noop)
                   if !cancelled.get() || maskedHere then
-                    cur = fromResult(result); stack = capturedStack; loop()
+                    cur = fromResult(result); stack = capturedStack; resumeOn(() => loop())
                   else
                     executing.set(false)
                     drainFinalizers()
@@ -446,7 +460,8 @@ object Fx:
                   currentCanceler.compareAndSet(cancelerSlot.get(), Canceler.noop)
                   executing.set(true)
                   if !cancelled.get() || maskedHere then
-                    cur = fromResult(result); stack = capturedStack; loop()
+                    cur = fromResult(result); stack = capturedStack
+                    FxRuntime.withRuntime(rt)(loop())
                   else
                     executing.set(false)
                     drainFinalizers()
@@ -469,7 +484,7 @@ object Fx:
               cur = fromResult(cbState.get().asInstanceOf[Either[Throwable, Any]])
       end while
 
-    loop()
+    FxRuntime.withRuntime(rt)(loop())
 
     new Canceler:
       override def cancel(): Unit =
