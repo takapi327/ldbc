@@ -9,9 +9,10 @@ package ldbc.fx
 import java.util.concurrent.{ Executors, ScheduledExecutorService, ThreadFactory, TimeUnit }
 
 /**
- * JVM platform-default [[FxRuntime]]: a scheduler thread for timers, a cached pool for blocking
+ * Platform-default [[FxRuntime]] shared by JVM and Scala Native (both back it with
+ * `java.util.concurrent.Executors`): a scheduler thread for timers, a cached pool for blocking
  * calls, and a fixed pool (≈ cores) for auto-ceded continuations. Pools are lazy, so an idle process
- * pays nothing.
+ * pays nothing. (Scala Native requires multithreading, enabled by default via `detect`.)
  */
 private[fx] object PlatformFxRuntime:
 
@@ -53,7 +54,7 @@ private[fx] object PlatformFxRuntime:
         scheduler.schedule(new Runnable { override def run(): Unit = task() }, delayNanos, TimeUnit.NANOSECONDS)
       new Fx.Canceler { override def cancel(): Unit = { future.cancel(false); () } }
 
-/** Holds the [[FxRuntime]] current on each thread during interpretation (JVM: a `ThreadLocal`). */
+/** Holds the [[FxRuntime]] current on each thread during interpretation (JVM / Native: a `ThreadLocal`). */
 private[fx] object PlatformFxLocal:
   private val tl                    = new ThreadLocal[FxRuntime]
   def get():             FxRuntime  = tl.get()
