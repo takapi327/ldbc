@@ -323,7 +323,7 @@ lazy val benchmark = (project in file("benchmark"))
       "dev.zio"            %% "zio"               % "2.1.26"
     )
   )
-  .dependsOn(jdbcConnector.jvm, connector.jvm, queryBuilder.jvm, fx.jvm, pool.jvm)
+  .dependsOn(jdbcConnector.jvm, connector.jvm, queryBuilder.jvm, fx.jvm)
   .enablePlugins(JmhPlugin, AutomateHeaderPlugin, NoPublishPlugin)
 
 lazy val http4sExample = crossProject(JVMPlatform)
