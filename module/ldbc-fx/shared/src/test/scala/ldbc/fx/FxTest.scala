@@ -12,9 +12,10 @@ import scala.concurrent.{ Future, Promise }
 
 /**
  * Cross-platform (JVM / JS / Native) tests for the core [[Fx]] semantics that do not depend on
- * real threads: stack safety, `async` call-once, and `bracket` release on success/error. Tests are
- * `Future`-based so they run on the single-threaded JS runtime as well. Thread-dependent behaviours
- * (cancel/complete races, blocking-pool identity) live in the JVM-only `FxConcurrencyTest`.
+ * real threads: stack safety, `async` call-once, `bracket` release on success/error, and
+ * `onCancel` running its finalizer only on cancellation. Tests are `Future`-based so they run on the
+ * single-threaded JS runtime as well. Thread-dependent behaviours (cancel/complete races,
+ * blocking-pool identity) live in the JVM-only `FxConcurrencyTest`.
  */
 class FxTest extends munit.FunSuite:
 
@@ -61,3 +62,20 @@ class FxTest extends munit.FunSuite:
       Fx.delay { released.set(true); () }
     )
     toFuture(fx).failed.map(_ => assert(released.get()))
+
+  test("onCancel runs the finalizer when the effect is cancelled"):
+    val ran     = new AtomicBoolean(false)
+    val program = Fiber.start(Fx.never[Unit].onCancel(Fx.delay { ran.set(true); () })).flatMap(_.cancel)
+    toFuture(program).map(_ => assert(ran.get()))
+
+  test("onCancel does not run the finalizer on success"):
+    val ran = new AtomicBoolean(false)
+    toFuture(Fx.pure(42).onCancel(Fx.delay { ran.set(true); () })).map { v =>
+      assertEquals(v, 42)
+      assert(!ran.get())
+    }
+
+  test("onCancel does not run the finalizer on error"):
+    val ran = new AtomicBoolean(false)
+    val fx  = Fx.raiseError[Int](new RuntimeException("boom")).onCancel(Fx.delay { ran.set(true); () })
+    toFuture(fx).failed.map(_ => assert(!ran.get()))
