@@ -29,7 +29,8 @@ final class Ref[A] private (private val underlying: AtomicReference[A]):
    * @param f the transformation to apply to the current value
    */
   def update(f: A => A): Fx[Unit] = Fx.delay {
-    @annotation.tailrec def loop(): Unit =
+    @annotation.tailrec
+    def loop(): Unit =
       val cur = underlying.get
       if !underlying.compareAndSet(cur, f(cur)) then loop()
     loop()
@@ -42,7 +43,8 @@ final class Ref[A] private (private val underlying: AtomicReference[A]):
    * @tparam B the type of the returned result
    */
   def modify[B](f: A => (A, B)): Fx[B] = Fx.delay {
-    @annotation.tailrec def loop(): B =
+    @annotation.tailrec
+    def loop(): B =
       val cur     = underlying.get
       val (na, b) = f(cur)
       if underlying.compareAndSet(cur, na) then b else loop()
@@ -61,7 +63,9 @@ final class Ref[A] private (private val underlying: AtomicReference[A]):
    *
    * @param f the update function
    */
-  def updateAndGet(f: A => A): Fx[A] = modify { a => val na = f(a); (na, na) }
+  def updateAndGet(f: A => A): Fx[A] = modify { a =>
+    val na = f(a); (na, na)
+  }
 
   /**
    * Atomically sets the value to `a`, returning the previous value.

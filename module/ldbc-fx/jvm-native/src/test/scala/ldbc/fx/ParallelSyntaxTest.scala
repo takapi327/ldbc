@@ -73,9 +73,11 @@ class ParallelSyntaxTest extends munit.FunSuite:
     val peak    = new AtomicInteger(0)
     val program = for
       sem <- Semaphore(2)
-      _ <- (1 to 6).toList.parTraverse { i =>
+      _   <- (1 to 6).toList.parTraverse { i =>
              sem
-               .withPermit(tracked(current, peak)(Fx.sleep(60.millis) >> (if i == 3 then Fx.raiseError(new RuntimeException("x")) else Fx.unit)))
+               .withPermit(tracked(current, peak)(Fx.sleep(60.millis) >> (if i == 3 then
+                                                                            Fx.raiseError(new RuntimeException("x"))
+                                                                          else Fx.unit)))
                .attempt
                .void
            }

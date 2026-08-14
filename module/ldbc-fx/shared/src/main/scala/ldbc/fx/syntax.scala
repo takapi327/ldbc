@@ -54,9 +54,7 @@ object syntax:
      * non-matching errors and successes pass through unchanged (cats `onError`).
      */
     def onError(pf: PartialFunction[Throwable, Fx[Unit]]): Fx[A] =
-      fa.handleErrorWith(error =>
-        pf.applyOrElse(error, (_: Throwable) => Fx.unit).flatMap(_ => Fx.raiseError(error))
-      )
+      fa.handleErrorWith(error => pf.applyOrElse(error, (_: Throwable) => Fx.unit).flatMap(_ => Fx.raiseError(error)))
 
     /** Starts `fa` running concurrently in the background (cats-effect `start`). */
     def start: Fx[Fiber[A]] = Fiber.start(fa)
@@ -111,7 +109,9 @@ object syntax:
      */
     def parTraverseN[B](n: Int)(f: A => Fx[B]): Fx[List[B]] =
       Semaphore(n.max(1).toLong).flatMap { semaphore =>
-        xs.toList.traverse(a => Fiber.start(semaphore.withPermit(f(a)))).flatMap(fibers => fibers.traverse(_.joinWithNever))
+        xs.toList
+          .traverse(a => Fiber.start(semaphore.withPermit(f(a))))
+          .flatMap(fibers => fibers.traverse(_.joinWithNever))
       }
 
   extension [A, B](pair: (Fx[A], Fx[B]))

@@ -30,7 +30,8 @@ final class Mutex private (private val state: AtomicReference[Mutex.State]):
 
   /** Acquires the lock, suspending in FIFO order until it is granted. */
   private def acquire: Fx[Unit] = Fx.async { cb =>
-    @annotation.tailrec def loop(): Fx.Canceler =
+    @annotation.tailrec
+    def loop(): Fx.Canceler =
       state.get match
         case Mutex.Free =>
           if state.compareAndSet(Mutex.Free, Mutex.Locked(Queue.empty)) then
@@ -46,9 +47,10 @@ final class Mutex private (private val state: AtomicReference[Mutex.State]):
 
   /** Releases the lock, granting it to the next FIFO waiter if any. */
   private def release: Fx[Unit] = Fx.delay {
-    @annotation.tailrec def loop(): Unit =
+    @annotation.tailrec
+    def loop(): Unit =
       state.get match
-        case Mutex.Free => ()
+        case Mutex.Free                     => ()
         case locked @ Mutex.Locked(waiters) =>
           if waiters.isEmpty then { if !state.compareAndSet(locked, Mutex.Free) then loop() }
           else
@@ -59,9 +61,10 @@ final class Mutex private (private val state: AtomicReference[Mutex.State]):
 
   /** Removes a still-queued waiter (used by the cancellation of a suspended acquire). */
   private def remove(cb: Either[Throwable, Unit] => Unit): Unit =
-    @annotation.tailrec def loop(): Unit =
+    @annotation.tailrec
+    def loop(): Unit =
       state.get match
-        case Mutex.Free => ()
+        case Mutex.Free                     => ()
         case locked @ Mutex.Locked(waiters) =>
           if !state.compareAndSet(locked, Mutex.Locked(waiters.filterNot(_ eq cb))) then loop()
     loop()

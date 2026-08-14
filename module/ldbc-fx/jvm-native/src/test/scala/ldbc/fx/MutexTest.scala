@@ -48,7 +48,7 @@ class MutexTest extends munit.FunSuite:
     threads.foreach(_.join())
 
     assertEquals(errors.get(), 0, "no surround should fail")
-    assertEquals(maxSeen.get(), 1, s"observed ${maxSeen.get()} concurrent holders; mutex is not exclusive")
+    assertEquals(maxSeen.get(), 1, s"observed ${ maxSeen.get() } concurrent holders; mutex is not exclusive")
   }
 
   test("a second acquire waits until the first releases, then proceeds (no deadlock)") {
@@ -70,9 +70,7 @@ class MutexTest extends munit.FunSuite:
     holder.start()
     assert(firstHeld.await(5, TimeUnit.SECONDS), "first holder did not enter")
 
-    val contender = new Thread(() =>
-      runSync(mutex.surround(Fx.delay { order.updateAndGet("second-in" :: _); () }))
-    )
+    val contender = new Thread(() => runSync(mutex.surround(Fx.delay { order.updateAndGet("second-in" :: _); () })))
     contender.setDaemon(true)
     contender.start()
 

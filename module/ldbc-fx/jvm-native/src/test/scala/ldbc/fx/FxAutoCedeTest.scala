@@ -32,7 +32,7 @@ class FxAutoCedeTest extends munit.FunSuite:
   test("a long synchronous chain is auto-ceded off the starting thread") {
     val startThread = Thread.currentThread().getName
     // The chain far exceeds the threshold, so it must offload to the compute pool at least once.
-    val endThread   = runSync(spin(Fx.autoCedeThreshold * 4, 0))
+    val endThread = runSync(spin(Fx.autoCedeThreshold * 4, 0))
     assert(
       endThread != startThread,
       s"chain finished on the starting thread ($endThread) — auto-cede did not offload it"
@@ -62,14 +62,14 @@ class FxAutoCedeTest extends munit.FunSuite:
     go(n, 0)
 
   test("many concurrent long chains all complete (compute pool does not deadlock)") {
-    val n       = 16
-    val done    = new CountDownLatch(n)
-    val ok      = new AtomicInteger(0)
-    var i       = 0
+    val n    = 16
+    val done = new CountDownLatch(n)
+    val ok   = new AtomicInteger(0)
+    var i    = 0
     while i < n do
       spin2(Fx.autoCedeThreshold * 2).unsafeRun {
         case Right(v) if v == Fx.autoCedeThreshold * 2 => ok.incrementAndGet(); done.countDown()
-        case _                                      => done.countDown()
+        case _                                         => done.countDown()
       }
       i += 1
     assert(done.await(15, TimeUnit.SECONDS), "not all chains completed")

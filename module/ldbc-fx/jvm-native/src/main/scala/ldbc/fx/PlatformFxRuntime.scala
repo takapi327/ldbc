@@ -56,6 +56,6 @@ private[fx] object PlatformFxRuntime:
 
 /** Holds the [[FxRuntime]] current on each thread during interpretation (JVM / Native: a `ThreadLocal`). */
 private[fx] object PlatformFxLocal:
-  private val tl                    = new ThreadLocal[FxRuntime]
-  def get():             FxRuntime  = tl.get()
+  private val tl = new ThreadLocal[FxRuntime]
+  def get():              FxRuntime = tl.get()
   def set(rt: FxRuntime): Unit      = tl.set(rt)

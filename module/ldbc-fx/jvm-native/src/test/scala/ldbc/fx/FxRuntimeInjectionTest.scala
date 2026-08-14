@@ -31,17 +31,17 @@ class FxRuntimeInjectionTest extends munit.FunSuite:
   /** A [[FxRuntime]] that runs compute continuations on a single, distinctly-named thread and counts
    *  how often it is asked to. Blocking / scheduler / interruptible delegate to the global default. */
   private final class RecordingRuntime extends FxRuntime:
-    val computeCount                      = new AtomicInteger(0)
-    val scheduleCount                     = new AtomicInteger(0)
-    val lastComputeThread                 = new AtomicReference[Thread](null)
-    private val exec                      = Executors.newSingleThreadExecutor(named("INJECTED-COMPUTE"))
-    private val g                         = FxRuntime.global
+    val computeCount      = new AtomicInteger(0)
+    val scheduleCount     = new AtomicInteger(0)
+    val lastComputeThread = new AtomicReference[Thread](null)
+    private val exec      = Executors.newSingleThreadExecutor(named("INJECTED-COMPUTE"))
+    private val g         = FxRuntime.global
 
     override def executeCompute(task: () => Unit): Unit =
       computeCount.incrementAndGet()
       exec.execute(() => { lastComputeThread.set(Thread.currentThread); task() })
 
-    override def executeBlocking(task: () => Unit): Unit             = g.executeBlocking(task)
+    override def executeBlocking(task:      () => Unit): Unit        = g.executeBlocking(task)
     override def executeInterruptible(task: () => Unit): Fx.Canceler = g.executeInterruptible(task)
 
     override def scheduleOnce(delayNanos: Long, task: () => Unit): Fx.Canceler =
@@ -56,7 +56,7 @@ class FxRuntimeInjectionTest extends munit.FunSuite:
     holder.get()
 
   test("auto-ceded continuation resumes on the injected runtime") {
-    val rt = new RecordingRuntime
+    val rt        = new RecordingRuntime
     val endThread = new AtomicReference[Thread](null)
     // A long chain of pure steps exceeds the auto-cede threshold (1024), forcing a re-schedule.
     var fx: Fx[Int] = Fx.pure(0)
@@ -64,7 +64,7 @@ class FxRuntimeInjectionTest extends munit.FunSuite:
     val result = runWith(fx.map { n => endThread.set(Thread.currentThread); n }, rt)
 
     assertEquals(result, Right(1500))
-    assert(rt.computeCount.get() >= 1, s"auto-cede should hit injected executeCompute, got ${rt.computeCount.get()}")
+    assert(rt.computeCount.get() >= 1, s"auto-cede should hit injected executeCompute, got ${ rt.computeCount.get() }")
     assert(
       endThread.get() eq rt.lastComputeThread.get(),
       "post-auto-cede continuation must run on the injected runtime's thread"
@@ -76,8 +76,10 @@ class FxRuntimeInjectionTest extends munit.FunSuite:
     val completer       = Executors.newSingleThreadExecutor(named("COMPLETER"))
     val completerThread = new AtomicReference[Thread](null)
     val resumeThread    = new AtomicReference[Thread](null)
-    val eff = Fx
-      .async[Int] { cb => completer.execute(() => { completerThread.set(Thread.currentThread); cb(Right(1)) }); Fx.Canceler.noop }
+    val eff             = Fx
+      .async[Int] { cb =>
+        completer.execute(() => { completerThread.set(Thread.currentThread); cb(Right(1)) }); Fx.Canceler.noop
+      }
       .map { n => resumeThread.set(Thread.currentThread); n }
 
     val result = runWith(eff, rt)
@@ -92,7 +94,7 @@ class FxRuntimeInjectionTest extends munit.FunSuite:
     val rt     = new RecordingRuntime
     val outer  = new AtomicReference[FxRuntime](null)
     val nested = new AtomicReference[FxRuntime](null)
-    val eff = Fx
+    val eff    = Fx
       .delay(outer.set(FxRuntime.current))
       .flatMap(_ => Fx.delay(Fx.delay(nested.set(FxRuntime.current)).unsafeRun(_ => ())))
 

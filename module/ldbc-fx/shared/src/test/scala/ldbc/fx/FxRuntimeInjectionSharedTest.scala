@@ -34,7 +34,7 @@ class FxRuntimeInjectionSharedTest extends munit.FunSuite:
       computeCount.incrementAndGet()
       g.executeCompute(task)
 
-    override def executeBlocking(task: () => Unit): Unit            = g.executeBlocking(task)
+    override def executeBlocking(task:      () => Unit): Unit        = g.executeBlocking(task)
     override def executeInterruptible(task: () => Unit): Fx.Canceler = g.executeInterruptible(task)
 
     override def scheduleOnce(delayNanos: Long, task: () => Unit): Fx.Canceler =
@@ -56,7 +56,7 @@ class FxRuntimeInjectionSharedTest extends munit.FunSuite:
     for _ <- 0 until 1500 do fx = fx.map(_ + 1)
     runFut(fx.map { n => endCurrent.set(FxRuntime.current); n }, rt).map { n =>
       assertEquals(n, 1500)
-      assert(rt.computeCount.get() >= 1, s"auto-cede must hit injected executeCompute, got ${rt.computeCount.get()}")
+      assert(rt.computeCount.get() >= 1, s"auto-cede must hit injected executeCompute, got ${ rt.computeCount.get() }")
       assert(endCurrent.get() eq rt, "current after auto-cede (across setTimeout) must be the injected runtime")
     }
   }
@@ -65,7 +65,7 @@ class FxRuntimeInjectionSharedTest extends munit.FunSuite:
     val rt         = new CountingRuntime
     val afterSleep = new AtomicReference[FxRuntime](null)
     val nested     = new AtomicReference[FxRuntime](null)
-    val fx = Fx
+    val fx         = Fx
       .sleep(5.millis)
       .flatMap(_ => Fx.delay(afterSleep.set(FxRuntime.current)))
       .flatMap(_ => Fx.delay(Fx.delay(nested.set(FxRuntime.current)).unsafeRun(_ => ())))

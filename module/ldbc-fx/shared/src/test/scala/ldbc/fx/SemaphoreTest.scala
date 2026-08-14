@@ -44,11 +44,11 @@ class SemaphoreTest extends FxSuite:
     assertFx(
       for
         s        <- Semaphore(1)
-        _        <- s.acquire // take the only permit
+        _        <- s.acquire    // take the only permit
         acquired <- Ref.of(false)
         fib      <- Fiber.start(s.acquire >> acquired.set(true))
         before   <- acquired.get // the waiter must still be blocked → false
-        _        <- s.release // now the waiter may proceed
+        _        <- s.release    // now the waiter may proceed
         _        <- fib.joinWithNever
         after    <- acquired.get // now true
       yield (before, after),
@@ -61,7 +61,7 @@ class SemaphoreTest extends FxSuite:
       for
         s        <- Semaphore(2)
         _        <- s.acquire
-        _        <- s.acquire // permits now 0
+        _        <- s.acquire    // permits now 0
         acquired <- Ref.of(false)
         fib      <- Fiber.start(s.acquire >> acquired.set(true))
         before   <- acquired.get // false: no permit available yet
@@ -82,10 +82,10 @@ class SemaphoreTest extends FxSuite:
         f1    <- Fiber.start(s.acquire >> order.update(1 :: _) >> s.release)
         f2    <- Fiber.start(s.acquire >> order.update(2 :: _) >> s.release)
         // waiters are queued [f1, f2]; releasing hands the permit down the queue in order
-        _     <- s.release
-        _     <- f1.joinWithNever
-        _     <- f2.joinWithNever
-        ord   <- order.get
+        _   <- s.release
+        _   <- f1.joinWithNever
+        _   <- f2.joinWithNever
+        ord <- order.get
       yield ord.reverse,
       List(1, 2)
     )
@@ -98,10 +98,10 @@ class SemaphoreTest extends FxSuite:
     assertFx(
       for
         s <- Semaphore(1)
-        _ <- s.acquire // permit taken (permits = 0)
+        _ <- s.acquire              // permit taken (permits = 0)
         f <- Fiber.start(s.acquire) // queues as a waiter, suspends
-        _ <- f.cancel // cancel the queued acquirer → it must deregister
-        _ <- s.release // makes a permit available again
+        _ <- f.cancel               // cancel the queued acquirer → it must deregister
+        _ <- s.release              // makes a permit available again
         r <- Fx.timeout(s.acquire.map(_ => "ok"), 3.seconds)(new RuntimeException("permit leaked: acquire deadlocked"))
       yield r,
       "ok"

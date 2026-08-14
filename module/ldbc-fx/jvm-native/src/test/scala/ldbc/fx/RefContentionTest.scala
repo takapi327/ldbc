@@ -27,9 +27,9 @@ class RefContentionTest extends munit.FunSuite:
     ref.get().fold(throw _, identity)
 
   test("update loses no increments under real-thread contention") {
-    val threadCount     = 8
-    val perThread       = 2000
-    val ref             = runSync(Ref.of(0))
+    val threadCount = 8
+    val perThread   = 2000
+    val ref         = runSync(Ref.of(0))
     val increments: Fx[Unit] =
       (1 to perThread).foldLeft(Fx.unit)((acc, _) => acc >> ref.update(_ + 1))
 

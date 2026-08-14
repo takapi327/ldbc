@@ -38,5 +38,5 @@ private[fx] object PlatformFxRuntime:
  */
 private[fx] object PlatformFxLocal:
   private var value:      FxRuntime = null
-  def get():             FxRuntime  = value
+  def get():              FxRuntime = value
   def set(rt: FxRuntime): Unit      = value = rt

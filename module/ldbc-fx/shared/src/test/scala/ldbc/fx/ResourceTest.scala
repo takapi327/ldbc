@@ -49,7 +49,7 @@ class ResourceTest extends FxSuite:
   test("an acquire failure of a later resource releases the earlier ones") {
     val log  = ListBuffer.empty[String]
     val boom = new RuntimeException("acquire-B-failed")
-    val res = for
+    val res  = for
       a <- tracked(log, "A")
       _ <- Resource.make(Fx.raiseError[String](boom))(_ => Fx.delay { log += "release-B"; () })
     yield a
@@ -71,7 +71,7 @@ class ResourceTest extends FxSuite:
   test("a failing release surfaces its error, and earlier releases still run (LIFO)") {
     val log     = ListBuffer.empty[String]
     val relBoom = new RuntimeException("release-B-failed")
-    val res = for
+    val res     = for
       _ <- tracked(log, "A")
       _ <- Resource.make(Fx.delay { log += "acquire-B"; "B" })(_ => Fx.raiseError[Unit](relBoom))
     yield ()

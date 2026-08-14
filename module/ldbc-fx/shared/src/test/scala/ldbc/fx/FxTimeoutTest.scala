@@ -24,7 +24,9 @@ class FxTimeoutTest extends FxSuite:
   }
 
   test("a slow effect fails with the supplied timeout error once the deadline fires") {
-    interceptFx[RuntimeException](Fx.timeout(Fx.sleep(2.seconds) >> Fx.pure(1), 50.millis)(new RuntimeException("timed-out")))
+    interceptFx[RuntimeException](
+      Fx.timeout(Fx.sleep(2.seconds) >> Fx.pure(1), 50.millis)(new RuntimeException("timed-out"))
+    )
       .map(e => assertEquals(e.getMessage, "timed-out"))
   }
 

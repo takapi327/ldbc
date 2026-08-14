@@ -6,8 +6,8 @@
 
 package ldbc.fx
 
-import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.{ AtomicBoolean, AtomicReference }
+import java.util.concurrent.ConcurrentLinkedQueue
 
 import scala.concurrent.duration.{ FiniteDuration, MILLISECONDS, NANOSECONDS }
 import scala.util.control.NonFatal
@@ -90,17 +90,17 @@ object Fx:
     val noop: Canceler = new Canceler:
       override def cancel(): Unit = ()
 
-  private[fx] final case class Pure[A](a: A)                                          extends Fx[A]
-  private[fx] final case class Err(t: Throwable)                                      extends Fx[Nothing]
-  private[fx] final case class Delay[A](thunk: () => A)                               extends Fx[A]
-  private[fx] final case class Blocking[A](thunk: () => A)                            extends Fx[A]
-  private[fx] final case class Interruptible[A](thunk: () => A)                       extends Fx[A]
+  private[fx] final case class Pure[A](a: A)                                           extends Fx[A]
+  private[fx] final case class Err(t: Throwable)                                       extends Fx[Nothing]
+  private[fx] final case class Delay[A](thunk: () => A)                                extends Fx[A]
+  private[fx] final case class Blocking[A](thunk: () => A)                             extends Fx[A]
+  private[fx] final case class Interruptible[A](thunk: () => A)                        extends Fx[A]
   private[fx] final case class Async[A](k: (Either[Throwable, A] => Unit) => Canceler) extends Fx[A]
-  private[fx] final case class FlatMap[A, B](fa: Fx[A], f: A => Fx[B])                extends Fx[B]
-  private[fx] final case class Handle[A](fa: Fx[A], h: Throwable => Fx[A])            extends Fx[A]
+  private[fx] final case class FlatMap[A, B](fa: Fx[A], f: A => Fx[B])                 extends Fx[B]
+  private[fx] final case class Handle[A](fa: Fx[A], h: Throwable => Fx[A])             extends Fx[A]
   private[fx] final case class Bracket[A, B](acquire: Fx[A], use: A => Fx[B], release: A => Fx[Unit]) extends Fx[B]
-  private[fx] final case class Uncancelable[A](body: Fx[A])                                            extends Fx[A]
-  private[fx] final case class OnCancel[A](fa: Fx[A], fin: Fx[Unit])                                   extends Fx[A]
+  private[fx] final case class Uncancelable[A](body: Fx[A])                                           extends Fx[A]
+  private[fx] final case class OnCancel[A](fa: Fx[A], fin: Fx[Unit])                                  extends Fx[A]
 
   /**
    * Lifts an already-computed value into an effect.
@@ -282,9 +282,9 @@ object Fx:
     }
 
   private sealed trait Frame
-  private final case class Bind(f:    Any => Fx[Any])          extends Frame
-  private final case class HandleF(h: Throwable => Fx[Any])    extends Frame
-  private case object Unmask                                   extends Frame
+  private final case class Bind(f: Any => Fx[Any])          extends Frame
+  private final case class HandleF(h: Throwable => Fx[Any]) extends Frame
+  private case object Unmask                                extends Frame
 
   private val SUSPENDED: AnyRef = new AnyRef
 
@@ -336,7 +336,7 @@ object Fx:
 
     def drainFinalizers(): Unit =
       var fs: List[() => Unit] = Nil
-      var f                    = cancelFinalizers.poll()
+      var f = cancelFinalizers.poll()
       while f != null do { fs = f :: fs; f = cancelFinalizers.poll() }
       fs.foreach(_())
 
@@ -357,7 +357,7 @@ object Fx:
      * across threads is arbitrated by the CAS on `cbState`.
      */
     def loop(): Unit =
-      var iters = 0
+      var iters  = 0
       val cedeAt = autoCedeThreshold // read the volatile once per loop entry, not per iteration
       while true do
         if cancelled.get() && maskDepth.get() == 0 then
@@ -397,34 +397,36 @@ object Fx:
           case Uncancelable(body) =>
             maskDepth.incrementAndGet()
             stack = Unmask :: stack
-            cur = body.asInstanceOf[Fx[Any]]
+            cur   = body.asInstanceOf[Fx[Any]]
           case Bracket(acquire, use, release) =>
             val u = use.asInstanceOf[Any => Fx[Any]]
             val r = release.asInstanceOf[Any => Fx[Unit]]
             cur = Uncancelable(
               acquire.asInstanceOf[Fx[Any]].map { res =>
-                val ran             = new AtomicBoolean(false)
-                val rel: () => Unit = () => if ran.compareAndSet(false, true) then { r(res).unsafeRun(_ => ())(using rt); () }
+                val ran = new AtomicBoolean(false)
+                val rel: () => Unit =
+                  () => if ran.compareAndSet(false, true) then { r(res).unsafeRun(_ => ())(using rt); () }
                 cancelFinalizers.add(rel)
                 (res, rel, ran)
               }
-            ).flatMap { case (res, rel, ran) =>
-              // Deregister the cancel-path finalizer, claim the single run, then run `release`
-              // UNCANCELABLY so its error is surfaced rather than swallowed. Runs exactly once per
-              // path (success XOR error), so evaluating this description in both arms below is safe.
-              val runRelease: Fx[Unit] =
-                Fx.delay { cancelFinalizers.remove(rel); ran.set(true); () }.flatMap(_ => Uncancelable(r(res)))
-              // Fast path (use succeeds, release succeeds): no `attempt`/`Either` boxing, no match —
-              // `handleErrorWith` only wraps `u(res)`, so a release error from the trailing `flatMap`
-              // is NOT re-caught (no double release). On a use error, release runs with its own error
-              // suppressed and the use error (primary) is re-raised.
-              u(res)
-                .handleErrorWith(ue => runRelease.handleErrorWith(_ => Fx.unit).flatMap(_ => Fx.raiseError(ue)))
-                .flatMap(a => runRelease.map(_ => a))
+            ).flatMap {
+              case (res, rel, ran) =>
+                // Deregister the cancel-path finalizer, claim the single run, then run `release`
+                // UNCANCELABLY so its error is surfaced rather than swallowed. Runs exactly once per
+                // path (success XOR error), so evaluating this description in both arms below is safe.
+                val runRelease: Fx[Unit] =
+                  Fx.delay { cancelFinalizers.remove(rel); ran.set(true); () }.flatMap(_ => Uncancelable(r(res)))
+                // Fast path (use succeeds, release succeeds): no `attempt`/`Either` boxing, no match —
+                // `handleErrorWith` only wraps `u(res)`, so a release error from the trailing `flatMap`
+                // is NOT re-caught (no double release). On a use error, release runs with its own error
+                // suppressed and the use error (primary) is re-raised.
+                u(res)
+                  .handleErrorWith(ue => runRelease.handleErrorWith(_ => Fx.unit).flatMap(_ => Fx.raiseError(ue)))
+                  .flatMap(a => runRelease.map(_ => a))
             }
           case OnCancel(fa, fin) =>
-            val f               = fin.asInstanceOf[Fx[Unit]]
-            val ran             = new AtomicBoolean(false)
+            val f   = fin.asInstanceOf[Fx[Unit]]
+            val ran = new AtomicBoolean(false)
             val rel: () => Unit = () => if ran.compareAndSet(false, true) then { f.unsafeRun(_ => ())(using rt); () }
             cancelFinalizers.add(rel)
             // On normal completion (success or error) deregister WITHOUT running `fin`; only the
@@ -454,11 +456,11 @@ object Fx:
             if cbState.compareAndSet(null, SUSPENDED) then return
             else cur = fromResult(cbState.get().asInstanceOf[Either[Throwable, Any]])
           case Interruptible(th) =>
-            val once          = new AtomicBoolean(false)
-            val cbState       = new AtomicReference[AnyRef](null)
-            val capturedStack = stack
-            val maskedHere    = maskDepth.get() > 0
-            val cancelerSlot  = new AtomicReference[Canceler](Canceler.noop)
+            val once              = new AtomicBoolean(false)
+            val cbState           = new AtomicReference[AnyRef](null)
+            val capturedStack     = stack
+            val maskedHere        = maskDepth.get() > 0
+            val cancelerSlot      = new AtomicReference[Canceler](Canceler.noop)
             val interruptCanceler = rt.executeInterruptible { () =>
               val result: Either[Throwable, Any] = try Right(th())
               catch { case NonFatal(e) => Left(e) }

@@ -25,16 +25,17 @@ trait FxSuite extends munit.FunSuite:
   override def munitValueTransforms: List[ValueTransform] =
     super.munitValueTransforms :+ new ValueTransform(
       "Fx",
-      { case fx: Fx[?] =>
-        val promise = Promise[Any]()
-        fx.unsafeRun { result =>
-          scala.concurrent.ExecutionContext.global.execute { () =>
-            result match
-              case Right(a) => promise.success(a)
-              case Left(e)  => promise.failure(e)
+      {
+        case fx: Fx[?] =>
+          val promise = Promise[Any]()
+          fx.unsafeRun { result =>
+            scala.concurrent.ExecutionContext.global.execute { () =>
+              result match
+                case Right(a) => promise.success(a)
+                case Left(e)  => promise.failure(e)
+            }
           }
-        }
-        promise.future
+          promise.future
       }
     )
 

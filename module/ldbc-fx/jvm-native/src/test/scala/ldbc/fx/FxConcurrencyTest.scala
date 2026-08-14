@@ -29,7 +29,7 @@ class FxConcurrencyTest extends munit.FunSuite:
     var i              = 0
     while i < 5000 do
       val completed = new AtomicInteger(0)
-      val fx = Fx.async[Int] { cb =>
+      val fx        = Fx.async[Int] { cb =>
         val t = new Thread(() => cb(Right(1)))
         t.start()
         Fx.Canceler.noop
@@ -54,7 +54,7 @@ class FxConcurrencyTest extends munit.FunSuite:
 
   test("bracket releases on cancel") {
     val released = new AtomicBoolean(false)
-    val fx =
+    val fx       =
       Fx.bracket(Fx.pure("r"))(_ => Fx.async[Int](_ => Fx.Canceler.noop))(_ => Fx.delay { released.set(true); () })
     val canc = fx.unsafeRun(_ => ())
     Thread.sleep(30)

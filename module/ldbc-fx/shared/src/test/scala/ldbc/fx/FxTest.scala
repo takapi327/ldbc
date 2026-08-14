@@ -48,7 +48,7 @@ class FxTest extends munit.FunSuite:
     // that resumes the loop for every callback invocation (which the value alone would not reveal,
     // since a second `Promise.complete` is silently ignored).
     val runs = new AtomicInteger(0)
-    val fx = Fx
+    val fx   = Fx
       .async[Int] { cb => cb(Right(1)); cb(Right(2)); cb(Right(3)); Fx.Canceler.noop }
       .map { v => runs.incrementAndGet(); v }
     toFuture(fx).map { v =>
@@ -68,7 +68,7 @@ class FxTest extends munit.FunSuite:
 
   test("bracket releases on error") {
     val released = new AtomicBoolean(false)
-    val fx = Fx.bracket(Fx.pure("r"))(_ => Fx.raiseError[Int](new RuntimeException("x")))(_ =>
+    val fx       = Fx.bracket(Fx.pure("r"))(_ => Fx.raiseError[Int](new RuntimeException("x")))(_ =>
       Fx.delay { released.set(true); () }
     )
     toFuture(fx).failed.map(_ => assert(released.get()))
@@ -118,7 +118,9 @@ class FxTest extends munit.FunSuite:
   }
 
   test("timeout propagates the wrapped effect's own error when it fails before the deadline") {
-    toFuture(Fx.timeout(Fx.raiseError[Int](new RuntimeException("boom")), 10.seconds)(new RuntimeException("timeout"))).failed
+    toFuture(
+      Fx.timeout(Fx.raiseError[Int](new RuntimeException("boom")), 10.seconds)(new RuntimeException("timeout"))
+    ).failed
       .map(e => assertEquals(e.getMessage, "boom"))
   }
 
@@ -138,12 +140,16 @@ class FxTest extends munit.FunSuite:
   }
 
   test("parTraverse fails if any element fails") {
-    toFuture(List(1, 2, 3).parTraverse(n => if n == 2 then Fx.raiseError[Int](new RuntimeException("boom")) else Fx.pure(n))).failed
+    toFuture(
+      List(1, 2, 3).parTraverse(n => if n == 2 then Fx.raiseError[Int](new RuntimeException("boom")) else Fx.pure(n))
+    ).failed
       .map(e => assertEquals(e.getMessage, "boom"))
   }
 
   test("bracket surfaces an error raised by release on the success path") {
-    toFuture(Fx.bracket(Fx.pure("r"))(_ => Fx.pure(1))(_ => Fx.raiseError[Unit](new RuntimeException("release-failed")))).failed
+    toFuture(
+      Fx.bracket(Fx.pure("r"))(_ => Fx.pure(1))(_ => Fx.raiseError[Unit](new RuntimeException("release-failed")))
+    ).failed
       .map(e => assertEquals(e.getMessage, "release-failed"))
   }
 

@@ -27,13 +27,13 @@ class MutexLogicTest extends FxSuite:
         entered <- Ref.of(List.empty[String])
         f1      <- Fiber.start(m.surround(entered.update("in-1" :: _) >> gate.get >> entered.update("out-1" :: _)))
         // f1 now holds the lock, suspended on `gate.get`
-        f2      <- Fiber.start(m.surround(entered.update("in-2" :: _)))
+        f2 <- Fiber.start(m.surround(entered.update("in-2" :: _)))
         // f2 is suspended waiting for the lock and must not have entered
-        before  <- entered.get
-        _       <- gate.complete(()) // release holder 1 → the lock is handed to f2
-        _       <- f1.joinWithNever
-        _       <- f2.joinWithNever
-        after   <- entered.get
+        before <- entered.get
+        _      <- gate.complete(()) // release holder 1 → the lock is handed to f2
+        _      <- f1.joinWithNever
+        _      <- f2.joinWithNever
+        after  <- entered.get
       yield (before.reverse, after.reverse),
       (List("in-1"), List("in-1", "out-1", "in-2"))
     )
@@ -48,7 +48,7 @@ class MutexLogicTest extends FxSuite:
         gate    <- Deferred[Unit]
         inside  <- Ref.of(0)
         maxSeen <- Ref.of(0)
-        f1 <- Fiber.start(
+        f1      <- Fiber.start(
                 m.surround(
                   inside.updateAndGet(_ + 1).flatMap(n => maxSeen.update(mx => if n > mx then n else mx))
                     >> gate.get

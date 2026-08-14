@@ -24,7 +24,8 @@ final class Deferred[A] private (private val state: AtomicReference[Deferred.Sta
    * caller is registered as a waiter and the returned cancellation removes that registration.
    */
   def get: Fx[A] = Fx.async { cb =>
-    @annotation.tailrec def loop(): Fx.Canceler =
+    @annotation.tailrec
+    def loop(): Fx.Canceler =
       state.get match
         case Deferred.Done(value) =>
           cb(Right(value))
@@ -43,9 +44,10 @@ final class Deferred[A] private (private val state: AtomicReference[Deferred.Sta
    * @param a the value to publish
    */
   def complete(a: A): Fx[Boolean] = Fx.delay {
-    @annotation.tailrec def loop(): Boolean =
+    @annotation.tailrec
+    def loop(): Boolean =
       state.get match
-        case Deferred.Done(_) => false
+        case Deferred.Done(_)          => false
         case w @ Deferred.Waiting(cbs) =>
           if state.compareAndSet(w, Deferred.Done(a)) then
             cbs.foreach(cb => cb(Right(a)))
@@ -57,15 +59,16 @@ final class Deferred[A] private (private val state: AtomicReference[Deferred.Sta
   /** Returns the value if already completed, or `None` otherwise, without suspending. */
   def tryGet: Fx[Option[A]] = Fx.delay {
     state.get match
-      case Deferred.Done(value) => Some(value)
+      case Deferred.Done(value)   => Some(value)
       case _: Deferred.Waiting[A] => None
   }
 
   /** Removes a still-pending waiter callback (used by the cancellation of [[get]]). */
   private def remove(cb: Either[Throwable, A] => Unit): Unit =
-    @annotation.tailrec def loop(): Unit =
+    @annotation.tailrec
+    def loop(): Unit =
       state.get match
-        case _: Deferred.Done[A] => ()
+        case _: Deferred.Done[A]       => ()
         case w @ Deferred.Waiting(cbs) =>
           if !state.compareAndSet(w, Deferred.Waiting(cbs.filterNot(_ eq cb))) then loop()
     loop()
