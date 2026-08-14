@@ -122,9 +122,19 @@ class FxTest extends munit.FunSuite:
       .map(e => assertEquals(e.getMessage, "boom"))
   }
 
+  test("parTupled runs both effects and pairs their results") {
+    toFuture((Fx.pure(1), Fx.pure("a")).parTupled).map(v => assertEquals(v, (1, "a")))
+  }
+
   test("parTupled fails if either side fails") {
     toFuture((Fx.pure(1), Fx.raiseError[Int](new RuntimeException("boom"))).parTupled).failed
       .map(e => assertEquals(e.getMessage, "boom"))
+  }
+
+  test("parTraverse preserves input order even when later elements finish first") {
+    // Later elements sleep less, so they complete first; the result must still be in input order.
+    toFuture(List(1, 2, 3, 4, 5).parTraverse(n => Fx.sleep(((6 - n) * 5).millis) >> Fx.pure(n)))
+      .map(v => assertEquals(v, List(1, 2, 3, 4, 5)))
   }
 
   test("parTraverse fails if any element fails") {
@@ -135,4 +145,16 @@ class FxTest extends munit.FunSuite:
   test("bracket surfaces an error raised by release on the success path") {
     toFuture(Fx.bracket(Fx.pure("r"))(_ => Fx.pure(1))(_ => Fx.raiseError[Unit](new RuntimeException("release-failed")))).failed
       .map(e => assertEquals(e.getMessage, "release-failed"))
+  }
+
+  test("blocking produces its value (inline on JS)") {
+    toFuture(Fx.blocking(42)).map(v => assertEquals(v, 42))
+  }
+
+  test("blocking failure propagates") {
+    toFuture(Fx.blocking[Int](throw new RuntimeException("boom"))).failed.map(e => assertEquals(e.getMessage, "boom"))
+  }
+
+  test("interruptible produces its value (inline on JS)") {
+    toFuture(Fx.interruptible(21 * 2)).map(v => assertEquals(v, 42))
   }
