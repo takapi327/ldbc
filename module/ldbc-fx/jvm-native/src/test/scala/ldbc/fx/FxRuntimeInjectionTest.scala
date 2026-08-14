@@ -33,13 +33,13 @@ class FxRuntimeInjectionTest extends munit.FunSuite:
   private final class RecordingRuntime extends FxRuntime:
     val computeCount                      = new AtomicInteger(0)
     val scheduleCount                     = new AtomicInteger(0)
-    val lastComputeThread                 = new AtomicReference[String]("")
+    val lastComputeThread                 = new AtomicReference[Thread](null)
     private val exec                      = Executors.newSingleThreadExecutor(named("INJECTED-COMPUTE"))
     private val g                         = FxRuntime.global
 
     override def executeCompute(task: () => Unit): Unit =
       computeCount.incrementAndGet()
-      exec.execute(() => { lastComputeThread.set(Thread.currentThread.getName); task() })
+      exec.execute(() => { lastComputeThread.set(Thread.currentThread); task() })
 
     override def executeBlocking(task: () => Unit): Unit             = g.executeBlocking(task)
     override def executeInterruptible(task: () => Unit): Fx.Canceler = g.executeInterruptible(task)
@@ -57,29 +57,33 @@ class FxRuntimeInjectionTest extends munit.FunSuite:
 
   test("auto-ceded continuation resumes on the injected runtime") {
     val rt = new RecordingRuntime
-    val endThread = new AtomicReference[String]("")
+    val endThread = new AtomicReference[Thread](null)
     // A long chain of pure steps exceeds the auto-cede threshold (1024), forcing a re-schedule.
     var fx: Fx[Int] = Fx.pure(0)
     for _ <- 0 until 1500 do fx = fx.map(_ + 1)
-    val result = runWith(fx.map { n => endThread.set(Thread.currentThread.getName); n }, rt)
+    val result = runWith(fx.map { n => endThread.set(Thread.currentThread); n }, rt)
 
     assertEquals(result, Right(1500))
     assert(rt.computeCount.get() >= 1, s"auto-cede should hit injected executeCompute, got ${rt.computeCount.get()}")
-    assertEquals(endThread.get(), "INJECTED-COMPUTE", "post-auto-cede continuation must run on the injected runtime")
+    assert(
+      endThread.get() eq rt.lastComputeThread.get(),
+      "post-auto-cede continuation must run on the injected runtime's thread"
+    )
   }
 
   test("Async completion resumes inline, not through the injected runtime") {
-    val rt        = new RecordingRuntime
-    val completer = Executors.newSingleThreadExecutor(named("COMPLETER"))
-    val resumeThread = new AtomicReference[String]("")
+    val rt              = new RecordingRuntime
+    val completer       = Executors.newSingleThreadExecutor(named("COMPLETER"))
+    val completerThread = new AtomicReference[Thread](null)
+    val resumeThread    = new AtomicReference[Thread](null)
     val eff = Fx
-      .async[Int] { cb => completer.execute(() => cb(Right(1))); Fx.Canceler.noop }
-      .map { n => resumeThread.set(Thread.currentThread.getName); n }
+      .async[Int] { cb => completer.execute(() => { completerThread.set(Thread.currentThread); cb(Right(1)) }); Fx.Canceler.noop }
+      .map { n => resumeThread.set(Thread.currentThread); n }
 
     val result = runWith(eff, rt)
 
     assertEquals(result, Right(1))
-    assertEquals(resumeThread.get(), "COMPLETER", "async resume must be inline on the completing thread")
+    assert(resumeThread.get() eq completerThread.get(), "async resume must be inline on the completing thread")
     assertEquals(rt.computeCount.get(), 0, "async resume must not hop through the injected compute pool")
     completer.shutdownNow()
   }
