@@ -63,7 +63,10 @@ class FxRuntimeInjectionTest extends munit.FunSuite:
     val result = runWith(fx, rt)
 
     assertEquals(result, Right(1500))
-    assert(rt.computeCount.get() >= 1, s"auto-cede must hit the injected executeCompute, got ${ rt.computeCount.get() }")
+    assert(
+      rt.computeCount.get() >= 1,
+      s"auto-cede must hit the injected executeCompute, got ${ rt.computeCount.get() }"
+    )
   }
 
   test("Async completion resumes inline, not through the injected runtime") {
