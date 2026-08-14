@@ -19,19 +19,30 @@ final class Semaphore private (state: Ref[Semaphore.State]):
   /** Acquires a single permit, suspending until one is available. */
   def acquire: Fx[Unit] =
     Deferred[Unit].flatMap { waiter =>
-      state.modify { s =>
-        if s.permits > 0 then (s.copy(permits = s.permits - 1), Fx.unit)
-        else (s.copy(waiters = s.waiters :+ waiter), waiter.get)
-      }.flatMap(identity)
+      val cleanup: Fx[Unit] =
+        state
+          .modify { s =>
+            if s.waiters.exists(_ eq waiter) then (s.copy(waiters = s.waiters.filterNot(_ eq waiter)), Fx.unit)
+            else (s.copy(permits = s.permits + 1), Fx.unit)
+          }
+          .flatMap(identity)
+      state
+        .modify { s =>
+          if s.permits > 0 then (s.copy(permits = s.permits - 1), Fx.unit)
+          else (s.copy(waiters = s.waiters :+ waiter), waiter.get.onCancel(cleanup))
+        }
+        .flatMap(identity)
     }
 
   /** Releases a single permit, handing it to the longest-waiting acquirer if any. */
   def release: Fx[Unit] =
-    state.modify { s =>
-      s.waiters match
-        case head +: tail => (s.copy(waiters = tail), head.complete(()).map(_ => ()))
-        case _            => (s.copy(permits = s.permits + 1), Fx.unit)
-    }.flatMap(identity)
+    state
+      .modify { s =>
+        s.waiters match
+          case head +: tail => (s.copy(waiters = tail), head.complete(()).map(_ => ()))
+          case _            => (s.copy(permits = s.permits + 1), Fx.unit)
+      }
+      .flatMap(identity)
 
   /**
    * Runs `fa` while holding a permit, releasing it afterwards on success, error, and cancellation.
