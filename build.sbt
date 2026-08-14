@@ -83,6 +83,16 @@ lazy val fx = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     libraryDependencies += "org.scalameta" %%% "munit" % "1.2.4" % Test
   )
 
+lazy val net = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Full)
+  .module("net", "Non-blocking transport (IoEngine + Socket) on Fx")
+  .settings(
+    libraryDependencies += "org.scalameta" %%% "munit" % "1.2.4" % Test
+  )
+  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
+  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .dependsOn(fx)
+
 lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("dsl", "Projects that provide a way to connect to the database")
@@ -518,6 +528,7 @@ lazy val ldbc = tlCrossRootProject
     sql,
     core,
     fx,
+    net,
     jdbcConnector,
     connector,
     dsl,
