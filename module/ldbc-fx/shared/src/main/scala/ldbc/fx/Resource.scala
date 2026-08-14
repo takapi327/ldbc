@@ -38,7 +38,14 @@ final class Resource[A] private (private[fx] val allocated: Fx[(A, Fx[Unit])]):
     new Resource(
       allocated.flatMap { (a, releaseA) =>
         f(a).allocated
-          .map { (b, releaseB) => (b, releaseB.flatMap(_ => releaseA)) }
+          .map { (b, releaseB) =>
+            val release =
+              releaseB
+                .map(_ => Option.empty[Throwable])
+                .handleErrorWith(e => Fx.pure(Some(e)))
+                .flatMap(rbErr => releaseA.flatMap(_ => rbErr.fold(Fx.unit)(Fx.raiseError)))
+            (b, release)
+          }
           .handleErrorWith(error => releaseA.flatMap(_ => Fx.raiseError(error)))
       }
     )
