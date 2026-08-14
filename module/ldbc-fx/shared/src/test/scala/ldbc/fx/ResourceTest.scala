@@ -18,22 +18,24 @@ class ResourceTest extends FxSuite:
   private def tracked(log: ListBuffer[String], name: String): Resource[String] =
     Resource.make(Fx.delay { log += s"acquire-$name"; name })(_ => Fx.delay { log += s"release-$name"; () })
 
-  test("use acquires, runs the body, and releases on success"):
+  test("use acquires, runs the body, and releases on success") {
     val log = ListBuffer.empty[String]
     tracked(log, "A").use(a => Fx.delay { log += s"use-$a"; a.length }).map { out =>
       assertEquals(out, 1)
       assertEquals(log.toList, List("acquire-A", "use-A", "release-A"))
     }
+  }
 
-  test("use releases even when the body fails"):
+  test("use releases even when the body fails") {
     val log  = ListBuffer.empty[String]
     val boom = new RuntimeException("boom")
     interceptFx[RuntimeException](tracked(log, "A").use(_ => Fx.raiseError[Int](boom))).map { e =>
       assertEquals(e.getMessage, "boom")
       assertEquals(log.toList, List("acquire-A", "release-A"))
     }
+  }
 
-  test("flatMap composes resources and releases in LIFO order"):
+  test("flatMap composes resources and releases in LIFO order") {
     val log = ListBuffer.empty[String]
     val res = for
       a <- tracked(log, "A")
@@ -42,8 +44,9 @@ class ResourceTest extends FxSuite:
     res.use(v => Fx.delay { log += s"use-$v"; () }).map { _ =>
       assertEquals(log.toList, List("acquire-A", "acquire-B", "use-AB", "release-B", "release-A"))
     }
+  }
 
-  test("an acquire failure of a later resource releases the earlier ones"):
+  test("an acquire failure of a later resource releases the earlier ones") {
     val log  = ListBuffer.empty[String]
     val boom = new RuntimeException("acquire-B-failed")
     val res = for
@@ -54,16 +57,18 @@ class ResourceTest extends FxSuite:
       assertEquals(e.getMessage, "acquire-B-failed")
       assertEquals(log.toList, List("acquire-A", "release-A"), "B never acquired; A must be released")
     }
+  }
 
-  test("eval and pure carry no release"):
+  test("eval and pure carry no release") {
     val log = ListBuffer.empty[String]
     val res = for
       _ <- Resource.eval(Fx.delay { log += "eval"; 1 })
       _ <- Resource.pure(2)
     yield ()
     res.use(_ => Fx.unit).map(_ => assertEquals(log.toList, List("eval")))
+  }
 
-  test("a failing release surfaces its error, and earlier releases still run (LIFO)"):
+  test("a failing release surfaces its error, and earlier releases still run (LIFO)") {
     val log     = ListBuffer.empty[String]
     val relBoom = new RuntimeException("release-B-failed")
     val res = for
@@ -75,11 +80,13 @@ class ResourceTest extends FxSuite:
       // B's release ran (and failed); A's release must still run afterwards (LIFO).
       assertEquals(log.toList, List("acquire-A", "acquire-B", "use", "release-A"))
     }
+  }
 
-  test("allocated returns the value and a release action to run later"):
+  test("allocated returns the value and a release action to run later") {
     val log = ListBuffer.empty[String]
     tracked(log, "A").allocated
       .flatMap { (value, release) =>
         Fx.delay { log += s"between-$value"; () }.flatMap(_ => release)
       }
       .map(_ => assertEquals(log.toList, List("acquire-A", "between-A", "release-A")))
+  }

@@ -19,7 +19,7 @@ import ldbc.fx.syntax.*
  */
 class MutexLogicTest extends FxSuite:
 
-  test("surround serializes: a second acquirer waits until the first releases"):
+  test("surround serializes: a second acquirer waits until the first releases") {
     assertFx(
       for
         m       <- Mutex.create
@@ -37,8 +37,9 @@ class MutexLogicTest extends FxSuite:
       yield (before.reverse, after.reverse),
       (List("in-1"), List("in-1", "out-1", "in-2"))
     )
+  }
 
-  test("a second fiber cannot enter the critical section while the first holds it"):
+  test("a second fiber cannot enter the critical section while the first holds it") {
     // `gate` keeps holder 1 *inside* the critical section (suspended) while holder 2 attempts entry,
     // so this observes genuine overlap: a broken mutex lets holder 2 in and `maxSeen` reaches 2.
     assertFx(
@@ -68,8 +69,9 @@ class MutexLogicTest extends FxSuite:
       yield mx,
       1
     )
+  }
 
-  test("surround releases the lock when the body is cancelled"):
+  test("surround releases the lock when the body is cancelled") {
     assertFx(
       for
         m <- Mutex.create
@@ -79,3 +81,4 @@ class MutexLogicTest extends FxSuite:
       yield r,
       "ok"
     )
+  }
