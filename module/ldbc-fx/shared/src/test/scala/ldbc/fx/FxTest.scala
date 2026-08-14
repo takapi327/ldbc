@@ -8,6 +8,7 @@ package ldbc.fx
 
 import java.util.concurrent.atomic.{ AtomicBoolean, AtomicInteger }
 
+import scala.collection.mutable.ListBuffer
 import scala.concurrent.{ Future, Promise }
 import scala.concurrent.duration.*
 
@@ -15,11 +16,12 @@ import ldbc.fx.syntax.*
 
 /**
  * Cross-platform (JVM / JS / Native) tests for the core [[Fx]] semantics that do not depend on
- * real threads: stack safety, `async` call-once, `bracket` release on success/error, `onCancel`
- * running its finalizer only on cancellation, and error propagation (a throwing handler / `flatMap`,
- * `timeout`, the parallel combinators, and a failing `bracket` release). Tests are `Future`-based so
- * they run on the single-threaded JS runtime as well. Thread-dependent behaviours (cancel/complete
- * races, blocking-pool identity) live in the JVM-only `FxConcurrencyTest`.
+ * real threads: stack safety, `async` call-once, `bracket` release on success/error and nested LIFO
+ * order on cancel, `onCancel` running its finalizer only on cancellation, and error propagation (a
+ * throwing handler / `flatMap`, `timeout`, the parallel combinators, and a failing `bracket`
+ * release). Tests are `Future`-based so they run on the single-threaded JS runtime as well.
+ * Thread-dependent behaviours (cancel/complete races, blocking-pool identity) live in the JVM-only
+ * `FxConcurrencyTest`.
  */
 class FxTest extends munit.FunSuite:
 
@@ -70,6 +72,18 @@ class FxTest extends munit.FunSuite:
       Fx.delay { released.set(true); () }
     )
     toFuture(fx).failed.map(_ => assert(released.get()))
+  }
+
+  test("nested bracket finalizers run in LIFO order on cancel") {
+    // On cancel the finalizers must unwind inner-before-outer, matching normal unwinding.
+    val order = ListBuffer.empty[String]
+    val program: Fx[Unit] =
+      Fx.bracket(Fx.pure("outer"))(_ =>
+        Fx.bracket(Fx.pure("inner"))(_ => Fx.async[Unit](_ => Fx.Canceler.noop))(_ => Fx.delay { order += "inner"; () })
+      )(_ => Fx.delay { order += "outer"; () })
+    val canceler = program.unsafeRun(_ => ())
+    canceler.cancel()
+    assertEquals(order.toList, List("inner", "outer"))
   }
 
   test("onCancel runs the finalizer when the effect is cancelled") {
