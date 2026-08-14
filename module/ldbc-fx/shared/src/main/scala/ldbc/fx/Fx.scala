@@ -55,6 +55,16 @@ sealed trait Fx[+A]:
   def handleErrorWith[B >: A](h: Throwable => Fx[B]): Fx[B] = Fx.Handle(this, h)
 
   /**
+   * Runs `fin` if and only if this effect is cancelled before completing. Unlike `bracket`'s release,
+   * `fin` does NOT run on normal success or error — only on cancellation. Useful for deregistering a
+   * pending registration (e.g. removing a waiter from a queue) when a suspended effect is interrupted.
+   *
+   * @param fin the finalizer to run only on cancellation
+   * @return an effect equivalent to this one, with `fin` attached to the cancellation path
+   */
+  def onCancel(fin: Fx[Unit]): Fx[A] = Fx.OnCancel(this, fin)
+
+  /**
    * Runs this effect. This is the unsafe boundary where side effects actually happen; the effect
    * frontends ([[ldbc.fx.Fx]] bridged to cats-effect / ZIO / Future) call it internally.
    *
@@ -90,6 +100,7 @@ object Fx:
   private[fx] final case class Handle[A](fa: Fx[A], h: Throwable => Fx[A])            extends Fx[A]
   private[fx] final case class Bracket[A, B](acquire: Fx[A], use: A => Fx[B], release: A => Fx[Unit]) extends Fx[B]
   private[fx] final case class Uncancelable[A](body: Fx[A])                                            extends Fx[A]
+  private[fx] final case class OnCancel[A](fa: Fx[A], fin: Fx[Unit])                                   extends Fx[A]
 
   /**
    * Lifts an already-computed value into an effect.
@@ -395,14 +406,35 @@ object Fx:
                 val ran             = new AtomicBoolean(false)
                 val rel: () => Unit = () => if ran.compareAndSet(false, true) then { r(res).unsafeRun(_ => ())(using rt); () }
                 cancelFinalizers.add(rel)
-                (res, rel)
+                (res, rel, ran)
               }
-            ).flatMap { case (res, rel) =>
-              val cleanup: Fx[Unit] = Fx.delay { cancelFinalizers.remove(rel); rel() }
+            ).flatMap { case (res, rel, ran) =>
+              // Deregister the cancel-path finalizer, claim the single run, then run `release`
+              // UNCANCELABLY so its error is surfaced rather than swallowed. Runs exactly once per
+              // path (success XOR error), so evaluating this description in both arms below is safe.
+              val runRelease: Fx[Unit] =
+                Fx.delay { cancelFinalizers.remove(rel); ran.set(true); () }.flatMap(_ => Uncancelable(r(res)))
+              // Fast path (use succeeds, release succeeds): no `attempt`/`Either` boxing, no match —
+              // `handleErrorWith` only wraps `u(res)`, so a release error from the trailing `flatMap`
+              // is NOT re-caught (no double release). On a use error, release runs with its own error
+              // suppressed and the use error (primary) is re-raised.
               u(res)
-                .flatMap(a => cleanup.map(_ => a))
-                .handleErrorWith(e => cleanup.flatMap(_ => Fx.raiseError(e)))
+                .handleErrorWith(ue => runRelease.handleErrorWith(_ => Fx.unit).flatMap(_ => Fx.raiseError(ue)))
+                .flatMap(a => runRelease.map(_ => a))
             }
+          case OnCancel(fa, fin) =>
+            val f               = fin.asInstanceOf[Fx[Unit]]
+            val ran             = new AtomicBoolean(false)
+            val rel: () => Unit = () => if ran.compareAndSet(false, true) then { f.unsafeRun(_ => ())(using rt); () }
+            cancelFinalizers.add(rel)
+            // On normal completion (success or error) deregister WITHOUT running `fin`; only the
+            // cancellation path (drainFinalizers) runs it. The `executing` flag arbitrates so a cancel
+            // cannot race the deregister within an interpretation burst.
+            val deregister: Fx[Unit] = Fx.delay { cancelFinalizers.remove(rel); () }
+            cur = fa
+              .asInstanceOf[Fx[Any]]
+              .flatMap(a => deregister.map(_ => a))
+              .handleErrorWith(e => deregister.flatMap(_ => Fx.raiseError(e)))
           case Blocking(th) =>
             val once          = new AtomicBoolean(false)
             val cbState       = new AtomicReference[AnyRef](null)
