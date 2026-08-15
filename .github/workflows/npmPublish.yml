@@ -109,7 +109,10 @@ jobs:
       - name: Build document
         run: sbt docs/tlSite
 
+      - name: Link Scala.js output
+        run: sbt "${{ github.event.inputs.server }}/Compile/fastOptJS"
+
       - name: Publish
-        run: sbt "${{ github.event.inputs.server }}/npmPackage; ${{ github.event.inputs.server }}/npmPackageNpmrc; ${{ github.event.inputs.server }}/npmPackagePublish"
+        run: ./script/publish-npm-package.sh
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
