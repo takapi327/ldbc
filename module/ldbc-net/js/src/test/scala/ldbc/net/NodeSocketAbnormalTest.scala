@@ -14,9 +14,9 @@ import ldbc.fx.Fx
 
 /**
  * Node-transport abnormal-case coverage (the JS counterparts of the `jvm-native` tests, whose
- * `close`/TLS internals differ per platform): a peer reset surfaces as a read error, a read issued
- * after `close` fails promptly instead of hanging, and a TLS handshake against a plaintext peer
- * fails rather than hanging.
+ * `connect`/`close`/TLS internals differ per platform): a peer reset surfaces as a read error, a read
+ * issued after `close` fails promptly instead of hanging, cancelling an in-flight connect never fires
+ * the callback, and a TLS handshake against a plaintext peer fails rather than hanging.
  */
 class NodeSocketAbnormalTest extends munit.FunSuite:
 
@@ -89,6 +89,25 @@ class NodeSocketAbnormalTest extends munit.FunSuite:
             server.close()
             assert(outcome.isFailure, s"read after close must fail promptly, not hang or succeed: got $outcome")
           }
+    }
+
+  test("cancelling an in-progress connect never completes the callback"):
+    // The blackhole silently drops the SYN, so the node connect stays pending across the window below.
+    // Cancelling must tear down the socket without ever invoking the callback — in particular the
+    // destroy() must not surface as a spurious 'error' completion.
+    var outcome: Option[Either[Throwable, Socket]] = None
+    var pendingAtCancel                            = false
+    val canceler = IoEngine.global.connect("10.255.255.1", 80, 30.seconds).unsafeRun(r => outcome = Some(r))
+    val done     = Promise[Unit]()
+    js.timers.setTimeout(300.0) {
+      pendingAtCancel = outcome.isEmpty
+      canceler.cancel()
+      js.timers.setTimeout(500.0) { done.success(()); () } // give any leaked completion time to fire
+      ()
+    }
+    done.future.map { _ =>
+      assert(pendingAtCancel, "precondition: the blackhole connect should still be pending when cancelled")
+      assert(outcome.isEmpty, s"a cancelled connect must not complete the callback at all: got $outcome")
     }
 
   test("a TLS handshake against a plaintext peer fails and does not hang"):
