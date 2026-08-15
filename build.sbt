@@ -450,44 +450,16 @@ lazy val mcpDocumentServer = crossProject(JSPlatform)
     libraryDependencies += "io.github.takapi327" %%% "mcp-scala-server" % "0.1.0-alpha2"
   )
   .jsSettings(
-    npmPackageName                := "@ldbc/mcp-document-server",
-    npmPackageDescription         := (Compile / description).value,
-    npmPackageKeywords            := Seq("mcp", "scala", "ldbc"),
-    npmPackageAuthor              := "takapi327",
-    npmPackageLicense             := Some("MIT"),
-    npmPackageBinaryEnable        := true,
-    npmPackageVersion             := "0.1.0-alpha6",
-    npmPackageREADME              := Some(baseDirectory.value / "README.md"),
-    npmPackageAdditionalNpmConfig := Map(
-      "homepage"      -> _root_.io.circe.Json.fromString("https://takapi327.github.io/ldbc/"),
-      "private"       -> _root_.io.circe.Json.fromBoolean(false),
-      "publishConfig" -> _root_.io.circe.Json.obj(
-        "access" -> _root_.io.circe.Json.fromString("public")
-      )
-    ),
     scalaJSUseMainModuleInitializer := true,
-    scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule)),
-    Compile / mainClass := Some("ldbc.mcp.StdioServer"),
-
-    // Custom task to copy mdoc docs to npm package directory
-    npmPackage := {
-      (Compile / npmPackage).value
-      val log = streams.value.log
-
-      val docsSourceDir = file("docs/target/mdoc")
-      val docsTargetDir = (Compile / npmPackageOutputDirectory).value / "docs"
-
-      if (docsSourceDir.exists()) {
-        log.info(s"Copying mdoc documentation from ${ docsSourceDir } to ${ docsTargetDir }")
-        IO.copyDirectory(docsSourceDir, docsTargetDir)
-        log.success("Documentation copied successfully")
-      } else {
-        log.warn(s"Source docs directory not found: ${ docsSourceDir }")
-      }
-    }
+    scalaJSLinkerConfig ~= { config =>
+      config
+        .withModuleKind(ModuleKind.CommonJSModule)
+        .withJSHeader(s"#!/usr/bin/env node\n${ config.jsHeader }")
+    },
+    Compile / mainClass := Some("ldbc.mcp.StdioServer")
   )
   .defaultSettings
-  .enablePlugins(NpmPackagePlugin, NoPublishPlugin)
+  .enablePlugins(NoPublishPlugin)
 
 lazy val examples = Seq(
   http4sExample,
