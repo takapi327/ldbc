@@ -49,7 +49,6 @@ class NodeSocketAbnormalTest extends munit.FunSuite:
   test("a peer reset surfaces as a read error, not as EOF"):
     val ready  = Promise[Int]()
     val server = netModule.createServer(((sock: js.Dynamic) => {
-      // Abort the connection so the client observes ECONNRESET (an 'error') rather than a graceful FIN.
       sock.resetAndDestroy()
       ()
     }): js.Function1[js.Dynamic, Unit])
@@ -92,9 +91,6 @@ class NodeSocketAbnormalTest extends munit.FunSuite:
     }
 
   test("cancelling an in-progress connect never completes the callback"):
-    // The blackhole silently drops the SYN, so the node connect stays pending across the window below.
-    // Cancelling must tear down the socket without ever invoking the callback — in particular the
-    // destroy() must not surface as a spurious 'error' completion.
     var outcome: Option[Either[Throwable, Socket]] = None
     var pendingAtCancel = false
     val canceler        = IoEngine.global.connect("10.255.255.1", 80, 30.seconds).unsafeRun(r => outcome = Some(r))
@@ -102,7 +98,7 @@ class NodeSocketAbnormalTest extends munit.FunSuite:
     js.timers.setTimeout(300.0) {
       pendingAtCancel = outcome.isEmpty
       canceler.cancel()
-      js.timers.setTimeout(500.0) { done.success(()); () } // give any leaked completion time to fire
+      js.timers.setTimeout(500.0) { done.success(()); () }
       ()
     }
     done.future.map { _ =>

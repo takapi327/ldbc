@@ -35,8 +35,6 @@ class IoEngineConnectTimeoutTest extends munit.FunSuite:
     assert(elapsedMs < 5000, s"connect should time out promptly (~500ms), took ${ elapsedMs }ms")
 
   test("connect to a refused port fails fast with a connection error, not a timeout"):
-    // A closed local port replies with RST (ECONNREFUSED). Despite a generous 5s timeout, the connect
-    // must fail promptly on the refusal — not wait out the timer and not surface a ConnectTimeoutException.
     val startNanos = System.nanoTime()
     val result     = runSync(IoEngine.global.connect("127.0.0.1", 1, 5.seconds), 8000)
     val elapsedMs  = (System.nanoTime() - startNanos) / 1000000L
@@ -48,16 +46,13 @@ class IoEngineConnectTimeoutTest extends munit.FunSuite:
     assert(elapsedMs < 2000, s"a refused connection should fail promptly (RST), took ${ elapsedMs }ms")
 
   test("cancelling an in-progress connect returns promptly and never completes the callback"):
-    // The blackhole silently drops the SYN, so the connect stays pending with a long timeout. Cancelling
-    // its Canceler must tear down the half-open socket promptly and must not later fire the callback
-    // (neither a spurious success nor the eventual timeout).
     val outcome  = new AtomicReference[Either[Throwable, Socket]](null)
     val canceler = IoEngine.global.connect("10.255.255.1", 80, 30.seconds).unsafeRun(r => outcome.set(r))
-    Thread.sleep(200) // let the connect register interest and arm its timer
+    Thread.sleep(200)
     val startNanos = System.nanoTime()
     canceler.cancel()
     val cancelMs = (System.nanoTime() - startNanos) / 1000000L
     assert(cancelMs < 1000, s"cancel must return promptly, took ${ cancelMs }ms")
-    Thread.sleep(500) // give any leaked completion a chance to fire
+    Thread.sleep(500)
     val result = outcome.get()
     assert(result == null, s"a cancelled connect must not complete the callback at all: got $result")

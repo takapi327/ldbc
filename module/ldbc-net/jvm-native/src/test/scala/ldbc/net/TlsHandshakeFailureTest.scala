@@ -38,7 +38,7 @@ class TlsHandshakeFailureTest extends munit.FunSuite:
           try
             s.getOutputStream.write("HTTP/1.1 400 Bad Request\r\n\r\n".getBytes("UTF-8"))
             s.getOutputStream.flush()
-            s.close() // hang up so the client's handshake read sees EOF rather than waiting for more bytes
+            s.close()
           catch { case _: Throwable => () }
         )
         worker.setDaemon(true)

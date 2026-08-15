@@ -89,10 +89,21 @@ private[net] final class NativeIoEngine(poller: Poller) extends IoEngine:
     st.writeReady = ready
     enqueue(() => poller.arm(fd, read = false, write = true))
 
-  private[net] def deregister(fd: Int): Unit =
+  /**
+   * Removes `fd` from the registry and poller and only THEN closes it — all on the poller thread, in
+   * this order. Closing the fd is what frees its number for reuse, so it must happen after
+   * `poller.remove` has cleared both the `registered` set and the kernel epoll/kqueue entry.
+   * Otherwise the OS can hand the just-freed number to a concurrent `connect` while the poller still
+   * believes it is registered: that connect's `add` is skipped (the number is already in
+   * `registered`), its `arm` then targets an fd absent from the kernel poller, and its readiness
+   * event never fires — the connect hangs until its timeout. This surfaced as intermittent
+   * `connect ... timed out` failures on loaded CI runners.
+   */
+  private[net] def deregisterAndClose(fd: Int): Unit =
     enqueue { () =>
       registry.remove(fd)
       poller.remove(fd)
+      CInterop.closeFd(fd)
     }
 
   private[net] def start(): NativeIoEngine =
@@ -117,7 +128,7 @@ private[net] final class NativeIoEngine(poller: Poller) extends IoEngine:
             val soError = CInterop.socketError(fd)
             if soError == 0 then cb(Right(new FdSocket(fd, st, this)))
             else
-              deregister(fd); CInterop.closeFd(fd)
+              deregisterAndClose(fd)
               cb(Left(new java.io.IOException(s"connect to $host:$port failed (errno=$soError)")))
 
         st.connectReady = () => finishConnect()
@@ -127,7 +138,7 @@ private[net] final class NativeIoEngine(poller: Poller) extends IoEngine:
           enqueue(() => { poller.add(fd); poller.arm(fd, read = false, write = true) })
           timer.set(Fx.sleep(timeout).unsafeRun { _ =>
             if done.compareAndSet(false, true) then
-              deregister(fd); CInterop.closeFd(fd)
+              deregisterAndClose(fd)
               cb(Left(new ConnectTimeoutException(s"connect to $host:$port timed out after $timeout")))
           })
         else
@@ -138,7 +149,7 @@ private[net] final class NativeIoEngine(poller: Poller) extends IoEngine:
         new Fx.Canceler:
           override def cancel(): Unit =
             if done.compareAndSet(false, true) then
-              timer.get.cancel(); deregister(fd); CInterop.closeFd(fd)
+              timer.get.cancel(); deregisterAndClose(fd)
       }.flatMap(SerializedSocket.apply)
     }
 

@@ -31,35 +31,41 @@ private[net] final class FdSocket(fd: Int, st: ChannelState, engine: NativeIoEng
     if n <= 0 then Fx.pure(Some(Array.emptyByteArray))
     else
       Fx.async { cb =>
-        def attempt(): Unit =
-          val buf = new Array[Byte](n)
-          val r   = CInterop.recvInto(fd, buf, n)
-          if r > 0 then cb(Right(Some(java.util.Arrays.copyOf(buf, r))))
-          else if r == 0 then cb(Right(None))
-          else if errno == EAGAIN || errno == EWOULDBLOCK then engine.armRead(fd, st, () => attempt())
-          else cb(Left(new java.io.IOException(s"read failed (errno=$errno)")))
-        attempt()
-        new Fx.Canceler { override def cancel(): Unit = st.readReady = null }
+        if closed.get() then
+          cb(Left(new java.io.IOException("socket closed")))
+          Fx.Canceler.noop
+        else
+          def attempt(): Unit =
+            val buf = new Array[Byte](n)
+            val r   = CInterop.recvInto(fd, buf, n)
+            if r > 0 then cb(Right(Some(java.util.Arrays.copyOf(buf, r))))
+            else if r == 0 then cb(Right(None))
+            else if errno == EAGAIN || errno == EWOULDBLOCK then engine.armRead(fd, st, () => attempt())
+            else cb(Left(new java.io.IOException(s"read failed (errno=$errno)")))
+          attempt()
+          new Fx.Canceler { override def cancel(): Unit = st.readReady = null }
       }
 
   override def write(bytes: Array[Byte]): Fx[Unit] =
     Fx.async { cb =>
-      val off = new java.util.concurrent.atomic.AtomicInteger(0)
-      def attempt(): Unit =
-        var blocked = false
-        while off.get() < bytes.length && !blocked do
-          val w = CInterop.sendFrom(fd, bytes, off.get(), bytes.length - off.get())
-          if w > 0 then off.addAndGet(w)
-          else if w < 0 && (errno == EAGAIN || errno == EWOULDBLOCK) then
-            engine.armWrite(fd, st, () => attempt()); blocked = true
-          else { cb(Left(new java.io.IOException(s"write failed (errno=$errno)"))); return }
-        if !blocked && off.get() >= bytes.length then cb(Right(()))
-      attempt()
-      new Fx.Canceler { override def cancel(): Unit = st.writeReady = null }
+      if closed.get() then
+        cb(Left(new java.io.IOException("socket closed")))
+        Fx.Canceler.noop
+      else
+        val off = new java.util.concurrent.atomic.AtomicInteger(0)
+        def attempt(): Unit =
+          var blocked = false
+          while off.get() < bytes.length && !blocked do
+            val w = CInterop.sendFrom(fd, bytes, off.get(), bytes.length - off.get())
+            if w > 0 then off.addAndGet(w)
+            else if w < 0 && (errno == EAGAIN || errno == EWOULDBLOCK) then
+              engine.armWrite(fd, st, () => attempt()); blocked = true
+            else { cb(Left(new java.io.IOException(s"write failed (errno=$errno)"))); return }
+          if !blocked && off.get() >= bytes.length then cb(Right(()))
+        attempt()
+        new Fx.Canceler { override def cancel(): Unit = st.writeReady = null }
     }
 
   override def close(): Fx[Unit] = Fx.delay {
-    if closed.compareAndSet(false, true) then
-      engine.deregister(fd)
-      CInterop.closeFd(fd)
+    if closed.compareAndSet(false, true) then engine.deregisterAndClose(fd)
   }

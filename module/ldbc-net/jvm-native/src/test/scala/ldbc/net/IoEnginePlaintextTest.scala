@@ -107,8 +107,8 @@ class IoEnginePlaintextTest extends munit.FunSuite:
     val th  = new Thread(() =>
       try
         val s = rst.accept()
-        s.getInputStream.read(new Array[Byte](16)) // wait for the client's write so the link is established
-        s.setSoLinger(true, 0)                     // linger 0 → close aborts the connection with an RST
+        s.getInputStream.read(new Array[Byte](16))
+        s.setSoLinger(true, 0)
         s.close()
       catch { case _: Throwable => () }
     )
@@ -124,9 +124,6 @@ class IoEnginePlaintextTest extends munit.FunSuite:
       yield r
     val result    = runSync(prog, 4000)
     val elapsedMs = (System.nanoTime() - startNanos) / 1000000L
-    // A reset surfaces as ECONNRESET (Left) on macOS/BSD, but as an orderly EOF (Right(None)) on Linux
-    // once all sent data has been consumed — both are acceptable OS behaviours. What must never happen
-    // is a hang, or phantom data (Right(Some(_))) that hides the disconnection.
     assert(elapsedMs < 2000, s"a reset must terminate the read promptly, not hang (took ${ elapsedMs }ms)")
     assert(!result.exists(_.isDefined), s"a reset must surface as an error or EOF, never phantom data: got $result")
 
