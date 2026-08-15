@@ -39,11 +39,12 @@ class SimpleHttpClientSecurityTest extends CatsEffectSuite:
   }
 
   test("accept HTTP URIs") {
-    val uri = URI.create("http://httpbin.org/get")
+    // A closed local port fails fast with a connection error rather than a scheme-validation error,
+    // so this checks the scheme is accepted without depending on any external service.
+    val uri = URI.create("http://127.0.0.1:1/")
 
-    // This test will fail if network is not available, but validates the scheme is accepted
     client.get(uri, Map.empty).attempt.map { result =>
-      // Either succeeds or fails with network error (not scheme validation error)
+      // Either succeeds or fails with a network error (not a scheme-validation error).
       result.fold(
         error => assert(!error.getMessage.contains("Unsupported URI scheme")),
         _ => assert(true)
@@ -52,11 +53,12 @@ class SimpleHttpClientSecurityTest extends CatsEffectSuite:
   }
 
   test("accept HTTPS URIs and use correct default port") {
-    val uri = URI.create("https://httpbin.org/get")
+    // A closed local port fails fast; this checks the HTTPS scheme is accepted (and would use port
+    // 443) without depending on any external service.
+    val uri = URI.create("https://127.0.0.1:1/")
 
-    // This test validates HTTPS scheme is accepted and would use port 443
     client.get(uri, Map.empty).attempt.map { result =>
-      // Either succeeds or fails with network error (not scheme validation error)
+      // Either succeeds or fails with a network error (not a scheme-validation error).
       result.fold(
         error => assert(!error.getMessage.contains("Unsupported URI scheme")),
         _ => assert(true)
