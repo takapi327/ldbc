@@ -10,9 +10,9 @@ import scala.concurrent.{ Future, Promise }
 
 import cats.effect.IO
 
-import zio.{ Task, ZIO }
-
 import ldbc.fx.Fx
+
+import zio.{ Task, ZIO }
 
 /**
  * Effect-frontend bridges (`Fx ~> IO / ZIO / Future`) used by the Fx overhead benchmarks. These

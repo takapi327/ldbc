@@ -13,12 +13,12 @@ import scala.concurrent.duration.*
 
 import org.openjdk.jmh.annotations.*
 
-import cats.effect.IO
 import cats.effect.unsafe.IORuntime
-
-import zio.{ Runtime as ZRuntime, Unsafe, ZIO }
+import cats.effect.IO
 
 import ldbc.fx.Fx
+
+import zio.{ Runtime as ZRuntime, Unsafe, ZIO }
 
 /**
  * Checks how the Fx-bridge overhead behaves as the flatMap chain grows (N = 100 / 1000 / 10000).
@@ -60,9 +60,9 @@ class ScaleBench:
     while i < n do { f = f.flatMap(x => Future.successful(x + 1)); i += 1 }
     f
 
-  @Benchmark def io_native: Int     = ioChain.unsafeRunSync()
-  @Benchmark def io_viaFx: Int      = Bridges.toIO(fxChain).unsafeRunSync()
-  @Benchmark def zio_native: Int    = runZ(zioChain)
-  @Benchmark def zio_viaFx: Int     = runZ(Bridges.toZIO(fxChain))
+  @Benchmark def io_native:     Int = ioChain.unsafeRunSync()
+  @Benchmark def io_viaFx:      Int = Bridges.toIO(fxChain).unsafeRunSync()
+  @Benchmark def zio_native:    Int = runZ(zioChain)
+  @Benchmark def zio_viaFx:     Int = runZ(Bridges.toZIO(fxChain))
   @Benchmark def future_native: Int = Await.result(futureChain, 60.seconds)
-  @Benchmark def future_viaFx: Int  = Await.result(Bridges.toFuture(fxChain), 60.seconds)
+  @Benchmark def future_viaFx:  Int = Await.result(Bridges.toFuture(fxChain), 60.seconds)

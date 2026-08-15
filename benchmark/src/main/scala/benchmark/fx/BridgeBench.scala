@@ -13,12 +13,12 @@ import scala.concurrent.duration.*
 
 import org.openjdk.jmh.annotations.*
 
-import cats.effect.IO
 import cats.effect.unsafe.IORuntime
-
-import zio.{ Runtime as ZRuntime, Unsafe, ZIO }
+import cats.effect.IO
 
 import ldbc.fx.Fx
+
+import zio.{ Runtime as ZRuntime, Unsafe, ZIO }
 
 /**
  * Compares "run via the Fx bridge" (`toIO` / `toZIO` / `toFuture`) against native cats-effect / ZIO /
@@ -60,18 +60,18 @@ class BridgeBench:
     f
 
   @Benchmark def io_syncChain_native: Int = ioChain.unsafeRunSync()
-  @Benchmark def io_syncChain_viaFx: Int  = Bridges.toIO(fxChain).unsafeRunSync()
+  @Benchmark def io_syncChain_viaFx:  Int = Bridges.toIO(fxChain).unsafeRunSync()
 
   @Benchmark def zio_syncChain_native: Int = runZ(zioChain)
-  @Benchmark def zio_syncChain_viaFx: Int  = runZ(Bridges.toZIO(fxChain))
+  @Benchmark def zio_syncChain_viaFx:  Int = runZ(Bridges.toZIO(fxChain))
 
   @Benchmark def future_syncChain_native: Int = Await.result(futureChain, 10.seconds)
-  @Benchmark def future_syncChain_viaFx: Int  = Await.result(Bridges.toFuture(fxChain), 10.seconds)
+  @Benchmark def future_syncChain_viaFx:  Int = Await.result(Bridges.toFuture(fxChain), 10.seconds)
 
   @Benchmark def io_asyncOnce_native: Int = IO.async_[Int](cb => cb(Right(1))).unsafeRunSync()
-  @Benchmark def io_asyncOnce_viaFx: Int  =
+  @Benchmark def io_asyncOnce_viaFx:  Int =
     Bridges.toIO(Fx.async[Int] { cb => cb(Right(1)); Fx.Canceler.noop }).unsafeRunSync()
 
   @Benchmark def zio_asyncOnce_native: Int = runZ(ZIO.async[Any, Throwable, Int](k => k(ZIO.succeed(1))))
-  @Benchmark def zio_asyncOnce_viaFx: Int  =
+  @Benchmark def zio_asyncOnce_viaFx:  Int =
     runZ(Bridges.toZIO(Fx.async[Int] { cb => cb(Right(1)); Fx.Canceler.noop }))

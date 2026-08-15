@@ -12,12 +12,12 @@ import scala.concurrent.duration.*
 
 import org.openjdk.jmh.annotations.*
 
-import cats.effect.IO
 import cats.effect.unsafe.IORuntime
-
-import zio.{ Runtime as ZRuntime, Unsafe, ZIO }
+import cats.effect.IO
 
 import ldbc.fx.Fx
+
+import zio.{ Runtime as ZRuntime, Unsafe, ZIO }
 
 /**
  * Checks whether the Fx-bridge overhead becomes pronounced when a single operation is heavy (CPU)
@@ -43,13 +43,13 @@ class HeavyBench:
     fib(30)
 
   @Benchmark def io_heavyCompute_native: Long = IO(heavy()).unsafeRunSync()
-  @Benchmark def io_heavyCompute_viaFx: Long  = Bridges.toIO(Fx.delay(heavy())).unsafeRunSync()
+  @Benchmark def io_heavyCompute_viaFx:  Long = Bridges.toIO(Fx.delay(heavy())).unsafeRunSync()
 
   @Benchmark def zio_heavyCompute_native: Long = runZ(ZIO.attempt(heavy()))
-  @Benchmark def zio_heavyCompute_viaFx: Long  = runZ(Bridges.toZIO(Fx.delay(heavy())))
+  @Benchmark def zio_heavyCompute_viaFx:  Long = runZ(Bridges.toZIO(Fx.delay(heavy())))
 
   @Benchmark def io_sleep1ms_native: Unit = IO.sleep(1.milli).unsafeRunSync()
-  @Benchmark def io_sleep1ms_viaFx: Unit  = Bridges.toIO(Fx.sleep(1.milli)).unsafeRunSync()
+  @Benchmark def io_sleep1ms_viaFx:  Unit = Bridges.toIO(Fx.sleep(1.milli)).unsafeRunSync()
 
   @Benchmark def zio_sleep1ms_native: Unit = runZ(ZIO.sleep(zio.Duration.fromMillis(1)))
-  @Benchmark def zio_sleep1ms_viaFx: Unit  = runZ(Bridges.toZIO(Fx.sleep(1.milli)))
+  @Benchmark def zio_sleep1ms_viaFx:  Unit = runZ(Bridges.toZIO(Fx.sleep(1.milli)))
