@@ -22,6 +22,7 @@ private[net] final class ReadBuffer:
   private var waiterN: Int                                                    = 0
   private var eof:     Boolean                                                = false
   private var error:   Option[Throwable]                                      = None
+  private var closed:  Boolean                                                = false
 
   /** Appends received bytes and serves a parked reader if any. */
   def onData(bytes: Array[Byte]): Unit =
@@ -39,6 +40,15 @@ private[net] final class ReadBuffer:
     deliver()
 
   /**
+   * Marks the transport as locally closed (its owning [[Socket.close]] was called) and fails a parked
+   * reader. Unlike [[onEof]], this does not wait for the peer's EOF: a subsequent or parked `read`
+   * completes immediately with an error instead of hanging on a peer that never sends `end`.
+   */
+  def onClose(): Unit =
+    closed = true
+    deliver()
+
+  /**
    * Requests up to `n` bytes. A `n <= 0` request completes immediately with `Some` of an empty
    * array (never confused with EOF). Otherwise the callback is served from the buffer / EOF /
    * error, or parked until data arrives. Returns a cancel action that drops a still-parked waiter.
@@ -51,6 +61,7 @@ private[net] final class ReadBuffer:
       case Some(e) => cb(Left(e))
       case None =>
         if n <= 0 then cb(Right(Some(Array.emptyByteArray)))
+        else if closed then cb(Left(new java.io.IOException("socket closed")))
         else if pending.nonEmpty then cb(Right(Some(takeN(n))))
         else if eof then cb(Right(None))
         else
@@ -83,7 +94,10 @@ private[net] final class ReadBuffer:
             waiter = None
             w(Left(e))
           case None =>
-            if pending.nonEmpty then
+            if closed then
+              waiter = None
+              w(Left(new java.io.IOException("socket closed")))
+            else if pending.nonEmpty then
               waiter = None
               w(Right(Some(takeN(waiterN))))
             else if eof then

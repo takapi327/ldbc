@@ -108,15 +108,18 @@ private[net] final class S2nTlsSocket(
     attempt(0)
 
   override def close(): Fx[Unit] =
-    def shutdown: Fx[Unit] =
+    /**
+     * A single best-effort `close_notify`. It is deliberately NOT retried on
+     * `S2N_BLOCKED_ON_WRITE`: a peer that has already gone away keeps the send blocked forever, so an
+     * await/retry loop would hang `close()` (and thus a failed-handshake cleanup) indefinitely. When
+     * the peer is alive the 7-byte alert flushes into the empty socket buffer in this one call; when
+     * it cannot, the following `raw.close()` still tears the connection down.
+     */
+    val shutdown: Fx[Unit] =
       Fx.delay {
         val blocked = stackalloc[CInt]()
-        val rc      = S2n.s2n_shutdown_send(conn, blocked)
-        (rc, !blocked)
-      }.flatMap { (rc, blocked) =>
-        if rc >= 0 then Fx.unit
-        else awaitBlocked(blocked, "shutdown").flatMap(_ => shutdown)
-      }
+        S2n.s2n_shutdown_send(conn, blocked)
+      }.map(_ => ())
     shutdown
       .handleErrorWith(_ => Fx.unit)
       .flatMap(_ => Fx.delay(release()))

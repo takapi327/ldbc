@@ -7,7 +7,7 @@
 package ldbc.net
 
 import java.nio.ByteBuffer
-import java.nio.channels.{ SelectionKey, SocketChannel }
+import java.nio.channels.{ ClosedChannelException, SelectionKey, SocketChannel }
 
 import ldbc.fx.Fx
 
@@ -24,21 +24,25 @@ private[net] final class NioSocket(
     if n <= 0 then Fx.pure(Some(Array.emptyByteArray))
     else
       Fx.async { cb =>
-        lazy val onReadable: SelectionKey => Unit = _ =>
-          try
-            val buf = ByteBuffer.allocate(n)
-            NioSocket.interpret(buf, ch.read(buf)) match
-              case NioSocket.Eof     => cb(Right(None))
-              case NioSocket.Data(a) => cb(Right(Some(a)))
-              case NioSocket.More =>
-                st.readReady = onReadable
-                engine.enableInterest(key, SelectionKey.OP_READ)
-          catch { case e: Throwable => cb(Left(e)) }
-        st.readReady = onReadable
-        engine.enableInterest(key, SelectionKey.OP_READ)
-        new Fx.Canceler {
-          override def cancel(): Unit = { st.readReady = null; engine.disableInterest(key, SelectionKey.OP_READ) }
-        }
+        if !ch.isOpen then
+          cb(Left(new ClosedChannelException))
+          Fx.Canceler.noop
+        else
+          lazy val onReadable: SelectionKey => Unit = _ =>
+            try
+              val buf = ByteBuffer.allocate(n)
+              NioSocket.interpret(buf, ch.read(buf)) match
+                case NioSocket.Eof     => cb(Right(None))
+                case NioSocket.Data(a) => cb(Right(Some(a)))
+                case NioSocket.More =>
+                  st.readReady = onReadable
+                  engine.enableInterest(key, SelectionKey.OP_READ)
+            catch { case e: Throwable => cb(Left(e)) }
+          st.readReady = onReadable
+          engine.enableInterest(key, SelectionKey.OP_READ)
+          new Fx.Canceler {
+            override def cancel(): Unit = { st.readReady = null; engine.disableInterest(key, SelectionKey.OP_READ) }
+          }
       }
 
   override def write(bytes: Array[Byte]): Fx[Unit] = Fx.async { cb =>

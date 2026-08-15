@@ -59,4 +59,4 @@ private[net] final class NodeSocket(sock: js.Dynamic) extends Socket:
     Fx.Canceler.noop
   }
 
-  override def close(): Fx[Unit] = Fx.delay { sock.end(); () }
+  override def close(): Fx[Unit] = Fx.delay { sock.end(); buffer.onClose(); () }
