@@ -6,11 +6,8 @@
 
 package ldbc.connector.exception
 
-import scala.collection.immutable.SortedMap
-
 import org.typelevel.otel4s.Attribute
 
-import ldbc.connector.data.Parameter
 import ldbc.connector.FTestPlatform
 
 class SQLExceptionTest extends FTestPlatform:
@@ -39,19 +36,13 @@ class SQLExceptionTest extends FTestPlatform:
   }
 
   test("SQLException.fields should return correct attributes") {
-    val params = SortedMap(
-      1 -> Parameter.string("test_value"),
-      2 -> Parameter.int(42)
-    )
-
     val exception = new SQLException(
       message    = "Query error",
       sqlState   = Some("42S02"),
       vendorCode = Some(1146),
       sql        = Some("SELECT * FROM non_existent_table"),
       detail     = Some("Table does not exist"),
-      hint       = Some("Create the table first"),
-      params     = params
+      hint       = Some("Create the table first")
     )
 
     val fields = exception.fields
@@ -63,11 +54,6 @@ class SQLExceptionTest extends FTestPlatform:
     assertEquals(fields.contains(Attribute("error.detail", "Table does not exist")), true)
     assertEquals(fields.contains(Attribute("error.hint", "Create the table first")), true)
 
-    // Check parameter attributes
-    assertEquals(fields.contains(Attribute("error.parameter.1.type", "CHAR")), true)
-    assertEquals(fields.contains(Attribute("error.parameter.1.value", "'test_value'")), true)
-    assertEquals(fields.contains(Attribute("error.parameter.2.type", "INT")), true)
-    assertEquals(fields.contains(Attribute("error.parameter.2.value", "42")), true)
   }
 
   test("labeled method should format messages correctly") {
@@ -86,8 +72,7 @@ class SQLExceptionTest extends FTestPlatform:
       message    = "Query failed",
       sqlState   = Some("HY000"),
       vendorCode = Some(9999),
-      sql        = Some("SELECT * FROM users WHERE id = ?"),
-      params     = SortedMap(1 -> Parameter.int(123))
+      sql        = Some("SELECT * FROM users WHERE id = ?")
     )
 
     val message = exception.getMessage
@@ -97,5 +82,4 @@ class SQLExceptionTest extends FTestPlatform:
     assert(message.contains("HY000"), "Message should contain the SQL state")
     assert(message.contains("9999"), "Message should contain the vendor code")
     assert(message.contains("SELECT * FROM users WHERE id = ?"), "Message should contain the SQL query")
-    assert(message.contains("123"), "Message should contain the parameter value")
   }
