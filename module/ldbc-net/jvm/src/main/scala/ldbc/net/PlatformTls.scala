@@ -8,9 +8,9 @@ package ldbc.net
 
 import java.io.ByteArrayInputStream
 import java.nio.charset.StandardCharsets
-import java.security.KeyStore
-import java.security.cert.X509Certificate
 import java.security.cert.CertificateFactory
+import java.security.cert.X509Certificate
+import java.security.KeyStore
 
 import javax.net.ssl.{ SNIHostName, SSLContext, SSLEngine, TrustManager, TrustManagerFactory, X509TrustManager }
 
@@ -55,15 +55,15 @@ private[net] object PlatformTls:
     if !HostnameMatcher.isIpLiteral(host) then params.setServerNames(List(new SNIHostName(host)).asJava)
     ssl match
       case SSL.Custom(_, _, _, versions) if versions.nonEmpty => params.setProtocols(versions.toArray)
-      case _                                                        => ()
+      case _                                                  => ()
     engine.setSSLParameters(params)
     engine
 
   /** Resolves the trust managers for `ssl`; `null` selects the JDK default trust store. */
   private def trustManagers(ssl: SSL): Array[TrustManager] =
     ssl match
-      case SSL.System  => null
-      case SSL.Trusted => Array(trustAll)
+      case SSL.System                          => null
+      case SSL.Trusted                         => Array(trustAll)
       case SSL.Custom(trust, clientAuth, _, _) =>
         if clientAuth.isDefined then
           throw new UnsupportedOperationException("client certificates (mTLS) are not yet supported")
@@ -78,7 +78,7 @@ private[net] object PlatformTls:
   private val trustAll: X509TrustManager = new X509TrustManager:
     override def checkClientTrusted(chain: Array[X509Certificate], authType: String): Unit = ()
     override def checkServerTrusted(chain: Array[X509Certificate], authType: String): Unit = ()
-    override def getAcceptedIssuers: Array[X509Certificate]                                = Array.empty
+    override def getAcceptedIssuers: Array[X509Certificate] = Array.empty
 
   /** Builds trust managers that trust exactly the PEM-encoded certificates in `pem`. */
   private def fromPemCerts(pem: String): Array[TrustManager] =
@@ -86,8 +86,9 @@ private[net] object PlatformTls:
     val certificates = factory.generateCertificates(new ByteArrayInputStream(pem.getBytes(StandardCharsets.US_ASCII)))
     val keyStore     = KeyStore.getInstance(KeyStore.getDefaultType)
     keyStore.load(null, null)
-    certificates.asScala.zipWithIndex.foreach { case (cert, index) =>
-      keyStore.setCertificateEntry(s"trusted-$index", cert)
+    certificates.asScala.zipWithIndex.foreach {
+      case (cert, index) =>
+        keyStore.setCertificateEntry(s"trusted-$index", cert)
     }
     val tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm)
     tmf.init(keyStore)

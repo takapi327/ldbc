@@ -31,7 +31,7 @@ class IoEnginePlaintextTest extends munit.FunSuite:
     val ss = new ServerSocket(0)
     val th = new Thread(() =>
       while true do
-        val s = ss.accept()
+        val s      = ss.accept()
         val worker = new Thread(() =>
           try
             val in  = s.getInputStream
@@ -62,7 +62,7 @@ class IoEnginePlaintextTest extends munit.FunSuite:
 
   test("a larger payload is delivered intact"):
     val payload = ("x" * 4000)
-    val prog =
+    val prog    =
       for
         sock  <- IoEngine.global.connect("127.0.0.1", port, 5.seconds)
         _     <- sock.write(payload.getBytes("UTF-8"))
@@ -75,7 +75,7 @@ class IoEnginePlaintextTest extends munit.FunSuite:
 
   test("peer close surfaces as None (out-of-band EOF), read(0) as Some(empty)"):
     val oneShot = new ServerSocket(0)
-    val server = new Thread(() =>
+    val server  = new Thread(() =>
       try
         val s = oneShot.accept()
         s.getOutputStream.write("BYE".getBytes("UTF-8"))
@@ -104,7 +104,7 @@ class IoEnginePlaintextTest extends munit.FunSuite:
 
   test("a mid-stream connection reset surfaces as a read error, not EOF"):
     val rst = new ServerSocket(0)
-    val th = new Thread(() =>
+    val th  = new Thread(() =>
       try
         val s = rst.accept()
         s.getInputStream.read(new Array[Byte](16)) // wait for the client's write so the link is established
@@ -126,7 +126,7 @@ class IoEnginePlaintextTest extends munit.FunSuite:
 
   test("read after close fails promptly and does not hang"):
     val startNanos = System.nanoTime()
-    val prog =
+    val prog       =
       for
         sock <- IoEngine.global.connect("127.0.0.1", port, 5.seconds)
         _    <- sock.close()

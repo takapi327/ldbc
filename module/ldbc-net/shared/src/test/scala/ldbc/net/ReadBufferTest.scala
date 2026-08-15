@@ -14,7 +14,7 @@ package ldbc.net
 class ReadBufferTest extends munit.FunSuite:
 
   test("a parked read receives at most n bytes and keeps the remainder buffered"):
-    val buffer                        = new ReadBuffer
+    val buffer = new ReadBuffer
     var received: Option[Array[Byte]] = None
     buffer.read(3, { case Right(Some(a)) => received = Some(a); case other => fail(s"unexpected $other") })
     assert(received.isEmpty, "read should still be waiting")
@@ -28,21 +28,21 @@ class ReadBufferTest extends munit.FunSuite:
     assertEquals(next.get.toList, List[Byte](4, 5), "the remainder stays buffered for the next read")
 
   test("an immediate read also honours n"):
-    val buffer                   = new ReadBuffer
+    val buffer = new ReadBuffer
     buffer.onData(Array[Byte](1, 2, 3, 4))
     var got: Option[Array[Byte]] = None
     buffer.read(2, { case Right(Some(a)) => got = Some(a); case _ => () })
     assertEquals(got.get.toList, List[Byte](1, 2))
 
   test("EOF is delivered out of band as None, not as an empty array"):
-    val buffer                                   = new ReadBuffer
-    var got: Option[Option[Array[Byte]]]         = None
+    val buffer = new ReadBuffer
+    var got: Option[Option[Array[Byte]]] = None
     buffer.onEof()
     buffer.read(4, { case Right(result) => got = Some(result); case Left(_) => () })
     assertEquals(got, Some(None), "end of stream must be None, distinguishable from data")
 
   test("read(0) completes with Some(empty), distinct from EOF, even while data is pending"):
-    val buffer                           = new ReadBuffer
+    val buffer = new ReadBuffer
     buffer.onData(Array[Byte](1, 2, 3))
     var got: Option[Option[Array[Byte]]] = None
     buffer.read(0, { case Right(result) => got = Some(result); case Left(_) => () })
@@ -56,10 +56,14 @@ class ReadBufferTest extends munit.FunSuite:
     buffer.onError(new RuntimeException("socket error"))
     var got: Option[Either[Throwable, Option[Array[Byte]]]] = None
     buffer.read(4, r => got = Some(r))
-    assertEquals(got.flatMap(_.left.toOption).map(_.getMessage), Some("socket error"), "an errored buffer must surface the error")
+    assertEquals(
+      got.flatMap(_.left.toOption).map(_.getMessage),
+      Some("socket error"),
+      "an errored buffer must surface the error"
+    )
 
   test("a parked read is woken by a later onError (does not hang)"):
-    val buffer                                             = new ReadBuffer
+    val buffer = new ReadBuffer
     var got: Option[Either[Throwable, Option[Array[Byte]]]] = None
     buffer.read(4, r => got = Some(r))
     assert(got.isEmpty, "read should be parked with no data yet")
@@ -78,14 +82,14 @@ class ReadBufferTest extends munit.FunSuite:
     assert(got.exists(_.isLeft), s"a read after close must fail fast, got $got")
 
   test("read(0) after onClose still completes with Some(empty), not a failure"):
-    val buffer                           = new ReadBuffer
+    val buffer = new ReadBuffer
     buffer.onClose()
     var got: Option[Either[Throwable, Option[Array[Byte]]]] = None
     buffer.read(0, r => got = Some(r))
     assert(got.exists(_.exists(_.exists(_.isEmpty))), s"read(0) after close must be Some(empty), got $got")
 
   test("a parked read is woken by a later onClose (does not hang)"):
-    val buffer                                             = new ReadBuffer
+    val buffer = new ReadBuffer
     var got: Option[Either[Throwable, Option[Array[Byte]]]] = None
     buffer.read(4, r => got = Some(r))
     assert(got.isEmpty, "read should be parked with no data yet")

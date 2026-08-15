@@ -33,7 +33,7 @@ class TlsHandshakeFailureTest extends munit.FunSuite:
     val ss = new ServerSocket(0)
     val th = new Thread(() =>
       while true do
-        val s = ss.accept()
+        val s      = ss.accept()
         val worker = new Thread(() =>
           try
             s.getOutputStream.write("HTTP/1.1 400 Bad Request\r\n\r\n".getBytes("UTF-8"))
@@ -52,7 +52,7 @@ class TlsHandshakeFailureTest extends munit.FunSuite:
 
   test("a TLS handshake against a plaintext peer fails and does not hang"):
     val startNanos = System.nanoTime()
-    val prog =
+    val prog       =
       for
         plain <- IoEngine.global.connect("127.0.0.1", port, 5.seconds)
         tls   <- Tls.client(plain, "localhost", port, SSL.Trusted)

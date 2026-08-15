@@ -59,14 +59,14 @@ private[net] final class ReadBuffer:
   def read(n: Int, cb: Either[Throwable, Option[Array[Byte]]] => Unit): () => Unit =
     error match
       case Some(e) => cb(Left(e))
-      case None =>
+      case None    =>
         if n <= 0 then cb(Right(Some(Array.emptyByteArray)))
         else if closed then cb(Left(new java.io.IOException("socket closed")))
         else if pending.nonEmpty then cb(Right(Some(takeN(n))))
         else if eof then cb(Right(None))
         else
           waiterN = n
-          waiter = Some(cb)
+          waiter  = Some(cb)
     () => waiter = None
 
   /**
@@ -87,7 +87,7 @@ private[net] final class ReadBuffer:
   /** Serves a parked reader if one is waiting and a result is available. */
   private def deliver(): Unit =
     waiter match
-      case None => ()
+      case None    => ()
       case Some(w) =>
         error match
           case Some(e) =>

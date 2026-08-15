@@ -7,7 +7,7 @@
 package ldbc.net
 
 import scala.scalanative.bsd.kevent.*
-import scala.scalanative.posix.stdint.{ int16_t, uint16_t, uint32_t, uintptr_t, intptr_t }
+import scala.scalanative.posix.stdint.{ int16_t, intptr_t, uint16_t, uint32_t, uintptr_t }
 import scala.scalanative.posix.unistd.{ pipe, read as cRead, write as cWrite }
 import scala.scalanative.runtime.Intrinsics
 import scala.scalanative.unsafe.*
@@ -20,10 +20,10 @@ import scala.scalanative.unsigned.*
  */
 private[net] final class KqueuePoller extends Poller:
 
-  private val kq                = kqueue()
-  private val wakePipe          = Array.fill(2)(0)
-  private val maxEvents         = 64
-  private val evSize            = scalanative_kevent_size().toInt
+  private val kq        = kqueue()
+  private val wakePipe  = Array.fill(2)(0)
+  private val maxEvents = 64
+  private val evSize    = scalanative_kevent_size().toInt
   private val eventList: Ptr[Byte] = stdlibMalloc(evSize * maxEvents)
 
   locally {

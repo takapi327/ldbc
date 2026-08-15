@@ -165,7 +165,7 @@ class TlsTest extends munit.FunSuite:
   test("the expected-host registry entry is released once the handshake completes, not held until close"):
     val config   = SSL.Custom(trust = TrustSource.FromPemCerts(certPem), verifyHostname = true)
     val baseline = S2nBridge.registeredHosts
-    val prog =
+    val prog     =
       for
         plain <- IoEngine.global.connect("127.0.0.1", port, 5.seconds)
         tls   <- Tls.client(plain, "localhost", port, config)
@@ -177,7 +177,7 @@ class TlsTest extends munit.FunSuite:
 
   test("close() releases the io registry entry"):
     val baseline = S2nBridge.registeredIo
-    val prog =
+    val prog     =
       for
         plain <- IoEngine.global.connect("127.0.0.1", port, 5.seconds)
         tls   <- Tls.client(plain, "localhost", port, SSL.Trusted)

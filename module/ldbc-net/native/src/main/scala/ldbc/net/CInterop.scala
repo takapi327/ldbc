@@ -11,17 +11,17 @@ import scala.scalanative.libc.signal.{ signal, SIG_IGN }
 import scala.scalanative.meta.LinktimeInfo
 import scala.scalanative.posix.fcntl.{ fcntl, F_GETFL, F_SETFL, O_NONBLOCK }
 import scala.scalanative.posix.netdb.{ addrinfo, freeaddrinfo, getaddrinfo }
-import scala.scalanative.posix.signal.SIGPIPE
 import scala.scalanative.posix.netinet.in.IPPROTO_TCP
 import scala.scalanative.posix.netinet.tcp.TCP_NODELAY
+import scala.scalanative.posix.signal.SIGPIPE
 import scala.scalanative.posix.sys.socket.{
   connect as cConnect,
   getsockopt,
   recv,
   send,
   setsockopt,
-  socket,
   sockaddr,
+  socket,
   socklen_t,
   SOCK_STREAM,
   SOL_SOCKET,
@@ -47,7 +47,7 @@ private[net] final class Resolved(val fd: Int, private[net] val info: Ptr[addrin
   private[net] def addr: Ptr[sockaddr] =
     if LinktimeInfo.isMac then info._7.asInstanceOf[Ptr[sockaddr]] else info._6
   private[net] def addrLen: socklen_t = info._5
-  private[net] def free(): Unit       = freeaddrinfo(info)
+  private[net] def free():  Unit      = freeaddrinfo(info)
 
 /** Thin POSIX interop for the Native [[NativeIoEngine]] (socket, getaddrinfo, recv/send, SIGPIPE). */
 private[net] object CInterop:
@@ -63,7 +63,7 @@ private[net] object CInterop:
    */
   def resolve(host: String, port: Int): Resolved = Zone {
     val hints = alloc[addrinfo]()
-    hints._2 = 0          // ai_family = AF_UNSPEC
+    hints._2 = 0           // ai_family = AF_UNSPEC
     hints._3 = SOCK_STREAM // ai_socktype
     val res = alloc[Ptr[addrinfo]]()
     val rc  = getaddrinfo(toCString(host), toCString(port.toString), hints, res)

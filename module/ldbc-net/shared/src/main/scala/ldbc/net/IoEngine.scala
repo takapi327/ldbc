@@ -26,7 +26,12 @@ trait IoEngine:
    * @param options the TCP socket options to apply to the connection
    * @return an effect that produces a connected [[Socket]]
    */
-  def connect(host: String, port: Int, timeout: FiniteDuration, options: SocketOptions = SocketOptions.default): Fx[Socket]
+  def connect(
+    host:    String,
+    port:    Int,
+    timeout: FiniteDuration,
+    options: SocketOptions = SocketOptions.default
+  ): Fx[Socket]
 
 object IoEngine:
   /** The platform-default engine. */

@@ -21,7 +21,10 @@ private[net] final class NodeSocket(sock: js.Dynamic) extends Socket:
   private val buffer = new ReadBuffer
 
   sock.on("data", ((chunk: Uint8Array) => buffer.onData(toBytes(chunk))): js.Function1[Uint8Array, Unit])
-  sock.on("error", ((_: js.Dynamic) => buffer.onError(new RuntimeException("socket error"))): js.Function1[js.Dynamic, Unit])
+  sock.on(
+    "error",
+    ((_: js.Dynamic) => buffer.onError(new RuntimeException("socket error"))): js.Function1[js.Dynamic, Unit]
+  )
   sock.on("end", ((() => buffer.onEof())): js.Function0[Unit])
 
   private def toBytes(chunk: Uint8Array): Array[Byte] =

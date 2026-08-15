@@ -25,9 +25,9 @@ class IoEngineTest extends munit.FunSuite:
   private def startEchoServer(): Int =
     val ss   = new ServerSocket(0)
     val port = ss.getLocalPort
-    val th = new Thread(() =>
+    val th   = new Thread(() =>
       while true do
-        val s = ss.accept()
+        val s  = ss.accept()
         val t2 = new Thread(() =>
           try
             val in  = s.getInputStream
@@ -61,9 +61,9 @@ class IoEngineTest extends munit.FunSuite:
     assertEquals(runSync(echo("HELLO-WORLD-123")), Right("HELLO-WORLD-123"))
 
   test("read cancellation does not hang (no data arrives)"):
-    val pending = IoEngine.global.connect("127.0.0.1", port, 5.seconds).flatMap(_.read(16))
-    val latch   = new CountDownLatch(1)
-    val canc    = pending.unsafeRun(_ => latch.countDown())
+    val pending               = IoEngine.global.connect("127.0.0.1", port, 5.seconds).flatMap(_.read(16))
+    val latch                 = new CountDownLatch(1)
+    val canc                  = pending.unsafeRun(_ => latch.countDown())
     val completedBeforeCancel = latch.await(200, TimeUnit.MILLISECONDS)
     canc.cancel()
     assert(!completedBeforeCancel)
@@ -95,7 +95,7 @@ class IoEngineTest extends munit.FunSuite:
 
   test("EOF is None (out of band) and read(0) is Some(empty) on a live connection"):
     val oneShot = new ServerSocket(0)
-    val server = new Thread(() =>
+    val server  = new Thread(() =>
       try
         val s = oneShot.accept()
         s.getOutputStream.write("BYE".getBytes("UTF-8"))
@@ -108,11 +108,11 @@ class IoEngineTest extends munit.FunSuite:
 
     val prog =
       for
-        sock  <- IoEngine.global.connect("127.0.0.1", oneShot.getLocalPort, 5.seconds)
-        zero  <- sock.read(0)
-        data  <- sock.read(16)
-        eof   <- sock.read(16)
-        _     <- sock.close()
+        sock <- IoEngine.global.connect("127.0.0.1", oneShot.getLocalPort, 5.seconds)
+        zero <- sock.read(0)
+        data <- sock.read(16)
+        eof  <- sock.read(16)
+        _    <- sock.close()
       yield (zero, data.map(new String(_, "UTF-8")), eof)
 
     runSync(prog) match

@@ -30,7 +30,7 @@ private[net] object PlatformTls:
     val _ = port
     socket match
       case node: NodeSocket => upgrade(node, host, ssl)
-      case _ =>
+      case _                =>
         Fx.raiseError(new IllegalArgumentException("JS TLS requires a socket produced by the node IoEngine"))
 
   /** Detaches the plaintext wrapper, replays pre-read bytes, and starts the TLS handshake. */
@@ -49,8 +49,9 @@ private[net] object PlatformTls:
         )
         tlsSock.on(
           "error",
-          ((err: js.Dynamic) =>
-            if done.compareAndSet(false, true) then cb(Left(new RuntimeException(s"TLS handshake failed: $err")))
+          (
+            (err: js.Dynamic) =>
+              if done.compareAndSet(false, true) then cb(Left(new RuntimeException(s"TLS handshake failed: $err")))
           ): js.Function1[js.Dynamic, Unit]
         )
         new Fx.Canceler { override def cancel(): Unit = { tlsSock.destroy(); () } }
@@ -64,25 +65,25 @@ private[net] object PlatformTls:
   private def buildOptions(host: String, ssl: SSL): js.Dynamic =
     val options = js.Dynamic.literal()
     ssl match
-      case SSL.System  => ()
-      case SSL.Trusted => options.rejectUnauthorized = false
+      case SSL.System                                                 => ()
+      case SSL.Trusted                                                => options.rejectUnauthorized = false
       case SSL.Custom(trust, clientAuth, verifyHostname, tlsVersions) =>
         if clientAuth.isDefined then
           throw new UnsupportedOperationException("client certificates (mTLS) are not yet supported")
         trust match
           case TrustSource.System            => ()
           case TrustSource.InsecureTrustAll  => options.rejectUnauthorized = false
-          case TrustSource.FromPemCerts(pem) => options.ca = pem
+          case TrustSource.FromPemCerts(pem) => options.ca                 = pem
         if !verifyHostname then
           options.checkServerIdentity =
             ((_: js.Dynamic, _: js.Dynamic) => js.undefined): js.Function2[js.Dynamic, js.Dynamic, js.Any]
         if tlsVersions.nonEmpty then
           options.minVersion = tlsVersions.min
           options.maxVersion = tlsVersions.max
-      case SSL.None => ()
+      case SSL.None           => ()
       case SSL.Platform(_, _) =>
         throw new UnsupportedOperationException("SSL.Platform (a JVM SSLContext) is not supported on Scala.js")
-    options.host = host
+    options.host                                                  = host
     if !HostnameMatcher.isIpLiteral(host) then options.servername = host
     options
 

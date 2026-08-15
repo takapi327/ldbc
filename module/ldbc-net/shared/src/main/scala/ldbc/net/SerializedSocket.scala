@@ -41,7 +41,9 @@ private[net] object SerializedSocket:
    * @param underlying the socket to serialise
    */
   def apply(underlying: Socket): Fx[Socket] =
-    Mutex.create.flatMap(readMutex => Mutex.create.map(writeMutex => new SerializedSocket(underlying, readMutex, writeMutex)))
+    Mutex.create.flatMap(readMutex =>
+      Mutex.create.map(writeMutex => new SerializedSocket(underlying, readMutex, writeMutex))
+    )
 
   /**
    * Returns the raw socket beneath a [[SerializedSocket]] (or `socket` itself if it is not one), so a

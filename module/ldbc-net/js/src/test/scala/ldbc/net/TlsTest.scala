@@ -123,9 +123,7 @@ class TlsTest extends munit.FunSuite:
 
   test("TLS echo round-trip with Trusted"):
     withTlsEchoServer { port =>
-      toFuture(echoOver(port, "localhost", SSL.Trusted, "PING-JS-TLS")).map(got =>
-        assertEquals(got, "PING-JS-TLS")
-      )
+      toFuture(echoOver(port, "localhost", SSL.Trusted, "PING-JS-TLS")).map(got => assertEquals(got, "PING-JS-TLS"))
     }
 
   test("FromPemCerts + matching hostname succeeds with verification on"):
@@ -203,8 +201,9 @@ class TlsTest extends munit.FunSuite:
           new String(banner.getOrElse(Array.emptyByteArray), "UTF-8"),
           new String(bytes.getOrElse(Array.emptyByteArray), "UTF-8")
         )
-      toFuture(prog).map { case (banner, echoed) =>
-        assertEquals(banner, "BANNER")
-        assertEquals(echoed, "AFTER-UPGRADE")
+      toFuture(prog).map {
+        case (banner, echoed) =>
+          assertEquals(banner, "BANNER")
+          assertEquals(echoed, "AFTER-UPGRADE")
       }
     }

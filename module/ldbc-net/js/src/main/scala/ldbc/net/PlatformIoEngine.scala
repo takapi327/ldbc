@@ -22,25 +22,32 @@ private[net] object PlatformIoEngine:
   private lazy val netModule = js.Dynamic.global.require("net")
 
   lazy val global: IoEngine = new IoEngine:
-    override def connect(host: String, port: Int, timeout: FiniteDuration, options: SocketOptions): Fx[Socket] = Fx.async[Socket] { cb =>
-      val sock = netModule.connect(port.asInstanceOf[js.Any], host.asInstanceOf[js.Any])
-      sock.setNoDelay(options.noDelay.asInstanceOf[js.Any])
-      if options.keepAlive then sock.setKeepAlive(true.asInstanceOf[js.Any])
-      val done = new AtomicBoolean(false)
-      val timer = Fx.sleep(timeout).unsafeRun { _ =>
-        if done.compareAndSet(false, true) then
-          sock.destroy()
-          cb(Left(new ConnectTimeoutException(s"connect to $host:$port timed out after $timeout")))
+    override def connect(host: String, port: Int, timeout: FiniteDuration, options: SocketOptions): Fx[Socket] = Fx
+      .async[Socket] { cb =>
+        val sock = netModule.connect(port.asInstanceOf[js.Any], host.asInstanceOf[js.Any])
+        sock.setNoDelay(options.noDelay.asInstanceOf[js.Any])
+        if options.keepAlive then sock.setKeepAlive(true.asInstanceOf[js.Any])
+        val done  = new AtomicBoolean(false)
+        val timer = Fx.sleep(timeout).unsafeRun { _ =>
+          if done.compareAndSet(false, true) then
+            sock.destroy()
+            cb(Left(new ConnectTimeoutException(s"connect to $host:$port timed out after $timeout")))
+        }
+        sock.on(
+          "connect",
+          (
+            (() => if done.compareAndSet(false, true) then { timer.cancel(); cb(Right(new NodeSocket(sock))) })
+          ): js.Function0[Unit]
+        )
+        sock.on(
+          "error",
+          (
+            (_: js.Dynamic) =>
+              if done.compareAndSet(false, true) then {
+                timer.cancel(); cb(Left(new RuntimeException("connect error")))
+              }
+          ): js.Function1[js.Dynamic, Unit]
+        )
+        new Fx.Canceler { override def cancel(): Unit = { timer.cancel(); sock.destroy(); () } }
       }
-      sock.on(
-        "connect",
-        ((() => if done.compareAndSet(false, true) then { timer.cancel(); cb(Right(new NodeSocket(sock))) })): js.Function0[Unit]
-      )
-      sock.on(
-        "error",
-        ((_: js.Dynamic) =>
-          if done.compareAndSet(false, true) then { timer.cancel(); cb(Left(new RuntimeException("connect error"))) }
-        ): js.Function1[js.Dynamic, Unit]
-      )
-      new Fx.Canceler { override def cancel(): Unit = { timer.cancel(); sock.destroy(); () } }
-    }.flatMap(SerializedSocket.apply)
+      .flatMap(SerializedSocket.apply)

@@ -6,9 +6,9 @@
 
 package ldbc.net
 
+import java.util.concurrent.atomic.{ AtomicBoolean, AtomicReference }
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.atomic.{ AtomicBoolean, AtomicReference }
 
 import scala.concurrent.duration.FiniteDuration
 import scala.scalanative.meta.LinktimeInfo
@@ -57,8 +57,7 @@ private[net] final class NativeIoEngine(poller: Poller) extends IoEngine:
           try
             val st = registry.get(fd)
             if st != null then
-              if error then
-                fireAll(st)
+              if error then fireAll(st)
               else
                 if writable then
                   val cb = st.writeReady
@@ -79,8 +78,8 @@ private[net] final class NativeIoEngine(poller: Poller) extends IoEngine:
   /** Fires every pending callback (used on error/EOF so a stuck operation cannot hang). */
   private def fireAll(st: ChannelState): Unit =
     val c = st.connectReady; st.connectReady = null; if c != null then c()
-    val r = st.readReady; st.readReady = null; if r != null then r()
-    val w = st.writeReady; st.writeReady = null; if w != null then w()
+    val r = st.readReady; st.readReady       = null; if r != null then r()
+    val w = st.writeReady; st.writeReady     = null; if w != null then w()
 
   private[net] def armRead(fd: Int, st: ChannelState, ready: () => Unit): Unit =
     st.readReady = ready

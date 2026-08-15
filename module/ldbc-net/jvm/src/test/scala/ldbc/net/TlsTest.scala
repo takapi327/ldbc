@@ -68,7 +68,18 @@ class TlsTest extends munit.FunSuite:
       "-ext",
       "SAN=dns:localhost,ip:127.0.0.1"
     )
-    run("-exportcert", "-alias", "test", "-keystore", keystore.toString, "-storepass", password, "-rfc", "-file", certFile.toString)
+    run(
+      "-exportcert",
+      "-alias",
+      "test",
+      "-keystore",
+      keystore.toString,
+      "-storepass",
+      password,
+      "-rfc",
+      "-file",
+      certFile.toString
+    )
     (keystore, new String(Files.readAllBytes(certFile), StandardCharsets.US_ASCII))
 
   /** Starts a TLS echo server backed by the generated keystore; returns its port. */
@@ -81,7 +92,7 @@ class TlsTest extends munit.FunSuite:
     kmf.init(ks, password.toCharArray)
     val context = SSLContext.getInstance("TLS")
     context.init(kmf.getKeyManagers, null, null)
-    val server = context.getServerSocketFactory.createServerSocket(0).asInstanceOf[SSLServerSocket]
+    val server    = context.getServerSocketFactory.createServerSocket(0).asInstanceOf[SSLServerSocket]
     val accepting = new Thread(() =>
       while true do
         val socket = server.accept()
@@ -118,7 +129,7 @@ class TlsTest extends munit.FunSuite:
 
   test("large payload round-trips across TLS record boundaries"):
     val payload = "x" * 50000
-    val prog =
+    val prog    =
       for
         plain <- IoEngine.global.connect("127.0.0.1", port, 5.seconds)
         tls   <- Tls.client(plain, "localhost", port, SSL.Trusted)

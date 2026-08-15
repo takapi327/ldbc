@@ -27,7 +27,7 @@ class IoEngineConcurrencyTest extends munit.FunSuite:
     val ss = new ServerSocket(0)
     val th = new Thread(() =>
       while true do
-        val s = ss.accept()
+        val s      = ss.accept()
         val worker = new Thread(() =>
           try
             val in  = s.getInputStream
@@ -47,7 +47,13 @@ class IoEngineConcurrencyTest extends munit.FunSuite:
   private lazy val port = startEchoServer()
 
   /** One connection doing `rounds` sequential echo round-trips; completes `latch` with the outcome. */
-  private def session(id: Int, rounds: Int, ok: AtomicInteger, bad: ConcurrentLinkedQueue[String], latch: CountDownLatch): Unit =
+  private def session(
+    id:     Int,
+    rounds: Int,
+    ok:     AtomicInteger,
+    bad:    ConcurrentLinkedQueue[String],
+    latch:  CountDownLatch
+  ): Unit =
     def loop(n: Int, sock: Socket): Fx[Unit] =
       if n >= rounds then sock.close()
       else
@@ -63,7 +69,7 @@ class IoEngineConcurrencyTest extends munit.FunSuite:
     val program = IoEngine.global.connect("127.0.0.1", port, 5.seconds).flatMap(loop(0, _))
     program.unsafeRun {
       case Right(_)    => ok.incrementAndGet(); latch.countDown()
-      case Left(error) => bad.add(s"c$id: ${error.getMessage}"); latch.countDown()
+      case Left(error) => bad.add(s"c$id: ${ error.getMessage }"); latch.countDown()
     }
 
   test("many connections are multiplexed concurrently through the single poller"):
@@ -79,14 +85,14 @@ class IoEngineConcurrencyTest extends munit.FunSuite:
       session(i, rounds, ok, bad, latch)
       i += 1
 
-    val finished = latch.await(30, TimeUnit.SECONDS)
-    val elapsedMs = (System.nanoTime() - started) / 1000000.0
+    val finished   = latch.await(30, TimeUnit.SECONDS)
+    val elapsedMs  = (System.nanoTime() - started) / 1000000.0
     val roundTrips = ok.get() * rounds
     println(
-      f"[IoEngineConcurrencyTest] $connections conns x $rounds rounds: ok=${ok.get()} " +
-        f"in $elapsedMs%.1f ms (${roundTrips / (elapsedMs / 1000.0)}%.0f round-trips/s)"
+      f"[IoEngineConcurrencyTest] $connections conns x $rounds rounds: ok=${ ok.get() } " +
+        f"in $elapsedMs%.1f ms (${ roundTrips / (elapsedMs / 1000.0) }%.0f round-trips/s)"
     )
 
-    assert(finished, s"timed out; only ${connections - latch.getCount} of $connections finished")
-    assert(bad.isEmpty, s"failures: ${bad.toArray.mkString("; ")}")
+    assert(finished, s"timed out; only ${ connections - latch.getCount } of $connections finished")
+    assert(bad.isEmpty, s"failures: ${ bad.toArray.mkString("; ") }")
     assertEquals(ok.get(), connections, "every connection must complete all round-trips")

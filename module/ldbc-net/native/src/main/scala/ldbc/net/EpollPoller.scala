@@ -22,12 +22,12 @@ import scala.scalanative.unsigned.*
  */
 private[net] final class EpollPoller extends Poller:
 
-  private val epfd             = epoll_create1(0)
-  private val wakeFd           = eventfd(0.toUInt, EFD_NONBLOCK)
-  private val maxEvents        = 64
-  private val evSize           = scalanative_epoll_event_size().toInt
+  private val epfd      = epoll_create1(0)
+  private val wakeFd    = eventfd(0.toUInt, EFD_NONBLOCK)
+  private val maxEvents = 64
+  private val evSize    = scalanative_epoll_event_size().toInt
   private val eventList: Ptr[Byte] = malloc(evSize * maxEvents)
-  private val registered       = ConcurrentHashMap.newKeySet[Int]()
+  private val registered = ConcurrentHashMap.newKeySet[Int]()
 
   locally {
     ctl(EPOLL_CTL_ADD, wakeFd, EPOLLIN.toUInt, wakeFd)
@@ -53,8 +53,8 @@ private[net] final class EpollPoller extends Poller:
       val events = stackalloc[uint32_t]()
       val data   = stackalloc[uint64_t]()
       scalanative_epoll_event_get(eventList.asInstanceOf[CVoidPtr], i, events, data)
-      val fd  = (!data).toInt
-      val ev  = (!events).toInt
+      val fd = (!data).toInt
+      val ev = (!events).toInt
       if fd == wakeFd then drainWake()
       else
         val readable = (ev & EPOLLIN.toInt) != 0

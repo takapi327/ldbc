@@ -29,7 +29,7 @@ class PollerStarvationTest extends munit.FunSuite:
     val ss = new ServerSocket(0)
     val th = new Thread(() =>
       while true do
-        val s = ss.accept()
+        val s      = ss.accept()
         val worker = new Thread(() =>
           try
             Thread.sleep(delayMs)
@@ -48,7 +48,7 @@ class PollerStarvationTest extends munit.FunSuite:
     val ss = new ServerSocket(0)
     val th = new Thread(() =>
       while true do
-        val s = ss.accept()
+        val s      = ss.accept()
         val worker = new Thread(() =>
           try
             val in  = s.getInputStream
@@ -112,10 +112,10 @@ class PollerStarvationTest extends munit.FunSuite:
     // A parked read resumes on the I/O thread (proven above). If its continuation is a long chain,
     // the run loop's auto-cede must move it off the I/O thread onto the compute pool, so the I/O
     // thread is freed rather than monopolised.
-    val port     = startDelayedSender(120)
-    val sock     = connectTo(port)
-    val endTid   = new AtomicReference[String]("<none>")
-    val done     = new CountDownLatch(1)
+    val port   = startDelayedSender(120)
+    val sock   = connectTo(port)
+    val endTid = new AtomicReference[String]("<none>")
+    val done   = new CountDownLatch(1)
 
     def chain(n: Int, acc: Int): Fx[Int] =
       if n <= 0 then Fx.pure(acc) else Fx.delay(acc + 1).flatMap(next => chain(n - 1, next))
@@ -154,7 +154,8 @@ class PollerStarvationTest extends munit.FunSuite:
     // to force that, the hog first drains the immediate echo, then parks on a second read that never
     // completes while we measure.
     val hogProg =
-      hog.write("h".getBytes("UTF-8"))
+      hog
+        .write("h".getBytes("UTF-8"))
         .flatMap(_ => hog.read(16))
         .flatMap(_ => Fx.delay { burning.countDown(); burnCpu(busyMs); () })
         .flatMap(_ => hog.close())
@@ -171,7 +172,7 @@ class PollerStarvationTest extends munit.FunSuite:
 
     assert(done.await(10, TimeUnit.SECONDS), "programs did not finish")
     val latency = victimLatencyMs.get()
-    println(s"[PollerStarvationTest] hog busy=${busyMs}ms, victim parked-read latency=${latency}ms")
+    println(s"[PollerStarvationTest] hog busy=${ busyMs }ms, victim parked-read latency=${ latency }ms")
     // Illustrative only (timing-dependent across platforms/CI); the deterministic proof is the
     // continuation-thread test above. A parked victim read whose data arrives (~120ms) while the hog
     // burns (~500ms) cannot be serviced until the burn ends if they share one I/O thread.

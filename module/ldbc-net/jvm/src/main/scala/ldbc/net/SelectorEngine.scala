@@ -8,8 +8,8 @@ package ldbc.net
 
 import java.net.InetSocketAddress
 import java.nio.channels.{ SelectionKey, Selector, SocketChannel }
-import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.{ AtomicBoolean, AtomicReference }
+import java.util.concurrent.ConcurrentLinkedQueue
 
 import scala.concurrent.duration.FiniteDuration
 import scala.util.control.NonFatal
@@ -71,36 +71,44 @@ private[net] final class SelectorEngine(selector: Selector) extends IoEngine:
   private[net] def disableInterest(key: SelectionKey, op: Int): Unit =
     enqueue(() => if key.isValid then key.interestOps(key.interestOps & ~op))
 
-  override def connect(host: String, port: Int, timeout: FiniteDuration, options: SocketOptions): Fx[Socket] = Fx.async[Socket] { cb =>
-    val ch    = SocketChannel.open()
-    ch.configureBlocking(false)
-    ch.setOption(java.net.StandardSocketOptions.TCP_NODELAY, java.lang.Boolean.valueOf(options.noDelay))
-    ch.setOption(java.net.StandardSocketOptions.SO_KEEPALIVE, java.lang.Boolean.valueOf(options.keepAlive))
-    options.sendBufferSize.foreach(size => ch.setOption(java.net.StandardSocketOptions.SO_SNDBUF, Integer.valueOf(size)))
-    options.receiveBufferSize.foreach(size => ch.setOption(java.net.StandardSocketOptions.SO_RCVBUF, Integer.valueOf(size)))
-    val st    = new ChannelState
-    val done  = new AtomicBoolean(false)
-    val timer = new AtomicReference[Fx.Canceler](Fx.Canceler.noop)
-    st.connectReady = key =>
-      if done.compareAndSet(false, true) then
-        timer.get.cancel()
-        try
-          ch.finishConnect()
-          key.interestOps(0)
-          cb(Right(new NioSocket(ch, key, st, this)))
-        catch { case e: Throwable => cb(Left(e)) }
-    ch.connect(new InetSocketAddress(host, port))
-    enqueue(() => { ch.register(selector, SelectionKey.OP_CONNECT, st); () })
-    timer.set(Fx.sleep(timeout).unsafeRun { _ =>
-      if done.compareAndSet(false, true) then
-        try ch.close()
-        catch { case _: Throwable => () }
-        cb(Left(new ConnectTimeoutException(s"connect to $host:$port timed out after $timeout")))
-    })
-    new Fx.Canceler {
-      override def cancel(): Unit = { timer.get.cancel(); try ch.close() catch { case _: Throwable => () } }
+  override def connect(host: String, port: Int, timeout: FiniteDuration, options: SocketOptions): Fx[Socket] = Fx
+    .async[Socket] { cb =>
+      val ch = SocketChannel.open()
+      ch.configureBlocking(false)
+      ch.setOption(java.net.StandardSocketOptions.TCP_NODELAY, java.lang.Boolean.valueOf(options.noDelay))
+      ch.setOption(java.net.StandardSocketOptions.SO_KEEPALIVE, java.lang.Boolean.valueOf(options.keepAlive))
+      options.sendBufferSize
+        .foreach(size => ch.setOption(java.net.StandardSocketOptions.SO_SNDBUF, Integer.valueOf(size)))
+      options.receiveBufferSize
+        .foreach(size => ch.setOption(java.net.StandardSocketOptions.SO_RCVBUF, Integer.valueOf(size)))
+      val st    = new ChannelState
+      val done  = new AtomicBoolean(false)
+      val timer = new AtomicReference[Fx.Canceler](Fx.Canceler.noop)
+      st.connectReady = key =>
+        if done.compareAndSet(false, true) then
+          timer.get.cancel()
+          try
+            ch.finishConnect()
+            key.interestOps(0)
+            cb(Right(new NioSocket(ch, key, st, this)))
+          catch { case e: Throwable => cb(Left(e)) }
+      ch.connect(new InetSocketAddress(host, port))
+      enqueue(() => { ch.register(selector, SelectionKey.OP_CONNECT, st); () })
+      timer.set(Fx.sleep(timeout).unsafeRun { _ =>
+        if done.compareAndSet(false, true) then
+          try ch.close()
+          catch { case _: Throwable => () }
+          cb(Left(new ConnectTimeoutException(s"connect to $host:$port timed out after $timeout")))
+      })
+      new Fx.Canceler {
+        override def cancel(): Unit = {
+          timer.get.cancel();
+          try ch.close()
+          catch { case _: Throwable => () }
+        }
+      }
     }
-  }.flatMap(SerializedSocket.apply)
+    .flatMap(SerializedSocket.apply)
 
 private[net] object SelectorEngine:
   final class ChannelState:

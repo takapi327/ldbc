@@ -7,8 +7,8 @@
 package ldbc.net
 
 import java.nio.charset.StandardCharsets
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.{ AtomicBoolean, AtomicLong }
+import java.util.concurrent.ConcurrentHashMap
 
 import scala.scalanative.runtime.{ fromRawPtr, toRawPtr, Intrinsics }
 import scala.scalanative.unsafe.*
@@ -112,7 +112,7 @@ private[net] object PlatformTls:
         if tlsVersions.nonEmpty then
           throw new UnsupportedOperationException("explicit tlsVersions are not yet supported on Native")
         trust match
-          case TrustSource.System => installVerifyHost(verifyHostname)
+          case TrustSource.System           => installVerifyHost(verifyHostname)
           case TrustSource.InsecureTrustAll =>
             check(S2n.s2n_config_disable_x509_verification(config), "s2n_config_disable_x509_verification")
             -1L
@@ -122,7 +122,7 @@ private[net] object PlatformTls:
               check(S2n.s2n_config_add_pem_to_trust_store(config, toCString(pem)), "s2n_config_add_pem_to_trust_store")
             }
             installVerifyHost(verifyHostname)
-      case SSL.None => -1L
+      case SSL.None           => -1L
       case SSL.Platform(_, _) =>
         throw new UnsupportedOperationException("SSL.Platform (a JVM SSLContext) is not supported on Scala Native")
 

@@ -6,8 +6,8 @@
 
 package ldbc.net
 
-import java.nio.ByteBuffer
 import java.nio.channels.{ ClosedChannelException, SelectionKey, SocketChannel }
+import java.nio.ByteBuffer
 
 import ldbc.fx.Fx
 
@@ -34,7 +34,7 @@ private[net] final class NioSocket(
               NioSocket.interpret(buf, ch.read(buf)) match
                 case NioSocket.Eof     => cb(Right(None))
                 case NioSocket.Data(a) => cb(Right(Some(a)))
-                case NioSocket.More =>
+                case NioSocket.More    =>
                   st.readReady = onReadable
                   engine.enableInterest(key, SelectionKey.OP_READ)
             catch { case e: Throwable => cb(Left(e)) }
@@ -61,7 +61,10 @@ private[net] final class NioSocket(
     }
   }
 
-  override def close(): Fx[Unit] = Fx.delay { try ch.close() catch { case _: Throwable => () } }
+  override def close(): Fx[Unit] = Fx.delay {
+    try ch.close()
+    catch { case _: Throwable => () }
+  }
 
 private[net] object NioSocket:
 

@@ -121,7 +121,7 @@ private[net] final class TlsSocket(engine: SSLEngine, raw: Socket) extends Socke
     else
       Fx.delay(takePlain(n)).flatMap {
         case Some(bytes) => Fx.pure(Some(bytes))
-        case None =>
+        case None        =>
           if engine.isInboundDone then Fx.pure(None)
           else
             unwrapForData.flatMap { closed =>
@@ -156,7 +156,7 @@ private[net] final class TlsSocket(engine: SSLEngine, raw: Socket) extends Socke
         case Status.BUFFER_OVERFLOW =>
           Fx.delay { appIn = growPreserving(appIn) }.flatMap(_ => unwrapForData)
         case Status.CLOSED => Fx.pure(true)
-        case _ =>
+        case _             =>
           val hs = result.getHandshakeStatus
           if hs == HandshakeStatus.NEED_WRAP || hs == HandshakeStatus.NEED_TASK then step(hs).map(_ => false)
           else if appIn.position() > 0 then Fx.pure(false)

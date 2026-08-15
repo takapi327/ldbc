@@ -38,7 +38,7 @@ class NodeSocketAbnormalTest extends munit.FunSuite:
 
   /** Starts a plaintext echo server; returns a Future of its port. */
   private def startEchoServer(): Future[(Int, js.Dynamic)] =
-    val ready = Promise[Int]()
+    val ready  = Promise[Int]()
     val server = netModule.createServer(((sock: js.Dynamic) => {
       sock.on("data", ((chunk: js.Dynamic) => { sock.write(chunk); () }): js.Function1[js.Dynamic, Unit])
       ()
@@ -47,7 +47,7 @@ class NodeSocketAbnormalTest extends munit.FunSuite:
     ready.future.map(port => (port, server))
 
   test("a peer reset surfaces as a read error, not as EOF"):
-    val ready = Promise[Int]()
+    val ready  = Promise[Int]()
     val server = netModule.createServer(((sock: js.Dynamic) => {
       // Abort the connection so the client observes ECONNRESET (an 'error') rather than a graceful FIN.
       sock.resetAndDestroy()
@@ -60,7 +60,11 @@ class NodeSocketAbnormalTest extends munit.FunSuite:
           sock <- IoEngine.global.connect("127.0.0.1", port, 5.seconds)
           r    <- sock.read(64)
         yield r
-      raceTimeout(toFuture(prog).transform(t => scala.util.Success(t)), 4000, scala.util.Failure(new RuntimeException("hang")))
+      raceTimeout(
+        toFuture(prog).transform(t => scala.util.Success(t)),
+        4000,
+        scala.util.Failure(new RuntimeException("hang"))
+      )
         .map { outcome =>
           server.close()
           assert(outcome.isFailure, s"a reset connection must surface a read error, not EOF/None: got $outcome")
@@ -68,22 +72,27 @@ class NodeSocketAbnormalTest extends munit.FunSuite:
     }
 
   test("read after close fails promptly and does not hang"):
-    startEchoServer().flatMap { case (port, server) =>
-      val prog =
-        for
-          sock <- IoEngine.global.connect("127.0.0.1", port, 5.seconds)
-          _    <- sock.close()
-          r    <- sock.read(16)
-        yield r
-      raceTimeout(toFuture(prog).transform(t => scala.util.Success(t)), 3000, scala.util.Failure(new RuntimeException("hang")))
-        .map { outcome =>
-          server.close()
-          assert(outcome.isFailure, s"read after close must fail promptly, not hang or succeed: got $outcome")
-        }
+    startEchoServer().flatMap {
+      case (port, server) =>
+        val prog =
+          for
+            sock <- IoEngine.global.connect("127.0.0.1", port, 5.seconds)
+            _    <- sock.close()
+            r    <- sock.read(16)
+          yield r
+        raceTimeout(
+          toFuture(prog).transform(t => scala.util.Success(t)),
+          3000,
+          scala.util.Failure(new RuntimeException("hang"))
+        )
+          .map { outcome =>
+            server.close()
+            assert(outcome.isFailure, s"read after close must fail promptly, not hang or succeed: got $outcome")
+          }
     }
 
   test("a TLS handshake against a plaintext peer fails and does not hang"):
-    val ready = Promise[Int]()
+    val ready  = Promise[Int]()
     val server = netModule.createServer(((sock: js.Dynamic) => {
       sock.write("HTTP/1.1 400 Bad Request\r\n\r\n")
       sock.end()
@@ -96,7 +105,11 @@ class NodeSocketAbnormalTest extends munit.FunSuite:
           plain <- IoEngine.global.connect("127.0.0.1", port, 5.seconds)
           tls   <- Tls.client(plain, "localhost", port, SSL.Trusted)
         yield tls
-      raceTimeout(toFuture(prog).transform(t => scala.util.Success(t)), 5000, scala.util.Failure(new RuntimeException("hang")))
+      raceTimeout(
+        toFuture(prog).transform(t => scala.util.Success(t)),
+        5000,
+        scala.util.Failure(new RuntimeException("hang"))
+      )
         .map { outcome =>
           server.close()
           assert(outcome.isFailure, s"a TLS handshake against a plaintext peer must fail, got $outcome")
