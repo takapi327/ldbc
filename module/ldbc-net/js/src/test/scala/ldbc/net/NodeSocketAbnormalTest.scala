@@ -96,9 +96,9 @@ class NodeSocketAbnormalTest extends munit.FunSuite:
     // Cancelling must tear down the socket without ever invoking the callback — in particular the
     // destroy() must not surface as a spurious 'error' completion.
     var outcome: Option[Either[Throwable, Socket]] = None
-    var pendingAtCancel                            = false
-    val canceler = IoEngine.global.connect("10.255.255.1", 80, 30.seconds).unsafeRun(r => outcome = Some(r))
-    val done     = Promise[Unit]()
+    var pendingAtCancel = false
+    val canceler        = IoEngine.global.connect("10.255.255.1", 80, 30.seconds).unsafeRun(r => outcome = Some(r))
+    val done            = Promise[Unit]()
     js.timers.setTimeout(300.0) {
       pendingAtCancel = outcome.isEmpty
       canceler.cancel()
