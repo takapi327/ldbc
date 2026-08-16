@@ -16,6 +16,7 @@ import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
 import ldbc.connector.*
+import ldbc.connector.syntax.*
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
@@ -48,8 +49,7 @@ class Batch:
 
   @Benchmark
   def statement(): Unit =
-    datasource.getConnection
-      .use { conn =>
+    datasource.use { conn =>
         for
           statement <- conn.createStatement()
           _         <- records.foldLeft(IO.unit) {
@@ -66,8 +66,7 @@ class Batch:
 
   @Benchmark
   def prepareStatement(): Unit =
-    datasource.getConnection
-      .use { conn =>
+    datasource.use { conn =>
         for
           statement <- conn.prepareStatement(s"INSERT INTO ldbc_test (c1, c2) VALUES (?, ?)")
           _         <- records.foldLeft(IO.unit) {

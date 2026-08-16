@@ -75,7 +75,7 @@ class Select:
 
     val datasource = MySQLDataSource.fromDataSource[IO](ds, ex)
 
-    connection = datasource.getConnection.allocated.unsafeRunSync()._1
+    connection = datasource.getConnection.unsafeRunSync()._1
 
   @TearDown(Level.Trial)
   def tearDown(): Unit =
