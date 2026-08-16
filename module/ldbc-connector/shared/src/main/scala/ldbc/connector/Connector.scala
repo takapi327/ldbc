@@ -16,6 +16,8 @@ import ldbc.*
 import ldbc.free.*
 import ldbc.logging.{ LogEvent, LogHandler }
 
+import ldbc.connector.syntax.*
+
 object Connector:
 
   private def noopLogger[F[_]: Applicative]: LogHandler[F] = (_: LogEvent) => Applicative[F].unit
@@ -44,6 +46,6 @@ object Connector:
   def fromDataSource[F[_]: Sync](dataSource: DataSource[F], logHandler: Option[LogHandler[F]] = None): Connector[F] =
     new Connector[F]:
       private val interpreter:            Interpreter[F] = new KleisliInterpreter[F](logHandler.getOrElse(noopLogger))
-      override def run[A](dbio: DBIO[A]): F[A]           = dataSource.getConnection.use { connection =>
+      override def run[A](dbio: DBIO[A]): F[A]           = dataSource.use { connection =>
         dbio.foldMap(interpreter.ConnectionInterpreter).run(connection)
       }

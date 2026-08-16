@@ -6,6 +6,8 @@
 
 package ldbc.connector.pool
 
+import ldbc.connector.syntax.*
+
 import scala.concurrent.duration.*
 
 import cats.syntax.all.*
@@ -44,7 +46,7 @@ class PooledDataSourceTest extends FTestPlatform:
     val resource = PooledDataSource.fromConfig[IO](config.setMinConnections(2).setMaxConnections(5))
 
     resource.use { datasource =>
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statusAfterAcquire <- datasource.status
 
@@ -70,7 +72,7 @@ class PooledDataSourceTest extends FTestPlatform:
     resource.use { datasource =>
       // Use connections concurrently within their Resource scope
       val results = IO.parTraverseN(5)((1 to 5).toList) { i =>
-        datasource.getConnection.use { conn =>
+        datasource.use { conn =>
           for
             stmt   <- conn.createStatement()
             rs     <- stmt.executeQuery(s"SELECT $i")
@@ -96,9 +98,9 @@ class PooledDataSourceTest extends FTestPlatform:
     resource.use { datasource =>
       for
         initialStatus <- datasource.status
-        _             <- datasource.getConnection.use { _ =>
-               datasource.getConnection.use { _ =>
-                 datasource.getConnection.use { _ =>
+        _             <- datasource.use { _ =>
+               datasource.use { _ =>
+                 datasource.use { _ =>
                    datasource.status.map { statusAfterGrowth =>
                      assert(statusAfterGrowth.total >= 3)
                      assertEquals(statusAfterGrowth.active, 3)
@@ -128,10 +130,10 @@ class PooledDataSourceTest extends FTestPlatform:
     val resource = PooledDataSource.fromConfig[IO](testConfig)
 
     val testResult = resource.use { datasource =>
-      datasource.getConnection.use { _ =>
-        datasource.getConnection.use { _ =>
+      datasource.use { _ =>
+        datasource.use { _ =>
           // Try to acquire one more (should timeout)
-          val acquireThird = datasource.getConnection.use(_ => IO.unit)
+          val acquireThird = datasource.use(_ => IO.unit)
 
           // This should timeout because all connections are in use
           acquireThird.timeout(600.millis).attempt.map { result =>
@@ -149,7 +151,7 @@ class PooledDataSourceTest extends FTestPlatform:
     val resource = PooledDataSource.fromConfig[IO](config.setMinConnections(1).setMaxConnections(2))
 
     resource.use { datasource =>
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         conn.isValid(5).map { isValid =>
           assert(isValid, "Connection should be valid")
         }
@@ -177,11 +179,11 @@ class PooledDataSourceTest extends FTestPlatform:
     resource.use { datasource =>
       for
         // Perform some operations
-        _ <- datasource.getConnection.use { _ =>
+        _ <- datasource.use { _ =>
                IO.sleep(100.millis)
              }
 
-        _ <- datasource.getConnection.use { _ =>
+        _ <- datasource.use { _ =>
                IO.sleep(50.millis)
              }
 
@@ -199,7 +201,7 @@ class PooledDataSourceTest extends FTestPlatform:
     val resource = PooledDataSource.fromConfig[IO](config.setMinConnections(1))
 
     resource.use { datasource =>
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           // Start transaction
           _ <- conn.setAutoCommit(false)
@@ -228,7 +230,7 @@ class PooledDataSourceTest extends FTestPlatform:
     val resource = PooledDataSource.fromConfig[IO](config.setMinConnections(1))
 
     resource.use { datasource =>
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           // Create prepared statement
           pstmt <- conn.prepareStatement("SELECT ? + ?")
@@ -248,8 +250,8 @@ class PooledDataSourceTest extends FTestPlatform:
     val resource = PooledDataSource.fromConfig[IO](config.setMinConnections(3).setMaxConnections(5))
 
     for finalStatus <- resource.use { datasource =>
-                         datasource.getConnection.use { _ =>
-                           datasource.getConnection.use { _ =>
+                         datasource.use { _ =>
+                           datasource.use { _ =>
                              datasource.status
                            }
                          }
@@ -279,7 +281,7 @@ class PooledDataSourceTest extends FTestPlatform:
       for
         // Much more conservative approach for GitHub Actions
         _ <- IO.parTraverseN(2)((1 to 20).toList) { _ => // Only 2 concurrent, 20 total operations
-               datasource.getConnection.use { conn =>
+               datasource.use { conn =>
                  for
                    stmt <- conn.createStatement()
                    rs   <- stmt.executeQuery("SELECT 1") // Simplest possible query
@@ -332,7 +334,7 @@ class PooledDataSourceTest extends FTestPlatform:
         _            <- IO(assertEquals(initialState.idleConnections.size, 2))
 
         // Acquire a connection
-        result <- datasource.getConnection.use { _ =>
+        result <- datasource.use { _ =>
                     for
                       stateWhileAcquired <- datasource.poolState.get
                       status             <- datasource.status
@@ -358,7 +360,7 @@ class PooledDataSourceTest extends FTestPlatform:
         initialSize = initialState.idleConnections.size
 
         // Acquire and release a connection
-        _ <- datasource.getConnection.use { conn =>
+        _ <- datasource.use { conn =>
                for
                  duringAcquire <- datasource.poolState.get
                  _             <- IO(assertEquals(duringAcquire.idleConnections.size, initialSize - 1))
@@ -386,10 +388,10 @@ class PooledDataSourceTest extends FTestPlatform:
 
         // Acquire multiple connections concurrently
         result <- (
-                    datasource.getConnection.use { _ =>
+                    datasource.use { _ =>
                       datasource.poolState.get.map(_.idleConnections.size)
                     },
-                    datasource.getConnection.use { _ =>
+                    datasource.use { _ =>
                       datasource.poolState.get.map(_.idleConnections.size)
                     }
                   ).parTupled
@@ -415,7 +417,7 @@ class PooledDataSourceTest extends FTestPlatform:
       for
         // Run multiple acquire/release cycles
         _ <- IO.parTraverseN(2)((1 to 10).toList) { _ =>
-               datasource.getConnection.use { conn =>
+               datasource.use { conn =>
                  conn.createStatement().flatMap(_.executeQuery("SELECT 1")).void
                }
              }
@@ -448,13 +450,13 @@ class PooledDataSourceTest extends FTestPlatform:
         _            <- IO(assertEquals(initialState.idleConnections.size, 1))
 
         // Acquire first connection
-        _ <- datasource.getConnection.use { _ =>
+        _ <- datasource.use { _ =>
                for
                  state1 <- datasource.poolState.get
                  _      <- IO(assertEquals(state1.idleConnections.size, 0))
 
                  // Acquire second connection (will create new one)
-                 _ <- datasource.getConnection.use { _ =>
+                 _ <- datasource.use { _ =>
                         for
                           state2 <- datasource.poolState.get
                           // Pool should have grown
@@ -501,7 +503,7 @@ class PooledDataSourceTest extends FTestPlatform:
         results <- IO.parTraverseN(3)((1 to 15).toList) { i =>
                      // Mix of quick and slow operations
                      val delay = if i % 3 == 0 then 100.millis else 10.millis
-                     datasource.getConnection.use { conn =>
+                     datasource.use { conn =>
                        for
                          stmt <- conn.createStatement()
                          rs   <- stmt.executeQuery(s"SELECT $i")
@@ -556,10 +558,10 @@ class PooledDataSourceTest extends FTestPlatform:
         _            <- IO(assertEquals(initialState.connections.size, 2))
 
         // Acquire all connections to force pool growth
-        _ <- datasource.getConnection.use { _ =>
-               datasource.getConnection.use { _ =>
+        _ <- datasource.use { _ =>
+               datasource.use { _ =>
                  // Force creation of a third connection
-                 datasource.getConnection.use { _ =>
+                 datasource.use { _ =>
                    for
                      stateDuringUse <- datasource.poolState.get
                      _              <- IO(assert(stateDuringUse.connections.size >= 3))
@@ -608,7 +610,7 @@ class PooledDataSourceTest extends FTestPlatform:
         _            <- IO(assertEquals(initialState.idleConnections.size, 2))
 
         // Start a long-running connection use
-        connectionFiber <- datasource.getConnection.use { conn =>
+        connectionFiber <- datasource.use { conn =>
                              for
                                stmt <- conn.createStatement()
                                rs   <- stmt.executeQuery("SELECT SLEEP(0.1)")
@@ -654,7 +656,7 @@ class PooledDataSourceTest extends FTestPlatform:
 
         // Rapid acquire/release cycles
         _ <- (1 to 50).toList.traverse_ { _ =>
-               datasource.getConnection.use { conn =>
+               datasource.use { conn =>
                  conn.createStatement().flatMap(_.executeQuery("SELECT 1")).void
                }
              }
@@ -666,7 +668,7 @@ class PooledDataSourceTest extends FTestPlatform:
 
         // Concurrent rapid operations
         _ <- IO.parTraverseN(4)((1 to 20).toList) { _ =>
-               datasource.getConnection.use { conn =>
+               datasource.use { conn =>
                  conn.createStatement().flatMap(_.executeQuery("SELECT 1")).void
                }
              }
@@ -703,11 +705,11 @@ class PooledDataSourceTest extends FTestPlatform:
     resource.use { datasource =>
       for
         // Use connections to ensure they need validation later
-        _ <- datasource.getConnection.use { conn =>
+        _ <- datasource.use { conn =>
                conn.createStatement().flatMap(_.executeQuery("SELECT 1")).void
              }
 
-        _ <- datasource.getConnection.use { conn =>
+        _ <- datasource.use { conn =>
                conn.createStatement().flatMap(_.executeQuery("SELECT 2")).void
              }
 
@@ -748,7 +750,7 @@ class PooledDataSourceTest extends FTestPlatform:
       case (datasource, tracker) =>
         for
           status <- datasource.status
-          _      <- datasource.getConnection.use { conn =>
+          _      <- datasource.use { conn =>
                  conn.createStatement().flatMap(_.executeQuery("SELECT 1")).void
                }
           metrics <- tracker.getMetrics
@@ -772,7 +774,7 @@ class PooledDataSourceTest extends FTestPlatform:
         // Step 1: Create a temporary table with autocommit ON.
         // TEMPORARY TABLE is session-scoped, so it persists across pool return/re-acquisition
         // on the same physical connection.
-        _ <- datasource.getConnection.use { conn =>
+        _ <- datasource.use { conn =>
                conn
                  .createStatement()
                  .flatMap(
@@ -786,7 +788,7 @@ class PooledDataSourceTest extends FTestPlatform:
         // resetConnection is called internally on pool return:
         //   Bug:  setAutoCommit(true) → commits the INSERT, then rollback() is a no-op
         //   Fix:  rollback() → discards the INSERT, then setAutoCommit(true) restores mode
-        _ <- datasource.getConnection.use { conn =>
+        _ <- datasource.use { conn =>
                for
                  _    <- conn.setAutoCommit(false)
                  stmt <- conn.createStatement()
@@ -796,7 +798,7 @@ class PooledDataSourceTest extends FTestPlatform:
              }
 
         // Step 3: Re-acquire the same physical connection and verify the INSERT was rolled back.
-        count <- datasource.getConnection.use { conn =>
+        count <- datasource.use { conn =>
                    for
                      stmt  <- conn.createStatement()
                      rs    <- stmt.executeQuery("SELECT COUNT(*) FROM reset_conn_test")
@@ -827,7 +829,7 @@ class PooledDataSourceTest extends FTestPlatform:
     resource.use {
       case (datasource, manualTracker) =>
         for
-          _ <- datasource.getConnection.use { conn =>
+          _ <- datasource.use { conn =>
                  conn.createStatement().flatMap(_.executeQuery("SELECT 1")).void
                }
           // metricsTracker is used for internal tracking, meter for OTel — both are independent

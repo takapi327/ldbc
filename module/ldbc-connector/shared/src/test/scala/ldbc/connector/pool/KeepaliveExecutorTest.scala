@@ -6,6 +6,8 @@
 
 package ldbc.connector.pool
 
+import ldbc.connector.syntax.*
+
 import scala.concurrent.duration.*
 
 import cats.syntax.all.*
@@ -385,7 +387,7 @@ class KeepaliveExecutorTest extends FTestPlatform:
           initialMetrics <- tracker.getMetrics
 
           // Use some connections to make them idle
-          _ <- datasource.getConnection.use { conn =>
+          _ <- datasource.use { conn =>
                  conn.createStatement().flatMap(_.executeQuery("SELECT 1")).void
                }
 

@@ -21,6 +21,7 @@ import org.typelevel.otel4s.metrics.*
 import org.typelevel.otel4s.trace.*
 
 import ldbc.sql.DatabaseMetaData
+import ldbc.sql.DataSource
 
 import ldbc.connector.pool.*
 import ldbc.connector.telemetry.{ DatabaseMetrics, TelemetryConfig }
@@ -28,7 +29,6 @@ import ldbc.connector.telemetry.TelemetryAttribute
 
 import ldbc.authentication.plugin.AuthenticationPlugin
 import ldbc.build.Version
-import ldbc.DataSource
 
 /**
  * A DataSource implementation for MySQL connections using the pure Scala MySQL wire protocol.
@@ -153,7 +153,9 @@ final case class MySQLDataSource[F[_]: Async: Network: Console: Hashing: UUIDGen
    *
    * @return a Resource that manages a MySQL connection
    */
-  override def getConnection: Resource[F, Connection[F]] =
+  override def getConnection: F[(Connection[F], F[Unit])] = connectionResource.allocated
+
+  private def connectionResource: Resource[F, Connection[F]] =
     getOrCreateDatabaseMetrics.flatMap { databaseMetrics =>
       (before, after) match
         case (Some(b), Some(a)) =>
@@ -644,7 +646,7 @@ object MySQLDataSource:
    *   .setConnectionTimeout(30.seconds)
    *
    * MySQLDataSource.pooling[IO](poolConfig).use { pool =>
-   *   pool.getConnection.use { conn =>
+   *   pool.use { conn =>
    *     // Use connection
    *   }
    * }
@@ -709,7 +711,7 @@ object MySQLDataSource:
    *   before = Some(beforeHook),
    *   after = Some(afterHook)
    * ).use { pool =>
-   *   pool.getConnection.use { conn =>
+   *   pool.use { conn =>
    *     // Connection has session variables set and usage will be logged
    *   }
    * }

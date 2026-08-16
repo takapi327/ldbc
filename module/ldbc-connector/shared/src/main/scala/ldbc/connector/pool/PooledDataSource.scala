@@ -30,12 +30,12 @@ import ldbc.connector.telemetry.*
 
 import ldbc.authentication.plugin.AuthenticationPlugin
 import ldbc.build.Version
-import ldbc.DataSource
+import ldbc.sql.DataSource
 
 /**
  * A DataSource implementation that manages a pool of reusable database connections.
  *
- * PooledDataSource extends the basic [[ldbc.DataSource]] interface to provide connection
+ * PooledDataSource extends the basic [[ldbc.sql.DataSource]] interface to provide connection
  * pooling capabilities, which significantly improve performance by reusing existing
  * connections rather than creating new ones for each request.
  *
@@ -215,7 +215,7 @@ object PooledDataSource:
   )(using Tracer[F])
     extends PooledDataSource[F]:
 
-    override def getConnection: Resource[F, Connection[F]] = Resource.make(acquire)(release)
+    override def getConnection: F[(Connection[F], F[Unit])] = Resource.make(acquire)(release).allocated
 
     override def status: F[PoolStatus] = for {
       state <- poolState.get
@@ -1020,7 +1020,7 @@ object PooledDataSource:
    * @example {{{
    * // Given TracerProvider[IO] and MeterProvider[IO] in scope:
    * PooledDataSource.withTraced[IO](MySQLConfig.default).use { pool =>
-   *   pool.getConnection.use { conn => ... }
+   *   pool.use { conn => ... }
    * }
    * }}}
    */

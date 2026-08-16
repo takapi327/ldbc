@@ -14,6 +14,8 @@ import ldbc.*
 import ldbc.free.*
 import ldbc.logging.{ LogEvent, LogHandler }
 
+import ldbc.sql.DataSource
+
 class ConnectorTest extends FTestPlatform:
 
   // Mock Connection implementation
@@ -86,14 +88,14 @@ class ConnectorTest extends FTestPlatform:
   class MockDataSource[F[_]: Sync] extends DataSource[F]:
     var connections: List[MockConnection[F]] = List.empty
 
-    override def getConnection: Resource[F, Connection[F]] =
+    override def getConnection: F[(Connection[F], F[Unit])] =
       Resource.make(
         Sync[F].delay {
           val conn = new MockConnection[F]
           connections = connections :+ conn
           conn: Connection[F]
         }
-      )(_.close())
+      )(_.close()).allocated
 
   // Mock LogHandler to capture log events
   class MockLogHandler[F[_]: Sync] extends LogHandler[F]:
