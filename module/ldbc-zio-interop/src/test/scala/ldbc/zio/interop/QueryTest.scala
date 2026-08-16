@@ -12,6 +12,7 @@ import cats.Monad
 
 import ldbc.connector.*
 import ldbc.connector.data.*
+import ldbc.connector.syntax.*
 
 import zio.*
 import zio.test.*
@@ -28,7 +29,7 @@ object QueryTest extends ZIOSpecDefault:
 
   def spec = suite("QueryTest")(
     test("The client's PreparedStatement may use NULL as a parameter.") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.prepareStatement("SELECT `bit`, `bit_null` FROM `all_types` WHERE `bit_null` is ?")
           resultSet <- statement.setNull(1, MysqlType.BIT.jdbcType) *> statement.executeQuery()
@@ -42,7 +43,7 @@ object QueryTest extends ZIOSpecDefault:
       }
     },
     test("Client PreparedStatement should be able to retrieve BIT type records") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.prepareStatement("SELECT `bit`, `bit_null` FROM `all_types` WHERE `bit` = ?")
           resultSet <- statement.setByte(1, 1.toByte) *> statement.executeQuery()
@@ -56,7 +57,7 @@ object QueryTest extends ZIOSpecDefault:
       }
     },
     test("Client PreparedStatement should be able to retrieve TINYINT type records") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <-
             conn.prepareStatement("SELECT `tinyint`, `tinyint_null` FROM `all_types` WHERE `tinyint` = ?")
@@ -71,7 +72,7 @@ object QueryTest extends ZIOSpecDefault:
       }
     },
     test("Client PreparedStatement should be able to retrieve unsigned TINYINT type records") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <-
             conn.prepareStatement(
@@ -88,7 +89,7 @@ object QueryTest extends ZIOSpecDefault:
       }
     },
     test("Client PreparedStatement should be able to retrieve SMALLINT type records") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <-
             conn.prepareStatement("SELECT `smallint`, `smallint_null` FROM `all_types` WHERE `smallint` = ?")
@@ -103,7 +104,7 @@ object QueryTest extends ZIOSpecDefault:
       }
     },
     test("Client PreparedStatement should be able to retrieve unsigned SMALLINT type records") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <-
             conn.prepareStatement(
@@ -120,7 +121,7 @@ object QueryTest extends ZIOSpecDefault:
       }
     },
     test("Client PreparedStatement should be able to retrieve MEDIUMINT type records") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <-
             conn.prepareStatement("SELECT `mediumint`, `mediumint_null` FROM `all_types` WHERE `mediumint` = ?")
@@ -135,7 +136,7 @@ object QueryTest extends ZIOSpecDefault:
       }
     },
     test("Client PreparedStatement should be able to retrieve INT type records") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.prepareStatement("SELECT `int`, `int_null` FROM `all_types` WHERE `int` = ?")
           resultSet <- statement.setInt(1, 2147483647) *> statement.executeQuery()
@@ -149,7 +150,7 @@ object QueryTest extends ZIOSpecDefault:
       }
     },
     test("Client PreparedStatement should be able to retrieve unsigned INT type records") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.prepareStatement(
                          "SELECT `int_unsigned`, `int_unsigned_null` FROM `all_types` WHERE `int_unsigned` = ?"
@@ -165,7 +166,7 @@ object QueryTest extends ZIOSpecDefault:
       }
     },
     test("Client PreparedStatement should be able to retrieve BIGINT type records") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <-
             conn.prepareStatement("SELECT `bigint`, `bigint_null` FROM `all_types` WHERE `bigint` = ?")
@@ -180,7 +181,7 @@ object QueryTest extends ZIOSpecDefault:
       }
     },
     test("Client PreparedStatement should be able to retrieve unsigned BIGINT type records") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.prepareStatement(
                          "SELECT `bigint_unsigned`, `bigint_unsigned_null` FROM `all_types` WHERE `bigint_unsigned` = ?"
@@ -196,7 +197,7 @@ object QueryTest extends ZIOSpecDefault:
       }
     },
     test("Client PreparedStatement should be able to retrieve FLOAT type records") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.prepareStatement("SELECT `float`, `float_null` FROM `all_types` WHERE `float` > ?")
           resultSet <- statement.setFloat(1, 3.4f) *> statement.executeQuery()
@@ -210,7 +211,7 @@ object QueryTest extends ZIOSpecDefault:
       }
     },
     test("Client PreparedStatement should be able to retrieve DOUBLE type records") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <-
             conn.prepareStatement("SELECT `double`, `double_null` FROM `all_types` WHERE `double` = ?")
@@ -225,7 +226,7 @@ object QueryTest extends ZIOSpecDefault:
       }
     },
     test("Client PreparedStatement should be able to retrieve DECIMAL type records") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <-
             conn.prepareStatement("SELECT `decimal`, `decimal_null` FROM `all_types` WHERE `decimal` = ?")
@@ -240,7 +241,7 @@ object QueryTest extends ZIOSpecDefault:
       }
     },
     test("Client PreparedStatement should be able to retrieve DATE type records") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.prepareStatement("SELECT `date`, `date_null` FROM `all_types` WHERE `date` = ?")
           resultSet <- statement.setDate(1, LocalDate.of(2020, 1, 1)) *> statement.executeQuery()
@@ -254,7 +255,7 @@ object QueryTest extends ZIOSpecDefault:
       }
     },
     test("Client PreparedStatement should be able to retrieve TIME type records") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.prepareStatement("SELECT `time`, `time_null` FROM `all_types` WHERE `time` = ?")
           resultSet <- statement.setTime(1, LocalTime.of(12, 34, 56)) *> statement.executeQuery()
@@ -268,7 +269,7 @@ object QueryTest extends ZIOSpecDefault:
       }
     },
     test("Client PreparedStatement should be able to retrieve DATETIME type records") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <-
             conn.prepareStatement("SELECT `datetime`, `datetime_null` FROM `all_types` WHERE `datetime` = ?")
@@ -283,7 +284,7 @@ object QueryTest extends ZIOSpecDefault:
       }
     },
     test("Client PreparedStatement should be able to retrieve TIMESTAMP type records") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <-
             conn.prepareStatement("SELECT `timestamp`, `timestamp_null` FROM `all_types` WHERE `timestamp` = ?")
@@ -298,7 +299,7 @@ object QueryTest extends ZIOSpecDefault:
       }
     },
     test("Client PreparedStatement should be able to retrieve YEAR type records") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.prepareStatement("SELECT `year`, `year_null` FROM `all_types` WHERE `year` = ?")
           resultSet <- statement.setInt(1, 2020) *> statement.executeQuery()
@@ -312,7 +313,7 @@ object QueryTest extends ZIOSpecDefault:
       }
     },
     test("Client PreparedStatement should be able to retrieve CHAR type records") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.prepareStatement("SELECT `char`, `char_null` FROM `all_types` WHERE `char` = ?")
           resultSet <- statement.setString(1, "char") *> statement.executeQuery()
@@ -326,7 +327,7 @@ object QueryTest extends ZIOSpecDefault:
       }
     },
     test("Client PreparedStatement should be able to retrieve VARCHAR type records") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <-
             conn.prepareStatement("SELECT `varchar`, `varchar_null` FROM `all_types` WHERE `varchar` = ?")
@@ -341,7 +342,7 @@ object QueryTest extends ZIOSpecDefault:
       }
     },
     test("Client PreparedStatement should be able to retrieve BINARY type records") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <-
             conn.prepareStatement("SELECT `binary`, `binary_null` FROM `all_types` WHERE `binary` = ?")
@@ -357,7 +358,7 @@ object QueryTest extends ZIOSpecDefault:
       }
     },
     test("Client PreparedStatement should be able to retrieve VARBINARY type records") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <-
             conn.prepareStatement("SELECT `varbinary`, `varbinary_null` FROM `all_types` WHERE `varbinary` = ?")
@@ -372,7 +373,7 @@ object QueryTest extends ZIOSpecDefault:
       }
     },
     test("Client PreparedStatement should be able to retrieve TINYBLOB type records") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <-
             conn.prepareStatement("SELECT `tinyblob`, `tinyblob_null` FROM `all_types` WHERE `tinyblob` = ?")
@@ -387,7 +388,7 @@ object QueryTest extends ZIOSpecDefault:
       }
     },
     test("Client PreparedStatement should be able to retrieve BLOB type records") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.prepareStatement("SELECT `blob`, `blob_null` FROM `all_types` WHERE `blob` = ?")
           resultSet <- statement.setString(1, "blob") *> statement.executeQuery()
@@ -401,7 +402,7 @@ object QueryTest extends ZIOSpecDefault:
       }
     },
     test("Client PreparedStatement should be able to retrieve MEDIUMBLOB type records") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.prepareStatement(
                          "SELECT `mediumblob`, `mediumblob_null` FROM `all_types` WHERE `mediumblob` = ?"
@@ -417,7 +418,7 @@ object QueryTest extends ZIOSpecDefault:
       }
     },
     test("Client PreparedStatement should be able to retrieve LONGBLOB type records") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <-
             conn.prepareStatement("SELECT `longblob`, `longblob_null` FROM `all_types` WHERE `longblob` = ?")
@@ -432,7 +433,7 @@ object QueryTest extends ZIOSpecDefault:
       }
     },
     test("Client PreparedStatement should be able to retrieve TINYTEXT type records") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <-
             conn.prepareStatement("SELECT `tinytext`, `tinytext_null` FROM `all_types` WHERE `tinytext` = ?")
@@ -447,7 +448,7 @@ object QueryTest extends ZIOSpecDefault:
       }
     },
     test("Client PreparedStatement should be able to retrieve TEXT type records") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.prepareStatement("SELECT `text`, `text_null` FROM `all_types` WHERE `text` = ?")
           resultSet <- statement.setString(1, "text") *> statement.executeQuery()
@@ -461,7 +462,7 @@ object QueryTest extends ZIOSpecDefault:
       }
     },
     test("Client PreparedStatement should be able to retrieve MEDIUMTEXT type records") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.prepareStatement(
                          "SELECT `mediumtext`, `mediumtext_null` FROM `all_types` WHERE `mediumtext` = ?"
@@ -477,7 +478,7 @@ object QueryTest extends ZIOSpecDefault:
       }
     },
     test("Client PreparedStatement should be able to retrieve LONGTEXT type records") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <-
             conn.prepareStatement("SELECT `longtext`, `longtext_null` FROM `all_types` WHERE `longtext` = ?")
@@ -492,7 +493,7 @@ object QueryTest extends ZIOSpecDefault:
       }
     },
     test("Client PreparedStatement should be able to retrieve ENUM type records") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.prepareStatement("SELECT `enum`, `enum_null` FROM `all_types` WHERE `enum` = ?")
           resultSet <- statement.setString(1, "a") *> statement.executeQuery()
@@ -506,7 +507,7 @@ object QueryTest extends ZIOSpecDefault:
       }
     },
     test("Client PreparedStatement should be able to retrieve SET type records") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.prepareStatement("SELECT `set`, `set_null` FROM `all_types` WHERE `set` = ?")
           resultSet <- statement.setString(1, "a,b") *> statement.executeQuery()
