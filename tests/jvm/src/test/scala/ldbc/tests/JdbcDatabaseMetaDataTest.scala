@@ -12,7 +12,7 @@ import cats.effect.*
 
 import jdbc.connector.*
 
-import ldbc.DataSource
+import ldbc.sql.DataSource
 
 class JdbcDatabaseMetaDataTest extends DatabaseMetaDataTest:
 

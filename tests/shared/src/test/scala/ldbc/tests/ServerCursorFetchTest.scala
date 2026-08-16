@@ -17,7 +17,7 @@ import ldbc.sql.*
 import ldbc.connector.*
 import ldbc.connector.syntax.*
 
-import ldbc.DataSource
+import ldbc.sql.DataSource
 
 class LdbcServerCursorFetchTest extends ServerCursorFetchTest:
 
@@ -43,7 +43,7 @@ trait ServerCursorFetchTest extends CatsEffectSuite:
 
   test("Statement: Query result retrieval using server cursor matches the specified number of results.") {
     assertIO(
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
           _         <- statement.setFetchSize(1)
@@ -59,7 +59,7 @@ trait ServerCursorFetchTest extends CatsEffectSuite:
 
   test("Statement: Query result retrieval using server cursor matches the specified number of results.") {
     assertIO(
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
           _         <- statement.setFetchSize(5)
@@ -75,7 +75,7 @@ trait ServerCursorFetchTest extends CatsEffectSuite:
 
   test("PreparedStatement: Query result retrieval using server cursor matches the specified number of results.") {
     assertIO(
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.prepareStatement("SELECT * FROM `city`")
           _         <- statement.setFetchSize(1)
@@ -91,7 +91,7 @@ trait ServerCursorFetchTest extends CatsEffectSuite:
 
   test("PreparedStatement: Query result retrieval using server cursor matches the specified number of results.") {
     assertIO(
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.prepareStatement("SELECT * FROM `city`")
           _         <- statement.setFetchSize(5)
