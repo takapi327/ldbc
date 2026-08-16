@@ -6,12 +6,8 @@
 
 package ldbc.free
 
-import scala.concurrent.duration.FiniteDuration
-
 import cats.~>
 import cats.free.Free
-
-import cats.effect.kernel.{ Poll, Sync }
 
 import ldbc.sql.*
 
@@ -27,22 +23,6 @@ object ConnectionOp:
     override def visit[F[_]](v: ConnectionOp.Visitor[F]): F[A] = v.raiseError(e)
   final case class HandleErrorWith[A](fa: ConnectionIO[A], f: Throwable => ConnectionIO[A]) extends ConnectionOp[A]:
     override def visit[F[_]](v: ConnectionOp.Visitor[F]): F[A] = v.handleErrorWith(fa)(f)
-  case object Monotonic extends ConnectionOp[FiniteDuration]:
-    override def visit[F[_]](v: ConnectionOp.Visitor[F]): F[FiniteDuration] = v.monotonic
-  case object Realtime extends ConnectionOp[FiniteDuration]:
-    override def visit[F[_]](v: ConnectionOp.Visitor[F]): F[FiniteDuration] = v.realTime
-  final case class Suspend[A](hint: Sync.Type, thunk: () => A) extends ConnectionOp[A]:
-    override def visit[F[_]](v: ConnectionOp.Visitor[F]): F[A] = v.suspend(hint)(thunk())
-  final case class ForceR[A, B](fa: ConnectionIO[A], fb: ConnectionIO[B]) extends ConnectionOp[B]:
-    override def visit[F[_]](v: ConnectionOp.Visitor[F]): F[B] = v.forceR(fa)(fb)
-  final case class Uncancelable[A](body: Poll[ConnectionIO] => ConnectionIO[A]) extends ConnectionOp[A]:
-    override def visit[F[_]](v: ConnectionOp.Visitor[F]): F[A] = v.uncancelable(body)
-  final case class Poll1[A](poll: Any, fa: ConnectionIO[A]) extends ConnectionOp[A]:
-    override def visit[F[_]](v: Visitor[F]): F[A] = v.poll(poll, fa)
-  case object Canceled extends ConnectionOp[Unit]:
-    override def visit[F[_]](v: ConnectionOp.Visitor[F]): F[Unit] = v.canceled
-  final case class OnCancel[A](fa: ConnectionIO[A], fin: ConnectionIO[Unit]) extends ConnectionOp[A]:
-    override def visit[F[_]](v: ConnectionOp.Visitor[F]): F[A] = v.onCancel(fa, fin)
   final case class PerformLogging(event: LogEvent) extends ConnectionOp[Unit]:
     override def visit[F[_]](v: ConnectionOp.Visitor[F]): F[Unit] = v.performLogging(event)
 
@@ -97,14 +77,6 @@ object ConnectionOp:
     def embed[A](e:            Embedded[A]):                                        F[A]
     def handleErrorWith[A](fa: ConnectionIO[A])(f:   Throwable => ConnectionIO[A]): F[A]
     def raiseError[A](err:     Throwable):                                          F[A]
-    def monotonic:                                                                  F[FiniteDuration]
-    def realTime:                                                                   F[FiniteDuration]
-    def suspend[A](hint:       Sync.Type)(thunk:     => A):                         F[A]
-    def forceR[A, B](fa:       ConnectionIO[A])(fb:  ConnectionIO[B]):              F[B]
-    def uncancelable[A](body:  Poll[ConnectionIO] => ConnectionIO[A]):              F[A]
-    def poll[A](poll:          Any, fa:              ConnectionIO[A]):              F[A]
-    def canceled:                                                                   F[Unit]
-    def onCancel[A](fa:        ConnectionIO[A], fin: ConnectionIO[Unit]):           F[A]
     def performLogging(event:  LogEvent):                                           F[Unit]
 
     def createStatement():                                                                F[Statement[?]]
@@ -135,20 +107,6 @@ object ConnectionIO:
   def raiseError[A](err: Throwable): ConnectionIO[A] = Free.liftF(ConnectionOp.RaiseError(err))
   def handleErrorWith[A](fa: ConnectionIO[A])(f: Throwable => ConnectionIO[A]): ConnectionIO[A] =
     Free.liftF[ConnectionOp, A](ConnectionOp.HandleErrorWith(fa, f))
-  val monotonic: ConnectionIO[FiniteDuration] = Free.liftF[ConnectionOp, FiniteDuration](ConnectionOp.Monotonic)
-  val realtime:  ConnectionIO[FiniteDuration] = Free.liftF[ConnectionOp, FiniteDuration](ConnectionOp.Realtime)
-  def suspend[A](hint: Sync.Type)(thunk: => A): ConnectionIO[A] =
-    Free.liftF[ConnectionOp, A](ConnectionOp.Suspend(hint, () => thunk))
-  def forceR[A, B](fa: ConnectionIO[A])(fb: ConnectionIO[B]): ConnectionIO[B] =
-    Free.liftF[ConnectionOp, B](ConnectionOp.ForceR(fa, fb))
-  def uncancelable[A](body: Poll[ConnectionIO] => ConnectionIO[A]): ConnectionIO[A] =
-    Free.liftF[ConnectionOp, A](ConnectionOp.Uncancelable(body))
-  val canceled: ConnectionIO[Unit] = Free.liftF[ConnectionOp, Unit](ConnectionOp.Canceled)
-  def onCancel[A](fa: ConnectionIO[A], fin: ConnectionIO[Unit]): ConnectionIO[A] =
-    Free.liftF[ConnectionOp, A](ConnectionOp.OnCancel(fa, fin))
-  def capturePoll[M[_]](mpoll: Poll[M]): Poll[ConnectionIO] = new Poll[ConnectionIO]:
-    override def apply[A](fa: ConnectionIO[A]): ConnectionIO[A] =
-      Free.liftF[ConnectionOp, A](ConnectionOp.Poll1(mpoll, fa))
   def performLogging(event: LogEvent): ConnectionIO[Unit] =
     Free.liftF[ConnectionOp, Unit](ConnectionOp.PerformLogging(event))
 

@@ -8,12 +8,8 @@ package ldbc.free
 
 import java.time.*
 
-import scala.concurrent.duration.FiniteDuration
-
-import cats.{ ~>, Applicative }
+import cats.~>
 import cats.free.Free
-
-import cats.effect.kernel.{ CancelScope, Poll, Sync }
 
 import ldbc.sql.*
 
@@ -28,24 +24,6 @@ object PreparedStatementOp:
   final case class HandleErrorWith[A](fa: PreparedStatementIO[A], f: Throwable => PreparedStatementIO[A])
     extends PreparedStatementOp[A]:
     override def visit[F[_]](v: PreparedStatementOp.Visitor[F]): F[A] = v.handleErrorWith(fa)(f)
-  case object Monotonic extends PreparedStatementOp[FiniteDuration]:
-    override def visit[F[_]](v: PreparedStatementOp.Visitor[F]): F[FiniteDuration] = v.monotonic
-  case object Realtime extends PreparedStatementOp[FiniteDuration]:
-    override def visit[F[_]](v: PreparedStatementOp.Visitor[F]): F[FiniteDuration] = v.realTime
-  final case class Suspend[A](hint: Sync.Type, thunk: () => A) extends PreparedStatementOp[A]:
-    override def visit[F[_]](v: PreparedStatementOp.Visitor[F]): F[A] = v.suspend(hint)(thunk())
-  final case class ForceR[A, B](fa: PreparedStatementIO[A], fb: PreparedStatementIO[B]) extends PreparedStatementOp[B]:
-    override def visit[F[_]](v: PreparedStatementOp.Visitor[F]): F[B] = v.forceR(fa)(fb)
-  final case class Uncancelable[A](body: Poll[PreparedStatementIO] => PreparedStatementIO[A])
-    extends PreparedStatementOp[A]:
-    override def visit[F[_]](v: PreparedStatementOp.Visitor[F]): F[A] = v.uncancelable(body)
-  final case class Poll1[A](poll: Any, fa: PreparedStatementIO[A]) extends PreparedStatementOp[A]:
-    override def visit[F[_]](v: Visitor[F]): F[A] = v.poll(poll, fa)
-  case object Canceled extends PreparedStatementOp[Unit]:
-    override def visit[F[_]](v: PreparedStatementOp.Visitor[F]): F[Unit] = v.canceled
-  final case class OnCancel[A](fa: PreparedStatementIO[A], fin: PreparedStatementIO[Unit])
-    extends PreparedStatementOp[A]:
-    override def visit[F[_]](v: PreparedStatementOp.Visitor[F]): F[A] = v.onCancel(fa, fin)
 
   final case class SetNull(index: Int, sqlType: Int) extends PreparedStatementOp[Unit]:
     override def visit[F[_]](v: PreparedStatementOp.Visitor[F]): F[Unit] = v.setNull(index, sqlType)
@@ -111,14 +89,6 @@ object PreparedStatementOp:
     def embed[A](e:            Embedded[A]):                                                      F[A]
     def handleErrorWith[A](fa: PreparedStatementIO[A])(f:   Throwable => PreparedStatementIO[A]): F[A]
     def raiseError[A](err:     Throwable):                                                        F[A]
-    def monotonic:                                                                                F[FiniteDuration]
-    def realTime:                                                                                 F[FiniteDuration]
-    def suspend[A](hint:       Sync.Type)(thunk:            => A):                                F[A]
-    def forceR[A, B](fa:       PreparedStatementIO[A])(fb:  PreparedStatementIO[B]):              F[B]
-    def uncancelable[A](body:  Poll[PreparedStatementIO] => PreparedStatementIO[A]):              F[A]
-    def poll[A](poll:          Any, fa:                     PreparedStatementIO[A]):              F[A]
-    def canceled:                                                                                 F[Unit]
-    def onCancel[A](fa:        PreparedStatementIO[A], fin: PreparedStatementIO[Unit]):           F[A]
 
     def setNull(index:       Int, sqlType: Int):           F[Unit]
     def setBoolean(index:    Int, value:   Boolean):       F[Unit]
@@ -151,53 +121,12 @@ type PreparedStatementIO[A] = Free[PreparedStatementOp, A]
 object PreparedStatementIO:
   module =>
 
-  given Sync[PreparedStatementIO] =
-    new Sync[PreparedStatementIO]:
-      val monad = Free.catsFreeMonadForFree[PreparedStatementOp]
-      override val applicative:     Applicative[PreparedStatementIO] = monad
-      override val rootCancelScope: CancelScope                      = CancelScope.Cancelable
-      override def pure[A](x: A):   PreparedStatementIO[A]           = monad.pure(x)
-      override def flatMap[A, B](fa: PreparedStatementIO[A])(f: A => PreparedStatementIO[B]): PreparedStatementIO[B] =
-        monad.flatMap(fa)(f)
-      override def tailRecM[A, B](a: A)(f: A => PreparedStatementIO[Either[A, B]]): PreparedStatementIO[B] =
-        monad.tailRecM(a)(f)
-      override def raiseError[A](e: Throwable): PreparedStatementIO[A] = module.raiseError(e)
-      override def handleErrorWith[A](fa: PreparedStatementIO[A])(
-        f: Throwable => PreparedStatementIO[A]
-      ):                      PreparedStatementIO[A]              = module.handleErrorWith(fa)(f)
-      override def monotonic: PreparedStatementIO[FiniteDuration] = module.monotonic
-      override def realTime:  PreparedStatementIO[FiniteDuration] = module.realtime
-      override def suspend[A](hint: Sync.Type)(thunk: => A): PreparedStatementIO[A] = module.suspend(hint)(thunk)
-      override def forceR[A, B](fa: PreparedStatementIO[A])(fb: PreparedStatementIO[B]): PreparedStatementIO[B] =
-        module.forceR(fa)(fb)
-      override def uncancelable[A](body: Poll[PreparedStatementIO] => PreparedStatementIO[A]): PreparedStatementIO[A] =
-        module.uncancelable(body)
-      override def canceled: PreparedStatementIO[Unit] = module.canceled
-      override def onCancel[A](fa: PreparedStatementIO[A], fin: PreparedStatementIO[Unit]): PreparedStatementIO[A] =
-        module.onCancel(fa, fin)
-
   def embed[F[_], J, A](j: J, fa: Free[F, A])(using ev: Embeddable[F, J]): Free[PreparedStatementOp, A] =
     Free.liftF(PreparedStatementOp.Embed(ev.embed(j, fa)))
   def pure[A](a:         A):         PreparedStatementIO[A] = Free.pure(a)
   def raiseError[A](err: Throwable): PreparedStatementIO[A] = Free.liftF(PreparedStatementOp.RaiseError(err))
   def handleErrorWith[A](fa: PreparedStatementIO[A])(f: Throwable => PreparedStatementIO[A]): PreparedStatementIO[A] =
     Free.liftF[PreparedStatementOp, A](PreparedStatementOp.HandleErrorWith(fa, f))
-  val monotonic: PreparedStatementIO[FiniteDuration] =
-    Free.liftF[PreparedStatementOp, FiniteDuration](PreparedStatementOp.Monotonic)
-  val realtime: PreparedStatementIO[FiniteDuration] =
-    Free.liftF[PreparedStatementOp, FiniteDuration](PreparedStatementOp.Realtime)
-  def suspend[A](hint: Sync.Type)(thunk: => A): PreparedStatementIO[A] =
-    Free.liftF[PreparedStatementOp, A](PreparedStatementOp.Suspend(hint, () => thunk))
-  def forceR[A, B](fa: PreparedStatementIO[A])(fb: PreparedStatementIO[B]): PreparedStatementIO[B] =
-    Free.liftF[PreparedStatementOp, B](PreparedStatementOp.ForceR(fa, fb))
-  def uncancelable[A](body: Poll[PreparedStatementIO] => PreparedStatementIO[A]): PreparedStatementIO[A] =
-    Free.liftF[PreparedStatementOp, A](PreparedStatementOp.Uncancelable(body))
-  val canceled: PreparedStatementIO[Unit] = Free.liftF[PreparedStatementOp, Unit](PreparedStatementOp.Canceled)
-  def onCancel[A](fa: PreparedStatementIO[A], fin: PreparedStatementIO[Unit]): PreparedStatementIO[A] =
-    Free.liftF[PreparedStatementOp, A](PreparedStatementOp.OnCancel(fa, fin))
-  def capturePoll[M[_]](mpoll: Poll[M]): Poll[PreparedStatementIO] = new Poll[PreparedStatementIO]:
-    override def apply[A](fa: PreparedStatementIO[A]): PreparedStatementIO[A] =
-      Free.liftF[PreparedStatementOp, A](PreparedStatementOp.Poll1(mpoll, fa))
 
   def setNull(index: Int, sqlType: Int): PreparedStatementIO[Unit] =
     Free.liftF(PreparedStatementOp.SetNull(index, sqlType))

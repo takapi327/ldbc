@@ -8,13 +8,9 @@ package ldbc.free
 
 import java.time.*
 
-import scala.concurrent.duration.FiniteDuration
-
-import cats.~>
+import cats.{ ~>, MonadError }
 import cats.data.Kleisli
 import cats.free.Free
-
-import cats.effect.kernel.{ Poll, Sync }
 
 import ldbc.sql.*
 
@@ -24,7 +20,7 @@ import ldbc.logging.*
  * This code is based on doobie's code.
  * @see https://github.com/typelevel/doobie/blob/main/modules/free/src/main/scala/doobie/free/kleisliinterpreter.scala
  */
-class KleisliInterpreter[F[_]: Sync](logHandler: LogHandler[F]) extends Interpreter[F]:
+class KleisliInterpreter[F[_]](logHandler: LogHandler[F])(using F: MonadError[F, Throwable]) extends Interpreter[F]:
   outer =>
 
   lazy val ConnectionInterpreter: ConnectionOp ~> ([A] =>> Kleisli[F, Connection[F], A]) = new ConnectionInterpreter {}
@@ -33,30 +29,12 @@ class KleisliInterpreter[F[_]: Sync](logHandler: LogHandler[F]) extends Interpre
     new PreparedStatementInterpreter {}
   lazy val ResultSetInterpreter: ResultSetOp ~> ([A] =>> Kleisli[F, ResultSet[F], A]) = new ResultSetInterpreter {}
 
-  def primitive[J, A](f:  J => F[A]): Kleisli[F, J, A]              = Kleisli(f)
-  def raiseError[J, A](e: Throwable): Kleisli[F, J, A]              = Kleisli(_ => Sync[F].raiseError(e))
-  def monotonic[J]:                   Kleisli[F, J, FiniteDuration] = Kleisli(_ => Sync[F].monotonic)
-  def realTime[J]:                    Kleisli[F, J, FiniteDuration] = Kleisli(_ => Sync[F].realTime)
-  def suspend[J, A](hint: Sync.Type)(thunk: => A): Kleisli[F, J, A]    = Kleisli(_ => Sync[F].suspend(hint)(thunk))
-  def canceled[J]:                                 Kleisli[F, J, Unit] = Kleisli(_ => Sync[F].canceled)
+  def primitive[J, A](f:  J => F[A]): Kleisli[F, J, A] = Kleisli(f)
+  def raiseError[J, A](e: Throwable): Kleisli[F, J, A] = Kleisli(_ => F.raiseError(e))
   def handleErrorWith[G[_], J, A](
     interpreter: G ~> ([T] =>> Kleisli[F, J, T])
   )(fa: Free[G, A])(f: Throwable => Free[G, A]): Kleisli[F, J, A] =
-    Kleisli(j => Sync[F].handleErrorWith(fa.foldMap(interpreter).run(j))(f.andThen(_.foldMap(interpreter).run(j))))
-  def forceR[G[_], J, A, B](interpreter: G ~> ([T] =>> Kleisli[F, J, T]))(fa: Free[G, A])(
-    fb: Free[G, B]
-  ): Kleisli[F, J, B] = Kleisli(j => Sync[F].forceR(fa.foldMap(interpreter).run(j))(fb.foldMap(interpreter).run(j)))
-  def uncancelable[G[_], J, A](
-    interpreter: G ~> ([T] =>> Kleisli[F, J, T]),
-    capture:     Poll[F] => Poll[[T] =>> Free[G, T]]
-  )(body: Poll[[T] =>> Free[G, T]] => Free[G, A]): Kleisli[F, J, A] =
-    Kleisli(j => Sync[F].uncancelable(body.compose(capture).andThen(_.foldMap(interpreter).run(j))))
-  def poll[G[_], J, A](interpreter: G ~> ([T] =>> Kleisli[F, J, T]))(mpoll: Any, fa: Free[G, A]): Kleisli[F, J, A] =
-    Kleisli(j => mpoll.asInstanceOf[Poll[F]].apply(fa.foldMap(interpreter).run(j)))
-  def onCancel[G[_], J, A](
-    interpreter: G ~> ([T] =>> Kleisli[F, J, T])
-  )(fa: Free[G, A], fin: Free[G, Unit]): Kleisli[F, J, A] =
-    Kleisli(j => Sync[F].onCancel(fa.foldMap(interpreter).run(j), fin.foldMap(interpreter).run(j)))
+    Kleisli(j => F.handleErrorWith(fa.foldMap(interpreter).run(j))(f.andThen(_.foldMap(interpreter).run(j))))
 
   def embed[J, A](e: Embedded[A]): Kleisli[F, J, A] =
     e match
@@ -71,20 +49,9 @@ class KleisliInterpreter[F[_]: Sync](logHandler: LogHandler[F]) extends Interpre
 
     override def embed[A](e:        Embedded[A]): Kleisli[F, Connection[F], A] = outer.embed(e)
     override def raiseError[A](err: Throwable):   Kleisli[F, Connection[F], A] = outer.raiseError(err)
-    override def monotonic: Kleisli[F, Connection[F], FiniteDuration] = outer.monotonic[Connection[F]]
-    override def realTime:  Kleisli[F, Connection[F], FiniteDuration] = outer.realTime[Connection[F]]
-    override def suspend[A](hint: Sync.Type)(thunk: => A): Kleisli[F, Connection[F], A] = outer.suspend(hint)(thunk)
-    override def canceled: Kleisli[F, Connection[F], Unit] = outer.canceled[Connection[F]]
     override def handleErrorWith[A](fa: ConnectionIO[A])(
       f: Throwable => ConnectionIO[A]
     ): Kleisli[F, Connection[F], A] = outer.handleErrorWith(this)(fa)(f)
-    override def forceR[A, B](fa: ConnectionIO[A])(fb: ConnectionIO[B]): Kleisli[F, Connection[F], B] =
-      outer.forceR(this)(fa)(fb)
-    override def uncancelable[A](body: Poll[ConnectionIO] => ConnectionIO[A]): Kleisli[F, Connection[F], A] =
-      outer.uncancelable(this, ConnectionIO.capturePoll)(body)
-    override def poll[A](poll: Any, fa: ConnectionIO[A]): Kleisli[F, Connection[F], A] = outer.poll(this)(poll, fa)
-    override def onCancel[A](fa: ConnectionIO[A], fin: ConnectionIO[Unit]): Kleisli[F, Connection[F], A] =
-      outer.onCancel(this)(fa, fin)
     override def performLogging(event: LogEvent): Kleisli[F, Connection[F], Unit] = Kleisli(_ => logHandler.run(event))
 
     override def createStatement(): Kleisli[F, Connection[F], Statement[?]] =
@@ -126,19 +93,8 @@ class KleisliInterpreter[F[_]: Sync](logHandler: LogHandler[F]) extends Interpre
 
     override def embed[A](e:        Embedded[A]): Kleisli[F, Statement[F], A] = outer.embed(e)
     override def raiseError[A](err: Throwable):   Kleisli[F, Statement[F], A] = outer.raiseError(err)
-    override def monotonic: Kleisli[F, Statement[F], FiniteDuration] = outer.monotonic[Statement[F]]
-    override def realTime:  Kleisli[F, Statement[F], FiniteDuration] = outer.realTime[Statement[F]]
-    override def suspend[A](hint: Sync.Type)(thunk: => A): Kleisli[F, Statement[F], A]    = outer.suspend(hint)(thunk)
-    override def canceled:                                 Kleisli[F, Statement[F], Unit] = outer.canceled[Statement[F]]
     override def handleErrorWith[A](fa: StatementIO[A])(f: Throwable => StatementIO[A]): Kleisli[F, Statement[F], A] =
       outer.handleErrorWith(this)(fa)(f)
-    override def forceR[A, B](fa: StatementIO[A])(fb: StatementIO[B]): Kleisli[F, Statement[F], B] =
-      outer.forceR(this)(fa)(fb)
-    override def uncancelable[A](body: Poll[StatementIO] => StatementIO[A]): Kleisli[F, Statement[F], A] =
-      outer.uncancelable(this, StatementIO.capturePoll)(body)
-    override def poll[A](poll: Any, fa: StatementIO[A]): Kleisli[F, Statement[F], A] = outer.poll(this)(poll, fa)
-    override def onCancel[A](fa: StatementIO[A], fin: StatementIO[Unit]): Kleisli[F, Statement[F], A] =
-      outer.onCancel(this)(fa, fin)
 
     override def executeQuery(sql: String): Kleisli[F, Statement[F], ResultSet[?]] =
       primitive[Statement[F], ResultSet[F]](_.executeQuery(sql)).asInstanceOf[Kleisli[F, Statement[F], ResultSet[?]]]
@@ -151,26 +107,9 @@ class KleisliInterpreter[F[_]: Sync](logHandler: LogHandler[F]) extends Interpre
 
     override def embed[A](e:        Embedded[A]): Kleisli[F, PreparedStatement[F], A] = outer.embed(e)
     override def raiseError[A](err: Throwable):   Kleisli[F, PreparedStatement[F], A] = outer.raiseError(err)
-    override def monotonic: Kleisli[F, PreparedStatement[F], FiniteDuration] = outer.monotonic[PreparedStatement[F]]
-    override def realTime:  Kleisli[F, PreparedStatement[F], FiniteDuration] = outer.realTime[PreparedStatement[F]]
-    override def suspend[A](hint: Sync.Type)(thunk: => A): Kleisli[F, PreparedStatement[F], A] =
-      outer.suspend(hint)(thunk)
-    override def canceled: Kleisli[F, PreparedStatement[F], Unit] = outer.canceled[PreparedStatement[F]]
     override def handleErrorWith[A](fa: PreparedStatementIO[A])(
       f: Throwable => PreparedStatementIO[A]
     ): Kleisli[F, PreparedStatement[F], A] = outer.handleErrorWith(this)(fa)(f)
-    override def forceR[A, B](fa: PreparedStatementIO[A])(
-      fb: PreparedStatementIO[B]
-    ): Kleisli[F, PreparedStatement[F], B] = outer.forceR(this)(fa)(fb)
-    override def uncancelable[A](
-      body: Poll[PreparedStatementIO] => PreparedStatementIO[A]
-    ): Kleisli[F, PreparedStatement[F], A] = outer.uncancelable(this, PreparedStatementIO.capturePoll)(body)
-    override def poll[A](poll: Any, fa: PreparedStatementIO[A]): Kleisli[F, PreparedStatement[F], A] =
-      outer.poll(this)(poll, fa)
-    override def onCancel[A](
-      fa:  PreparedStatementIO[A],
-      fin: PreparedStatementIO[Unit]
-    ): Kleisli[F, PreparedStatement[F], A] = outer.onCancel(this)(fa, fin)
 
     override def setNull(index: Int, sqlType: Int): Kleisli[F, PreparedStatement[F], Unit] = primitive(
       _.setNull(index, sqlType)
