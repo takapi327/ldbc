@@ -49,7 +49,8 @@ class Batch:
 
   @Benchmark
   def statement(): Unit =
-    datasource.use { conn =>
+    datasource
+      .use { conn =>
         for
           statement <- conn.createStatement()
           _         <- records.foldLeft(IO.unit) {
@@ -66,7 +67,8 @@ class Batch:
 
   @Benchmark
   def prepareStatement(): Unit =
-    datasource.use { conn =>
+    datasource
+      .use { conn =>
         for
           statement <- conn.prepareStatement(s"INSERT INTO ldbc_test (c1, c2) VALUES (?, ?)")
           _         <- records.foldLeft(IO.unit) {

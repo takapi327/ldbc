@@ -18,9 +18,9 @@ import com.mysql.cj.jdbc.MysqlDataSource
 import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
-import jdbc.connector.*
 import ldbc.connector.syntax.*
 
+import jdbc.connector.*
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
@@ -95,7 +95,8 @@ class Insert:
 
   @Benchmark
   def statement(): Unit =
-    datasource.use { conn =>
+    datasource
+      .use { conn =>
         for
           statement <- conn.createStatement()
           _         <- conn.setAutoCommit(false)
@@ -116,7 +117,8 @@ class Insert:
 
   @Benchmark
   def prepareStatement(): Unit =
-    datasource.use { conn =>
+    datasource
+      .use { conn =>
         for
           statement <-
             conn.prepareStatement(

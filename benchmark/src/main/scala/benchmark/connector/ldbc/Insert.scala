@@ -88,7 +88,8 @@ class Insert:
 
   @Benchmark
   def statement(): Unit =
-    datasource.use { conn =>
+    datasource
+      .use { conn =>
         for
           statement <- conn.createStatement()
           _         <- conn.setAutoCommit(false)
@@ -109,7 +110,8 @@ class Insert:
 
   @Benchmark
   def prepareStatement(): Unit =
-    datasource.use { conn =>
+    datasource
+      .use { conn =>
         for
           statement <-
             conn.prepareStatement(
