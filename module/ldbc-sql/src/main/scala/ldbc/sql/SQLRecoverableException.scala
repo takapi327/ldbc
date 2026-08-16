@@ -17,6 +17,6 @@ class SQLRecoverableException(
   sql:        Option[String]    = None,
   detail:     Option[String]    = None,
   hint:       Option[String]    = None,
-  vendor: String = "SQL",
+  vendor:     String            = "SQL",
   cause:      Option[Throwable] = None
 ) extends SQLException(message, sqlState, vendorCode, sql, detail, hint, vendor, cause)

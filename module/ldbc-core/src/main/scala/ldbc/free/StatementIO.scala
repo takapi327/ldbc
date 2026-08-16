@@ -40,9 +40,9 @@ object StatementOp:
   trait Visitor[F[_]] extends (StatementOp ~> F):
     final def apply[A](fa: StatementOp[A]): F[A] = fa.visit(this)
 
-    def embed[A](e:            Embedded[A]):                                      F[A]
-    def handleErrorWith[A](fa: StatementIO[A])(f:   Throwable => StatementIO[A]): F[A]
-    def raiseError[A](err:     Throwable):                                        F[A]
+    def embed[A](e:            Embedded[A]):                                    F[A]
+    def handleErrorWith[A](fa: StatementIO[A])(f: Throwable => StatementIO[A]): F[A]
+    def raiseError[A](err:     Throwable):                                      F[A]
 
     def executeQuery(sql:  String): F[ResultSet[?]]
     def executeUpdate(sql: String): F[Int]

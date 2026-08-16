@@ -22,7 +22,9 @@ trait DataSourceOps:
 
   extension [F[_]](ds: DataSource[F])
     def use[B](f: Connection[F] => F[B])(using mc: MonadCancel[F, Throwable]): F[B] =
-      mc.bracket(ds.getConnection)((pair: (Connection[F], F[Unit])) => f(pair._1))((pair: (
-        Connection[F],
-        F[Unit]
-      )) => pair._2)
+      mc.bracket(ds.getConnection)((pair: (Connection[F], F[Unit])) => f(pair._1))(
+        (pair: (
+          Connection[F],
+          F[Unit]
+        )) => pair._2
+      )

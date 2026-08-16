@@ -10,9 +10,9 @@ import com.mysql.cj.jdbc.MysqlDataSource
 
 import cats.effect.*
 
-import jdbc.connector.*
-
 import ldbc.sql.DataSource
+
+import jdbc.connector.*
 
 class JdbcDatabaseMetaDataTest extends DatabaseMetaDataTest:
 

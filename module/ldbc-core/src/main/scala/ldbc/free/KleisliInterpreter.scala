@@ -51,7 +51,7 @@ class KleisliInterpreter[F[_]](logHandler: LogHandler[F])(using F: MonadError[F,
     override def raiseError[A](err: Throwable):   Kleisli[F, Connection[F], A] = outer.raiseError(err)
     override def handleErrorWith[A](fa: ConnectionIO[A])(
       f: Throwable => ConnectionIO[A]
-    ): Kleisli[F, Connection[F], A] = outer.handleErrorWith(this)(fa)(f)
+    ):                                            Kleisli[F, Connection[F], A]    = outer.handleErrorWith(this)(fa)(f)
     override def performLogging(event: LogEvent): Kleisli[F, Connection[F], Unit] = Kleisli(_ => logHandler.run(event))
     override def suspend[A](thunk: => A): Kleisli[F, Connection[F], A] = Kleisli(_ => F.map(F.unit)(_ => thunk))
 

@@ -6,8 +6,6 @@
 
 package ldbc.connector.pool
 
-import ldbc.connector.syntax.*
-
 import scala.concurrent.duration.*
 
 import cats.syntax.all.*
@@ -17,6 +15,7 @@ import cats.effect.*
 import org.typelevel.otel4s.metrics.Meter
 
 import ldbc.connector.*
+import ldbc.connector.syntax.*
 
 class PooledDataSourceTest extends FTestPlatform:
 

@@ -15,7 +15,6 @@ import scala.concurrent.ExecutionContext
 import cats.effect.*
 
 import ldbc.sql.Connection
-
 import ldbc.sql.DataSource as LdbcDataSource
 
 object MySQLDataSource:

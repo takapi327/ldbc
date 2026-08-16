@@ -21,11 +21,11 @@ class SQLExceptionTest extends munit.FunSuite:
   test("fields summarises the standard diagnostics as attributes (no parameter values)") {
     val exception = new SQLException(
       "Invalid data",
-      sqlState = Some("22007"),
+      sqlState   = Some("22007"),
       vendorCode = Some(1292),
-      sql = Some("INSERT INTO t VALUES (?)"),
-      detail = Some("bad date"),
-      hint = Some("use ISO-8601")
+      sql        = Some("INSERT INTO t VALUES (?)"),
+      detail     = Some("bad date"),
+      hint       = Some("use ISO-8601")
     )
     val fields = exception.fields
     assert(fields.contains(Attribute("error.message", "Invalid data")))
@@ -40,10 +40,10 @@ class SQLExceptionTest extends munit.FunSuite:
   test("getMessage includes the diagnostics and honours the vendor label") {
     val message = new SQLException(
       "Data validation error",
-      sqlState = Some("22007"),
+      sqlState   = Some("22007"),
       vendorCode = Some(1292),
-      sql = Some("SELECT 1"),
-      vendor = "MySQL"
+      sql        = Some("SELECT 1"),
+      vendor     = "MySQL"
     ).getMessage
     assert(message.contains("Data validation error"))
     assert(message.contains("22007"))

@@ -10,11 +10,11 @@ import cats.syntax.all.*
 
 import cats.effect.*
 
-import ldbc.connector.syntax.*
-
 import fs2.io.file.*
 import fs2.io.net.tls.SecureContext
 import fs2.text
+
+import ldbc.connector.syntax.*
 
 class TLSConnectionTest extends FTestPlatform:
 

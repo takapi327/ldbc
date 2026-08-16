@@ -14,9 +14,8 @@ import ldbc.dsl.*
 
 import ldbc.connector.*
 
-import ldbc.Connector
-
 import ldbc.catseffect.*
+import ldbc.Connector
 
 class LdbcStreamQueryTest extends StreamQueryTest:
 

@@ -12,11 +12,11 @@ import cats.effect.*
 
 import ldbc.sql.*
 
+import ldbc.connector.syntax.*
+
 import ldbc.*
 import ldbc.free.*
 import ldbc.logging.{ LogEvent, LogHandler }
-
-import ldbc.connector.syntax.*
 
 object Connector:
 

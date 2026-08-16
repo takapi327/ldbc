@@ -20,8 +20,8 @@ import fs2.io.net.*
 import org.typelevel.otel4s.metrics.*
 import org.typelevel.otel4s.trace.*
 
-import ldbc.sql.DatabaseMetaData
 import ldbc.sql.DataSource
+import ldbc.sql.DatabaseMetaData
 
 import ldbc.connector.pool.*
 import ldbc.connector.telemetry.{ DatabaseMetrics, TelemetryConfig }

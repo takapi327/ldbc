@@ -594,10 +594,10 @@ object DBIO:
   implicit val monadErrorDBIO: MonadError[DBIO, Throwable] =
     new MonadError[DBIO, Throwable]:
       val monad = Free.catsFreeMonadForFree[ConnectionOp]
-      override def pure[A](x:        A):                                   DBIO[A] = monad.pure(x)
-      override def flatMap[A, B](fa: DBIO[A])(f: A => DBIO[B]):            DBIO[B] = monad.flatMap(fa)(f)
-      override def tailRecM[A, B](a: A)(f:       A => DBIO[Either[A, B]]): DBIO[B] = monad.tailRecM(a)(f)
-      override def raiseError[A](e: Throwable):                              DBIO[A] = ConnectionIO.raiseError(e)
+      override def pure[A](x:        A):                                     DBIO[A] = monad.pure(x)
+      override def flatMap[A, B](fa: DBIO[A])(f: A => DBIO[B]):              DBIO[B] = monad.flatMap(fa)(f)
+      override def tailRecM[A, B](a: A)(f:       A => DBIO[Either[A, B]]):   DBIO[B] = monad.tailRecM(a)(f)
+      override def raiseError[A](e:  Throwable):                             DBIO[A] = ConnectionIO.raiseError(e)
       override def handleErrorWith[A](fa: DBIO[A])(f: Throwable => DBIO[A]): DBIO[A] =
         ConnectionIO.handleErrorWith(fa)(f)
 

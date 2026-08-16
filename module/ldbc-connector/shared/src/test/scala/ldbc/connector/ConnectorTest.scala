@@ -9,12 +9,11 @@ package ldbc.connector
 import cats.effect.*
 
 import ldbc.sql.*
+import ldbc.sql.DataSource
 
 import ldbc.*
 import ldbc.free.*
 import ldbc.logging.{ LogEvent, LogHandler }
-
-import ldbc.sql.DataSource
 
 class ConnectorTest extends FTestPlatform:
 
@@ -89,13 +88,15 @@ class ConnectorTest extends FTestPlatform:
     var connections: List[MockConnection[F]] = List.empty
 
     override def getConnection: F[(Connection[F], F[Unit])] =
-      Resource.make(
-        Sync[F].delay {
-          val conn = new MockConnection[F]
-          connections = connections :+ conn
-          conn: Connection[F]
-        }
-      )(_.close()).allocated
+      Resource
+        .make(
+          Sync[F].delay {
+            val conn = new MockConnection[F]
+            connections = connections :+ conn
+            conn: Connection[F]
+          }
+        )(_.close())
+        .allocated
 
   // Mock LogHandler to capture log events
   class MockLogHandler[F[_]: Sync] extends LogHandler[F]:

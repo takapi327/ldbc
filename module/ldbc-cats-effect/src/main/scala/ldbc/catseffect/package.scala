@@ -8,19 +8,19 @@ package ldbc.catseffect
 
 import scala.concurrent.duration.{ FiniteDuration, MILLISECONDS, NANOSECONDS }
 
-import cats.Applicative
 import cats.free.Free
 import cats.syntax.all.*
+import cats.Applicative
 
 import cats.effect.kernel.{ CancelScope, Poll, Sync }
-
-import ldbc.*
-import ldbc.free.*
-import ldbc.logging.LogEvent
 
 import ldbc.dsl.*
 import ldbc.dsl.codec.Decoder
 import ldbc.dsl.exception.DecodeFailureException
+
+import ldbc.*
+import ldbc.free.*
+import ldbc.logging.LogEvent
 
 /**
  * Cats Effect streaming boundary for the shared `DBIO` DSL.
@@ -42,21 +42,21 @@ import ldbc.dsl.exception.DecodeFailureException
 implicit val syncDBIO: Sync[DBIO] =
   new Sync[DBIO]:
     private val monad = Free.catsFreeMonadForFree[ConnectionOp]
-    override val applicative:     Applicative[DBIO] = monad
-    override val rootCancelScope: CancelScope       = CancelScope.Uncancelable
-    override def pure[A](x:        A):                                   DBIO[A] = monad.pure(x)
-    override def flatMap[A, B](fa: DBIO[A])(f: A => DBIO[B]):            DBIO[B] = monad.flatMap(fa)(f)
-    override def tailRecM[A, B](a: A)(f:       A => DBIO[Either[A, B]]): DBIO[B] = monad.tailRecM(a)(f)
-    override def raiseError[A](e: Throwable): DBIO[A] = ConnectionIO.raiseError(e)
+    override val applicative:                                            Applicative[DBIO] = monad
+    override val rootCancelScope:                                        CancelScope       = CancelScope.Uncancelable
+    override def pure[A](x:        A):                                   DBIO[A]           = monad.pure(x)
+    override def flatMap[A, B](fa: DBIO[A])(f: A => DBIO[B]):            DBIO[B]           = monad.flatMap(fa)(f)
+    override def tailRecM[A, B](a: A)(f:       A => DBIO[Either[A, B]]): DBIO[B]           = monad.tailRecM(a)(f)
+    override def raiseError[A](e:  Throwable):                           DBIO[A]           = ConnectionIO.raiseError(e)
     override def handleErrorWith[A](fa: DBIO[A])(f: Throwable => DBIO[A]): DBIO[A] =
       ConnectionIO.handleErrorWith(fa)(f)
     override def monotonic: DBIO[FiniteDuration] = ConnectionIO.suspend(FiniteDuration(System.nanoTime(), NANOSECONDS))
     override def realTime:  DBIO[FiniteDuration] =
       ConnectionIO.suspend(FiniteDuration(System.currentTimeMillis(), MILLISECONDS))
-    override def suspend[A](hint: Sync.Type)(thunk: => A): DBIO[A]    = ConnectionIO.suspend(thunk)
-    override def forceR[A, B](fa: DBIO[A])(fb: DBIO[B]):   DBIO[B]    = flatMap(attempt(fa))(_ => fb)
-    override def canceled:                                 DBIO[Unit] = unit
-    override def uncancelable[A](body: Poll[DBIO] => DBIO[A]): DBIO[A] =
+    override def suspend[A](hint: Sync.Type)(thunk: => A):     DBIO[A]    = ConnectionIO.suspend(thunk)
+    override def forceR[A, B](fa: DBIO[A])(fb:      DBIO[B]):  DBIO[B]    = flatMap(attempt(fa))(_ => fb)
+    override def canceled:                                     DBIO[Unit] = unit
+    override def uncancelable[A](body: Poll[DBIO] => DBIO[A]): DBIO[A]    =
       body(new Poll[DBIO]:
         override def apply[B](fb: DBIO[B]): DBIO[B] = fb)
     override def onCancel[A](fa: DBIO[A], fin: DBIO[Unit]): DBIO[A] = fa

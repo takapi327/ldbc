@@ -86,9 +86,9 @@ object PreparedStatementOp:
   trait Visitor[F[_]] extends (PreparedStatementOp ~> F):
     final def apply[A](fa: PreparedStatementOp[A]): F[A] = fa.visit(this)
 
-    def embed[A](e:            Embedded[A]):                                                      F[A]
-    def handleErrorWith[A](fa: PreparedStatementIO[A])(f:   Throwable => PreparedStatementIO[A]): F[A]
-    def raiseError[A](err:     Throwable):                                                        F[A]
+    def embed[A](e:            Embedded[A]):                                                    F[A]
+    def handleErrorWith[A](fa: PreparedStatementIO[A])(f: Throwable => PreparedStatementIO[A]): F[A]
+    def raiseError[A](err:     Throwable):                                                      F[A]
 
     def setNull(index:       Int, sqlType: Int):           F[Unit]
     def setBoolean(index:    Int, value:   Boolean):       F[Unit]

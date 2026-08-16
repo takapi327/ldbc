@@ -13,11 +13,10 @@ import cats.effect.*
 import munit.*
 
 import ldbc.sql.*
+import ldbc.sql.DataSource
 
 import ldbc.connector.*
 import ldbc.connector.syntax.*
-
-import ldbc.sql.DataSource
 
 class LdbcServerCursorFetchTest extends ServerCursorFetchTest:
 

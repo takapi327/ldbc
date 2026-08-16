@@ -76,11 +76,11 @@ object ConnectionOp:
   trait Visitor[F[_]] extends (ConnectionOp ~> F):
     final def apply[A](fa: ConnectionOp[A]): F[A] = fa.visit(this)
 
-    def embed[A](e:            Embedded[A]):                                        F[A]
-    def handleErrorWith[A](fa: ConnectionIO[A])(f:   Throwable => ConnectionIO[A]): F[A]
-    def raiseError[A](err:     Throwable):                                          F[A]
-    def performLogging(event:  LogEvent):                                           F[Unit]
-    def suspend[A](thunk:      => A):                                               F[A]
+    def embed[A](e:            Embedded[A]):                                      F[A]
+    def handleErrorWith[A](fa: ConnectionIO[A])(f: Throwable => ConnectionIO[A]): F[A]
+    def raiseError[A](err:     Throwable):                                        F[A]
+    def performLogging(event:  LogEvent):                                         F[Unit]
+    def suspend[A](thunk:      => A):                                             F[A]
 
     def createStatement():                                                                F[Statement[?]]
     def prepareStatement(sql:     String):                                                F[PreparedStatement[?]]

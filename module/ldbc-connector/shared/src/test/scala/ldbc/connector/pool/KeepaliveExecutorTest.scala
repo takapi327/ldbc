@@ -6,8 +6,6 @@
 
 package ldbc.connector.pool
 
-import ldbc.connector.syntax.*
-
 import scala.concurrent.duration.*
 
 import cats.syntax.all.*
@@ -17,6 +15,7 @@ import cats.effect.*
 import ldbc.sql.*
 
 import ldbc.connector.*
+import ldbc.connector.syntax.*
 
 class KeepaliveExecutorTest extends FTestPlatform:
 

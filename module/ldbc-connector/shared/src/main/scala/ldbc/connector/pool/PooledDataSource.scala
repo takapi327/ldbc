@@ -22,6 +22,7 @@ import fs2.io.net.*
 import org.typelevel.otel4s.metrics.*
 import org.typelevel.otel4s.trace.*
 
+import ldbc.sql.DataSource
 import ldbc.sql.DatabaseMetaData
 
 import ldbc.connector.*
@@ -30,7 +31,6 @@ import ldbc.connector.telemetry.*
 
 import ldbc.authentication.plugin.AuthenticationPlugin
 import ldbc.build.Version
-import ldbc.sql.DataSource
 
 /**
  * A DataSource implementation that manages a pool of reusable database connections.
