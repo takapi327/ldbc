@@ -64,7 +64,7 @@ object DBIO:
    * @note The method uses pattern matching to determine the appropriate setter method
    *       based on the runtime type of each encoded value
    */
-  private def paramBind(params: List[Parameter.Dynamic]): PreparedStatementIO[Unit] =
+  private[ldbc] def paramBind(params: List[Parameter.Dynamic]): PreparedStatementIO[Unit] =
     val encoded = params.foldLeft(PreparedStatementIO.pure(List.empty[Encoder.Supported])) {
       case (acc, param) =>
         for
