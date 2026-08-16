@@ -8,4 +8,4 @@ package jdbc
 
 package object connector:
   export ldbc.Connector
-  export ldbc.DataSource
+  export ldbc.sql.DataSource
