@@ -16,6 +16,8 @@ import ldbc.connector.*
 
 import ldbc.Connector
 
+import ldbc.catseffect.*
+
 class LdbcStreamQueryTest extends StreamQueryTest:
 
   private val datasource = MySQLDataSource
