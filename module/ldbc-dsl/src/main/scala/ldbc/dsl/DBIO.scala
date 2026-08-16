@@ -8,14 +8,10 @@ package ldbc.dsl
 
 import java.time.*
 
-import scala.concurrent.duration.FiniteDuration
-
 import cats.*
 import cats.data.NonEmptyList
 import cats.free.Free
 import cats.syntax.all.*
-
-import cats.effect.kernel.{ CancelScope, Poll, Sync }
 
 import ldbc.sql.*
 
@@ -546,86 +542,6 @@ object DBIO:
       ConnectionIO.performLogging(LogEvent.Success(statements.mkString("\n"), List.empty))
 
   /**
-   * Creates a streaming query that processes results incrementally.
-   * 
-   * This method is ideal for processing large result sets without loading
-   * all data into memory at once. It uses JDBC fetch size to control
-   * how many rows are fetched from the database in each round trip.
-   * 
-   * The stream is resource-safe and will automatically close the
-   * PreparedStatement when the stream terminates (normally or via error).
-   * 
-   * @param statement The SQL query to execute
-   * @param params Dynamic parameters to bind to the query
-   * @param decoder Decoder to convert each result row to type A
-   * @param fetchSize Number of rows to fetch in each batch from the database
-   * @tparam A The result type
-   * @return An fs2.Stream that emits decoded values
-   * 
-   * @example
-   * {{{
-   * val stream = DBIO.stream(
-   *   "SELECT * FROM large_table WHERE category = ?",
-   *   List(Parameter.Dynamic.Success("books")),
-   *   Decoder[Product],
-   *   fetchSize = 1000
-   * )
-   * 
-   * // Process results as they arrive
-   * stream
-   *   .evalMap(product => processProduct(product))
-   *   .compile
-   *   .drain
-   *   .run(connector)
-   * }}}
-   * 
-   * @note The fetch size is a hint to the JDBC driver and may be ignored
-   */
-  def stream[A](
-    statement: String,
-    params:    List[Parameter.Dynamic],
-    decoder:   Decoder[A],
-    fetchSize: Int
-  ): fs2.Stream[DBIO, A] =
-    (for
-      preparedStatement              <- fs2.Stream.eval(ConnectionIO.prepareStatement(statement))
-      (preparedStatement, resultSet) <- fs2.Stream.bracket {
-                                          ConnectionIO.embed(
-                                            preparedStatement,
-                                            for
-                                              _         <- PreparedStatementIO.setFetchSize(fetchSize)
-                                              _         <- paramBind(params)
-                                              resultSet <- PreparedStatementIO.executeQuery()
-                                            yield (preparedStatement, resultSet)
-                                          )
-                                        }((preparedStatement, _) =>
-                                          ConnectionIO.embed(preparedStatement, PreparedStatementIO.close())
-                                        )
-      result <- fs2.Stream.unfoldEval(resultSet) { rs =>
-                  ConnectionIO.embed(
-                    rs,
-                    ResultSetIO.next().flatMap {
-                      case true =>
-                        decoder
-                          .decode(1, statement)
-                          .flatMap {
-                            case Right(value) => ResultSetIO.pure(value)
-                            case Left(error)  =>
-                              ResultSetIO.raiseError(
-                                new DecodeFailureException(error.message, decoder.offset, statement, error.cause)
-                              )
-                          }
-                          .map(name => Some((name, rs)))
-                      case false => ResultSetIO.pure(None)
-                    }
-                  )
-                }
-    yield result).onError { ex =>
-      fs2.Stream.eval(ConnectionIO.performLogging(LogEvent.ProcessingFailure(statement, params.map(_.value), ex)))
-    } <*
-      fs2.Stream.eval(ConnectionIO.performLogging(LogEvent.Success(statement, params.map(_.value))))
-
-  /**
    * Combines multiple DBIO actions into a single action that produces a list of results.
    * 
    * This is equivalent to the traverse operation, executing each DBIO in sequence
@@ -666,33 +582,24 @@ object DBIO:
   def raiseError[A](e: Throwable): DBIO[A] = ConnectionIO.raiseError(e)
 
   /**
-   * Provides a Sync type class instance for DBIO.
-   * 
-   * This enables DBIO to be used with any Cats Effect operations that
-   * require a Sync constraint, including error handling, resource management,
-   * and cancellation support.
-   * 
-   * The implementation delegates to the underlying ConnectionIO Free monad
-   * operations, ensuring proper effect handling throughout the DBIO lifecycle.
+   * Provides a MonadError type class instance for DBIO.
+   *
+   * This enables DBIO to be used with the standard cats error-handling combinators
+   * (`raiseError`, `handleErrorWith`, `onError`, `attempt`, ...) while remaining
+   * free of any cats-effect dependency.
+   *
+   * The implementation delegates monadic operations to the underlying ConnectionOp
+   * Free monad and error operations to the algebra's native RaiseError/HandleErrorWith.
    */
-  implicit val syncDBIO: Sync[DBIO] =
-    new Sync[DBIO]:
+  implicit val monadErrorDBIO: MonadError[DBIO, Throwable] =
+    new MonadError[DBIO, Throwable]:
       val monad = Free.catsFreeMonadForFree[ConnectionOp]
-      override val applicative:                                            Applicative[DBIO] = monad
-      override val rootCancelScope:                                        CancelScope       = CancelScope.Cancelable
-      override def pure[A](x:        A):                                   DBIO[A]           = monad.pure(x)
-      override def flatMap[A, B](fa: DBIO[A])(f: A => DBIO[B]):            DBIO[B]           = monad.flatMap(fa)(f)
-      override def tailRecM[A, B](a: A)(f:       A => DBIO[Either[A, B]]): DBIO[B]           = monad.tailRecM(a)(f)
+      override def pure[A](x:        A):                                   DBIO[A] = monad.pure(x)
+      override def flatMap[A, B](fa: DBIO[A])(f: A => DBIO[B]):            DBIO[B] = monad.flatMap(fa)(f)
+      override def tailRecM[A, B](a: A)(f:       A => DBIO[Either[A, B]]): DBIO[B] = monad.tailRecM(a)(f)
       override def raiseError[A](e: Throwable):                              DBIO[A] = ConnectionIO.raiseError(e)
       override def handleErrorWith[A](fa: DBIO[A])(f: Throwable => DBIO[A]): DBIO[A] =
         ConnectionIO.handleErrorWith(fa)(f)
-      override def monotonic:                                   DBIO[FiniteDuration] = ConnectionIO.monotonic
-      override def realTime:                                    DBIO[FiniteDuration] = ConnectionIO.realtime
-      override def suspend[A](hint: Sync.Type)(thunk: => A):    DBIO[A]              = ConnectionIO.suspend(hint)(thunk)
-      override def forceR[A, B](fa: DBIO[A])(fb:      DBIO[B]): DBIO[B]              = ConnectionIO.forceR(fa)(fb)
-      override def uncancelable[A](body: Poll[DBIO] => DBIO[A]):    DBIO[A]    = ConnectionIO.uncancelable(body)
-      override def canceled:                                        DBIO[Unit] = ConnectionIO.canceled
-      override def onCancel[A](fa:       DBIO[A], fin: DBIO[Unit]): DBIO[A]    = ConnectionIO.onCancel(fa, fin)
 
   /**
    * Extension methods for DBIO values that provide various execution strategies.
