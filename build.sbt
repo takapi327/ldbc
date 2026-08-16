@@ -70,8 +70,7 @@ lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .module("core", "Core project for ldbc")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-free"   % "2.13.0",
-      "org.typelevel" %%% "cats-effect" % "3.7.0"
+      "org.typelevel" %%% "cats-free" % "2.13.0"
     )
   )
   .dependsOn(sql)
@@ -148,8 +147,9 @@ lazy val jdbcConnector = crossProject(JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .in(file("module/jdbc-connector"))
   .settings(
-    name        := "jdbc-connector",
-    description := "JDBC API wrapped project with Effect System."
+    name                                    := "jdbc-connector",
+    description                             := "JDBC API wrapped project with Effect System.",
+    libraryDependencies += "org.typelevel" %%% "cats-effect" % "3.7.0"
   )
   .defaultSettings
   .dependsOn(core)
