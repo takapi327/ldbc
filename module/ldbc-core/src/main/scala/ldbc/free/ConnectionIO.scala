@@ -25,6 +25,8 @@ object ConnectionOp:
     override def visit[F[_]](v: ConnectionOp.Visitor[F]): F[A] = v.handleErrorWith(fa)(f)
   final case class PerformLogging(event: LogEvent) extends ConnectionOp[Unit]:
     override def visit[F[_]](v: ConnectionOp.Visitor[F]): F[Unit] = v.performLogging(event)
+  final case class Suspend[A](thunk: () => A) extends ConnectionOp[A]:
+    override def visit[F[_]](v: ConnectionOp.Visitor[F]): F[A] = v.suspend(thunk())
 
   final case class CreateStatement() extends ConnectionOp[Statement[?]]:
     override def visit[F[_]](v: ConnectionOp.Visitor[F]): F[Statement[?]] = v.createStatement()
@@ -78,6 +80,7 @@ object ConnectionOp:
     def handleErrorWith[A](fa: ConnectionIO[A])(f:   Throwable => ConnectionIO[A]): F[A]
     def raiseError[A](err:     Throwable):                                          F[A]
     def performLogging(event:  LogEvent):                                           F[Unit]
+    def suspend[A](thunk:      => A):                                               F[A]
 
     def createStatement():                                                                F[Statement[?]]
     def prepareStatement(sql:     String):                                                F[PreparedStatement[?]]
@@ -109,6 +112,8 @@ object ConnectionIO:
     Free.liftF[ConnectionOp, A](ConnectionOp.HandleErrorWith(fa, f))
   def performLogging(event: LogEvent): ConnectionIO[Unit] =
     Free.liftF[ConnectionOp, Unit](ConnectionOp.PerformLogging(event))
+  def suspend[A](thunk: => A): ConnectionIO[A] =
+    Free.liftF[ConnectionOp, A](ConnectionOp.Suspend(() => thunk))
 
   def createStatement(): ConnectionIO[Statement[?]] =
     Free.liftF[ConnectionOp, Statement[?]](ConnectionOp.CreateStatement())
