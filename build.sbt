@@ -59,6 +59,9 @@ ThisBuild / mimaBinaryIssueFilters ++= List(
 lazy val sql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("sql", "JDBC API wrapped project with Effect System")
+  .settings(
+    libraryDependencies += "org.scalameta" %%% "munit" % "1.2.4" % Test
+  )
   .platformsSettings(JSPlatform, NativePlatform)(
     libraryDependencies ++= Seq(
       "io.github.cquiroz" %%% "scala-java-time" % "2.7.0"
