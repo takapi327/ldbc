@@ -6,8 +6,8 @@
 
 package ldbc.fx
 
-import java.util.concurrent.atomic.{ AtomicBoolean, AtomicReference }
 import java.util.concurrent.{ ConcurrentLinkedQueue, TimeoutException }
+import java.util.concurrent.atomic.{ AtomicBoolean, AtomicReference }
 
 import scala.concurrent.duration.{ FiniteDuration, MILLISECONDS, NANOSECONDS }
 import scala.util.control.NonFatal
@@ -358,6 +358,7 @@ object Fx:
     val drained          = new AtomicBoolean(false)
     val current          = new AtomicReference[Cancelable](Cancelable(Canceler.noop, false))
     val cancelFinalizers = new ConcurrentLinkedQueue[() => Fx[Unit]]()
+
     /**
      * Present only on the cancelable entry point; closed (run-independently) at every run termination
      * point so a waiting `CancelToken.cancel` unblocks. Null on the fire-and-forget `unsafeRun` path.
@@ -400,7 +401,9 @@ object Fx:
         var f = cancelFinalizers.poll()
         while f != null do { fs = f :: fs; f = cancelFinalizers.poll() }
         val chain = fs.foldLeft(Fx.unit) { (acc, rel) =>
-          acc.flatMap(_ => timeout(rel(), finalizerTimeout)(new TimeoutException("finalizer timed out")).handleErrorWith(_ => Fx.unit))
+          acc.flatMap(_ =>
+            timeout(rel(), finalizerTimeout)(new TimeoutException("finalizer timed out")).handleErrorWith(_ => Fx.unit)
+          )
         }
         chain.unsafeRun(_ => if cancelDone != null then { cancelDone.unsafeComplete(()); () })(using rt)
 
