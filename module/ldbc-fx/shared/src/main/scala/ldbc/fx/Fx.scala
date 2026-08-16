@@ -6,8 +6,8 @@
 
 package ldbc.fx
 
+import java.util.concurrent.{ ConcurrentLinkedQueue, TimeoutException }
 import java.util.concurrent.atomic.{ AtomicBoolean, AtomicReference }
-import java.util.concurrent.ConcurrentLinkedQueue
 
 import scala.concurrent.duration.{ FiniteDuration, MILLISECONDS, NANOSECONDS }
 import scala.util.control.NonFatal
@@ -74,7 +74,26 @@ sealed trait Fx[+A]:
    * @return a [[Fx.Canceler]] that requests interruption and runs any open `bracket` finalizers
    */
   def unsafeRun(cb: Either[Throwable, A] => Unit)(using rt: FxRuntime = FxRuntime.current): Fx.Canceler =
-    Fx.run(this, cb, rt)
+    val handle = Fx.run(this, cb, rt, cancelable = false)
+    new Fx.Canceler:
+      override def cancel(): Unit = handle.requestCancel()
+
+  /**
+   * Like [[unsafeRun]] but returns a [[Fx.CancelToken]] whose `cancel: Fx[Unit]` completes only
+   * after the run's cancel-path finalizers have drained. Frontend bridges (CE/ZIO) use this so a
+   * cancelled fiber backpressures until rollback / resource release actually finishes.
+   *
+   * @param cb invoked at most once with the outcome
+   * @param rt the runtime the continuations run on
+   * @return a [[Fx.CancelToken]] whose completion tracks finalizer draining
+   */
+  def unsafeRunCancelable(cb: Either[Throwable, A] => Unit)(using rt: FxRuntime = FxRuntime.current): Fx.CancelToken =
+    val handle = Fx.run(this, cb, rt, cancelable = true)
+    new Fx.CancelToken:
+      val cancel: Fx[Unit] =
+        Fx.delay(handle.requestCancel()).flatMap { _ =>
+          if handle.cancelDone != null then handle.cancelDone.get else Fx.unit
+        }
 
 /** Constructors and the runtime for [[Fx]]. */
 object Fx:
@@ -89,6 +108,25 @@ object Fx:
     /** A [[Canceler]] that does nothing. */
     val noop: Canceler = new Canceler:
       override def cancel(): Unit = ()
+
+  /**
+   * A completion-aware cancel handle returned by [[Fx.unsafeRunCancelable]]. Unlike [[Canceler]]
+   * (fire-and-forget), [[cancel]] is an `Fx[Unit]` that completes only after the run's cancel-path
+   * finalizers have drained, so a frontend bridge (CE/ZIO) can backpressure on cancellation.
+   */
+  trait CancelToken:
+    /** Requests cancellation and completes when the run's finalizers have finished draining. */
+    def cancel: Fx[Unit]
+
+  /** Pairs an in-flight async/interruptible canceler with whether it was suspended inside a mask. */
+  private[fx] final case class Cancelable(canceler: Canceler, masked: Boolean)
+
+  /**
+   * Internal result of [[run]]: the fire-and-forget cancel request and (for cancelable runs) the
+   * `Deferred` that closes when cancellation finalizers have drained. [[unsafeRun]] wraps only the
+   * former into a [[Canceler]]; [[unsafeRunCancelable]] wraps both into a [[CancelToken]].
+   */
+  private[fx] final class RunHandle(val requestCancel: () => Unit, val cancelDone: Deferred[Unit] | Null)
 
   private[fx] final case class Pure[A](a: A)                                           extends Fx[A]
   private[fx] final case class Err(t: Throwable)                                       extends Fx[Nothing]
@@ -303,18 +341,34 @@ object Fx:
    */
   @volatile private[fx] var autoCedeThreshold: Int = 1024
 
+  /**
+   * Upper bound applied per cancel-path release so a release that never settles (e.g. a rollback to
+   * a dead peer) cannot make [[CancelToken.cancel]] hang forever. Global `private[fx] var` for now;
+   * a per-runtime value would require extending [[FxRuntime]] (and every platform impl + test double).
+   */
+  @volatile private[fx] var finalizerTimeout: FiniteDuration = FiniteDuration(30000, MILLISECONDS)
+
   private def fromResult(r: Either[Throwable, Any]): Fx[Any] = r match
     case Right(a) => Pure(a)
     case Left(t)  => Err(t)
 
-  private def run[A](start: Fx[A], cb: Either[Throwable, A] => Unit, rt: FxRuntime): Canceler =
+  private def run[A](start: Fx[A], cb: Either[Throwable, A] => Unit, rt: FxRuntime, cancelable: Boolean): RunHandle =
     val cancelled        = new AtomicBoolean(false)
     val done             = new AtomicBoolean(false)
-    val currentCanceler  = new AtomicReference[Canceler](Canceler.noop)
-    val cancelFinalizers = new ConcurrentLinkedQueue[() => Unit]()
+    val drained          = new AtomicBoolean(false)
+    val current          = new AtomicReference[Cancelable](Cancelable(Canceler.noop, false))
+    val cancelFinalizers = new ConcurrentLinkedQueue[() => Fx[Unit]]()
+
+    /**
+     * Present only on the cancelable entry point; closed (run-independently) at every run termination
+     * point so a waiting `CancelToken.cancel` unblocks. Null on the fire-and-forget `unsafeRun` path.
+     */
+    val cancelDone: Deferred[Unit] | Null = if cancelable then Deferred.unsafe[Unit] else null
 
     def finish(r: Either[Throwable, Any]): Unit =
-      if done.compareAndSet(false, true) then cb(r.asInstanceOf[Either[Throwable, A]])
+      if done.compareAndSet(false, true) then
+        cb(r.asInstanceOf[Either[Throwable, A]])
+        if cancelDone != null then { cancelDone.unsafeComplete(()); () }
 
     var cur:   Fx[Any]     = start.asInstanceOf[Fx[Any]]
     var stack: List[Frame] = Nil
@@ -334,11 +388,24 @@ object Fx:
      */
     val executing = new AtomicBoolean(true)
 
+    /**
+     * Runs the cancel-path finalizers exactly once (guarded by `drained` so concurrent callers do not
+     * split the queue), sequentially in LIFO order, each bounded by `finalizerTimeout` and with its
+     * error suppressed. When the chain settles it closes `cancelDone` (run-independently) so a waiting
+     * `CancelToken.cancel` unblocks. May be called from the loop, from `requestCancel`, or from the
+     * Async self-cancel return.
+     */
     def drainFinalizers(): Unit =
-      var fs: List[() => Unit] = Nil
-      var f = cancelFinalizers.poll()
-      while f != null do { fs = f :: fs; f = cancelFinalizers.poll() }
-      fs.foreach(_())
+      if drained.compareAndSet(false, true) then
+        var fs: List[() => Fx[Unit]] = Nil
+        var f = cancelFinalizers.poll()
+        while f != null do { fs = f :: fs; f = cancelFinalizers.poll() }
+        val chain = fs.foldLeft(Fx.unit) { (acc, rel) =>
+          acc.flatMap(_ =>
+            timeout(rel(), finalizerTimeout)(new TimeoutException("finalizer timed out")).handleErrorWith(_ => Fx.unit)
+          )
+        }
+        chain.unsafeRun(_ => if cancelDone != null then { cancelDone.unsafeComplete(()); () })(using rt)
 
     /**
      * Resumes `task` on `rt`'s compute pool with `rt` re-installed as [[FxRuntime.current]]. Used
@@ -404,8 +471,8 @@ object Fx:
             cur = Uncancelable(
               acquire.asInstanceOf[Fx[Any]].map { res =>
                 val ran = new AtomicBoolean(false)
-                val rel: () => Unit =
-                  () => if ran.compareAndSet(false, true) then { r(res).unsafeRun(_ => ())(using rt); () }
+                val rel: () => Fx[Unit] =
+                  () => if ran.compareAndSet(false, true) then r(res) else Fx.unit
                 cancelFinalizers.add(rel)
                 (res, rel, ran)
               }
@@ -427,7 +494,7 @@ object Fx:
           case OnCancel(fa, fin) =>
             val f   = fin.asInstanceOf[Fx[Unit]]
             val ran = new AtomicBoolean(false)
-            val rel: () => Unit = () => if ran.compareAndSet(false, true) then { f.unsafeRun(_ => ())(using rt); () }
+            val rel: () => Fx[Unit] = () => if ran.compareAndSet(false, true) then f else Fx.unit
             cancelFinalizers.add(rel)
             // On normal completion (success or error) deregister WITHOUT running `fin`; only the
             // cancellation path (drainFinalizers) runs it. The `executing` flag arbitrates so a cancel
@@ -460,38 +527,39 @@ object Fx:
             val cbState           = new AtomicReference[AnyRef](null)
             val capturedStack     = stack
             val maskedHere        = maskDepth.get() > 0
-            val cancelerSlot      = new AtomicReference[Canceler](Canceler.noop)
+            val cellSlot          = new AtomicReference[Cancelable](Cancelable(Canceler.noop, false))
             val interruptCanceler = rt.executeInterruptible { () =>
               val result: Either[Throwable, Any] = try Right(th())
               catch { case NonFatal(e) => Left(e) }
               if once.compareAndSet(false, true) then
                 if !cbState.compareAndSet(null, result.asInstanceOf[AnyRef]) then
-                  currentCanceler.compareAndSet(cancelerSlot.get(), Canceler.noop)
+                  current.compareAndSet(cellSlot.get(), Cancelable(Canceler.noop, false))
                   if !cancelled.get() || maskedHere then
                     cur = fromResult(result); stack = capturedStack; resumeOn(() => loop())
                   else
                     executing.set(false)
                     drainFinalizers()
             }
-            cancelerSlot.set(interruptCanceler)
-            currentCanceler.set(interruptCanceler)
+            val cell = Cancelable(interruptCanceler, maskedHere)
+            cellSlot.set(cell)
+            current.set(cell)
             if cbState.compareAndSet(null, SUSPENDED) then
               suspendHook()
               if cancelled.get() && !maskedHere then interruptCanceler.cancel()
               return
             else
-              currentCanceler.compareAndSet(interruptCanceler, Canceler.noop)
+              current.compareAndSet(cell, Cancelable(Canceler.noop, false))
               cur = fromResult(cbState.get().asInstanceOf[Either[Throwable, Any]])
           case Async(k) =>
             val once          = new AtomicBoolean(false)
             val cbState       = new AtomicReference[AnyRef](null)
             val capturedStack = stack
-            val cancelerSlot  = new AtomicReference[Canceler](Canceler.noop)
+            val cellSlot      = new AtomicReference[Cancelable](Cancelable(Canceler.noop, false))
             val maskedHere    = maskDepth.get() > 0
             def complete(result: Either[Throwable, Any]): Unit =
               if once.compareAndSet(false, true) then
                 if !cbState.compareAndSet(null, result.asInstanceOf[AnyRef]) then
-                  currentCanceler.compareAndSet(cancelerSlot.get(), Canceler.noop)
+                  current.compareAndSet(cellSlot.get(), Cancelable(Canceler.noop, false))
                   executing.set(true)
                   if !cancelled.get() || maskedHere then
                     cur = fromResult(result); stack = capturedStack
@@ -505,26 +573,32 @@ object Fx:
                 case NonFatal(error) =>
                   complete(Left(error))
                   Canceler.noop
-            cancelerSlot.set(canceler)
-            currentCanceler.set(canceler)
+            val cell = Cancelable(canceler, maskedHere)
+            cellSlot.set(cell)
+            current.set(cell)
             executing.set(false)
             if cbState.compareAndSet(null, SUSPENDED) then
               suspendHook()
-              if cancelled.get() && !maskedHere then canceler.cancel()
+              if cancelled.get() && !maskedHere then
+                canceler.cancel()
+                drainFinalizers()
               return
             else
               executing.set(true)
-              currentCanceler.compareAndSet(canceler, Canceler.noop)
+              current.compareAndSet(cell, Cancelable(Canceler.noop, false))
               cur = fromResult(cbState.get().asInstanceOf[Either[Throwable, Any]])
       end while
 
     FxRuntime.withRuntime(rt)(loop())
 
-    new Canceler:
-      override def cancel(): Unit =
-        if cancelled.compareAndSet(false, true) then
-          currentCanceler.getAndSet(Canceler.noop).cancel()
-          if !executing.get() && maskDepth.get() == 0 then drainFinalizers()
+    /** Fire-and-forget cancel request (mask-aware): does not wait for finalizer draining. */
+    def requestCancel(): Unit =
+      if cancelled.compareAndSet(false, true) then
+        val c = current.getAndSet(Cancelable(Canceler.noop, false))
+        if !c.masked then c.canceler.cancel()
+        if !executing.get() && maskDepth.get() == 0 then drainFinalizers()
+
+    new RunHandle(() => requestCancel(), cancelDone)
 
   private def safeApply(f: Any => Fx[Any], a: Any): Fx[Any] =
     try f(a)

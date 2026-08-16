@@ -56,6 +56,25 @@ final class Deferred[A] private (private val state: AtomicReference[Deferred.Sta
     loop()
   }
 
+  /**
+   * Run-independent version of [[complete]]: performs the same state CAS AND wakes all pending
+   * getters, but WITHOUT the surrounding `Fx.delay` (i.e. no `unsafeRun`/`run`). The [[Fx]] run loop
+   * calls this from `finish`/`drainFinalizers`; wrapping it in an `Fx` and running it there would
+   * recurse into `finish` and overflow the stack. Waking waiters (`cbs.foreach`) is essential — an
+   * async release path registers a `get` waiter before this completes, so omitting it hangs.
+   */
+  private[fx] def unsafeComplete(a: A): Boolean =
+    @annotation.tailrec
+    def loop(): Boolean =
+      state.get match
+        case Deferred.Done(_)          => false
+        case w @ Deferred.Waiting(cbs) =>
+          if state.compareAndSet(w, Deferred.Done(a)) then
+            cbs.foreach(cb => cb(Right(a)))
+            true
+          else loop()
+    loop()
+
   /** Returns the value if already completed, or `None` otherwise, without suspending. */
   def tryGet: Fx[Option[A]] = Fx.delay {
     state.get match
@@ -91,3 +110,11 @@ object Deferred:
    * @tparam A the type of the deferred value
    */
   def apply[A]: Fx[Deferred[A]] = Fx.delay(new Deferred(new AtomicReference(Waiting[A](Nil))))
+
+  /**
+   * Run-independent constructor used by the [[Fx]] run loop, which needs a `Deferred` instance
+   * synchronously (its internals are already impure). Prefer [[apply]] elsewhere.
+   *
+   * @tparam A the type of the deferred value
+   */
+  private[fx] def unsafe[A]: Deferred[A] = new Deferred(new AtomicReference(Waiting[A](Nil)))
