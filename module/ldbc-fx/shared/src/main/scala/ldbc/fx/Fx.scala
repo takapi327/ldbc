@@ -34,7 +34,7 @@ sealed trait Fx[+A]:
    * @tparam B the transformed result type
    * @return an effect that produces `f(a)` when this produces `a`
    */
-  def map[B](f: A => B): Fx[B] = flatMap(a => Fx.Pure(f(a)))
+  def map[B](f: A => B): Fx[B] = Fx.Map(this, f)
 
   /**
    * Sequences this effect with `f`: runs `f` on the successful result to produce the next effect.
@@ -134,6 +134,7 @@ object Fx:
   private[fx] final case class Blocking[A](thunk: () => A)                             extends Fx[A]
   private[fx] final case class Interruptible[A](thunk: () => A)                        extends Fx[A]
   private[fx] final case class Async[A](k: (Either[Throwable, A] => Unit) => Canceler) extends Fx[A]
+  private[fx] final case class Map[A, B](fa: Fx[A], f: A => B)                         extends Fx[B]
   private[fx] final case class FlatMap[A, B](fa: Fx[A], f: A => Fx[B])                 extends Fx[B]
   private[fx] final case class Handle[A](fa: Fx[A], h: Throwable => Fx[A])             extends Fx[A]
   private[fx] final case class Bracket[A, B](acquire: Fx[A], use: A => Fx[B], release: A => Fx[Unit]) extends Fx[B]
@@ -321,6 +322,7 @@ object Fx:
 
   private sealed trait Frame
   private final case class Bind(f: Any => Fx[Any])          extends Frame
+  private final case class MapK(f: Any => Any)              extends Frame
   private final case class HandleF(h: Throwable => Fx[Any]) extends Frame
   private case object Unmask                                extends Frame
 
@@ -442,6 +444,7 @@ object Fx:
             while !brk do
               s match
                 case Bind(f) :: rest    => cur = safeApply(f, a); stack = rest; brk = true
+                case MapK(f) :: rest    => cur = safeMap(f, a); stack = rest; brk = true
                 case HandleF(_) :: rest => s = rest
                 case Unmask :: rest     => maskDepth.decrementAndGet(); s = rest
                 case Nil                => finish(Right(a)); executing.set(false); return
@@ -452,11 +455,14 @@ object Fx:
               s match
                 case HandleF(h) :: rest => cur = safeApply1(h, t); stack = rest; brk = true
                 case Bind(_) :: rest    => s = rest
+                case MapK(_) :: rest    => s = rest
                 case Unmask :: rest     => maskDepth.decrementAndGet(); s = rest
                 case Nil                => finish(Left(t)); executing.set(false); return
           case Delay(th) =>
             cur = try Pure(th())
             catch { case NonFatal(e) => Err(e) }
+          case Map(fa, f) =>
+            stack = MapK(f.asInstanceOf[Any => Any]) :: stack; cur = fa
           case FlatMap(fa, f) =>
             stack = Bind(f.asInstanceOf[Any => Fx[Any]]) :: stack; cur = fa
           case Handle(fa, h) =>
@@ -602,6 +608,9 @@ object Fx:
 
   private def safeApply(f: Any => Fx[Any], a: Any): Fx[Any] =
     try f(a)
+    catch { case NonFatal(e) => Err(e) }
+  private def safeMap(f: Any => Any, a: Any): Fx[Any] =
+    try Pure(f(a))
     catch { case NonFatal(e) => Err(e) }
   private def safeApply1(h: Throwable => Fx[Any], t: Throwable): Fx[Any] =
     try h(t)
