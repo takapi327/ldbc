@@ -68,16 +68,6 @@ lazy val sql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     )
   )
 
-lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
-  .crossType(CrossType.Pure)
-  .module("core", "Core project for ldbc")
-  .settings(
-    libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-free" % "2.13.0"
-    )
-  )
-  .dependsOn(sql)
-
 lazy val fx = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
   .module("fx", "Effect-agnostic core effect type (Fx); bridges to cats-effect / ZIO / Future")
@@ -95,13 +85,23 @@ lazy val net = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .nativeSettings(Test / nativeBrewFormulas += "s2n")
   .dependsOn(fx)
 
+lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
+  .module("core", "Core project for ldbc")
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel" %%% "cats-free" % "2.13.0"
+    )
+  )
+  .dependsOn(sql)
+  .dependsOn(fx)
+
 lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("dsl", "Projects that provide a way to connect to the database")
   .settings(
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "twiddles-core"     % "1.1.0",
-      "co.fs2"        %%% "fs2-core"          % "3.13.0",
       "org.typelevel" %%% "munit-cats-effect" % "2.2.0" % Test
     )
   )
@@ -118,6 +118,7 @@ lazy val catsEffect = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     )
   )
   .dependsOn(dsl)
+  .dependsOn(fx)
 
 lazy val statement = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
