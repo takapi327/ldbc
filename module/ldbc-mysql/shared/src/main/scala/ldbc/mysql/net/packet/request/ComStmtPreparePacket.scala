@@ -10,7 +10,6 @@ package request
 import scodec.*
 import scodec.bits.BitVector
 
-
 import ldbc.mysql.data.CommandId
 
 case class ComStmtPreparePacket(query: String) extends RequestPacket:

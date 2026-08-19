@@ -7,8 +7,6 @@
 package ldbc.mysql.net.protocol
 
 import ldbc.fx.{ Fx, Ref }
-
-
 import ldbc.mysql.FTestPlatform
 
 class AuthenticationTest extends Authentication, FTestPlatform:

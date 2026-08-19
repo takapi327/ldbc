@@ -6,7 +6,6 @@
 
 package ldbc.mysql.net.packet
 
-
 import scodec.bits.BitVector
 
 import ldbc.mysql.*

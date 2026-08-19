@@ -6,14 +6,12 @@
 
 package ldbc.mysql
 
-import ldbc.sql.SQLException
-import ldbc.fx.{ Fx, Ref }
-
 import java.time.*
 
-
 import ldbc.sql.{ ResultSet, ResultSetMetaData }
+import ldbc.sql.SQLException
 
+import ldbc.fx.{ Fx, Ref }
 import ldbc.mysql.data.*
 import ldbc.mysql.net.packet.response.*
 import ldbc.mysql.net.Protocol

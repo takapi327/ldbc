@@ -14,7 +14,6 @@ import scala.collection.immutable.ListMap
 import scodec.*
 import scodec.bits.*
 
-
 import ldbc.mysql.data.*
 
 /**
@@ -58,7 +57,9 @@ object ComQueryPacket:
         .toList
         .foldLeft(BitVector.empty)(_ ++ _)
 
-      BitVector(parameterCount) ++ nullBitmap(comQuery.params.keys.toList) ++ BitVector(0x01) ++ names ++ BinaryProtocolValuePacket(comQuery.params).encode
+      BitVector(parameterCount) ++ nullBitmap(comQuery.params.keys.toList) ++ BitVector(
+        0x01
+      ) ++ names ++ BinaryProtocolValuePacket(comQuery.params).encode
     else BitVector.empty
 
     Attempt.successful(

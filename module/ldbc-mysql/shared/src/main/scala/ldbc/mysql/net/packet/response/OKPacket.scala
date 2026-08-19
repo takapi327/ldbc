@@ -10,7 +10,6 @@ package response
 import scodec.*
 import scodec.bits.BitVector
 
-
 import ldbc.mysql.data.*
 
 /**

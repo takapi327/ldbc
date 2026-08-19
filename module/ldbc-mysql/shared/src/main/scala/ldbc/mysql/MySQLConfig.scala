@@ -8,9 +8,9 @@ package ldbc.mysql
 
 import scala.concurrent.duration.*
 
-import ldbc.net.{ SSL, SocketOptions }
-
 import ldbc.sql.DatabaseMetaData
+
+import ldbc.net.{ SSL, SocketOptions }
 
 /**
  * Configuration for MySQL database connections.
@@ -221,7 +221,7 @@ object MySQLConfig:
     database:                Option[String]                        = None,
     debug:                   Boolean                               = false,
     ssl:                     SSL                                   = SSL.None,
-    socketOptions:           SocketOptions                    = defaultSocketOptions,
+    socketOptions:           SocketOptions                         = defaultSocketOptions,
     readTimeout:             Duration                              = Duration.Inf,
     allowPublicKeyRetrieval: Boolean                               = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
@@ -245,15 +245,15 @@ object MySQLConfig:
         s"useCursorFetch=$useCursorFetch, useServerPrepStmts=$useServerPrepStmts, " +
         s"maxAllowedPacket=$maxAllowedPacket)"
 
-    override def setHost(host:                   String):             MySQLConfig = copy(host = host)
-    override def setPort(port:                   Int):                MySQLConfig = copy(port = port)
-    override def setUser(user:                   String):             MySQLConfig = copy(user = user)
-    override def setPassword(password:           String):             MySQLConfig = copy(password = Some(password))
-    override def setDatabase(database:           String):             MySQLConfig = copy(database = Some(database))
-    override def setDebug(debug:                 Boolean):            MySQLConfig = copy(debug = debug)
-    override def setSSL(ssl:                     SSL):                MySQLConfig = copy(ssl = ssl)
+    override def setHost(host:                   String):        MySQLConfig = copy(host = host)
+    override def setPort(port:                   Int):           MySQLConfig = copy(port = port)
+    override def setUser(user:                   String):        MySQLConfig = copy(user = user)
+    override def setPassword(password:           String):        MySQLConfig = copy(password = Some(password))
+    override def setDatabase(database:           String):        MySQLConfig = copy(database = Some(database))
+    override def setDebug(debug:                 Boolean):       MySQLConfig = copy(debug = debug)
+    override def setSSL(ssl:                     SSL):           MySQLConfig = copy(ssl = ssl)
     override def setSocketOptions(socketOptions: SocketOptions): MySQLConfig = copy(socketOptions = socketOptions)
-    override def setReadTimeout(readTimeout:     Duration):           MySQLConfig = copy(readTimeout = readTimeout)
+    override def setReadTimeout(readTimeout:     Duration):      MySQLConfig = copy(readTimeout = readTimeout)
     override def setAllowPublicKeyRetrieval(allowPublicKeyRetrieval: Boolean): MySQLConfig =
       copy(allowPublicKeyRetrieval = allowPublicKeyRetrieval)
     override def setDatabaseTerm(databaseTerm: DatabaseMetaData.DatabaseTerm): MySQLConfig =
@@ -261,7 +261,7 @@ object MySQLConfig:
     override def setUseCursorFetch(useCursorFetch: Boolean):         MySQLConfig = copy(useCursorFetch = useCursorFetch)
     override def setUseServerPrepStmts(useServerPrepStmts: Boolean): MySQLConfig =
       copy(useServerPrepStmts = useServerPrepStmts)
-    override def setMaxAllowedPacket(maxAllowedPacket: Int):        MySQLConfig = {
+    override def setMaxAllowedPacket(maxAllowedPacket: Int): MySQLConfig = {
       require(
         maxAllowedPacket >= MIN_PACKET_SIZE,
         s"maxAllowedPacket must be at least $MIN_PACKET_SIZE bytes, but got $maxAllowedPacket"

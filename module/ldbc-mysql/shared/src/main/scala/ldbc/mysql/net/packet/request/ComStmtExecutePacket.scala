@@ -13,7 +13,6 @@ import scodec.*
 import scodec.bits.*
 import scodec.codecs.*
 
-
 import ldbc.sql.ResultSet
 
 import ldbc.mysql.data.*
@@ -65,7 +64,9 @@ object ComStmtExecutePacket:
 
   val encoder: Encoder[ComStmtExecutePacket] = Encoder { comStmtExecute =>
     val types = comStmtExecute.params.values.foldLeft(BitVector.empty) { (acc, param) =>
-      acc ++ uint16L.encode(param.columnDataType.code.toInt).require ++ uint8L.encode(0x00).require // unsigned flag: 0x80 for unsigned, 0x00 for signed
+      acc ++ uint16L.encode(param.columnDataType.code.toInt).require ++ uint8L
+        .encode(0x00)
+        .require // unsigned flag: 0x80 for unsigned, 0x00 for signed
     }
 
     val values = comStmtExecute.params.values.foldLeft(BitVector.empty) { (acc, param) =>
@@ -84,7 +85,11 @@ object ComStmtExecutePacket:
       else BitVector(1)
 
     Attempt.successful(
-      BitVector(CommandId.COM_STMT_EXECUTE) ++ uint32L.encode(comStmtExecute.statementId).require ++ BitVector(comStmtExecute.enumCursorType.code) ++ uint32L.encode(1L).require ++ BitVector(paramCount) ++ nullBitmap(comStmtExecute.params.values.map(_.columnDataType).toList) ++ newParamsBindFlag ++ types ++ values
+      BitVector(CommandId.COM_STMT_EXECUTE) ++ uint32L.encode(comStmtExecute.statementId).require ++ BitVector(
+        comStmtExecute.enumCursorType.code
+      ) ++ uint32L.encode(1L).require ++ BitVector(paramCount) ++ nullBitmap(
+        comStmtExecute.params.values.map(_.columnDataType).toList
+      ) ++ newParamsBindFlag ++ types ++ values
     )
   }
 

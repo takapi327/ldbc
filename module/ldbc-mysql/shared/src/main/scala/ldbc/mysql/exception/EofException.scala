@@ -14,7 +14,7 @@ case class EofException(
   bytesRead:      Int
 ) extends SQLException(
     message = "EOF was reached on the network socket.",
-    detail = Some(
+    detail  = Some(
       s"Attempt to read $bytesRequested byte(s) failed after $bytesRead bytes(s) were read, because the connection had closed."
     ),
     hint   = Some("Discard this session and retry with a new one."),

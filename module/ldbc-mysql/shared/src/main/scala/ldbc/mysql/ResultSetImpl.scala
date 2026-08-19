@@ -9,10 +9,9 @@ package ldbc.mysql
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAccessor
 
-import ldbc.fx.{ Fx, Ref }
-
 import ldbc.sql.ResultSet
 
+import ldbc.fx.{ Fx, Ref }
 import ldbc.mysql.data.{ ColumnValueDecoder, TextColumnValueDecoder }
 import ldbc.mysql.net.packet.response.*
 import ldbc.mysql.net.Protocol
@@ -35,8 +34,7 @@ private[ldbc] case class ResultSetImpl(
   resultSetType:        Int            = ResultSet.TYPE_FORWARD_ONLY,
   resultSetConcurrency: Int            = ResultSet.CONCUR_READ_ONLY,
   statement:            Option[String] = None
-)
-  extends SharedResultSet:
+) extends SharedResultSet:
 
   override def next(): Fx[Boolean] =
     checkClosed().map { _ =>

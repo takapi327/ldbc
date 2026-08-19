@@ -10,11 +10,9 @@ import java.nio.charset.StandardCharsets
 
 import scodec.bits.ByteVector
 
-import ldbc.fx.Fx
-
-import ldbc.mysql.util.PlatformHash
-
 import ldbc.authentication.plugin.*
+import ldbc.fx.Fx
+import ldbc.mysql.util.PlatformHash
 
 /**
  * The `sha256_password` authentication plugin: the token is

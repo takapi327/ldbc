@@ -7,17 +7,12 @@
 package ldbc.mysql
 
 import ldbc.sql.SQLException
-import ldbc.net.SSL
-import ldbc.mysql.telemetry.*
-
-import ldbc.fx.{ Fx }
-import ldbc.fx.syntax.*
-
-
-
-
 import ldbc.sql.Types
 
+import ldbc.fx.syntax.*
+import ldbc.fx.Fx
+import ldbc.mysql.telemetry.*
+import ldbc.net.SSL
 
 class CallableStatementTest extends FTestPlatform:
 

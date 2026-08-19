@@ -6,9 +6,6 @@
 
 package ldbc.mysql.authenticator
 
-
-
-
 import ldbc.mysql.*
 import ldbc.mysql.util.Version
 

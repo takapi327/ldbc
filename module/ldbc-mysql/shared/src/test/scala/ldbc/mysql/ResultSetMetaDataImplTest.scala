@@ -6,8 +6,8 @@
 
 package ldbc.mysql
 
-import ldbc.sql.SQLException
 import ldbc.sql.ResultSetMetaData
+import ldbc.sql.SQLException
 
 import ldbc.mysql.data.*
 import ldbc.mysql.net.packet.response.*

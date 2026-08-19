@@ -6,17 +6,13 @@
 
 package ldbc.mysql
 
-import ldbc.net.{ SSL, SocketOptions }
-import ldbc.mysql.telemetry.*
-
-import ldbc.fx.{ Fx }
-
 import scala.concurrent.duration.Duration
 
-
-
-
 import ldbc.sql.DatabaseMetaData
+
+import ldbc.fx.Fx
+import ldbc.mysql.telemetry.*
+import ldbc.net.{ SSL, SocketOptions }
 
 class MySQLDataSourceTest extends FTestPlatform:
 

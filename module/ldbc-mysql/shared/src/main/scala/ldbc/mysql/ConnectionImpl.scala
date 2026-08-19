@@ -6,16 +6,13 @@
 
 package ldbc.mysql
 
-import ldbc.sql.{ SQLException, SQLNonTransientException }
 import scala.collection.immutable.SortedMap
+
+import ldbc.sql.{ CallableStatement, Connection, DatabaseMetaData, PreparedStatement, ResultSet, Savepoint, Statement }
+import ldbc.sql.{ SQLException, SQLNonTransientException }
 
 import ldbc.fx.{ Fx, Ref }
 import ldbc.fx.syntax.*
-
-import ldbc.mysql.telemetry.Tracer
-
-import ldbc.sql.{ CallableStatement, Connection, DatabaseMetaData, PreparedStatement, ResultSet, Savepoint, Statement }
-
 import ldbc.mysql.data.*
 import ldbc.mysql.exception.*
 import ldbc.mysql.net.*
@@ -23,6 +20,7 @@ import ldbc.mysql.net.packet.request.*
 import ldbc.mysql.net.packet.response.*
 import ldbc.mysql.net.protocol.*
 import ldbc.mysql.telemetry.{ DatabaseMetrics, TelemetryConfig }
+import ldbc.mysql.telemetry.Tracer
 import ldbc.mysql.util.StringHelper
 
 private[ldbc] case class ConnectionImpl(

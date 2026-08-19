@@ -11,7 +11,6 @@ import scodec.*
 import scodec.bits.*
 import scodec.codecs.uint32L
 
-
 import ldbc.mysql.data.*
 
 /**

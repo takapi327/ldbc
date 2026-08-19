@@ -11,7 +11,6 @@ import scodec.*
 import scodec.bits.BitVector
 import scodec.bits.ByteVector
 
-
 import ldbc.mysql.data.*
 
 /**
@@ -73,6 +72,8 @@ object ComChangeUserPacket:
       else BitVector.empty
 
     Attempt.successful(
-      BitVector(CommandId.COM_CHANGE_USER) ++ nullTerminatedStringCodec.encode(comChangeUserPacket.user).require ++ authPluginData ++ database ++ characterSet ++ pluginName ++ attrs
+      BitVector(CommandId.COM_CHANGE_USER) ++ nullTerminatedStringCodec
+        .encode(comChangeUserPacket.user)
+        .require ++ authPluginData ++ database ++ characterSet ++ pluginName ++ attrs
     )
   }

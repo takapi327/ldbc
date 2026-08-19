@@ -11,7 +11,6 @@ import scodec.*
 import scodec.bits.BitVector
 import scodec.codecs.uint32L
 
-
 import ldbc.mysql.data.CommandId
 
 /**
@@ -39,6 +38,8 @@ object ComStmtFetchPacket:
 
   val encoder: Encoder[ComStmtFetchPacket] = Encoder { comStmtFetch =>
     Attempt.Successful(
-      BitVector(CommandId.COM_STMT_FETCH) ++ uint32L.encode(comStmtFetch.statementId).require ++ uint32L.encode(comStmtFetch.numRows).require
+      BitVector(CommandId.COM_STMT_FETCH) ++ uint32L.encode(comStmtFetch.statementId).require ++ uint32L
+        .encode(comStmtFetch.numRows)
+        .require
     )
   }

@@ -10,6 +10,6 @@ import ldbc.sql.SQLException
 
 /** Thrown when the driver receives a MySQL protocol packet it does not recognise. */
 case class UnknownPacketException(
-  message:           String,
+  message:             String,
   override val detail: Option[String] = None
 ) extends SQLException(message, vendor = "MySQL")

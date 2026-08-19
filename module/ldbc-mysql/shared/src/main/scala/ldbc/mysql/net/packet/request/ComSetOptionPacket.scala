@@ -11,7 +11,6 @@ import scodec.*
 import scodec.bits.BitVector
 import scodec.codecs.*
 
-
 import ldbc.mysql.data.*
 
 /**

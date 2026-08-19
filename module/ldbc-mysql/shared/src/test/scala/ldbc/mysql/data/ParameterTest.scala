@@ -136,7 +136,10 @@ class ParameterTest extends FTestPlatform:
     assertEquals(Parameter.bytes(Array[Byte](1)).columnDataType, ColumnDataType.MYSQL_TYPE_VAR_STRING)
     assertEquals(Parameter.time(LocalTime.of(12, 0, 0)).columnDataType, ColumnDataType.MYSQL_TYPE_TIME)
     assertEquals(Parameter.date(LocalDate.of(2020, 1, 1)).columnDataType, ColumnDataType.MYSQL_TYPE_DATE)
-    assertEquals(Parameter.datetime(LocalDateTime.of(2020, 1, 1, 12, 0, 0)).columnDataType, ColumnDataType.MYSQL_TYPE_TIMESTAMP)
+    assertEquals(
+      Parameter.datetime(LocalDateTime.of(2020, 1, 1, 12, 0, 0)).columnDataType,
+      ColumnDataType.MYSQL_TYPE_TIMESTAMP
+    )
     assertEquals(Parameter.year(Year.of(2020)).columnDataType, ColumnDataType.MYSQL_TYPE_SHORT)
     assertEquals(Parameter.parameter("test").columnDataType, ColumnDataType.MYSQL_TYPE_STRING)
   }

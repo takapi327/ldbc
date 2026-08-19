@@ -527,4 +527,3 @@ object MySQLDataSource:
       maxAllowedPacket        = config.maxAllowedPacket,
       meter                   = Some(meter)
     )
-

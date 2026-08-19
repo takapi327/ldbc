@@ -6,9 +6,9 @@
 
 package ldbc.mysql.telemetry
 
-import ldbc.sql.Attribute
-
 import scala.concurrent.duration.FiniteDuration
+
+import ldbc.sql.Attribute
 
 import ldbc.fx.{ Fx, Resource }
 
@@ -89,12 +89,12 @@ object DatabaseMetrics:
 
   /** A metrics instance that records nothing. */
   val noop: DatabaseMetrics = new DatabaseMetrics:
-    override def recordOperationDuration(duration: FiniteDuration, attributes: Attribute[?]*): Fx[Unit] = Fx.unit
-    override def recordReturnedRows(rows: Long, attributes: Attribute[?]*): Fx[Unit]                    = Fx.unit
-    override def recordConnectionCreateTime(duration: FiniteDuration, poolName: String): Fx[Unit]       = Fx.unit
-    override def recordConnectionWaitTime(duration: FiniteDuration, poolName: String): Fx[Unit]         = Fx.unit
-    override def recordConnectionUseTime(duration: FiniteDuration, poolName: String): Fx[Unit]          = Fx.unit
-    override def recordConnectionTimeout(poolName: String): Fx[Unit]                                    = Fx.unit
+    override def recordOperationDuration(duration:    FiniteDuration, attributes: Attribute[?]*): Fx[Unit] = Fx.unit
+    override def recordReturnedRows(rows:             Long, attributes:           Attribute[?]*): Fx[Unit] = Fx.unit
+    override def recordConnectionCreateTime(duration: FiniteDuration, poolName:   String):        Fx[Unit] = Fx.unit
+    override def recordConnectionWaitTime(duration:   FiniteDuration, poolName:   String):        Fx[Unit] = Fx.unit
+    override def recordConnectionUseTime(duration:    FiniteDuration, poolName:   String):        Fx[Unit] = Fx.unit
+    override def recordConnectionTimeout(poolName:    String):                                    Fx[Unit] = Fx.unit
     override def registerPoolStateCallback(
       poolName:       String,
       minConnections: Int,

@@ -9,9 +9,9 @@ package ldbc.mysql.syntax
 import scala.collection.mutable
 import scala.collection.Factory
 
-import ldbc.fx.Fx
-
 import ldbc.sql.ResultSet
+
+import ldbc.fx.Fx
 
 trait ResultSetOps:
 

@@ -15,7 +15,7 @@ object MySQLErrors:
     SQLFeatureNotSupportedException(
       message,
       detail = detail,
-      hint = Some(
+      hint   = Some(
         "Report Issues here: https://github.com/takapi327/ldbc/issues/new?assignees=&labels=&projects=&template=bug_report.md&title="
       ),
       vendor = "MySQL"

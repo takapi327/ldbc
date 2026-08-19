@@ -6,7 +6,6 @@
 
 package ldbc.mysql.net
 
-import ldbc.sql.{ SQLException, SQLInvalidAuthorizationSpecException }
 import java.nio.charset.StandardCharsets
 
 import scala.collection.immutable.ListMap
@@ -14,13 +13,12 @@ import scala.concurrent.duration.*
 
 import scodec.Decoder
 
-import ldbc.fx.{ Fx, Ref, Resource }
-import ldbc.fx.syntax.*
-
-import ldbc.mysql.telemetry.{ DbAttributes, ServerAttributes }
-import ldbc.mysql.telemetry.{ Span, StatusCode, Tracer }
+import ldbc.sql.{ SQLException, SQLInvalidAuthorizationSpecException }
 import ldbc.sql.Attribute
 
+import ldbc.authentication.plugin.*
+import ldbc.fx.{ Fx, Ref, Resource }
+import ldbc.fx.syntax.*
 import ldbc.mysql.authenticator.{ CachingSha2PasswordPlugin, MysqlNativePasswordPlugin, Sha256PasswordPlugin }
 import ldbc.mysql.data.*
 import ldbc.mysql.net.packet.*
@@ -28,8 +26,8 @@ import ldbc.mysql.net.packet.request.*
 import ldbc.mysql.net.packet.response.*
 import ldbc.mysql.net.protocol.*
 import ldbc.mysql.telemetry.*
-
-import ldbc.authentication.plugin.*
+import ldbc.mysql.telemetry.{ DbAttributes, ServerAttributes }
+import ldbc.mysql.telemetry.{ Span, StatusCode, Tracer }
 
 /**
  * Protocol is a protocol to communicate with MySQL server.

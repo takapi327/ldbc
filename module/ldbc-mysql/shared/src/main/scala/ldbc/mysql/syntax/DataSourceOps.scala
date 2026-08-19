@@ -6,9 +6,9 @@
 
 package ldbc.mysql.syntax
 
-import ldbc.fx.Fx
-
 import ldbc.sql.{ Connection, DataSource }
+
+import ldbc.fx.Fx
 
 /**
  * Consumption helper for an [[ldbc.sql.DataSource]] over the [[ldbc.fx.Fx]] effect.
@@ -21,7 +21,9 @@ trait DataSourceOps:
 
   extension (ds: DataSource[Fx])
     def use[B](f: Connection[Fx] => Fx[B]): Fx[B] =
-      Fx.bracket(ds.getConnection)((pair: (Connection[Fx], Fx[Unit])) => f(pair._1))((pair: (
-        Connection[Fx],
-        Fx[Unit]
-      )) => pair._2)
+      Fx.bracket(ds.getConnection)((pair: (Connection[Fx], Fx[Unit])) => f(pair._1))(
+        (pair: (
+          Connection[Fx],
+          Fx[Unit]
+        )) => pair._2
+      )

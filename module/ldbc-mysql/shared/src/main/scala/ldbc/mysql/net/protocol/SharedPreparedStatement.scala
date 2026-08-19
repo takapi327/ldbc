@@ -6,15 +6,14 @@
 
 package ldbc.mysql.net.protocol
 
-import ldbc.sql.SQLException
 import java.time.*
 
 import scala.collection.immutable.SortedMap
 
-import ldbc.fx.{ Fx, Ref }
-
 import ldbc.sql.PreparedStatement
+import ldbc.sql.SQLException
 
+import ldbc.fx.{ Fx, Ref }
 import ldbc.mysql.data.*
 
 private[ldbc] trait SharedPreparedStatement extends PreparedStatement[Fx], StatementImpl.ShareStatement:

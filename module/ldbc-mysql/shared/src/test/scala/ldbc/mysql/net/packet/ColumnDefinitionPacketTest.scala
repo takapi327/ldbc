@@ -11,11 +11,7 @@ import scodec.Attempt
 
 import ldbc.mysql.*
 import ldbc.mysql.data.*
-import ldbc.mysql.net.packet.response.{
-  ColumnDefinition320Packet,
-  ColumnDefinition41Packet,
-  ColumnDefinitionPacket
-}
+import ldbc.mysql.net.packet.response.{ ColumnDefinition320Packet, ColumnDefinition41Packet, ColumnDefinitionPacket }
 
 class ColumnDefinitionPacketTest extends FTestPlatform:
 

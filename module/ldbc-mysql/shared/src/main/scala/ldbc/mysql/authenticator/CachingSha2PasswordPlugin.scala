@@ -6,9 +6,8 @@
 
 package ldbc.mysql.authenticator
 
-import ldbc.mysql.util.Version
-
 import ldbc.authentication.plugin.*
+import ldbc.mysql.util.Version
 
 /**
  * The `caching_sha2_password` authentication plugin. It shares [[Sha256PasswordPlugin]]'s hashing; only

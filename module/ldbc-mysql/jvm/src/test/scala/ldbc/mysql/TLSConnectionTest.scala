@@ -6,9 +6,8 @@
 
 package ldbc.mysql
 
-import ldbc.net.SSL
-
 import ldbc.mysql.syntax.*
+import ldbc.net.SSL
 
 class TLSConnectionTest extends FTestPlatform:
 

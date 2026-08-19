@@ -7,11 +7,10 @@
 package ldbc.mysql.net.protocol
 
 import ldbc.sql.SQLException
+
 import ldbc.fx.Fx
-
-import ldbc.net.Socket
-
 import ldbc.mysql.net.packet.response.InitialPacket
+import ldbc.net.Socket
 
 /**
  * Initial packet is the first packet sent by the server to the client. It contains the server version,

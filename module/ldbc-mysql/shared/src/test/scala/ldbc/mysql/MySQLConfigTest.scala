@@ -6,12 +6,11 @@
 
 package ldbc.mysql
 
-import ldbc.net.{ SSL, SocketOptions }
-
 import scala.concurrent.duration.Duration
 
-
 import ldbc.sql.DatabaseMetaData
+
+import ldbc.net.{ SSL, SocketOptions }
 
 class MySQLConfigTest extends FTestPlatform:
 

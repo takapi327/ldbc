@@ -6,10 +6,9 @@
 
 package ldbc.mysql
 
-import ldbc.fx.Fx
-
 import ldbc.sql.Connection
 
+import ldbc.fx.Fx
 import ldbc.mysql.net.packet.response.*
 import ldbc.mysql.net.protocol.*
 

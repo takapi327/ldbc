@@ -7,12 +7,20 @@
 package ldbc.mysql.net.packet
 package response
 
-
-import ldbc.sql.{ BatchUpdateException, SQLDataException, SQLException, SQLFeatureNotSupportedException, SQLIntegrityConstraintViolationException, SQLInvalidAuthorizationSpecException, SQLSyntaxErrorException, SQLTransactionRollbackException, SQLTransientConnectionException }
 import scodec.*
 import scodec.codecs.*
 
-
+import ldbc.sql.{
+  BatchUpdateException,
+  SQLDataException,
+  SQLException,
+  SQLFeatureNotSupportedException,
+  SQLIntegrityConstraintViolationException,
+  SQLInvalidAuthorizationSpecException,
+  SQLSyntaxErrorException,
+  SQLTransactionRollbackException,
+  SQLTransientConnectionException
+}
 import ldbc.sql.Attribute
 
 import ldbc.mysql.data.*

@@ -6,7 +6,6 @@
 
 package ldbc.mysql.telemetry
 
-
 /**
  * Generates span names according to OpenTelemetry database semantic conventions v1.39.0.
  *

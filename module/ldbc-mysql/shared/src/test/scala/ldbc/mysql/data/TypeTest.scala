@@ -6,7 +6,6 @@
 
 package ldbc.mysql.data
 
-
 import ldbc.mysql.*
 
 class TypeTest extends FTestPlatform:

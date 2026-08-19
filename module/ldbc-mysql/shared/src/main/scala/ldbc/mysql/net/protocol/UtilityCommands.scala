@@ -7,7 +7,6 @@
 package ldbc.mysql.net.protocol
 
 import ldbc.fx.Fx
-
 import ldbc.mysql.data.EnumMySQLSetOption
 import ldbc.mysql.net.packet.response.*
 

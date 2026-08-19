@@ -6,11 +6,10 @@
 
 package ldbc.mysql
 
-import ldbc.fx.{ Fx, Ref }
-import ldbc.fx.syntax.*
-
 import ldbc.sql.ResultSet
 
+import ldbc.fx.{ Fx, Ref }
+import ldbc.fx.syntax.*
 import ldbc.mysql.data.ColumnValueDecoder
 import ldbc.mysql.net.packet.request.*
 import ldbc.mysql.net.packet.response.*
@@ -32,8 +31,7 @@ private[ldbc] case class StreamingResultSet(
   resultSetType:        Int            = ResultSet.TYPE_FORWARD_ONLY,
   resultSetConcurrency: Int            = ResultSet.CONCUR_READ_ONLY,
   statement:            Option[String] = None
-)
-  extends SharedResultSet:
+) extends SharedResultSet:
 
   private var isCompleteAllFetch: Boolean                    = false
   private var rows:               Vector[ResultSetRowPacket] = Vector.empty

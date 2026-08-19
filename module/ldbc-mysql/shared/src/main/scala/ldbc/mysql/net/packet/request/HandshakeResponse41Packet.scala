@@ -12,7 +12,6 @@ import java.util.Arrays.copyOf
 import scodec.*
 import scodec.bits.*
 
-
 import ldbc.mysql.data.CapabilitiesFlags
 
 /**
@@ -81,6 +80,10 @@ object HandshakeResponse41Packet:
       else BitVector.empty
 
     Attempt.successful(
-      handshakeResponse.encodeCapabilitiesFlags() ++ handshakeResponse.maxPacketSize ++ BitVector(handshakeResponse.characterSet) ++ reserved ++ nullTerminatedStringCodec.encode(handshakeResponse.user).require ++ authResponse ++ database ++ pluginName ++ attrs ++ zstdCompressionLevel
+      handshakeResponse.encodeCapabilitiesFlags() ++ handshakeResponse.maxPacketSize ++ BitVector(
+        handshakeResponse.characterSet
+      ) ++ reserved ++ nullTerminatedStringCodec
+        .encode(handshakeResponse.user)
+        .require ++ authResponse ++ database ++ pluginName ++ attrs ++ zstdCompressionLevel
     )
   }

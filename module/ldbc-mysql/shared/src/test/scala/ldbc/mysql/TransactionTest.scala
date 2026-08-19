@@ -6,18 +6,13 @@
 
 package ldbc.mysql
 
-import ldbc.sql.SQLNonTransientException
-import ldbc.net.SSL
-import ldbc.mysql.telemetry.*
-import ldbc.mysql.syntax.*
-
-import ldbc.fx.{ Fx }
-
-
-
-
 import ldbc.sql.Connection as SQLConnection
+import ldbc.sql.SQLNonTransientException
 
+import ldbc.fx.Fx
+import ldbc.mysql.syntax.*
+import ldbc.mysql.telemetry.*
+import ldbc.net.SSL
 
 class TransactionTest extends FTestPlatform:
 

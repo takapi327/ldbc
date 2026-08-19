@@ -7,11 +7,9 @@
 package ldbc.mysql.net
 
 import ldbc.fx.{ Fx, Ref, Resource }
-
-import ldbc.net.{ Socket, SSL, Tls }
-
 import ldbc.mysql.data.CapabilitiesFlags
 import ldbc.mysql.net.packet.request.SSLRequestPacket
+import ldbc.net.{ SSL, Socket, Tls }
 
 /**
  * MySQL STARTTLS negotiation: the SSL request packet is written in the clear, then the plaintext socket
@@ -54,7 +52,7 @@ object SSLNegotiation:
   ): Resource[Socket] =
     for
       sequenceId <- Resource.eval(sequenceIdRef.get)
-      _ <- Resource.eval(
+      _          <- Resource.eval(
              socket.write(SSLRequestPacket(sequenceId, capabilityFlags).encode.bytes.toArray)
            )
       encrypted <- Resource.make(

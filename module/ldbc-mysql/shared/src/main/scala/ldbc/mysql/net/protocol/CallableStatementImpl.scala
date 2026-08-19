@@ -6,20 +6,16 @@
 
 package ldbc.mysql.net.protocol
 
-import ldbc.sql.SQLException
 import java.time.*
 
 import scala.collection.immutable.{ ListMap, SortedMap }
 
+import ldbc.sql.{ CallableStatement, DatabaseMetaData, ParameterMetaData, ResultSet, Statement }
+import ldbc.sql.Attribute
+import ldbc.sql.SQLException
+
 import ldbc.fx.{ Fx, Ref }
 import ldbc.fx.syntax.*
-
-import ldbc.mysql.telemetry.{ DbAttributes, ErrorAttributes }
-import ldbc.mysql.telemetry.{ Span, StatusCode, Tracer }
-import ldbc.sql.Attribute
-
-import ldbc.sql.{ CallableStatement, DatabaseMetaData, ParameterMetaData, ResultSet, Statement }
-
 import ldbc.mysql.*
 import ldbc.mysql.data.*
 import ldbc.mysql.net.packet.request.*
@@ -27,6 +23,8 @@ import ldbc.mysql.net.packet.response.*
 import ldbc.mysql.net.Protocol
 import ldbc.mysql.syntax.*
 import ldbc.mysql.telemetry.*
+import ldbc.mysql.telemetry.{ DbAttributes, ErrorAttributes }
+import ldbc.mysql.telemetry.{ Span, StatusCode, Tracer }
 
 case class CallableStatementImpl(
   protocol:                Protocol,

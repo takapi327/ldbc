@@ -9,7 +9,6 @@ package ldbc.mysql
 import ldbc.sql.SQLFeatureNotSupportedException
 import ldbc.sql.Savepoint
 
-
 /**
  * Represents SQL SAVEPOINTS in MySQL.
  */

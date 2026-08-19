@@ -6,29 +6,21 @@
 
 package ldbc.mysql.net
 
-import ldbc.mysql.FTestPlatform
-
-import ldbc.mysql.telemetry.*
-
-import ldbc.fx.{ Fx, Ref }
-import ldbc.fx.syntax.*
-
 import scodec.bits.ByteVector
 import scodec.Decoder
 
-
-
-
-
+import ldbc.fx.{ Fx, Ref }
+import ldbc.fx.syntax.*
+import ldbc.mysql.authenticator.MysqlClearPasswordPlugin
 import ldbc.mysql.authenticator.MysqlNativePasswordPlugin
 import ldbc.mysql.data.{ CapabilitiesFlags, ServerStatusFlags }
 import ldbc.mysql.net.packet.{ RequestPacket, ResponsePacket }
 import ldbc.mysql.net.packet.request.AuthSwitchResponsePacket
 import ldbc.mysql.net.packet.response.{ AuthSwitchRequestPacket, InitialPacket, OKPacket }
 import ldbc.mysql.net.protocol.Exchange
+import ldbc.mysql.telemetry.*
 import ldbc.mysql.util.Version
-
-import ldbc.mysql.authenticator.MysqlClearPasswordPlugin
+import ldbc.mysql.FTestPlatform
 
 /**
  * Verification test for the security finding: the confidentiality guard is applied only on the
@@ -42,7 +34,7 @@ import ldbc.mysql.authenticator.MysqlClearPasswordPlugin
  */
 class AuthDowngradeTest extends FTestPlatform:
 
-  given Tracer  = Tracer.noop
+  given Tracer = Tracer.noop
 
   /** A PacketSocket that records everything sent and replays a scripted list of server packets. */
   private final class ScriptedSocket(
@@ -80,8 +72,8 @@ class AuthDowngradeTest extends FTestPlatform:
 
     val program = for
       given Exchange <- Exchange.apply
-      sent               <- Ref.of(Vector.empty[RequestPacket])
-      toReceive          <- Ref.of(
+      sent           <- Ref.of(Vector.empty[RequestPacket])
+      toReceive      <- Ref.of(
                      List[ResponsePacket](
                        AuthSwitchRequestPacket(0xfe, "mysql_clear_password", Array.fill[Byte](20)(2)),
                        OKPacket(0x00, 0L, 0L, Set.empty[ServerStatusFlags], None, None, None, None)
@@ -126,8 +118,8 @@ class AuthDowngradeTest extends FTestPlatform:
 
     val program = for
       given Exchange <- Exchange.apply
-      sent               <- Ref.of(Vector.empty[RequestPacket])
-      toReceive          <- Ref.of(List.empty[ResponsePacket])
+      sent           <- Ref.of(Vector.empty[RequestPacket])
+      toReceive      <- Ref.of(List.empty[ResponsePacket])
       protocol = Protocol.Impl(
                    initialPacket               = clearTextInitialPacket,
                    hostInfo                    = hostInfo,

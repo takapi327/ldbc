@@ -6,13 +6,10 @@
 
 package ldbc.mysql
 
-import ldbc.fx.{ Fx, Ref }
-import ldbc.fx.syntax.*
-
 import scala.collection.mutable.ListBuffer
 
-
-
+import ldbc.fx.{ Fx, Ref }
+import ldbc.fx.syntax.*
 import ldbc.mysql.data.*
 import ldbc.mysql.net.packet.request.*
 import ldbc.mysql.net.packet.response.*

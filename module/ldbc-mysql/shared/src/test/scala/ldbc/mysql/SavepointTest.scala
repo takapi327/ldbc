@@ -6,14 +6,11 @@
 
 package ldbc.mysql
 
-import ldbc.net.SSL
-import ldbc.mysql.telemetry.*
 import munit.AnyFixture
 
 import ldbc.fx.Resource
-
-
-
+import ldbc.mysql.telemetry.*
+import ldbc.net.SSL
 
 class SavepointTest extends FTestPlatform:
 

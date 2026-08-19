@@ -10,9 +10,8 @@ import java.nio.charset.StandardCharsets
 
 import scodec.bits.ByteVector
 
-import ldbc.fx.Fx
-
 import ldbc.authentication.plugin.*
+import ldbc.fx.Fx
 
 /**
  * The `mysql_clear_password` authentication plugin: the password is sent to the server as cleartext

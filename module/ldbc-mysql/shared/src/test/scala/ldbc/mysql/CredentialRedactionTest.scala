@@ -6,8 +6,6 @@
 
 package ldbc.mysql
 
-
-
 /**
  * Verification test for the security finding: the default case-class `toString`
  * of [[MySQLDataSource]] and [[MySQLConfig]] exposes the configured password in

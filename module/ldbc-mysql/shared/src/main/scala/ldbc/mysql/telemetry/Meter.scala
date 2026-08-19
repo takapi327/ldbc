@@ -58,6 +58,6 @@ object MeterProvider:
   /** A provider that yields no-op meters. */
   val noop: MeterProvider = new MeterProvider:
     override def meter(name: String): MeterBuilder = new MeterBuilder:
-      override def withVersion(version: String): MeterBuilder     = this
+      override def withVersion(version:     String): MeterBuilder = this
       override def withSchemaUrl(schemaUrl: String): MeterBuilder = this
-      override def get: Fx[Meter]                                 = Fx.pure(Meter.noop)
+      override def get:                              Fx[Meter]    = Fx.pure(Meter.noop)

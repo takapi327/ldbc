@@ -6,17 +6,13 @@
 
 package ldbc.mysql
 
-import ldbc.net.SSL
-import ldbc.mysql.telemetry.*
-import ldbc.mysql.syntax.*
-
-import ldbc.fx.{ Fx }
-import ldbc.fx.syntax.*
-
 import java.time.*
 
-
-
+import ldbc.fx.syntax.*
+import ldbc.fx.Fx
+import ldbc.mysql.syntax.*
+import ldbc.mysql.telemetry.*
+import ldbc.net.SSL
 
 class StatementQueryTest extends FTestPlatform:
 

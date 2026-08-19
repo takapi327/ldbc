@@ -6,14 +6,12 @@
 
 package ldbc.mysql
 
-import ldbc.fx.{ Fx, Ref }
-import ldbc.fx.syntax.*
-
 import java.time.*
-
 
 import ldbc.sql.ResultSet
 
+import ldbc.fx.{ Fx, Ref }
+import ldbc.fx.syntax.*
 import ldbc.mysql.data.*
 import ldbc.mysql.net.packet.response.*
 import ldbc.mysql.net.Protocol
@@ -36,8 +34,7 @@ class SharedResultSetTest extends FTestPlatform:
     val resultSetConcurrency: Int                = ResultSet.CONCUR_READ_ONLY,
     val statement:            Option[String]     = None,
     val decoder:              ColumnValueDecoder = TextColumnValueDecoder
-  )
-    extends SharedResultSet:
+  ) extends SharedResultSet:
     // Mock protocol for testing
     val protocol: Protocol = mockProtocol
 

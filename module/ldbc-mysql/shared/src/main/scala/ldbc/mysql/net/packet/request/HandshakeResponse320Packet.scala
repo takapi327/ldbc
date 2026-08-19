@@ -12,7 +12,6 @@ import java.util.Arrays.copyOf
 import scodec.*
 import scodec.bits.*
 
-
 import ldbc.mysql.data.CapabilitiesFlags
 
 /**
@@ -60,6 +59,8 @@ object HandshakeResponse320Packet:
       case _ => BitVector(copyOf(handshakeResponse.hashedPassword, handshakeResponse.hashedPassword.length))
 
     Attempt.successful(
-      handshakeResponse.encodeCapabilitiesFlags() ++ handshakeResponse.maxPacketSize ++ BitVector(copyOf(userBytes, userBytes.length + 1)) ++ authResponse
+      handshakeResponse.encodeCapabilitiesFlags() ++ handshakeResponse.maxPacketSize ++ BitVector(
+        copyOf(userBytes, userBytes.length + 1)
+      ) ++ authResponse
     )
   }

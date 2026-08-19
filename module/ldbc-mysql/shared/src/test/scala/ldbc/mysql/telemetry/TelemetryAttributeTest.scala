@@ -8,7 +8,6 @@ package ldbc.mysql.telemetry
 
 import ldbc.sql.Attribute
 
-
 import ldbc.mysql.*
 
 class TelemetryAttributeTest extends FTestPlatform:

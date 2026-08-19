@@ -6,9 +6,10 @@
 
 package ldbc.mysql.data
 
-import ldbc.sql.SQLDataException
 import java.nio.{ ByteBuffer, ByteOrder }
 import java.time.*
+
+import ldbc.sql.SQLDataException
 
 import ldbc.mysql.*
 import ldbc.mysql.data.ColumnDataType.*

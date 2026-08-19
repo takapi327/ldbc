@@ -6,20 +6,19 @@
 
 package ldbc.mysql.net
 
-import ldbc.sql.SQLTimeoutException
 import scala.concurrent.duration.Duration
 import scala.concurrent.duration.FiniteDuration
 
 import scodec.bits.{ BitVector, ByteVector }
 
+import ldbc.sql.SQLTimeoutException
+
 import ldbc.fx.{ Fx, Ref, Resource }
 import ldbc.fx.syntax.*
-
-import ldbc.net.Socket
-
 import ldbc.mysql.data.CapabilitiesFlags
 import ldbc.mysql.net.packet.response.InitialPacket
 import ldbc.mysql.net.protocol.Initial
+import ldbc.net.Socket
 
 /**
  * A higher-level [[ldbc.net.Socket]] interface defined in terms of `BitVector`, carrying leftover bytes
@@ -92,7 +91,7 @@ object BitVectorSocket:
       socket        <- sockets
       initialPacket <- Resource.eval(Initial(socket).start)
       _             <- Resource.eval(initialPacketRef.set(Some(initialPacket)))
-      socket$ <- sslOptions.fold(Resource.pure(socket))(option =>
+      socket$       <- sslOptions.fold(Resource.pure(socket))(option =>
                    SSLNegotiation.negotiateSSL(socket, capabilitiesFlags, option, sequenceIdRef)
                  )
       carryRef <- Resource.eval(Ref.of(ByteVector.empty))

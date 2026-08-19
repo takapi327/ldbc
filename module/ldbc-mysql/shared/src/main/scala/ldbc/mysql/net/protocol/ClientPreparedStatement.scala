@@ -6,23 +6,21 @@
 
 package ldbc.mysql.net.protocol
 
-import ldbc.sql.SQLException
 import scala.collection.immutable.{ ListMap, SortedMap }
+
+import ldbc.sql.{ ResultSet, Statement }
+import ldbc.sql.Attribute
+import ldbc.sql.SQLException
 
 import ldbc.fx.{ Fx, Ref }
 import ldbc.fx.syntax.*
-
-import ldbc.mysql.telemetry.{ DbAttributes, ErrorAttributes }
-import ldbc.mysql.telemetry.{ Span, StatusCode, Tracer }
-import ldbc.sql.Attribute
-
-import ldbc.sql.{ ResultSet, Statement }
-
 import ldbc.mysql.data.*
 import ldbc.mysql.net.packet.request.*
 import ldbc.mysql.net.packet.response.*
 import ldbc.mysql.net.Protocol
 import ldbc.mysql.telemetry.*
+import ldbc.mysql.telemetry.{ DbAttributes, ErrorAttributes }
+import ldbc.mysql.telemetry.{ Span, StatusCode, Tracer }
 import ldbc.mysql.ResultSetImpl
 
 /**
@@ -205,7 +203,7 @@ case class ClientPreparedStatement(
     then
       executeQuery().flatMap {
         case resultSet: ResultSetImpl => resultSet.hasRows()
-        case _                           => Fx.pure(false)
+        case _                        => Fx.pure(false)
       }
     else executeUpdate().map(_ => false)
 

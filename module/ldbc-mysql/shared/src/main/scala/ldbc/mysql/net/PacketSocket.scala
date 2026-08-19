@@ -14,14 +14,12 @@ import scodec.Decoder
 
 import ldbc.fx.{ Fx, Ref, Resource }
 import ldbc.fx.syntax.*
-
-import ldbc.net.Socket
-
 import ldbc.mysql.data.CapabilitiesFlags
 import ldbc.mysql.exception.PacketTooBigException
 import ldbc.mysql.net.packet.*
 import ldbc.mysql.net.packet.response.InitialPacket
 import ldbc.mysql.net.protocol.parseHeader
+import ldbc.net.Socket
 
 /**
  * A higher-level [[BitVectorSocket]] that speaks in terms of `Packet`, framing each message with the

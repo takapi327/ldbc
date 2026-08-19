@@ -7,19 +7,13 @@
 package ldbc.mysql
 
 import ldbc.sql.{ SQLClientInfoException, SQLInvalidAuthorizationSpecException, SQLSyntaxErrorException }
-import ldbc.net.SSL
-import ldbc.mysql.telemetry.*
-import ldbc.mysql.syntax.*
-
-import ldbc.fx.{ Fx }
-import ldbc.fx.syntax.*
-
-
-
-
-
 import ldbc.sql.DatabaseMetaData
 
+import ldbc.fx.syntax.*
+import ldbc.fx.Fx
+import ldbc.mysql.syntax.*
+import ldbc.mysql.telemetry.*
+import ldbc.net.SSL
 
 class ConnectionTest extends FTestPlatform:
 

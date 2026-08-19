@@ -6,17 +6,14 @@
 
 package ldbc.mysql
 
-import ldbc.net.SSL
-
-import ldbc.fx.{ Fx }
-
 import scala.concurrent.duration.*
-
 
 import ldbc.sql.ResultSet
 
+import ldbc.fx.Fx
 import ldbc.mysql.*
 import ldbc.mysql.syntax.*
+import ldbc.net.SSL
 
 class ServerCursorFetchTest extends FTestPlatform:
 

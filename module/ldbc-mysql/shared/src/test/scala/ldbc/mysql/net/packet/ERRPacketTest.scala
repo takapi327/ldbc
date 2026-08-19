@@ -6,9 +6,17 @@
 
 package ldbc.mysql.net.packet
 
-import ldbc.sql.{ BatchUpdateException, SQLDataException, SQLFeatureNotSupportedException, SQLIntegrityConstraintViolationException, SQLInvalidAuthorizationSpecException, SQLTransactionRollbackException }
 import scodec.bits.BitVector
 import scodec.Attempt
+
+import ldbc.sql.{
+  BatchUpdateException,
+  SQLDataException,
+  SQLFeatureNotSupportedException,
+  SQLIntegrityConstraintViolationException,
+  SQLInvalidAuthorizationSpecException,
+  SQLTransactionRollbackException
+}
 
 import ldbc.mysql.*
 import ldbc.mysql.data.*

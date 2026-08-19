@@ -8,7 +8,6 @@ package ldbc.mysql.telemetry
 
 import ldbc.sql.Attribute
 
-
 /**
  * ldbc-specific telemetry attributes.
  *

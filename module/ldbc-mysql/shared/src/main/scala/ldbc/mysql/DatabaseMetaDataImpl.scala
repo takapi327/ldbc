@@ -6,17 +6,14 @@
 
 package ldbc.mysql
 
-import ldbc.sql.{ SQLException, SQLFeatureNotSupportedException }
 import scala.collection.immutable.{ ListMap, SortedMap }
+
+import ldbc.sql.{ Connection, DatabaseMetaData, PreparedStatement, ResultSet, RowIdLifetime, Statement }
+import ldbc.sql.{ SQLException, SQLFeatureNotSupportedException }
+import ldbc.sql.Types.*
 
 import ldbc.fx.{ Fx, Ref }
 import ldbc.fx.syntax.*
-
-import ldbc.mysql.telemetry.Tracer
-
-import ldbc.sql.{ Connection, DatabaseMetaData, PreparedStatement, ResultSet, RowIdLifetime, Statement }
-import ldbc.sql.Types.*
-
 import ldbc.mysql.data.*
 import ldbc.mysql.data.Constants.*
 import ldbc.mysql.net.packet.request.*
@@ -25,6 +22,7 @@ import ldbc.mysql.net.protocol.*
 import ldbc.mysql.net.Protocol
 import ldbc.mysql.syntax.*
 import ldbc.mysql.telemetry.{ DatabaseMetrics, TelemetryConfig }
+import ldbc.mysql.telemetry.Tracer
 import ldbc.mysql.util.StringHelper
 import ldbc.mysql.util.Version
 

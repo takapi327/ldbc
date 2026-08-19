@@ -7,17 +7,13 @@
 package ldbc.mysql.authenticator
 
 import ldbc.sql.SQLInvalidAuthorizationSpecException
-import ldbc.net.SSL
-import ldbc.mysql.telemetry.*
 
-import ldbc.fx.{ Fx }
 import ldbc.fx.syntax.*
-
-
-
+import ldbc.fx.Fx
 import ldbc.mysql.*
-
 import ldbc.mysql.authenticator.MysqlClearPasswordPlugin
+import ldbc.mysql.telemetry.*
+import ldbc.net.SSL
 
 class MysqlNativePasswordTest extends FTestPlatform:
 

@@ -64,10 +64,10 @@ object Span:
 
   /** A span that ignores all annotations. */
   val noop: Span = new Span:
-    override def addAttribute(attribute: Attribute[?]): Fx[Unit]                            = Fx.unit
-    override def addAttributes(attributes: Attribute[?]*): Fx[Unit]                         = Fx.unit
-    override def recordException(exception: Throwable, attributes: Attribute[?]*): Fx[Unit] = Fx.unit
-    override def setStatus(status: StatusCode, description: String): Fx[Unit]               = Fx.unit
+    override def addAttribute(attribute:    Attribute[?]):                           Fx[Unit] = Fx.unit
+    override def addAttributes(attributes:  Attribute[?]*):                          Fx[Unit] = Fx.unit
+    override def recordException(exception: Throwable, attributes:   Attribute[?]*): Fx[Unit] = Fx.unit
+    override def setStatus(status:          StatusCode, description: String):        Fx[Unit] = Fx.unit
 
 /**
  * A handle to a not-yet-started span, mirroring otel4s's `SpanOps`. [[use]] runs the body with the
@@ -149,6 +149,6 @@ object TracerProvider:
   /** A provider that yields no-op tracers. */
   val noop: TracerProvider = new TracerProvider:
     override def tracer(name: String): TracerBuilder = new TracerBuilder:
-      override def withVersion(version: String): TracerBuilder     = this
+      override def withVersion(version:     String): TracerBuilder = this
       override def withSchemaUrl(schemaUrl: String): TracerBuilder = this
-      override def get: Fx[Tracer]                                 = Fx.pure(Tracer.noop)
+      override def get:                              Fx[Tracer]    = Fx.pure(Tracer.noop)

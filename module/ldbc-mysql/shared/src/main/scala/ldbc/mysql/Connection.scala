@@ -6,23 +6,19 @@
 
 package ldbc.mysql
 
-import ldbc.sql.SQLClientInfoException
 import scala.concurrent.duration.*
 
-import ldbc.fx.{ Fx, Ref, Resource }
-
-import ldbc.net.{ IoEngine, SSL, Socket, SocketOptions }
-
-import ldbc.mysql.telemetry.Tracer
-
 import ldbc.sql.DatabaseMetaData
+import ldbc.sql.SQLClientInfoException
 
+import ldbc.authentication.plugin.*
+import ldbc.fx.{ Fx, Ref, Resource }
 import ldbc.mysql.data.*
 import ldbc.mysql.net.*
 import ldbc.mysql.net.protocol.*
 import ldbc.mysql.telemetry.{ DatabaseMetrics, TelemetryConfig }
-
-import ldbc.authentication.plugin.*
+import ldbc.mysql.telemetry.Tracer
+import ldbc.net.{ IoEngine, SSL, Socket, SocketOptions }
 
 type Connection[F[_]] = ldbc.sql.Connection[F]
 
@@ -58,21 +54,21 @@ object Connection:
     host:                        String,
     port:                        Int,
     user:                        String,
-    password:                    Option[String]                        = None,
-    database:                    Option[String]                        = None,
-    debug:                       Boolean                               = false,
-    ssl:                         SSL                                   = SSL.None,
-    socketOptions:               SocketOptions                         = SocketOptions.default,
-    readTimeout:                 Duration                              = Duration.Inf,
-    allowPublicKeyRetrieval:     Boolean                               = false,
-    useCursorFetch:              Boolean                               = false,
-    useServerPrepStmts:          Boolean                               = false,
-    maxAllowedPacket:            Int                                   = MySQLConfig.DEFAULT_PACKET_SIZE,
+    password:                    Option[String] = None,
+    database:                    Option[String] = None,
+    debug:                       Boolean = false,
+    ssl:                         SSL = SSL.None,
+    socketOptions:               SocketOptions = SocketOptions.default,
+    readTimeout:                 Duration = Duration.Inf,
+    allowPublicKeyRetrieval:     Boolean = false,
+    useCursorFetch:              Boolean = false,
+    useServerPrepStmts:          Boolean = false,
+    maxAllowedPacket:            Int = MySQLConfig.DEFAULT_PACKET_SIZE,
     databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
-    defaultAuthenticationPlugin: Option[AuthenticationPlugin[Fx]]      = None,
-    plugins:                     List[AuthenticationPlugin[Fx]]        = List.empty[AuthenticationPlugin[Fx]],
-    telemetryConfig:             TelemetryConfig                       = TelemetryConfig.default,
-    databaseMetrics:             Option[DatabaseMetrics]               = None
+    defaultAuthenticationPlugin: Option[AuthenticationPlugin[Fx]] = None,
+    plugins:                     List[AuthenticationPlugin[Fx]] = List.empty[AuthenticationPlugin[Fx]],
+    telemetryConfig:             TelemetryConfig = TelemetryConfig.default,
+    databaseMetrics:             Option[DatabaseMetrics] = None
   ): Tracer ?=> Resource[LdbcConnection] = default[Unit](
     host,
     port,
@@ -102,21 +98,21 @@ object Connection:
     user:                        String,
     before:                      Connection[Fx] => Fx[A],
     after:                       (A, Connection[Fx]) => Fx[Unit],
-    password:                    Option[String]                        = None,
-    database:                    Option[String]                        = None,
-    debug:                       Boolean                               = false,
-    ssl:                         SSL                                   = SSL.None,
-    socketOptions:               SocketOptions                         = SocketOptions.default,
-    readTimeout:                 Duration                              = Duration.Inf,
-    allowPublicKeyRetrieval:     Boolean                               = false,
-    useCursorFetch:              Boolean                               = false,
-    useServerPrepStmts:          Boolean                               = false,
-    maxAllowedPacket:            Int                                   = MySQLConfig.DEFAULT_PACKET_SIZE,
+    password:                    Option[String] = None,
+    database:                    Option[String] = None,
+    debug:                       Boolean = false,
+    ssl:                         SSL = SSL.None,
+    socketOptions:               SocketOptions = SocketOptions.default,
+    readTimeout:                 Duration = Duration.Inf,
+    allowPublicKeyRetrieval:     Boolean = false,
+    useCursorFetch:              Boolean = false,
+    useServerPrepStmts:          Boolean = false,
+    maxAllowedPacket:            Int = MySQLConfig.DEFAULT_PACKET_SIZE,
     databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
-    defaultAuthenticationPlugin: Option[AuthenticationPlugin[Fx]]      = None,
-    plugins:                     List[AuthenticationPlugin[Fx]]        = List.empty[AuthenticationPlugin[Fx]],
-    telemetryConfig:             TelemetryConfig                       = TelemetryConfig.default,
-    databaseMetrics:             Option[DatabaseMetrics]               = None
+    defaultAuthenticationPlugin: Option[AuthenticationPlugin[Fx]] = None,
+    plugins:                     List[AuthenticationPlugin[Fx]] = List.empty[AuthenticationPlugin[Fx]],
+    telemetryConfig:             TelemetryConfig = TelemetryConfig.default,
+    databaseMetrics:             Option[DatabaseMetrics] = None
   ): Tracer ?=> Resource[LdbcConnection] = default(
     host,
     port,
@@ -144,21 +140,21 @@ object Connection:
     host:                        String,
     port:                        Int,
     user:                        String,
-    password:                    Option[String]                        = None,
-    database:                    Option[String]                        = None,
-    debug:                       Boolean                               = false,
-    ssl:                         SSL                                   = SSL.None,
-    socketOptions:               SocketOptions                         = SocketOptions.default,
-    readTimeout:                 Duration                              = Duration.Inf,
-    allowPublicKeyRetrieval:     Boolean                               = false,
-    useCursorFetch:              Boolean                               = false,
-    useServerPrepStmts:          Boolean                               = false,
-    maxAllowedPacket:            Int                                   = MySQLConfig.DEFAULT_PACKET_SIZE,
+    password:                    Option[String] = None,
+    database:                    Option[String] = None,
+    debug:                       Boolean = false,
+    ssl:                         SSL = SSL.None,
+    socketOptions:               SocketOptions = SocketOptions.default,
+    readTimeout:                 Duration = Duration.Inf,
+    allowPublicKeyRetrieval:     Boolean = false,
+    useCursorFetch:              Boolean = false,
+    useServerPrepStmts:          Boolean = false,
+    maxAllowedPacket:            Int = MySQLConfig.DEFAULT_PACKET_SIZE,
     databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
-    defaultAuthenticationPlugin: Option[AuthenticationPlugin[Fx]]      = None,
-    plugins:                     List[AuthenticationPlugin[Fx]]        = List.empty[AuthenticationPlugin[Fx]],
-    telemetryConfig:             TelemetryConfig                       = TelemetryConfig.default,
-    databaseMetrics:             Option[DatabaseMetrics]               = None,
+    defaultAuthenticationPlugin: Option[AuthenticationPlugin[Fx]] = None,
+    plugins:                     List[AuthenticationPlugin[Fx]] = List.empty[AuthenticationPlugin[Fx]],
+    telemetryConfig:             TelemetryConfig = TelemetryConfig.default,
+    databaseMetrics:             Option[DatabaseMetrics] = None,
     before:                      Connection[Fx] => Fx[A],
     after:                       (A, Connection[Fx]) => Fx[Unit]
   ): Tracer ?=> Resource[LdbcConnection] =
@@ -177,7 +173,9 @@ object Connection:
     val sockets: Resource[Socket] =
       Resource
         .eval(validateEndpoint)
-        .flatMap(_ => Resource.make(IoEngine.global.connect(host, port, defaultConnectTimeout, socketOptions))(_.close()))
+        .flatMap(_ =>
+          Resource.make(IoEngine.global.connect(host, port, defaultConnectTimeout, socketOptions))(_.close())
+        )
 
     fromSockets(
       sockets,
@@ -207,20 +205,20 @@ object Connection:
     host:                        String,
     port:                        Int,
     user:                        String,
-    password:                    Option[String]                        = None,
-    database:                    Option[String]                        = None,
-    debug:                       Boolean                               = false,
+    password:                    Option[String] = None,
+    database:                    Option[String] = None,
+    debug:                       Boolean = false,
     sslOptions:                  Option[SSLNegotiation.Options],
-    readTimeout:                 Duration                              = Duration.Inf,
-    allowPublicKeyRetrieval:     Boolean                               = false,
-    useCursorFetch:              Boolean                               = false,
-    useServerPrepStmts:          Boolean                               = false,
-    maxAllowedPacket:            Int                                   = MySQLConfig.DEFAULT_PACKET_SIZE,
+    readTimeout:                 Duration = Duration.Inf,
+    allowPublicKeyRetrieval:     Boolean = false,
+    useCursorFetch:              Boolean = false,
+    useServerPrepStmts:          Boolean = false,
+    maxAllowedPacket:            Int = MySQLConfig.DEFAULT_PACKET_SIZE,
     databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = None,
     defaultAuthenticationPlugin: Option[AuthenticationPlugin[Fx]],
     plugins:                     List[AuthenticationPlugin[Fx]],
-    telemetryConfig:             TelemetryConfig                       = TelemetryConfig.default,
-    databaseMetrics:             Option[DatabaseMetrics]               = None,
+    telemetryConfig:             TelemetryConfig = TelemetryConfig.default,
+    databaseMetrics:             Option[DatabaseMetrics] = None,
     acquire:                     Connection[Fx] => Fx[A],
     release:                     (A, Connection[Fx]) => Fx[Unit]
   ): Tracer ?=> Resource[LdbcConnection] =
