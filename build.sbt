@@ -4,7 +4,6 @@
  *  please view the LICENSE file that was distributed with this source code.
  */
 
-import com.typesafe.tools.mima.core.*
 import BuildSettings.*
 import Implicits.*
 import JavaVersions.*
@@ -44,17 +43,6 @@ ThisBuild / githubWorkflowBuild ~= { steps =>
 ThisBuild / githubWorkflowTargetBranches        := Seq("**")
 ThisBuild / githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v")))
 ThisBuild / tlSitePublishBranch                 := None
-ThisBuild / mimaBinaryIssueFilters ++= List(
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.connector.net.packet.response.ResultSetRowPacket.decoder"),
-  ProblemFilters.exclude[DirectMissingMethodProblem](
-    "ldbc.connector.net.packet.response.BinaryProtocolResultSetRowPacket.decodeValue"
-  ),
-  // New Statement methods introduced in line with MySQL Connector/J 9.7.0 (WL #17215)
-  ProblemFilters.exclude[ReversedMissingMethodProblem]("ldbc.sql.Statement.enquoteLiteral"),
-  ProblemFilters.exclude[ReversedMissingMethodProblem]("ldbc.sql.Statement.enquoteIdentifier"),
-  ProblemFilters.exclude[ReversedMissingMethodProblem]("ldbc.sql.Statement.enquoteNCharLiteral"),
-  ProblemFilters.exclude[ReversedMissingMethodProblem]("ldbc.sql.Statement.isSimpleIdentifier")
-)
 
 lazy val sql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
