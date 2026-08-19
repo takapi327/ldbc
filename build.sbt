@@ -240,6 +240,34 @@ lazy val awsAuthenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativeP
   .nativeSettings(Test / nativeBrewFormulas += "s2n")
   .dependsOn(authenticationPlugin)
 
+lazy val mysql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Full)
+  .module("mysql", "Effect-agnostic MySQL driver (CE-free) built on Fx / net / pool")
+  .settings(
+    scalacOptions += "-Ykind-projector:underscores",
+    libraryDependencies ++= Seq(
+      "org.scodec"    %%% "scodec-bits"   % "1.2.5",
+      "org.scodec"    %%% "scodec-core"   % "2.3.3",
+      "org.typelevel" %%% "twiddles-core" % "1.1.0",
+      "org.scalameta" %%% "munit"         % "1.2.4" % Test
+    ),
+    (Compile / sourceGenerators) += Def.task {
+      Generator.version(
+        version      = version.value,
+        scalaVersion = scalaVersion.value,
+        sbtVersion   = sbtVersion.value,
+        dir          = (Compile / sourceManaged).value
+      )
+    }.taskValue
+  )
+  .jsSettings(
+    Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
+  )
+  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
+  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .dependsOn(sql, net, authenticationPlugin)
+  .dependsOn(fx % "compile->compile;test->test")
+
 lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
   .settings(description := "Projects that provide sbt plug-ins")
   .settings((Compile / sourceGenerators) += Def.task {
@@ -349,7 +377,13 @@ lazy val benchmark = (project in file("benchmark"))
       "dev.zio"            %% "zio"               % "2.1.26"
     )
   )
-  .dependsOn(jdbcConnector.jvm, connector.jvm, queryBuilder.jvm, fx.jvm)
+  .dependsOn(
+    jdbcConnector.jvm,
+    connector.jvm,
+    queryBuilder.jvm,
+    fx.jvm,
+    mysql.jvm
+  )
   .enablePlugins(JmhPlugin, AutomateHeaderPlugin, NoPublishPlugin)
 
 lazy val http4sExample = crossProject(JVMPlatform)
@@ -546,6 +580,7 @@ lazy val ldbc = tlCrossRootProject
     fx,
     net,
     jdbcConnector,
+    mysql,
     connector,
     dsl,
     catsEffect,
