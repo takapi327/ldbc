@@ -25,7 +25,7 @@ object FxInstances:
    */
   given catsMonadErrorForFx: MonadError[Fx, Throwable] =
     new MonadError[Fx, Throwable] with StackSafeMonad[Fx]:
-      override def pure[A](a: A): Fx[A] = Fx.pure(a)
-      override def flatMap[A, B](fa: Fx[A])(f: A => Fx[B]): Fx[B] = fa.flatMap(f)
-      override def raiseError[A](e: Throwable): Fx[A] = Fx.raiseError(e)
+      override def pure[A](a:             A):                            Fx[A] = Fx.pure(a)
+      override def flatMap[A, B](fa:      Fx[A])(f: A => Fx[B]):         Fx[B] = fa.flatMap(f)
+      override def raiseError[A](e:       Throwable):                    Fx[A] = Fx.raiseError(e)
       override def handleErrorWith[A](fa: Fx[A])(f: Throwable => Fx[A]): Fx[A] = fa.handleErrorWith(f)
