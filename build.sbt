@@ -131,6 +131,9 @@ lazy val statement = crossProject(JVMPlatform, JSPlatform, NativePlatform)
 lazy val queryBuilder = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("query-builder", "Project to build type-safe queries")
+  .settings(
+    libraryDependencies += "org.typelevel" %%% "cats-effect" % "3.7.0" % Test
+  )
   .dependsOn(statement)
 
 lazy val schema = crossProject(JVMPlatform, JSPlatform, NativePlatform)
