@@ -1,0 +1,83 @@
+/**
+ * Copyright (c) 2023-2026 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
+
+package ldbc.mysql
+
+import ldbc.net.SSL
+import ldbc.mysql.telemetry.*
+
+import ldbc.fx.{ Fx }
+import ldbc.fx.syntax.*
+
+
+
+import ldbc.sql.Statement
+
+class StatementUpdateTest extends FTestPlatform:
+
+  given Tracer = Tracer.noop
+
+  private val connection = Connection(
+    host     = TestConfig.host,
+    port     = TestConfig.port,
+    user     = TestConfig.user,
+    password = Some(TestConfig.password),
+    database = Some("connector_test"),
+    ssl      = SSL.Trusted
+  )
+
+  test("As a result of entering one case of data, there will be one affected row.") {
+    assertFx(
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          _         <- statement.executeUpdate("CREATE TABLE `bit_table`(`bit_column` BIT NOT NULL)")
+          count     <- statement.executeUpdate("INSERT INTO `bit_table`(`bit_column`) VALUES (b'1')")
+          _         <- statement.executeUpdate("DROP TABLE `bit_table`")
+        yield count
+      },
+      1
+    )
+  }
+
+  test("As a result of entering data for two cases, there will be two affected rows.") {
+    assertFx(
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          _         <- statement.executeUpdate("CREATE TABLE `bit_table`(`bit_column` BIT NOT NULL)")
+          count     <- statement.executeUpdate("INSERT INTO `bit_table`(`bit_column`) VALUES (b'0'),(b'1')")
+          _         <- statement.executeUpdate("DROP TABLE `bit_table`")
+        yield count
+      },
+      2
+    )
+  }
+
+  test("The value generated when adding a record of AUTO_INCREMENT is returned.") {
+    assertFx(
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          _         <-
+            statement
+              .executeUpdate(
+                "CREATE TABLE `auto_inc_table`(`id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, `c1` VARCHAR(255) NOT NULL)"
+              )
+          _         <- statement.executeUpdate("INSERT INTO `auto_inc_table`(`id`, `c1`) VALUES (null, 'column 1')")
+          resultSet <-
+            statement.executeUpdate(
+              "INSERT INTO `auto_inc_table`(`id`, `c1`) VALUES (null, 'column 2')",
+              Statement.RETURN_GENERATED_KEYS
+            ) *> statement.getGeneratedKeys()
+          _         <- resultSet.next()
+          generated <- resultSet.getLong(1)
+          _         <- statement.executeUpdate("DROP TABLE `auto_inc_table`")
+        yield generated
+      },
+      2L
+    )
+  }
