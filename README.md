@@ -352,6 +352,16 @@ However, not all jdbc APIs could be supported. Nor can we guarantee that it is p
 
 We will continue to develop features and improve the stability of the ldbc connector to achieve the same level of stability and reliability as the jdbc connector.
 
+### 0.8.x: sbt 2 support
+
+We plan to support sbt 2 in the 0.8.x series. This mainly affects `ldbc-plugin`, which will be cross-built so that it can be used from both sbt 1 and sbt 2 projects.
+
+### 0.9.x: Support for multiple effect systems
+
+The goal of the 0.9.x series is **not** to migrate away from Cats Effect, but to support multiple effect systems purely. This includes plain `Future`.
+
+Cats Effect remains a first-class citizen; the intent is to let users choose the effect system that fits their project without giving up the type-safe API that ldbc provides.
+
 ## Contributing
 
 All suggestions welcome :)!
