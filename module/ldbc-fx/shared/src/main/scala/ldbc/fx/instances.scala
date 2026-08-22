@@ -26,20 +26,20 @@ import ldbc.effect.{ Concurrent, Fiber as EffectFiber }
  *     cancel the loser" pattern `Fx.timeout` uses.
  */
 given concurrentFx: Concurrent[Fx] with
-  def pure[A](a: A): Fx[A]                                          = Fx.pure(a)
-  def flatMap[A, B](fa: Fx[A])(f: A => Fx[B]): Fx[B]               = fa.flatMap(f)
-  override def map[A, B](fa: Fx[A])(f: A => B): Fx[B]              = fa.map(f)
-  def raiseError[A](e: Throwable): Fx[A]                           = Fx.raiseError(e)
-  def handleErrorWith[A](fa: Fx[A])(f: Throwable => Fx[A]): Fx[A]  = fa.handleErrorWith(f)
-  def delay[A](thunk: => A): Fx[A]                                 = Fx.delay(thunk)
-  override def blocking[A](thunk: => A): Fx[A]                     = Fx.blocking(thunk)
+  def pure[A](a:                  A):                                         Fx[A] = Fx.pure(a)
+  def flatMap[A, B](fa:           Fx[A])(f: A => Fx[B]):                      Fx[B] = fa.flatMap(f)
+  override def map[A, B](fa:      Fx[A])(f: A => B):                          Fx[B] = fa.map(f)
+  def raiseError[A](e:            Throwable):                                 Fx[A] = Fx.raiseError(e)
+  def handleErrorWith[A](fa:      Fx[A])(f: Throwable => Fx[A]):              Fx[A] = fa.handleErrorWith(f)
+  def delay[A](thunk:             => A):                                      Fx[A] = Fx.delay(thunk)
+  override def blocking[A](thunk: => A):                                      Fx[A] = Fx.blocking(thunk)
   def bracket[A, B](acquire: Fx[A])(use: A => Fx[B])(release: A => Fx[Unit]): Fx[B] =
     Fx.bracket(acquire)(use)(release)
-  def onCancel[A](fa: Fx[A])(fin: Fx[Unit]): Fx[A]                = fa.onCancel(fin)
-  def uncancelable[A](fa: Fx[A]): Fx[A]                           = Fx.uncancelable(fa)
-  def monotonic: Fx[FiniteDuration]                              = Fx.monotonic
-  def realTime:  Fx[FiniteDuration]                              = Fx.realTime
-  def sleep(duration: FiniteDuration): Fx[Unit]                 = Fx.sleep(duration)
+  def onCancel[A](fa:     Fx[A])(fin: Fx[Unit]): Fx[A]              = fa.onCancel(fin)
+  def uncancelable[A](fa: Fx[A]):                Fx[A]              = Fx.uncancelable(fa)
+  def monotonic:                                 Fx[FiniteDuration] = Fx.monotonic
+  def realTime:                                  Fx[FiniteDuration] = Fx.realTime
+  def sleep(duration:     FiniteDuration):       Fx[Unit]           = Fx.sleep(duration)
   override def timeout[A](fa: Fx[A], after: FiniteDuration)(onTimeout: => Throwable): Fx[A] =
     Fx.timeout(fa, after)(onTimeout)
 
