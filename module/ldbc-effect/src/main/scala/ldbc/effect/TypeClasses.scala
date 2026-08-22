@@ -20,7 +20,7 @@ import scala.concurrent.duration.FiniteDuration
 
 /** Sequencing plus error handling — the minimal monad. */
 trait MonadThrow[F[_]]:
-  def pure[A](a: A): F[A]
+  def pure[A](a:        A):                  F[A]
   def flatMap[A, B](fa: F[A])(f: A => F[B]): F[B]
 
   /**
@@ -30,16 +30,16 @@ trait MonadThrow[F[_]]:
    */
   def map[A, B](fa: F[A])(f: A => B): F[B] = flatMap(fa)(a => pure(f(a)))
 
-  def raiseError[A](e: Throwable): F[A]
+  def raiseError[A](e:       Throwable):                  F[A]
   def handleErrorWith[A](fa: F[A])(f: Throwable => F[A]): F[A]
 
-  def unit: F[Unit]                            = pure(())
-  def void[A](fa: F[A]): F[Unit]               = map(fa)(_ => ())
-  def as[A, B](fa: F[A], b: B): F[B]           = map(fa)(_ => b)
-  def productR[A, B](fa: F[A])(fb: F[B]): F[B] = flatMap(fa)(_ => fb)
-  def flatTap[A, B](fa: F[A])(f: A => F[B]): F[A] = flatMap(fa)(a => map(f(a))(_ => a))
-  def whenA(cond: Boolean)(fa: => F[Unit]): F[Unit] = if cond then fa else unit
-  def attempt[A](fa: F[A]): F[Either[Throwable, A]] =
+  def unit:                                        F[Unit]                 = pure(())
+  def void[A](fa:        F[A]):                    F[Unit]                 = map(fa)(_ => ())
+  def as[A, B](fa:       F[A], b:     B):          F[B]                    = map(fa)(_ => b)
+  def productR[A, B](fa: F[A])(fb:    F[B]):       F[B]                    = flatMap(fa)(_ => fb)
+  def flatTap[A, B](fa:  F[A])(f:     A => F[B]):  F[A]                    = flatMap(fa)(a => map(f(a))(_ => a))
+  def whenA(cond:        Boolean)(fa: => F[Unit]): F[Unit]                 = if cond then fa else unit
+  def attempt[A](fa: F[A]):                        F[Either[Throwable, A]] =
     handleErrorWith(map(fa)(Right(_): Either[Throwable, A]))(e => pure(Left(e)))
 
 object MonadThrow:
@@ -47,7 +47,7 @@ object MonadThrow:
 
 /** Suspension of synchronous side effects. */
 trait Sync[F[_]] extends MonadThrow[F]:
-  def delay[A](thunk: => A): F[A]
+  def delay[A](thunk:    => A): F[A]
   def blocking[A](thunk: => A): F[A] = delay(thunk)
 
 object Sync:
@@ -62,7 +62,7 @@ object Sync:
  */
 trait Async[F[_]] extends Sync[F]:
   def async[A](k: (Either[Throwable, A] => Unit) => F[Option[F[Unit]]]): F[A]
-  def async_[A](k: (Either[Throwable, A] => Unit) => Unit): F[A] =
+  def async_[A](k: (Either[Throwable, A] => Unit) => Unit):              F[A] =
     async(cb => map(delay(k(cb)))(_ => Option.empty[F[Unit]]))
 
   /**
@@ -107,7 +107,7 @@ trait Fiber[F[_], A]:
  * so there is no `Concurrent[Future]`.
  */
 trait Concurrent[F[_]] extends Temporal[F]:
-  def start[A](fa: F[A]): F[Fiber[F, A]]
+  def start[A](fa:   F[A]):           F[Fiber[F, A]]
   def race[A, B](fa: F[A], fb: F[B]): F[Either[A, B]]
 
   /** Default: race the action against a timer; `race` cancels the loser. Instances may override. */

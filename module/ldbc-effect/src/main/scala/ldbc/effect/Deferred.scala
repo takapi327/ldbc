@@ -37,7 +37,7 @@ final class Deferred[F[_], A] private (state: AtomicReference[Deferred.State[A]]
     @annotation.tailrec
     def loop(): Boolean =
       state.get match
-        case Deferred.Done(_) => false
+        case Deferred.Done(_)          => false
         case w @ Deferred.Waiting(cbs) =>
           if state.compareAndSet(w, Deferred.Done(a)) then
             cbs.foreach(cb => cb(Right(a)))
@@ -56,7 +56,7 @@ final class Deferred[F[_], A] private (state: AtomicReference[Deferred.State[A]]
     @annotation.tailrec
     def loop(): Unit =
       state.get match
-        case _: Deferred.Done[A] => ()
+        case _: Deferred.Done[A]       => ()
         case w @ Deferred.Waiting(cbs) =>
           if !state.compareAndSet(w, Deferred.Waiting(cbs.filterNot(_ eq cb))) then loop()
     loop()

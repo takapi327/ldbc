@@ -18,22 +18,22 @@ import munit.CatsEffectSuite
 class PrimitivesTest extends CatsEffectSuite:
 
   private given Concurrent[IO] with
-    def pure[A](a: A): IO[A]                                     = IO.pure(a)
-    def flatMap[A, B](fa: IO[A])(f: A => IO[B]): IO[B]           = fa.flatMap(f)
-    override def map[A, B](fa: IO[A])(f: A => B): IO[B]          = fa.map(f)
-    def raiseError[A](e: Throwable): IO[A]                       = IO.raiseError(e)
-    def handleErrorWith[A](fa: IO[A])(f: Throwable => IO[A]): IO[A] = fa.handleErrorWith(f)
-    def delay[A](thunk: => A): IO[A]                            = IO(thunk)
-    override def blocking[A](thunk: => A): IO[A]                = IO.blocking(thunk)
-    def async[A](k: (Either[Throwable, A] => Unit) => IO[Option[IO[Unit]]]): IO[A] = IO.async(k)
+    def pure[A](a:                  A):                            IO[A] = IO.pure(a)
+    def flatMap[A, B](fa:           IO[A])(f: A => IO[B]):         IO[B] = fa.flatMap(f)
+    override def map[A, B](fa:      IO[A])(f: A => B):             IO[B] = fa.map(f)
+    def raiseError[A](e:            Throwable):                    IO[A] = IO.raiseError(e)
+    def handleErrorWith[A](fa:      IO[A])(f: Throwable => IO[A]): IO[A] = fa.handleErrorWith(f)
+    def delay[A](thunk:             => A):                         IO[A] = IO(thunk)
+    override def blocking[A](thunk: => A):                         IO[A] = IO.blocking(thunk)
+    def async[A](k: (Either[Throwable, A] => Unit) => IO[Option[IO[Unit]]]):    IO[A] = IO.async(k)
     def bracket[A, B](acquire: IO[A])(use: A => IO[B])(release: A => IO[Unit]): IO[B] =
       acquire.bracket(use)(release)
-    def onCancel[A](fa: IO[A])(fin: IO[Unit]): IO[A]            = fa.onCancel(fin)
-    def uncancelable[A](fa: IO[A]): IO[A]                       = IO.uncancelable(_ => fa)
-    def monotonic: IO[FiniteDuration]                          = IO.monotonic
-    def realTime:  IO[FiniteDuration]                          = IO.realTime
-    def sleep(duration: FiniteDuration): IO[Unit]              = IO.sleep(duration)
-    def start[A](fa: IO[A]): IO[Fiber[IO, A]] =
+    def onCancel[A](fa:     IO[A])(fin: IO[Unit]): IO[A]              = fa.onCancel(fin)
+    def uncancelable[A](fa: IO[A]):                IO[A]              = IO.uncancelable(_ => fa)
+    def monotonic:                                 IO[FiniteDuration] = IO.monotonic
+    def realTime:                                  IO[FiniteDuration] = IO.realTime
+    def sleep(duration:     FiniteDuration):       IO[Unit]           = IO.sleep(duration)
+    def start[A](fa: IO[A]):                       IO[Fiber[IO, A]]   =
       fa.start.map(fib =>
         new Fiber[IO, A]:
           def cancel: IO[Unit] = fib.cancel
