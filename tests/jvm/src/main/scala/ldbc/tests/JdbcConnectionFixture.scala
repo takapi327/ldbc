@@ -12,9 +12,9 @@ import munit.*
 import munit.catseffect.IOFixture
 import munit.catseffect.ResourceFixture.FixtureNotInstantiatedException
 
-import jdbc.connector.Connector
+import ldbc.sql.DataSource
 
-import ldbc.{ Connector, DataSource }
+import jdbc.connector.Connector
 
 private case class JdbcConnectionFixture(
   name:              String,
@@ -45,9 +45,9 @@ private case class JdbcConnectionFixture(
         case None    => throw new FixtureNotInstantiatedException(name)
 
       override def beforeAll(): IO[Unit] =
-        datasource.getConnection.map(Connector.fromConnection).allocated.flatMap {
-          case (conn, close) =>
-            connectBeforeAll(conn) *> IO(this.value = Some((conn, close)))
+        datasource.getConnection.flatMap { (rawConnection, close) =>
+          val connector = Connector.fromConnection(rawConnection)
+          connectBeforeAll(connector) *> IO(this.value = Some((connector, close)))
         }
 
       override def afterAll(): IO[Unit] =

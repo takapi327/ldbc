@@ -6,4 +6,4 @@
 
 package ldbc.connector
 
-package object syntax extends ResultSetOps
+package object syntax extends ResultSetOps with DataSourceOps

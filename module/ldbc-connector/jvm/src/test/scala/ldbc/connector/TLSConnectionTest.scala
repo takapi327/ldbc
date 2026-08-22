@@ -8,6 +8,8 @@ package ldbc.connector
 
 import cats.effect.*
 
+import ldbc.connector.syntax.*
+
 class TLSConnectionTest extends FTestPlatform:
 
   test("Verify that you can connect to MySQL with a TLS connection") {
@@ -21,7 +23,6 @@ class TLSConnectionTest extends FTestPlatform:
         .setPassword("securepassword")
         .setDatabase("world")
         .setSSL(SSL.fromKeyStoreResource("keystore.jks", "password".toCharArray, "password".toCharArray))
-        .getConnection
         .use { conn =>
           for
             statement <- conn.createStatement()

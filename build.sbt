@@ -47,6 +47,9 @@ ThisBuild / tlSitePublishBranch                 := None
 lazy val sql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("sql", "JDBC API wrapped project with Effect System")
+  .settings(
+    libraryDependencies += "org.scalameta" %%% "munit" % "1.2.4" % Test
+  )
   .platformsSettings(JSPlatform, NativePlatform)(
     libraryDependencies ++= Seq(
       "io.github.cquiroz" %%% "scala-java-time" % "2.7.0"
@@ -58,8 +61,7 @@ lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .module("core", "Core project for ldbc")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-free"   % "2.13.0",
-      "org.typelevel" %%% "cats-effect" % "3.7.0"
+      "org.typelevel" %%% "cats-free" % "2.13.0"
     )
   )
   .dependsOn(sql)
@@ -92,6 +94,18 @@ lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     )
   )
   .dependsOn(core)
+
+lazy val catsEffect = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
+  .module("cats-effect", "Cats Effect boundary for ldbc (fs2 streaming and IO helpers over the shared DSL)")
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel" %%% "cats-effect"       % "3.7.0",
+      "co.fs2"        %%% "fs2-core"          % "3.13.0",
+      "org.typelevel" %%% "munit-cats-effect" % "2.2.0" % Test
+    )
+  )
+  .dependsOn(dsl)
 
 lazy val statement = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
@@ -136,8 +150,9 @@ lazy val jdbcConnector = crossProject(JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .in(file("module/jdbc-connector"))
   .settings(
-    name        := "jdbc-connector",
-    description := "JDBC API wrapped project with Effect System."
+    name                                    := "jdbc-connector",
+    description                             := "JDBC API wrapped project with Effect System.",
+    libraryDependencies += "org.typelevel" %%% "cats-effect" % "3.7.0"
   )
   .defaultSettings
   .dependsOn(core)
@@ -302,7 +317,7 @@ lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
   .nativeSettings(Test / nativeBrewFormulas += "s2n")
-  .dependsOn(connector, queryBuilder, schema)
+  .dependsOn(connector, queryBuilder, schema, catsEffect)
   .enablePlugins(NoPublishPlugin)
 
 lazy val benchmark = (project in file("benchmark"))
@@ -492,6 +507,7 @@ lazy val ldbc = tlCrossRootProject
     jdbcConnector,
     connector,
     dsl,
+    catsEffect,
     statement,
     queryBuilder,
     schema,

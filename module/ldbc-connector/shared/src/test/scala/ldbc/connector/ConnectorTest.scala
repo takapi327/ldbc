@@ -9,6 +9,7 @@ package ldbc.connector
 import cats.effect.*
 
 import ldbc.sql.*
+import ldbc.sql.DataSource
 
 import ldbc.*
 import ldbc.free.*
@@ -86,14 +87,16 @@ class ConnectorTest extends FTestPlatform:
   class MockDataSource[F[_]: Sync] extends DataSource[F]:
     var connections: List[MockConnection[F]] = List.empty
 
-    override def getConnection: Resource[F, Connection[F]] =
-      Resource.make(
-        Sync[F].delay {
-          val conn = new MockConnection[F]
-          connections = connections :+ conn
-          conn: Connection[F]
-        }
-      )(_.close())
+    override def getConnection: F[(Connection[F], F[Unit])] =
+      Resource
+        .make(
+          Sync[F].delay {
+            val conn = new MockConnection[F]
+            connections = connections :+ conn
+            conn: Connection[F]
+          }
+        )(_.close())
+        .allocated
 
   // Mock LogHandler to capture log events
   class MockLogHandler[F[_]: Sync] extends LogHandler[F]:

@@ -10,9 +10,9 @@ import com.mysql.cj.jdbc.MysqlDataSource
 
 import cats.effect.*
 
-import jdbc.connector.*
+import ldbc.sql.DataSource
 
-import ldbc.DataSource
+import jdbc.connector.*
 
 class JdbcConnectionTest extends ConnectionTest:
 

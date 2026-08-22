@@ -33,12 +33,13 @@ object RollbackHandler:
    * @return a [[Resource]] that provides a [[Connector]] with automatic rollback on release
    */
   def resource[F[_]: Async](dataSource: MySQLDataSource[F, ?]): Resource[F, Connector[F]] =
-    dataSource.getConnection.flatMap { rawConnection =>
-      Resource.make(
-        rawConnection
-          .setAutoCommit(false)
-          .as(
-            LdbcConnector.fromConnection[F](new TestConnection[F](rawConnection))
-          )
-      )(_ => rawConnection.rollback())
+    Resource.make(dataSource.getConnection)(_._2).flatMap {
+      case (rawConnection, _) =>
+        Resource.make(
+          rawConnection
+            .setAutoCommit(false)
+            .as(
+              LdbcConnector.fromConnection[F](new TestConnection[F](rawConnection))
+            )
+        )(_ => rawConnection.rollback())
     }
