@@ -272,7 +272,7 @@ object Main extends ZIOAppDefault:
       }
 ```
 
-### パフォーマンス
+### Performance
 
 Performance results from the Cats Effect to ZIO conversion are shown below.
 
