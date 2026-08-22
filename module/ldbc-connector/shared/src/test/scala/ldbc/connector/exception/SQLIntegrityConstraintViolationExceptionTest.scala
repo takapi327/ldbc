@@ -6,11 +6,8 @@
 
 package ldbc.connector.exception
 
-import scala.collection.immutable.SortedMap
-
 import org.typelevel.otel4s.Attribute
 
-import ldbc.connector.data.Parameter
 import ldbc.connector.FTestPlatform
 
 class SQLIntegrityConstraintViolationExceptionTest extends FTestPlatform:
@@ -39,19 +36,13 @@ class SQLIntegrityConstraintViolationExceptionTest extends FTestPlatform:
   }
 
   test("SQLIntegrityConstraintViolationException.fields should return correct attributes") {
-    val params = SortedMap(
-      1 -> Parameter.int(101),
-      2 -> Parameter.string("test_user")
-    )
-
     val exception = new SQLIntegrityConstraintViolationException(
       message    = "Violation of unique constraint",
       sqlState   = Some("23505"),
       vendorCode = Some(1063),
       sql        = Some("INSERT INTO users (id, name) VALUES (?, ?)"),
       detail     = Some("Key (id)=(101) already exists"),
-      hint       = Some("Use a different primary key value"),
-      params     = params
+      hint       = Some("Use a different primary key value")
     )
 
     val fields = exception.fields
@@ -63,11 +54,6 @@ class SQLIntegrityConstraintViolationExceptionTest extends FTestPlatform:
     assertEquals(fields.contains(Attribute("error.detail", "Key (id)=(101) already exists")), true)
     assertEquals(fields.contains(Attribute("error.hint", "Use a different primary key value")), true)
 
-    // Check parameter attributes
-    assertEquals(fields.contains(Attribute("error.parameter.1.type", "INT")), true)
-    assertEquals(fields.contains(Attribute("error.parameter.1.value", "101")), true)
-    assertEquals(fields.contains(Attribute("error.parameter.2.type", "CHAR")), true)
-    assertEquals(fields.contains(Attribute("error.parameter.2.value", "'test_user'")), true)
   }
 
   test("getMessage should include all relevant information") {
@@ -75,11 +61,7 @@ class SQLIntegrityConstraintViolationExceptionTest extends FTestPlatform:
       message    = "Foreign key constraint violated",
       sqlState   = Some("23503"),
       vendorCode = Some(1452),
-      sql        = Some("INSERT INTO orders (user_id, product_id) VALUES (?, ?)"),
-      params     = SortedMap(
-        1 -> Parameter.int(999),
-        2 -> Parameter.int(101)
-      )
+      sql        = Some("INSERT INTO orders (user_id, product_id) VALUES (?, ?)")
     )
 
     val message = exception.getMessage
@@ -92,6 +74,4 @@ class SQLIntegrityConstraintViolationExceptionTest extends FTestPlatform:
       message.contains("INSERT INTO orders (user_id, product_id) VALUES (?, ?)"),
       "Message should contain the SQL query"
     )
-    assert(message.contains("999"), "Message should contain the first parameter value")
-    assert(message.contains("101"), "Message should contain the second parameter value")
   }

@@ -415,6 +415,87 @@ trait Statement[F[_]]:
    */
   def executeLargeBatch(): F[Array[Long]]
 
+  /**
+   * Returns a <code>String</code> enclosed in single quotes. Any occurrence of a
+   * single quote within the string will be replaced by two single quotes.
+   *
+   * <blockquote>
+   * <table class="striped">
+   * <caption>Examples of the conversion:</caption>
+   * <tr><th>Value</th><th>Result</th></tr>
+   * <tr><td>Hello</td><td>'Hello'</td></tr>
+   * <tr><td>G'Day</td><td>'G''Day'</td></tr>
+   * <tr><td>'G''Day'</td><td>'''G''''Day'''</td></tr>
+   * <tr><td>I'''M</td><td>'I''''''M'</td></tr>
+   * </table>
+   * </blockquote>
+   *
+   * The driver may apply additional, vendor-specific escaping rules
+   * (for example, escaping of backslash characters depending on the
+   * <code>NO_BACKSLASH_ESCAPES</code> SQL mode in MySQL).
+   *
+   * @param value a character string
+   * @return A string enclosed by single quotes with every single quote
+   *         converted to two single quotes
+   */
+  def enquoteLiteral(value: String): F[String]
+
+  /**
+   * Returns a SQL identifier. If <code>identifier</code> is a simple SQL identifier:
+   * <ul>
+   * <li>Return the original value if <code>alwaysQuote</code> is <code>false</code></li>
+   * <li>Return a delimited identifier if <code>alwaysQuote</code> is <code>true</code></li>
+   * </ul>
+   *
+   * If <code>identifier</code> is not a simple SQL identifier, <code>identifier</code> will be
+   * enclosed in the identifier quote character used by the database
+   * (backtick <code>`</code> by default in MySQL, or double quote <code>"</code> when the
+   * <code>ANSI_QUOTES</code> SQL mode is enabled).
+   *
+   * @param identifier a SQL identifier
+   * @param alwaysQuote indicates if a simple SQL identifier should be
+   *                    returned as a quoted identifier
+   * @return A simple SQL identifier or a delimited identifier
+   */
+  def enquoteIdentifier(identifier: String, alwaysQuote: Boolean): F[String]
+
+  /**
+   * Returns a <code>String</code> representing a National Character Set Literal
+   * enclosed in single quotes and prefixed with a upper case letter <code>N</code>.
+   * Any occurrence of a single quote within the string will be replaced
+   * by two single quotes.
+   *
+   * <blockquote>
+   * <table class="striped">
+   * <caption>Examples of the conversion:</caption>
+   * <tr><th>Value</th><th>Result</th></tr>
+   * <tr><td>Hello</td><td>N'Hello'</td></tr>
+   * <tr><td>G'Day</td><td>N'G''Day'</td></tr>
+   * <tr><td>N'Hello'</td><td>N'Hello'</td></tr>
+   * </table>
+   * </blockquote>
+   *
+   * @param value a character string
+   * @return the result of replacing every single quote character in the
+   *         argument by two single quote characters where this entire result is
+   *         then prefixed with 'N'.
+   */
+  def enquoteNCharLiteral(value: String): F[String]
+
+  /**
+   * Retrieves whether <code>identifier</code> is a simple SQL identifier that can be used
+   * in a SQL statement without quoting.
+   *
+   * In MySQL, a simple identifier consists of characters in the range
+   * <code>[0-9a-zA-Z$_]</code> or extended characters (<code>U+0080</code> and above),
+   * must not consist solely of digits, must not be longer than 64 characters
+   * and must not be a reserved word.
+   *
+   * @param identifier a SQL identifier
+   * @return true if a simple SQL identifier, false otherwise
+   */
+  def isSimpleIdentifier(identifier: String): F[Boolean]
+
 object Statement:
 
   /**
