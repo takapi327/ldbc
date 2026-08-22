@@ -338,15 +338,13 @@ class HelperFunctionsSyntaxTest extends CatsEffectSuite with HelperFunctionsSynt
     assert(ops.isInstanceOf[DBIO.Ops[_]])
   }
 
-  test("syncDBIO should be available as implicit Sync instance") {
-    val sync = syncDBIO
+  test("monadErrorDBIO should be available as implicit MonadError instance") {
+    val monad = monadErrorDBIO
 
-    // Test basic Sync operations
-    val pureDBIO       = sync.pure(42)
-    val mappedDBIO     = sync.map(pureDBIO)(_ + 1)
-    val flatMappedDBIO = sync.flatMap(pureDBIO)(x => sync.pure(x * 2))
+    val pureDBIO       = monad.pure(42)
+    val mappedDBIO     = monad.map(pureDBIO)(_ + 1)
+    val flatMappedDBIO = monad.flatMap(pureDBIO)(x => monad.pure(x * 2))
 
-    // Just verify the operations compile and return DBIO instances
     assert(pureDBIO.isInstanceOf[DBIO[_]])
     assert(mappedDBIO.isInstanceOf[DBIO[_]])
     assert(flatMappedDBIO.isInstanceOf[DBIO[_]])

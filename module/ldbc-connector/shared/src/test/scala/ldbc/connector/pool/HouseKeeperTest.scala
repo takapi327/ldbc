@@ -13,6 +13,7 @@ import cats.syntax.all.*
 import cats.effect.*
 
 import ldbc.connector.*
+import ldbc.connector.syntax.*
 
 class HouseKeeperTest extends FTestPlatform:
 
@@ -89,7 +90,7 @@ class HouseKeeperTest extends FTestPlatform:
     resource.use { datasource =>
       for
         // Use and release a connection to ensure it needs validation
-        _ <- datasource.getConnection.use { conn =>
+        _ <- datasource.use { conn =>
                conn.createStatement().flatMap(_.executeQuery("SELECT 1")).void
              }
         statusBefore <- datasource.status
@@ -118,7 +119,7 @@ class HouseKeeperTest extends FTestPlatform:
           // Wait for initial metrics
           _ <- IO.sleep(1.second)
           // Acquire a connection to change pool state
-          _ <- datasource.getConnection.use(_ => IO.sleep(100.millis))
+          _ <- datasource.use(_ => IO.sleep(100.millis))
           // Wait for maintenance to update metrics
           _       <- IO.sleep(1.second)
           metrics <- tracker.getMetrics
@@ -197,7 +198,7 @@ class HouseKeeperTest extends FTestPlatform:
     resource.use { datasource =>
       for
         // Use a connection
-        _ <- datasource.getConnection.use { conn =>
+        _ <- datasource.use { conn =>
                conn.createStatement().flatMap(_.executeQuery("SELECT 1")).void
              }
 
@@ -231,7 +232,7 @@ class HouseKeeperTest extends FTestPlatform:
     resource.use { datasource =>
       // This test is limited by the minimum 40-second lifetime
       // We'll test the logic by verifying connections are properly managed
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statusDuringUse <- datasource.status
           // Execute a query to ensure connection is active
@@ -258,7 +259,7 @@ class HouseKeeperTest extends FTestPlatform:
       case (datasource, tracker) =>
         for
           // Create and use connections
-          _ <- datasource.getConnection.use(_.createStatement())
+          _ <- datasource.use(_.createStatement())
 
           initialStatus <- datasource.status
 
@@ -288,7 +289,7 @@ class HouseKeeperTest extends FTestPlatform:
     resource.use { datasource =>
       // Run concurrent operations while maintenance is happening
       val operations = (1 to 20).toList.traverse_ { i =>
-        datasource.getConnection.use { conn =>
+        datasource.use { conn =>
           conn.createStatement().flatMap(_.executeQuery(s"SELECT $i")).void
         }
       }
@@ -326,7 +327,7 @@ class HouseKeeperTest extends FTestPlatform:
       case (datasource, tracker) =>
         for
           // Use connections
-          _ <- datasource.getConnection.use(_.createStatement())
+          _ <- datasource.use(_.createStatement())
 
           // Wait for initial state
           _        <- IO.sleep(1.second)
@@ -402,7 +403,7 @@ class HouseKeeperTest extends FTestPlatform:
           _ <- IO.sleep(300.millis) // Wait for initial maintenance
 
           // Get a connection to change state
-          connFiber <- datasource.getConnection.use { _ =>
+          connFiber <- datasource.use { _ =>
                          IO.sleep(500.millis)
                        }.start
 

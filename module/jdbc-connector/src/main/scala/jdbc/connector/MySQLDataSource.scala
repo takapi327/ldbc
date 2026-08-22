@@ -15,8 +15,7 @@ import scala.concurrent.ExecutionContext
 import cats.effect.*
 
 import ldbc.sql.Connection
-
-import ldbc.DataSource as LdbcDataSource
+import ldbc.sql.DataSource as LdbcDataSource
 
 object MySQLDataSource:
 
@@ -25,16 +24,17 @@ object MySQLDataSource:
     connectEC:  ExecutionContext
   )(using ev: Async[F])
     extends LdbcDataSource[F]:
-    override def getConnection: Resource[F, Connection[F]] =
+    override def getConnection: F[(Connection[F], F[Unit])] =
       Resource
         .fromAutoCloseable(ev.evalOn(ev.delay(dataSource.getConnection()), connectEC))
         .map(conn => ConnectionImpl(conn))
+        .allocated
 
   private case class JavaConnection[F[_]: Sync](
     connection: java.sql.Connection
   ) extends LdbcDataSource[F]:
-    override def getConnection: Resource[F, Connection[F]] =
-      Resource.pure(ConnectionImpl(connection))
+    override def getConnection: F[(Connection[F], F[Unit])] =
+      Resource.pure(ConnectionImpl(connection)).allocated
 
   class Driver[F[_]](using ev: Async[F]):
 
@@ -42,13 +42,14 @@ object MySQLDataSource:
       driver: String,
       conn:   () => java.sql.Connection
     ): LdbcDataSource[F] = new LdbcDataSource[F]:
-      override def getConnection: Resource[F, Connection[F]] =
+      override def getConnection: F[(Connection[F], F[Unit])] =
         Resource
           .fromAutoCloseable(ev.blocking {
             Class.forName(driver)
             conn()
           })
           .map(conn => ConnectionImpl(conn))
+          .allocated
 
     /** Construct a new `DataSource` that uses the JDBC `DriverManager` to allocate connections.
      *

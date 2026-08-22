@@ -15,6 +15,7 @@ import cats.effect.*
 import ldbc.sql.*
 
 import ldbc.connector.*
+import ldbc.connector.syntax.*
 
 class KeepaliveExecutorTest extends FTestPlatform:
 
@@ -385,7 +386,7 @@ class KeepaliveExecutorTest extends FTestPlatform:
           initialMetrics <- tracker.getMetrics
 
           // Use some connections to make them idle
-          _ <- datasource.getConnection.use { conn =>
+          _ <- datasource.use { conn =>
                  conn.createStatement().flatMap(_.executeQuery("SELECT 1")).void
                }
 

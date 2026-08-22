@@ -6,12 +6,8 @@
 
 package ldbc.free
 
-import scala.concurrent.duration.FiniteDuration
-
 import cats.~>
 import cats.free.Free
-
-import cats.effect.kernel.{ Poll, Sync }
 
 import ldbc.sql.*
 
@@ -25,23 +21,6 @@ object StatementOp:
     override def visit[F[_]](v: StatementOp.Visitor[F]): F[A] = v.raiseError(e)
   final case class HandleErrorWith[A](fa: StatementIO[A], f: Throwable => StatementIO[A]) extends StatementOp[A]:
     override def visit[F[_]](v: StatementOp.Visitor[F]): F[A] = v.handleErrorWith(fa)(f)
-  case object Monotonic extends StatementOp[FiniteDuration]:
-    override def visit[F[_]](v: StatementOp.Visitor[F]): F[FiniteDuration] = v.monotonic
-  case object Realtime extends StatementOp[FiniteDuration]:
-    override def visit[F[_]](v: StatementOp.Visitor[F]): F[FiniteDuration] = v.realTime
-  final case class Suspend[A](hint: Sync.Type, thunk: () => A) extends StatementOp[A]:
-    override def visit[F[_]](v: StatementOp.Visitor[F]): F[A] = v.suspend(hint)(thunk())
-  final case class ForceR[A, B](fa: StatementIO[A], fb: StatementIO[B]) extends StatementOp[B]:
-    override def visit[F[_]](v: StatementOp.Visitor[F]): F[B] = v.forceR(fa)(fb)
-  final case class Uncancelable[A](body: Poll[StatementIO] => StatementIO[A]) extends StatementOp[A]:
-    override def visit[F[_]](v: StatementOp.Visitor[F]): F[A] = v.uncancelable(body)
-  final case class Poll1[A](poll: Any, fa: StatementIO[A]) extends StatementOp[A]:
-    override def visit[F[_]](v: Visitor[F]): F[A] = v.poll(poll, fa)
-  case object Canceled extends StatementOp[Unit]:
-    override def visit[F[_]](v: StatementOp.Visitor[F]): F[Unit] = v.canceled
-  final case class OnCancel[A](fa: StatementIO[A], fin: StatementIO[Unit]) extends StatementOp[A]:
-    override def visit[F[_]](v: StatementOp.Visitor[F]): F[A] = v.onCancel(fa, fin)
-
   final case class ExecuteQuery(sql: String) extends StatementOp[ResultSet[?]]:
     override def visit[F[_]](v: StatementOp.Visitor[F]): F[ResultSet[?]] = v.executeQuery(sql)
   final case class ExecuteUpdate(sql: String) extends StatementOp[Int]:
@@ -61,17 +40,9 @@ object StatementOp:
   trait Visitor[F[_]] extends (StatementOp ~> F):
     final def apply[A](fa: StatementOp[A]): F[A] = fa.visit(this)
 
-    def embed[A](e:            Embedded[A]):                                      F[A]
-    def handleErrorWith[A](fa: StatementIO[A])(f:   Throwable => StatementIO[A]): F[A]
-    def raiseError[A](err:     Throwable):                                        F[A]
-    def monotonic:                                                                F[FiniteDuration]
-    def realTime:                                                                 F[FiniteDuration]
-    def suspend[A](hint:       Sync.Type)(thunk:    => A):                        F[A]
-    def forceR[A, B](fa:       StatementIO[A])(fb:  StatementIO[B]):              F[B]
-    def uncancelable[A](body:  Poll[StatementIO] => StatementIO[A]):              F[A]
-    def poll[A](poll:          Any, fa:             StatementIO[A]):              F[A]
-    def canceled:                                                                 F[Unit]
-    def onCancel[A](fa:        StatementIO[A], fin: StatementIO[Unit]):           F[A]
+    def embed[A](e:            Embedded[A]):                                    F[A]
+    def handleErrorWith[A](fa: StatementIO[A])(f: Throwable => StatementIO[A]): F[A]
+    def raiseError[A](err:     Throwable):                                      F[A]
 
     def executeQuery(sql:  String): F[ResultSet[?]]
     def executeUpdate(sql: String): F[Int]
@@ -90,19 +61,6 @@ object StatementIO:
   def raiseError[A](err: Throwable): StatementIO[A] = Free.liftF(StatementOp.RaiseError(err))
   def handleErrorWith[A](fa: StatementIO[A])(f: Throwable => StatementIO[A]): StatementIO[A] =
     Free.liftF[StatementOp, A](StatementOp.HandleErrorWith(fa, f))
-  val monotonic: StatementIO[FiniteDuration] = Free.liftF[StatementOp, FiniteDuration](StatementOp.Monotonic)
-  val realtime:  StatementIO[FiniteDuration] = Free.liftF[StatementOp, FiniteDuration](StatementOp.Realtime)
-  def suspend[A](hint: Sync.Type)(thunk: => A): StatementIO[A] =
-    Free.liftF[StatementOp, A](StatementOp.Suspend(hint, () => thunk))
-  def forceR[A, B](fa: StatementIO[A])(fb: StatementIO[B]): StatementIO[B] =
-    Free.liftF[StatementOp, B](StatementOp.ForceR(fa, fb))
-  def uncancelable[A](body: Poll[StatementIO] => StatementIO[A]): StatementIO[A] =
-    Free.liftF[StatementOp, A](StatementOp.Uncancelable(body))
-  val canceled: StatementIO[Unit] = Free.liftF[StatementOp, Unit](StatementOp.Canceled)
-  def onCancel[A](fa: StatementIO[A], fin: StatementIO[Unit]): StatementIO[A] =
-    Free.liftF[StatementOp, A](StatementOp.OnCancel(fa, fin))
-  def capturePoll[M[_]](mpoll: Poll[M]): Poll[StatementIO] = new Poll[StatementIO]:
-    override def apply[A](fa: StatementIO[A]): StatementIO[A] = Free.liftF[StatementOp, A](StatementOp.Poll1(mpoll, fa))
 
   def executeQuery(sql: String): StatementIO[ResultSet[?]] =
     Free.liftF[StatementOp, ResultSet[?]](StatementOp.ExecuteQuery(sql))

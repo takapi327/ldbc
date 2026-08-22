@@ -21,20 +21,24 @@ class TLSConnectionTest extends FTestPlatform:
         cfg <- S2nConfig.builder
                  .withPemsToTrustStore(List(ca))
                  .build[IO]
-        connection <- MySQLDataSource
-                        .build[IO]("127.0.0.1", 13306, "ldbc_ssl_user")
-                        .setPassword("securepassword")
-                        .setDatabase("world")
-                        .setSSL(
-                          SSL
-                            .fromS2nConfig(cfg)
-                            .withTLSParameters(
-                              TLSParameters(
-                                serverName = Some("MySQL_Server")
-                              )
+        connection <- Resource
+                        .make(
+                          MySQLDataSource
+                            .build[IO]("127.0.0.1", 13306, "ldbc_ssl_user")
+                            .setPassword("securepassword")
+                            .setDatabase("world")
+                            .setSSL(
+                              SSL
+                                .fromS2nConfig(cfg)
+                                .withTLSParameters(
+                                  TLSParameters(
+                                    serverName = Some("MySQL_Server")
+                                  )
+                                )
                             )
-                        )
-                        .getConnection
+                            .getConnection
+                        )(_._2)
+                        .map(_._1)
       yield connection).use { conn =>
         for
           statement <- conn.createStatement()

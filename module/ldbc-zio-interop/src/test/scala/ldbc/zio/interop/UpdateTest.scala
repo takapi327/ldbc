@@ -10,6 +10,7 @@ import java.time.*
 
 import ldbc.connector.*
 import ldbc.connector.data.*
+import ldbc.connector.syntax.*
 
 import zio.*
 import zio.test.*
@@ -26,7 +27,7 @@ object UpdateTest extends ZIOSpecDefault:
 
   def spec = suite("UpdateTest")(
     test("Boolean values can be set as parameters") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.createStatement()
           _         <- statement.executeUpdate(
@@ -42,7 +43,7 @@ object UpdateTest extends ZIOSpecDefault:
       }
     },
     test("Byte values can be set as parameters") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.createStatement()
           _ <- statement.executeUpdate("CREATE TABLE `client_statement_byte_table`(`c1` BIT NOT NULL, `c2` BIT NULL)")
@@ -56,7 +57,7 @@ object UpdateTest extends ZIOSpecDefault:
       }
     },
     test("Short values can be set as parameters") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.createStatement()
           _         <- statement.executeUpdate(
@@ -72,7 +73,7 @@ object UpdateTest extends ZIOSpecDefault:
       }
     },
     test("Int values can be set as parameters") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.createStatement()
           _         <- statement.executeUpdate(
@@ -90,7 +91,7 @@ object UpdateTest extends ZIOSpecDefault:
       }
     },
     test("Long values can be set as parameters") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.createStatement()
           _         <- statement.executeUpdate(
@@ -107,7 +108,7 @@ object UpdateTest extends ZIOSpecDefault:
       }
     },
     test("BigInt values can be set as parameters") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.createStatement()
           _         <-
@@ -124,7 +125,7 @@ object UpdateTest extends ZIOSpecDefault:
       }
     },
     test("Float values can be set as parameters") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.createStatement()
           _         <-
@@ -139,7 +140,7 @@ object UpdateTest extends ZIOSpecDefault:
       }
     },
     test("Double values can be set as parameters") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.createStatement()
           _         <- statement.executeUpdate(
@@ -155,7 +156,7 @@ object UpdateTest extends ZIOSpecDefault:
       }
     },
     test("BigDecimal values can be set as parameters") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.createStatement()
           _         <- statement.executeUpdate(
@@ -171,7 +172,7 @@ object UpdateTest extends ZIOSpecDefault:
       }
     },
     test("String values can be set as parameters") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.createStatement()
           _         <- statement.executeUpdate(
@@ -187,7 +188,7 @@ object UpdateTest extends ZIOSpecDefault:
       }
     },
     test("Array[Byte] values can be set as parameters") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.createStatement()
           _         <- statement.executeUpdate(
@@ -204,7 +205,7 @@ object UpdateTest extends ZIOSpecDefault:
       }
     },
     test("java.time.LocalTime values can be set as parameters") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.createStatement()
           _ <- statement.executeUpdate("CREATE TABLE `client_statement_time_table`(`c1` TIME NOT NULL, `c2` TIME NULL)")
@@ -220,7 +221,7 @@ object UpdateTest extends ZIOSpecDefault:
       }
     },
     test("java.time.LocalDate values can be set as parameters") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.createStatement()
           _ <- statement.executeUpdate("CREATE TABLE `client_statement_date_table`(`c1` DATE NOT NULL, `c2` DATE NULL)")
@@ -236,7 +237,7 @@ object UpdateTest extends ZIOSpecDefault:
       }
     },
     test("java.time.LocalDateTime values can be set as parameters") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.createStatement()
           _         <- statement.executeUpdate(
@@ -251,7 +252,7 @@ object UpdateTest extends ZIOSpecDefault:
       }
     },
     test("java.time.Year values can be set as parameters") {
-      datasource.getConnection.use { conn =>
+      datasource.use { conn =>
         for
           statement <- conn.createStatement()
           _ <- statement.executeUpdate("CREATE TABLE `client_statement_year_table`(`c1` YEAR NOT NULL, `c2` YEAR NULL)")

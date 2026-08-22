@@ -14,6 +14,8 @@ import fs2.io.file.*
 import fs2.io.net.tls.SecureContext
 import fs2.text
 
+import ldbc.connector.syntax.*
+
 class TLSConnectionTest extends FTestPlatform:
 
   test("Verify that you can connect to MySQL with a TLS connection") {
@@ -34,7 +36,6 @@ class TLSConnectionTest extends FTestPlatform:
                     .setPassword("securepassword")
                     .setDatabase("world")
                     .setSSL(SSL.fromSecureContext(secureContext))
-                    .getConnection
                     .use { conn =>
                       for
                         statement <- conn.createStatement()
