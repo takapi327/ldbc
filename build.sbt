@@ -56,6 +56,17 @@ lazy val sql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     )
   )
 
+lazy val effect = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
+  .module("effect", "Effect type-class hierarchy (Async/Temporal/Concurrent) and concurrent primitives")
+  .settings(
+    libraryDependencies += "org.typelevel" %%% "munit-cats-effect" % "2.2.0" % Test
+  )
+  .jsSettings(
+    Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
+  )
+  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
+
 lazy val fx = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
   .module("fx", "Effect-agnostic core effect type (Fx); bridges to cats-effect / ZIO / Future")
@@ -539,6 +550,7 @@ lazy val ldbc = tlCrossRootProject
   .settings(commonSettings)
   .aggregate(
     sql,
+    effect,
     core,
     fx,
     net,
