@@ -1,0 +1,30 @@
+{
+  "name": "@ldbc/mcp-document-server",
+  "description": "Project for MCP document server for ldbc",
+  "version": "0.1.0-alpha6",
+  "type": "commonjs",
+  "main": "main.js",
+  "bin": {
+    "@ldbc/mcp-document-server": "main.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/takapi327/ldbc"
+  },
+  "homepage": "https://takapi327.github.io/ldbc/",
+  "author": "takapi327",
+  "license": "MIT",
+  "keywords": [
+    "mcp",
+    "scala",
+    "ldbc"
+  ],
+  "dependencies": {
+    "punycode": "2.1.1"
+  },
+  "devDependencies": {},
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  }
+}
