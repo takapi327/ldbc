@@ -1,0 +1,361 @@
+/**
+ * Copyright (c) 2023-2026 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
+
+package ldbc.mysql
+
+import scala.concurrent.duration.Duration
+
+import ldbc.sql.DatabaseMetaData
+
+import ldbc.fx.Fx
+import ldbc.mysql.telemetry.*
+import ldbc.net.{ SSL, SocketOptions }
+
+class MySQLDataSourceTest extends FTestPlatform:
+
+  test("MySQLDataSource should have correct default values when created with minimal parameters") {
+    val dataSource = MySQLDataSource[Unit](
+      host = "localhost",
+      port = 3306,
+      user = "root"
+    )
+
+    assertEquals(dataSource.host, "localhost")
+    assertEquals(dataSource.port, 3306)
+    assertEquals(dataSource.user, "root")
+    assertEquals(dataSource.password, None)
+    assertEquals(dataSource.database, None)
+    assertEquals(dataSource.debug, false)
+    assertEquals(dataSource.ssl, SSL.None)
+    assertEquals(dataSource.socketOptions, MySQLConfig.defaultSocketOptions)
+    assertEquals(dataSource.readTimeout, Duration.Inf)
+    assertEquals(dataSource.allowPublicKeyRetrieval, false)
+    assertEquals(dataSource.databaseTerm, Some(DatabaseMetaData.DatabaseTerm.CATALOG))
+    assertEquals(dataSource.useCursorFetch, false)
+    assertEquals(dataSource.useServerPrepStmts, false)
+    assertEquals(dataSource.maxAllowedPacket, MySQLConfig.DEFAULT_PACKET_SIZE)
+    assertEquals(dataSource.before, None)
+    assertEquals(dataSource.after, None)
+  }
+
+  test("setHost should update host value") {
+    val dataSource = MySQLDataSource[Unit]("localhost", 3306, "root")
+    val updated    = dataSource.setHost(TestConfig.host)
+
+    assertEquals(updated.host, TestConfig.host)
+    assertEquals(updated.port, dataSource.port)
+    assertEquals(updated.user, dataSource.user)
+  }
+
+  test("setPort should update port value") {
+    val dataSource = MySQLDataSource[Unit]("localhost", 3306, "root")
+    val updated    = dataSource.setPort(3307)
+
+    assertEquals(updated.port, 3307)
+    assertEquals(updated.host, dataSource.host)
+  }
+
+  test("setUser should update user value") {
+    val dataSource = MySQLDataSource[Unit]("localhost", 3306, "root")
+    val updated    = dataSource.setUser("testuser")
+
+    assertEquals(updated.user, "testuser")
+    assertEquals(updated.host, dataSource.host)
+  }
+
+  test("setPassword should update password to Some value") {
+    val dataSource = MySQLDataSource[Unit]("localhost", 3306, "root")
+    val updated    = dataSource.setPassword("secret")
+
+    assertEquals(updated.password, Some("secret"))
+  }
+
+  test("setDatabase should update database to Some value") {
+    val dataSource = MySQLDataSource[Unit]("localhost", 3306, "root")
+    val updated    = dataSource.setDatabase("testdb")
+
+    assertEquals(updated.database, Some("testdb"))
+  }
+
+  test("setDebug should update debug value") {
+    val dataSource = MySQLDataSource[Unit]("localhost", 3306, "root")
+    val updated    = dataSource.setDebug(true)
+
+    assertEquals(updated.debug, true)
+  }
+
+  test("setSSL should update SSL configuration") {
+    val dataSource = MySQLDataSource[Unit]("localhost", 3306, "root")
+    val updated    = dataSource.setSSL(SSL.Trusted)
+
+    assertEquals(updated.ssl, SSL.Trusted)
+  }
+
+  test("setSocketOptions should update socket options") {
+    val dataSource = MySQLDataSource[Unit]("localhost", 3306, "root")
+    val newOptions = SocketOptions(noDelay = false, keepAlive = true)
+    val updated    = dataSource.setSocketOptions(newOptions)
+
+    assertEquals(updated.socketOptions, newOptions)
+  }
+
+  test("setReadTimeout should update read timeout") {
+    val dataSource = MySQLDataSource[Unit]("localhost", 3306, "root")
+    val timeout    = Duration("30s")
+    val updated    = dataSource.setReadTimeout(timeout)
+
+    assertEquals(updated.readTimeout, timeout)
+  }
+
+  test("setAllowPublicKeyRetrieval should update allowPublicKeyRetrieval value") {
+    val dataSource = MySQLDataSource[Unit]("localhost", 3306, "root")
+    val updated    = dataSource.setAllowPublicKeyRetrieval(true)
+
+    assertEquals(updated.allowPublicKeyRetrieval, true)
+  }
+
+  test("setDatabaseTerm should update databaseTerm to Some value") {
+    val dataSource = MySQLDataSource[Unit]("localhost", 3306, "root")
+    val updated    = dataSource.setDatabaseTerm(DatabaseMetaData.DatabaseTerm.SCHEMA)
+
+    assertEquals(updated.databaseTerm, Some(DatabaseMetaData.DatabaseTerm.SCHEMA))
+  }
+
+  test("setTracer should update tracer to Some value") {
+    val dataSource = MySQLDataSource[Unit]("localhost", 3306, "root")
+    val tracer     = Tracer.noop
+    val updated    = dataSource.setTracer(tracer)
+
+    assertEquals(updated.tracer, Some(tracer))
+  }
+
+  test("setUseCursorFetch should update useCursorFetch value") {
+    val dataSource = MySQLDataSource[Unit]("localhost", 3306, "root")
+    val updated    = dataSource.setUseCursorFetch(true)
+
+    assertEquals(updated.useCursorFetch, true)
+  }
+
+  test("setUseServerPrepStmts should update useServerPrepStmts value") {
+    val dataSource = MySQLDataSource[Unit]("localhost", 3306, "root")
+    val updated    = dataSource.setUseServerPrepStmts(true)
+
+    assertEquals(updated.useServerPrepStmts, true)
+  }
+
+  test("setMaxAllowedPacket should update maxAllowedPacket value") {
+    val dataSource = MySQLDataSource[Unit]("localhost", 3306, "root")
+    val updated    = dataSource.setMaxAllowedPacket(1048576) // 1MB
+
+    assertEquals(updated.maxAllowedPacket, 1048576)
+    // Ensure other values remain unchanged
+    assertEquals(updated.host, dataSource.host)
+    assertEquals(updated.port, dataSource.port)
+  }
+
+  test("setMaxAllowedPacket should accept minimum valid value") {
+    val dataSource = MySQLDataSource[Unit]("localhost", 3306, "root")
+    val updated    = dataSource.setMaxAllowedPacket(MySQLConfig.MIN_PACKET_SIZE)
+
+    assertEquals(updated.maxAllowedPacket, MySQLConfig.MIN_PACKET_SIZE)
+  }
+
+  test("setMaxAllowedPacket should accept maximum valid value") {
+    val dataSource = MySQLDataSource[Unit]("localhost", 3306, "root")
+    val updated    = dataSource.setMaxAllowedPacket(MySQLConfig.MAX_PACKET_SIZE)
+
+    assertEquals(updated.maxAllowedPacket, MySQLConfig.MAX_PACKET_SIZE)
+  }
+
+  test("setMaxAllowedPacket should reject values below minimum") {
+    val dataSource = MySQLDataSource[Unit]("localhost", 3306, "root")
+
+    intercept[IllegalArgumentException] {
+      dataSource.setMaxAllowedPacket(MySQLConfig.MIN_PACKET_SIZE - 1)
+    }
+  }
+
+  test("setMaxAllowedPacket should reject values above maximum") {
+    val dataSource = MySQLDataSource[Unit]("localhost", 3306, "root")
+
+    intercept[IllegalArgumentException] {
+      dataSource.setMaxAllowedPacket(MySQLConfig.MAX_PACKET_SIZE + 1)
+    }
+  }
+
+  test("setMaxAllowedPacket should reject zero value") {
+    val dataSource = MySQLDataSource[Unit]("localhost", 3306, "root")
+
+    intercept[IllegalArgumentException] {
+      dataSource.setMaxAllowedPacket(0)
+    }
+  }
+
+  test("setMaxAllowedPacket should reject negative values") {
+    val dataSource = MySQLDataSource[Unit]("localhost", 3306, "root")
+
+    intercept[IllegalArgumentException] {
+      dataSource.setMaxAllowedPacket(-1)
+    }
+  }
+
+  test("withBefore should add a before hook and change type parameter") {
+    val dataSource = MySQLDataSource[Unit]("localhost", 3306, "root")
+    val beforeHook: Connection[Fx] => Fx[String] = _ => Fx.pure("before result")
+    val updated = dataSource.withBefore(beforeHook)
+
+    assert(updated.before.isDefined)
+    // Type parameter changes from Unit to String
+    val _: MySQLDataSource[String] = updated
+  }
+
+  test("withAfter should add an after hook") {
+    val dataSource = MySQLDataSource[Unit]("localhost", 3306, "root")
+    val afterHook: (Unit, Connection[Fx]) => Fx[Unit] = (_, _) => Fx.unit
+    val updated = dataSource.withAfter(afterHook)
+
+    assert(updated.after.isDefined)
+  }
+
+  test("withBeforeAfter should add both before and after hooks") {
+    val dataSource = MySQLDataSource[Unit]("localhost", 3306, "root")
+    val beforeHook: Connection[Fx] => Fx[String]         = _ => Fx.pure("before result")
+    val afterHook:  (String, Connection[Fx]) => Fx[Unit] = (_, _) => Fx.unit
+    val updated = dataSource.withBeforeAfter(beforeHook, afterHook)
+
+    assert(updated.before.isDefined)
+    assert(updated.after.isDefined)
+    // Type parameter changes from Unit to String
+    val _: MySQLDataSource[String] = updated
+  }
+
+  test("chaining multiple setter methods should work correctly") {
+    val dataSource = MySQLDataSource[Unit]("localhost", 3306, "root")
+      .setHost(TestConfig.host)
+      .setPort(3307)
+      .setUser("testuser")
+      .setPassword("testpass")
+      .setDatabase("testdb")
+      .setDebug(true)
+      .setSSL(SSL.Trusted)
+      .setAllowPublicKeyRetrieval(true)
+      .setUseCursorFetch(true)
+      .setUseServerPrepStmts(true)
+      .setMaxAllowedPacket(1048576)
+
+    assertEquals(dataSource.host, TestConfig.host)
+    assertEquals(dataSource.port, 3307)
+    assertEquals(dataSource.user, "testuser")
+    assertEquals(dataSource.password, Some("testpass"))
+    assertEquals(dataSource.database, Some("testdb"))
+    assertEquals(dataSource.debug, true)
+    assertEquals(dataSource.ssl, SSL.Trusted)
+    assertEquals(dataSource.allowPublicKeyRetrieval, true)
+    assertEquals(dataSource.useCursorFetch, true)
+    assertEquals(dataSource.useServerPrepStmts, true)
+    assertEquals(dataSource.maxAllowedPacket, 1048576)
+  }
+
+  test("MySQLDataSource.fromConfig should create DataSource from MySQLConfig") {
+    val config = MySQLConfig.default
+      .setHost("confighost")
+      .setPort(3308)
+      .setUser("configuser")
+      .setPassword("configpass")
+      .setDatabase("configdb")
+      .setDebug(true)
+      .setMaxAllowedPacket(2097152) // 2MB
+
+    val dataSource = MySQLDataSource.fromConfig(config)
+
+    assertEquals(dataSource.host, "confighost")
+    assertEquals(dataSource.port, 3308)
+    assertEquals(dataSource.user, "configuser")
+    assertEquals(dataSource.password, Some("configpass"))
+    assertEquals(dataSource.database, Some("configdb"))
+    assertEquals(dataSource.debug, true)
+    assertEquals(dataSource.maxAllowedPacket, 2097152)
+  }
+
+  test("MySQLDataSource.default should create DataSource with default config") {
+    val dataSource = MySQLDataSource.default
+
+    assertEquals(dataSource.host, TestConfig.host)
+    assertEquals(dataSource.port, 3306)
+    assertEquals(dataSource.user, "root")
+    assertEquals(dataSource.password, None)
+    assertEquals(dataSource.database, None)
+    assertEquals(dataSource.debug, false)
+  }
+
+  test("MySQLDataSource.build should create DataSource with specified parameters") {
+    val dataSource = MySQLDataSource.build(
+      host = "buildhost",
+      port = 3309,
+      user = "builduser"
+    )
+
+    assertEquals(dataSource.host, "buildhost")
+    assertEquals(dataSource.port, 3309)
+    assertEquals(dataSource.user, "builduser")
+    // Other values should be default
+    assertEquals(dataSource.password, None)
+    assertEquals(dataSource.database, None)
+    assertEquals(dataSource.debug, false)
+  }
+
+  test("MySQLDataSource should be immutable - original should not change") {
+    val original     = MySQLDataSource[Unit]("localhost", 3306, "root")
+    val originalHost = original.host
+    val originalPort = original.port
+
+    // Make multiple changes
+    val updated = original
+      .setHost("newhost")
+      .setPort(3308)
+      .setUser("newuser")
+      .setPassword("newpass")
+
+    // Original should remain unchanged
+    assertEquals(original.host, originalHost)
+    assertEquals(original.port, originalPort)
+    assertEquals(original.user, "root")
+    assertEquals(original.password, None)
+
+    // Updated should have new values
+    assertEquals(updated.host, "newhost")
+    assertEquals(updated.port, 3308)
+    assertEquals(updated.user, "newuser")
+    assertEquals(updated.password, Some("newpass"))
+  }
+
+  test("MySQLDataSource with custom socket options") {
+    val customOptions = SocketOptions(noDelay = false, keepAlive = true)
+
+    val dataSource = MySQLDataSource[Unit]("localhost", 3306, "root")
+      .setSocketOptions(customOptions)
+    assertEquals(dataSource.socketOptions, customOptions)
+  }
+
+  test("MySQLDataSource with different SSL configurations") {
+    val dataSourceNone    = MySQLDataSource[Unit]("localhost", 3306, "root")
+    val dataSourceTrusted = MySQLDataSource[Unit]("localhost", 3306, "root").setSSL(SSL.Trusted)
+    val dataSourceSystem  = MySQLDataSource[Unit]("localhost", 3306, "root").setSSL(SSL.System)
+
+    assertEquals(dataSourceNone.ssl, SSL.None)
+    assertEquals(dataSourceTrusted.ssl, SSL.Trusted)
+    assertEquals(dataSourceSystem.ssl, SSL.System)
+  }
+
+  test("MySQLDataSource with different DatabaseTerm values") {
+    val dataSourceCatalog = MySQLDataSource[Unit]("localhost", 3306, "root")
+      .setDatabaseTerm(DatabaseMetaData.DatabaseTerm.CATALOG)
+    val dataSourceSchema = MySQLDataSource[Unit]("localhost", 3306, "root")
+      .setDatabaseTerm(DatabaseMetaData.DatabaseTerm.SCHEMA)
+
+    assertEquals(dataSourceCatalog.databaseTerm, Some(DatabaseMetaData.DatabaseTerm.CATALOG))
+    assertEquals(dataSourceSchema.databaseTerm, Some(DatabaseMetaData.DatabaseTerm.SCHEMA))
+  }

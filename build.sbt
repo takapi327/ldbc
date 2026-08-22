@@ -56,16 +56,6 @@ lazy val sql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     )
   )
 
-lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
-  .crossType(CrossType.Pure)
-  .module("core", "Core project for ldbc")
-  .settings(
-    libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-free" % "2.13.0"
-    )
-  )
-  .dependsOn(sql)
-
 lazy val fx = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
   .module("fx", "Effect-agnostic core effect type (Fx); bridges to cats-effect / ZIO / Future")
@@ -83,13 +73,23 @@ lazy val net = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .nativeSettings(Test / nativeBrewFormulas += "s2n")
   .dependsOn(fx)
 
+lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
+  .module("core", "Core project for ldbc")
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel" %%% "cats-free" % "2.13.0"
+    )
+  )
+  .dependsOn(sql)
+  .dependsOn(fx)
+
 lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("dsl", "Projects that provide a way to connect to the database")
   .settings(
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "twiddles-core"     % "1.1.0",
-      "co.fs2"        %%% "fs2-core"          % "3.13.0",
       "org.typelevel" %%% "munit-cats-effect" % "2.2.0" % Test
     )
   )
@@ -106,6 +106,7 @@ lazy val catsEffect = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     )
   )
   .dependsOn(dsl)
+  .dependsOn(fx)
 
 lazy val statement = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
@@ -118,6 +119,9 @@ lazy val statement = crossProject(JVMPlatform, JSPlatform, NativePlatform)
 lazy val queryBuilder = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("query-builder", "Project to build type-safe queries")
+  .settings(
+    libraryDependencies += "org.typelevel" %%% "cats-effect" % "3.7.0" % Test
+  )
   .dependsOn(statement)
 
 lazy val schema = crossProject(JVMPlatform, JSPlatform, NativePlatform)
@@ -226,6 +230,34 @@ lazy val awsAuthenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativeP
   .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
   .nativeSettings(Test / nativeBrewFormulas += "s2n")
   .dependsOn(authenticationPlugin)
+
+lazy val mysql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Full)
+  .module("mysql", "Effect-agnostic MySQL driver (CE-free) built on Fx / net / pool")
+  .settings(
+    scalacOptions += "-Ykind-projector:underscores",
+    libraryDependencies ++= Seq(
+      "org.scodec"    %%% "scodec-bits"   % "1.2.5",
+      "org.scodec"    %%% "scodec-core"   % "2.3.3",
+      "org.typelevel" %%% "twiddles-core" % "1.1.0",
+      "org.scalameta" %%% "munit"         % "1.2.4" % Test
+    ),
+    (Compile / sourceGenerators) += Def.task {
+      Generator.version(
+        version      = version.value,
+        scalaVersion = scalaVersion.value,
+        sbtVersion   = sbtVersion.value,
+        dir          = (Compile / sourceManaged).value
+      )
+    }.taskValue
+  )
+  .jsSettings(
+    Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
+  )
+  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
+  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .dependsOn(sql, net, authenticationPlugin)
+  .dependsOn(fx % "compile->compile;test->test")
 
 lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
   .settings(description := "Projects that provide sbt plug-ins")
@@ -336,7 +368,13 @@ lazy val benchmark = (project in file("benchmark"))
       "dev.zio"            %% "zio"               % "2.1.26"
     )
   )
-  .dependsOn(jdbcConnector.jvm, connector.jvm, queryBuilder.jvm, fx.jvm)
+  .dependsOn(
+    jdbcConnector.jvm,
+    connector.jvm,
+    queryBuilder.jvm,
+    fx.jvm,
+    mysql.jvm
+  )
   .enablePlugins(JmhPlugin, AutomateHeaderPlugin, NoPublishPlugin)
 
 lazy val http4sExample = crossProject(JVMPlatform)
@@ -505,6 +543,7 @@ lazy val ldbc = tlCrossRootProject
     fx,
     net,
     jdbcConnector,
+    mysql,
     connector,
     dsl,
     catsEffect,
