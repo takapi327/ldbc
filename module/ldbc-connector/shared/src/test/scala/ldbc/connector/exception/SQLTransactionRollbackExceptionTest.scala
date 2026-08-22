@@ -6,11 +6,8 @@
 
 package ldbc.connector.exception
 
-import scala.collection.immutable.SortedMap
-
 import org.typelevel.otel4s.Attribute
 
-import ldbc.connector.data.Parameter
 import ldbc.connector.FTestPlatform
 
 class SQLTransactionRollbackExceptionTest extends FTestPlatform:
@@ -39,19 +36,13 @@ class SQLTransactionRollbackExceptionTest extends FTestPlatform:
   }
 
   test("SQLTransactionRollbackException.fields should return correct attributes") {
-    val params = SortedMap(
-      1 -> Parameter.string("product_id"),
-      2 -> Parameter.int(10)
-    )
-
     val exception = new SQLTransactionRollbackException(
       message    = "Deadlock found when trying to get lock",
       sqlState   = Some("40001"),
       vendorCode = Some(1213),
       sql        = Some("UPDATE inventory SET quantity = quantity - ? WHERE product_id = ?"),
       detail     = Some("Transaction was rolled back automatically"),
-      hint       = Some("Try restarting the transaction"),
-      params     = params
+      hint       = Some("Try restarting the transaction")
     )
 
     val fields = exception.fields
@@ -66,11 +57,6 @@ class SQLTransactionRollbackExceptionTest extends FTestPlatform:
     assertEquals(fields.contains(Attribute("error.detail", "Transaction was rolled back automatically")), true)
     assertEquals(fields.contains(Attribute("error.hint", "Try restarting the transaction")), true)
 
-    // Check parameter attributes
-    assertEquals(fields.contains(Attribute("error.parameter.1.type", "CHAR")), true)
-    assertEquals(fields.contains(Attribute("error.parameter.1.value", "'product_id'")), true)
-    assertEquals(fields.contains(Attribute("error.parameter.2.type", "INT")), true)
-    assertEquals(fields.contains(Attribute("error.parameter.2.value", "10")), true)
   }
 
   test("getMessage should include all relevant information") {
@@ -78,11 +64,7 @@ class SQLTransactionRollbackExceptionTest extends FTestPlatform:
       message    = "Transaction rolled back",
       sqlState   = Some("40001"),
       vendorCode = Some(1213),
-      sql        = Some("UPDATE accounts SET balance = balance - ? WHERE id = ?"),
-      params     = SortedMap(
-        1 -> Parameter.int(100),
-        2 -> Parameter.int(42)
-      )
+      sql        = Some("UPDATE accounts SET balance = balance - ? WHERE id = ?")
     )
 
     val message = exception.getMessage
@@ -95,8 +77,6 @@ class SQLTransactionRollbackExceptionTest extends FTestPlatform:
       message.contains("UPDATE accounts SET balance = balance - ? WHERE id = ?"),
       "Message should contain the SQL query"
     )
-    assert(message.contains("100"), "Message should contain the first parameter value")
-    assert(message.contains("42"), "Message should contain the second parameter value")
   }
 
   test("SQLTransactionRollbackException should be a subclass of SQLTransientException") {

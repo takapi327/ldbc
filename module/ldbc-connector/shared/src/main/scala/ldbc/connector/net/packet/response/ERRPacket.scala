@@ -7,8 +7,6 @@
 package ldbc.connector.net.packet
 package response
 
-import scala.collection.immutable.SortedMap
-
 import scodec.*
 import scodec.codecs.*
 
@@ -75,8 +73,7 @@ case class ERRPacket(
 
   def toException(
     sql:    Option[String],
-    detail: Option[String],
-    params: SortedMap[Int, Parameter] = SortedMap.empty
+    detail: Option[String]
   ): SQLException =
     sqlState match
       case Some(SQLState.TRANSIENT_CONNECTION_EXCEPTION) =>
@@ -85,8 +82,7 @@ case class ERRPacket(
           sqlState   = sqlState,
           vendorCode = Some(errorCode),
           sql        = sql,
-          detail     = detail,
-          params     = params
+          detail     = detail
         )
       case Some(SQLState.DATA_EXCEPTION) =>
         SQLDataException(
@@ -94,8 +90,7 @@ case class ERRPacket(
           sqlState   = sqlState,
           vendorCode = Some(errorCode),
           sql        = sql,
-          detail     = detail,
-          params     = params
+          detail     = detail
         )
       case Some(SQLState.INVALID_AUTHORIZATION_SPEC_EXCEPTION) =>
         SQLInvalidAuthorizationSpecException(
@@ -103,8 +98,7 @@ case class ERRPacket(
           sqlState   = sqlState,
           vendorCode = Some(errorCode),
           sql        = sql,
-          detail     = detail,
-          params     = params
+          detail     = detail
         )
       case Some(SQLState.INTEGRITY_CONSTRAINT_VIOLATION_EXCEPTION) =>
         SQLIntegrityConstraintViolationException(
@@ -112,8 +106,7 @@ case class ERRPacket(
           sqlState   = sqlState,
           vendorCode = Some(errorCode),
           sql        = sql,
-          detail     = detail,
-          params     = params
+          detail     = detail
         )
       case Some(SQLState.TRANSACTION_ROLLBACK_EXCEPTION) =>
         SQLTransactionRollbackException(
@@ -121,8 +114,7 @@ case class ERRPacket(
           sqlState   = sqlState,
           vendorCode = Some(errorCode),
           sql        = sql,
-          detail     = detail,
-          params     = params
+          detail     = detail
         )
       case Some(SQLState.SYNTAX_ERROR_EXCEPTION) =>
         SQLSyntaxErrorException(
@@ -146,16 +138,14 @@ case class ERRPacket(
           sqlState   = sqlState,
           vendorCode = Some(errorCode),
           sql        = sql,
-          detail     = detail,
-          params     = params
+          detail     = detail
         )
       case None =>
         SQLException(
           message    = errorMessage,
           vendorCode = Some(errorCode),
           sql        = sql,
-          detail     = detail,
-          params     = params
+          detail     = detail
         )
 
   def toException: SQLException = toException(None, None)
