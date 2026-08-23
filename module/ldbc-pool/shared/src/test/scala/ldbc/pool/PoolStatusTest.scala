@@ -6,7 +6,6 @@
 
 package ldbc.pool
 
-
 class PoolStatusTest extends munit.FunSuite:
 
   test("PoolStatus should be created with correct values") {

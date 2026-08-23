@@ -6,14 +6,13 @@
 
 package ldbc.pool
 
-import ldbc.fx.FxSuite
-
-import ldbc.fx.Fx
-import ldbc.fx.concurrentFx
-import ldbc.effect.Ref
-import ldbc.fx.syntax.*
-
 import ldbc.sql.Connection
+
+import ldbc.effect.Ref
+import ldbc.fx.concurrentFx
+import ldbc.fx.syntax.*
+import ldbc.fx.Fx
+import ldbc.fx.FxSuite
 
 /**
  * Tests for [[ConnectionProxy]] delegation semantics against a [[MockConnection]]: `close()` invokes
@@ -110,13 +109,13 @@ class ConnectionProxyTest extends FxSuite:
       conn               <- mock
       pooledConn         <- createPooledConnection("test-1", conn)
       connectionReturned <- Ref.of(false)
-      releaseCallback = (_: Connection[Fx]) =>
-                          pooledConn.state.set(ConnectionState.Idle) >> connectionReturned.set(true)
+      releaseCallback =
+        (_: Connection[Fx]) => pooledConn.state.set(ConnectionState.Idle) >> connectionReturned.set(true)
       proxy = new ConnectionProxy(pooledConn, releaseCallback)
-      _    <- pooledConn.state.set(ConnectionState.InUse)
-      stmt <- proxy.createStatement()
-      _    <- stmt.execute("SELECT 1")
-      _    <- proxy.close()
+      _           <- pooledConn.state.set(ConnectionState.InUse)
+      stmt        <- proxy.createStatement()
+      _           <- stmt.execute("SELECT 1")
+      _           <- proxy.close()
       finalState  <- pooledConn.state.get
       wasReturned <- connectionReturned.get
     yield

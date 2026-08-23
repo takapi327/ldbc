@@ -13,14 +13,14 @@ import ldbc.effect.syntax.*
 
 /** Tracks pool metrics, generic over `F`. Ranges from [[PoolMetricsTracker.noop]] to in-memory. */
 trait PoolMetricsTracker[F[_]]:
-  def recordAcquisition(duration: FiniteDuration): F[Unit]
-  def recordUsage(duration: FiniteDuration): F[Unit]
-  def recordCreation(duration: FiniteDuration): F[Unit]
-  def recordTimeout(): F[Unit]
-  def recordLeak(): F[Unit]
-  def recordRemoval(): F[Unit]
-  def updateGauge(name: String, value: Long): F[Unit]
-  def getMetrics: F[PoolMetrics]
+  def recordAcquisition(duration: FiniteDuration):      F[Unit]
+  def recordUsage(duration:       FiniteDuration):      F[Unit]
+  def recordCreation(duration:    FiniteDuration):      F[Unit]
+  def recordTimeout():                                  F[Unit]
+  def recordLeak():                                     F[Unit]
+  def recordRemoval():                                  F[Unit]
+  def updateGauge(name:           String, value: Long): F[Unit]
+  def getMetrics:                                       F[PoolMetrics]
 
 object PoolMetricsTracker:
 
@@ -49,7 +49,11 @@ object PoolMetricsTracker:
     gauges           <- Ref.of[F, Map[String, Long]](Map.empty)
   yield new PoolMetricsTracker[F]:
 
-    private def recordDuration(ref: Ref[F, Vector[FiniteDuration]], duration: FiniteDuration, maxSize: Int = 100): F[Unit] =
+    private def recordDuration(
+      ref:      Ref[F, Vector[FiniteDuration]],
+      duration: FiniteDuration,
+      maxSize:  Int = 100
+    ): F[Unit] =
       ref.update { times =>
         val updated = times :+ duration
         if updated.size > maxSize then updated.drop(1) else updated

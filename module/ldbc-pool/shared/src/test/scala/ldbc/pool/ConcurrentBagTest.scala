@@ -6,20 +6,19 @@
 
 package ldbc.pool
 
-import ldbc.fx.FxSuite
-
 import scala.concurrent.duration.*
 
-import ldbc.fx.Fx
-import ldbc.fx.concurrentFx
 import ldbc.effect.Ref
+import ldbc.fx.concurrentFx
 import ldbc.fx.syntax.*
+import ldbc.fx.Fx
+import ldbc.fx.FxSuite
 
 class ConcurrentBagTest extends FxSuite:
 
   final class TestBagEntry(val id: String, stateRef: Ref[Fx, Int]) extends BagEntry[Fx]:
-    override def getState: Fx[Int]              = stateRef.get
-    override def setState(state: Int): Fx[Unit] = stateRef.set(state)
+    override def getState:                                Fx[Int]     = stateRef.get
+    override def setState(state: Int):                    Fx[Unit]    = stateRef.set(state)
     override def compareAndSet(expect: Int, update: Int): Fx[Boolean] =
       stateRef.modify(current => if current == expect then (update, true) else (current, false))
 
@@ -71,7 +70,7 @@ class ConcurrentBagTest extends FxSuite:
       bag     <- ConcurrentBag[Fx, TestBagEntry]()
       entries <- (1 to 10).toList.traverse(i => createTestEntry(s"item$i"))
       _       <- entries.traverse_(bag.add)
-      _ <- (1 to 100).toList.parTraverse { _ =>
+      _       <- (1 to 100).toList.parTraverse { _ =>
              bag.borrow(1.second).flatMap {
                case Some(item) => Fx.sleep(10.millis) >> bag.requite(item)
                case None       => Fx.raiseError(new Exception("Failed to borrow"))

@@ -64,7 +64,7 @@ object KeepaliveExecutor:
                 (for
                   now   <- nowMillis
                   valid <- pool.validateConnection(pooled.connection)
-                  _ <-
+                  _     <-
                     if valid then
                       pooled.lastValidatedAt.set(now) >>
                         pooled.state.set(ConnectionState.Idle) >>

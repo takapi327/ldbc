@@ -13,8 +13,8 @@ import ldbc.effect.syntax.*
 
 /** An item that can live in a [[ConcurrentBag]], tracking its own borrow/return state. */
 trait BagEntry[F[_]]:
-  def getState: F[Int]
-  def setState(state: Int): F[Unit]
+  def getState:                                F[Int]
+  def setState(state:       Int):              F[Unit]
   def compareAndSet(expect: Int, update: Int): F[Boolean]
 
 object BagEntry:
@@ -31,12 +31,12 @@ object BagEntry:
  */
 trait ConcurrentBag[F[_], T <: BagEntry[F]]:
   def borrow(timeout: FiniteDuration): F[Option[T]]
-  def requite(item: T): F[Unit]
-  def add(item: T): F[Unit]
-  def remove(item: T): F[Boolean]
-  def size: F[Int]
-  def values: F[List[T]]
-  def close: F[Unit]
+  def requite(item:   T):              F[Unit]
+  def add(item:       T):              F[Unit]
+  def remove(item:    T):              F[Boolean]
+  def size:                            F[Int]
+  def values:                          F[List[T]]
+  def close:                           F[Unit]
 
 object ConcurrentBag:
 
@@ -60,7 +60,7 @@ object ConcurrentBag:
 
     override def borrow(timeout: FiniteDuration): F[Option[T]] =
       closed.get.flatMap {
-        case true => F.pure(None)
+        case true  => F.pure(None)
         case false =>
           waiters
             .update(_ + 1)
@@ -103,7 +103,7 @@ object ConcurrentBag:
       Deferred[F, Option[T]].flatMap { deferred =>
         handoff.update(_ :+ deferred).flatMap { _ =>
           F.race(deferred.get, F.sleep(timeout)).flatMap {
-            case Left(item) => F.pure(item)                       // handed off (Some(item) or None)
+            case Left(item) => F.pure(item)                          // handed off (Some(item) or None)
             case Right(_)   => removeWaiter(deferred).map(_ => None) // timed out; loser (get) cancelled by race
           }
         }
@@ -113,27 +113,29 @@ object ConcurrentBag:
       handoff.update(_.filterNot(_ eq deferred))
 
     private def offerToWaiter(item: T): F[Boolean] =
-      handoff.modify {
-        case head +: rest => (rest, Some(head))
-        case _            => (Vector.empty, None)
-      }.flatMap {
-        case None => F.pure(false)
-        case Some(deferred) =>
-          deferred.complete(Some(item)).flatMap {
-            case true  => F.pure(true)
-            case false => offerToWaiter(item) // waiter already timed out; try the next
-          }
-      }
+      handoff
+        .modify {
+          case head +: rest => (rest, Some(head))
+          case _            => (Vector.empty, None)
+        }
+        .flatMap {
+          case None           => F.pure(false)
+          case Some(deferred) =>
+            deferred.complete(Some(item)).flatMap {
+              case true  => F.pure(true)
+              case false => offerToWaiter(item) // waiter already timed out; try the next
+            }
+        }
 
     override def requite(item: T): F[Unit] =
       closed.get.flatMap {
-        case true => F.unit
+        case true  => F.unit
         case false =>
           item.getState.flatMap { state =>
             if state == BagEntry.STATE_REMOVED then F.unit
             else
               item.compareAndSet(BagEntry.STATE_IN_USE, BagEntry.STATE_NOT_IN_USE).flatMap {
-                case true => continueRequiteProcess(item)
+                case true  => continueRequiteProcess(item)
                 case false =>
                   item.getState.flatMap {
                     case BagEntry.STATE_NOT_IN_USE => continueRequiteProcess(item)
@@ -146,7 +148,7 @@ object ConcurrentBag:
 
     override def add(item: T): F[Unit] =
       closed.get.flatMap {
-        case true => F.unit
+        case true  => F.unit
         case false =>
           sharedList.update(list => distributeItem(item, list)).flatMap { _ =>
             waiters.get.flatMap { waiting =>
@@ -162,7 +164,7 @@ object ConcurrentBag:
 
     override def remove(item: T): F[Boolean] =
       item.compareAndSet(BagEntry.STATE_NOT_IN_USE, BagEntry.STATE_REMOVED).flatMap {
-        case true => sharedList.update(_.filterNot(_ eq item)).map(_ => true)
+        case true  => sharedList.update(_.filterNot(_ eq item)).map(_ => true)
         case false =>
           item.compareAndSet(BagEntry.STATE_IN_USE, BagEntry.STATE_REMOVED).flatMap {
             case true  => F.pure(true)
@@ -189,7 +191,7 @@ object ConcurrentBag:
       item.getState.flatMap {
         case BagEntry.STATE_REMOVED    => F.unit
         case BagEntry.STATE_NOT_IN_USE => F.unit
-        case BagEntry.STATE_RESERVED =>
+        case BagEntry.STATE_RESERVED   =>
           F.sleep(1.milli).flatMap { _ =>
             item.compareAndSet(BagEntry.STATE_RESERVED, BagEntry.STATE_NOT_IN_USE).flatMap {
               case true  => continueRequiteProcess(item)

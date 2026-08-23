@@ -6,11 +6,11 @@
 
 package ldbc.pool
 
-import ldbc.fx.FxSuite
-import ldbc.fx.Fx
-import ldbc.fx.concurrentFx
-
 import scala.concurrent.duration.*
+
+import ldbc.fx.concurrentFx
+import ldbc.fx.Fx
+import ldbc.fx.FxSuite
 
 class PoolLoggerTest extends FxSuite:
 

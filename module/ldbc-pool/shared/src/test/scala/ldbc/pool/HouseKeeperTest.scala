@@ -6,16 +6,15 @@
 
 package ldbc.pool
 
-import ldbc.fx.FxSuite
-
 import scala.concurrent.duration.*
 
-import ldbc.fx.Fx
-import ldbc.fx.concurrentFx
-import ldbc.effect.Resource
-import ldbc.fx.syntax.*
-
 import ldbc.sql.Connection
+
+import ldbc.effect.Resource
+import ldbc.fx.concurrentFx
+import ldbc.fx.syntax.*
+import ldbc.fx.Fx
+import ldbc.fx.FxSuite
 
 /**
  * Tests for [[HouseKeeper]] wired into a real [[PooledDataSource[Fx]]] whose physical connections come from
@@ -50,7 +49,7 @@ class HouseKeeperTest extends FxSuite:
   test("HouseKeeper should maintain minimum connections") {
     for
       tracker <- PoolMetricsTracker.inMemory[Fx]
-      _ <- pool(config(3, 10), tracker).use { datasource =>
+      _       <- pool(config(3, 10), tracker).use { datasource =>
              for
                initialStatus <- datasource.status
                _             <- Fx.sleep(1500.millis)
@@ -66,7 +65,7 @@ class HouseKeeperTest extends FxSuite:
   test("HouseKeeper should keep the pool healthy and update metrics") {
     for
       tracker <- PoolMetricsTracker.inMemory[Fx]
-      _ <- pool(config(2, 5), tracker).use { datasource =>
+      _       <- pool(config(2, 5), tracker).use { datasource =>
              for
                _       <- datasource.use(conn => conn.isValid(5).void)
                _       <- Fx.sleep(1200.millis)
@@ -83,7 +82,7 @@ class HouseKeeperTest extends FxSuite:
       tracker <- PoolMetricsTracker.inMemory[Fx]
       _ <- pool(config(1, 5, idleTimeout = 1.second, maintenanceInterval = 500.millis), tracker).use { datasource =>
              for
-               _ <- Fx.sleep(200.millis)
+               _           <- Fx.sleep(200.millis)
                grownStatus <- datasource.use { _ =>
                                 datasource.use { _ =>
                                   datasource.use(_ => datasource.status)
@@ -93,7 +92,10 @@ class HouseKeeperTest extends FxSuite:
                finalStatus <- datasource.status
              yield
                assert(grownStatus.total >= 3, s"Pool should have grown, got ${ grownStatus.total }")
-               assert(finalStatus.total < grownStatus.total, s"Idle connections should be evicted, got ${ finalStatus.total }")
+               assert(
+                 finalStatus.total < grownStatus.total,
+                 s"Idle connections should be evicted, got ${ finalStatus.total }"
+               )
                assert(finalStatus.total >= 1, s"Should keep the minimum, got ${ finalStatus.total }")
            }
     yield ()
@@ -102,7 +104,7 @@ class HouseKeeperTest extends FxSuite:
   test("HouseKeeper should handle concurrent pool operations during maintenance") {
     for
       tracker <- PoolMetricsTracker.inMemory[Fx]
-      _ <- pool(config(2, 10, maintenanceInterval = 500.millis), tracker).use { datasource =>
+      _       <- pool(config(2, 10, maintenanceInterval = 500.millis), tracker).use { datasource =>
              val operations = (1 to 20).toList.traverse_ { _ =>
                datasource.use(conn => conn.isValid(5).void)
              }
@@ -122,7 +124,7 @@ class HouseKeeperTest extends FxSuite:
   test("HouseKeeper should not create connections when the pool is closed") {
     for
       tracker <- PoolMetricsTracker.inMemory[Fx]
-      _ <- pool(config(3, 5, maintenanceInterval = 500.millis), tracker).use { datasource =>
+      _       <- pool(config(3, 5, maintenanceInterval = 500.millis), tracker).use { datasource =>
              for
                initialStatus <- datasource.status
                closeFiber    <- (Fx.sleep(500.millis) >> datasource.close).start

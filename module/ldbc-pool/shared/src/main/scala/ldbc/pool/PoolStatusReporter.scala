@@ -34,7 +34,9 @@ object PoolStatusReporter:
    * @param poolLogger     the logger to write to
    * @param metricsTracker the tracker providing detailed metrics
    */
-  def apply[F[_]](reportInterval: FiniteDuration, poolLogger: PoolLogger[F], metricsTracker: PoolMetricsTracker[F])(using F: Concurrent[F]): PoolStatusReporter[F] =
+  def apply[F[_]](reportInterval: FiniteDuration, poolLogger: PoolLogger[F], metricsTracker: PoolMetricsTracker[F])(
+    using F: Concurrent[F]
+  ): PoolStatusReporter[F] =
     new PoolStatusReporter[F]:
 
       override def start(pool: PooledDataSource[F], poolName: String): Resource[F, Unit] =
@@ -54,4 +56,5 @@ object PoolStatusReporter:
         yield ()
 
   /** A reporter that does nothing. */
-  def noop[F[_]](using F: Concurrent[F]): PoolStatusReporter[F] = (_: PooledDataSource[F], _: String) => Resource.pure[F, Unit](())
+  def noop[F[_]](using F: Concurrent[F]): PoolStatusReporter[F] = (_: PooledDataSource[F], _: String) =>
+    Resource.pure[F, Unit](())

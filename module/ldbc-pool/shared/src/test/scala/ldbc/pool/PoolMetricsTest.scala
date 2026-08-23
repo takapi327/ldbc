@@ -8,7 +8,6 @@ package ldbc.pool
 
 import scala.concurrent.duration.*
 
-
 class PoolMetricsTest extends munit.FunSuite:
 
   test("PoolMetrics should be created with correct values") {

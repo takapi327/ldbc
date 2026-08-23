@@ -6,9 +6,9 @@
 
 package ldbc.pool
 
-import ldbc.effect.Deferred
-
 import ldbc.sql.Connection
+
+import ldbc.effect.Deferred
 
 case class PoolState[F[_]](
   connections:     Vector[PooledConnection[F]],

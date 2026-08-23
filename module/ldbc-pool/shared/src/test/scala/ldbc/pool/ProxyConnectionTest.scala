@@ -6,13 +6,12 @@
 
 package ldbc.pool
 
-import ldbc.fx.FxSuite
-
-import ldbc.fx.Fx
-import ldbc.fx.concurrentFx
-import ldbc.effect.Ref
-
 import ldbc.sql.Connection
+
+import ldbc.effect.Ref
+import ldbc.fx.concurrentFx
+import ldbc.fx.Fx
+import ldbc.fx.FxSuite
 
 /**
  * Tests for [[ProxyConnection]] statement tracking: created statements are tracked and closed on

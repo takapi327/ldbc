@@ -13,12 +13,10 @@ import munit.CatsEffectSuite
 import ldbc.dsl.*
 import ldbc.dsl.codec.*
 
-import ldbc.net.SSL
-
 import ldbc.catseffect.concurrentIO
 import ldbc.catseffect.toIOResource
-
 import ldbc.mysql.{ Connector, MySQLConfig, MySQLDataSource }
+import ldbc.net.SSL
 
 /**
  * End-to-end proof that an externally-built [[PooledDataSource]] drives the MySQL driver natively at
@@ -41,7 +39,7 @@ class PooledMySQLIntegrationTest extends CatsEffectSuite:
   test("native IO: SELECT round-trips through an externally-built Concurrent[IO] pool") {
     val poolConfig = ConnectionPoolConfig(minConnections = 1, maxConnections = 2)
     val pool       = PooledDataSource.fromDataSource[IO](poolConfig, MySQLDataSource.fromConfig[IO](config))
-    val program = toIOResource(pool).use { ds =>
+    val program    = toIOResource(pool).use { ds =>
       sql"SELECT 7".query[Int].to[Option].readOnly(Connector.fromDataSource(ds))
     }
     assertIO(program, Some(7))

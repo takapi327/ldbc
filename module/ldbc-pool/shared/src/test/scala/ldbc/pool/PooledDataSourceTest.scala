@@ -6,16 +6,15 @@
 
 package ldbc.pool
 
-import ldbc.fx.FxSuite
-
 import scala.concurrent.duration.*
 
-import ldbc.fx.Fx
-import ldbc.fx.concurrentFx
-import ldbc.effect.Resource
-import ldbc.fx.syntax.*
-
 import ldbc.sql.Connection
+
+import ldbc.effect.Resource
+import ldbc.fx.concurrentFx
+import ldbc.fx.syntax.*
+import ldbc.fx.Fx
+import ldbc.fx.FxSuite
 
 /**
  * Behaviour tests for the ported [[PooledDataSource]] orchestrator (acquire/release, pool growth, the
@@ -71,7 +70,7 @@ class PooledDataSourceTest extends FxSuite:
     pool(config(2, 5)).use { datasource =>
       for
         initialStatus <- datasource.status
-        _ <- datasource.use { _ =>
+        _             <- datasource.use { _ =>
                datasource.use { _ =>
                  datasource.use { _ =>
                    datasource.status.map { statusAfterGrowth =>
@@ -109,13 +108,15 @@ class PooledDataSourceTest extends FxSuite:
   }
 
   test("PooledDataSource should clean up on shutdown") {
-    pool(config(3, 5)).use { datasource =>
-      datasource.use { _ =>
+    pool(config(3, 5))
+      .use { datasource =>
         datasource.use { _ =>
-          datasource.status
+          datasource.use { _ =>
+            datasource.status
+          }
         }
       }
-    }.map(finalStatus => assert(finalStatus.total >= 2))
+      .map(finalStatus => assert(finalStatus.total >= 2))
   }
 
   test("PooledDataSource should add connections to idleConnections on initialization") {

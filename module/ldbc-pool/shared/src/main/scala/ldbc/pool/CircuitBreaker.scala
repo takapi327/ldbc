@@ -10,16 +10,16 @@ import java.util.concurrent.TimeUnit
 
 import scala.concurrent.duration.*
 
+import ldbc.sql.SQLException
+
 import ldbc.effect.{ Async, Ref }
 import ldbc.effect.syntax.*
-
-import ldbc.sql.SQLException
 
 /** Guards connection creation with a circuit breaker (closed/open/half-open), generic over `F`. */
 trait CircuitBreaker[F[_]]:
   def protect[A](action: F[A]): F[A]
-  def state: F[CircuitBreaker.State]
-  def reset: F[Unit]
+  def state:                    F[CircuitBreaker.State]
+  def reset:                    F[Unit]
 
 object CircuitBreaker:
 
@@ -86,7 +86,7 @@ object CircuitBreaker:
             }
             .flatMap {
               case false => F.raiseError(new SQLException("Circuit breaker is open"))
-              case true =>
+              case true  =>
                 guarantee(
                   action
                     .handleErrorWith { error =>

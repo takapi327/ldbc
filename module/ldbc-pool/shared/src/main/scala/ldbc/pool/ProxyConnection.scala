@@ -6,10 +6,10 @@
 
 package ldbc.pool
 
-import ldbc.effect.Sync
-import ldbc.effect.syntax.*
-
 import ldbc.sql.*
+
+import ldbc.effect.syntax.*
+import ldbc.effect.Sync
 
 /**
  * A high-performance proxy for pooled connections that tracks statements and ensures proper cleanup
@@ -26,9 +26,10 @@ private[pool] class ProxyConnection[F[_]](
   val pooled:         PooledConnection[F],
   releaseCallback:    Connection[F] => F[Unit],
   closeAllStatements: Boolean = true
-)(using F: Sync[F]) extends Connection[F]:
+)(using F: Sync[F])
+  extends Connection[F]:
 
-  private val openStatements            = new FastList[Statement[F]]()
+  private val openStatements = new FastList[Statement[F]]()
   private val delegate: Connection[F] = pooled.connection
 
   override def close(): F[Unit] =

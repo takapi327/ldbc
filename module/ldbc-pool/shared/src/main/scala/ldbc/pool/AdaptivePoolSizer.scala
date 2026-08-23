@@ -34,10 +34,14 @@ object AdaptivePoolSizer:
    * @param config         the pool configuration (bounds and interval)
    * @param metricsTracker the tracker providing utilisation metrics
    */
-  def apply[F[_]](config: ConnectionPoolConfig, metricsTracker: PoolMetricsTracker[F])(using F: Concurrent[F]): AdaptivePoolSizer[F] =
+  def apply[F[_]](config: ConnectionPoolConfig, metricsTracker: PoolMetricsTracker[F])(using
+    F: Concurrent[F]
+  ): AdaptivePoolSizer[F] =
     new Impl(config, metricsTracker)
 
-  private final class Impl[F[_]](config: ConnectionPoolConfig, metricsTracker: PoolMetricsTracker[F])(using F: Concurrent[F]) extends AdaptivePoolSizer[F]:
+  private final class Impl[F[_]](config: ConnectionPoolConfig, metricsTracker: PoolMetricsTracker[F])(using
+    F: Concurrent[F]
+  ) extends AdaptivePoolSizer[F]:
 
     override def start(pool: PooledDataSource[F]): Resource[F, Unit] =
       def loop(state: AdaptiveState): F[Unit] =
@@ -71,7 +75,11 @@ object AdaptivePoolSizer:
           yield (newState.copy(history = newHistory), ())
       }
 
-    private def calculateAdjustment(status: PoolStatus, snapshot: PoolSnapshot, history: Vector[PoolSnapshot]): PoolAdjustment =
+    private def calculateAdjustment(
+      status:   PoolStatus,
+      snapshot: PoolSnapshot,
+      history:  Vector[PoolSnapshot]
+    ): PoolAdjustment =
       val highUtilizationThreshold     = 0.8
       val criticalUtilizationThreshold = 0.95
       val lowUtilizationThreshold      = 0.2
@@ -79,7 +87,7 @@ object AdaptivePoolSizer:
       val waitQueueThreshold           = status.total * 0.1
       val criticalWaitQueueThreshold   = status.total * 0.25
       val recentSnapshots              = history.takeRight(5)
-      val avgUtilization =
+      val avgUtilization               =
         if recentSnapshots.nonEmpty then recentSnapshots.map(_.utilizationRate).sum / recentSnapshots.size
         else snapshot.utilizationRate
       val avgWaitQueue =
@@ -101,7 +109,12 @@ object AdaptivePoolSizer:
         if decrease > 0 then PoolAdjustment.Shrink(decrease) else PoolAdjustment.NoChange
       else PoolAdjustment.NoChange
 
-    private def applyAdjustment(pool: PooledDataSource[F], state: AdaptiveState, adjustment: PoolAdjustment, now: Long): F[AdaptiveState] =
+    private def applyAdjustment(
+      pool:       PooledDataSource[F],
+      state:      AdaptiveState,
+      adjustment: PoolAdjustment,
+      now:        Long
+    ): F[AdaptiveState] =
       val cooldownPeriod          = 2.minutes.toMillis
       val timeSinceLastAdjustment = now - state.lastAdjustment
       if timeSinceLastAdjustment < cooldownPeriod then F.pure(state)

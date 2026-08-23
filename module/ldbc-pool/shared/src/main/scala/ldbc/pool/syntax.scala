@@ -6,9 +6,9 @@
 
 package ldbc.pool
 
-import ldbc.effect.Async
-
 import ldbc.sql.{ Connection, DataSource }
+
+import ldbc.effect.Async
 
 /**
  * Consumption helper for an [[ldbc.sql.DataSource]] over any effect `F` with an [[ldbc.effect.Async]]

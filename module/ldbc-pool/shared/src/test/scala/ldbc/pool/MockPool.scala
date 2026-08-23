@@ -6,10 +6,10 @@
 
 package ldbc.pool
 
-import ldbc.fx.Fx
-import ldbc.effect.Ref
-
 import ldbc.sql.Connection
+
+import ldbc.effect.Ref
+import ldbc.fx.Fx
 
 /**
  * A configurable mock [[PooledDataSource]] for testing the background maintenance tasks (housekeeper,
@@ -30,11 +30,11 @@ final class MockPool(
   val poolState:      Ref[Fx, PoolState[Fx]],
   val metricsTracker: PoolMetricsTracker[Fx],
   val poolLogger:     PoolLogger[Fx],
-  config:             ConnectionPoolConfig          = ConnectionPoolConfig(minConnections = 2, maxConnections = 5),
-  statusEffect:       Option[Fx[PoolStatus]]        = None,
-  validateFn:         Connection[Fx] => Fx[Boolean] = _ => Fx.pure(true),
-  removeFn:           PooledConnection[Fx] => Fx[Unit]  = _ => Fx.unit,
-  createForPool:      Fx[PooledConnection[Fx]]          = Fx.raiseError(new NotImplementedError("createNewConnectionForPool"))
+  config:             ConnectionPoolConfig             = ConnectionPoolConfig(minConnections = 2, maxConnections = 5),
+  statusEffect:       Option[Fx[PoolStatus]]           = None,
+  validateFn:         Connection[Fx] => Fx[Boolean]    = _ => Fx.pure(true),
+  removeFn:           PooledConnection[Fx] => Fx[Unit] = _ => Fx.unit,
+  createForPool: Fx[PooledConnection[Fx]] = Fx.raiseError(new NotImplementedError("createNewConnectionForPool"))
 ) extends PooledDataSource[Fx]:
 
   override def minConnections         = config.minConnections
@@ -63,13 +63,13 @@ final class MockPool(
       )
     )
 
-  override def metrics: Fx[PoolMetrics]                         = metricsTracker.getMetrics
-  override def close: Fx[Unit]                                  = Fx.unit
-  override def returnToPool(pooled: PooledConnection[Fx]): Fx[Unit] = Fx.unit
-  override def removeConnection(pooled: PooledConnection[Fx]): Fx[Unit] = removeFn(pooled)
-  override def validateConnection(conn: Connection[Fx]): Fx[Boolean] = validateFn(conn)
-  override def createNewConnectionForPool(): Fx[PooledConnection[Fx]]   = createForPool
-  override def createNewConnection(): Fx[PooledConnection[Fx]] =
+  override def metrics:                                        Fx[PoolMetrics]          = metricsTracker.getMetrics
+  override def close:                                          Fx[Unit]                 = Fx.unit
+  override def returnToPool(pooled:     PooledConnection[Fx]): Fx[Unit]                 = Fx.unit
+  override def removeConnection(pooled: PooledConnection[Fx]): Fx[Unit]                 = removeFn(pooled)
+  override def validateConnection(conn: Connection[Fx]):       Fx[Boolean]              = validateFn(conn)
+  override def createNewConnectionForPool():                   Fx[PooledConnection[Fx]] = createForPool
+  override def createNewConnection():                          Fx[PooledConnection[Fx]] =
     Fx.raiseError(new NotImplementedError("createNewConnection"))
   override def getConnection: Fx[(Connection[Fx], Fx[Unit])] =
     Fx.raiseError(new NotImplementedError("getConnection"))

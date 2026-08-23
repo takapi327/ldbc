@@ -6,16 +6,15 @@
 
 package ldbc.pool
 
-import ldbc.fx.FxSuite
-
 import scala.concurrent.duration.*
 
-import ldbc.fx.Fx
-import ldbc.fx.concurrentFx
-import ldbc.effect.Ref
-import ldbc.fx.syntax.*
-
 import ldbc.sql.Connection
+
+import ldbc.effect.Ref
+import ldbc.fx.concurrentFx
+import ldbc.fx.syntax.*
+import ldbc.fx.Fx
+import ldbc.fx.FxSuite
 
 /**
  * Tests for [[PooledConnection]] over [[ldbc.fx.Fx]], using a [[MockConnection]] as the wrapped
@@ -154,7 +153,7 @@ class PooledConnectionTest extends FxSuite:
     for
       conn       <- mock
       pooledConn <- createPooledConnection("test-1", conn)
-      _ <- (1 to 100).toList.parTraverseN(10) { i =>
+      _          <- (1 to 100).toList.parTraverseN(10) { i =>
              if i % 2 == 0 then pooledConn.state.set(ConnectionState.InUse)
              else pooledConn.state.set(ConnectionState.Idle)
            }

@@ -6,15 +6,14 @@
 
 package ldbc.pool
 
-import ldbc.fx.FxSuite
-
 import scala.concurrent.duration.*
 
-import ldbc.fx.Fx
-import ldbc.fx.concurrentFx
-import ldbc.effect.Ref
-
 import ldbc.sql.Connection
+
+import ldbc.effect.Ref
+import ldbc.fx.concurrentFx
+import ldbc.fx.Fx
+import ldbc.fx.FxSuite
 
 /**
  * Tests for [[KeepaliveExecutor]]: its `Fx.sleep`-recursion loop periodically validates idle
@@ -53,7 +52,7 @@ class KeepaliveExecutorTest extends FxSuite:
     for
       tracker <- PoolMetricsTracker.inMemory[Fx]
       state   <- Ref.of(PoolState.empty[Fx])
-      pool = new MockPool(state, tracker, PoolLogger.noop[Fx])
+      pool      = new MockPool(state, tracker, PoolLogger.noop[Fx])
       keepalive = KeepaliveExecutor[Fx](100.milliseconds, tracker)
       _ <- keepalive.start(pool).use(_ => Fx.sleep(50.milliseconds))
     yield assert(true)
@@ -61,13 +60,13 @@ class KeepaliveExecutorTest extends FxSuite:
 
   test("KeepaliveExecutor should validate idle connections") {
     for
-      tracker <- PoolMetricsTracker.inMemory[Fx]
-      conn1   <- MockConnection()
-      conn2   <- MockConnection()
-      now     <- Fx.realTime.map(_.toMillis)
+      tracker     <- PoolMetricsTracker.inMemory[Fx]
+      conn1       <- MockConnection()
+      conn2       <- MockConnection()
+      now         <- Fx.realTime.map(_.toMillis)
       pooledConn1 <- createPooledConnection("conn-1", conn1, now, now - 1000)
       pooledConn2 <- createPooledConnection("conn-2", conn2, now, now - 2000)
-      state <- Ref.of(
+      state       <- Ref.of(
                  PoolState[Fx](
                    connections     = Vector(pooledConn1, pooledConn2),
                    idleConnections = Set("conn-1", "conn-2"),
@@ -76,7 +75,7 @@ class KeepaliveExecutorTest extends FxSuite:
                    closed          = false
                  )
                )
-      pool = new MockPool(state, tracker, PoolLogger.noop[Fx], validateFn = _.isValid(1))
+      pool      = new MockPool(state, tracker, PoolLogger.noop[Fx], validateFn = _.isValid(1))
       keepalive = KeepaliveExecutor[Fx](100.milliseconds, tracker)
       _     <- keepalive.start(pool).use(_ => Fx.sleep(250.milliseconds))
       count <- conn1.validationCount.get.flatMap(c1 => conn2.validationCount.get.map(_ + c1))
@@ -91,7 +90,7 @@ class KeepaliveExecutorTest extends FxSuite:
       now         <- Fx.realTime.map(_.toMillis)
       pooledConn1 <- createPooledConnection("conn-1", validConn, now, now)
       pooledConn2 <- createPooledConnection("conn-2", invalidConn, now, now)
-      state <- Ref.of(
+      state       <- Ref.of(
                  PoolState[Fx](
                    connections     = Vector(pooledConn1, pooledConn2),
                    idleConnections = Set("conn-1", "conn-2"),
@@ -123,7 +122,7 @@ class KeepaliveExecutorTest extends FxSuite:
       conn       <- MockConnection()
       now        <- Fx.realTime.map(_.toMillis)
       pooledConn <- createPooledConnection("conn-1", conn, now, now)
-      state <- Ref.of(
+      state      <- Ref.of(
                  PoolState[Fx](
                    connections     = Vector(pooledConn),
                    idleConnections = Set("conn-1"),
@@ -132,7 +131,7 @@ class KeepaliveExecutorTest extends FxSuite:
                    closed          = false
                  )
                )
-      pool = new MockPool(state, tracker, PoolLogger.noop[Fx], validateFn = _.isValid(1))
+      pool      = new MockPool(state, tracker, PoolLogger.noop[Fx], validateFn = _.isValid(1))
       keepalive = KeepaliveExecutor[Fx](100.milliseconds, tracker)
       _ <- keepalive.start(pool).use { _ =>
              for

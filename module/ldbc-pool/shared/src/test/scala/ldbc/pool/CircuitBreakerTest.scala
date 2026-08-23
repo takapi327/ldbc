@@ -6,14 +6,13 @@
 
 package ldbc.pool
 
-import ldbc.fx.FxSuite
-
 import scala.concurrent.duration.*
 
-import ldbc.fx.Fx
-import ldbc.fx.concurrentFx
 import ldbc.effect.{ Deferred, Ref }
+import ldbc.fx.concurrentFx
 import ldbc.fx.syntax.*
+import ldbc.fx.Fx
+import ldbc.fx.FxSuite
 
 class CircuitBreakerTest extends FxSuite:
 
@@ -76,13 +75,13 @@ class CircuitBreakerTest extends FxSuite:
     val config = CircuitBreaker.Config(maxFailures = 1, resetTimeout = 100.millis, exponentialBackoffFactor = 2.0)
     CircuitBreaker[Fx](config).flatMap { cb =>
       for
-        _      <- cb.protect(Fx.raiseError(new Exception("fail 1"))).attempt
-        _      <- Fx.sleep(150.millis)
-        _      <- cb.protect(Fx.raiseError(new Exception("fail 2"))).attempt
-        state1 <- cb.state
+        _          <- cb.protect(Fx.raiseError(new Exception("fail 1"))).attempt
+        _          <- Fx.sleep(150.millis)
+        _          <- cb.protect(Fx.raiseError(new Exception("fail 2"))).attempt
+        state1     <- cb.state
         _          <- Fx.sleep(100.millis)
         testResult <- cb.protect(Fx.pure("test")).attempt
-        _ <- Fx.delay {
+        _          <- Fx.delay {
                assert(testResult.isLeft)
                testResult.left.foreach(error => assert(error.getMessage.contains("Circuit breaker is open")))
              }
@@ -196,7 +195,7 @@ class CircuitBreakerTest extends FxSuite:
         gate    <- Deferred[Fx, Unit]
         _       <- cb.protect(Fx.raiseError(new Exception("fail"))).attempt
         _       <- Fx.sleep(20.millis)
-        fibers <- (1 to 10).toList.traverse { _ =>
+        fibers  <- (1 to 10).toList.traverse { _ =>
                     (cb.protect(counter.update(_ + 1) >> gate.get).attempt).start
                   }
         _     <- Fx.sleep(50.millis)

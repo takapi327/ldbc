@@ -6,13 +6,12 @@
 
 package ldbc.pool
 
-import ldbc.fx.FxSuite
-
 import scala.concurrent.duration.*
 
-import ldbc.fx.Fx
-import ldbc.fx.concurrentFx
 import ldbc.effect.Ref
+import ldbc.fx.concurrentFx
+import ldbc.fx.Fx
+import ldbc.fx.FxSuite
 
 class PoolStatusReporterTest extends FxSuite:
 
@@ -20,11 +19,11 @@ class PoolStatusReporterTest extends FxSuite:
   private class CountingPoolLogger(count: Ref[Fx, Int], debugEnabled: Boolean) extends PoolLogger[Fx]:
     override def logPoolState(poolName: String, status: PoolStatus, metrics: Option[PoolMetrics]): Fx[Unit] =
       count.update(_ + 1)
-    override def debug(message: String): Fx[Unit]                          = Fx.unit
-    override def info(message:  String): Fx[Unit]                          = Fx.unit
-    override def warn(message:  String): Fx[Unit]                          = Fx.unit
-    override def error(message: String, error: Option[Throwable]): Fx[Unit] = Fx.unit
-    override def isDebugEnabled: Fx[Boolean] = Fx.pure(debugEnabled)
+    override def debug(message: String):                           Fx[Unit]    = Fx.unit
+    override def info(message:  String):                           Fx[Unit]    = Fx.unit
+    override def warn(message:  String):                           Fx[Unit]    = Fx.unit
+    override def error(message: String, error: Option[Throwable]): Fx[Unit]    = Fx.unit
+    override def isDebugEnabled:                                   Fx[Boolean] = Fx.pure(debugEnabled)
 
   private def mockPool(logger: PoolLogger[Fx]): Fx[MockPool] =
     Ref.of(PoolState.empty[Fx]).map { state =>
@@ -40,7 +39,7 @@ class PoolStatusReporterTest extends FxSuite:
     for
       count <- Ref.of(0)
       logger = new CountingPoolLogger(count, debugEnabled = true)
-      pool   <- mockPool(logger)
+      pool <- mockPool(logger)
       reporter = PoolStatusReporter(100.milliseconds, logger, PoolMetricsTracker.noop[Fx])
       _        <- reporter.start(pool, "test-pool").use(_ => Fx.sleep(500.milliseconds))
       logCount <- count.get
@@ -51,7 +50,7 @@ class PoolStatusReporterTest extends FxSuite:
     for
       count <- Ref.of(0)
       logger = new CountingPoolLogger(count, debugEnabled = true)
-      pool   <- mockPool(logger)
+      pool <- mockPool(logger)
       reporter = PoolStatusReporter.noop[Fx]
       _        <- reporter.start(pool, "test-pool").use(_ => Fx.sleep(200.milliseconds))
       logCount <- count.get
@@ -62,7 +61,7 @@ class PoolStatusReporterTest extends FxSuite:
     for
       count <- Ref.of(0)
       logger = new CountingPoolLogger(count, debugEnabled = false)
-      pool   <- mockPool(logger)
+      pool <- mockPool(logger)
       reporter = PoolStatusReporter(50.milliseconds, logger, PoolMetricsTracker.noop[Fx])
       _        <- reporter.start(pool, "test-pool").use(_ => Fx.sleep(150.milliseconds))
       logCount <- count.get

@@ -11,11 +11,11 @@ import ldbc.effect.Sync
 /** A structured logger for pool lifecycle events, generic over the effect `F`. */
 trait PoolLogger[F[_]]:
   def logPoolState(poolName: String, status: PoolStatus, metrics: Option[PoolMetrics] = None): F[Unit]
-  def debug(message: String): F[Unit]
-  def info(message: String): F[Unit]
-  def warn(message: String): F[Unit]
-  def error(message: String, error: Option[Throwable] = None): F[Unit]
-  def isDebugEnabled: F[Boolean]
+  def debug(message:         String):                                                          F[Unit]
+  def info(message:          String):                                                          F[Unit]
+  def warn(message:          String):                                                          F[Unit]
+  def error(message:         String, error:  Option[Throwable] = None):                        F[Unit]
+  def isDebugEnabled:                                                                          F[Boolean]
 
 object PoolLogger:
 
@@ -49,8 +49,8 @@ object PoolLogger:
   /** A logger that discards all messages. */
   def noop[F[_]](using F: Sync[F]): PoolLogger[F] = new PoolLogger[F]:
     override def logPoolState(poolName: String, status: PoolStatus, metrics: Option[PoolMetrics]): F[Unit] = F.unit
-    override def debug(message: String):                                                          F[Unit] = F.unit
-    override def info(message:  String):                                                          F[Unit] = F.unit
-    override def warn(message:  String):                                                          F[Unit] = F.unit
-    override def error(message: String, error: Option[Throwable]):                                F[Unit] = F.unit
-    override def isDebugEnabled:                                                                  F[Boolean] = F.pure(false)
+    override def debug(message:         String):                                                   F[Unit] = F.unit
+    override def info(message:          String):                                                   F[Unit] = F.unit
+    override def warn(message:          String):                                                   F[Unit] = F.unit
+    override def error(message:         String, error:  Option[Throwable]):                        F[Unit] = F.unit
+    override def isDebugEnabled: F[Boolean] = F.pure(false)

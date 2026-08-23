@@ -38,8 +38,7 @@ object PoolConfigValidator:
     if c.idleTimeout < Duration.Zero then List(s"idleTimeout cannot be negative, value: ${ c.idleTimeout }") else Nil
 
   private def validateMaxLifetime(c: ConnectionPoolConfig): List[String] =
-    if c.maxLifetime < 30.seconds then
-      List(s"maxLifetime cannot be less than 30 seconds, value: ${ c.maxLifetime }")
+    if c.maxLifetime < 30.seconds then List(s"maxLifetime cannot be less than 30 seconds, value: ${ c.maxLifetime }")
     else Nil
 
   private def validateMaintenanceInterval(c: ConnectionPoolConfig): List[String] =
@@ -93,6 +92,6 @@ object PoolConfigValidator:
   /** Raises an `IllegalArgumentException` if `config` is invalid, otherwise succeeds. */
   def validate[F[_]](config: ConnectionPoolConfig)(using F: MonadThrow[F]): F[Unit] =
     errors(config) match
-      case Nil => F.unit
+      case Nil  => F.unit
       case errs =>
         F.raiseError(new IllegalArgumentException(s"Configuration validation failed:\n${ errs.mkString("\n") }"))

@@ -6,13 +6,12 @@
 
 package ldbc.pool
 
-import ldbc.fx.FxSuite
-
 import scala.concurrent.duration.*
 
-import ldbc.fx.Fx
 import ldbc.fx.concurrentFx
 import ldbc.fx.syntax.*
+import ldbc.fx.Fx
+import ldbc.fx.FxSuite
 
 /**
  * Tests for the DB-agnostic [[PoolConfigValidator]] (pool sizes, timeouts, lifetimes). The connector's

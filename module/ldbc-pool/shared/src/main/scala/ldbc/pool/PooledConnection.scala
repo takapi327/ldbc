@@ -6,9 +6,9 @@
 
 package ldbc.pool
 
-import ldbc.effect.{ Fiber, Ref }
-
 import ldbc.sql.Connection
+
+import ldbc.effect.{ Fiber, Ref }
 
 case class PooledConnection[F[_]](
   id:              String,

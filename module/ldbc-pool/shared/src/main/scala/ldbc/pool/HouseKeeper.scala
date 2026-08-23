@@ -33,10 +33,14 @@ object HouseKeeper:
    * @param config         the pool configuration
    * @param metricsTracker the tracker whose gauges are refreshed
    */
-  def apply[F[_]](config: ConnectionPoolConfig, metricsTracker: PoolMetricsTracker[F])(using F: Concurrent[F]): HouseKeeper[F] =
+  def apply[F[_]](config: ConnectionPoolConfig, metricsTracker: PoolMetricsTracker[F])(using
+    F: Concurrent[F]
+  ): HouseKeeper[F] =
     new Impl(config, metricsTracker)
 
-  private final class Impl[F[_]](config: ConnectionPoolConfig, metricsTracker: PoolMetricsTracker[F])(using F: Concurrent[F]) extends HouseKeeper[F]:
+  private final class Impl[F[_]](config: ConnectionPoolConfig, metricsTracker: PoolMetricsTracker[F])(using
+    F: Concurrent[F]
+  ) extends HouseKeeper[F]:
 
     override def start(pool: PooledDataSource[F]): Resource[F, Unit] =
       def loop: F[Unit] = F.sleep(config.maintenanceInterval).flatMap(_ => runMaintenance(pool)).flatMap(_ => loop)

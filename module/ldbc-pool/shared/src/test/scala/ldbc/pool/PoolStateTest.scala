@@ -6,15 +6,14 @@
 
 package ldbc.pool
 
-import ldbc.fx.FxSuite
-
 import scala.concurrent.duration.*
 
-import ldbc.fx.Fx
-import ldbc.fx.concurrentFx
-import ldbc.effect.{ Deferred, Ref }
-
 import ldbc.sql.Connection
+
+import ldbc.effect.{ Deferred, Ref }
+import ldbc.fx.concurrentFx
+import ldbc.fx.Fx
+import ldbc.fx.FxSuite
 
 class PoolStateTest extends FxSuite:
 
@@ -207,7 +206,7 @@ class PoolStateTest extends FxSuite:
       conn        <- mock
       pooledConn1 <- createPooledConnection("conn-1", conn)
       pooledConn2 <- createPooledConnection("conn-2", conn)
-      emptyState = PoolState.empty[Fx]
+      emptyState    = PoolState.empty[Fx]
       nonEmptyState = PoolState[Fx](
                         connections     = Vector(pooledConn1, pooledConn2),
                         idleConnections = Set("conn-1", "conn-2"),

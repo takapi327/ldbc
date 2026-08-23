@@ -8,10 +8,10 @@ package ldbc.pool
 
 import scala.concurrent.duration.*
 
+import ldbc.sql.{ Connection, DataSource, SQLException }
+
 import ldbc.effect.{ Concurrent, Fiber, Ref, Resource }
 import ldbc.effect.syntax.*
-
-import ldbc.sql.{ Connection, DataSource, SQLException }
 
 /**
  * A connection pool exposed as a [[ldbc.sql.DataSource]], generic over the effect `F: Concurrent`.
@@ -20,31 +20,31 @@ import ldbc.sql.{ Connection, DataSource, SQLException }
  */
 trait PooledDataSource[F[_]] extends DataSource[F]:
 
-  def minConnections: Int
-  def maxConnections: Int
-  def connectionTimeout: FiniteDuration
-  def idleTimeout: FiniteDuration
-  def maxLifetime: FiniteDuration
-  def validationTimeout: FiniteDuration
-  def leakDetectionThreshold: Option[FiniteDuration]
-  def adaptiveSizing: Boolean
-  def adaptiveInterval: FiniteDuration
-  def metricsTracker: PoolMetricsTracker[F]
-  def poolState: Ref[F, PoolState[F]]
-  def idGenerator: F[String]
-  def aliveBypassWindow: FiniteDuration
-  def keepaliveTime: Option[FiniteDuration]
-  def connectionTestQuery: Option[String]
-  def poolLogger: PoolLogger[F]
-  def status: F[PoolStatus]
-  def metrics: F[PoolMetrics]
-  def close: F[Unit]
-  def createNewConnection(): F[PooledConnection[F]]
-  def circuitBreaker: CircuitBreaker[F]
-  def createNewConnectionForPool(): F[PooledConnection[F]]
-  def returnToPool(pooled: PooledConnection[F]): F[Unit]
+  def minConnections:                                Int
+  def maxConnections:                                Int
+  def connectionTimeout:                             FiniteDuration
+  def idleTimeout:                                   FiniteDuration
+  def maxLifetime:                                   FiniteDuration
+  def validationTimeout:                             FiniteDuration
+  def leakDetectionThreshold:                        Option[FiniteDuration]
+  def adaptiveSizing:                                Boolean
+  def adaptiveInterval:                              FiniteDuration
+  def metricsTracker:                                PoolMetricsTracker[F]
+  def poolState:                                     Ref[F, PoolState[F]]
+  def idGenerator:                                   F[String]
+  def aliveBypassWindow:                             FiniteDuration
+  def keepaliveTime:                                 Option[FiniteDuration]
+  def connectionTestQuery:                           Option[String]
+  def poolLogger:                                    PoolLogger[F]
+  def status:                                        F[PoolStatus]
+  def metrics:                                       F[PoolMetrics]
+  def close:                                         F[Unit]
+  def createNewConnection():                         F[PooledConnection[F]]
+  def circuitBreaker:                                CircuitBreaker[F]
+  def createNewConnectionForPool():                  F[PooledConnection[F]]
+  def returnToPool(pooled:     PooledConnection[F]): F[Unit]
   def removeConnection(pooled: PooledConnection[F]): F[Unit]
-  def validateConnection(conn: Connection[F]): F[Boolean]
+  def validateConnection(conn: Connection[F]):       F[Boolean]
 
 object PooledDataSource:
 
@@ -98,27 +98,29 @@ object PooledDataSource:
     override def metrics: F[PoolMetrics] = metricsTracker.getMetrics
 
     override def close: F[Unit] =
-      poolState.modify { state =>
-        if state.closed then (state, F.unit)
-        else
-          val newState = state.copy(closed = true)
-          val closeAll = state.connections.traverse_ { pooled =>
-            pooled.finalizer.attempt.flatMap {
-              case Left(error) =>
-                poolLogger.debug(s"Error closing connection ${ pooled.id }: ${ error.getMessage }") >>
-                  pooled.connection.close().attempt.void
-              case Right(_) =>
-                F.unit
+      poolState
+        .modify { state =>
+          if state.closed then (state, F.unit)
+          else
+            val newState = state.copy(closed = true)
+            val closeAll = state.connections.traverse_ { pooled =>
+              pooled.finalizer.attempt.flatMap {
+                case Left(error) =>
+                  poolLogger.debug(s"Error closing connection ${ pooled.id }: ${ error.getMessage }") >>
+                    pooled.connection.close().attempt.void
+                case Right(_) =>
+                  F.unit
+              }
             }
-          }
-          val failWaiters = state.waitQueue.traverse_ { deferred =>
-            deferred.complete(Left(new SQLException("Pool closed"))).attempt.void
-          }
-          val effect =
-            poolLogger.info(s"Closing connection pool (${ config.poolName })") >>
-              closeAll *> failWaiters >> poolLogger.info("Connection pool closed successfully")
-          (newState, effect)
-      }.flatMap(identity)
+            val failWaiters = state.waitQueue.traverse_ { deferred =>
+              deferred.complete(Left(new SQLException("Pool closed"))).attempt.void
+            }
+            val effect =
+              poolLogger.info(s"Closing connection pool (${ config.poolName })") >>
+                closeAll *> failWaiters >> poolLogger.info("Connection pool closed successfully")
+            (newState, effect)
+        }
+        .flatMap(identity)
 
     private def acquire: F[Connection[F]] = for
       startTime <- F.monotonic
@@ -133,7 +135,7 @@ object PooledDataSource:
             case Some(pooled) =>
               for
                 shouldValidate <- needsValidation(pooled)
-                valid <-
+                valid          <-
                   if shouldValidate then
                     validateConnection(pooled.connection).flatTap {
                       case true  => F.unit
@@ -151,7 +153,7 @@ object PooledDataSource:
                       _       <- pooled.useCount.update(_ + 1)
                       endTime <- F.monotonic
                       _       <- metricsTracker.recordAcquisition(endTime - startTime)
-                      _ <- config.leakDetectionThreshold.traverse_ { threshold =>
+                      _       <- config.leakDetectionThreshold.traverse_ { threshold =>
                              val leakTask = F.sleep(threshold).flatMap { _ =>
                                pooled.state.get.flatMap {
                                  case ConnectionState.InUse =>
@@ -201,7 +203,7 @@ object PooledDataSource:
     private def releaseConnectionWithStartTime(conn: Connection[F], startTime: FiniteDuration): F[Unit] =
       val pooledF: F[Option[PooledConnection[F]]] = conn match
         case proxy: ConnectionProxy[F] @unchecked => F.pure(Some(proxy.pooled))
-        case _                                     =>
+        case _                                    =>
           connectionBag.values.map(connections => connections.find(p => p.connection == unwrapConnection(conn)))
 
       val recordUse: F[Unit] =
@@ -216,7 +218,7 @@ object PooledDataSource:
               case Right(_) =>
                 for
                   shouldValidate <- needsValidation(pooled)
-                  valid <-
+                  valid          <-
                     if shouldValidate then
                       validateConnection(pooled.connection).flatTap {
                         case true  => F.unit
@@ -225,7 +227,7 @@ object PooledDataSource:
                       }
                     else F.pure(true)
                   expired <- isExpired(pooled)
-                  _ <-
+                  _       <-
                     if valid && !expired then
                       connectionBag.requite(pooled) *>
                         poolState.update(s => s.copy(idleConnections = s.idleConnections + pooled.id)) *>
@@ -291,7 +293,7 @@ object PooledDataSource:
                      if poolState.connections.size >= config.maxConnections then (poolState, false)
                      else
                        val newState = poolState.copy(
-                         connections = poolState.connections :+ pooled,
+                         connections     = poolState.connections :+ pooled,
                          idleConnections =
                            if initialState == ConnectionState.Idle then poolState.idleConnections + pooled.id
                            else poolState.idleConnections
@@ -319,7 +321,7 @@ object PooledDataSource:
 
     override def validateConnection(conn: Connection[F]): F[Boolean] =
       val timeoutError = new SQLException(s"Connection validation timed out after ${ config.validationTimeout }")
-      val validation = connectionTestQuery match
+      val validation   = connectionTestQuery match
         case Some(query) =>
           for
             closed <- conn.isClosed()
@@ -334,7 +336,9 @@ object PooledDataSource:
       F.timeout(validation, config.validationTimeout)(timeoutError)
         .handleErrorWith { error =>
           poolLogger
-            .debug(s"Connection validation failed or timed out after ${ config.validationTimeout }: ${ error.getMessage }")
+            .debug(
+              s"Connection validation failed or timed out after ${ config.validationTimeout }: ${ error.getMessage }"
+            )
             .as(false)
         }
 
@@ -371,7 +375,7 @@ object PooledDataSource:
       _            <- connectionBag.remove(pooled)
       _            <- pooled.finalizer.attempt.void
       _            <- pooled.leakDetection.get.flatMap(_.traverse_(fiber => fiber.cancel))
-      _ <- poolState.update { state =>
+      _            <- poolState.update { state =>
              state.copy(
                connections     = state.connections.filterNot(_ == pooled),
                idleConnections = state.idleConnections - pooled.id
@@ -386,7 +390,7 @@ object PooledDataSource:
     private def unwrapConnection(conn: Connection[F]): Connection[F] =
       conn match
         case proxy: ConnectionProxy[F] @unchecked => proxy.pooled.connection
-        case _                                     => conn
+        case _                                    => conn
 
   /**
    * The default connection-id generator: a random version-4 UUID string, built from `scala.util.Random`
@@ -402,9 +406,9 @@ object PooledDataSource:
     config:              ConnectionPoolConfig,
     create:              Resource[F, Connection[F]],
     metricsTracker:      Option[PoolMetricsTracker[F]] = None,
-    connectionTestQuery: Option[String]             = None,
-    poolLogger:          Option[PoolLogger[F]]         = None,
-    idGenerator:         F[String]                  = null.asInstanceOf[F[String]]
+    connectionTestQuery: Option[String] = None,
+    poolLogger:          Option[PoolLogger[F]] = None,
+    idGenerator:         F[String] = null.asInstanceOf[F[String]]
   )(using F: Concurrent[F]): Resource[F, PooledDataSource[F]] =
     val idGen = if idGenerator == null then randomConnectionId[F] else idGenerator
     build(config, create, metricsTracker, connectionTestQuery, poolLogger, idGen, None)
@@ -415,9 +419,9 @@ object PooledDataSource:
     before:              Connection[F] => F[A],
     after:               (A, Connection[F]) => F[Unit],
     metricsTracker:      Option[PoolMetricsTracker[F]] = None,
-    connectionTestQuery: Option[String]             = None,
-    poolLogger:          Option[PoolLogger[F]]         = None,
-    idGenerator:         F[String]                  = null.asInstanceOf[F[String]]
+    connectionTestQuery: Option[String] = None,
+    poolLogger:          Option[PoolLogger[F]] = None,
+    idGenerator:         F[String] = null.asInstanceOf[F[String]]
   )(using F: Concurrent[F]): Resource[F, PooledDataSource[F]] =
     val idGen = if idGenerator == null then randomConnectionId[F] else idGenerator
     val hook: Connection[F] => Resource[F, Unit] =
@@ -428,9 +432,9 @@ object PooledDataSource:
     config:              ConnectionPoolConfig,
     dataSource:          DataSource[F],
     metricsTracker:      Option[PoolMetricsTracker[F]] = None,
-    connectionTestQuery: Option[String]             = None,
-    poolLogger:          Option[PoolLogger[F]]         = None,
-    idGenerator:         F[String]                  = null.asInstanceOf[F[String]]
+    connectionTestQuery: Option[String] = None,
+    poolLogger:          Option[PoolLogger[F]] = None,
+    idGenerator:         F[String] = null.asInstanceOf[F[String]]
   )(using F: Concurrent[F]): Resource[F, PooledDataSource[F]] =
     val idGen = if idGenerator == null then randomConnectionId[F] else idGenerator
     fromConfig(config, connectionResource(dataSource), metricsTracker, connectionTestQuery, poolLogger, idGen)
@@ -441,9 +445,9 @@ object PooledDataSource:
     before:              Connection[F] => F[A],
     after:               (A, Connection[F]) => F[Unit],
     metricsTracker:      Option[PoolMetricsTracker[F]] = None,
-    connectionTestQuery: Option[String]             = None,
-    poolLogger:          Option[PoolLogger[F]]         = None,
-    idGenerator:         F[String]                  = null.asInstanceOf[F[String]]
+    connectionTestQuery: Option[String] = None,
+    poolLogger:          Option[PoolLogger[F]] = None,
+    idGenerator:         F[String] = null.asInstanceOf[F[String]]
   )(using F: Concurrent[F]): Resource[F, PooledDataSource[F]] =
     val idGen = if idGenerator == null then randomConnectionId[F] else idGenerator
     fromConfigWithBeforeAfter(

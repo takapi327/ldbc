@@ -6,16 +6,15 @@
 
 package ldbc.pool
 
-import ldbc.fx.FxSuite
-
 import scala.concurrent.duration.*
 
-import ldbc.fx.Fx
-import ldbc.fx.concurrentFx
-import ldbc.effect.Resource
-import ldbc.fx.syntax.*
-
 import ldbc.sql.Connection
+
+import ldbc.effect.Resource
+import ldbc.fx.concurrentFx
+import ldbc.fx.syntax.*
+import ldbc.fx.Fx
+import ldbc.fx.FxSuite
 
 /**
  * Tests for [[AdaptivePoolSizer]] wired into a real [[PooledDataSource[Fx]]] with a [[MockConnection]]
@@ -46,10 +45,10 @@ class AdaptivePoolSizerTest extends FxSuite:
   test("AdaptivePoolSizer should grow the pool under high load") {
     for
       tracker <- PoolMetricsTracker.inMemory[Fx]
-      _ <- pool(config(2, 10), tracker).use { datasource =>
+      _       <- pool(config(2, 10), tracker).use { datasource =>
              for
                initialStatus <- datasource.status
-               _ <- datasource.use { _ =>
+               _             <- datasource.use { _ =>
                       datasource.use { _ =>
                         for
                           _                <- Fx.sleep(150.millis)
@@ -69,7 +68,7 @@ class AdaptivePoolSizerTest extends FxSuite:
   test("AdaptivePoolSizer should shrink the pool under low load") {
     for
       tracker <- PoolMetricsTracker.inMemory[Fx]
-      _ <- pool(config(2, 10), tracker).use { datasource =>
+      _       <- pool(config(2, 10), tracker).use { datasource =>
              for
                _                 <- (1 to 5).toList.parTraverseN(5)(_ => datasource.use(_ => Fx.sleep(50.millis)))
                statusAfterGrowth <- datasource.status
@@ -85,7 +84,7 @@ class AdaptivePoolSizerTest extends FxSuite:
   test("AdaptivePoolSizer should track consecutive high/low periods") {
     for
       tracker <- PoolMetricsTracker.inMemory[Fx]
-      _ <- pool(config(2, 10), tracker).use { datasource =>
+      _       <- pool(config(2, 10), tracker).use { datasource =>
              for
                initialStatus    <- datasource.status
                fiber1           <- datasource.use(_ => Fx.sleep(200.millis)).start
@@ -105,7 +104,7 @@ class AdaptivePoolSizerTest extends FxSuite:
   test("AdaptivePoolSizer should stop when the pool is closed") {
     for
       tracker <- PoolMetricsTracker.inMemory[Fx]
-      _ <- pool(config(2, 5), tracker).use { datasource =>
+      _       <- pool(config(2, 5), tracker).use { datasource =>
              for
                initialStatus <- datasource.status
                _             <- Fx.sleep(100.millis)
@@ -120,7 +119,7 @@ class AdaptivePoolSizerTest extends FxSuite:
   test("AdaptivePoolSizer should handle pool growth gracefully") {
     for
       tracker <- PoolMetricsTracker.inMemory[Fx]
-      _ <- pool(config(1, 100, connectionTimeout = 250.millis), tracker).use { datasource =>
+      _       <- pool(config(1, 100, connectionTimeout = 250.millis), tracker).use { datasource =>
              for
                initialStatus <- datasource.status
                _             <- datasource.use(_ => Fx.sleep(150.millis))
@@ -135,11 +134,11 @@ class AdaptivePoolSizerTest extends FxSuite:
   test("AdaptivePoolSizer should track metrics correctly") {
     for
       tracker <- PoolMetricsTracker.inMemory[Fx]
-      _ <- pool(config(4, 10), tracker).use { datasource =>
+      _       <- pool(config(4, 10), tracker).use { datasource =>
              for
-               _ <- datasource.use(_ => Fx.sleep(10.millis))
-               _ <- datasource.use(_ => Fx.sleep(10.millis))
-               _ <- (1 to 4).toList.parTraverseN(2)(i => datasource.use(_ => Fx.sleep((i * 10).millis)))
+               _       <- datasource.use(_ => Fx.sleep(10.millis))
+               _       <- datasource.use(_ => Fx.sleep(10.millis))
+               _       <- (1 to 4).toList.parTraverseN(2)(i => datasource.use(_ => Fx.sleep((i * 10).millis)))
                _       <- Fx.sleep(100.millis)
                status  <- datasource.status
                metrics <- tracker.getMetrics

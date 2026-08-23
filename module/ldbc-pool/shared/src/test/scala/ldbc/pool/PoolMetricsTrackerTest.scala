@@ -6,13 +6,12 @@
 
 package ldbc.pool
 
-import ldbc.fx.FxSuite
-import ldbc.fx.Fx
-import ldbc.fx.concurrentFx
-
 import scala.concurrent.duration.*
 
+import ldbc.fx.concurrentFx
 import ldbc.fx.syntax.*
+import ldbc.fx.Fx
+import ldbc.fx.FxSuite
 
 class PoolMetricsTrackerTest extends FxSuite:
 
@@ -148,7 +147,7 @@ class PoolMetricsTrackerTest extends FxSuite:
   test("in-memory tracker should be thread-safe") {
     for
       tracker <- PoolMetricsTracker.inMemory[Fx]
-      _ <- (1 to 100).toList.parTraverseN(10) { _ =>
+      _       <- (1 to 100).toList.parTraverseN(10) { _ =>
              tracker.recordAcquisition(100.millis) *>
                tracker.recordTimeout() *>
                tracker.recordLeak()

@@ -6,11 +6,10 @@
 
 package ldbc.pool
 
-import ldbc.fx.FxSuite
-
-import ldbc.fx.Fx
-import ldbc.fx.concurrentFx
 import ldbc.effect.{ Ref, Resource }
+import ldbc.fx.concurrentFx
+import ldbc.fx.Fx
+import ldbc.fx.FxSuite
 
 /**
  * Regression tests for bug #710: `validateConnection` used `handleError`, silently dropping the debug
@@ -28,11 +27,11 @@ class ValidateConnectionLoggerTest extends FxSuite:
   /** A [[PoolLogger]] that records every message it emits, for assertion. */
   private class RecordingPoolLogger(ref: Ref[Fx, List[String]]) extends PoolLogger[Fx]:
     override def logPoolState(poolName: String, status: PoolStatus, metrics: Option[PoolMetrics]): Fx[Unit] = Fx.unit
-    override def debug(message: String): Fx[Unit] = ref.update(_ :+ s"[DEBUG] $message")
-    override def info(message:  String): Fx[Unit] = ref.update(_ :+ s"[INFO] $message")
-    override def warn(message:  String): Fx[Unit] = ref.update(_ :+ s"[WARN] $message")
-    override def error(message: String, error: Option[Throwable]): Fx[Unit] = ref.update(_ :+ s"[ERROR] $message")
-    override def isDebugEnabled: Fx[Boolean] = Fx.pure(true)
+    override def debug(message: String):                           Fx[Unit]    = ref.update(_ :+ s"[DEBUG] $message")
+    override def info(message:  String):                           Fx[Unit]    = ref.update(_ :+ s"[INFO] $message")
+    override def warn(message:  String):                           Fx[Unit]    = ref.update(_ :+ s"[WARN] $message")
+    override def error(message: String, error: Option[Throwable]): Fx[Unit]    = ref.update(_ :+ s"[ERROR] $message")
+    override def isDebugEnabled:                                   Fx[Boolean] = Fx.pure(true)
 
   /** minConnections = 0 so the factory is never invoked; the factory itself must therefore never run. */
   private val poolConfig = ConnectionPoolConfig(minConnections = 0, maxConnections = 1, debug = true)
@@ -45,7 +44,7 @@ class ValidateConnectionLoggerTest extends FxSuite:
       val logger = new RecordingPoolLogger(logs)
       for
         conn <- MockConnection(isValidError = Some(new RuntimeException("connection broken")))
-        _ <- PooledDataSource
+        _    <- PooledDataSource
                .fromConfig(poolConfig, neverCreate, poolLogger = Some(logger))
                .use { ds =>
                  for
