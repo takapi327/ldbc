@@ -144,7 +144,14 @@ private[net] final class S2nTlsSocketF[F[_]](
  */
 private[net] object PlatformTls:
 
-  private val initialised = new AtomicBoolean(false)
+  /**
+   * `s2n_init` must run exactly once per process and complete before any other s2n API is touched. A
+   * `lazy val` gives that for free: Scala initialises it under a lock, so concurrent TLS handshakes block
+   * here until the first `s2n_init` finishes rather than racing ahead to `s2n_config_new`; and if the call
+   * fails the val stays uninitialised, so a later connection retries instead of using a half-initialised
+   * library.
+   */
+  private lazy val s2nInitialised: Unit = check(S2n.s2n_init(), "s2n_init")
 
   /**
    * Wraps `socket` in a TLS client session. The s2n connection is built without I/O, then the handshake is
@@ -171,7 +178,7 @@ private[net] object PlatformTls:
 
   /** Builds the s2n config + connection and installs callbacks. Pure setup — performs no socket I/O. */
   private def build[F[_]](raw: FdRawSocket, host: String, tlsConfig: SSL)(using F: Async[F]): S2nTlsSocketF[F] =
-    if initialised.compareAndSet(false, true) then check(S2n.s2n_init(), "s2n_init")
+    s2nInitialised
     val config = S2n.s2n_config_new()
     if config == null then throw new RuntimeException("s2n_config_new returned null")
     var ioId   = -1L
