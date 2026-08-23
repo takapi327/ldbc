@@ -10,8 +10,8 @@ import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.concurrent.duration.*
 import scala.scalajs.js
 
-import ldbc.fx.Fx
 import ldbc.fx.concurrentFx
+import ldbc.fx.Fx
 import ldbc.net.TlsUpgrade
 
 /**

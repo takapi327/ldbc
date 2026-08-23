@@ -7,7 +7,6 @@
 package ldbc.net
 
 import ldbc.effect.Async
-
 import ldbc.net.SSL
 
 /**

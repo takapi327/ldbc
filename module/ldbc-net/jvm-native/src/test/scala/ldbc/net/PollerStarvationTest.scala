@@ -12,8 +12,8 @@ import java.util.concurrent.atomic.{ AtomicLong, AtomicReference }
 
 import scala.concurrent.duration.*
 
-import ldbc.fx.Fx
 import ldbc.fx.concurrentFx
+import ldbc.fx.Fx
 
 /**
  * Adversarial check of the claim "a long synchronous continuation on the I/O thread will not, in

@@ -39,8 +39,8 @@ private[net] object NodeRawEngine:
       )
       sock.on(
         "error",
-        ((_: js.Dynamic) =>
-          if done.compareAndSet(false, true) then cb(Left(new RuntimeException("connect error")))
+        (
+          (_: js.Dynamic) => if done.compareAndSet(false, true) then cb(Left(new RuntimeException("connect error")))
         ): js.Function1[js.Dynamic, Unit]
       )
       new Canceler:

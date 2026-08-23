@@ -12,8 +12,8 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import scala.concurrent.duration.*
 
-import ldbc.fx.Fx
 import ldbc.fx.concurrentFx
+import ldbc.fx.Fx
 
 /**
  * Concurrency load for the non-blocking engine (JVM NIO selector / Native epoll·kqueue): many

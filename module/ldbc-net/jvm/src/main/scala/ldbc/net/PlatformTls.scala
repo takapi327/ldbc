@@ -7,21 +7,29 @@
 package ldbc.net
 
 import java.io.ByteArrayInputStream
-import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
+import java.nio.ByteBuffer
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import java.security.KeyStore
 
-import javax.net.ssl.{ SNIHostName, SSLContext, SSLEngine, SSLEngineResult, SSLException, TrustManager, TrustManagerFactory, X509TrustManager }
+import javax.net.ssl.{
+  SNIHostName,
+  SSLContext,
+  SSLEngine,
+  SSLEngineResult,
+  SSLException,
+  TrustManager,
+  TrustManagerFactory,
+  X509TrustManager
+}
 import javax.net.ssl.SSLEngineResult.HandshakeStatus
 import javax.net.ssl.SSLEngineResult.Status
 
 import scala.jdk.CollectionConverters.*
 
-import ldbc.effect.Sync
 import ldbc.effect.syntax.*
-
+import ldbc.effect.Sync
 import ldbc.net.{ HostnameMatcher, SSL, TrustSource }
 
 /**

@@ -17,8 +17,8 @@ import javax.net.ssl.{ KeyManagerFactory, SSLContext, SSLServerSocket }
 
 import scala.concurrent.duration.*
 
-import ldbc.fx.Fx
 import ldbc.fx.concurrentFx
+import ldbc.fx.Fx
 import ldbc.net.TlsUpgrade
 
 /**

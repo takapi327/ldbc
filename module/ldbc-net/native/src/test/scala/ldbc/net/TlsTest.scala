@@ -13,8 +13,8 @@ import java.util.concurrent.atomic.AtomicReference
 
 import scala.concurrent.duration.*
 
-import ldbc.fx.Fx
 import ldbc.fx.concurrentFx
+import ldbc.fx.Fx
 import ldbc.net.TlsUpgrade
 
 /**

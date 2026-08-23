@@ -96,7 +96,7 @@ private[net] final class FdRawEngine(poller: Poller) extends RawIoEngine:
     options: SocketOptions,
     cb:      Either[Throwable, RawSocket] => Unit
   ): Canceler =
-    val done = new AtomicBoolean(false)
+    val done  = new AtomicBoolean(false)
     val fdRef = new java.util.concurrent.atomic.AtomicInteger(-1)
 
     val worker = new Thread(
@@ -120,14 +120,12 @@ private[net] final class FdRawEngine(poller: Poller) extends RawIoEngine:
           st.connectReady = () => finishConnect()
           val err = CInterop.beginConnect(fd, resolved)
           if err == 0 then finishConnect()
-          else if err == EINPROGRESS then
-            enqueue(() => { poller.add(fd); poller.arm(fd, read = false, write = true) })
+          else if err == EINPROGRESS then enqueue(() => { poller.add(fd); poller.arm(fd, read = false, write = true) })
           else
             done.set(true)
             registry.remove(fd); CInterop.closeFd(fd)
             cb(Left(new java.io.IOException(s"connect to $host:$port failed (errno=$err)")))
-        catch case e: Throwable => if done.compareAndSet(false, true) then cb(Left(e)),
-      "ldbc-net-fd-connect"
+        catch case e: Throwable => if done.compareAndSet(false, true) then cb(Left(e)), "ldbc-net-fd-connect"
     )
     worker.setDaemon(true)
     worker.start()
