@@ -11,7 +11,9 @@ import java.time.*
 import ldbc.sql.{ ResultSet, ResultSetMetaData }
 import ldbc.sql.SQLException
 
-import ldbc.fx.{ Fx, Ref }
+import ldbc.fx.Fx
+import ldbc.fx.concurrentFx
+import ldbc.effect.Ref
 import ldbc.mysql.data.*
 import ldbc.mysql.net.packet.response.*
 import ldbc.mysql.net.Protocol
@@ -1068,12 +1070,12 @@ class ResultSetTest extends FTestPlatform:
     version:              Version,
     resultSetType:        Int = ResultSet.TYPE_FORWARD_ONLY,
     resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY
-  ): Fx[ResultSetImpl] =
+  ): Fx[ResultSetImpl[Fx]] =
     for
-      isClosed  <- Ref.of[Boolean](false)
-      fetchSize <- Ref.of[Int](0)
+      isClosed  <- Ref.of[Fx, Boolean](false)
+      fetchSize <- Ref.of[Fx, Int](0)
     yield ResultSetImpl(
-      null.asInstanceOf[Protocol],
+      null.asInstanceOf[Protocol[Fx]],
       columns,
       records,
       Map.empty,
@@ -1117,7 +1119,7 @@ class ResultSetTest extends FTestPlatform:
       decimals     = if useScale then 2 else 0
     )
 
-  private def collectRows[A](resultSet: ResultSetImpl)(f: ResultSetImpl => Fx[A]): Fx[List[A]] =
+  private def collectRows[A](resultSet: ResultSetImpl[Fx])(f: ResultSetImpl[Fx] => Fx[A]): Fx[List[A]] =
     def loop(acc: List[A]): Fx[List[A]] =
       resultSet.next().flatMap { hasNext =>
         if hasNext then f(resultSet).flatMap(row => loop(row :: acc))

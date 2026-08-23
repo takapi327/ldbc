@@ -6,6 +6,8 @@
 
 package ldbc.mysql
 
+import ldbc.fx.concurrentFx
+
 import ldbc.sql.SQLException
 import ldbc.sql.Types
 
@@ -16,7 +18,7 @@ import ldbc.net.SSL
 
 class CallableStatementTest extends FTestPlatform:
 
-  given Tracer = Tracer.noop
+  given Tracer[Fx] = Tracer.noop[Fx]
 
   /** Repeats `body` while `cond` yields `true`, collecting each result in iteration order. */
   private def collectWhile[T](cond: => Fx[Boolean])(body: => Fx[T]): Fx[List[T]] =
@@ -25,7 +27,7 @@ class CallableStatementTest extends FTestPlatform:
       case false => Fx.pure(Nil)
     }
 
-  private val connection = Connection(
+  private val connection = Connection[Fx](
     host     = TestConfig.host,
     port     = TestConfig.port,
     user     = TestConfig.user,

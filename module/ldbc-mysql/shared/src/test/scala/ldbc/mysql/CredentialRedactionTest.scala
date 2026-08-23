@@ -6,6 +6,10 @@
 
 package ldbc.mysql
 
+import ldbc.fx.Fx
+
+import ldbc.fx.concurrentFx
+
 /**
  * Verification test for the security finding: the default case-class `toString`
  * of [[MySQLDataSource]] and [[MySQLConfig]] exposes the configured password in
@@ -17,7 +21,7 @@ class CredentialRedactionTest extends FTestPlatform:
   private val secret = "sup3r-s3cret-passw0rd"
 
   test("MySQLDataSource.toString should not expose the password") {
-    val dataSource = MySQLDataSource[Unit](
+    val dataSource = MySQLDataSource[Fx, Unit](
       host     = "localhost",
       port     = 3306,
       user     = "myuser",

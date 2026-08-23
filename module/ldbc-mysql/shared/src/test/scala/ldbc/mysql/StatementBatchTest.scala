@@ -6,6 +6,8 @@
 
 package ldbc.mysql
 
+import ldbc.fx.concurrentFx
+
 import munit.AnyFixture
 
 import ldbc.sql.BatchUpdateException
@@ -17,9 +19,9 @@ import ldbc.net.SSL
 
 class StatementBatchTest extends FTestPlatform:
 
-  given Tracer = Tracer.noop
+  given Tracer[Fx] = Tracer.noop[Fx]
 
-  private val connection = Connection(
+  private val connection = Connection[Fx](
     host     = TestConfig.host,
     port     = TestConfig.port,
     user     = TestConfig.user,

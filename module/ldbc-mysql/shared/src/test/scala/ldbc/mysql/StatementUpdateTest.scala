@@ -6,6 +6,8 @@
 
 package ldbc.mysql
 
+import ldbc.fx.concurrentFx
+
 import ldbc.sql.Statement
 
 import ldbc.fx.syntax.*
@@ -15,9 +17,9 @@ import ldbc.net.SSL
 
 class StatementUpdateTest extends FTestPlatform:
 
-  given Tracer = Tracer.noop
+  given Tracer[Fx] = Tracer.noop[Fx]
 
-  private val connection = Connection(
+  private val connection = Connection[Fx](
     host     = TestConfig.host,
     port     = TestConfig.port,
     user     = TestConfig.user,

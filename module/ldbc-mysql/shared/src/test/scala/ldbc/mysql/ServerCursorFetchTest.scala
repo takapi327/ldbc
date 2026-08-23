@@ -6,6 +6,8 @@
 
 package ldbc.mysql
 
+import ldbc.fx.concurrentFx
+
 import scala.concurrent.duration.*
 
 import ldbc.sql.ResultSet

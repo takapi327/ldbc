@@ -6,6 +6,8 @@
 
 package ldbc.mysql
 
+import ldbc.fx.concurrentFx
+
 import ldbc.mysql.syntax.*
 import ldbc.net.SSL
 
