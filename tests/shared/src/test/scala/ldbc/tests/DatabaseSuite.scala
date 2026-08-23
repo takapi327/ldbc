@@ -29,6 +29,13 @@ trait DatabaseSuite[F[_]] extends munit.FunSuite:
 
   protected given monad: MonadThrow[F]
 
+  /**
+   * A short per-effect label (`io` / `fx` / `future`) supplied by the leaf mixin. Data-mutating suites
+   * combine it with their connector `prefix` to isolate databases/tables/rows, so every concrete suite
+   * owns a private namespace and the suites can run in parallel against one shared MySQL instance.
+   */
+  protected def effectLabel: String
+
   /** Runs `obtained` and asserts its result equals `returns` (the `assertIO` analogue). */
   def assertF[A, B](obtained: F[A], returns: B, clue: => Any = "values are not the same")(using
     munit.Location,
@@ -74,14 +81,17 @@ trait DatabaseSuite[F[_]] extends munit.FunSuite:
 
 /** `F = IO` leaf harness: reuses munit-cats-effect's IO value transform. */
 trait IODatabaseSuite extends munit.CatsEffectSuite with DatabaseSuite[IO]:
+  protected val effectLabel: String = "io"
   protected given monad: MonadThrow[IO] = cats.effect.IO.asyncForIO
 
 /** `F = Fx` leaf harness: reuses `ldbc.fx.FxSuite`'s Fx value transform. */
 trait FxDatabaseSuite extends DatabaseSuite[Fx] with ldbc.fx.FxSuite:
+  protected val effectLabel: String = "fx"
   protected given monad: MonadThrow[Fx] = ldbc.future.FxInstances.catsMonadErrorForFx
 
 /** `F = Future` leaf harness: munit transforms `Future` natively; `MonadThrow[Future]` comes from cats. */
 trait FutureDatabaseSuite extends DatabaseSuite[Future]:
+  protected val effectLabel: String = "future"
   import scala.concurrent.ExecutionContext.Implicits.global
   protected given monad: MonadThrow[Future] = cats.instances.future.catsStdInstancesForFuture
 

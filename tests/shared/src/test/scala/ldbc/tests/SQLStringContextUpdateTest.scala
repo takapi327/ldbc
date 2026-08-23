@@ -81,10 +81,7 @@ trait SQLStringContextUpdateTest[F[_]] extends DatabaseSuite[F]:
     .withBeforeEach(conn => sql"TRUNCATE TABLE $table".update.commit(conn).void)
     .fixture
 
-  final val table = prefix match
-    case "jdbc"  => ident("jdbc_sql_string_context_table")
-    case "ldbc"  => ident("ldbc_sql_string_context_table")
-    case "mysql" => ident("mysql_sql_string_context_table")
+  lazy val table = ident(s"${ prefix }_${ effectLabel }_sql_string_context_table")
 
   override def munitFixtures = List(connectionFixture)
 
