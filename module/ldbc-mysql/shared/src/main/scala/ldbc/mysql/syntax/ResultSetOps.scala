@@ -11,18 +11,19 @@ import scala.collection.Factory
 
 import ldbc.sql.ResultSet
 
-import ldbc.fx.Fx
+import ldbc.effect.MonadThrow
+import ldbc.effect.syntax.*
 
 trait ResultSetOps:
 
-  extension (resultSet: ResultSet[Fx])
+  extension [F[_]](resultSet: ResultSet[F])(using F: MonadThrow[F])
 
-    private def loop[G[_], T](acc: mutable.Builder[T, G[T]], func: => Fx[T]): Fx[G[T]] =
+    private def loop[G[_], T](acc: mutable.Builder[T, G[T]], func: => F[T]): F[G[T]] =
       resultSet.next().flatMap { hasNext =>
         if hasNext then func.flatMap(value => loop(acc += value, func))
-        else Fx.pure(acc.result())
+        else F.pure(acc.result())
       }
 
-    def whileM[G[_], T](func: => Fx[T])(using factory: Factory[T, G[T]]): Fx[G[T]] =
+    def whileM[G[_], T](func: => F[T])(using factory: Factory[T, G[T]]): F[G[T]] =
       val builder = factory.newBuilder
       loop(builder, func)

@@ -6,8 +6,6 @@
 
 package ldbc.mysql.net.protocol
 
-import ldbc.fx.Fx
-
 /**
  * Protocol to handle the Authentication Phase
  * 
@@ -22,7 +20,7 @@ import ldbc.fx.Fx
  * @tparam F
  *   The effect type
  */
-trait Authentication:
+trait Authentication[F[_]]:
 
   /**
    * Start the authentication process.
@@ -32,7 +30,7 @@ trait Authentication:
    * @param password
    *   Password
    */
-  def startAuthentication(username: String, password: String): Fx[Unit]
+  def startAuthentication(username: String, password: String): F[Unit]
 
   /**
    * Change the user.
@@ -42,7 +40,7 @@ trait Authentication:
    * @param password
    *   Password
    */
-  def changeUser(user: String, password: String): Fx[Unit]
+  def changeUser(user: String, password: String): F[Unit]
 
 object Authentication:
 

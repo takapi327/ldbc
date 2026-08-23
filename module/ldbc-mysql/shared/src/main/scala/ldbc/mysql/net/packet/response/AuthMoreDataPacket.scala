@@ -13,7 +13,7 @@ import scodec.codecs.*
 /**
  * We need to make sure that when sending plugin supplied data to the client they are not considered a special out-of-band command, like e.g.
  *
- * ERR_Packet, Protocol::AuthSwitchRequest: or OK_Packet. To avoid this the server will send all plugin data packets "wrapped" in a command \1. Note that the client will continue sending its replies unrwapped: Protocol::AuthSwitchResponse:
+ * ERR_Packet, Protocol::AuthSwitchRequest: or OK_Packet. To avoid this the server will send all plugin data packets "wrapped" in a command \1. Note that the client will continue sending its replies unrwapped: Protocol[F]::AuthSwitchResponse:
  *
  * @param status
  *   Type: int<1>

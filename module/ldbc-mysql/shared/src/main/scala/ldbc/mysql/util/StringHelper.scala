@@ -6,7 +6,7 @@
 
 package ldbc.mysql.util
 
-import ldbc.fx.Fx
+import ldbc.effect.Sync
 
 object StringHelper:
 
@@ -68,8 +68,8 @@ object StringHelper:
 
   end indexOfIgnoreCase
 
-  def getUniqueSavepointId: Fx[String] =
-    Fx.delay(java.util.UUID.randomUUID().toString.replaceAll("-", "_"))
+  def getUniqueSavepointId[F[_]](using F: Sync[F]): F[String] =
+    F.delay(java.util.UUID.randomUUID().toString.replaceAll("-", "_"))
 
   /**
    * Does the string contain wildcard symbols ('%' or '_'). Used in DatabaseMetaData.

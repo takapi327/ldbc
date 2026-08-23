@@ -10,7 +10,7 @@ import scala.concurrent.duration.FiniteDuration
 
 import ldbc.sql.Attribute
 
-import ldbc.fx.{ Fx, Resource }
+import ldbc.effect.{ Concurrent, Resource }
 
 /**
  * The metrics SPI for database operations, following the OpenTelemetry database semantic conventions
@@ -20,7 +20,7 @@ import ldbc.fx.{ Fx, Resource }
  *
  * @see [[https://opentelemetry.io/docs/specs/semconv/database/database-metrics/]]
  */
-trait DatabaseMetrics:
+trait DatabaseMetrics[F[_]]:
 
   /**
    * Records the duration of a database operation.
@@ -28,7 +28,7 @@ trait DatabaseMetrics:
    * @param duration   the operation duration
    * @param attributes additional attributes
    */
-  def recordOperationDuration(duration: FiniteDuration, attributes: Attribute[?]*): Fx[Unit]
+  def recordOperationDuration(duration: FiniteDuration, attributes: Attribute[?]*): F[Unit]
 
   /**
    * Records the number of rows returned by an operation.
@@ -36,7 +36,7 @@ trait DatabaseMetrics:
    * @param rows       the number of rows
    * @param attributes additional attributes
    */
-  def recordReturnedRows(rows: Long, attributes: Attribute[?]*): Fx[Unit]
+  def recordReturnedRows(rows: Long, attributes: Attribute[?]*): F[Unit]
 
   /**
    * Records connection creation time.
@@ -44,7 +44,7 @@ trait DatabaseMetrics:
    * @param duration the time taken to create a connection
    * @param poolName the pool name
    */
-  def recordConnectionCreateTime(duration: FiniteDuration, poolName: String): Fx[Unit]
+  def recordConnectionCreateTime(duration: FiniteDuration, poolName: String): F[Unit]
 
   /**
    * Records connection wait time (time to acquire from the pool).
@@ -52,7 +52,7 @@ trait DatabaseMetrics:
    * @param duration the wait time
    * @param poolName the pool name
    */
-  def recordConnectionWaitTime(duration: FiniteDuration, poolName: String): Fx[Unit]
+  def recordConnectionWaitTime(duration: FiniteDuration, poolName: String): F[Unit]
 
   /**
    * Records connection use time (time between borrow and return).
@@ -60,14 +60,14 @@ trait DatabaseMetrics:
    * @param duration the use time
    * @param poolName the pool name
    */
-  def recordConnectionUseTime(duration: FiniteDuration, poolName: String): Fx[Unit]
+  def recordConnectionUseTime(duration: FiniteDuration, poolName: String): F[Unit]
 
   /**
    * Increments the connection-timeout counter.
    *
    * @param poolName the pool name
    */
-  def recordConnectionTimeout(poolName: String): Fx[Unit]
+  def recordConnectionTimeout(poolName: String): F[Unit]
 
   /**
    * Registers an observable callback for pool gauge metrics.
@@ -82,31 +82,32 @@ trait DatabaseMetrics:
     poolName:       String,
     minConnections: Int,
     maxConnections: Int,
-    stateProvider:  Fx[PoolMetricsState]
-  ): Resource[Unit]
+    stateProvider:  F[PoolMetricsState]
+  ): Resource[F, Unit]
 
 object DatabaseMetrics:
 
   /** A metrics instance that records nothing. */
-  val noop: DatabaseMetrics = new DatabaseMetrics:
-    override def recordOperationDuration(duration:    FiniteDuration, attributes: Attribute[?]*): Fx[Unit] = Fx.unit
-    override def recordReturnedRows(rows:             Long, attributes:           Attribute[?]*): Fx[Unit] = Fx.unit
-    override def recordConnectionCreateTime(duration: FiniteDuration, poolName:   String):        Fx[Unit] = Fx.unit
-    override def recordConnectionWaitTime(duration:   FiniteDuration, poolName:   String):        Fx[Unit] = Fx.unit
-    override def recordConnectionUseTime(duration:    FiniteDuration, poolName:   String):        Fx[Unit] = Fx.unit
-    override def recordConnectionTimeout(poolName:    String):                                    Fx[Unit] = Fx.unit
+  def noop[F[_]](using F: Concurrent[F]): DatabaseMetrics[F] = new DatabaseMetrics[F]:
+    override def recordOperationDuration(duration:    FiniteDuration, attributes: Attribute[?]*): F[Unit] = F.unit
+    override def recordReturnedRows(rows:             Long, attributes:           Attribute[?]*): F[Unit] = F.unit
+    override def recordConnectionCreateTime(duration: FiniteDuration, poolName:   String):        F[Unit] = F.unit
+    override def recordConnectionWaitTime(duration:   FiniteDuration, poolName:   String):        F[Unit] = F.unit
+    override def recordConnectionUseTime(duration:    FiniteDuration, poolName:   String):        F[Unit] = F.unit
+    override def recordConnectionTimeout(poolName:    String):                                    F[Unit] = F.unit
     override def registerPoolStateCallback(
       poolName:       String,
       minConnections: Int,
       maxConnections: Int,
-      stateProvider:  Fx[PoolMetricsState]
-    ): Resource[Unit] = Resource.pure(())
+      stateProvider:  F[PoolMetricsState]
+    ): Resource[F, Unit] = Resource.pure(())
 
   /**
-   * Builds a [[DatabaseMetrics]] from a [[Meter]]. In the CE-free core this always yields the no-op
+   * Builds a [[DatabaseMetrics[F]]] from a [[Meter]]. In the CE-free core this always yields the no-op
    * implementation, regardless of the meter — real instrument wiring is the observability bridge's job.
    *
    * @param meter the meter (ignored by the core)
    * @return a resource containing the no-op metrics instance
    */
-  def fromMeter(@annotation.unused meter: Meter): Resource[DatabaseMetrics] = Resource.pure(noop)
+  def fromMeter[F[_]](@annotation.unused meter: Meter)(using F: Concurrent[F]): Resource[F, DatabaseMetrics[F]] =
+    Resource.pure(noop)

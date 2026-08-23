@@ -6,7 +6,7 @@
 
 package ldbc.mysql.telemetry
 
-import ldbc.fx.Fx
+import ldbc.effect.Concurrent
 
 /**
  * A metrics meter, mirroring otel4s's `Meter`. In the CE-free core it is an opaque handle: the driver
@@ -23,28 +23,28 @@ object Meter:
 /**
  * A builder for a [[Meter]], mirroring otel4s's meter builder.
  */
-trait MeterBuilder:
+trait MeterBuilder[F[_]]:
 
   /** Sets the instrumentation version. */
-  def withVersion(version: String): MeterBuilder
+  def withVersion(version: String): MeterBuilder[F]
 
   /** Sets the schema URL. */
-  def withSchemaUrl(schemaUrl: String): MeterBuilder
+  def withSchemaUrl(schemaUrl: String): MeterBuilder[F]
 
   /** Builds the meter. */
-  def get: Fx[Meter]
+  def get: F[Meter]
 
 /**
  * A provider of [[Meter]]s, mirroring otel4s's `MeterProvider`.
  */
-trait MeterProvider:
+trait MeterProvider[F[_]]:
 
   /**
    * Starts building a meter with the given instrumentation name.
    *
    * @param name the instrumentation scope name
    */
-  def meter(name: String): MeterBuilder
+  def meter(name: String): MeterBuilder[F]
 
 object MeterProvider:
 
@@ -53,11 +53,11 @@ object MeterProvider:
    *
    * @param provider the instance
    */
-  def apply(using provider: MeterProvider): MeterProvider = provider
+  def apply[F[_]](using provider: MeterProvider[F]): MeterProvider[F] = provider
 
   /** A provider that yields no-op meters. */
-  val noop: MeterProvider = new MeterProvider:
-    override def meter(name: String): MeterBuilder = new MeterBuilder:
-      override def withVersion(version:     String): MeterBuilder = this
-      override def withSchemaUrl(schemaUrl: String): MeterBuilder = this
-      override def get:                              Fx[Meter]    = Fx.pure(Meter.noop)
+  def noop[F[_]](using F: Concurrent[F]): MeterProvider[F] = new MeterProvider[F]:
+    override def meter(name: String): MeterBuilder[F] = new MeterBuilder[F]:
+      override def withVersion(version:     String): MeterBuilder[F] = this
+      override def withSchemaUrl(schemaUrl: String): MeterBuilder[F] = this
+      override def get:                              F[Meter]        = F.pure(Meter.noop)

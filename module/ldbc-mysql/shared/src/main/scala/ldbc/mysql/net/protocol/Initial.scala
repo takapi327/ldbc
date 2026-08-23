@@ -8,18 +8,19 @@ package ldbc.mysql.net.protocol
 
 import ldbc.sql.SQLException
 
-import ldbc.fx.Fx
+import ldbc.effect.Concurrent
+import ldbc.effect.syntax.*
 import ldbc.mysql.net.packet.response.InitialPacket
-import ldbc.net.Socket
+import ldbc.net.effect.Socket
 
 /**
  * Initial packet is the first packet sent by the server to the client. It contains the server version,
  * connection id, and authentication plugin data. The client uses this information to determine the
  * authentication method to use.
  */
-trait Initial:
+trait Initial[F[_]]:
 
-  def start: Fx[InitialPacket]
+  def start: F[InitialPacket]
 
 object Initial:
 
@@ -28,17 +29,17 @@ object Initial:
    *
    * @param socket the freshly connected socket
    */
-  def apply(socket: Socket): Initial =
-    new Initial:
-      override def start: Fx[InitialPacket] =
+  def apply[F[_]](socket: Socket[F])(using F: Concurrent[F]): Initial[F] =
+    new Initial[F]:
+      override def start: F[InitialPacket] =
         for
           header <- socket.read(4).flatMap {
-                      case Some(bytes) => Fx.pure(bytes)
-                      case None        => Fx.raiseError(new SQLException("Failed to read header"))
+                      case Some(bytes) => F.pure(bytes)
+                      case None        => F.raiseError(new SQLException("Failed to read header"))
                     }
           payloadSize = parseHeader(header)
           payload <- socket.read(payloadSize).flatMap {
-                       case Some(bytes) => Fx.pure(bytes)
-                       case None        => Fx.raiseError(new SQLException("Failed to read payload"))
+                       case Some(bytes) => F.pure(bytes)
+                       case None        => F.raiseError(new SQLException("Failed to read payload"))
                      }
         yield InitialPacket.decode(payload)

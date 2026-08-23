@@ -8,10 +8,10 @@ package ldbc.mysql.syntax
 
 import ldbc.sql.{ Connection, DataSource }
 
-import ldbc.fx.Fx
+import ldbc.effect.Async
 
 /**
- * Consumption helper for an [[ldbc.sql.DataSource]] over the [[ldbc.fx.Fx]] effect.
+ * Consumption helper for an [[ldbc.sql.DataSource]] over any effect `F` with an `Async` instance.
  *
  * `DataSource.getConnection` returns the connection in "allocated" form `(connection, release)`, which
  * must be released with a bracket to stay safe under cancellation. This extension performs that bracket
@@ -19,11 +19,11 @@ import ldbc.fx.Fx
  */
 trait DataSourceOps:
 
-  extension (ds: DataSource[Fx])
-    def use[B](f: Connection[Fx] => Fx[B]): Fx[B] =
-      Fx.bracket(ds.getConnection)((pair: (Connection[Fx], Fx[Unit])) => f(pair._1))(
+  extension [F[_]](ds: DataSource[F])(using F: Async[F])
+    def use[B](f: Connection[F] => F[B]): F[B] =
+      F.bracket(ds.getConnection)((pair: (Connection[F], F[Unit])) => f(pair._1))(
         (pair: (
-          Connection[Fx],
-          Fx[Unit]
+          Connection[F],
+          F[Unit]
         )) => pair._2
       )

@@ -17,8 +17,8 @@ import ldbc.sql.{ SQLException, SQLInvalidAuthorizationSpecException }
 import ldbc.sql.Attribute
 
 import ldbc.authentication.plugin.*
-import ldbc.fx.{ Fx, Ref, Resource }
-import ldbc.fx.syntax.*
+import ldbc.effect.{ Concurrent, Ref, Resource }
+import ldbc.effect.syntax.*
 import ldbc.mysql.authenticator.{ CachingSha2PasswordPlugin, MysqlNativePasswordPlugin, Sha256PasswordPlugin }
 import ldbc.mysql.data.*
 import ldbc.mysql.net.packet.*
@@ -28,6 +28,7 @@ import ldbc.mysql.net.protocol.*
 import ldbc.mysql.telemetry.*
 import ldbc.mysql.telemetry.{ DbAttributes, ServerAttributes }
 import ldbc.mysql.telemetry.{ Span, StatusCode, Tracer }
+import ldbc.net.effect.{ Socket, TlsUpgrade }
 
 /**
  * Protocol is a protocol to communicate with MySQL server.
@@ -36,7 +37,7 @@ import ldbc.mysql.telemetry.{ Span, StatusCode, Tracer }
  * @tparam F
  *   the effect type
  */
-trait Protocol extends UtilityCommands, Authentication:
+trait Protocol[F[_]] extends UtilityCommands[F], Authentication[F]:
 
   /**
    * Returns the initial packet.
@@ -58,20 +59,20 @@ trait Protocol extends UtilityCommands, Authentication:
    * Receive the next `ResponsePacket`, or raise an exception if EOF is reached before a complete
    * message arrives.
    */
-  def receive[P <: ResponsePacket](decoder: Decoder[P]): Fx[P]
+  def receive[P <: ResponsePacket](decoder: Decoder[P]): F[P]
 
   /** Send the specified request packet. */
-  def send(request: RequestPacket): Fx[Unit]
+  def send(request: RequestPacket): F[Unit]
 
   /**
    * Resets the sequence id.
    */
-  def resetSequenceId: Fx[Unit]
+  def resetSequenceId: F[Unit]
 
   /**
    * Resets the connection.
    */
-  def resetConnection: Fx[Unit]
+  def resetConnection: F[Unit]
 
   /**
    * Controls whether or not multiple SQL statements are allowed to be executed at once.
@@ -81,21 +82,21 @@ trait Protocol extends UtilityCommands, Authentication:
    * @param optionOperation
    * [[EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON]] or [[EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF]]
    */
-  def setOption(optionOperation: EnumMySQLSetOption): Fx[Unit]
+  def setOption(optionOperation: EnumMySQLSetOption): F[Unit]
 
   /**
    * Enables multiple SQL statements to be executed at once.
    *
    * NOTE: It can only be used for batch processing with Insert, Update, and Delete statements.
    */
-  def enableMultiQueries: Fx[Unit] = setOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON)
+  def enableMultiQueries: F[Unit] = setOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON)
 
   /**
    * Disables multiple SQL statements to be executed at once.
    *
    * NOTE: It can only be used for batch processing with Insert, Update, and Delete statements.
    */
-  def disableMultiQueries: Fx[Unit] = setOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF)
+  def disableMultiQueries: F[Unit] = setOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF)
 
   /**
    * Repeats the process `times` times.
@@ -109,7 +110,7 @@ trait Protocol extends UtilityCommands, Authentication:
    * @return
    *   a vector of the response packets
    */
-  def repeatProcess[P <: ResponsePacket](times: Int, decoder: Decoder[P]): Fx[Vector[P]]
+  def repeatProcess[P <: ResponsePacket](times: Int, decoder: Decoder[P]): F[Vector[P]]
 
   /**
    * Reads until EOF is reached.
@@ -121,30 +122,30 @@ trait Protocol extends UtilityCommands, Authentication:
    * @return
    *   a vector of the response packets
    */
-  def readUntilEOF[P <: ResponsePacket](decoder: Decoder[P | EOFPacket | ERRPacket]): Fx[Vector[P]]
+  def readUntilEOF[P <: ResponsePacket](decoder: Decoder[P | EOFPacket | ERRPacket]): F[Vector[P]]
 
   /**
    * Returns the server variables.
    */
-  def serverVariables(): Fx[Map[String, String]]
+  def serverVariables(): F[Map[String, String]]
 
 object Protocol:
 
   private val SELECT_SERVER_VARIABLES_QUERY =
     "SELECT @@session.auto_increment_increment AS auto_increment_increment, @@character_set_client AS character_set_client, @@character_set_connection AS character_set_connection, @@character_set_results AS character_set_results, @@character_set_server AS character_set_server, @@collation_server AS collation_server, @@collation_connection AS collation_connection, @@init_connect AS init_connect, @@interactive_timeout AS interactive_timeout, @@license AS license, @@lower_case_table_names AS lower_case_table_names, @@max_allowed_packet AS max_allowed_packet, @@net_write_timeout AS net_write_timeout, @@performance_schema AS performance_schema, @@sql_mode AS sql_mode, @@system_time_zone AS system_time_zone, @@time_zone AS time_zone, @@transaction_isolation AS transaction_isolation, @@wait_timeout AS wait_timeout"
 
-  private[ldbc] case class Impl(
+  private[ldbc] case class Impl[F[_]](
     initialPacket:               InitialPacket,
     hostInfo:                    HostInfo,
-    socket:                      PacketSocket,
+    socket:                      PacketSocket[F],
     useSSL:                      Boolean = false,
     allowPublicKeyRetrieval:     Boolean = false,
     capabilityFlags:             Set[CapabilitiesFlags],
-    sequenceIdRef:               Ref[Byte],
-    defaultAuthenticationPlugin: Option[AuthenticationPlugin[Fx]],
-    plugins:                     Map[String, AuthenticationPlugin[Fx]]
-  )(using tracer: Tracer, ex: Exchange)
-    extends Protocol:
+    sequenceIdRef:               Ref[F, Byte],
+    defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
+    plugins:                     Map[String, AuthenticationPlugin[F]]
+  )(using tracer: Tracer[F], ex: Exchange[F], F: Concurrent[F])
+    extends Protocol[F]:
 
     private val attributes = List(
       DbAttributes.DbSystemName(DbAttributes.DbSystemNameValue.Mysql.value),
@@ -156,17 +157,17 @@ object Protocol:
       .map(db => DbAttributes.DbNamespace(db))
       .toList
 
-    override def receive[P <: ResponsePacket](decoder: Decoder[P]): Fx[P] = socket.receive(decoder)
+    override def receive[P <: ResponsePacket](decoder: Decoder[P]): F[P] = socket.receive(decoder)
 
-    override def send(request: RequestPacket): Fx[Unit] = socket.send(request)
+    override def send(request: RequestPacket): F[Unit] = socket.send(request)
 
-    override def comQuit(): Fx[Unit] =
-      exchange[Unit](TelemetrySpanName.CONNECTION_CLOSE) { (span: Span) =>
+    override def comQuit(): F[Unit] =
+      exchange[F, Unit](TelemetrySpanName.CONNECTION_CLOSE) { (span: Span[F]) =>
         span.addAttributes(attributes*) *> socket.send(ComQuitPacket())
       }
 
-    override def comInitDB(schema: String): Fx[Unit] =
-      exchange[Unit](TelemetrySpanName.CHANGE_DATABASE) { (span: Span) =>
+    override def comInitDB(schema: String): F[Unit] =
+      exchange[F, Unit](TelemetrySpanName.CHANGE_DATABASE) { (span: Span[F]) =>
         span.addAttributes((attributes ++ List(DbAttributes.DbNamespace(schema)))*) *>
           socket.send(ComInitDBPacket(schema)) *>
           socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
@@ -174,20 +175,20 @@ object Protocol:
               val ex = error.toException(s"Failed to change schema to '$schema'")
               span.recordException(ex, error.attributes*) *>
                 span.setStatus(StatusCode.Error, ex.getMessage) *>
-                Fx.raiseError(ex)
-            case ok: OKPacket => Fx.unit
+                F.raiseError(ex)
+            case ok: OKPacket => F.unit
           }
       }
 
-    override def comStatistics(): Fx[StatisticsPacket] =
-      exchange[StatisticsPacket](TelemetrySpanName.COMMAND_STATISTICS) { (span: Span) =>
+    override def comStatistics(): F[StatisticsPacket] =
+      exchange[F, StatisticsPacket](TelemetrySpanName.COMMAND_STATISTICS) { (span: Span[F]) =>
         span.addAttributes(attributes*) *>
           socket.send(ComStatisticsPacket()) *>
           socket.receive(StatisticsPacket.decoder)
       }
 
-    override def comPing(): Fx[Boolean] =
-      exchange[Boolean](TelemetrySpanName.PING) { (span: Span) =>
+    override def comPing(): F[Boolean] =
+      exchange[F, Boolean](TelemetrySpanName.PING) { (span: Span[F]) =>
         span.addAttributes(attributes*) *>
           socket.send(ComPingPacket()) *>
           socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
@@ -195,13 +196,13 @@ object Protocol:
               val ex = error.toException
               span.recordException(ex, error.attributes*) *>
                 span.setStatus(StatusCode.Error, ex.getMessage) *>
-                Fx.pure(false)
-            case ok: OKPacket => Fx.pure(true)
+                F.pure(false)
+            case ok: OKPacket => F.pure(true)
           }
       }
 
-    override def comResetConnection(): Fx[Unit] =
-      exchange[Unit](TelemetrySpanName.CONNECTION_RESET) { (span: Span) =>
+    override def comResetConnection(): F[Unit] =
+      exchange[F, Unit](TelemetrySpanName.CONNECTION_RESET) { (span: Span[F]) =>
         span.addAttributes(attributes*) *>
           socket.send(ComResetConnectionPacket()) *>
           socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
@@ -209,13 +210,13 @@ object Protocol:
               val ex = error.toException("Failed to execute reset connection")
               span.recordException(ex, error.attributes*) *>
                 span.setStatus(StatusCode.Error, ex.getMessage) *>
-                Fx.raiseError(ex)
-            case ok: OKPacket => Fx.unit
+                F.raiseError(ex)
+            case ok: OKPacket => F.unit
           }
       }
 
-    override def comSetOption(optionOperation: EnumMySQLSetOption): Fx[Unit] =
-      exchange[Unit](TelemetrySpanName.SET_OPTION_MULTI_STATEMENTS(optionOperation.code)) { (span: Span) =>
+    override def comSetOption(optionOperation: EnumMySQLSetOption): F[Unit] =
+      exchange[F, Unit](TelemetrySpanName.SET_OPTION_MULTI_STATEMENTS(optionOperation.code)) { (span: Span[F]) =>
         span.addAttributes(attributes*) *>
           socket.send(ComSetOptionPacket(optionOperation)) *>
           socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
@@ -223,25 +224,25 @@ object Protocol:
               val ex = error.toException("Failed to execute set option")
               span.recordException(ex, error.attributes*) *>
                 span.setStatus(StatusCode.Error, ex.getMessage) *>
-                Fx.raiseError(ex)
-            case eof: EOFPacket => Fx.unit
-            case ok: OKPacket   => Fx.unit
+                F.raiseError(ex)
+            case eof: EOFPacket => F.unit
+            case ok: OKPacket   => F.unit
           }
       }
 
-    override def resetSequenceId: Fx[Unit] =
+    override def resetSequenceId: F[Unit] =
       sequenceIdRef.update(_ => 0.toByte)
 
-    override def resetConnection: Fx[Unit] = resetSequenceId *> comResetConnection()
+    override def resetConnection: F[Unit] = resetSequenceId *> comResetConnection()
 
-    override def setOption(optionOperation: EnumMySQLSetOption): Fx[Unit] =
+    override def setOption(optionOperation: EnumMySQLSetOption): F[Unit] =
       resetSequenceId *> comSetOption(optionOperation)
 
-    override def repeatProcess[P <: ResponsePacket](times: Int, decoder: Decoder[P]): Fx[Vector[P]] =
+    override def repeatProcess[P <: ResponsePacket](times: Int, decoder: Decoder[P]): F[Vector[P]] =
       val builder = Vector.newBuilder[P]
 
-      def read(remaining: Int): Fx[Vector[P]] =
-        if remaining <= 0 then Fx.pure(builder.result())
+      def read(remaining: Int): F[Vector[P]] =
+        if remaining <= 0 then F.pure(builder.result())
         else
           socket.receive(decoder).flatMap { result =>
             builder += result
@@ -250,13 +251,13 @@ object Protocol:
 
       read(times)
 
-    override def readUntilEOF[P <: ResponsePacket](decoder: Decoder[P | EOFPacket | ERRPacket]): Fx[Vector[P]] =
+    override def readUntilEOF[P <: ResponsePacket](decoder: Decoder[P | EOFPacket | ERRPacket]): F[Vector[P]] =
       val builder = Vector.newBuilder[P]
-      def loop: Fx[Vector[P]] =
+      def loop: F[Vector[P]] =
         socket.receive(decoder).flatMap {
-          case _: EOFPacket     => Fx.pure(builder.result())
+          case _: EOFPacket     => F.pure(builder.result())
           case error: ERRPacket =>
-            Fx.raiseError(error.toException("Error during database operation"))
+            F.raiseError(error.toException("Error during database operation"))
           case row =>
             builder += row.asInstanceOf[P]
             loop
@@ -264,13 +265,13 @@ object Protocol:
 
       loop
 
-    override def serverVariables(): Fx[Map[String, String]] =
+    override def serverVariables(): F[Map[String, String]] =
       resetSequenceId *>
         send(ComQueryPacket(SELECT_SERVER_VARIABLES_QUERY, initialPacket.capabilityFlags, ListMap.empty)) *>
         receive(ColumnsNumberPacket.decoder(initialPacket.capabilityFlags)).flatMap {
-          case _: OKPacket      => Fx.pure(Map.empty)
+          case _: OKPacket      => F.pure(Map.empty)
           case error: ERRPacket =>
-            Fx.raiseError(error.toException(Some(SELECT_SERVER_VARIABLES_QUERY), None))
+            F.raiseError(error.toException(Some(SELECT_SERVER_VARIABLES_QUERY), None))
           case result: ColumnsNumberPacket =>
             for
               columnDefinitions <-
@@ -298,17 +299,17 @@ object Protocol:
      * Authentication plugin
      */
     private def readUntilOk(
-      plugin:       AuthenticationPlugin[Fx],
+      plugin:       AuthenticationPlugin[F],
       password:     String,
-      span:         Span,
+      span:         Span[F],
       scrambleBuff: Option[Array[Byte]] = None
-    ): Fx[Unit] =
+    ): F[Unit] =
       socket.receive(AuthenticationPacket.decoder(initialPacket.capabilityFlags)).flatMap {
         case more: AuthMoreDataPacket
           if (allowPublicKeyRetrieval || useSSL) && more.authenticationMethodData
             .mkString("") == Authentication.FULL_AUTH =>
           plugin match
-            case plugin: CachingSha2PasswordPlugin =>
+            case plugin: (CachingSha2PasswordPlugin[F] @unchecked) =>
               cachingSha2Authentication(
                 plugin,
                 password,
@@ -318,14 +319,14 @@ object Protocol:
                 password,
                 span
               )
-            case plugin: Sha256PasswordPlugin =>
+            case plugin: (Sha256PasswordPlugin[F] @unchecked) =>
               sha256Authentication(
                 plugin,
                 password,
                 scrambleBuff.getOrElse(initialPacket.scrambleBuff)
               ) *> readUntilOk(plugin, password, span)
             case unknown =>
-              Fx.raiseError(
+              F.raiseError(
                 new SQLInvalidAuthorizationSpecException(
                   s"Unexpected authentication method: $unknown",
                   detail = Some(
@@ -338,16 +339,16 @@ object Protocol:
               )
         case more: AuthMoreDataPacket        => readUntilOk(plugin, password, span)
         case packet: AuthSwitchRequestPacket => changeAuthenticationMethod(packet, password, span)
-        case _: OKPacket                     => Fx.unit
+        case _: OKPacket                     => F.unit
         case error: ERRPacket                =>
-          Fx.raiseError(
+          F.raiseError(
             error.toException(
               s"Check that the ${ hostInfo.host }:${ hostInfo.port } server is running or that the authentication information, etc. used for the connection is correct."
             )
           )
-        case unknown: UnknownPacket => Fx.raiseError(unknown.toException("Error during database operation"))
+        case unknown: UnknownPacket => F.raiseError(unknown.toException("Error during database operation"))
         case unknown                =>
-          Fx.raiseError(
+          F.raiseError(
             new SQLInvalidAuthorizationSpecException(
               "Unexpected packets processed",
               detail = Some(
@@ -371,10 +372,10 @@ object Protocol:
     private def changeAuthenticationMethod(
       switchRequestPacket: AuthSwitchRequestPacket,
       password:            String,
-      span:                Span
-    ): Fx[Unit] =
+      span:                Span[F]
+    ): F[Unit] =
       resolveAuthPlugin(switchRequestPacket.pluginName, span).flatMap {
-        case plugin: CachingSha2PasswordPlugin =>
+        case plugin: (CachingSha2PasswordPlugin[F] @unchecked) =>
           for
             hashedPassword <- plugin.hashPassword(password, switchRequestPacket.pluginProvidedData)
             _              <- socket.send(AuthSwitchResponsePacket(hashedPassword))
@@ -385,7 +386,7 @@ object Protocol:
                    Some(switchRequestPacket.pluginProvidedData)
                  )
           yield ()
-        case plugin: Sha256PasswordPlugin =>
+        case plugin: (Sha256PasswordPlugin[F] @unchecked) =>
           sha256Authentication(plugin, password, switchRequestPacket.pluginProvidedData) *> readUntilOk(
             plugin,
             password,
@@ -413,10 +414,10 @@ object Protocol:
      * Scramble buffer for authentication payload
      */
     private def plainTextHandshake(
-      plugin:       AuthenticationPlugin[Fx],
+      plugin:       AuthenticationPlugin[F],
       password:     String,
       scrambleBuff: Array[Byte]
-    ): Fx[Unit] =
+    ): F[Unit] =
       plugin
         .hashPassword(password, scrambleBuff)
         .flatMap(hashedPassword => socket.send(AuthSwitchResponsePacket(hashedPassword)))
@@ -425,7 +426,7 @@ object Protocol:
      * SSL handshake.
      * Send a plain password to use SSL/TLS encrypted secure communication.
      */
-    private def sslHandshake(password: String): Fx[Unit] =
+    private def sslHandshake(password: String): F[Unit] =
       socket.send(AuthSwitchResponsePacket.unsafeFromBytes((password + "\u0000").getBytes(StandardCharsets.UTF_8)))
 
     /**
@@ -441,11 +442,12 @@ object Protocol:
       plugin:       EncryptPasswordPlugin,
       password:     String,
       scrambleBuff: Array[Byte]
-    ): Fx[Unit] =
+    ): F[Unit] =
       socket.receive(AuthMoreDataPacket.decoder).flatMap { moreData =>
         // TODO: When converted to Array[Byte], it contains an extra 1 for some reason. This causes an error in public key parsing when executing Scala JS. Therefore, the first 1Byte is excluded.
         val publicKeyString = moreData.authenticationMethodData
           .drop(1)
+          .iterator
           .map("%02x" format _)
           .map(hex => Integer.parseInt(hex, 16).toChar)
           .mkString("")
@@ -463,10 +465,10 @@ object Protocol:
      * Scramble buffer for authentication payload
      */
     private def sha256Authentication(
-      plugin:       Sha256PasswordPlugin,
+      plugin:       Sha256PasswordPlugin[F],
       password:     String,
       scrambleBuff: Array[Byte]
-    ): Fx[Unit] =
+    ): F[Unit] =
       (useSSL, allowPublicKeyRetrieval) match
         case (true, _)     => sslHandshake(password)
         case (false, true) =>
@@ -482,10 +484,10 @@ object Protocol:
      * Scramble buffer for authentication payload
      */
     private def cachingSha2Authentication(
-      plugin:       CachingSha2PasswordPlugin,
+      plugin:       CachingSha2PasswordPlugin[F],
       password:     String,
       scrambleBuff: Array[Byte]
-    ): Fx[Unit] =
+    ): F[Unit] =
       (useSSL, allowPublicKeyRetrieval) match
         case (true, _)     => sslHandshake(password)
         case (false, true) =>
@@ -498,7 +500,7 @@ object Protocol:
      * @param plugin
      * Authentication plugin
      */
-    private def handshake(plugin: AuthenticationPlugin[Fx], username: String, password: String): Fx[Unit] =
+    private def handshake(plugin: AuthenticationPlugin[F], username: String, password: String): F[Unit] =
       for
         hashedPassword <- plugin.hashPassword(password, initialPacket.scrambleBuff)
         handshakeResponse = HandshakeResponsePacket(
@@ -512,9 +514,9 @@ object Protocol:
         _ <- socket.send(handshakeResponse)
       yield ()
 
-    override def startAuthentication(username: String, password: String): Fx[Unit] =
-      exchange[Unit](TelemetrySpanName.CONNECTION_CREATE) { (span: Span) =>
-        val resolvedPlugin: Fx[AuthenticationPlugin[Fx]] =
+    override def startAuthentication(username: String, password: String): F[Unit] =
+      exchange[F, Unit](TelemetrySpanName.CONNECTION_CREATE) { (span: Span[F]) =>
+        val resolvedPlugin: F[AuthenticationPlugin[F]] =
           defaultAuthenticationPlugin match
             case Some(plugin) => checkRequiresConfidentiality(plugin, span).as(plugin)
             case None         => resolveAuthPlugin(initialPacket.authPlugin, span)
@@ -528,8 +530,8 @@ object Protocol:
         )
       }
 
-    override def changeUser(user: String, password: String): Fx[Unit] =
-      exchange[Unit](TelemetrySpanName.CHANGE_USER) { (span: Span) =>
+    override def changeUser(user: String, password: String): F[Unit] =
+      exchange[F, Unit](TelemetrySpanName.CHANGE_USER) { (span: Span[F]) =>
         span.addAttributes(attributes*) *> resolveAuthPlugin(initialPacket.authPlugin, span).flatMap(plugin =>
           for
             hashedPassword <- plugin.hashPassword(password, initialPacket.scrambleBuff)
@@ -555,17 +557,17 @@ object Protocol:
      * so a plugin that transmits credentials in cleartext can never be used over a non-SSL
      * connection. Fails closed (sends ComQuit, then raises) on an unknown plugin.
      */
-    private def resolveAuthPlugin(pluginName: String, span: Span): Fx[AuthenticationPlugin[Fx]] =
+    private def resolveAuthPlugin(pluginName: String, span: Span[F]): F[AuthenticationPlugin[F]] =
       determinatePlugin(pluginName) match
         case Left(error) =>
           span.recordException(error) *>
             span.setStatus(StatusCode.Error, error.getMessage) *>
             socket.send(ComQuitPacket()) *>
-            Fx.raiseError(error)
+            F.raiseError(error)
         case Right(plugin) =>
           checkRequiresConfidentiality(plugin, span).as(plugin)
 
-    private def checkRequiresConfidentiality(plugin: AuthenticationPlugin[Fx], span: Span): Fx[Unit] =
+    private def checkRequiresConfidentiality(plugin: AuthenticationPlugin[F], span: Span[F]): F[Unit] =
       if plugin.requiresConfidentiality && !useSSL then
         val error = new SQLInvalidAuthorizationSpecException(
           s"SSL connection required for plugin '${ plugin.name }'. Check if 'ssl' is enabled.",
@@ -578,10 +580,10 @@ object Protocol:
         )
         span.recordException(error) *>
           span.setStatus(StatusCode.Error, error.getMessage) *>
-          Fx.raiseError(error)
-      else Fx.unit
+          F.raiseError(error)
+      else F.unit
 
-    private def determinatePlugin(pluginName: String): Either[ldbc.sql.SQLException, AuthenticationPlugin[Fx]] =
+    private def determinatePlugin(pluginName: String): Either[ldbc.sql.SQLException, AuthenticationPlugin[F]] =
       plugins
         .get(pluginName)
         .toRight(
@@ -596,21 +598,21 @@ object Protocol:
           )
         )
 
-  def apply(
-    sockets:                     Resource[ldbc.net.Socket],
+  def apply[F[_]](
+    sockets:                     Resource[F, Socket[F]],
     hostInfo:                    HostInfo,
     debug:                       Boolean,
-    sslOptions:                  Option[SSLNegotiation.Options],
+    sslOptions:                  Option[SSLNegotiation.Options[F]],
     allowPublicKeyRetrieval:     Boolean = false,
     readTimeout:                 Duration,
     capabilitiesFlags:           Set[CapabilitiesFlags],
     maxAllowedPacket:            Int,
-    defaultAuthenticationPlugin: Option[AuthenticationPlugin[Fx]],
-    plugins:                     Map[String, AuthenticationPlugin[Fx]]
-  )(using Tracer, Exchange): Resource[Protocol] =
+    defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
+    plugins:                     Map[String, AuthenticationPlugin[F]]
+  )(using Tracer[F], Exchange[F], Concurrent[F], TlsUpgrade[F]): Resource[F, Protocol[F]] =
     for
-      sequenceIdRef    <- Resource.eval(Ref.of[Byte](0x01))
-      initialPacketRef <- Resource.eval(Ref.of[Option[InitialPacket]](None))
+      sequenceIdRef    <- Resource.eval(Ref.of[F, Byte](0x01))
+      initialPacketRef <- Resource.eval(Ref.of[F, Option[InitialPacket]](None))
       packetSocket     <-
         PacketSocket(
           debug,
@@ -637,20 +639,20 @@ object Protocol:
                   )
     yield protocol
 
-  def fromPacketSocket(
-    packetSocket:                PacketSocket,
+  def fromPacketSocket[F[_]](
+    packetSocket:                PacketSocket[F],
     hostInfo:                    HostInfo,
-    sslOptions:                  Option[SSLNegotiation.Options],
+    sslOptions:                  Option[SSLNegotiation.Options[F]],
     allowPublicKeyRetrieval:     Boolean = false,
     capabilitiesFlags:           Set[CapabilitiesFlags],
-    sequenceIdRef:               Ref[Byte],
-    initialPacketRef:            Ref[Option[InitialPacket]],
-    defaultAuthenticationPlugin: Option[AuthenticationPlugin[Fx]],
-    plugins:                     Map[String, AuthenticationPlugin[Fx]]
-  )(using Tracer, Exchange): Fx[Protocol] =
+    sequenceIdRef:               Ref[F, Byte],
+    initialPacketRef:            Ref[F, Option[InitialPacket]],
+    defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
+    plugins:                     Map[String, AuthenticationPlugin[F]]
+  )(using tracer: Tracer[F], ex: Exchange[F], F: Concurrent[F]): F[Protocol[F]] =
     initialPacketRef.get.flatMap {
       case Some(initialPacket) =>
-        Fx.pure(
+        F.pure(
           Impl(
             initialPacket,
             hostInfo,
@@ -661,14 +663,14 @@ object Protocol:
             sequenceIdRef,
             defaultAuthenticationPlugin,
             Map(
-              MYSQL_NATIVE_PASSWORD.toString -> MysqlNativePasswordPlugin(),
-              SHA256_PASSWORD.toString       -> Sha256PasswordPlugin(),
-              CACHING_SHA2_PASSWORD.toString -> CachingSha2PasswordPlugin(initialPacket.serverVersion)
+              MYSQL_NATIVE_PASSWORD.toString -> MysqlNativePasswordPlugin[F],
+              SHA256_PASSWORD.toString       -> Sha256PasswordPlugin[F],
+              CACHING_SHA2_PASSWORD.toString -> CachingSha2PasswordPlugin[F](initialPacket.serverVersion)
             ) ++ plugins
           )
         )
       case None =>
-        Fx.raiseError(
+        F.raiseError(
           new SQLException(
             "Initial packet is not set",
             detail = Some(
