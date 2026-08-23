@@ -14,7 +14,7 @@ import ldbc.sql.DataSource
 
 import jdbc.connector.*
 
-class JdbcConnectionTest extends ConnectionTest:
+class JdbcConnectionTest extends ConnectionTest[IO] with IOAsyncDatabaseSuite:
 
   val ds = new MysqlDataSource()
   ds.setServerName(host)

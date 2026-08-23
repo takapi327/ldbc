@@ -6,7 +6,11 @@
 
 package ldbc.tests
 
+import ldbc.fx.Fx
+
 import java.time.*
+
+import cats.syntax.all.*
 
 import cats.effect.*
 
@@ -17,11 +21,11 @@ import ldbc.dsl.codec.Codec
 
 import ldbc.connector.*
 
-class LdbcCodecTest extends CodecTest:
+class LdbcCodecTest extends CodecTest[IO] with IODatabaseSuite:
 
   override def prefix: "jdbc" | "ldbc" = "ldbc"
 
-  override def connection: ConnectionFixture =
+  override def connection: ConnectionFixture[IO] =
     ConnectionFixture(
       "connection",
       MySQLDataSource
@@ -31,14 +35,14 @@ class LdbcCodecTest extends CodecTest:
         .setSSL(SSL.Trusted)
     )
 
-class MysqlCodecTest extends CodecTest:
+class MysqlCodecTest extends CodecTest[IO] with IODatabaseSuite:
   import ldbc.catseffect.concurrentIO
   import ldbc.mysql.MySQLDataSource
   import ldbc.net.SSL as MysqlSSL
 
   override def prefix: "mysql" = "mysql"
 
-  override def connection: ConnectionFixture =
+  override def connection: ConnectionFixture[IO] =
     ConnectionFixture(
       "connection",
       MySQLDataSource
@@ -48,20 +52,37 @@ class MysqlCodecTest extends CodecTest:
         .setSSL(MysqlSSL.Trusted)
     )
 
-trait CodecTest extends CatsEffectSuite:
+class MysqlFxCodecTest extends CodecTest[Fx] with FxDatabaseSuite:
+  import ldbc.fx.concurrentFx
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
+
+  override def prefix:    "mysql" = "mysql"
+
+  override def connection: ConnectionFixture[Fx] =
+    ConnectionFixture(
+      "connection",
+      MySQLDataSource
+        .build[Fx](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+        .setPassword(MySQLTestConfig.password)
+        .setDatabase("world")
+        .setSSL(MysqlSSL.Trusted)
+    )
+
+trait CodecTest[F[_]] extends DatabaseSuite[F]:
 
   def prefix:     "jdbc" | "ldbc" | "mysql"
-  def connection: ConnectionFixture
+  def connection: ConnectionFixture[F]
 
   private lazy val connectionFixture = connection
-    .withBeforeAll(conn => sql"CREATE DATABASE IF NOT EXISTS codec_test".update.commit(conn) *> IO.unit)
-    .withAfterAll(conn => sql"DROP DATABASE IF EXISTS codec_test".update.commit(conn) *> IO.unit)
+    .withBeforeAll(conn => sql"CREATE DATABASE IF NOT EXISTS codec_test".update.commit(conn).void)
+    .withAfterAll(conn => sql"DROP DATABASE IF EXISTS codec_test".update.commit(conn).void)
     .fixture
 
   override def munitFixtures = List(connectionFixture)
 
   test("Encoder and Decoder work properly for data of type Boolean.") {
-    assertIO(
+    assertF(
       (for
         _      <- sql"USE codec_test".update
         _      <- sql"CREATE TABLE boolean_test (flag BOOLEAN)".update
@@ -73,7 +94,7 @@ trait CodecTest extends CatsEffectSuite:
   }
 
   test("Encoder and Decoder work properly for data of type Byte.") {
-    assertIO(
+    assertF(
       (for
         _      <- sql"USE codec_test".update
         _      <- sql"CREATE TABLE byte_test (id TINYINT)".update
@@ -85,7 +106,7 @@ trait CodecTest extends CatsEffectSuite:
   }
 
   test("Encoder and Decoder work properly for data of type Short.") {
-    assertIO(
+    assertF(
       (for
         _      <- sql"USE codec_test".update
         _      <- sql"CREATE TABLE short_test (id SMALLINT)".update
@@ -97,7 +118,7 @@ trait CodecTest extends CatsEffectSuite:
   }
 
   test("Encoder and Decoder work properly for data of type Int.") {
-    assertIO(
+    assertF(
       (for
         _      <- sql"USE codec_test".update
         _      <- sql"CREATE TABLE int_test (id INT)".update
@@ -109,7 +130,7 @@ trait CodecTest extends CatsEffectSuite:
   }
 
   test("Encoder and Decoder work properly for data of type Long.") {
-    assertIO(
+    assertF(
       (for
         _      <- sql"USE codec_test".update
         _      <- sql"CREATE TABLE long_test (id BIGINT)".update
@@ -121,7 +142,7 @@ trait CodecTest extends CatsEffectSuite:
   }
 
   test("Encoder and Decoder work properly for data of type Float.") {
-    assertIO(
+    assertF(
       (for
         _      <- sql"USE codec_test".update
         _      <- sql"CREATE TABLE float_test (id FLOAT)".update
@@ -133,7 +154,7 @@ trait CodecTest extends CatsEffectSuite:
   }
 
   test("Encoder and Decoder work properly for data of type Double.") {
-    assertIO(
+    assertF(
       (for
         _      <- sql"USE codec_test".update
         _      <- sql"CREATE TABLE double_test (id DOUBLE)".update
@@ -145,7 +166,7 @@ trait CodecTest extends CatsEffectSuite:
   }
 
   test("Encoder and Decoder work properly for data of type BigDecimal.") {
-    assertIO(
+    assertF(
       (for
         _      <- sql"USE codec_test".update
         _      <- sql"CREATE TABLE bigdecimal_test (id DECIMAL(10, 2))".update
@@ -157,7 +178,7 @@ trait CodecTest extends CatsEffectSuite:
   }
 
   test("Encoder and Decoder work properly for data of type String.") {
-    assertIO(
+    assertF(
       (for
         _      <- sql"USE codec_test".update
         _      <- sql"CREATE TABLE string_test (name VARCHAR(255))".update
@@ -169,7 +190,7 @@ trait CodecTest extends CatsEffectSuite:
   }
 
   test("Encoder and Decoder work properly for data of type Array[Byte].") {
-    assertIO(
+    assertF(
       (for
         _      <- sql"USE codec_test".update
         _      <- sql"CREATE TABLE array_byte_test (data BLOB)".update
@@ -184,7 +205,7 @@ trait CodecTest extends CatsEffectSuite:
   test("Encoder and Decoder work properly for data of type MySQL Vector (Array[Float]).") {
     assume(MySQLTestConfig.isMySql9OrLater, "VECTOR type requires MySQL 9.x")
     val vector = Array(1f, 2f, 3f)
-    assertIO(
+    assertF(
       (for
         _      <- sql"USE codec_test".update
         _      <- sql"CREATE TABLE vector_test (data VECTOR(384))".update
@@ -198,7 +219,7 @@ trait CodecTest extends CatsEffectSuite:
 
   test("Encoder and Decoder work properly for data of type MySQL Vector NULL (Option[Array[Float]]).") {
     assume(MySQLTestConfig.isMySql9OrLater, "VECTOR type requires MySQL 9.x")
-    assertIO(
+    assertF(
       (for
         _      <- sql"USE codec_test".update
         _      <- sql"CREATE TABLE vector_null_test (data VECTOR(384) NULL)".update
@@ -210,7 +231,7 @@ trait CodecTest extends CatsEffectSuite:
   }
 
   test("Encoder and Decoder work properly for data of type LocalTime.") {
-    assertIO(
+    assertF(
       (for
         _      <- sql"USE codec_test".update
         _      <- sql"CREATE TABLE local_time_test (time TIME)".update
@@ -223,7 +244,7 @@ trait CodecTest extends CatsEffectSuite:
   }
 
   test("Encoder and Decoder work properly for data of type LocalDate.") {
-    assertIO(
+    assertF(
       (for
         _      <- sql"USE codec_test".update
         _      <- sql"CREATE TABLE local_date_test (date DATE)".update
@@ -236,7 +257,7 @@ trait CodecTest extends CatsEffectSuite:
   }
 
   test("Encoder and Decoder work properly for data of type LocalDateTime.") {
-    assertIO(
+    assertF(
       (for
         _ <- sql"USE codec_test".update
         _ <- sql"CREATE TABLE local_date_time_test (date_time DATETIME)".update
@@ -252,7 +273,7 @@ trait CodecTest extends CatsEffectSuite:
   }
 
   test("Encoder and Decoder work properly for data of type Year.") {
-    assertIO(
+    assertF(
       (for
         _      <- sql"USE codec_test".update
         _      <- sql"CREATE TABLE year_test (year YEAR)".update
@@ -264,7 +285,7 @@ trait CodecTest extends CatsEffectSuite:
   }
 
   test("Encoder and Decoder work properly for data of type YearMonth.") {
-    assertIO(
+    assertF(
       (for
         _      <- sql"USE codec_test".update
         _      <- sql"CREATE TABLE year_month_test (ymonth VARCHAR(7))".update
@@ -277,7 +298,7 @@ trait CodecTest extends CatsEffectSuite:
   }
 
   test("Encoder and Decoder work properly for data of type None.type.") {
-    assertIO(
+    assertF(
       (for
         _      <- sql"USE codec_test".update
         _      <- sql"CREATE TABLE none_test (none INT)".update

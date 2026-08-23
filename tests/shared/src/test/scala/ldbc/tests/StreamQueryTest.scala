@@ -6,6 +6,10 @@
 
 package ldbc.tests
 
+import scala.concurrent.Future
+
+import ldbc.fx.Fx
+
 import cats.effect.*
 
 import munit.*
@@ -17,7 +21,7 @@ import ldbc.connector.*
 import ldbc.catseffect.*
 import ldbc.Connector
 
-class LdbcStreamQueryTest extends StreamQueryTest:
+class LdbcStreamQueryTest extends StreamQueryTest[IO] with IODatabaseSuite:
 
   private val datasource = MySQLDataSource
     .build[IO](host, port, user)
@@ -29,7 +33,7 @@ class LdbcStreamQueryTest extends StreamQueryTest:
 
   override def connector: Connector[IO] = Connector.fromDataSource(datasource)
 
-class MysqlStreamQueryTest extends StreamQueryTest:
+class MysqlStreamQueryTest extends StreamQueryTest[IO] with IODatabaseSuite:
   import ldbc.catseffect.concurrentIO
   import ldbc.mysql.Connector as MysqlConnector
   import ldbc.mysql.MySQLDataSource
@@ -45,7 +49,39 @@ class MysqlStreamQueryTest extends StreamQueryTest:
 
   override def connector: Connector[IO] = MysqlConnector.fromDataSource(datasource)
 
-trait StreamQueryTest extends CatsEffectSuite:
+class MysqlFxStreamQueryTest extends StreamQueryTest[Fx] with FxDatabaseSuite:
+  import ldbc.fx.concurrentFx
+  import ldbc.mysql.{ Connector as MysqlConnector, MySQLDataSource }
+  import ldbc.net.SSL as MysqlSSL
+
+  override def connector: Connector[Fx] =
+    MysqlConnector.fromDataSource(
+      MySQLDataSource
+        .build[Fx](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+        .setPassword(MySQLTestConfig.password)
+        .setDatabase("world")
+        .setSSL(MysqlSSL.None)
+        .setUseCursorFetch(true)
+        .setAllowPublicKeyRetrieval(true)
+    )
+
+class MysqlFutureStreamQueryTest extends StreamQueryTest[Future] with FutureDatabaseSuite:
+  import ldbc.fx.concurrentFx
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
+
+  override def connector: Connector[Future] =
+    ldbc.future.Connector.fromDataSource(
+      MySQLDataSource
+        .build[Fx](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+        .setPassword(MySQLTestConfig.password)
+        .setDatabase("world")
+        .setSSL(MysqlSSL.None)
+        .setUseCursorFetch(true)
+        .setAllowPublicKeyRetrieval(true)
+    )
+
+trait StreamQueryTest[F[_]] extends DatabaseSuite[F]:
 
   protected val host:     String = MySQLTestConfig.host
   protected val port:     Int    = MySQLTestConfig.port
@@ -53,10 +89,10 @@ trait StreamQueryTest extends CatsEffectSuite:
   protected val password: String = MySQLTestConfig.password
   protected val database: String = "world"
 
-  def connector: Connector[IO]
+  def connector: Connector[F]
 
   test("Stream support test") {
-    assertIO(
+    assertF(
       sql"SELECT Name FROM `city`".query[String].stream.take(5).compile.toList.readOnly(connector),
       List(
         "Kabul",
@@ -69,7 +105,7 @@ trait StreamQueryTest extends CatsEffectSuite:
   }
 
   test("Stream support test with fetchSize") {
-    assertIO(
+    assertF(
       sql"SELECT Name FROM `city`".query[String].stream(2).take(5).compile.toList.readOnly(connector),
       List(
         "Kabul",
@@ -82,13 +118,13 @@ trait StreamQueryTest extends CatsEffectSuite:
   }
 
   test("Stream with negative fetchSize should fail") {
-    interceptIO[IllegalArgumentException] {
+    interceptF[IllegalArgumentException] {
       sql"SELECT Name FROM `city`".query[String].stream(-1).take(1).compile.toList.readOnly(connector)
     }
   }
 
   test("Stream with zero fetchSize should fail") {
-    interceptIO[IllegalArgumentException] {
+    interceptF[IllegalArgumentException] {
       sql"SELECT Name FROM `city`".query[String].stream(0).take(1).compile.toList.readOnly(connector)
     }
   }

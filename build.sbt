@@ -373,7 +373,7 @@ lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
   .nativeSettings(Test / nativeBrewFormulas += "s2n")
-  .dependsOn(connector, mysql, pool, queryBuilder, schema, catsEffect)
+  .dependsOn(connector, mysql, pool, queryBuilder, schema, catsEffect, future, fx % "test->test")
   .enablePlugins(NoPublishPlugin)
 
 lazy val benchmark = (project in file("benchmark"))

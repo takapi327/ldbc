@@ -6,6 +6,10 @@
 
 package ldbc.tests
 
+import ldbc.fx.Fx
+
+import cats.syntax.all.*
+
 import cats.effect.*
 
 import munit.CatsEffectSuite
@@ -14,10 +18,10 @@ import ldbc.dsl.*
 
 import ldbc.connector.*
 
-class LdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest:
+class LdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest[IO] with IODatabaseSuite:
   override def prefix: "jdbc" | "ldbc" = "ldbc"
 
-  override def connection: ConnectionFixture =
+  override def connection: ConnectionFixture[IO] =
     ConnectionFixture(
       "connection",
       MySQLDataSource
@@ -27,14 +31,14 @@ class LdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest:
         .setSSL(SSL.Trusted)
     )
 
-class MysqlSQLStringContextUpdateTest extends SQLStringContextUpdateTest:
+class MysqlSQLStringContextUpdateTest extends SQLStringContextUpdateTest[IO] with IODatabaseSuite:
   import ldbc.catseffect.concurrentIO
   import ldbc.mysql.MySQLDataSource
   import ldbc.net.SSL as MysqlSSL
 
   override def prefix: "mysql" = "mysql"
 
-  override def connection: ConnectionFixture =
+  override def connection: ConnectionFixture[IO] =
     ConnectionFixture(
       "connection",
       MySQLDataSource
@@ -44,19 +48,36 @@ class MysqlSQLStringContextUpdateTest extends SQLStringContextUpdateTest:
         .setSSL(MysqlSSL.Trusted)
     )
 
-trait SQLStringContextUpdateTest extends CatsEffectSuite:
+class MysqlFxSQLStringContextUpdateTest extends SQLStringContextUpdateTest[Fx] with FxDatabaseSuite:
+  import ldbc.fx.concurrentFx
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
+
+  override def prefix:    "mysql" = "mysql"
+
+  override def connection: ConnectionFixture[Fx] =
+    ConnectionFixture(
+      "connection",
+      MySQLDataSource
+        .build[Fx](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+        .setPassword(MySQLTestConfig.password)
+        .setDatabase("connector_test")
+        .setSSL(MysqlSSL.Trusted)
+    )
+
+trait SQLStringContextUpdateTest[F[_]] extends DatabaseSuite[F]:
 
   def prefix: "jdbc" | "ldbc" | "mysql"
 
-  def connection: ConnectionFixture
+  def connection: ConnectionFixture[F]
 
   private lazy val connectionFixture = connection
     .withBeforeAll(conn =>
       sql"CREATE TABLE $table (`id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, `c1` VARCHAR(255) NOT NULL)".update
-        .commit(conn) *> IO.unit
+        .commit(conn).void
     )
-    .withAfterAll(conn => sql"DROP TABLE $table".update.commit(conn) *> IO.unit)
-    .withBeforeEach(conn => sql"TRUNCATE TABLE $table".update.commit(conn) *> IO.unit)
+    .withAfterAll(conn => sql"DROP TABLE $table".update.commit(conn).void)
+    .withBeforeEach(conn => sql"TRUNCATE TABLE $table".update.commit(conn).void)
     .fixture
 
   final val table = prefix match
@@ -67,21 +88,21 @@ trait SQLStringContextUpdateTest extends CatsEffectSuite:
   override def munitFixtures = List(connectionFixture)
 
   test("As a result of entering one case of data, there will be one affected row.") {
-    assertIO(
+    assertF(
       sql"INSERT INTO $table (`c1`) VALUES ('value1')".update.commit(connectionFixture()),
       1
     )
   }
 
   test("As a result of entering data for two cases, there will be two affected rows.") {
-    assertIO(
+    assertF(
       sql"INSERT INTO $table (`c1`) VALUES ('value1'),('value2')".update.commit(connectionFixture()),
       2
     )
   }
 
   test("The value generated when adding a record of AUTO_INCREMENT is returned.") {
-    assertIO(
+    assertF(
       (for
         _         <- sql"INSERT INTO $table (`id`, `c1`) VALUES ($None, ${ "column 1" })".update
         generated <- sql"INSERT INTO $table (`id`, `c1`) VALUES ($None, ${ "column 2" })".returning[Long]
@@ -91,7 +112,7 @@ trait SQLStringContextUpdateTest extends CatsEffectSuite:
   }
 
   test("Not a single submission of result data rolled back in transaction has been reflected.") {
-    assertIO(
+    assertF(
       for
         _ <-
           sql"INSERT INTO $table (`id`, `c1`) VALUES ($None, ${ "column 1" })".update

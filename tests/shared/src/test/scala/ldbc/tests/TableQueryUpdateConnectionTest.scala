@@ -6,6 +6,10 @@
 
 package ldbc.tests
 
+import scala.concurrent.Future
+
+import ldbc.fx.Fx
+
 import cats.data.NonEmptyList
 
 import cats.effect.*
@@ -21,7 +25,7 @@ import ldbc.connector.*
 import ldbc.tests.model.*
 import ldbc.Connector
 
-class LdbcTableQueryUpdateConnectionTest extends TableQueryUpdateConnectionTest:
+class LdbcTableQueryUpdateConnectionTest extends TableQueryUpdateConnectionTest[IO] with IODatabaseSuite:
 
   override def prefix: "jdbc" | "ldbc" = "ldbc"
 
@@ -33,7 +37,7 @@ class LdbcTableQueryUpdateConnectionTest extends TableQueryUpdateConnectionTest:
 
   override def connector: Connector[IO] = Connector.fromDataSource(datasource)
 
-class MysqlTableQueryUpdateConnectionTest extends TableQueryUpdateConnectionTest:
+class MysqlTableQueryUpdateConnectionTest extends TableQueryUpdateConnectionTest[IO] with IODatabaseSuite:
   import ldbc.catseffect.concurrentIO
   import ldbc.mysql.Connector as MysqlConnector
   import ldbc.mysql.MySQLDataSource
@@ -49,10 +53,42 @@ class MysqlTableQueryUpdateConnectionTest extends TableQueryUpdateConnectionTest
 
   override def connector: Connector[IO] = MysqlConnector.fromDataSource(datasource)
 
-trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
+class MysqlFxTableQueryUpdateConnectionTest extends TableQueryUpdateConnectionTest[Fx] with FxDatabaseSuite:
+  import ldbc.fx.concurrentFx
+  import ldbc.mysql.{ Connector as MysqlConnector, MySQLDataSource }
+  import ldbc.net.SSL as MysqlSSL
+
+  override def prefix:    "mysql" = "mysql"
+
+  override def connector: Connector[Fx] =
+    MysqlConnector.fromDataSource(
+      MySQLDataSource
+        .build[Fx](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+        .setPassword(MySQLTestConfig.password)
+        .setDatabase("world2")
+        .setSSL(MysqlSSL.Trusted)
+    )
+
+class MysqlFutureTableQueryUpdateConnectionTest extends TableQueryUpdateConnectionTest[Future] with FutureDatabaseSuite:
+  import ldbc.fx.concurrentFx
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
+
+  override def prefix:    "mysql" = "mysql"
+
+  override def connector: Connector[Future] =
+    ldbc.future.Connector.fromDataSource(
+      MySQLDataSource
+        .build[Fx](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+        .setPassword(MySQLTestConfig.password)
+        .setDatabase("world2")
+        .setSSL(MysqlSSL.Trusted)
+    )
+
+trait TableQueryUpdateConnectionTest[F[_]] extends DatabaseSuite[F]:
 
   def prefix:    "jdbc" | "ldbc" | "mysql"
-  def connector: Connector[IO]
+  def connector: Connector[F]
 
   private final val country         = TableQuery[Country]
   private final val city            = TableQuery[City]
@@ -63,7 +99,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     case "ldbc"  => s"L$index"
     case "mysql" => s"M$index"
 
-  private def cleanup: IO[Unit] =
+  private def cleanup: F[Unit] =
     (for
       _ <- sql"DELETE FROM city WHERE CountryCode IN (${ code(1) }, ${ code(2) }, ${ code(3) }, ${ code(4) })".update
       _ <- sql"DELETE FROM city WHERE Name = 'Nishinomiya' AND CountryCode = 'JPN'".update
@@ -74,16 +110,13 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     yield ()).commit(connector)
 
   override def munitFixtures = List(
-    ResourceSuiteLocalFixture(
-      "cleanup",
-      Resource.make(cleanup)(_ => cleanup)
-    )
+    suiteFixture("cleanup", cleanup, cleanup)
   )
 
   test(
     "New data can be registered with the value of Tuple."
   ) {
-    assertIO(
+    assertF(
       country
         .insert(
           (
@@ -113,7 +146,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
   test(
     "New data can be registered with the value of Tuple."
   ) {
-    assertIO(
+    assertF(
       country
         .insert(
           (
@@ -177,7 +210,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
       None,
       code(4)
     )
-    assertIO(
+    assertF(
       (country += newCountry).update.commit(connector),
       1
     )
@@ -220,7 +253,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
       None,
       code(6)
     )
-    assertIO(
+    assertF(
       (country ++= NonEmptyList.of(newCountry1, newCountry2)).update.commit(connector),
       2
     )
@@ -229,7 +262,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
   test(
     "Only specified items can be added to the data."
   ) {
-    assertIO(
+    assertF(
       city
         .insertInto(v => v.name *: v.countryCode *: v.district *: v.population)
         .values(("Test", code(1), "T", 1))
@@ -242,7 +275,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
   test(
     "Multiple additions of data can be made only for specified items."
   ) {
-    assertIO(
+    assertF(
       city
         .insertInto(v => v.name *: v.countryCode *: v.district *: v.population)
         .values(
@@ -258,7 +291,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
   test(
     "A stand-alone update succeeds."
   ) {
-    assertIO(
+    assertF(
       city
         .update(_.district)("Tokyo-test")
         .where(_.name _equals "Tokyo")
@@ -271,7 +304,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
   test(
     "A stand-alone update from the model will be successful."
   ) {
-    assertIO(
+    assertF(
       (for
         cityOpt <-
           city.selectAll.where(_.countryCode _equals "JPN").and(_.name _equals "Tokyo").query.to[Option]
@@ -291,7 +324,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
   test(
     "Multiple columns are successfully updated."
   ) {
-    assertIO(
+    assertF(
       city
         .update(c => c.name *: c.countryCode *: c.district *: c.population)(
           ("Jokohama [Yokohama]", "JPN", "Kanagawa", 2)
@@ -306,7 +339,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
   test(
     "The values of columns that do not satisfy the condition are not updated."
   ) {
-    assertIO(
+    assertF(
       (for
         _ <- city
                .update(_.name)("update Odawara")
@@ -323,7 +356,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
   test(
     "If the primary key is duplicated, the data is updated."
   ) {
-    assertIO(
+    assertF(
       (for
         _ <-
           city
@@ -340,7 +373,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
   test(
     "If there are duplicate primary keys, only the specified columns are updated."
   ) {
-    assertIO(
+    assertF(
       (for
         _ <- (city += City(1639, "update Kushiro", "JPN", "not update Hokkaido", 197608))
                .onDuplicateKeyUpdate(_.name)
@@ -355,7 +388,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
   test(
     "Data is added if the primary key is not duplicated."
   ) {
-    assertIOBoolean(
+    assertFBoolean(
       (for
         empty <- city.selectAll.where(_.name _equals "Nishinomiya").query.to[Option]
         _     <- city.insert((9999, "Nishinomiya", "JPN", "Hyogo", 0)).onDuplicateKeyUpdate(_.name).update
@@ -366,7 +399,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
   }
 
   test("The value of AutoIncrement obtained during insert matches the specified value") {
-    assertIO(
+    assertF(
       city
         .insertInto(v => v.name *: v.countryCode *: v.district *: v.population)
         .select(
@@ -383,7 +416,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
   test(
     "The update succeeds in the combined processing of multiple queries."
   ) {
-    assertIO(
+    assertF(
       (for
         codeOpt <- country
                      .select(_.code)
@@ -407,7 +440,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
   test(
     "Bulk renewal succeeds."
   ) {
-    assertIO(
+    assertF(
       countryLanguage
         .update(_.isOfficial)(CountryLanguage.IsOfficial.T)
         .where(_.countryCode _equals "JPN")
@@ -420,7 +453,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
   test(
     "Successful batch update with specified number."
   ) {
-    assertIO(
+    assertF(
       countryLanguage
         .update(_.isOfficial)(CountryLanguage.IsOfficial.T)
         .where(_.countryCode _equals "JPN")
@@ -434,7 +467,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
   test(
     "Deletion by itself is successful."
   ) {
-    assertIO(
+    assertF(
       country.delete
         .where(v => v.code _equals code(5) or (v.code _equals code(6)))
         .update
@@ -446,7 +479,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
   test(
     "The number of deletions in multiple cases matches the number specified."
   ) {
-    assertIO(
+    assertF(
       countryLanguage.delete
         .where(_.countryCode _equals "AFG")
         .update
