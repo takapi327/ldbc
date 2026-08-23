@@ -8,13 +8,12 @@ package ldbc.future
 
 import scala.concurrent.Future
 
-import ldbc.fx.Fx
-
 import ldbc.sql.{ Connection, DataSource }
 
 import ldbc.*
 import ldbc.free.*
 import ldbc.future.FxInstances.given
+import ldbc.fx.Fx
 import ldbc.logging.{ LogEvent, LogHandler }
 
 /**
