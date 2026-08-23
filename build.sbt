@@ -274,7 +274,7 @@ lazy val pool = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     libraryDependencies += "org.typelevel" %%% "munit-cats-effect" % "2.2.0" % Test
   )
-  .dependsOn(sql, effect, fx % "test->compile;test->test", mysql % Test, catsEffect % Test)
+  .dependsOn(sql, effect, fx % "test->compile;test->test")
 
 lazy val future = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
@@ -377,7 +377,7 @@ lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
   .nativeSettings(Test / nativeBrewFormulas += "s2n")
-  .dependsOn(connector, mysql, queryBuilder, schema, catsEffect)
+  .dependsOn(connector, mysql, pool, queryBuilder, schema, catsEffect)
   .enablePlugins(NoPublishPlugin)
 
 lazy val benchmark = (project in file("benchmark"))

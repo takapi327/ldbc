@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.pool
+package ldbc.tests
 
 import cats.effect.IO
 
@@ -17,10 +17,11 @@ import ldbc.catseffect.concurrentIO
 import ldbc.catseffect.toIOResource
 import ldbc.mysql.{ Connector, MySQLConfig, MySQLDataSource }
 import ldbc.net.SSL
+import ldbc.pool.{ ConnectionPoolConfig, PooledDataSource }
 
 /**
- * End-to-end proof that an externally-built [[PooledDataSource]] drives the MySQL driver natively at
- * `F = IO`: the pool is created from a `MySQLDataSource[IO]` and handed to
+ * End-to-end proof that an externally-built [[ldbc.pool.PooledDataSource]] drives the MySQL driver
+ * natively at `F = IO`: the pool is created from a `MySQLDataSource[IO]` and handed to
  * [[ldbc.mysql.Connector.fromDataSource]], then a `SELECT` round-trips through a borrowed connection.
  * This is the pool ⇄ driver integration point — the driver itself never creates a pool. Requires the
  * Docker MySQL at 127.0.0.1:13306.
