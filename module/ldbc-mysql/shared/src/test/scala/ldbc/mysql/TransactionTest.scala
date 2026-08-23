@@ -9,6 +9,7 @@ package ldbc.mysql
 import ldbc.sql.Connection as SQLConnection
 import ldbc.sql.SQLNonTransientException
 
+import ldbc.fx.concurrentFx
 import ldbc.fx.Fx
 import ldbc.mysql.syntax.*
 import ldbc.mysql.telemetry.*
@@ -16,10 +17,10 @@ import ldbc.net.SSL
 
 class TransactionTest extends FTestPlatform:
 
-  given Tracer = Tracer.noop
+  given Tracer[Fx] = Tracer.noop[Fx]
 
   test("Transactions initiated in a session are read-only.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -35,7 +36,7 @@ class TransactionTest extends FTestPlatform:
   }
 
   test("Transactions initiated in a session are write-only.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -51,7 +52,7 @@ class TransactionTest extends FTestPlatform:
   }
 
   test("Transactions initiated in a session are in auto commit mode.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -67,7 +68,7 @@ class TransactionTest extends FTestPlatform:
   }
 
   test("Transactions initiated in a session do not enter autocommit mode.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -83,7 +84,7 @@ class TransactionTest extends FTestPlatform:
   }
 
   test("If a transaction initiated in a session is not in autocommit mode, it can be committed manually.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -101,7 +102,7 @@ class TransactionTest extends FTestPlatform:
   test(
     "If a transaction initiated in a session is in autocommit mode, a manual commit will result in a SQLNonTransientException."
   ) {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -117,7 +118,7 @@ class TransactionTest extends FTestPlatform:
   }
 
   test("If a transaction initiated in a session is not in autocommit mode, it can be rollback manually.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -135,7 +136,7 @@ class TransactionTest extends FTestPlatform:
   test(
     "If a transaction initiated in a session is in autocommit mode, a manual rollback will result in a SQLNonTransientException."
   ) {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -151,7 +152,7 @@ class TransactionTest extends FTestPlatform:
   }
 
   test("Transaction isolation level becomes READ_UNCOMMITTED.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -167,7 +168,7 @@ class TransactionTest extends FTestPlatform:
   }
 
   test("Transaction isolation level becomes READ_COMMITTED.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -183,7 +184,7 @@ class TransactionTest extends FTestPlatform:
   }
 
   test("Transaction isolation level becomes SERIALIZABLE.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -199,7 +200,7 @@ class TransactionTest extends FTestPlatform:
   }
 
   test("Transaction isolation level becomes REPEATABLE_READ.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -215,7 +216,7 @@ class TransactionTest extends FTestPlatform:
   }
 
   test("The update process is reflected by the commit.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -241,7 +242,7 @@ class TransactionTest extends FTestPlatform:
   }
 
   test("The update process is not reflected by the rollback.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,

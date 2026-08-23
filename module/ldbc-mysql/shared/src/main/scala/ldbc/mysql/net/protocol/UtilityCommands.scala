@@ -6,50 +6,49 @@
 
 package ldbc.mysql.net.protocol
 
-import ldbc.fx.Fx
 import ldbc.mysql.data.EnumMySQLSetOption
 import ldbc.mysql.net.packet.response.*
 
 /**
  * Utility commands
- * 
+ *
  * @tparam F
  *   the effect type
  */
-trait UtilityCommands:
+trait UtilityCommands[F[_]]:
 
   /**
    * Quit the connection
    */
-  def comQuit(): Fx[Unit]
+  def comQuit(): F[Unit]
 
   /**
    * Initialize the database
-   * 
+   *
    * @param schema
    *   the name of a schema in which to work
    */
-  def comInitDB(schema: String): Fx[Unit]
+  def comInitDB(schema: String): F[Unit]
 
   /**
    * Get the statistics of the connection
    */
-  def comStatistics(): Fx[StatisticsPacket]
+  def comStatistics(): F[StatisticsPacket]
 
   /**
    * Check if the server is alive.
    */
-  def comPing(): Fx[Boolean]
+  def comPing(): F[Boolean]
 
   /**
    * Reset the connection
    */
-  def comResetConnection(): Fx[Unit]
+  def comResetConnection(): F[Unit]
 
   /**
    * Set an option
-   * 
+   *
    * @param optionOperation
    *   the option operation
    */
-  def comSetOption(optionOperation: EnumMySQLSetOption): Fx[Unit]
+  def comSetOption(optionOperation: EnumMySQLSetOption): F[Unit]

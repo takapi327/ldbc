@@ -6,15 +6,16 @@
 
 package ldbc.mysql.net
 
-import ldbc.fx.{ Fx, Ref, Resource }
+import ldbc.effect.{ Concurrent, Ref, Resource }
 import ldbc.mysql.data.CapabilitiesFlags
 import ldbc.mysql.net.packet.request.SSLRequestPacket
-import ldbc.net.{ SSL, Socket, Tls }
+import ldbc.net.effect.{ Socket, TlsUpgrade }
+import ldbc.net.SSL
 
 /**
  * MySQL STARTTLS negotiation: the SSL request packet is written in the clear, then the plaintext socket
- * is upgraded to TLS via [[ldbc.net.Tls.client]] (the transport supports upgrading an already-connected
- * socket, which is exactly what MySQL requires).
+ * is upgraded to TLS via [[ldbc.net.effect.TlsUpgrade]] (the transport supports upgrading an
+ * already-connected socket, which is exactly what MySQL requires).
  */
 object SSLNegotiation:
 
@@ -27,12 +28,12 @@ object SSLNegotiation:
    * @param fallbackOk whether a failed TLS negotiation may fall back to plaintext
    * @param logger     an optional TLS logger
    */
-  case class Options(
+  case class Options[F[_]](
     tlsConfig:  SSL,
     host:       String,
     port:       Int,
     fallbackOk: Boolean,
-    logger:     Option[String => Fx[Unit]]
+    logger:     Option[String => F[Unit]]
   )
 
   /**
@@ -44,19 +45,19 @@ object SSLNegotiation:
    * @param sequenceIdRef   the MySQL packet sequence id
    * @return a resource producing the encrypted socket
    */
-  def negotiateSSL(
-    socket:          Socket,
+  def negotiateSSL[F[_]](
+    socket:          Socket[F],
     capabilityFlags: Set[CapabilitiesFlags],
-    sslOptions:      Options,
-    sequenceIdRef:   Ref[Byte]
-  ): Resource[Socket] =
+    sslOptions:      Options[F],
+    sequenceIdRef:   Ref[F, Byte]
+  )(using F: Concurrent[F], tls: TlsUpgrade[F]): Resource[F, Socket[F]] =
     for
       sequenceId <- Resource.eval(sequenceIdRef.get)
       _          <- Resource.eval(
              socket.write(SSLRequestPacket(sequenceId, capabilityFlags).encode.bytes.toArray)
            )
       encrypted <- Resource.make(
-                     Tls.client(socket, sslOptions.host, sslOptions.port, sslOptions.tlsConfig)
+                     tls.client(socket, sslOptions.host, sslOptions.port, sslOptions.tlsConfig)
                    )(_.close())
       _ <- Resource.eval(sequenceIdRef.update(id => ((id + 1) % 256).toByte))
     yield encrypted

@@ -10,8 +10,10 @@ import java.time.*
 
 import ldbc.sql.ResultSet
 
-import ldbc.fx.{ Fx, Ref }
+import ldbc.effect.{ Concurrent, Ref }
+import ldbc.fx.concurrentFx
 import ldbc.fx.syntax.*
+import ldbc.fx.Fx
 import ldbc.mysql.data.*
 import ldbc.mysql.net.packet.response.*
 import ldbc.mysql.net.Protocol
@@ -21,22 +23,23 @@ class SharedResultSetTest extends FTestPlatform:
 
   // Test implementation of SharedResultSet
   class TestSharedResultSet(
-    mockProtocol:             Protocol,
+    mockProtocol:             Protocol[Fx],
     val columns:              Vector[ColumnDefinitionPacket],
     val records:              Vector[ResultSetRowPacket],
     val serverVariables:      Map[String, String],
     val version:              Version,
-    val isClosed:             Ref[Boolean],
-    val fetchSize:            Ref[Int],
+    val isClosed:             Ref[Fx, Boolean],
+    val fetchSize:            Ref[Fx, Int],
     val useCursorFetch:       Boolean            = false,
     val useServerPrepStmts:   Boolean            = false,
     val resultSetType:        Int                = ResultSet.TYPE_FORWARD_ONLY,
     val resultSetConcurrency: Int                = ResultSet.CONCUR_READ_ONLY,
     val statement:            Option[String]     = None,
     val decoder:              ColumnValueDecoder = TextColumnValueDecoder
-  ) extends SharedResultSet:
+  ) extends SharedResultSet[Fx]:
+    override protected def F: Concurrent[Fx] = concurrentFx
     // Mock protocol for testing
-    val protocol: Protocol = mockProtocol
+    val protocol: Protocol[Fx] = mockProtocol
 
     // Implement the missing abstract method
     override def next(): Fx[Boolean] = Fx.delay {
@@ -129,15 +132,15 @@ class SharedResultSetTest extends FTestPlatform:
 
   def createEmptyRecords: Vector[ResultSetRowPacket] = Vector.empty
 
-  // Since Protocol requires many complex dependencies, we'll use null for testing
+  // Since Protocol[Fx] requires many complex dependencies, we'll use null for testing
   // as SharedResultSet doesn't actually use the protocol in most methods we're testing
-  def createMockProtocol: Protocol = null.asInstanceOf[Protocol]
+  def createMockProtocol: Protocol[Fx] = null.asInstanceOf[Protocol[Fx]]
 
   test("getString retrieves string value by index") {
     for
       protocol  <- Fx.delay(createMockProtocol)
-      isClosed  <- Ref.of[Boolean](false)
-      fetchSize <- Ref.of[Int](0)
+      isClosed  <- Ref.of[Fx, Boolean](false)
+      fetchSize <- Ref.of[Fx, Int](0)
       rs = new TestSharedResultSet(
              protocol,
              createTestColumns,
@@ -155,8 +158,8 @@ class SharedResultSetTest extends FTestPlatform:
   test("getInt retrieves integer value by index") {
     for
       protocol  <- Fx.delay(createMockProtocol)
-      isClosed  <- Ref.of[Boolean](false)
-      fetchSize <- Ref.of[Int](0)
+      isClosed  <- Ref.of[Fx, Boolean](false)
+      fetchSize <- Ref.of[Fx, Int](0)
       rs = new TestSharedResultSet(
              protocol,
              createTestColumns,
@@ -174,8 +177,8 @@ class SharedResultSetTest extends FTestPlatform:
   test("getBoolean handles various boolean representations") {
     for
       protocol  <- Fx.delay(createMockProtocol)
-      isClosed  <- Ref.of[Boolean](false)
-      fetchSize <- Ref.of[Int](0)
+      isClosed  <- Ref.of[Fx, Boolean](false)
+      fetchSize <- Ref.of[Fx, Int](0)
       rs = new TestSharedResultSet(
              protocol,
              createTestColumns,
@@ -204,8 +207,8 @@ class SharedResultSetTest extends FTestPlatform:
   test("getTimestamp parses datetime correctly") {
     for
       protocol  <- Fx.delay(createMockProtocol)
-      isClosed  <- Ref.of[Boolean](false)
-      fetchSize <- Ref.of[Int](0)
+      isClosed  <- Ref.of[Fx, Boolean](false)
+      fetchSize <- Ref.of[Fx, Int](0)
       rs = new TestSharedResultSet(
              protocol,
              createTestColumns,
@@ -223,8 +226,8 @@ class SharedResultSetTest extends FTestPlatform:
   test("wasNull returns true after reading null value") {
     for
       protocol  <- Fx.delay(createMockProtocol)
-      isClosed  <- Ref.of[Boolean](false)
-      fetchSize <- Ref.of[Int](0)
+      isClosed  <- Ref.of[Fx, Boolean](false)
+      fetchSize <- Ref.of[Fx, Int](0)
       rs = new TestSharedResultSet(
              protocol,
              createTestColumns,
@@ -247,8 +250,8 @@ class SharedResultSetTest extends FTestPlatform:
   test("getString by column name") {
     for
       protocol  <- Fx.delay(createMockProtocol)
-      isClosed  <- Ref.of[Boolean](false)
-      fetchSize <- Ref.of[Int](0)
+      isClosed  <- Ref.of[Fx, Boolean](false)
+      fetchSize <- Ref.of[Fx, Int](0)
       rs = new TestSharedResultSet(
              protocol,
              createTestColumns,
@@ -266,8 +269,8 @@ class SharedResultSetTest extends FTestPlatform:
   test("getInt by column name with case-insensitive matching") {
     for
       protocol  <- Fx.delay(createMockProtocol)
-      isClosed  <- Ref.of[Boolean](false)
-      fetchSize <- Ref.of[Int](0)
+      isClosed  <- Ref.of[Fx, Boolean](false)
+      fetchSize <- Ref.of[Fx, Int](0)
       rs = new TestSharedResultSet(
              protocol,
              createTestColumns,
@@ -291,8 +294,8 @@ class SharedResultSetTest extends FTestPlatform:
   test("findByName fails for non-existent column") {
     for
       protocol  <- Fx.delay(createMockProtocol)
-      isClosed  <- Ref.of[Boolean](false)
-      fetchSize <- Ref.of[Int](0)
+      isClosed  <- Ref.of[Fx, Boolean](false)
+      fetchSize <- Ref.of[Fx, Int](0)
       rs = new TestSharedResultSet(
              protocol,
              createTestColumns,
@@ -310,8 +313,8 @@ class SharedResultSetTest extends FTestPlatform:
   test("navigation methods for TYPE_FORWARD_ONLY") {
     for
       protocol  <- Fx.delay(createMockProtocol)
-      isClosed  <- Ref.of[Boolean](false)
-      fetchSize <- Ref.of[Int](0)
+      isClosed  <- Ref.of[Fx, Boolean](false)
+      fetchSize <- Ref.of[Fx, Int](0)
       rs = new TestSharedResultSet(
              protocol,
              createTestColumns,
@@ -344,8 +347,8 @@ class SharedResultSetTest extends FTestPlatform:
   test("navigation methods for TYPE_SCROLL_INSENSITIVE") {
     for
       protocol  <- Fx.delay(createMockProtocol)
-      isClosed  <- Ref.of[Boolean](false)
-      fetchSize <- Ref.of[Int](0)
+      isClosed  <- Ref.of[Fx, Boolean](false)
+      fetchSize <- Ref.of[Fx, Int](0)
       rs = new TestSharedResultSet(
              protocol,
              createTestColumns,
@@ -389,8 +392,8 @@ class SharedResultSetTest extends FTestPlatform:
   test("isBeforeFirst, isFirst, isLast, isAfterLast") {
     for
       protocol  <- Fx.delay(createMockProtocol)
-      isClosed  <- Ref.of[Boolean](false)
-      fetchSize <- Ref.of[Int](0)
+      isClosed  <- Ref.of[Fx, Boolean](false)
+      fetchSize <- Ref.of[Fx, Int](0)
       rs = new TestSharedResultSet(
              protocol,
              createTestColumns,
@@ -432,8 +435,8 @@ class SharedResultSetTest extends FTestPlatform:
     // from row 1 onwards. The JDBC spec requires it to return true ONLY on row 1.
     for
       protocol  <- Fx.delay(createMockProtocol)
-      isClosed  <- Ref.of[Boolean](false)
-      fetchSize <- Ref.of[Int](0)
+      isClosed  <- Ref.of[Fx, Boolean](false)
+      fetchSize <- Ref.of[Fx, Int](0)
       rs = new TestSharedResultSet(
              protocol,
              createTestColumns,
@@ -470,8 +473,8 @@ class SharedResultSetTest extends FTestPlatform:
   test("absolute with positive and negative positions") {
     for
       protocol  <- Fx.delay(createMockProtocol)
-      isClosed  <- Ref.of[Boolean](false)
-      fetchSize <- Ref.of[Int](0)
+      isClosed  <- Ref.of[Fx, Boolean](false)
+      fetchSize <- Ref.of[Fx, Int](0)
       rs = new TestSharedResultSet(
              protocol,
              createTestColumns,
@@ -505,8 +508,8 @@ class SharedResultSetTest extends FTestPlatform:
   test("close and isClosed behavior") {
     for
       protocol  <- Fx.delay(createMockProtocol)
-      isClosed  <- Ref.of[Boolean](false)
-      fetchSize <- Ref.of[Int](0)
+      isClosed  <- Ref.of[Fx, Boolean](false)
+      fetchSize <- Ref.of[Fx, Int](0)
       rs = new TestSharedResultSet(
              protocol,
              createTestColumns,
@@ -531,8 +534,8 @@ class SharedResultSetTest extends FTestPlatform:
   test("getMetaData returns correct metadata") {
     for
       protocol  <- Fx.delay(createMockProtocol)
-      isClosed  <- Ref.of[Boolean](false)
-      fetchSize <- Ref.of[Int](0)
+      isClosed  <- Ref.of[Fx, Boolean](false)
+      fetchSize <- Ref.of[Fx, Int](0)
       rs = new TestSharedResultSet(
              protocol,
              createTestColumns,
@@ -556,8 +559,8 @@ class SharedResultSetTest extends FTestPlatform:
   test("getType and getConcurrency return correct values") {
     for
       protocol  <- Fx.delay(createMockProtocol)
-      isClosed  <- Ref.of[Boolean](false)
-      fetchSize <- Ref.of[Int](0)
+      isClosed  <- Ref.of[Fx, Boolean](false)
+      fetchSize <- Ref.of[Fx, Int](0)
       rs = new TestSharedResultSet(
              protocol,
              createTestColumns,
@@ -580,9 +583,9 @@ class SharedResultSetTest extends FTestPlatform:
   test("hasRows and rowLength") {
     for
       protocol  <- Fx.delay(createMockProtocol)
-      isClosed1 <- Ref.of[Boolean](false)
-      isClosed2 <- Ref.of[Boolean](false)
-      fetchSize <- Ref.of[Int](0)
+      isClosed1 <- Ref.of[Fx, Boolean](false)
+      isClosed2 <- Ref.of[Fx, Boolean](false)
+      fetchSize <- Ref.of[Fx, Int](0)
       rs1 = new TestSharedResultSet(
               protocol,
               createTestColumns,
@@ -616,8 +619,8 @@ class SharedResultSetTest extends FTestPlatform:
   test("getByte handles character and numeric values") {
     for
       protocol  <- Fx.delay(createMockProtocol)
-      isClosed  <- Ref.of[Boolean](false)
-      fetchSize <- Ref.of[Int](0)
+      isClosed  <- Ref.of[Fx, Boolean](false)
+      fetchSize <- Ref.of[Fx, Int](0)
       // Create custom records with byte values
       byteRecords = Vector(
                       ResultSetRowPacket.fromStrings(Some("65"), Some("A"), Some("-128"), Some("127"))
@@ -705,8 +708,8 @@ class SharedResultSetTest extends FTestPlatform:
   test("error when column index out of bounds") {
     for
       protocol  <- Fx.delay(createMockProtocol)
-      isClosed  <- Ref.of[Boolean](false)
-      fetchSize <- Ref.of[Int](0)
+      isClosed  <- Ref.of[Fx, Boolean](false)
+      fetchSize <- Ref.of[Fx, Int](0)
       rs = new TestSharedResultSet(
              protocol,
              createTestColumns,
@@ -728,8 +731,8 @@ class SharedResultSetTest extends FTestPlatform:
   test("all data type getters with column names") {
     for
       protocol  <- Fx.delay(createMockProtocol)
-      isClosed  <- Ref.of[Boolean](false)
-      fetchSize <- Ref.of[Int](0)
+      isClosed  <- Ref.of[Fx, Boolean](false)
+      fetchSize <- Ref.of[Fx, Int](0)
       // Create records with various data types
       dataRecords = Vector(
                       ResultSetRowPacket.fromStrings(

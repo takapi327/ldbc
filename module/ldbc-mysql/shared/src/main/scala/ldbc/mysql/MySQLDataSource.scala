@@ -12,17 +12,19 @@ import ldbc.sql.{ Connection as SqlConnection, DataSource, DatabaseMetaData }
 
 import ldbc.authentication.plugin.AuthenticationPlugin
 import ldbc.build.Version
-import ldbc.fx.{ Fx, Resource }
+import ldbc.effect.{ Concurrent, Resource }
+import ldbc.effect.syntax.*
 import ldbc.mysql.telemetry.*
 import ldbc.mysql.telemetry.{ DatabaseMetrics, TelemetryConfig }
 import ldbc.net.{ SSL, SocketOptions }
+import ldbc.net.effect.{ IoEngine, TlsUpgrade }
 
 /**
  * A [[ldbc.sql.DataSource]] implementation for MySQL connections using the pure Scala MySQL wire protocol.
  *
  * This DataSource manages MySQL connections with support for SSL, authentication, prepared statements,
  * and various connection options. It also supports lifecycle hooks that can be executed before and
- * after connection acquisition. Effects are expressed with the effect-agnostic [[ldbc.fx.Fx]] core.
+ * after connection acquisition. Effects are expressed with the effect-agnostic `ldbc.effect` type classes.
  *
  * @tparam A the type of value returned by the before hook
  *
@@ -59,29 +61,30 @@ import ldbc.net.{ SSL, SocketOptions }
  * )
  * }}}
  */
-final case class MySQLDataSource[A](
+final case class MySQLDataSource[F[_], A](
   host:                        String,
   port:                        Int,
   user:                        String,
-  password:                    Option[String]                          = None,
-  database:                    Option[String]                          = None,
-  debug:                       Boolean                                 = false,
-  ssl:                         SSL                                     = SSL.None,
-  socketOptions:               SocketOptions                           = SocketOptions.default,
-  readTimeout:                 Duration                                = Duration.Inf,
-  allowPublicKeyRetrieval:     Boolean                                 = false,
-  databaseTerm:                Option[DatabaseMetaData.DatabaseTerm]   = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
-  tracer:                      Option[Tracer]                          = None,
-  telemetryConfig:             TelemetryConfig                         = TelemetryConfig.default,
-  useCursorFetch:              Boolean                                 = false,
-  useServerPrepStmts:          Boolean                                 = false,
-  maxAllowedPacket:            Int                                     = MySQLConfig.DEFAULT_PACKET_SIZE,
-  defaultAuthenticationPlugin: Option[AuthenticationPlugin[Fx]]        = None,
-  plugins:                     List[AuthenticationPlugin[Fx]]          = List.empty[AuthenticationPlugin[Fx]],
-  meter:                       Option[Meter]                           = None,
-  before:                      Option[Connection[Fx] => Fx[A]]         = None,
-  after:                       Option[(A, Connection[Fx]) => Fx[Unit]] = None
-) extends DataSource[Fx]:
+  password:                    Option[String]                        = None,
+  database:                    Option[String]                        = None,
+  debug:                       Boolean                               = false,
+  ssl:                         SSL                                   = SSL.None,
+  socketOptions:               SocketOptions                         = SocketOptions.default,
+  readTimeout:                 Duration                              = Duration.Inf,
+  allowPublicKeyRetrieval:     Boolean                               = false,
+  databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
+  tracer:                      Option[Tracer[F]]                     = None,
+  telemetryConfig:             TelemetryConfig                       = TelemetryConfig.default,
+  useCursorFetch:              Boolean                               = false,
+  useServerPrepStmts:          Boolean                               = false,
+  maxAllowedPacket:            Int                                   = MySQLConfig.DEFAULT_PACKET_SIZE,
+  defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]]       = None,
+  plugins:                     List[AuthenticationPlugin[F]]         = List.empty[AuthenticationPlugin[F]],
+  meter:                       Option[Meter]                         = None,
+  before:                      Option[Connection[F] => F[A]]         = None,
+  after:                       Option[(A, Connection[F]) => F[Unit]] = None
+)(using F: Concurrent[F], engine: IoEngine[F], tls: TlsUpgrade[F])
+  extends DataSource[F]:
 
   /**
    * Returns a string representation of this DataSource without exposing sensitive information.
@@ -98,7 +101,7 @@ final case class MySQLDataSource[A](
       s"useCursorFetch=$useCursorFetch, useServerPrepStmts=$useServerPrepStmts, maxAllowedPacket=$maxAllowedPacket)"
 
   /** The tracer used for distributed tracing. Falls back to a no-op tracer if none is provided. */
-  private given Tracer = tracer.getOrElse(Tracer.noop)
+  private given Tracer[F] = tracer.getOrElse(Tracer.noop[F])
 
   /**
    * Creates a new connection resource from this DataSource.
@@ -109,13 +112,13 @@ final case class MySQLDataSource[A](
    *
    * @return a Resource that manages a MySQL connection
    */
-  override def getConnection: Fx[(SqlConnection[Fx], Fx[Unit])] = connectionResource.allocatedCase
+  override def getConnection: F[(SqlConnection[F], F[Unit])] = connectionResource.allocatedCase
 
-  private def connectionResource: Resource[SqlConnection[Fx]] =
-    DatabaseMetrics.fromMeter(meter.getOrElse(Meter.noop)).flatMap { databaseMetrics =>
+  private def connectionResource: Resource[F, SqlConnection[F]] =
+    DatabaseMetrics.fromMeter[F](meter.getOrElse(Meter.noop)).flatMap { databaseMetrics =>
       val resource = (before, after) match
         case (Some(b), Some(a)) =>
-          Connection.withBeforeAfter(
+          Connection.withBeforeAfter[F, A](
             host                        = host,
             port                        = port,
             user                        = user,
@@ -138,12 +141,12 @@ final case class MySQLDataSource[A](
             databaseMetrics             = Some(databaseMetrics)
           )
         case (Some(b), None) =>
-          Connection.withBeforeAfter(
+          Connection.withBeforeAfter[F, A](
             host                        = host,
             port                        = port,
             user                        = user,
             before                      = b,
-            after                       = (_, _) => Fx.unit,
+            after                       = (_, _) => F.unit,
             password                    = password,
             database                    = database,
             debug                       = debug,
@@ -161,7 +164,7 @@ final case class MySQLDataSource[A](
             databaseMetrics             = Some(databaseMetrics)
           )
         case (None, _) =>
-          Connection(
+          Connection[F](
             host                        = host,
             port                        = port,
             user                        = user,
@@ -181,63 +184,63 @@ final case class MySQLDataSource[A](
             telemetryConfig             = telemetryConfig,
             databaseMetrics             = Some(databaseMetrics)
           )
-      resource.map(conn => conn: SqlConnection[Fx])
+      resource.map(conn => conn: SqlConnection[F])
     }
 
   /** Sets the hostname or IP address of the MySQL server.
     * @param newHost the hostname or IP address
     * @return a new MySQLDataSource with the updated host
     */
-  def setHost(newHost: String): MySQLDataSource[A] = copy(host = newHost)
+  def setHost(newHost: String): MySQLDataSource[F, A] = copy(host = newHost)
 
   /** Sets the port number for the MySQL connection.
     * @param newPort the port number (typically 3306)
     * @return a new MySQLDataSource with the updated port
     */
-  def setPort(newPort: Int): MySQLDataSource[A] = copy(port = newPort)
+  def setPort(newPort: Int): MySQLDataSource[F, A] = copy(port = newPort)
 
   /** Sets the username for MySQL authentication.
     * @param newUser the username
     * @return a new MySQLDataSource with the updated user
     */
-  def setUser(newUser: String): MySQLDataSource[A] = copy(user = newUser)
+  def setUser(newUser: String): MySQLDataSource[F, A] = copy(user = newUser)
 
   /** Sets the password for MySQL authentication.
     * @param newPassword the password
     * @return a new MySQLDataSource with the updated password
     */
-  def setPassword(newPassword: String): MySQLDataSource[A] = copy(password = Some(newPassword))
+  def setPassword(newPassword: String): MySQLDataSource[F, A] = copy(password = Some(newPassword))
 
   /** Sets the default database to use upon connection.
     * @param newDatabase the database name
     * @return a new MySQLDataSource with the updated database
     */
-  def setDatabase(newDatabase: String): MySQLDataSource[A] = copy(database = Some(newDatabase))
+  def setDatabase(newDatabase: String): MySQLDataSource[F, A] = copy(database = Some(newDatabase))
 
   /** Enables or disables debug logging for connections.
     * @param newDebug true to enable debug logging, false to disable
     * @return a new MySQLDataSource with the updated debug setting
     */
-  def setDebug(newDebug: Boolean): MySQLDataSource[A] = copy(debug = newDebug)
+  def setDebug(newDebug: Boolean): MySQLDataSource[F, A] = copy(debug = newDebug)
 
   /** Sets the SSL configuration for secure connections.
     * @param newSSL the SSL configuration (None, Trusted, or System)
     * @return a new MySQLDataSource with the updated SSL setting
     */
-  def setSSL(newSSL: SSL): MySQLDataSource[A] = copy(ssl = newSSL)
+  def setSSL(newSSL: SSL): MySQLDataSource[F, A] = copy(ssl = newSSL)
 
   /** Sets socket-level options for the TCP connection.
     * @param newSocketOptions the socket options to apply
     * @return a new MySQLDataSource with the updated socket options
     */
-  def setSocketOptions(newSocketOptions: SocketOptions): MySQLDataSource[A] =
+  def setSocketOptions(newSocketOptions: SocketOptions): MySQLDataSource[F, A] =
     copy(socketOptions = newSocketOptions)
 
   /** Sets the timeout duration for read operations.
     * @param newReadTimeout the read timeout duration, or Duration.Inf for no timeout
     * @return a new MySQLDataSource with the updated read timeout
     */
-  def setReadTimeout(newReadTimeout: Duration): MySQLDataSource[A] =
+  def setReadTimeout(newReadTimeout: Duration): MySQLDataSource[F, A] =
     copy(readTimeout = newReadTimeout)
 
   /** Sets whether to allow retrieval of RSA public keys from the server.
@@ -245,7 +248,7 @@ final case class MySQLDataSource[A](
     * @param newAllowPublicKeyRetrieval true to allow public key retrieval
     * @return a new MySQLDataSource with the updated setting
     */
-  def setAllowPublicKeyRetrieval(newAllowPublicKeyRetrieval: Boolean): MySQLDataSource[A] =
+  def setAllowPublicKeyRetrieval(newAllowPublicKeyRetrieval: Boolean): MySQLDataSource[F, A] =
     copy(allowPublicKeyRetrieval = newAllowPublicKeyRetrieval)
 
   /** Sets the database terminology to use.
@@ -253,21 +256,21 @@ final case class MySQLDataSource[A](
     * @param newDatabaseTerm the database term (CATALOG or SCHEMA)
     * @return a new MySQLDataSource with the updated database term
     */
-  def setDatabaseTerm(newDatabaseTerm: DatabaseMetaData.DatabaseTerm): MySQLDataSource[A] =
+  def setDatabaseTerm(newDatabaseTerm: DatabaseMetaData.DatabaseTerm): MySQLDataSource[F, A] =
     copy(databaseTerm = Some(newDatabaseTerm))
 
   /** Sets the tracer for distributed tracing.
     * @param newTracer the tracer instance
     * @return a new MySQLDataSource with the updated tracer
     */
-  def setTracer(newTracer: Tracer): MySQLDataSource[A] =
+  def setTracer(newTracer: Tracer[F]): MySQLDataSource[F, A] =
     copy(tracer = Some(newTracer))
 
   /** Sets the meter for database metrics.
     * @param newMeter the meter instance
     * @return a new MySQLDataSource with the updated meter
     */
-  def setMeter(newMeter: Meter): MySQLDataSource[A] =
+  def setMeter(newMeter: Meter): MySQLDataSource[F, A] =
     copy(meter = Some(newMeter))
 
   /** Sets the telemetry configuration for telemetry behavior.
@@ -278,7 +281,7 @@ final case class MySQLDataSource[A](
     * @param newTelemetryConfig the telemetry configuration
     * @return a new MySQLDataSource with the updated telemetry config
     */
-  def setTelemetryConfig(newTelemetryConfig: TelemetryConfig): MySQLDataSource[A] =
+  def setTelemetryConfig(newTelemetryConfig: TelemetryConfig): MySQLDataSource[F, A] =
     copy(telemetryConfig = newTelemetryConfig)
 
   /** Sets whether to use cursor-based fetching for result sets.
@@ -286,7 +289,7 @@ final case class MySQLDataSource[A](
     * @param newUseCursorFetch true to enable cursor-based fetching
     * @return a new MySQLDataSource with the updated setting
     */
-  def setUseCursorFetch(newUseCursorFetch: Boolean): MySQLDataSource[A] =
+  def setUseCursorFetch(newUseCursorFetch: Boolean): MySQLDataSource[F, A] =
     copy(useCursorFetch = newUseCursorFetch)
 
   /** Sets whether to use server-side prepared statements.
@@ -294,7 +297,7 @@ final case class MySQLDataSource[A](
     * @param newUseServerPrepStmts true to enable server-side prepared statements
     * @return a new MySQLDataSource with the updated setting
     */
-  def setUseServerPrepStmts(newUseServerPrepStmts: Boolean): MySQLDataSource[A] =
+  def setUseServerPrepStmts(newUseServerPrepStmts: Boolean): MySQLDataSource[F, A] =
     copy(useServerPrepStmts = newUseServerPrepStmts)
 
   /** Sets the maximum allowed packet size for network communication.
@@ -303,7 +306,7 @@ final case class MySQLDataSource[A](
    * @return a new MySQLDataSource with the updated packet size limit
    * @throws IllegalArgumentException if the value is outside the valid range
    */
-  def setMaxAllowedPacket(maxAllowedPacket: Int): MySQLDataSource[A] = {
+  def setMaxAllowedPacket(maxAllowedPacket: Int): MySQLDataSource[F, A] = {
     require(
       maxAllowedPacket >= MySQLConfig.MIN_PACKET_SIZE,
       s"maxAllowedPacket must be at least ${ MySQLConfig.MIN_PACKET_SIZE } bytes, but got $maxAllowedPacket"
@@ -320,7 +323,7 @@ final case class MySQLDataSource[A](
    *   The authentication plugin used first for communication with the server
    * @return a new MySQLDataSource with the updated setting
    */
-  def setDefaultAuthenticationPlugin(defaultAuthenticationPlugin: AuthenticationPlugin[Fx]): MySQLDataSource[A] =
+  def setDefaultAuthenticationPlugin(defaultAuthenticationPlugin: AuthenticationPlugin[F]): MySQLDataSource[F, A] =
     copy(defaultAuthenticationPlugin = Some(defaultAuthenticationPlugin))
 
   /**
@@ -332,7 +335,7 @@ final case class MySQLDataSource[A](
    *   List of authentication plugins used for communication with the server
    * @return a new MySQLDataSource with the updated setting
    */
-  def setPlugins(p1: AuthenticationPlugin[Fx], pn: AuthenticationPlugin[Fx]*): MySQLDataSource[A] =
+  def setPlugins(p1: AuthenticationPlugin[F], pn: AuthenticationPlugin[F]*): MySQLDataSource[F, A] =
     copy(plugins = p1 :: pn.toList)
 
   /**
@@ -345,7 +348,7 @@ final case class MySQLDataSource[A](
    * @param before the function to execute before using a connection
    * @return a new MySQLDataSource with the before hook configured
    */
-  def withBefore[B](before: Connection[Fx] => Fx[B]): MySQLDataSource[B] =
+  def withBefore[B](before: Connection[F] => F[B]): MySQLDataSource[F, B] =
     MySQLDataSource(
       host                    = host,
       port                    = port,
@@ -376,7 +379,7 @@ final case class MySQLDataSource[A](
    * @param after the function to execute after using a connection
    * @return a new MySQLDataSource with the after hook configured
    */
-  def withAfter(after: (A, Connection[Fx]) => Fx[Unit]): MySQLDataSource[A] =
+  def withAfter(after: (A, Connection[F]) => F[Unit]): MySQLDataSource[F, A] =
     copy(after = Some(after))
 
   /**
@@ -392,9 +395,9 @@ final case class MySQLDataSource[A](
    * @return a new MySQLDataSource with both hooks configured
    */
   def withBeforeAfter[B](
-    before: Connection[Fx] => Fx[B],
-    after:  (B, Connection[Fx]) => Fx[Unit]
-  ): MySQLDataSource[B] =
+    before: Connection[F] => F[B],
+    after:  (B, Connection[F]) => F[Unit]
+  ): MySQLDataSource[F, B] =
     MySQLDataSource(
       host                    = host,
       port                    = port,
@@ -430,7 +433,11 @@ object MySQLDataSource:
    * @param config the MySQLConfig containing connection parameters
    * @return a new MySQLDataSource configured according to the provided config
    */
-  def fromConfig(config: MySQLConfig): MySQLDataSource[Unit] =
+  def fromConfig[F[_]](config: MySQLConfig)(using
+    Concurrent[F],
+    IoEngine[F],
+    TlsUpgrade[F]
+  ): MySQLDataSource[F, Unit] =
     MySQLDataSource(
       host                    = config.host,
       port                    = config.port,
@@ -459,8 +466,8 @@ object MySQLDataSource:
    *
    * @return a new MySQLDataSource with default settings
    */
-  def default: MySQLDataSource[Unit] =
-    fromConfig(MySQLConfig.default)
+  def default[F[_]](using Concurrent[F], IoEngine[F], TlsUpgrade[F]): MySQLDataSource[F, Unit] =
+    fromConfig[F](MySQLConfig.default)
 
   /**
    * Creates a MySQLDataSource with minimal required parameters.
@@ -473,11 +480,11 @@ object MySQLDataSource:
    * @param user the username for authenticating with the MySQL server
    * @return a new MySQLDataSource with the specified parameters
    */
-  def build(
+  def build[F[_]](
     host: String,
     port: Int,
     user: String
-  ): MySQLDataSource[Unit] =
+  )(using Concurrent[F], IoEngine[F], TlsUpgrade[F]): MySQLDataSource[F, Unit] =
     MySQLDataSource(
       host = host,
       port = port,
@@ -497,11 +504,15 @@ object MySQLDataSource:
    * @param meterProvider  the provider used to acquire the meter (defaults to a no-op provider)
    * @return an effect that resolves to a [[MySQLDataSource]] with tracing and metrics enabled
    */
-  def withTraced(
+  def withTraced[F[_]](using
+    Concurrent[F],
+    IoEngine[F],
+    TlsUpgrade[F]
+  )(
     config:         MySQLConfig,
-    tracerProvider: TracerProvider = TracerProvider.noop,
-    meterProvider:  MeterProvider = MeterProvider.noop
-  ): Fx[MySQLDataSource[Unit]] =
+    tracerProvider: TracerProvider[F] = TracerProvider.noop[F],
+    meterProvider:  MeterProvider[F] = MeterProvider.noop[F]
+  ): F[MySQLDataSource[F, Unit]] =
     for
       tracer <- tracerProvider.tracer("ldbc").withVersion(Version.current).get
       meter  <- meterProvider

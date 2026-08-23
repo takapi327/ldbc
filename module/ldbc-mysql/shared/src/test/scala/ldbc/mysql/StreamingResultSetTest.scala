@@ -8,8 +8,10 @@ package ldbc.mysql
 
 import scala.collection.mutable.ListBuffer
 
-import ldbc.fx.{ Fx, Ref }
+import ldbc.effect.Ref
+import ldbc.fx.concurrentFx
 import ldbc.fx.syntax.*
+import ldbc.fx.Fx
 import ldbc.mysql.data.*
 import ldbc.mysql.net.packet.request.*
 import ldbc.mysql.net.packet.response.*
@@ -26,8 +28,8 @@ class StreamingResultSetTest extends FTestPlatform:
     testRecords:            Vector[ResultSetRowPacket],
     testServerVariables:    Map[String, String],
     testVersion:            Version,
-    testIsClosed:           Ref[Boolean],
-    testFetchSize:          Ref[Int],
+    testIsClosed:           Ref[Fx, Boolean],
+    testFetchSize:          Ref[Fx, Int],
     testUseCursorFetch:     Boolean = true,
     testUseServerPrepStmts: Boolean = true
   ) {
@@ -49,7 +51,7 @@ class StreamingResultSetTest extends FTestPlatform:
     var closeStmtCalled       = false
 
     // Create a mock protocol
-    val mockProtocol: Protocol = null.asInstanceOf[Protocol]
+    val mockProtocol: Protocol[Fx] = null.asInstanceOf[Protocol[Fx]]
 
     // We'll create our own implementation that mimics StreamingResultSet behavior
     var isCompleteAllFetch: Boolean                    = false
@@ -167,8 +169,8 @@ class StreamingResultSetTest extends FTestPlatform:
 
   test("next() should fetch rows based on fetch size") {
     for
-      isClosed  <- Ref.of[Boolean](false)
-      fetchSize <- Ref.of[Int](2) // Fetch 2 rows at a time
+      isClosed  <- Ref.of[Fx, Boolean](false)
+      fetchSize <- Ref.of[Fx, Int](2) // Fetch 2 rows at a time
 
       mockResultSet = new MockStreamingResultSet(
                         testStatementId        = 123L,
@@ -227,8 +229,8 @@ class StreamingResultSetTest extends FTestPlatform:
 
   test("next() with empty initial records should fetch immediately") {
     for
-      isClosed  <- Ref.of[Boolean](false)
-      fetchSize <- Ref.of[Int](5)
+      isClosed  <- Ref.of[Fx, Boolean](false)
+      fetchSize <- Ref.of[Fx, Int](5)
 
       mockResultSet = new MockStreamingResultSet(
                         testStatementId        = 456L,
@@ -255,8 +257,8 @@ class StreamingResultSetTest extends FTestPlatform:
 
   test("streaming completes when fewer rows returned than fetch size") {
     for
-      isClosed  <- Ref.of[Boolean](false)
-      fetchSize <- Ref.of[Int](10) // Request 10 rows
+      isClosed  <- Ref.of[Fx, Boolean](false)
+      fetchSize <- Ref.of[Fx, Int](10) // Request 10 rows
 
       mockResultSet = new MockStreamingResultSet(
                         testStatementId        = 789L,
@@ -293,8 +295,8 @@ class StreamingResultSetTest extends FTestPlatform:
 
   test("multiple fetch cycles with varying response sizes") {
     for
-      isClosed  <- Ref.of[Boolean](false)
-      fetchSize <- Ref.of[Int](3)
+      isClosed  <- Ref.of[Fx, Boolean](false)
+      fetchSize <- Ref.of[Fx, Int](3)
 
       mockResultSet = new MockStreamingResultSet(
                         testStatementId        = 222L,
@@ -333,8 +335,8 @@ class StreamingResultSetTest extends FTestPlatform:
 
   test("changing fetch size during iteration") {
     for
-      isClosed  <- Ref.of[Boolean](false)
-      fetchSize <- Ref.of[Int](2)
+      isClosed  <- Ref.of[Fx, Boolean](false)
+      fetchSize <- Ref.of[Fx, Int](2)
 
       mockResultSet = new MockStreamingResultSet(
                         testStatementId        = 333L,
@@ -373,8 +375,8 @@ class StreamingResultSetTest extends FTestPlatform:
 
   test("empty result set handling") {
     for
-      isClosed  <- Ref.of[Boolean](false)
-      fetchSize <- Ref.of[Int](10)
+      isClosed  <- Ref.of[Fx, Boolean](false)
+      fetchSize <- Ref.of[Fx, Int](10)
 
       mockResultSet = new MockStreamingResultSet(
                         testStatementId        = 555L,

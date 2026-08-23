@@ -83,7 +83,6 @@ lazy val net = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
   .nativeSettings(Test / nativeBrewFormulas += "s2n")
-  .dependsOn(effect)
   .dependsOn(fx)
 
 lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
@@ -94,8 +93,7 @@ lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
       "org.typelevel" %%% "cats-free" % "2.13.0"
     )
   )
-  .dependsOn(sql)
-  .dependsOn(fx)
+  .dependsOn(sql, fx)
 
 lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
@@ -118,8 +116,7 @@ lazy val catsEffect = crossProject(JVMPlatform, JSPlatform, NativePlatform)
       "org.typelevel" %%% "munit-cats-effect" % "2.2.0" % Test
     )
   )
-  .dependsOn(dsl)
-  .dependsOn(effect)
+  .dependsOn(dsl, effect)
 
 lazy val statement = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
@@ -250,10 +247,10 @@ lazy val mysql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     scalacOptions += "-Ykind-projector:underscores",
     libraryDependencies ++= Seq(
-      "org.scodec"    %%% "scodec-bits"   % "1.2.5",
-      "org.scodec"    %%% "scodec-core"   % "2.3.3",
-      "org.typelevel" %%% "twiddles-core" % "1.1.0",
-      "org.scalameta" %%% "munit"         % "1.2.4" % Test
+      "org.scodec"    %%% "scodec-bits"       % "1.2.5",
+      "org.scodec"    %%% "scodec-core"       % "2.3.3",
+      "org.typelevel" %%% "twiddles-core"     % "1.1.0",
+      "org.typelevel" %%% "munit-cats-effect" % "2.2.0" % Test
     ),
     (Compile / sourceGenerators) += Def.task {
       Generator.version(
@@ -269,8 +266,7 @@ lazy val mysql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
   .nativeSettings(Test / nativeBrewFormulas += "s2n")
-  .dependsOn(sql, net, authenticationPlugin)
-  .dependsOn(fx % "compile->compile;test->test")
+  .dependsOn(sql, net, authenticationPlugin, core, catsEffect % Test, fx % "test->compile;test->test")
 
 lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
   .settings(description := "Projects that provide sbt plug-ins")

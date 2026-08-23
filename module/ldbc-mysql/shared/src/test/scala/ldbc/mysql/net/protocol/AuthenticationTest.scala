@@ -6,19 +6,21 @@
 
 package ldbc.mysql.net.protocol
 
-import ldbc.fx.{ Fx, Ref }
+import ldbc.effect.Ref
+import ldbc.fx.concurrentFx
+import ldbc.fx.Fx
 import ldbc.mysql.FTestPlatform
 
-class AuthenticationTest extends Authentication, FTestPlatform:
+class AuthenticationTest extends Authentication[Fx], FTestPlatform:
 
   // Mock state for testing authentication process
-  private val authenticationStarted: Ref[Boolean]        = Ref.unsafe[Boolean](false)
-  private val authenticatedUser:     Ref[Option[String]] = Ref.unsafe[Option[String]](None)
-  private val authenticatedPassword: Ref[Option[String]] = Ref.unsafe[Option[String]](None)
-  private val userChanged:           Ref[Boolean]        = Ref.unsafe[Boolean](false)
+  private val authenticationStarted: Ref[Fx, Boolean]        = Ref.unsafe[Fx, Boolean](false)
+  private val authenticatedUser:     Ref[Fx, Option[String]] = Ref.unsafe[Fx, Option[String]](None)
+  private val authenticatedPassword: Ref[Fx, Option[String]] = Ref.unsafe[Fx, Option[String]](None)
+  private val userChanged:           Ref[Fx, Boolean]        = Ref.unsafe[Fx, Boolean](false)
 
   // Cache which plugin was selected in determinatePlugin for testing
-  private val selectedPluginName: Ref[Option[String]] = Ref.unsafe[Option[String]](None)
+  private val selectedPluginName: Ref[Fx, Option[String]] = Ref.unsafe[Fx, Option[String]](None)
 
   // Implementation of required methods from Authentication
   override def startAuthentication(username: String, password: String): Fx[Unit] =

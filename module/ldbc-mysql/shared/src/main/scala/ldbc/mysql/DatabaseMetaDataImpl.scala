@@ -12,8 +12,8 @@ import ldbc.sql.{ Connection, DatabaseMetaData, PreparedStatement, ResultSet, Ro
 import ldbc.sql.{ SQLException, SQLFeatureNotSupportedException }
 import ldbc.sql.Types.*
 
-import ldbc.fx.{ Fx, Ref }
-import ldbc.fx.syntax.*
+import ldbc.effect.{ Concurrent, Ref }
+import ldbc.effect.syntax.*
 import ldbc.mysql.data.*
 import ldbc.mysql.data.Constants.*
 import ldbc.mysql.net.packet.request.*
@@ -26,26 +26,26 @@ import ldbc.mysql.telemetry.Tracer
 import ldbc.mysql.util.StringHelper
 import ldbc.mysql.util.Version
 
-private[ldbc] case class DatabaseMetaDataImpl(
-  protocol:                      Protocol,
+private[ldbc] case class DatabaseMetaDataImpl[F[_]](
+  protocol:                      Protocol[F],
   serverVariables:               Map[String, String],
-  connectionClosed:              Ref[Boolean],
-  statementClosed:               Ref[Boolean],
-  resultSetClosed:               Ref[Boolean],
-  fetchSize:                     Ref[Int],
+  connectionClosed:              Ref[F, Boolean],
+  statementClosed:               Ref[F, Boolean],
+  resultSetClosed:               Ref[F, Boolean],
+  fetchSize:                     Ref[F, Int],
   useCursorFetch:                Boolean,
   useServerPrepStmts:            Boolean,
   database:                      Option[String]                = None,
   databaseTerm:                  DatabaseMetaData.DatabaseTerm = DatabaseMetaData.DatabaseTerm.CATALOG,
   telemetryConfig:               TelemetryConfig               = TelemetryConfig.default,
-  databaseMetrics:               DatabaseMetrics,
+  databaseMetrics:               DatabaseMetrics[F],
   getProceduresReturnsFunctions: Boolean                       = true,
   tinyInt1isBit:                 Boolean                       = true,
   transformedBitIsBoolean:       Boolean                       = false,
   yearIsDateType:                Boolean                       = true,
   nullDatabaseMeansCurrent:      Boolean                       = false
-)(using Tracer, Exchange)
-  extends DatabaseMetaDataImpl.StaticDatabaseMetaData:
+)(using tracer: Tracer[F], ex: Exchange[F], F: Concurrent[F])
+  extends DatabaseMetaDataImpl.StaticDatabaseMetaData[F]:
 
   private enum FunctionConstant:
     case FUNCTION_COLUMN_UNKNOWN, FUNCTION_COLUMN_IN, FUNCTION_COLUMN_INOUT, FUNCTION_COLUMN_OUT,
@@ -63,12 +63,12 @@ private[ldbc] case class DatabaseMetaDataImpl(
 
   override def getURL(): String = protocol.hostInfo.url
 
-  override def getUserName(): Fx[String] =
+  override def getUserName(): F[String] =
     protocol.resetSequenceId *>
       protocol.send(ComQueryPacket("SELECT USER()", protocol.initialPacket.capabilityFlags, ListMap.empty)) *>
       protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
-        case _: OKPacket                 => Fx.pure("")
-        case error: ERRPacket            => Fx.raiseError(error.toException(Some("SELECT USER()"), None))
+        case _: OKPacket                 => F.pure("")
+        case error: ERRPacket            => F.raiseError(error.toException(Some("SELECT USER()"), None))
         case result: ColumnsNumberPacket =>
           for
             columnDefinitions <-
@@ -109,7 +109,7 @@ private[ldbc] case class DatabaseMetaDataImpl(
         else "`"
       case None => "`"
 
-  override def getSQLKeywords(): Fx[String] =
+  override def getSQLKeywords(): F[String] =
     protocol.resetSequenceId *>
       protocol.send(
         ComQueryPacket(
@@ -119,9 +119,9 @@ private[ldbc] case class DatabaseMetaDataImpl(
         )
       ) *>
       protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
-        case _: OKPacket      => Fx.pure("")
+        case _: OKPacket      => F.pure("")
         case error: ERRPacket =>
-          Fx.raiseError(
+          F.raiseError(
             error.toException(
               Some("SELECT WORD FROM INFORMATION_SCHEMA.KEYWORDS WHERE RESERVED=1 ORDER BY WORD"),
               None
@@ -202,7 +202,7 @@ private[ldbc] case class DatabaseMetaDataImpl(
     catalog:              Option[String],
     schemaPattern:        Option[String],
     procedureNamePattern: Option[String]
-  ): Fx[ResultSet[Fx]] =
+  ): F[ResultSet[F]] =
     val db = getDatabase(catalog, schemaPattern)
 
     val sqlBuf = new StringBuilder(
@@ -257,7 +257,7 @@ private[ldbc] case class DatabaseMetaDataImpl(
           preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, procedureName)
         case (Some(dbValue), None)       => preparedStatement.setString(1, dbValue)
         case (None, Some(procedureName)) => preparedStatement.setString(1, procedureName)
-        case _                           => Fx.unit
+        case _                           => F.unit
 
       setting *> preparedStatement.executeQuery()
     }
@@ -267,7 +267,7 @@ private[ldbc] case class DatabaseMetaDataImpl(
     schemaPattern:        Option[String],
     procedureNamePattern: Option[String],
     columnNamePattern:    Option[String]
-  ): Fx[ResultSet[Fx]] =
+  ): F[ResultSet[F]] =
     val db = getDatabase(catalog, schemaPattern)
 
     val supportsFractSeconds = protocol.initialPacket.serverVersion.compare(Version(5, 6, 4)) >= 0
@@ -443,7 +443,7 @@ private[ldbc] case class DatabaseMetaDataImpl(
           preparedStatement.setString(1, procedureName) *> preparedStatement.setString(2, columnName)
         case (None, Some(procedureName), None) => preparedStatement.setString(1, procedureName)
         case (None, None, Some(columnName))    => preparedStatement.setString(1, columnName)
-        case (None, None, None)                => Fx.unit
+        case (None, None, None)                => F.unit
 
       setting *> preparedStatement.executeQuery()
     }
@@ -453,7 +453,7 @@ private[ldbc] case class DatabaseMetaDataImpl(
     schemaPattern:    Option[String],
     tableNamePattern: Option[String],
     types:            Array[String]
-  ): Fx[ResultSet[Fx]] =
+  ): F[ResultSet[F]] =
     val db = getDatabase(catalog, schemaPattern)
 
     val sqlBuf = new StringBuilder(
@@ -509,37 +509,37 @@ private[ldbc] case class DatabaseMetaDataImpl(
       ) *> (
         tableNamePattern match
           case Some(tableName) => preparedStatement.setString(2, tableName)
-          case None            => Fx.unit
+          case None            => F.unit
       ) *> (
         if types.nonEmpty then
-          List.fill(5)("").zipWithIndex.foldLeft(Fx.unit) {
+          List.fill(5)("").zipWithIndex.foldLeft(F.unit) {
             case (acc, (_, index)) =>
               acc *> preparedStatement.setNull(index + 3, MysqlType.NULL.jdbcType)
           } *>
-            types.zipWithIndex.foldLeft(Fx.unit) {
+            types.zipWithIndex.foldLeft(F.unit) {
               case (acc, (tableType, index)) =>
                 preparedStatement.setString(index + 3, tableType)
             }
-        else Fx.unit
+        else F.unit
       ) *> preparedStatement.executeQuery()
     }
 
-  override def getCatalogs(): Fx[ResultSet[Fx]] =
+  override def getCatalogs(): F[ResultSet[F]] =
     // Starting with MySQL 9.3.0, it has been changed to reference INFORMATION_SCHEMA.
     // see: https://dev.mysql.com/doc/relnotes/connector-j/en/news-9-3-0.html
     protocol.initialPacket.serverVersion.compare(Version(9, 3, 0)) match
       case 1 => getCatalogsByInformationSchema
       case _ => getCatalogsByDatabase
 
-  private def getCatalogsByInformationSchema: Fx[ResultSet[Fx]] =
+  private def getCatalogsByInformationSchema: F[ResultSet[F]] =
     val query = new StringBuilder("SELECT SCHEMA_NAME AS TABLE_CAT FROM INFORMATION_SCHEMA.SCHEMATA")
     if databaseTerm != DatabaseMetaData.DatabaseTerm.CATALOG then query.append(" WHERE FALSE")
     end if
     query.append(" ORDER BY TABLE_CAT")
     prepareMetaDataSafeStatement(query.toString()).flatMap(_.executeQuery())
 
-  private def getCatalogsByDatabase: Fx[ResultSet[Fx]] =
-    (if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then Fx.pure(List.empty[String])
+  private def getCatalogsByDatabase: F[ResultSet[F]] =
+    (if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then F.pure(List.empty[String])
      else getDatabases(None)).map { dbList =>
       ResultSetImpl(
         protocol,
@@ -562,8 +562,8 @@ private[ldbc] case class DatabaseMetaDataImpl(
       )
     }
 
-  override def getTableTypes(): Fx[ResultSet[Fx]] =
-    Fx.pure(
+  override def getTableTypes(): F[ResultSet[F]] =
+    F.pure(
       ResultSetImpl(
         protocol,
         Vector(
@@ -574,7 +574,7 @@ private[ldbc] case class DatabaseMetaDataImpl(
             override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
             override def charset:    String                     = "UTF-8"
         ),
-        TableType.values
+        TableType.values.iterator
           .filterNot(_ == TableType.UNKNOWN)
           .map(tableType => ResultSetRowPacket.fromStrings(Some(tableType.name)))
           .toVector,
@@ -593,7 +593,7 @@ private[ldbc] case class DatabaseMetaDataImpl(
     schemaPattern:     Option[String],
     tableName:         Option[String],
     columnNamePattern: Option[String]
-  ): Fx[ResultSet[Fx]] =
+  ): F[ResultSet[F]] =
     val db = getDatabase(catalog, schemaPattern)
 
     val sqlBuf = new StringBuilder(
@@ -775,12 +775,12 @@ private[ldbc] case class DatabaseMetaDataImpl(
             preparedStatement.setString(1, tableNameValue) *> preparedStatement.setString(2, columnName)
           case (None, Some(tableNameValue), None) => preparedStatement.setString(1, tableNameValue)
           case (None, None, Some(columnName))     => preparedStatement.setString(1, columnName)
-          case (None, None, None)                 => Fx.unit
+          case (None, None, None)                 => F.unit
 
         settings *> preparedStatement.executeQuery()
       }
       .map {
-        case (resultSet: ResultSetImpl) =>
+        case (resultSet: (ResultSetImpl[F] @unchecked)) =>
           ResultSetImpl(
             protocol,
             Vector(
@@ -832,7 +832,7 @@ private[ldbc] case class DatabaseMetaDataImpl(
     schema:            Option[String],
     table:             Option[String],
     columnNamePattern: Option[String]
-  ): Fx[ResultSet[Fx]] =
+  ): F[ResultSet[F]] =
     val db = getDatabase(catalog, schema)
 
     val sqlBuf = new StringBuilder(
@@ -867,7 +867,7 @@ private[ldbc] case class DatabaseMetaDataImpl(
           preparedStatement.setString(1, tableName) *> preparedStatement.setString(2, columnName)
         case (None, Some(tableName), None)  => preparedStatement.setString(1, tableName)
         case (None, None, Some(columnName)) => preparedStatement.setString(1, columnName)
-        case (None, None, None)             => Fx.unit
+        case (None, None, None)             => F.unit
 
       setting *> preparedStatement.executeQuery()
     }
@@ -876,7 +876,7 @@ private[ldbc] case class DatabaseMetaDataImpl(
     catalog:          Option[String],
     schemaPattern:    Option[String],
     tableNamePattern: Option[String]
-  ): Fx[ResultSet[Fx]] =
+  ): F[ResultSet[F]] =
 
     val db = getDatabase(catalog, schemaPattern)
 
@@ -922,7 +922,7 @@ private[ldbc] case class DatabaseMetaDataImpl(
             preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, tableName)
           case (Some(dbValue), None)   => preparedStatement.setString(1, dbValue)
           case (None, Some(tableName)) => preparedStatement.setString(1, tableName)
-          case _                       => Fx.unit
+          case _                       => F.unit
 
         setting *> preparedStatement.executeQuery()
       }
@@ -933,7 +933,7 @@ private[ldbc] case class DatabaseMetaDataImpl(
     table:    String,
     scope:    Option[Int],
     nullable: Option[Boolean]
-  ): Fx[ResultSet[Fx]] =
+  ): F[ResultSet[F]] =
 
     val db = getDatabase(catalog, schema)
 
@@ -971,7 +971,7 @@ private[ldbc] case class DatabaseMetaDataImpl(
       setting *> preparedStatement.executeQuery()
     }
 
-  override def getVersionColumns(catalog: Option[String], schema: Option[String], table: String): Fx[ResultSet[Fx]] =
+  override def getVersionColumns(catalog: Option[String], schema: Option[String], table: String): F[ResultSet[F]] =
 
     val db = getDatabase(catalog, schema)
 
@@ -1015,7 +1015,7 @@ private[ldbc] case class DatabaseMetaDataImpl(
       setting *> preparedStatement.executeQuery()
     }
 
-  override def getPrimaryKeys(catalog: Option[String], schema: Option[String], table: String): Fx[ResultSet[Fx]] =
+  override def getPrimaryKeys(catalog: Option[String], schema: Option[String], table: String): F[ResultSet[F]] =
 
     val db = getDatabase(catalog, schema)
 
@@ -1043,7 +1043,7 @@ private[ldbc] case class DatabaseMetaDataImpl(
       setting *> preparedStatement.executeQuery()
     }
 
-  override def getImportedKeys(catalog: Option[String], schema: Option[String], table: String): Fx[ResultSet[Fx]] =
+  override def getImportedKeys(catalog: Option[String], schema: Option[String], table: String): F[ResultSet[F]] =
 
     val db = getDatabase(catalog, schema)
 
@@ -1088,7 +1088,7 @@ private[ldbc] case class DatabaseMetaDataImpl(
       setting *> preparedStatement.executeQuery()
     }
 
-  override def getExportedKeys(catalog: Option[String], schema: Option[String], table: String): Fx[ResultSet[Fx]] =
+  override def getExportedKeys(catalog: Option[String], schema: Option[String], table: String): F[ResultSet[F]] =
 
     val db = getDatabase(catalog, schema)
 
@@ -1141,7 +1141,7 @@ private[ldbc] case class DatabaseMetaDataImpl(
     foreignCatalog: Option[String],
     foreignSchema:  Option[String],
     foreignTable:   Option[String]
-  ): Fx[ResultSet[Fx]] =
+  ): F[ResultSet[F]] =
 
     val primaryDb = getDatabase(parentCatalog, parentSchema)
     val foreignDb = getDatabase(foreignCatalog, foreignSchema)
@@ -1218,7 +1218,7 @@ private[ldbc] case class DatabaseMetaDataImpl(
       setting *> preparedStatement.executeQuery()
     }
 
-  override def getTypeInfo(): Fx[ResultSet[Fx]] =
+  override def getTypeInfo(): F[ResultSet[F]] =
     val types = Vector(
       ResultSetRowPacket.fromStrings(getTypeInfo("BIT")*),
       ResultSetRowPacket.fromStrings(getTypeInfo("TINYINT")*),
@@ -1266,7 +1266,7 @@ private[ldbc] case class DatabaseMetaDataImpl(
       ResultSetRowPacket.fromStrings(getTypeInfo("TIMESTAMP")*)
     )
 
-    Fx.pure(
+    F.pure(
       ResultSetImpl(
         protocol,
         Vector(
@@ -1313,7 +1313,7 @@ private[ldbc] case class DatabaseMetaDataImpl(
     table:       Option[String],
     unique:      Boolean,
     approximate: Boolean
-  ): Fx[ResultSet[Fx]] =
+  ): F[ResultSet[F]] =
 
     val db = getDatabase(catalog, schema)
 
@@ -1340,7 +1340,7 @@ private[ldbc] case class DatabaseMetaDataImpl(
           preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, tableName)
         case (Some(dbValue), None)   => preparedStatement.setString(1, dbValue)
         case (None, Some(tableName)) => preparedStatement.setString(1, tableName)
-        case (None, None)            => Fx.unit
+        case (None, None)            => F.unit
 
       setting *> preparedStatement.executeQuery()
     }
@@ -1350,7 +1350,7 @@ private[ldbc] case class DatabaseMetaDataImpl(
     schemaPattern:   Option[String],
     typeNamePattern: Option[String],
     types:           Array[Int]
-  ): Fx[ResultSet[Fx]] =
+  ): F[ResultSet[F]] =
     emptyResultSet(
       Vector(
         "TYPE_CAT",
@@ -1363,7 +1363,7 @@ private[ldbc] case class DatabaseMetaDataImpl(
       )
     )
 
-  override def getConnection(): Connection[Fx] = throw new SQLFeatureNotSupportedException(
+  override def getConnection(): Connection[F] = throw new SQLFeatureNotSupportedException(
     "Connections should be available that generate this DatabaseMetaData."
   )
 
@@ -1371,7 +1371,7 @@ private[ldbc] case class DatabaseMetaDataImpl(
     catalog:         Option[String],
     schemaPattern:   Option[String],
     typeNamePattern: Option[String]
-  ): Fx[ResultSet[Fx]] =
+  ): F[ResultSet[F]] =
     emptyResultSet(
       Vector(
         "TYPE_CAT",
@@ -1387,7 +1387,7 @@ private[ldbc] case class DatabaseMetaDataImpl(
     catalog:          Option[String],
     schemaPattern:    Option[String],
     tableNamePattern: Option[String]
-  ): Fx[ResultSet[Fx]] =
+  ): F[ResultSet[F]] =
     emptyResultSet(
       Vector(
         "TYPE_CAT",
@@ -1402,7 +1402,7 @@ private[ldbc] case class DatabaseMetaDataImpl(
     schemaPattern:        Option[String],
     typeNamePattern:      Option[String],
     attributeNamePattern: Option[String]
-  ): Fx[ResultSet[Fx]] =
+  ): F[ResultSet[F]] =
     emptyResultSet(
       Vector(
         "TYPE_CAT",
@@ -1433,14 +1433,14 @@ private[ldbc] case class DatabaseMetaDataImpl(
 
   override def getDatabaseMinorVersion(): Int = protocol.initialPacket.serverVersion.minor
 
-  override def getSchemas(catalog: Option[String], schemaPattern: Option[String]): Fx[ResultSet[Fx]] =
+  override def getSchemas(catalog: Option[String], schemaPattern: Option[String]): F[ResultSet[F]] =
     // Starting with MySQL 9.3.0, it has been changed to reference INFORMATION_SCHEMA.
     // see: https://dev.mysql.com/doc/relnotes/connector-j/en/news-9-3-0.html
     protocol.initialPacket.serverVersion.compare(Version(9, 3, 0)) match
       case 1 => getSchemasByInformationSchema(catalog, schemaPattern)
       case _ => getSchemasByDatabase(schemaPattern)
 
-  private def getSchemasByInformationSchema(catalog: Option[String], schemaPattern: Option[String]): Fx[ResultSet[Fx]] =
+  private def getSchemasByInformationSchema(catalog: Option[String], schemaPattern: Option[String]): F[ResultSet[F]] =
     val db = getDatabase(catalog, schemaPattern)
 
     val query = new StringBuilder("SELECT")
@@ -1460,13 +1460,13 @@ private[ldbc] case class DatabaseMetaDataImpl(
     prepareMetaDataSafeStatement(query.toString()).flatMap { preparedStatement =>
       val setting = db match
         case Some(dbValue) => preparedStatement.setString(1, dbValue)
-        case None          => Fx.unit
+        case None          => F.unit
       setting *> preparedStatement.executeQuery()
     }
 
-  private def getSchemasByDatabase(schemaPattern: Option[String]): Fx[ResultSet[Fx]] =
+  private def getSchemasByDatabase(schemaPattern: Option[String]): F[ResultSet[F]] =
     (if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then getDatabases(schemaPattern)
-     else Fx.pure(List.empty[String])).map { dbList =>
+     else F.pure(List.empty[String])).map { dbList =>
       ResultSetImpl(
         protocol,
         Vector("TABLE_CATALOG", "TABLE_SCHEM").map { value =>
@@ -1488,7 +1488,7 @@ private[ldbc] case class DatabaseMetaDataImpl(
       )
     }
 
-  override def getClientInfoProperties(): Fx[ResultSet[Fx]] =
+  override def getClientInfoProperties(): F[ResultSet[F]] =
     emptyResultSet(
       Vector(
         "NAME",
@@ -1502,7 +1502,7 @@ private[ldbc] case class DatabaseMetaDataImpl(
     catalog:             Option[String],
     schemaPattern:       Option[String],
     functionNamePattern: Option[String]
-  ): Fx[ResultSet[Fx]] =
+  ): F[ResultSet[F]] =
 
     val db = getDatabase(catalog, schemaPattern)
 
@@ -1533,7 +1533,7 @@ private[ldbc] case class DatabaseMetaDataImpl(
           preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, functionName)
         case (Some(dbValue), None)      => preparedStatement.setString(1, dbValue)
         case (None, Some(functionName)) => preparedStatement.setString(1, functionName)
-        case (None, None)               => Fx.unit
+        case (None, None)               => F.unit
 
       setting *> preparedStatement.executeQuery()
     }
@@ -1543,7 +1543,7 @@ private[ldbc] case class DatabaseMetaDataImpl(
     schemaPattern:       Option[String],
     functionNamePattern: Option[String],
     columnNamePattern:   Option[String]
-  ): Fx[ResultSet[Fx]] =
+  ): F[ResultSet[F]] =
 
     val supportsFractSeconds = protocol.initialPacket.serverVersion.compare(Version(5, 6, 4)) >= 0
 
@@ -1697,7 +1697,7 @@ private[ldbc] case class DatabaseMetaDataImpl(
           preparedStatement.setString(1, functionName) *> preparedStatement.setString(2, columnName)
         case (None, Some(functionName), None) => preparedStatement.setString(1, functionName)
         case (None, None, Some(columnName))   => preparedStatement.setString(1, columnName)
-        case (None, None, None)               => Fx.unit
+        case (None, None, None)               => F.unit
 
       setting *> preparedStatement.executeQuery()
     }
@@ -1707,7 +1707,7 @@ private[ldbc] case class DatabaseMetaDataImpl(
     schemaPattern:     Option[String],
     tableNamePattern:  Option[String],
     columnNamePattern: Option[String]
-  ): Fx[ResultSet[Fx]] =
+  ): F[ResultSet[F]] =
     emptyResultSet(
       Vector(
         "TABLE_CAT",
@@ -1739,11 +1739,11 @@ private[ldbc] case class DatabaseMetaDataImpl(
    * query
    * @return PreparedStatement
    */
-  protected def prepareMetaDataSafeStatement(sql: String): Fx[PreparedStatement[Fx]] =
+  protected def prepareMetaDataSafeStatement(sql: String): F[PreparedStatement[F]] =
     for
       params            <- Ref.of(SortedMap.empty[Int, Parameter])
       batchedArgs       <- Ref.of(Vector.empty[String])
-      currentResultSet  <- Ref.of[Option[ResultSet[Fx]]](None)
+      currentResultSet  <- Ref.of[F, Option[ResultSet[F]]](None)
       updateCount       <- Ref.of(-1L)
       moreResults       <- Ref.of(false)
       autoGeneratedKeys <- Ref.of(Statement.NO_GENERATED_KEYS)
@@ -1816,7 +1816,7 @@ private[ldbc] case class DatabaseMetaDataImpl(
     buf.append(" ELSE 1111")
     buf.append(" END ")
 
-  private def getDatabases(dbPattern: Option[String]): Fx[List[String]] =
+  private def getDatabases(dbPattern: Option[String]): F[List[String]] =
 
     val sqlBuf = new StringBuilder("SHOW DATABASES")
 
@@ -1901,8 +1901,8 @@ private[ldbc] case class DatabaseMetaDataImpl(
       Some("10") // NUM_PREC_RADIX
     )
 
-  private def emptyResultSet(fields: Vector[String]): Fx[ResultSet[Fx]] =
-    Fx.pure(
+  private def emptyResultSet(fields: Vector[String]): F[ResultSet[F]] =
+    F.pure(
       ResultSetImpl(
         protocol,
         fields.map { value =>
@@ -2354,7 +2354,7 @@ private[ldbc] object DatabaseMetaDataImpl:
    * @tparam F
    *   the effect type
    */
-  private[ldbc] trait StaticDatabaseMetaData extends DatabaseMetaData[Fx]:
+  private[ldbc] trait StaticDatabaseMetaData[F[_]] extends DatabaseMetaData[F]:
     override def allProceduresAreCallable(): Boolean = false
     override def allTablesAreSelectable():   Boolean = false
     override def isReadOnly():               Boolean = false

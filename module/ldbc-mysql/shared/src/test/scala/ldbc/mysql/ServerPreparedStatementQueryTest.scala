@@ -10,6 +10,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.time.*
 
+import ldbc.fx.concurrentFx
 import ldbc.fx.syntax.*
 import ldbc.fx.Fx
 import ldbc.mysql.data.MysqlType
@@ -19,9 +20,9 @@ import ldbc.net.SSL
 
 class ServerPreparedStatementQueryTest extends FTestPlatform:
 
-  given Tracer = Tracer.noop
+  given Tracer[Fx] = Tracer.noop[Fx]
 
-  private val connection = Connection(
+  private val connection = Connection[Fx](
     host     = TestConfig.host,
     port     = TestConfig.port,
     user     = TestConfig.user,

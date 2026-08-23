@@ -11,8 +11,8 @@ import scala.collection.immutable.SortedMap
 import ldbc.sql.{ CallableStatement, Connection, DatabaseMetaData, PreparedStatement, ResultSet, Savepoint, Statement }
 import ldbc.sql.{ SQLException, SQLNonTransientException }
 
-import ldbc.fx.{ Fx, Ref }
-import ldbc.fx.syntax.*
+import ldbc.effect.{ Concurrent, Ref }
+import ldbc.effect.syntax.*
 import ldbc.mysql.data.*
 import ldbc.mysql.exception.*
 import ldbc.mysql.net.*
@@ -23,44 +23,44 @@ import ldbc.mysql.telemetry.{ DatabaseMetrics, TelemetryConfig }
 import ldbc.mysql.telemetry.Tracer
 import ldbc.mysql.util.StringHelper
 
-private[ldbc] case class ConnectionImpl(
-  protocol:           Protocol,
+private[ldbc] case class ConnectionImpl[F[_]](
+  protocol:           Protocol[F],
   serverVariables:    Map[String, String],
   database:           Option[String],
-  readOnly:           Ref[Boolean],
-  isAutoCommit:       Ref[Boolean],
-  connectionClosed:   Ref[Boolean],
+  readOnly:           Ref[F, Boolean],
+  isAutoCommit:       Ref[F, Boolean],
+  connectionClosed:   Ref[F, Boolean],
   useCursorFetch:     Boolean,
   useServerPrepStmts: Boolean,
   databaseTerm:       DatabaseMetaData.DatabaseTerm = DatabaseMetaData.DatabaseTerm.CATALOG,
   telemetryConfig:    TelemetryConfig               = TelemetryConfig.default,
-  databaseMetrics:    DatabaseMetrics
-)(using Tracer, Exchange)
-  extends LdbcConnection:
+  databaseMetrics:    DatabaseMetrics[F]
+)(using tracer: Tracer[F], ex: Exchange[F], F: Concurrent[F])
+  extends LdbcConnection[F]:
 
-  override def createStatement(): Fx[Statement[Fx]] =
+  override def createStatement(): F[Statement[F]] =
     createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
 
-  override def prepareStatement(sql: String): Fx[PreparedStatement[Fx]] =
+  override def prepareStatement(sql: String): F[PreparedStatement[F]] =
     buildPreparedStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
 
-  override def prepareCall(sql: String): Fx[CallableStatement[Fx]] =
+  override def prepareCall(sql: String): F[CallableStatement[F]] =
     prepareCall(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
 
-  override def nativeSQL(sql: String): Fx[String] = Fx.pure(sql)
+  override def nativeSQL(sql: String): F[String] = F.pure(sql)
 
-  override def setAutoCommit(autoCommit: Boolean): Fx[Unit] =
+  override def setAutoCommit(autoCommit: Boolean): F[Unit] =
     isAutoCommit.update(_ => autoCommit) *>
       createStatement()
         .flatMap(_.executeQuery("SET autocommit=" + (if autoCommit then "1" else "0")))
         .void
 
-  override def getAutoCommit(): Fx[Boolean] = isAutoCommit.get
+  override def getAutoCommit(): F[Boolean] = isAutoCommit.get
 
-  override def commit(): Fx[Unit] = isAutoCommit.get.flatMap { autoCommit =>
+  override def commit(): F[Unit] = isAutoCommit.get.flatMap { autoCommit =>
     if !autoCommit then createStatement().flatMap(_.executeQuery("COMMIT")).void
     else
-      Fx.raiseError(
+      F.raiseError(
         new SQLNonTransientException(
           "Can't call commit when autocommit=true",
           hint = Some("Use setAutoCommit(false) to disable autocommit.")
@@ -68,10 +68,10 @@ private[ldbc] case class ConnectionImpl(
       )
   }
 
-  override def rollback(): Fx[Unit] = isAutoCommit.get.flatMap { autoCommit =>
+  override def rollback(): F[Unit] = isAutoCommit.get.flatMap { autoCommit =>
     if !autoCommit then createStatement().flatMap(_.executeQuery("ROLLBACK")).void
     else
-      Fx.raiseError(
+      F.raiseError(
         new SQLNonTransientException(
           "Can't call rollback when autocommit=true",
           hint = Some("Use setAutoCommit(false) to disable autocommit.")
@@ -79,19 +79,19 @@ private[ldbc] case class ConnectionImpl(
       )
   }
 
-  override def close(): Fx[Unit] = getAutoCommit().flatMap { autoCommit =>
+  override def close(): F[Unit] = getAutoCommit().flatMap { autoCommit =>
     (if !autoCommit then createStatement().flatMap(_.executeQuery("ROLLBACK")).void
-     else Fx.unit) *> protocol.resetSequenceId *> protocol.comQuit() *> connectionClosed.set(true)
+     else F.unit) *> protocol.resetSequenceId *> protocol.comQuit() *> connectionClosed.set(true)
   }
 
-  override def isClosed(): Fx[Boolean] = connectionClosed.get
+  override def isClosed(): F[Boolean] = connectionClosed.get
 
-  override def getMetaData(): Fx[DatabaseMetaData[Fx]] =
+  override def getMetaData(): F[DatabaseMetaData[F]] =
     isClosed().ifM(
-      Fx.raiseError(new SQLException("No operations allowed after connection closed.")),
+      F.raiseError(new SQLException("No operations allowed after connection closed.")),
       (for
-        statementClosed <- Ref.of[Boolean](false)
-        resultSetClosed <- Ref.of[Boolean](false)
+        statementClosed <- Ref.of[F, Boolean](false)
+        resultSetClosed <- Ref.of[F, Boolean](false)
         fetchSize       <- Ref.of(0)
       yield DatabaseMetaDataImpl(
         protocol,
@@ -109,20 +109,20 @@ private[ldbc] case class ConnectionImpl(
       ))
     )
 
-  override def setReadOnly(isReadOnly: Boolean): Fx[Unit] =
+  override def setReadOnly(isReadOnly: Boolean): F[Unit] =
     readOnly.update(_ => isReadOnly) *>
       createStatement()
         .flatMap(_.executeQuery("SET SESSION TRANSACTION READ " + (if isReadOnly then "ONLY" else "WRITE")))
         .void
 
-  override def isReadOnly: Fx[Boolean] = readOnly.get
+  override def isReadOnly: F[Boolean] = readOnly.get
 
-  override def setCatalog(catalog: String): Fx[Unit] =
+  override def setCatalog(catalog: String): F[Unit] =
     databaseTerm match
       case DatabaseMetaData.DatabaseTerm.CATALOG => setSchema(catalog)
-      case DatabaseMetaData.DatabaseTerm.SCHEMA  => Fx.unit
+      case DatabaseMetaData.DatabaseTerm.SCHEMA  => F.unit
 
-  override def getCatalog(): Fx[String] =
+  override def getCatalog(): F[String] =
     databaseTerm match
       case DatabaseMetaData.DatabaseTerm.CATALOG =>
         for
@@ -130,9 +130,9 @@ private[ldbc] case class ConnectionImpl(
           result    <- statement.executeQuery("SELECT DATABASE()")
           value     <- result.getString(1)
         yield Option(value).getOrElse("")
-      case DatabaseMetaData.DatabaseTerm.SCHEMA => Fx.pure(null)
+      case DatabaseMetaData.DatabaseTerm.SCHEMA => F.pure(null)
 
-  override def setTransactionIsolation(level: Int): Fx[Unit] =
+  override def setTransactionIsolation(level: Int): F[Unit] =
     level match
       case Connection.TRANSACTION_READ_UNCOMMITTED =>
         createStatement().flatMap(_.executeQuery("SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED")).void
@@ -143,14 +143,14 @@ private[ldbc] case class ConnectionImpl(
       case Connection.TRANSACTION_SERIALIZABLE =>
         createStatement().flatMap(_.executeQuery("SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE")).void
       case unknown =>
-        Fx.raiseError(
+        F.raiseError(
           MySQLErrors.featureNotSupported(
             s"Unknown transaction isolation level $unknown",
             Some("Expected READ-UNCOMMITTED, READ-COMMITTED, REPEATABLE-READ, or SERIALIZABLE")
           )
         )
 
-  override def getTransactionIsolation(): Fx[Int] =
+  override def getTransactionIsolation(): F[Int] =
     for
       statement <- createStatement()
       result    <- statement.executeQuery("SELECT @@session.transaction_isolation")
@@ -171,12 +171,12 @@ private[ldbc] case class ConnectionImpl(
           Some("Expected READ-UNCOMMITTED, READ-COMMITTED, REPEATABLE-READ, or SERIALIZABLE")
         )
 
-  override def createStatement(resultSetType: Int, resultSetConcurrency: Int): Fx[Statement[Fx]] =
+  override def createStatement(resultSetType: Int, resultSetConcurrency: Int): F[Statement[F]] =
     for
       batchedArgs       <- Ref.of(Vector.empty[String])
-      statementClosed   <- Ref.of[Boolean](false)
-      resultSetClosed   <- Ref.of[Boolean](false)
-      currentResultSet  <- Ref.of[Option[ResultSet[Fx]]](None)
+      statementClosed   <- Ref.of[F, Boolean](false)
+      resultSetClosed   <- Ref.of[F, Boolean](false)
+      currentResultSet  <- Ref.of[F, Option[ResultSet[F]]](None)
       updateCount       <- Ref.of(-1L)
       moreResults       <- Ref.of(false)
       autoGeneratedKeys <-
@@ -204,14 +204,14 @@ private[ldbc] case class ConnectionImpl(
       databaseMetrics
     )
 
-  override def prepareStatement(sql: String, resultSetType: Int, resultSetConcurrency: Int): Fx[PreparedStatement[Fx]] =
+  override def prepareStatement(sql: String, resultSetType: Int, resultSetConcurrency: Int): F[PreparedStatement[F]] =
     buildPreparedStatement(sql, resultSetType, resultSetConcurrency)
 
-  override def prepareCall(sql: String, resultSetType: Int, resultSetConcurrency: Int): Fx[CallableStatement[Fx]] =
+  override def prepareCall(sql: String, resultSetType: Int, resultSetConcurrency: Int): F[CallableStatement[F]] =
     for
       metaData  <- getMetaData()
       procName  <- extractProcedureName(sql)
-      resultSet <- Fx.pure(databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA)
+      resultSet <- F.pure(databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA)
                      .ifM(
                        metaData.getProcedureColumns(None, database, Some(procName), Some("%")),
                        metaData.getProcedureColumns(database, None, Some(procName), Some("%"))
@@ -220,16 +220,16 @@ private[ldbc] case class ConnectionImpl(
         CallableStatementImpl.ParamInfo(
           sql,
           database,
-          resultSet.asInstanceOf[ResultSetImpl],
+          resultSet.asInstanceOf[ResultSetImpl[F]],
           isFunctionCall = false
         )
       params                  <- Ref.of(SortedMap.empty[Int, Parameter])
       batchedArgs             <- Ref.of(Vector.empty[String])
-      statementClosed         <- Ref.of[Boolean](false)
-      resultSetClosed         <- Ref.of[Boolean](false)
-      currentResultSet        <- Ref.of[Option[ResultSet[Fx]]](None)
-      outputParameterResult   <- Ref.of[Option[ResultSetImpl]](None)
-      resultSets              <- Ref.of(List.empty[ResultSetImpl])
+      statementClosed         <- Ref.of[F, Boolean](false)
+      resultSetClosed         <- Ref.of[F, Boolean](false)
+      currentResultSet        <- Ref.of[F, Option[ResultSet[F]]](None)
+      outputParameterResult   <- Ref.of[F, Option[ResultSetImpl[F]]](None)
+      resultSets              <- Ref.of(List.empty[ResultSetImpl[F]])
       parameterIndexToRsIndex <-
         Ref.of(
           List
@@ -273,58 +273,58 @@ private[ldbc] case class ConnectionImpl(
   override def prepareStatement(
     sql:               String,
     autoGeneratedKeys: Int
-  ): Fx[PreparedStatement[Fx]] =
+  ): F[PreparedStatement[F]] =
     buildPreparedStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, autoGeneratedKeys)
 
-  override def clientPreparedStatement(sql: String): Fx[ClientPreparedStatement] =
+  override def clientPreparedStatement(sql: String): F[ClientPreparedStatement[F]] =
     buildClientPreparedStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
 
   override def clientPreparedStatement(
     sql:                  String,
     resultSetType:        Int,
     resultSetConcurrency: Int
-  ): Fx[ClientPreparedStatement] =
+  ): F[ClientPreparedStatement[F]] =
     buildClientPreparedStatement(sql, resultSetType, resultSetConcurrency)
 
   override def clientPreparedStatement(
     sql:               String,
     autoGeneratedKeys: Int
-  ): Fx[ClientPreparedStatement] =
+  ): F[ClientPreparedStatement[F]] =
     buildClientPreparedStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, autoGeneratedKeys)
 
-  override def serverPreparedStatement(sql: String): Fx[ServerPreparedStatement] =
+  override def serverPreparedStatement(sql: String): F[ServerPreparedStatement[F]] =
     buildServerPreparedStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
 
   override def serverPreparedStatement(
     sql:                  String,
     resultSetType:        Int,
     resultSetConcurrency: Int
-  ): Fx[ServerPreparedStatement] =
+  ): F[ServerPreparedStatement[F]] =
     buildServerPreparedStatement(sql, resultSetType, resultSetConcurrency, Statement.NO_GENERATED_KEYS)
 
   override def serverPreparedStatement(
     sql:               String,
     autoGeneratedKeys: Int
-  ): Fx[ServerPreparedStatement] =
+  ): F[ServerPreparedStatement[F]] =
     buildServerPreparedStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, autoGeneratedKeys)
 
-  override def setSavepoint(): Fx[Savepoint] = StringHelper.getUniqueSavepointId.flatMap(setSavepoint)
+  override def setSavepoint(): F[Savepoint] = StringHelper.getUniqueSavepointId[F].flatMap(setSavepoint)
 
-  override def setSavepoint(name: String): Fx[Savepoint] =
+  override def setSavepoint(name: String): F[Savepoint] =
     for
       statement <- createStatement()
       _         <- statement.executeQuery(s"SAVEPOINT `$name`")
     yield MysqlSavepoint(name)
 
-  override def rollback(savepoint: Savepoint): Fx[Unit] =
+  override def rollback(savepoint: Savepoint): F[Unit] =
     createStatement().flatMap(_.executeQuery(s"ROLLBACK TO SAVEPOINT `${ savepoint.getSavepointName() }`")).void
 
-  override def releaseSavepoint(savepoint: Savepoint): Fx[Unit] =
+  override def releaseSavepoint(savepoint: Savepoint): F[Unit] =
     createStatement().flatMap(_.executeQuery(s"RELEASE SAVEPOINT `${ savepoint.getSavepointName() }`")).void
 
-  override def setSchema(schema: String): Fx[Unit] = protocol.resetSequenceId *> protocol.comInitDB(schema)
+  override def setSchema(schema: String): F[Unit] = protocol.resetSequenceId *> protocol.comInitDB(schema)
 
-  override def getSchema(): Fx[String] =
+  override def getSchema(): F[String] =
     databaseTerm match
       case DatabaseMetaData.DatabaseTerm.SCHEMA =>
         for
@@ -332,13 +332,13 @@ private[ldbc] case class ConnectionImpl(
           result    <- statement.executeQuery("SELECT DATABASE()")
           value     <- result.getString(1)
         yield Option(value).getOrElse("")
-      case DatabaseMetaData.DatabaseTerm.CATALOG => Fx.pure(null)
+      case DatabaseMetaData.DatabaseTerm.CATALOG => F.pure(null)
 
-  override def getStatistics: Fx[StatisticsPacket] = protocol.resetSequenceId *> protocol.comStatistics()
+  override def getStatistics: F[StatisticsPacket] = protocol.resetSequenceId *> protocol.comStatistics()
 
-  override def isValid(timeout: Int): Fx[Boolean] = protocol.resetSequenceId *> protocol.comPing()
+  override def isValid(timeout: Int): F[Boolean] = protocol.resetSequenceId *> protocol.comPing()
 
-  override def resetServerState: Fx[Unit] =
+  override def resetServerState: F[Unit] =
     protocol.resetSequenceId *> protocol.resetConnection *> createStatement().flatMap { statement =>
       statement.executeQuery("SET NAMES utf8mb4") *>
         statement.executeQuery("SET character_set_results = NULL") *>
@@ -346,10 +346,10 @@ private[ldbc] case class ConnectionImpl(
         isAutoCommit.update(_ => true)
     }
 
-  override def changeUser(user: String, password: String): Fx[Unit] =
+  override def changeUser(user: String, password: String): F[Unit] =
     protocol.resetSequenceId *> protocol.changeUser(user, password)
 
-  private def extractProcedureName(sql: String): Fx[String] =
+  private def extractProcedureName(sql: String): F[String] =
     val (keyword, offset) =
       if sql.toUpperCase.contains("CALL ") then ("CALL ", 5)
       else if sql.toUpperCase.contains("SELECT ") then ("SELECT ", 7)
@@ -359,21 +359,21 @@ private[ldbc] case class ConnectionImpl(
       val endCallIndex     = StringHelper.indexOfIgnoreCase(0, sql, keyword)
       val trimmedStatement = sql.substring(endCallIndex + offset).trim()
       val name             = trimmedStatement.takeWhile(c => !Character.isWhitespace(c) && c != '(' && c != '?')
-      Fx.pure(name)
-    else Fx.raiseError(new SQLException("Invalid SQL statement"))
+      F.pure(name)
+    else F.raiseError(new SQLException("Invalid SQL statement"))
 
   private def buildClientPreparedStatement(
     sql:                  String,
     resultSetType:        Int,
     resultSetConcurrency: Int,
     autoGeneratedKeys:    Int = Statement.NO_GENERATED_KEYS
-  ): Fx[ClientPreparedStatement] =
+  ): F[ClientPreparedStatement[F]] =
     for
       params            <- Ref.of(SortedMap.empty[Int, Parameter])
       batchedArgs       <- Ref.of(Vector.empty[String])
-      statementClosed   <- Ref.of[Boolean](false)
-      resultSetClosed   <- Ref.of[Boolean](false)
-      currentResultSet  <- Ref.of[Option[ResultSet[Fx]]](None)
+      statementClosed   <- Ref.of[F, Boolean](false)
+      resultSetClosed   <- Ref.of[F, Boolean](false)
+      currentResultSet  <- Ref.of[F, Option[ResultSet[F]]](None)
       updateCount       <- Ref.of(-1L)
       moreResults       <- Ref.of(false)
       autoGeneratedKeys <- Ref.of(autoGeneratedKeys)
@@ -407,12 +407,12 @@ private[ldbc] case class ConnectionImpl(
     resultSetType:        Int,
     resultSetConcurrency: Int,
     autoGeneratedKeys:    Int = Statement.NO_GENERATED_KEYS
-  ): Fx[ServerPreparedStatement] =
+  ): F[ServerPreparedStatement[F]] =
     for
       result <- protocol.resetSequenceId *> protocol.send(ComStmtPreparePacket(sql)) *>
                   protocol.receive(ComStmtPrepareOkPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
-                    case error: ERRPacket           => Fx.raiseError(error.toException(Some(sql), None))
-                    case ok: ComStmtPrepareOkPacket => Fx.pure(ok)
+                    case error: ERRPacket           => F.raiseError(error.toException(Some(sql), None))
+                    case ok: ComStmtPrepareOkPacket => F.pure(ok)
                   }
       _ <- protocol.repeatProcess(
              result.numParams,
@@ -424,9 +424,9 @@ private[ldbc] case class ConnectionImpl(
            )
       params            <- Ref.of(SortedMap.empty[Int, Parameter])
       batchedArgs       <- Ref.of(Vector.empty[String])
-      statementClosed   <- Ref.of[Boolean](false)
-      resultSetClosed   <- Ref.of[Boolean](false)
-      currentResultSet  <- Ref.of[Option[ResultSet[Fx]]](None)
+      statementClosed   <- Ref.of[F, Boolean](false)
+      resultSetClosed   <- Ref.of[F, Boolean](false)
+      currentResultSet  <- Ref.of[F, Option[ResultSet[F]]](None)
       updateCount       <- Ref.of(-1L)
       moreResults       <- Ref.of(false)
       autoGeneratedKeys <- Ref.of(autoGeneratedKeys)
@@ -461,10 +461,10 @@ private[ldbc] case class ConnectionImpl(
     resultSetType:        Int,
     resultSetConcurrency: Int,
     autoGeneratedKeys:    Int = Statement.NO_GENERATED_KEYS
-  ): Fx[PreparedStatement[Fx]] =
+  ): F[PreparedStatement[F]] =
     if useServerPrepStmts then
       buildServerPreparedStatement(sql, resultSetType, resultSetConcurrency, autoGeneratedKeys)
-        .asInstanceOf[Fx[PreparedStatement[Fx]]]
+        .asInstanceOf[F[PreparedStatement[F]]]
     else
       buildClientPreparedStatement(sql, resultSetType, resultSetConcurrency, autoGeneratedKeys)
-        .asInstanceOf[Fx[PreparedStatement[Fx]]]
+        .asInstanceOf[F[PreparedStatement[F]]]

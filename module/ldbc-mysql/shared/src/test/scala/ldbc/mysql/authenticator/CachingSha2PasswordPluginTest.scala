@@ -6,24 +6,26 @@
 
 package ldbc.mysql.authenticator
 
+import ldbc.fx.concurrentFx
+import ldbc.fx.Fx
 import ldbc.mysql.*
 import ldbc.mysql.util.Version
 
 class CachingSha2PasswordPluginTest extends FTestPlatform:
 
   test("CachingSha2PasswordPlugin#name should return correct plugin name") {
-    val plugin = CachingSha2PasswordPlugin(Version(8, 0, 10))
+    val plugin = CachingSha2PasswordPlugin[Fx](Version(8, 0, 10))
     assertEquals(plugin.name.toString, "caching_sha2_password")
   }
 
   test("CachingSha2PasswordPlugin for version >= 8.0.5 should use default transformation") {
-    CachingSha2PasswordPlugin(Version(8, 0, 10))
+    CachingSha2PasswordPlugin[Fx](Version(8, 0, 10))
     // Default transformation is not explicitly defined in the trait
     // so we don't have a direct way to test it
     assert(true) // Placeholder assertion
   }
 
   test("CachingSha2PasswordPlugin for version < 8.0.5 should use specific transformation") {
-    val plugin = CachingSha2PasswordPlugin(Version(8, 0, 4))
+    val plugin = CachingSha2PasswordPlugin[Fx](Version(8, 0, 4))
     assertEquals(plugin.transformation, "RSA/ECB/PKCS1Padding")
   }

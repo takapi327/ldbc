@@ -12,34 +12,34 @@ import scala.io.AnsiColor
 import scodec.bits.{ BitVector, ByteVector }
 import scodec.Decoder
 
-import ldbc.fx.{ Fx, Ref, Resource }
-import ldbc.fx.syntax.*
+import ldbc.effect.{ Concurrent, Ref, Resource }
+import ldbc.effect.syntax.*
 import ldbc.mysql.data.CapabilitiesFlags
 import ldbc.mysql.exception.PacketTooBigException
 import ldbc.mysql.net.packet.*
 import ldbc.mysql.net.packet.response.InitialPacket
 import ldbc.mysql.net.protocol.parseHeader
-import ldbc.net.Socket
+import ldbc.net.effect.{ Socket, TlsUpgrade }
 
 /**
  * A higher-level [[BitVectorSocket]] that speaks in terms of `Packet`, framing each message with the
  * MySQL 4-byte header.
  */
-trait PacketSocket:
+trait PacketSocket[F[_]]:
 
   /**
    * Receives the next `ResponsePacket`, failing if end-of-stream is reached before a complete message
    * arrives.
    */
-  def receive[P <: ResponsePacket](decoder: Decoder[P]): Fx[P]
+  def receive[P <: ResponsePacket](decoder: Decoder[P]): F[P]
 
   /** Sends the specified request packet. */
-  def send(request: RequestPacket): Fx[Unit]
+  def send(request: RequestPacket): F[Unit]
 
 object PacketSocket:
 
-  val DEFAULT_MAX_PACKET_SIZE  = 65535    // 64KB (JDBC Driver default)
-  val PROTOCOL_MAX_PACKET_SIZE = 16777215 // 16MB (MySQL protocol limit)
+  val DEFAULT_MAX_PACKET_SIZE  = 65535
+  val PROTOCOL_MAX_PACKET_SIZE = 16777215
   val MIN_PACKET_SIZE          = 0
 
   /**
@@ -50,19 +50,19 @@ object PacketSocket:
    * @param sequenceIdRef    the MySQL packet sequence id
    * @param maxAllowedPacket the maximum accepted payload size
    */
-  def fromBitVectorSocket(
-    bvs:              BitVectorSocket,
+  def fromBitVectorSocket[F[_]](
+    bvs:              BitVectorSocket[F],
     debugEnabled:     Boolean,
-    sequenceIdRef:    Ref[Byte],
+    sequenceIdRef:    Ref[F, Byte],
     maxAllowedPacket: Int
-  ): PacketSocket = new PacketSocket:
+  )(using F: Concurrent[F]): PacketSocket[F] = new PacketSocket[F]:
 
-    private def debug(msg: => String): Fx[Unit] =
-      Fx.whenA(debugEnabled) {
-        sequenceIdRef.get.flatMap(id => Fx.delay(println(s"[$id] $msg")))
+    private def debug(msg: => String): F[Unit] =
+      F.whenA(debugEnabled) {
+        sequenceIdRef.get.flatMap(id => F.delay(println(s"[$id] $msg")))
       }
 
-    override def receive[P <: ResponsePacket](decoder: Decoder[P]): Fx[P] =
+    override def receive[P <: ResponsePacket](decoder: Decoder[P]): F[P] =
       (for
         header <- bvs.read(4)
         payloadSize = parseHeader(header.toByteArray)
@@ -81,7 +81,7 @@ object PacketSocket:
           )
       }
 
-    private def buildRequest(request: RequestPacket): Fx[BitVector] =
+    private def buildRequest(request: RequestPacket): F[BitVector] =
       sequenceIdRef.get.map { sequenceId =>
         val bits        = request.encode
         val payloadSize = bits.toByteArray.length
@@ -94,7 +94,7 @@ object PacketSocket:
         ByteVector(header).toBitVector ++ bits
       }
 
-    override def send(request: RequestPacket): Fx[Unit] =
+    override def send(request: RequestPacket): F[Unit] =
       for
         bits <- buildRequest(request)
         _    <-
@@ -105,10 +105,10 @@ object PacketSocket:
         _ <- sequenceIdRef.update(sequenceId => ((sequenceId + 1) % 256).toByte)
       yield ()
 
-    private def validatePacketSize(size: Int): Fx[Unit] =
-      if size < MIN_PACKET_SIZE then Fx.raiseError(PacketTooBigException(size, maxAllowedPacket))
-      else if size > maxAllowedPacket then Fx.raiseError(PacketTooBigException(size, maxAllowedPacket))
-      else Fx.unit
+    private def validatePacketSize(size: Int): F[Unit] =
+      if size < MIN_PACKET_SIZE then F.raiseError(PacketTooBigException(size, maxAllowedPacket))
+      else if size > maxAllowedPacket then F.raiseError(PacketTooBigException(size, maxAllowedPacket))
+      else F.unit
 
   /**
    * Builds a [[PacketSocket]] over a connected socket.
@@ -122,16 +122,16 @@ object PacketSocket:
    * @param capabilitiesFlags the negotiated capability flags
    * @param maxAllowedPacket  the maximum accepted payload size
    */
-  def apply(
+  def apply[F[_]](
     debug:             Boolean,
-    sockets:           Resource[Socket],
-    sslOptions:        Option[SSLNegotiation.Options],
-    sequenceIdRef:     Ref[Byte],
-    initialPacketRef:  Ref[Option[InitialPacket]],
+    sockets:           Resource[F, Socket[F]],
+    sslOptions:        Option[SSLNegotiation.Options[F]],
+    sequenceIdRef:     Ref[F, Byte],
+    initialPacketRef:  Ref[F, Option[InitialPacket]],
     readTimeout:       Duration,
     capabilitiesFlags: Set[CapabilitiesFlags],
     maxAllowedPacket:  Int
-  ): Resource[PacketSocket] =
+  )(using F: Concurrent[F], tls: TlsUpgrade[F]): Resource[F, PacketSocket[F]] =
     BitVectorSocket(sockets, sequenceIdRef, initialPacketRef, sslOptions, readTimeout, capabilitiesFlags).map(
       fromBitVectorSocket(_, debug, sequenceIdRef, maxAllowedPacket)
     )

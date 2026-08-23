@@ -11,7 +11,7 @@ import java.nio.charset.StandardCharsets
 import scodec.bits.ByteVector
 
 import ldbc.authentication.plugin.*
-import ldbc.fx.Fx
+import ldbc.effect.Sync
 import ldbc.mysql.util.PlatformHash
 
 /**
@@ -19,16 +19,19 @@ import ldbc.mysql.util.PlatformHash
  * `SHA256(password) XOR SHA256(SHA256(SHA256(password)) ++ scramble)`. RSA public-key encryption of the
  * password (for non-TLS connections) is provided by [[EncryptPasswordPlugin]].
  */
-trait Sha256PasswordPlugin extends AuthenticationPlugin[Fx], EncryptPasswordPlugin:
+trait Sha256PasswordPlugin[F[_]] extends AuthenticationPlugin[F], EncryptPasswordPlugin:
+
+  /** The effect instance used to suspend the hashing. Concrete instances supply it. */
+  protected given effect: Sync[F]
 
   override def name: PluginName = SHA256_PASSWORD
 
   override def requiresConfidentiality: Boolean = false
 
-  override def hashPassword(password: String, scramble: Array[Byte]): Fx[ByteVector] =
-    if password.isEmpty then Fx.pure(ByteVector.empty)
+  override def hashPassword(password: String, scramble: Array[Byte]): F[ByteVector] =
+    if password.isEmpty then effect.pure(ByteVector.empty)
     else
-      Fx.delay {
+      effect.delay {
         val hash1 = PlatformHash.sha256(password.getBytes(StandardCharsets.UTF_8))
         val hash2 = PlatformHash.sha256(hash1)
         val hash3 = PlatformHash.sha256(hash2 ++ scramble)
@@ -39,4 +42,6 @@ trait Sha256PasswordPlugin extends AuthenticationPlugin[Fx], EncryptPasswordPlug
 
 object Sha256PasswordPlugin:
 
-  def apply(): Sha256PasswordPlugin = new Sha256PasswordPlugin {}
+  def apply[F[_]](using F: Sync[F]): Sha256PasswordPlugin[F] =
+    new Sha256PasswordPlugin[F]:
+      override protected given effect: Sync[F] = F

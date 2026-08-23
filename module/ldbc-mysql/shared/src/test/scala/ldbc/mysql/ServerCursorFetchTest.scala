@@ -10,6 +10,7 @@ import scala.concurrent.duration.*
 
 import ldbc.sql.ResultSet
 
+import ldbc.fx.concurrentFx
 import ldbc.fx.Fx
 import ldbc.mysql.*
 import ldbc.mysql.syntax.*

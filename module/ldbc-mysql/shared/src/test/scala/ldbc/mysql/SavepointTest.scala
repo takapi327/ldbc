@@ -8,15 +8,17 @@ package ldbc.mysql
 
 import munit.AnyFixture
 
+import ldbc.fx.concurrentFx
+import ldbc.fx.Fx
 import ldbc.fx.Resource
 import ldbc.mysql.telemetry.*
 import ldbc.net.SSL
 
 class SavepointTest extends FTestPlatform:
 
-  given Tracer = Tracer.noop
+  given Tracer[Fx] = Tracer.noop[Fx]
 
-  private val connection = Connection(
+  private val connection = Connection[Fx](
     host     = TestConfig.host,
     port     = TestConfig.port,
     user     = TestConfig.user,

@@ -8,30 +8,33 @@ package ldbc.mysql
 
 import ldbc.sql.ResultSet
 
-import ldbc.fx.{ Fx, Ref }
-import ldbc.fx.syntax.*
+import ldbc.effect.{ Concurrent, Ref }
+import ldbc.effect.syntax.*
 import ldbc.mysql.data.ColumnValueDecoder
 import ldbc.mysql.net.packet.request.*
 import ldbc.mysql.net.packet.response.*
 import ldbc.mysql.net.Protocol
 import ldbc.mysql.util.Version
 
-private[ldbc] case class StreamingResultSet(
-  protocol:             Protocol,
+private[ldbc] case class StreamingResultSet[F[_]](
+  protocol:             Protocol[F],
   statementId:          Long,
   columns:              Vector[ColumnDefinitionPacket],
   records:              Vector[ResultSetRowPacket],
   serverVariables:      Map[String, String],
   version:              Version,
-  isClosed:             Ref[Boolean],
-  fetchSize:            Ref[Int],
+  isClosed:             Ref[F, Boolean],
+  fetchSize:            Ref[F, Int],
   useCursorFetch:       Boolean,
   useServerPrepStmts:   Boolean,
   decoder:              ColumnValueDecoder,
   resultSetType:        Int            = ResultSet.TYPE_FORWARD_ONLY,
   resultSetConcurrency: Int            = ResultSet.CONCUR_READ_ONLY,
   statement:            Option[String] = None
-) extends SharedResultSet:
+)(using concurrentF: Concurrent[F])
+  extends SharedResultSet[F]:
+
+  override protected def F: Concurrent[F] = concurrentF
 
   private var isCompleteAllFetch: Boolean                    = false
   private var rows:               Vector[ResultSetRowPacket] = Vector.empty
@@ -41,9 +44,9 @@ private[ldbc] case class StreamingResultSet(
    * Updates the internal rows collection and resets the cursor position.
    *
    * @param size the number of rows to fetch
-   * @return an Fx[Unit] representing the fetch operation
+   * @return an F[Unit] representing the fetch operation
    */
-  private def fetchRow(size: Int): Fx[Unit] =
+  private def fetchRow(size: Int): F[Unit] =
     protocol.resetSequenceId *> protocol.send(ComStmtFetchPacket(statementId, size)) *>
       protocol
         .readUntilEOF[ResultSetRowPacket](
@@ -60,12 +63,12 @@ private[ldbc] case class StreamingResultSet(
    * Closes the prepared statement on the server side.
    * Sets the completion flag to indicate no more rows are available.
    *
-   * @return an Fx[Boolean] indicating whether rows were available in the final batch
+   * @return an F[Boolean] indicating whether rows were available in the final batch
    */
-  private def closeStmt(): Fx[Boolean] =
+  private def closeStmt(): F[Boolean] =
     protocol.send(ComStmtClosePacket(statementId)).as(false)
 
-  override def next(): Fx[Boolean] =
+  override def next(): F[Boolean] =
     checkClosed() *> fetchSize.get.flatMap { size =>
       if isCompleteAllFetch && currentCursor >= rows.length then protocol.resetSequenceId *> closeStmt()
       else if rows.isEmpty then fetchRow(size) *> next()
@@ -73,5 +76,5 @@ private[ldbc] case class StreamingResultSet(
       else
         currentCursor = currentCursor + 1
         currentRow    = rows.lift(currentCursor - 1)
-        Fx.pure(true)
+        F.pure(true)
     }

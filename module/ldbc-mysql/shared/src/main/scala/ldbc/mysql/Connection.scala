@@ -12,13 +12,14 @@ import ldbc.sql.DatabaseMetaData
 import ldbc.sql.SQLClientInfoException
 
 import ldbc.authentication.plugin.*
-import ldbc.fx.{ Fx, Ref, Resource }
+import ldbc.effect.{ Concurrent, Ref, Resource }
 import ldbc.mysql.data.*
 import ldbc.mysql.net.*
 import ldbc.mysql.net.protocol.*
 import ldbc.mysql.telemetry.{ DatabaseMetrics, TelemetryConfig }
 import ldbc.mysql.telemetry.Tracer
-import ldbc.net.{ IoEngine, SSL, Socket, SocketOptions }
+import ldbc.net.{ SSL, SocketOptions }
+import ldbc.net.effect.{ IoEngine, Socket, TlsUpgrade }
 
 type Connection[F[_]] = ldbc.sql.Connection[F]
 
@@ -44,13 +45,17 @@ object Connection:
     CapabilitiesFlags.MULTI_FACTOR_AUTHENTICATION
   )
 
-  private val unitBefore: Connection[Fx] => Fx[Unit]         = _ => Fx.unit
-  private val unitAfter:  (Unit, Connection[Fx]) => Fx[Unit] = (_, _) => Fx.unit
+  private def unitBefore[F[_]](using F: Concurrent[F]): Connection[F] => F[Unit]         = _ => F.unit
+  private def unitAfter[F[_]](using F:  Concurrent[F]): (Unit, Connection[F]) => F[Unit] = (_, _) => F.unit
 
-  def apply(host: String, port: Int, user: String): Tracer ?=> Resource[LdbcConnection] =
-    default[Unit](host, port, user, before = unitBefore, after = unitAfter)
+  def apply[F[_]](host: String, port: Int, user: String)(using
+    Concurrent[F],
+    IoEngine[F],
+    TlsUpgrade[F]
+  ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] =
+    default[F, Unit](host, port, user, before = unitBefore[F], after = unitAfter[F])
 
-  def apply(
+  def apply[F[_]](
     host:                        String,
     port:                        Int,
     user:                        String,
@@ -65,11 +70,11 @@ object Connection:
     useServerPrepStmts:          Boolean = false,
     maxAllowedPacket:            Int = MySQLConfig.DEFAULT_PACKET_SIZE,
     databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
-    defaultAuthenticationPlugin: Option[AuthenticationPlugin[Fx]] = None,
-    plugins:                     List[AuthenticationPlugin[Fx]] = List.empty[AuthenticationPlugin[Fx]],
+    defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]] = None,
+    plugins:                     List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
     telemetryConfig:             TelemetryConfig = TelemetryConfig.default,
-    databaseMetrics:             Option[DatabaseMetrics] = None
-  ): Tracer ?=> Resource[LdbcConnection] = default[Unit](
+    databaseMetrics:             Option[DatabaseMetrics[F]] = None
+  )(using Concurrent[F], IoEngine[F], TlsUpgrade[F]): Tracer[F] ?=> Resource[F, LdbcConnection[F]] = default[F, Unit](
     host,
     port,
     user,
@@ -88,16 +93,16 @@ object Connection:
     plugins,
     telemetryConfig,
     databaseMetrics,
-    unitBefore,
-    unitAfter
+    unitBefore[F],
+    unitAfter[F]
   )
 
-  def withBeforeAfter[A](
+  def withBeforeAfter[F[_], A](
     host:                        String,
     port:                        Int,
     user:                        String,
-    before:                      Connection[Fx] => Fx[A],
-    after:                       (A, Connection[Fx]) => Fx[Unit],
+    before:                      Connection[F] => F[A],
+    after:                       (A, Connection[F]) => F[Unit],
     password:                    Option[String] = None,
     database:                    Option[String] = None,
     debug:                       Boolean = false,
@@ -109,11 +114,11 @@ object Connection:
     useServerPrepStmts:          Boolean = false,
     maxAllowedPacket:            Int = MySQLConfig.DEFAULT_PACKET_SIZE,
     databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
-    defaultAuthenticationPlugin: Option[AuthenticationPlugin[Fx]] = None,
-    plugins:                     List[AuthenticationPlugin[Fx]] = List.empty[AuthenticationPlugin[Fx]],
+    defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]] = None,
+    plugins:                     List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
     telemetryConfig:             TelemetryConfig = TelemetryConfig.default,
-    databaseMetrics:             Option[DatabaseMetrics] = None
-  ): Tracer ?=> Resource[LdbcConnection] = default(
+    databaseMetrics:             Option[DatabaseMetrics[F]] = None
+  )(using Concurrent[F], IoEngine[F], TlsUpgrade[F]): Tracer[F] ?=> Resource[F, LdbcConnection[F]] = default[F, A](
     host,
     port,
     user,
@@ -136,7 +141,7 @@ object Connection:
     after
   )
 
-  def default[A](
+  def default[F[_], A](
     host:                        String,
     port:                        Int,
     user:                        String,
@@ -151,33 +156,30 @@ object Connection:
     useServerPrepStmts:          Boolean = false,
     maxAllowedPacket:            Int = MySQLConfig.DEFAULT_PACKET_SIZE,
     databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
-    defaultAuthenticationPlugin: Option[AuthenticationPlugin[Fx]] = None,
-    plugins:                     List[AuthenticationPlugin[Fx]] = List.empty[AuthenticationPlugin[Fx]],
+    defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]] = None,
+    plugins:                     List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
     telemetryConfig:             TelemetryConfig = TelemetryConfig.default,
-    databaseMetrics:             Option[DatabaseMetrics] = None,
-    before:                      Connection[Fx] => Fx[A],
-    after:                       (A, Connection[Fx]) => Fx[Unit]
-  ): Tracer ?=> Resource[LdbcConnection] =
-    val sslOptions: Option[SSLNegotiation.Options] = ssl match
+    databaseMetrics:             Option[DatabaseMetrics[F]] = None,
+    before:                      Connection[F] => F[A],
+    after:                       (A, Connection[F]) => F[Unit]
+  )(using F: Concurrent[F], engine: IoEngine[F], tls: TlsUpgrade[F]): Tracer[F] ?=> Resource[F, LdbcConnection[F]] =
+    val sslOptions: Option[SSLNegotiation.Options[F]] = ssl match
       case SSL.None => None
       case _        =>
-        Some(SSLNegotiation.Options(ssl, host, port, fallbackOk = false, logger = None))
+        Some(SSLNegotiation.Options[F](ssl, host, port, fallbackOk = false, logger = None))
 
-    val validateEndpoint: Fx[Unit] =
+    val validateEndpoint: F[Unit] =
       if host.trim.isEmpty then
-        Fx.raiseError(new SQLClientInfoException(s"""Hostname: "$host" is not syntactically valid."""))
-      else if port < 0 || port > 65535 then
-        Fx.raiseError(new SQLClientInfoException(s"""Port: "$port" is not valid."""))
-      else Fx.unit
+        F.raiseError(new SQLClientInfoException(s"""Hostname: "$host" is not syntactically valid."""))
+      else if port < 0 || port > 65535 then F.raiseError(new SQLClientInfoException(s"""Port: "$port" is not valid."""))
+      else F.unit
 
-    val sockets: Resource[Socket] =
+    val sockets: Resource[F, Socket[F]] =
       Resource
         .eval(validateEndpoint)
-        .flatMap(_ =>
-          Resource.make(IoEngine.global.connect(host, port, defaultConnectTimeout, socketOptions))(_.close())
-        )
+        .flatMap(_ => Resource.make(engine.connect(host, port, defaultConnectTimeout, socketOptions))(_.close()))
 
-    fromSockets(
+    fromSockets[F, A](
       sockets,
       host,
       port,
@@ -200,37 +202,37 @@ object Connection:
       after
     )
 
-  def fromSockets[A](
-    sockets:                     Resource[Socket],
+  def fromSockets[F[_], A](
+    sockets:                     Resource[F, Socket[F]],
     host:                        String,
     port:                        Int,
     user:                        String,
     password:                    Option[String] = None,
     database:                    Option[String] = None,
     debug:                       Boolean = false,
-    sslOptions:                  Option[SSLNegotiation.Options],
+    sslOptions:                  Option[SSLNegotiation.Options[F]],
     readTimeout:                 Duration = Duration.Inf,
     allowPublicKeyRetrieval:     Boolean = false,
     useCursorFetch:              Boolean = false,
     useServerPrepStmts:          Boolean = false,
     maxAllowedPacket:            Int = MySQLConfig.DEFAULT_PACKET_SIZE,
     databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = None,
-    defaultAuthenticationPlugin: Option[AuthenticationPlugin[Fx]],
-    plugins:                     List[AuthenticationPlugin[Fx]],
+    defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
+    plugins:                     List[AuthenticationPlugin[F]],
     telemetryConfig:             TelemetryConfig = TelemetryConfig.default,
-    databaseMetrics:             Option[DatabaseMetrics] = None,
-    acquire:                     Connection[Fx] => Fx[A],
-    release:                     (A, Connection[Fx]) => Fx[Unit]
-  ): Tracer ?=> Resource[LdbcConnection] =
-    val resolvedMetrics = databaseMetrics.getOrElse(DatabaseMetrics.noop)
+    databaseMetrics:             Option[DatabaseMetrics[F]] = None,
+    acquire:                     Connection[F] => F[A],
+    release:                     (A, Connection[F]) => F[Unit]
+  )(using F: Concurrent[F], tls: TlsUpgrade[F]): Tracer[F] ?=> Resource[F, LdbcConnection[F]] =
+    val resolvedMetrics = databaseMetrics.getOrElse(DatabaseMetrics.noop[F])
     val pluginMap       = plugins.map(plugin => plugin.name.toString -> plugin).toMap
     val capabilityFlags = defaultCapabilityFlags ++
       (if database.isDefined then Set(CapabilitiesFlags.CLIENT_CONNECT_WITH_DB) else Set.empty) ++
       (if sslOptions.isDefined then Set(CapabilitiesFlags.CLIENT_SSL) else Set.empty)
     val hostInfo = HostInfo(host, port, user, password, database)
     for
-      given Exchange <- Resource.eval(Exchange.apply)
-      protocol       <-
+      given Exchange[F] <- Resource.eval(Exchange.apply[F])
+      protocol          <-
         Protocol(
           sockets,
           hostInfo,
@@ -245,12 +247,12 @@ object Connection:
         )
       _                <- Resource.eval(protocol.startAuthentication(user, password.getOrElse("")))
       serverVariables  <- Resource.eval(protocol.serverVariables())
-      readOnly         <- Resource.eval(Ref.of[Boolean](false))
-      autoCommit       <- Resource.eval(Ref.of[Boolean](true))
-      connectionClosed <- Resource.eval(Ref.of[Boolean](false))
+      readOnly         <- Resource.eval(Ref.of[F, Boolean](false))
+      autoCommit       <- Resource.eval(Ref.of[F, Boolean](true))
+      connectionClosed <- Resource.eval(Ref.of[F, Boolean](false))
       connection       <-
         Resource.make(
-          Fx.pure(
+          F.pure(
             ConnectionImpl(
               protocol,
               serverVariables,

@@ -11,15 +11,16 @@ import munit.AnyFixture
 import ldbc.sql.BatchUpdateException
 
 import ldbc.fx.{ Fx, Resource }
+import ldbc.fx.concurrentFx
 import ldbc.fx.syntax.*
 import ldbc.mysql.telemetry.*
 import ldbc.net.SSL
 
 class StatementBatchTest extends FTestPlatform:
 
-  given Tracer = Tracer.noop
+  given Tracer[Fx] = Tracer.noop[Fx]
 
-  private val connection = Connection(
+  private val connection = Connection[Fx](
     host     = TestConfig.host,
     port     = TestConfig.port,
     user     = TestConfig.user,

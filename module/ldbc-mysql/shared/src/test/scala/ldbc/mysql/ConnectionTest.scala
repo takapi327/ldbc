@@ -9,6 +9,7 @@ package ldbc.mysql
 import ldbc.sql.{ SQLClientInfoException, SQLInvalidAuthorizationSpecException, SQLSyntaxErrorException }
 import ldbc.sql.DatabaseMetaData
 
+import ldbc.fx.concurrentFx
 import ldbc.fx.syntax.*
 import ldbc.fx.Fx
 import ldbc.mysql.syntax.*
@@ -17,10 +18,10 @@ import ldbc.net.SSL
 
 class ConnectionTest extends FTestPlatform:
 
-  given Tracer = Tracer.noop
+  given Tracer[Fx] = Tracer.noop[Fx]
 
   test("Passing an empty string to host causes SQLException") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host = "",
       port = TestConfig.port,
       user = "root"
@@ -31,7 +32,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("UnknownHostException occurs when invalid host is passed") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host = "host",
       port = TestConfig.port,
       user = "root"
@@ -42,7 +43,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("Passing a negative value to Port causes SQLException") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host = TestConfig.host,
       port = -1,
       user = "root"
@@ -53,7 +54,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("SQLException occurs when passing more than 65535 values to Port") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host = TestConfig.host,
       port = 65536,
       user = "root"
@@ -64,7 +65,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("Connections to MySQL servers using users with sha256_password will fail for non-SSL connections.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = "ldbc_sha256_user",
@@ -78,7 +79,7 @@ class ConnectionTest extends FTestPlatform:
   test(
     "Connections to MySQL servers using users with sha256_password will succeed if allowPublicKeyRetrieval is enabled for non-SSL connections."
   ) {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host                    = TestConfig.host,
       port                    = TestConfig.port,
       user                    = "ldbc_sha256_user",
@@ -89,7 +90,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("Connections to MySQL servers using users with sha256_password will succeed for SSL connections.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = "ldbc_sha256_user",
@@ -102,7 +103,7 @@ class ConnectionTest extends FTestPlatform:
   test(
     "If allowPublicKeyRetrieval is enabled for non-SSL connections, a connection to a MySQL server specifying a database using a user with sha256_password will succeed."
   ) {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host                    = TestConfig.host,
       port                    = TestConfig.port,
       user                    = "ldbc_sha256_user",
@@ -116,7 +117,7 @@ class ConnectionTest extends FTestPlatform:
   test(
     "A connection to a MySQL server with a database specified using a user with sha256_password will succeed with an SSL connection."
   ) {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = "ldbc_sha256_user",
@@ -130,7 +131,7 @@ class ConnectionTest extends FTestPlatform:
   test(
     "Connections to MySQL servers using users with caching_sha2_password will succeed if allowPublicKeyRetrieval is enabled for non-SSL connections."
   ) {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host                    = TestConfig.host,
       port                    = TestConfig.port,
       user                    = TestConfig.user,
@@ -141,7 +142,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("Connections to MySQL servers using users with caching_sha2_password will succeed for SSL connections.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -154,7 +155,7 @@ class ConnectionTest extends FTestPlatform:
   test(
     "If the login information of a user using caching_sha2_password is cached, the connection to the MySQL server will succeed even for non-SSL connections."
   ) {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -166,7 +167,7 @@ class ConnectionTest extends FTestPlatform:
   test(
     "If allowPublicKeyRetrieval is enabled for non-SSL connections, a connection to a MySQL server specifying a database using a user with caching_sha2_password will succeed."
   ) {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host                    = TestConfig.host,
       port                    = TestConfig.port,
       user                    = TestConfig.user,
@@ -180,7 +181,7 @@ class ConnectionTest extends FTestPlatform:
   test(
     "A connection to a MySQL server with a database specified using a user with caching_sha2_password will succeed with an SSL connection."
   ) {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -192,7 +193,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("Catalog change will change the currently connected Catalog.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -210,7 +211,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("Statistics of the MySQL server can be obtained.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -226,7 +227,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The connection is valid.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -239,7 +240,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("Connection state reset succeeds.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -252,7 +253,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("If multi-querying is not enabled, ERRPacketException is raised when multi-querying is performed.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -270,7 +271,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("Can change from sha256_password user to caching_sha2_password user.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = "ldbc_sha256_user",
@@ -286,7 +287,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("Can change from caching_sha2_password user to sha256_password user.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -302,7 +303,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The allProceduresAreCallable method of DatabaseMetaData is always false.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -315,7 +316,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The allTablesAreSelectable method of DatabaseMetaData is always false.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -328,7 +329,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The URL retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -344,7 +345,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The User name retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -360,7 +361,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The isReadOnly method of DatabaseMetaData is always false.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -373,7 +374,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The nullsAreSortedHigh method of DatabaseMetaData is always false.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -386,7 +387,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The nullsAreSortedLow method of DatabaseMetaData is always true.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -399,7 +400,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The nullsAreSortedAtStart method of DatabaseMetaData is always false.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -412,7 +413,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The nullsAreSortedAtEnd method of DatabaseMetaData is always false.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -425,7 +426,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The getDatabaseProductName method of DatabaseMetaData is always MySQL.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -441,7 +442,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The Server version retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -457,7 +458,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The getDriverName method of DatabaseMetaData is always MySQL Connector/L.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -473,7 +474,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The Driver version retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -489,7 +490,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The usesLocalFiles method of DatabaseMetaData is always false.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -502,7 +503,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The usesLocalFilePerTable method of DatabaseMetaData is always false.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -515,7 +516,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The supports Mixed Case Identifiers retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -528,7 +529,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The storesUpperCaseIdentifiers method of DatabaseMetaData is always false.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -541,7 +542,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The stores Lower Case Identifiers retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -554,7 +555,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The stores Mixed Case Identifiers retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -567,7 +568,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The supports Mixed Case Quoted Identifiers retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -580,7 +581,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The storesUpperCaseQuotedIdentifiers method of DatabaseMetaData is always true.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -593,7 +594,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The stores Lower Case Quoted Identifiers retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -606,7 +607,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The stores Mixed Case Quoted Identifiers retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -619,7 +620,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The Identifier Quote String retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -635,7 +636,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The SQL Keywords retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -657,7 +658,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The Numeric Functions retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -673,7 +674,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The String Functions retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -692,7 +693,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The System Functions retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -708,7 +709,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The Time Date Functions retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -726,7 +727,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The Search String Escape retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -742,7 +743,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The Extra Name Characters retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -758,7 +759,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The result of retrieving procedure information matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -791,7 +792,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The result of retrieving procedure columns information matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -825,7 +826,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The result of retrieving tables information matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -863,7 +864,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The result of retrieving schemas information matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host         = TestConfig.host,
       port         = TestConfig.port,
       user         = TestConfig.user,
@@ -903,7 +904,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The result of retrieving catalogs information matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -940,7 +941,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The result of retrieving tableTypes information matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -971,7 +972,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The result of retrieving columns information matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host         = TestConfig.host,
       port         = TestConfig.port,
       user         = TestConfig.user,
@@ -1026,7 +1027,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The result of retrieving column privileges information matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host         = TestConfig.host,
       port         = TestConfig.port,
       user         = TestConfig.user,
@@ -1066,7 +1067,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The result of retrieving table privileges information matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -1102,7 +1103,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The result of retrieving best row identifier information matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host         = TestConfig.host,
       port         = TestConfig.port,
       user         = TestConfig.user,
@@ -1141,7 +1142,7 @@ class ConnectionTest extends FTestPlatform:
   test(
     "getBestRowIdentifier should return correct COLUMN_SIZE for DATETIME(3) including fractional seconds precision."
   ) {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host         = TestConfig.host,
       port         = TestConfig.port,
       user         = TestConfig.user,
@@ -1179,7 +1180,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The result of retrieving version columns information matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -1215,7 +1216,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The result of retrieving primary key information matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,
@@ -1249,7 +1250,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The result of retrieving imported key information matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host         = TestConfig.host,
       port         = TestConfig.port,
       user         = TestConfig.user,
@@ -1292,7 +1293,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The result of retrieving exported key information matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host         = TestConfig.host,
       port         = TestConfig.port,
       user         = TestConfig.user,
@@ -1335,7 +1336,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The result of retrieving cross reference information matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host         = TestConfig.host,
       port         = TestConfig.port,
       user         = TestConfig.user,
@@ -1380,7 +1381,7 @@ class ConnectionTest extends FTestPlatform:
 
   test("The result of retrieving type information matches the specified value.") {
     assume(TestConfig.isMySql9OrLater, "Type info list includes VECTOR which requires MySQL 9.x")
-    val connection = Connection(
+    val connection = Connection[Fx](
       host         = TestConfig.host,
       port         = TestConfig.port,
       user         = TestConfig.user,
@@ -1470,7 +1471,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The result of retrieving index information matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host         = TestConfig.host,
       port         = TestConfig.port,
       user         = TestConfig.user,
@@ -1512,7 +1513,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The result of retrieving function information matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host         = TestConfig.host,
       port         = TestConfig.port,
       user         = TestConfig.user,
@@ -1566,7 +1567,7 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The result of retrieving function column information matches the specified value.") {
-    val connection = Connection(
+    val connection = Connection[Fx](
       host         = TestConfig.host,
       port         = TestConfig.port,
       user         = TestConfig.user,
@@ -1654,7 +1655,7 @@ class ConnectionTest extends FTestPlatform:
         _         <- statement.execute("DROP DATABASE IF EXISTS connector_before_after_test")
       yield ()
 
-    val connection = Connection.withBeforeAfter[Int](
+    val connection = Connection.withBeforeAfter[Fx, Int](
       host     = TestConfig.host,
       port     = TestConfig.port,
       user     = TestConfig.user,

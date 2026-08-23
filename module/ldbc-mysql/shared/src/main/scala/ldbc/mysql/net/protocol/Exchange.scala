@@ -6,21 +6,21 @@
 
 package ldbc.mysql.net.protocol
 
-import ldbc.fx.{ Fx, Mutex }
+import ldbc.effect.{ Async, Semaphore }
 
 /**
- * Serialises effects through a mutex so that request/response exchanges on a single connection never
+ * Serialises effects through a semaphore so that request/response exchanges on a single connection never
  * interleave. Each exchange is atomic and uncancelable.
  */
-trait Exchange:
-  def apply[A](fa: Fx[A]): Fx[A]
+trait Exchange[F[_]]:
+  def apply[A](fa: F[A]): F[A]
 
 object Exchange:
 
-  /** Creates an [[Exchange]] backed by a fresh [[ldbc.fx.Mutex]]. */
-  def apply: Fx[Exchange] =
-    Mutex.create.map { mutex =>
-      new Exchange:
-        override def apply[A](fa: Fx[A]): Fx[A] =
-          Fx.uncancelable(mutex.surround(fa))
+  /** Creates an [[Exchange]] backed by a fresh single-permit [[ldbc.effect.Semaphore]]. */
+  def apply[F[_]](using F: Async[F]): F[Exchange[F]] =
+    F.map(Semaphore[F](1)) { semaphore =>
+      new Exchange[F]:
+        override def apply[A](fa: F[A]): F[A] =
+          F.uncancelable(semaphore.withPermit(fa))
     }

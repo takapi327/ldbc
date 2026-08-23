@@ -9,8 +9,10 @@ package ldbc.mysql.net
 import scodec.bits.ByteVector
 import scodec.Decoder
 
-import ldbc.fx.{ Fx, Ref }
+import ldbc.effect.Ref
+import ldbc.fx.concurrentFx
 import ldbc.fx.syntax.*
+import ldbc.fx.Fx
 import ldbc.mysql.authenticator.MysqlClearPasswordPlugin
 import ldbc.mysql.authenticator.MysqlNativePasswordPlugin
 import ldbc.mysql.data.{ CapabilitiesFlags, ServerStatusFlags }
@@ -34,13 +36,13 @@ import ldbc.mysql.FTestPlatform
  */
 class AuthDowngradeTest extends FTestPlatform:
 
-  given Tracer = Tracer.noop
+  given Tracer[Fx] = Tracer.noop[Fx]
 
   /** A PacketSocket that records everything sent and replays a scripted list of server packets. */
   private final class ScriptedSocket(
-    sent:      Ref[Vector[RequestPacket]],
-    toReceive: Ref[List[ResponsePacket]]
-  ) extends PacketSocket:
+    sent:      Ref[Fx, Vector[RequestPacket]],
+    toReceive: Ref[Fx, List[ResponsePacket]]
+  ) extends PacketSocket[Fx]:
     override def receive[P <: ResponsePacket](decoder: Decoder[P]): Fx[P] =
       toReceive
         .modify {
@@ -71,9 +73,9 @@ class AuthDowngradeTest extends FTestPlatform:
     val cleartext = ByteVector(password.getBytes("UTF-8"))
 
     val program = for
-      given Exchange <- Exchange.apply
-      sent           <- Ref.of(Vector.empty[RequestPacket])
-      toReceive      <- Ref.of(
+      given Exchange[Fx] <- Exchange.apply[Fx]
+      sent               <- Ref.of[Fx, Vector[RequestPacket]](Vector.empty)
+      toReceive          <- Ref.of[Fx, List[ResponsePacket]](
                      List[ResponsePacket](
                        AuthSwitchRequestPacket(0xfe, "mysql_clear_password", Array.fill[Byte](20)(2)),
                        OKPacket(0x00, 0L, 0L, Set.empty[ServerStatusFlags], None, None, None, None)
@@ -89,8 +91,8 @@ class AuthDowngradeTest extends FTestPlatform:
                    sequenceIdRef               = null,
                    defaultAuthenticationPlugin = None,
                    plugins                     = Map(
-                     "mysql_native_password" -> MysqlNativePasswordPlugin(),
-                     "mysql_clear_password"  -> MysqlClearPasswordPlugin()
+                     "mysql_native_password" -> MysqlNativePasswordPlugin[Fx],
+                     "mysql_clear_password"  -> MysqlClearPasswordPlugin[Fx]
                    )
                  )
       result <- protocol.startAuthentication("user", password).attempt
@@ -117,9 +119,9 @@ class AuthDowngradeTest extends FTestPlatform:
     val clearTextInitialPacket = initialPacket.copy(authPlugin = "mysql_clear_password")
 
     val program = for
-      given Exchange <- Exchange.apply
-      sent           <- Ref.of(Vector.empty[RequestPacket])
-      toReceive      <- Ref.of(List.empty[ResponsePacket])
+      given Exchange[Fx] <- Exchange.apply[Fx]
+      sent               <- Ref.of[Fx, Vector[RequestPacket]](Vector.empty)
+      toReceive          <- Ref.of[Fx, List[ResponsePacket]](List.empty[ResponsePacket])
       protocol = Protocol.Impl(
                    initialPacket               = clearTextInitialPacket,
                    hostInfo                    = hostInfo,
@@ -129,7 +131,7 @@ class AuthDowngradeTest extends FTestPlatform:
                    capabilityFlags             = Set.empty[CapabilitiesFlags],
                    sequenceIdRef               = null,
                    defaultAuthenticationPlugin = None,
-                   plugins                     = Map("mysql_clear_password" -> MysqlClearPasswordPlugin())
+                   plugins                     = Map("mysql_clear_password" -> MysqlClearPasswordPlugin[Fx])
                  )
       result <- protocol.changeUser("user", "secret").attempt
       sends  <- sent.get
