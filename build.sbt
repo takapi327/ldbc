@@ -118,7 +118,7 @@ lazy val catsEffect = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     )
   )
   .dependsOn(dsl)
-  .dependsOn(fx)
+  .dependsOn(effect)
 
 lazy val statement = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
