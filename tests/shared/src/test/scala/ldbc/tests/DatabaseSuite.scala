@@ -81,13 +81,13 @@ trait DatabaseSuite[F[_]] extends munit.FunSuite:
 
 /** `F = IO` leaf harness: reuses munit-cats-effect's IO value transform. */
 trait IODatabaseSuite extends munit.CatsEffectSuite with DatabaseSuite[IO]:
-  protected val effectLabel: String = "io"
-  protected given monad: MonadThrow[IO] = cats.effect.IO.asyncForIO
+  protected val effectLabel: String         = "io"
+  protected given monad:     MonadThrow[IO] = cats.effect.IO.asyncForIO
 
 /** `F = Fx` leaf harness: reuses `ldbc.fx.FxSuite`'s Fx value transform. */
 trait FxDatabaseSuite extends DatabaseSuite[Fx] with ldbc.fx.FxSuite:
-  protected val effectLabel: String = "fx"
-  protected given monad: MonadThrow[Fx] = ldbc.future.FxInstances.catsMonadErrorForFx
+  protected val effectLabel: String         = "fx"
+  protected given monad:     MonadThrow[Fx] = ldbc.future.FxInstances.catsMonadErrorForFx
 
 /** `F = Future` leaf harness: munit transforms `Future` natively; `MonadThrow[Future]` comes from cats. */
 trait FutureDatabaseSuite extends DatabaseSuite[Future]:
