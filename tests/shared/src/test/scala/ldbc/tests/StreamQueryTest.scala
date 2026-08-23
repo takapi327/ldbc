@@ -31,8 +31,8 @@ class LdbcStreamQueryTest extends StreamQueryTest:
 
 class MysqlStreamQueryTest extends StreamQueryTest:
   import ldbc.catseffect.concurrentIO
-  import ldbc.mysql.MySQLDataSource
   import ldbc.mysql.Connector as MysqlConnector
+  import ldbc.mysql.MySQLDataSource
   import ldbc.net.SSL as MysqlSSL
 
   private val datasource = MySQLDataSource

@@ -65,8 +65,8 @@ class LdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
 
 class MysqlSQLStringContextQueryTest extends SQLStringContextQueryTest:
   import ldbc.catseffect.concurrentIO
-  import ldbc.mysql.MySQLDataSource
   import ldbc.mysql.Connector as MysqlConnector
+  import ldbc.mysql.MySQLDataSource
   import ldbc.net.SSL as MysqlSSL
 
   private val datasource = MySQLDataSource

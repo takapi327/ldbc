@@ -36,8 +36,8 @@ class LdbcTableQuerySelectConnectionTest extends TableQuerySelectConnectionTest:
 
 class MysqlTableQuerySelectConnectionTest extends TableQuerySelectConnectionTest:
   import ldbc.catseffect.concurrentIO
-  import ldbc.mysql.MySQLDataSource
   import ldbc.mysql.Connector as MysqlConnector
+  import ldbc.mysql.MySQLDataSource
   import ldbc.net.SSL as MysqlSSL
 
   override def prefix: "mysql" = "mysql"
