@@ -73,6 +73,7 @@ lazy val fx = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     libraryDependencies += "org.scalameta" %%% "munit" % "1.2.4" % Test
   )
+  .dependsOn(effect)
 
 lazy val net = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
