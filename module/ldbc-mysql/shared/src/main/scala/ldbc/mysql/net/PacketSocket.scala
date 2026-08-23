@@ -19,7 +19,7 @@ import ldbc.mysql.exception.PacketTooBigException
 import ldbc.mysql.net.packet.*
 import ldbc.mysql.net.packet.response.InitialPacket
 import ldbc.mysql.net.protocol.parseHeader
-import ldbc.net.effect.{ Socket, TlsUpgrade }
+import ldbc.net.{ Socket, TlsUpgrade }
 
 /**
  * A higher-level [[BitVectorSocket]] that speaks in terms of `Packet`, framing each message with the

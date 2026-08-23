@@ -19,7 +19,7 @@ import ldbc.mysql.net.protocol.*
 import ldbc.mysql.telemetry.{ DatabaseMetrics, TelemetryConfig }
 import ldbc.mysql.telemetry.Tracer
 import ldbc.net.{ SSL, SocketOptions }
-import ldbc.net.effect.{ IoEngine, Socket, TlsUpgrade }
+import ldbc.net.{ IoEngine, Socket, TlsUpgrade }
 
 type Connection[F[_]] = ldbc.sql.Connection[F]
 

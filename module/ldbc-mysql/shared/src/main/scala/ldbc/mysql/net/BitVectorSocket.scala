@@ -18,10 +18,10 @@ import ldbc.effect.syntax.*
 import ldbc.mysql.data.CapabilitiesFlags
 import ldbc.mysql.net.packet.response.InitialPacket
 import ldbc.mysql.net.protocol.Initial
-import ldbc.net.effect.{ Socket, TlsUpgrade }
+import ldbc.net.{ Socket, TlsUpgrade }
 
 /**
- * A higher-level [[ldbc.net.effect.Socket]] interface defined in terms of `BitVector`, carrying leftover
+ * A higher-level [[ldbc.net.Socket]] interface defined in terms of `BitVector`, carrying leftover
  * bytes between reads so callers can request an exact number of bytes.
  */
 trait BitVectorSocket[F[_]]:
@@ -38,7 +38,7 @@ trait BitVectorSocket[F[_]]:
 object BitVectorSocket:
 
   /**
-   * Wraps an existing [[ldbc.net.effect.Socket]] as a [[BitVectorSocket]].
+   * Wraps an existing [[ldbc.net.Socket]] as a [[BitVectorSocket]].
    *
    * @param socket      the underlying socket
    * @param readTimeout the per-read timeout (or `Duration.Inf` for none)

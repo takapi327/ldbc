@@ -11,7 +11,7 @@ import ldbc.sql.SQLException
 import ldbc.effect.syntax.*
 import ldbc.effect.Concurrent
 import ldbc.mysql.net.packet.response.InitialPacket
-import ldbc.net.effect.Socket
+import ldbc.net.Socket
 
 /**
  * Initial packet is the first packet sent by the server to the client. It contains the server version,

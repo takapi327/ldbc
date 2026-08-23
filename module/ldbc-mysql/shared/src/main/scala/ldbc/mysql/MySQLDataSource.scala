@@ -17,7 +17,7 @@ import ldbc.effect.syntax.*
 import ldbc.mysql.telemetry.*
 import ldbc.mysql.telemetry.{ DatabaseMetrics, TelemetryConfig }
 import ldbc.net.{ SSL, SocketOptions }
-import ldbc.net.effect.{ IoEngine, TlsUpgrade }
+import ldbc.net.{ IoEngine, TlsUpgrade }
 
 /**
  * A [[ldbc.sql.DataSource]] implementation for MySQL connections using the pure Scala MySQL wire protocol.
