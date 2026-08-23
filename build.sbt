@@ -106,18 +106,6 @@ lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .dependsOn(core)
 
-lazy val catsEffect = crossProject(JVMPlatform, JSPlatform, NativePlatform)
-  .crossType(CrossType.Pure)
-  .module("cats-effect", "Cats Effect boundary for ldbc (fs2 streaming and IO helpers over the shared DSL)")
-  .settings(
-    libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-effect"       % "3.7.0",
-      "co.fs2"        %%% "fs2-core"          % "3.13.0",
-      "org.typelevel" %%% "munit-cats-effect" % "2.2.0" % Test
-    )
-  )
-  .dependsOn(dsl, effect)
-
 lazy val statement = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("statement", "Project for building type-safe statements")
@@ -271,6 +259,18 @@ lazy val pool = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
   .module("pool", "Effect-agnostic connection pool over the ldbc.effect type classes")
   .dependsOn(sql, effect, fx % "test->compile;test->test")
+
+lazy val catsEffect = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
+  .module("cats-effect", "Cats Effect boundary for ldbc (fs2 streaming and IO helpers over the shared DSL)")
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel" %%% "cats-effect"       % "3.7.0",
+      "co.fs2"        %%% "fs2-core"          % "3.13.0",
+      "org.typelevel" %%% "munit-cats-effect" % "2.2.0" % Test
+    )
+  )
+  .dependsOn(dsl, effect)
 
 lazy val future = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
@@ -567,10 +567,10 @@ lazy val ldbc = tlCrossRootProject
     core,
     fx,
     net,
-    jdbcConnector,
     mysql,
     pool,
     connector,
+    jdbcConnector,
     dsl,
     catsEffect,
     future,
