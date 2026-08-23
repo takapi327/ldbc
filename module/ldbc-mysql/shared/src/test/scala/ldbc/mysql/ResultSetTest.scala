@@ -11,9 +11,9 @@ import java.time.*
 import ldbc.sql.{ ResultSet, ResultSetMetaData }
 import ldbc.sql.SQLException
 
-import ldbc.fx.Fx
-import ldbc.fx.concurrentFx
 import ldbc.effect.Ref
+import ldbc.fx.concurrentFx
+import ldbc.fx.Fx
 import ldbc.mysql.data.*
 import ldbc.mysql.net.packet.response.*
 import ldbc.mysql.net.Protocol

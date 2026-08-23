@@ -10,10 +10,10 @@ import java.time.*
 
 import ldbc.sql.ResultSet
 
-import ldbc.fx.Fx
-import ldbc.fx.concurrentFx
 import ldbc.effect.{ Concurrent, Ref }
+import ldbc.fx.concurrentFx
 import ldbc.fx.syntax.*
+import ldbc.fx.Fx
 import ldbc.mysql.data.*
 import ldbc.mysql.net.packet.response.*
 import ldbc.mysql.net.Protocol

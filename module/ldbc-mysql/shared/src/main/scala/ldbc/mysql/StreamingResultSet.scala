@@ -17,7 +17,7 @@ import ldbc.mysql.net.Protocol
 import ldbc.mysql.util.Version
 
 private[ldbc] case class StreamingResultSet[F[_]](
-  protocol: Protocol[F],
+  protocol:             Protocol[F],
   statementId:          Long,
   columns:              Vector[ColumnDefinitionPacket],
   records:              Vector[ResultSetRowPacket],
@@ -31,10 +31,10 @@ private[ldbc] case class StreamingResultSet[F[_]](
   resultSetType:        Int            = ResultSet.TYPE_FORWARD_ONLY,
   resultSetConcurrency: Int            = ResultSet.CONCUR_READ_ONLY,
   statement:            Option[String] = None
-)(using concurrentF: Concurrent[F]) extends SharedResultSet[F]:
+)(using concurrentF: Concurrent[F])
+  extends SharedResultSet[F]:
 
   override protected def F: Concurrent[F] = concurrentF
-
 
   private var isCompleteAllFetch: Boolean                    = false
   private var rows:               Vector[ResultSetRowPacket] = Vector.empty

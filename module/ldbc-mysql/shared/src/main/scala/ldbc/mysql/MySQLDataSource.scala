@@ -14,10 +14,10 @@ import ldbc.authentication.plugin.AuthenticationPlugin
 import ldbc.build.Version
 import ldbc.effect.{ Concurrent, Resource }
 import ldbc.effect.syntax.*
-import ldbc.net.effect.{ IoEngine, TlsUpgrade }
 import ldbc.mysql.telemetry.*
 import ldbc.mysql.telemetry.{ DatabaseMetrics, TelemetryConfig }
 import ldbc.net.{ SSL, SocketOptions }
+import ldbc.net.effect.{ IoEngine, TlsUpgrade }
 
 /**
  * A [[ldbc.sql.DataSource]] implementation for MySQL connections using the pure Scala MySQL wire protocol.
@@ -65,25 +65,26 @@ final case class MySQLDataSource[F[_], A](
   host:                        String,
   port:                        Int,
   user:                        String,
-  password:                    Option[String]                          = None,
-  database:                    Option[String]                          = None,
-  debug:                       Boolean                                 = false,
-  ssl:                         SSL                                     = SSL.None,
-  socketOptions:               SocketOptions                           = SocketOptions.default,
-  readTimeout:                 Duration                                = Duration.Inf,
-  allowPublicKeyRetrieval:     Boolean                                 = false,
-  databaseTerm:                Option[DatabaseMetaData.DatabaseTerm]   = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
-  tracer:                      Option[Tracer[F]]                          = None,
-  telemetryConfig:             TelemetryConfig                         = TelemetryConfig.default,
-  useCursorFetch:              Boolean                                 = false,
-  useServerPrepStmts:          Boolean                                 = false,
-  maxAllowedPacket:            Int                                     = MySQLConfig.DEFAULT_PACKET_SIZE,
-  defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]]        = None,
-  plugins:                     List[AuthenticationPlugin[F]]          = List.empty[AuthenticationPlugin[F]],
-  meter:                       Option[Meter]                           = None,
+  password:                    Option[String]                        = None,
+  database:                    Option[String]                        = None,
+  debug:                       Boolean                               = false,
+  ssl:                         SSL                                   = SSL.None,
+  socketOptions:               SocketOptions                         = SocketOptions.default,
+  readTimeout:                 Duration                              = Duration.Inf,
+  allowPublicKeyRetrieval:     Boolean                               = false,
+  databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
+  tracer:                      Option[Tracer[F]]                     = None,
+  telemetryConfig:             TelemetryConfig                       = TelemetryConfig.default,
+  useCursorFetch:              Boolean                               = false,
+  useServerPrepStmts:          Boolean                               = false,
+  maxAllowedPacket:            Int                                   = MySQLConfig.DEFAULT_PACKET_SIZE,
+  defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]]       = None,
+  plugins:                     List[AuthenticationPlugin[F]]         = List.empty[AuthenticationPlugin[F]],
+  meter:                       Option[Meter]                         = None,
   before:                      Option[Connection[F] => F[A]]         = None,
   after:                       Option[(A, Connection[F]) => F[Unit]] = None
-)(using F: Concurrent[F], engine: IoEngine[F], tls: TlsUpgrade[F]) extends DataSource[F]:
+)(using F: Concurrent[F], engine: IoEngine[F], tls: TlsUpgrade[F])
+  extends DataSource[F]:
 
   /**
    * Returns a string representation of this DataSource without exposing sensitive information.
@@ -503,7 +504,11 @@ object MySQLDataSource:
    * @param meterProvider  the provider used to acquire the meter (defaults to a no-op provider)
    * @return an effect that resolves to a [[MySQLDataSource]] with tracing and metrics enabled
    */
-  def withTraced[F[_]](using Concurrent[F], IoEngine[F], TlsUpgrade[F])(
+  def withTraced[F[_]](using
+    Concurrent[F],
+    IoEngine[F],
+    TlsUpgrade[F]
+  )(
     config:         MySQLConfig,
     tracerProvider: TracerProvider[F] = TracerProvider.noop[F],
     meterProvider:  MeterProvider[F] = MeterProvider.noop[F]

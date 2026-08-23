@@ -27,7 +27,7 @@ import ldbc.mysql.util.StringHelper
 import ldbc.mysql.util.Version
 
 private[ldbc] case class DatabaseMetaDataImpl[F[_]](
-  protocol: Protocol[F],
+  protocol:                      Protocol[F],
   serverVariables:               Map[String, String],
   connectionClosed:              Ref[F, Boolean],
   statementClosed:               Ref[F, Boolean],

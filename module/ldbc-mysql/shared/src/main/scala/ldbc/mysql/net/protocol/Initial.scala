@@ -8,8 +8,8 @@ package ldbc.mysql.net.protocol
 
 import ldbc.sql.SQLException
 
-import ldbc.effect.Concurrent
 import ldbc.effect.syntax.*
+import ldbc.effect.Concurrent
 import ldbc.mysql.net.packet.response.InitialPacket
 import ldbc.net.effect.Socket
 

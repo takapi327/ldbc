@@ -27,5 +27,5 @@ object CachingSha2PasswordPlugin:
           override protected given effect: Sync[F] = F
       case _ =>
         new CachingSha2PasswordPlugin[F]:
-          override protected given effect: Sync[F]        = F
-          override def transformation:     String          = "RSA/ECB/PKCS1Padding"
+          override protected given effect: Sync[F] = F
+          override def transformation:     String  = "RSA/ECB/PKCS1Padding"

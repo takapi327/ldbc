@@ -6,9 +6,8 @@
 
 package ldbc.mysql
 
-import ldbc.fx.Fx
-
 import ldbc.fx.concurrentFx
+import ldbc.fx.Fx
 
 /**
  * Verification test for the security finding: the default case-class `toString`

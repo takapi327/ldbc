@@ -6,11 +6,10 @@
 
 package ldbc.mysql
 
-import ldbc.fx.concurrentFx
-
 import ldbc.sql.Connection as SQLConnection
 import ldbc.sql.SQLNonTransientException
 
+import ldbc.fx.concurrentFx
 import ldbc.fx.Fx
 import ldbc.mysql.syntax.*
 import ldbc.mysql.telemetry.*

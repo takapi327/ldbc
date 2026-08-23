@@ -8,15 +8,13 @@ package ldbc.mysql
 
 import cats.MonadError
 
-import ldbc.effect.{ Async, Concurrent, Resource as EffResource }
-
 import ldbc.sql.{ Connection, DataSource }
 
-import ldbc.DBIO
+import ldbc.effect.{ Async, Concurrent, Resource as EffResource }
 import ldbc.free.KleisliInterpreter
 import ldbc.logging.{ LogEvent, LogHandler }
-
 import ldbc.net.effect.{ IoEngine, TlsUpgrade }
+import ldbc.DBIO
 
 /**
  * MySQL factories for [[ldbc.Connector]].
@@ -58,7 +56,7 @@ object Connector:
     logHandler: Option[LogHandler[F]] = None
   )(using F: MonadError[F, Throwable]): ldbc.Connector[F] =
     new ldbc.Connector[F]:
-      private val interpreter            = new KleisliInterpreter[F](logHandler.getOrElse(noopLogger))
+      private val interpreter = new KleisliInterpreter[F](logHandler.getOrElse(noopLogger))
       override def run[A](dbio: DBIO[A]): F[A] =
         dbio.foldMap(interpreter.ConnectionInterpreter).run(connection)
 
@@ -74,7 +72,7 @@ object Connector:
     logHandler: Option[LogHandler[F]] = None
   )(using MonadError[F, Throwable], Async[F]): ldbc.Connector[F] =
     new ldbc.Connector[F]:
-      private val interpreter            = new KleisliInterpreter[F](logHandler.getOrElse(noopLogger))
+      private val interpreter = new KleisliInterpreter[F](logHandler.getOrElse(noopLogger))
       override def run[A](dbio: DBIO[A]): F[A] =
         summon[Async[F]].bracket(dataSource.getConnection)((pair: (Connection[F], F[Unit])) =>
           dbio.foldMap(interpreter.ConnectionInterpreter).run(pair._1)

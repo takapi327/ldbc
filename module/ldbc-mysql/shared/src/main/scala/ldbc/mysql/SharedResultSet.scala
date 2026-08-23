@@ -24,7 +24,7 @@ private[ldbc] trait SharedResultSet[F[_]] extends ResultSet[F]:
   protected def F: Concurrent[F]
   private given Concurrent[F] = F
 
-  def protocol: Protocol[F]
+  def protocol:             Protocol[F]
   def columns:              Vector[ColumnDefinitionPacket]
   def records:              Vector[ResultSetRowPacket]
   def serverVariables:      Map[String, String]

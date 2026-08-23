@@ -6,9 +6,9 @@
 
 package ldbc.mysql.net.protocol
 
-import ldbc.fx.Fx
-import ldbc.fx.concurrentFx
 import ldbc.effect.Ref
+import ldbc.fx.concurrentFx
+import ldbc.fx.Fx
 import ldbc.mysql.FTestPlatform
 
 class AuthenticationTest extends Authentication[Fx], FTestPlatform:

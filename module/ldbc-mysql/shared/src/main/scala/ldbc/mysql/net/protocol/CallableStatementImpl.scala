@@ -57,7 +57,6 @@ case class CallableStatementImpl[F[_]](
 
   override protected def F: Concurrent[F] = evF
 
-
   private val baseAttributes    = buildBaseAttributes(protocol)
   private val metricsAttributes = buildMetricsAttributes(protocol)
 

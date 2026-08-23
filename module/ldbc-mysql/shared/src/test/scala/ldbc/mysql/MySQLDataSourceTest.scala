@@ -6,12 +6,11 @@
 
 package ldbc.mysql
 
-import ldbc.fx.concurrentFx
-
 import scala.concurrent.duration.Duration
 
 import ldbc.sql.DatabaseMetaData
 
+import ldbc.fx.concurrentFx
 import ldbc.fx.Fx
 import ldbc.mysql.telemetry.*
 import ldbc.net.{ SSL, SocketOptions }

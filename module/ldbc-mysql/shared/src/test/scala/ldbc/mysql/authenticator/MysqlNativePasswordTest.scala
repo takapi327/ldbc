@@ -6,10 +6,9 @@
 
 package ldbc.mysql.authenticator
 
-import ldbc.fx.concurrentFx
-
 import ldbc.sql.SQLInvalidAuthorizationSpecException
 
+import ldbc.fx.concurrentFx
 import ldbc.fx.syntax.*
 import ldbc.fx.Fx
 import ldbc.mysql.*

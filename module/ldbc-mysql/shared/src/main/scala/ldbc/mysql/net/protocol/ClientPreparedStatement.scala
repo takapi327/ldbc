@@ -38,7 +38,7 @@ import ldbc.mysql.ResultSetImpl
  *   the effect type
  */
 case class ClientPreparedStatement[F[_]](
-  protocol: Protocol[F],
+  protocol:             Protocol[F],
   serverVariables:      Map[String, String],
   sql:                  String,
   params:               Ref[F, SortedMap[Int, Parameter]],
@@ -62,7 +62,6 @@ case class ClientPreparedStatement[F[_]](
   extends SharedPreparedStatement[F]:
 
   override protected def F: Concurrent[F] = evF
-
 
   private val baseAttributes    = buildBaseAttributes(protocol)
   private val metricsAttributes = buildMetricsAttributes(protocol)
@@ -206,7 +205,7 @@ case class ClientPreparedStatement[F[_]](
     then
       executeQuery().flatMap {
         case resultSet: (ResultSetImpl[F] @unchecked) => resultSet.hasRows()
-        case _                        => F.pure(false)
+        case _                                        => F.pure(false)
       }
     else executeUpdate().map(_ => false)
 

@@ -6,12 +6,10 @@
 
 package ldbc.mysql
 
-import ldbc.fx.Fx
-
-import ldbc.fx.concurrentFx
-
 import munit.AnyFixture
 
+import ldbc.fx.concurrentFx
+import ldbc.fx.Fx
 import ldbc.fx.Resource
 import ldbc.mysql.telemetry.*
 import ldbc.net.SSL

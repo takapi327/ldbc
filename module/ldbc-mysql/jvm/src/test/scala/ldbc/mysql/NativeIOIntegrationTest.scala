@@ -13,9 +13,8 @@ import munit.CatsEffectSuite
 import ldbc.dsl.*
 import ldbc.dsl.codec.*
 
-import ldbc.net.SSL
-
 import ldbc.catseffect.concurrentIO
+import ldbc.net.SSL
 
 /**
  * End-to-end proof that the MySQL driver runs **natively at `F = IO`** through the generic

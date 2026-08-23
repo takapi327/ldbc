@@ -6,14 +6,13 @@
 
 package ldbc.mysql.net
 
-import ldbc.fx.concurrentFx
-
 import scodec.bits.ByteVector
 import scodec.Decoder
 
-import ldbc.fx.Fx
 import ldbc.effect.Ref
+import ldbc.fx.concurrentFx
 import ldbc.fx.syntax.*
+import ldbc.fx.Fx
 import ldbc.mysql.authenticator.MysqlClearPasswordPlugin
 import ldbc.mysql.authenticator.MysqlNativePasswordPlugin
 import ldbc.mysql.data.{ CapabilitiesFlags, ServerStatusFlags }

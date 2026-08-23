@@ -38,7 +38,7 @@ import ldbc.mysql.telemetry.{ Span, StatusCode, Tracer }
  *   The effect type
  */
 case class ServerPreparedStatement[F[_]](
-  protocol: Protocol[F],
+  protocol:             Protocol[F],
   serverVariables:      Map[String, String],
   statementId:          Long,
   sql:                  String,
@@ -63,7 +63,6 @@ case class ServerPreparedStatement[F[_]](
   extends SharedPreparedStatement[F]:
 
   override protected def F: Concurrent[F] = evF
-
 
   private val baseAttributes    = buildBaseAttributes(protocol)
   private val metricsAttributes = buildMetricsAttributes(protocol)
@@ -220,7 +219,7 @@ case class ServerPreparedStatement[F[_]](
     then
       executeQuery().flatMap {
         case resultSet: (ResultSetImpl[F] @unchecked) => resultSet.hasRows()
-        case _                        => F.pure(false)
+        case _                                        => F.pure(false)
       }
     else executeUpdate().map(_ => false)
 

@@ -24,7 +24,7 @@ import ldbc.mysql.telemetry.Tracer
 import ldbc.mysql.util.StringHelper
 
 private[ldbc] case class ConnectionImpl[F[_]](
-  protocol: Protocol[F],
+  protocol:           Protocol[F],
   serverVariables:    Map[String, String],
   database:           Option[String],
   readOnly:           Ref[F, Boolean],

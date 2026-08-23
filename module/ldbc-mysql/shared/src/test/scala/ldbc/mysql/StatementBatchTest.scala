@@ -6,13 +6,12 @@
 
 package ldbc.mysql
 
-import ldbc.fx.concurrentFx
-
 import munit.AnyFixture
 
 import ldbc.sql.BatchUpdateException
 
 import ldbc.fx.{ Fx, Resource }
+import ldbc.fx.concurrentFx
 import ldbc.fx.syntax.*
 import ldbc.mysql.telemetry.*
 import ldbc.net.SSL

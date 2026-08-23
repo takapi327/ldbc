@@ -45,8 +45,8 @@ object Connection:
     CapabilitiesFlags.MULTI_FACTOR_AUTHENTICATION
   )
 
-  private def unitBefore[F[_]](using F: Concurrent[F]): Connection[F] => F[Unit]        = _ => F.unit
-  private def unitAfter[F[_]](using F: Concurrent[F]):  (Unit, Connection[F]) => F[Unit] = (_, _) => F.unit
+  private def unitBefore[F[_]](using F: Concurrent[F]): Connection[F] => F[Unit]         = _ => F.unit
+  private def unitAfter[F[_]](using F:  Concurrent[F]): (Unit, Connection[F]) => F[Unit] = (_, _) => F.unit
 
   def apply[F[_]](host: String, port: Int, user: String)(using
     Concurrent[F],
@@ -171,16 +171,13 @@ object Connection:
     val validateEndpoint: F[Unit] =
       if host.trim.isEmpty then
         F.raiseError(new SQLClientInfoException(s"""Hostname: "$host" is not syntactically valid."""))
-      else if port < 0 || port > 65535 then
-        F.raiseError(new SQLClientInfoException(s"""Port: "$port" is not valid."""))
+      else if port < 0 || port > 65535 then F.raiseError(new SQLClientInfoException(s"""Port: "$port" is not valid."""))
       else F.unit
 
     val sockets: Resource[F, Socket[F]] =
       Resource
         .eval(validateEndpoint)
-        .flatMap(_ =>
-          Resource.make(engine.connect(host, port, defaultConnectTimeout, socketOptions))(_.close())
-        )
+        .flatMap(_ => Resource.make(engine.connect(host, port, defaultConnectTimeout, socketOptions))(_.close()))
 
     fromSockets[F, A](
       sockets,
@@ -235,7 +232,7 @@ object Connection:
     val hostInfo = HostInfo(host, port, user, password, database)
     for
       given Exchange[F] <- Resource.eval(Exchange.apply[F])
-      protocol       <-
+      protocol          <-
         Protocol(
           sockets,
           hostInfo,

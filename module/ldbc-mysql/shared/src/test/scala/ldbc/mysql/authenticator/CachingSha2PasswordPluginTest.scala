@@ -6,10 +6,10 @@
 
 package ldbc.mysql.authenticator
 
+import ldbc.fx.concurrentFx
+import ldbc.fx.Fx
 import ldbc.mysql.*
 import ldbc.mysql.util.Version
-import ldbc.fx.Fx
-import ldbc.fx.concurrentFx
 
 class CachingSha2PasswordPluginTest extends FTestPlatform:
 

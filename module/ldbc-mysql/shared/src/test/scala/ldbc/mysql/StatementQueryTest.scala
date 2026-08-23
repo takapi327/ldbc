@@ -6,10 +6,9 @@
 
 package ldbc.mysql
 
-import ldbc.fx.concurrentFx
-
 import java.time.*
 
+import ldbc.fx.concurrentFx
 import ldbc.fx.syntax.*
 import ldbc.fx.Fx
 import ldbc.mysql.syntax.*

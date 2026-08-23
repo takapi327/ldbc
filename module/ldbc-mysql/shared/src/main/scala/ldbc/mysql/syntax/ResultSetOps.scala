@@ -11,8 +11,8 @@ import scala.collection.Factory
 
 import ldbc.sql.ResultSet
 
-import ldbc.effect.MonadThrow
 import ldbc.effect.syntax.*
+import ldbc.effect.MonadThrow
 
 trait ResultSetOps:
 

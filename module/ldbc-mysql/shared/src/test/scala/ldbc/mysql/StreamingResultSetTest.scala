@@ -8,10 +8,10 @@ package ldbc.mysql
 
 import scala.collection.mutable.ListBuffer
 
-import ldbc.fx.Fx
-import ldbc.fx.concurrentFx
 import ldbc.effect.Ref
+import ldbc.fx.concurrentFx
 import ldbc.fx.syntax.*
+import ldbc.fx.Fx
 import ldbc.mysql.data.*
 import ldbc.mysql.net.packet.request.*
 import ldbc.mysql.net.packet.response.*
