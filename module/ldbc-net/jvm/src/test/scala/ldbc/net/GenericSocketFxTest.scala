@@ -15,10 +15,10 @@ import munit.FunSuite
 
 import ldbc.fx.{ Fx, FxRuntime }
 import ldbc.fx.concurrentFx // given Concurrent[Fx]
-import ldbc.net.effect.IoEngine
+import ldbc.net.IoEngine
 
 /**
- * Step 3 check: the generic `ldbc.net.effect.Socket[F]` over the effect-free [[NioRawEngine]] runs at
+ * Step 3 check: the generic `ldbc.net.Socket[F]` over the effect-free [[NioRawEngine]] runs at
  * `F = Fx` (via `concurrentFx`) against a real MySQL server — no `Fx`-native `Socket` involved.
  */
 class GenericSocketFxTest extends FunSuite:

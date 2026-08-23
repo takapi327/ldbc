@@ -10,7 +10,9 @@ import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.concurrent.duration.*
 import scala.scalajs.js
 
+import ldbc.fx.concurrentFx
 import ldbc.fx.Fx
+import ldbc.net.TlsUpgrade
 
 /**
  * Node TLS integration tests (design Phase 2): a node `tls` echo server backed by an embedded
@@ -19,6 +21,8 @@ import ldbc.fx.Fx
  * first, TLS upgrade on the same socket).
  */
 class TlsTest extends munit.FunSuite:
+
+  private val engine = ldbc.net.IoEngine.fromRaw[Fx](PlatformRawEngine.global)
 
   private given ExecutionContext = munitExecutionContext
 
@@ -114,8 +118,8 @@ class TlsTest extends munit.FunSuite:
 
   private def echoOver(port: Int, host: String, config: SSL, message: String): Fx[String] =
     for
-      plain <- IoEngine.global.connect("127.0.0.1", port, 5.seconds)
-      tls   <- Tls.client(plain, host, port, config)
+      plain <- engine.connect("127.0.0.1", port, 5.seconds)
+      tls   <- summon[TlsUpgrade[Fx]].client(plain, host, port, config)
       _     <- tls.write(message.getBytes("UTF-8"))
       bytes <- tls.read(1024)
       _     <- tls.close()
@@ -161,9 +165,9 @@ class TlsTest extends munit.FunSuite:
     withTlsEchoServer { port =>
       val prog =
         for
-          plain <- IoEngine.global.connect("127.0.0.1", port, 5.seconds)
-          raw = SerializedSocket.unwrap(plain).asInstanceOf[NodeSocket].underlying
-          tls   <- Tls.client(plain, "localhost", port, SSL.Trusted)
+          plain <- engine.connect("127.0.0.1", port, 5.seconds)
+          raw = plain.asInstanceOf[ldbc.net.RawBackedSocket].underlying.asInstanceOf[NodeRawSocket].underlying
+          tls   <- summon[TlsUpgrade[Fx]].client(plain, "localhost", port, SSL.Trusted)
           count <- Fx.delay(raw.listenerCount("error").asInstanceOf[Int])
           _     <- tls.close()
         yield count
@@ -179,9 +183,9 @@ class TlsTest extends munit.FunSuite:
     withTlsEchoServer { port =>
       val prog =
         for
-          plain <- IoEngine.global.connect("127.0.0.1", port, 5.seconds)
-          raw = SerializedSocket.unwrap(plain).asInstanceOf[NodeSocket].underlying
-          tls <- Tls.client(plain, "localhost", port, SSL.Trusted)
+          plain <- engine.connect("127.0.0.1", port, 5.seconds)
+          raw = plain.asInstanceOf[ldbc.net.RawBackedSocket].underlying.asInstanceOf[NodeRawSocket].underlying
+          tls <- summon[TlsUpgrade[Fx]].client(plain, "localhost", port, SSL.Trusted)
           _   <- Fx.delay { raw.emit("error", new js.Error("injected raw failure")); () }
         yield ()
       toFuture(prog).map(_ => assert(true))
@@ -191,9 +195,9 @@ class TlsTest extends munit.FunSuite:
     withStartTlsServer("BANNER") { port =>
       val prog =
         for
-          plain  <- IoEngine.global.connect("127.0.0.1", port, 5.seconds)
+          plain  <- engine.connect("127.0.0.1", port, 5.seconds)
           banner <- plain.read(6)
-          tls    <- Tls.client(plain, "localhost", port, SSL.Trusted)
+          tls    <- summon[TlsUpgrade[Fx]].client(plain, "localhost", port, SSL.Trusted)
           _      <- tls.write("AFTER-UPGRADE".getBytes("UTF-8"))
           bytes  <- tls.read(1024)
           _      <- tls.close()

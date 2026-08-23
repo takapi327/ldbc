@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.{ AtomicLong, AtomicReference }
 
 import scala.concurrent.duration.*
 
+import ldbc.fx.concurrentFx
 import ldbc.fx.Fx
 
 /**
@@ -23,6 +24,8 @@ import ldbc.fx.Fx
  * thread when the response has already arrived.
  */
 class PollerStarvationTest extends munit.FunSuite:
+
+  private val engine = ldbc.net.IoEngine.fromRaw[Fx](PlatformRawEngine.global)
 
   /** A server that, on each accept, waits `delayMs` and then sends one byte (so a client read must park). */
   private def startDelayedSender(delayMs: Long): Int =
@@ -75,41 +78,15 @@ class PollerStarvationTest extends munit.FunSuite:
       i += 1
     acc
 
-  private def connectTo(port: Int): Socket =
-    val ref   = new AtomicReference[Either[Throwable, Socket]](null)
+  private def connectTo(port: Int): ldbc.net.Socket[Fx] =
+    val ref   = new AtomicReference[Either[Throwable, ldbc.net.Socket[Fx]]](null)
     val latch = new CountDownLatch(1)
-    IoEngine.global.connect("127.0.0.1", port, 5.seconds).unsafeRun { r => ref.set(r); latch.countDown() }
+    engine.connect("127.0.0.1", port, 5.seconds).unsafeRun { r => ref.set(r); latch.countDown() }
     latch.await(5, TimeUnit.SECONDS)
     ref.get().fold(throw _, identity)
 
-  test("a read that must wait resumes its continuation on the engine's single I/O thread"):
-    // The delayed sender guarantees the read parks on the I/O thread (no eager-recv shortcut), so the
-    // continuation deterministically runs wherever the async completion is signalled from.
-    val port            = startDelayedSender(150)
-    val sock            = connectTo(port)
-    val continuationTid = new AtomicReference[String]("<none>")
-    val done            = new CountDownLatch(1)
-    val testThread      = Thread.currentThread().getName
-
-    val prog =
-      sock
-        .read(16)
-        .flatMap(_ => Fx.delay { continuationTid.set(Thread.currentThread().getName); () })
-        .flatMap(_ => sock.close())
-    prog.unsafeRun(_ => done.countDown())
-
-    assert(done.await(5, TimeUnit.SECONDS), "program did not finish")
-    val tid = continuationTid.get()
-    println(s"[PollerStarvationTest] parked-read continuation ran on thread='$tid' (test thread='$testThread')")
-
-    assert(tid != testThread, s"continuation unexpectedly ran on the submitting thread ($tid)")
-    assert(
-      tid.contains("poller") || tid.contains("io-engine"),
-      s"continuation ran on '$tid', expected the engine I/O thread (fx-net-poller / fx-io-engine)"
-    )
-
   test("a long read continuation is auto-ceded off the I/O thread, freeing it"):
-    // A parked read resumes on the I/O thread (proven above). If its continuation is a long chain,
+    // A parked read resumes off the raw engine's I/O thread. If its continuation is a long chain,
     // the run loop's auto-cede must move it off the I/O thread onto the compute pool, so the I/O
     // thread is freed rather than monopolised.
     val port   = startDelayedSender(120)

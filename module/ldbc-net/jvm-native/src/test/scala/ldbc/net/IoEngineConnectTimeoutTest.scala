@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 import scala.concurrent.duration.*
 
+import ldbc.fx.concurrentFx
 import ldbc.fx.Fx
 
 /**
@@ -19,6 +20,8 @@ import ldbc.fx.Fx
  * SYN; without the timeout the connect would block until the OS default (or never).
  */
 class IoEngineConnectTimeoutTest extends munit.FunSuite:
+
+  private val engine = ldbc.net.IoEngine.fromRaw[Fx](PlatformRawEngine.global)
 
   private def runSync[A](fx: Fx[A], timeoutMs: Long): Either[Throwable, A] =
     val latch = new CountDownLatch(1)
@@ -29,14 +32,14 @@ class IoEngineConnectTimeoutTest extends munit.FunSuite:
 
   test("connect to an unreachable host fails within the timeout, not hanging"):
     val startNanos = System.nanoTime()
-    val result     = runSync(IoEngine.global.connect("10.255.255.1", 80, 500.millis), 8000)
+    val result     = runSync(engine.connect("10.255.255.1", 80, 500.millis), 8000)
     val elapsedMs  = (System.nanoTime() - startNanos) / 1000000L
     assert(result.isLeft, s"expected connect to fail, got $result")
     assert(elapsedMs < 5000, s"connect should time out promptly (~500ms), took ${ elapsedMs }ms")
 
   test("connect to a refused port fails fast with a connection error, not a timeout"):
     val startNanos = System.nanoTime()
-    val result     = runSync(IoEngine.global.connect("127.0.0.1", 1, 5.seconds), 8000)
+    val result     = runSync(engine.connect("127.0.0.1", 1, 5.seconds), 8000)
     val elapsedMs  = (System.nanoTime() - startNanos) / 1000000L
     assert(result.isLeft, s"expected connect to a closed port to fail, got $result")
     assert(
@@ -46,8 +49,8 @@ class IoEngineConnectTimeoutTest extends munit.FunSuite:
     assert(elapsedMs < 2000, s"a refused connection should fail promptly (RST), took ${ elapsedMs }ms")
 
   test("cancelling an in-progress connect returns promptly and never completes the callback"):
-    val outcome  = new AtomicReference[Either[Throwable, Socket]](null)
-    val canceler = IoEngine.global.connect("10.255.255.1", 80, 30.seconds).unsafeRun(r => outcome.set(r))
+    val outcome  = new AtomicReference[Either[Throwable, ldbc.net.Socket[Fx]]](null)
+    val canceler = engine.connect("10.255.255.1", 80, 30.seconds).unsafeRun(r => outcome.set(r))
     Thread.sleep(200)
     val startNanos = System.nanoTime()
     canceler.cancel()

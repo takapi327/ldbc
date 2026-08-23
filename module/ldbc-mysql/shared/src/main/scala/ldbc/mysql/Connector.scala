@@ -13,7 +13,7 @@ import ldbc.sql.{ Connection, DataSource }
 import ldbc.effect.{ Async, Concurrent, Resource as EffResource }
 import ldbc.free.KleisliInterpreter
 import ldbc.logging.{ LogEvent, LogHandler }
-import ldbc.net.effect.{ IoEngine, TlsUpgrade }
+import ldbc.net.{ IoEngine, TlsUpgrade }
 import ldbc.DBIO
 
 /**

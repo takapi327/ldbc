@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 /**
  * JVM [[RawIoEngine]]: one daemon selector thread drives non-blocking NIO channels, invoking one-shot
  * callbacks on readiness. The effect-free counterpart of the former `Fx` NIO selector engine that the generic
- * `ldbc.net.effect.IoEngine[F]` wraps. Interest registration is marshalled onto the selector thread.
+ * `ldbc.net.IoEngine[F]` wraps. Interest registration is marshalled onto the selector thread.
  */
 private[net] final class NioRawEngine private (selector: Selector) extends RawIoEngine:
 

@@ -17,7 +17,9 @@ import javax.net.ssl.{ KeyManagerFactory, SSLContext, SSLServerSocket }
 
 import scala.concurrent.duration.*
 
+import ldbc.fx.concurrentFx
 import ldbc.fx.Fx
+import ldbc.net.TlsUpgrade
 
 /**
  * JVM TLS integration tests (design §11): a keytool-generated self-signed server (SAN =
@@ -26,6 +28,8 @@ import ldbc.fx.Fx
  * verification (mismatch rejected exactly when `verifyHostname` is on).
  */
 class TlsTest extends munit.FunSuite:
+
+  private val engine = ldbc.net.IoEngine.fromRaw[Fx](PlatformRawEngine.global)
 
   private val password = "changeit"
 
@@ -117,8 +121,8 @@ class TlsTest extends munit.FunSuite:
 
   private def echoOver(host: String, config: SSL, message: String): Fx[String] =
     for
-      plain <- IoEngine.global.connect("127.0.0.1", port, 5.seconds)
-      tls   <- Tls.client(plain, host, port, config)
+      plain <- engine.connect("127.0.0.1", port, 5.seconds)
+      tls   <- summon[TlsUpgrade[Fx]].client(plain, host, port, config)
       _     <- tls.write(message.getBytes("UTF-8"))
       bytes <- tls.read(1024)
       _     <- tls.close()
@@ -131,15 +135,15 @@ class TlsTest extends munit.FunSuite:
     val payload = "x" * 50000
     val prog    =
       for
-        plain <- IoEngine.global.connect("127.0.0.1", port, 5.seconds)
-        tls   <- Tls.client(plain, "localhost", port, SSL.Trusted)
+        plain <- engine.connect("127.0.0.1", port, 5.seconds)
+        tls   <- summon[TlsUpgrade[Fx]].client(plain, "localhost", port, SSL.Trusted)
         _     <- tls.write(payload.getBytes("UTF-8"))
         got   <- readFully(tls, payload.length)
         _     <- tls.close()
       yield got
     assertEquals(runSync(prog).map(_.length), Right(payload.length))
 
-  private def readFully(socket: Socket, total: Int): Fx[String] =
+  private def readFully(socket: ldbc.net.Socket[Fx], total: Int): Fx[String] =
     def loop(acc: Array[Byte]): Fx[Array[Byte]] =
       if acc.length >= total then Fx.pure(acc)
       else

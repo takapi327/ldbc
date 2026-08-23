@@ -9,12 +9,12 @@ package ldbc.mysql.net
 import ldbc.effect.{ Concurrent, Ref, Resource }
 import ldbc.mysql.data.CapabilitiesFlags
 import ldbc.mysql.net.packet.request.SSLRequestPacket
-import ldbc.net.effect.{ Socket, TlsUpgrade }
+import ldbc.net.{ Socket, TlsUpgrade }
 import ldbc.net.SSL
 
 /**
  * MySQL STARTTLS negotiation: the SSL request packet is written in the clear, then the plaintext socket
- * is upgraded to TLS via [[ldbc.net.effect.TlsUpgrade]] (the transport supports upgrading an
+ * is upgraded to TLS via [[ldbc.net.TlsUpgrade]] (the transport supports upgrading an
  * already-connected socket, which is exactly what MySQL requires).
  */
 object SSLNegotiation:

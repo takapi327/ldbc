@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 import scala.concurrent.duration.*
 
+import ldbc.fx.concurrentFx
 import ldbc.fx.Fx
 
 /**
@@ -20,6 +21,8 @@ import ldbc.fx.Fx
  * `IoEngine` implementations are exercised by the same assertions.
  */
 class IoEnginePlaintextTest extends munit.FunSuite:
+
+  private val engine = ldbc.net.IoEngine.fromRaw[Fx](PlatformRawEngine.global)
 
   private def runSync[A](fx: Fx[A], timeoutMs: Long = 8000): Either[Throwable, A] =
     val latch = new CountDownLatch(1)
@@ -53,7 +56,7 @@ class IoEnginePlaintextTest extends munit.FunSuite:
   test("connect + write + read round-trips over the non-blocking engine"):
     val prog =
       for
-        sock <- IoEngine.global.connect("127.0.0.1", port, 5.seconds)
+        sock <- engine.connect("127.0.0.1", port, 5.seconds)
         _    <- sock.write("PING".getBytes("UTF-8"))
         resp <- sock.read(64)
         _    <- sock.close()
@@ -64,7 +67,7 @@ class IoEnginePlaintextTest extends munit.FunSuite:
     val payload = ("x" * 4000)
     val prog    =
       for
-        sock  <- IoEngine.global.connect("127.0.0.1", port, 5.seconds)
+        sock  <- engine.connect("127.0.0.1", port, 5.seconds)
         _     <- sock.write(payload.getBytes("UTF-8"))
         first <- sock.read(8192)
         _     <- sock.close()
@@ -88,7 +91,7 @@ class IoEnginePlaintextTest extends munit.FunSuite:
 
     val prog =
       for
-        sock <- IoEngine.global.connect("127.0.0.1", oneShot.getLocalPort, 5.seconds)
+        sock <- engine.connect("127.0.0.1", oneShot.getLocalPort, 5.seconds)
         zero <- sock.read(0)
         data <- sock.read(16)
         eof  <- sock.read(16)
@@ -118,7 +121,7 @@ class IoEnginePlaintextTest extends munit.FunSuite:
     val startNanos = System.nanoTime()
     val prog       =
       for
-        sock <- IoEngine.global.connect("127.0.0.1", rst.getLocalPort, 5.seconds)
+        sock <- engine.connect("127.0.0.1", rst.getLocalPort, 5.seconds)
         _    <- sock.write("PING".getBytes("UTF-8"))
         r    <- sock.read(64)
       yield r
@@ -131,7 +134,7 @@ class IoEnginePlaintextTest extends munit.FunSuite:
     val startNanos = System.nanoTime()
     val prog       =
       for
-        sock <- IoEngine.global.connect("127.0.0.1", port, 5.seconds)
+        sock <- engine.connect("127.0.0.1", port, 5.seconds)
         _    <- sock.close()
         r    <- sock.read(16)
       yield r

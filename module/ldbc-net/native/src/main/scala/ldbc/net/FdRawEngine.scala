@@ -17,9 +17,9 @@ import scala.scalanative.posix.errno.{ EAGAIN, EINPROGRESS, EWOULDBLOCK }
 /**
  * Scala Native [[RawIoEngine]]: a single daemon poller thread drives non-blocking sockets through
  * `epoll`/`kqueue`, invoking one-shot callbacks on readiness. The effect-free counterpart of the `Fx`
- * `NativeIoEngine` that the generic `ldbc.net.effect.IoEngine[F]` wraps once with `F.async`.
+ * `NativeIoEngine` that the generic `ldbc.net.IoEngine[F]` wraps once with `F.async`.
  *
- * The connect timeout is applied at the `F` layer ([[ldbc.net.effect.IoEngine.fromRaw]]); blocking DNS
+ * The connect timeout is applied at the `F` layer ([[ldbc.net.IoEngine.fromRaw]]); blocking DNS
  * (`getaddrinfo`) runs on a transient daemon thread so the poller thread is never stalled, and the TCP
  * handshake plus all reads/writes are non-blocking (design `NATIVE_EPOLL_IOENGINE_DESIGN.md`).
  */
