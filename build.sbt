@@ -77,13 +77,13 @@ lazy val fx = crossProject(JVMPlatform, JSPlatform, NativePlatform)
 
 lazy val net = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
-  .module("net", "Non-blocking transport (IoEngine + Socket) on Fx")
+  .module("net", "Non-blocking transport (IoEngine + Socket) over the ldbc.effect type classes")
   .settings(
     libraryDependencies += "org.scalameta" %%% "munit" % "1.2.4" % Test
   )
   .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
   .nativeSettings(Test / nativeBrewFormulas += "s2n")
-  .dependsOn(fx)
+  .dependsOn(effect, fx % "test->compile;test->test")
 
 lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
