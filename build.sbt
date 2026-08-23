@@ -268,6 +268,14 @@ lazy val mysql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .nativeSettings(Test / nativeBrewFormulas += "s2n")
   .dependsOn(sql, net, authenticationPlugin, core, catsEffect % Test, fx % "test->compile;test->test")
 
+lazy val pool = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Full)
+  .module("pool", "Effect-agnostic connection pool over the ldbc.effect type classes")
+  .settings(
+    libraryDependencies += "org.typelevel" %%% "munit-cats-effect" % "2.2.0" % Test
+  )
+  .dependsOn(sql, effect, fx % "test->compile;test->test", mysql % Test, catsEffect % Test)
+
 lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
   .settings(description := "Projects that provide sbt plug-ins")
   .settings((Compile / sourceGenerators) += Def.task {
@@ -554,6 +562,7 @@ lazy val ldbc = tlCrossRootProject
     net,
     jdbcConnector,
     mysql,
+    pool,
     connector,
     dsl,
     catsEffect,
