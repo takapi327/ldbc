@@ -34,9 +34,25 @@ class LdbcTableSchemaSelectConnectionTest extends TableSchemaSelectConnectionTes
 
   override def connector: Connector[IO] = Connector.fromDataSource(datasource)
 
+class MysqlTableSchemaSelectConnectionTest extends TableSchemaSelectConnectionTest:
+  import ldbc.catseffect.concurrentIO
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.mysql.Connector as MysqlConnector
+  import ldbc.net.SSL as MysqlSSL
+
+  override def prefix: "mysql" = "mysql"
+
+  private val datasource = MySQLDataSource
+    .build[IO](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+    .setPassword(MySQLTestConfig.password)
+    .setDatabase("world")
+    .setSSL(MysqlSSL.Trusted)
+
+  override def connector: Connector[IO] = MysqlConnector.fromDataSource(datasource)
+
 trait TableSchemaSelectConnectionTest extends CatsEffectSuite:
 
-  def prefix: "jdbc" | "ldbc"
+  def prefix: "jdbc" | "ldbc" | "mysql"
 
   def connector: Connector[IO]
 

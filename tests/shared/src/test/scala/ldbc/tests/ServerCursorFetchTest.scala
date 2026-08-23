@@ -30,6 +30,20 @@ class LdbcServerCursorFetchTest extends ServerCursorFetchTest:
     .setSSL(SSL.Trusted)
     .setUseCursorFetch(true)
 
+class MysqlServerCursorFetchTest extends ServerCursorFetchTest:
+  import ldbc.catseffect.concurrentIO
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
+
+  override def munitIOTimeout: Duration = 80.seconds
+
+  override def datasource: DataSource[IO] = MySQLDataSource
+    .build[IO](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+    .setPassword(MySQLTestConfig.password)
+    .setDatabase("world")
+    .setSSL(MysqlSSL.Trusted)
+    .setUseCursorFetch(true)
+
 trait ServerCursorFetchTest extends CatsEffectSuite:
 
   protected val host:     String = MySQLTestConfig.host

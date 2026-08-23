@@ -30,6 +30,20 @@ class LdbcDatabaseMetaDataTest extends DatabaseMetaDataTest:
       .setDatabase(database)
       .setSSL(SSL.Trusted)
 
+class MysqlDatabaseMetaDataTest extends DatabaseMetaDataTest:
+  import ldbc.catseffect.concurrentIO
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
+
+  override def prefix: "mysql" = "mysql"
+
+  override def datasource: DataSource[IO] =
+    MySQLDataSource
+      .build[IO](host, port, user)
+      .setPassword(password)
+      .setDatabase(database)
+      .setSSL(MysqlSSL.Trusted)
+
 trait DatabaseMetaDataTest extends CatsEffectSuite:
 
   protected val host:     String = MySQLTestConfig.host
@@ -38,7 +52,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
   protected val password: String = MySQLTestConfig.password
   protected val database: String = "connector_test"
 
-  def prefix:     "jdbc" | "ldbc"
+  def prefix:     "jdbc" | "ldbc" | "mysql"
   def datasource: DataSource[IO]
 
   test(s"$prefix: allTablesAreSelectable") {
@@ -149,7 +163,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for metaData <- conn.getMetaData()
         yield metaData.getDriverName()
       },
-      if prefix == "ldbc" then "MySQL Connector/L" else "MySQL Connector/J"
+      if prefix == "jdbc" then "MySQL Connector/J" else "MySQL Connector/L"
     )
   }
 
@@ -160,6 +174,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         yield metaData.getDriverVersion()
       },
       if prefix == "jdbc" then "mysql-connector-j-9.7.0 (Revision: 0aade1f13bcc98faf7dda5c02e782481eb291f62)"
+      else if prefix == "mysql" then "ldbc-connector-0.8.0"
       else "ldbc-connector-0.9.0"
     )
   }
@@ -180,7 +195,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for metaData <- conn.getMetaData()
         yield metaData.getDriverMinorVersion()
       },
-      if prefix == "jdbc" then 7 else 9
+      if prefix == "jdbc" then 7 else if prefix == "mysql" then 8 else 9
     )
   }
 
@@ -2299,7 +2314,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
         for metaData <- conn.getMetaData()
         yield metaData.getJDBCMinorVersion()
       },
-      if prefix == "jdbc" then 2 else 9
+      if prefix == "jdbc" then 2 else if prefix == "mysql" then 8 else 9
     )
   }
 

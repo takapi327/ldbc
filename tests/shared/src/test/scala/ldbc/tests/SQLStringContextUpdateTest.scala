@@ -27,9 +27,26 @@ class LdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest:
         .setSSL(SSL.Trusted)
     )
 
+class MysqlSQLStringContextUpdateTest extends SQLStringContextUpdateTest:
+  import ldbc.catseffect.concurrentIO
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
+
+  override def prefix: "mysql" = "mysql"
+
+  override def connection: ConnectionFixture =
+    ConnectionFixture(
+      "connection",
+      MySQLDataSource
+        .build[IO](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+        .setPassword(MySQLTestConfig.password)
+        .setDatabase("connector_test")
+        .setSSL(MysqlSSL.Trusted)
+    )
+
 trait SQLStringContextUpdateTest extends CatsEffectSuite:
 
-  def prefix: "jdbc" | "ldbc"
+  def prefix: "jdbc" | "ldbc" | "mysql"
 
   def connection: ConnectionFixture
 
@@ -43,8 +60,9 @@ trait SQLStringContextUpdateTest extends CatsEffectSuite:
     .fixture
 
   final val table = prefix match
-    case "jdbc" => ident("jdbc_sql_string_context_table")
-    case "ldbc" => ident("ldbc_sql_string_context_table")
+    case "jdbc"  => ident("jdbc_sql_string_context_table")
+    case "ldbc"  => ident("ldbc_sql_string_context_table")
+    case "mysql" => ident("mysql_sql_string_context_table")
 
   override def munitFixtures = List(connectionFixture)
 

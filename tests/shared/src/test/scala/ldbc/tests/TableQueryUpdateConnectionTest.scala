@@ -33,9 +33,25 @@ class LdbcTableQueryUpdateConnectionTest extends TableQueryUpdateConnectionTest:
 
   override def connector: Connector[IO] = Connector.fromDataSource(datasource)
 
+class MysqlTableQueryUpdateConnectionTest extends TableQueryUpdateConnectionTest:
+  import ldbc.catseffect.concurrentIO
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.mysql.Connector as MysqlConnector
+  import ldbc.net.SSL as MysqlSSL
+
+  override def prefix: "mysql" = "mysql"
+
+  private val datasource = MySQLDataSource
+    .build[IO](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+    .setPassword(MySQLTestConfig.password)
+    .setDatabase("world2")
+    .setSSL(MysqlSSL.Trusted)
+
+  override def connector: Connector[IO] = MysqlConnector.fromDataSource(datasource)
+
 trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
 
-  def prefix:    "jdbc" | "ldbc"
+  def prefix:    "jdbc" | "ldbc" | "mysql"
   def connector: Connector[IO]
 
   private final val country         = TableQuery[Country]
@@ -43,8 +59,9 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
   private final val countryLanguage = TableQuery[CountryLanguage]
 
   private def code(index: Int): String = prefix match
-    case "jdbc" => s"J$index"
-    case "ldbc" => s"L$index"
+    case "jdbc"  => s"J$index"
+    case "ldbc"  => s"L$index"
+    case "mysql" => s"M$index"
 
   private def cleanup: IO[Unit] =
     (for

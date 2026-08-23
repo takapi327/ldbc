@@ -35,6 +35,25 @@ class LdbcConnectionTest extends ConnectionTest:
           case "CATALOG" => DatabaseMetaData.DatabaseTerm.CATALOG
       )
 
+class MysqlConnectionTest extends ConnectionTest:
+  import ldbc.catseffect.concurrentIO
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
+
+  override def prefix: "mysql" = "mysql"
+
+  override def datasource(databaseTerm: "SCHEMA" | "CATALOG" = "CATALOG"): DataSource[IO] =
+    MySQLDataSource
+      .build[IO](host, port, user)
+      .setPassword(password)
+      .setDatabase(database)
+      .setSSL(MysqlSSL.Trusted)
+      .setDatabaseTerm(
+        databaseTerm match
+          case "SCHEMA"  => DatabaseMetaData.DatabaseTerm.SCHEMA
+          case "CATALOG" => DatabaseMetaData.DatabaseTerm.CATALOG
+      )
+
 trait ConnectionTest extends CatsEffectSuite:
 
   protected val host:     String = MySQLTestConfig.host
@@ -43,7 +62,7 @@ trait ConnectionTest extends CatsEffectSuite:
   protected val password: String = MySQLTestConfig.password
   protected val database: String = "connector_test"
 
-  def prefix:                                                     "jdbc" | "ldbc"
+  def prefix:                                                     "jdbc" | "ldbc" | "mysql"
   def datasource(databaseTerm: "SCHEMA" | "CATALOG" = "CATALOG"): DataSource[IO]
 
   test("Catalog change will change the currently connected Catalog.") {
@@ -164,6 +183,7 @@ trait ConnectionTest extends CatsEffectSuite:
     assertIO(
       datasource().use(_.getMetaData().map(_.getDriverVersion())),
       if prefix == "jdbc" then "mysql-connector-j-9.7.0 (Revision: 0aade1f13bcc98faf7dda5c02e782481eb291f62)"
+      else if prefix == "mysql" then "ldbc-connector-0.8.0"
       else "ldbc-connector-0.9.0"
     )
   }

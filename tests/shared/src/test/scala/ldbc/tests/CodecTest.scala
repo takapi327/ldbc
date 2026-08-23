@@ -31,9 +31,26 @@ class LdbcCodecTest extends CodecTest:
         .setSSL(SSL.Trusted)
     )
 
+class MysqlCodecTest extends CodecTest:
+  import ldbc.catseffect.concurrentIO
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
+
+  override def prefix: "mysql" = "mysql"
+
+  override def connection: ConnectionFixture =
+    ConnectionFixture(
+      "connection",
+      MySQLDataSource
+        .build[IO](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+        .setPassword(MySQLTestConfig.password)
+        .setDatabase("world")
+        .setSSL(MysqlSSL.Trusted)
+    )
+
 trait CodecTest extends CatsEffectSuite:
 
-  def prefix:     "jdbc" | "ldbc"
+  def prefix:     "jdbc" | "ldbc" | "mysql"
   def connection: ConnectionFixture
 
   private lazy val connectionFixture = connection

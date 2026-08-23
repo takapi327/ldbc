@@ -28,6 +28,20 @@ class LdbcDDLTest extends DDLTest:
 
   override def connector: Connector[IO] = Connector.fromDataSource(datasource)
 
+class MysqlDDLTest extends DDLTest:
+  import ldbc.catseffect.concurrentIO
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.mysql.Connector as MysqlConnector
+  import ldbc.net.SSL as MysqlSSL
+
+  private val datasource = MySQLDataSource
+    .build[IO](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+    .setPassword(MySQLTestConfig.password)
+    .setDatabase("connector_test")
+    .setSSL(MysqlSSL.Trusted)
+
+  override def connector: Connector[IO] = MysqlConnector.fromDataSource(datasource)
+
 trait DDLTest extends CatsEffectSuite:
 
   def connector: Connector[IO]

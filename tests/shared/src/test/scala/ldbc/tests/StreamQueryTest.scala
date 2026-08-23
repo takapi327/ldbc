@@ -29,6 +29,22 @@ class LdbcStreamQueryTest extends StreamQueryTest:
 
   override def connector: Connector[IO] = Connector.fromDataSource(datasource)
 
+class MysqlStreamQueryTest extends StreamQueryTest:
+  import ldbc.catseffect.concurrentIO
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.mysql.Connector as MysqlConnector
+  import ldbc.net.SSL as MysqlSSL
+
+  private val datasource = MySQLDataSource
+    .build[IO](host, port, user)
+    .setPassword(password)
+    .setDatabase(database)
+    .setSSL(MysqlSSL.None)
+    .setUseCursorFetch(true)
+    .setAllowPublicKeyRetrieval(true)
+
+  override def connector: Connector[IO] = MysqlConnector.fromDataSource(datasource)
+
 trait StreamQueryTest extends CatsEffectSuite:
 
   protected val host:     String = MySQLTestConfig.host
