@@ -22,28 +22,28 @@ import ldbc.effect.{ Concurrent, Fiber }
  * `bracket` / `race` derivations.
  */
 given concurrentIO: Concurrent[IO] with
-  override def pure[A](a:               A): IO[A]                          = IO.pure(a)
-  override def flatMap[A, B](fa:        IO[A])(f: A => IO[B]): IO[B]       = fa.flatMap(f)
-  override def map[A, B](fa:            IO[A])(f: A => B): IO[B]           = fa.map(f)
-  override def raiseError[A](e:         Throwable): IO[A]                  = IO.raiseError(e)
-  override def handleErrorWith[A](fa:   IO[A])(f: Throwable => IO[A]): IO[A] = fa.handleErrorWith(f)
-  override def delay[A](thunk:          => A): IO[A]                       = IO(thunk)
-  override def blocking[A](thunk:       => A): IO[A]                       = IO.blocking(thunk)
-  override def async[A](k: (Either[Throwable, A] => Unit) => IO[Option[IO[Unit]]]): IO[A] = IO.async(k)
-  override def bracket[A, B](acquire:   IO[A])(use: A => IO[B])(release: A => IO[Unit]): IO[B] =
+  override def pure[A](a:             A):                            IO[A] = IO.pure(a)
+  override def flatMap[A, B](fa:      IO[A])(f: A => IO[B]):         IO[B] = fa.flatMap(f)
+  override def map[A, B](fa:          IO[A])(f: A => B):             IO[B] = fa.map(f)
+  override def raiseError[A](e:       Throwable):                    IO[A] = IO.raiseError(e)
+  override def handleErrorWith[A](fa: IO[A])(f: Throwable => IO[A]): IO[A] = fa.handleErrorWith(f)
+  override def delay[A](thunk:        => A):                         IO[A] = IO(thunk)
+  override def blocking[A](thunk:     => A):                         IO[A] = IO.blocking(thunk)
+  override def async[A](k: (Either[Throwable, A] => Unit) => IO[Option[IO[Unit]]]):    IO[A] = IO.async(k)
+  override def bracket[A, B](acquire: IO[A])(use: A => IO[B])(release: A => IO[Unit]): IO[B] =
     acquire.bracket(use)(release)
-  override def guarantee[A](fa:         IO[A])(fin: IO[Unit]): IO[A]       = fa.guarantee(fin)
-  override def onCancel[A](fa:          IO[A])(fin: IO[Unit]): IO[A]       = fa.onCancel(fin)
-  override def uncancelable[A](fa:      IO[A]): IO[A]                      = IO.uncancelable(_ => fa)
-  override def monotonic:               IO[FiniteDuration]                = IO.monotonic
-  override def realTime:                IO[FiniteDuration]                = IO.realTime
-  override def sleep(duration:          FiniteDuration): IO[Unit]         = IO.sleep(duration)
-  override def start[A](fa:             IO[A]): IO[Fiber[IO, A]]          =
+  override def guarantee[A](fa:    IO[A])(fin: IO[Unit]): IO[A]              = fa.guarantee(fin)
+  override def onCancel[A](fa:     IO[A])(fin: IO[Unit]): IO[A]              = fa.onCancel(fin)
+  override def uncancelable[A](fa: IO[A]):                IO[A]              = IO.uncancelable(_ => fa)
+  override def monotonic:                                 IO[FiniteDuration] = IO.monotonic
+  override def realTime:                                  IO[FiniteDuration] = IO.realTime
+  override def sleep(duration:     FiniteDuration):       IO[Unit]           = IO.sleep(duration)
+  override def start[A](fa: IO[A]):                       IO[Fiber[IO, A]]   =
     fa.start.map { fib =>
       new Fiber[IO, A]:
         override def cancel: IO[Unit] = fib.cancel
         override def join:   IO[A]    = fib.joinWithNever
     }
-  override def race[A, B](fa:           IO[A], fb: IO[B]): IO[Either[A, B]] = IO.race(fa, fb)
-  override def timeout[A](fa:           IO[A], after: FiniteDuration)(onTimeout: => Throwable): IO[A] =
+  override def race[A, B](fa: IO[A], fb: IO[B]):                                      IO[Either[A, B]] = IO.race(fa, fb)
+  override def timeout[A](fa: IO[A], after: FiniteDuration)(onTimeout: => Throwable): IO[A]            =
     fa.timeoutTo(after, IO.raiseError(onTimeout))
