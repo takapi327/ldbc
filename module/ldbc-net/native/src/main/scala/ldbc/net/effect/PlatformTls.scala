@@ -11,9 +11,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 import scala.scalanative.runtime.Intrinsics
 import scala.scalanative.unsafe.*
 
-import ldbc.effect.Async
 import ldbc.effect.syntax.*
-
+import ldbc.effect.Async
 import ldbc.net.{ FdRawSocket, HostnameMatcher, S2n, S2nBridge, SSL, TrustSource }
 
 /**

@@ -27,11 +27,10 @@ object Canceler:
  */
 trait RawSocket:
   /** Reads up to `n` bytes. `Some(bytes)` on data (empty for `n <= 0`), `None` at end of stream. */
-  def read(n: Int, cb: Either[Throwable, Option[Array[Byte]]] => Unit): Canceler
-  def write(bytes: Array[Byte], cb: Either[Throwable, Unit] => Unit): Canceler
-  def close(): Unit
+  def read(n:      Int, cb:         Either[Throwable, Option[Array[Byte]]] => Unit): Canceler
+  def write(bytes: Array[Byte], cb: Either[Throwable, Unit] => Unit):                Canceler
+  def close():                                                                       Unit
 
 /** Opens [[RawSocket]]s. One implementation per platform. Connect timeout is applied at the `F` layer. */
 trait RawIoEngine:
   def connect(host: String, port: Int, options: SocketOptions, cb: Either[Throwable, RawSocket] => Unit): Canceler
-

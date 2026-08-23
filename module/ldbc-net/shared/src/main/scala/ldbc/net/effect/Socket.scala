@@ -9,7 +9,6 @@ package ldbc.net.effect
 import scala.concurrent.duration.FiniteDuration
 
 import ldbc.effect.{ Async, Concurrent }
-
 import ldbc.net.{ ConnectTimeoutException, PlatformRawEngine, RawIoEngine, RawSocket, SocketOptions }
 
 /**
@@ -18,9 +17,9 @@ import ldbc.net.{ ConnectTimeoutException, PlatformRawEngine, RawIoEngine, RawSo
  * `Async` instance (`IO` / `Task` / `Fx`) runs the same raw I/O natively.
  */
 trait Socket[F[_]]:
-  def read(n: Int): F[Option[Array[Byte]]]
+  def read(n:      Int):         F[Option[Array[Byte]]]
   def write(bytes: Array[Byte]): F[Unit]
-  def close(): F[Unit]
+  def close():                   F[Unit]
 
 /**
  * A [[Socket]] backed by a known [[ldbc.net.RawSocket]], exposing it so the platform TLS layer can reach the
@@ -36,7 +35,7 @@ object Socket:
 
   /** The [[fromRaw]] wrapper, named so it exposes its [[underlying]] raw socket to the TLS layer. */
   private[net] final class FromRawSocket[F[_]](raw: RawSocket)(using F: Async[F]) extends Socket[F], RawBackedSocket:
-    override def underlying: RawSocket = raw
+    override def underlying:   RawSocket              = raw
     override def read(n: Int): F[Option[Array[Byte]]] =
       F.async(cb => F.delay { val c = raw.read(n, cb); Some(F.delay(c.cancel())): Option[F[Unit]] })
     override def write(bytes: Array[Byte]): F[Unit] =

@@ -13,7 +13,6 @@ import scala.scalajs.js.typedarray.Uint8Array
 import scala.util.control.NonFatal
 
 import ldbc.effect.Async
-
 import ldbc.net.{ HostnameMatcher, NodeRawSocket, SSL, TrustSource }
 
 /**
@@ -53,14 +52,15 @@ private[net] object PlatformTls:
           val tlsSock = tlsModule.connect(options)
           tlsSock.on(
             "secureConnect",
-            ((() =>
-              if done.compareAndSet(false, true) then cb(Right(Socket.fromRaw[F](new NodeRawSocket(tlsSock))))
+            ((
+              () => if done.compareAndSet(false, true) then cb(Right(Socket.fromRaw[F](new NodeRawSocket(tlsSock))))
             ): js.Function0[Unit])
           )
           tlsSock.on(
             "error",
-            ((err: js.Dynamic) =>
-              if done.compareAndSet(false, true) then cb(Left(new RuntimeException(s"TLS handshake failed: $err")))
+            (
+              (err: js.Dynamic) =>
+                if done.compareAndSet(false, true) then cb(Left(new RuntimeException(s"TLS handshake failed: $err")))
             ): js.Function1[js.Dynamic, Unit]
           )
           Some(F.delay { tlsSock.destroy(); () }): Option[F[Unit]]

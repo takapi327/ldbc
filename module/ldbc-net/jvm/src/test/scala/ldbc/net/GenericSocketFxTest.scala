@@ -6,8 +6,8 @@
 
 package ldbc.net
 
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.CountDownLatch
 
 import scala.concurrent.duration.*
 
@@ -15,7 +15,6 @@ import munit.FunSuite
 
 import ldbc.fx.{ Fx, FxRuntime }
 import ldbc.fx.concurrentFx // given Concurrent[Fx]
-
 import ldbc.net.effect.IoEngine
 
 /**
@@ -32,8 +31,8 @@ class GenericSocketFxTest extends FunSuite:
     ref.get().fold(throw _, identity)
 
   test("generic Socket[Fx] over NioRawEngine reads the MySQL handshake (proto v10)") {
-    val engine: IoEngine[Fx] = IoEngine.fromRaw[Fx](NioRawEngine.global)
-    val program: Fx[Byte] =
+    val engine:  IoEngine[Fx] = IoEngine.fromRaw[Fx](NioRawEngine.global)
+    val program: Fx[Byte]     =
       engine.connect("127.0.0.1", 13306, 5.seconds).flatMap { sock =>
         sock.read(4).flatMap {
           case Some(header) =>

@@ -7,8 +7,8 @@
 package ldbc.net
 
 import java.net.{ InetSocketAddress, StandardSocketOptions }
-import java.nio.ByteBuffer
 import java.nio.channels.{ ClosedChannelException, SelectionKey, Selector, SocketChannel }
+import java.nio.ByteBuffer
 import java.util.concurrent.ConcurrentLinkedQueue
 
 /**
@@ -83,7 +83,7 @@ private[net] final class NioRawSocket(ch: SocketChannel, engine: NioRawEngine) e
       def attempt(): Unit =
         try
           val got = ch.read(buf)
-          if got < 0 then cb(Right(None)) // end of stream
+          if got < 0 then cb(Right(None))                                                  // end of stream
           else if got == 0 then engine.register(ch, SelectionKey.OP_READ, () => attempt()) // readable but no bytes yet
           else { buf.flip(); val a = new Array[Byte](buf.remaining()); buf.get(a); cb(Right(Some(a))) } // up to n bytes
         catch case e: Throwable => cb(Left(e))
