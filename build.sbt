@@ -83,6 +83,7 @@ lazy val net = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
   .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .dependsOn(effect)
   .dependsOn(fx)
 
 lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
