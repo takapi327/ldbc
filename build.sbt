@@ -93,7 +93,7 @@ lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
       "org.typelevel" %%% "cats-free" % "2.13.0"
     )
   )
-  .dependsOn(sql, fx)
+  .dependsOn(sql)
 
 lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
@@ -275,6 +275,17 @@ lazy val pool = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     libraryDependencies += "org.typelevel" %%% "munit-cats-effect" % "2.2.0" % Test
   )
   .dependsOn(sql, effect, fx % "test->compile;test->test", mysql % Test, catsEffect % Test)
+
+lazy val future = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
+  .module("future", "Future boundary for ldbc (bridges Fx to scala.concurrent.Future)")
+  .settings(
+    libraryDependencies += "org.scalameta" %%% "munit" % "1.2.4" % Test
+  )
+  .jsSettings(
+    Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
+  )
+  .dependsOn(dsl, fx)
 
 lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
   .settings(description := "Projects that provide sbt plug-ins")
@@ -566,6 +577,7 @@ lazy val ldbc = tlCrossRootProject
     connector,
     dsl,
     catsEffect,
+    future,
     statement,
     queryBuilder,
     schema,

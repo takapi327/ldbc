@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.free
+package ldbc.future
 
 import cats.{ MonadError, StackSafeMonad }
 
@@ -13,9 +13,12 @@ import ldbc.fx.Fx
 /**
  * Cats type class instances for [[ldbc.fx.Fx]].
  *
- * These live in ldbc-core rather than ldbc-fx because ldbc-fx does not depend on cats.
- * The interpreter's `Free.foldMap` into `Kleisli[Fx, J, *]` requires a `cats.Monad[Fx]`;
- * a full `MonadError[Fx, Throwable]` is provided since `Fx` natively supports error handling.
+ * These live in ldbc-future — the sole consumer — rather than ldbc-core, so that the DB-agnostic core
+ * stays effect-agnostic (no dependency on the concrete `Fx`). `ldbc-future` interprets `DBIO` at `F = Fx`
+ * (the only effect it can run the driver on, since `Future` is not `Concurrent`) and bridges the result to
+ * `Future`; `Free.foldMap` into `Kleisli[Fx, J, *]` requires a `cats.Monad[Fx]`, and a full
+ * `MonadError[Fx, Throwable]` is provided since `Fx` natively supports error handling. ldbc-fx itself does
+ * not depend on cats, which is why the instance is defined here rather than there.
  */
 object FxInstances:
 
