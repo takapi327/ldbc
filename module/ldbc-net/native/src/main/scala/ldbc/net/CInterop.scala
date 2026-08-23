@@ -49,7 +49,7 @@ private[net] final class Resolved(val fd: Int, private[net] val info: Ptr[addrin
   private[net] def addrLen: socklen_t = info._5
   private[net] def free():  Unit      = freeaddrinfo(info)
 
-/** Thin POSIX interop for the Native [[NativeIoEngine]] (socket, getaddrinfo, recv/send, SIGPIPE). */
+/** Thin POSIX interop for the Native [[FdRawEngine]] (socket, getaddrinfo, recv/send, SIGPIPE). */
 private[net] object CInterop:
 
   /** Ignores SIGPIPE process-wide so a `send` to a closed peer returns EPIPE instead of killing us. */

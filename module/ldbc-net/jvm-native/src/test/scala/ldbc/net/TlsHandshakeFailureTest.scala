@@ -13,6 +13,8 @@ import java.util.concurrent.atomic.AtomicReference
 import scala.concurrent.duration.*
 
 import ldbc.fx.Fx
+import ldbc.fx.concurrentFx
+import ldbc.net.TlsUpgrade
 
 /**
  * Abnormal-case coverage shared by the JVM (JSSE) and Native (s2n) TLS clients: a TLS handshake
@@ -21,6 +23,8 @@ import ldbc.fx.Fx
  * so the client's TLS record parser rejects it during the handshake.
  */
 class TlsHandshakeFailureTest extends munit.FunSuite:
+
+  private val engine = ldbc.net.IoEngine.fromRaw[Fx](PlatformRawEngine.global)
 
   private def runSync[A](fx: Fx[A], timeoutMs: Long): Either[Throwable, A] =
     val latch = new CountDownLatch(1)
@@ -54,8 +58,8 @@ class TlsHandshakeFailureTest extends munit.FunSuite:
     val startNanos = System.nanoTime()
     val prog       =
       for
-        plain <- IoEngine.global.connect("127.0.0.1", port, 5.seconds)
-        tls   <- Tls.client(plain, "localhost", port, SSL.Trusted)
+        plain <- engine.connect("127.0.0.1", port, 5.seconds)
+        tls   <- summon[TlsUpgrade[Fx]].client(plain, "localhost", port, SSL.Trusted)
       yield tls
     val result    = runSync(prog, 8000)
     val elapsedMs = (System.nanoTime() - startNanos) / 1000000L

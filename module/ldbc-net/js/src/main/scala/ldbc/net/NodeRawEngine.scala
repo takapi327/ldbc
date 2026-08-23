@@ -13,10 +13,10 @@ import scala.scalajs.js.typedarray.Uint8Array
 
 /**
  * Scala.js [[RawIoEngine]] over node's async `net` module (event loop, non-blocking): the effect-free
- * counterpart of the former `Fx` node engine that the generic `ldbc.net.effect.IoEngine[F]` wraps once with
+ * counterpart of the former `Fx` node engine that the generic `ldbc.net.IoEngine[F]` wraps once with
  * `F.async`, so every effect (`IO` / `Task` / `Fx`) drives the same node socket natively.
  *
- * The connect timeout is applied at the `F` layer ([[ldbc.net.effect.IoEngine.fromRaw]]), so `connect`
+ * The connect timeout is applied at the `F` layer ([[ldbc.net.IoEngine.fromRaw]]), so `connect`
  * here only registers the `connect` / `error` events and hands back a [[Canceler]] that destroys the socket.
  */
 private[net] object NodeRawEngine:
@@ -39,8 +39,8 @@ private[net] object NodeRawEngine:
       )
       sock.on(
         "error",
-        (
-          (_: js.Dynamic) => if done.compareAndSet(false, true) then cb(Left(new RuntimeException("connect error")))
+        ((_: js.Dynamic) =>
+          if done.compareAndSet(false, true) then cb(Left(new RuntimeException("connect error")))
         ): js.Function1[js.Dynamic, Unit]
       )
       new Canceler:

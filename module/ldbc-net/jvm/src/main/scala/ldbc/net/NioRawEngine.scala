@@ -7,14 +7,14 @@
 package ldbc.net
 
 import java.net.{ InetSocketAddress, StandardSocketOptions }
-import java.nio.channels.{ ClosedChannelException, SelectionKey, Selector, SocketChannel }
 import java.nio.ByteBuffer
+import java.nio.channels.{ ClosedChannelException, SelectionKey, Selector, SocketChannel }
 import java.util.concurrent.ConcurrentLinkedQueue
 
 /**
  * JVM [[RawIoEngine]]: one daemon selector thread drives non-blocking NIO channels, invoking one-shot
  * callbacks on readiness. The effect-free counterpart of the former `Fx` NIO selector engine that the generic
- * `ldbc.net.effect.IoEngine[F]` wraps. Interest registration is marshalled onto the selector thread.
+ * `ldbc.net.IoEngine[F]` wraps. Interest registration is marshalled onto the selector thread.
  */
 private[net] final class NioRawEngine private (selector: Selector) extends RawIoEngine:
 
@@ -83,7 +83,7 @@ private[net] final class NioRawSocket(ch: SocketChannel, engine: NioRawEngine) e
       def attempt(): Unit =
         try
           val got = ch.read(buf)
-          if got < 0 then cb(Right(None))                                                  // end of stream
+          if got < 0 then cb(Right(None)) // end of stream
           else if got == 0 then engine.register(ch, SelectionKey.OP_READ, () => attempt()) // readable but no bytes yet
           else { buf.flip(); val a = new Array[Byte](buf.remaining()); buf.get(a); cb(Right(Some(a))) } // up to n bytes
         catch case e: Throwable => cb(Left(e))

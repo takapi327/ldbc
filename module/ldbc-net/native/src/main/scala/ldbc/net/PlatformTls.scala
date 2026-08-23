@@ -6,50 +6,172 @@
 
 package ldbc.net
 
-import java.nio.charset.StandardCharsets
-import java.util.concurrent.atomic.{ AtomicBoolean, AtomicLong }
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 
-import scala.scalanative.runtime.{ fromRawPtr, toRawPtr, Intrinsics }
+import scala.scalanative.runtime.Intrinsics
 import scala.scalanative.unsafe.*
-import scala.scalanative.unsigned.*
 
-import ldbc.fx.Fx
+import ldbc.effect.Async
+import ldbc.effect.syntax.*
+
+import ldbc.net.{ FdRawSocket, HostnameMatcher, S2n, S2nBridge, SSL, TrustSource }
 
 /**
- * Scala Native TLS engine over s2n-tls (design Phase 3 / P1). The s2n connection drives IO through
- * custom recv/send callbacks that perform non-blocking `recv`/`send` on the underlying [[FdSocket]]'s
- * fd; when s2n reports it blocked, the driver awaits fd readiness on the engine's poller and retries,
- * so no thread is parked during handshake or encrypted IO. Hostname verification uses s2n's
- * `verify_host` callback — which delivers one certificate name per call — backed by the shared
- * [[HostnameMatcher]] (RFC 6125).
+ * A [[Socket]] that encrypts through an s2n connection, generic over the effect `F`, driven fully
+ * non-blocking (design Phase 3 / P1). This is the effect-generic counterpart of `ldbc.net.S2nTlsSocket`:
+ * each s2n call runs on the run loop; when s2n reports `S2N_BLOCKED_ON_READ`/`WRITE`, the fd's readiness is
+ * awaited on the engine's poller (no thread is parked) and the call is retried. Reads never return more than
+ * `n` bytes; `close()` sends close_notify best-effort, frees the s2n resources exactly once, and closes the
+ * underlying socket. `close()` MUST be called (there is no finalizer).
+ */
+private[net] final class S2nTlsSocketF[F[_]](
+  conn:   Ptr[Byte],
+  config: Ptr[Byte],
+  raw:    FdRawSocket,
+  ioId:   Long,
+  hostId: Long
+)(using F: Async[F])
+  extends Socket[F]:
+
+  private val closed = new AtomicBoolean(false)
+  private val engine = raw.ioEngine
+  private val fd     = raw.fileDescriptor
+  private val st     = raw.channelState
+
+  /** `s2n_blocked_status`: 0 = not blocked, 1 = blocked on read, 2 = blocked on write. */
+  private inline val BlockedRead  = 1
+  private inline val BlockedWrite = 2
+
+  /** Converts a JVM `Long` to a native `Size` (ssize_t). */
+  private def toSize(value: Long): Size = Size.valueOf(Intrinsics.castLongToRawSize(value))
+
+  /** Suspends until the fd is readable, then resumes on the poller thread. */
+  private def awaitReadable: F[Unit] = F.async { cb =>
+    F.delay {
+      engine.armRead(fd, st, () => cb(Right(())))
+      Some(F.delay { st.readReady = null }): Option[F[Unit]]
+    }
+  }
+
+  /** Suspends until the fd is writable, then resumes on the poller thread. */
+  private def awaitWritable: F[Unit] = F.async { cb =>
+    F.delay {
+      engine.armWrite(fd, st, () => cb(Right(())))
+      Some(F.delay { st.writeReady = null }): Option[F[Unit]]
+    }
+  }
+
+  /** Awaits readiness for the direction s2n blocked on, or fails if it was a genuine error. */
+  private def awaitBlocked(blocked: Int, what: String): F[Unit] =
+    blocked match
+      case BlockedRead  => awaitReadable
+      case BlockedWrite => awaitWritable
+      case _            => F.raiseError(new RuntimeException(s"TLS $what failed"))
+
+  /** Runs the handshake to completion, awaiting readiness whenever s2n blocks. */
+  private[net] def handshake: F[Unit] =
+    F.delay {
+      val blocked = stackalloc[CInt]()
+      val rc      = S2n.s2n_negotiate(conn, blocked)
+      (rc, !blocked)
+    }.flatMap { (rc, blocked) =>
+      if rc >= 0 then F.unit
+      else awaitBlocked(blocked, "handshake").flatMap(_ => handshake)
+    }
+
+  /** Frees the expected-host registry entry once the handshake has completed. */
+  private[net] def releaseHost(): Unit = S2nBridge.unregister(-1L, hostId)
+
+  override def read(n: Int): F[Option[Array[Byte]]] =
+    if n <= 0 then F.pure(Some(Array.emptyByteArray))
+    else
+      val arr = new Array[Byte](n)
+      def attempt: F[Option[Array[Byte]]] =
+        F.delay {
+          val blocked = stackalloc[CInt]()
+          val got     = S2n.s2n_recv(conn, arr.at(0), toSize(n.toLong), blocked).toLong
+          (got, !blocked)
+        }.flatMap { (got, blocked) =>
+          if got > 0 then F.pure(Some(java.util.Arrays.copyOf(arr, got.toInt)))
+          else if got == 0 then F.pure(None)
+          else awaitBlocked(blocked, "read").flatMap(_ => attempt)
+        }
+      attempt
+
+  override def write(bytes: Array[Byte]): F[Unit] =
+    def attempt(offset: Int): F[Unit] =
+      if offset >= bytes.length then F.unit
+      else
+        F.delay {
+          val blocked = stackalloc[CInt]()
+          val sent    = S2n.s2n_send(conn, bytes.at(offset), toSize((bytes.length - offset).toLong), blocked).toLong
+          (sent, !blocked)
+        }.flatMap { (sent, blocked) =>
+          if sent > 0 then attempt(offset + sent.toInt)
+          else awaitBlocked(blocked, "write").flatMap(_ => attempt(offset))
+        }
+    attempt(0)
+
+  override def close(): F[Unit] =
+    /**
+     * A single best-effort `close_notify`. It is deliberately NOT retried on `S2N_BLOCKED_ON_WRITE`: a peer
+     * that has already gone away keeps the send blocked forever, so an await/retry loop would hang `close()`
+     * (and thus a failed-handshake cleanup) indefinitely. When the peer is alive the 7-byte alert flushes
+     * into the empty socket buffer in this one call; when it cannot, the following `raw.close()` still tears
+     * the connection down.
+     */
+    val shutdown: F[Unit] =
+      F.delay {
+        val blocked = stackalloc[CInt]()
+        S2n.s2n_shutdown_send(conn, blocked)
+      }.map(_ => ())
+    shutdown
+      .handleErrorWith(_ => F.unit)
+      .flatMap(_ => F.delay(release()))
+      .flatMap(_ => F.delay(raw.close()))
+
+  /** Frees the s2n connection/config and the io registry entry exactly once. */
+  private def release(): Unit =
+    if closed.compareAndSet(false, true) then
+      S2n.s2n_connection_free(conn)
+      S2n.s2n_config_free(config)
+      S2nBridge.unregister(ioId, -1L)
+      ()
+
+/**
+ * Scala Native generic TLS entry over s2n-tls (design Phase 3 / P1). The trust / hostname-verification /
+ * connection-setup logic is identical to `ldbc.net.PlatformTls`; only the effect operations are abstracted
+ * over `Async[F]`, and the plaintext socket is reached through its underlying [[FdRawSocket]].
  */
 private[net] object PlatformTls:
 
   private val initialised = new AtomicBoolean(false)
 
   /**
-   * Wraps `socket` in a TLS client session (see [[Tls.client]]). The s2n connection is built without
-   * I/O, then the handshake is driven asynchronously over the engine's poller (non-blocking, using
-   * s2n's blocked-status), so no thread is parked during negotiation.
+   * Wraps `socket` in a TLS client session. The s2n connection is built without I/O, then the handshake is
+   * driven asynchronously over the engine's poller (non-blocking), so no thread is parked during negotiation.
    */
-  def client(socket: Socket, host: String, port: Int, ssl: SSL): Fx[Socket] =
+  def client[F[_]](socket: Socket[F], host: String, port: Int, ssl: SSL)(using F: Async[F]): F[Socket[F]] =
     val _ = port
     socket match
-      case raw: FdSocket =>
-        Fx.delay(build(raw, host, ssl)).flatMap { tls =>
-          tls.handshake
-            .map(_ => tls.releaseHost())
-            .flatMap(_ => Fx.pure[Socket](tls))
-            .handleErrorWith { error =>
-              tls.close().handleErrorWith(_ => Fx.unit).flatMap(_ => Fx.raiseError(error))
+      case backed: RawBackedSocket =>
+        backed.underlying match
+          case raw: FdRawSocket =>
+            F.delay(build(raw, host, ssl)).flatMap { tls =>
+              tls.handshake
+                .map(_ => tls.releaseHost())
+                .flatMap(_ => F.pure[Socket[F]](tls))
+                .handleErrorWith { error =>
+                  tls.close().handleErrorWith(_ => F.unit).flatMap(_ => F.raiseError(error))
+                }
             }
-        }
+          case _ =>
+            F.raiseError(new IllegalArgumentException("Native TLS requires a socket produced by the Native IoEngine"))
       case _ =>
-        Fx.raiseError(new IllegalArgumentException("Native TLS requires a socket produced by the Native IoEngine"))
+        F.raiseError(new IllegalArgumentException("Native TLS requires a socket produced by the Native IoEngine"))
 
   /** Builds the s2n config + connection and installs callbacks. Pure setup — performs no socket I/O. */
-  private def build(raw: FdSocket, host: String, tlsConfig: SSL): S2nTlsSocket =
+  private def build[F[_]](raw: FdRawSocket, host: String, tlsConfig: SSL)(using F: Async[F]): S2nTlsSocketF[F] =
     if initialised.compareAndSet(false, true) then check(S2n.s2n_init(), "s2n_init")
     val config = S2n.s2n_config_new()
     if config == null then throw new RuntimeException("s2n_config_new returned null")
@@ -70,7 +192,7 @@ private[net] object PlatformTls:
         check(S2n.s2n_connection_set_send_cb(conn, S2nBridge.sendCb), "s2n_connection_set_send_cb")
         check(S2n.s2n_connection_set_recv_ctx(conn, ioCtx), "s2n_connection_set_recv_ctx")
         check(S2n.s2n_connection_set_send_ctx(conn, ioCtx), "s2n_connection_set_send_ctx")
-        new S2nTlsSocket(conn, config, raw, ioId, hostId)
+        new S2nTlsSocketF[F](conn, config, raw, ioId, hostId)
       catch
         case error: Throwable =>
           S2n.s2n_connection_free(conn)
@@ -82,8 +204,8 @@ private[net] object PlatformTls:
         throw error
 
   /**
-   * Applies the trust and hostname-verification policy to the config; returns the registry id of
-   * the expected host when a verifying callback was installed (or `-1`).
+   * Applies the trust and hostname-verification policy to the config; returns the registry id of the expected
+   * host when a verifying callback was installed (or `-1`).
    */
   private def applyTrust(config: Ptr[Byte], host: String, tlsConfig: SSL): Long =
     def installVerifyHost(verify: Boolean): Long =
@@ -129,101 +251,3 @@ private[net] object PlatformTls:
   /** Raises when an s2n call reports failure. */
   private def check(rc: CInt, what: String): Unit =
     if rc < 0 then throw new RuntimeException(s"$what failed (rc=$rc)")
-
-/**
- * Static callback bridge between s2n's C callbacks and Scala objects: contexts are passed as
- * integer ids encoded in the `void*` pointer and resolved through concurrent registries (C function
- * pointers cannot capture Scala state).
- */
-private[net] object S2nBridge:
-
-  private val ids     = new AtomicLong(1L)
-  private val sockets = new ConcurrentHashMap[Long, Integer]()
-  private val hosts   = new ConcurrentHashMap[Long, String]()
-
-  /** Registers the fd the recv/send callbacks will read/write (non-blocking); returns its id. */
-  def registerIo(fd: Int): Long =
-    val id = ids.getAndIncrement()
-    sockets.put(id, Integer.valueOf(fd))
-    id
-
-  /** Registers the expected hostname for the verify-host callback; returns its id. */
-  def registerHost(host: String): Long =
-    val id = ids.getAndIncrement()
-    hosts.put(id, host)
-    id
-
-  /** Removes registry entries for a finished connection (negative ids are ignored). */
-  def unregister(ioId: Long, hostId: Long): Unit =
-    if ioId >= 0 then sockets.remove(ioId)
-    if hostId >= 0 then hosts.remove(hostId)
-    ()
-
-  /** Number of live io registry entries, exposed for leak tests. */
-  private[net] def registeredIo: Int = sockets.size
-
-  /** Number of live expected-host registry entries, exposed for leak tests. */
-  private[net] def registeredHosts: Int = hosts.size
-
-  /** Encodes a registry id as the opaque `void*` context pointer. */
-  def pointerOf(id: Long): Ptr[Byte] = fromRawPtr[Byte](Intrinsics.castLongToRawPtr(id))
-
-  /** Decodes the opaque `void*` context pointer back to a registry id. */
-  private def idOf(ctx: Ptr[Byte]): Long = Intrinsics.castRawPtrToLong(toRawPtr(ctx))
-
-  /** s2n recv callback: non-blocking read of up to `len` bytes; `0` = EOF, `-1` = would-block/error (errno set). */
-  val recvCb: CFuncPtr3[Ptr[Byte], Ptr[Byte], CUnsignedInt, CInt] =
-    CFuncPtr3.fromScalaFunction { (ctx: Ptr[Byte], buf: Ptr[Byte], len: CUnsignedInt) =>
-      val fd = sockets.get(idOf(ctx))
-      if fd == null then -1
-      else
-        try
-          val max  = len.toInt
-          val arr  = new Array[Byte](max)
-          val read = CInterop.recvOnce(fd.intValue, arr, max)
-          if read <= 0 then read
-          else
-            var i = 0
-            while i < read do
-              buf(i) = arr(i)
-              i += 1
-            read
-        catch case _: Throwable => -1
-    }
-
-  /** s2n send callback: non-blocking write of `len` bytes; `-1` = would-block/error (errno set). */
-  val sendCb: CFuncPtr3[Ptr[Byte], Ptr[Byte], CUnsignedInt, CInt] =
-    CFuncPtr3.fromScalaFunction { (ctx: Ptr[Byte], buf: Ptr[Byte], len: CUnsignedInt) =>
-      val fd = sockets.get(idOf(ctx))
-      if fd == null then -1
-      else
-        try
-          val size = len.toInt
-          val arr  = new Array[Byte](size)
-          var i    = 0
-          while i < size do
-            arr(i) = buf(i)
-            i += 1
-          CInterop.sendOnce(fd.intValue, arr, size)
-        catch case _: Throwable => -1
-    }
-
-  /** s2n verify-host callback: matches one certificate name against the registered expected host. */
-  val verifyHostCb: CFuncPtr3[CString, CLong, Ptr[Byte], UByte] =
-    CFuncPtr3.fromScalaFunction { (name: CString, nameLen: CLong, data: Ptr[Byte]) =>
-      val host = hosts.get(idOf(data))
-      if host == null || name == null then 0.toUByte
-      else
-        val length = nameLen.toInt
-        val arr    = new Array[Byte](length)
-        var i      = 0
-        while i < length do
-          arr(i) = name(i)
-          i += 1
-        val certName = new String(arr, StandardCharsets.US_ASCII)
-        if HostnameMatcher.matchesName(certName, host) then 1.toUByte else 0.toUByte
-    }
-
-  /** s2n verify-host callback that accepts every name (used when `verifyHostname = false`). */
-  val acceptAllCb: CFuncPtr3[CString, CLong, Ptr[Byte], UByte] =
-    CFuncPtr3.fromScalaFunction { (_: CString, _: CLong, _: Ptr[Byte]) => 1.toUByte }

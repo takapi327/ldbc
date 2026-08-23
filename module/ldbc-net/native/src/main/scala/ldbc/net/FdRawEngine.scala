@@ -17,9 +17,9 @@ import scala.scalanative.posix.errno.{ EAGAIN, EINPROGRESS, EWOULDBLOCK }
 /**
  * Scala Native [[RawIoEngine]]: a single daemon poller thread drives non-blocking sockets through
  * `epoll`/`kqueue`, invoking one-shot callbacks on readiness. The effect-free counterpart of the `Fx`
- * `NativeIoEngine` that the generic `ldbc.net.effect.IoEngine[F]` wraps once with `F.async`.
+ * `NativeIoEngine` that the generic `ldbc.net.IoEngine[F]` wraps once with `F.async`.
  *
- * The connect timeout is applied at the `F` layer ([[ldbc.net.effect.IoEngine.fromRaw]]); blocking DNS
+ * The connect timeout is applied at the `F` layer ([[ldbc.net.IoEngine.fromRaw]]); blocking DNS
  * (`getaddrinfo`) runs on a transient daemon thread so the poller thread is never stalled, and the TCP
  * handshake plus all reads/writes are non-blocking (design `NATIVE_EPOLL_IOENGINE_DESIGN.md`).
  */
@@ -96,7 +96,7 @@ private[net] final class FdRawEngine(poller: Poller) extends RawIoEngine:
     options: SocketOptions,
     cb:      Either[Throwable, RawSocket] => Unit
   ): Canceler =
-    val done  = new AtomicBoolean(false)
+    val done = new AtomicBoolean(false)
     val fdRef = new java.util.concurrent.atomic.AtomicInteger(-1)
 
     val worker = new Thread(
@@ -120,12 +120,14 @@ private[net] final class FdRawEngine(poller: Poller) extends RawIoEngine:
           st.connectReady = () => finishConnect()
           val err = CInterop.beginConnect(fd, resolved)
           if err == 0 then finishConnect()
-          else if err == EINPROGRESS then enqueue(() => { poller.add(fd); poller.arm(fd, read = false, write = true) })
+          else if err == EINPROGRESS then
+            enqueue(() => { poller.add(fd); poller.arm(fd, read = false, write = true) })
           else
             done.set(true)
             registry.remove(fd); CInterop.closeFd(fd)
             cb(Left(new java.io.IOException(s"connect to $host:$port failed (errno=$err)")))
-        catch case e: Throwable => if done.compareAndSet(false, true) then cb(Left(e)), "ldbc-net-fd-connect"
+        catch case e: Throwable => if done.compareAndSet(false, true) then cb(Left(e)),
+      "ldbc-net-fd-connect"
     )
     worker.setDaemon(true)
     worker.start()

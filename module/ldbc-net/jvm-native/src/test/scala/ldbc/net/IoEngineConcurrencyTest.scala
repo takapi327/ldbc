@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import scala.concurrent.duration.*
 
 import ldbc.fx.Fx
+import ldbc.fx.concurrentFx
 
 /**
  * Concurrency load for the non-blocking engine (JVM NIO selector / Native epoll·kqueue): many
@@ -22,6 +23,8 @@ import ldbc.fx.Fx
  * (one poller thread regardless of connection count).
  */
 class IoEngineConcurrencyTest extends munit.FunSuite:
+
+  private val engine = ldbc.net.IoEngine.fromRaw[Fx](PlatformRawEngine.global)
 
   private def startEchoServer(): Int =
     val ss = new ServerSocket(0)
@@ -54,7 +57,7 @@ class IoEngineConcurrencyTest extends munit.FunSuite:
     bad:    ConcurrentLinkedQueue[String],
     latch:  CountDownLatch
   ): Unit =
-    def loop(n: Int, sock: Socket): Fx[Unit] =
+    def loop(n: Int, sock: ldbc.net.Socket[Fx]): Fx[Unit] =
       if n >= rounds then sock.close()
       else
         val msg = s"c$id-r$n"
@@ -66,7 +69,7 @@ class IoEngineConcurrencyTest extends munit.FunSuite:
             if got == msg then loop(n + 1, sock)
             else { bad.add(s"expected $msg got $got"); sock.close() }
           }
-    val program = IoEngine.global.connect("127.0.0.1", port, 5.seconds).flatMap(loop(0, _))
+    val program = engine.connect("127.0.0.1", port, 5.seconds).flatMap(loop(0, _))
     program.unsafeRun {
       case Right(_)    => ok.incrementAndGet(); latch.countDown()
       case Left(error) => bad.add(s"c$id: ${ error.getMessage }"); latch.countDown()

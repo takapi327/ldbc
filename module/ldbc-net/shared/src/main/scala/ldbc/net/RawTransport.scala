@@ -8,7 +8,7 @@ package ldbc.net
 
 /**
  * The effect-free, callback-based transport layer (design §4.3). The platform engines expose this; the
- * generic `ldbc.net.effect.Socket[F]` / `IoEngine[F]` wrap it once with `F.async`, so every effect
+ * generic `ldbc.net.Socket[F]` / `IoEngine[F]` wrap it once with `F.async`, so every effect
  * (`IO` / `Task` / `Fx`) wraps the *same* raw callbacks natively — no per-effect engine, no bridging.
  * This is the sole transport layer; the earlier per-effect `Fx`-returning socket stack has been removed.
  */
@@ -27,10 +27,13 @@ object Canceler:
  */
 trait RawSocket:
   /** Reads up to `n` bytes. `Some(bytes)` on data (empty for `n <= 0`), `None` at end of stream. */
-  def read(n:      Int, cb:         Either[Throwable, Option[Array[Byte]]] => Unit): Canceler
-  def write(bytes: Array[Byte], cb: Either[Throwable, Unit] => Unit):                Canceler
-  def close():                                                                       Unit
+  def read(n: Int, cb: Either[Throwable, Option[Array[Byte]]] => Unit): Canceler
+  def write(bytes: Array[Byte], cb: Either[Throwable, Unit] => Unit): Canceler
+  def close(): Unit
 
 /** Opens [[RawSocket]]s. One implementation per platform. Connect timeout is applied at the `F` layer. */
 trait RawIoEngine:
   def connect(host: String, port: Int, options: SocketOptions, cb: Either[Throwable, RawSocket] => Unit): Canceler
+
+/** Raised when a connect does not establish a connection within its timeout (applied at the `F` layer). */
+final class ConnectTimeoutException(message: String) extends RuntimeException(message)

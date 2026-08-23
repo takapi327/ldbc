@@ -11,6 +11,8 @@ import scala.concurrent.duration.*
 import scala.scalajs.js
 
 import ldbc.fx.Fx
+import ldbc.fx.concurrentFx
+import ldbc.net.TlsUpgrade
 
 /**
  * Node-transport abnormal-case coverage (the JS counterparts of the `jvm-native` tests, whose
@@ -19,6 +21,8 @@ import ldbc.fx.Fx
  * the callback, and a TLS handshake against a plaintext peer fails rather than hanging.
  */
 class NodeSocketAbnormalTest extends munit.FunSuite:
+
+  private val engine = ldbc.net.IoEngine.fromRaw[Fx](PlatformRawEngine.global)
 
   private given ExecutionContext = munitExecutionContext
 
@@ -56,7 +60,7 @@ class NodeSocketAbnormalTest extends munit.FunSuite:
     ready.future.flatMap { port =>
       val prog =
         for
-          sock <- IoEngine.global.connect("127.0.0.1", port, 5.seconds)
+          sock <- engine.connect("127.0.0.1", port, 5.seconds)
           r    <- sock.read(64)
         yield r
       raceTimeout(
@@ -75,7 +79,7 @@ class NodeSocketAbnormalTest extends munit.FunSuite:
       case (port, server) =>
         val prog =
           for
-            sock <- IoEngine.global.connect("127.0.0.1", port, 5.seconds)
+            sock <- engine.connect("127.0.0.1", port, 5.seconds)
             _    <- sock.close()
             r    <- sock.read(16)
           yield r
@@ -91,9 +95,9 @@ class NodeSocketAbnormalTest extends munit.FunSuite:
     }
 
   test("cancelling an in-progress connect never completes the callback"):
-    var outcome: Option[Either[Throwable, Socket]] = None
+    var outcome: Option[Either[Throwable, ldbc.net.Socket[Fx]]] = None
     var pendingAtCancel = false
-    val canceler        = IoEngine.global.connect("10.255.255.1", 80, 30.seconds).unsafeRun(r => outcome = Some(r))
+    val canceler        = engine.connect("10.255.255.1", 80, 30.seconds).unsafeRun(r => outcome = Some(r))
     val done            = Promise[Unit]()
     js.timers.setTimeout(300.0) {
       pendingAtCancel = outcome.isEmpty
@@ -117,8 +121,8 @@ class NodeSocketAbnormalTest extends munit.FunSuite:
     ready.future.flatMap { port =>
       val prog =
         for
-          plain <- IoEngine.global.connect("127.0.0.1", port, 5.seconds)
-          tls   <- Tls.client(plain, "localhost", port, SSL.Trusted)
+          plain <- engine.connect("127.0.0.1", port, 5.seconds)
+          tls   <- summon[TlsUpgrade[Fx]].client(plain, "localhost", port, SSL.Trusted)
         yield tls
       raceTimeout(
         toFuture(prog).transform(t => scala.util.Success(t)),

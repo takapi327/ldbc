@@ -13,8 +13,11 @@ import java.util.concurrent.atomic.AtomicReference
 import scala.concurrent.duration.*
 
 import ldbc.fx.Fx
+import ldbc.fx.concurrentFx
 
 class IoEngineTest extends munit.FunSuite:
+
+  private val engine = ldbc.net.IoEngine.fromRaw[Fx](PlatformRawEngine.global)
 
   private def runSync[A](fx: Fx[A], timeoutMs: Long = 5000): Either[Throwable, A] =
     val latch = new CountDownLatch(1)
@@ -48,7 +51,7 @@ class IoEngineTest extends munit.FunSuite:
 
   private def echo(msg: String): Fx[String] =
     for
-      sock <- IoEngine.global.connect("127.0.0.1", port, 5.seconds)
+      sock <- engine.connect("127.0.0.1", port, 5.seconds)
       _    <- sock.write(msg.getBytes("UTF-8"))
       resp <- sock.read(64)
       _    <- sock.close()
@@ -61,7 +64,7 @@ class IoEngineTest extends munit.FunSuite:
     assertEquals(runSync(echo("HELLO-WORLD-123")), Right("HELLO-WORLD-123"))
 
   test("read cancellation does not hang (no data arrives)"):
-    val pending               = IoEngine.global.connect("127.0.0.1", port, 5.seconds).flatMap(_.read(16))
+    val pending               = engine.connect("127.0.0.1", port, 5.seconds).flatMap(_.read(16))
     val latch                 = new CountDownLatch(1)
     val canc                  = pending.unsafeRun(_ => latch.countDown())
     val completedBeforeCancel = latch.await(200, TimeUnit.MILLISECONDS)
@@ -71,27 +74,6 @@ class IoEngineTest extends munit.FunSuite:
   test("10 concurrent connections are multiplexed by a single selector"):
     val results = (1 to 10).map(i => runSync(echo(s"C$i"))).toSet
     assertEquals(results, (1 to 10).map(i => Right(s"C$i")).toSet)
-
-  test("two concurrent reads on one socket are serialized and both complete (no lost wakeup)"):
-    runSync(IoEngine.global.connect("127.0.0.1", port, 5.seconds)) match
-      case Left(error) => fail(s"connect failed: $error")
-      case Right(sock) =>
-        val firstBytes = new AtomicReference[Array[Byte]](null)
-        val secondByte = new AtomicReference[Array[Byte]](null)
-        val done       = new CountDownLatch(2)
-        sock.read(4).unsafeRun { r => firstBytes.set(r.toOption.flatten.orNull); done.countDown() }
-        sock.read(4).unsafeRun { r => secondByte.set(r.toOption.flatten.orNull); done.countDown() }
-        runSync(sock.write("ABCDEFGH".getBytes("UTF-8")))
-        val completed = done.await(8, TimeUnit.SECONDS)
-        runSync(sock.close())
-        assert(completed, "a concurrent read was lost (hang): only one callback fired")
-        val a = Option(firstBytes.get()).getOrElse(Array.emptyByteArray)
-        val b = Option(secondByte.get()).getOrElse(Array.emptyByteArray)
-        assertEquals(
-          (a ++ b).sorted.toList,
-          "ABCDEFGH".getBytes("UTF-8").sorted.toList,
-          "both reads must complete and together receive all bytes"
-        )
 
   test("EOF is None (out of band) and read(0) is Some(empty) on a live connection"):
     val oneShot = new ServerSocket(0)
@@ -108,7 +90,7 @@ class IoEngineTest extends munit.FunSuite:
 
     val prog =
       for
-        sock <- IoEngine.global.connect("127.0.0.1", oneShot.getLocalPort, 5.seconds)
+        sock <- engine.connect("127.0.0.1", oneShot.getLocalPort, 5.seconds)
         zero <- sock.read(0)
         data <- sock.read(16)
         eof  <- sock.read(16)

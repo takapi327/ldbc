@@ -14,6 +14,8 @@ import java.util.concurrent.atomic.AtomicReference
 import scala.concurrent.duration.*
 
 import ldbc.fx.Fx
+import ldbc.fx.concurrentFx
+import ldbc.net.TlsUpgrade
 
 /**
  * Native s2n TLS integration tests (design Phase 3): an `openssl s_server -www` process backed by an
@@ -22,6 +24,8 @@ import ldbc.fx.Fx
  * encrypted data path.
  */
 class TlsTest extends munit.FunSuite:
+
+  private val engine = ldbc.net.IoEngine.fromRaw[Fx](PlatformRawEngine.global)
 
   private val certPem =
     """-----BEGIN CERTIFICATE-----
@@ -132,8 +136,8 @@ class TlsTest extends munit.FunSuite:
 
   private def handshakeAndFetch(host: String, config: SSL): Fx[Array[Byte]] =
     for
-      plain    <- IoEngine.global.connect("127.0.0.1", port, 5.seconds)
-      tls      <- Tls.client(plain, host, port, config)
+      plain    <- engine.connect("127.0.0.1", port, 5.seconds)
+      tls      <- summon[TlsUpgrade[Fx]].client(plain, host, port, config)
       _        <- tls.write("GET / HTTP/1.0\r\n\r\n".getBytes("UTF-8"))
       response <- tls.read(4096)
       _        <- tls.close()
@@ -167,8 +171,8 @@ class TlsTest extends munit.FunSuite:
     val baseline = S2nBridge.registeredHosts
     val prog     =
       for
-        plain <- IoEngine.global.connect("127.0.0.1", port, 5.seconds)
-        tls   <- Tls.client(plain, "localhost", port, config)
+        plain <- engine.connect("127.0.0.1", port, 5.seconds)
+        tls   <- summon[TlsUpgrade[Fx]].client(plain, "localhost", port, config)
         after <- Fx.delay(S2nBridge.registeredHosts)
         _     <- tls.close()
       yield after
@@ -179,8 +183,8 @@ class TlsTest extends munit.FunSuite:
     val baseline = S2nBridge.registeredIo
     val prog     =
       for
-        plain <- IoEngine.global.connect("127.0.0.1", port, 5.seconds)
-        tls   <- Tls.client(plain, "localhost", port, SSL.Trusted)
+        plain <- engine.connect("127.0.0.1", port, 5.seconds)
+        tls   <- summon[TlsUpgrade[Fx]].client(plain, "localhost", port, SSL.Trusted)
         _     <- tls.close()
       yield ()
     assert(runSync(prog).isRight)

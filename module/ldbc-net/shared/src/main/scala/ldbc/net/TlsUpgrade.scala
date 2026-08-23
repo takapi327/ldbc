@@ -4,9 +4,10 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.net.effect
+package ldbc.net
 
 import ldbc.effect.Async
+
 import ldbc.net.SSL
 
 /**

@@ -12,53 +12,63 @@ import scala.scalajs.js
 import scala.scalajs.js.typedarray.Uint8Array
 import scala.util.control.NonFatal
 
-import ldbc.fx.Fx
+import ldbc.effect.Async
+
+import ldbc.net.{ HostnameMatcher, NodeRawSocket, SSL, TrustSource }
 
 /**
- * Scala.js TLS engine over node's `tls.connect` (design Phase 2). The plaintext [[NodeSocket]] is
- * detached (listeners removed, pre-read bytes `unshift`ed back onto the stream) and the underlying
- * node socket is handed to `tls.connect`, which performs the handshake, chain validation
- * (`rejectUnauthorized`) and — via `servername`/`host` — node's built-in hostname verification. The
- * resulting `TLSSocket` is wrapped in a fresh [[NodeSocket]], so reads and writes carry plaintext.
+ * Scala.js generic TLS engine over node's `tls.connect` (design Phase 2), generic over the effect `F`. The
+ * trust / identity / protocol-version option mapping is identical to `ldbc.net.PlatformTls`: the plaintext
+ * [[NodeRawSocket]] is detached (listeners removed, pre-read bytes `unshift`ed back onto the stream) and the
+ * underlying node socket is handed to `tls.connect`, which performs the handshake, chain validation
+ * (`rejectUnauthorized`) and — via `servername`/`host` — node's built-in hostname verification. The resulting
+ * `TLSSocket` is wrapped in a fresh [[NodeRawSocket]], so reads and writes carry plaintext.
  */
 private[net] object PlatformTls:
 
   private lazy val tlsModule = js.Dynamic.global.require("tls")
 
-  /** Wraps `socket` in a TLS client session (see [[Tls.client]]). */
-  def client(socket: Socket, host: String, port: Int, ssl: SSL): Fx[Socket] =
+  /** Wraps `socket` in a TLS client session. */
+  def client[F[_]](socket: Socket[F], host: String, port: Int, ssl: SSL)(using F: Async[F]): F[Socket[F]] =
     val _ = port
     socket match
-      case node: NodeSocket => upgrade(node, host, ssl)
-      case _                =>
-        Fx.raiseError(new IllegalArgumentException("JS TLS requires a socket produced by the node IoEngine"))
+      case backed: RawBackedSocket =>
+        backed.underlying match
+          case node: NodeRawSocket => upgrade(node, host, ssl)
+          case _                   =>
+            F.raiseError(new IllegalArgumentException("JS TLS requires a socket produced by the node IoEngine"))
+      case _ =>
+        F.raiseError(new IllegalArgumentException("JS TLS requires a socket produced by the node IoEngine"))
 
   /** Detaches the plaintext wrapper, replays pre-read bytes, and starts the TLS handshake. */
-  private def upgrade(node: NodeSocket, host: String, ssl: SSL): Fx[Socket] =
-    Fx.async { cb =>
-      val done = new AtomicBoolean(false)
-      try
-        val (raw, pending) = node.detachForUpgrade()
-        if pending.nonEmpty then raw.unshift(toUint8Array(pending))
-        val options = buildOptions(host, ssl)
-        options.socket = raw
-        val tlsSock = tlsModule.connect(options)
-        tlsSock.on(
-          "secureConnect",
-          ((() => if done.compareAndSet(false, true) then cb(Right(new NodeSocket(tlsSock)))): js.Function0[Unit])
-        )
-        tlsSock.on(
-          "error",
-          (
-            (err: js.Dynamic) =>
+  private def upgrade[F[_]](node: NodeRawSocket, host: String, ssl: SSL)(using F: Async[F]): F[Socket[F]] =
+    F.async { cb =>
+      F.delay {
+        val done = new AtomicBoolean(false)
+        try
+          val (raw, pending) = node.detachForUpgrade()
+          if pending.nonEmpty then raw.unshift(toUint8Array(pending))
+          val options = buildOptions(host, ssl)
+          options.socket = raw
+          val tlsSock = tlsModule.connect(options)
+          tlsSock.on(
+            "secureConnect",
+            ((() =>
+              if done.compareAndSet(false, true) then cb(Right(Socket.fromRaw[F](new NodeRawSocket(tlsSock))))
+            ): js.Function0[Unit])
+          )
+          tlsSock.on(
+            "error",
+            ((err: js.Dynamic) =>
               if done.compareAndSet(false, true) then cb(Left(new RuntimeException(s"TLS handshake failed: $err")))
-          ): js.Function1[js.Dynamic, Unit]
-        )
-        new Fx.Canceler { override def cancel(): Unit = { tlsSock.destroy(); () } }
-      catch
-        case NonFatal(error) =>
-          if done.compareAndSet(false, true) then cb(Left(error))
-          Fx.Canceler.noop
+            ): js.Function1[js.Dynamic, Unit]
+          )
+          Some(F.delay { tlsSock.destroy(); () }): Option[F[Unit]]
+        catch
+          case NonFatal(error) =>
+            if done.compareAndSet(false, true) then cb(Left(error))
+            Option.empty[F[Unit]]
+      }
     }
 
   /** Maps a [[SSL]] to node `tls.connect` options (trust, identity, protocol versions). */
