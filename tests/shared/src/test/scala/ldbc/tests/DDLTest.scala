@@ -8,8 +8,6 @@ package ldbc.tests
 
 import scala.concurrent.Future
 
-import ldbc.fx.Fx
-
 import cats.syntax.all.*
 
 import cats.effect.*
@@ -22,6 +20,7 @@ import ldbc.schema.*
 
 import ldbc.connector.*
 
+import ldbc.fx.Fx
 import ldbc.Connector
 
 class LdbcDDLTest extends DDLTest[IO] with IODatabaseSuite:

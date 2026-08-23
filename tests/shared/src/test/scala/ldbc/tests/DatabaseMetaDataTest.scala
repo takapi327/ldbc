@@ -6,12 +6,10 @@
 
 package ldbc.tests
 
-import ldbc.fx.Fx
-
 import scala.concurrent.duration.*
 
-import cats.Monad
 import cats.syntax.all.*
+import cats.Monad
 
 import cats.effect.*
 
@@ -20,9 +18,10 @@ import munit.*
 import ldbc.sql.*
 import ldbc.sql.DataSource
 
-import ldbc.effect.Concurrent
-
 import ldbc.connector.*
+
+import ldbc.effect.Concurrent
+import ldbc.fx.Fx
 import ldbc.mysql.syntax.*
 
 class LdbcDatabaseMetaDataTest extends DatabaseMetaDataTest[IO] with IOAsyncDatabaseSuite:
@@ -52,14 +51,14 @@ class MysqlFxDatabaseMetaDataTest extends DatabaseMetaDataTest[Fx] with FxAsyncD
   import ldbc.mysql.MySQLDataSource
   import ldbc.net.SSL as MysqlSSL
 
-  override def prefix:    "mysql" = "mysql"
+  override def prefix: "mysql" = "mysql"
 
   override def datasource: DataSource[Fx] =
     MySQLDataSource
-        .build[Fx](host, port, user)
-        .setPassword(password)
-        .setDatabase(database)
-        .setSSL(MysqlSSL.Trusted)
+      .build[Fx](host, port, user)
+      .setPassword(password)
+      .setDatabase(database)
+      .setSSL(MysqlSSL.Trusted)
 
 trait DatabaseMetaDataTest[F[_]] extends DatabaseSuite[F]:
 

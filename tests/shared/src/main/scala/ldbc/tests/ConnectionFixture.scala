@@ -10,8 +10,9 @@ import cats.MonadThrow
 
 import munit.*
 
-import ldbc.Connector
 import ldbc.sql.DataSource
+
+import ldbc.Connector
 
 /**
  * Effect-agnostic connection fixture: a suite-level `Connector[F]` acquired in `beforeAll` and released

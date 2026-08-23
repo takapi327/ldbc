@@ -6,12 +6,10 @@
 
 package ldbc.tests
 
-import ldbc.fx.Fx
-
 import scala.concurrent.duration.*
 
-import cats.Monad
 import cats.syntax.all.*
+import cats.Monad
 
 import cats.effect.*
 
@@ -20,9 +18,10 @@ import munit.*
 import ldbc.sql.*
 import ldbc.sql.DataSource
 
-import ldbc.effect.Concurrent
-
 import ldbc.connector.*
+
+import ldbc.effect.Concurrent
+import ldbc.fx.Fx
 import ldbc.mysql.syntax.*
 
 class LdbcConnectionTest extends ConnectionTest[IO] with IOAsyncDatabaseSuite:

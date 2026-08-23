@@ -8,10 +8,7 @@ package ldbc.tests
 
 import scala.concurrent.Future
 
-import ldbc.fx.Fx
-
 import cats.data.NonEmptyList
-
 import cats.syntax.all.*
 
 import cats.effect.*
@@ -25,6 +22,7 @@ import ldbc.schema.*
 
 import ldbc.connector.*
 
+import ldbc.fx.Fx
 import ldbc.tests.model.*
 import ldbc.Connector
 
@@ -61,7 +59,7 @@ class MysqlFxTableSchemaSelectConnectionTest extends TableSchemaSelectConnection
   import ldbc.mysql.{ Connector as MysqlConnector, MySQLDataSource }
   import ldbc.net.SSL as MysqlSSL
 
-  override def prefix:    "mysql" = "mysql"
+  override def prefix: "mysql" = "mysql"
 
   override def connector: Connector[Fx] =
     MysqlConnector.fromDataSource(
@@ -72,12 +70,14 @@ class MysqlFxTableSchemaSelectConnectionTest extends TableSchemaSelectConnection
         .setSSL(MysqlSSL.Trusted)
     )
 
-class MysqlFutureTableSchemaSelectConnectionTest extends TableSchemaSelectConnectionTest[Future] with FutureDatabaseSuite:
+class MysqlFutureTableSchemaSelectConnectionTest
+  extends TableSchemaSelectConnectionTest[Future]
+     with FutureDatabaseSuite:
   import ldbc.fx.concurrentFx
   import ldbc.mysql.MySQLDataSource
   import ldbc.net.SSL as MysqlSSL
 
-  override def prefix:    "mysql" = "mysql"
+  override def prefix: "mysql" = "mysql"
 
   override def connector: Connector[Future] =
     ldbc.future.Connector.fromDataSource(

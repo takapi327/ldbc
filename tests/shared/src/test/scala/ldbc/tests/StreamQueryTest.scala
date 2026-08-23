@@ -8,8 +8,6 @@ package ldbc.tests
 
 import scala.concurrent.Future
 
-import ldbc.fx.Fx
-
 import cats.effect.*
 
 import munit.*
@@ -19,6 +17,7 @@ import ldbc.dsl.*
 import ldbc.connector.*
 
 import ldbc.catseffect.*
+import ldbc.fx.Fx
 import ldbc.Connector
 
 class LdbcStreamQueryTest extends StreamQueryTest[IO] with IODatabaseSuite:

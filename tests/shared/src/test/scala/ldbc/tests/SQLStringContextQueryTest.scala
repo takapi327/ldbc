@@ -6,11 +6,9 @@
 
 package ldbc.tests
 
-import scala.concurrent.Future
-
-import ldbc.fx.Fx
-
 import java.time.*
+
+import scala.concurrent.Future
 
 import cats.data.NonEmptyList
 
@@ -26,6 +24,7 @@ import ldbc.dsl.exception.*
 import ldbc.connector.*
 import ldbc.connector.exception.SQLException
 
+import ldbc.fx.Fx
 import ldbc.Connector
 
 class LdbcSQLStringContextQueryTest extends SQLStringContextQueryTest[IO] with IODatabaseSuite:

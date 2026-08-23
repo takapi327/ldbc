@@ -6,22 +6,21 @@
 
 package ldbc.tests
 
-import ldbc.fx.Fx
-
 import scala.concurrent.duration.*
+
+import cats.syntax.all.*
 
 import cats.effect.*
 
 import munit.*
 
-import cats.syntax.all.*
-
 import ldbc.sql.*
 import ldbc.sql.DataSource
 
-import ldbc.effect.Concurrent
-
 import ldbc.connector.*
+
+import ldbc.effect.Concurrent
+import ldbc.fx.Fx
 import ldbc.mysql.syntax.*
 
 class LdbcServerCursorFetchTest extends ServerCursorFetchTest[IO] with IOAsyncDatabaseSuite:
@@ -51,6 +50,7 @@ class MysqlServerCursorFetchTest extends ServerCursorFetchTest[IO] with IOAsyncD
 
 class MysqlFxServerCursorFetchTest extends ServerCursorFetchTest[Fx] with FxAsyncDatabaseSuite:
   import scala.concurrent.duration.*
+
   import ldbc.mysql.MySQLDataSource
   import ldbc.net.SSL as MysqlSSL
 
@@ -58,11 +58,11 @@ class MysqlFxServerCursorFetchTest extends ServerCursorFetchTest[Fx] with FxAsyn
 
   override def datasource: DataSource[Fx] =
     MySQLDataSource
-        .build[Fx](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
-        .setPassword(MySQLTestConfig.password)
-        .setDatabase("world")
-        .setSSL(MysqlSSL.Trusted)
-        .setUseCursorFetch(true)
+      .build[Fx](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+      .setPassword(MySQLTestConfig.password)
+      .setDatabase("world")
+      .setSSL(MysqlSSL.Trusted)
+      .setUseCursorFetch(true)
 
 trait ServerCursorFetchTest[F[_]] extends DatabaseSuite[F]:
 

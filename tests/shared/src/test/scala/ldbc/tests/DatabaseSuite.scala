@@ -51,7 +51,7 @@ trait DatabaseSuite[F[_]] extends munit.FunSuite:
    */
   def suiteFixture(name: String, setup: => F[Unit], teardown: => F[Unit]): munit.AnyFixture[Unit] =
     new munit.AnyFixture[Unit](name):
-      def apply(): Unit                 = ()
+      def apply():              Unit    = ()
       override def beforeAll(): F[Unit] = setup
       override def afterAll():  F[Unit] = teardown
 
@@ -60,7 +60,7 @@ trait DatabaseSuite[F[_]] extends munit.FunSuite:
     def apply[A](fa: F[A]): F[T] =
       monad.map(monad.attempt(fa)) {
         case Left(error) if ct.runtimeClass.isInstance(error) => error.asInstanceOf[T]
-        case Left(error) =>
+        case Left(error)                                      =>
           throw munit.FailException(
             s"intercept failed, exception '${ error.getClass.getName }' is not a subtype of '${ ct.runtimeClass.getName }'",
             loc

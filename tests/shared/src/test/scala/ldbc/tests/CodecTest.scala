@@ -6,8 +6,6 @@
 
 package ldbc.tests
 
-import ldbc.fx.Fx
-
 import java.time.*
 
 import cats.syntax.all.*
@@ -20,6 +18,8 @@ import ldbc.dsl.*
 import ldbc.dsl.codec.Codec
 
 import ldbc.connector.*
+
+import ldbc.fx.Fx
 
 class LdbcCodecTest extends CodecTest[IO] with IODatabaseSuite:
 
@@ -57,7 +57,7 @@ class MysqlFxCodecTest extends CodecTest[Fx] with FxDatabaseSuite:
   import ldbc.mysql.MySQLDataSource
   import ldbc.net.SSL as MysqlSSL
 
-  override def prefix:    "mysql" = "mysql"
+  override def prefix: "mysql" = "mysql"
 
   override def connection: ConnectionFixture[Fx] =
     ConnectionFixture(

@@ -6,8 +6,6 @@
 
 package ldbc.tests
 
-import ldbc.fx.Fx
-
 import cats.syntax.all.*
 
 import cats.effect.*
@@ -17,6 +15,8 @@ import munit.CatsEffectSuite
 import ldbc.dsl.*
 
 import ldbc.connector.*
+
+import ldbc.fx.Fx
 
 class LdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest[IO] with IODatabaseSuite:
   override def prefix: "jdbc" | "ldbc" = "ldbc"
@@ -53,7 +53,7 @@ class MysqlFxSQLStringContextUpdateTest extends SQLStringContextUpdateTest[Fx] w
   import ldbc.mysql.MySQLDataSource
   import ldbc.net.SSL as MysqlSSL
 
-  override def prefix:    "mysql" = "mysql"
+  override def prefix: "mysql" = "mysql"
 
   override def connection: ConnectionFixture[Fx] =
     ConnectionFixture(
@@ -74,7 +74,8 @@ trait SQLStringContextUpdateTest[F[_]] extends DatabaseSuite[F]:
   private lazy val connectionFixture = connection
     .withBeforeAll(conn =>
       sql"CREATE TABLE $table (`id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, `c1` VARCHAR(255) NOT NULL)".update
-        .commit(conn).void
+        .commit(conn)
+        .void
     )
     .withAfterAll(conn => sql"DROP TABLE $table".update.commit(conn).void)
     .withBeforeEach(conn => sql"TRUNCATE TABLE $table".update.commit(conn).void)
