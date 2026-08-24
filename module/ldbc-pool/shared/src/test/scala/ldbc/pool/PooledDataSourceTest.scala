@@ -123,7 +123,7 @@ class PooledDataSourceTest extends FxSuite:
     val hangingCreate: Resource[Fx, Connection[Fx]] =
       Resource.make(MockConnection().map(c => (c: Connection[Fx])))(_ => Fx.never[Unit])
 
-    PooledDataSource.fromConfig(config(1, 1), hangingCreate).use(_ => Fx.unit).timeout(3.seconds)
+    PooledDataSource.fromConfig(config(1, 1, 500.millis), hangingCreate).use(_ => Fx.unit).timeout(3.seconds)
   }
 
   test("PooledDataSource should add connections to idleConnections on initialization") {

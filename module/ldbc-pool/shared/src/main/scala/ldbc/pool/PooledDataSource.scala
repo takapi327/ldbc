@@ -6,6 +6,8 @@
 
 package ldbc.pool
 
+import java.util.concurrent.TimeoutException
+
 import scala.concurrent.duration.*
 
 import ldbc.sql.{ Connection, DataSource, SQLException }
@@ -103,11 +105,15 @@ object PooledDataSource:
           if state.closed then (state, F.unit)
           else
             val newState = state.copy(closed = true)
+            def bounded(action: F[Unit], id: String): F[Unit] =
+              F.timeout(action, config.connectionTimeout)(
+                new TimeoutException(s"Closing connection $id timed out after ${ config.connectionTimeout }")
+              )
             val closeAll = state.connections.traverse_ { pooled =>
-              pooled.finalizer.attempt.flatMap {
+              bounded(pooled.finalizer, pooled.id).attempt.flatMap {
                 case Left(error) =>
                   poolLogger.debug(s"Error closing connection ${ pooled.id }: ${ error.getMessage }") >>
-                    pooled.connection.close().attempt.void
+                    bounded(pooled.connection.close(), pooled.id).attempt.void
                 case Right(_) =>
                   F.unit
               }
