@@ -119,6 +119,13 @@ class PooledDataSourceTest extends FxSuite:
       .map(finalStatus => assert(finalStatus.total >= 2))
   }
 
+  test("PooledDataSource shutdown must not hang when a connection's close blocks") {
+    val hangingCreate: Resource[Fx, Connection[Fx]] =
+      Resource.make(MockConnection().map(c => (c: Connection[Fx])))(_ => Fx.never[Unit])
+
+    PooledDataSource.fromConfig(config(1, 1), hangingCreate).use(_ => Fx.unit).timeout(3.seconds)
+  }
+
   test("PooledDataSource should add connections to idleConnections on initialization") {
     pool(config(3, 5)).use { datasource =>
       for

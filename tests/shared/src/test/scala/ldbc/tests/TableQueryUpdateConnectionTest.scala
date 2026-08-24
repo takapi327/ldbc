@@ -93,15 +93,22 @@ trait TableQueryUpdateConnectionTest[F[_]] extends DatabaseSuite[F]:
   private final val city            = TableQuery[City]
   private final val countryLanguage = TableQuery[CountryLanguage]
 
-  private def code(index: Int): String = prefix match
-    case "jdbc"  => s"J$index"
-    case "ldbc"  => s"L$index"
-    case "mysql" => s"M$index"
+  private def code(index: Int): String =
+    val tag = (prefix, effectLabel) match
+      case ("jdbc", _)         => "j"
+      case ("ldbc", _)         => "l"
+      case ("mysql", "fx")     => "f"
+      case ("mysql", "future") => "u"
+      case _                   => "m"
+    s"$tag$index"
+
+  private def nishiName: String = s"${ prefix }_${ effectLabel }_Nishi"
+  private def nishiId:   Int    = 900000 + math.abs(s"${ prefix }${ effectLabel }".hashCode % 90000)
 
   private def cleanup: F[Unit] =
     (for
       _ <- sql"DELETE FROM city WHERE CountryCode IN (${ code(1) }, ${ code(2) }, ${ code(3) }, ${ code(4) })".update
-      _ <- sql"DELETE FROM city WHERE Name = 'Nishinomiya' AND CountryCode = 'JPN'".update
+      _ <- sql"DELETE FROM city WHERE Name = ${ nishiName } AND CountryCode = 'JPN'".update
       _ <- sql"DELETE FROM city WHERE Name = 'Test4' AND CountryCode = ${ code(4) }".update
       _ <- sql"DELETE FROM city WHERE Name = 'Japan' AND CountryCode = 'JPN' AND District = 'Kanto'".update
       _ <-
@@ -120,7 +127,7 @@ trait TableQueryUpdateConnectionTest[F[_]] extends DatabaseSuite[F]:
         .insert(
           (
             code(1),
-            s"${ prefix }_Test1",
+            s"${ prefix }_${ effectLabel }_Test1",
             Country.Continent.Asia,
             "Northeast",
             BigDecimal.decimal(390757.00),
@@ -150,7 +157,7 @@ trait TableQueryUpdateConnectionTest[F[_]] extends DatabaseSuite[F]:
         .insert(
           (
             code(2),
-            s"${ prefix }_Test2",
+            s"${ prefix }_${ effectLabel }_Test2",
             Country.Continent.Asia,
             "Northeast",
             BigDecimal.decimal(390757.00),
@@ -167,7 +174,7 @@ trait TableQueryUpdateConnectionTest[F[_]] extends DatabaseSuite[F]:
           ),
           (
             code(3),
-            s"${ prefix }_Test3",
+            s"${ prefix }_${ effectLabel }_Test3",
             Country.Continent.Asia,
             "Northeast",
             BigDecimal.decimal(390757.00),
@@ -194,7 +201,7 @@ trait TableQueryUpdateConnectionTest[F[_]] extends DatabaseSuite[F]:
   ) {
     val newCountry = Country(
       code(4),
-      s"${ prefix }_Test4",
+      s"${ prefix }_${ effectLabel }_Test4",
       Country.Continent.Asia,
       "Northeast",
       BigDecimal.decimal(390757.00),
@@ -220,7 +227,7 @@ trait TableQueryUpdateConnectionTest[F[_]] extends DatabaseSuite[F]:
   ) {
     val newCountry1 = Country(
       code(5),
-      s"${ prefix }_Test5",
+      s"${ prefix }_${ effectLabel }_Test5",
       Country.Continent.Asia,
       "Northeast",
       BigDecimal.decimal(390757.00),
@@ -237,7 +244,7 @@ trait TableQueryUpdateConnectionTest[F[_]] extends DatabaseSuite[F]:
     )
     val newCountry2 = Country(
       code(6),
-      s"${ prefix }_Test6",
+      s"${ prefix }_${ effectLabel }_Test6",
       Country.Continent.North_America,
       "Northeast",
       BigDecimal.decimal(390757.00),
@@ -389,9 +396,9 @@ trait TableQueryUpdateConnectionTest[F[_]] extends DatabaseSuite[F]:
   ) {
     assertFBoolean(
       (for
-        empty <- city.selectAll.where(_.name _equals "Nishinomiya").query.to[Option]
-        _     <- city.insert((9999, "Nishinomiya", "JPN", "Hyogo", 0)).onDuplicateKeyUpdate(_.name).update
-        data  <- city.selectAll.where(_.id _equals 9999).query.to[Option]
+        empty <- city.selectAll.where(_.name _equals nishiName).query.to[Option]
+        _     <- city.insert((nishiId, nishiName, "JPN", "Hyogo", 0)).onDuplicateKeyUpdate(_.name).update
+        data  <- city.selectAll.where(_.id _equals nishiId).query.to[Option]
       yield empty.isEmpty & data.nonEmpty)
         .transaction(connector)
     )
