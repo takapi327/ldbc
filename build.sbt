@@ -106,18 +106,6 @@ lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .dependsOn(core)
 
-lazy val catsEffect = crossProject(JVMPlatform, JSPlatform, NativePlatform)
-  .crossType(CrossType.Pure)
-  .module("cats-effect", "Cats Effect boundary for ldbc (fs2 streaming and IO helpers over the shared DSL)")
-  .settings(
-    libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-effect"       % "3.7.0",
-      "co.fs2"        %%% "fs2-core"          % "3.13.0",
-      "org.typelevel" %%% "munit-cats-effect" % "2.2.0" % Test
-    )
-  )
-  .dependsOn(dsl, effect)
-
 lazy val statement = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("statement", "Project for building type-safe statements")
@@ -247,10 +235,9 @@ lazy val mysql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     scalacOptions += "-Ykind-projector:underscores",
     libraryDependencies ++= Seq(
-      "org.scodec"    %%% "scodec-bits"       % "1.2.5",
-      "org.scodec"    %%% "scodec-core"       % "2.3.3",
-      "org.typelevel" %%% "twiddles-core"     % "1.1.0",
-      "org.typelevel" %%% "munit-cats-effect" % "2.2.0" % Test
+      "org.scodec"    %%% "scodec-bits"   % "1.2.5",
+      "org.scodec"    %%% "scodec-core"   % "2.3.3",
+      "org.typelevel" %%% "twiddles-core" % "1.1.0"
     ),
     (Compile / sourceGenerators) += Def.task {
       Generator.version(
@@ -266,15 +253,24 @@ lazy val mysql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
   .nativeSettings(Test / nativeBrewFormulas += "s2n")
-  .dependsOn(sql, net, authenticationPlugin, core, catsEffect % Test, fx % "test->compile;test->test")
+  .dependsOn(net, authenticationPlugin, core, fx % "test->compile;test->test")
 
 lazy val pool = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
   .module("pool", "Effect-agnostic connection pool over the ldbc.effect type classes")
+  .dependsOn(sql, effect, fx % "test->compile;test->test")
+
+lazy val catsEffect = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
+  .module("cats-effect", "Cats Effect boundary for ldbc (fs2 streaming and IO helpers over the shared DSL)")
   .settings(
-    libraryDependencies += "org.typelevel" %%% "munit-cats-effect" % "2.2.0" % Test
+    libraryDependencies ++= Seq(
+      "org.typelevel" %%% "cats-effect"       % "3.7.0",
+      "co.fs2"        %%% "fs2-core"          % "3.13.0",
+      "org.typelevel" %%% "munit-cats-effect" % "2.2.0" % Test
+    )
   )
-  .dependsOn(sql, effect, fx % "test->compile;test->test", mysql % Test, catsEffect % Test)
+  .dependsOn(dsl, effect)
 
 lazy val future = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
@@ -377,7 +373,7 @@ lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
   .nativeSettings(Test / nativeBrewFormulas += "s2n")
-  .dependsOn(connector, queryBuilder, schema, catsEffect)
+  .dependsOn(connector, mysql, pool, queryBuilder, schema, catsEffect, future, fx % "test->test")
   .enablePlugins(NoPublishPlugin)
 
 lazy val benchmark = (project in file("benchmark"))
@@ -481,7 +477,7 @@ lazy val testkitExample = crossProject(JVMPlatform)
   .crossType(CrossType.Pure)
   .withoutSuffixFor(JVMPlatform)
   .example("testkit", "ldbc-testkit usage example")
-  .dependsOn(connector, dsl, testkitMunit)
+  .dependsOn(dsl, testkitMunit)
 
 lazy val docs = (project in file("docs"))
   .settings(
@@ -571,10 +567,10 @@ lazy val ldbc = tlCrossRootProject
     core,
     fx,
     net,
-    jdbcConnector,
     mysql,
     pool,
     connector,
+    jdbcConnector,
     dsl,
     catsEffect,
     future,

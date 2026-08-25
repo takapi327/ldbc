@@ -14,7 +14,7 @@ import ldbc.sql.DataSource
 
 import jdbc.connector.*
 
-class JdbcDatabaseMetaDataTest extends DatabaseMetaDataTest:
+class JdbcDatabaseMetaDataTest extends DatabaseMetaDataTest[IO] with IOAsyncDatabaseSuite:
 
   val ds = new MysqlDataSource()
   ds.setServerName(host)

@@ -8,6 +8,8 @@ package ldbc.tests
 
 import java.time.*
 
+import scala.concurrent.Future
+
 import cats.data.NonEmptyList
 
 import cats.effect.*
@@ -22,9 +24,10 @@ import ldbc.dsl.exception.*
 import ldbc.connector.*
 import ldbc.connector.exception.SQLException
 
+import ldbc.fx.Fx
 import ldbc.Connector
 
-class LdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
+class LdbcSQLStringContextQueryTest extends SQLStringContextQueryTest[IO] with IODatabaseSuite:
 
   private val datasource = MySQLDataSource
     .build[IO](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
@@ -42,7 +45,7 @@ class LdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
 
     given Codec[MyEnum] = Codec.derivedEnum[MyEnum]
 
-    interceptIO[SQLException](
+    interceptF[SQLException](
       sql"SELECT D"
         .query[MyEnum]
         .to[Option]
@@ -55,7 +58,7 @@ class LdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
   ) {
     case class City(id: Int, name: String, age: Int)
 
-    interceptIO[SQLException](
+    interceptF[SQLException](
       sql"SELECT Id, Name FROM city LIMIT 1"
         .query[City]
         .to[Option]
@@ -63,12 +66,54 @@ class LdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
     )
   }
 
-trait SQLStringContextQueryTest extends CatsEffectSuite:
+class MysqlSQLStringContextQueryTest extends SQLStringContextQueryTest[IO] with IODatabaseSuite:
+  import ldbc.catseffect.concurrentIO
+  import ldbc.mysql.Connector as MysqlConnector
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
 
-  def connector: Connector[IO]
+  private val datasource = MySQLDataSource
+    .build[IO](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+    .setPassword(MySQLTestConfig.password)
+    .setDatabase("world")
+    .setSSL(MysqlSSL.Trusted)
+
+  override def connector: Connector[IO] = MysqlConnector.fromDataSource(datasource)
+
+class MysqlFxSQLStringContextQueryTest extends SQLStringContextQueryTest[Fx] with FxDatabaseSuite:
+  import ldbc.fx.concurrentFx
+  import ldbc.mysql.{ Connector as MysqlConnector, MySQLDataSource }
+  import ldbc.net.SSL as MysqlSSL
+
+  override def connector: Connector[Fx] =
+    MysqlConnector.fromDataSource(
+      MySQLDataSource
+        .build[Fx](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+        .setPassword(MySQLTestConfig.password)
+        .setDatabase("world")
+        .setSSL(MysqlSSL.Trusted)
+    )
+
+class MysqlFutureSQLStringContextQueryTest extends SQLStringContextQueryTest[Future] with FutureDatabaseSuite:
+  import ldbc.fx.concurrentFx
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
+
+  override def connector: Connector[Future] =
+    ldbc.future.Connector.fromDataSource(
+      MySQLDataSource
+        .build[Fx](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+        .setPassword(MySQLTestConfig.password)
+        .setDatabase("world")
+        .setSSL(MysqlSSL.Trusted)
+    )
+
+trait SQLStringContextQueryTest[F[_]] extends DatabaseSuite[F]:
+
+  def connector: Connector[F]
 
   test("Statement should be able to execute a query") {
-    assertIO(
+    assertF(
       (for
         result1 <- sql"SELECT 1".query[Int].to[List]
         result2 <- sql"SELECT 2".query[Int].to[Option]
@@ -79,7 +124,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   }
 
   test("Statement should be able to retrieve BIT type records.") {
-    assertIO(
+    assertF(
       (for
         result1 <- sql"SELECT `bit`, `bit_null` FROM `connector_test`.`all_types`".query[(Byte, Byte)].to[List]
         result2 <- sql"SELECT `bit`, `bit_null` FROM `connector_test`.`all_types`".query[(Byte, Byte)].to[Option]
@@ -90,7 +135,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   }
 
   test("Statement should be able to retrieve TINYINT type records.") {
-    assertIO(
+    assertF(
       (for
         result1 <-
           sql"SELECT `tinyint`, `tinyint_null` FROM `connector_test`.`all_types`".query[(Byte, Byte)].to[List]
@@ -105,7 +150,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   }
 
   test("Statement should be able to retrieve unsigned TINYINT type records.") {
-    assertIO(
+    assertF(
       (for
         result1 <- sql"SELECT `tinyint_unsigned`, `tinyint_unsigned_null` FROM `connector_test`.`all_types`"
                      .query[(Short, Short)]
@@ -123,7 +168,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   }
 
   test("Statement should be able to retrieve SMALLINT type records.") {
-    assertIO(
+    assertF(
       (for
         result1 <-
           sql"SELECT `smallint`, `smallint_null` FROM `connector_test`.`all_types`".query[(Short, Short)].to[List]
@@ -139,7 +184,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   }
 
   test("Statement should be able to retrieve unsigned SMALLINT type records.") {
-    assertIO(
+    assertF(
       (for
         result1 <- sql"SELECT `smallint_unsigned`, `smallint_unsigned_null` FROM `connector_test`.`all_types`"
                      .query[(Int, Int)]
@@ -157,7 +202,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   }
 
   test("Statement should be able to retrieve MEDIUMINT type records.") {
-    assertIO(
+    assertF(
       (for
         result1 <-
           sql"SELECT `mediumint`, `mediumint_null` FROM `connector_test`.`all_types`".query[(Int, Int)].to[List]
@@ -173,7 +218,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   }
 
   test("Statement should be able to retrieve INT type records.") {
-    assertIO(
+    assertF(
       (for
         result1 <- sql"SELECT `int`, `int_null` FROM `connector_test`.`all_types`".query[(Int, Int)].to[List]
         result2 <- sql"SELECT `int`, `int_null` FROM `connector_test`.`all_types` WHERE `int` = ${ 2147483647 }"
@@ -186,7 +231,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   }
 
   test("Statement should be able to retrieve unsigned INT type records.") {
-    assertIO(
+    assertF(
       (for
         result1 <-
           sql"SELECT `int_unsigned`, `int_unsigned_null` FROM `connector_test`.`all_types`"
@@ -204,7 +249,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   }
 
   test("Statement should be able to retrieve BIGINT type records.") {
-    assertIO(
+    assertF(
       (for
         result1 <- sql"SELECT `bigint`, `bigint_null` FROM `connector_test`.`all_types`".query[(Long, Long)].to[List]
         result2 <-
@@ -218,7 +263,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   }
 
   test("Statement should be able to retrieve unsigned BIGINT type records.") {
-    assertIO(
+    assertF(
       (for
         result1 <- sql"SELECT `bigint_unsigned`, `bigint_unsigned_null` FROM `connector_test`.`all_types`"
                      .query[(String, Option[String])]
@@ -236,7 +281,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   }
 
   test("Statement should be able to retrieve FLOAT type records.") {
-    assertIO(
+    assertF(
       (for
         result1 <- sql"SELECT `float`, `float_null` FROM `connector_test`.`all_types`".query[(Float, Float)].to[List]
         result2 <- sql"SELECT `float`, `float_null` FROM `connector_test`.`all_types` WHERE `float` >= ${ 3.3f }"
@@ -249,7 +294,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   }
 
   test("Statement should be able to retrieve DOUBLE type records.") {
-    assertIO(
+    assertF(
       (for
         result1 <-
           sql"SELECT `double`, `double_null` FROM `connector_test`.`all_types`".query[(Double, Double)].to[List]
@@ -269,7 +314,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   }
 
   test("Statement should be able to retrieve DECIMAL type records.") {
-    assertIO(
+    assertF(
       (for
         result1 <- sql"SELECT `decimal`, `decimal_null` FROM `connector_test`.`all_types`"
                      .query[(BigDecimal, Option[BigDecimal])]
@@ -291,7 +336,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   }
 
   test("Statement should be able to retrieve DATE type records.") {
-    assertIO(
+    assertF(
       (for
         result1 <-
           sql"SELECT `date`, `date_null` FROM `connector_test`.`all_types`"
@@ -311,7 +356,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   }
 
   test("Statement should be able to retrieve TIME type records.") {
-    assertIO(
+    assertF(
       (for
         result1 <-
           sql"SELECT `time`, `time_null` FROM `connector_test`.`all_types`"
@@ -331,7 +376,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   }
 
   test("Statement should be able to retrieve DATETIME type records.") {
-    assertIO(
+    assertF(
       (for
         result1 <- sql"SELECT `datetime`, `datetime_null` FROM `connector_test`.`all_types`"
                      .query[(LocalDateTime, Option[LocalDateTime])]
@@ -354,7 +399,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   }
 
   test("Statement should be able to retrieve TIMESTAMP type records.") {
-    assertIO(
+    assertF(
       (for
         result1 <- sql"SELECT `timestamp`, `timestamp_null` FROM `connector_test`.`all_types`"
                      .query[(LocalDateTime, Option[LocalDateTime])]
@@ -377,7 +422,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   }
 
   test("Statement should be able to retrieve YEAR type records.") {
-    assertIO(
+    assertF(
       (for
         result1 <-
           sql"SELECT `year`, `year_null` FROM `connector_test`.`all_types`".query[(Short, Option[Short])].to[List]
@@ -393,7 +438,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   }
 
   test("Statement should be able to retrieve CHAR type records.") {
-    assertIO(
+    assertF(
       (for
         result1 <-
           sql"SELECT `char`, `char_null` FROM `connector_test`.`all_types`".query[(String, Option[String])].to[List]
@@ -409,7 +454,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   }
 
   test("Statement should be able to retrieve VARCHAR type records.") {
-    assertIO(
+    assertF(
       (for
         result1 <-
           sql"SELECT `varchar`, `varchar_null` FROM `connector_test`.`all_types`"
@@ -429,7 +474,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   }
 
   test("Statement should be able to retrieve BINARY type records.") {
-    assertIO(
+    assertF(
       (for
         result1 <- sql"SELECT `binary`, `binary_null` FROM `connector_test`.`all_types`"
                      .query[(Array[Byte], Option[Array[Byte]])]
@@ -454,7 +499,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   }
 
   test("Statement should be able to retrieve VARBINARY type records.") {
-    assertIO(
+    assertF(
       (for
         result1 <-
           sql"SELECT `varbinary`, `varbinary_null` FROM `connector_test`.`all_types`"
@@ -473,7 +518,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   }
 
   test("Statement should be able to retrieve MEDIUMBLOB type records.") {
-    assertIO(
+    assertF(
       (for
         result1 <- sql"SELECT `mediumblob`, `mediumblob_null` FROM `connector_test`.`all_types`"
                      .query[(String, Option[String])]
@@ -491,7 +536,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   }
 
   test("Statement should be able to retrieve LONGBLOB type records.") {
-    assertIO(
+    assertF(
       (for
         result1 <-
           sql"SELECT `longblob`, `longblob_null` FROM `connector_test`.`all_types`"
@@ -510,7 +555,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   }
 
   test("Statement should be able to retrieve TINYTEXT type records.") {
-    assertIO(
+    assertF(
       (for
         result1 <-
           sql"SELECT `tinytext`, `tinytext_null` FROM `connector_test`.`all_types`"
@@ -529,7 +574,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   }
 
   test("Statement should be able to retrieve TEXT type records.") {
-    assertIO(
+    assertF(
       (for
         result1 <-
           sql"SELECT `text`, `text_null` FROM `connector_test`.`all_types`".query[(String, Option[String])].to[List]
@@ -545,7 +590,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   }
 
   test("Statement should be able to retrieve MEDIUMTEXT type records.") {
-    assertIO(
+    assertF(
       (for
         result1 <- sql"SELECT `mediumtext`, `mediumtext_null` FROM `connector_test`.`all_types`"
                      .query[(String, Option[String])]
@@ -564,7 +609,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   }
 
   test("Statement should be able to retrieve LONGTEXT type records.") {
-    assertIO(
+    assertF(
       (for
         result1 <-
           sql"SELECT `longtext`, `longtext_null` FROM `connector_test`.`all_types`"
@@ -583,7 +628,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   }
 
   test("Statement should be able to retrieve ENUM type records.") {
-    assertIO(
+    assertF(
       (for
         result1 <-
           sql"SELECT `enum`, `enum_null` FROM `connector_test`.`all_types`".query[(String, Option[String])].to[List]
@@ -599,7 +644,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   }
 
   test("Statement should be able to retrieve SET type records.") {
-    assertIO(
+    assertF(
       (for
         result1 <-
           sql"SELECT `set`, `set_null` FROM `connector_test`.`all_types`".query[(String, Option[String])].to[List]
@@ -615,7 +660,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   }
 
   test("Statement should be able to retrieve JSON type records.") {
-    assertIO(
+    assertF(
       (for
         result1 <-
           sql"SELECT `json`, `json_null` FROM `connector_test`.`all_types`".query[(String, Option[String])].to[List]
@@ -629,7 +674,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   }
 
   test("Statement and can be converted to any model.") {
-    assertIO(
+    assertF(
       (for
         result1 <-
           sql"SELECT `int_unsigned`, `int_unsigned_null` FROM `connector_test`.`all_types`"
@@ -653,7 +698,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
     case class Country(code: String, name: String)
     case class CityWithCountry(c: City, ct: Country)
 
-    assertIO(
+    assertF(
       sql"SELECT c.Id, c.Name, ct.Code, ct.Name FROM city AS c JOIN country AS ct ON c.CountryCode = ct.Code LIMIT 1"
         .query[CityWithCountry]
         .to[Option]
@@ -666,7 +711,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
     case class City(id: Int, name: String)
     case class Country(code: String, name: String)
 
-    assertIO(
+    assertF(
       sql"SELECT city.Id, city.Name, country.Code, country.Name FROM city JOIN country ON city.CountryCode = country.Code LIMIT 1"
         .query[(City, Country)]
         .to[Option]
@@ -681,7 +726,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
 
     given Codec[MyEnum] = Codec.derivedEnum[MyEnum]
 
-    assertIO(
+    assertF(
       (for
         a <- sql"SELECT 'A'".query[MyEnum].to[Option]
         b <- sql"SELECT 'B'".query[MyEnum].to[Option]
@@ -694,21 +739,21 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   test(
     "If option is specified, the data to be acquired can be obtained with Some if the data to be acquired is one case."
   ) {
-    assertIO(
+    assertF(
       sql"SELECT Name FROM `city` LIMIT 1".query[String].option.readOnly(connector),
       Some("Kabul")
     )
   }
 
   test("If option is specified, None is returned when there is no data to be acquired.") {
-    assertIO(
+    assertF(
       sql"SELECT Name FROM `city` WHERE ID = 9999999".query[String].option.readOnly(connector),
       None
     )
   }
 
   test("If option is specified, an exception occurs if there are two or more data to be acquired.") {
-    interceptIO[UnexpectedContinuation](
+    interceptF[UnexpectedContinuation](
       sql"SELECT Name FROM `city`".query[String].option.readOnly(connector)
     )
   }
@@ -716,14 +761,14 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   test(
     "When nel is specified, if there is one or more data to be retrieved, it can be retrieved with NonEmptyList."
   ) {
-    assertIO(
+    assertF(
       sql"SELECT Name FROM `city` LIMIT 5".query[String].nel.readOnly(connector),
       NonEmptyList.of("Kabul", "Qandahar", "Herat", "Mazar-e-Sharif", "Amsterdam")
     )
   }
 
   test("When nel is specified, an exception occurs if there is no data to be acquired.") {
-    interceptIO[UnexpectedEnd](
+    interceptF[UnexpectedEnd](
       sql"SELECT Name FROM `city` WHERE ID = 9999999".query[String].nel.readOnly(connector)
     )
   }
