@@ -145,13 +145,17 @@ private[net] final class S2nTlsSocketF[F[_]](
 private[net] object PlatformTls:
 
   /**
-   * `s2n_init` must run exactly once per process and complete before any other s2n API is touched. A
-   * `lazy val` gives that for free: Scala initialises it under a lock, so concurrent TLS handshakes block
-   * here until the first `s2n_init` finishes rather than racing ahead to `s2n_config_new`; and if the call
-   * fails the val stays uninitialised, so a later connection retries instead of using a half-initialised
-   * library.
+   * Ensures `s2n_init` has run before any other s2n API is touched. A `lazy val` runs it exactly once and
+   * serialises concurrent TLS handshakes behind that single initialisation (Scala initialises a lazy val
+   * under a lock), so a handshake never races ahead to `s2n_config_new` before s2n is ready.
+   *
+   * The return code is intentionally ignored: on Native this process may also link fs2-io, whose TLS
+   * initialises s2n first, in which case `s2n_init` returns `-1` (`S2N_ERR_INITIALIZED`) even though s2n is
+   * perfectly usable. A genuine initialisation failure still surfaces immediately after, where
+   * `s2n_config_new` returns null and is rejected.
    */
-  private lazy val s2nInitialised: Unit = check(S2n.s2n_init(), "s2n_init")
+  private lazy val s2nInitialised: Unit =
+    val _ = S2n.s2n_init()
 
   /**
    * Wraps `socket` in a TLS client session. The s2n connection is built without I/O, then the handshake is
