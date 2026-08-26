@@ -147,6 +147,34 @@ object DBIO:
     decoder:       Decoder[T],
     factoryCompat: FactoryCompat[T, G[T]]
   ): ResultSetIO[G[T]] =
+    val decodeRow = decoder.decode(1, statement)
+
+    val step: (collection.mutable.Builder[T, G[T]], SyncRow) => collection.mutable.Builder[T, G[T]] =
+      (builder, row) =>
+        decodeRow.foldMap(syncResultSetInterpreter(row)) match
+          case Right(value) => builder += value
+          case Left(error)  =>
+            throw new DecodeFailureException(error.message, decoder.offset, statement, error.cause)
+
+    ResultSetIO
+      .drainRows[collection.mutable.Builder[T, G[T]]](
+        whileMPerRow(statement, decoder, factoryCompat),
+        factoryCompat.newBuilder,
+        step
+      )
+      .map(_.result())
+
+  /**
+   * Per-row effectful fallback used by [[whileM]]. Applied verbatim by the interpreter when the result set is
+   * not a [[ldbc.sql.BufferedResultSet]] (streaming), or when a decoder cannot be interpreted synchronously.
+   * Returns the accumulating builder (not the finished collection) so both paths share the `B = Builder` shape;
+   * [[whileM]] applies `.result()` once, uniformly.
+   */
+  private def whileMPerRow[G[_], T](
+    statement:     String,
+    decoder:       Decoder[T],
+    factoryCompat: FactoryCompat[T, G[T]]
+  ): ResultSetIO[collection.mutable.Builder[T, G[T]]] =
     val builder = factoryCompat.newBuilder
 
     def loop(acc: collection.mutable.Builder[T, G[T]]): ResultSetIO[collection.mutable.Builder[T, G[T]]] =
@@ -165,7 +193,7 @@ object DBIO:
         case false => ResultSetIO.pure(acc)
       }
 
-    loop(builder).map(_.result())
+    loop(builder)
 
   /**
    * Executes a SQL query that returns exactly one row and decodes it to type A.
