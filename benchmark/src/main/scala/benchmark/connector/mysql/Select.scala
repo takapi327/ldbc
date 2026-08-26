@@ -11,24 +11,23 @@ import java.util.concurrent.{ CountDownLatch, TimeUnit }
 import java.util.concurrent.atomic.AtomicReference
 
 import scala.compiletime.uninitialized
-import scala.concurrent.Await
 import scala.concurrent.duration.*
+import scala.concurrent.Await
 
 import org.openjdk.jmh.annotations.*
 
 import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
-import ldbc.effect.MonadThrow
-import ldbc.effect.syntax.*
-
 import ldbc.sql.{ BufferedResultSet, Connection, ResultSet }
 
 import ldbc.catseffect.concurrentIO
-import ldbc.fx.{ concurrentFx, Fx }
+import ldbc.effect.syntax.*
+import ldbc.effect.MonadThrow
 import ldbc.future.toFuture
-import ldbc.mysql.MySQLDataSource
+import ldbc.fx.{ concurrentFx, Fx }
 import ldbc.mysql.syntax.*
+import ldbc.mysql.MySQLDataSource
 import ldbc.net.SSL
 
 /**
@@ -134,33 +133,33 @@ class Select:
       _         <- statement.setInt(1, len)
       resultSet <- statement.executeQuery()
       decoded   <- resultSet match
-                     case buffered: BufferedResultSet[F] =>
-                       buffered
-                         .foldRowsSync(List.newBuilder[BenchmarkType]) { (builder, row) =>
-                           builder += (
-                             (
-                               row.getLong(1),
-                               row.getShort(2),
-                               row.getInt(3),
-                               row.getInt(4),
-                               row.getInt(5),
-                               row.getLong(6),
-                               row.getFloat(7),
-                               row.getDouble(8),
-                               row.getBigDecimal(9),
-                               row.getString(10),
-                               row.getString(11),
-                               row.getBoolean(12),
-                               row.getDate(13),
-                               row.getTime(14),
-                               row.getTimestamp(15),
-                               row.getTimestamp(16)
-                             )
+                   case buffered: BufferedResultSet[F] =>
+                     buffered
+                       .foldRowsSync(List.newBuilder[BenchmarkType]) { (builder, row) =>
+                         builder += (
+                           (
+                             row.getLong(1),
+                             row.getShort(2),
+                             row.getInt(3),
+                             row.getInt(4),
+                             row.getInt(5),
+                             row.getLong(6),
+                             row.getFloat(7),
+                             row.getDouble(8),
+                             row.getBigDecimal(9),
+                             row.getString(10),
+                             row.getString(11),
+                             row.getBoolean(12),
+                             row.getDate(13),
+                             row.getTime(14),
+                             row.getTimestamp(15),
+                             row.getTimestamp(16)
                            )
-                         }
-                         .map(_.result())
-                     case other => consume(other)
-      _         <- statement.close()
+                         )
+                       }
+                       .map(_.result())
+                   case other => consume(other)
+      _ <- statement.close()
     yield decoded
 
   private def consume[F[_]: MonadThrow](resultSet: ResultSet[F]): F[List[BenchmarkType]] =
