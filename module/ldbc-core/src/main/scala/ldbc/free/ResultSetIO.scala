@@ -11,7 +11,7 @@ import java.time.*
 import cats.~>
 import cats.free.Free
 
-import ldbc.sql.{ ResultSet, ResultSetMetaData }
+import ldbc.sql.{ ResultSet, ResultSetMetaData, SyncRow }
 
 sealed trait ResultSetOp[A]:
   def visit[F[_]](v: ResultSetOp.Visitor[F]): F[A]
@@ -110,6 +110,16 @@ object ResultSetOp:
   final case class RaiseError[A](e: Throwable) extends ResultSetOp[A]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[A] = v.raiseError(e)
 
+  /**
+   * Drains every row of the current result set, folding them with `step`. If the result set is a
+   * [[ldbc.sql.BufferedResultSet]] the interpreter runs `step` synchronously over the buffered rows inside a
+   * single effect; otherwise (streaming, or a decoder that cannot be interpreted synchronously) it falls back
+   * to `fallback` — an equivalent per-row [[ResultSetIO]] program.
+   */
+  final case class DrainRows[B](fallback: Free[ResultSetOp, B], zero: B, step: (B, SyncRow) => B)
+    extends ResultSetOp[B]:
+    override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[B] = v.drainRows(fallback, zero, step)
+
   given Embeddable[ResultSetOp, ResultSet[?]] =
     new Embeddable[ResultSetOp, ResultSet[?]]:
       override def embed[A](j: ResultSet[?], fa: Free[ResultSetOp, A]): Embedded.ResultSet[?, A] =
@@ -121,50 +131,51 @@ object ResultSetOp:
     def embed[A](e:        Embedded[A]): F[A]
     def raiseError[A](err: Throwable):   F[A]
 
-    def next():                             F[Boolean]
-    def close():                            F[Unit]
-    def wasNull():                          F[Boolean]
-    def getString(columnIndex:     Int):    F[String]
-    def getBoolean(columnIndex:    Int):    F[Boolean]
-    def getByte(columnIndex:       Int):    F[Byte]
-    def getShort(columnIndex:      Int):    F[Short]
-    def getInt(columnIndex:        Int):    F[Int]
-    def getLong(columnIndex:       Int):    F[Long]
-    def getFloat(columnIndex:      Int):    F[Float]
-    def getDouble(columnIndex:     Int):    F[Double]
-    def getBytes(columnIndex:      Int):    F[Array[Byte]]
-    def getDate(columnIndex:       Int):    F[LocalDate]
-    def getTime(columnIndex:       Int):    F[LocalTime]
-    def getTimestamp(columnIndex:  Int):    F[LocalDateTime]
-    def getString(columnLabel:     String): F[String]
-    def getBoolean(columnLabel:    String): F[Boolean]
-    def getByte(columnLabel:       String): F[Byte]
-    def getShort(columnLabel:      String): F[Short]
-    def getInt(columnLabel:        String): F[Int]
-    def getLong(columnLabel:       String): F[Long]
-    def getFloat(columnLabel:      String): F[Float]
-    def getDouble(columnLabel:     String): F[Double]
-    def getBytes(columnLabel:      String): F[Array[Byte]]
-    def getDate(columnLabel:       String): F[LocalDate]
-    def getTime(columnLabel:       String): F[LocalTime]
-    def getTimestamp(columnLabel:  String): F[LocalDateTime]
-    def getMetaData():                      F[ResultSetMetaData]
-    def getBigDecimal(columnIndex: Int):    F[BigDecimal]
-    def getBigDecimal(columnLabel: String): F[BigDecimal]
-    def isBeforeFirst():                    F[Boolean]
-    def isFirst():                          F[Boolean]
-    def isAfterLast():                      F[Boolean]
-    def isLast():                           F[Boolean]
-    def beforeFirst():                      F[Unit]
-    def afterLast():                        F[Unit]
-    def first():                            F[Boolean]
-    def last():                             F[Boolean]
-    def getRow():                           F[Int]
-    def absolute(row:              Int):    F[Boolean]
-    def relative(rows:             Int):    F[Boolean]
-    def previous():                         F[Boolean]
-    def getType():                          F[Int]
-    def getConcurrency():                   F[Int]
+    def next():                                                                             F[Boolean]
+    def close():                                                                            F[Unit]
+    def wasNull():                                                                          F[Boolean]
+    def getString(columnIndex:     Int):                                                    F[String]
+    def getBoolean(columnIndex:    Int):                                                    F[Boolean]
+    def getByte(columnIndex:       Int):                                                    F[Byte]
+    def getShort(columnIndex:      Int):                                                    F[Short]
+    def getInt(columnIndex:        Int):                                                    F[Int]
+    def getLong(columnIndex:       Int):                                                    F[Long]
+    def getFloat(columnIndex:      Int):                                                    F[Float]
+    def getDouble(columnIndex:     Int):                                                    F[Double]
+    def getBytes(columnIndex:      Int):                                                    F[Array[Byte]]
+    def getDate(columnIndex:       Int):                                                    F[LocalDate]
+    def getTime(columnIndex:       Int):                                                    F[LocalTime]
+    def getTimestamp(columnIndex:  Int):                                                    F[LocalDateTime]
+    def getString(columnLabel:     String):                                                 F[String]
+    def getBoolean(columnLabel:    String):                                                 F[Boolean]
+    def getByte(columnLabel:       String):                                                 F[Byte]
+    def getShort(columnLabel:      String):                                                 F[Short]
+    def getInt(columnLabel:        String):                                                 F[Int]
+    def getLong(columnLabel:       String):                                                 F[Long]
+    def getFloat(columnLabel:      String):                                                 F[Float]
+    def getDouble(columnLabel:     String):                                                 F[Double]
+    def getBytes(columnLabel:      String):                                                 F[Array[Byte]]
+    def getDate(columnLabel:       String):                                                 F[LocalDate]
+    def getTime(columnLabel:       String):                                                 F[LocalTime]
+    def getTimestamp(columnLabel:  String):                                                 F[LocalDateTime]
+    def getMetaData():                                                                      F[ResultSetMetaData]
+    def getBigDecimal(columnIndex: Int):                                                    F[BigDecimal]
+    def getBigDecimal(columnLabel: String):                                                 F[BigDecimal]
+    def isBeforeFirst():                                                                    F[Boolean]
+    def isFirst():                                                                          F[Boolean]
+    def isAfterLast():                                                                      F[Boolean]
+    def isLast():                                                                           F[Boolean]
+    def beforeFirst():                                                                      F[Unit]
+    def afterLast():                                                                        F[Unit]
+    def first():                                                                            F[Boolean]
+    def last():                                                                             F[Boolean]
+    def getRow():                                                                           F[Int]
+    def absolute(row:              Int):                                                    F[Boolean]
+    def relative(rows:             Int):                                                    F[Boolean]
+    def previous():                                                                         F[Boolean]
+    def getType():                                                                          F[Int]
+    def getConcurrency():                                                                   F[Int]
+    def drainRows[B](fallback:     Free[ResultSetOp, B], zero: B, step: (B, SyncRow) => B): F[B]
 
 type ResultSetIO[A] = Free[ResultSetOp, A]
 
@@ -220,3 +231,5 @@ object ResultSetIO:
   def previous():          ResultSetIO[Boolean] = Free.liftF(ResultSetOp.Previous())
   def getType():           ResultSetIO[Int]     = Free.liftF(ResultSetOp.GetType())
   def getConcurrency():    ResultSetIO[Int]     = Free.liftF(ResultSetOp.GetConcurrency())
+  def drainRows[B](fallback: ResultSetIO[B], zero: B, step: (B, SyncRow) => B): ResultSetIO[B] =
+    Free.liftF(ResultSetOp.DrainRows(fallback, zero, step))

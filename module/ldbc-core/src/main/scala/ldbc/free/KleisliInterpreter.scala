@@ -234,3 +234,18 @@ class KleisliInterpreter[F[_]](logHandler: LogHandler[F])(using F: MonadError[F,
     override def previous():          Kleisli[F, ResultSet[F], Boolean] = primitive(_.previous())
     override def getType():           Kleisli[F, ResultSet[F], Int]     = primitive(_.getType())
     override def getConcurrency():    Kleisli[F, ResultSet[F], Int]     = primitive(_.getConcurrency())
+
+    override def drainRows[B](
+      fallback: Free[ResultSetOp, B],
+      zero:     B,
+      step:     (B, SyncRow) => B
+    ): Kleisli[F, ResultSet[F], B] =
+      Kleisli {
+        case buffered: BufferedResultSet[F] =>
+          F.handleErrorWith(buffered.foldRowsSync(zero)(step)) {
+            case _: NonSyncDecoderException => fallback.foldMap(this).run(buffered)
+            case error                      => F.raiseError(error)
+          }
+        case other =>
+          fallback.foldMap(this).run(other)
+      }

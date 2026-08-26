@@ -8,7 +8,7 @@ package ldbc.mysql
 
 import java.time.*
 
-import ldbc.sql.{ ResultSet, ResultSetMetaData }
+import ldbc.sql.{ ResultSet, ResultSetMetaData, SyncRow }
 import ldbc.sql.SQLException
 
 import ldbc.effect.{ Concurrent, Ref }
@@ -380,6 +380,67 @@ private[ldbc] trait SharedResultSet[F[_]] extends ResultSet[F]:
                 )
               )
             }
+
+  /**
+   * Synchronous twin of [[rowDecode]]: decodes column `index` from the **given row** (not `currentRow`),
+   * sharing the exact same range check, byte extraction, `lastColumnReadNullable` update, and value conversion.
+   * Differs only in effect handling — it returns `T` directly and **throws** `SQLException` on out-of-range or
+   * conversion errors. Intended to run inside a single enclosing effect (see [[BufferedSyncRow]] /
+   * `foldRowsSync`), which turns any throwable into `F.raiseError`.
+   */
+  private[ldbc] def rowDecodeSync[T](
+    row:          ResultSetRowPacket,
+    index:        Int,
+    extract:      ColumnValueDecoder => (Array[Byte], String, ColumnDataType, Boolean) => T,
+    defaultValue: T
+  ): T =
+    if index < 1 || index > columns.length then
+      throw new SQLException(
+        s"Column index $index is out of range. Number of columns: ${ columns.length }.",
+        sqlState = Some("S1009"),
+        sql      = statement
+      )
+    else
+      val col        = columns(index - 1)
+      val charset    = charsets(index - 1)
+      val isUnsigned = unsignedFlags(index - 1)
+
+      decoder.extractColumn(row.rawBytes, index - 1, columnTypes) match
+        case None =>
+          lastColumnReadNullable = true
+          defaultValue
+        case Some(bytes) =>
+          lastColumnReadNullable = false
+          try Option(extract(decoder)(bytes, charset, col.columnType, isUnsigned)).getOrElse(defaultValue)
+          catch
+            case e: Throwable =>
+              throw new SQLException(
+                s"Cannot convert column $index value to the requested type: ${ e.getMessage }",
+                sqlState = Some("22018"),
+                sql      = statement
+              )
+
+  /**
+   * A reusable [[SyncRow]] view over a single buffered row. Each accessor delegates to [[rowDecodeSync]] so the
+   * conversion rules and `lastColumnReadNullable` bookkeeping stay identical to the effectful `getX` path.
+   * `row` is repointed per iteration by `foldRowsSync` to avoid per-row allocation.
+   */
+  protected final class BufferedSyncRow extends SyncRow:
+    var row:                            ResultSetRowPacket = null
+    override def getString(i:     Int): String             = rowDecodeSync(row, i, _.decodeString, null)
+    override def getBoolean(i:    Int): Boolean            = rowDecodeSync(row, i, _.decodeBoolean, false)
+    override def getByte(i:       Int): Byte               = rowDecodeSync(row, i, _.decodeByte, 0)
+    override def getShort(i:      Int): Short              = rowDecodeSync(row, i, _.decodeShort, 0)
+    override def getInt(i:        Int): Int                = rowDecodeSync(row, i, _.decodeInt, 0)
+    override def getLong(i:       Int): Long               = rowDecodeSync(row, i, _.decodeLong, 0L)
+    override def getFloat(i:      Int): Float              = rowDecodeSync(row, i, _.decodeFloat, 0f)
+    override def getDouble(i:     Int): Double             = rowDecodeSync(row, i, _.decodeDouble, 0.0)
+    override def getBytes(i:      Int): Array[Byte]        = rowDecodeSync(row, i, _.decodeBytes, null)
+    override def getDate(i:       Int): LocalDate          = rowDecodeSync(row, i, _.decodeDate, null)
+    override def getTime(i:       Int): LocalTime          = rowDecodeSync(row, i, _.decodeTime, null)
+    override def getTimestamp(i:  Int): LocalDateTime      = rowDecodeSync(row, i, _.decodeTimestamp, null)
+    override def getBigDecimal(i: Int): BigDecimal         = rowDecodeSync(row, i, _.decodeBigDecimal, null)
+    override def wasNull():             Boolean            = lastColumnReadNullable
 
   /**
    * Finds the column index by column name or alias.

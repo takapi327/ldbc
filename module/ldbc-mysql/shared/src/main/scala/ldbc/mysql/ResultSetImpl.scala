@@ -9,7 +9,7 @@ package ldbc.mysql
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAccessor
 
-import ldbc.sql.ResultSet
+import ldbc.sql.{ BufferedResultSet, ResultSet, SyncRow }
 
 import ldbc.effect.{ Concurrent, Ref }
 import ldbc.effect.syntax.*
@@ -36,9 +36,22 @@ private[ldbc] case class ResultSetImpl[F[_]](
   resultSetConcurrency: Int            = ResultSet.CONCUR_READ_ONLY,
   statement:            Option[String] = None
 )(using concurrentF: Concurrent[F])
-  extends SharedResultSet[F]:
+  extends SharedResultSet[F],
+          BufferedResultSet[F]:
 
   override protected def F: Concurrent[F] = concurrentF
+
+  override def foldRowsSync[B](zero: B)(step: (B, SyncRow) => B): F[B] =
+    checkClosed() *> concurrentF.delay {
+      val view = new BufferedSyncRow
+      var acc  = zero
+      var i    = 0
+      while i < records.length do
+        view.row = records(i)
+        acc      = step(acc, view)
+        i += 1
+      acc
+    }
 
   override def next(): F[Boolean] =
     checkClosed().map { _ =>
