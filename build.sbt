@@ -66,7 +66,7 @@ lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "cats-free"   % "2.13.0",
-      "org.typelevel" %%% "cats-effect" % "3.7.0"
+      "org.typelevel" %%% "cats-effect" % "3.7.1"
     )
   )
   .dependsOn(sql)
