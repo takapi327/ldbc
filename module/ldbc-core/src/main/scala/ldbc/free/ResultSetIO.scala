@@ -11,7 +11,7 @@ import java.time.*
 import cats.~>
 import cats.free.Free
 
-import ldbc.sql.{ ResultSet, ResultSetMetaData }
+import ldbc.sql.{ ResultSet, ResultSetMetaData, SyncRow }
 
 sealed trait ResultSetOp[A]:
   def visit[F[_]](v: ResultSetOp.Visitor[F]): F[A]
@@ -110,6 +110,16 @@ object ResultSetOp:
   final case class RaiseError[A](e: Throwable) extends ResultSetOp[A]:
     override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[A] = v.raiseError(e)
 
+  /**
+   * Drains every row of the current result set, folding them with `step`. If the result set is a
+   * [[ldbc.sql.BufferedResultSet]] the interpreter runs `step` synchronously over the buffered rows inside a
+   * single effect; otherwise (streaming, or a decoder that cannot be interpreted synchronously) it falls back
+   * to `fallback` — an equivalent per-row [[ResultSetIO]] program.
+   */
+  final case class DrainRows[B](fallback: Free[ResultSetOp, B], zero: B, step: (B, SyncRow) => B)
+    extends ResultSetOp[B]:
+    override def visit[F[_]](v: ResultSetOp.Visitor[F]): F[B] = v.drainRows(fallback, zero, step)
+
   given Embeddable[ResultSetOp, ResultSet[?]] =
     new Embeddable[ResultSetOp, ResultSet[?]]:
       override def embed[A](j: ResultSet[?], fa: Free[ResultSetOp, A]): Embedded.ResultSet[?, A] =
@@ -165,6 +175,7 @@ object ResultSetOp:
     def previous():                         F[Boolean]
     def getType():                          F[Int]
     def getConcurrency():                   F[Int]
+    def drainRows[B](fallback: Free[ResultSetOp, B], zero: B, step: (B, SyncRow) => B): F[B]
 
 type ResultSetIO[A] = Free[ResultSetOp, A]
 
@@ -220,3 +231,5 @@ object ResultSetIO:
   def previous():          ResultSetIO[Boolean] = Free.liftF(ResultSetOp.Previous())
   def getType():           ResultSetIO[Int]     = Free.liftF(ResultSetOp.GetType())
   def getConcurrency():    ResultSetIO[Int]     = Free.liftF(ResultSetOp.GetConcurrency())
+  def drainRows[B](fallback: ResultSetIO[B], zero: B, step: (B, SyncRow) => B): ResultSetIO[B] =
+    Free.liftF(ResultSetOp.DrainRows(fallback, zero, step))
