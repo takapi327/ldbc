@@ -49,7 +49,7 @@ private[ldbc] case class ResultSetImpl[F[_]](
       while i < records.length do
         view.row = records(i)
         acc      = step(acc, view)
-        i       += 1
+        i += 1
       acc
     }
 

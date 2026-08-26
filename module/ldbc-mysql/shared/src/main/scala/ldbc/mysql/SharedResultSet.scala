@@ -426,21 +426,21 @@ private[ldbc] trait SharedResultSet[F[_]] extends ResultSet[F]:
    * `row` is repointed per iteration by `foldRowsSync` to avoid per-row allocation.
    */
   protected final class BufferedSyncRow extends SyncRow:
-    var row: ResultSetRowPacket = null
-    override def getString(i:     Int): String        = rowDecodeSync(row, i, _.decodeString, null)
-    override def getBoolean(i:    Int): Boolean        = rowDecodeSync(row, i, _.decodeBoolean, false)
-    override def getByte(i:       Int): Byte           = rowDecodeSync(row, i, _.decodeByte, 0)
-    override def getShort(i:      Int): Short          = rowDecodeSync(row, i, _.decodeShort, 0)
-    override def getInt(i:        Int): Int            = rowDecodeSync(row, i, _.decodeInt, 0)
-    override def getLong(i:       Int): Long           = rowDecodeSync(row, i, _.decodeLong, 0L)
-    override def getFloat(i:      Int): Float          = rowDecodeSync(row, i, _.decodeFloat, 0f)
-    override def getDouble(i:     Int): Double         = rowDecodeSync(row, i, _.decodeDouble, 0.0)
-    override def getBytes(i:      Int): Array[Byte]    = rowDecodeSync(row, i, _.decodeBytes, null)
-    override def getDate(i:       Int): LocalDate      = rowDecodeSync(row, i, _.decodeDate, null)
-    override def getTime(i:       Int): LocalTime      = rowDecodeSync(row, i, _.decodeTime, null)
-    override def getTimestamp(i:  Int): LocalDateTime  = rowDecodeSync(row, i, _.decodeTimestamp, null)
-    override def getBigDecimal(i: Int): BigDecimal     = rowDecodeSync(row, i, _.decodeBigDecimal, null)
-    override def wasNull(): Boolean = lastColumnReadNullable
+    var row:                            ResultSetRowPacket = null
+    override def getString(i:     Int): String             = rowDecodeSync(row, i, _.decodeString, null)
+    override def getBoolean(i:    Int): Boolean            = rowDecodeSync(row, i, _.decodeBoolean, false)
+    override def getByte(i:       Int): Byte               = rowDecodeSync(row, i, _.decodeByte, 0)
+    override def getShort(i:      Int): Short              = rowDecodeSync(row, i, _.decodeShort, 0)
+    override def getInt(i:        Int): Int                = rowDecodeSync(row, i, _.decodeInt, 0)
+    override def getLong(i:       Int): Long               = rowDecodeSync(row, i, _.decodeLong, 0L)
+    override def getFloat(i:      Int): Float              = rowDecodeSync(row, i, _.decodeFloat, 0f)
+    override def getDouble(i:     Int): Double             = rowDecodeSync(row, i, _.decodeDouble, 0.0)
+    override def getBytes(i:      Int): Array[Byte]        = rowDecodeSync(row, i, _.decodeBytes, null)
+    override def getDate(i:       Int): LocalDate          = rowDecodeSync(row, i, _.decodeDate, null)
+    override def getTime(i:       Int): LocalTime          = rowDecodeSync(row, i, _.decodeTime, null)
+    override def getTimestamp(i:  Int): LocalDateTime      = rowDecodeSync(row, i, _.decodeTimestamp, null)
+    override def getBigDecimal(i: Int): BigDecimal         = rowDecodeSync(row, i, _.decodeBigDecimal, null)
+    override def wasNull():             Boolean            = lastColumnReadNullable
 
   /**
    * Finds the column index by column name or alias.

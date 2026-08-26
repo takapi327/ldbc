@@ -30,4 +30,4 @@ trait SyncRow:
   def getTime(columnIndex:       Int): LocalTime
   def getTimestamp(columnIndex:  Int): LocalDateTime
   def getBigDecimal(columnIndex: Int): BigDecimal
-  def wasNull(): Boolean
+  def wasNull():                       Boolean
