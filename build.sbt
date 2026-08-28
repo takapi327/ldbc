@@ -412,7 +412,9 @@ lazy val benchmark = (project in file("benchmark"))
     connector.jvm,
     queryBuilder.jvm,
     fx.jvm,
-    mysql.jvm
+    mysql.jvm,
+    catsEffect.jvm,
+    future.jvm
   )
   .enablePlugins(JmhPlugin, AutomateHeaderPlugin, NoPublishPlugin)
 
