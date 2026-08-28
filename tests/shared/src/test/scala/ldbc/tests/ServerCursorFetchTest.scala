@@ -12,6 +12,8 @@ import cats.syntax.all.*
 
 import cats.effect.*
 
+import zio.Task
+
 import munit.*
 
 import ldbc.sql.*
@@ -59,6 +61,22 @@ class MysqlFxServerCursorFetchTest extends ServerCursorFetchTest[Fx] with FxAsyn
   override def datasource: DataSource[Fx] =
     MySQLDataSource
       .build[Fx](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+      .setPassword(MySQLTestConfig.password)
+      .setDatabase("world")
+      .setSSL(MysqlSSL.Trusted)
+      .setUseCursorFetch(true)
+
+class MysqlZioServerCursorFetchTest extends ServerCursorFetchTest[Task] with ZioAsyncDatabaseSuite:
+  import scala.concurrent.duration.*
+
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
+
+  override def munitTimeout: Duration = 80.seconds
+
+  override def datasource: DataSource[Task] =
+    MySQLDataSource
+      .build[Task](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
       .setPassword(MySQLTestConfig.password)
       .setDatabase("world")
       .setSSL(MysqlSSL.Trusted)

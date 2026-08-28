@@ -12,6 +12,8 @@ import cats.syntax.all.*
 
 import cats.effect.*
 
+import zio.Task
+
 import munit.*
 
 import ldbc.dsl.*
@@ -64,6 +66,23 @@ class MysqlFxCodecTest extends CodecTest[Fx] with FxDatabaseSuite:
       "connection",
       MySQLDataSource
         .build[Fx](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+        .setPassword(MySQLTestConfig.password)
+        .setDatabase("world")
+        .setSSL(MysqlSSL.Trusted)
+    )
+
+class MysqlZioCodecTest extends CodecTest[Task] with ZioDatabaseSuite:
+  import ldbc.zio.concurrentTask
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
+
+  override def prefix: "mysql" = "mysql"
+
+  override def connection: ConnectionFixture[Task] =
+    ConnectionFixture(
+      "connection",
+      MySQLDataSource
+        .build[Task](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
         .setPassword(MySQLTestConfig.password)
         .setDatabase("world")
         .setSSL(MysqlSSL.Trusted)

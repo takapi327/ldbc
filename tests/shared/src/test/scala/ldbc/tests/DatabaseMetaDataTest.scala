@@ -13,6 +13,8 @@ import cats.Monad
 
 import cats.effect.*
 
+import zio.Task
+
 import munit.*
 
 import ldbc.sql.*
@@ -56,6 +58,19 @@ class MysqlFxDatabaseMetaDataTest extends DatabaseMetaDataTest[Fx] with FxAsyncD
   override def datasource: DataSource[Fx] =
     MySQLDataSource
       .build[Fx](host, port, user)
+      .setPassword(password)
+      .setDatabase(database)
+      .setSSL(MysqlSSL.Trusted)
+
+class MysqlZioDatabaseMetaDataTest extends DatabaseMetaDataTest[Task] with ZioAsyncDatabaseSuite:
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
+
+  override def prefix: "mysql" = "mysql"
+
+  override def datasource: DataSource[Task] =
+    MySQLDataSource
+      .build[Task](host, port, user)
       .setPassword(password)
       .setDatabase(database)
       .setSSL(MysqlSSL.Trusted)

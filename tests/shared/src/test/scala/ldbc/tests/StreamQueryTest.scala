@@ -10,6 +10,8 @@ import scala.concurrent.Future
 
 import cats.effect.*
 
+import zio.Task
+
 import munit.*
 
 import ldbc.dsl.*
@@ -73,6 +75,22 @@ class MysqlFutureStreamQueryTest extends StreamQueryTest[Future] with FutureData
     ldbc.future.Connector.fromDataSource(
       MySQLDataSource
         .build[Fx](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+        .setPassword(MySQLTestConfig.password)
+        .setDatabase("world")
+        .setSSL(MysqlSSL.None)
+        .setUseCursorFetch(true)
+        .setAllowPublicKeyRetrieval(true)
+    )
+
+class MysqlZioStreamQueryTest extends StreamQueryTest[Task] with ZioDatabaseSuite:
+  import ldbc.zio.concurrentTask
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
+
+  override def connector: Connector[Task] =
+    ldbc.zio.Connector.fromDataSource(
+      MySQLDataSource
+        .build[Task](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
         .setPassword(MySQLTestConfig.password)
         .setDatabase("world")
         .setSSL(MysqlSSL.None)

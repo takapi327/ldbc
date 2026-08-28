@@ -12,6 +12,8 @@ import cats.data.NonEmptyList
 
 import cats.effect.*
 
+import zio.Task
+
 import munit.*
 
 import ldbc.dsl.*
@@ -79,6 +81,22 @@ class MysqlFutureTableQueryUpdateConnectionTest extends TableQueryUpdateConnecti
     ldbc.future.Connector.fromDataSource(
       MySQLDataSource
         .build[Fx](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+        .setPassword(MySQLTestConfig.password)
+        .setDatabase("world2")
+        .setSSL(MysqlSSL.Trusted)
+    )
+
+class MysqlZioTableQueryUpdateConnectionTest extends TableQueryUpdateConnectionTest[Task] with ZioDatabaseSuite:
+  import ldbc.zio.concurrentTask
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
+
+  override def prefix: "mysql" = "mysql"
+
+  override def connector: Connector[Task] =
+    ldbc.zio.Connector.fromDataSource(
+      MySQLDataSource
+        .build[Task](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
         .setPassword(MySQLTestConfig.password)
         .setDatabase("world2")
         .setSSL(MysqlSSL.Trusted)

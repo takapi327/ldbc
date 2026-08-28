@@ -10,6 +10,8 @@ import cats.syntax.all.*
 
 import cats.effect.*
 
+import zio.Task
+
 import munit.CatsEffectSuite
 
 import ldbc.dsl.*
@@ -60,6 +62,23 @@ class MysqlFxSQLStringContextUpdateTest extends SQLStringContextUpdateTest[Fx] w
       "connection",
       MySQLDataSource
         .build[Fx](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+        .setPassword(MySQLTestConfig.password)
+        .setDatabase("connector_test")
+        .setSSL(MysqlSSL.Trusted)
+    )
+
+class MysqlZioSQLStringContextUpdateTest extends SQLStringContextUpdateTest[Task] with ZioDatabaseSuite:
+  import ldbc.zio.concurrentTask
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
+
+  override def prefix: "mysql" = "mysql"
+
+  override def connection: ConnectionFixture[Task] =
+    ConnectionFixture(
+      "connection",
+      MySQLDataSource
+        .build[Task](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
         .setPassword(MySQLTestConfig.password)
         .setDatabase("connector_test")
         .setSSL(MysqlSSL.Trusted)
