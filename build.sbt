@@ -283,6 +283,21 @@ lazy val future = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .dependsOn(dsl, fx)
 
+lazy val zio = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
+  .module("zio", "ZIO boundary for ldbc (native Concurrent[Task] and ZStream over the ldbc.effect type classes)")
+  .settings(
+    libraryDependencies ++= Seq(
+      "dev.zio"       %%% "zio"         % "2.1.26",
+      "dev.zio"       %%% "zio-streams" % "2.1.26",
+      "org.typelevel" %%% "cats-core"   % "2.13.0"
+    )
+  )
+  .jsSettings(
+    Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
+  )
+  .dependsOn(dsl, effect)
+
 lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
   .settings(description := "Projects that provide sbt plug-ins")
   .settings((Compile / sourceGenerators) += Def.task {
@@ -373,7 +388,7 @@ lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
   .nativeSettings(Test / nativeBrewFormulas += "s2n")
-  .dependsOn(connector, mysql, pool, queryBuilder, schema, catsEffect, future, fx % "test->test")
+  .dependsOn(connector, mysql, pool, queryBuilder, schema, catsEffect, future, zio, fx % "test->test")
   .enablePlugins(NoPublishPlugin)
 
 lazy val benchmark = (project in file("benchmark"))
@@ -574,6 +589,7 @@ lazy val ldbc = tlCrossRootProject
     dsl,
     catsEffect,
     future,
+    zio,
     statement,
     queryBuilder,
     schema,
