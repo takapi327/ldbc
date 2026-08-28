@@ -35,7 +35,7 @@ class LdbcDDLTest extends DDLTest[IO] with IODatabaseSuite:
 
 class MysqlDDLTest extends DDLTest[IO] with IODatabaseSuite:
   import ldbc.catseffect.concurrentIO
-  import ldbc.mysql.Connector as MysqlConnector
+  import ldbc.catseffect.Connector as MysqlConnector
   import ldbc.mysql.MySQLDataSource
   import ldbc.net.SSL as MysqlSSL
 
@@ -49,7 +49,7 @@ class MysqlDDLTest extends DDLTest[IO] with IODatabaseSuite:
 
 class MysqlFxDDLTest extends DDLTest[Fx] with FxDatabaseSuite:
   import ldbc.fx.concurrentFx
-  import ldbc.mysql.{ Connector as MysqlConnector, MySQLDataSource }
+  import ldbc.mysql.MySQLDataSource, ldbc.tests.TestConnector as MysqlConnector
   import ldbc.net.SSL as MysqlSSL
 
   override def connector: Connector[Fx] =

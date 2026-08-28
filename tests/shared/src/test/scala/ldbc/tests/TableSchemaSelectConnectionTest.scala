@@ -40,7 +40,7 @@ class LdbcTableSchemaSelectConnectionTest extends TableSchemaSelectConnectionTes
 
 class MysqlTableSchemaSelectConnectionTest extends TableSchemaSelectConnectionTest[IO] with IODatabaseSuite:
   import ldbc.catseffect.concurrentIO
-  import ldbc.mysql.Connector as MysqlConnector
+  import ldbc.catseffect.Connector as MysqlConnector
   import ldbc.mysql.MySQLDataSource
   import ldbc.net.SSL as MysqlSSL
 
@@ -56,7 +56,7 @@ class MysqlTableSchemaSelectConnectionTest extends TableSchemaSelectConnectionTe
 
 class MysqlFxTableSchemaSelectConnectionTest extends TableSchemaSelectConnectionTest[Fx] with FxDatabaseSuite:
   import ldbc.fx.concurrentFx
-  import ldbc.mysql.{ Connector as MysqlConnector, MySQLDataSource }
+  import ldbc.mysql.MySQLDataSource, ldbc.tests.TestConnector as MysqlConnector
   import ldbc.net.SSL as MysqlSSL
 
   override def prefix: "mysql" = "mysql"

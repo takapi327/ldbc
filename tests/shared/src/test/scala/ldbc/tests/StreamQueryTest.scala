@@ -30,11 +30,11 @@ class LdbcStreamQueryTest extends StreamQueryTest[IO] with IODatabaseSuite:
     .setUseCursorFetch(true)
     .setAllowPublicKeyRetrieval(true)
 
-  override def connector: Connector[IO] = Connector.fromDataSource(datasource)
+  override def connector: Connector[IO] = ldbc.connector.Connector.fromDataSource(datasource)
 
 class MysqlStreamQueryTest extends StreamQueryTest[IO] with IODatabaseSuite:
   import ldbc.catseffect.concurrentIO
-  import ldbc.mysql.Connector as MysqlConnector
+  import ldbc.catseffect.Connector as MysqlConnector
   import ldbc.mysql.MySQLDataSource
   import ldbc.net.SSL as MysqlSSL
 
@@ -50,7 +50,7 @@ class MysqlStreamQueryTest extends StreamQueryTest[IO] with IODatabaseSuite:
 
 class MysqlFxStreamQueryTest extends StreamQueryTest[Fx] with FxDatabaseSuite:
   import ldbc.fx.concurrentFx
-  import ldbc.mysql.{ Connector as MysqlConnector, MySQLDataSource }
+  import ldbc.mysql.MySQLDataSource, ldbc.tests.TestConnector as MysqlConnector
   import ldbc.net.SSL as MysqlSSL
 
   override def connector: Connector[Fx] =
