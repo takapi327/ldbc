@@ -99,34 +99,34 @@ private[net] final class FdRawEngine(poller: Poller) extends RawIoEngine:
     val done  = new AtomicBoolean(false)
     val fdRef = new java.util.concurrent.atomic.AtomicInteger(-1)
 
-    val worker = new Thread(
-      () =>
-        try
-          val resolved = CInterop.resolve(host, port)
-          val fd       = resolved.fd
-          fdRef.set(fd)
-          CInterop.applyOptions(fd, options)
-          val st = new ChannelState
-          registry.put(fd, st)
+    val connect: Runnable = () =>
+      try
+        val resolved = CInterop.resolve(host, port)
+        val fd       = resolved.fd
+        fdRef.set(fd)
+        CInterop.applyOptions(fd, options)
+        val st = new ChannelState
+        registry.put(fd, st)
 
-          def finishConnect(): Unit =
-            if done.compareAndSet(false, true) then
-              val soError = CInterop.socketError(fd)
-              if soError == 0 then cb(Right(new FdRawSocket(fd, st, this)))
-              else
-                deregisterAndClose(fd)
-                cb(Left(new java.io.IOException(s"connect to $host:$port failed (errno=$soError)")))
+        def finishConnect(): Unit =
+          if done.compareAndSet(false, true) then
+            val soError = CInterop.socketError(fd)
+            if soError == 0 then cb(Right(new FdRawSocket(fd, st, this)))
+            else
+              deregisterAndClose(fd)
+              cb(Left(new java.io.IOException(s"connect to $host:$port failed (errno=$soError)")))
 
-          st.connectReady = () => finishConnect()
-          val err = CInterop.beginConnect(fd, resolved)
-          if err == 0 then finishConnect()
-          else if err == EINPROGRESS then enqueue(() => { poller.add(fd); poller.arm(fd, read = false, write = true) })
-          else
-            done.set(true)
-            registry.remove(fd); CInterop.closeFd(fd)
-            cb(Left(new java.io.IOException(s"connect to $host:$port failed (errno=$err)")))
-        catch case e: Throwable => if done.compareAndSet(false, true) then cb(Left(e)), "ldbc-net-fd-connect"
-    )
+        st.connectReady = () => finishConnect()
+        val err = CInterop.beginConnect(fd, resolved)
+        if err == 0 then finishConnect()
+        else if err == EINPROGRESS then enqueue(() => { poller.add(fd); poller.arm(fd, read = false, write = true) })
+        else
+          done.set(true)
+          registry.remove(fd); CInterop.closeFd(fd)
+          cb(Left(new java.io.IOException(s"connect to $host:$port failed (errno=$err)")))
+      catch case e: Throwable => if done.compareAndSet(false, true) then cb(Left(e))
+
+    val worker = new Thread(connect, "ldbc-net-fd-connect")
     worker.setDaemon(true)
     worker.start()
 
