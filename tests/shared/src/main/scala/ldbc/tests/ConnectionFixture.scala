@@ -67,7 +67,7 @@ object ConnectionFixture:
 
         override def beforeAll(): F[Unit] =
           F.flatMap(datasource.getConnection) { (rawConnection, close) =>
-            val connector = ldbc.mysql.Connector.fromConnection(rawConnection)
+            val connector = TestConnector.fromConnection(rawConnection)
             F.map(connectBeforeAll(connector))(_ => this.value = Some((connector, close)))
           }
 
