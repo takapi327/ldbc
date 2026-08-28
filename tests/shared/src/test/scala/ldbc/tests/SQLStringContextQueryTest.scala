@@ -14,8 +14,6 @@ import cats.data.NonEmptyList
 
 import cats.effect.*
 
-import zio.Task
-
 import munit.CatsEffectSuite
 
 import ldbc.dsl.*
@@ -28,6 +26,8 @@ import ldbc.connector.exception.SQLException
 
 import ldbc.fx.Fx
 import ldbc.Connector
+
+import zio.Task
 
 class LdbcSQLStringContextQueryTest extends SQLStringContextQueryTest[IO] with IODatabaseSuite:
 
@@ -84,8 +84,9 @@ class MysqlSQLStringContextQueryTest extends SQLStringContextQueryTest[IO] with 
 
 class MysqlFxSQLStringContextQueryTest extends SQLStringContextQueryTest[Fx] with FxDatabaseSuite:
   import ldbc.fx.concurrentFx
-  import ldbc.mysql.MySQLDataSource, ldbc.tests.TestConnector as MysqlConnector
+  import ldbc.mysql.MySQLDataSource
   import ldbc.net.SSL as MysqlSSL
+  import ldbc.tests.TestConnector as MysqlConnector
 
   override def connector: Connector[Fx] =
     MysqlConnector.fromDataSource(
@@ -111,9 +112,9 @@ class MysqlFutureSQLStringContextQueryTest extends SQLStringContextQueryTest[Fut
     )
 
 class MysqlZioSQLStringContextQueryTest extends SQLStringContextQueryTest[Task] with ZioDatabaseSuite:
-  import ldbc.zio.concurrentTask
   import ldbc.mysql.MySQLDataSource
   import ldbc.net.SSL as MysqlSSL
+  import ldbc.zio.concurrentTask
 
   override def connector: Connector[Task] =
     ldbc.zio.Connector.fromDataSource(

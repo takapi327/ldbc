@@ -12,8 +12,6 @@ import cats.data.NonEmptyList
 
 import cats.effect.*
 
-import zio.Task
-
 import munit.*
 
 import ldbc.dsl.DBIO
@@ -25,6 +23,8 @@ import ldbc.connector.*
 import ldbc.fx.Fx
 import ldbc.tests.model.*
 import ldbc.Connector
+
+import zio.Task
 
 class LdbcTableSchemaUpdateConnectionTest extends TableSchemaUpdateConnectionTest[IO] with IODatabaseSuite:
 
@@ -56,8 +56,9 @@ class MysqlTableSchemaUpdateConnectionTest extends TableSchemaUpdateConnectionTe
 
 class MysqlFxTableSchemaUpdateConnectionTest extends TableSchemaUpdateConnectionTest[Fx] with FxDatabaseSuite:
   import ldbc.fx.concurrentFx
-  import ldbc.mysql.MySQLDataSource, ldbc.tests.TestConnector as MysqlConnector
+  import ldbc.mysql.MySQLDataSource
   import ldbc.net.SSL as MysqlSSL
+  import ldbc.tests.TestConnector as MysqlConnector
 
   override def prefix: "mysql" = "mysql"
 
@@ -89,9 +90,9 @@ class MysqlFutureTableSchemaUpdateConnectionTest
     )
 
 class MysqlZioTableSchemaUpdateConnectionTest extends TableSchemaUpdateConnectionTest[Task] with ZioDatabaseSuite:
-  import ldbc.zio.concurrentTask
   import ldbc.mysql.MySQLDataSource
   import ldbc.net.SSL as MysqlSSL
+  import ldbc.zio.concurrentTask
 
   override def prefix: "mysql" = "mysql"
 

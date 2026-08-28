@@ -12,8 +12,6 @@ import cats.syntax.all.*
 
 import cats.effect.*
 
-import zio.Task
-
 import munit.*
 
 import ldbc.sql.*
@@ -24,6 +22,8 @@ import ldbc.connector.*
 import ldbc.effect.Concurrent
 import ldbc.fx.Fx
 import ldbc.mysql.syntax.*
+
+import zio.Task
 
 class LdbcServerCursorFetchTest extends ServerCursorFetchTest[IO] with IOAsyncDatabaseSuite:
 

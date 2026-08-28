@@ -13,9 +13,9 @@ import cats.MonadThrow
 
 import cats.effect.IO
 
-import zio.{ Runtime, Task, Unsafe, ZIO }
-
 import ldbc.fx.Fx
+
+import zio.{ Runtime, Task, Unsafe, ZIO }
 
 /**
  * Effect-agnostic munit base suite for the shared connector integration bodies.
@@ -121,8 +121,11 @@ trait ZioDatabaseSuite extends DatabaseSuite[Task]:
   override def munitValueTransforms: List[ValueTransform] =
     super.munitValueTransforms :+ new ValueTransform(
       "ZIO Task",
-      { case task: ZIO[?, ?, ?] =>
-        Unsafe.unsafe(implicit unsafe => Runtime.default.unsafe.runToFuture(task.asInstanceOf[Task[Any]]): Future[Any])
+      {
+        case task: ZIO[?, ?, ?] =>
+          Unsafe.unsafe(implicit unsafe =>
+            Runtime.default.unsafe.runToFuture(task.asInstanceOf[Task[Any]]): Future[Any]
+          )
       }
     )
 

@@ -12,8 +12,6 @@ import cats.syntax.all.*
 
 import cats.effect.*
 
-import zio.Task
-
 import munit.*
 
 import ldbc.dsl.*
@@ -24,6 +22,8 @@ import ldbc.connector.*
 
 import ldbc.fx.Fx
 import ldbc.Connector
+
+import zio.Task
 
 class LdbcDDLTest extends DDLTest[IO] with IODatabaseSuite:
 
@@ -51,8 +51,9 @@ class MysqlDDLTest extends DDLTest[IO] with IODatabaseSuite:
 
 class MysqlFxDDLTest extends DDLTest[Fx] with FxDatabaseSuite:
   import ldbc.fx.concurrentFx
-  import ldbc.mysql.MySQLDataSource, ldbc.tests.TestConnector as MysqlConnector
+  import ldbc.mysql.MySQLDataSource
   import ldbc.net.SSL as MysqlSSL
+  import ldbc.tests.TestConnector as MysqlConnector
 
   override def connector: Connector[Fx] =
     MysqlConnector.fromDataSource(
@@ -78,9 +79,9 @@ class MysqlFutureDDLTest extends DDLTest[Future] with FutureDatabaseSuite:
     )
 
 class MysqlZioDDLTest extends DDLTest[Task] with ZioDatabaseSuite:
-  import ldbc.zio.concurrentTask
   import ldbc.mysql.MySQLDataSource
   import ldbc.net.SSL as MysqlSSL
+  import ldbc.zio.concurrentTask
 
   override def connector: Connector[Task] =
     ldbc.zio.Connector.fromDataSource(

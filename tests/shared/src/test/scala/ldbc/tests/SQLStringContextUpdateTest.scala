@@ -10,8 +10,6 @@ import cats.syntax.all.*
 
 import cats.effect.*
 
-import zio.Task
-
 import munit.CatsEffectSuite
 
 import ldbc.dsl.*
@@ -19,6 +17,8 @@ import ldbc.dsl.*
 import ldbc.connector.*
 
 import ldbc.fx.Fx
+
+import zio.Task
 
 class LdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest[IO] with IODatabaseSuite:
   override def prefix: "jdbc" | "ldbc" = "ldbc"
@@ -68,9 +68,9 @@ class MysqlFxSQLStringContextUpdateTest extends SQLStringContextUpdateTest[Fx] w
     )
 
 class MysqlZioSQLStringContextUpdateTest extends SQLStringContextUpdateTest[Task] with ZioDatabaseSuite:
-  import ldbc.zio.concurrentTask
   import ldbc.mysql.MySQLDataSource
   import ldbc.net.SSL as MysqlSSL
+  import ldbc.zio.concurrentTask
 
   override def prefix: "mysql" = "mysql"
 

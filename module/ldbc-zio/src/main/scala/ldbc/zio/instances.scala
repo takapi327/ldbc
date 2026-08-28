@@ -12,9 +12,9 @@ import scala.concurrent.duration.FiniteDuration
 
 import cats.{ MonadError, StackSafeMonad }
 
-import zio.{ Clock, Duration as ZDuration, Promise, Task, Unsafe, ZIO }
-
 import ldbc.effect.{ Concurrent, Fiber }
+
+import zio.{ Clock, Duration as ZDuration, Promise, Task, Unsafe, ZIO }
 
 /**
  * A [[cats.MonadError]] instance for ZIO's `Task`, provided here (the consumer) rather than in the
@@ -42,7 +42,7 @@ given catsMonadErrorForTask: MonadError[Task, Throwable] =
 given concurrentTask: Concurrent[Task] with
   override def pure[A](a:             A):                                Task[A] = ZIO.succeed(a)
   override def flatMap[A, B](fa:      Task[A])(f: A => Task[B]):         Task[B] = fa.flatMap(f)
-  override def map[A, B](fa:          Task[A])(f: A => B):              Task[B] = fa.map(f)
+  override def map[A, B](fa:          Task[A])(f: A => B):               Task[B] = fa.map(f)
   override def raiseError[A](e:       Throwable):                        Task[A] = ZIO.fail(e)
   override def handleErrorWith[A](fa: Task[A])(f: Throwable => Task[A]): Task[A] = fa.catchAll(f)
   override def delay[A](thunk:        => A):                             Task[A] = ZIO.attempt(thunk)
@@ -66,9 +66,9 @@ given concurrentTask: Concurrent[Task] with
   override def bracket[A, B](acquire: Task[A])(use: A => Task[B])(release: A => Task[Unit]): Task[B] =
     ZIO.acquireReleaseWith(acquire)((a: A) => release(a).orDie)(use)
 
-  override def guarantee[A](fa: Task[A])(fin: Task[Unit]): Task[A] = fa.ensuring(fin.orDie)
-  override def onCancel[A](fa:  Task[A])(fin: Task[Unit]): Task[A] = fa.onInterrupt(fin.orDie)
-  override def uncancelable[A](fa: Task[A]): Task[A] = ZIO.uninterruptible(fa)
+  override def guarantee[A](fa:    Task[A])(fin: Task[Unit]): Task[A] = fa.ensuring(fin.orDie)
+  override def onCancel[A](fa:     Task[A])(fin: Task[Unit]): Task[A] = fa.onInterrupt(fin.orDie)
+  override def uncancelable[A](fa: Task[A]):                  Task[A] = ZIO.uninterruptible(fa)
 
   override def monotonic: Task[FiniteDuration] = Clock.nanoTime.map(FiniteDuration(_, TimeUnit.NANOSECONDS))
   override def realTime:  Task[FiniteDuration] =

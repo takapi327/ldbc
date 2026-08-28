@@ -10,8 +10,6 @@ import scala.concurrent.Future
 
 import cats.effect.*
 
-import zio.Task
-
 import munit.*
 
 import ldbc.dsl.*
@@ -21,6 +19,8 @@ import ldbc.connector.*
 import ldbc.catseffect.*
 import ldbc.fx.Fx
 import ldbc.Connector
+
+import zio.Task
 
 class LdbcStreamQueryTest extends StreamQueryTest[IO] with IODatabaseSuite:
 
@@ -52,8 +52,9 @@ class MysqlStreamQueryTest extends StreamQueryTest[IO] with IODatabaseSuite:
 
 class MysqlFxStreamQueryTest extends StreamQueryTest[Fx] with FxDatabaseSuite:
   import ldbc.fx.concurrentFx
-  import ldbc.mysql.MySQLDataSource, ldbc.tests.TestConnector as MysqlConnector
+  import ldbc.mysql.MySQLDataSource
   import ldbc.net.SSL as MysqlSSL
+  import ldbc.tests.TestConnector as MysqlConnector
 
   override def connector: Connector[Fx] =
     MysqlConnector.fromDataSource(
@@ -83,9 +84,9 @@ class MysqlFutureStreamQueryTest extends StreamQueryTest[Future] with FutureData
     )
 
 class MysqlZioStreamQueryTest extends StreamQueryTest[Task] with ZioDatabaseSuite:
-  import ldbc.zio.concurrentTask
   import ldbc.mysql.MySQLDataSource
   import ldbc.net.SSL as MysqlSSL
+  import ldbc.zio.concurrentTask
 
   override def connector: Connector[Task] =
     ldbc.zio.Connector.fromDataSource(

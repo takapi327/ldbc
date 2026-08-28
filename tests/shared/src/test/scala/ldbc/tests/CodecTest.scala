@@ -12,8 +12,6 @@ import cats.syntax.all.*
 
 import cats.effect.*
 
-import zio.Task
-
 import munit.*
 
 import ldbc.dsl.*
@@ -22,6 +20,8 @@ import ldbc.dsl.codec.Codec
 import ldbc.connector.*
 
 import ldbc.fx.Fx
+
+import zio.Task
 
 class LdbcCodecTest extends CodecTest[IO] with IODatabaseSuite:
 
@@ -72,9 +72,9 @@ class MysqlFxCodecTest extends CodecTest[Fx] with FxDatabaseSuite:
     )
 
 class MysqlZioCodecTest extends CodecTest[Task] with ZioDatabaseSuite:
-  import ldbc.zio.concurrentTask
   import ldbc.mysql.MySQLDataSource
   import ldbc.net.SSL as MysqlSSL
+  import ldbc.zio.concurrentTask
 
   override def prefix: "mysql" = "mysql"
 

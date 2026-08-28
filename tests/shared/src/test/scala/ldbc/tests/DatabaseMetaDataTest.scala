@@ -13,8 +13,6 @@ import cats.Monad
 
 import cats.effect.*
 
-import zio.Task
-
 import munit.*
 
 import ldbc.sql.*
@@ -25,6 +23,8 @@ import ldbc.connector.*
 import ldbc.effect.Concurrent
 import ldbc.fx.Fx
 import ldbc.mysql.syntax.*
+
+import zio.Task
 
 class LdbcDatabaseMetaDataTest extends DatabaseMetaDataTest[IO] with IOAsyncDatabaseSuite:
   override def prefix: "ldbc" = "ldbc"
