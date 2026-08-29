@@ -67,6 +67,59 @@ lazy val effect = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
 
+lazy val telemetry = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
+  .module(
+    "telemetry",
+    "DB-agnostic OpenTelemetry tracing/metrics SPI (Tracer/Span/Meter) over the ldbc.effect type classes"
+  )
+  .settings(
+    libraryDependencies += "org.scalameta" %%% "munit" % "1.2.4" % Test
+  )
+  .jsSettings(
+    Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
+  )
+  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
+  .dependsOn(sql, effect)
+
+lazy val otel4s = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
+  .module(
+    "otel4s",
+    "otel4s-backed adapter for the DB-agnostic ldbc.telemetry SPI (native TracerProvider/MeterProvider for cats-effect)"
+  )
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel" %%% "otel4s-core-trace"   % "1.1.0",
+      "org.typelevel" %%% "otel4s-core-metrics" % "1.1.0",
+      "org.typelevel" %%% "cats-effect"         % "3.7.0"  % Test,
+      "org.typelevel" %%% "otel4s-sdk-testkit"  % "0.19.1" % Test,
+      "org.typelevel" %%% "munit-cats-effect"   % "2.2.0"  % Test
+    )
+  )
+  .jsSettings(
+    Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
+  )
+  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
+  .dependsOn(telemetry)
+
+lazy val zioTelemetry = crossProject(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .withoutSuffixFor(JVMPlatform)
+  .module(
+    "zio-telemetry",
+    "zio-telemetry (OpenTelemetry) adapter for the DB-agnostic ldbc.telemetry SPI — native TracerProvider[Task] (JVM only)"
+  )
+  .settings(
+    libraryDependencies ++= Seq(
+      "dev.zio"         %% "zio-opentelemetry"         % "3.1.19",
+      "io.opentelemetry" % "opentelemetry-sdk"         % "1.53.0" % Test,
+      "io.opentelemetry" % "opentelemetry-sdk-testing" % "1.53.0" % Test,
+      "org.scalameta"   %% "munit"                     % "1.2.4"  % Test
+    )
+  )
+  .dependsOn(telemetry)
+
 lazy val fx = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
   .module("fx", "Effect-agnostic core effect type (Fx); bridges to cats-effect / ZIO / Future")
@@ -582,6 +635,9 @@ lazy val ldbc = tlCrossRootProject
   .aggregate(
     sql,
     effect,
+    telemetry,
+    otel4s,
+    zioTelemetry,
     core,
     fx,
     net,
