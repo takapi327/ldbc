@@ -31,8 +31,7 @@ ThisBuild / githubWorkflowBuildMatrixExclusions ++= Seq(
   MatrixExclude(Map("os" -> "ubuntu-24.04", "project" -> "ldbcJS")),
   MatrixExclude(Map("os" -> "ubuntu-22.04", "project" -> "ldbcNative"))
 )
-ThisBuild / githubWorkflowBuildPreamble ++= List(dockerRun, brewUpdate) ++ nativeBrewInstallWorkflowSteps.value
-ThisBuild / nativeBrewInstallCond := Some("matrix.project == 'ldbcNative'")
+ThisBuild / githubWorkflowBuildPreamble ++= List(dockerRun, brewUpdate, brewInstall)
 ThisBuild / githubWorkflowAddedJobs ++= Seq(sbtScripted.value, sbtCoverageReport.value)
 ThisBuild / githubWorkflowBuildPostamble += dockerStop
 ThisBuild / githubWorkflowBuild ~= { steps =>
@@ -149,8 +148,7 @@ lazy val authenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativePlat
   .jsSettings(
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
   )
-  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
-  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .nativeSettings(Brew.nativeSettings)
 
 lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
@@ -185,8 +183,7 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .jsSettings(
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
   )
-  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
-  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .nativeSettings(Brew.nativeSettings)
   .dependsOn(core, authenticationPlugin)
 
 lazy val awsAuthenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativePlatform)
@@ -203,8 +200,7 @@ lazy val awsAuthenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativeP
   .jsSettings(
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
   )
-  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
-  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .nativeSettings(Brew.nativeSettings)
   .dependsOn(authenticationPlugin)
 
 lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
@@ -231,8 +227,7 @@ lazy val testkit = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .jsSettings(
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
   )
-  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
-  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .nativeSettings(Brew.nativeSettings)
   .dependsOn(connector)
 
 lazy val testkitMunit = crossProject(JVMPlatform, JSPlatform, NativePlatform)
@@ -246,8 +241,7 @@ lazy val testkitMunit = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .jsSettings(
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
   )
-  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
-  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .nativeSettings(Brew.nativeSettings)
   .dependsOn(testkit, dsl % Test)
 
 lazy val zioInterop = crossProject(JVMPlatform, JSPlatform)
@@ -297,8 +291,7 @@ lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
       }
     }
   )
-  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
-  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .nativeSettings(Brew.nativeSettings)
   .dependsOn(connector, queryBuilder, schema)
   .enablePlugins(NoPublishPlugin)
 
