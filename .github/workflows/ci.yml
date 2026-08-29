@@ -444,7 +444,7 @@ jobs:
       matrix:
         os: [ubuntu-22.04]
         scala: [3.3.8]
-        java: [temurin@17, temurin@21]
+        java: [corretto@17, corretto@21]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)

@@ -209,6 +209,8 @@ lazy val awsAuthenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativeP
 
 lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
   .settings(description := "Projects that provide sbt plug-ins")
+  .settings(addSbtPlugin("com.github.sbt" % "sbt2-compat" % "0.2.0"))
+  .settings(scalacOptions += "-Wconf:src=.*Settings\\.scala&msg=unused import:s")
   .settings((Compile / sourceGenerators) += Def.task {
     Generator.version(
       version      = version.value,

@@ -7,16 +7,18 @@
 package ldbc.sbt
 
 import java.io.FilenameFilter
+import java.lang.reflect.Method
 import java.nio.file.attribute.FileTime
 import java.nio.file.Files
-
-import scala.language.reflectiveCalls
 
 import sbt._
 import sbt.Keys._
 
 import ldbc.sbt.AutoImport._
 import ldbc.sbt.CustomKeys._
+
+import sbtcompat.PluginCompat._
+import xsbti.FileConverter
 
 object Generator {
 
@@ -55,6 +57,28 @@ object Generator {
 
   private def convertToUrls(files: Seq[File]): Array[URL] = files.map(_.toURI.toURL).toArray
 
+  /**
+   * Resolves `ldbc.codegen.LdbcGenerator.generate` out of the project's own classpath.
+   *
+   * A structural type would read better, but Scala 3 only permits structural calls on receivers
+   * extending `scala.reflect.Selectable`, which has no Scala 2.12 equivalent. Going through
+   * `java.lang.reflect` directly keeps one source tree compiling for both sbt 1 and sbt 2.
+   */
+  private def loadGenerator(classLoader: ClassLoader): (AnyRef, Method) = {
+    val moduleClass = classLoader.loadClass("ldbc.codegen.LdbcGenerator$")
+    val module      = moduleClass.getField("MODULE$").get(null)
+    val method      = moduleClass.getMethod(
+      "generate",
+      classOf[Array[File]],
+      classOf[Array[File]],
+      classOf[String],
+      classOf[String],
+      classOf[File],
+      classOf[String]
+    )
+    (module, method)
+  }
+
   private var cacheMap:       Map[String, FileTime] = Map.empty
   private var generatedCache: Set[File]             = Set.empty
 
@@ -87,16 +111,7 @@ object Generator {
     alwaysGenerate:     Boolean = false
   ): Def.Initialize[Task[Seq[File]]] = Def.task {
 
-    type LdbcGenerator = {
-      def generate(
-        parseFiles:         Array[File],
-        customYamlFiles:    Array[File],
-        classNameFormat:    String,
-        propertyNameFormat: String,
-        sourceManaged:      File,
-        packageName:        String
-      ): Array[File]
-    }
+    implicit val conv: FileConverter = fileConverter.value
 
     val sqlFilesInDirectory = parseDirectories.value.flatMap(file => {
       if (file.isDirectory) {
@@ -111,12 +126,11 @@ object Generator {
     val combinedFiles = (filtered ++ sqlFilesInDirectory).distinct
 
     val projectClassLoader = new ProjectClassLoader(
-      urls   = convertToUrls((Runtime / externalDependencyClasspath).value.files),
+      urls   = convertToUrls(toFiles((Runtime / externalDependencyClasspath).value)),
       parent = baseClassloader.value
     )
 
-    val mainClass:  Class[_]      = projectClassLoader.loadClass("ldbc.codegen.LdbcGenerator$")
-    val mainObject: LdbcGenerator = mainClass.getField("MODULE$").get(null).asInstanceOf[LdbcGenerator]
+    val (generator, generate) = loadGenerator(projectClassLoader)
 
     val changed = changedHits(combinedFiles)
 
@@ -137,14 +151,17 @@ object Generator {
       })
     }
 
-    val generated = mainObject.generate(
-      executeFiles.toArray,
-      customYamlFiles.value.toArray,
-      classNameFormat.value.toString,
-      propertyNameFormat.value.toString,
-      sourceManaged.value,
-      packageName.value
-    )
+    val generated = generate
+      .invoke(
+        generator,
+        executeFiles.toArray,
+        customYamlFiles.value.toArray,
+        classNameFormat.value.toString,
+        propertyNameFormat.value.toString,
+        sourceManaged.value,
+        packageName.value
+      )
+      .asInstanceOf[Array[File]]
 
     if (generated.nonEmpty) {
       logger.debug("Generated files: [" + generated.map(_.getAbsoluteFile.getName).mkString(", ") + "]")
@@ -152,7 +169,7 @@ object Generator {
 
     if (generatedCache.isEmpty) {
       generatedCache = generated.toSet
-      generated
+      generated.toSeq
     } else {
       generatedCache = generatedCache ++ generated
       generatedCache.toSeq
