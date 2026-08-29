@@ -12,8 +12,8 @@ import ldbc.sql.DatabaseMetaData
 
 import ldbc.fx.concurrentFx
 import ldbc.fx.Fx
-import ldbc.telemetry.*
 import ldbc.net.{ SSL, SocketOptions }
+import ldbc.telemetry.*
 
 class MySQLDataSourceTest extends FTestPlatform:
 

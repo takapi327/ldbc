@@ -14,10 +14,10 @@ import ldbc.authentication.plugin.AuthenticationPlugin
 import ldbc.build.Version
 import ldbc.effect.{ Concurrent, Resource }
 import ldbc.effect.syntax.*
-import ldbc.telemetry.*
-import ldbc.telemetry.{ DatabaseMetrics, TelemetryConfig }
 import ldbc.net.{ IoEngine, TlsUpgrade }
 import ldbc.net.{ SSL, SocketOptions }
+import ldbc.telemetry.*
+import ldbc.telemetry.{ DatabaseMetrics, TelemetryConfig }
 
 /**
  * A [[ldbc.sql.DataSource]] implementation for MySQL connections using the pure Scala MySQL wire protocol.

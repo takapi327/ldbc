@@ -6,9 +6,9 @@
 
 package ldbc.telemetry
 
-import ldbc.sql.Attribute
-
 import munit.FunSuite
+
+import ldbc.sql.Attribute
 
 class TelemetryAttributeTest extends FunSuite:
 

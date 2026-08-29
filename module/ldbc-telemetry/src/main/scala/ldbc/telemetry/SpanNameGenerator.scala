@@ -86,7 +86,7 @@ object SpanNameGenerator:
             // Priority 3: {target} alone
             target match
               case Some(t) => t
-              case None => context.dbSystemName
+              case None    => context.dbSystemName
 
   /**
    * Resolves the target according to the hierarchy.

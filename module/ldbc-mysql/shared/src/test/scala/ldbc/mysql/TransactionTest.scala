@@ -12,8 +12,8 @@ import ldbc.sql.SQLNonTransientException
 import ldbc.fx.concurrentFx
 import ldbc.fx.Fx
 import ldbc.mysql.syntax.*
-import ldbc.telemetry.*
 import ldbc.net.SSL
+import ldbc.telemetry.*
 
 class TransactionTest extends FTestPlatform:
 

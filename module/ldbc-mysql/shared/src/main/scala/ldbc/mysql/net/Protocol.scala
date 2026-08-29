@@ -25,11 +25,11 @@ import ldbc.mysql.net.packet.*
 import ldbc.mysql.net.packet.request.*
 import ldbc.mysql.net.packet.response.*
 import ldbc.mysql.net.protocol.*
-import ldbc.telemetry.*
 import ldbc.mysql.telemetry.MysqlTelemetryAttribute
+import ldbc.net.{ Socket, TlsUpgrade }
+import ldbc.telemetry.*
 import ldbc.telemetry.{ DbAttributes, ServerAttributes }
 import ldbc.telemetry.{ Span, StatusCode, Tracer }
-import ldbc.net.{ Socket, TlsUpgrade }
 
 /**
  * Protocol is a protocol to communicate with MySQL server.

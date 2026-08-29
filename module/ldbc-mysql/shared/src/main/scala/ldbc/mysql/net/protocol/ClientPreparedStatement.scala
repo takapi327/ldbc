@@ -18,10 +18,10 @@ import ldbc.mysql.data.*
 import ldbc.mysql.net.packet.request.*
 import ldbc.mysql.net.packet.response.*
 import ldbc.mysql.net.Protocol
+import ldbc.mysql.ResultSetImpl
 import ldbc.telemetry.*
 import ldbc.telemetry.{ DbAttributes, ErrorAttributes }
 import ldbc.telemetry.{ Span, StatusCode, Tracer }
-import ldbc.mysql.ResultSetImpl
 
 /**
  * PreparedStatement for query construction at the client side.

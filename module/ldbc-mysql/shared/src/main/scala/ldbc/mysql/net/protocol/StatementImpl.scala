@@ -18,12 +18,12 @@ import ldbc.mysql.data.*
 import ldbc.mysql.net.packet.request.*
 import ldbc.mysql.net.packet.response.*
 import ldbc.mysql.net.Protocol
-import ldbc.telemetry.*
 import ldbc.mysql.telemetry.MysqlTelemetryAttribute
-import ldbc.telemetry.{ DbAttributes, ErrorAttributes, ServerAttributes }
-import ldbc.telemetry.{ Span, StatusCode, Tracer }
 import ldbc.mysql.util.StringHelper
 import ldbc.mysql.ResultSetImpl
+import ldbc.telemetry.*
+import ldbc.telemetry.{ DbAttributes, ErrorAttributes, ServerAttributes }
+import ldbc.telemetry.{ Span, StatusCode, Tracer }
 
 private[ldbc] case class StatementImpl[F[_]](
   protocol:             Protocol[F],

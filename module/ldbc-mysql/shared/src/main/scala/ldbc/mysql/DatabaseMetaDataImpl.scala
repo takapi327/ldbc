@@ -21,10 +21,10 @@ import ldbc.mysql.net.packet.response.*
 import ldbc.mysql.net.protocol.*
 import ldbc.mysql.net.Protocol
 import ldbc.mysql.syntax.*
-import ldbc.telemetry.{ DatabaseMetrics, TelemetryConfig }
-import ldbc.telemetry.Tracer
 import ldbc.mysql.util.StringHelper
 import ldbc.mysql.util.Version
+import ldbc.telemetry.{ DatabaseMetrics, TelemetryConfig }
+import ldbc.telemetry.Tracer
 
 private[ldbc] case class DatabaseMetaDataImpl[F[_]](
   protocol:                      Protocol[F],
