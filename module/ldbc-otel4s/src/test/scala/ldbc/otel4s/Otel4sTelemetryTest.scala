@@ -8,11 +8,11 @@ package ldbc.otel4s
 
 import cats.effect.IO
 
-import munit.CatsEffectSuite
-
-import org.typelevel.otel4s.trace.TracerProvider as OtelTracerProvider
 import org.typelevel.otel4s.sdk.testkit.OpenTelemetrySdkTestkit
 import org.typelevel.otel4s.sdk.trace.data.StatusData
+import org.typelevel.otel4s.trace.TracerProvider as OtelTracerProvider
+
+import munit.CatsEffectSuite
 
 import ldbc.sql.Attribute
 
@@ -26,15 +26,15 @@ class Otel4sTelemetryTest extends CatsEffectSuite:
       for
         tracer <- provider.tracer("ldbc").withVersion("test").get
         _      <- tracer.span("Query", Attribute("db.system.name", "mysql")).use { span =>
-                    span.addAttributes(
-                      Attribute("s", "str"),
-                      Attribute("i", 7),
-                      Attribute("l", 42L),
-                      Attribute("b", true),
-                      Attribute("d", 1.5)
-                    ) *> span.setStatus(StatusCode.Ok, "ok")
-                  }
-        spans  <- testkit.finishedSpans
+               span.addAttributes(
+                 Attribute("s", "str"),
+                 Attribute("i", 7),
+                 Attribute("l", 42L),
+                 Attribute("b", true),
+                 Attribute("d", 1.5)
+               ) *> span.setStatus(StatusCode.Ok, "ok")
+             }
+        spans <- testkit.finishedSpans
       yield
         val attrs = spans.head.attributes.elements.toList.map(a => a.key.name -> a.value).toMap
         assertEquals(spans.map(_.name), List("Query"))
@@ -55,10 +55,10 @@ class Otel4sTelemetryTest extends CatsEffectSuite:
       for
         tracer <- provider.tracer("ldbc").get
         _      <- tracer.span("Query").use { span =>
-                    span.recordException(boom, Attribute("db.system.name", "mysql")) *>
-                      span.setStatus(StatusCode.Error, "boom")
-                  }
-        spans  <- testkit.finishedSpans
+               span.recordException(boom, Attribute("db.system.name", "mysql")) *>
+                 span.setStatus(StatusCode.Error, "boom")
+             }
+        spans <- testkit.finishedSpans
       yield
         assert(spans.head.events.elements.nonEmpty, "an exception event is recorded")
         assert(spans.head.status.isInstanceOf[StatusData.Error], s"expected Error status, got ${ spans.head.status }")
@@ -95,12 +95,13 @@ class Otel4sTelemetryTest extends CatsEffectSuite:
       for
         tracer <- provider.tracer("ldbc").get
         _      <- tracer.span("Outer").use { outer =>
-                    outer.addAttribute(Attribute("which", "outer")) *>
-                      tracer.span("Inner").use(inner => inner.addAttribute(Attribute("which", "inner")))
-                  }
-        spans  <- testkit.finishedSpans
+               outer.addAttribute(Attribute("which", "outer")) *>
+                 tracer.span("Inner").use(inner => inner.addAttribute(Attribute("which", "inner")))
+             }
+        spans <- testkit.finishedSpans
       yield
-        val which = spans.map(s => s.name -> s.attributes.elements.toList.find(_.key.name == "which").map(_.value)).toMap
+        val which =
+          spans.map(s => s.name -> s.attributes.elements.toList.find(_.key.name == "which").map(_.value)).toMap
         assertEquals(which.get("Outer"), Some(Some("outer")))
         assertEquals(which.get("Inner"), Some(Some("inner")))
     }
@@ -108,7 +109,7 @@ class Otel4sTelemetryTest extends CatsEffectSuite:
 
   test("the derived given bridges an otel4s TracerProvider to the ldbc SPI, and meterProvider yields a noop Meter") {
     OpenTelemetrySdkTestkit.inMemory[IO]().use { testkit =>
-      given OtelTracerProvider[IO]     = testkit.tracerProvider
+      given OtelTracerProvider[IO] = testkit.tracerProvider
       val provider: TracerProvider[IO] = Otel4sTelemetry.derivedTracerProvider[IO]
       for
         tracer <- provider.tracer("ldbc").get

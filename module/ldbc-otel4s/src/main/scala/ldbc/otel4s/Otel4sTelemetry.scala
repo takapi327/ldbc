@@ -6,12 +6,12 @@
 
 package ldbc.otel4s
 
-import cats.Functor
 import cats.syntax.functor.*
+import cats.Functor
 
-import org.typelevel.otel4s.Attribute as OtelAttribute
-import org.typelevel.otel4s.trace as oteltrace
 import org.typelevel.otel4s.metrics as otelmetrics
+import org.typelevel.otel4s.trace as oteltrace
+import org.typelevel.otel4s.Attribute as OtelAttribute
 
 import ldbc.sql.Attribute
 

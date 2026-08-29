@@ -8,27 +8,26 @@ package ldbc.ziotelemetry
 
 import scala.jdk.CollectionConverters.*
 
-import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.api.trace.StatusCode as JStatusCode
-import io.opentelemetry.sdk.trace.SdkTracerProvider
-import io.opentelemetry.sdk.trace.`export`.SimpleSpanProcessor
-import io.opentelemetry.sdk.trace.data.SpanData
-import io.opentelemetry.sdk.testing.exporter.InMemorySpanExporter
-
-import zio.{ Runtime, Task, Unsafe, ZIO, ZLayer }
-import zio.telemetry.opentelemetry.OpenTelemetry
-import zio.telemetry.opentelemetry.tracing.Tracing
-
 import ldbc.sql.Attribute
 
 import ldbc.telemetry.{ Span, StatusCode, TracerProvider }
+
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.trace.StatusCode as JStatusCode
+import io.opentelemetry.sdk.testing.exporter.InMemorySpanExporter
+import io.opentelemetry.sdk.trace.`export`.SimpleSpanProcessor
+import io.opentelemetry.sdk.trace.data.SpanData
+import io.opentelemetry.sdk.trace.SdkTracerProvider
+import zio.{ Runtime, Task, Unsafe, ZIO, ZLayer }
+import zio.telemetry.opentelemetry.tracing.Tracing
+import zio.telemetry.opentelemetry.OpenTelemetry
 
 class ZioTelemetryTest extends munit.FunSuite:
 
   private def withTracing[A](use: TracerProvider[Task] => Task[A]): (A, List[SpanData]) =
     val exporter = InMemorySpanExporter.create()
     val sdk      = SdkTracerProvider.builder().addSpanProcessor(SimpleSpanProcessor.create(exporter)).build()
-    val program =
+    val program  =
       ZIO
         .serviceWithZIO[Tracing](tracing => use(ZioTelemetry.tracerProvider(tracing)))
         .provide(ZLayer.succeed(sdk.get("ldbc")), OpenTelemetry.contextZIO, Tracing.live())
@@ -43,14 +42,14 @@ class ZioTelemetryTest extends munit.FunSuite:
       for
         tracer <- provider.tracer("ldbc").withVersion("test").get
         _      <- tracer.span("Query", Attribute("db.system.name", "mysql")).use { span =>
-                    span.addAttributes(
-                      Attribute("s", "str"),
-                      Attribute("i", 7),
-                      Attribute("l", 42L),
-                      Attribute("b", true),
-                      Attribute("d", 1.5)
-                    )
-                  }
+               span.addAttributes(
+                 Attribute("s", "str"),
+                 Attribute("i", 7),
+                 Attribute("l", 42L),
+                 Attribute("b", true),
+                 Attribute("d", 1.5)
+               )
+             }
       yield ()
     }
     val attrs = spans.head.getAttributes
@@ -64,14 +63,14 @@ class ZioTelemetryTest extends munit.FunSuite:
   }
 
   test("explicit recordException and setStatus(Error) reach the underlying span") {
-    val boom = new RuntimeException("boom")
+    val boom       = new RuntimeException("boom")
     val (_, spans) = withTracing { provider =>
       for
         tracer <- provider.tracer("ldbc").get
         _      <- tracer.span("Query").use { (span: Span[Task]) =>
-                    span.recordException(boom, Attribute("db.system.name", "mysql")) *>
-                      span.setStatus(StatusCode.Error, "boom")
-                  }
+               span.recordException(boom, Attribute("db.system.name", "mysql")) *>
+                 span.setStatus(StatusCode.Error, "boom")
+             }
       yield ()
     }
     assertEquals(spans.head.getStatus.getStatusCode, JStatusCode.ERROR)
@@ -105,9 +104,9 @@ class ZioTelemetryTest extends munit.FunSuite:
       for
         tracer <- provider.tracer("ldbc").get
         _      <- tracer.span("Outer").use { outer =>
-                    outer.addAttribute(Attribute("which", "outer")) *>
-                      tracer.span("Inner").use(inner => inner.addAttribute(Attribute("which", "inner")))
-                  }
+               outer.addAttribute(Attribute("which", "outer")) *>
+                 tracer.span("Inner").use(inner => inner.addAttribute(Attribute("which", "inner")))
+             }
       yield ()
     }
     val which = spans.map(s => s.getName -> stringAttribute(s, "which")).toMap
@@ -119,8 +118,8 @@ class ZioTelemetryTest extends munit.FunSuite:
     val (_, spans) = withTracing { provider =>
       for
         tracer <- provider.tracer("ldbc").get
-        span    = (id: String) => tracer.span(s"Span-$id").use(_.addAttribute(Attribute("id", id)))
-        _      <- span("a").zipPar(span("b"))
+        span = (id: String) => tracer.span(s"Span-$id").use(_.addAttribute(Attribute("id", id)))
+        _ <- span("a").zipPar(span("b"))
       yield ()
     }
     val byName = spans.map(s => s.getName -> stringAttribute(s, "id")).toMap

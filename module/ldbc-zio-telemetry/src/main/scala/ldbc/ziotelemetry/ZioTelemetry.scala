@@ -6,15 +6,14 @@
 
 package ldbc.ziotelemetry
 
-import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.api.trace.StatusCode as JStatusCode
-
-import zio.{ Task, ZIO }
-import zio.telemetry.opentelemetry.tracing.Tracing
-
 import ldbc.sql.Attribute
 
 import ldbc.telemetry.*
+
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.StatusCode as JStatusCode
+import zio.{ Task, ZIO }
+import zio.telemetry.opentelemetry.tracing.Tracing
 
 /**
  * zio-telemetry-backed implementation of the DB-agnostic `ldbc.telemetry` SPI, running natively on ZIO's
