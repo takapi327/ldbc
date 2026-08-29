@@ -15,8 +15,8 @@ import de.heikoseeberger.sbtheader.HeaderPlugin.autoImport.HeaderPattern.comment
 
 import org.typelevel.sbt.TypelevelGitHubPlugin.autoImport.tlGitHubDev
 
-import ScalaVersions.*
 import SbtVersions.*
+import ScalaVersions.*
 
 object BuildSettings {
 
