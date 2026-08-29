@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.zio.telemetry
+package ldbc.ziotelemetry
 
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.StatusCode as JStatusCode

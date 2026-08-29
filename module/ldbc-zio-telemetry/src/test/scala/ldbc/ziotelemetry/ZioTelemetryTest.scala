@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.zio.telemetry
+package ldbc.ziotelemetry
 
 import scala.jdk.CollectionConverters.*
 
