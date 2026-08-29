@@ -21,6 +21,8 @@ import ldbc.connector.*
 
 import ldbc.fx.Fx
 
+import zio.Task
+
 class LdbcCodecTest extends CodecTest[IO] with IODatabaseSuite:
 
   override def prefix: "jdbc" | "ldbc" = "ldbc"
@@ -64,6 +66,23 @@ class MysqlFxCodecTest extends CodecTest[Fx] with FxDatabaseSuite:
       "connection",
       MySQLDataSource
         .build[Fx](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+        .setPassword(MySQLTestConfig.password)
+        .setDatabase("world")
+        .setSSL(MysqlSSL.Trusted)
+    )
+
+class MysqlZioCodecTest extends CodecTest[Task] with ZioDatabaseSuite:
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
+  import ldbc.zio.concurrentTask
+
+  override def prefix: "mysql" = "mysql"
+
+  override def connection: ConnectionFixture[Task] =
+    ConnectionFixture(
+      "connection",
+      MySQLDataSource
+        .build[Task](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
         .setPassword(MySQLTestConfig.password)
         .setDatabase("world")
         .setSSL(MysqlSSL.Trusted)

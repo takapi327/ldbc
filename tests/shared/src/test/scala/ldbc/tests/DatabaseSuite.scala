@@ -15,6 +15,8 @@ import cats.effect.IO
 
 import ldbc.fx.Fx
 
+import zio.{ Runtime, Task, Unsafe, ZIO }
+
 /**
  * Effect-agnostic munit base suite for the shared connector integration bodies.
  *
@@ -106,3 +108,27 @@ trait IOAsyncDatabaseSuite extends IODatabaseSuite:
 /** `F = Fx` counterpart of [[IOAsyncDatabaseSuite]]. */
 trait FxAsyncDatabaseSuite extends FxDatabaseSuite:
   protected given concurrent: ldbc.effect.Concurrent[Fx] = ldbc.fx.concurrentFx
+
+/**
+ * `F = Task` leaf harness. munit has no native ZIO transform, so this supplies one that runs the returned
+ * `Task` to a `Future` on ZIO's default runtime (mirroring `CatsEffectSuite`'s IO transform). `MonadThrow`
+ * is the hand-written `cats.MonadError[Task, Throwable]` from `ldbc.zio` — no `zio-interop-cats`.
+ */
+trait ZioDatabaseSuite extends DatabaseSuite[Task]:
+  protected val effectLabel: String           = "zio"
+  protected given monad:     MonadThrow[Task] = ldbc.zio.catsMonadErrorForTask
+
+  override def munitValueTransforms: List[ValueTransform] =
+    super.munitValueTransforms :+ new ValueTransform(
+      "ZIO Task",
+      {
+        case task: ZIO[?, ?, ?] =>
+          Unsafe.unsafe(implicit unsafe =>
+            Runtime.default.unsafe.runToFuture(task.asInstanceOf[Task[Any]]): Future[Any]
+          )
+      }
+    )
+
+/** `F = Task` counterpart of [[IOAsyncDatabaseSuite]]. */
+trait ZioAsyncDatabaseSuite extends ZioDatabaseSuite:
+  protected given concurrent: ldbc.effect.Concurrent[Task] = ldbc.zio.concurrentTask

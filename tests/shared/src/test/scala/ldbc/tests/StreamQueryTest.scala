@@ -20,6 +20,8 @@ import ldbc.catseffect.*
 import ldbc.fx.Fx
 import ldbc.Connector
 
+import zio.Task
+
 class LdbcStreamQueryTest extends StreamQueryTest[IO] with IODatabaseSuite:
 
   private val datasource = MySQLDataSource
@@ -30,11 +32,11 @@ class LdbcStreamQueryTest extends StreamQueryTest[IO] with IODatabaseSuite:
     .setUseCursorFetch(true)
     .setAllowPublicKeyRetrieval(true)
 
-  override def connector: Connector[IO] = Connector.fromDataSource(datasource)
+  override def connector: Connector[IO] = ldbc.connector.Connector.fromDataSource(datasource)
 
 class MysqlStreamQueryTest extends StreamQueryTest[IO] with IODatabaseSuite:
   import ldbc.catseffect.concurrentIO
-  import ldbc.mysql.Connector as MysqlConnector
+  import ldbc.catseffect.Connector as MysqlConnector
   import ldbc.mysql.MySQLDataSource
   import ldbc.net.SSL as MysqlSSL
 
@@ -50,8 +52,9 @@ class MysqlStreamQueryTest extends StreamQueryTest[IO] with IODatabaseSuite:
 
 class MysqlFxStreamQueryTest extends StreamQueryTest[Fx] with FxDatabaseSuite:
   import ldbc.fx.concurrentFx
-  import ldbc.mysql.{ Connector as MysqlConnector, MySQLDataSource }
+  import ldbc.mysql.MySQLDataSource
   import ldbc.net.SSL as MysqlSSL
+  import ldbc.tests.TestConnector as MysqlConnector
 
   override def connector: Connector[Fx] =
     MysqlConnector.fromDataSource(
@@ -73,6 +76,22 @@ class MysqlFutureStreamQueryTest extends StreamQueryTest[Future] with FutureData
     ldbc.future.Connector.fromDataSource(
       MySQLDataSource
         .build[Fx](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+        .setPassword(MySQLTestConfig.password)
+        .setDatabase("world")
+        .setSSL(MysqlSSL.None)
+        .setUseCursorFetch(true)
+        .setAllowPublicKeyRetrieval(true)
+    )
+
+class MysqlZioStreamQueryTest extends StreamQueryTest[Task] with ZioDatabaseSuite:
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
+  import ldbc.zio.concurrentTask
+
+  override def connector: Connector[Task] =
+    ldbc.zio.Connector.fromDataSource(
+      MySQLDataSource
+        .build[Task](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
         .setPassword(MySQLTestConfig.password)
         .setDatabase("world")
         .setSSL(MysqlSSL.None)

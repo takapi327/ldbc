@@ -24,6 +24,8 @@ import ldbc.effect.Concurrent
 import ldbc.fx.Fx
 import ldbc.mysql.syntax.*
 
+import zio.Task
+
 class LdbcConnectionTest extends ConnectionTest[IO] with IOAsyncDatabaseSuite:
   override def prefix: "ldbc" = "ldbc"
 
@@ -66,6 +68,24 @@ class MysqlFxConnectionTest extends ConnectionTest[Fx] with FxAsyncDatabaseSuite
   override def datasource(databaseTerm: "SCHEMA" | "CATALOG" = "CATALOG"): DataSource[Fx] =
     MySQLDataSource
       .build[Fx](host, port, user)
+      .setPassword(password)
+      .setDatabase(database)
+      .setSSL(MysqlSSL.Trusted)
+      .setDatabaseTerm(
+        databaseTerm match
+          case "SCHEMA"  => DatabaseMetaData.DatabaseTerm.SCHEMA
+          case "CATALOG" => DatabaseMetaData.DatabaseTerm.CATALOG
+      )
+
+class MysqlZioConnectionTest extends ConnectionTest[Task] with ZioAsyncDatabaseSuite:
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
+
+  override def prefix: "mysql" = "mysql"
+
+  override def datasource(databaseTerm: "SCHEMA" | "CATALOG" = "CATALOG"): DataSource[Task] =
+    MySQLDataSource
+      .build[Task](host, port, user)
       .setPassword(password)
       .setDatabase(database)
       .setSSL(MysqlSSL.Trusted)
