@@ -18,6 +18,8 @@ import ldbc.connector.*
 
 import ldbc.fx.Fx
 
+import zio.Task
+
 class LdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest[IO] with IODatabaseSuite:
   override def prefix: "jdbc" | "ldbc" = "ldbc"
 
@@ -60,6 +62,23 @@ class MysqlFxSQLStringContextUpdateTest extends SQLStringContextUpdateTest[Fx] w
       "connection",
       MySQLDataSource
         .build[Fx](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+        .setPassword(MySQLTestConfig.password)
+        .setDatabase("connector_test")
+        .setSSL(MysqlSSL.Trusted)
+    )
+
+class MysqlZioSQLStringContextUpdateTest extends SQLStringContextUpdateTest[Task] with ZioDatabaseSuite:
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
+  import ldbc.zio.concurrentTask
+
+  override def prefix: "mysql" = "mysql"
+
+  override def connection: ConnectionFixture[Task] =
+    ConnectionFixture(
+      "connection",
+      MySQLDataSource
+        .build[Task](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
         .setPassword(MySQLTestConfig.password)
         .setDatabase("connector_test")
         .setSSL(MysqlSSL.Trusted)

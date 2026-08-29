@@ -23,6 +23,8 @@ import ldbc.connector.*
 import ldbc.fx.Fx
 import ldbc.Connector
 
+import zio.Task
+
 class LdbcDDLTest extends DDLTest[IO] with IODatabaseSuite:
 
   private val datasource = MySQLDataSource
@@ -35,7 +37,7 @@ class LdbcDDLTest extends DDLTest[IO] with IODatabaseSuite:
 
 class MysqlDDLTest extends DDLTest[IO] with IODatabaseSuite:
   import ldbc.catseffect.concurrentIO
-  import ldbc.mysql.Connector as MysqlConnector
+  import ldbc.catseffect.Connector as MysqlConnector
   import ldbc.mysql.MySQLDataSource
   import ldbc.net.SSL as MysqlSSL
 
@@ -49,8 +51,9 @@ class MysqlDDLTest extends DDLTest[IO] with IODatabaseSuite:
 
 class MysqlFxDDLTest extends DDLTest[Fx] with FxDatabaseSuite:
   import ldbc.fx.concurrentFx
-  import ldbc.mysql.{ Connector as MysqlConnector, MySQLDataSource }
+  import ldbc.mysql.MySQLDataSource
   import ldbc.net.SSL as MysqlSSL
+  import ldbc.tests.TestConnector as MysqlConnector
 
   override def connector: Connector[Fx] =
     MysqlConnector.fromDataSource(
@@ -70,6 +73,20 @@ class MysqlFutureDDLTest extends DDLTest[Future] with FutureDatabaseSuite:
     ldbc.future.Connector.fromDataSource(
       MySQLDataSource
         .build[Fx](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+        .setPassword(MySQLTestConfig.password)
+        .setDatabase("connector_test")
+        .setSSL(MysqlSSL.Trusted)
+    )
+
+class MysqlZioDDLTest extends DDLTest[Task] with ZioDatabaseSuite:
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
+  import ldbc.zio.concurrentTask
+
+  override def connector: Connector[Task] =
+    ldbc.zio.Connector.fromDataSource(
+      MySQLDataSource
+        .build[Task](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
         .setPassword(MySQLTestConfig.password)
         .setDatabase("connector_test")
         .setSSL(MysqlSSL.Trusted)

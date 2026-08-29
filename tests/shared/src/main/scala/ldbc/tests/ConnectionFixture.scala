@@ -18,7 +18,7 @@ import ldbc.Connector
  * Effect-agnostic connection fixture: a suite-level `Connector[F]` acquired in `beforeAll` and released
  * in `afterAll`, with optional `F[Unit]` hooks around each phase. Works for any `F` with a
  * `cats.MonadThrow` (IO / Fx / Future) — the connection is wrapped via the generic
- * `ldbc.mysql.Connector.fromConnection`, and munit awaits the `F[Unit]` lifecycle hooks through the
+ * `ldbc.tests.TestConnector.fromConnection`, and munit awaits the `F[Unit]` lifecycle hooks through the
  * suite's per-effect value transform.
  */
 trait ConnectionFixture[F[_]]:
@@ -67,7 +67,7 @@ object ConnectionFixture:
 
         override def beforeAll(): F[Unit] =
           F.flatMap(datasource.getConnection) { (rawConnection, close) =>
-            val connector = ldbc.mysql.Connector.fromConnection(rawConnection)
+            val connector = TestConnector.fromConnection(rawConnection)
             F.map(connectBeforeAll(connector))(_ => this.value = Some((connector, close)))
           }
 

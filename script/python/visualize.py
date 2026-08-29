@@ -16,6 +16,7 @@ target_names = {
     'mysql_io': 'ldbc-mysql: CE',
     'mysql_fx': 'ldbc-mysql: Fx',
     'mysql_future': 'ldbc-mysql: Future',
+    'mysql_zio': 'ldbc-mysql: ZIO',
     'ldbc_querySelectN': 'ldbc (query builder)',
     'ldbc_dslSelectN': 'ldbc (plain sql)',
     'doobie_selectN': 'doobie',

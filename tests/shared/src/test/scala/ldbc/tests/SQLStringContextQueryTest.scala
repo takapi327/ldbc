@@ -27,6 +27,8 @@ import ldbc.connector.exception.SQLException
 import ldbc.fx.Fx
 import ldbc.Connector
 
+import zio.Task
+
 class LdbcSQLStringContextQueryTest extends SQLStringContextQueryTest[IO] with IODatabaseSuite:
 
   private val datasource = MySQLDataSource
@@ -68,7 +70,7 @@ class LdbcSQLStringContextQueryTest extends SQLStringContextQueryTest[IO] with I
 
 class MysqlSQLStringContextQueryTest extends SQLStringContextQueryTest[IO] with IODatabaseSuite:
   import ldbc.catseffect.concurrentIO
-  import ldbc.mysql.Connector as MysqlConnector
+  import ldbc.catseffect.Connector as MysqlConnector
   import ldbc.mysql.MySQLDataSource
   import ldbc.net.SSL as MysqlSSL
 
@@ -82,8 +84,9 @@ class MysqlSQLStringContextQueryTest extends SQLStringContextQueryTest[IO] with 
 
 class MysqlFxSQLStringContextQueryTest extends SQLStringContextQueryTest[Fx] with FxDatabaseSuite:
   import ldbc.fx.concurrentFx
-  import ldbc.mysql.{ Connector as MysqlConnector, MySQLDataSource }
+  import ldbc.mysql.MySQLDataSource
   import ldbc.net.SSL as MysqlSSL
+  import ldbc.tests.TestConnector as MysqlConnector
 
   override def connector: Connector[Fx] =
     MysqlConnector.fromDataSource(
@@ -103,6 +106,20 @@ class MysqlFutureSQLStringContextQueryTest extends SQLStringContextQueryTest[Fut
     ldbc.future.Connector.fromDataSource(
       MySQLDataSource
         .build[Fx](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+        .setPassword(MySQLTestConfig.password)
+        .setDatabase("world")
+        .setSSL(MysqlSSL.Trusted)
+    )
+
+class MysqlZioSQLStringContextQueryTest extends SQLStringContextQueryTest[Task] with ZioDatabaseSuite:
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
+  import ldbc.zio.concurrentTask
+
+  override def connector: Connector[Task] =
+    ldbc.zio.Connector.fromDataSource(
+      MySQLDataSource
+        .build[Task](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
         .setPassword(MySQLTestConfig.password)
         .setDatabase("world")
         .setSSL(MysqlSSL.Trusted)

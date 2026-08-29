@@ -23,6 +23,8 @@ import ldbc.effect.Concurrent
 import ldbc.fx.Fx
 import ldbc.mysql.syntax.*
 
+import zio.Task
+
 class LdbcServerCursorFetchTest extends ServerCursorFetchTest[IO] with IOAsyncDatabaseSuite:
 
   // In case of Scala.js, timeout occurs when FetchSize: 1, so it is necessary to extend the time.
@@ -59,6 +61,22 @@ class MysqlFxServerCursorFetchTest extends ServerCursorFetchTest[Fx] with FxAsyn
   override def datasource: DataSource[Fx] =
     MySQLDataSource
       .build[Fx](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+      .setPassword(MySQLTestConfig.password)
+      .setDatabase("world")
+      .setSSL(MysqlSSL.Trusted)
+      .setUseCursorFetch(true)
+
+class MysqlZioServerCursorFetchTest extends ServerCursorFetchTest[Task] with ZioAsyncDatabaseSuite:
+  import scala.concurrent.duration.*
+
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
+
+  override def munitTimeout: Duration = 80.seconds
+
+  override def datasource: DataSource[Task] =
+    MySQLDataSource
+      .build[Task](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
       .setPassword(MySQLTestConfig.password)
       .setDatabase("world")
       .setSSL(MysqlSSL.Trusted)
