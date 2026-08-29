@@ -412,7 +412,7 @@ lazy val http4sExample = crossProject(JVMPlatform)
       "org.http4s"    %% "http4s-dsl"          % "0.23.36",
       "org.http4s"    %% "http4s-ember-server" % "0.23.36",
       "org.http4s"    %% "http4s-circe"        % "0.23.36",
-      "ch.qos.logback" % "logback-classic"     % "1.6.1",
+      "ch.qos.logback" % "logback-classic"     % "1.6.3",
       "io.circe"      %% "circe-generic"       % "0.14.10"
     )
   )
@@ -456,7 +456,7 @@ lazy val zioExample = crossProject(JVMPlatform)
   .example("zio", "ZIO example project")
   .settings(
     libraryDependencies ++= Seq(
-      "dev.zio" %% "zio-http" % "3.11.3"
+      "dev.zio" %% "zio-http" % "3.11.4"
     )
   )
   .dependsOn(connector, dsl, zioInterop)
