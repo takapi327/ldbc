@@ -4,11 +4,11 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.mysql.telemetry
+package ldbc.telemetry
 
-import ldbc.mysql.*
+import munit.FunSuite
 
-class SpanNameGeneratorTest extends FTestPlatform:
+class SpanNameGeneratorTest extends FunSuite:
 
   // ============================================================
   // generate Tests - Priority 1: querySummary
@@ -101,21 +101,24 @@ class SpanNameGeneratorTest extends FTestPlatform:
   // generate Tests - Priority 4: fallback
   // ============================================================
 
-  test("generate should fallback to mysql when no context") {
+  test("generate should fallback to the default db system name when no context") {
     val ctx = SpanNameGenerator.Context()
+    assertEquals(SpanNameGenerator.generate(ctx), SpanNameGenerator.DefaultDbSystemName)
+  }
+
+  test("generate fallback should use the context-supplied dbSystemName (driver override)") {
+    val ctx = SpanNameGenerator.Context(dbSystemName = "mysql")
     assertEquals(SpanNameGenerator.generate(ctx), "mysql")
   }
 
-  test("generate should fallback when only partial server info") {
-    // Only serverAddress without port should not form a target
+  test("generate should fallback when only server address without port") {
     val ctx = SpanNameGenerator.Context(serverAddress = Some("localhost"))
-    assertEquals(SpanNameGenerator.generate(ctx), "mysql")
+    assertEquals(SpanNameGenerator.generate(ctx), SpanNameGenerator.DefaultDbSystemName)
   }
 
   test("generate should fallback when only port without address") {
-    // Only serverPort without address should not form a target
     val ctx = SpanNameGenerator.Context(serverPort = Some(3306))
-    assertEquals(SpanNameGenerator.generate(ctx), "mysql")
+    assertEquals(SpanNameGenerator.generate(ctx), SpanNameGenerator.DefaultDbSystemName)
   }
 
   // ============================================================

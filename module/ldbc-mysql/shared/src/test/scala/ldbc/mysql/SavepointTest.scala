@@ -11,8 +11,8 @@ import munit.AnyFixture
 import ldbc.fx.concurrentFx
 import ldbc.fx.Fx
 import ldbc.fx.Resource
-import ldbc.mysql.telemetry.*
 import ldbc.net.SSL
+import ldbc.telemetry.*
 
 class SavepointTest extends FTestPlatform:
 

@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.mysql.telemetry
+package ldbc.telemetry
 
 /**
  * Generates span names according to OpenTelemetry database semantic conventions v1.39.0.
@@ -34,6 +34,13 @@ package ldbc.mysql.telemetry
 object SpanNameGenerator:
 
   /**
+   * The generic, DB-agnostic `db.system.name` used as the last-resort span name (OTel priority 4) when no
+   * query summary, operation, or target is available. A concrete driver can override it per call via
+   * [[Context.dbSystemName]] (e.g. the MySQL driver passes `"mysql"`).
+   */
+  val DefaultDbSystemName: String = "database"
+
+  /**
    * Context for generating span names.
    *
    * @param querySummary Low-cardinality query summary
@@ -43,6 +50,7 @@ object SpanNameGenerator:
    * @param namespace Database/schema name
    * @param serverAddress Server hostname
    * @param serverPort Server port number
+   * @param dbSystemName Last-resort span name (the `db.system.name`); defaults to [[DefaultDbSystemName]]
    */
   case class Context(
     querySummary:        Option[String] = None,
@@ -51,7 +59,8 @@ object SpanNameGenerator:
     storedProcedureName: Option[String] = None,
     namespace:           Option[String] = None,
     serverAddress:       Option[String] = None,
-    serverPort:          Option[Int]    = None
+    serverPort:          Option[Int]    = None,
+    dbSystemName:        String         = DefaultDbSystemName
   )
 
   /**
@@ -77,8 +86,7 @@ object SpanNameGenerator:
             // Priority 3: {target} alone
             target match
               case Some(t) => t
-              // Priority 4: fallback to system name
-              case None => DbAttributes.DbSystemNameValue.Mysql.value
+              case None    => context.dbSystemName
 
   /**
    * Resolves the target according to the hierarchy.

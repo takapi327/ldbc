@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.mysql.telemetry
+package ldbc.telemetry
 
 enum TelemetrySpanName(val name: String):
   case CANCEL_QUERY                              extends TelemetrySpanName("Cancel Query")

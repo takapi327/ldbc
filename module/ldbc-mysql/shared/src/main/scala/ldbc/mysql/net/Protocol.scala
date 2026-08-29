@@ -25,10 +25,11 @@ import ldbc.mysql.net.packet.*
 import ldbc.mysql.net.packet.request.*
 import ldbc.mysql.net.packet.response.*
 import ldbc.mysql.net.protocol.*
-import ldbc.mysql.telemetry.*
-import ldbc.mysql.telemetry.{ DbAttributes, ServerAttributes }
-import ldbc.mysql.telemetry.{ Span, StatusCode, Tracer }
+import ldbc.mysql.telemetry.MysqlTelemetryAttribute
 import ldbc.net.{ Socket, TlsUpgrade }
+import ldbc.telemetry.*
+import ldbc.telemetry.{ DbAttributes, ServerAttributes }
+import ldbc.telemetry.{ Span, StatusCode, Tracer }
 
 /**
  * Protocol is a protocol to communicate with MySQL server.
@@ -151,8 +152,8 @@ object Protocol:
       DbAttributes.DbSystemName(DbAttributes.DbSystemNameValue.Mysql.value),
       ServerAttributes.ServerAddress(hostInfo.host),
       ServerAttributes.ServerPort(hostInfo.port.toLong),
-      TelemetryAttribute.dbMysqlVersion(initialPacket.serverVersion.toString),
-      TelemetryAttribute.dbMysqlThreadId(initialPacket.threadId)
+      MysqlTelemetryAttribute.dbMysqlVersion(initialPacket.serverVersion.toString),
+      MysqlTelemetryAttribute.dbMysqlThreadId(initialPacket.threadId)
     ) ++ hostInfo.database
       .map(db => DbAttributes.DbNamespace(db))
       .toList
@@ -522,7 +523,7 @@ object Protocol:
             case None         => resolveAuthPlugin(initialPacket.authPlugin, span)
         span.addAttributes(
           (attributes ++ List(
-            TelemetryAttribute.dbMysqlAuthPlugin(initialPacket.authPlugin),
+            MysqlTelemetryAttribute.dbMysqlAuthPlugin(initialPacket.authPlugin),
             Attribute("username", username)
           ))*
         ) *> resolvedPlugin.flatMap(plugin =>

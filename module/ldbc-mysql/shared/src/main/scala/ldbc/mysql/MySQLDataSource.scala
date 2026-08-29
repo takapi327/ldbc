@@ -14,10 +14,10 @@ import ldbc.authentication.plugin.AuthenticationPlugin
 import ldbc.build.Version
 import ldbc.effect.{ Concurrent, Resource }
 import ldbc.effect.syntax.*
-import ldbc.mysql.telemetry.*
-import ldbc.mysql.telemetry.{ DatabaseMetrics, TelemetryConfig }
 import ldbc.net.{ IoEngine, TlsUpgrade }
 import ldbc.net.{ SSL, SocketOptions }
+import ldbc.telemetry.*
+import ldbc.telemetry.{ DatabaseMetrics, TelemetryConfig }
 
 /**
  * A [[ldbc.sql.DataSource]] implementation for MySQL connections using the pure Scala MySQL wire protocol.
@@ -494,9 +494,9 @@ object MySQLDataSource:
   /**
    * Creates a MySQLDataSource with tracing and metrics enabled.
    *
-   * This factory method acquires a [[ldbc.mysql.telemetry.Tracer]] and a
-   * [[ldbc.mysql.telemetry.Meter]] from the given [[ldbc.mysql.telemetry.TracerProvider]]
-   * and [[ldbc.mysql.telemetry.MeterProvider]], then constructs a [[MySQLDataSource]]
+   * This factory method acquires a [[ldbc.telemetry.Tracer]] and a
+   * [[ldbc.telemetry.Meter]] from the given [[ldbc.telemetry.TracerProvider]]
+   * and [[ldbc.telemetry.MeterProvider]], then constructs a [[MySQLDataSource]]
    * configured to emit traces and metrics for every database operation.
    *
    * @param config         the [[MySQLConfig]] holding host, port, credentials, and other connection settings

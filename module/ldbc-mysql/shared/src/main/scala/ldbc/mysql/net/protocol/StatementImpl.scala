@@ -18,11 +18,12 @@ import ldbc.mysql.data.*
 import ldbc.mysql.net.packet.request.*
 import ldbc.mysql.net.packet.response.*
 import ldbc.mysql.net.Protocol
-import ldbc.mysql.telemetry.*
-import ldbc.mysql.telemetry.{ DbAttributes, ErrorAttributes, ServerAttributes }
-import ldbc.mysql.telemetry.{ Span, StatusCode, Tracer }
+import ldbc.mysql.telemetry.MysqlTelemetryAttribute
 import ldbc.mysql.util.StringHelper
 import ldbc.mysql.ResultSetImpl
+import ldbc.telemetry.*
+import ldbc.telemetry.{ DbAttributes, ErrorAttributes, ServerAttributes }
+import ldbc.telemetry.{ Span, StatusCode, Tracer }
 
 private[ldbc] case class StatementImpl[F[_]](
   protocol:             Protocol[F],
@@ -480,8 +481,8 @@ object StatementImpl:
         DbAttributes.DbSystemName(DbAttributes.DbSystemNameValue.Mysql.value),
         ServerAttributes.ServerAddress(protocol.hostInfo.host),
         ServerAttributes.ServerPort(protocol.hostInfo.port.toLong),
-        TelemetryAttribute.dbMysqlVersion(protocol.initialPacket.serverVersion.toString),
-        TelemetryAttribute.dbMysqlThreadId(protocol.initialPacket.threadId)
+        MysqlTelemetryAttribute.dbMysqlVersion(protocol.initialPacket.serverVersion.toString),
+        MysqlTelemetryAttribute.dbMysqlThreadId(protocol.initialPacket.threadId)
       ) ++ protocol.hostInfo.database.map(name => DbAttributes.DbNamespace(name)).toList
 
     /**
