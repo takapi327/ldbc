@@ -16,6 +16,7 @@ import de.heikoseeberger.sbtheader.HeaderPlugin.autoImport.HeaderPattern.comment
 import org.typelevel.sbt.TypelevelGitHubPlugin.autoImport.tlGitHubDev
 
 import ScalaVersions.*
+import SbtVersions.*
 
 object BuildSettings {
 
@@ -65,11 +66,30 @@ object BuildSettings {
     )
   )
 
-  /** A project that is an sbt plugin. */
+  /**
+   * A project that is an sbt plugin.
+   *
+   * The plugin is cross-built rather than migrated: sbt 1.x loads plugins compiled against Scala
+   * 2.12 and sbt 2.x loads plugins compiled against Scala 3, so both artifacts have to be published
+   * side by side. `scalaBinaryVersion` selects which sbt the plugin is compiled against.
+   *
+   * NOTE: sbt-typelevel derives `scalaVersion` from `crossScalaVersions`, so appending with `+=`
+   * here produces `Cyclic reference involving crossScalaVersions/scalaVersion` at project load.
+   * Both keys must be assigned with `:=`.
+   */
   object LepusSbtPluginProject {
     def apply(name: String, dir: String): Project =
       Project(name, file(dir))
-        .settings(scalaVersion := scala2)
+        .settings(
+          scalaVersion                  := scala2,
+          crossScalaVersions            := Seq(scala2, scala38),
+          pluginCrossBuild / sbtVersion := {
+            scalaBinaryVersion.value match {
+              case "2.12" => sbt1
+              case _      => sbt2
+            }
+          }
+        )
         .settings(scalacOptions ++= additionalSettings)
         .settings(scalacOptions --= removeSettings)
         .settings(commonSettings)
