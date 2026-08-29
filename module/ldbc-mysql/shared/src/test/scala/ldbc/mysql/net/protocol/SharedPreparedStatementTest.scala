@@ -19,7 +19,7 @@ import ldbc.fx.syntax.*
 import ldbc.fx.Fx
 import ldbc.mysql.data.*
 import ldbc.mysql.net.Protocol
-import ldbc.mysql.telemetry.DatabaseMetrics
+import ldbc.telemetry.DatabaseMetrics
 import ldbc.mysql.FTestPlatform
 
 class SharedPreparedStatementTest extends SharedPreparedStatement[Fx], FTestPlatform:

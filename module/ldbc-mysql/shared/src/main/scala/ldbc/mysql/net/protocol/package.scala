@@ -6,9 +6,9 @@
 
 package ldbc.mysql.net
 
-import ldbc.mysql.telemetry.Span
-import ldbc.mysql.telemetry.TelemetrySpanName
-import ldbc.mysql.telemetry.Tracer
+import ldbc.telemetry.Span
+import ldbc.telemetry.TelemetrySpanName
+import ldbc.telemetry.Tracer
 
 package object protocol:
 

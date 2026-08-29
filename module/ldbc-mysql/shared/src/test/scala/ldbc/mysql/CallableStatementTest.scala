@@ -12,7 +12,7 @@ import ldbc.sql.Types
 import ldbc.fx.concurrentFx
 import ldbc.fx.syntax.*
 import ldbc.fx.Fx
-import ldbc.mysql.telemetry.*
+import ldbc.telemetry.*
 import ldbc.net.SSL
 
 class CallableStatementTest extends FTestPlatform:

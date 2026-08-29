@@ -13,7 +13,7 @@ import ldbc.fx.syntax.*
 import ldbc.fx.Fx
 import ldbc.mysql.*
 import ldbc.mysql.authenticator.MysqlClearPasswordPlugin
-import ldbc.mysql.telemetry.*
+import ldbc.telemetry.*
 import ldbc.net.SSL
 
 class MysqlNativePasswordTest extends FTestPlatform:

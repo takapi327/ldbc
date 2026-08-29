@@ -20,7 +20,7 @@ import ldbc.mysql.net.packet.{ RequestPacket, ResponsePacket }
 import ldbc.mysql.net.packet.request.AuthSwitchResponsePacket
 import ldbc.mysql.net.packet.response.{ AuthSwitchRequestPacket, InitialPacket, OKPacket }
 import ldbc.mysql.net.protocol.Exchange
-import ldbc.mysql.telemetry.*
+import ldbc.telemetry.*
 import ldbc.mysql.util.Version
 import ldbc.mysql.FTestPlatform
 

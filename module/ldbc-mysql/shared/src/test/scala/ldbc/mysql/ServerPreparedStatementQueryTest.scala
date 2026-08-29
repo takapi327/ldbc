@@ -15,7 +15,7 @@ import ldbc.fx.syntax.*
 import ldbc.fx.Fx
 import ldbc.mysql.data.MysqlType
 import ldbc.mysql.syntax.*
-import ldbc.mysql.telemetry.*
+import ldbc.telemetry.*
 import ldbc.net.SSL
 
 class ServerPreparedStatementQueryTest extends FTestPlatform:

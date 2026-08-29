@@ -22,9 +22,9 @@ import ldbc.mysql.net.packet.request.*
 import ldbc.mysql.net.packet.response.*
 import ldbc.mysql.net.Protocol
 import ldbc.mysql.syntax.*
-import ldbc.mysql.telemetry.*
-import ldbc.mysql.telemetry.{ DbAttributes, ErrorAttributes }
-import ldbc.mysql.telemetry.{ Span, StatusCode, Tracer }
+import ldbc.telemetry.*
+import ldbc.telemetry.{ DbAttributes, ErrorAttributes }
+import ldbc.telemetry.{ Span, StatusCode, Tracer }
 
 case class CallableStatementImpl[F[_]](
   protocol:                Protocol[F],

@@ -13,7 +13,7 @@ import ldbc.sql.BatchUpdateException
 import ldbc.fx.{ Fx, Resource }
 import ldbc.fx.concurrentFx
 import ldbc.fx.syntax.*
-import ldbc.mysql.telemetry.*
+import ldbc.telemetry.*
 import ldbc.net.SSL
 
 class StatementBatchTest extends FTestPlatform:
