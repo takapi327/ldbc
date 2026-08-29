@@ -67,6 +67,21 @@ lazy val effect = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
 
+lazy val telemetry = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
+  .module(
+    "telemetry",
+    "DB-agnostic OpenTelemetry tracing/metrics SPI (Tracer/Span/Meter) over the ldbc.effect type classes"
+  )
+  .settings(
+    libraryDependencies += "org.scalameta" %%% "munit" % "1.2.4" % Test
+  )
+  .jsSettings(
+    Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
+  )
+  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
+  .dependsOn(sql, effect)
+
 lazy val fx = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
   .module("fx", "Effect-agnostic core effect type (Fx); bridges to cats-effect / ZIO / Future")
@@ -253,7 +268,7 @@ lazy val mysql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
   .nativeSettings(Test / nativeBrewFormulas += "s2n")
-  .dependsOn(net, authenticationPlugin, core, fx % "test->compile;test->test")
+  .dependsOn(net, telemetry, authenticationPlugin, core, fx % "test->compile;test->test")
 
 lazy val pool = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
@@ -566,6 +581,7 @@ lazy val ldbc = tlCrossRootProject
   .aggregate(
     sql,
     effect,
+    telemetry,
     core,
     fx,
     net,
