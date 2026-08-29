@@ -19,8 +19,6 @@ import org.openjdk.jmh.annotations.*
 import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
-import zio.{ Runtime, Task, Unsafe }
-
 import ldbc.sql.{ BufferedResultSet, Connection, ResultSet }
 
 import ldbc.catseffect.concurrentIO
@@ -28,10 +26,12 @@ import ldbc.effect.syntax.*
 import ldbc.effect.MonadThrow
 import ldbc.future.toFuture
 import ldbc.fx.{ concurrentFx, Fx }
-import ldbc.zio.concurrentTask
 import ldbc.mysql.syntax.*
 import ldbc.mysql.MySQLDataSource
 import ldbc.net.SSL
+import ldbc.zio.concurrentTask
+
+import zio.{ Runtime, Task, Unsafe }
 
 /**
  * Throughput of the effect-generic `ldbc-mysql` driver running the same read-only `SELECT` at the raw
