@@ -4,13 +4,12 @@
  *  please view the LICENSE file that was distributed with this source code.
  */
 
+import scala.scalanative.sbtplugin.ScalaNativePlugin.autoImport.*
 import scala.sys.process.Process
 import scala.util.Try
 
 import sbt.*
 import sbt.Keys.*
-
-import scala.scalanative.sbtplugin.ScalaNativePlugin.autoImport.*
 
 /**
  * Homebrew integration for the Scala Native builds.
