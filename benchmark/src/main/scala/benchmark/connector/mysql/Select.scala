@@ -19,6 +19,8 @@ import org.openjdk.jmh.annotations.*
 import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
+import zio.{ Runtime, Task, Unsafe }
+
 import ldbc.sql.{ BufferedResultSet, Connection, ResultSet }
 
 import ldbc.catseffect.concurrentIO
@@ -26,6 +28,7 @@ import ldbc.effect.syntax.*
 import ldbc.effect.MonadThrow
 import ldbc.future.toFuture
 import ldbc.fx.{ concurrentFx, Fx }
+import ldbc.zio.concurrentTask
 import ldbc.mysql.syntax.*
 import ldbc.mysql.MySQLDataSource
 import ldbc.net.SSL
@@ -36,9 +39,10 @@ import ldbc.net.SSL
  * measurement level of the `jdbc` and `ldbc` benchmarks in this package rather than going through the
  * `DBIO` / DSL layer.
  *
- * `io` and `fx` run natively on a `Connection[IO]` / `Connection[Fx]`. `Future` is not `Concurrent`, so it
- * has no native `Connection[Future]`; `future` therefore runs the identical program on the `Fx` connection
- * and bridges the single result with [[ldbc.future.toFuture]] — the cost a `Future` caller actually pays.
+ * `io`, `fx` and `zio` run natively on a `Connection[IO]` / `Connection[Fx]` / `Connection[Task]`. `Future` is
+ * not `Concurrent`, so it has no native `Connection[Future]`; `future` therefore runs the identical program on
+ * the `Fx` connection and bridges the single result with [[ldbc.future.toFuture]] — the cost a `Future` caller
+ * actually pays.
  */
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
@@ -75,10 +79,18 @@ class Select:
   var fxConnection: Connection[Fx] = uninitialized
 
   @volatile
+  var zioConnection: Connection[Task] = uninitialized
+
+  @volatile
   var ioRelease: IO[Unit] = uninitialized
 
   @volatile
   var fxRelease: Fx[Unit] = uninitialized
+
+  @volatile
+  var zioRelease: Task[Unit] = uninitialized
+
+  private val zioRuntime = Runtime.default
 
   @Setup
   def setup(): Unit =
@@ -94,18 +106,28 @@ class Select:
       .setDatabase("benchmark")
       .setSSL(SSL.Trusted)
 
-    val (ioConn, ioClose) = ioDataSource.getConnection.unsafeRunSync()
-    val (fxConn, fxClose) = unsafeRunFx(fxDataSource.getConnection)
+    val zioDataSource = MySQLDataSource
+      .build[Task]("127.0.0.1", 13306, "ldbc")
+      .setPassword("password")
+      .setDatabase("benchmark")
+      .setSSL(SSL.Trusted)
 
-    ioConnection = ioConn
-    ioRelease    = ioClose
-    fxConnection = fxConn
-    fxRelease    = fxClose
+    val (ioConn, ioClose)   = ioDataSource.getConnection.unsafeRunSync()
+    val (fxConn, fxClose)   = unsafeRunFx(fxDataSource.getConnection)
+    val (zioConn, zioClose) = unsafeRunZio(zioDataSource.getConnection)
+
+    ioConnection  = ioConn
+    ioRelease     = ioClose
+    fxConnection  = fxConn
+    fxRelease     = fxClose
+    zioConnection = zioConn
+    zioRelease    = zioClose
 
   @TearDown(Level.Trial)
   def tearDown(): Unit =
     ioRelease.unsafeRunSync()
     unsafeRunFx(fxRelease)
+    unsafeRunZio(zioRelease)
 
   @Param(Array("500", "1000", "1500", "2000"))
   var len: Int = uninitialized
@@ -121,6 +143,10 @@ class Select:
   @Benchmark
   def future: List[BenchmarkType] =
     Await.result(toFuture(programBatch(fxConnection)), 60.seconds)
+
+  @Benchmark
+  def zio: List[BenchmarkType] =
+    unsafeRunZio(programBatch(zioConnection))
 
   /**
    * The shared read-only program. A fully-buffered result set is decoded through the single-effect synchronous
@@ -194,3 +220,7 @@ class Select:
     }
     latch.await()
     result.get.fold(throw _, identity)
+
+  /** Runs a `Task` to a value on ZIO's default runtime, blocking the calling thread until it completes. */
+  private def unsafeRunZio[A](task: Task[A]): A =
+    Unsafe.unsafe(implicit unsafe => zioRuntime.unsafe.run(task).getOrThrowFiberFailure())

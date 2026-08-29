@@ -414,7 +414,8 @@ lazy val benchmark = (project in file("benchmark"))
     fx.jvm,
     mysql.jvm,
     catsEffect.jvm,
-    future.jvm
+    future.jvm,
+    zio.jvm
   )
   .enablePlugins(JmhPlugin, AutomateHeaderPlugin, NoPublishPlugin)
 
