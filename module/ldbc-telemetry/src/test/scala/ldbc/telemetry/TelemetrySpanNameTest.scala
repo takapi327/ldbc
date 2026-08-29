@@ -4,11 +4,11 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.mysql.telemetry
+package ldbc.telemetry
 
-import ldbc.mysql.*
+import munit.FunSuite
 
-class TelemetrySpanNameTest extends FTestPlatform:
+class TelemetrySpanNameTest extends FunSuite:
 
   test("CANCEL_QUERY should have correct name") {
     assertEquals(TelemetrySpanName.CANCEL_QUERY.name, "Cancel Query")

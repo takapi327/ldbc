@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.mysql.telemetry
+package ldbc.telemetry
 
 import ldbc.sql.Attribute
 
@@ -17,14 +17,6 @@ import ldbc.sql.Attribute
  * @see [[https://opentelemetry.io/docs/specs/semconv/db/ Database Semantic Conventions]]
  */
 object TelemetryAttribute:
-
-  // ============================================================
-  // MySQL-specific attribute keys (not in OTel semantic conventions)
-  // ============================================================
-
-  val DB_MYSQL_VERSION:     String = "db.mysql.version"
-  val DB_MYSQL_THREAD_ID:   String = "db.mysql.thread_id"
-  val DB_MYSQL_AUTH_PLUGIN: String = "db.mysql.auth_plugin"
 
   // Prefixed parameter attributes (non-standard parameterized attrs)
   val DB_OPERATION_PARAMETER_PREFIX: String = "db.operation.parameter."
@@ -59,19 +51,6 @@ object TelemetryAttribute:
     val INIT_DB:  String = "INIT_DB"
     val KILL:     String = "KILL"
     val SHUTDOWN: String = "SHUTDOWN"
-
-  // ============================================================
-  // MySQL-specific attribute factory methods
-  // ============================================================
-
-  def dbMysqlVersion(version: String): Attribute[String] =
-    Attribute(DB_MYSQL_VERSION, version)
-
-  def dbMysqlThreadId(threadId: Int): Attribute[Long] =
-    Attribute(DB_MYSQL_THREAD_ID, threadId.toLong)
-
-  def dbMysqlAuthPlugin(plugin: String): Attribute[String] =
-    Attribute(DB_MYSQL_AUTH_PLUGIN, plugin)
 
   // ============================================================
   // Helper methods wrapping semconv attributes with ldbc-specific logic

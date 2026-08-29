@@ -11,8 +11,8 @@ import ldbc.sql.Statement
 import ldbc.fx.concurrentFx
 import ldbc.fx.syntax.*
 import ldbc.fx.Fx
-import ldbc.mysql.telemetry.*
 import ldbc.net.SSL
+import ldbc.telemetry.*
 
 class StatementUpdateTest extends FTestPlatform:
 

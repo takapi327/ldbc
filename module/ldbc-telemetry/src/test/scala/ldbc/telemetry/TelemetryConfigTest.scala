@@ -4,11 +4,11 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.mysql.telemetry
+package ldbc.telemetry
 
-import ldbc.mysql.*
+import munit.FunSuite
 
-class TelemetryConfigTest extends FTestPlatform:
+class TelemetryConfigTest extends FunSuite:
 
   // ============================================================
   // Default configuration tests
@@ -167,10 +167,10 @@ class TelemetryConfigTest extends FTestPlatform:
     assertEquals(spanName, "SELECT users")
   }
 
-  test("generateSpanName should fallback to mysql when extraction disabled and no metadata") {
+  test("generateSpanName should fallback to the default db system name when extraction disabled and no metadata") {
     val config   = TelemetryConfig.withoutQueryTextExtraction
     val spanName = config.generateSpanName("SELECT * FROM users")
-    assertEquals(spanName, "mysql")
+    assertEquals(spanName, SpanNameGenerator.DefaultDbSystemName)
   }
 
   test("generateSpanName should use namespace when no collection available") {

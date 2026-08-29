@@ -4,28 +4,13 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.mysql.telemetry
+package ldbc.telemetry
+
+import munit.FunSuite
 
 import ldbc.sql.Attribute
 
-import ldbc.mysql.*
-
-class TelemetryAttributeTest extends FTestPlatform:
-
-  test("dbMysqlVersion should return correct attribute") {
-    val version = "8.0.33"
-    assertEquals(TelemetryAttribute.dbMysqlVersion(version), Attribute("db.mysql.version", version))
-  }
-
-  test("dbMysqlThreadId should return correct attribute") {
-    val threadId = 12345
-    assertEquals(TelemetryAttribute.dbMysqlThreadId(threadId), Attribute("db.mysql.thread_id", 12345L))
-  }
-
-  test("dbMysqlAuthPlugin should return correct attribute") {
-    val plugin = "mysql_native_password"
-    assertEquals(TelemetryAttribute.dbMysqlAuthPlugin(plugin), Attribute("db.mysql.auth_plugin", plugin))
-  }
+class TelemetryAttributeTest extends FunSuite:
 
   test("dbOperationBatchSize should return Some with DbAttributes key for size >= 2") {
     assertEquals(

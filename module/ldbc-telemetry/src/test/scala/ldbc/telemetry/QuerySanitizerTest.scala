@@ -4,11 +4,11 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.mysql.telemetry
+package ldbc.telemetry
 
-import ldbc.mysql.*
+import munit.FunSuite
 
-class QuerySanitizerTest extends FTestPlatform:
+class QuerySanitizerTest extends FunSuite:
 
   // ============================================================
   // isParameterizedQuery Tests

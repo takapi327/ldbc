@@ -306,7 +306,7 @@ lazy val mysql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
   .nativeSettings(Test / nativeBrewFormulas += "s2n")
-  .dependsOn(net, authenticationPlugin, core, fx % "test->compile;test->test")
+  .dependsOn(net, telemetry, authenticationPlugin, core, fx % "test->compile;test->test")
 
 lazy val pool = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)

@@ -19,9 +19,9 @@ import ldbc.mysql.net.*
 import ldbc.mysql.net.packet.request.*
 import ldbc.mysql.net.packet.response.*
 import ldbc.mysql.net.protocol.*
-import ldbc.mysql.telemetry.{ DatabaseMetrics, TelemetryConfig }
-import ldbc.mysql.telemetry.Tracer
 import ldbc.mysql.util.StringHelper
+import ldbc.telemetry.{ DatabaseMetrics, TelemetryConfig }
+import ldbc.telemetry.Tracer
 
 private[ldbc] case class ConnectionImpl[F[_]](
   protocol:           Protocol[F],
