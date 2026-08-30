@@ -1668,7 +1668,7 @@ trait DatabaseMetaDataTest[F[_]] extends DatabaseSuite[F]:
           result    <- Monad[F].whileM[List, String](resultSet.next()) {
                       resultSet.getString("TABLE_SCHEM")
                     }
-        yield result
+        yield result.filterNot(_.startsWith("codec_test"))
       },
       List.empty
     )
@@ -1684,7 +1684,7 @@ trait DatabaseMetaDataTest[F[_]] extends DatabaseSuite[F]:
           result    <- Monad[F].whileM[List, String](resultSet.next()) {
                       resultSet.getString("TABLE_CAT")
                     }
-        yield result
+        yield result.filterNot(_.startsWith("codec_test"))
       },
       List(
         "benchmark",

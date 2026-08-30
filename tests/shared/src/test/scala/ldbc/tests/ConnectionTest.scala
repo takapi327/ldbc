@@ -435,7 +435,7 @@ trait ConnectionTest[F[_]] extends DatabaseSuite[F]:
                         tableCatalog <- resultSet.getString("TABLE_CATALOG")
                         tableSchem   <- resultSet.getString("TABLE_SCHEM")
                       yield
-                        if tableSchem == "codec_test" then None
+                        if tableSchem.startsWith("codec_test") then None
                         else Some(s"Table Catalog: $tableCatalog, Table Schema: $tableSchem")
                     }
         yield result.flatten
@@ -462,8 +462,8 @@ trait ConnectionTest[F[_]] extends DatabaseSuite[F]:
           resultSet <- metaData.getCatalogs()
           result    <- Monad[F].whileM[Vector, Option[String]](resultSet.next()) {
                       resultSet.getString("TABLE_CAT").map { tableCatalog =>
-                        // codec_test is excluded because it is created and deleted in another test, causing unintended test failures when tests are run in parallel.
-                        if tableCatalog == "codec_test" then None else Some(s"Table Catalog: $tableCatalog")
+                        // codec_test_* databases are excluded because they are created and deleted by CodecTest, causing unintended test failures when tests are run in parallel.
+                        if tableCatalog.startsWith("codec_test") then None else Some(s"Table Catalog: $tableCatalog")
                       }
                     }
         yield result.flatten
