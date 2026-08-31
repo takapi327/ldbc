@@ -78,16 +78,19 @@ class AdaptivePoolSizerTest extends FTestPlatform:
 
     resource.use { datasource =>
       for
-        // First grow the pool by creating load
-        _ <- IO.parTraverseN(5)((1 to 5).toList) { _ =>
-               datasource.use { _ => IO.sleep(50.millis) }
-             }
+        // First grow the pool by holding sustained load in the background, so the adaptive sizer
+        // observes high utilization across several intervals before we sample.
+        load <- (1 to 5).toList.parTraverse { _ =>
+                  datasource.use { _ => IO.sleep(1.second) }.start
+                }
+        _ <- IO.sleep(500.millis) // 10 adaptive intervals of sustained load
 
         statusAfterGrowth <- datasource.status
 
-        // Now let pool be idle to trigger shrinking
+        // Release the load and let the pool be idle to trigger shrinking
+        _ <- load.parTraverse(_.cancel)
         // Need multiple consecutive low utilization periods (3 as per implementation)
-        _ <- IO.sleep(200.millis) // 4 adaptive intervals
+        _ <- IO.sleep(500.millis)
 
         finalStatus <- datasource.status
       yield
