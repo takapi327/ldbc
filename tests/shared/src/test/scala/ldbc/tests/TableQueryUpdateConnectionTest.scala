@@ -131,7 +131,7 @@ trait TableQueryUpdateConnectionTest[F[_]] extends DatabaseSuite[F]:
       _ <- sql"DELETE FROM city WHERE Name = 'Test4' AND CountryCode = ${ code(4) }".update
       _ <- sql"DELETE FROM city WHERE Name = 'Japan' AND CountryCode = 'JPN' AND District = 'Kanto'".update
       _ <-
-        sql"DELETE FROM country WHERE Code IN (${ code(1) }, ${ code(2) }, ${ code(3) }, ${ code(4) }, ${ code(5) }, ${ code(6) })".update
+        sql"DELETE FROM country WHERE Code IN (${ code(1) }, ${ code(2) }, ${ code(3) }, ${ code(4) }, ${ code(5) }, ${ code(6) }, ${ code(7) }, ${ code(8) })".update
     yield ()).commit(connector)
 
   override def munitFixtures = List(
@@ -492,11 +492,46 @@ trait TableQueryUpdateConnectionTest[F[_]] extends DatabaseSuite[F]:
   test(
     "Deletion by itself is successful."
   ) {
+    val delCountry1 = Country(
+      code(7),
+      s"${ prefix }_${ effectLabel }_Delete7",
+      Country.Continent.Asia,
+      "Northeast",
+      BigDecimal.decimal(390757.00),
+      None,
+      1,
+      None,
+      None,
+      None,
+      "Test",
+      "Test",
+      None,
+      None,
+      code(7)
+    )
+    val delCountry2 = Country(
+      code(8),
+      s"${ prefix }_${ effectLabel }_Delete8",
+      Country.Continent.North_America,
+      "Northeast",
+      BigDecimal.decimal(390757.00),
+      None,
+      1,
+      None,
+      None,
+      None,
+      "Test",
+      "Test",
+      None,
+      None,
+      code(8)
+    )
     assertF(
-      country.delete
-        .where(v => v.code _equals code(5) or (v.code _equals code(6)))
-        .update
-        .commit(connector),
+      (for
+        _       <- country.delete.where(v => v.code _equals code(7) or (v.code _equals code(8))).update
+        _       <- (country ++= NonEmptyList.of(delCountry1, delCountry2)).update
+        deleted <- country.delete.where(v => v.code _equals code(7) or (v.code _equals code(8))).update
+      yield deleted).commit(connector),
       2
     )
   }
