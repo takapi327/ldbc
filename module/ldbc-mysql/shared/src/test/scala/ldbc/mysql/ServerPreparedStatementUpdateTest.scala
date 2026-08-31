@@ -54,7 +54,9 @@ class ServerPreparedStatementUpdateTest extends FTestPlatform:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          _ <- statement.executeUpdate("CREATE TABLE `mysql_server_statement_byte_table`(`c1` BIT NOT NULL, `c2` BIT NULL)")
+          _         <- statement.executeUpdate(
+                 "CREATE TABLE `mysql_server_statement_byte_table`(`c1` BIT NOT NULL, `c2` BIT NULL)"
+               )
           preparedStatement <-
             conn.serverPreparedStatement("INSERT INTO `mysql_server_statement_byte_table`(`c1`, `c2`) VALUES (?, ?)")
           count <-
@@ -160,7 +162,9 @@ class ServerPreparedStatementUpdateTest extends FTestPlatform:
         for
           statement <- conn.createStatement()
           _         <-
-            statement.executeUpdate("CREATE TABLE `mysql_server_statement_float_table`(`c1` FLOAT NOT NULL, `c2` FLOAT NULL)")
+            statement.executeUpdate(
+              "CREATE TABLE `mysql_server_statement_float_table`(`c1` FLOAT NOT NULL, `c2` FLOAT NULL)"
+            )
           preparedStatement <-
             conn.serverPreparedStatement("INSERT INTO `mysql_server_statement_float_table`(`c1`, `c2`) VALUES (?, ?)")
           count <-
@@ -204,7 +208,9 @@ class ServerPreparedStatementUpdateTest extends FTestPlatform:
                  "CREATE TABLE `mysql_server_statement_bigdecimal_table`(`c1` DECIMAL NOT NULL, `c2` DECIMAL NULL)"
                )
           preparedStatement <-
-            conn.serverPreparedStatement("INSERT INTO `mysql_server_statement_bigdecimal_table`(`c1`, `c2`) VALUES (?, ?)")
+            conn.serverPreparedStatement(
+              "INSERT INTO `mysql_server_statement_bigdecimal_table`(`c1`, `c2`) VALUES (?, ?)"
+            )
           count <- preparedStatement.setBigDecimal(1, BigDecimal.decimal(1.1)) *> preparedStatement
                      .setNull(2, MysqlType.DECIMAL.jdbcType) *> preparedStatement
                      .executeUpdate()
@@ -220,9 +226,10 @@ class ServerPreparedStatementUpdateTest extends FTestPlatform:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          _         <- statement.executeUpdate(
-                 "CREATE TABLE `mysql_server_statement_string_table`(`c1` VARCHAR(255) NOT NULL, `c2` VARCHAR(255) NULL)"
-               )
+          _         <-
+            statement.executeUpdate(
+              "CREATE TABLE `mysql_server_statement_string_table`(`c1` VARCHAR(255) NOT NULL, `c2` VARCHAR(255) NULL)"
+            )
           preparedStatement <-
             conn.serverPreparedStatement("INSERT INTO `mysql_server_statement_string_table`(`c1`, `c2`) VALUES (?, ?)")
           count <-
@@ -263,7 +270,9 @@ class ServerPreparedStatementUpdateTest extends FTestPlatform:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          _ <- statement.executeUpdate("CREATE TABLE `mysql_server_statement_time_table`(`c1` TIME NOT NULL, `c2` TIME NULL)")
+          _         <- statement.executeUpdate(
+                 "CREATE TABLE `mysql_server_statement_time_table`(`c1` TIME NOT NULL, `c2` TIME NULL)"
+               )
           preparedStatement <-
             conn.serverPreparedStatement("INSERT INTO `mysql_server_statement_time_table`(`c1`, `c2`) VALUES (?, ?)")
           count <-
@@ -282,7 +291,9 @@ class ServerPreparedStatementUpdateTest extends FTestPlatform:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          _ <- statement.executeUpdate("CREATE TABLE `mysql_server_statement_date_table`(`c1` DATE NOT NULL, `c2` DATE NULL)")
+          _         <- statement.executeUpdate(
+                 "CREATE TABLE `mysql_server_statement_date_table`(`c1` DATE NOT NULL, `c2` DATE NULL)"
+               )
           preparedStatement <-
             conn.serverPreparedStatement("INSERT INTO `mysql_server_statement_date_table`(`c1`, `c2`) VALUES (?, ?)")
           count <-
@@ -305,7 +316,9 @@ class ServerPreparedStatementUpdateTest extends FTestPlatform:
                  "CREATE TABLE `mysql_server_statement_datetime_table`(`c1` TIMESTAMP NOT NULL, `c2` TIMESTAMP NULL)"
                )
           preparedStatement <-
-            conn.serverPreparedStatement("INSERT INTO `mysql_server_statement_datetime_table`(`c1`, `c2`) VALUES (?, ?)")
+            conn.serverPreparedStatement(
+              "INSERT INTO `mysql_server_statement_datetime_table`(`c1`, `c2`) VALUES (?, ?)"
+            )
           count <- preparedStatement.setTimestamp(1, LocalDateTime.of(2020, 1, 1, 12, 34, 56)) *> preparedStatement
                      .setNull(2, MysqlType.TIMESTAMP.jdbcType) *> preparedStatement.executeUpdate() <* preparedStatement
                      .close()
@@ -321,7 +334,9 @@ class ServerPreparedStatementUpdateTest extends FTestPlatform:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          _ <- statement.executeUpdate("CREATE TABLE `mysql_server_statement_year_table`(`c1` YEAR NOT NULL, `c2` YEAR NULL)")
+          _         <- statement.executeUpdate(
+                 "CREATE TABLE `mysql_server_statement_year_table`(`c1` YEAR NOT NULL, `c2` YEAR NULL)"
+               )
           preparedStatement <-
             conn.serverPreparedStatement("INSERT INTO `mysql_server_statement_year_table`(`c1`, `c2`) VALUES (?, ?)")
           count <-

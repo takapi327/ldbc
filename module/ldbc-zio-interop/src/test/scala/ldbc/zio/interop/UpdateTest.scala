@@ -46,7 +46,8 @@ object UpdateTest extends ZIOSpecDefault:
       datasource.use { conn =>
         for
           statement <- conn.createStatement()
-          _ <- statement.executeUpdate("CREATE TABLE `zio_client_statement_byte_table`(`c1` BIT NOT NULL, `c2` BIT NULL)")
+          _         <-
+            statement.executeUpdate("CREATE TABLE `zio_client_statement_byte_table`(`c1` BIT NOT NULL, `c2` BIT NULL)")
           preparedStatement <-
             conn.prepareStatement("INSERT INTO `zio_client_statement_byte_table`(`c1`, `c2`) VALUES (?, ?)")
           count <- preparedStatement.setByte(1, 1.toByte) *> preparedStatement
@@ -129,7 +130,9 @@ object UpdateTest extends ZIOSpecDefault:
         for
           statement <- conn.createStatement()
           _         <-
-            statement.executeUpdate("CREATE TABLE `zio_client_statement_float_table`(`c1` FLOAT NOT NULL, `c2` FLOAT NULL)")
+            statement.executeUpdate(
+              "CREATE TABLE `zio_client_statement_float_table`(`c1` FLOAT NOT NULL, `c2` FLOAT NULL)"
+            )
           preparedStatement <-
             conn.prepareStatement("INSERT INTO `zio_client_statement_float_table`(`c1`, `c2`) VALUES (?, ?)")
           count <- preparedStatement.setFloat(1, 1.1f) *> preparedStatement
@@ -208,7 +211,9 @@ object UpdateTest extends ZIOSpecDefault:
       datasource.use { conn =>
         for
           statement <- conn.createStatement()
-          _ <- statement.executeUpdate("CREATE TABLE `zio_client_statement_time_table`(`c1` TIME NOT NULL, `c2` TIME NULL)")
+          _         <- statement.executeUpdate(
+                 "CREATE TABLE `zio_client_statement_time_table`(`c1` TIME NOT NULL, `c2` TIME NULL)"
+               )
           preparedStatement <-
             conn.prepareStatement("INSERT INTO `zio_client_statement_time_table`(`c1`, `c2`) VALUES (?, ?)")
           count <-
@@ -224,7 +229,9 @@ object UpdateTest extends ZIOSpecDefault:
       datasource.use { conn =>
         for
           statement <- conn.createStatement()
-          _ <- statement.executeUpdate("CREATE TABLE `zio_client_statement_date_table`(`c1` DATE NOT NULL, `c2` DATE NULL)")
+          _         <- statement.executeUpdate(
+                 "CREATE TABLE `zio_client_statement_date_table`(`c1` DATE NOT NULL, `c2` DATE NULL)"
+               )
           preparedStatement <-
             conn.prepareStatement("INSERT INTO `zio_client_statement_date_table`(`c1`, `c2`) VALUES (?, ?)")
           count <-
@@ -255,7 +262,9 @@ object UpdateTest extends ZIOSpecDefault:
       datasource.use { conn =>
         for
           statement <- conn.createStatement()
-          _ <- statement.executeUpdate("CREATE TABLE `zio_client_statement_year_table`(`c1` YEAR NOT NULL, `c2` YEAR NULL)")
+          _         <- statement.executeUpdate(
+                 "CREATE TABLE `zio_client_statement_year_table`(`c1` YEAR NOT NULL, `c2` YEAR NULL)"
+               )
           preparedStatement <-
             conn.prepareStatement("INSERT INTO `zio_client_statement_year_table`(`c1`, `c2`) VALUES (?, ?)")
           count <-

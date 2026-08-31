@@ -53,7 +53,9 @@ class ClientPreparedStatementUpdateTest extends FTestPlatform:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          _ <- statement.executeUpdate("CREATE TABLE `mysql_client_statement_byte_table`(`c1` BIT NOT NULL, `c2` BIT NULL)")
+          _         <- statement.executeUpdate(
+                 "CREATE TABLE `mysql_client_statement_byte_table`(`c1` BIT NOT NULL, `c2` BIT NULL)"
+               )
           preparedStatement <-
             conn.clientPreparedStatement("INSERT INTO `mysql_client_statement_byte_table`(`c1`, `c2`) VALUES (?, ?)")
           count <- preparedStatement.setByte(1, 1.toByte) *> preparedStatement
@@ -156,7 +158,9 @@ class ClientPreparedStatementUpdateTest extends FTestPlatform:
         for
           statement <- conn.createStatement()
           _         <-
-            statement.executeUpdate("CREATE TABLE `mysql_client_statement_float_table`(`c1` FLOAT NOT NULL, `c2` FLOAT NULL)")
+            statement.executeUpdate(
+              "CREATE TABLE `mysql_client_statement_float_table`(`c1` FLOAT NOT NULL, `c2` FLOAT NULL)"
+            )
           preparedStatement <-
             conn.clientPreparedStatement("INSERT INTO `mysql_client_statement_float_table`(`c1`, `c2`) VALUES (?, ?)")
           count <- preparedStatement.setFloat(1, 1.1f) *> preparedStatement
@@ -198,7 +202,9 @@ class ClientPreparedStatementUpdateTest extends FTestPlatform:
                  "CREATE TABLE `mysql_client_statement_bigdecimal_table`(`c1` DECIMAL NOT NULL, `c2` DECIMAL NULL)"
                )
           preparedStatement <-
-            conn.clientPreparedStatement("INSERT INTO `mysql_client_statement_bigdecimal_table`(`c1`, `c2`) VALUES (?, ?)")
+            conn.clientPreparedStatement(
+              "INSERT INTO `mysql_client_statement_bigdecimal_table`(`c1`, `c2`) VALUES (?, ?)"
+            )
           count <- preparedStatement.setBigDecimal(1, BigDecimal.decimal(1.1)) *> preparedStatement
                      .setNull(2, MysqlType.DECIMAL.jdbcType) *> preparedStatement
                      .executeUpdate()
@@ -214,9 +220,10 @@ class ClientPreparedStatementUpdateTest extends FTestPlatform:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          _         <- statement.executeUpdate(
-                 "CREATE TABLE `mysql_client_statement_string_table`(`c1` VARCHAR(255) NOT NULL, `c2` VARCHAR(255) NULL)"
-               )
+          _         <-
+            statement.executeUpdate(
+              "CREATE TABLE `mysql_client_statement_string_table`(`c1` VARCHAR(255) NOT NULL, `c2` VARCHAR(255) NULL)"
+            )
           preparedStatement <-
             conn.clientPreparedStatement("INSERT INTO `mysql_client_statement_string_table`(`c1`, `c2`) VALUES (?, ?)")
           count <- preparedStatement.setString(1, "test") *> preparedStatement
@@ -255,7 +262,9 @@ class ClientPreparedStatementUpdateTest extends FTestPlatform:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          _ <- statement.executeUpdate("CREATE TABLE `mysql_client_statement_time_table`(`c1` TIME NOT NULL, `c2` TIME NULL)")
+          _         <- statement.executeUpdate(
+                 "CREATE TABLE `mysql_client_statement_time_table`(`c1` TIME NOT NULL, `c2` TIME NULL)"
+               )
           preparedStatement <-
             conn.clientPreparedStatement("INSERT INTO `mysql_client_statement_time_table`(`c1`, `c2`) VALUES (?, ?)")
           count <-
@@ -275,7 +284,9 @@ class ClientPreparedStatementUpdateTest extends FTestPlatform:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          _ <- statement.executeUpdate("CREATE TABLE `mysql_client_statement_date_table`(`c1` DATE NOT NULL, `c2` DATE NULL)")
+          _         <- statement.executeUpdate(
+                 "CREATE TABLE `mysql_client_statement_date_table`(`c1` DATE NOT NULL, `c2` DATE NULL)"
+               )
           preparedStatement <-
             conn.clientPreparedStatement("INSERT INTO `mysql_client_statement_date_table`(`c1`, `c2`) VALUES (?, ?)")
           count <-
@@ -299,7 +310,9 @@ class ClientPreparedStatementUpdateTest extends FTestPlatform:
                  "CREATE TABLE `mysql_client_statement_datetime_table`(`c1` TIMESTAMP NOT NULL, `c2` TIMESTAMP NULL)"
                )
           preparedStatement <-
-            conn.clientPreparedStatement("INSERT INTO `mysql_client_statement_datetime_table`(`c1`, `c2`) VALUES (?, ?)")
+            conn.clientPreparedStatement(
+              "INSERT INTO `mysql_client_statement_datetime_table`(`c1`, `c2`) VALUES (?, ?)"
+            )
           count <- preparedStatement.setTimestamp(1, LocalDateTime.of(2020, 1, 1, 12, 34, 56)) *> preparedStatement
                      .setNull(2, MysqlType.TIMESTAMP.jdbcType) *> preparedStatement.executeUpdate()
           _ <- statement.executeUpdate("DROP TABLE `mysql_client_statement_datetime_table`")
@@ -314,7 +327,9 @@ class ClientPreparedStatementUpdateTest extends FTestPlatform:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          _ <- statement.executeUpdate("CREATE TABLE `mysql_client_statement_year_table`(`c1` YEAR NOT NULL, `c2` YEAR NULL)")
+          _         <- statement.executeUpdate(
+                 "CREATE TABLE `mysql_client_statement_year_table`(`c1` YEAR NOT NULL, `c2` YEAR NULL)"
+               )
           preparedStatement <-
             conn.clientPreparedStatement("INSERT INTO `mysql_client_statement_year_table`(`c1`, `c2`) VALUES (?, ?)")
           count <-
