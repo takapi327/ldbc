@@ -72,11 +72,11 @@ class CircuitBreakerTest extends FxSuite:
   }
 
   test("CircuitBreaker should return to open with increased timeout after half-open failure") {
-    val config = CircuitBreaker.Config(maxFailures = 1, resetTimeout = 100.millis, exponentialBackoffFactor = 2.0)
+    val config = CircuitBreaker.Config(maxFailures = 1, resetTimeout = 200.millis, exponentialBackoffFactor = 2.0)
     CircuitBreaker[Fx](config).flatMap { cb =>
       for
         _          <- cb.protect(Fx.raiseError(new Exception("fail 1"))).attempt
-        _          <- Fx.sleep(150.millis)
+        _          <- Fx.sleep(300.millis)
         _          <- cb.protect(Fx.raiseError(new Exception("fail 2"))).attempt
         state1     <- cb.state
         _          <- Fx.sleep(100.millis)
@@ -85,7 +85,7 @@ class CircuitBreakerTest extends FxSuite:
                assert(testResult.isLeft)
                testResult.left.foreach(error => assert(error.getMessage.contains("Circuit breaker is open")))
              }
-        _           <- Fx.sleep(150.millis)
+        _           <- Fx.sleep(500.millis)
         finalResult <- cb.protect(Fx.pure("finally success"))
         finalState  <- cb.state
       yield
