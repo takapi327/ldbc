@@ -32,9 +32,9 @@ class StatementUpdateTest extends FTestPlatform:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          _         <- statement.executeUpdate("CREATE TABLE `bit_table`(`bit_column` BIT NOT NULL)")
-          count     <- statement.executeUpdate("INSERT INTO `bit_table`(`bit_column`) VALUES (b'1')")
-          _         <- statement.executeUpdate("DROP TABLE `bit_table`")
+          _         <- statement.executeUpdate("CREATE TABLE `mysql_bit_table`(`bit_column` BIT NOT NULL)")
+          count     <- statement.executeUpdate("INSERT INTO `mysql_bit_table`(`bit_column`) VALUES (b'1')")
+          _         <- statement.executeUpdate("DROP TABLE `mysql_bit_table`")
         yield count
       },
       1
@@ -46,9 +46,9 @@ class StatementUpdateTest extends FTestPlatform:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          _         <- statement.executeUpdate("CREATE TABLE `bit_table`(`bit_column` BIT NOT NULL)")
-          count     <- statement.executeUpdate("INSERT INTO `bit_table`(`bit_column`) VALUES (b'0'),(b'1')")
-          _         <- statement.executeUpdate("DROP TABLE `bit_table`")
+          _         <- statement.executeUpdate("CREATE TABLE `mysql_bit_table`(`bit_column` BIT NOT NULL)")
+          count     <- statement.executeUpdate("INSERT INTO `mysql_bit_table`(`bit_column`) VALUES (b'0'),(b'1')")
+          _         <- statement.executeUpdate("DROP TABLE `mysql_bit_table`")
         yield count
       },
       2
@@ -63,17 +63,17 @@ class StatementUpdateTest extends FTestPlatform:
           _         <-
             statement
               .executeUpdate(
-                "CREATE TABLE `auto_inc_table`(`id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, `c1` VARCHAR(255) NOT NULL)"
+                "CREATE TABLE `mysql_auto_inc_table`(`id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, `c1` VARCHAR(255) NOT NULL)"
               )
-          _         <- statement.executeUpdate("INSERT INTO `auto_inc_table`(`id`, `c1`) VALUES (null, 'column 1')")
+          _ <- statement.executeUpdate("INSERT INTO `mysql_auto_inc_table`(`id`, `c1`) VALUES (null, 'column 1')")
           resultSet <-
             statement.executeUpdate(
-              "INSERT INTO `auto_inc_table`(`id`, `c1`) VALUES (null, 'column 2')",
+              "INSERT INTO `mysql_auto_inc_table`(`id`, `c1`) VALUES (null, 'column 2')",
               Statement.RETURN_GENERATED_KEYS
             ) *> statement.getGeneratedKeys()
           _         <- resultSet.next()
           generated <- resultSet.getLong(1)
-          _         <- statement.executeUpdate("DROP TABLE `auto_inc_table`")
+          _         <- statement.executeUpdate("DROP TABLE `mysql_auto_inc_table`")
         yield generated
       },
       2L

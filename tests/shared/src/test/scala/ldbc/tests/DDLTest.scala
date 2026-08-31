@@ -102,7 +102,7 @@ trait DDLTest[F[_]] extends DatabaseSuite[F]:
     age:  Option[Int]
   )
 
-  class UserTable extends Table[User]("user"):
+  class UserTable(tableName: String) extends Table[User](tableName):
     def id:   Column[Long]        = bigint().autoIncrement
     def name: Column[String]      = varchar(255)
     def age:  Column[Option[Int]] = int()
@@ -111,7 +111,7 @@ trait DDLTest[F[_]] extends DatabaseSuite[F]:
 
     def * : Column[User] = (id *: name *: age).to[User]
 
-  final val userTable = TableQuery[UserTable]
+  final val userTable = TableQuery[User, UserTable](new UserTable(s"user_${ effectLabel }_${ getClass.getSimpleName }"))
 
   override def munitFixtures = List(
     suiteFixture(

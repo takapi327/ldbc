@@ -229,11 +229,11 @@ class AdaptivePoolSizerTest extends FTestPlatform:
           initialStatus <- datasource.status
 
           // Create sustained high load (need 2 consecutive high periods for growth)
-          fiber1 <- datasource.use { _ => IO.sleep(200.millis) }.start
-          fiber2 <- datasource.use { _ => IO.sleep(200.millis) }.start
+          fiber1 <- datasource.use { _ => IO.sleep(1000.millis) }.start
+          fiber2 <- datasource.use { _ => IO.sleep(1000.millis) }.start
 
           // Wait for multiple adaptive intervals
-          _ <- IO.sleep(150.millis)
+          _ <- IO.sleep(200.millis)
 
           statusDuringLoad <- datasource.status
 
