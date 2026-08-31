@@ -716,7 +716,7 @@ trait SQLStringContextQueryTest[F[_]] extends DatabaseSuite[F]:
     case class CityWithCountry(c: City, ct: Country)
 
     assertF(
-      sql"SELECT c.Id, c.Name, ct.Code, ct.Name FROM city AS c JOIN country AS ct ON c.CountryCode = ct.Code LIMIT 1"
+      sql"SELECT c.Id, c.Name, ct.Code, ct.Name FROM city AS c JOIN country AS ct ON c.CountryCode = ct.Code ORDER BY c.Id LIMIT 1"
         .query[CityWithCountry]
         .to[Option]
         .readOnly(connector),
@@ -729,7 +729,7 @@ trait SQLStringContextQueryTest[F[_]] extends DatabaseSuite[F]:
     case class Country(code: String, name: String)
 
     assertF(
-      sql"SELECT city.Id, city.Name, country.Code, country.Name FROM city JOIN country ON city.CountryCode = country.Code LIMIT 1"
+      sql"SELECT city.Id, city.Name, country.Code, country.Name FROM city JOIN country ON city.CountryCode = country.Code ORDER BY city.Id LIMIT 1"
         .query[(City, Country)]
         .to[Option]
         .readOnly(connector),
