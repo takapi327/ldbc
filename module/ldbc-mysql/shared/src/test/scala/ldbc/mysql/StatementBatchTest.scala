@@ -36,12 +36,12 @@ class StatementBatchTest extends FTestPlatform:
         connection.use { conn =>
           for
             statement <- conn.createStatement()
-            _         <- statement.executeUpdate("CREATE TABLE IF NOT EXISTS `mysql_batch_test` (`c1` BIGINT, `c2` INT)")
-            _         <- statement.executeUpdate("TRUNCATE TABLE `mysql_batch_test`")
-            _         <- statement.addBatch("INSERT INTO `mysql_batch_test` VALUES (1, 1)")
-            _         <- statement.addBatch("INSERT INTO `mysql_batch_test` VALUES (2, 2)")
-            _         <- statement.addBatch("INSERT INTO `mysql_batch_test` VALUES (3, 3)")
-            _         <- statement.executeBatch()
+            _ <- statement.executeUpdate("CREATE TABLE IF NOT EXISTS `mysql_batch_test` (`c1` BIGINT, `c2` INT)")
+            _ <- statement.executeUpdate("TRUNCATE TABLE `mysql_batch_test`")
+            _ <- statement.addBatch("INSERT INTO `mysql_batch_test` VALUES (1, 1)")
+            _ <- statement.addBatch("INSERT INTO `mysql_batch_test` VALUES (2, 2)")
+            _ <- statement.addBatch("INSERT INTO `mysql_batch_test` VALUES (3, 3)")
+            _ <- statement.executeBatch()
           yield ()
         }
       )(_ =>
