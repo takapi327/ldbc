@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.7</a>
+      <a class="text-link menu-toggle" href="#">Version 0.8</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../older-versions.html">Older Versions</a></li>
@@ -171,20 +171,25 @@
   <ul class="nav-list">
     <li class="level1 nav-leaf"><a href="#packages">Packages</a></li>
     <li class="level1 nav-node"><a href="#key-changes">🎯 Key Changes</a></li>
-    <li class="level2 nav-leaf"><a href="#_1-new-testing-modules">1. New Testing Modules</a></li>
-    <li class="level2 nav-leaf"><a href="#_2-new-dsl-helper-functions">2. New DSL Helper Functions</a></li>
-    <li class="level2 nav-leaf"><a href="#_3-opentelemetry-type-safe-semantic-conventions-migration">3. OpenTelemetry Type-Safe Semantic Conventions Migration</a></li>
-    <li class="level2 nav-leaf"><a href="#_4-enhanced-scala-native-support">4. Enhanced Scala Native Support</a></li>
-    <li class="level2 nav-leaf"><a href="#_5-code-generator-yaml-parser-migration">5. Code Generator YAML Parser Migration</a></li>
+    <li class="level2 nav-leaf"><a href="#_1-sql-injection-under-no_backslash_escapes-fixed">1. SQL injection under <code>NO_BACKSLASH_ESCAPES</code> fixed</a></li>
+    <li class="level2 nav-leaf"><a href="#_2-jdbc-4-3-enquote-api-support">2. JDBC 4.3 enquote API support</a></li>
+    <li class="level2 nav-leaf"><a href="#_3-ldbc-plugin-now-supports-sbt-2">3. <code>ldbc-plugin</code> now supports sbt 2</a></li>
+    <li class="level2 nav-leaf"><a href="#_4-column-order-bug-in-insert-fixed">4. Column-order bug in <code>insert</code> fixed</a></li>
+    <li class="level2 nav-leaf"><a href="#_5-dependency-updates">5. Dependency updates</a></li>
     <li class="level1 nav-node"><a href="#breaking-changes">Breaking Changes</a></li>
-    <li class="level2 nav-leaf"><a href="#java-11-support-dropped">Java 11 Support Dropped</a></li>
-    <li class="level2 nav-leaf"><a href="#scala-version-update">Scala Version Update</a></li>
+    <li class="level2 nav-leaf"><a href="#parameter-is-now-a-sealed-trait-and-sql-has-been-removed"><code>Parameter</code> is now a <code>sealed trait</code> and <code>sql</code> has been removed</a></li>
+    <li class="level2 nav-leaf"><a href="#params-removed-from-sqlexception"><code>params</code> removed from <code>SQLException</code></a></li>
+    <li class="level2 nav-leaf"><a href="#four-abstract-methods-added-to-statement">Four abstract methods added to <code>Statement</code></a></li>
+    <li class="level2 nav-leaf"><a href="#twiddles-core-is-now-1-1-0">twiddles-core is now 1.1.0</a></li>
+    <li class="level2 nav-leaf"><a href="#what-has-not-changed">What has not changed</a></li>
     <li class="level1 nav-leaf"><a href="#deprecated-apis">Deprecated APIs</a></li>
     <li class="level1 nav-node"><a href="#migration-guide">Migration Guide</a></li>
-    <li class="level2 nav-leaf"><a href="#replace-sc-with-ident">Replace <code>sc()</code> with <code>ident()</code></a></li>
-    <li class="level2 nav-leaf"><a href="#replace-connection-fromsocketgroup-with-fromnetwork">Replace <code>Connection.fromSocketGroup</code> with <code>fromNetwork</code></a></li>
-    <li class="level2 nav-leaf"><a href="#update-the-path-type-for-ssl-fromkeystorefile">Update the path type for <code>SSL.fromKeyStoreFile</code></a></li>
-    <li class="level2 nav-leaf"><a href="#adopt-the-testing-modules">Adopt the testing modules</a></li>
+    <li class="level2 nav-leaf"><a href="#update-your-dependencies">Update your dependencies</a></li>
+    <li class="level2 nav-leaf"><a href="#replace-references-to-parameter-sql">Replace references to <code>Parameter#sql</code></a></li>
+    <li class="level2 nav-leaf"><a href="#fix-code-that-constructs-sqlexception-directly">Fix code that constructs <code>SQLException</code> directly</a></li>
+    <li class="level2 nav-leaf"><a href="#revisit-telemetry-that-relied-on-error-parameter">Revisit telemetry that relied on <code>error.parameter.*</code></a></li>
+    <li class="level2 nav-leaf"><a href="#assemble-sql-with-dynamic-identifiers-safely">Assemble SQL with dynamic identifiers safely</a></li>
+    <li class="level2 nav-leaf"><a href="#use-ldbc-plugin-from-an-sbt-2-project">Use <code>ldbc-plugin</code> from an sbt 2 project</a></li>
     <li class="level1 nav-leaf"><a href="#summary">Summary</a></li>
   </ul>
 
@@ -194,10 +199,10 @@
 
   <main class="content">
 
-    <h1 id="migration-notes-from-0-6-x-to-0-7-x" class="title">Migration Notes (from 0.6.x to 0.7.x)</h1>
+    <h1 id="migration-notes-from-0-7-x-to-0-8-x" class="title">Migration Notes (from 0.7.x to 0.8.x)</h1>
     
     <h2 id="packages" class="section"><a class="anchor-link left" href="#packages"><i class="icofont-laika link">&#xef71;</i></a>Packages</h2>
-    <p><strong>All Packages</strong></p>
+    <p><strong>All packages</strong></p>
     <table>
       <thead>
         <tr>
@@ -214,259 +219,284 @@
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-sql_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-sql_3"><img src="https://img.shields.io/badge/javadoc-0.8.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-core</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-core_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-core_3"><img src="https://img.shields.io/badge/javadoc-0.8.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-connector</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-connector_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-connector_3"><img src="https://img.shields.io/badge/javadoc-0.8.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>jdbc-connector</code></td>
           <td>✅</td>
           <td>❌</td>
           <td>❌</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/jdbc-connector_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/jdbc-connector_3"><img src="https://img.shields.io/badge/javadoc-0.8.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-dsl</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3"><img src="https://img.shields.io/badge/javadoc-0.8.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-statement</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-statement_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-statement_3"><img src="https://img.shields.io/badge/javadoc-0.8.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-query-builder</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-query-builder_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-query-builder_3"><img src="https://img.shields.io/badge/javadoc-0.8.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-schema</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-schema_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-schema_3"><img src="https://img.shields.io/badge/javadoc-0.8.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-codegen</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-codegen_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-codegen_3"><img src="https://img.shields.io/badge/javadoc-0.8.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-plugin</code></td>
           <td>✅</td>
           <td>❌</td>
           <td>❌</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-plugin_2.12_1.0"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-plugin_2.12_1.0"><img src="https://img.shields.io/badge/javadoc-0.8.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-testkit</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-testkit_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-testkit_3"><img src="https://img.shields.io/badge/javadoc-0.8.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-testkit-munit</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-testkit-munit_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-testkit-munit_3"><img src="https://img.shields.io/badge/javadoc-0.8.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-zio-interop</code></td>
           <td>✅</td>
           <td>❌</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-zio-interop_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-zio-interop_3"><img src="https://img.shields.io/badge/javadoc-0.8.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-authentication-plugin</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-authentication-plugin_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-authentication-plugin_3"><img src="https://img.shields.io/badge/javadoc-0.8.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-aws-authentication-plugin</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-aws-authentication-plugin_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-aws-authentication-plugin_3"><img src="https://img.shields.io/badge/javadoc-0.8.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
       </tbody>
     </table>
     
     <h2 id="key-changes" class="section"><a class="anchor-link left" href="#key-changes"><i class="icofont-laika link">&#xef71;</i></a>🎯 Key Changes</h2>
     
-    <h3 id="_1-new-testing-modules" class="section"><a class="anchor-link left" href="#_1-new-testing-modules"><i class="icofont-laika link">&#xef71;</i></a>1. New Testing Modules</h3>
-    <p>0.7.0 introduces two dedicated modules for writing database tests more easily.</p>
+    <h3 id="_1-sql-injection-under-no_backslash_escapes-fixed" class="section"><a class="anchor-link left" href="#_1-sql-injection-under-no_backslash_escapes-fixed"><i class="icofont-laika link">&#xef71;</i></a>1. SQL injection under <code>NO_BACKSLASH_ESCAPES</code> fixed</h3>
+    <p><strong>This is the most important change in 0.8.0. Upgrading is recommended if you use the ldbc connector.</strong></p>
+    <p>In 0.7.x and earlier, client-side prepared statements (<code>useServerPrepStmts = false</code>, the default) escaped string parameters with backslash escaping only (<code>&#39;</code> -&gt; <code>\&#39;</code>) and never consulted the server <code>sql_mode</code>.</p>
+    <p>When a session runs with the MySQL <code>NO_BACKSLASH_ESCAPES</code> sql_mode, a backslash is an ordinary character. <code>\&#39;</code> therefore does not neutralize the quote, and <strong>a string parameter can break out of its literal</strong>.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// 0.7.x and earlier, in a session with sql_mode = &#39;NO_BACKSLASH_ESCAPES&#39;
+</span><span class="identifier">ps</span><span>.</span><span class="identifier">setString</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;zzz&#39; OR 1=1 -- &quot;</span><span>)
+</span><span class="comment">// Rendered SQL: WHERE t.name = &#39;zzz\&#39; OR 1=1 -- &#39;
+//            =&gt; (name = &#39;zzz\&#39;) OR 1=1  ... always true</span></code></pre>
+    <p>0.8.0 fixes this in three parts.</p>
+    <p><strong>1. All escaping is centralised in <code>QueryRenderer</code></strong></p>
+    <p><code>QueryRenderer</code> is now the only path that turns a string parameter into a SQL literal. <code>Parameter</code> itself no longer exposes a SQL-text representation for strings, so a path that bypasses the sql_mode-aware logic cannot exist by construction.</p>
+    <p><strong>2. Escaping follows the server sql_mode</strong></p>
+    <table>
+      <thead>
+        <tr>
+          <th>sql_mode</th>
+          <th>Escaping</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>default</td>
+          <td><code>&#39;</code> -&gt; <code>\&#39;</code>, <code>&quot;</code> -&gt; <code>\&quot;</code>, `<code>-&gt;</code>`, control characters -&gt; <code>\0</code> <code>\b</code> <code>\n</code> <code>\r</code> <code>\Z</code></td>
+        </tr>
+        <tr>
+          <td><code>NO_BACKSLASH_ESCAPES</code></td>
+          <td><code>&#39;</code> -&gt; <code>&#39;&#39;</code> (doubling the single quote)</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>Doubling the quote under <code>NO_BACKSLASH_ESCAPES</code> is the only way to embed a quote such that it can never be consumed by a preceding backslash.</p>
+    <p><strong>3. The sql_mode is tracked for the life of the session</strong></p>
+    <p><code>Protocol.noBackslashEscapes</code> has been added. It is seeded from the status flags of the initial handshake and then updated from the status flags of <strong>every OK / EOF packet received</strong>. A <code>SET SESSION sql_mode = ...</code> issued after connecting is therefore reflected in subsequent query construction.</p>
+    <p>No user code changes are required.</p>
     
-    <h4 id="ldbc-testkit" class="section"><a class="anchor-link left" href="#ldbc-testkit"><i class="icofont-laika link">&#xef71;</i></a>ldbc-testkit</h4>
-    <p>A new framework-agnostic <code>ldbc-testkit</code> module has been added. It provides automatic rollback at the end of tests.</p>
-    <p><strong><code>RollbackHandler</code></strong>: Provides a <code>Connector</code> wrapped in a <code>Resource</code> that automatically rolls back all changes after the test completes.</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">testkit</span><span>.</span><span class="type-name">RollbackHandler</span><span>
-
-</span><span class="type-name">RollbackHandler</span><span>.</span><span class="identifier">resource</span><span>[</span><span class="type-name">F</span><span>](</span><span class="identifier">dataSource</span><span>).</span><span class="identifier">use</span><span> { </span><span class="identifier">connector</span><span> =&gt;
-  </span><span class="comment">// All changes within this block are rolled back after the test
-</span><span>  </span><span class="identifier">connector</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
-    </span><span class="identifier">conn</span><span>.</span><span class="identifier">executeUpdate</span><span>(</span><span class="string-literal">&quot;INSERT INTO users VALUES (1, &#39;Alice&#39;)&quot;</span><span>)
-  }
-}</span></code></pre>
-    <p><strong><code>TestConnection</code></strong>: Intercepts <code>commit()</code> and <code>setAutoCommit(true)</code> as no-ops to prevent accidental commits during tests.</p>
-    
-    <h4 id="ldbc-testkit-munit" class="section"><a class="anchor-link left" href="#ldbc-testkit-munit"><i class="icofont-laika link">&#xef71;</i></a>ldbc-testkit-munit</h4>
-    <p>A new <code>ldbc-testkit-munit</code> module provides MUnit integration for database testing.</p>
-    <p><strong><code>LdbcSuite</code></strong>: A base trait extending <code>CatsEffectSuite</code> with ldbc-specific test helpers.</p>
-    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">testkit</span><span>.</span><span class="identifier">munit</span><span>.</span><span class="type-name">LdbcSuite</span><span>
-
-</span><span class="keyword">class</span><span> </span><span class="type-name">MyDbTest</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">LdbcSuite</span><span> {
-
-  </span><span class="comment">// Test that rolls back after completion (for DML operations)
-</span><span>  </span><span class="identifier">ephemeralTest</span><span>(</span><span class="string-literal">&quot;insert and query&quot;</span><span>) { </span><span class="identifier">conn</span><span> =&gt;
-    </span><span class="keyword">for</span><span>
-      </span><span class="identifier">_</span><span>     &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">executeUpdate</span><span>(</span><span class="string-literal">&quot;INSERT INTO users VALUES (1, &#39;Alice&#39;)&quot;</span><span>)
-      </span><span class="identifier">count</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">executeQuery</span><span>(</span><span class="string-literal">&quot;SELECT COUNT(*) FROM users&quot;</span><span>).</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">head</span><span>)
-    </span><span class="keyword">yield</span><span> </span><span class="identifier">assertCount</span><span>(</span><span class="identifier">count</span><span>, </span><span class="number-literal">1</span><span>)
-  }
-
-  </span><span class="comment">// Test that actually commits (for DDL operations)
-</span><span>  </span><span class="identifier">persistentTest</span><span>(</span><span class="string-literal">&quot;create table&quot;</span><span>) { </span><span class="identifier">conn</span><span> =&gt;
-    </span><span class="identifier">conn</span><span>.</span><span class="identifier">executeUpdate</span><span>(</span><span class="string-literal">&quot;CREATE TABLE IF NOT EXISTS test_table (id INT)&quot;</span><span>)
-  }
-}</span></code></pre>
-    <p><strong>Available assertion helpers:</strong></p>
+    <h3 id="_2-jdbc-4-3-enquote-api-support" class="section"><a class="anchor-link left" href="#_2-jdbc-4-3-enquote-api-support"><i class="icofont-laika link">&#xef71;</i></a>2. JDBC 4.3 enquote API support</h3>
+    <p>Following MySQL Connector/J 9.7.0 (WL #17215), four methods have been added to <code>ldbc.sql.Statement</code>. Use them to safely quote values and identifiers when assembling SQL dynamically.</p>
     <table>
       <thead>
         <tr>
           <th>Method</th>
-          <th>Description</th>
+          <th>Purpose</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td><code>assertCount(result, expected)</code></td>
-          <td>Assert row count</td>
+          <td><code>enquoteLiteral(value)</code></td>
+          <td>Wrap a string in single quotes as a literal</td>
         </tr>
         <tr>
-          <td><code>assertEmpty(result)</code></td>
-          <td>Assert empty result set</td>
+          <td><code>enquoteIdentifier(identifier, alwaysQuote)</code></td>
+          <td>Quote an identifier</td>
         </tr>
         <tr>
-          <td><code>assertRowsUnordered(result, expected)</code></td>
-          <td>Assert rows regardless of order</td>
+          <td><code>enquoteNCharLiteral(value)</code></td>
+          <td>Produce an <code>N</code>-prefixed national character literal</td>
         </tr>
         <tr>
-          <td><code>assertRowsOrdered(result, expected)</code></td>
-          <td>Assert rows in exact order</td>
+          <td><code>isSimpleIdentifier(identifier)</code></td>
+          <td>Report whether an identifier can be used without quoting</td>
         </tr>
       </tbody>
     </table>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">for</span><span>
+  </span><span class="identifier">stmt</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">createStatement</span><span>()
+  </span><span class="identifier">a</span><span>    &lt;- </span><span class="identifier">stmt</span><span>.</span><span class="identifier">enquoteLiteral</span><span>(</span><span class="string-literal">&quot;G&#39;Day&quot;</span><span>)              </span><span class="comment">// &#39;G&#39;&#39;Day&#39;
+</span><span>  </span><span class="identifier">b</span><span>    &lt;- </span><span class="identifier">stmt</span><span>.</span><span class="identifier">enquoteIdentifier</span><span>(</span><span class="string-literal">&quot;my table&quot;</span><span>, </span><span class="boolean-literal">false</span><span>) </span><span class="comment">// `my table`
+</span><span>  </span><span class="identifier">c</span><span>    &lt;- </span><span class="identifier">stmt</span><span>.</span><span class="identifier">enquoteIdentifier</span><span>(</span><span class="string-literal">&quot;user&quot;</span><span>, </span><span class="boolean-literal">true</span><span>)      </span><span class="comment">// `user`
+</span><span>  </span><span class="identifier">d</span><span>    &lt;- </span><span class="identifier">stmt</span><span>.</span><span class="identifier">enquoteNCharLiteral</span><span>(</span><span class="string-literal">&quot;Hello&quot;</span><span>)         </span><span class="comment">// N&#39;Hello&#39;
+</span><span>  </span><span class="identifier">e</span><span>    &lt;- </span><span class="identifier">stmt</span><span>.</span><span class="identifier">isSimpleIdentifier</span><span>(</span><span class="string-literal">&quot;user_name&quot;</span><span>)      </span><span class="comment">// true
+</span><span>  </span><span class="identifier">f</span><span>    &lt;- </span><span class="identifier">stmt</span><span>.</span><span class="identifier">isSimpleIdentifier</span><span>(</span><span class="string-literal">&quot;select&quot;</span><span>)         </span><span class="comment">// false (reserved word)
+</span><span class="keyword">yield</span><span> ()</span></code></pre>
+    <p>Following the MySQL rules, <code>isSimpleIdentifier</code> treats an identifier as simple when it consists only of <code>[0-9a-zA-Z$_]</code> or extended characters (<code>U+0080</code> and above), is not made up solely of digits, is at most 64 characters long, and is not a reserved word.</p>
+    <p>When the <code>ANSI_QUOTES</code> sql_mode is enabled, the identifier quote character is <code>&quot;</code> rather than <code>`</code>.</p>
+    <p>The methods are available on both <code>Statement</code> and <code>PreparedStatement</code>, for the ldbc connector as well as the jdbc connector.</p>
+    <blockquote><strong>Note</strong>: the existing <code>ident()</code> helper is for embedding identifiers inside the <code>sql</code> interpolator and remains available. Use <code>enquoteIdentifier</code> when you need compatibility with the standard JDBC API, or control over <code>alwaysQuote</code>.</blockquote>
     
-    <h3 id="_2-new-dsl-helper-functions" class="section"><a class="anchor-link left" href="#_2-new-dsl-helper-functions"><i class="icofont-laika link">&#xef71;</i></a>2. New DSL Helper Functions</h3>
-    <p>The following functions have been added to <code>ldbc.dsl.syntax.HelperFunctionsSyntax</code>.</p>
+    <h3 id="_3-ldbc-plugin-now-supports-sbt-2" class="section"><a class="anchor-link left" href="#_3-ldbc-plugin-now-supports-sbt-2"><i class="icofont-laika link">&#xef71;</i></a>3. <code>ldbc-plugin</code> now supports sbt 2</h3>
+    <p><code>ldbc-plugin</code> is cross-built for both sbt 1 and sbt 2. Artifacts for sbt 1 (Scala 2.12) and sbt 2 (Scala 3) are published side by side.</p>
+    <p>The declaration is identical for either version; sbt resolves the right artifact.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// project/plugins.sbt — the same for sbt 1.x and sbt 2.x
+</span><span class="identifier">addSbtPlugin</span><span>(</span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> % </span><span class="string-literal">&quot;ldbc-plugin&quot;</span><span> % </span><span class="string-literal">&quot;0.8.0&quot;</span><span>)</span></code></pre>
     
-    <h4 id="ident-safe-sql-identifier-escaping" class="section"><a class="anchor-link left" href="#ident-safe-sql-identifier-escaping"><i class="icofont-laika link">&#xef71;</i></a><code>ident()</code> — Safe SQL identifier escaping</h4>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">tableName</span><span> = </span><span class="string-literal">&quot;my_table&quot;</span><span>
-</span><span class="string-literal">sql&quot;SELECT * FROM </span><span class="substitution">${ident(tableName)}</span><span class="string-literal">&quot;</span><span>
-</span><span class="comment">// → SELECT * FROM `my_table`</span></code></pre>
-    <p>Wraps identifiers in backticks and removes NUL characters to prevent SQL injection.</p>
+    <h3 id="_4-column-order-bug-in-insert-fixed" class="section"><a class="anchor-link left" href="#_4-column-order-bug-in-insert-fixed"><i class="icofont-laika link">&#xef71;</i></a>4. Column-order bug in <code>insert</code> fixed</h3>
+    <p>The tuple overload of <code>insert</code> now goes through the entity mapping defined by the table&#39;s <code>*</code> projection.</p>
+    <p>In 0.7.x the tuple was cast onto the column encoder directly, so <strong>values could be inserted into the wrong columns whenever the field order of the model differed from the column order of the <code>*</code> projection</strong>.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">userTable</span><span>.</span><span class="identifier">insert</span><span>((</span><span class="number-literal">1L</span><span>, </span><span class="string-literal">&quot;Alice&quot;</span><span>, </span><span class="type-name">Some</span><span>(</span><span class="number-literal">20</span><span>)))</span></code></pre>
+    <p>If the <code>*</code> projection is not ordered as <code>id *: name *: age</code>, code like the above produces a different parameter order in 0.8.0 than in 0.7.x. The change makes the result correct, but <strong>verifying it with your tests after upgrading is recommended</strong>.</p>
     
-    <h4 id="when-conditional-sql-fragments" class="section"><a class="anchor-link left" href="#when-conditional-sql-fragments"><i class="icofont-laika link">&#xef71;</i></a><code>when()</code> — Conditional SQL fragments</h4>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">limit</span><span> = </span><span class="number-literal">10</span><span>
-</span><span class="string-literal">sql&quot;SELECT * FROM users&quot;</span><span> ++ </span><span class="identifier">when</span><span>(</span><span class="identifier">limit</span><span> &gt; </span><span class="number-literal">0</span><span>)(</span><span class="string-literal">sql&quot; LIMIT </span><span class="substitution">$limit</span><span class="string-literal">&quot;</span><span>)</span></code></pre>
-    
-    <h4 id="paginate-pagination-helper" class="section"><a class="anchor-link left" href="#paginate-pagination-helper"><i class="icofont-laika link">&#xef71;</i></a><code>paginate()</code> — Pagination helper</h4>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// With offset
-</span><span class="string-literal">sql&quot;SELECT * FROM users &quot;</span><span> ++ </span><span class="identifier">paginate</span><span>(</span><span class="identifier">limit</span><span> = </span><span class="number-literal">20</span><span>, </span><span class="identifier">offset</span><span> = </span><span class="number-literal">40</span><span>)
-</span><span class="comment">// → SELECT * FROM users LIMIT ? OFFSET ?
-</span><span>
-</span><span class="comment">// Without offset
-</span><span class="string-literal">sql&quot;SELECT * FROM users &quot;</span><span> ++ </span><span class="identifier">paginate</span><span>(</span><span class="identifier">limit</span><span> = </span><span class="number-literal">20</span><span>)
-</span><span class="comment">// → SELECT * FROM users LIMIT ?</span></code></pre>
-    <p>Throws <code>IllegalArgumentException</code> if <code>limit</code> or <code>offset</code> is negative.</p>
-    
-    <h3 id="_3-opentelemetry-type-safe-semantic-conventions-migration" class="section"><a class="anchor-link left" href="#_3-opentelemetry-type-safe-semantic-conventions-migration"><i class="icofont-laika link">&#xef71;</i></a>3. OpenTelemetry Type-Safe Semantic Conventions Migration</h3>
-    <p><code>TelemetryAttribute</code> string constants have been migrated to the type-safe API from the <code>otel4s-semconv</code> library. This is an internal change with no direct impact on user code.</p>
-    <p><strong>Before (0.6.x) — internal implementation:</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="type-name">TelemetryAttribute</span><span>.</span><span class="identifier">dbSystemName</span><span>
-</span><span class="type-name">TelemetryAttribute</span><span>.</span><span class="identifier">serverAddress</span><span>(</span><span class="identifier">host</span><span>)
-</span><span class="type-name">TelemetryAttribute</span><span>.</span><span class="identifier">dbNamespace</span><span>(</span><span class="identifier">db</span><span>)
-</span><span class="type-name">TelemetryAttribute</span><span>.</span><span class="identifier">dbOperationName</span><span>(</span><span class="identifier">op</span><span>)
-</span><span class="type-name">TelemetryAttribute</span><span>.</span><span class="identifier">dbQueryText</span><span>(</span><span class="identifier">sql</span><span>)</span></code></pre>
-    <p><strong>After (0.7.x) — internal implementation:</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="type-name">DbAttributes</span><span>.</span><span class="type-name">DbSystemName</span><span>(</span><span class="type-name">DbAttributes</span><span>.</span><span class="type-name">DbSystemNameValue</span><span>.</span><span class="type-name">Mysql</span><span>.</span><span class="identifier">value</span><span>)
-</span><span class="type-name">ServerAttributes</span><span>.</span><span class="type-name">ServerAddress</span><span>(</span><span class="identifier">host</span><span>)
-</span><span class="type-name">DbAttributes</span><span>.</span><span class="type-name">DbNamespace</span><span>(</span><span class="identifier">db</span><span>)
-</span><span class="type-name">DbAttributes</span><span>.</span><span class="type-name">DbOperationName</span><span>(</span><span class="identifier">op</span><span>)
-</span><span class="type-name">DbAttributes</span><span>.</span><span class="type-name">DbQueryText</span><span>(</span><span class="identifier">sql</span><span>)</span></code></pre>
-    <p>What remains in <code>TelemetryAttribute</code> are MySQL-specific attributes (<code>DB_MYSQL_VERSION</code>, <code>DB_MYSQL_THREAD_ID</code>, <code>DB_MYSQL_AUTH_PLUGIN</code>) and the <code>SqlOperation</code> object only.</p>
-    
-    <h3 id="_4-enhanced-scala-native-support" class="section"><a class="anchor-link left" href="#_4-enhanced-scala-native-support"><i class="icofont-laika link">&#xef71;</i></a>4. Enhanced Scala Native Support</h3>
-    <p><code>sbt-scala-native</code> has been upgraded from <code>0.4.17</code> to <code>0.5.10</code>. Scala Native 0.5 introduces official multithreading support, which significantly advances ldbc&#39;s Scala Native capabilities.</p>
-    
-    <h4 id="multithreading-support-in-scala-native-0-5" class="section"><a class="anchor-link left" href="#multithreading-support-in-scala-native-0-5"><i class="icofont-laika link">&#xef71;</i></a>Multithreading Support in Scala Native 0.5</h4>
-    <p>Scala Native 0.4 only supported single-threaded execution, but 0.5 enables <strong>true multithreaded execution</strong>.</p>
-    <p>Cats Effect 3.7.0 responds to this change by porting the JVM&#39;s <code>WorkStealingThreadPool</code> and <code>IORuntime</code> to Scala Native 0.5. As a result, the following features are now available on Scala Native:</p>
-    <ul>
-      <li><strong><code>WorkStealingThreadPool</code></strong>: A work-stealing thread pool equivalent to the JVM now runs on Native</li>
-      <li><strong>epoll / kqueue support</strong>: Non-blocking I/O polling via <code>epoll</code> on Linux and <code>kqueue</code> on macOS/BSD</li>
-      <li><strong>Full <code>IORuntime</code> support</strong>: Fiber scheduling works nearly on par with the JVM</li>
-    </ul>
-    
-    <h4 id="fiber-model-and-threadlocal-incompatibility" class="section"><a class="anchor-link left" href="#fiber-model-and-threadlocal-incompatibility"><i class="icofont-laika link">&#xef71;</i></a>Fiber Model and ThreadLocal Incompatibility</h4>
-    <p>Because Cats Effect Fibers can migrate freely between threads, the HikariCP-style approach of using <code>ThreadLocal</code> for connection pool caching does not apply. ldbc&#39;s connection pool implementation (<code>ConcurrentBag</code>) accounts for this constraint by adopting lock-free shared data structures using <code>Ref[F, ...]</code> and <code>Queue[F, ...]</code>.</p>
-    
-    <h3 id="_5-code-generator-yaml-parser-migration" class="section"><a class="anchor-link left" href="#_5-code-generator-yaml-parser-migration"><i class="icofont-laika link">&#xef71;</i></a>5. Code Generator YAML Parser Migration</h3>
-    <p>The YAML parser for JS/Native platforms has been migrated from <code>circe-scala-yaml</code> (armanbilge) to <code>scala-yaml</code> (VirtusLab). There are no API changes for users of the code generator.</p>
+    <h3 id="_5-dependency-updates" class="section"><a class="anchor-link left" href="#_5-dependency-updates"><i class="icofont-laika link">&#xef71;</i></a>5. Dependency updates</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Library</th>
+          <th>Before (0.7.x)</th>
+          <th>After (0.8.0)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>MySQL Connector/J</td>
+          <td>9.6.0</td>
+          <td>9.7.0</td>
+        </tr>
+        <tr>
+          <td>twiddles-core</td>
+          <td>0.10.0</td>
+          <td>1.1.0</td>
+        </tr>
+      </tbody>
+    </table>
+    <p><code>ldbc.connector.data.Constants.DRIVER_VERSION</code> has been updated to <code>0.8.0</code> as well.</p>
     
     <h2 id="breaking-changes" class="section"><a class="anchor-link left" href="#breaking-changes"><i class="icofont-laika link">&#xef71;</i></a>Breaking Changes</h2>
     
-    <h3 id="java-11-support-dropped" class="section"><a class="anchor-link left" href="#java-11-support-dropped"><i class="icofont-laika link">&#xef71;</i></a>Java 11 Support Dropped</h3>
-    <p>Java 11 (<a href="mailto:corretto@11">corretto@11</a>) is no longer supported.</p>
-    <p><strong>Supported Java versions:</strong> 17, 21, 25</p>
+    <h3 id="parameter-is-now-a-sealed-trait-and-sql-has-been-removed" class="section"><a class="anchor-link left" href="#parameter-is-now-a-sealed-trait-and-sql-has-been-removed"><i class="icofont-laika link">&#xef71;</i></a><code>Parameter</code> is now a <code>sealed trait</code> and <code>sql</code> has been removed</h3>
+    <p><code>ldbc.connector.data.Parameter</code> is now a <code>sealed trait</code> with one case class per type, and <code>def sql: String</code> has been removed.</p>
+    <p><strong>Before (0.7.x):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">trait</span><span> </span><span class="type-name">Parameter</span><span>:
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">columnDataType</span><span>: </span><span class="type-name">ColumnDataType</span><span>
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">sql</span><span>:            </span><span class="type-name">String</span><span>
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">encode</span><span>:         </span><span class="type-name">BitVector</span></code></pre>
+    <p><strong>After (0.8.0):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">sealed</span><span> </span><span class="keyword">trait</span><span> </span><span class="type-name">Parameter</span><span>:
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">columnDataType</span><span>: </span><span class="type-name">ColumnDataType</span><span>
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">encode</span><span>:         </span><span class="type-name">BitVector</span></code></pre>
+    <p>This is part of Key Change 1 (the SQL injection fix). Rendering a string into a SQL literal depends on the sql_mode, so that representation was removed from <code>Parameter</code> to leave <code>QueryRenderer</code> as the only route.</p>
+    <ul>
+      <li><strong>Custom <code>Parameter</code> implementations</strong> are no longer possible now that the trait is <code>sealed</code>. Use the factory methods such as <code>Parameter.string(...)</code></li>
+      <li><strong>Code that read <code>param.sql</code></strong> should use <code>param.toString</code>. Note that <code>toString</code> is a sql_mode-independent literal intended for display and diagnostics, and <strong>must not be used to assemble SQL for execution</strong></li>
+    </ul>
     
-    <h3 id="scala-version-update" class="section"><a class="anchor-link left" href="#scala-version-update"><i class="icofont-laika link">&#xef71;</i></a>Scala Version Update</h3>
-    <p>The minimum supported Scala version has been updated from Scala 3.7.x to <strong>Scala 3.8.x</strong>.</p>
+    <h3 id="params-removed-from-sqlexception" class="section"><a class="anchor-link left" href="#params-removed-from-sqlexception"><i class="icofont-laika link">&#xef71;</i></a><code>params</code> removed from <code>SQLException</code></h3>
+    <p>The <code>params: SortedMap[Int, Parameter]</code> parameter has been removed from <code>SQLException</code> and its subclasses, as well as from the signature of <code>ERRPacket.toException</code>.</p>
+    <p>As a result, the following are no longer emitted:</p>
+    <ul>
+      <li>The OpenTelemetry attributes <code>error.parameter.$i.type</code> / <code>error.parameter.$i.value</code></li>
+      <li>The &quot;and the arguments were&quot; section of the exception message</li>
+    </ul>
+    <p>This closes the paths by which bound values could leak through exception messages and telemetry. <strong>If you build dashboards or alerts on those attributes, you are affected.</strong></p>
+    
+    <h3 id="four-abstract-methods-added-to-statement" class="section"><a class="anchor-link left" href="#four-abstract-methods-added-to-statement"><i class="icofont-laika link">&#xef71;</i></a>Four abstract methods added to <code>Statement</code></h3>
+    <p>The four methods from Key Change 2 are added as abstract members of <code>ldbc.sql.Statement</code>. There is no impact as long as you use the connectors that ldbc provides, but <strong>implementing <code>Statement</code> or <code>PreparedStatement</code> yourself will now fail to compile.</strong></p>
+    
+    <h3 id="twiddles-core-is-now-1-1-0" class="section"><a class="anchor-link left" href="#twiddles-core-is-now-1-1-0"><i class="icofont-laika link">&#xef71;</i></a>twiddles-core is now 1.1.0</h3>
+    <p>The twiddles-core dependency of <code>ldbc-dsl</code> and <code>ldbc-connector</code> moved from 0.10.0 to 1.1.0. Align the version if your project uses twiddles directly.</p>
+    
+    <h3 id="what-has-not-changed" class="section"><a class="anchor-link left" href="#what-has-not-changed"><i class="icofont-laika link">&#xef71;</i></a>What has not changed</h3>
+    <p>For reference, these requirements are unchanged from 0.7.x.</p>
     <table>
       <thead>
         <tr>
           <th></th>
-          <th>Before (0.6.x)</th>
-          <th>After (0.7.x)</th>
+          <th>0.7.x</th>
+          <th>0.8.0</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td>Scala version</td>
-          <td>3.7.4</td>
-          <td>3.8.3</td>
+          <td>Java versions</td>
+          <td>17, 21, 25</td>
+          <td>unchanged</td>
+        </tr>
+        <tr>
+          <td>Scala versions</td>
+          <td>3.3.x / 3.8.x</td>
+          <td>unchanged</td>
         </tr>
       </tbody>
     </table>
     
     <h2 id="deprecated-apis" class="section"><a class="anchor-link left" href="#deprecated-apis"><i class="icofont-laika link">&#xef71;</i></a>Deprecated APIs</h2>
-    <p>The following APIs are deprecated in 0.7.0 and will be removed in a future release.</p>
+    <p>The following APIs deprecated in 0.7.0 remain available in 0.8.0, but are scheduled for removal in a future version.</p>
     <table>
       <thead>
         <tr>
@@ -493,64 +523,63 @@
         </tr>
       </tbody>
     </table>
+    <p>See the <a href="https://takapi327.github.io/ldbc/0.7/en/migration-notes.html">0.7.x migration notes</a> for how to migrate.</p>
     
     <h2 id="migration-guide" class="section"><a class="anchor-link left" href="#migration-guide"><i class="icofont-laika link">&#xef71;</i></a>Migration Guide</h2>
     
-    <h3 id="replace-sc-with-ident" class="section"><a class="anchor-link left" href="#replace-sc-with-ident"><i class="icofont-laika link">&#xef71;</i></a>Replace <code>sc()</code> with <code>ident()</code></h3>
-    <p>The <code>sc()</code> function is deprecated. Please migrate to <code>ident()</code>.</p>
-    <p><strong>Before (0.6.x):</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="string-literal">sql&quot;SELECT * FROM </span><span class="substitution">${sc(tableName)}</span><span class="string-literal">&quot;</span></code></pre>
-    <p><strong>After (0.7.x):</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="string-literal">sql&quot;SELECT * FROM </span><span class="substitution">${ident(tableName)}</span><span class="string-literal">&quot;</span><span>
-</span><span class="comment">// → SELECT * FROM `tableName`</span></code></pre>
-    <p><code>ident()</code> wraps identifiers in backticks, making it safe against SQL injection for table and column names.</p>
+    <h3 id="update-your-dependencies" class="section"><a class="anchor-link left" href="#update-your-dependencies"><i class="icofont-laika link">&#xef71;</i></a>Update your dependencies</h3>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-dsl&quot;</span><span>       % </span><span class="string-literal">&quot;0.8.0&quot;</span><span>
+</span><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.8.0&quot;</span></code></pre>
+    <p>Use <code>%%%</code> for cross-platform builds.</p>
     
-    <h3 id="replace-connection-fromsocketgroup-with-fromnetwork" class="section"><a class="anchor-link left" href="#replace-connection-fromsocketgroup-with-fromnetwork"><i class="icofont-laika link">&#xef71;</i></a>Replace <code>Connection.fromSocketGroup</code> with <code>fromNetwork</code></h3>
-    <p><strong>Before (0.6.x):</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="type-name">Connection</span><span>.</span><span class="identifier">fromSocketGroup</span><span>(</span><span class="identifier">socketGroup</span><span>, </span><span class="identifier">host</span><span>, </span><span class="identifier">port</span><span>, </span><span class="identifier">user</span><span>, </span><span class="identifier">password</span><span>, </span><span class="identifier">database</span><span>)</span></code></pre>
-    <p><strong>After (0.7.x):</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="type-name">Connection</span><span>.</span><span class="identifier">fromNetwork</span><span>(</span><span class="identifier">network</span><span>, </span><span class="identifier">host</span><span>, </span><span class="identifier">port</span><span>, </span><span class="identifier">user</span><span>, </span><span class="identifier">password</span><span>, </span><span class="identifier">database</span><span>)</span></code></pre>
+    <h3 id="replace-references-to-parameter-sql" class="section"><a class="anchor-link left" href="#replace-references-to-parameter-sql"><i class="icofont-laika link">&#xef71;</i></a>Replace references to <code>Parameter#sql</code></h3>
+    <p><strong>Before (0.7.x):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">literal</span><span>: </span><span class="type-name">String</span><span> = </span><span class="identifier">parameter</span><span>.</span><span class="identifier">sql</span></code></pre>
+    <p><strong>After (0.8.0):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">display</span><span>: </span><span class="type-name">String</span><span> = </span><span class="identifier">parameter</span><span>.</span><span class="identifier">toString</span></code></pre>
+    <p><code>toString</code> is for display and diagnostics. Do not use it to assemble SQL for execution. To build SQL dynamically, use placeholders with <code>setXxx</code>, or the enquote API.</p>
     
-    <h3 id="update-the-path-type-for-ssl-fromkeystorefile" class="section"><a class="anchor-link left" href="#update-the-path-type-for-ssl-fromkeystorefile"><i class="icofont-laika link">&#xef71;</i></a>Update the path type for <code>SSL.fromKeyStoreFile</code></h3>
-    <p><strong>Before (0.6.x):</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">nio</span><span>.</span><span class="identifier">file</span><span>.</span><span class="type-name">Paths</span><span>
-
-</span><span class="type-name">SSL</span><span>.</span><span class="identifier">fromKeyStoreFile</span><span>(</span><span class="type-name">Paths</span><span>.</span><span class="identifier">get</span><span>(</span><span class="string-literal">&quot;/path/to/keystore&quot;</span><span>), </span><span class="identifier">password</span><span>, </span><span class="identifier">keyPassword</span><span>)</span></code></pre>
-    <p><strong>After (0.7.x):</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">fs2</span><span>.</span><span class="identifier">io</span><span>.</span><span class="identifier">file</span><span>.</span><span class="type-name">Path</span><span>
-
-</span><span class="type-name">SSL</span><span>.</span><span class="identifier">fromKeyStoreFile</span><span>(</span><span class="type-name">Path</span><span>(</span><span class="string-literal">&quot;/path/to/keystore&quot;</span><span>), </span><span class="identifier">password</span><span>, </span><span class="identifier">keyPassword</span><span>)</span></code></pre>
+    <h3 id="fix-code-that-constructs-sqlexception-directly" class="section"><a class="anchor-link left" href="#fix-code-that-constructs-sqlexception-directly"><i class="icofont-laika link">&#xef71;</i></a>Fix code that constructs <code>SQLException</code> directly</h3>
+    <p><strong>Before (0.7.x):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="type-name">SQLException</span><span>(
+  </span><span class="identifier">message</span><span> = </span><span class="string-literal">&quot;...&quot;</span><span>,
+  </span><span class="identifier">sql</span><span>     = </span><span class="type-name">Some</span><span>(</span><span class="identifier">sql</span><span>),
+  </span><span class="identifier">params</span><span>  = </span><span class="identifier">params</span><span>
+)</span></code></pre>
+    <p><strong>After (0.8.0):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="type-name">SQLException</span><span>(
+  </span><span class="identifier">message</span><span> = </span><span class="string-literal">&quot;...&quot;</span><span>,
+  </span><span class="identifier">sql</span><span>     = </span><span class="type-name">Some</span><span>(</span><span class="identifier">sql</span><span>)
+)</span></code></pre>
     
-    <h3 id="adopt-the-testing-modules" class="section"><a class="anchor-link left" href="#adopt-the-testing-modules"><i class="icofont-laika link">&#xef71;</i></a>Adopt the testing modules</h3>
-    <p>You can migrate existing rollback logic to <code>ldbc-testkit</code>.</p>
-    <p><strong>Add dependencies to <code>build.sbt</code>:</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Framework-agnostic
-</span><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-testkit&quot;</span><span> % </span><span class="string-literal">&quot;0.7.1&quot;</span><span> % </span><span class="type-name">Test</span><span>
-
-</span><span class="comment">// MUnit integration
-</span><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-testkit-munit&quot;</span><span> % </span><span class="string-literal">&quot;0.7.1&quot;</span><span> % </span><span class="type-name">Test</span></code></pre>
-    <p><strong>After (0.7.x):</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">testkit</span><span>.</span><span class="identifier">munit</span><span>.</span><span class="type-name">LdbcSuite</span><span>
-
-</span><span class="keyword">class</span><span> </span><span class="type-name">UserRepositoryTest</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">LdbcSuite</span><span> {
-
-  </span><span class="identifier">ephemeralTest</span><span>(</span><span class="string-literal">&quot;can create a user&quot;</span><span>) { </span><span class="identifier">conn</span><span> =&gt;
-    </span><span class="keyword">for</span><span>
-      </span><span class="identifier">_</span><span>     &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">executeUpdate</span><span>(</span><span class="string-literal">&quot;INSERT INTO users (name) VALUES (&#39;Alice&#39;)&quot;</span><span>)
-      </span><span class="identifier">count</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">executeQuery</span><span>(</span><span class="string-literal">&quot;SELECT COUNT(*) FROM users&quot;</span><span>).</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">head</span><span>)
-    </span><span class="keyword">yield</span><span> </span><span class="identifier">assertCount</span><span>(</span><span class="identifier">count</span><span>, </span><span class="number-literal">1</span><span>)
-  }
-}</span></code></pre>
+    <h3 id="revisit-telemetry-that-relied-on-error-parameter" class="section"><a class="anchor-link left" href="#revisit-telemetry-that-relied-on-error-parameter"><i class="icofont-laika link">&#xef71;</i></a>Revisit telemetry that relied on <code>error.parameter.*</code></h3>
+    <p>Bound-value attributes are no longer emitted. Use the <code>db.query.text</code> attribute to identify a query. See <a href="reference/Telemetry.html">Telemetry</a> for how query text is sanitized.</p>
+    
+    <h3 id="assemble-sql-with-dynamic-identifiers-safely" class="section"><a class="anchor-link left" href="#assemble-sql-with-dynamic-identifiers-safely"><i class="icofont-laika link">&#xef71;</i></a>Assemble SQL with dynamic identifiers safely</h3>
+    <p><strong>Inside the <code>sql</code> interpolator (as before):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="string-literal">sql&quot;SELECT * FROM </span><span class="substitution">${ident(tableName)}</span><span class="string-literal">&quot;</span></code></pre>
+    <p><strong>When you need the standard JDBC API:</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">for</span><span>
+  </span><span class="identifier">stmt</span><span>      &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">createStatement</span><span>()
+  </span><span class="identifier">isSimple</span><span>  &lt;- </span><span class="identifier">stmt</span><span>.</span><span class="identifier">isSimpleIdentifier</span><span>(</span><span class="identifier">tableName</span><span>)
+  </span><span class="identifier">quoted</span><span>    &lt;- </span><span class="identifier">stmt</span><span>.</span><span class="identifier">enquoteIdentifier</span><span>(</span><span class="identifier">tableName</span><span>, </span><span class="identifier">alwaysQuote</span><span> = </span><span class="boolean-literal">true</span><span>)
+  </span><span class="identifier">resultSet</span><span> &lt;- </span><span class="identifier">stmt</span><span>.</span><span class="identifier">executeQuery</span><span>(</span><span class="string-literal">s&quot;SELECT * FROM </span><span class="substitution">$quoted</span><span class="string-literal">&quot;</span><span>)
+</span><span class="keyword">yield</span><span> </span><span class="identifier">resultSet</span></code></pre>
+    
+    <h3 id="use-ldbc-plugin-from-an-sbt-2-project" class="section"><a class="anchor-link left" href="#use-ldbc-plugin-from-an-sbt-2-project"><i class="icofont-laika link">&#xef71;</i></a>Use <code>ldbc-plugin</code> from an sbt 2 project</h3>
+    <p>The <code>project/plugins.sbt</code> declaration is the same as for sbt 1. The artifact matching your sbt version is resolved automatically.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">addSbtPlugin</span><span>(</span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> % </span><span class="string-literal">&quot;ldbc-plugin&quot;</span><span> % </span><span class="string-literal">&quot;0.8.0&quot;</span><span>)</span></code></pre>
     
     <h2 id="summary" class="section"><a class="anchor-link left" href="#summary"><i class="icofont-laika link">&#xef71;</i></a>Summary</h2>
-    <p>Migrating to 0.7.x brings the following benefits:</p>
+    <p>Migrating to 0.8.x gives you:</p>
     <ol class="arabic">
-      <li><strong>Dedicated testing modules</strong>: <code>ldbc-testkit</code> and <code>ldbc-testkit-munit</code> make it easy to write tests with automatic rollback and MUnit integration</li>
-      <li><strong>Richer DSL helpers</strong>: <code>ident()</code>, <code>when()</code>, and <code>paginate()</code> enable safer and more readable SQL construction</li>
-      <li><strong>Type-safe OpenTelemetry</strong>: Migration to the semantic conventions library improves the robustness of internal implementation</li>
-      <li><strong>Enhanced Scala Native support</strong>: Upgrading to <code>sbt-scala-native 0.5.x</code> improves cross-platform support with true multithreading</li>
+      <li><strong>Improved security</strong>: the SQL injection in client-side prepared statements under the <code>NO_BACKSLASH_ESCAPES</code> sql_mode is fixed, and escaping is centralised in one place</li>
+      <li><strong>Alignment with the JDBC standard</strong>: enquote APIs matching MySQL Connector/J 9.7.0</li>
+      <li><strong>A smaller disclosure surface</strong>: bound values are no longer emitted in exception messages or telemetry</li>
+      <li><strong>A more correct <code>insert</code></strong>: values no longer shift when the field order of a model differs from its column order</li>
+      <li><strong>sbt 2 support</strong>: <code>ldbc-plugin</code> is usable from both sbt 1 and sbt 2</li>
     </ol>
-    <p>The impact on user code is primarily the migration of deprecated APIs (<code>sc()</code> → <code>ident()</code>, <code>fromSocketGroup</code> → <code>fromNetwork</code>) and updating Java/Scala version requirements.</p>
+    <p>The impact on user code is limited to places that used <code>Parameter#sql</code> or the <code>params</code> argument of <code>SQLException</code> directly. Most projects can migrate by updating dependency versions alone.</p>
 
     
 <hr class="footer-rule"/>

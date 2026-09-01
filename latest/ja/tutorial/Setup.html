@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.7</a>
+      <a class="text-link menu-toggle" href="#">Version 0.8</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -188,7 +188,7 @@
     
     <h2 id="必要なもの" class="section"><a class="anchor-link left" href="#必要なもの"><i class="icofont-laika link">&#xef71;</i></a>必要なもの</h2>
     <ul>
-      <li>JDK 21以上</li>
+      <li>JDK 17以上（17、21、25 で動作確認しています）</li>
       <li>Scala 3</li>
       <li>Docker（データベース環境のため）</li>
       <li><a href="https://scala-cli.virtuslab.org/">Scala CLI</a>（推奨）</li>
@@ -198,7 +198,7 @@
     <p>まず、Dockerを使用してMySQLデータベースを起動します。以下のdocker-compose.ymlファイルを作成してください：</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="attribute-name">services</span><span>:
   </span><span class="attribute-name">mysql</span><span>:
-    </span><span class="attribute-name">image</span><span>: </span><span class="string-literal">mysql:9.6.0</span><span>
+    </span><span class="attribute-name">image</span><span>: </span><span class="string-literal">mysql:9.7.0</span><span>
     </span><span class="attribute-name">container_name</span><span>: </span><span class="string-literal">ldbc</span><span>
     </span><span class="attribute-name">ports</span><span>:
       - </span><span class="number-literal">13306</span><span>:3306
@@ -279,8 +279,8 @@
 touch FirstSteps.scala</span></code></pre>
     <p><code>FirstSteps.scala</code>に以下のコードを記述します：</p>
     <pre><code class="nohighlight"><span class="comment">//&gt; using scala &quot;3.3.8&quot;
-//&gt; using dep &quot;io.github.takapi327::ldbc-dsl:0.7.1&quot;
-//&gt; using dep &quot;io.github.takapi327::ldbc-connector:0.7.1&quot;
+//&gt; using dep &quot;io.github.takapi327::ldbc-dsl:0.8.0&quot;
+//&gt; using dep &quot;io.github.takapi327::ldbc-connector:0.8.0&quot;
 </span><span>
 </span><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.*
 </span><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">syntax</span><span>.</span><span class="identifier">all</span><span>.*
@@ -313,7 +313,7 @@ touch FirstSteps.scala</span></code></pre>
     
     <h2 id="自動セットアップスクリプト-オプション" class="section"><a class="anchor-link left" href="#自動セットアップスクリプト-オプション"><i class="icofont-laika link">&#xef71;</i></a>自動セットアップスクリプト（オプション）</h2>
     <p>すべてのセットアップを自動で行うScala CLIスクリプトも用意しています：</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span>scala-cli https://github.com/takapi</span><span class="number-literal">327</span><span>/ldbc/tree/master/docs/src/main/scala/</span><span class="number-literal">00</span><span>-Setup.scala --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-dsl:</span><span class="number-literal">0.7.1</span><span> --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-connector:</span><span class="number-literal">0.7.1</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span>scala-cli https://github.com/takapi</span><span class="number-literal">327</span><span>/ldbc/tree/master/docs/src/main/scala/</span><span class="number-literal">00</span><span>-Setup.scala --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-dsl:</span><span class="number-literal">0.8.0</span><span> --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-connector:</span><span class="number-literal">0.8.0</span></code></pre>
     
     <h2 id="次のステップ" class="section"><a class="anchor-link left" href="#次のステップ"><i class="icofont-laika link">&#xef71;</i></a>次のステップ</h2>
     <p>これでldbcを使用する準備が整いました！次は<a href="Connection.html">コネクション</a>に進み、データベース接続の詳細について学びましょう。</p>

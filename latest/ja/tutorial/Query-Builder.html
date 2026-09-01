@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.7</a>
+      <a class="text-link menu-toggle" href="#">Version 0.8</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -222,7 +222,7 @@
     
     <h2 id="準備" class="section"><a class="anchor-link left" href="#準備"><i class="icofont-laika link">&#xef71;</i></a>準備</h2>
     <p>プロジェクトに以下の依存関係を設定する必要があります。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">//&gt; using dep &quot;io.github.takapi327::ldbc-query-builder:0.7.1&quot;</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">//&gt; using dep &quot;io.github.takapi327::ldbc-query-builder:0.8.0&quot;</span></code></pre>
     
     <h2 id="基本的な使い方" class="section"><a class="anchor-link left" href="#基本的な使い方"><i class="icofont-laika link">&#xef71;</i></a>基本的な使い方</h2>
     <p>ldbcでは、ケースクラスを使用してテーブルを表現し、クエリを構築します。まず、シンプルなテーブルの定義から始めましょう。</p>
@@ -530,6 +530,8 @@
   (</span><span class="number-literal">2</span><span>, </span><span class="string-literal">&quot;Bob&quot;</span><span>, </span><span class="string-literal">&quot;bob@example.com&quot;</span><span>)
 )
 </span><span class="comment">// INSERT INTO user (`id`, `name`, `email`) VALUES(?, ?, ?), (?, ?, ?)</span></code></pre>
+    <p>タプルの要素は、テーブルの<code>*</code>射影で定義したカラムの順序に対応します。モデルのフィールド順とカラム順が異なるテーブルでも、値は<code>*</code>射影の順序に従って正しくバインドされます。</p>
+    <blockquote><strong>注意</strong>: 0.7.x以前は、タプルの要素がモデルのフィールド順のままバインドされていたため、<code>*</code>射影の順序と異なる場合に値が意図しないカラムへ挿入される可能性がありました。0.8.0で修正されています。該当するテーブルがある場合、アップグレード後にテストで確認してください。</blockquote>
     
     <h3 id="insertintoメソッドを使用" class="section"><a class="anchor-link left" href="#insertintoメソッドを使用"><i class="icofont-laika link">&#xef71;</i></a><code>insertInto</code>メソッドを使用</h3>
     <p>特定のカラムにのみ値を挿入する場合に便利です（例えばAUTO INCREMENTを使用している場合など）：</p>

@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.7</a>
+      <a class="text-link menu-toggle" href="#">Version 0.8</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -178,6 +178,8 @@
     <li class="level2 nav-leaf"><a href="#other-helper-functions">Other Helper Functions</a></li>
     <li class="level2 nav-leaf"><a href="#optional-conditions">Optional Conditions</a></li>
     <li class="level1 nav-leaf"><a href="#identifier-escaping">Identifier Escaping</a></li>
+    <li class="level1 nav-leaf"><a href="#parameter-escaping-and-sql_mode">Parameter Escaping and sql_mode</a></li>
+    <li class="level1 nav-leaf"><a href="#quoting-identifiers-and-values-jdbc-4-3-compatible-api">Quoting Identifiers and Values (JDBC 4.3 compatible API)</a></li>
     <li class="level1 nav-leaf"><a href="#conditional-sql-fragments">Conditional SQL Fragments</a></li>
     <li class="level1 nav-leaf"><a href="#pagination">Pagination</a></li>
     <li class="level1 nav-leaf"><a href="#next-steps">Next Steps</a></li>
@@ -336,7 +338,72 @@
 </span><span class="keyword">val</span><span> </span><span class="identifier">table</span><span> = </span><span class="string-literal">&quot;user&quot;</span><span>
 
 </span><span class="string-literal">sql&quot;SELECT * FROM </span><span class="substitution">${ident(schema)}</span><span class="string-literal">.</span><span class="substitution">${ident(table)}</span><span class="string-literal">&quot;</span></code></pre>
-    <blockquote><strong>Note</strong>: While <code>ident</code> escapes with backticks, it is recommended to use it only with trusted values (constants, configuration values, etc.). Avoid using user input directly as identifiers.</blockquote>
+    <blockquote><strong>Note</strong>: While <code>ident</code> escapes with backticks, it is recommended to use it only with trusted values (constants, configuration values, etc.). Avoid using user input directly as identifiers. If you want to validate a value as an identifier beforehand, use <code>isSimpleIdentifier</code> described below.</blockquote>
+    
+    <h2 id="parameter-escaping-and-sql_mode" class="section"><a class="anchor-link left" href="#parameter-escaping-and-sql_mode"><i class="icofont-laika link">&#xef71;</i></a>Parameter Escaping and sql_mode</h2>
+    <p>Dynamic parameters are handled by <code>PreparedStatement</code>, so escaping is normally not something you need to think about. However, the client-side <code>PreparedStatement</code> of the ldbc connector (<code>useServerPrepStmts = false</code>, the default) assembles the query on the client, so the escaping depends on the server <code>sql_mode</code>.</p>
+    <p>ldbc tracks the session <code>sql_mode</code> and escapes string literals as follows.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>sql_mode</th>
+          <th>Escaping</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>default</td>
+          <td><code>&#39;</code> -&gt; <code>\&#39;</code>, <code>&quot;</code> -&gt; <code>\&quot;</code>, `<code>-&gt;</code>`, control characters -&gt; <code>\0</code> <code>\b</code> <code>\n</code> <code>\r</code> <code>\Z</code></td>
+        </tr>
+        <tr>
+          <td><code>NO_BACKSLASH_ESCAPES</code></td>
+          <td><code>&#39;</code> -&gt; <code>&#39;&#39;</code> (doubling the single quote)</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>In a session with <code>NO_BACKSLASH_ESCAPES</code>, a backslash is an ordinary character, so <code>\&#39;</code> does not neutralize the quote. ldbc therefore switches to doubling the quote.</p>
+    <p>The <code>sql_mode</code> is read when the connection is established and then updated from every OK/EOF packet received from the server. A <code>SET SESSION sql_mode = ...</code> issued after connecting is reflected in subsequent query construction.</p>
+    <p>No configuration is required on your side.</p>
+    
+    <h2 id="quoting-identifiers-and-values-jdbc-4-3-compatible-api" class="section"><a class="anchor-link left" href="#quoting-identifiers-and-values-jdbc-4-3-compatible-api"><i class="icofont-laika link">&#xef71;</i></a>Quoting Identifiers and Values (JDBC 4.3 compatible API)</h2>
+    <p>The quoting methods standardised in JDBC 4.3 are available on <code>Statement</code> and <code>PreparedStatement</code>. Use them when assembling SQL statements outside the <code>sql</code> interpolator, or when you need compatibility with the standard JDBC API.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Method</th>
+          <th>Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>enquoteLiteral(value)</code></td>
+          <td>Wrap a string in single quotes as a literal</td>
+        </tr>
+        <tr>
+          <td><code>enquoteIdentifier(identifier, alwaysQuote)</code></td>
+          <td>Quote an identifier</td>
+        </tr>
+        <tr>
+          <td><code>enquoteNCharLiteral(value)</code></td>
+          <td>Produce an <code>N</code>-prefixed national character literal</td>
+        </tr>
+        <tr>
+          <td><code>isSimpleIdentifier(identifier)</code></td>
+          <td>Report whether an identifier can be used without quoting</td>
+        </tr>
+      </tbody>
+    </table>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">for</span><span>
+  </span><span class="identifier">stmt</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">createStatement</span><span>()
+  </span><span class="identifier">a</span><span>    &lt;- </span><span class="identifier">stmt</span><span>.</span><span class="identifier">enquoteLiteral</span><span>(</span><span class="string-literal">&quot;G&#39;Day&quot;</span><span>)              </span><span class="comment">// &#39;G&#39;&#39;Day&#39;
+</span><span>  </span><span class="identifier">b</span><span>    &lt;- </span><span class="identifier">stmt</span><span>.</span><span class="identifier">enquoteIdentifier</span><span>(</span><span class="string-literal">&quot;my table&quot;</span><span>, </span><span class="boolean-literal">false</span><span>) </span><span class="comment">// `my table`
+</span><span>  </span><span class="identifier">c</span><span>    &lt;- </span><span class="identifier">stmt</span><span>.</span><span class="identifier">enquoteIdentifier</span><span>(</span><span class="string-literal">&quot;user&quot;</span><span>, </span><span class="boolean-literal">true</span><span>)      </span><span class="comment">// `user`
+</span><span>  </span><span class="identifier">d</span><span>    &lt;- </span><span class="identifier">stmt</span><span>.</span><span class="identifier">enquoteNCharLiteral</span><span>(</span><span class="string-literal">&quot;Hello&quot;</span><span>)         </span><span class="comment">// N&#39;Hello&#39;
+</span><span>  </span><span class="identifier">e</span><span>    &lt;- </span><span class="identifier">stmt</span><span>.</span><span class="identifier">isSimpleIdentifier</span><span>(</span><span class="string-literal">&quot;user_name&quot;</span><span>)      </span><span class="comment">// true
+</span><span>  </span><span class="identifier">f</span><span>    &lt;- </span><span class="identifier">stmt</span><span>.</span><span class="identifier">isSimpleIdentifier</span><span>(</span><span class="string-literal">&quot;select&quot;</span><span>)         </span><span class="comment">// false (reserved word)
+</span><span class="keyword">yield</span><span> ()</span></code></pre>
+    <p>Following the MySQL rules, <code>isSimpleIdentifier</code> treats an identifier as simple when it consists only of <code>[0-9a-zA-Z$_]</code> or extended characters (<code>U+0080</code> and above), is not made up solely of digits, is at most 64 characters long, and is not a reserved word. When the <code>ANSI_QUOTES</code> sql_mode is enabled, the identifier quote character is <code>&quot;</code> rather than a backtick.</p>
+    <blockquote><strong>Note</strong>: to embed an identifier inside the <code>sql</code> interpolator, keep using <code>ident</code>. These methods require a <code>Statement</code> instance, so they are mainly for assembling SQL statements as strings.</blockquote>
     
     <h2 id="conditional-sql-fragments" class="section"><a class="anchor-link left" href="#conditional-sql-fragments"><i class="icofont-laika link">&#xef71;</i></a>Conditional SQL Fragments</h2>
     <p>When you want to conditionally append a SQL fragment, use the <code>when</code> function.</p>

@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.7</a>
+      <a class="text-link menu-toggle" href="#">Version 0.8</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -212,9 +212,9 @@
     今後このコネクタを使用してより高レイヤーのAPIを提供する予定です。また既存の高レイヤーのAPIとの互換性を持たせることも予定しています。</p>
     <p>使用するにはプロジェクトに以下の依存関係を設定する必要があります。</p>
     <p><strong>JVM</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.7.1&quot;</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.8.0&quot;</span></code></pre>
     <p><strong>JS/Native</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %%% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.7.1&quot;</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %%% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.8.0&quot;</span></code></pre>
     <p><strong>サポートバージョン</strong></p>
     <p>現在のバージョンは以下のバージョンのMySQLをサポートしています。</p>
     <ul>
@@ -394,6 +394,47 @@
     </span><span class="identifier">gereatedKeys</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">getGeneratedKeys</span><span>()
   </span><span class="keyword">yield</span><span>
 }</span></code></pre>
+    
+    <h4 id="値と識別子のクォート" class="section"><a class="anchor-link left" href="#値と識別子のクォート"><i class="icofont-laika link">&#xef71;</i></a>値と識別子のクォート</h4>
+    <p>SQL文を文字列として組み立てる場合に、値や識別子を安全にクォートするためのメソッドです。JDBC 4.3で標準化されたAPIに対応しており、<code>Statement</code>と<code>PreparedStatement</code>の両方で利用できます。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>メソッド</th>
+          <th>用途</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>enquoteLiteral(value)</code></td>
+          <td><code>文字列をシングルクォートで囲んだリテラルにする</code></td>
+        </tr>
+        <tr>
+          <td><code>enquoteIdentifier(identifier, alwaysQuote)</code></td>
+          <td><code>識別子をクォートする</code></td>
+        </tr>
+        <tr>
+          <td><code>enquoteNCharLiteral(value)</code></td>
+          <td><code>Nプレフィックス付きの各国文字リテラルにする</code></td>
+        </tr>
+        <tr>
+          <td><code>isSimpleIdentifier(identifier)</code></td>
+          <td><code>クォートなしで使える単純な識別子か判定する</code></td>
+        </tr>
+      </tbody>
+    </table>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="keyword">for</span><span>
+    </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">createStatement</span><span>()
+    </span><span class="identifier">literal</span><span>   &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">enquoteLiteral</span><span>(</span><span class="string-literal">&quot;G&#39;Day&quot;</span><span>)              </span><span class="comment">// &#39;G&#39;&#39;Day&#39;
+</span><span>    </span><span class="identifier">quoted</span><span>    &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">enquoteIdentifier</span><span>(</span><span class="string-literal">&quot;my table&quot;</span><span>, </span><span class="boolean-literal">false</span><span>) </span><span class="comment">// `my table`
+</span><span>    </span><span class="identifier">nchar</span><span>     &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">enquoteNCharLiteral</span><span>(</span><span class="string-literal">&quot;Hello&quot;</span><span>)         </span><span class="comment">// N&#39;Hello&#39;
+</span><span>    </span><span class="identifier">isSimple</span><span>  &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">isSimpleIdentifier</span><span>(</span><span class="string-literal">&quot;user_name&quot;</span><span>)      </span><span class="comment">// true
+</span><span>  </span><span class="keyword">yield</span><span>
+}</span></code></pre>
+    <p><code>isSimpleIdentifier</code>はMySQLの規則に従い、<code>[0-9a-zA-Z$_]</code>と<code>U+0080</code>以上の拡張文字のみで構成され、数字のみではなく、64文字以内で、予約語でないものを単純な識別子と判定します。</p>
+    <p><code>ANSI_QUOTES</code> sql_modeが有効な場合、識別子のクォート文字はバッククォートではなく<code>&quot;</code>になります。</p>
+    <p>※ これらのメソッドはSQL文を文字列として組み立てる場合の補助です。動的な値を扱う場合は、<code>PreparedStatement</code>のパラメーターを使用してください。</p>
     
     <h3 id="client-server-preparedstatement" class="section"><a class="anchor-link left" href="#client-server-preparedstatement"><i class="icofont-laika link">&#xef71;</i></a>Client/Server PreparedStatement</h3>
     <p>ldbcでは<code>PreparedStatement</code>を<code>Client PreparedStatement</code>と<code>Server PreparedStatement</code>に分けて提供しています。</p>

@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.7</a>
+      <a class="text-link menu-toggle" href="#">Version 0.8</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -222,7 +222,7 @@
     
     <h2 id="prerequisites" class="section"><a class="anchor-link left" href="#prerequisites"><i class="icofont-laika link">&#xef71;</i></a>Prerequisites</h2>
     <p>You need to set up the following dependency in your project:</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">//&gt; using dep &quot;io.github.takapi327::ldbc-query-builder:0.7.1&quot;</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">//&gt; using dep &quot;io.github.takapi327::ldbc-query-builder:0.8.0&quot;</span></code></pre>
     
     <h2 id="basic-usage" class="section"><a class="anchor-link left" href="#basic-usage"><i class="icofont-laika link">&#xef71;</i></a>Basic Usage</h2>
     <p>In ldbc, we use case classes to represent tables and build queries. Let&#39;s start with a simple table definition:</p>
@@ -530,6 +530,8 @@
   (</span><span class="number-literal">2</span><span>, </span><span class="string-literal">&quot;Bob&quot;</span><span>, </span><span class="string-literal">&quot;bob@example.com&quot;</span><span>)
 )
 </span><span class="comment">// INSERT INTO user (`id`, `name`, `email`) VALUES(?, ?, ?), (?, ?, ?)</span></code></pre>
+    <p>The elements of the tuple correspond to the column order defined by the table&#39;s <code>*</code> projection. Even when the field order of the model differs from the column order, values are bound according to the <code>*</code> projection.</p>
+    <blockquote><strong>Note</strong>: in 0.7.x and earlier the tuple elements were bound in the field order of the model, so values could be inserted into the wrong columns when that order differed from the <code>*</code> projection. This was fixed in 0.8.0. If you have such a table, verify it with your tests after upgrading.</blockquote>
     
     <h3 id="using-the-insertinto-method" class="section"><a class="anchor-link left" href="#using-the-insertinto-method"><i class="icofont-laika link">&#xef71;</i></a>Using the <code>insertInto</code> Method</h3>
     <p>Useful when you want to insert values only into specific columns (e.g., when using AUTO INCREMENT):</p>

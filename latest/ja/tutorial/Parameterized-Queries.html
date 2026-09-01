@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.7</a>
+      <a class="text-link menu-toggle" href="#">Version 0.8</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -178,6 +178,8 @@
     <li class="level2 nav-leaf"><a href="#その他のヘルパー関数">その他のヘルパー関数</a></li>
     <li class="level2 nav-leaf"><a href="#オプションの条件">オプションの条件</a></li>
     <li class="level1 nav-leaf"><a href="#識別子のエスケープ">識別子のエスケープ</a></li>
+    <li class="level1 nav-leaf"><a href="#パラメータのエスケープとsql_mode">パラメータのエスケープとsql_mode</a></li>
+    <li class="level1 nav-leaf"><a href="#識別子と値のクォート-jdbc-4-3互換api">識別子と値のクォート（JDBC 4.3互換API）</a></li>
     <li class="level1 nav-leaf"><a href="#条件付きsql断片">条件付きSQL断片</a></li>
     <li class="level1 nav-leaf"><a href="#ページネーション">ページネーション</a></li>
     <li class="level1 nav-leaf"><a href="#次のステップ">次のステップ</a></li>
@@ -334,7 +336,72 @@
 </span><span class="keyword">val</span><span> </span><span class="identifier">table</span><span> = </span><span class="string-literal">&quot;user&quot;</span><span>
 
 </span><span class="string-literal">sql&quot;SELECT * FROM </span><span class="substitution">${ident(schema)}</span><span class="string-literal">.</span><span class="substitution">${ident(table)}</span><span class="string-literal">&quot;</span></code></pre>
-    <blockquote><strong>注意</strong>: <code>ident</code> はバッククォートでエスケープを行いますが、信頼できる値（定数・設定値など）に対して使用することを推奨します。ユーザー入力をそのまま識別子として使用する設計は避けてください。</blockquote>
+    <blockquote><strong>注意</strong>: <code>ident</code> はバッククォートでエスケープを行いますが、信頼できる値（定数・設定値など）に対して使用することを推奨します。ユーザー入力をそのまま識別子として使用する設計は避けてください。値が識別子として妥当かを事前に検証したい場合は、後述の<code>isSimpleIdentifier</code>が利用できます。</blockquote>
+    
+    <h2 id="パラメータのエスケープとsql_mode" class="section"><a class="anchor-link left" href="#パラメータのエスケープとsql_mode"><i class="icofont-laika link">&#xef71;</i></a>パラメータのエスケープとsql_mode</h2>
+    <p>動的パラメータは<code>PreparedStatement</code>が処理するため、通常はエスケープを意識する必要はありません。ただし、ldbcコネクターのクライアントサイド<code>PreparedStatement</code>（<code>useServerPrepStmts = false</code>、既定）はクエリをクライアント側で組み立てるため、エスケープ方法がサーバーの<code>sql_mode</code>に依存します。</p>
+    <p>ldbcはセッションの<code>sql_mode</code>を追跡し、以下のように文字列リテラルをエスケープします。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>sql_mode</th>
+          <th>エスケープ方法</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>既定</td>
+          <td><code>&#39;</code> → <code>\&#39;</code>、<code>&quot;</code> → <code>\&quot;</code>、`<code>→</code>`、制御文字 → <code>\0</code> <code>\b</code> <code>\n</code> <code>\r</code> <code>\Z</code></td>
+        </tr>
+        <tr>
+          <td><code>NO_BACKSLASH_ESCAPES</code></td>
+          <td><code>&#39;</code> → <code>&#39;&#39;</code>（シングルクォートの二重化）</td>
+        </tr>
+      </tbody>
+    </table>
+    <p><code>NO_BACKSLASH_ESCAPES</code>が有効なセッションではバックスラッシュが通常の文字として扱われるため、<code>\&#39;</code>ではクォートを無効化できません。そのためクォートの二重化に切り替えています。</p>
+    <p>この<code>sql_mode</code>は接続時に取得したあと、サーバーから受信するOK/EOFパケットごとに更新されます。接続後に<code>SET SESSION sql_mode = ...</code>を実行した場合でも、その時点以降のクエリ生成に正しく反映されます。</p>
+    <p>利用者側で必要な設定はありません。</p>
+    
+    <h2 id="識別子と値のクォート-jdbc-4-3互換api" class="section"><a class="anchor-link left" href="#識別子と値のクォート-jdbc-4-3互換api"><i class="icofont-laika link">&#xef71;</i></a>識別子と値のクォート（JDBC 4.3互換API）</h2>
+    <p>JDBC 4.3で標準化されたクォート用のメソッドが<code>Statement</code>および<code>PreparedStatement</code>で利用できます。<code>sql</code>補間子の外でSQL文を組み立てる場合や、JDBC標準APIとの互換性が必要な場合に使用します。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>メソッド</th>
+          <th>用途</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>enquoteLiteral(value)</code></td>
+          <td>文字列をシングルクォートで囲んだリテラルにする</td>
+        </tr>
+        <tr>
+          <td><code>enquoteIdentifier(identifier, alwaysQuote)</code></td>
+          <td>識別子をクォートする</td>
+        </tr>
+        <tr>
+          <td><code>enquoteNCharLiteral(value)</code></td>
+          <td><code>N</code>プレフィックス付きの各国文字リテラルにする</td>
+        </tr>
+        <tr>
+          <td><code>isSimpleIdentifier(identifier)</code></td>
+          <td>クォートなしで使える単純な識別子か判定する</td>
+        </tr>
+      </tbody>
+    </table>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">for</span><span>
+  </span><span class="identifier">stmt</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">createStatement</span><span>()
+  </span><span class="identifier">a</span><span>    &lt;- </span><span class="identifier">stmt</span><span>.</span><span class="identifier">enquoteLiteral</span><span>(</span><span class="string-literal">&quot;G&#39;Day&quot;</span><span>)              </span><span class="comment">// &#39;G&#39;&#39;Day&#39;
+</span><span>  </span><span class="identifier">b</span><span>    &lt;- </span><span class="identifier">stmt</span><span>.</span><span class="identifier">enquoteIdentifier</span><span>(</span><span class="string-literal">&quot;my table&quot;</span><span>, </span><span class="boolean-literal">false</span><span>) </span><span class="comment">// `my table`
+</span><span>  </span><span class="identifier">c</span><span>    &lt;- </span><span class="identifier">stmt</span><span>.</span><span class="identifier">enquoteIdentifier</span><span>(</span><span class="string-literal">&quot;user&quot;</span><span>, </span><span class="boolean-literal">true</span><span>)      </span><span class="comment">// `user`
+</span><span>  </span><span class="identifier">d</span><span>    &lt;- </span><span class="identifier">stmt</span><span>.</span><span class="identifier">enquoteNCharLiteral</span><span>(</span><span class="string-literal">&quot;Hello&quot;</span><span>)         </span><span class="comment">// N&#39;Hello&#39;
+</span><span>  </span><span class="identifier">e</span><span>    &lt;- </span><span class="identifier">stmt</span><span>.</span><span class="identifier">isSimpleIdentifier</span><span>(</span><span class="string-literal">&quot;user_name&quot;</span><span>)      </span><span class="comment">// true
+</span><span>  </span><span class="identifier">f</span><span>    &lt;- </span><span class="identifier">stmt</span><span>.</span><span class="identifier">isSimpleIdentifier</span><span>(</span><span class="string-literal">&quot;select&quot;</span><span>)         </span><span class="comment">// false（予約語）
+</span><span class="keyword">yield</span><span> ()</span></code></pre>
+    <p><code>isSimpleIdentifier</code>はMySQLの規則に従い、<code>[0-9a-zA-Z$_]</code>と<code>U+0080</code>以上の拡張文字のみで構成され、数字のみではなく、64文字以内で、予約語でないものを単純な識別子と判定します。<code>ANSI_QUOTES</code> sql_modeが有効な場合、識別子のクォート文字はバッククォートではなく<code>&quot;</code>になります。</p>
+    <blockquote><strong>注意</strong>: <code>sql</code>補間子の中で識別子を埋め込む場合は、引き続き<code>ident</code>を使用してください。これらのメソッドは<code>Statement</code>のインスタンスを必要とするため、主にSQL文を文字列として組み立てる場面で使います。</blockquote>
     
     <h2 id="条件付きsql断片" class="section"><a class="anchor-link left" href="#条件付きsql断片"><i class="icofont-laika link">&#xef71;</i></a>条件付きSQL断片</h2>
     <p>条件に応じてSQL断片を付加したい場合は、<code>when</code> 関数を使用します。</p>

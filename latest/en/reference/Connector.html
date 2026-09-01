@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.7</a>
+      <a class="text-link menu-toggle" href="#">Version 0.8</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
@@ -212,9 +212,9 @@
     We plan to provide higher-layer APIs using this connector in the future. We also plan to maintain compatibility with existing higher-layer APIs.</p>
     <p>To use it, you need to set up the following dependency in your project:</p>
     <p><strong>JVM</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.7.1&quot;</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.8.0&quot;</span></code></pre>
     <p><strong>JS/Native</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %%% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.7.1&quot;</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %%% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.8.0&quot;</span></code></pre>
     <p><strong>Supported Versions</strong></p>
     <p>The current version supports the following versions of MySQL:</p>
     <ul>
@@ -394,6 +394,47 @@
     </span><span class="identifier">generatedKeys</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">getGeneratedKeys</span><span>()
   </span><span class="keyword">yield</span><span>
 }</span></code></pre>
+    
+    <h4 id="quoting-values-and-identifiers" class="section"><a class="anchor-link left" href="#quoting-values-and-identifiers"><i class="icofont-laika link">&#xef71;</i></a>Quoting Values and Identifiers</h4>
+    <p>These methods safely quote values and identifiers when you assemble a SQL statement as a string. They implement the API standardised in JDBC 4.3 and are available on both <code>Statement</code> and <code>PreparedStatement</code>.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Method</th>
+          <th>Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>enquoteLiteral(value)</code></td>
+          <td><code>Wrap a string in single quotes as a literal</code></td>
+        </tr>
+        <tr>
+          <td><code>enquoteIdentifier(identifier, alwaysQuote)</code></td>
+          <td><code>Quote an identifier</code></td>
+        </tr>
+        <tr>
+          <td><code>enquoteNCharLiteral(value)</code></td>
+          <td><code>Produce an N-prefixed national character literal</code></td>
+        </tr>
+        <tr>
+          <td><code>isSimpleIdentifier(identifier)</code></td>
+          <td><code>Report whether an identifier can be used without quoting</code></td>
+        </tr>
+      </tbody>
+    </table>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">datasource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="keyword">for</span><span>
+    </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">createStatement</span><span>()
+    </span><span class="identifier">literal</span><span>   &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">enquoteLiteral</span><span>(</span><span class="string-literal">&quot;G&#39;Day&quot;</span><span>)              </span><span class="comment">// &#39;G&#39;&#39;Day&#39;
+</span><span>    </span><span class="identifier">quoted</span><span>    &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">enquoteIdentifier</span><span>(</span><span class="string-literal">&quot;my table&quot;</span><span>, </span><span class="boolean-literal">false</span><span>) </span><span class="comment">// `my table`
+</span><span>    </span><span class="identifier">nchar</span><span>     &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">enquoteNCharLiteral</span><span>(</span><span class="string-literal">&quot;Hello&quot;</span><span>)         </span><span class="comment">// N&#39;Hello&#39;
+</span><span>    </span><span class="identifier">isSimple</span><span>  &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">isSimpleIdentifier</span><span>(</span><span class="string-literal">&quot;user_name&quot;</span><span>)      </span><span class="comment">// true
+</span><span>  </span><span class="keyword">yield</span><span>
+}</span></code></pre>
+    <p>Following the MySQL rules, <code>isSimpleIdentifier</code> treats an identifier as simple when it consists only of <code>[0-9a-zA-Z$_]</code> or extended characters (<code>U+0080</code> and above), is not made up solely of digits, is at most 64 characters long, and is not a reserved word.</p>
+    <p>When the <code>ANSI_QUOTES</code> sql_mode is enabled, the identifier quote character is <code>&quot;</code> rather than a backtick.</p>
+    <p>Note: these methods are a helper for assembling SQL as a string. For dynamic values, use the parameters of <code>PreparedStatement</code>.</p>
     
     <h3 id="client-server-preparedstatement" class="section"><a class="anchor-link left" href="#client-server-preparedstatement"><i class="icofont-laika link">&#xef71;</i></a>Client/Server PreparedStatement</h3>
     <p>ldbc provides <code>PreparedStatement</code> divided into <code>Client PreparedStatement</code> and <code>Server PreparedStatement</code>.</p>

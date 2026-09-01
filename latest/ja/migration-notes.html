@@ -44,7 +44,7 @@
     </a>
     
     <div class="menu-container version-menu">
-      <a class="text-link menu-toggle" href="#">Version 0.7</a>
+      <a class="text-link menu-toggle" href="#">Version 0.8</a>
       <nav class="menu-content">
         <ul class="nav-list">
           <li class="level1 nav-leaf"><a href="../older-versions.html">Older Versions</a></li>
@@ -171,20 +171,25 @@
   <ul class="nav-list">
     <li class="level1 nav-leaf"><a href="#パッケージ">パッケージ</a></li>
     <li class="level1 nav-node"><a href="#主要な変更点">🎯 主要な変更点</a></li>
-    <li class="level2 nav-leaf"><a href="#_1-テスト用モジュールの追加">1. テスト用モジュールの追加</a></li>
-    <li class="level2 nav-leaf"><a href="#_2-dsl-ヘルパー関数の追加">2. DSL ヘルパー関数の追加</a></li>
-    <li class="level2 nav-leaf"><a href="#_3-opentelemetry-セマンティクス属性の型安全api移行">3. OpenTelemetry セマンティクス属性の型安全API移行</a></li>
-    <li class="level2 nav-leaf"><a href="#_4-scala-native-対応の強化">4. Scala Native 対応の強化</a></li>
-    <li class="level2 nav-leaf"><a href="#_5-コードジェネレーターの-yaml-パーサ移行">5. コードジェネレーターの YAML パーサ移行</a></li>
+    <li class="level2 nav-leaf"><a href="#_1-no_backslash_escapes-環境での-sql-インジェクションを修正">1. <code>NO_BACKSLASH_ESCAPES</code> 環境での SQL インジェクションを修正</a></li>
+    <li class="level2 nav-leaf"><a href="#_2-jdbc-4-3-の-enquote-api-に対応">2. JDBC 4.3 の enquote API に対応</a></li>
+    <li class="level2 nav-leaf"><a href="#_3-ldbc-plugin-が-sbt-2-に対応">3. <code>ldbc-plugin</code> が sbt 2 に対応</a></li>
+    <li class="level2 nav-leaf"><a href="#_4-insert-のカラム順不一致バグを修正">4. <code>insert</code> のカラム順不一致バグを修正</a></li>
+    <li class="level2 nav-leaf"><a href="#_5-依存ライブラリの更新">5. 依存ライブラリの更新</a></li>
     <li class="level1 nav-node"><a href="#破壊的変更">破壊的変更</a></li>
-    <li class="level2 nav-leaf"><a href="#java-11-のサポート廃止">Java 11 のサポート廃止</a></li>
-    <li class="level2 nav-leaf"><a href="#scala-バージョンの更新">Scala バージョンの更新</a></li>
+    <li class="level2 nav-leaf"><a href="#parameter-が-sealed-trait-になり-sql-が削除されました"><code>Parameter</code> が <code>sealed trait</code> になり <code>sql</code> が削除されました</a></li>
+    <li class="level2 nav-leaf"><a href="#sqlexception-から-params-を削除しました"><code>SQLException</code> から <code>params</code> を削除しました</a></li>
+    <li class="level2 nav-leaf"><a href="#statement-に-4-つの抽象メソッドが追加されました"><code>Statement</code> に 4 つの抽象メソッドが追加されました</a></li>
+    <li class="level2 nav-leaf"><a href="#twiddles-core-が-1-1-0-になりました">twiddles-core が 1.1.0 になりました</a></li>
+    <li class="level2 nav-leaf"><a href="#変更がないもの">変更がないもの</a></li>
     <li class="level1 nav-leaf"><a href="#非推奨api">非推奨API</a></li>
     <li class="level1 nav-node"><a href="#移行ガイド">移行ガイド</a></li>
-    <li class="level2 nav-leaf"><a href="#sc-を-ident-に置き換える"><code>sc()</code> を <code>ident()</code> に置き換える</a></li>
-    <li class="level2 nav-leaf"><a href="#connection-fromsocketgroup-を-fromnetwork-に置き換える"><code>Connection.fromSocketGroup</code> を <code>fromNetwork</code> に置き換える</a></li>
-    <li class="level2 nav-leaf"><a href="#ssl-fromkeystorefile-のパス型を変更する"><code>SSL.fromKeyStoreFile</code> のパス型を変更する</a></li>
-    <li class="level2 nav-leaf"><a href="#テスト用モジュールを導入する">テスト用モジュールを導入する</a></li>
+    <li class="level2 nav-leaf"><a href="#依存関係を更新する">依存関係を更新する</a></li>
+    <li class="level2 nav-leaf"><a href="#parameter-sql-の参照を置き換える"><code>Parameter#sql</code> の参照を置き換える</a></li>
+    <li class="level2 nav-leaf"><a href="#sqlexception-を直接構築しているコードを修正する"><code>SQLException</code> を直接構築しているコードを修正する</a></li>
+    <li class="level2 nav-leaf"><a href="#error-parameter-に依存したテレメトリ設定を見直す"><code>error.parameter.*</code> に依存したテレメトリ設定を見直す</a></li>
+    <li class="level2 nav-leaf"><a href="#動的な識別子を含む-sql-を安全に組み立てる">動的な識別子を含む SQL を安全に組み立てる</a></li>
+    <li class="level2 nav-leaf"><a href="#sbt-2-のプロジェクトで-ldbc-plugin-を使う">sbt 2 のプロジェクトで <code>ldbc-plugin</code> を使う</a></li>
     <li class="level1 nav-leaf"><a href="#まとめ">まとめ</a></li>
   </ul>
 
@@ -194,7 +199,7 @@
 
   <main class="content">
 
-    <h1 id="マイグレーションノート-0-6-xから0-7-xへの移行" class="title">マイグレーションノート (0.6.xから0.7.xへの移行)</h1>
+    <h1 id="マイグレーションノート-0-7-xから0-8-xへの移行" class="title">マイグレーションノート (0.7.xから0.8.xへの移行)</h1>
     
     <h2 id="パッケージ" class="section"><a class="anchor-link left" href="#パッケージ"><i class="icofont-laika link">&#xef71;</i></a>パッケージ</h2>
     <p><strong>全てのパッケージ</strong></p>
@@ -214,259 +219,284 @@
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-sql_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-sql_3"><img src="https://img.shields.io/badge/javadoc-0.8.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-core</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-core_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-core_3"><img src="https://img.shields.io/badge/javadoc-0.8.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-connector</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-connector_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-connector_3"><img src="https://img.shields.io/badge/javadoc-0.8.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>jdbc-connector</code></td>
           <td>✅</td>
           <td>❌</td>
           <td>❌</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/jdbc-connector_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/jdbc-connector_3"><img src="https://img.shields.io/badge/javadoc-0.8.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-dsl</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3"><img src="https://img.shields.io/badge/javadoc-0.8.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-statement</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-statement_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-statement_3"><img src="https://img.shields.io/badge/javadoc-0.8.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-query-builder</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-query-builder_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-query-builder_3"><img src="https://img.shields.io/badge/javadoc-0.8.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-schema</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-schema_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-schema_3"><img src="https://img.shields.io/badge/javadoc-0.8.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-codegen</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-codegen_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-codegen_3"><img src="https://img.shields.io/badge/javadoc-0.8.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-plugin</code></td>
           <td>✅</td>
           <td>❌</td>
           <td>❌</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-plugin_2.12_1.0"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-plugin_2.12_1.0"><img src="https://img.shields.io/badge/javadoc-0.8.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-testkit</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-testkit_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-testkit_3"><img src="https://img.shields.io/badge/javadoc-0.8.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-testkit-munit</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-testkit-munit_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-testkit-munit_3"><img src="https://img.shields.io/badge/javadoc-0.8.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-zio-interop</code></td>
           <td>✅</td>
           <td>❌</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-zio-interop_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-zio-interop_3"><img src="https://img.shields.io/badge/javadoc-0.8.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-authentication-plugin</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-authentication-plugin_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-authentication-plugin_3"><img src="https://img.shields.io/badge/javadoc-0.8.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
         <tr>
           <td><code>ldbc-aws-authentication-plugin</code></td>
           <td>✅</td>
           <td>✅</td>
           <td>✅</td>
-          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-aws-authentication-plugin_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-aws-authentication-plugin_3"><img src="https://img.shields.io/badge/javadoc-0.8.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
         </tr>
       </tbody>
     </table>
     
     <h2 id="主要な変更点" class="section"><a class="anchor-link left" href="#主要な変更点"><i class="icofont-laika link">&#xef71;</i></a>🎯 主要な変更点</h2>
     
-    <h3 id="_1-テスト用モジュールの追加" class="section"><a class="anchor-link left" href="#_1-テスト用モジュールの追加"><i class="icofont-laika link">&#xef71;</i></a>1. テスト用モジュールの追加</h3>
-    <p>0.7.0 ではデータベーステストを簡単に書くための専用モジュールが2つ追加されました。</p>
+    <h3 id="_1-no_backslash_escapes-環境での-sql-インジェクションを修正" class="section"><a class="anchor-link left" href="#_1-no_backslash_escapes-環境での-sql-インジェクションを修正"><i class="icofont-laika link">&#xef71;</i></a>1. <code>NO_BACKSLASH_ESCAPES</code> 環境での SQL インジェクションを修正</h3>
+    <p><strong>これは 0.8.0 で最も重要な変更です。ldbc コネクターを使っている場合はアップグレードを推奨します。</strong></p>
+    <p>0.7.x 以前のクライアントサイド prepared statement（<code>useServerPrepStmts = false</code>、既定）は、文字列パラメータをバックスラッシュエスケープ（<code>&#39;</code> → <code>\&#39;</code>）でのみエスケープし、サーバーの <code>sql_mode</code> を参照していませんでした。</p>
+    <p>MySQL の <code>NO_BACKSLASH_ESCAPES</code> sql_mode が有効なセッションでは、バックスラッシュは通常の文字として扱われます。そのため <code>\&#39;</code> はクォートを無効化できず、<strong>文字列リテラルから脱出できてしまいます</strong>。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// 0.7.x 以前: sql_mode = &#39;NO_BACKSLASH_ESCAPES&#39; のセッションで
+</span><span class="identifier">ps</span><span>.</span><span class="identifier">setString</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;zzz&#39; OR 1=1 -- &quot;</span><span>)
+</span><span class="comment">// 生成される SQL: WHERE t.name = &#39;zzz\&#39; OR 1=1 -- &#39;
+//               → (name = &#39;zzz\&#39;) OR 1=1  ... 常に真になる</span></code></pre>
+    <p>0.8.0 では以下の 3 点で修正しています。</p>
+    <p><strong>1. エスケープ処理を <code>QueryRenderer</code> に一元化</strong></p>
+    <p>文字列パラメータを SQL リテラルへ変換する経路が <code>QueryRenderer</code> ただ一つになりました。<code>Parameter</code> 自身は文字列の SQL テキスト表現を公開しなくなったため、sql_mode を考慮しない経路が構造上存在しません。</p>
+    <p><strong>2. sql_mode に応じたエスケープ</strong></p>
+    <table>
+      <thead>
+        <tr>
+          <th>sql_mode</th>
+          <th>エスケープ方法</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>既定</td>
+          <td><code>&#39;</code> → <code>\&#39;</code>、<code>&quot;</code> → <code>\&quot;</code>、`<code>→</code>`、制御文字 → <code>\0</code> <code>\b</code> <code>\n</code> <code>\r</code> <code>\Z</code></td>
+        </tr>
+        <tr>
+          <td><code>NO_BACKSLASH_ESCAPES</code></td>
+          <td><code>&#39;</code> → <code>&#39;&#39;</code>（シングルクォートの二重化）</td>
+        </tr>
+      </tbody>
+    </table>
+    <p><code>NO_BACKSLASH_ESCAPES</code> 時にクォートを二重化するのは、直前のバックスラッシュに吸収されることがない唯一の方法だからです。</p>
+    <p><strong>3. sql_mode をセッション中に追従</strong></p>
+    <p><code>Protocol.noBackslashEscapes</code> が追加されました。初回ハンドシェイクの status flags で初期化され、以降は受信する <strong>すべての OK / EOF パケットの status flags で更新</strong>されます。そのため接続後に <code>SET SESSION sql_mode = ...</code> を実行した場合でも、その時点以降のクエリ生成に正しく反映されます。</p>
+    <p>ユーザーコードの変更は不要です。</p>
     
-    <h4 id="ldbc-testkit" class="section"><a class="anchor-link left" href="#ldbc-testkit"><i class="icofont-laika link">&#xef71;</i></a>ldbc-testkit</h4>
-    <p>フレームワークに依存しない <code>ldbc-testkit</code> モジュールが追加されました。テスト終了時に自動でロールバックする仕組みを提供します。</p>
-    <p><strong><code>RollbackHandler</code></strong>: テスト終了後に全変更を自動ロールバックする <code>Connector</code> を <code>Resource</code> として提供します。</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">testkit</span><span>.</span><span class="type-name">RollbackHandler</span><span>
-
-</span><span class="type-name">RollbackHandler</span><span>.</span><span class="identifier">resource</span><span>[</span><span class="type-name">F</span><span>](</span><span class="identifier">dataSource</span><span>).</span><span class="identifier">use</span><span> { </span><span class="identifier">connector</span><span> =&gt;
-  </span><span class="comment">// このブロック内の全変更はテスト終了後にロールバックされる
-</span><span>  </span><span class="identifier">connector</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
-    </span><span class="identifier">conn</span><span>.</span><span class="identifier">executeUpdate</span><span>(</span><span class="string-literal">&quot;INSERT INTO users VALUES (1, &#39;Alice&#39;)&quot;</span><span>)
-  }
-}</span></code></pre>
-    <p><strong><code>TestConnection</code></strong>: <code>commit()</code> と <code>setAutoCommit(true)</code> をno-opにインターセプトし、テスト中の意図しないコミットを防止します。</p>
-    
-    <h4 id="ldbc-testkit-munit" class="section"><a class="anchor-link left" href="#ldbc-testkit-munit"><i class="icofont-laika link">&#xef71;</i></a>ldbc-testkit-munit</h4>
-    <p>MUnit との統合テストサポートを提供する <code>ldbc-testkit-munit</code> モジュールが追加されました。</p>
-    <p><strong><code>LdbcSuite</code></strong>: <code>CatsEffectSuite</code> を継承した ldbc テスト用基底トレイトです。</p>
-    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">testkit</span><span>.</span><span class="identifier">munit</span><span>.</span><span class="type-name">LdbcSuite</span><span>
-
-</span><span class="keyword">class</span><span> </span><span class="type-name">MyDbTest</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">LdbcSuite</span><span> {
-
-  </span><span class="comment">// テスト終了後にロールバックされるテスト（DML操作向け）
-</span><span>  </span><span class="identifier">ephemeralTest</span><span>(</span><span class="string-literal">&quot;insert and query&quot;</span><span>) { </span><span class="identifier">conn</span><span> =&gt;
-    </span><span class="keyword">for</span><span>
-      </span><span class="identifier">_</span><span>     &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">executeUpdate</span><span>(</span><span class="string-literal">&quot;INSERT INTO users VALUES (1, &#39;Alice&#39;)&quot;</span><span>)
-      </span><span class="identifier">count</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">executeQuery</span><span>(</span><span class="string-literal">&quot;SELECT COUNT(*) FROM users&quot;</span><span>).</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">head</span><span>)
-    </span><span class="keyword">yield</span><span> </span><span class="identifier">assertCount</span><span>(</span><span class="identifier">count</span><span>, </span><span class="number-literal">1</span><span>)
-  }
-
-  </span><span class="comment">// 実際にコミットするテスト（DDL操作向け）
-</span><span>  </span><span class="identifier">persistentTest</span><span>(</span><span class="string-literal">&quot;create table&quot;</span><span>) { </span><span class="identifier">conn</span><span> =&gt;
-    </span><span class="identifier">conn</span><span>.</span><span class="identifier">executeUpdate</span><span>(</span><span class="string-literal">&quot;CREATE TABLE IF NOT EXISTS test_table (id INT)&quot;</span><span>)
-  }
-}</span></code></pre>
-    <p><strong>アサーションヘルパー一覧:</strong></p>
+    <h3 id="_2-jdbc-4-3-の-enquote-api-に対応" class="section"><a class="anchor-link left" href="#_2-jdbc-4-3-の-enquote-api-に対応"><i class="icofont-laika link">&#xef71;</i></a>2. JDBC 4.3 の enquote API に対応</h3>
+    <p>MySQL Connector/J 9.7.0（WL #17215）に追随し、<code>ldbc.sql.Statement</code> に 4 つのメソッドを追加しました。SQL 文を動的に組み立てる際に、値や識別子を安全にクォートするために使えます。</p>
     <table>
       <thead>
         <tr>
           <th>メソッド</th>
-          <th>説明</th>
+          <th>用途</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td><code>assertCount(result, expected)</code></td>
-          <td>行数を検証する</td>
+          <td><code>enquoteLiteral(value)</code></td>
+          <td>文字列をシングルクォートで囲んだリテラルにする</td>
         </tr>
         <tr>
-          <td><code>assertEmpty(result)</code></td>
-          <td>結果が空であることを検証する</td>
+          <td><code>enquoteIdentifier(identifier, alwaysQuote)</code></td>
+          <td>識別子をクォートする</td>
         </tr>
         <tr>
-          <td><code>assertRowsUnordered(result, expected)</code></td>
-          <td>順序を問わず行を検証する</td>
+          <td><code>enquoteNCharLiteral(value)</code></td>
+          <td><code>N</code> プレフィックス付きの各国文字リテラルにする</td>
         </tr>
         <tr>
-          <td><code>assertRowsOrdered(result, expected)</code></td>
-          <td>順序通りに行を検証する</td>
+          <td><code>isSimpleIdentifier(identifier)</code></td>
+          <td>クォートなしで使える単純な識別子か判定する</td>
         </tr>
       </tbody>
     </table>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">for</span><span>
+  </span><span class="identifier">stmt</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">createStatement</span><span>()
+  </span><span class="identifier">a</span><span>    &lt;- </span><span class="identifier">stmt</span><span>.</span><span class="identifier">enquoteLiteral</span><span>(</span><span class="string-literal">&quot;G&#39;Day&quot;</span><span>)            </span><span class="comment">// &#39;G&#39;&#39;Day&#39;
+</span><span>  </span><span class="identifier">b</span><span>    &lt;- </span><span class="identifier">stmt</span><span>.</span><span class="identifier">enquoteIdentifier</span><span>(</span><span class="string-literal">&quot;my table&quot;</span><span>, </span><span class="boolean-literal">false</span><span>) </span><span class="comment">// `my table`
+</span><span>  </span><span class="identifier">c</span><span>    &lt;- </span><span class="identifier">stmt</span><span>.</span><span class="identifier">enquoteIdentifier</span><span>(</span><span class="string-literal">&quot;user&quot;</span><span>, </span><span class="boolean-literal">true</span><span>)      </span><span class="comment">// `user`
+</span><span>  </span><span class="identifier">d</span><span>    &lt;- </span><span class="identifier">stmt</span><span>.</span><span class="identifier">enquoteNCharLiteral</span><span>(</span><span class="string-literal">&quot;Hello&quot;</span><span>)         </span><span class="comment">// N&#39;Hello&#39;
+</span><span>  </span><span class="identifier">e</span><span>    &lt;- </span><span class="identifier">stmt</span><span>.</span><span class="identifier">isSimpleIdentifier</span><span>(</span><span class="string-literal">&quot;user_name&quot;</span><span>)      </span><span class="comment">// true
+</span><span>  </span><span class="identifier">f</span><span>    &lt;- </span><span class="identifier">stmt</span><span>.</span><span class="identifier">isSimpleIdentifier</span><span>(</span><span class="string-literal">&quot;select&quot;</span><span>)         </span><span class="comment">// false（予約語）
+</span><span class="keyword">yield</span><span> ()</span></code></pre>
+    <p><code>isSimpleIdentifier</code> は MySQL の規則に従い、<code>[0-9a-zA-Z$_]</code> と <code>U+0080</code> 以上の拡張文字のみで構成され、数字のみではなく、64 文字以内で、予約語でないものを単純な識別子と判定します。</p>
+    <p><code>ANSI_QUOTES</code> sql_mode が有効な場合、識別子のクォート文字は <code>`</code> ではなく <code>&quot;</code> になります。</p>
+    <p>これらは <code>Statement</code> と <code>PreparedStatement</code> の両方で、ldbc コネクター・jdbc コネクターのどちらでも利用できます。</p>
+    <blockquote><strong>補足</strong>: 既存の <code>ident()</code> ヘルパーは <code>sql</code> 補間子の中で識別子を埋め込むためのもので、引き続き利用できます。<code>enquoteIdentifier</code> は JDBC 標準 API との互換性が必要な場面や、<code>alwaysQuote</code> の制御が必要な場面で使ってください。</blockquote>
     
-    <h3 id="_2-dsl-ヘルパー関数の追加" class="section"><a class="anchor-link left" href="#_2-dsl-ヘルパー関数の追加"><i class="icofont-laika link">&#xef71;</i></a>2. DSL ヘルパー関数の追加</h3>
-    <p><code>ldbc.dsl.syntax.HelperFunctionsSyntax</code> に以下の関数が追加されました。</p>
+    <h3 id="_3-ldbc-plugin-が-sbt-2-に対応" class="section"><a class="anchor-link left" href="#_3-ldbc-plugin-が-sbt-2-に対応"><i class="icofont-laika link">&#xef71;</i></a>3. <code>ldbc-plugin</code> が sbt 2 に対応</h3>
+    <p><code>ldbc-plugin</code> が sbt 1 と sbt 2 の両方向けにクロスビルドされるようになりました。sbt 1 用（Scala 2.12）と sbt 2 用（Scala 3）の成果物が同時に公開されます。</p>
+    <p>記述方法はどちらのバージョンでも同じで、sbt が適切な成果物を解決します。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// project/plugins.sbt — sbt 1.x / sbt 2.x のどちらでも同じ
+</span><span class="identifier">addSbtPlugin</span><span>(</span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> % </span><span class="string-literal">&quot;ldbc-plugin&quot;</span><span> % </span><span class="string-literal">&quot;0.8.0&quot;</span><span>)</span></code></pre>
     
-    <h4 id="ident-sql識別子の安全なエスケープ" class="section"><a class="anchor-link left" href="#ident-sql識別子の安全なエスケープ"><i class="icofont-laika link">&#xef71;</i></a><code>ident()</code> — SQL識別子の安全なエスケープ</h4>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">tableName</span><span> = </span><span class="string-literal">&quot;my_table&quot;</span><span>
-</span><span class="string-literal">sql&quot;SELECT * FROM </span><span class="substitution">${ident(tableName)}</span><span class="string-literal">&quot;</span><span>
-</span><span class="comment">// → SELECT * FROM `my_table`</span></code></pre>
-    <p>識別子をバッククォートで囲み、NUL文字を除去することで SQL インジェクションを防止します。</p>
+    <h3 id="_4-insert-のカラム順不一致バグを修正" class="section"><a class="anchor-link left" href="#_4-insert-のカラム順不一致バグを修正"><i class="icofont-laika link">&#xef71;</i></a>4. <code>insert</code> のカラム順不一致バグを修正</h3>
+    <p>タプルを渡す <code>insert</code> が、テーブルの <code>*</code> 射影で定義したエンティティマッピングを経由するようになりました。</p>
+    <p>0.7.x では、タプルをカラムのエンコーダーへ直接キャストして渡していたため、<strong>モデルのフィールド順とテーブルの <code>*</code> 射影のカラム順が異なる場合に、値が意図しないカラムへ挿入される</strong>可能性がありました。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">userTable</span><span>.</span><span class="identifier">insert</span><span>((</span><span class="number-literal">1L</span><span>, </span><span class="string-literal">&quot;Alice&quot;</span><span>, </span><span class="type-name">Some</span><span>(</span><span class="number-literal">20</span><span>)))</span></code></pre>
+    <p>上記のようなコードは、<code>*</code> 射影の順序が <code>id *: name *: age</code> でない場合、0.7.x と 0.8.0 で生成される SQL のパラメータ順が変わります。挿入結果が正しくなる方向の修正ですが、<strong>アップグレード後にテストで確認することを推奨します</strong>。</p>
     
-    <h4 id="when-条件付きsql断片" class="section"><a class="anchor-link left" href="#when-条件付きsql断片"><i class="icofont-laika link">&#xef71;</i></a><code>when()</code> — 条件付きSQL断片</h4>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">limit</span><span> = </span><span class="number-literal">10</span><span>
-</span><span class="string-literal">sql&quot;SELECT * FROM users&quot;</span><span> ++ </span><span class="identifier">when</span><span>(</span><span class="identifier">limit</span><span> &gt; </span><span class="number-literal">0</span><span>)(</span><span class="string-literal">sql&quot; LIMIT </span><span class="substitution">$limit</span><span class="string-literal">&quot;</span><span>)</span></code></pre>
-    
-    <h4 id="paginate-ページネーションヘルパー" class="section"><a class="anchor-link left" href="#paginate-ページネーションヘルパー"><i class="icofont-laika link">&#xef71;</i></a><code>paginate()</code> — ページネーションヘルパー</h4>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// オフセットあり
-</span><span class="string-literal">sql&quot;SELECT * FROM users &quot;</span><span> ++ </span><span class="identifier">paginate</span><span>(</span><span class="identifier">limit</span><span> = </span><span class="number-literal">20</span><span>, </span><span class="identifier">offset</span><span> = </span><span class="number-literal">40</span><span>)
-</span><span class="comment">// → SELECT * FROM users LIMIT ? OFFSET ?
-</span><span>
-</span><span class="comment">// オフセットなし
-</span><span class="string-literal">sql&quot;SELECT * FROM users &quot;</span><span> ++ </span><span class="identifier">paginate</span><span>(</span><span class="identifier">limit</span><span> = </span><span class="number-literal">20</span><span>)
-</span><span class="comment">// → SELECT * FROM users LIMIT ?</span></code></pre>
-    <p><code>limit</code> または <code>offset</code> が負の値の場合は <code>IllegalArgumentException</code> をスローします。</p>
-    
-    <h3 id="_3-opentelemetry-セマンティクス属性の型安全api移行" class="section"><a class="anchor-link left" href="#_3-opentelemetry-セマンティクス属性の型安全api移行"><i class="icofont-laika link">&#xef71;</i></a>3. OpenTelemetry セマンティクス属性の型安全API移行</h3>
-    <p><code>TelemetryAttribute</code> の文字列定数が <code>otel4s-semconv</code> ライブラリの型安全な API に移行されました。これは内部実装の変更のため、ユーザーコードへの直接的な影響はありません。</p>
-    <p><strong>移行前 (0.6.x) — 内部実装:</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="type-name">TelemetryAttribute</span><span>.</span><span class="identifier">dbSystemName</span><span>
-</span><span class="type-name">TelemetryAttribute</span><span>.</span><span class="identifier">serverAddress</span><span>(</span><span class="identifier">host</span><span>)
-</span><span class="type-name">TelemetryAttribute</span><span>.</span><span class="identifier">dbNamespace</span><span>(</span><span class="identifier">db</span><span>)
-</span><span class="type-name">TelemetryAttribute</span><span>.</span><span class="identifier">dbOperationName</span><span>(</span><span class="identifier">op</span><span>)
-</span><span class="type-name">TelemetryAttribute</span><span>.</span><span class="identifier">dbQueryText</span><span>(</span><span class="identifier">sql</span><span>)</span></code></pre>
-    <p><strong>移行後 (0.7.x) — 内部実装:</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="type-name">DbAttributes</span><span>.</span><span class="type-name">DbSystemName</span><span>(</span><span class="type-name">DbAttributes</span><span>.</span><span class="type-name">DbSystemNameValue</span><span>.</span><span class="type-name">Mysql</span><span>.</span><span class="identifier">value</span><span>)
-</span><span class="type-name">ServerAttributes</span><span>.</span><span class="type-name">ServerAddress</span><span>(</span><span class="identifier">host</span><span>)
-</span><span class="type-name">DbAttributes</span><span>.</span><span class="type-name">DbNamespace</span><span>(</span><span class="identifier">db</span><span>)
-</span><span class="type-name">DbAttributes</span><span>.</span><span class="type-name">DbOperationName</span><span>(</span><span class="identifier">op</span><span>)
-</span><span class="type-name">DbAttributes</span><span>.</span><span class="type-name">DbQueryText</span><span>(</span><span class="identifier">sql</span><span>)</span></code></pre>
-    <p><code>TelemetryAttribute</code> に引き続き残るのは MySQL 固有の属性（<code>DB_MYSQL_VERSION</code>、<code>DB_MYSQL_THREAD_ID</code>、<code>DB_MYSQL_AUTH_PLUGIN</code>）と <code>SqlOperation</code> オブジェクトのみです。</p>
-    
-    <h3 id="_4-scala-native-対応の強化" class="section"><a class="anchor-link left" href="#_4-scala-native-対応の強化"><i class="icofont-laika link">&#xef71;</i></a>4. Scala Native 対応の強化</h3>
-    <p><code>sbt-scala-native</code> を <code>0.4.17</code> から <code>0.5.10</code> へアップグレードしました。Scala Native 0.5 系ではマルチスレッドが正式にサポートされたことにより、ldbc の Scala Native 対応が大きく前進しています。</p>
-    
-    <h4 id="scala-native-0-5-でのマルチスレッドサポート" class="section"><a class="anchor-link left" href="#scala-native-0-5-でのマルチスレッドサポート"><i class="icofont-laika link">&#xef71;</i></a>Scala Native 0.5 でのマルチスレッドサポート</h4>
-    <p>Scala Native 0.4 系ではシングルスレッド実行のみサポートされていましたが、0.5 系では <strong>真のマルチスレッド実行</strong> が可能になりました。</p>
-    <p>Cats Effect 3.7.0 はこの変更に対応し、JVM 向けの <code>WorkStealingThreadPool</code> と <code>IORuntime</code> を Scala Native 0.5 向けにポートしています。これにより、以下の機能が Scala Native でも利用可能になりました。</p>
-    <ul>
-      <li><strong><code>WorkStealingThreadPool</code></strong>: JVM と同等のワークスチールスレッドプールが Native 上で動作</li>
-      <li><strong>epoll / kqueue サポート</strong>: Linux では <code>epoll</code>、macOS/BSD では <code>kqueue</code> を使ったノンブロッキング I/O ポーリング</li>
-      <li><strong><code>IORuntime</code> の完全対応</strong>: Fiber スケジューリングが JVM とほぼ同等に動作</li>
-    </ul>
-    
-    <h4 id="fiber-モデルと-threadlocal-の非互換性" class="section"><a class="anchor-link left" href="#fiber-モデルと-threadlocal-の非互換性"><i class="icofont-laika link">&#xef71;</i></a>Fiber モデルと ThreadLocal の非互換性</h4>
-    <p>Cats Effect の Fiber はスレッド間を自由に移動するため、Java の <code>ThreadLocal</code> をコネクションプールのキャッシュに使う HikariCP 流のアプローチは適用できません。ldbc のコネクションプール実装（<code>ConcurrentBag</code>）はこの制約を考慮し、<code>Ref[F, ...]</code> と <code>Queue[F, ...]</code> を使ったロックフリーな共有データ構造を採用しています。</p>
-    
-    <h3 id="_5-コードジェネレーターの-yaml-パーサ移行" class="section"><a class="anchor-link left" href="#_5-コードジェネレーターの-yaml-パーサ移行"><i class="icofont-laika link">&#xef71;</i></a>5. コードジェネレーターの YAML パーサ移行</h3>
-    <p>JS/Native 向けの YAML パーサを <code>circe-scala-yaml</code>（armanbilge）から <code>scala-yaml</code>（VirtusLab）に移行しました。コードジェネレーターを使用しているユーザーへの API 変更はありません。</p>
+    <h3 id="_5-依存ライブラリの更新" class="section"><a class="anchor-link left" href="#_5-依存ライブラリの更新"><i class="icofont-laika link">&#xef71;</i></a>5. 依存ライブラリの更新</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>ライブラリ</th>
+          <th>変更前 (0.7.x)</th>
+          <th>変更後 (0.8.0)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>MySQL Connector/J</td>
+          <td>9.6.0</td>
+          <td>9.7.0</td>
+        </tr>
+        <tr>
+          <td>twiddles-core</td>
+          <td>0.10.0</td>
+          <td>1.1.0</td>
+        </tr>
+      </tbody>
+    </table>
+    <p><code>ldbc.connector.data.Constants.DRIVER_VERSION</code> も <code>0.8.0</code> に更新されています。</p>
     
     <h2 id="破壊的変更" class="section"><a class="anchor-link left" href="#破壊的変更"><i class="icofont-laika link">&#xef71;</i></a>破壊的変更</h2>
     
-    <h3 id="java-11-のサポート廃止" class="section"><a class="anchor-link left" href="#java-11-のサポート廃止"><i class="icofont-laika link">&#xef71;</i></a>Java 11 のサポート廃止</h3>
-    <p>Java 11（corretto@11）のサポートが廃止されました。</p>
-    <p><strong>サポート対象の Java バージョン:</strong> 17、21、25</p>
+    <h3 id="parameter-が-sealed-trait-になり-sql-が削除されました" class="section"><a class="anchor-link left" href="#parameter-が-sealed-trait-になり-sql-が削除されました"><i class="icofont-laika link">&#xef71;</i></a><code>Parameter</code> が <code>sealed trait</code> になり <code>sql</code> が削除されました</h3>
+    <p><code>ldbc.connector.data.Parameter</code> は型ごとの case class を持つ <code>sealed trait</code> になり、<code>def sql: String</code> が削除されました。</p>
+    <p><strong>変更前 (0.7.x):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">trait</span><span> </span><span class="type-name">Parameter</span><span>:
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">columnDataType</span><span>: </span><span class="type-name">ColumnDataType</span><span>
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">sql</span><span>:            </span><span class="type-name">String</span><span>
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">encode</span><span>:         </span><span class="type-name">BitVector</span></code></pre>
+    <p><strong>変更後 (0.8.0):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">sealed</span><span> </span><span class="keyword">trait</span><span> </span><span class="type-name">Parameter</span><span>:
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">columnDataType</span><span>: </span><span class="type-name">ColumnDataType</span><span>
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">encode</span><span>:         </span><span class="type-name">BitVector</span></code></pre>
+    <p>これは主要な変更点 1（SQL インジェクション修正）の一部です。文字列の SQL リテラル化は sql_mode に依存するため、<code>Parameter</code> からその表現を取り除き、<code>QueryRenderer</code> を通る以外の方法をなくしています。</p>
+    <ul>
+      <li><strong>独自の <code>Parameter</code> 実装</strong>は <code>sealed</code> になったため定義できません。<code>Parameter.string(...)</code> などのファクトリメソッドを使ってください</li>
+      <li><strong><code>param.sql</code> を参照していたコード</strong>は <code>param.toString</code> に置き換えられます。ただし <code>toString</code> は表示・診断用の sql_mode 非依存なリテラルであり、<strong>実行する SQL の組み立てには使えません</strong></li>
+    </ul>
     
-    <h3 id="scala-バージョンの更新" class="section"><a class="anchor-link left" href="#scala-バージョンの更新"><i class="icofont-laika link">&#xef71;</i></a>Scala バージョンの更新</h3>
-    <p>クロスビルド対象が Scala 3.7.x から <strong>Scala 3.8.x</strong> に変更されました。</p>
+    <h3 id="sqlexception-から-params-を削除しました" class="section"><a class="anchor-link left" href="#sqlexception-から-params-を削除しました"><i class="icofont-laika link">&#xef71;</i></a><code>SQLException</code> から <code>params</code> を削除しました</h3>
+    <p><code>SQLException</code> とそのサブクラスから <code>params: SortedMap[Int, Parameter]</code> パラメータを削除しました。<code>ERRPacket.toException</code> のシグネチャも同様です。</p>
+    <p>これに伴い、以下が出力されなくなりました。</p>
+    <ul>
+      <li>OpenTelemetry 属性 <code>error.parameter.$i.type</code> / <code>error.parameter.$i.value</code></li>
+      <li>例外メッセージ内の &quot;and the arguments were&quot; セクション</li>
+    </ul>
+    <p>バインドした値が例外メッセージやテレメトリ経由で漏れる経路を塞ぐための変更です。<strong>これらの属性を使ってダッシュボードやアラートを構成している場合は影響を受けます。</strong></p>
+    
+    <h3 id="statement-に-4-つの抽象メソッドが追加されました" class="section"><a class="anchor-link left" href="#statement-に-4-つの抽象メソッドが追加されました"><i class="icofont-laika link">&#xef71;</i></a><code>Statement</code> に 4 つの抽象メソッドが追加されました</h3>
+    <p>主要な変更点 2 の 4 メソッドは <code>ldbc.sql.Statement</code> の抽象メソッドとして追加されています。ldbc が提供するコネクターを使っている限り影響はありませんが、<strong><code>Statement</code> や <code>PreparedStatement</code> を独自に実装している場合はコンパイルエラーになります。</strong></p>
+    
+    <h3 id="twiddles-core-が-1-1-0-になりました" class="section"><a class="anchor-link left" href="#twiddles-core-が-1-1-0-になりました"><i class="icofont-laika link">&#xef71;</i></a>twiddles-core が 1.1.0 になりました</h3>
+    <p><code>ldbc-dsl</code> と <code>ldbc-connector</code> が依存する twiddles-core が 0.10.0 から 1.1.0 に上がりました。twiddles を直接利用しているプロジェクトはバージョンを揃えてください。</p>
+    
+    <h3 id="変更がないもの" class="section"><a class="anchor-link left" href="#変更がないもの"><i class="icofont-laika link">&#xef71;</i></a>変更がないもの</h3>
+    <p>参考までに、0.7.x から変わっていない要件を挙げます。</p>
     <table>
       <thead>
         <tr>
           <th></th>
-          <th>変更前 (0.6.x)</th>
-          <th>変更後 (0.7.x)</th>
+          <th>0.7.x</th>
+          <th>0.8.0</th>
         </tr>
       </thead>
       <tbody>
         <tr>
+          <td>Java バージョン</td>
+          <td>17、21、25</td>
+          <td>変更なし</td>
+        </tr>
+        <tr>
           <td>Scala バージョン</td>
-          <td>3.7.4</td>
-          <td>3.8.3</td>
+          <td>3.3.x / 3.8.x</td>
+          <td>変更なし</td>
         </tr>
       </tbody>
     </table>
     
     <h2 id="非推奨api" class="section"><a class="anchor-link left" href="#非推奨api"><i class="icofont-laika link">&#xef71;</i></a>非推奨API</h2>
-    <p>以下の API が 0.7.0 で非推奨になりました。将来のバージョンで削除される予定です。</p>
+    <p>0.7.0 で非推奨になった以下の API は 0.8.0 でも引き続き利用できますが、将来のバージョンで削除される予定です。</p>
     <table>
       <thead>
         <tr>
@@ -493,64 +523,63 @@
         </tr>
       </tbody>
     </table>
+    <p>移行方法は <a href="https://takapi327.github.io/ldbc/0.7/ja/migration-notes.html">0.7.x のマイグレーションノート</a> を参照してください。</p>
     
     <h2 id="移行ガイド" class="section"><a class="anchor-link left" href="#移行ガイド"><i class="icofont-laika link">&#xef71;</i></a>移行ガイド</h2>
     
-    <h3 id="sc-を-ident-に置き換える" class="section"><a class="anchor-link left" href="#sc-を-ident-に置き換える"><i class="icofont-laika link">&#xef71;</i></a><code>sc()</code> を <code>ident()</code> に置き換える</h3>
-    <p><code>sc()</code> 関数は非推奨になりました。<code>ident()</code> に移行してください。</p>
-    <p><strong>移行前 (0.6.x):</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="string-literal">sql&quot;SELECT * FROM </span><span class="substitution">${sc(tableName)}</span><span class="string-literal">&quot;</span></code></pre>
-    <p><strong>移行後 (0.7.x):</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="string-literal">sql&quot;SELECT * FROM </span><span class="substitution">${ident(tableName)}</span><span class="string-literal">&quot;</span><span>
-</span><span class="comment">// → SELECT * FROM `tableName`</span></code></pre>
-    <p><code>ident()</code> は識別子をバッククォートで囲むため、テーブル名やカラム名の SQL インジェクション対策として安全です。</p>
+    <h3 id="依存関係を更新する" class="section"><a class="anchor-link left" href="#依存関係を更新する"><i class="icofont-laika link">&#xef71;</i></a>依存関係を更新する</h3>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-dsl&quot;</span><span>       % </span><span class="string-literal">&quot;0.8.0&quot;</span><span>
+</span><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-connector&quot;</span><span> % </span><span class="string-literal">&quot;0.8.0&quot;</span></code></pre>
+    <p>クロスプラットフォーム構成では <code>%%%</code> を使ってください。</p>
     
-    <h3 id="connection-fromsocketgroup-を-fromnetwork-に置き換える" class="section"><a class="anchor-link left" href="#connection-fromsocketgroup-を-fromnetwork-に置き換える"><i class="icofont-laika link">&#xef71;</i></a><code>Connection.fromSocketGroup</code> を <code>fromNetwork</code> に置き換える</h3>
-    <p><strong>移行前 (0.6.x):</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="type-name">Connection</span><span>.</span><span class="identifier">fromSocketGroup</span><span>(</span><span class="identifier">socketGroup</span><span>, </span><span class="identifier">host</span><span>, </span><span class="identifier">port</span><span>, </span><span class="identifier">user</span><span>, </span><span class="identifier">password</span><span>, </span><span class="identifier">database</span><span>)</span></code></pre>
-    <p><strong>移行後 (0.7.x):</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="type-name">Connection</span><span>.</span><span class="identifier">fromNetwork</span><span>(</span><span class="identifier">network</span><span>, </span><span class="identifier">host</span><span>, </span><span class="identifier">port</span><span>, </span><span class="identifier">user</span><span>, </span><span class="identifier">password</span><span>, </span><span class="identifier">database</span><span>)</span></code></pre>
+    <h3 id="parameter-sql-の参照を置き換える" class="section"><a class="anchor-link left" href="#parameter-sql-の参照を置き換える"><i class="icofont-laika link">&#xef71;</i></a><code>Parameter#sql</code> の参照を置き換える</h3>
+    <p><strong>移行前 (0.7.x):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">literal</span><span>: </span><span class="type-name">String</span><span> = </span><span class="identifier">parameter</span><span>.</span><span class="identifier">sql</span></code></pre>
+    <p><strong>移行後 (0.8.0):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">display</span><span>: </span><span class="type-name">String</span><span> = </span><span class="identifier">parameter</span><span>.</span><span class="identifier">toString</span></code></pre>
+    <p><code>toString</code> は表示・診断用です。実行する SQL を組み立てる目的では使わないでください。SQL を動的に組み立てる場合は、プレースホルダと <code>setXxx</code> を使うか、enquote API を使ってください。</p>
     
-    <h3 id="ssl-fromkeystorefile-のパス型を変更する" class="section"><a class="anchor-link left" href="#ssl-fromkeystorefile-のパス型を変更する"><i class="icofont-laika link">&#xef71;</i></a><code>SSL.fromKeyStoreFile</code> のパス型を変更する</h3>
-    <p><strong>移行前 (0.6.x):</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">nio</span><span>.</span><span class="identifier">file</span><span>.</span><span class="type-name">Paths</span><span>
-
-</span><span class="type-name">SSL</span><span>.</span><span class="identifier">fromKeyStoreFile</span><span>(</span><span class="type-name">Paths</span><span>.</span><span class="identifier">get</span><span>(</span><span class="string-literal">&quot;/path/to/keystore&quot;</span><span>), </span><span class="identifier">password</span><span>, </span><span class="identifier">keyPassword</span><span>)</span></code></pre>
-    <p><strong>移行後 (0.7.x):</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">fs2</span><span>.</span><span class="identifier">io</span><span>.</span><span class="identifier">file</span><span>.</span><span class="type-name">Path</span><span>
-
-</span><span class="type-name">SSL</span><span>.</span><span class="identifier">fromKeyStoreFile</span><span>(</span><span class="type-name">Path</span><span>(</span><span class="string-literal">&quot;/path/to/keystore&quot;</span><span>), </span><span class="identifier">password</span><span>, </span><span class="identifier">keyPassword</span><span>)</span></code></pre>
+    <h3 id="sqlexception-を直接構築しているコードを修正する" class="section"><a class="anchor-link left" href="#sqlexception-を直接構築しているコードを修正する"><i class="icofont-laika link">&#xef71;</i></a><code>SQLException</code> を直接構築しているコードを修正する</h3>
+    <p><strong>移行前 (0.7.x):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="type-name">SQLException</span><span>(
+  </span><span class="identifier">message</span><span> = </span><span class="string-literal">&quot;...&quot;</span><span>,
+  </span><span class="identifier">sql</span><span>     = </span><span class="type-name">Some</span><span>(</span><span class="identifier">sql</span><span>),
+  </span><span class="identifier">params</span><span>  = </span><span class="identifier">params</span><span>
+)</span></code></pre>
+    <p><strong>移行後 (0.8.0):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="type-name">SQLException</span><span>(
+  </span><span class="identifier">message</span><span> = </span><span class="string-literal">&quot;...&quot;</span><span>,
+  </span><span class="identifier">sql</span><span>     = </span><span class="type-name">Some</span><span>(</span><span class="identifier">sql</span><span>)
+)</span></code></pre>
     
-    <h3 id="テスト用モジュールを導入する" class="section"><a class="anchor-link left" href="#テスト用モジュールを導入する"><i class="icofont-laika link">&#xef71;</i></a>テスト用モジュールを導入する</h3>
-    <p>既存のロールバック処理を <code>ldbc-testkit</code> に移行できます。</p>
-    <p><strong><code>build.sbt</code> に依存関係を追加:</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// フレームワーク非依存
-</span><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-testkit&quot;</span><span> % </span><span class="string-literal">&quot;0.7.1&quot;</span><span> % </span><span class="type-name">Test</span><span>
-
-</span><span class="comment">// MUnit 統合
-</span><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-testkit-munit&quot;</span><span> % </span><span class="string-literal">&quot;0.7.1&quot;</span><span> % </span><span class="type-name">Test</span></code></pre>
-    <p><strong>移行後 (0.7.x):</strong></p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">testkit</span><span>.</span><span class="identifier">munit</span><span>.</span><span class="type-name">LdbcSuite</span><span>
-
-</span><span class="keyword">class</span><span> </span><span class="type-name">UserRepositoryTest</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">LdbcSuite</span><span> {
-
-  </span><span class="identifier">ephemeralTest</span><span>(</span><span class="string-literal">&quot;ユーザーを作成できる&quot;</span><span>) { </span><span class="identifier">conn</span><span> =&gt;
-    </span><span class="keyword">for</span><span>
-      </span><span class="identifier">_</span><span>     &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">executeUpdate</span><span>(</span><span class="string-literal">&quot;INSERT INTO users (name) VALUES (&#39;Alice&#39;)&quot;</span><span>)
-      </span><span class="identifier">count</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">executeQuery</span><span>(</span><span class="string-literal">&quot;SELECT COUNT(*) FROM users&quot;</span><span>).</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">head</span><span>)
-    </span><span class="keyword">yield</span><span> </span><span class="identifier">assertCount</span><span>(</span><span class="identifier">count</span><span>, </span><span class="number-literal">1</span><span>)
-  }
-}</span></code></pre>
+    <h3 id="error-parameter-に依存したテレメトリ設定を見直す" class="section"><a class="anchor-link left" href="#error-parameter-に依存したテレメトリ設定を見直す"><i class="icofont-laika link">&#xef71;</i></a><code>error.parameter.*</code> に依存したテレメトリ設定を見直す</h3>
+    <p>バインド値の属性は出力されなくなりました。クエリの特定には <code>db.query.text</code> 属性を利用してください。クエリテキストのサニタイズ方法は <a href="reference/Telemetry.html">テレメトリ</a> を参照してください。</p>
+    
+    <h3 id="動的な識別子を含む-sql-を安全に組み立てる" class="section"><a class="anchor-link left" href="#動的な識別子を含む-sql-を安全に組み立てる"><i class="icofont-laika link">&#xef71;</i></a>動的な識別子を含む SQL を安全に組み立てる</h3>
+    <p><strong><code>sql</code> 補間子の中で使う場合（従来どおり）:</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="string-literal">sql&quot;SELECT * FROM </span><span class="substitution">${ident(tableName)}</span><span class="string-literal">&quot;</span></code></pre>
+    <p><strong>JDBC 標準 API 互換の方法が必要な場合:</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">for</span><span>
+  </span><span class="identifier">stmt</span><span>      &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">createStatement</span><span>()
+  </span><span class="identifier">isSimple</span><span>  &lt;- </span><span class="identifier">stmt</span><span>.</span><span class="identifier">isSimpleIdentifier</span><span>(</span><span class="identifier">tableName</span><span>)
+  </span><span class="identifier">quoted</span><span>    &lt;- </span><span class="identifier">stmt</span><span>.</span><span class="identifier">enquoteIdentifier</span><span>(</span><span class="identifier">tableName</span><span>, </span><span class="identifier">alwaysQuote</span><span> = </span><span class="boolean-literal">true</span><span>)
+  </span><span class="identifier">resultSet</span><span> &lt;- </span><span class="identifier">stmt</span><span>.</span><span class="identifier">executeQuery</span><span>(</span><span class="string-literal">s&quot;SELECT * FROM </span><span class="substitution">$quoted</span><span class="string-literal">&quot;</span><span>)
+</span><span class="keyword">yield</span><span> </span><span class="identifier">resultSet</span></code></pre>
+    
+    <h3 id="sbt-2-のプロジェクトで-ldbc-plugin-を使う" class="section"><a class="anchor-link left" href="#sbt-2-のプロジェクトで-ldbc-plugin-を使う"><i class="icofont-laika link">&#xef71;</i></a>sbt 2 のプロジェクトで <code>ldbc-plugin</code> を使う</h3>
+    <p><code>project/plugins.sbt</code> の記述は sbt 1 と同じです。sbt のバージョンに応じた成果物が自動的に解決されます。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">addSbtPlugin</span><span>(</span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> % </span><span class="string-literal">&quot;ldbc-plugin&quot;</span><span> % </span><span class="string-literal">&quot;0.8.0&quot;</span><span>)</span></code></pre>
     
     <h2 id="まとめ" class="section"><a class="anchor-link left" href="#まとめ"><i class="icofont-laika link">&#xef71;</i></a>まとめ</h2>
-    <p>0.7.x への移行により、以下のメリットが得られます：</p>
+    <p>0.8.x への移行により、以下のメリットが得られます：</p>
     <ol class="arabic">
-      <li><strong>テスト専用モジュール</strong>: <code>ldbc-testkit</code> と <code>ldbc-testkit-munit</code> により、自動ロールバックや MUnit 統合テストが簡単に書けるようになる</li>
-      <li><strong>DSL ヘルパーの充実</strong>: <code>ident()</code>、<code>when()</code>、<code>paginate()</code> により安全で読みやすい SQL 構築が可能</li>
-      <li><strong>OpenTelemetry の型安全化</strong>: セマンティクス属性ライブラリへの移行により、内部実装の堅牢性が向上</li>
-      <li><strong>Scala Native 対応の強化</strong>: <code>sbt-scala-native 0.5.x</code> 系へのアップグレードにより、クロスプラットフォームサポートが改善</li>
+      <li><strong>セキュリティの向上</strong>: <code>NO_BACKSLASH_ESCAPES</code> sql_mode 下でのクライアントサイド prepared statement の SQL インジェクションが修正され、エスケープ処理が一箇所に集約された</li>
+      <li><strong>JDBC 標準への追随</strong>: MySQL Connector/J 9.7.0 に合わせて enquote 系 API に対応</li>
+      <li><strong>情報漏洩経路の縮小</strong>: 例外メッセージとテレメトリからバインド値が出力されなくなった</li>
+      <li><strong><code>insert</code> の正確性</strong>: モデルのフィールド順とカラム順が異なるテーブルでの値ずれが修正された</li>
+      <li><strong>sbt 2 対応</strong>: <code>ldbc-plugin</code> が sbt 1 / sbt 2 の両方で利用可能に</li>
     </ol>
-    <p>ユーザーコードへの影響は主に非推奨APIの移行（<code>sc()</code> → <code>ident()</code>、<code>fromSocketGroup</code> → <code>fromNetwork</code>）と Java/Scala バージョン要件の更新です。</p>
+    <p>ユーザーコードへの影響は、<code>Parameter#sql</code> と <code>SQLException</code> の <code>params</code> を直接利用していた場合に限られます。多くのプロジェクトでは依存関係のバージョン更新のみで移行できます。</p>
 
     
 <hr class="footer-rule"/>
