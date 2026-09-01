@@ -194,7 +194,7 @@ object Main extends IOApp.Simple:
 ```yaml
 services:
   database:
-    image: mysql:9.6.0
+    image: mysql:@MYSQL_VERSION@
     container_name: ldbc-otel-example
     ports:
       - 13306:3306

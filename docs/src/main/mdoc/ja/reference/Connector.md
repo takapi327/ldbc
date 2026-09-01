@@ -196,6 +196,35 @@ datasource.getConnection.use { conn =>
 }
 ```
 
+#### 値と識別子のクォート
+
+SQL文を文字列として組み立てる場合に、値や識別子を安全にクォートするためのメソッドです。JDBC 4.3で標準化されたAPIに対応しており、`Statement`と`PreparedStatement`の両方で利用できます。
+
+| メソッド | 用途 |
+|-----------------------------------------------|-----------------------------------|
+| `enquoteLiteral(value)` | `文字列をシングルクォートで囲んだリテラルにする` |
+| `enquoteIdentifier(identifier, alwaysQuote)`  | `識別子をクォートする` |
+| `enquoteNCharLiteral(value)` | `Nプレフィックス付きの各国文字リテラルにする` |
+| `isSimpleIdentifier(identifier)` | `クォートなしで使える単純な識別子か判定する` |
+
+```scala 3
+datasource.getConnection.use { conn =>
+  for
+    statement <- conn.createStatement()
+    literal   <- statement.enquoteLiteral("G'Day")              // 'G''Day'
+    quoted    <- statement.enquoteIdentifier("my table", false) // `my table`
+    nchar     <- statement.enquoteNCharLiteral("Hello")         // N'Hello'
+    isSimple  <- statement.isSimpleIdentifier("user_name")      // true
+  yield
+}
+```
+
+`isSimpleIdentifier`はMySQLの規則に従い、`[0-9a-zA-Z$_]`と`U+0080`以上の拡張文字のみで構成され、数字のみではなく、64文字以内で、予約語でないものを単純な識別子と判定します。
+
+`ANSI_QUOTES` sql_modeが有効な場合、識別子のクォート文字はバッククォートではなく`"`になります。
+
+※ これらのメソッドはSQL文を文字列として組み立てる場合の補助です。動的な値を扱う場合は、`PreparedStatement`のパラメーターを使用してください。
+
 ### Client/Server PreparedStatement
 
 ldbcでは`PreparedStatement`を`Client PreparedStatement`と`Server PreparedStatement`に分けて提供しています。

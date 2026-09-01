@@ -16,10 +16,12 @@ object LaikaSettings {
 
   object versions {
 
+    private val archive: Boolean = sys.env.get("LDBC_DOCS_ARCHIVE").contains("true")
+
     private def version(version: String, label: String = "EOL"): Version = {
       val (pathSegment, canonical) = version match {
-        case LdbcVersions.latest => ("latest", true)
-        case _                   => (version, false)
+        case LdbcVersions.latest if !archive => ("latest", true)
+        case _                               => (version, false)
       }
 
       val v =

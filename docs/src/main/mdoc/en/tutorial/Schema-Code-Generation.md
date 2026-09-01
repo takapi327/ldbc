@@ -19,6 +19,8 @@ You need to set up the following dependency in your project. Add it to `project/
 addSbtPlugin("@ORGANIZATION@" % "ldbc-plugin" % "@VERSION@")
 ```
 
+`ldbc-plugin` supports both sbt 1 and sbt 2. The declaration is the same for either version; sbt automatically resolves the artifact matching the version in use (Scala 2.12 for sbt 1, Scala 3 for sbt 2).
+
 ### Enabling the Plugin
 
 Enable the plugin for your project in the `build.sbt` file.
