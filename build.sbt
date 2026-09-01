@@ -64,7 +64,6 @@ lazy val effect = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .jsSettings(
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
   )
-  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
 
 lazy val telemetry = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
@@ -78,7 +77,6 @@ lazy val telemetry = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .jsSettings(
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
   )
-  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
   .dependsOn(sql, effect)
 
 lazy val otel4s = crossProject(JVMPlatform, JSPlatform, NativePlatform)
@@ -99,7 +97,6 @@ lazy val otel4s = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .jsSettings(
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
   )
-  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
   .dependsOn(telemetry)
 
 lazy val zioTelemetry = crossProject(JVMPlatform)
@@ -133,8 +130,7 @@ lazy val net = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     libraryDependencies += "org.scalameta" %%% "munit" % "1.2.4" % Test
   )
-  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
-  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .nativeSettings(Brew.nativeSettings)
   .dependsOn(effect, fx % "test->compile;test->test")
 
 lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
@@ -300,8 +296,7 @@ lazy val mysql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .jsSettings(
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
   )
-  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
-  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .nativeSettings(Brew.nativeSettings)
   .dependsOn(net, telemetry, authenticationPlugin, core, fx % "test->compile;test->test")
 
 lazy val pool = crossProject(JVMPlatform, JSPlatform, NativePlatform)
