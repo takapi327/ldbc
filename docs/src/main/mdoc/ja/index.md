@@ -51,7 +51,8 @@ libraryDependencies ++= Seq(
   
   // 使用するコネクタを選択
   "@ORGANIZATION@" %% "jdbc-connector" % "@VERSION@", // Javaコネクタ (対応プラットフォーム: JVM)
-  "@ORGANIZATION@" %% "ldbc-connector" % "@VERSION@", // Scalaコネクタ (対応プラットフォーム: JVM, JS, Native)
+  "@ORGANIZATION@" %% "ldbc-mysql"       % "@VERSION@", // MySQL ドライバ (対応プラットフォーム: JVM, JS, Native)
+  "@ORGANIZATION@" %% "ldbc-cats-effect" % "@VERSION@", // Cats Effect ブリッジ
 
   // そして、必要に応じてこれらを加える
   "@ORGANIZATION@" %% "ldbc-query-builder" % "@VERSION@", // 型安全なクエリ構築

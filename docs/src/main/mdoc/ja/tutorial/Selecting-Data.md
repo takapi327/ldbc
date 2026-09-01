@@ -12,7 +12,9 @@ ldbcの最も強力な機能の1つは、データベースの結果をScalaの�
 ※ このチュートリアルでは、データベース操作を実行するために`Connector`を使用します。以下のように作成します：
 
 ```scala
-import ldbc.connector.*
+import ldbc.mysql.MySQLDataSource
+import ldbc.net.SSL
+import ldbc.catseffect.*
 
 // Connectorを作成
 val connector = Connector.fromDataSource(datasource)
