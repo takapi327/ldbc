@@ -36,11 +36,11 @@ class StatementBatchTest extends FTestPlatform:
         connection.use { conn =>
           for
             statement <- conn.createStatement()
-            _         <- statement.executeUpdate("CREATE TABLE IF NOT EXISTS `batch_test` (`c1` BIGINT, `c2` INT)")
-            _         <- statement.executeUpdate("TRUNCATE TABLE `batch_test`")
-            _         <- statement.addBatch("INSERT INTO `batch_test` VALUES (1, 1)")
-            _         <- statement.addBatch("INSERT INTO `batch_test` VALUES (2, 2)")
-            _         <- statement.addBatch("INSERT INTO `batch_test` VALUES (3, 3)")
+            _         <- statement.executeUpdate("CREATE TABLE IF NOT EXISTS `mysql_batch_test` (`c1` BIGINT, `c2` INT)")
+            _         <- statement.executeUpdate("TRUNCATE TABLE `mysql_batch_test`")
+            _         <- statement.addBatch("INSERT INTO `mysql_batch_test` VALUES (1, 1)")
+            _         <- statement.addBatch("INSERT INTO `mysql_batch_test` VALUES (2, 2)")
+            _         <- statement.addBatch("INSERT INTO `mysql_batch_test` VALUES (3, 3)")
             _         <- statement.executeBatch()
           yield ()
         }
@@ -48,7 +48,7 @@ class StatementBatchTest extends FTestPlatform:
         connection.use { conn =>
           for
             statement <- conn.createStatement()
-            _         <- statement.executeUpdate("DROP TABLE IF EXISTS `batch_test`")
+            _         <- statement.executeUpdate("DROP TABLE IF EXISTS `mysql_batch_test`")
           yield ()
         }
       )
@@ -60,9 +60,9 @@ class StatementBatchTest extends FTestPlatform:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          _         <- statement.addBatch("CREATE TABLE `batch_test_2` (`c1` INT)")
-          _         <- statement.addBatch("INSERT INTO `batch_test_2` VALUES (1)")
-          _         <- statement.addBatch("DROP TABLE `batch_test_2`")
+          _         <- statement.addBatch("CREATE TABLE `mysql_batch_test_2` (`c1` INT)")
+          _         <- statement.addBatch("INSERT INTO `mysql_batch_test_2` VALUES (1)")
+          _         <- statement.addBatch("DROP TABLE `mysql_batch_test_2`")
           result    <- statement.executeBatch()
         yield result.toList
       },
@@ -75,11 +75,11 @@ class StatementBatchTest extends FTestPlatform:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          _         <- statement.addBatch("CREATE TABLE `batch_test_3` (`c1` INT)")
-          _         <- statement.addBatch("INSERT INTO `batch_test_3` VALUES (1)")
+          _         <- statement.addBatch("CREATE TABLE `mysql_batch_test_3` (`c1` INT)")
+          _         <- statement.addBatch("INSERT INTO `mysql_batch_test_3` VALUES (1)")
           _         <- statement.clearBatch()
-          _         <- statement.addBatch("CREATE TABLE `batch_test_3` (`c1` INT)")
-          _         <- statement.addBatch("DROP TABLE `batch_test_3`")
+          _         <- statement.addBatch("CREATE TABLE `mysql_batch_test_3` (`c1` INT)")
+          _         <- statement.addBatch("DROP TABLE `mysql_batch_test_3`")
           result    <- statement.executeBatch()
         yield result.toList
       },
@@ -104,9 +104,9 @@ class StatementBatchTest extends FTestPlatform:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          _         <- statement.addBatch("INSERT INTO `batch_test` VALUES (1, 1)")
-          _         <- statement.addBatch("INSERT INTO `batch_test` VALUES (2, 2)")
-          _         <- statement.addBatch("INSERT INTO `batch_test` VALUES (3, 'failed')")
+          _         <- statement.addBatch("INSERT INTO `mysql_batch_test` VALUES (1, 1)")
+          _         <- statement.addBatch("INSERT INTO `mysql_batch_test` VALUES (2, 2)")
+          _         <- statement.addBatch("INSERT INTO `mysql_batch_test` VALUES (3, 'failed')")
           result    <- statement.executeBatch()
         yield result.toList
       }
@@ -119,7 +119,7 @@ class StatementBatchTest extends FTestPlatform:
     assertFx(
       connection.use { conn =>
         for
-          preparedStatement <- conn.clientPreparedStatement("INSERT INTO `batch_test` VALUES (?, ?)")
+          preparedStatement <- conn.clientPreparedStatement("INSERT INTO `mysql_batch_test` VALUES (?, ?)")
           _      <- preparedStatement.setInt(1, 1) *> preparedStatement.setInt(2, 1) *> preparedStatement.addBatch()
           _      <- preparedStatement.setInt(1, 2) *> preparedStatement.setInt(2, 2) *> preparedStatement.addBatch()
           _      <- preparedStatement.setInt(1, 3) *> preparedStatement.setInt(2, 3) *> preparedStatement.addBatch()
@@ -134,7 +134,7 @@ class StatementBatchTest extends FTestPlatform:
     interceptFx[IllegalArgumentException](
       connection.use { conn =>
         for
-          preparedStatement <- conn.clientPreparedStatement("INSERT INTO `batch_test2` VALUES (?)")
+          preparedStatement <- conn.clientPreparedStatement("INSERT INTO `mysql_batch_test2` VALUES (?)")
           _      <- preparedStatement.setInt(1, 1) *> preparedStatement.setInt(2, 1) *> preparedStatement.addBatch()
           _      <- preparedStatement.setInt(1, 2) *> preparedStatement.setInt(2, 2) *> preparedStatement.addBatch()
           _      <- preparedStatement.setInt(1, 3) *> preparedStatement.setInt(2, 3) *> preparedStatement.addBatch()
@@ -150,7 +150,7 @@ class StatementBatchTest extends FTestPlatform:
     assertFx(
       connection.use { conn =>
         for
-          preparedStatement <- conn.serverPreparedStatement("INSERT INTO `batch_test` VALUES (?, ?)")
+          preparedStatement <- conn.serverPreparedStatement("INSERT INTO `mysql_batch_test` VALUES (?, ?)")
           _      <- preparedStatement.setInt(1, 1) *> preparedStatement.setInt(2, 1) *> preparedStatement.addBatch()
           _      <- preparedStatement.setInt(1, 2) *> preparedStatement.setInt(2, 2) *> preparedStatement.addBatch()
           _      <- preparedStatement.setInt(1, 3) *> preparedStatement.setInt(2, 3) *> preparedStatement.addBatch()
@@ -167,7 +167,7 @@ class StatementBatchTest extends FTestPlatform:
     assertFx(
       connection.use { conn =>
         for
-          preparedStatement <- conn.clientPreparedStatement("INSERT INTO `batch_test` VALUES (?, ?), (?, ?)")
+          preparedStatement <- conn.clientPreparedStatement("INSERT INTO `mysql_batch_test` VALUES (?, ?), (?, ?)")
           _ <- preparedStatement.setInt(1, 4) *> preparedStatement.setInt(2, 4) *> preparedStatement.setInt(
                  3,
                  5
@@ -193,7 +193,7 @@ class StatementBatchTest extends FTestPlatform:
     assertFx(
       connection.use { conn =>
         for
-          preparedStatement <- conn.clientPreparedStatement("INSERT INTO `batch_test` VALUES (?, ?)")
+          preparedStatement <- conn.clientPreparedStatement("INSERT INTO `mysql_batch_test` VALUES (?, ?)")
           _      <- preparedStatement.setInt(1, 4) *> preparedStatement.setInt(2, 4) *> preparedStatement.addBatch()
           _      <- preparedStatement.setInt(1, 5) *> preparedStatement.setInt(2, 6) *> preparedStatement.addBatch()
           _      <- preparedStatement.setInt(1, 6) *> preparedStatement.setInt(2, 7) *> preparedStatement.addBatch()
@@ -210,7 +210,7 @@ class StatementBatchTest extends FTestPlatform:
     assertFx(
       connection.use { conn =>
         for
-          preparedStatement <- conn.clientPreparedStatement("UPDATE `batch_test` SET `c2` = ? WHERE `c1` = ?")
+          preparedStatement <- conn.clientPreparedStatement("UPDATE `mysql_batch_test` SET `c2` = ? WHERE `c1` = ?")
           _      <- preparedStatement.setInt(1, 1) *> preparedStatement.setInt(2, 1) *> preparedStatement.addBatch()
           _      <- preparedStatement.setInt(1, 2) *> preparedStatement.setInt(2, 2) *> preparedStatement.addBatch()
           _      <- preparedStatement.setInt(1, 3) *> preparedStatement.setInt(2, 3) *> preparedStatement.addBatch()
@@ -227,7 +227,7 @@ class StatementBatchTest extends FTestPlatform:
     interceptFx[BatchUpdateException](
       connection.use { conn =>
         for
-          preparedStatement <- conn.clientPreparedStatement("UPDATE `batch_test` SET `c2` = ? WHERE `c1` = ?")
+          preparedStatement <- conn.clientPreparedStatement("UPDATE `mysql_batch_test` SET `c2` = ? WHERE `c1` = ?")
           _ <- preparedStatement.setInt(1, 1) *> preparedStatement.setInt(2, 1) *> preparedStatement.addBatch()
           _ <- preparedStatement.setInt(1, 2) *> preparedStatement.setInt(2, 2) *> preparedStatement.addBatch()
           _ <-
@@ -244,7 +244,7 @@ class StatementBatchTest extends FTestPlatform:
     assertFx(
       connection.use { conn =>
         for
-          preparedStatement <- conn.clientPreparedStatement("DELETE from `batch_test` WHERE `c1` = ?")
+          preparedStatement <- conn.clientPreparedStatement("DELETE from `mysql_batch_test` WHERE `c1` = ?")
           _                 <- preparedStatement.setInt(1, 1) *> preparedStatement.addBatch()
           _                 <- preparedStatement.setInt(1, 2) *> preparedStatement.addBatch()
           _                 <- preparedStatement.setInt(1, 3) *> preparedStatement.addBatch()
@@ -261,7 +261,7 @@ class StatementBatchTest extends FTestPlatform:
     interceptFx[BatchUpdateException](
       connection.use { conn =>
         for
-          preparedStatement <- conn.clientPreparedStatement("DELETE from `batch_test` WHERE `c1` = ?")
+          preparedStatement <- conn.clientPreparedStatement("DELETE from `mysql_batch_test` WHERE `c1` = ?")
           _                 <- preparedStatement.setInt(1, 1) *> preparedStatement.addBatch()
           _                 <- preparedStatement.setInt(1, 2) *> preparedStatement.addBatch()
           _                 <- preparedStatement.setString(1, "failed") *> preparedStatement.addBatch()

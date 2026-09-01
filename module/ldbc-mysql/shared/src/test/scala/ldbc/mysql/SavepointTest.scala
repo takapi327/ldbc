@@ -33,8 +33,8 @@ class SavepointTest extends FTestPlatform:
       Resource.make(
         connection.use { conn =>
           for
-            s1 <- conn.clientPreparedStatement("CREATE TABLE IF NOT EXISTS `savepoint_test` (`c1` BIGINT)")
-            s2 <- conn.clientPreparedStatement("TRUNCATE TABLE `savepoint_test`")
+            s1 <- conn.clientPreparedStatement("CREATE TABLE IF NOT EXISTS `mysql_savepoint_test` (`c1` BIGINT)")
+            s2 <- conn.clientPreparedStatement("TRUNCATE TABLE `mysql_savepoint_test`")
             _  <- s1.executeUpdate()
             _  <- s2.executeUpdate()
           yield ()
@@ -42,7 +42,7 @@ class SavepointTest extends FTestPlatform:
       )(_ =>
         connection.use { conn =>
           for
-            s1 <- conn.clientPreparedStatement("DROP TABLE IF EXISTS `savepoint_test`")
+            s1 <- conn.clientPreparedStatement("DROP TABLE IF EXISTS `mysql_savepoint_test`")
             _  <- s1.executeUpdate()
           yield ()
         }
@@ -65,16 +65,16 @@ class SavepointTest extends FTestPlatform:
       connection.use { conn =>
         for
           _          <- conn.setAutoCommit(false)
-          statement1 <- conn.clientPreparedStatement("INSERT INTO `savepoint_test` VALUES (?)")
+          statement1 <- conn.clientPreparedStatement("INSERT INTO `mysql_savepoint_test` VALUES (?)")
           _          <- statement1.setLong(1, 1L)
           _          <- statement1.executeUpdate()
           savepoint  <- conn.setSavepoint("test_savepoint")
-          statement2 <- conn.clientPreparedStatement("INSERT INTO `savepoint_test` VALUES (?)")
+          statement2 <- conn.clientPreparedStatement("INSERT INTO `mysql_savepoint_test` VALUES (?)")
           _          <- statement2.setLong(1, 2L)
           _          <- statement2.executeUpdate()
           _          <- conn.rollback(savepoint)
           _          <- conn.commit()
-          statement3 <- conn.clientPreparedStatement("SELECT count(*) FROM `savepoint_test` WHERE `c1` IN (?, ?)")
+          statement3 <- conn.clientPreparedStatement("SELECT count(*) FROM `mysql_savepoint_test` WHERE `c1` IN (?, ?)")
           _          <- statement3.setLong(1, 1L)
           _          <- statement3.setLong(2, 2L)
           resultSet  <- statement3.executeQuery()
@@ -91,16 +91,16 @@ class SavepointTest extends FTestPlatform:
       connection.use { conn =>
         for
           _          <- conn.setAutoCommit(false)
-          statement1 <- conn.clientPreparedStatement("INSERT INTO `savepoint_test` VALUES (?)")
+          statement1 <- conn.clientPreparedStatement("INSERT INTO `mysql_savepoint_test` VALUES (?)")
           _          <- statement1.setLong(1, 1L)
           _          <- statement1.executeUpdate()
           savepoint  <- conn.setSavepoint("test_savepoint")
-          statement2 <- conn.clientPreparedStatement("INSERT INTO `savepoint_test` VALUES (?)")
+          statement2 <- conn.clientPreparedStatement("INSERT INTO `mysql_savepoint_test` VALUES (?)")
           _          <- statement2.setLong(1, 2L)
           _          <- statement2.executeUpdate()
           _          <- conn.releaseSavepoint(savepoint)
           _          <- conn.commit()
-          statement3 <- conn.clientPreparedStatement("SELECT count(*) FROM `savepoint_test` WHERE `c1` IN (?, ?)")
+          statement3 <- conn.clientPreparedStatement("SELECT count(*) FROM `mysql_savepoint_test` WHERE `c1` IN (?, ?)")
           _          <- statement3.setLong(1, 1L)
           _          <- statement3.setLong(2, 2L)
           resultSet  <- statement3.executeQuery()
