@@ -19,6 +19,8 @@
 addSbtPlugin("@ORGANIZATION@" % "ldbc-plugin" % "@VERSION@")
 ```
 
+`ldbc-plugin`はsbt 1とsbt 2の両方に対応しています。記述方法はどちらのバージョンでも同じで、sbtが使用中のバージョンに合わせた成果物（sbt 1向けはScala 2.12、sbt 2向けはScala 3）を自動的に解決します。
+
 ### プラグインの有効化
 
 `build.sbt`ファイルでプロジェクトに対してプラグインを有効にします。

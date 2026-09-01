@@ -196,6 +196,35 @@ datasource.getConnection.use { conn =>
 }
 ```
 
+#### Quoting Values and Identifiers
+
+These methods safely quote values and identifiers when you assemble a SQL statement as a string. They implement the API standardised in JDBC 4.3 and are available on both `Statement` and `PreparedStatement`.
+
+| Method | Purpose |
+|-----------------------------------------------|-----------------------------------|
+| `enquoteLiteral(value)` | `Wrap a string in single quotes as a literal` |
+| `enquoteIdentifier(identifier, alwaysQuote)`  | `Quote an identifier` |
+| `enquoteNCharLiteral(value)` | `Produce an N-prefixed national character literal` |
+| `isSimpleIdentifier(identifier)` | `Report whether an identifier can be used without quoting` |
+
+```scala 3
+datasource.getConnection.use { conn =>
+  for
+    statement <- conn.createStatement()
+    literal   <- statement.enquoteLiteral("G'Day")              // 'G''Day'
+    quoted    <- statement.enquoteIdentifier("my table", false) // `my table`
+    nchar     <- statement.enquoteNCharLiteral("Hello")         // N'Hello'
+    isSimple  <- statement.isSimpleIdentifier("user_name")      // true
+  yield
+}
+```
+
+Following the MySQL rules, `isSimpleIdentifier` treats an identifier as simple when it consists only of `[0-9a-zA-Z$_]` or extended characters (`U+0080` and above), is not made up solely of digits, is at most 64 characters long, and is not a reserved word.
+
+When the `ANSI_QUOTES` sql_mode is enabled, the identifier quote character is `"` rather than a backtick.
+
+Note: these methods are a helper for assembling SQL as a string. For dynamic values, use the parameters of `PreparedStatement`.
+
 ### Client/Server PreparedStatement
 
 ldbc provides `PreparedStatement` divided into `Client PreparedStatement` and `Server PreparedStatement`.
