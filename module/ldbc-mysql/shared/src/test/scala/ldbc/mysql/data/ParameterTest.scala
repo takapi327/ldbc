@@ -251,7 +251,10 @@ class ParameterTest extends FTestPlatform:
   test("String parameter special cases") {
     // Multiline string: newlines are escaped as \n per MySQL text protocol
     val multilineString = "line1\nline2\nline3"
-    assertEquals(QueryRenderer.render(Parameter.string(multilineString), noBackslashEscapes = false), "'line1\\nline2\\nline3'")
+    assertEquals(
+      QueryRenderer.render(Parameter.string(multilineString), noBackslashEscapes = false),
+      "'line1\\nline2\\nline3'"
+    )
 
     // String with special characters: \r, \n, \b are escaped; \t is not in MySQL's escape list
     val specialChars = "\t\r\n\b"
