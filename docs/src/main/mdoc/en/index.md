@@ -66,5 +66,4 @@ libraryDependencies ++= Seq(
 - Geometry data type support
 - CHECK constraint support
 - Support for databases other than MySQL
-- Test kit
 - etc...

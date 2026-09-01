@@ -7,6 +7,7 @@
 import sbt.*
 
 import org.typelevel.sbt.gha.GenerativePlugin.autoImport.*
+import org.typelevel.sbt.TypelevelSitePlugin.autoImport.*
 
 import JavaVersions.*
 import ScalaVersions.*
@@ -71,6 +72,33 @@ object Workflows {
       "MYSQL_VERSION" -> "8.4.7"
     )
   )
+
+  val archiveSite: Def.Initialize[Seq[WorkflowStep]] = Def.setting {
+    val cond = tlSitePublish.value.headOption.flatMap(_.cond)
+    Seq(
+      WorkflowStep.Sbt(
+        commands = List("docs/tlSite"),
+        name     = Some("Generate site (archive)"),
+        env      = Map("LDBC_DOCS_ARCHIVE" -> "true"),
+        cond     = cond
+      ),
+      WorkflowStep.Use(
+        UseRef.Public(
+          "peaceiris",
+          "actions-gh-pages",
+          "v4.0.0"
+        ),
+        name   = Some("Publish site (archive)"),
+        params = Map(
+          "github_token"    -> "${{ secrets.GITHUB_TOKEN }}",
+          "publish_dir"     -> s"docs/target/docs/site/${ LdbcVersions.latest }",
+          "destination_dir" -> LdbcVersions.latest,
+          "keep_files"      -> "true"
+        ),
+        cond = cond
+      )
+    )
+  }
 
   val sbtCoverageReport: Def.Initialize[WorkflowJob] = Def.setting(
     WorkflowJob(

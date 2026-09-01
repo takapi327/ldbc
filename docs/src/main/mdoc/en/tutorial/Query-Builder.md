@@ -324,6 +324,10 @@ val multiInsert = TableQuery[User].insert(
 // INSERT INTO user (`id`, `name`, `email`) VALUES(?, ?, ?), (?, ?, ?)
 ```
 
+The elements of the tuple correspond to the column order defined by the table's `*` projection. Even when the field order of the model differs from the column order, values are bound according to the `*` projection.
+
+> **Note**: in 0.7.x and earlier the tuple elements were bound in the field order of the model, so values could be inserted into the wrong columns when that order differed from the `*` projection. This was fixed in 0.8.0. If you have such a table, verify it with your tests after upgrading.
+
 ### Using the `insertInto` Method
 
 Useful when you want to insert values only into specific columns (e.g., when using AUTO INCREMENT):

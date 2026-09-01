@@ -16,7 +16,7 @@ ldbcではHikariCPと組み合わせることで、効率的なデータベー�
 
 ```scala
 libraryDependencies ++= Seq(
-  "com.mysql" % "mysql-connector-j" % "9.6.0",
+  "com.mysql" % "mysql-connector-j" % "@MYSQL_VERSION@",
   "com.zaxxer" % "HikariCP" % "6.2.1"
 )
 ```
