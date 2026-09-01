@@ -9,7 +9,7 @@ Welcome to the first step in getting started with ldbc! This page explains how t
 
 ## Requirements
 
-- JDK 21 or higher
+- JDK 17 or higher (tested on 17, 21 and 25)
 - Scala 3
 - Docker (for database environment)
 - [Scala CLI](https://scala-cli.virtuslab.org/) (recommended)

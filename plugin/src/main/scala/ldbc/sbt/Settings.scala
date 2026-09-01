@@ -9,6 +9,7 @@ package ldbc.sbt
 import sbt._
 import sbt.Keys._
 
+import sbtcompat.PluginCompat._
 import AutoImport._
 import CustomKeys._
 
@@ -16,7 +17,7 @@ object Settings {
 
   lazy val projectSettings: Seq[Def.Setting[?]] = Def.settings(
     libraryDependencies += ldbcCodegen,
-    baseClassloader    := Commands.baseClassloaderTask.value,
+    baseClassloader    := Def.uncached(Commands.baseClassloaderTask.value),
     parseFiles         := List.empty,
     parseDirectories   := List.empty,
     excludeFiles       := List.empty,
@@ -25,9 +26,7 @@ object Settings {
     propertyNameFormat := Format.CAMEL,
     ldbcPackage        := "ldbc.generated",
     (Compile / sourceGenerators) += Generator.generate.taskValue,
-    generateBySQLSchema := {
-      Generator.alwaysGenerate.value
-    },
+    generateBySQLSchema := Def.uncached(Generator.alwaysGenerate.value),
     commands += Commands.generateBySchema
   )
 }

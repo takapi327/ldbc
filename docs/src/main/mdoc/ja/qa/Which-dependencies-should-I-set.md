@@ -156,6 +156,50 @@ libraryDependencies ++= Seq(
 
 `ldbc-testkit-munit`はMUnitの`CatsEffectSuite`を継承した`LdbcSuite`トレイトを提供します。`ephemeralTest`（テスト終了後に自動ロールバック）と`persistentTest`（DDLなど実際のコミットが必要な場合）を使ってRepositoryのテストを簡潔に記述できます。
 
+### SQLファイルからのコード生成
+
+既存のSQLファイルからモデルとテーブル定義を生成する場合は、sbtプラグインを`project/plugins.sbt`に追加します。sbt 1とsbt 2の両方に対応しています。
+
+```scala 3
+addSbtPlugin("@ORGANIZATION@" % "ldbc-plugin" % "@VERSION@")
+```
+
+詳細は[スキーマコード生成](/ja/tutorial/Schema-Code-Generation.md)を参照してください。
+
+### ZIOとの併用
+
+Cats EffectではなくZIOを使用する場合は、`ldbc-zio-interop`を追加します。
+
+```scala 3
+libraryDependencies ++= Seq(
+  "@ORGANIZATION@" %% "ldbc-zio-interop" % "@VERSION@"
+)
+```
+
+JVMとScala.jsで動作します（ZIO Interop CatsがScala Nativeに未対応のため、Scala Nativeでは利用できません）。詳細は[ZIOとの併用](/ja/qa/How-to-use-with-ZIO.md)を参照してください。
+
+### 認証プラグイン
+
+`ldbc-connector`には主要なMySQL認証プラグインが同梱されているため、通常は追加の依存関係は不要です。独自の認証プラグインを実装する場合や、Aurora IAM認証を利用する場合のみ以下を追加します。
+
+**ldbc-authentication-plugin**（認証プラグインの基盤）
+
+```scala 3
+libraryDependencies ++= Seq(
+  "@ORGANIZATION@" %%% "ldbc-authentication-plugin" % "@VERSION@"
+)
+```
+
+**ldbc-aws-authentication-plugin**（Aurora IAM認証）
+
+```scala 3
+libraryDependencies ++= Seq(
+  "@ORGANIZATION@" %%% "ldbc-aws-authentication-plugin" % "@VERSION@"
+)
+```
+
+いずれもJVM、Scala.js、Scala Nativeで動作します。詳細は[認証プラグイン](/ja/reference/AuthenticationPlugin.md)を参照してください。
+
 ## 参考資料
 - [クエリビルダーの使い方](/ja/tutorial/Query-Builder.md)
 - [スキーマ定義の詳細](/ja/tutorial/Schema.md)

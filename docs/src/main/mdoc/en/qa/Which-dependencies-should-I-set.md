@@ -156,6 +156,50 @@ libraryDependencies ++= Seq(
 
 `ldbc-testkit-munit` provides `LdbcSuite`, a base trait that extends MUnit's `CatsEffectSuite` and offers `ephemeralTest` (auto-rollback after each test) and `persistentTest` (actual commits, for DDL).
 
+### Code Generation from SQL Files
+
+To generate models and table definitions from existing SQL files, add the sbt plugin to `project/plugins.sbt`. It supports both sbt 1 and sbt 2.
+
+```scala 3
+addSbtPlugin("@ORGANIZATION@" % "ldbc-plugin" % "@VERSION@")
+```
+
+See [Schema Code Generation](/en/tutorial/Schema-Code-Generation.md) for details.
+
+### Using ldbc with ZIO
+
+If you use ZIO instead of Cats Effect, add `ldbc-zio-interop`.
+
+```scala 3
+libraryDependencies ++= Seq(
+  "@ORGANIZATION@" %% "ldbc-zio-interop" % "@VERSION@"
+)
+```
+
+It works on JVM and Scala.js (Scala Native is not available because ZIO Interop Cats does not support it). See [How to use with ZIO](/en/qa/How-to-use-with-ZIO.md) for details.
+
+### Authentication Plugins
+
+`ldbc-connector` bundles the major MySQL authentication plugins, so no extra dependency is normally required. Add the following only when implementing your own authentication plugin, or when using Aurora IAM authentication.
+
+**ldbc-authentication-plugin** (authentication plugin foundation)
+
+```scala 3
+libraryDependencies ++= Seq(
+  "@ORGANIZATION@" %%% "ldbc-authentication-plugin" % "@VERSION@"
+)
+```
+
+**ldbc-aws-authentication-plugin** (Aurora IAM authentication)
+
+```scala 3
+libraryDependencies ++= Seq(
+  "@ORGANIZATION@" %%% "ldbc-aws-authentication-plugin" % "@VERSION@"
+)
+```
+
+Both work on JVM, Scala.js, and Scala Native. See [Authentication Plugin](/en/reference/AuthenticationPlugin.md) for details.
+
 ## References
 - [How to use Query Builder](/en/tutorial/Query-Builder.md)
 - [Schema Definition Details](/en/tutorial/Schema.md)

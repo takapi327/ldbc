@@ -6,13 +6,10 @@
 
 package ldbc.connector.exception
 
-import scala.collection.immutable.SortedMap
-
 import cats.syntax.all.*
 
 import org.typelevel.otel4s.Attribute
 
-import ldbc.connector.data.Parameter
 import ldbc.connector.util.Pretty
 
 /**
@@ -38,12 +35,11 @@ import ldbc.connector.util.Pretty
  */
 class SQLException(
   message:    String,
-  sqlState:   Option[String]            = None,
-  vendorCode: Option[Int]               = None,
-  sql:        Option[String]            = None,
-  detail:     Option[String]            = None,
-  hint:       Option[String]            = None,
-  params:     SortedMap[Int, Parameter] = SortedMap.empty
+  sqlState:   Option[String] = None,
+  vendorCode: Option[Int]    = None,
+  sql:        Option[String] = None,
+  detail:     Option[String] = None,
+  hint:       Option[String] = None
 ) extends Exception:
 
   /**
@@ -74,12 +70,6 @@ class SQLException(
     sql.foreach(a => builder += Attribute("error.sql", a))
     detail.foreach(a => builder += Attribute("error.detail", a))
     hint.foreach(a => builder += Attribute("error.hint", a))
-
-    params.foreach {
-      case (i, p) =>
-        builder += Attribute(s"error.parameter.$i.type", p.columnDataType.name)
-        builder += Attribute(s"error.parameter.$i.value", p.toString)
-    }
 
     builder.result()
 
@@ -117,23 +107,8 @@ class SQLException(
           |""".stripMargin
     }
 
-  protected def args: String =
-
-    def formatValue(s: String) =
-      s"${ Console.GREEN }$s${ Console.RESET }"
-
-    if params.isEmpty then ""
-    else
-      s"""|and the arguments were
-          |
-          |  ${ params
-           .map { case (i, p) => f"$$$i ${ p.columnDataType.name }%-10s ${ formatValue(p.toString) }" }
-           .mkString("\n|  ") }
-          |
-          |""".stripMargin
-
   protected def sections: List[String] =
-    List(header, statement, args)
+    List(header, statement)
 
   final override def getMessage: String =
     sections.combineAll.linesIterator
