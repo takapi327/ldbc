@@ -225,7 +225,9 @@ case class ServerPreparedStatement[F[_]](
 
   override def addBatch(): F[Unit] =
     checkClosed() *> checkNullOrEmptyQuery(sql) *> params.get.flatMap { params =>
-      batchedArgs.update(_ :+ buildBatchQuery(sql, params))
+      protocol.noBackslashEscapes.flatMap { noBackslashEscapes =>
+        batchedArgs.update(_ :+ QueryRenderer.buildBatch(sql, params, noBackslashEscapes))
+      }
     } *> params.set(SortedMap.empty)
 
   override def clearBatch(): F[Unit] = batchedArgs.set(Vector.empty)

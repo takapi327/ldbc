@@ -77,6 +77,7 @@ case class ClientPreparedStatement[F[_]](
       )
     ) { (span: Span[F]) =>
       params.get.flatMap { params =>
+        protocol.noBackslashEscapes.flatMap { noBackslashEscapes =>
         val processedSql    = telemetryConfig.processQueryText(sql)
         val queryAttributes = baseAttributes ++ List(
           DbAttributes.DbQueryText(processedSql)
@@ -86,7 +87,11 @@ case class ClientPreparedStatement[F[_]](
           span.addAttributes(queryAttributes*) *>
             protocol.resetSequenceId *>
             protocol.send(
-              ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)
+              ComQueryPacket(
+                QueryRenderer.build(sql, params, noBackslashEscapes),
+                protocol.initialPacket.capabilityFlags,
+                ListMap.empty
+              )
             ) *>
             protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
               case _: OKPacket =>
@@ -144,6 +149,7 @@ case class ClientPreparedStatement[F[_]](
             },
           metricsAttributes*
         )
+        }
       } <* params.set(SortedMap.empty)
     }
 
@@ -158,6 +164,7 @@ case class ClientPreparedStatement[F[_]](
       )
     ) { (span: Span[F]) =>
       params.get.flatMap { params =>
+        protocol.noBackslashEscapes.flatMap { noBackslashEscapes =>
         val processedSql    = telemetryConfig.processQueryText(sql)
         val queryAttributes = baseAttributes ++ List(
           DbAttributes.DbQueryText(processedSql)
@@ -167,7 +174,11 @@ case class ClientPreparedStatement[F[_]](
           span.addAttributes(queryAttributes*) *>
             protocol.resetSequenceId *>
             protocol.send(
-              ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)
+              ComQueryPacket(
+                QueryRenderer.build(sql, params, noBackslashEscapes),
+                protocol.initialPacket.capabilityFlags,
+                ListMap.empty
+              )
             ) *>
             protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
               case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
@@ -186,6 +197,7 @@ case class ClientPreparedStatement[F[_]](
             },
           metricsAttributes*
         )
+        }
       } <* params.set(SortedMap.empty)
     }
 
@@ -211,7 +223,9 @@ case class ClientPreparedStatement[F[_]](
 
   override def addBatch(): F[Unit] =
     checkClosed() *> checkNullOrEmptyQuery(sql) *> params.get.flatMap { params =>
-      batchedArgs.update(_ :+ buildBatchQuery(sql, params))
+      protocol.noBackslashEscapes.flatMap { noBackslashEscapes =>
+        batchedArgs.update(_ :+ QueryRenderer.buildBatch(sql, params, noBackslashEscapes))
+      }
     } *> params.set(SortedMap.empty)
 
   override def clearBatch(): F[Unit] = batchedArgs.set(Vector.empty)

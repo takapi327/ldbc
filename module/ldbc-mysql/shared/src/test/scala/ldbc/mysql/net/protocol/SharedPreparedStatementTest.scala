@@ -57,7 +57,7 @@ class SharedPreparedStatementTest extends SharedPreparedStatement[Fx], FTestPlat
 
   // Helper method to compare Parameter instances
   private def assertParameter(actual: Parameter, expected: Parameter): Boolean = {
-    actual.sql == expected.sql &&
+    QueryRenderer.render(actual, noBackslashEscapes = false) == QueryRenderer.render(expected, noBackslashEscapes = false) &&
     actual.columnDataType == expected.columnDataType
   }
 
@@ -238,7 +238,7 @@ class SharedPreparedStatementTest extends SharedPreparedStatement[Fx], FTestPlat
       _      <- resetParams
       _      <- setInt(1, 100)
       _      <- setString(2, "John")
-      result <- params.get.map(p => buildQuery("SELECT * FROM users WHERE id = ? AND name = ?", p))
+      result <- params.get.map(p => QueryRenderer.build("SELECT * FROM users WHERE id = ? AND name = ?", p, noBackslashEscapes = false))
       _      <- Fx.delay(assertEquals(result, "SELECT * FROM users WHERE id = 100 AND name = 'John'"))
     } yield ()
   }
@@ -248,7 +248,7 @@ class SharedPreparedStatementTest extends SharedPreparedStatement[Fx], FTestPlat
       _      <- resetParams
       _      <- setInt(1, 100)
       _      <- setString(2, "John")
-      result <- params.get.map(p => buildBatchQuery("INSERT INTO users (id, name) VALUES (?, ?)", p))
+      result <- params.get.map(p => QueryRenderer.buildBatch("INSERT INTO users (id, name) VALUES (?, ?)", p, noBackslashEscapes = false))
       _      <- Fx.delay(assertEquals(result, " (100, 'John')"))
     } yield ()
   }
@@ -258,7 +258,7 @@ class SharedPreparedStatementTest extends SharedPreparedStatement[Fx], FTestPlat
       _      <- resetParams
       _      <- setInt(1, 100)
       _      <- setString(2, "John")
-      result <- params.get.map(p => buildBatchQuery("INSERT INTO users (id, name) values (?, ?)", p))
+      result <- params.get.map(p => QueryRenderer.buildBatch("INSERT INTO users (id, name) values (?, ?)", p, noBackslashEscapes = false))
       // split("VALUES") does not match lowercase "values", so .last returns the entire query string
       // This assertion FAILS with the current (buggy) implementation
       _ <- Fx.delay(assertEquals(result, " (100, 'John')"))
@@ -270,7 +270,7 @@ class SharedPreparedStatementTest extends SharedPreparedStatement[Fx], FTestPlat
       _      <- resetParams
       _      <- setInt(1, 100)
       _      <- setString(2, "John")
-      result <- params.get.map(p => buildBatchQuery("INSERT INTO users (id, name) Values (?, ?)", p))
+      result <- params.get.map(p => QueryRenderer.buildBatch("INSERT INTO users (id, name) Values (?, ?)", p, noBackslashEscapes = false))
       // This assertion FAILS with the current (buggy) implementation
       _ <- Fx.delay(assertEquals(result, " (100, 'John')"))
     } yield ()
@@ -281,7 +281,7 @@ class SharedPreparedStatementTest extends SharedPreparedStatement[Fx], FTestPlat
       _      <- resetParams
       _      <- setString(1, "John")
       _      <- setInt(2, 100)
-      result <- params.get.map(p => buildBatchQuery("UPDATE users SET name = ? WHERE id = ?", p))
+      result <- params.get.map(p => QueryRenderer.buildBatch("UPDATE users SET name = ? WHERE id = ?", p, noBackslashEscapes = false))
       _      <- Fx.delay(assertEquals(result, "UPDATE users SET name = 'John' WHERE id = 100"))
     } yield ()
   }
@@ -291,7 +291,7 @@ class SharedPreparedStatementTest extends SharedPreparedStatement[Fx], FTestPlat
       _      <- resetParams
       _      <- setInt(1, 100)
       params <- params.get
-      result <- Fx.delay(buildBatchQuery("SELECT * FROM users WHERE id = ?", params)).attempt
+      result <- Fx.delay(QueryRenderer.buildBatch("SELECT * FROM users WHERE id = ?", params, noBackslashEscapes = false)).attempt
       _      <- Fx.delay(
              assert(
                result.isLeft && result.left.exists(
@@ -314,43 +314,43 @@ class SharedPreparedStatementTest extends SharedPreparedStatement[Fx], FTestPlat
     //   Result: '\\\''
     val input    = "\\'"
     val expected = "'\\\\\\''" // '\\\''  in the actual string
-    Fx.delay(assertEquals(Parameter.string(input).sql, expected))
+    Fx.delay(assertEquals(QueryRenderer.render(Parameter.string(input), noBackslashEscapes = false), expected))
   }
 
   test("Bug #716: Parameter.string should escape NUL character") {
     val input    = "a\u0000b"
     val expected = "'a\\0b'"
-    Fx.delay(assertEquals(Parameter.string(input).sql, expected))
+    Fx.delay(assertEquals(QueryRenderer.render(Parameter.string(input), noBackslashEscapes = false), expected))
   }
 
   test("Bug #716: Parameter.string should escape newline") {
     val input    = "a\nb"
     val expected = "'a\\nb'"
-    Fx.delay(assertEquals(Parameter.string(input).sql, expected))
+    Fx.delay(assertEquals(QueryRenderer.render(Parameter.string(input), noBackslashEscapes = false), expected))
   }
 
   test("Bug #716: Parameter.string should escape carriage return") {
     val input    = "a\rb"
     val expected = "'a\\rb'"
-    Fx.delay(assertEquals(Parameter.string(input).sql, expected))
+    Fx.delay(assertEquals(QueryRenderer.render(Parameter.string(input), noBackslashEscapes = false), expected))
   }
 
   test("Bug #716: Parameter.string should escape double quote") {
     val input    = "a\"b"
     val expected = "'a\\\"b'"
-    Fx.delay(assertEquals(Parameter.string(input).sql, expected))
+    Fx.delay(assertEquals(QueryRenderer.render(Parameter.string(input), noBackslashEscapes = false), expected))
   }
 
   test("Bug #716: Parameter.string should escape Ctrl-Z") {
     val input    = "a\u001ab"
     val expected = "'a\\Zb'"
-    Fx.delay(assertEquals(Parameter.string(input).sql, expected))
+    Fx.delay(assertEquals(QueryRenderer.render(Parameter.string(input), noBackslashEscapes = false), expected))
   }
 
   test("Bug #716: Parameter.string should escape backspace") {
     val input    = "a\bb"
     val expected = "'a\\bb'"
-    Fx.delay(assertEquals(Parameter.string(input).sql, expected))
+    Fx.delay(assertEquals(QueryRenderer.render(Parameter.string(input), noBackslashEscapes = false), expected))
   }
 
   test("enquoteLiteral should quote a value and double single quotes") {
