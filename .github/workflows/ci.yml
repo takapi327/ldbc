@@ -438,6 +438,21 @@ jobs:
           publish_dir: docs/target/docs/site
           keep_files: true
 
+      - name: Generate site (archive)
+        if: github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags/v')
+        env:
+          LDBC_DOCS_ARCHIVE: true
+        run: sbt docs/tlSite
+
+      - name: Publish site (archive)
+        if: github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags/v')
+        uses: peaceiris/actions-gh-pages@v4.0.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs/target/docs/site/0.8
+          destination_dir: 0.8
+          keep_files: true
+
   sbtScripted:
     name: sbt scripted
     strategy:
