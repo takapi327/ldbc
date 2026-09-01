@@ -449,8 +449,8 @@ jobs:
         uses: peaceiris/actions-gh-pages@v4.0.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: docs/target/docs/site/0.8
-          destination_dir: 0.8
+          publish_dir: docs/target/docs/site/0.9
+          destination_dir: 0.9
           keep_files: true
 
   sbtScripted:
