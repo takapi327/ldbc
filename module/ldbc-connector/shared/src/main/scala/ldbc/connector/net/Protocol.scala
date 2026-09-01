@@ -136,6 +136,15 @@ trait Protocol[F[_]] extends UtilityCommands[F], Authentication[F]:
    */
   def serverVariables(): F[Map[String, String]]
 
+  /**
+   * Whether the current server session has the `NO_BACKSLASH_ESCAPES` sql_mode enabled.
+   *
+   * This tracks the live server status: it is seeded from the initial handshake and updated from
+   * the status flags of every OK/EOF packet received (so a mid-session `SET sql_mode` is reflected).
+   * Client-side statement construction consults this to escape string literals correctly.
+   */
+  def noBackslashEscapes: F[Boolean]
+
 object Protocol:
 
   private val SELECT_SERVER_VARIABLES_QUERY =
@@ -164,7 +173,21 @@ object Protocol:
       .map(db => DbAttributes.DbNamespace(db))
       .toList
 
-    override def receive[P <: ResponsePacket](decoder: Decoder[P]): F[P] = socket.receive(decoder)
+    private val noBackslashEscapesRef: Ref[F, Boolean] =
+      Ref.unsafe[F, Boolean](initialPacket.statusFlags.contains(ServerStatusFlags.SERVER_STATUS_NO_BACKSLASH_ESCAPES))
+
+    override def noBackslashEscapes: F[Boolean] = noBackslashEscapesRef.get
+
+    override def receive[P <: ResponsePacket](decoder: Decoder[P]): F[P] =
+      socket.receive(decoder).flatTap {
+        case ok: OKPacket =>
+          noBackslashEscapesRef.set(ok.statusFlags.contains(ServerStatusFlags.SERVER_STATUS_NO_BACKSLASH_ESCAPES))
+        case eof: EOFPacket =>
+          noBackslashEscapesRef.set(
+            ServerStatusFlags(eof.statusFlags.toLong).contains(ServerStatusFlags.SERVER_STATUS_NO_BACKSLASH_ESCAPES)
+          )
+        case _ => ev.unit
+      }
 
     override def send(request: RequestPacket): F[Unit] = socket.send(request)
 

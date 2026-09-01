@@ -30,8 +30,7 @@ ThisBuild / githubWorkflowBuildMatrixExclusions ++= Seq(
   MatrixExclude(Map("os" -> "ubuntu-24.04", "project" -> "ldbcJS")),
   MatrixExclude(Map("os" -> "ubuntu-22.04", "project" -> "ldbcNative"))
 )
-ThisBuild / githubWorkflowBuildPreamble ++= List(dockerRun, brewUpdate) ++ nativeBrewInstallWorkflowSteps.value
-ThisBuild / nativeBrewInstallCond := Some("matrix.project == 'ldbcNative'")
+ThisBuild / githubWorkflowBuildPreamble ++= List(dockerRun, brewUpdate, brewInstall)
 ThisBuild / githubWorkflowAddedJobs ++= Seq(sbtScripted.value, sbtCoverageReport.value)
 ThisBuild / githubWorkflowBuildPostamble += dockerStop
 ThisBuild / githubWorkflowBuild ~= { steps =>
@@ -224,8 +223,7 @@ lazy val authenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativePlat
   .jsSettings(
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
   )
-  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
-  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .nativeSettings(Brew.nativeSettings)
 
 lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
@@ -260,8 +258,7 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .jsSettings(
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
   )
-  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
-  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .nativeSettings(Brew.nativeSettings)
   .dependsOn(core, authenticationPlugin)
 
 lazy val awsAuthenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativePlatform)
@@ -278,8 +275,7 @@ lazy val awsAuthenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativeP
   .jsSettings(
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
   )
-  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
-  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .nativeSettings(Brew.nativeSettings)
   .dependsOn(authenticationPlugin)
 
 lazy val mysql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
@@ -353,6 +349,8 @@ lazy val zio = crossProject(JVMPlatform, JSPlatform, NativePlatform)
 
 lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
   .settings(description := "Projects that provide sbt plug-ins")
+  .settings(addSbtPlugin("com.github.sbt" % "sbt2-compat" % "0.2.0"))
+  .settings(scalacOptions += "-Wconf:src=.*Settings\\.scala&msg=unused import:s")
   .settings((Compile / sourceGenerators) += Def.task {
     Generator.version(
       version      = version.value,
@@ -373,8 +371,7 @@ lazy val testkit = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .jsSettings(
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
   )
-  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
-  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .nativeSettings(Brew.nativeSettings)
   .dependsOn(connector)
 
 lazy val testkitMunit = crossProject(JVMPlatform, JSPlatform, NativePlatform)
@@ -388,8 +385,7 @@ lazy val testkitMunit = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .jsSettings(
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
   )
-  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
-  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .nativeSettings(Brew.nativeSettings)
   .dependsOn(testkit, dsl % Test)
 
 lazy val zioInterop = crossProject(JVMPlatform, JSPlatform)
@@ -439,8 +435,7 @@ lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
       }
     }
   )
-  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
-  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .nativeSettings(Brew.nativeSettings)
   .dependsOn(connector, mysql, pool, queryBuilder, schema, catsEffect, future, zio, fx % "test->test")
   .enablePlugins(NoPublishPlugin)
 

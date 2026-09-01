@@ -28,7 +28,7 @@ object Workflows {
         )
       ),
       scalas = List(scala3),
-      javas  = List(JavaSpec.temurin(java17), JavaSpec.temurin(java21))
+      javas  = List(JavaSpec.corretto(java17), JavaSpec.corretto(java21))
     )
   )
 
@@ -38,9 +38,15 @@ object Workflows {
   )
 
   val brewUpdate: WorkflowStep.Run = WorkflowStep.Run(
-    commands = List("/home/linuxbrew/.linuxbrew/bin/brew update"),
+    commands = List(s"${ Brew.linuxBin } update"),
     name     = Some("Update Homebrew"),
     cond     = Some("matrix.project == 'ldbcNative'")
+  )
+
+  val brewInstall: WorkflowStep.Run = WorkflowStep.Run(
+    commands = List(s"${ Brew.linuxBin } install ${ Brew.formulas.mkString(" ") }"),
+    name     = Some("Install brew formulae (ubuntu)"),
+    cond     = Some("(matrix.project == 'ldbcNative') && startsWith(matrix.os, 'ubuntu')")
   )
 
   val dockerStop: WorkflowStep.Run = WorkflowStep.Run(
