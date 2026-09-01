@@ -6,10 +6,6 @@
 
 package ldbc.connector.exception
 
-import scala.collection.immutable.SortedMap
-
-import ldbc.connector.data.Parameter
-
 /**
  * The subclass of {@link SQLException} for the SQLState class
  * value '<i>08</i>', or under vendor-specified conditions.  This indicates
@@ -18,10 +14,9 @@ import ldbc.connector.data.Parameter
  */
 class SQLTransientConnectionException(
   message:    String,
-  sqlState:   Option[String]            = None,
-  vendorCode: Option[Int]               = None,
-  sql:        Option[String]            = None,
-  detail:     Option[String]            = None,
-  hint:       Option[String]            = None,
-  params:     SortedMap[Int, Parameter] = SortedMap.empty
-) extends SQLTransientException(message, sqlState, vendorCode, sql, detail, hint, params)
+  sqlState:   Option[String] = None,
+  vendorCode: Option[Int]    = None,
+  sql:        Option[String] = None,
+  detail:     Option[String] = None,
+  hint:       Option[String] = None
+) extends SQLTransientException(message, sqlState, vendorCode, sql, detail, hint)

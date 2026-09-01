@@ -3,7 +3,8 @@
   */
 
 object LdbcVersions {
-  val latest = "0.7"
+  val latest = "0.8"
+  val v07    = "0.7"
   val v06    = "0.6"
   val v05    = "0.5"
   val v04    = "0.4"
@@ -13,9 +14,14 @@ object LdbcVersions {
 }
 
 object ScalaVersions {
-  val scala2  = "2.12.19"
+  val scala2  = "2.12.21"
   val scala3  = "3.3.8"
   val scala38 = "3.8.4"
+}
+
+object SbtVersions {
+  val sbt1 = "1.13.0"
+  val sbt2 = "2.0.8"
 }
 
 object JavaVersions {
