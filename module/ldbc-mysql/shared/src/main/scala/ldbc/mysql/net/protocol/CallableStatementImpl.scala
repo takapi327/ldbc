@@ -168,21 +168,21 @@ case class CallableStatementImpl[F[_]](
             else
               params.get.flatMap { params =>
                 protocol.noBackslashEscapes.flatMap { noBackslashEscapes =>
-                sendQuery(QueryRenderer.build(sql, params, noBackslashEscapes)).flatMap {
-                  case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
-                  case error: ERRPacket =>
-                    val exception = error.toException(Some(sql), None)
-                    span.addAttributes(error.attributes*) *>
-                      span.recordException(exception, error.attributes*) *>
-                      span.setStatus(StatusCode.Error, exception.getMessage) *>
-                      F.raiseError(exception)
-                  case eof: EOFPacket =>
-                    val exception = new SQLException("Unexpected EOF packet")
-                    span.addAttribute(ErrorAttributes.ErrorType(exception.getClass.getName)) *>
-                      span.recordException(exception, eof.attribute) *>
-                      span.setStatus(StatusCode.Error, exception.getMessage) *>
-                      F.raiseError(exception)
-                }
+                  sendQuery(QueryRenderer.build(sql, params, noBackslashEscapes)).flatMap {
+                    case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
+                    case error: ERRPacket =>
+                      val exception = error.toException(Some(sql), None)
+                      span.addAttributes(error.attributes*) *>
+                        span.recordException(exception, error.attributes*) *>
+                        span.setStatus(StatusCode.Error, exception.getMessage) *>
+                        F.raiseError(exception)
+                    case eof: EOFPacket =>
+                      val exception = new SQLException("Unexpected EOF packet")
+                      span.addAttribute(ErrorAttributes.ErrorType(exception.getClass.getName)) *>
+                        span.recordException(exception, eof.attribute) *>
+                        span.setStatus(StatusCode.Error, exception.getMessage) *>
+                        F.raiseError(exception)
+                  }
                 }
               }
             ,
@@ -213,27 +213,27 @@ case class CallableStatementImpl[F[_]](
           params.get
             .flatMap { params =>
               protocol.noBackslashEscapes.flatMap { noBackslashEscapes =>
-              val processedSql    = telemetryConfig.processQueryText(sql)
-              val queryAttributes = baseAttributes ++ List(
-                DbAttributes.DbQueryText(processedSql)
-              )
+                val processedSql    = telemetryConfig.processQueryText(sql)
+                val queryAttributes = baseAttributes ++ List(
+                  DbAttributes.DbQueryText(processedSql)
+                )
 
-              span.addAttributes(queryAttributes*) *>
-                sendQuery(QueryRenderer.build(sql, params, noBackslashEscapes)).flatMap {
-                  case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
-                  case error: ERRPacket =>
-                    val exception = error.toException(Some(sql), None)
-                    span.addAttributes(error.attributes*) *>
-                      span.recordException(exception, error.attributes*) *>
-                      span.setStatus(StatusCode.Error, exception.getMessage) *>
-                      F.raiseError(exception)
-                  case eof: EOFPacket =>
-                    val exception = new SQLException("Unexpected EOF packet")
-                    span.addAttribute(ErrorAttributes.ErrorType(exception.getClass.getName)) *>
-                      span.recordException(exception, eof.attribute) *>
-                      span.setStatus(StatusCode.Error, exception.getMessage) *>
-                      F.raiseError(exception)
-                }
+                span.addAttributes(queryAttributes*) *>
+                  sendQuery(QueryRenderer.build(sql, params, noBackslashEscapes)).flatMap {
+                    case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
+                    case error: ERRPacket =>
+                      val exception = error.toException(Some(sql), None)
+                      span.addAttributes(error.attributes*) *>
+                        span.recordException(exception, error.attributes*) *>
+                        span.setStatus(StatusCode.Error, exception.getMessage) *>
+                        F.raiseError(exception)
+                    case eof: EOFPacket =>
+                      val exception = new SQLException("Unexpected EOF packet")
+                      span.addAttribute(ErrorAttributes.ErrorType(exception.getClass.getName)) *>
+                        span.recordException(exception, eof.attribute) *>
+                        span.setStatus(StatusCode.Error, exception.getMessage) *>
+                        F.raiseError(exception)
+                  }
               }
             }
             .map(_ => false)
@@ -376,7 +376,9 @@ case class CallableStatementImpl[F[_]](
               params.get.flatMap { params =>
                 protocol.noBackslashEscapes.flatMap { noBackslashEscapes =>
                   val sql =
-                    queryBuf.toString ++ params.get(param.index).fold("NULL")(QueryRenderer.render(_, noBackslashEscapes))
+                    queryBuf.toString ++ params
+                      .get(param.index)
+                      .fold("NULL")(QueryRenderer.render(_, noBackslashEscapes))
                   sendQuery(sql).flatMap {
                     case _: OKPacket      => F.unit
                     case error: ERRPacket => F.raiseError(error.toException(Some(sql), None))
@@ -860,21 +862,21 @@ case class CallableStatementImpl[F[_]](
       setOutParams() *>
       params.get.flatMap { params =>
         protocol.noBackslashEscapes.flatMap { noBackslashEscapes =>
-        val processedSql    = telemetryConfig.processQueryText(sql)
-        val queryAttributes = baseAttributes ++ List(
-          DbAttributes.DbQueryText(processedSql)
-        )
+          val processedSql    = telemetryConfig.processQueryText(sql)
+          val queryAttributes = baseAttributes ++ List(
+            DbAttributes.DbQueryText(processedSql)
+          )
 
-        span.addAttributes(queryAttributes*) *>
-          protocol.resetSequenceId *>
-          protocol.send(
-            ComQueryPacket(
-              QueryRenderer.build(sql, params, noBackslashEscapes),
-              protocol.initialPacket.capabilityFlags,
-              ListMap.empty
-            )
-          ) *>
-          receiveUntilOkPacket(Vector.empty)
+          span.addAttributes(queryAttributes*) *>
+            protocol.resetSequenceId *>
+            protocol.send(
+              ComQueryPacket(
+                QueryRenderer.build(sql, params, noBackslashEscapes),
+                protocol.initialPacket.capabilityFlags,
+                ListMap.empty
+              )
+            ) *>
+            receiveUntilOkPacket(Vector.empty)
         }
       }
 

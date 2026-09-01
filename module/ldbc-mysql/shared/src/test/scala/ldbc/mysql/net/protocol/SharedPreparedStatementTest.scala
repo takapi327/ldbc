@@ -57,7 +57,10 @@ class SharedPreparedStatementTest extends SharedPreparedStatement[Fx], FTestPlat
 
   // Helper method to compare Parameter instances
   private def assertParameter(actual: Parameter, expected: Parameter): Boolean = {
-    QueryRenderer.render(actual, noBackslashEscapes = false) == QueryRenderer.render(expected, noBackslashEscapes = false) &&
+    QueryRenderer.render(actual, noBackslashEscapes = false) == QueryRenderer.render(
+      expected,
+      noBackslashEscapes = false
+    ) &&
     actual.columnDataType == expected.columnDataType
   }
 
@@ -238,8 +241,10 @@ class SharedPreparedStatementTest extends SharedPreparedStatement[Fx], FTestPlat
       _      <- resetParams
       _      <- setInt(1, 100)
       _      <- setString(2, "John")
-      result <- params.get.map(p => QueryRenderer.build("SELECT * FROM users WHERE id = ? AND name = ?", p, noBackslashEscapes = false))
-      _      <- Fx.delay(assertEquals(result, "SELECT * FROM users WHERE id = 100 AND name = 'John'"))
+      result <- params.get.map(p =>
+                  QueryRenderer.build("SELECT * FROM users WHERE id = ? AND name = ?", p, noBackslashEscapes = false)
+                )
+      _ <- Fx.delay(assertEquals(result, "SELECT * FROM users WHERE id = 100 AND name = 'John'"))
     } yield ()
   }
 
@@ -248,8 +253,10 @@ class SharedPreparedStatementTest extends SharedPreparedStatement[Fx], FTestPlat
       _      <- resetParams
       _      <- setInt(1, 100)
       _      <- setString(2, "John")
-      result <- params.get.map(p => QueryRenderer.buildBatch("INSERT INTO users (id, name) VALUES (?, ?)", p, noBackslashEscapes = false))
-      _      <- Fx.delay(assertEquals(result, " (100, 'John')"))
+      result <- params.get.map(p =>
+                  QueryRenderer.buildBatch("INSERT INTO users (id, name) VALUES (?, ?)", p, noBackslashEscapes = false)
+                )
+      _ <- Fx.delay(assertEquals(result, " (100, 'John')"))
     } yield ()
   }
 
@@ -258,7 +265,9 @@ class SharedPreparedStatementTest extends SharedPreparedStatement[Fx], FTestPlat
       _      <- resetParams
       _      <- setInt(1, 100)
       _      <- setString(2, "John")
-      result <- params.get.map(p => QueryRenderer.buildBatch("INSERT INTO users (id, name) values (?, ?)", p, noBackslashEscapes = false))
+      result <- params.get.map(p =>
+                  QueryRenderer.buildBatch("INSERT INTO users (id, name) values (?, ?)", p, noBackslashEscapes = false)
+                )
       // split("VALUES") does not match lowercase "values", so .last returns the entire query string
       // This assertion FAILS with the current (buggy) implementation
       _ <- Fx.delay(assertEquals(result, " (100, 'John')"))
@@ -270,7 +279,9 @@ class SharedPreparedStatementTest extends SharedPreparedStatement[Fx], FTestPlat
       _      <- resetParams
       _      <- setInt(1, 100)
       _      <- setString(2, "John")
-      result <- params.get.map(p => QueryRenderer.buildBatch("INSERT INTO users (id, name) Values (?, ?)", p, noBackslashEscapes = false))
+      result <- params.get.map(p =>
+                  QueryRenderer.buildBatch("INSERT INTO users (id, name) Values (?, ?)", p, noBackslashEscapes = false)
+                )
       // This assertion FAILS with the current (buggy) implementation
       _ <- Fx.delay(assertEquals(result, " (100, 'John')"))
     } yield ()
@@ -281,8 +292,10 @@ class SharedPreparedStatementTest extends SharedPreparedStatement[Fx], FTestPlat
       _      <- resetParams
       _      <- setString(1, "John")
       _      <- setInt(2, 100)
-      result <- params.get.map(p => QueryRenderer.buildBatch("UPDATE users SET name = ? WHERE id = ?", p, noBackslashEscapes = false))
-      _      <- Fx.delay(assertEquals(result, "UPDATE users SET name = 'John' WHERE id = 100"))
+      result <- params.get.map(p =>
+                  QueryRenderer.buildBatch("UPDATE users SET name = ? WHERE id = ?", p, noBackslashEscapes = false)
+                )
+      _ <- Fx.delay(assertEquals(result, "UPDATE users SET name = 'John' WHERE id = 100"))
     } yield ()
   }
 
@@ -291,8 +304,10 @@ class SharedPreparedStatementTest extends SharedPreparedStatement[Fx], FTestPlat
       _      <- resetParams
       _      <- setInt(1, 100)
       params <- params.get
-      result <- Fx.delay(QueryRenderer.buildBatch("SELECT * FROM users WHERE id = ?", params, noBackslashEscapes = false)).attempt
-      _      <- Fx.delay(
+      result <-
+        Fx.delay(QueryRenderer.buildBatch("SELECT * FROM users WHERE id = ?", params, noBackslashEscapes = false))
+          .attempt
+      _ <- Fx.delay(
              assert(
                result.isLeft && result.left.exists(
                  _.getMessage == "The batch query must be an INSERT, UPDATE, or DELETE statement."
