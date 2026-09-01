@@ -358,6 +358,12 @@ The goal of the 0.9.x series is **not** to migrate away from Cats Effect, but to
 
 Cats Effect remains a first-class citizen; the intent is to let users choose the effect system that fits their project without giving up the type-safe API that ldbc provides.
 
+### 0.10.x: SQLite support
+
+The goal of the 0.10.x series is to add support for SQLite.
+
+ldbc has so far been developed as a MySQL connector. The intent is to let users work with SQLite through the same type-safe API, so that plain queries, the query builder and schema definitions are written the same way regardless of the database.
+
 ## Contributing
 
 All suggestions welcome :)!
