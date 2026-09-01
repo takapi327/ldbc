@@ -422,6 +422,7 @@ lazy val docs = (project in file("docs"))
       }
     }
   )
+  .settings(tlSitePublish ++= archiveSite.value)
   .settings(commonSettings)
   .dependsOn(
     connector.jvm,
