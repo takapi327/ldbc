@@ -575,6 +575,9 @@ lazy val docs = (project in file("docs"))
   .settings(commonSettings)
   .dependsOn(
     connector.jvm,
+    mysql.jvm,
+    catsEffect.jvm,
+    pool.jvm,
     schema.jvm
   )
   .enablePlugins(AutomateHeaderPlugin, TypelevelSitePlugin, NoPublishPlugin)
