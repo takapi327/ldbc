@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="Typelevel Laika + Helium Theme" />
+  <title>マイグレーションノート</title>
+  
+  <meta name="author" content="Takahiko Tominaga"/>
+  
+  
+  <meta name="description" content="Documentation for ldbc"/>
+  
+  
+  
+  <link rel="icon" sizes="32x32" type="image/png" href="https://typelevel.org/img/favicon.png"/>
+  
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700">
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Mono:500">
+  
+  <link rel="stylesheet" type="text/css" href="../helium/site/icofont.min.css" />
+    <link rel="stylesheet" type="text/css" href="../helium/site/laika-helium.css" />
+    <link rel="stylesheet" type="text/css" href="../css/site.css" />
+  <script src="../helium/site/laika-helium.js"></script>
+    <script src="../helium/site/laika-versions.js"></script>
+  <script>initVersions("../../", "/ja/migration-notes.html", "0.7", null);</script>
+  
+  <script> /* for avoiding page load transitions */ </script>
+</head>
+
+<body>
+
+<header id="top-bar" class="light-default dark-default">
+
+  <div class="row">
+    <a id="nav-icon">
+      <i class="icofont-laika navigationMenu" title="Navigation">&#xefa2;</i>
+    </a>
+    
+    <div class="menu-container version-menu">
+      <a class="text-link menu-toggle" href="#">Version 0.7</a>
+      <nav class="menu-content">
+        <ul class="nav-list">
+          <li class="level1 nav-leaf"><a href="../older-versions.html">Older Versions</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <a class="image-link" href="https://typelevel.org"><img src="https://typelevel.org/img/logo.svg"></a>
+
+  <div class="row links">
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>  
+
+</header>
+
+<nav id="sidebar">
+
+  <div class="row">
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>
+
+  
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="index.html">ldbc</a></li>
+    <li class="level1 active nav-leaf"><a href="#">マイグレーションノート</a></li>
+    <li class="level1 nav-header">チュートリアル</li>
+    <li class="level2 nav-leaf"><a href="tutorial/">はじめに</a></li>
+    <li class="level2 nav-leaf"><a href="tutorial/Setup.html">セットアップ</a></li>
+    <li class="level2 nav-leaf"><a href="tutorial/Connection.html">コネクション</a></li>
+    <li class="level2 nav-leaf"><a href="tutorial/Simple-Program.html">シンプルプログラム</a></li>
+    <li class="level2 nav-leaf"><a href="tutorial/Database-Operations.html">データベース操作</a></li>
+    <li class="level2 nav-leaf"><a href="tutorial/Parameterized-Queries.html">パラメータ</a></li>
+    <li class="level2 nav-leaf"><a href="tutorial/Selecting-Data.html">データ選択</a></li>
+    <li class="level2 nav-leaf"><a href="tutorial/Updating-Data.html">データ更新</a></li>
+    <li class="level2 nav-leaf"><a href="tutorial/Error-Handling.html">エラーハンドリング</a></li>
+    <li class="level2 nav-leaf"><a href="tutorial/Logging.html">ロギング</a></li>
+    <li class="level2 nav-leaf"><a href="tutorial/Custom-Data-Type.html">カスタム データ型</a></li>
+    <li class="level2 nav-leaf"><a href="tutorial/Query-Builder.html">クエリビルダー</a></li>
+    <li class="level2 nav-leaf"><a href="tutorial/Schema.html">スキーマ</a></li>
+    <li class="level2 nav-leaf"><a href="tutorial/Schema-Code-Generation.html">スキーマコード生成</a></li>
+    <li class="level1 nav-header">Examples</li>
+    <li class="level2 nav-leaf"><a href="examples/">はじめに</a></li>
+    <li class="level2 nav-leaf"><a href="examples/Http4s.html">Http4s</a></li>
+    <li class="level2 nav-leaf"><a href="examples/HikariCP.html">HikariCP</a></li>
+    <li class="level2 nav-leaf"><a href="examples/Otel.html">OpenTelemetry</a></li>
+    <li class="level1 nav-header">QA</li>
+    <li class="level2 nav-leaf"><a href="qa/">はじめに</a></li>
+    <li class="level2 nav-leaf"><a href="qa/What-is-ldbc.html">Q: ldbcとは何ですか？</a></li>
+    <li class="level2 nav-leaf"><a href="qa/Which-dependencies-should-I-set.html">Q: どの依存関係を設定すればよいですか？</a></li>
+    <li class="level2 nav-leaf"><a href="qa/What-is-the-difference-between-a-Java-connect-and-a-Scala-connector.html">Q: JavaのコネクトとScalaのコネクタの違いは何ですか？</a></li>
+    <li class="level2 nav-leaf"><a href="qa/How-to-define-complex-queries-with-plain-queries.html">Q: プレーンクエリで複雑なクエリを定義する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="qa/How-do-I-use-my-own-type.html">Q: 独自の型を使うにはどうすればいいですか？</a></li>
+    <li class="level2 nav-leaf"><a href="qa/How-do-I-use-nested-models.html">Q: ネストしたモデルを使うにはどうすればいいですか？</a></li>
+    <li class="level2 nav-leaf"><a href="qa/How-to-perform-DDL-with-schema.html">Q: スキーマを使用したDDLを実行する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="qa/How-to-change-column-names-in-Query-Builder.html">Q: クエリビルダーでカラム名を変更する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="qa/How-to-change-the-format-of-column-names-using-the-schema.html">Q: スキーマを使用したカラム名のフォーマットを変更する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="qa/How-do-I-add-processing-before-and-after-the-connection-is-established.html">Q: コネクション確立の前後に処理を追加する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="qa/Implicit-search-problem-too-large.html">Q: `Implicit search problem too large.`が発生する場合の対処方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="qa/How-to-use-scala-connector-connection-pool.html">Q: Scalaコネクタでコネクションプールを使用する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="qa/Is-there-a-way-to-stream-query-results-asynchronously.html">Q: クエリの結果を非同期でストリーミングする方法はありますか？</a></li>
+    <li class="level2 nav-leaf"><a href="qa/Is-there-a-function-to-limit-the-number-of-concurrent-queries.html">Q: 同時実行のクエリ数を制限する機能はありますか？</a></li>
+    <li class="level2 nav-leaf"><a href="qa/How-to-handle-multiple-databases.html">Q: 複数のデータベース（マルチテナント環境）を扱う方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="qa/How-to-use-with-ZIO.html">Q: ZIOで使用する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="qa/How-do-I-use-the-Enum-type.html">Q: Enum型の使い方は？</a></li>
+    <li class="level1 nav-header">Reference</li>
+    <li class="level2 nav-leaf"><a href="reference/">はじめに</a></li>
+    <li class="level2 nav-leaf"><a href="reference/Connector.html">コネクタ</a></li>
+    <li class="level2 nav-leaf"><a href="reference/Performance.html">パフォーマンス</a></li>
+    <li class="level2 nav-leaf"><a href="reference/AuthenticationPlugin.html">認証プラグイン</a></li>
+    <li class="level2 nav-leaf"><a href="reference/Telemetry.html">テレメトリ</a></li>
+    <li class="level2 nav-leaf"><a href="reference/Pooling.html">コネクションプーリング</a></li>
+  </ul>
+  
+
+</nav>
+
+<div id="container">
+
+  
+<nav id="page-nav">
+  <p class="header"><a href="#">マイグレーションノート</a></p>
+
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="#パッケージ">パッケージ</a></li>
+    <li class="level1 nav-node"><a href="#主要な変更点">🎯 主要な変更点</a></li>
+    <li class="level2 nav-leaf"><a href="#_1-テスト用モジュールの追加">1. テスト用モジュールの追加</a></li>
+    <li class="level2 nav-leaf"><a href="#_2-dsl-ヘルパー関数の追加">2. DSL ヘルパー関数の追加</a></li>
+    <li class="level2 nav-leaf"><a href="#_3-opentelemetry-セマンティクス属性の型安全api移行">3. OpenTelemetry セマンティクス属性の型安全API移行</a></li>
+    <li class="level2 nav-leaf"><a href="#_4-scala-native-対応の強化">4. Scala Native 対応の強化</a></li>
+    <li class="level2 nav-leaf"><a href="#_5-コードジェネレーターの-yaml-パーサ移行">5. コードジェネレーターの YAML パーサ移行</a></li>
+    <li class="level1 nav-node"><a href="#破壊的変更">破壊的変更</a></li>
+    <li class="level2 nav-leaf"><a href="#java-11-のサポート廃止">Java 11 のサポート廃止</a></li>
+    <li class="level2 nav-leaf"><a href="#scala-バージョンの更新">Scala バージョンの更新</a></li>
+    <li class="level1 nav-leaf"><a href="#非推奨api">非推奨API</a></li>
+    <li class="level1 nav-node"><a href="#移行ガイド">移行ガイド</a></li>
+    <li class="level2 nav-leaf"><a href="#sc-を-ident-に置き換える"><code>sc()</code> を <code>ident()</code> に置き換える</a></li>
+    <li class="level2 nav-leaf"><a href="#connection-fromsocketgroup-を-fromnetwork-に置き換える"><code>Connection.fromSocketGroup</code> を <code>fromNetwork</code> に置き換える</a></li>
+    <li class="level2 nav-leaf"><a href="#ssl-fromkeystorefile-のパス型を変更する"><code>SSL.fromKeyStoreFile</code> のパス型を変更する</a></li>
+    <li class="level2 nav-leaf"><a href="#テスト用モジュールを導入する">テスト用モジュールを導入する</a></li>
+    <li class="level1 nav-leaf"><a href="#まとめ">まとめ</a></li>
+  </ul>
+
+  <p class="footer"></p>
+</nav>
+
+
+  <main class="content">
+
+    <h1 id="マイグレーションノート-0-6-xから0-7-xへの移行" class="title">マイグレーションノート (0.6.xから0.7.xへの移行)</h1>
+    
+    <h2 id="パッケージ" class="section"><a class="anchor-link left" href="#パッケージ"><i class="icofont-laika link">&#xef71;</i></a>パッケージ</h2>
+    <p><strong>全てのパッケージ</strong></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Module / Platform</th>
+          <th>JVM</th>
+          <th>Scala Native</th>
+          <th>Scala.js</th>
+          <th>Scaladoc</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>ldbc-sql</code></td>
+          <td>✅</td>
+          <td>✅</td>
+          <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-sql_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+        <tr>
+          <td><code>ldbc-core</code></td>
+          <td>✅</td>
+          <td>✅</td>
+          <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-core_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+        <tr>
+          <td><code>ldbc-connector</code></td>
+          <td>✅</td>
+          <td>✅</td>
+          <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-connector_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+        <tr>
+          <td><code>jdbc-connector</code></td>
+          <td>✅</td>
+          <td>❌</td>
+          <td>❌</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/jdbc-connector_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+        <tr>
+          <td><code>ldbc-dsl</code></td>
+          <td>✅</td>
+          <td>✅</td>
+          <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+        <tr>
+          <td><code>ldbc-statement</code></td>
+          <td>✅</td>
+          <td>✅</td>
+          <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-statement_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+        <tr>
+          <td><code>ldbc-query-builder</code></td>
+          <td>✅</td>
+          <td>✅</td>
+          <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-query-builder_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+        <tr>
+          <td><code>ldbc-schema</code></td>
+          <td>✅</td>
+          <td>✅</td>
+          <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-schema_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+        <tr>
+          <td><code>ldbc-codegen</code></td>
+          <td>✅</td>
+          <td>✅</td>
+          <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-codegen_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+        <tr>
+          <td><code>ldbc-plugin</code></td>
+          <td>✅</td>
+          <td>❌</td>
+          <td>❌</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-plugin_2.12_1.0"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+        <tr>
+          <td><code>ldbc-testkit</code></td>
+          <td>✅</td>
+          <td>✅</td>
+          <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-testkit_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+        <tr>
+          <td><code>ldbc-testkit-munit</code></td>
+          <td>✅</td>
+          <td>✅</td>
+          <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-testkit-munit_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+        <tr>
+          <td><code>ldbc-zio-interop</code></td>
+          <td>✅</td>
+          <td>❌</td>
+          <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-zio-interop_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+        <tr>
+          <td><code>ldbc-authentication-plugin</code></td>
+          <td>✅</td>
+          <td>✅</td>
+          <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-authentication-plugin_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+        <tr>
+          <td><code>ldbc-aws-authentication-plugin</code></td>
+          <td>✅</td>
+          <td>✅</td>
+          <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-aws-authentication-plugin_3"><img src="https://img.shields.io/badge/javadoc-0.7.1-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <h2 id="主要な変更点" class="section"><a class="anchor-link left" href="#主要な変更点"><i class="icofont-laika link">&#xef71;</i></a>🎯 主要な変更点</h2>
+    
+    <h3 id="_1-テスト用モジュールの追加" class="section"><a class="anchor-link left" href="#_1-テスト用モジュールの追加"><i class="icofont-laika link">&#xef71;</i></a>1. テスト用モジュールの追加</h3>
+    <p>0.7.0 ではデータベーステストを簡単に書くための専用モジュールが2つ追加されました。</p>
+    
+    <h4 id="ldbc-testkit" class="section"><a class="anchor-link left" href="#ldbc-testkit"><i class="icofont-laika link">&#xef71;</i></a>ldbc-testkit</h4>
+    <p>フレームワークに依存しない <code>ldbc-testkit</code> モジュールが追加されました。テスト終了時に自動でロールバックする仕組みを提供します。</p>
+    <p><strong><code>RollbackHandler</code></strong>: テスト終了後に全変更を自動ロールバックする <code>Connector</code> を <code>Resource</code> として提供します。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">testkit</span><span>.</span><span class="type-name">RollbackHandler</span><span>
+
+</span><span class="type-name">RollbackHandler</span><span>.</span><span class="identifier">resource</span><span>[</span><span class="type-name">F</span><span>](</span><span class="identifier">dataSource</span><span>).</span><span class="identifier">use</span><span> { </span><span class="identifier">connector</span><span> =&gt;
+  </span><span class="comment">// このブロック内の全変更はテスト終了後にロールバックされる
+</span><span>  </span><span class="identifier">connector</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    </span><span class="identifier">conn</span><span>.</span><span class="identifier">executeUpdate</span><span>(</span><span class="string-literal">&quot;INSERT INTO users VALUES (1, &#39;Alice&#39;)&quot;</span><span>)
+  }
+}</span></code></pre>
+    <p><strong><code>TestConnection</code></strong>: <code>commit()</code> と <code>setAutoCommit(true)</code> をno-opにインターセプトし、テスト中の意図しないコミットを防止します。</p>
+    
+    <h4 id="ldbc-testkit-munit" class="section"><a class="anchor-link left" href="#ldbc-testkit-munit"><i class="icofont-laika link">&#xef71;</i></a>ldbc-testkit-munit</h4>
+    <p>MUnit との統合テストサポートを提供する <code>ldbc-testkit-munit</code> モジュールが追加されました。</p>
+    <p><strong><code>LdbcSuite</code></strong>: <code>CatsEffectSuite</code> を継承した ldbc テスト用基底トレイトです。</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">testkit</span><span>.</span><span class="identifier">munit</span><span>.</span><span class="type-name">LdbcSuite</span><span>
+
+</span><span class="keyword">class</span><span> </span><span class="type-name">MyDbTest</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">LdbcSuite</span><span> {
+
+  </span><span class="comment">// テスト終了後にロールバックされるテスト（DML操作向け）
+</span><span>  </span><span class="identifier">ephemeralTest</span><span>(</span><span class="string-literal">&quot;insert and query&quot;</span><span>) { </span><span class="identifier">conn</span><span> =&gt;
+    </span><span class="keyword">for</span><span>
+      </span><span class="identifier">_</span><span>     &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">executeUpdate</span><span>(</span><span class="string-literal">&quot;INSERT INTO users VALUES (1, &#39;Alice&#39;)&quot;</span><span>)
+      </span><span class="identifier">count</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">executeQuery</span><span>(</span><span class="string-literal">&quot;SELECT COUNT(*) FROM users&quot;</span><span>).</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">head</span><span>)
+    </span><span class="keyword">yield</span><span> </span><span class="identifier">assertCount</span><span>(</span><span class="identifier">count</span><span>, </span><span class="number-literal">1</span><span>)
+  }
+
+  </span><span class="comment">// 実際にコミットするテスト（DDL操作向け）
+</span><span>  </span><span class="identifier">persistentTest</span><span>(</span><span class="string-literal">&quot;create table&quot;</span><span>) { </span><span class="identifier">conn</span><span> =&gt;
+    </span><span class="identifier">conn</span><span>.</span><span class="identifier">executeUpdate</span><span>(</span><span class="string-literal">&quot;CREATE TABLE IF NOT EXISTS test_table (id INT)&quot;</span><span>)
+  }
+}</span></code></pre>
+    <p><strong>アサーションヘルパー一覧:</strong></p>
+    <table>
+      <thead>
+        <tr>
+          <th>メソッド</th>
+          <th>説明</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>assertCount(result, expected)</code></td>
+          <td>行数を検証する</td>
+        </tr>
+        <tr>
+          <td><code>assertEmpty(result)</code></td>
+          <td>結果が空であることを検証する</td>
+        </tr>
+        <tr>
+          <td><code>assertRowsUnordered(result, expected)</code></td>
+          <td>順序を問わず行を検証する</td>
+        </tr>
+        <tr>
+          <td><code>assertRowsOrdered(result, expected)</code></td>
+          <td>順序通りに行を検証する</td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <h3 id="_2-dsl-ヘルパー関数の追加" class="section"><a class="anchor-link left" href="#_2-dsl-ヘルパー関数の追加"><i class="icofont-laika link">&#xef71;</i></a>2. DSL ヘルパー関数の追加</h3>
+    <p><code>ldbc.dsl.syntax.HelperFunctionsSyntax</code> に以下の関数が追加されました。</p>
+    
+    <h4 id="ident-sql識別子の安全なエスケープ" class="section"><a class="anchor-link left" href="#ident-sql識別子の安全なエスケープ"><i class="icofont-laika link">&#xef71;</i></a><code>ident()</code> — SQL識別子の安全なエスケープ</h4>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">tableName</span><span> = </span><span class="string-literal">&quot;my_table&quot;</span><span>
+</span><span class="string-literal">sql&quot;SELECT * FROM </span><span class="substitution">${ident(tableName)}</span><span class="string-literal">&quot;</span><span>
+</span><span class="comment">// → SELECT * FROM `my_table`</span></code></pre>
+    <p>識別子をバッククォートで囲み、NUL文字を除去することで SQL インジェクションを防止します。</p>
+    
+    <h4 id="when-条件付きsql断片" class="section"><a class="anchor-link left" href="#when-条件付きsql断片"><i class="icofont-laika link">&#xef71;</i></a><code>when()</code> — 条件付きSQL断片</h4>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">limit</span><span> = </span><span class="number-literal">10</span><span>
+</span><span class="string-literal">sql&quot;SELECT * FROM users&quot;</span><span> ++ </span><span class="identifier">when</span><span>(</span><span class="identifier">limit</span><span> &gt; </span><span class="number-literal">0</span><span>)(</span><span class="string-literal">sql&quot; LIMIT </span><span class="substitution">$limit</span><span class="string-literal">&quot;</span><span>)</span></code></pre>
+    
+    <h4 id="paginate-ページネーションヘルパー" class="section"><a class="anchor-link left" href="#paginate-ページネーションヘルパー"><i class="icofont-laika link">&#xef71;</i></a><code>paginate()</code> — ページネーションヘルパー</h4>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// オフセットあり
+</span><span class="string-literal">sql&quot;SELECT * FROM users &quot;</span><span> ++ </span><span class="identifier">paginate</span><span>(</span><span class="identifier">limit</span><span> = </span><span class="number-literal">20</span><span>, </span><span class="identifier">offset</span><span> = </span><span class="number-literal">40</span><span>)
+</span><span class="comment">// → SELECT * FROM users LIMIT ? OFFSET ?
+</span><span>
+</span><span class="comment">// オフセットなし
+</span><span class="string-literal">sql&quot;SELECT * FROM users &quot;</span><span> ++ </span><span class="identifier">paginate</span><span>(</span><span class="identifier">limit</span><span> = </span><span class="number-literal">20</span><span>)
+</span><span class="comment">// → SELECT * FROM users LIMIT ?</span></code></pre>
+    <p><code>limit</code> または <code>offset</code> が負の値の場合は <code>IllegalArgumentException</code> をスローします。</p>
+    
+    <h3 id="_3-opentelemetry-セマンティクス属性の型安全api移行" class="section"><a class="anchor-link left" href="#_3-opentelemetry-セマンティクス属性の型安全api移行"><i class="icofont-laika link">&#xef71;</i></a>3. OpenTelemetry セマンティクス属性の型安全API移行</h3>
+    <p><code>TelemetryAttribute</code> の文字列定数が <code>otel4s-semconv</code> ライブラリの型安全な API に移行されました。これは内部実装の変更のため、ユーザーコードへの直接的な影響はありません。</p>
+    <p><strong>移行前 (0.6.x) — 内部実装:</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="type-name">TelemetryAttribute</span><span>.</span><span class="identifier">dbSystemName</span><span>
+</span><span class="type-name">TelemetryAttribute</span><span>.</span><span class="identifier">serverAddress</span><span>(</span><span class="identifier">host</span><span>)
+</span><span class="type-name">TelemetryAttribute</span><span>.</span><span class="identifier">dbNamespace</span><span>(</span><span class="identifier">db</span><span>)
+</span><span class="type-name">TelemetryAttribute</span><span>.</span><span class="identifier">dbOperationName</span><span>(</span><span class="identifier">op</span><span>)
+</span><span class="type-name">TelemetryAttribute</span><span>.</span><span class="identifier">dbQueryText</span><span>(</span><span class="identifier">sql</span><span>)</span></code></pre>
+    <p><strong>移行後 (0.7.x) — 内部実装:</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="type-name">DbAttributes</span><span>.</span><span class="type-name">DbSystemName</span><span>(</span><span class="type-name">DbAttributes</span><span>.</span><span class="type-name">DbSystemNameValue</span><span>.</span><span class="type-name">Mysql</span><span>.</span><span class="identifier">value</span><span>)
+</span><span class="type-name">ServerAttributes</span><span>.</span><span class="type-name">ServerAddress</span><span>(</span><span class="identifier">host</span><span>)
+</span><span class="type-name">DbAttributes</span><span>.</span><span class="type-name">DbNamespace</span><span>(</span><span class="identifier">db</span><span>)
+</span><span class="type-name">DbAttributes</span><span>.</span><span class="type-name">DbOperationName</span><span>(</span><span class="identifier">op</span><span>)
+</span><span class="type-name">DbAttributes</span><span>.</span><span class="type-name">DbQueryText</span><span>(</span><span class="identifier">sql</span><span>)</span></code></pre>
+    <p><code>TelemetryAttribute</code> に引き続き残るのは MySQL 固有の属性（<code>DB_MYSQL_VERSION</code>、<code>DB_MYSQL_THREAD_ID</code>、<code>DB_MYSQL_AUTH_PLUGIN</code>）と <code>SqlOperation</code> オブジェクトのみです。</p>
+    
+    <h3 id="_4-scala-native-対応の強化" class="section"><a class="anchor-link left" href="#_4-scala-native-対応の強化"><i class="icofont-laika link">&#xef71;</i></a>4. Scala Native 対応の強化</h3>
+    <p><code>sbt-scala-native</code> を <code>0.4.17</code> から <code>0.5.10</code> へアップグレードしました。Scala Native 0.5 系ではマルチスレッドが正式にサポートされたことにより、ldbc の Scala Native 対応が大きく前進しています。</p>
+    
+    <h4 id="scala-native-0-5-でのマルチスレッドサポート" class="section"><a class="anchor-link left" href="#scala-native-0-5-でのマルチスレッドサポート"><i class="icofont-laika link">&#xef71;</i></a>Scala Native 0.5 でのマルチスレッドサポート</h4>
+    <p>Scala Native 0.4 系ではシングルスレッド実行のみサポートされていましたが、0.5 系では <strong>真のマルチスレッド実行</strong> が可能になりました。</p>
+    <p>Cats Effect 3.7.0 はこの変更に対応し、JVM 向けの <code>WorkStealingThreadPool</code> と <code>IORuntime</code> を Scala Native 0.5 向けにポートしています。これにより、以下の機能が Scala Native でも利用可能になりました。</p>
+    <ul>
+      <li><strong><code>WorkStealingThreadPool</code></strong>: JVM と同等のワークスチールスレッドプールが Native 上で動作</li>
+      <li><strong>epoll / kqueue サポート</strong>: Linux では <code>epoll</code>、macOS/BSD では <code>kqueue</code> を使ったノンブロッキング I/O ポーリング</li>
+      <li><strong><code>IORuntime</code> の完全対応</strong>: Fiber スケジューリングが JVM とほぼ同等に動作</li>
+    </ul>
+    
+    <h4 id="fiber-モデルと-threadlocal-の非互換性" class="section"><a class="anchor-link left" href="#fiber-モデルと-threadlocal-の非互換性"><i class="icofont-laika link">&#xef71;</i></a>Fiber モデルと ThreadLocal の非互換性</h4>
+    <p>Cats Effect の Fiber はスレッド間を自由に移動するため、Java の <code>ThreadLocal</code> をコネクションプールのキャッシュに使う HikariCP 流のアプローチは適用できません。ldbc のコネクションプール実装（<code>ConcurrentBag</code>）はこの制約を考慮し、<code>Ref[F, ...]</code> と <code>Queue[F, ...]</code> を使ったロックフリーな共有データ構造を採用しています。</p>
+    
+    <h3 id="_5-コードジェネレーターの-yaml-パーサ移行" class="section"><a class="anchor-link left" href="#_5-コードジェネレーターの-yaml-パーサ移行"><i class="icofont-laika link">&#xef71;</i></a>5. コードジェネレーターの YAML パーサ移行</h3>
+    <p>JS/Native 向けの YAML パーサを <code>circe-scala-yaml</code>（armanbilge）から <code>scala-yaml</code>（VirtusLab）に移行しました。コードジェネレーターを使用しているユーザーへの API 変更はありません。</p>
+    
+    <h2 id="破壊的変更" class="section"><a class="anchor-link left" href="#破壊的変更"><i class="icofont-laika link">&#xef71;</i></a>破壊的変更</h2>
+    
+    <h3 id="java-11-のサポート廃止" class="section"><a class="anchor-link left" href="#java-11-のサポート廃止"><i class="icofont-laika link">&#xef71;</i></a>Java 11 のサポート廃止</h3>
+    <p>Java 11（corretto@11）のサポートが廃止されました。</p>
+    <p><strong>サポート対象の Java バージョン:</strong> 17、21、25</p>
+    
+    <h3 id="scala-バージョンの更新" class="section"><a class="anchor-link left" href="#scala-バージョンの更新"><i class="icofont-laika link">&#xef71;</i></a>Scala バージョンの更新</h3>
+    <p>クロスビルド対象が Scala 3.7.x から <strong>Scala 3.8.x</strong> に変更されました。</p>
+    <table>
+      <thead>
+        <tr>
+          <th></th>
+          <th>変更前 (0.6.x)</th>
+          <th>変更後 (0.7.x)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Scala バージョン</td>
+          <td>3.7.4</td>
+          <td>3.8.3</td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <h2 id="非推奨api" class="section"><a class="anchor-link left" href="#非推奨api"><i class="icofont-laika link">&#xef71;</i></a>非推奨API</h2>
+    <p>以下の API が 0.7.0 で非推奨になりました。将来のバージョンで削除される予定です。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>API</th>
+          <th>非推奨バージョン</th>
+          <th>代替</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>sc(identifier)</code></td>
+          <td>0.7.0</td>
+          <td><code>ident(identifier)</code></td>
+        </tr>
+        <tr>
+          <td><code>Connection.fromSocketGroup(...)</code></td>
+          <td>0.7.0</td>
+          <td><code>Connection.fromNetwork(...)</code></td>
+        </tr>
+        <tr>
+          <td><code>SSL.fromKeyStoreFile(java.nio.file.Path, ...)</code></td>
+          <td>0.7.0</td>
+          <td><code>SSL.fromKeyStoreFile(fs2.io.file.Path, ...)</code></td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <h2 id="移行ガイド" class="section"><a class="anchor-link left" href="#移行ガイド"><i class="icofont-laika link">&#xef71;</i></a>移行ガイド</h2>
+    
+    <h3 id="sc-を-ident-に置き換える" class="section"><a class="anchor-link left" href="#sc-を-ident-に置き換える"><i class="icofont-laika link">&#xef71;</i></a><code>sc()</code> を <code>ident()</code> に置き換える</h3>
+    <p><code>sc()</code> 関数は非推奨になりました。<code>ident()</code> に移行してください。</p>
+    <p><strong>移行前 (0.6.x):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="string-literal">sql&quot;SELECT * FROM </span><span class="substitution">${sc(tableName)}</span><span class="string-literal">&quot;</span></code></pre>
+    <p><strong>移行後 (0.7.x):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="string-literal">sql&quot;SELECT * FROM </span><span class="substitution">${ident(tableName)}</span><span class="string-literal">&quot;</span><span>
+</span><span class="comment">// → SELECT * FROM `tableName`</span></code></pre>
+    <p><code>ident()</code> は識別子をバッククォートで囲むため、テーブル名やカラム名の SQL インジェクション対策として安全です。</p>
+    
+    <h3 id="connection-fromsocketgroup-を-fromnetwork-に置き換える" class="section"><a class="anchor-link left" href="#connection-fromsocketgroup-を-fromnetwork-に置き換える"><i class="icofont-laika link">&#xef71;</i></a><code>Connection.fromSocketGroup</code> を <code>fromNetwork</code> に置き換える</h3>
+    <p><strong>移行前 (0.6.x):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="type-name">Connection</span><span>.</span><span class="identifier">fromSocketGroup</span><span>(</span><span class="identifier">socketGroup</span><span>, </span><span class="identifier">host</span><span>, </span><span class="identifier">port</span><span>, </span><span class="identifier">user</span><span>, </span><span class="identifier">password</span><span>, </span><span class="identifier">database</span><span>)</span></code></pre>
+    <p><strong>移行後 (0.7.x):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="type-name">Connection</span><span>.</span><span class="identifier">fromNetwork</span><span>(</span><span class="identifier">network</span><span>, </span><span class="identifier">host</span><span>, </span><span class="identifier">port</span><span>, </span><span class="identifier">user</span><span>, </span><span class="identifier">password</span><span>, </span><span class="identifier">database</span><span>)</span></code></pre>
+    
+    <h3 id="ssl-fromkeystorefile-のパス型を変更する" class="section"><a class="anchor-link left" href="#ssl-fromkeystorefile-のパス型を変更する"><i class="icofont-laika link">&#xef71;</i></a><code>SSL.fromKeyStoreFile</code> のパス型を変更する</h3>
+    <p><strong>移行前 (0.6.x):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">nio</span><span>.</span><span class="identifier">file</span><span>.</span><span class="type-name">Paths</span><span>
+
+</span><span class="type-name">SSL</span><span>.</span><span class="identifier">fromKeyStoreFile</span><span>(</span><span class="type-name">Paths</span><span>.</span><span class="identifier">get</span><span>(</span><span class="string-literal">&quot;/path/to/keystore&quot;</span><span>), </span><span class="identifier">password</span><span>, </span><span class="identifier">keyPassword</span><span>)</span></code></pre>
+    <p><strong>移行後 (0.7.x):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">fs2</span><span>.</span><span class="identifier">io</span><span>.</span><span class="identifier">file</span><span>.</span><span class="type-name">Path</span><span>
+
+</span><span class="type-name">SSL</span><span>.</span><span class="identifier">fromKeyStoreFile</span><span>(</span><span class="type-name">Path</span><span>(</span><span class="string-literal">&quot;/path/to/keystore&quot;</span><span>), </span><span class="identifier">password</span><span>, </span><span class="identifier">keyPassword</span><span>)</span></code></pre>
+    
+    <h3 id="テスト用モジュールを導入する" class="section"><a class="anchor-link left" href="#テスト用モジュールを導入する"><i class="icofont-laika link">&#xef71;</i></a>テスト用モジュールを導入する</h3>
+    <p>既存のロールバック処理を <code>ldbc-testkit</code> に移行できます。</p>
+    <p><strong><code>build.sbt</code> に依存関係を追加:</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// フレームワーク非依存
+</span><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-testkit&quot;</span><span> % </span><span class="string-literal">&quot;0.7.1&quot;</span><span> % </span><span class="type-name">Test</span><span>
+
+</span><span class="comment">// MUnit 統合
+</span><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-testkit-munit&quot;</span><span> % </span><span class="string-literal">&quot;0.7.1&quot;</span><span> % </span><span class="type-name">Test</span></code></pre>
+    <p><strong>移行後 (0.7.x):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">testkit</span><span>.</span><span class="identifier">munit</span><span>.</span><span class="type-name">LdbcSuite</span><span>
+
+</span><span class="keyword">class</span><span> </span><span class="type-name">UserRepositoryTest</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">LdbcSuite</span><span> {
+
+  </span><span class="identifier">ephemeralTest</span><span>(</span><span class="string-literal">&quot;ユーザーを作成できる&quot;</span><span>) { </span><span class="identifier">conn</span><span> =&gt;
+    </span><span class="keyword">for</span><span>
+      </span><span class="identifier">_</span><span>     &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">executeUpdate</span><span>(</span><span class="string-literal">&quot;INSERT INTO users (name) VALUES (&#39;Alice&#39;)&quot;</span><span>)
+      </span><span class="identifier">count</span><span> &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">executeQuery</span><span>(</span><span class="string-literal">&quot;SELECT COUNT(*) FROM users&quot;</span><span>).</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">head</span><span>)
+    </span><span class="keyword">yield</span><span> </span><span class="identifier">assertCount</span><span>(</span><span class="identifier">count</span><span>, </span><span class="number-literal">1</span><span>)
+  }
+}</span></code></pre>
+    
+    <h2 id="まとめ" class="section"><a class="anchor-link left" href="#まとめ"><i class="icofont-laika link">&#xef71;</i></a>まとめ</h2>
+    <p>0.7.x への移行により、以下のメリットが得られます：</p>
+    <ol class="arabic">
+      <li><strong>テスト専用モジュール</strong>: <code>ldbc-testkit</code> と <code>ldbc-testkit-munit</code> により、自動ロールバックや MUnit 統合テストが簡単に書けるようになる</li>
+      <li><strong>DSL ヘルパーの充実</strong>: <code>ident()</code>、<code>when()</code>、<code>paginate()</code> により安全で読みやすい SQL 構築が可能</li>
+      <li><strong>OpenTelemetry の型安全化</strong>: セマンティクス属性ライブラリへの移行により、内部実装の堅牢性が向上</li>
+      <li><strong>Scala Native 対応の強化</strong>: <code>sbt-scala-native 0.5.x</code> 系へのアップグレードにより、クロスプラットフォームサポートが改善</li>
+    </ol>
+    <p>ユーザーコードへの影響は主に非推奨APIの移行（<code>sc()</code> → <code>ident()</code>、<code>fromSocketGroup</code> → <code>fromNetwork</code>）と Java/Scala バージョン要件の更新です。</p>
+
+    
+
+  </main>
+
+</div>
+
+</body>
+
+</html>

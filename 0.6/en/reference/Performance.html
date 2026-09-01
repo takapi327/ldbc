@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="Typelevel Laika + Helium Theme" />
+  <title>Performance</title>
+  
+  <meta name="author" content="Takahiko Tominaga"/>
+  
+  
+  <meta name="description" content="Documentation for ldbc"/>
+  
+  
+  
+  <link rel="icon" sizes="32x32" type="image/png" href="https://typelevel.org/img/favicon.png"/>
+  
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700">
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Mono:500">
+  
+  <link rel="stylesheet" type="text/css" href="../../helium/site/icofont.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../helium/site/laika-helium.css" />
+    <link rel="stylesheet" type="text/css" href="../../css/site.css" />
+  <script src="../../helium/site/laika-helium.js"></script>
+    <script src="../../helium/site/laika-versions.js"></script>
+  <script>initVersions("../../../", "/en/reference/Performance.html", "0.6", null);</script>
+  
+  <script> /* for avoiding page load transitions */ </script>
+</head>
+
+<body>
+
+<header id="top-bar" class="light-default dark-default">
+
+  <div class="row">
+    <a id="nav-icon">
+      <i class="icofont-laika navigationMenu" title="Navigation">&#xefa2;</i>
+    </a>
+    
+    <div class="menu-container version-menu">
+      <a class="text-link menu-toggle" href="#">Version 0.6</a>
+      <nav class="menu-content">
+        <ul class="nav-list">
+          <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <a class="image-link" href="https://typelevel.org"><img src="https://typelevel.org/img/logo.svg"></a>
+
+  <div class="row links">
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>  
+
+</header>
+
+<nav id="sidebar">
+
+  <div class="row">
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>
+
+  
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="../">ldbc</a></li>
+    <li class="level1 nav-leaf"><a href="../migration-notes.html">Migration Notes</a></li>
+    <li class="level1 nav-header">Tutorial</li>
+    <li class="level2 nav-leaf"><a href="../tutorial/">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Setup.html">Setup</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Connection.html">Connection</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Simple-Program.html">Simple Programs</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Database-Operations.html">Database Operations</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Parameterized-Queries.html">Parameterized Queries</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Selecting-Data.html">Selecting Data</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Updating-Data.html">Updating Data</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Error-Handling.html">Error Handling</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Logging.html">logging</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Custom-Data-Type.html">Custom Data Types</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Query-Builder.html">Query Builder</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Schema.html">Schema</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Schema-Code-Generation.html">Schema Code Generation</a></li>
+    <li class="level1 nav-header">Examples</li>
+    <li class="level2 nav-leaf"><a href="../examples/">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/Http4s.html">Http4s</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/HikariCP.html">HikariCP</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/Otel.html">OpenTelemetry</a></li>
+    <li class="level1 nav-header">QA</li>
+    <li class="level2 nav-leaf"><a href="../qa/">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/What-is-ldbc.html">Q: What is ldbc?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Which-dependencies-should-I-set.html">Q: Which dependencies should I set?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/What-is-the-difference-between-a-Java-connect-and-a-Scala-connector.html">Q: What is the difference between a Java connector and a Scala connector?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-define-complex-queries-with-plain-queries.html">Q: How to define complex queries with plain queries?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-my-own-type.html">Q: How do I use my own type?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-nested-models.html">Q: How do I use nested models?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-perform-DDL-with-schema.html">Q: How to perform DDL with schema?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-change-column-names-in-Query-Builder.html">Q: How to change column names in Query Builder?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-change-the-format-of-column-names-using-the-schema.html">Q: How to change the format of column names using the schema?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-add-processing-before-and-after-the-connection-is-established.html">Q: How do I add processing before and after the connection is established?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Implicit-search-problem-too-large.html">Q: How to handle the `Implicit search problem too large.` error?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-use-scala-connector-connection-pool.html">Q: How to use connection pool with Scala connector?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Is-there-a-way-to-stream-query-results-asynchronously.html">Q: Is there a way to stream query results asynchronously?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Is-there-a-function-to-limit-the-number-of-concurrent-queries.html">Q: Is there a function to limit the number of concurrent queries?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-handle-multiple-databases.html">Q: How to handle multiple databases (multi-tenant environment)?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-use-with-ZIO.html">Q: How to use with ZIO?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-the-Enum-type.html">Q: How to use the Enum type?</a></li>
+    <li class="level1 nav-header">Reference</li>
+    <li class="level2 nav-leaf"><a href="index.html">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="Connector.html">Connector</a></li>
+    <li class="level2 active nav-leaf"><a href="#">Performance</a></li>
+    <li class="level2 nav-leaf"><a href="AuthenticationPlugin.html">Authentication Plugin</a></li>
+    <li class="level2 nav-leaf"><a href="Telemetry.html">Telemetry</a></li>
+    <li class="level2 nav-leaf"><a href="Pooling.html">Connection pooling</a></li>
+  </ul>
+  
+
+</nav>
+
+<div id="container">
+
+  
+<nav id="page-nav">
+  <p class="header"><a href="#">Performance</a></p>
+
+  <ul class="nav-list">
+    <li class="level1 nav-node"><a href="#executive-summary">Executive Summary</a></li>
+    <li class="level2 nav-leaf"><a href="#key-findings">Key Findings</a></li>
+    <li class="level1 nav-node"><a href="#benchmark-environment">Benchmark Environment</a></li>
+    <li class="level2 nav-leaf"><a href="#hardware-and-software-environment">Hardware and Software Environment</a></li>
+    <li class="level2 nav-leaf"><a href="#jmh-benchmark-configuration">JMH Benchmark Configuration</a></li>
+    <li class="level2 nav-leaf"><a href="#test-conditions">Test Conditions</a></li>
+    <li class="level2 nav-leaf"><a href="#ldbc-specific-configuration">ldbc-specific Configuration</a></li>
+    <li class="level2 nav-leaf"><a href="#jdbc-specific-configuration">jdbc-specific Configuration</a></li>
+    <li class="level1 nav-node"><a href="#performance-comparison-by-thread-count">Performance Comparison by Thread Count</a></li>
+    <li class="level2 nav-leaf"><a href="#single-thread-environment">Single Thread Environment</a></li>
+    <li class="level2 nav-leaf"><a href="#_2-thread-environment">2 Thread Environment</a></li>
+    <li class="level2 nav-leaf"><a href="#_4-thread-environment">4 Thread Environment</a></li>
+    <li class="level2 nav-leaf"><a href="#_8-thread-environment">8 Thread Environment</a></li>
+    <li class="level2 nav-leaf"><a href="#_16-thread-environment">16 Thread Environment</a></li>
+    <li class="level1 nav-node"><a href="#technical-analysis">Technical Analysis</a></li>
+    <li class="level2 nav-leaf"><a href="#cats-effect-performance-characteristics">Cats Effect Performance Characteristics</a></li>
+    <li class="level2 nav-leaf"><a href="#concurrency-model-differences">Concurrency Model Differences</a></li>
+    <li class="level2 nav-leaf"><a href="#network-i-o-implementation">Network I/O Implementation</a></li>
+    <li class="level2 nav-leaf"><a href="#memory-efficiency-and-gc-pressure">Memory Efficiency and GC Pressure</a></li>
+    <li class="level1 nav-node"><a href="#usage-recommendations-by-scenario">Usage Recommendations by Scenario</a></li>
+    <li class="level2 nav-leaf"><a href="#when-to-choose-ldbc">When to Choose ldbc</a></li>
+    <li class="level2 nav-leaf"><a href="#when-to-choose-jdbc">When to Choose jdbc</a></li>
+    <li class="level1 nav-node"><a href="#performance-tuning">Performance Tuning</a></li>
+    <li class="level2 nav-leaf"><a href="#cats-effect-best-practices">Cats Effect Best Practices</a></li>
+    <li class="level2 nav-leaf"><a href="#ldbc-optimization-settings">ldbc Optimization Settings</a></li>
+    <li class="level2 nav-leaf"><a href="#thread-pool-configuration">Thread Pool Configuration</a></li>
+    <li class="level1 nav-node"><a href="#conclusion">Conclusion</a></li>
+    <li class="level2 nav-leaf"><a href="#benefits-from-cats-effect-optimization">Benefits from Cats Effect Optimization</a></li>
+  </ul>
+
+  <p class="footer"></p>
+</nav>
+
+
+  <main class="content">
+
+    <h1 id="performance" class="title">Performance</h1>
+    <p>This document provides a detailed analysis of the performance characteristics between ldbc and jdbc, helping you understand when and why to choose ldbc based on technical considerations.</p>
+    
+    <h2 id="executive-summary" class="section"><a class="anchor-link left" href="#executive-summary"><i class="icofont-laika link">&#xef71;</i></a>Executive Summary</h2>
+    <p>Benchmark results show that ldbc demonstrates approximately 1.8-2.1x higher throughput compared to jdbc. This advantage stems from Cats Effect&#39;s Fiber-based concurrency model and non-blocking I/O implementation. ldbc particularly excels in high-concurrency environments with superior scalability.</p>
+    
+    <h3 id="key-findings" class="section"><a class="anchor-link left" href="#key-findings"><i class="icofont-laika link">&#xef71;</i></a>Key Findings</h3>
+    <ol class="arabic">
+      <li><strong>Performance</strong>: ldbc is ~2x faster than jdbc (8-thread environment)</li>
+      <li><strong>Scalability</strong>: ldbc achieves near-linear scaling with increased thread count</li>
+      <li><strong>Resource Efficiency</strong>: Significantly reduced memory usage (Fiber: 500 bytes vs OS Thread: 1MB)</li>
+      <li><strong>Latency</strong>: Maintains stable response times even under high load</li>
+    </ol>
+    
+    <h2 id="benchmark-environment" class="section"><a class="anchor-link left" href="#benchmark-environment"><i class="icofont-laika link">&#xef71;</i></a>Benchmark Environment</h2>
+    
+    <h3 id="hardware-and-software-environment" class="section"><a class="anchor-link left" href="#hardware-and-software-environment"><i class="icofont-laika link">&#xef71;</i></a>Hardware and Software Environment</h3>
+    <ul>
+      <li><strong>JDK</strong>: Amazon Corretto 21.0.6</li>
+      <li><strong>JVM</strong>: OpenJDK 64-Bit Server VM (21.0.6+7-LTS)</li>
+      <li><strong>Memory</strong>: 4GB (Heap size: -Xms4G -Xmx4G)</li>
+      <li><strong>GC</strong>: G1GC (-XX:+UseG1GC -XX:MaxGCPauseMillis=200)</li>
+      <li><strong>MySQL</strong>: Version 8.4.0 (Docker environment)</li>
+    </ul>
+    <ul>
+      <li>Port: 13306</li>
+    </ul>
+    <ul>
+      <li>User: ldbc</li>
+    </ul>
+    <ul>
+      <li>Password: password</li>
+    </ul>
+    
+    <h3 id="jmh-benchmark-configuration" class="section"><a class="anchor-link left" href="#jmh-benchmark-configuration"><i class="icofont-laika link">&#xef71;</i></a>JMH Benchmark Configuration</h3>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="annotation">@BenchmarkMode</span><span>(</span><span class="type-name">Array</span><span>(</span><span class="type-name">Mode</span><span>.</span><span class="type-name">Throughput</span><span>))      </span><span class="comment">// Throughput measurement
+</span><span class="annotation">@OutputTimeUnit</span><span>(</span><span class="type-name">TimeUnit</span><span>.</span><span class="type-name">SECONDS</span><span>)           </span><span class="comment">// Output in ops/s
+</span><span class="annotation">@State</span><span>(</span><span class="type-name">Scope</span><span>.</span><span class="type-name">Benchmark</span><span>)                     </span><span class="comment">// Benchmark scope
+</span><span class="annotation">@Fork</span><span>(</span><span class="identifier">value</span><span> = </span><span class="number-literal">1</span><span>)                            </span><span class="comment">// Fork count: 1
+</span><span class="annotation">@Warmup</span><span>(</span><span class="identifier">iterations</span><span> = </span><span class="number-literal">5</span><span>)                     </span><span class="comment">// Warmup: 5 iterations
+</span><span class="annotation">@Measurement</span><span>(</span><span class="identifier">iterations</span><span> = </span><span class="number-literal">10</span><span>)               </span><span class="comment">// Measurement: 10 iterations
+</span><span class="annotation">@Threads</span><span>(</span><span class="number-literal">1</span><span>)                                 </span><span class="comment">// Thread count: varies 1-16</span></code></pre>
+    
+    <h3 id="test-conditions" class="section"><a class="anchor-link left" href="#test-conditions"><i class="icofont-laika link">&#xef71;</i></a>Test Conditions</h3>
+    <ul>
+      <li><strong>Connection Method</strong>: No connection pooling (single connection reused)</li>
+      <li><strong>Query Types</strong>: </li>
+    </ul>
+    <ul>
+      <li>Statement: Dynamic SQL execution</li>
+    </ul>
+    <ul>
+      <li>PreparedStatement: Parameterized queries</li>
+      <li><strong>Data Sizes</strong>: 500, 1000, 1500, 2000 rows</li>
+      <li><strong>Target Table</strong>: 16 columns (various data types)</li>
+    </ul>
+    <ul>
+      <li>Numeric types: Long, Short, Int, Float, Double, BigDecimal</li>
+    </ul>
+    <ul>
+      <li>String types: String (2 types)</li>
+    </ul>
+    <ul>
+      <li>Date/Time types: LocalDate, LocalTime, LocalDateTime (2 types)</li>
+    </ul>
+    <ul>
+      <li>Boolean type: Boolean</li>
+    </ul>
+    
+    <h3 id="ldbc-specific-configuration" class="section"><a class="anchor-link left" href="#ldbc-specific-configuration"><i class="icofont-laika link">&#xef71;</i></a>ldbc-specific Configuration</h3>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;127.0.0.1&quot;</span><span>, </span><span class="number-literal">13306</span><span>, </span><span class="string-literal">&quot;ldbc&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;benchmark&quot;</span><span>)
+  .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)
+  </span><span class="comment">// Default settings (no optimization)
+</span><span>  .</span><span class="identifier">setUseServerPrepStmts</span><span>(</span><span class="boolean-literal">false</span><span>)
+  .</span><span class="identifier">setUseCursorFetch</span><span>(</span><span class="boolean-literal">false</span><span>)</span></code></pre>
+    
+    <h3 id="jdbc-specific-configuration" class="section"><a class="anchor-link left" href="#jdbc-specific-configuration"><i class="icofont-laika link">&#xef71;</i></a>jdbc-specific Configuration</h3>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">ds</span><span> = </span><span class="keyword">new</span><span> </span><span class="type-name">MysqlDataSource</span><span>()
+</span><span class="identifier">ds</span><span>.</span><span class="identifier">setServerName</span><span>(</span><span class="string-literal">&quot;127.0.0.1&quot;</span><span>)
+</span><span class="identifier">ds</span><span>.</span><span class="identifier">setPortNumber</span><span>(</span><span class="number-literal">13306</span><span>)
+</span><span class="identifier">ds</span><span>.</span><span class="identifier">setDatabaseName</span><span>(</span><span class="string-literal">&quot;benchmark&quot;</span><span>)
+</span><span class="identifier">ds</span><span>.</span><span class="identifier">setUser</span><span>(</span><span class="string-literal">&quot;ldbc&quot;</span><span>)
+</span><span class="identifier">ds</span><span>.</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+</span><span class="identifier">ds</span><span>.</span><span class="identifier">setUseSSL</span><span>(</span><span class="boolean-literal">true</span><span>)
+</span><span class="comment">// Fixed-size thread pool
+</span><span class="keyword">val</span><span> </span><span class="identifier">executorService</span><span> = </span><span class="type-name">Executors</span><span>.</span><span class="identifier">newFixedThreadPool</span><span>(
+  </span><span class="type-name">Math</span><span>.</span><span class="identifier">max</span><span>(</span><span class="number-literal">4</span><span>, </span><span class="type-name">Runtime</span><span>.</span><span class="identifier">getRuntime</span><span>.</span><span class="identifier">availableProcessors</span><span>())
+)</span></code></pre>
+    
+    <h2 id="performance-comparison-by-thread-count" class="section"><a class="anchor-link left" href="#performance-comparison-by-thread-count"><i class="icofont-laika link">&#xef71;</i></a>Performance Comparison by Thread Count</h2>
+    
+    <h3 id="single-thread-environment" class="section"><a class="anchor-link left" href="#single-thread-environment"><i class="icofont-laika link">&#xef71;</i></a>Single Thread Environment</h3>
+    <div class="default-image-block">
+      <img src="../../img/connector/Select_Thread1.svg" alt="Select Benchmark (1 Thread)">
+    </div>
+    <p>In a single-threaded environment, the performance difference between ldbc and jdbc is relatively small as concurrency advantages are not utilized.</p>
+    <p><strong>Performance Ratio (ldbc/jdbc)</strong>:</p>
+    <ul>
+      <li>500 rows: 1.43x</li>
+      <li>1000 rows: 1.52x</li>
+      <li>1500 rows: 1.48x</li>
+      <li>2000 rows: 1.51x</li>
+    </ul>
+    
+    <h3 id="_2-thread-environment" class="section"><a class="anchor-link left" href="#_2-thread-environment"><i class="icofont-laika link">&#xef71;</i></a>2 Thread Environment</h3>
+    <div class="default-image-block">
+      <img src="../../img/connector/Select_Thread2.svg" alt="Select Benchmark (2 Threads)">
+    </div>
+    <p>Starting with 2 threads, ldbc&#39;s advantages become more apparent.</p>
+    <p><strong>Performance Ratio (ldbc/jdbc)</strong>:</p>
+    <ul>
+      <li>500 rows: 1.83x</li>
+      <li>1000 rows: 1.48x</li>
+      <li>1500 rows: 1.66x</li>
+      <li>2000 rows: 1.75x</li>
+    </ul>
+    
+    <h3 id="_4-thread-environment" class="section"><a class="anchor-link left" href="#_4-thread-environment"><i class="icofont-laika link">&#xef71;</i></a>4 Thread Environment</h3>
+    <div class="default-image-block">
+      <img src="../../img/connector/Select_Thread4.svg" alt="Select Benchmark (4 Threads)">
+    </div>
+    <p>At 4 threads, ldbc&#39;s scalability becomes pronounced.</p>
+    <p><strong>Performance Ratio (ldbc/jdbc)</strong>:</p>
+    <ul>
+      <li>500 rows: 1.89x</li>
+      <li>1000 rows: 1.82x</li>
+      <li>1500 rows: 1.87x</li>
+      <li>2000 rows: 1.93x</li>
+    </ul>
+    
+    <h3 id="_8-thread-environment" class="section"><a class="anchor-link left" href="#_8-thread-environment"><i class="icofont-laika link">&#xef71;</i></a>8 Thread Environment</h3>
+    <div class="default-image-block">
+      <img src="../../img/connector/Select_Thread8.svg" alt="Select Benchmark (8 Threads)">
+    </div>
+    <p>At 8 threads, ldbc shows its highest performance advantage.</p>
+    <p><strong>Performance Ratio (ldbc/jdbc)</strong>:</p>
+    <ul>
+      <li>500 rows: 1.76x</li>
+      <li>1000 rows: 2.01x</li>
+      <li>1500 rows: 1.92x</li>
+      <li>2000 rows: 2.09x</li>
+    </ul>
+    
+    <h3 id="_16-thread-environment" class="section"><a class="anchor-link left" href="#_16-thread-environment"><i class="icofont-laika link">&#xef71;</i></a>16 Thread Environment</h3>
+    <div class="default-image-block">
+      <img src="../../img/connector/Select_Thread16.svg" alt="Select Benchmark (16 Threads)">
+    </div>
+    <p>Even at 16 threads, ldbc maintains stable high performance.</p>
+    <p><strong>Performance Ratio (ldbc/jdbc)</strong>:</p>
+    <ul>
+      <li>500 rows: 1.95x</li>
+      <li>1000 rows: 2.03x</li>
+      <li>1500 rows: 1.98x</li>
+      <li>2000 rows: 2.12x</li>
+    </ul>
+    
+    <h2 id="technical-analysis" class="section"><a class="anchor-link left" href="#technical-analysis"><i class="icofont-laika link">&#xef71;</i></a>Technical Analysis</h2>
+    
+    <h3 id="cats-effect-performance-characteristics" class="section"><a class="anchor-link left" href="#cats-effect-performance-characteristics"><i class="icofont-laika link">&#xef71;</i></a>Cats Effect Performance Characteristics</h3>
+    <p>Cats Effect 3 is optimized for long-lived backend network applications:</p>
+    
+    <h4 id="optimization-targets" class="section"><a class="anchor-link left" href="#optimization-targets"><i class="icofont-laika link">&#xef71;</i></a>Optimization Targets</h4>
+    <ul>
+      <li><strong>Physical threads</strong>: Environments with 8+ threads</li>
+      <li><strong>Processing type</strong>: Network socket I/O-focused processing</li>
+      <li><strong>Runtime duration</strong>: Applications running for hours or more</li>
+    </ul>
+    
+    <h4 id="performance-metrics" class="section"><a class="anchor-link left" href="#performance-metrics"><i class="icofont-laika link">&#xef71;</i></a>Performance Metrics</h4>
+    <ul>
+      <li><strong><code>flatMap</code> operation</strong>: </li>
+    </ul>
+    <ul>
+      <li>Older Intel CPUs: ~7 nanoseconds</li>
+    </ul>
+    <ul>
+      <li>Modern AMD CPUs: ~3 nanoseconds</li>
+      <li><strong>Bottlenecks</strong>: Scheduling and I/O rather than computation</li>
+    </ul>
+    
+    <h4 id="userspace-scheduler" class="section"><a class="anchor-link left" href="#userspace-scheduler"><i class="icofont-laika link">&#xef71;</i></a>Userspace Scheduler</h4>
+    <ol class="arabic">
+      <li><strong>Work-stealing algorithm</strong>: Designed for throughput over pure responsiveness</li>
+      <li><strong>Fine-grained preemption</strong>: More flexible task switching than Kotlin coroutines</li>
+      <li><strong>Stack usage</strong>: Constant memory usage through coroutine interpreter</li>
+    </ol>
+    
+    <h4 id="comparison-with-other-runtimes" class="section"><a class="anchor-link left" href="#comparison-with-other-runtimes"><i class="icofont-laika link">&#xef71;</i></a>Comparison with Other Runtimes</h4>
+    <ul>
+      <li><strong>Project Loom (Virtual Threads)</strong>: Cats Effect currently outperforms</li>
+      <li><strong>Threadless suspension</strong>: Supports safe resource management and asynchronous interruption</li>
+    </ul>
+    
+    <h3 id="concurrency-model-differences" class="section"><a class="anchor-link left" href="#concurrency-model-differences"><i class="icofont-laika link">&#xef71;</i></a>Concurrency Model Differences</h3>
+    
+    <h4 id="ldbc-cats-effect-3" class="section"><a class="anchor-link left" href="#ldbc-cats-effect-3"><i class="icofont-laika link">&#xef71;</i></a>ldbc (Cats Effect 3)</h4>
+    <p>ldbc adopts Cats Effect 3&#39;s Fiber-based concurrency model:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Non-blocking I/O operations
+</span><span class="keyword">for</span><span> {
+  </span><span class="identifier">statement</span><span> &lt;- </span><span class="identifier">connection</span><span>.</span><span class="identifier">prepareStatement</span><span>(</span><span class="identifier">sql</span><span>)
+  </span><span class="identifier">_</span><span>         &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">setInt</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="identifier">id</span><span>)
+  </span><span class="identifier">resultSet</span><span> &lt;- </span><span class="identifier">statement</span><span>.</span><span class="identifier">executeQuery</span><span>()
+  </span><span class="identifier">result</span><span>    &lt;- </span><span class="identifier">resultSet</span><span>.</span><span class="identifier">decode</span><span>[</span><span class="type-name">User</span><span>]
+} </span><span class="keyword">yield</span><span> </span><span class="identifier">result</span></code></pre>
+    <p><strong>Characteristics</strong>:</p>
+    <ul>
+      <li><strong>Fibers (Green Threads)</strong>: Lightweight user-space threads</li>
+    </ul>
+    <ul>
+      <li>Memory usage: ~300-500 bytes per Fiber</li>
+    </ul>
+    <ul>
+      <li>Context switching: Completes in user space (no kernel calls required)</li>
+    </ul>
+    <ul>
+      <li>
+        <p>CPU cache efficiency: High cache hit rate due to thread affinity</p>
+      </li>
+      <li>
+        <p><strong>Work-Stealing Thread Pool</strong>:</p>
+      </li>
+    </ul>
+    <ul>
+      <li>Per-CPU-core work queues (avoiding global contention)</li>
+    </ul>
+    <ul>
+      <li>Dynamic load balancing</li>
+    </ul>
+    <ul>
+      <li>Automatic yield insertion to prevent CPU starvation</li>
+    </ul>
+    
+    <h4 id="jdbc-traditional-thread-model" class="section"><a class="anchor-link left" href="#jdbc-traditional-thread-model"><i class="icofont-laika link">&#xef71;</i></a>jdbc (Traditional Thread Model)</h4>
+    <p>jdbc uses traditional OS threads with blocking I/O:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Blocking I/O operations
+</span><span class="type-name">Sync</span><span>[</span><span class="type-name">F</span><span>].</span><span class="identifier">blocking</span><span> {
+  </span><span class="keyword">val</span><span> </span><span class="identifier">statement</span><span> = </span><span class="identifier">connection</span><span>.</span><span class="identifier">prepareStatement</span><span>(</span><span class="identifier">sql</span><span>)
+  </span><span class="identifier">statement</span><span>.</span><span class="identifier">setInt</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="identifier">id</span><span>)
+  </span><span class="keyword">val</span><span> </span><span class="identifier">resultSet</span><span> = </span><span class="identifier">statement</span><span>.</span><span class="identifier">executeQuery</span><span>()
+  </span><span class="comment">// Thread blocks here
+</span><span>}</span></code></pre>
+    <p><strong>Characteristics</strong>:</p>
+    <ul>
+      <li><strong>OS Threads</strong>: Native threads</li>
+    </ul>
+    <ul>
+      <li>Memory usage: ~1MB per thread</li>
+    </ul>
+    <ul>
+      <li>Context switching: Requires kernel calls</li>
+    </ul>
+    <ul>
+      <li>Fixed-size thread pool</li>
+    </ul>
+    
+    <h3 id="network-i-o-implementation" class="section"><a class="anchor-link left" href="#network-i-o-implementation"><i class="icofont-laika link">&#xef71;</i></a>Network I/O Implementation</h3>
+    
+    <h4 id="ldbc-non-blocking-socket" class="section"><a class="anchor-link left" href="#ldbc-non-blocking-socket"><i class="icofont-laika link">&#xef71;</i></a>ldbc - Non-blocking Socket</h4>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Non-blocking reads using fs2 Socket
+</span><span class="identifier">socket</span><span>.</span><span class="identifier">read</span><span>(</span><span class="number-literal">8192</span><span>).</span><span class="identifier">flatMap</span><span> { </span><span class="identifier">chunk</span><span> =&gt;
+  </span><span class="comment">// Efficient chunk-based processing
+</span><span>  </span><span class="identifier">processChunk</span><span>(</span><span class="identifier">chunk</span><span>)
+}</span></code></pre>
+    <ul>
+      <li><strong>Zero-copy optimization</strong>: Efficient buffer management using BitVector</li>
+      <li><strong>Streaming</strong>: Efficient processing of large result sets</li>
+      <li><strong>Timeout control</strong>: Fine-grained timeout configuration</li>
+    </ul>
+    
+    <h4 id="jdbc-blocking-socket" class="section"><a class="anchor-link left" href="#jdbc-blocking-socket"><i class="icofont-laika link">&#xef71;</i></a>jdbc - Blocking Socket</h4>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Traditional blocking I/O
+</span><span class="keyword">val</span><span> </span><span class="identifier">bytes</span><span> = </span><span class="identifier">inputStream</span><span>.</span><span class="identifier">read</span><span>(</span><span class="identifier">buffer</span><span>)
+</span><span class="comment">// Thread blocks until I/O completes</span></code></pre>
+    <ul>
+      <li><strong>Buffering</strong>: Entire result set loaded into memory</li>
+      <li><strong>Thread blocking</strong>: Thread unavailable during I/O wait</li>
+    </ul>
+    
+    <h3 id="memory-efficiency-and-gc-pressure" class="section"><a class="anchor-link left" href="#memory-efficiency-and-gc-pressure"><i class="icofont-laika link">&#xef71;</i></a>Memory Efficiency and GC Pressure</h3>
+    
+    <h4 id="ldbc-memory-management" class="section"><a class="anchor-link left" href="#ldbc-memory-management"><i class="icofont-laika link">&#xef71;</i></a>ldbc Memory Management</h4>
+    <ol class="arabic">
+      <li><strong>Pre-allocated buffers</strong>: Reusable buffers for result rows</li>
+      <li><strong>Streaming processing</strong>: On-demand data fetching</li>
+      <li><strong>Immutable data structures</strong>: Efficient memory usage through structural sharing</li>
+    </ol>
+    
+    <h4 id="jdbc-memory-management" class="section"><a class="anchor-link left" href="#jdbc-memory-management"><i class="icofont-laika link">&#xef71;</i></a>jdbc Memory Management</h4>
+    <ol class="arabic">
+      <li><strong>Bulk loading</strong>: Entire result set held in memory</li>
+      <li><strong>Intermediate objects</strong>: Boxing/unboxing overhead</li>
+      <li><strong>GC pressure</strong>: Frequent GC due to temporary objects</li>
+    </ol>
+    
+    <h2 id="usage-recommendations-by-scenario" class="section"><a class="anchor-link left" href="#usage-recommendations-by-scenario"><i class="icofont-laika link">&#xef71;</i></a>Usage Recommendations by Scenario</h2>
+    
+    <h3 id="when-to-choose-ldbc" class="section"><a class="anchor-link left" href="#when-to-choose-ldbc"><i class="icofont-laika link">&#xef71;</i></a>When to Choose ldbc</h3>
+    <ol class="arabic">
+      <li>
+        <p><strong>High-Concurrency Applications</strong></p>
+        <ul>
+          <li>Web applications (high traffic)</li>
+          <li>Microservices</li>
+          <li>Real-time data processing</li>
+        </ul>
+      </li>
+      <li>
+        <p><strong>Resource-Constrained Environments</strong></p>
+        <ul>
+          <li>Container environments (Kubernetes, etc.)</li>
+          <li>Serverless environments</li>
+          <li>Memory-limited environments</li>
+        </ul>
+      </li>
+      <li>
+        <p><strong>Scalability Focus</strong></p>
+        <ul>
+          <li>Expected future load increases</li>
+          <li>Need for elastic scaling</li>
+          <li>Cloud-native applications</li>
+        </ul>
+      </li>
+      <li>
+        <p><strong>Functional Programming</strong></p>
+        <ul>
+          <li>Pure functional architecture</li>
+          <li>Type safety emphasis</li>
+          <li>Composability focus</li>
+        </ul>
+      </li>
+    </ol>
+    
+    <h3 id="when-to-choose-jdbc" class="section"><a class="anchor-link left" href="#when-to-choose-jdbc"><i class="icofont-laika link">&#xef71;</i></a>When to Choose jdbc</h3>
+    <ol class="arabic">
+      <li>
+        <p><strong>Legacy System Integration</strong></p>
+        <ul>
+          <li>Existing jdbc codebase</li>
+          <li>Third-party library dependencies</li>
+          <li>High migration costs</li>
+        </ul>
+      </li>
+      <li>
+        <p><strong>Simple CRUD Operations</strong></p>
+        <ul>
+          <li>Low concurrency</li>
+          <li>Batch processing</li>
+          <li>Administrative tools</li>
+        </ul>
+      </li>
+      <li>
+        <p><strong>Special jdbc Features</strong></p>
+        <ul>
+          <li>Vendor-specific extensions</li>
+          <li>Special driver requirements</li>
+        </ul>
+      </li>
+    </ol>
+    
+    <h2 id="performance-tuning" class="section"><a class="anchor-link left" href="#performance-tuning"><i class="icofont-laika link">&#xef71;</i></a>Performance Tuning</h2>
+    
+    <h3 id="cats-effect-best-practices" class="section"><a class="anchor-link left" href="#cats-effect-best-practices"><i class="icofont-laika link">&#xef71;</i></a>Cats Effect Best Practices</h3>
+    
+    <h4 id="_1-understanding-your-workload" class="section"><a class="anchor-link left" href="#_1-understanding-your-workload"><i class="icofont-laika link">&#xef71;</i></a>1. Understanding Your Workload</h4>
+    <ul>
+      <li><strong>I/O-bound tasks</strong>: Cats Effect excels with non-blocking I/O</li>
+      <li><strong>CPU-bound tasks</strong>: Consider delegation to dedicated thread pools</li>
+      <li><strong>Measurement importance</strong>: Measure performance in your specific application context</li>
+    </ul>
+    
+    <h4 id="_2-optimizing-io-operations" class="section"><a class="anchor-link left" href="#_2-optimizing-io-operations"><i class="icofont-laika link">&#xef71;</i></a>2. Optimizing IO Operations</h4>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Leverage fine-grained IO composition
+</span><span class="keyword">val</span><span> </span><span class="identifier">optimized</span><span> = </span><span class="keyword">for</span><span> {
+  </span><span class="identifier">data</span><span> &lt;- </span><span class="identifier">fetchData</span><span>()           </span><span class="comment">// Non-blocking I/O
+</span><span>  </span><span class="identifier">_</span><span>    &lt;- </span><span class="type-name">IO</span><span>.</span><span class="identifier">cede</span><span>              </span><span class="comment">// Explicit cooperative yield
+</span><span>  </span><span class="identifier">processed</span><span> &lt;- </span><span class="identifier">processData</span><span>(</span><span class="identifier">data</span><span>) </span><span class="comment">// CPU-intensive processing
+</span><span>  </span><span class="identifier">_</span><span>    &lt;- </span><span class="identifier">saveResult</span><span>(</span><span class="identifier">processed</span><span>) </span><span class="comment">// Non-blocking I/O
+</span><span>} </span><span class="keyword">yield</span><span> </span><span class="identifier">processed</span><span>
+
+</span><span class="comment">// Execute CPU-bound tasks on dedicated pool
+</span><span class="keyword">val</span><span> </span><span class="identifier">cpuBound</span><span> = </span><span class="type-name">IO</span><span>.</span><span class="identifier">blocking</span><span> {
+  </span><span class="comment">// Heavy computation
+</span><span>}.</span><span class="identifier">evalOn</span><span>(</span><span class="identifier">cpuBoundExecutor</span><span>)</span></code></pre>
+    
+    <h4 id="_3-resource-management" class="section"><a class="anchor-link left" href="#_3-resource-management"><i class="icofont-laika link">&#xef71;</i></a>3. Resource Management</h4>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Safe resource management with Resource
+</span><span class="keyword">val</span><span> </span><span class="identifier">dataSource</span><span> = </span><span class="type-name">Resource</span><span>.</span><span class="identifier">make</span><span>(
+  </span><span class="identifier">createDataSource</span><span>()  </span><span class="comment">// Acquire
+</span><span>)(</span><span class="identifier">_</span><span>.</span><span class="identifier">close</span><span>())         </span><span class="comment">// Release
+</span><span>
+</span><span class="comment">// Guaranteed resource cleanup
+</span><span class="identifier">dataSource</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">ds</span><span> =&gt;
+  </span><span class="comment">// Process with datasource
+</span><span>}</span></code></pre>
+    
+    <h3 id="ldbc-optimization-settings" class="section"><a class="anchor-link left" href="#ldbc-optimization-settings"><i class="icofont-laika link">&#xef71;</i></a>ldbc Optimization Settings</h3>
+    <pre><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">datasource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;user&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;db&quot;</span><span>)
+  </span><span class="comment">// Performance settings
+</span><span>  .</span><span class="identifier">setUseServerPrepStmts</span><span>(</span><span class="boolean-literal">true</span><span>)      </span><span class="comment">// Server-side prepared statements
+</span><span>  .</span><span class="identifier">setUseCursorFetch</span><span>(</span><span class="boolean-literal">true</span><span>)           </span><span class="comment">// Cursor-based fetching
+</span><span>  .</span><span class="identifier">setFetchSize</span><span>(</span><span class="number-literal">1000</span><span>)                </span><span class="comment">// Fetch size
+</span><span>  .</span><span class="identifier">setSocketOptions</span><span>(</span><span class="type-name">List</span><span>(
+    </span><span class="type-name">SocketOption</span><span>.</span><span class="identifier">noDelay</span><span>(</span><span class="boolean-literal">true</span><span>),      </span><span class="comment">// TCP_NODELAY
+</span><span>    </span><span class="type-name">SocketOption</span><span>.</span><span class="identifier">keepAlive</span><span>(</span><span class="boolean-literal">true</span><span>)     </span><span class="comment">// Keep-alive
+</span><span>  ))
+  .</span><span class="identifier">setReadTimeout</span><span>(</span><span class="number-literal">30</span><span>.</span><span class="identifier">seconds</span><span>)        </span><span class="comment">// Read timeout</span></code></pre>
+    
+    <h3 id="thread-pool-configuration" class="section"><a class="anchor-link left" href="#thread-pool-configuration"><i class="icofont-laika link">&#xef71;</i></a>Thread Pool Configuration</h3>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Cats Effect 3 runtime configuration
+</span><span class="keyword">object</span><span> </span><span class="type-name">Main</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">IOApp</span><span> {
+  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">computeWorkerThreadCount</span><span>: </span><span class="type-name">Int</span><span> = 
+    </span><span class="identifier">math</span><span>.</span><span class="identifier">max</span><span>(</span><span class="number-literal">4</span><span>, </span><span class="type-name">Runtime</span><span>.</span><span class="identifier">getRuntime</span><span>.</span><span class="identifier">availableProcessors</span><span>())
+    
+  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">run</span><span>(</span><span class="identifier">args</span><span>: </span><span class="type-name">List</span><span>[</span><span class="type-name">String</span><span>]): </span><span class="type-name">IO</span><span>[</span><span class="type-name">ExitCode</span><span>] = {
+    </span><span class="comment">// Application logic
+</span><span>  }
+}</span></code></pre>
+    
+    <h2 id="conclusion" class="section"><a class="anchor-link left" href="#conclusion"><i class="icofont-laika link">&#xef71;</i></a>Conclusion</h2>
+    <p>ldbc is an excellent choice particularly when these conditions are met:</p>
+    <ol class="arabic">
+      <li><strong>High Concurrency</strong>: Need to handle many concurrent connections</li>
+      <li><strong>Scalability</strong>: Require flexible scaling based on load</li>
+      <li><strong>Resource Efficiency</strong>: Need to minimize memory usage</li>
+      <li><strong>Type Safety</strong>: Value compile-time type checking</li>
+      <li><strong>Functional Programming</strong>: Adopting pure functional architecture</li>
+    </ol>
+    <p>As benchmark results demonstrate, ldbc achieves approximately 2x the throughput of jdbc in environments with 8+ threads, while maintaining excellent scalability with minimal performance degradation at higher thread counts.</p>
+    
+    <h3 id="benefits-from-cats-effect-optimization" class="section"><a class="anchor-link left" href="#benefits-from-cats-effect-optimization"><i class="icofont-laika link">&#xef71;</i></a>Benefits from Cats Effect Optimization</h3>
+    <p>The Cats Effect 3 runtime that ldbc leverages is optimized for:</p>
+    <ul>
+      <li><strong>Long-running applications</strong>: Shows its true value in applications running for hours or more</li>
+      <li><strong>Network I/O-centric</strong>: Perfect for non-blocking I/O operations like database access</li>
+      <li><strong>Multi-core utilization</strong>: Best performance in environments with 8+ threads</li>
+    </ul>
+    <p>These characteristics perfectly align with ldbc&#39;s use case as a database access library, making ldbc a powerful choice for modern cloud-native applications and high-traffic web services.</p>
+    <p><strong>Key Principle</strong>: &quot;Performance is always relative to your target use-case and assumptions&quot; - we recommend measuring in your actual application context.</p>
+
+    
+
+  </main>
+
+</div>
+
+</body>
+
+</html>

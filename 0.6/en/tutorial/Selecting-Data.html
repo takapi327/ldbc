@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="Typelevel Laika + Helium Theme" />
+  <title>Selecting Data</title>
+  
+  <meta name="author" content="Takahiko Tominaga"/>
+  
+  
+  <meta name="description" content="Documentation for ldbc"/>
+  
+  
+  
+  <link rel="icon" sizes="32x32" type="image/png" href="https://typelevel.org/img/favicon.png"/>
+  
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700">
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Mono:500">
+  
+  <link rel="stylesheet" type="text/css" href="../../helium/site/icofont.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../helium/site/laika-helium.css" />
+    <link rel="stylesheet" type="text/css" href="../../css/site.css" />
+  <script src="../../helium/site/laika-helium.js"></script>
+    <script src="../../helium/site/laika-versions.js"></script>
+  <script>initVersions("../../../", "/en/tutorial/Selecting-Data.html", "0.6", null);</script>
+  
+  <script> /* for avoiding page load transitions */ </script>
+</head>
+
+<body>
+
+<header id="top-bar" class="light-default dark-default">
+
+  <div class="row">
+    <a id="nav-icon">
+      <i class="icofont-laika navigationMenu" title="Navigation">&#xefa2;</i>
+    </a>
+    
+    <div class="menu-container version-menu">
+      <a class="text-link menu-toggle" href="#">Version 0.6</a>
+      <nav class="menu-content">
+        <ul class="nav-list">
+          <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <a class="image-link" href="https://typelevel.org"><img src="https://typelevel.org/img/logo.svg"></a>
+
+  <div class="row links">
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>  
+
+</header>
+
+<nav id="sidebar">
+
+  <div class="row">
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>
+
+  
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="../">ldbc</a></li>
+    <li class="level1 nav-leaf"><a href="../migration-notes.html">Migration Notes</a></li>
+    <li class="level1 nav-header">Tutorial</li>
+    <li class="level2 nav-leaf"><a href="index.html">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="Setup.html">Setup</a></li>
+    <li class="level2 nav-leaf"><a href="Connection.html">Connection</a></li>
+    <li class="level2 nav-leaf"><a href="Simple-Program.html">Simple Programs</a></li>
+    <li class="level2 nav-leaf"><a href="Database-Operations.html">Database Operations</a></li>
+    <li class="level2 nav-leaf"><a href="Parameterized-Queries.html">Parameterized Queries</a></li>
+    <li class="level2 active nav-leaf"><a href="#">Selecting Data</a></li>
+    <li class="level2 nav-leaf"><a href="Updating-Data.html">Updating Data</a></li>
+    <li class="level2 nav-leaf"><a href="Error-Handling.html">Error Handling</a></li>
+    <li class="level2 nav-leaf"><a href="Logging.html">logging</a></li>
+    <li class="level2 nav-leaf"><a href="Custom-Data-Type.html">Custom Data Types</a></li>
+    <li class="level2 nav-leaf"><a href="Query-Builder.html">Query Builder</a></li>
+    <li class="level2 nav-leaf"><a href="Schema.html">Schema</a></li>
+    <li class="level2 nav-leaf"><a href="Schema-Code-Generation.html">Schema Code Generation</a></li>
+    <li class="level1 nav-header">Examples</li>
+    <li class="level2 nav-leaf"><a href="../examples/">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/Http4s.html">Http4s</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/HikariCP.html">HikariCP</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/Otel.html">OpenTelemetry</a></li>
+    <li class="level1 nav-header">QA</li>
+    <li class="level2 nav-leaf"><a href="../qa/">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/What-is-ldbc.html">Q: What is ldbc?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Which-dependencies-should-I-set.html">Q: Which dependencies should I set?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/What-is-the-difference-between-a-Java-connect-and-a-Scala-connector.html">Q: What is the difference between a Java connector and a Scala connector?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-define-complex-queries-with-plain-queries.html">Q: How to define complex queries with plain queries?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-my-own-type.html">Q: How do I use my own type?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-nested-models.html">Q: How do I use nested models?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-perform-DDL-with-schema.html">Q: How to perform DDL with schema?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-change-column-names-in-Query-Builder.html">Q: How to change column names in Query Builder?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-change-the-format-of-column-names-using-the-schema.html">Q: How to change the format of column names using the schema?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-add-processing-before-and-after-the-connection-is-established.html">Q: How do I add processing before and after the connection is established?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Implicit-search-problem-too-large.html">Q: How to handle the `Implicit search problem too large.` error?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-use-scala-connector-connection-pool.html">Q: How to use connection pool with Scala connector?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Is-there-a-way-to-stream-query-results-asynchronously.html">Q: Is there a way to stream query results asynchronously?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Is-there-a-function-to-limit-the-number-of-concurrent-queries.html">Q: Is there a function to limit the number of concurrent queries?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-handle-multiple-databases.html">Q: How to handle multiple databases (multi-tenant environment)?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-use-with-ZIO.html">Q: How to use with ZIO?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-the-Enum-type.html">Q: How to use the Enum type?</a></li>
+    <li class="level1 nav-header">Reference</li>
+    <li class="level2 nav-leaf"><a href="../reference/">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Connector.html">Connector</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Performance.html">Performance</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/AuthenticationPlugin.html">Authentication Plugin</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Telemetry.html">Telemetry</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Pooling.html">Connection pooling</a></li>
+  </ul>
+  
+
+</nav>
+
+<div id="container">
+
+  
+<nav id="page-nav">
+  <p class="header"><a href="#">Selecting Data</a></p>
+
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="#basic-data-retrieval-workflow">Basic Data Retrieval Workflow</a></li>
+    <li class="level1 nav-leaf"><a href="#reading-rows-into-collections">Reading Rows into Collections</a></li>
+    <li class="level1 nav-leaf"><a href="#multiple-column-queries">Multiple Column Queries</a></li>
+    <li class="level1 nav-node"><a href="#mapping-to-case-classes">Mapping to Case Classes</a></li>
+    <li class="level2 nav-leaf"><a href="#how-mapping-works">How Mapping Works</a></li>
+    <li class="level1 nav-node"><a href="#joining-multiple-tables-and-nested-case-classes">Joining Multiple Tables and Nested Case Classes</a></li>
+    <li class="level2 nav-leaf"><a href="#how-complex-mapping-works">How Complex Mapping Works</a></li>
+    <li class="level1 nav-leaf"><a href="#using-tuples-for-join-queries">Using Tuples for Join Queries</a></li>
+    <li class="level1 nav-leaf"><a href="#getting-a-single-result-option-type">Getting a Single Result (Option Type)</a></li>
+    <li class="level1 nav-leaf"><a href="#choosing-query-execution-methods">Choosing Query Execution Methods</a></li>
+    <li class="level1 nav-leaf"><a href="#combining-collection-operations-with-queries">Combining Collection Operations with Queries</a></li>
+    <li class="level1 nav-node"><a href="#efficient-processing-of-large-data-with-streaming">Efficient Processing of Large Data with Streaming</a></li>
+    <li class="level2 nav-leaf"><a href="#basic-usage-of-streaming">Basic Usage of Streaming</a></li>
+    <li class="level2 nav-leaf"><a href="#specifying-fetch-size">Specifying Fetch Size</a></li>
+    <li class="level2 nav-leaf"><a href="#practical-data-processing-with-streaming">Practical Data Processing with Streaming</a></li>
+    <li class="level2 nav-leaf"><a href="#optimizing-behavior-with-usecursorfetch">Optimizing Behavior with UseCursorFetch</a></li>
+    <li class="level2 nav-leaf"><a href="#example-of-large-data-processing">Example of Large Data Processing</a></li>
+    <li class="level2 nav-leaf"><a href="#benefits-of-streaming">Benefits of Streaming</a></li>
+    <li class="level1 nav-node"><a href="#how-mapping-works-in-detail">How Mapping Works in Detail</a></li>
+    <li class="level2 nav-leaf"><a href="#what-is-a-decoder">What is a Decoder?</a></li>
+    <li class="level2 nav-leaf"><a href="#basic-decoder-operations">Basic Decoder Operations</a></li>
+    <li class="level2 nav-leaf"><a href="#reading-by-column-number">Reading by Column Number</a></li>
+    <li class="level2 nav-leaf"><a href="#error-handling">Error Handling</a></li>
+    <li class="level1 nav-leaf"><a href="#summary">Summary</a></li>
+    <li class="level1 nav-leaf"><a href="#next-steps">Next Steps</a></li>
+  </ul>
+
+  <p class="footer"></p>
+</nav>
+
+
+  <main class="content">
+
+    <h1 id="selecting-data" class="title">Selecting Data</h1>
+    <p>Now that we&#39;ve learned about <a href="Parameterized-Queries.html">Parameterized Queries</a>, let&#39;s look at how to retrieve data in various formats. This page explains how to efficiently fetch data using SELECT queries and map them to Scala types.</p>
+    <p>One of ldbc&#39;s most powerful features is its ability to easily map database results to Scala types. It can handle various data formats, from simple primitive types to complex case classes.</p>
+    <p><em>Note: In this tutorial, we use a <code>Connector</code> to execute database operations. Create it as follows:</em></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+
+</span><span class="comment">// Create Connector
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)</span></code></pre>
+    
+    <h2 id="basic-data-retrieval-workflow" class="section"><a class="anchor-link left" href="#basic-data-retrieval-workflow"><i class="icofont-laika link">&#xef71;</i></a>Basic Data Retrieval Workflow</h2>
+    <p>The basic flow for retrieving data with ldbc is as follows:</p>
+    <ol class="arabic">
+      <li>Create an SQL query with the <code>sql</code> interpolator</li>
+      <li>Specify the result type with <code>.query[T]</code></li>
+      <li>Convert results to a collection with <code>.to[Collection]</code> (optional)</li>
+      <li>Execute the query using <code>.readOnly(connector)</code>/<code>.commit(connector)</code>/<code>.transaction(connector)</code>, etc.</li>
+      <li>Process the results</li>
+    </ol>
+    <p>Let&#39;s look at this flow along with the type transformations in code.</p>
+    
+    <h2 id="reading-rows-into-collections" class="section"><a class="anchor-link left" href="#reading-rows-into-collections"><i class="icofont-laika link">&#xef71;</i></a>Reading Rows into Collections</h2>
+    <p>In our first query, let&#39;s look at an example that retrieves some usernames into a list and outputs them. We&#39;ll show how the types change at each step:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="string-literal">sql&quot;SELECT name FROM user&quot;</span><span>
+  .</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>]                 </span><span class="comment">// Query[String]
+</span><span>  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]                      </span><span class="comment">// DBIO[List[String]]
+</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)                </span><span class="comment">// IO[List[String]]
+</span><span>  .</span><span class="identifier">unsafeRunSync</span><span>()               </span><span class="comment">// List[String]
+</span><span>  .</span><span class="identifier">foreach</span><span>(</span><span class="identifier">println</span><span>)              </span><span class="comment">// Unit</span></code></pre>
+    <p>Let&#39;s explain this code in detail:</p>
+    <ul>
+      <li><code>sql&quot;SELECT name FROM user&quot;</code> - Defines the SQL query.</li>
+      <li><code>.query[String]</code> - Maps each row result to a <code>String</code> type. This generates a <code>Query[String]</code> type.</li>
+      <li>
+        <code>.to[List]</code> - Aggregates the results into a <code>List</code>. This generates a <code>DBIO[List[String]]</code> type. This method can be used with any collection type that implements <code>FactoryCompat</code> (such as <code>List</code>, <code>Vector</code>, <code>Set</code>, etc.). Similar methods are:
+        <ul>
+          <li><code>.unsafe</code> which returns a single value, raising an exception if there is not exactly one row returned.</li>
+          <li><code>.option</code> which returns an Option, raising an exception if there is more than one row returned.</li>
+          <li><code>.nel</code> which returns an NonEmptyList, raising an exception if there are no rows returned.</li>
+        </ul>
+      </li>
+      <li><code>.readOnly(connector)</code> - Executes the query using the connection in read-only mode. The return value is <code>IO[List[String]]</code>.</li>
+      <li><code>.unsafeRunSync()</code> - Executes the IO monad to get the actual result (<code>List[String]</code>).</li>
+      <li><code>.foreach(println)</code> - Outputs each element of the result.</li>
+    </ul>
+    
+    <h2 id="multiple-column-queries" class="section"><a class="anchor-link left" href="#multiple-column-queries"><i class="icofont-laika link">&#xef71;</i></a>Multiple Column Queries</h2>
+    <p>Of course, you can select multiple columns and map them to tuples:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="string-literal">sql&quot;SELECT name, email FROM user&quot;</span><span>
+  .</span><span class="identifier">query</span><span>[(</span><span class="type-name">String</span><span>, </span><span class="type-name">String</span><span>)]       </span><span class="comment">// Query[(String, String)]
+</span><span>  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]                      </span><span class="comment">// DBIO[List[(String, String)]]
+</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)                </span><span class="comment">// IO[List[(String, String)]]
+</span><span>  .</span><span class="identifier">unsafeRunSync</span><span>()               </span><span class="comment">// List[(String, String)]
+</span><span>  .</span><span class="identifier">foreach</span><span> { </span><span class="keyword">case</span><span> (</span><span class="identifier">name</span><span>, </span><span class="identifier">email</span><span>) =&gt; </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;Name: </span><span class="substitution">$name</span><span class="string-literal">, Email: </span><span class="substitution">$email</span><span class="string-literal">&quot;</span><span>) }</span></code></pre>
+    <p>In multiple column queries, it&#39;s important that the order of selected columns matches the order of type parameters in the tuple. In the above example, <code>name</code> corresponds to the 1st column (tuple&#39;s <code>_1</code>), and <code>email</code> to the 2nd column (tuple&#39;s <code>_2</code>).</p>
+    
+    <h2 id="mapping-to-case-classes" class="section"><a class="anchor-link left" href="#mapping-to-case-classes"><i class="icofont-laika link">&#xef71;</i></a>Mapping to Case Classes</h2>
+    <p>While tuples are convenient, we recommend using case classes to improve code readability. ldbc can automatically map query results to case classes:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Case class representing user information
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">User</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Long</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">email</span><span>: </span><span class="type-name">String</span><span>)
+
+</span><span class="comment">// Query execution and mapping
+</span><span class="string-literal">sql&quot;SELECT id, name, email FROM user&quot;</span><span>
+  .</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>]                   </span><span class="comment">// Query[User]
+</span><span>  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]                      </span><span class="comment">// DBIO[List[User]]
+</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)                </span><span class="comment">// IO[List[User]]
+</span><span>  .</span><span class="identifier">unsafeRunSync</span><span>()               </span><span class="comment">// List[User]
+</span><span>  .</span><span class="identifier">foreach</span><span>(</span><span class="identifier">user</span><span> =&gt; </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;ID: </span><span class="substitution">${user.id}</span><span class="string-literal">, Name: </span><span class="substitution">${user.name}</span><span class="string-literal">, Email: </span><span class="substitution">${user.email}</span><span class="string-literal">&quot;</span><span>))</span></code></pre>
+    
+    <h3 id="how-mapping-works" class="section"><a class="anchor-link left" href="#how-mapping-works"><i class="icofont-laika link">&#xef71;</i></a>How Mapping Works</h3>
+    <p>The following diagram shows how SQL query results are mapped to the User model:</p>
+    <p><img src="../../img/select-mapping-simple-EN.svg" alt="Simple Mapping Mechanism"></p>
+    <p>The mapping process is performed as follows based on this diagram:</p>
+    <ol class="arabic">
+      <li><strong>SQL Execution</strong>: Create a query with <code>sql&quot;SELECT id, name, email FROM user&quot;</code> string interpolation and specify the result type with <code>.query[User]</code></li>
+      <li><strong>ResultSet</strong>: The result set returned from the database (values stored sequentially starting from column number 1)</li>
+      <li><strong>Decoder Resolution</strong>: At compile time, compose basic Decoders like <code>Decoder[Long]</code> and <code>Decoder[String]</code> to build <code>Decoder[User]</code></li>
+      <li><strong>Mapping Process</strong>: At runtime, convert each column value to the appropriate type with the decode method and finally generate a User instance</li>
+    </ol>
+    
+    <h2 id="joining-multiple-tables-and-nested-case-classes" class="section"><a class="anchor-link left" href="#joining-multiple-tables-and-nested-case-classes"><i class="icofont-laika link">&#xef71;</i></a>Joining Multiple Tables and Nested Case Classes</h2>
+    <p>When retrieving data from multiple tables using <code>JOIN</code>, you can map to nested case class structures. In the following example, we join the <code>city</code> and <code>country</code> tables and map the result to a <code>CityWithCountry</code> class:</p>
+    <pre><code class="nohighlight"><span class="comment">// Case class representing a city
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">City</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Long</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>)
+
+</span><span class="comment">// Case class representing a country
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Country</span><span>(</span><span class="identifier">code</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">region</span><span>: </span><span class="type-name">String</span><span>)
+
+</span><span class="comment">// Case class combining city and country information
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">CityWithCountry</span><span>(</span><span class="identifier">city</span><span>: </span><span class="type-name">City</span><span>, </span><span class="identifier">country</span><span>: </span><span class="type-name">Country</span><span>)
+
+</span><span class="comment">// Executing a join query
+</span><span class="string-literal">sql&quot;&quot;&quot;
+  SELECT
+    city.id,
+    city.name,
+    country.code,
+    country.name,
+    country.region
+  FROM city
+  JOIN country ON city.country_code = country.code
+&quot;&quot;&quot;</span><span>
+  .</span><span class="identifier">query</span><span>[</span><span class="type-name">CityWithCountry</span><span>]        </span><span class="comment">// Query[CityWithCountry]
+</span><span>  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]                      </span><span class="comment">// DBIO[List[CityWithCountry]]
+</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)                </span><span class="comment">// IO[List[CityWithCountry]]
+</span><span>  .</span><span class="identifier">unsafeRunSync</span><span>()               </span><span class="comment">// List[CityWithCountry]
+</span><span>  .</span><span class="identifier">foreach</span><span>(</span><span class="identifier">cityWithCountry</span><span> =&gt; </span><span class="identifier">println</span><span>(
+    </span><span class="string-literal">s&quot;City: </span><span class="substitution">${cityWithCountry.city.name}</span><span class="string-literal">, Country: </span><span class="substitution">${cityWithCountry.country.name}</span><span class="string-literal">&quot;</span><span>
+  ))</span></code></pre>
+    
+    <h3 id="how-complex-mapping-works" class="section"><a class="anchor-link left" href="#how-complex-mapping-works"><i class="icofont-laika link">&#xef71;</i></a>How Complex Mapping Works</h3>
+    <p>The following diagram shows how JOIN results are mapped to nested case classes (CityWithCountry):</p>
+    <p><img src="../../img/select-mapping-complex-EN.svg" alt="Complex Mapping Mechanism (JOIN Results)"></p>
+    <p>As can be seen from this diagram:</p>
+    <ol class="arabic">
+      <li><strong>SQL Execution</strong>: Execute a SQL query with JOIN clause and specify the result type with <code>.query[CityWithCountry]</code></li>
+      <li><strong>ResultSet</strong>: Result set with 5 columns (city.id, city.name, country.code, country.name, country.region)</li>
+      <li>
+        <strong>Decoder Construction</strong>: 
+        <ul>
+          <li>Decoder for City: Compose <code>Decoder[Long]</code> and <code>Decoder[String]</code> to create <code>Decoder[City]</code></li>
+          <li>Decoder for Country: Compose three <code>Decoder[String]</code>s to create <code>Decoder[Country]</code></li>
+          <li>Finally compose both to build <code>Decoder[CityWithCountry]</code></li>
+        </ul>
+      </li>
+      <li>
+        <strong>Mapping Process</strong>: 
+        <ul>
+          <li>Generate City object from columns 1,2</li>
+          <li>Generate Country object from columns 3,4,5</li>
+          <li>Combine both to create CityWithCountry instance</li>
+        </ul>
+      </li>
+    </ol>
+    
+    <h2 id="using-tuples-for-join-queries" class="section"><a class="anchor-link left" href="#using-tuples-for-join-queries"><i class="icofont-laika link">&#xef71;</i></a>Using Tuples for Join Queries</h2>
+    <p>Instead of nested case classes, you can also use tuples to retrieve data from multiple tables:</p>
+    <pre><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">City</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Long</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>)
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Country</span><span>(</span><span class="identifier">code</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">region</span><span>: </span><span class="type-name">String</span><span>)
+
+</span><span class="string-literal">sql&quot;&quot;&quot;
+  SELECT
+    city.id,
+    city.name,
+    country.code,
+    country.name,
+    country.region
+  FROM city
+  JOIN country ON city.country_code = country.code
+&quot;&quot;&quot;</span><span>
+  .</span><span class="identifier">query</span><span>[(</span><span class="type-name">City</span><span>, </span><span class="type-name">Country</span><span>)]        </span><span class="comment">// Query[(City, Country)]
+</span><span>  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]                      </span><span class="comment">// DBIO[List[(City, Country)]]
+</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)                </span><span class="comment">// IO[List[(City, Country)]]
+</span><span>  .</span><span class="identifier">unsafeRunSync</span><span>()               </span><span class="comment">// List[(City, Country)]
+</span><span>  .</span><span class="identifier">foreach</span><span> { </span><span class="keyword">case</span><span> (</span><span class="identifier">city</span><span>, </span><span class="identifier">country</span><span>) =&gt; 
+    </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;City: </span><span class="substitution">${city.name}</span><span class="string-literal">, Country: </span><span class="substitution">${country.name}</span><span class="string-literal">&quot;</span><span>)
+  }</span></code></pre>
+    
+    <h2 id="getting-a-single-result-option-type" class="section"><a class="anchor-link left" href="#getting-a-single-result-option-type"><i class="icofont-laika link">&#xef71;</i></a>Getting a Single Result (Option Type)</h2>
+    <p>If you want to get a single result or an optional result (0 or 1 record) instead of a list, you can use <code>.to[Option]</code>:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">User</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Long</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">email</span><span>: </span><span class="type-name">String</span><span>)
+
+</span><span class="comment">// Searching for a single user by ID
+</span><span class="string-literal">sql&quot;SELECT id, name, email FROM user WHERE id = </span><span class="substitution">${userId}</span><span class="string-literal">&quot;</span><span>
+  .</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>]                   </span><span class="comment">// Query[User]
+</span><span>  .</span><span class="identifier">to</span><span>[</span><span class="type-name">Option</span><span>]                    </span><span class="comment">// DBIO[Option[User]]
+</span><span>  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)                </span><span class="comment">// IO[Option[User]]
+</span><span>  .</span><span class="identifier">unsafeRunSync</span><span>()               </span><span class="comment">// Option[User]
+</span><span>  .</span><span class="identifier">foreach</span><span>(</span><span class="identifier">user</span><span> =&gt; </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;Found user: </span><span class="substitution">${user.name}</span><span class="string-literal">&quot;</span><span>))</span></code></pre>
+    <p>If no result is found, <code>None</code> is returned, and if one is found, <code>Some(User(...))</code> is returned.</p>
+    
+    <h2 id="choosing-query-execution-methods" class="section"><a class="anchor-link left" href="#choosing-query-execution-methods"><i class="icofont-laika link">&#xef71;</i></a>Choosing Query Execution Methods</h2>
+    <p>ldbc provides different query execution methods depending on the purpose:</p>
+    <ul>
+      <li><code>.readOnly(connector)</code> - Used for read-only operations (such as SELECT statements)</li>
+      <li><code>.commit(connector)</code> - Executes write operations in auto-commit mode</li>
+      <li><code>.rollback(connector)</code> - Executes write operations and always rolls back (for testing)</li>
+      <li><code>.transaction(connector)</code> - Executes operations within a transaction and commits only on success</li>
+    </ul>
+    <pre><code class="nohighlight"><span class="comment">// Example of a read-only operation
+</span><span class="string-literal">sql&quot;SELECT * FROM users&quot;</span><span>
+  .</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>]
+  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
+  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
+
+</span><span class="comment">// Example of a write operation (auto-commit)
+</span><span class="string-literal">sql&quot;UPDATE users SET name = </span><span class="substitution">${newName}</span><span class="string-literal"> WHERE id = </span><span class="substitution">${userId}</span><span class="string-literal">&quot;</span><span>
+  .</span><span class="identifier">update</span><span>
+  .</span><span class="identifier">commit</span><span>(</span><span class="identifier">connector</span><span>)
+
+</span><span class="comment">// Multiple operations in a transaction
+</span><span>(</span><span class="keyword">for</span><span> {
+  </span><span class="identifier">userId</span><span> &lt;- </span><span class="string-literal">sql&quot;INSERT INTO users (name, email) VALUES (</span><span class="substitution">${name}</span><span class="string-literal">, </span><span class="substitution">${email}</span><span class="string-literal">)&quot;</span><span>.</span><span class="identifier">returning</span><span>[</span><span class="type-name">Long</span><span>]
+  </span><span class="identifier">_</span><span>      &lt;- </span><span class="string-literal">sql&quot;INSERT INTO user_roles (user_id, role_id) VALUES (</span><span class="substitution">${userId}</span><span class="string-literal">, </span><span class="substitution">${roleId}</span><span class="string-literal">)&quot;</span><span>.</span><span class="identifier">update</span><span>
+} </span><span class="keyword">yield</span><span> </span><span class="identifier">userId</span><span>).</span><span class="identifier">transaction</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
+    
+    <h2 id="combining-collection-operations-with-queries" class="section"><a class="anchor-link left" href="#combining-collection-operations-with-queries"><i class="icofont-laika link">&#xef71;</i></a>Combining Collection Operations with Queries</h2>
+    <p>By applying Scala collection operations to retrieved data, you can concisely describe more complex data processing:</p>
+    <pre><code class="nohighlight"><span class="comment">// Example of grouping users
+</span><span class="string-literal">sql&quot;SELECT id, name, department FROM employees&quot;</span><span>
+  .</span><span class="identifier">query</span><span>[(</span><span class="type-name">Long</span><span>, </span><span class="type-name">String</span><span>, </span><span class="type-name">String</span><span>)] </span><span class="comment">// ID, name, department
+</span><span>  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
+  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
+  .</span><span class="identifier">unsafeRunSync</span><span>()
+  .</span><span class="identifier">groupBy</span><span>(</span><span class="identifier">_</span><span class="number-literal">._3</span><span>) </span><span class="comment">// Group by department
+</span><span>  .</span><span class="identifier">map</span><span> { </span><span class="keyword">case</span><span> (</span><span class="identifier">department</span><span>, </span><span class="identifier">employees</span><span>) =&gt; 
+    (</span><span class="identifier">department</span><span>, </span><span class="identifier">employees</span><span>.</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span class="number-literal">._2</span><span>)) </span><span class="comment">// Map to department name and list of employee names
+</span><span>  }
+  .</span><span class="identifier">foreach</span><span> { </span><span class="keyword">case</span><span> (</span><span class="identifier">department</span><span>, </span><span class="identifier">names</span><span>) =&gt;
+    </span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;Department: </span><span class="substitution">$department</span><span class="string-literal">, Employees: </span><span class="substitution">${names.mkString(&quot;, &quot;)}</span><span class="string-literal">&quot;</span><span>)
+  }</span></code></pre>
+    
+    <h2 id="efficient-processing-of-large-data-with-streaming" class="section"><a class="anchor-link left" href="#efficient-processing-of-large-data-with-streaming"><i class="icofont-laika link">&#xef71;</i></a>Efficient Processing of Large Data with Streaming</h2>
+    <p>When processing large amounts of data, loading all data into memory at once can cause memory exhaustion. ldbc allows you to process data efficiently using <strong>streaming</strong>.</p>
+    
+    <h3 id="basic-usage-of-streaming" class="section"><a class="anchor-link left" href="#basic-usage-of-streaming"><i class="icofont-laika link">&#xef71;</i></a>Basic Usage of Streaming</h3>
+    <p>Streaming allows you to fetch and process data incrementally, significantly reducing memory usage:</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">fs2</span><span>.</span><span class="type-name">Stream</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.*
+
+</span><span class="comment">// Basic streaming
+</span><span class="keyword">val</span><span> </span><span class="identifier">cityStream</span><span>: </span><span class="type-name">Stream</span><span>[</span><span class="type-name">DBIO</span><span>, </span><span class="type-name">String</span><span>] = 
+  </span><span class="string-literal">sql&quot;SELECT name FROM city&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>]
+    .</span><span class="identifier">stream</span><span>                    </span><span class="comment">// Stream[DBIO, String]
+</span><span>
+</span><span class="comment">// Create Connector
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
+
+</span><span class="comment">// Fetch and process only the first 5 records
+</span><span class="keyword">val</span><span> </span><span class="identifier">firstFiveCities</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">List</span><span>[</span><span class="type-name">String</span><span>]] = 
+  </span><span class="identifier">cityStream</span><span>
+    .</span><span class="identifier">take</span><span>(</span><span class="number-literal">5</span><span>)                   </span><span class="comment">// Only the first 5 records
+</span><span>    .</span><span class="identifier">compile</span><span>.</span><span class="identifier">toList</span><span>            </span><span class="comment">// Convert Stream to List
+</span><span>    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)       </span><span class="comment">// IO[List[String]]</span></code></pre>
+    
+    <h3 id="specifying-fetch-size" class="section"><a class="anchor-link left" href="#specifying-fetch-size"><i class="icofont-laika link">&#xef71;</i></a>Specifying Fetch Size</h3>
+    <p>You can control the number of rows fetched at once using the <code>stream(fetchSize: Int)</code> method:</p>
+    <pre><code class="nohighlight"><span class="comment">// Fetch 10 rows at a time
+</span><span class="keyword">val</span><span> </span><span class="identifier">efficientStream</span><span>: </span><span class="type-name">Stream</span><span>[</span><span class="type-name">DBIO</span><span>, </span><span class="type-name">String</span><span>] = 
+  </span><span class="string-literal">sql&quot;SELECT name FROM city&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>]
+    .</span><span class="identifier">stream</span><span>(</span><span class="number-literal">10</span><span>)                </span><span class="comment">// fetchSize = 10
+</span><span>
+</span><span class="comment">// Efficiently process large data
+</span><span class="keyword">val</span><span> </span><span class="identifier">processLargeData</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">Int</span><span>] = 
+  </span><span class="string-literal">sql&quot;SELECT id, name, population FROM city&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[(</span><span class="type-name">Long</span><span>, </span><span class="type-name">String</span><span>, </span><span class="type-name">Int</span><span>)]
+    .</span><span class="identifier">stream</span><span>(</span><span class="number-literal">100</span><span>)               </span><span class="comment">// Fetch 100 rows at a time
+</span><span>    .</span><span class="identifier">filter</span><span>(</span><span class="identifier">_</span><span class="number-literal">._3</span><span> &gt; </span><span class="number-literal">1000000</span><span>)    </span><span class="comment">// Cities with population over 1 million
+</span><span>    .</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span class="number-literal">._2</span><span>)                 </span><span class="comment">// Extract only city names
+</span><span>    .</span><span class="identifier">compile</span><span>.</span><span class="identifier">toList</span><span>
+    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
+    .</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">size</span><span>)</span></code></pre>
+    
+    <h3 id="practical-data-processing-with-streaming" class="section"><a class="anchor-link left" href="#practical-data-processing-with-streaming"><i class="icofont-laika link">&#xef71;</i></a>Practical Data Processing with Streaming</h3>
+    <p>Since streaming returns Fs2 <code>Stream</code>, you can use rich functional operations:</p>
+    <pre><code class="nohighlight"><span class="comment">// Process large user data incrementally
+// Create Connector
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">processUsers</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">Unit</span><span>] = 
+  </span><span class="string-literal">sql&quot;SELECT id, name, email, created_at FROM users&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[(</span><span class="type-name">Long</span><span>, </span><span class="type-name">String</span><span>, </span><span class="type-name">String</span><span>, </span><span class="identifier">java</span><span>.</span><span class="identifier">time</span><span>.</span><span class="type-name">LocalDateTime</span><span>)]
+    .</span><span class="identifier">stream</span><span>(</span><span class="number-literal">50</span><span>)                </span><span class="comment">// Fetch 50 rows at a time
+</span><span>    .</span><span class="identifier">filter</span><span>(</span><span class="identifier">_</span><span class="number-literal">._4</span><span>.</span><span class="identifier">isAfter</span><span>(</span><span class="identifier">lastWeek</span><span>))  </span><span class="comment">// Users created since last week
+</span><span>    .</span><span class="identifier">map</span><span> { </span><span class="keyword">case</span><span> (</span><span class="identifier">id</span><span>, </span><span class="identifier">name</span><span>, </span><span class="identifier">email</span><span>, </span><span class="identifier">_</span><span>) =&gt; 
+      </span><span class="string-literal">s&quot;New user: </span><span class="substitution">$name</span><span class="string-literal"> (</span><span class="substitution">$email</span><span class="string-literal">)&quot;</span><span>
+    }
+    .</span><span class="identifier">evalMap</span><span>(</span><span class="type-name">IO</span><span>.</span><span class="identifier">println</span><span>)       </span><span class="comment">// Output results sequentially
+</span><span>    .</span><span class="identifier">compile</span><span>.</span><span class="identifier">drain</span><span>             </span><span class="comment">// Execute the stream
+</span><span>    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
+    
+    <h3 id="optimizing-behavior-with-usecursorfetch" class="section"><a class="anchor-link left" href="#optimizing-behavior-with-usecursorfetch"><i class="icofont-laika link">&#xef71;</i></a>Optimizing Behavior with UseCursorFetch</h3>
+    <p>In MySQL, the efficiency of streaming changes significantly depending on the <code>UseCursorFetch</code> setting:</p>
+    <pre><code class="nohighlight"><span class="comment">// UseCursorFetch=true (recommended) - True streaming
+</span><span class="keyword">val</span><span> </span><span class="identifier">efficientProvider</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">host</span><span>, </span><span class="identifier">port</span><span>, </span><span class="identifier">user</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="identifier">password</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="identifier">database</span><span>)
+  .</span><span class="identifier">setUseCursorFetch</span><span>(</span><span class="boolean-literal">true</span><span>)    </span><span class="comment">// Enable server-side cursors
+</span><span>  .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">None</span><span>)
+
+</span><span class="comment">// UseCursorFetch=false (default) - Limited streaming
+</span><span class="keyword">val</span><span> </span><span class="identifier">standardProvider</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">host</span><span>, </span><span class="identifier">port</span><span>, </span><span class="identifier">user</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="identifier">password</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="identifier">database</span><span>)
+  .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">None</span><span>)</span></code></pre>
+    <p><strong>When UseCursorFetch=true:</strong></p>
+    <ul>
+      <li>Uses server-side cursors to fetch data incrementally as needed</li>
+      <li>Significantly reduces memory usage (safe even with millions of rows)</li>
+      <li>Enables true streaming processing</li>
+    </ul>
+    <p><strong>When UseCursorFetch=false:</strong></p>
+    <ul>
+      <li>Loads all results into memory when executing the query</li>
+      <li>Fast for small datasets but risky for large data</li>
+      <li>Limited effectiveness of streaming</li>
+    </ul>
+    
+    <h3 id="example-of-large-data-processing" class="section"><a class="anchor-link left" href="#example-of-large-data-processing"><i class="icofont-laika link">&#xef71;</i></a>Example of Large Data Processing</h3>
+    <p>Here&#39;s an example of safely processing one million rows:</p>
+    <pre><code class="nohighlight"><span class="comment">// Efficient large data processing
+</span><span class="keyword">val</span><span> </span><span class="identifier">datasource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">host</span><span>, </span><span class="identifier">port</span><span>, </span><span class="identifier">user</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="identifier">password</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="identifier">database</span><span>)
+  .</span><span class="identifier">setUseCursorFetch</span><span>(</span><span class="boolean-literal">true</span><span>)   </span><span class="comment">// Important: Enable server-side cursors
+</span><span>
+</span><span class="comment">// Create Connector
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">processMillionRecords</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">Long</span><span>] = 
+  </span><span class="string-literal">sql&quot;SELECT id, amount FROM transactions WHERE year = 2024&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[(</span><span class="type-name">Long</span><span>, </span><span class="type-name">BigDecimal</span><span>)]
+    .</span><span class="identifier">stream</span><span>(</span><span class="number-literal">1000</span><span>)          </span><span class="comment">// Process 1000 rows at a time
+</span><span>    .</span><span class="identifier">filter</span><span>(</span><span class="identifier">_</span><span class="number-literal">._2</span><span> &gt; </span><span class="number-literal">100</span><span>)    </span><span class="comment">// Transactions over 100 yen only
+</span><span>    .</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span class="number-literal">._2</span><span>)             </span><span class="comment">// Extract amounts only
+</span><span>    .</span><span class="identifier">fold</span><span>(</span><span class="type-name">BigDecimal</span><span>(</span><span class="number-literal">0</span><span>))(</span><span class="identifier">_</span><span> + </span><span class="identifier">_</span><span>)  </span><span class="comment">// Calculate sum
+</span><span>    .</span><span class="identifier">compile</span><span>.</span><span class="identifier">lastOrError</span><span>   </span><span class="comment">// Get final result
+</span><span>    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
+    
+    <h3 id="benefits-of-streaming" class="section"><a class="anchor-link left" href="#benefits-of-streaming"><i class="icofont-laika link">&#xef71;</i></a>Benefits of Streaming</h3>
+    <ol class="arabic">
+      <li><strong>Memory Efficiency</strong>: Keep memory usage constant even with large data</li>
+      <li><strong>Early Processing</strong>: Process data while receiving it simultaneously</li>
+      <li><strong>Interruptible</strong>: Stop processing midway based on conditions</li>
+      <li><strong>Functional Operations</strong>: Rich operations like <code>filter</code>, <code>map</code>, <code>take</code></li>
+    </ol>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Example of early termination based on conditions
+// Create Connector
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">datasource</span><span>)
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">findFirstLargeCity</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">Option</span><span>[</span><span class="type-name">String</span><span>]] = 
+  </span><span class="string-literal">sql&quot;SELECT name, population FROM city ORDER BY population DESC&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[(</span><span class="type-name">String</span><span>, </span><span class="type-name">Int</span><span>)]
+    .</span><span class="identifier">stream</span><span>(</span><span class="number-literal">10</span><span>)
+    .</span><span class="identifier">find</span><span>(</span><span class="identifier">_</span><span class="number-literal">._2</span><span> &gt; </span><span class="number-literal">5000000</span><span>)      </span><span class="comment">// First city with population over 5 million
+</span><span>    .</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span class="number-literal">._1</span><span>))          </span><span class="comment">// Extract only city name
+</span><span>    .</span><span class="identifier">compile</span><span>.</span><span class="identifier">last</span><span>
+    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
+    
+    <h2 id="how-mapping-works-in-detail" class="section"><a class="anchor-link left" href="#how-mapping-works-in-detail"><i class="icofont-laika link">&#xef71;</i></a>How Mapping Works in Detail</h2>
+    
+    <h3 id="what-is-a-decoder" class="section"><a class="anchor-link left" href="#what-is-a-decoder"><i class="icofont-laika link">&#xef71;</i></a>What is a Decoder?</h3>
+    <p>In ldbc, a <code>Decoder</code> is a crucial component responsible for converting from <code>ResultSet</code> to Scala types. Decoders have the following characteristics:</p>
+    <ol class="arabic">
+      <li><strong>Type Safety</strong>: Verify type consistency at compile time</li>
+      <li><strong>Composable</strong>: Create Decoders for complex structures by combining smaller Decoders</li>
+      <li><strong>Auto-derivation</strong>: Often generated automatically without explicit definitions</li>
+    </ol>
+    
+    <h3 id="basic-decoder-operations" class="section"><a class="anchor-link left" href="#basic-decoder-operations"><i class="icofont-laika link">&#xef71;</i></a>Basic Decoder Operations</h3>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Basic type Decoders (implicitly provided)
+</span><span class="keyword">val</span><span> </span><span class="identifier">longDecoder</span><span>: </span><span class="type-name">Decoder</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="type-name">Decoder</span><span>.</span><span class="identifier">long</span><span>
+</span><span class="keyword">val</span><span> </span><span class="identifier">stringDecoder</span><span>: </span><span class="type-name">Decoder</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="type-name">Decoder</span><span>.</span><span class="identifier">string</span><span>
+
+</span><span class="comment">// Composing multiple Decoders
+</span><span class="keyword">val</span><span> </span><span class="identifier">tupleDecoder</span><span>: </span><span class="type-name">Decoder</span><span>[(</span><span class="type-name">Long</span><span>, </span><span class="type-name">String</span><span>)] = 
+  </span><span class="identifier">longDecoder</span><span> *: </span><span class="identifier">stringDecoder</span><span>
+
+</span><span class="comment">// Converting to case class
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">User</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Long</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>)
+</span><span class="keyword">val</span><span> </span><span class="identifier">userDecoder</span><span>: </span><span class="type-name">Decoder</span><span>[</span><span class="type-name">User</span><span>] = </span><span class="identifier">tupleDecoder</span><span>.</span><span class="identifier">to</span><span>[</span><span class="type-name">User</span><span>]</span></code></pre>
+    
+    <h3 id="reading-by-column-number" class="section"><a class="anchor-link left" href="#reading-by-column-number"><i class="icofont-laika link">&#xef71;</i></a>Reading by Column Number</h3>
+    <p>When Decoders read values from a <code>ResultSet</code>, they use column numbers (starting from 1):</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// How decode(columnIndex, resultSet) method works
+</span><span class="identifier">decoder</span><span>.</span><span class="identifier">decode</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="identifier">resultSet</span><span>) </span><span class="comment">// Read the 1st column
+</span><span class="identifier">decoder</span><span>.</span><span class="identifier">decode</span><span>(</span><span class="number-literal">2</span><span>, </span><span class="identifier">resultSet</span><span>) </span><span class="comment">// Read the 2nd column</span></code></pre>
+    
+    <h3 id="error-handling" class="section"><a class="anchor-link left" href="#error-handling"><i class="icofont-laika link">&#xef71;</i></a>Error Handling</h3>
+    <p>During the decoding process, the following types of errors may occur:</p>
+    <ul>
+      <li><strong>Type mismatch</strong>: SQL type and Scala type are incompatible</li>
+      <li><strong>NULL values</strong>: Mapping to types that don&#39;t allow NULL</li>
+      <li><strong>Column count mismatch</strong>: Expected column count differs from actual</li>
+    </ul>
+    <p>These errors are represented as <code>Either[Decoder.Error, A]</code> and appropriate error messages are provided at runtime.</p>
+    
+    <h2 id="summary" class="section"><a class="anchor-link left" href="#summary"><i class="icofont-laika link">&#xef71;</i></a>Summary</h2>
+    <p>ldbc provides features for retrieving data from databases in a type-safe and intuitive manner. In this tutorial, we covered:</p>
+    <ul>
+      <li>The basic workflow for data retrieval</li>
+      <li>Single-column and multi-column queries</li>
+      <li>Mapping to case classes and <strong>how the internal mechanism works</strong></li>
+      <li><strong>Type-safe conversion processing with Decoders</strong></li>
+      <li>Joining multiple tables and nested data structures</li>
+      <li>Getting single and multiple results</li>
+      <li><strong>Efficient processing of large data with streaming</strong></li>
+      <li>Various execution methods</li>
+    </ul>
+    <p>By understanding how mapping works through Decoder composition, you can safely handle even more complex data structures. Additionally, by leveraging streaming capabilities, you can process large amounts of data efficiently in terms of memory usage. When dealing with large datasets, consider setting <code>UseCursorFetch=true</code>.</p>
+    
+    <h2 id="next-steps" class="section"><a class="anchor-link left" href="#next-steps"><i class="icofont-laika link">&#xef71;</i></a>Next Steps</h2>
+    <p>Now that you understand how to retrieve data from databases in various formats, you&#39;ve seen how type-safe mapping allows you to map database results directly to Scala data structures.</p>
+    <p>Next, let&#39;s move on to <a href="Updating-Data.html">Updating Data</a> to learn how to insert, update, and delete data.</p>
+
+    
+
+  </main>
+
+</div>
+
+</body>
+
+</html>

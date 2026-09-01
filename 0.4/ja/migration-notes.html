@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="Typelevel Laika + Helium Theme" />
+  <title>マイグレーションノート</title>
+  
+  <meta name="author" content="Takahiko Tominaga"/>
+  
+  
+  <meta name="description" content="Documentation for ldbc"/>
+  
+  
+  
+  <link rel="icon" sizes="32x32" type="image/png" href="https://typelevel.org/img/favicon.png"/>
+  
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700">
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Mono:500">
+  
+  <link rel="stylesheet" type="text/css" href="../helium/site/icofont.min.css" />
+    <link rel="stylesheet" type="text/css" href="../helium/site/laika-helium.css" />
+    <link rel="stylesheet" type="text/css" href="../css/site.css" />
+  <script src="../helium/site/laika-helium.js"></script>
+    <script src="../helium/site/laika-versions.js"></script>
+  <script>initVersions("../../", "/ja/migration-notes.html", "0.4", null);</script>
+  
+  <script> /* for avoiding page load transitions */ </script>
+</head>
+
+<body>
+
+<header id="top-bar" class="light-default dark-default">
+
+  <div class="row">
+    <a id="nav-icon">
+      <i class="icofont-laika navigationMenu" title="Navigation">&#xefa2;</i>
+    </a>
+    
+    <div class="menu-container version-menu">
+      <a class="text-link menu-toggle" href="#">Version 0.4</a>
+      <nav class="menu-content">
+        <ul class="nav-list">
+          <li class="level1 nav-leaf"><a href="../older-versions.html">Older Versions</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <a class="image-link" href="https://typelevel.org"><img src="https://typelevel.org/img/logo.svg"></a>
+
+  <div class="row links">
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>  
+
+</header>
+
+<nav id="sidebar">
+
+  <div class="row">
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>
+
+  
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="index.html">ldbc</a></li>
+    <li class="level1 active nav-leaf"><a href="#">マイグレーションノート</a></li>
+    <li class="level1 nav-header">チュートリアル</li>
+    <li class="level2 nav-leaf"><a href="tutorial/">はじめに</a></li>
+    <li class="level2 nav-leaf"><a href="tutorial/Setup.html">セットアップ</a></li>
+    <li class="level2 nav-leaf"><a href="tutorial/Connection.html">コネクション</a></li>
+    <li class="level2 nav-leaf"><a href="tutorial/Simple-Program.html">シンプルプログラム</a></li>
+    <li class="level2 nav-leaf"><a href="tutorial/Database-Operations.html">データベース操作</a></li>
+    <li class="level2 nav-leaf"><a href="tutorial/Parameterized-Queries.html">パラメータ</a></li>
+    <li class="level2 nav-leaf"><a href="tutorial/Selecting-Data.html">データ選択</a></li>
+    <li class="level2 nav-leaf"><a href="tutorial/Updating-Data.html">データ更新</a></li>
+    <li class="level2 nav-leaf"><a href="tutorial/Error-Handling.html">エラーハンドリング</a></li>
+    <li class="level2 nav-leaf"><a href="tutorial/Logging.html">ロギング</a></li>
+    <li class="level2 nav-leaf"><a href="tutorial/Custom-Data-Type.html">カスタム データ型</a></li>
+    <li class="level2 nav-leaf"><a href="tutorial/Query-Builder.html">クエリビルダー</a></li>
+    <li class="level2 nav-leaf"><a href="tutorial/Schema.html">スキーマ</a></li>
+    <li class="level2 nav-leaf"><a href="tutorial/Schema-Code-Generation.html">スキーマコード生成</a></li>
+    <li class="level1 nav-header">Examples</li>
+    <li class="level2 nav-leaf"><a href="examples/">はじめに</a></li>
+    <li class="level2 nav-leaf"><a href="examples/Http4s.html">Http4s</a></li>
+    <li class="level2 nav-leaf"><a href="examples/HikariCP.html">HikariCP</a></li>
+    <li class="level2 nav-leaf"><a href="examples/Otel.html">OpenTelemetry</a></li>
+    <li class="level1 nav-header">QA</li>
+    <li class="level2 nav-leaf"><a href="qa/">はじめに</a></li>
+    <li class="level2 nav-leaf"><a href="qa/What-is-ldbc.html">Q: ldbcとは何ですか？</a></li>
+    <li class="level2 nav-leaf"><a href="qa/Which-dependencies-should-I-set.html">Q: どの依存関係を設定すればよいですか？</a></li>
+    <li class="level2 nav-leaf"><a href="qa/What-is-the-difference-between-a-Java-connect-and-a-Scala-connector.html">Q: JavaのコネクトとScalaのコネクタの違いは何ですか？</a></li>
+    <li class="level2 nav-leaf"><a href="qa/How-to-define-complex-queries-with-plain-queries.html">Q: プレーンクエリで複雑なクエリを定義する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="qa/How-do-I-use-my-own-type.html">Q: 独自の型を使うにはどうすればいいですか？</a></li>
+    <li class="level2 nav-leaf"><a href="qa/How-do-I-use-nested-models.html">Q: ネストしたモデルを使うにはどうすればいいですか？</a></li>
+    <li class="level2 nav-leaf"><a href="qa/How-to-perform-DDL-with-schema.html">Q: スキーマを使用したDDLを実行する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="qa/How-to-change-column-names-in-Query-Builder.html">Q: クエリビルダーでカラム名を変更する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="qa/How-to-change-the-format-of-column-names-using-the-schema.html">Q: スキーマを使用したカラム名のフォーマットを変更する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="qa/How-do-I-add-processing-before-and-after-the-connection-is-established.html">Q: コネクション確立の前後に処理を追加する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="qa/Implicit-search-problem-too-large.html">Q: `Implicit search problem too large.`が発生する場合の対処方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="qa/How-to-use-scala-connector-connection-pool.html">Q: Scalaコネクタでコネクションプールを使用する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="qa/Is-there-a-way-to-stream-query-results-asynchronously.html">Q: クエリの結果を非同期でストリーミングする方法はありますか？</a></li>
+    <li class="level2 nav-leaf"><a href="qa/Is-there-a-function-to-limit-the-number-of-concurrent-queries.html">Q: 同時実行のクエリ数を制限する機能はありますか？</a></li>
+    <li class="level2 nav-leaf"><a href="qa/How-to-handle-multiple-databases.html">Q: 複数のデータベース（マルチテナント環境）を扱う方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="qa/How-to-use-with-ZIO.html">Q: ZIOで使用する方法は？</a></li>
+    <li class="level2 nav-leaf"><a href="qa/How-do-I-use-the-Enum-type.html">Q: Enum型の使い方は？</a></li>
+    <li class="level1 nav-header">Reference</li>
+    <li class="level2 nav-leaf"><a href="reference/">はじめに</a></li>
+    <li class="level2 nav-leaf"><a href="reference/Connector.html">コネクタ</a></li>
+    <li class="level2 nav-leaf"><a href="reference/Performance.html">パフォーマンス</a></li>
+    <li class="level2 nav-leaf"><a href="reference/Pooling.html">コネクションプーリング</a></li>
+  </ul>
+  
+
+</nav>
+
+<div id="container">
+
+  
+<nav id="page-nav">
+  <p class="header"><a href="#">マイグレーションノート</a></p>
+
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="#パッケージ">パッケージ</a></li>
+    <li class="level1 nav-node"><a href="#主要な変更点">🎯 主要な変更点</a></li>
+    <li class="level2 nav-leaf"><a href="#_1-組み込みコネクションプーリング機能の追加">1. 組み込みコネクションプーリング機能の追加</a></li>
+    <li class="level2 nav-leaf"><a href="#_2-api-の変更">2. API の変更</a></li>
+    <li class="level2 nav-leaf"><a href="#_3-設定方法の変更">3. 設定方法の変更</a></li>
+    <li class="level2 nav-leaf"><a href="#_4-コネクションプーリングの使用">4. コネクションプーリングの使用</a></li>
+    <li class="level2 nav-leaf"><a href="#_5-移行時の注意点">5. 移行時の注意点</a></li>
+    <li class="level2 nav-leaf"><a href="#_6-破壊的変更">6. 破壊的変更</a></li>
+    <li class="level2 nav-leaf"><a href="#_7-dbio-実行パターンの変更">7. DBIO 実行パターンの変更</a></li>
+    <li class="level2 nav-leaf"><a href="#_8-新機能">8. 新機能</a></li>
+    <li class="level1 nav-leaf"><a href="#まとめ">まとめ</a></li>
+  </ul>
+
+  <p class="footer"></p>
+</nav>
+
+
+  <main class="content">
+
+    <h1 id="マイグレーションノート-0-3-xから0-4-xへの移行" class="title">マイグレーションノート (0.3.xから0.4.xへの移行)</h1>
+    
+    <h2 id="パッケージ" class="section"><a class="anchor-link left" href="#パッケージ"><i class="icofont-laika link">&#xef71;</i></a>パッケージ</h2>
+    <p><strong>削除されたパッケージ</strong></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Module / Platform</th>
+          <th>JVM</th>
+          <th>Scala Native</th>
+          <th>Scala.js</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>ldbc-schemaSpy</code></td>
+          <td>✅</td>
+          <td>❌</td>
+          <td>❌</td>
+        </tr>
+      </tbody>
+    </table>
+    <p><strong>別の機能としてリニューアルされたパッケージ</strong></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Module / Platform</th>
+          <th>JVM</th>
+          <th>Scala Native</th>
+          <th>Scala.js</th>
+          <th>Scaladoc</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>ldbc-core</code></td>
+          <td>✅</td>
+          <td>✅</td>
+          <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-core_3"><img src="https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+      </tbody>
+    </table>
+    <p><strong>全てのパッケージ</strong></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Module / Platform</th>
+          <th>JVM</th>
+          <th>Scala Native</th>
+          <th>Scala.js</th>
+          <th>Scaladoc</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>ldbc-sql</code></td>
+          <td>✅</td>
+          <td>✅</td>
+          <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-sql_3"><img src="https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+        <tr>
+          <td><code>ldbc-core</code></td>
+          <td>✅</td>
+          <td>✅</td>
+          <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-core_3"><img src="https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+        <tr>
+          <td><code>ldbc-connector</code></td>
+          <td>✅</td>
+          <td>✅</td>
+          <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-connector_3"><img src="https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+        <tr>
+          <td><code>jdbc-connector</code></td>
+          <td>✅</td>
+          <td>❌</td>
+          <td>❌</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/jdbc-connector_3"><img src="https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+        <tr>
+          <td><code>ldbc-dsl</code></td>
+          <td>✅</td>
+          <td>✅</td>
+          <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3"><img src="https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+        <tr>
+          <td><code>ldbc-statement</code></td>
+          <td>✅</td>
+          <td>✅</td>
+          <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-statement_3"><img src="https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+        <tr>
+          <td><code>ldbc-query-builder</code></td>
+          <td>✅</td>
+          <td>✅</td>
+          <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-query-builder_3"><img src="https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+        <tr>
+          <td><code>ldbc-schema</code></td>
+          <td>✅</td>
+          <td>✅</td>
+          <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-schema_3"><img src="https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+        <tr>
+          <td><code>ldbc-codegen</code></td>
+          <td>✅</td>
+          <td>✅</td>
+          <td>✅</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-codegen_3"><img src="https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+        <tr>
+          <td><code>ldbc-hikari</code></td>
+          <td>✅</td>
+          <td>❌</td>
+          <td>❌</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-hikari_3"><img src="https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+        <tr>
+          <td><code>ldbc-plugin</code></td>
+          <td>✅</td>
+          <td>❌</td>
+          <td>❌</td>
+          <td><a href="https://javadoc.io/doc/io.github.takapi327/ldbc-plugin_2.12_1.0"><img src="https://img.shields.io/badge/javadoc-0.4.0-brightgreen.svg?label=Scaladoc" alt="Scaladoc"></a></td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <h2 id="主要な変更点" class="section"><a class="anchor-link left" href="#主要な変更点"><i class="icofont-laika link">&#xef71;</i></a>🎯 主要な変更点</h2>
+    
+    <h3 id="_1-組み込みコネクションプーリング機能の追加" class="section"><a class="anchor-link left" href="#_1-組み込みコネクションプーリング機能の追加"><i class="icofont-laika link">&#xef71;</i></a>1. 組み込みコネクションプーリング機能の追加</h3>
+    <p>0.4.0 から、ldbc-connector に高性能なコネクションプーリング機能が組み込まれました。これにより、HikariCP などの外部ライブラリを使用せずに、効率的なコネクション管理が可能になりました。</p>
+    <p><strong>メリット:</strong></p>
+    <ul>
+      <li>Cats Effect のファイバーベース並行性モデルに最適化</li>
+      <li>CircuitBreaker による障害時の保護</li>
+      <li>動的プールサイジング</li>
+      <li>詳細なメトリクス追跡</li>
+    </ul>
+    
+    <h3 id="_2-api-の変更" class="section"><a class="anchor-link left" href="#_2-api-の変更"><i class="icofont-laika link">&#xef71;</i></a>2. API の変更</h3>
+    
+    <h4 id="connectionprovider-から-mysqldatasource-への移行と-connector-の使用" class="section"><a class="anchor-link left" href="#connectionprovider-から-mysqldatasource-への移行と-connector-の使用"><i class="icofont-laika link">&#xef71;</i></a>ConnectionProvider から MySQLDataSource への移行と Connector の使用</h4>
+    <p>ConnectionProvider は非推奨となり、新しい MySQLDataSource と Connector API を使用します。</p>
+    <p><strong>旧 API (0.3.x):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+
+</span><span class="comment">// ConnectionProvider を使用
+</span><span class="keyword">val</span><span> </span><span class="identifier">provider</span><span> = </span><span class="type-name">ConnectionProvider</span><span>
+  .</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;root&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;test&quot;</span><span>)
+
+</span><span class="comment">// 直接使用
+</span><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">connection</span><span> =&gt;
+  </span><span class="comment">// SQL実行
+</span><span>}</span></code></pre>
+    <p><strong>新 API (0.4.x):</strong></p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">core</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.*
+
+</span><span class="comment">// MySQLDataSource を使用
+</span><span class="keyword">val</span><span> </span><span class="identifier">dataSource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;root&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;test&quot;</span><span>)
+
+</span><span class="comment">// Connector を作成して DBIO を実行
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">dataSource</span><span>)
+
+</span><span class="comment">// SQLクエリの実行
+</span><span class="keyword">val</span><span> </span><span class="identifier">result</span><span> = </span><span class="string-literal">sql&quot;SELECT * FROM users&quot;</span><span>
+  .</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>]
+  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
+  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
+
+</span><span class="comment">// または Connection から Connector を作成
+</span><span class="identifier">dataSource</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">connection</span><span> =&gt;
+  </span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromConnection</span><span>(</span><span class="identifier">connection</span><span>)
+  </span><span class="comment">// DBIO を実行
+</span><span>  </span><span class="string-literal">sql&quot;INSERT INTO users (name) VALUES (</span><span class="substitution">$name</span><span class="string-literal">)&quot;</span><span>
+    .</span><span class="identifier">update</span><span>
+    .</span><span class="identifier">commit</span><span>(</span><span class="identifier">connector</span><span>)
+}
+
+</span><span class="comment">// コネクションプーリング
+</span><span class="keyword">val</span><span> </span><span class="identifier">pooledDataSource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](
+  </span><span class="type-name">MySQLConfig</span><span>.</span><span class="identifier">default</span><span>
+    .</span><span class="identifier">setHost</span><span>(</span><span class="string-literal">&quot;localhost&quot;</span><span>)
+    .</span><span class="identifier">setPort</span><span>(</span><span class="number-literal">3306</span><span>)
+    .</span><span class="identifier">setUser</span><span>(</span><span class="string-literal">&quot;root&quot;</span><span>)
+    .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+    .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;test&quot;</span><span>)
+    .</span><span class="identifier">setMinConnections</span><span>(</span><span class="number-literal">5</span><span>)
+    .</span><span class="identifier">setMaxConnections</span><span>(</span><span class="number-literal">20</span><span>)
+)
+
+</span><span class="identifier">pooledDataSource</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">pool</span><span> =&gt;
+  </span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">pool</span><span>)
+  </span><span class="comment">// DBIO を実行
+</span><span>  </span><span class="string-literal">sql&quot;SELECT * FROM users WHERE id = </span><span class="substitution">$id</span><span class="string-literal">&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>]
+    .</span><span class="identifier">option</span><span>
+    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
+}</span></code></pre>
+    
+    <h3 id="_3-設定方法の変更" class="section"><a class="anchor-link left" href="#_3-設定方法の変更"><i class="icofont-laika link">&#xef71;</i></a>3. 設定方法の変更</h3>
+    
+    <h4 id="ldbc-connector-の設定" class="section"><a class="anchor-link left" href="#ldbc-connector-の設定"><i class="icofont-laika link">&#xef71;</i></a>ldbc-connector の設定</h4>
+    <p><strong>旧方式 (0.3.x):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">provider</span><span> = </span><span class="type-name">ConnectionProvider</span><span>
+  .</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;root&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;test&quot;</span><span>)
+  .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)
+  .</span><span class="identifier">addSocketOption</span><span>(</span><span class="type-name">SocketOption</span><span>.</span><span class="identifier">receiveBufferSize</span><span>(</span><span class="number-literal">4096</span><span>))
+  .</span><span class="identifier">setReadTimeout</span><span>(</span><span class="number-literal">30</span><span>.</span><span class="identifier">seconds</span><span>)</span></code></pre>
+    <p><strong>新方式 (0.4.x):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">dataSource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;root&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;test&quot;</span><span>)
+  .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)
+  .</span><span class="identifier">addSocketOption</span><span>(</span><span class="type-name">SocketOption</span><span>.</span><span class="identifier">receiveBufferSize</span><span>(</span><span class="number-literal">4096</span><span>))
+  .</span><span class="identifier">setReadTimeout</span><span>(</span><span class="number-literal">30</span><span>.</span><span class="identifier">seconds</span><span>)
+  .</span><span class="identifier">setDebug</span><span>(</span><span class="boolean-literal">true</span><span>)
+  .</span><span class="identifier">setAllowPublicKeyRetrieval</span><span>(</span><span class="boolean-literal">true</span><span>)</span></code></pre>
+    
+    <h4 id="jdbc-connector-の設定" class="section"><a class="anchor-link left" href="#jdbc-connector-の設定"><i class="icofont-laika link">&#xef71;</i></a>jdbc-connector の設定</h4>
+    <p><strong>旧方式 (0.3.x):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">jdbc</span><span>.</span><span class="identifier">connector</span><span>.*
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">dataSource</span><span> = </span><span class="keyword">new</span><span> </span><span class="identifier">com</span><span>.</span><span class="identifier">mysql</span><span>.</span><span class="identifier">cj</span><span>.</span><span class="identifier">jdbc</span><span>.</span><span class="type-name">MysqlDataSource</span><span>()
+</span><span class="comment">// 手動設定
+</span><span>
+</span><span class="keyword">val</span><span> </span><span class="identifier">provider</span><span> = </span><span class="type-name">ConnectionProvider</span><span>
+  .</span><span class="identifier">fromDataSource</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">dataSource</span><span>, </span><span class="identifier">ec</span><span>)</span></code></pre>
+    <p><strong>新方式 (0.4.x):</strong></p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">jdbc</span><span>.</span><span class="identifier">connector</span><span>.*
+
+</span><span class="comment">// DataSource から Connector を作成
+</span><span class="keyword">val</span><span> </span><span class="identifier">ds</span><span> = </span><span class="keyword">new</span><span> </span><span class="identifier">com</span><span>.</span><span class="identifier">mysql</span><span>.</span><span class="identifier">cj</span><span>.</span><span class="identifier">jdbc</span><span>.</span><span class="type-name">MysqlDataSource</span><span>()
+</span><span class="identifier">ds</span><span>.</span><span class="identifier">setServerName</span><span>(</span><span class="string-literal">&quot;localhost&quot;</span><span>)
+</span><span class="identifier">ds</span><span>.</span><span class="identifier">setPortNumber</span><span>(</span><span class="number-literal">3306</span><span>)
+</span><span class="identifier">ds</span><span>.</span><span class="identifier">setDatabaseName</span><span>(</span><span class="string-literal">&quot;test&quot;</span><span>)
+</span><span class="identifier">ds</span><span>.</span><span class="identifier">setUser</span><span>(</span><span class="string-literal">&quot;root&quot;</span><span>)
+</span><span class="identifier">ds</span><span>.</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">ds</span><span>, </span><span class="type-name">ExecutionContexts</span><span>.</span><span class="identifier">synchronous</span><span>)
+
+</span><span class="comment">// DriverManager から Connector を作成
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDriverManager</span><span>[</span><span class="type-name">IO</span><span>].</span><span class="identifier">apply</span><span>(
+  </span><span class="identifier">driver</span><span> = </span><span class="string-literal">&quot;com.mysql.cj.jdbc.Driver&quot;</span><span>,
+  </span><span class="identifier">url</span><span> = </span><span class="string-literal">&quot;jdbc:mysql://localhost:3306/test&quot;</span><span>,
+  </span><span class="identifier">user</span><span> = </span><span class="string-literal">&quot;root&quot;</span><span>,
+  </span><span class="identifier">password</span><span> = </span><span class="string-literal">&quot;password&quot;</span><span>,
+  </span><span class="identifier">logHandler</span><span> = </span><span class="type-name">None</span><span>
+)
+
+</span><span class="comment">// MySQLDataSource 経由（ldbc-connector）
+</span><span class="keyword">val</span><span> </span><span class="identifier">dataSource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">fromDataSource</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">ds</span><span>, </span><span class="type-name">ExecutionContexts</span><span>.</span><span class="identifier">synchronous</span><span>)</span></code></pre>
+    
+    <h3 id="_4-コネクションプーリングの使用" class="section"><a class="anchor-link left" href="#_4-コネクションプーリングの使用"><i class="icofont-laika link">&#xef71;</i></a>4. コネクションプーリングの使用</h3>
+    
+    <h4 id="基本的な使用方法" class="section"><a class="anchor-link left" href="#基本的な使用方法"><i class="icofont-laika link">&#xef71;</i></a>基本的な使用方法</h4>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">core</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">scala</span><span>.</span><span class="identifier">concurrent</span><span>.</span><span class="identifier">duration</span><span>.*
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">config</span><span> = </span><span class="type-name">MySQLConfig</span><span>.</span><span class="identifier">default</span><span>
+  .</span><span class="identifier">setHost</span><span>(</span><span class="string-literal">&quot;localhost&quot;</span><span>)
+  .</span><span class="identifier">setPort</span><span>(</span><span class="number-literal">3306</span><span>)
+  .</span><span class="identifier">setUser</span><span>(</span><span class="string-literal">&quot;myuser&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;mypassword&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;mydb&quot;</span><span>)
+  </span><span class="comment">// プール設定
+</span><span>  .</span><span class="identifier">setMinConnections</span><span>(</span><span class="number-literal">5</span><span>)          </span><span class="comment">// 最小接続数
+</span><span>  .</span><span class="identifier">setMaxConnections</span><span>(</span><span class="number-literal">20</span><span>)         </span><span class="comment">// 最大接続数
+</span><span>  .</span><span class="identifier">setConnectionTimeout</span><span>(</span><span class="number-literal">30</span><span>.</span><span class="identifier">seconds</span><span>)  </span><span class="comment">// 接続タイムアウト
+</span><span>  .</span><span class="identifier">setIdleTimeout</span><span>(</span><span class="number-literal">10</span><span>.</span><span class="identifier">minutes</span><span>)        </span><span class="comment">// アイドルタイムアウト
+</span><span>  .</span><span class="identifier">setMaxLifetime</span><span>(</span><span class="number-literal">30</span><span>.</span><span class="identifier">minutes</span><span>)        </span><span class="comment">// 最大生存時間
+</span><span>
+</span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">config</span><span>).</span><span class="identifier">use</span><span> { </span><span class="identifier">pool</span><span> =&gt;
+  </span><span class="comment">// Connector を作成して使用
+</span><span>  </span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">pool</span><span>)
+
+  </span><span class="comment">// SQLクエリの実行
+</span><span>  </span><span class="string-literal">sql&quot;SELECT COUNT(*) FROM users&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[</span><span class="type-name">Long</span><span>]
+    .</span><span class="identifier">unique</span><span>
+    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
+}</span></code></pre>
+    
+    <h4 id="メトリクス付きプール" class="section"><a class="anchor-link left" href="#メトリクス付きプール"><i class="icofont-laika link">&#xef71;</i></a>メトリクス付きプール</h4>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.</span><span class="identifier">pool</span><span>.*
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">metricsResource</span><span> = </span><span class="keyword">for</span><span> {
+  </span><span class="identifier">tracker</span><span> &lt;- </span><span class="type-name">Resource</span><span>.</span><span class="identifier">eval</span><span>(</span><span class="type-name">PoolMetricsTracker</span><span>.</span><span class="identifier">inMemory</span><span>[</span><span class="type-name">IO</span><span>])
+  </span><span class="identifier">pool</span><span>    &lt;- </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">pooling</span><span>[</span><span class="type-name">IO</span><span>](
+    </span><span class="identifier">config</span><span>,
+    </span><span class="identifier">metricsTracker</span><span> = </span><span class="type-name">Some</span><span>(</span><span class="identifier">tracker</span><span>)
+  )
+} </span><span class="keyword">yield</span><span> (</span><span class="identifier">pool</span><span>, </span><span class="identifier">tracker</span><span>)
+
+</span><span class="identifier">metricsResource</span><span>.</span><span class="identifier">use</span><span> { </span><span class="keyword">case</span><span> (</span><span class="identifier">pool</span><span>, </span><span class="identifier">tracker</span><span>) =&gt;
+  </span><span class="keyword">for</span><span> {
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="identifier">pool</span><span>.</span><span class="identifier">getConnection</span><span>.</span><span class="identifier">use</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">execute</span><span>(</span><span class="string-literal">&quot;SELECT 1&quot;</span><span>))
+    </span><span class="identifier">metrics</span><span> &lt;- </span><span class="identifier">tracker</span><span>.</span><span class="identifier">getMetrics</span><span>
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="type-name">IO</span><span>.</span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;&quot;&quot;
+      |プールメトリクス:
+      |  総接続数: </span><span class="substitution">${metrics.totalCreated}</span><span class="string-literal">
+      |  アクティブ: </span><span class="substitution">${metrics.activeConnections}</span><span class="string-literal">
+      |  アイドル: </span><span class="substitution">${metrics.idleConnections}</span><span class="string-literal">
+    &quot;&quot;&quot;</span><span>.</span><span class="identifier">stripMargin</span><span>)
+  } </span><span class="keyword">yield</span><span> ()
+}</span></code></pre>
+    
+    <h4 id="before-after-フック" class="section"><a class="anchor-link left" href="#before-after-フック"><i class="icofont-laika link">&#xef71;</i></a>Before/After フック</h4>
+    <pre><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">RequestContext</span><span>(</span><span class="identifier">requestId</span><span>: </span><span class="type-name">String</span><span>)
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">poolWithHooks</span><span> = </span><span class="type-name">MySQLDataSource</span><span>.</span><span class="identifier">poolingWithBeforeAfter</span><span>[</span><span class="type-name">IO</span><span>, </span><span class="type-name">RequestContext</span><span>](
+  </span><span class="identifier">config</span><span> = </span><span class="identifier">config</span><span>,
+  </span><span class="identifier">before</span><span> = </span><span class="type-name">Some</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+    </span><span class="keyword">for</span><span> {
+      </span><span class="identifier">id</span><span> &lt;- </span><span class="type-name">IO</span><span>.</span><span class="identifier">randomUUID</span><span>.</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">toString</span><span>)
+      </span><span class="identifier">_</span><span>  &lt;- </span><span class="identifier">conn</span><span>.</span><span class="identifier">execute</span><span>(</span><span class="string-literal">s&quot;SET @request_id = &#39;</span><span class="substitution">$id</span><span class="string-literal">&#39;&quot;</span><span>)
+    } </span><span class="keyword">yield</span><span> </span><span class="type-name">RequestContext</span><span>(</span><span class="identifier">id</span><span>)
+  },
+  </span><span class="identifier">after</span><span> = </span><span class="type-name">Some</span><span> { (</span><span class="identifier">ctx</span><span>, </span><span class="identifier">conn</span><span>) =&gt;
+    </span><span class="type-name">IO</span><span>.</span><span class="identifier">println</span><span>(</span><span class="string-literal">s&quot;Request </span><span class="substitution">${ctx.requestId}</span><span class="string-literal"> completed&quot;</span><span>)
+  }
+)</span></code></pre>
+    
+    <h3 id="_5-移行時の注意点" class="section"><a class="anchor-link left" href="#_5-移行時の注意点"><i class="icofont-laika link">&#xef71;</i></a>5. 移行時の注意点</h3>
+    
+    <h4 id="scala-native-での制限事項" class="section"><a class="anchor-link left" href="#scala-native-での制限事項"><i class="icofont-laika link">&#xef71;</i></a>Scala Native での制限事項</h4>
+    <div class="callout warning">
+      <i class="icofont-laika warning">&#xf026;</i>
+      <p><strong>重要</strong>: Scala Native 0.4.x はシングルスレッド実行のみをサポートしています。そのため、Scala Native でコネクションプーリングを使用することは推奨されません。代わりに、各操作で新しいコネクションを作成してください：</p>
+      <pre><code class="nohighlight"><span class="comment">// Scala Native での推奨使用方法
+</span><span class="keyword">val</span><span> </span><span class="identifier">dataSource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;user&quot;</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="string-literal">&quot;mydb&quot;</span><span>)
+
+</span><span class="comment">// プーリングは使用しない
+</span><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">dataSource</span><span>)
+
+</span><span class="comment">// DBIO の実行
+</span><span class="string-literal">sql&quot;SELECT * FROM products WHERE price &gt; </span><span class="substitution">$minPrice</span><span class="string-literal">&quot;</span><span>
+  .</span><span class="identifier">query</span><span>[</span><span class="type-name">Product</span><span>]
+  .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
+  .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
+    </div>
+    
+    <h3 id="_6-破壊的変更" class="section"><a class="anchor-link left" href="#_6-破壊的変更"><i class="icofont-laika link">&#xef71;</i></a>6. 破壊的変更</h3>
+    <p>以下の API は削除または変更されています：</p>
+    <ol class="arabic">
+      <li><strong>ConnectionProvider</strong>: 非推奨となり、<code>MySQLDataSource</code> に置き換えられました（0.5.xで削除予定）</li>
+      <li><strong>Provider トレイト</strong>: 非推奨となり、<code>DataSource</code> トレイトに置き換えられました</li>
+      <li><strong>ldbc.sql.Provider</strong>: 削除されました</li>
+      <li><strong>接続の直接使用</strong>: 新しい <code>Connector</code> API を経由して使用する必要があります</li>
+    </ol>
+    
+    <h3 id="_7-dbio-実行パターンの変更" class="section"><a class="anchor-link left" href="#_7-dbio-実行パターンの変更"><i class="icofont-laika link">&#xef71;</i></a>7. DBIO 実行パターンの変更</h3>
+    <p>DBIO の実行方法が変更され、より明確で柔軟になりました。</p>
+    <p><strong>旧方式 (0.3.x):</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">connection</span><span> =&gt;
+  (</span><span class="keyword">for</span><span>
+    </span><span class="identifier">result1</span><span> &lt;- </span><span class="string-literal">sql&quot;SELECT 1&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">Int</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
+    </span><span class="identifier">result2</span><span> &lt;- </span><span class="string-literal">sql&quot;SELECT 2&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">Int</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">Option</span><span>]
+  </span><span class="keyword">yield</span><span> (</span><span class="identifier">result1</span><span>, </span><span class="identifier">result2</span><span>)).</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connection</span><span>)
+}</span></code></pre>
+    <p><strong>新方式 (0.4.x):</strong></p>
+    <pre><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">connector</span><span> = </span><span class="type-name">Connector</span><span>.</span><span class="identifier">fromDataSource</span><span>(</span><span class="identifier">dataSource</span><span>)
+
+</span><span class="comment">// 各種実行モード
+</span><span class="string-literal">sql&quot;SELECT * FROM users&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)    </span><span class="comment">// 読み取り専用
+</span><span class="string-literal">sql&quot;INSERT INTO users ...&quot;</span><span>.</span><span class="identifier">update</span><span>.</span><span class="identifier">commit</span><span>(</span><span class="identifier">connector</span><span>)                 </span><span class="comment">// コミット付き
+</span><span class="string-literal">sql&quot;UPDATE users ...&quot;</span><span>.</span><span class="identifier">update</span><span>.</span><span class="identifier">transaction</span><span>(</span><span class="identifier">connector</span><span>)                 </span><span class="comment">// トランザクション
+</span><span class="string-literal">sql&quot;DELETE FROM users ...&quot;</span><span>.</span><span class="identifier">update</span><span>.</span><span class="identifier">rollback</span><span>(</span><span class="identifier">connector</span><span>)              </span><span class="comment">// ロールバック
+</span><span>
+</span><span class="comment">// 複数のクエリを組み合わせる
+</span><span>(</span><span class="keyword">for</span><span>
+  </span><span class="identifier">users</span><span> &lt;- </span><span class="string-literal">sql&quot;SELECT * FROM users&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
+  </span><span class="identifier">count</span><span> &lt;- </span><span class="string-literal">sql&quot;SELECT COUNT(*) FROM users&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">Long</span><span>].</span><span class="identifier">unique</span><span>
+</span><span class="keyword">yield</span><span> (</span><span class="identifier">users</span><span>, </span><span class="identifier">count</span><span>)).</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
+    
+    <h3 id="_8-新機能" class="section"><a class="anchor-link left" href="#_8-新機能"><i class="icofont-laika link">&#xef71;</i></a>8. 新機能</h3>
+    
+    <h4 id="circuitbreaker" class="section"><a class="anchor-link left" href="#circuitbreaker"><i class="icofont-laika link">&#xef71;</i></a>CircuitBreaker</h4>
+    <p>コネクションプールには、データベース障害時の保護のための CircuitBreaker が組み込まれています：</p>
+    <ul>
+      <li>連続した失敗後に自動的に接続試行を停止</li>
+      <li>指数バックオフによる段階的な回復</li>
+      <li>アプリケーションとデータベースの両方を保護</li>
+    </ul>
+    
+    <h4 id="アダプティブプールサイジング" class="section"><a class="anchor-link left" href="#アダプティブプールサイジング"><i class="icofont-laika link">&#xef71;</i></a>アダプティブプールサイジング</h4>
+    <p>負荷に基づいてプールサイズを動的に調整：</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">config</span><span> = </span><span class="type-name">MySQLConfig</span><span>.</span><span class="identifier">default</span><span>
+  </span><span class="comment">// ... 他の設定
+</span><span>  .</span><span class="identifier">setAdaptiveSizing</span><span>(</span><span class="boolean-literal">true</span><span>)
+  .</span><span class="identifier">setAdaptiveInterval</span><span>(</span><span class="number-literal">1</span><span>.</span><span class="identifier">minute</span><span>)</span></code></pre>
+    
+    <h4 id="リーク検出" class="section"><a class="anchor-link left" href="#リーク検出"><i class="icofont-laika link">&#xef71;</i></a>リーク検出</h4>
+    <p>開発環境でのコネクションリークを検出：</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">config</span><span> = </span><span class="type-name">MySQLConfig</span><span>.</span><span class="identifier">default</span><span>
+  </span><span class="comment">// ... 他の設定
+</span><span>  .</span><span class="identifier">setLeakDetectionThreshold</span><span>(</span><span class="number-literal">2</span><span>.</span><span class="identifier">minutes</span><span>)</span></code></pre>
+    
+    <h4 id="ストリーミングクエリのサポート" class="section"><a class="anchor-link left" href="#ストリーミングクエリのサポート"><i class="icofont-laika link">&#xef71;</i></a>ストリーミングクエリのサポート</h4>
+    <p>ldbcは<code>fs2.Stream</code>を使用した効率的なストリーミングクエリをサポートします。これにより、大量のデータを扱う際のメモリ使用量を抑えることができます。</p>
+    <p><strong>基本的な使用方法:</strong></p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">fs2</span><span>.</span><span class="type-name">Stream</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.*
+
+</span><span class="comment">// デフォルトのfetchSize（1）でストリーミング
+</span><span class="keyword">val</span><span> </span><span class="identifier">stream</span><span>: </span><span class="type-name">Stream</span><span>[</span><span class="type-name">DBIO</span><span>, </span><span class="type-name">String</span><span>] = 
+  </span><span class="string-literal">sql&quot;SELECT name FROM city&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>]
+    .</span><span class="identifier">stream</span><span>
+
+</span><span class="comment">// fetchSizeを指定したストリーミング
+</span><span class="keyword">val</span><span> </span><span class="identifier">streamWithFetchSize</span><span>: </span><span class="type-name">Stream</span><span>[</span><span class="type-name">DBIO</span><span>, </span><span class="type-name">City</span><span>] = 
+  </span><span class="string-literal">sql&quot;SELECT * FROM city&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[</span><span class="type-name">City</span><span>]
+    .</span><span class="identifier">stream</span><span>(</span><span class="identifier">fetchSize</span><span> = </span><span class="number-literal">100</span><span>)</span></code></pre>
+    <p><strong>実践的な使用例:</strong></p>
+    <pre><code class="nohighlight"><span class="comment">// 大量データの効率的な処理
+</span><span class="keyword">val</span><span> </span><span class="identifier">processLargeCities</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">List</span><span>[</span><span class="type-name">String</span><span>]] = 
+  </span><span class="string-literal">sql&quot;SELECT name, population FROM city&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[(</span><span class="type-name">String</span><span>, </span><span class="type-name">Int</span><span>)]
+    .</span><span class="identifier">stream</span><span>(</span><span class="number-literal">1000</span><span>)                    </span><span class="comment">// 1000行ずつ取得
+</span><span>    .</span><span class="identifier">filter</span><span>(</span><span class="identifier">_</span><span class="number-literal">._2</span><span> &gt; </span><span class="number-literal">1000000</span><span>)          </span><span class="comment">// 人口100万人以上
+</span><span>    .</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span class="number-literal">._1</span><span>)                       </span><span class="comment">// 都市名のみ取得
+</span><span>    .</span><span class="identifier">take</span><span>(</span><span class="number-literal">50</span><span>)                        </span><span class="comment">// 最初の50件まで
+</span><span>    .</span><span class="identifier">compile</span><span>.</span><span class="identifier">toList</span><span>
+    .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">connector</span><span>)
+
+</span><span class="comment">// 集計処理
+</span><span class="keyword">val</span><span> </span><span class="identifier">calculateTotal</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">BigDecimal</span><span>] = 
+  </span><span class="string-literal">sql&quot;SELECT amount FROM transactions WHERE year = 2024&quot;</span><span>
+    .</span><span class="identifier">query</span><span>[</span><span class="type-name">BigDecimal</span><span>]
+    .</span><span class="identifier">stream</span><span>(</span><span class="number-literal">5000</span><span>)                    </span><span class="comment">// 5000行ずつ処理
+</span><span>    .</span><span class="identifier">filter</span><span>(</span><span class="identifier">_</span><span> &gt; </span><span class="number-literal">100</span><span>)                 </span><span class="comment">// 100円以上の取引
+</span><span>    .</span><span class="identifier">fold</span><span>(</span><span class="type-name">BigDecimal</span><span>(</span><span class="number-literal">0</span><span>))(</span><span class="identifier">_</span><span> + </span><span class="identifier">_</span><span>)      </span><span class="comment">// 合計を計算
+</span><span>    .</span><span class="identifier">compile</span><span>.</span><span class="identifier">lastOrError</span><span>
+    .</span><span class="identifier">transaction</span><span>(</span><span class="identifier">connector</span><span>)</span></code></pre>
+    <p><strong>MySQLでの最適化設定:</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// サーバーサイドカーソルを有効化してメモリ効率を向上
+</span><span class="keyword">val</span><span> </span><span class="identifier">datasource</span><span> = </span><span class="type-name">MySQLDataSource</span><span>
+  .</span><span class="identifier">build</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">host</span><span>, </span><span class="identifier">port</span><span>, </span><span class="identifier">user</span><span>)
+  .</span><span class="identifier">setPassword</span><span>(</span><span class="identifier">password</span><span>)
+  .</span><span class="identifier">setDatabase</span><span>(</span><span class="identifier">database</span><span>)
+  .</span><span class="identifier">setUseCursorFetch</span><span>(</span><span class="boolean-literal">true</span><span>)  </span><span class="comment">// 真のストリーミング処理を実現</span></code></pre>
+    <p><strong>ストリーミングのメリット:</strong></p>
+    <ul>
+      <li><strong>メモリ効率</strong>: 大量データでもメモリ使用量を一定に保てる</li>
+      <li><strong>早期処理</strong>: データを受信しながら同時に処理できる</li>
+      <li><strong>中断可能</strong>: 条件に応じて処理を途中で止められる</li>
+      <li><strong>fs2の豊富な操作</strong>: <code>filter</code>、<code>map</code>、<code>take</code>、<code>fold</code>などの関数型操作が利用可能</li>
+    </ul>
+    
+    <h2 id="まとめ" class="section"><a class="anchor-link left" href="#まとめ"><i class="icofont-laika link">&#xef71;</i></a>まとめ</h2>
+    <p>0.4.x への移行により、以下のメリットが得られます：</p>
+    <ol class="arabic">
+      <li><strong>パフォーマンスの向上</strong>: 組み込みプーリングによる効率的なコネクション管理</li>
+      <li><strong>より直感的な API</strong>: ビルダーパターンによる設定の簡素化</li>
+      <li><strong>高度な機能</strong>: CircuitBreaker、アダプティブサイジング、メトリクス追跡</li>
+      <li><strong>外部依存の削減</strong>: HikariCP が不要に</li>
+    </ol>
+    <p>移行作業は主に API の更新で、機能的には後方互換性が保たれているため、段階的な移行が可能です。</p>
+
+    
+
+  </main>
+
+</div>
+
+</body>
+
+</html>
