@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 470" font-family="'Hiragino Kaku Gothic ProN','Noto Sans JP','Helvetica Neue',Arial,sans-serif">
+  <rect width="980" height="470" fill="#ffffff"/>
+  <text x="490" y="34" text-anchor="middle" font-size="21" font-weight="bold" fill="#222">2つのランタイムが並存する(効果側 ⇄ Fx 側)</text>
+
+  <!-- Left: user's effect runtime -->
+  <rect x="24" y="60" width="410" height="330" rx="12" fill="#f2f0fb" stroke="#6b4fbb" stroke-width="2"/>
+  <text x="229" y="90" text-anchor="middle" font-size="18" font-weight="bold" fill="#4a2f96">利用者の効果ランタイム</text>
+  <text x="229" y="112" text-anchor="middle" font-size="13" fill="#4a2f96">(IO / ZIO / Future の合成が走る)</text>
+  <rect x="48" y="130" width="362" height="52" rx="6" fill="#ffffff" stroke="#6b4fbb"/>
+  <text x="229" y="150" text-anchor="middle" font-size="13" fill="#333">cats-effect: work-stealing スレッドプール</text>
+  <text x="229" y="170" text-anchor="middle" font-size="13" fill="#333">ZIO: ZIO ランタイム</text>
+  <rect x="48" y="194" width="362" height="34" rx="6" fill="#ffffff" stroke="#6b4fbb"/>
+  <text x="229" y="216" text-anchor="middle" font-size="13" fill="#333">Future: アプリの ExecutionContext</text>
+  <text x="229" y="266" text-anchor="middle" font-size="13" fill="#4a2f96">ここで .map / .flatMap /</text>
+  <text x="229" y="286" text-anchor="middle" font-size="13" fill="#4a2f96">キャンセル・中断 が扱われる</text>
+  <text x="229" y="344" text-anchor="middle" font-size="12" fill="#666">利用者はこのランタイムしか意識しない</text>
+
+  <!-- Right: Fx runtime -->
+  <rect x="546" y="60" width="410" height="330" rx="12" fill="#eaf6ef" stroke="#2e9e5b" stroke-width="2"/>
+  <text x="751" y="90" text-anchor="middle" font-size="18" font-weight="bold" fill="#1c6e3d">Fx ランタイム</text>
+  <text x="751" y="112" text-anchor="middle" font-size="13" fill="#1c6e3d">(実際の DB I/O・タイマーが走る)</text>
+  <rect x="570" y="130" width="362" height="34" rx="6" fill="#ffffff" stroke="#2e9e5b"/>
+  <text x="751" y="152" text-anchor="middle" font-size="13" fill="#333">FxRuntime: scheduler / blocking スレッド</text>
+  <rect x="570" y="176" width="362" height="34" rx="6" fill="#ffffff" stroke="#2e9e5b"/>
+  <text x="751" y="198" text-anchor="middle" font-size="13" fill="#333">IoEngine: ノンブロッキング socket(selector)</text>
+  <text x="751" y="248" text-anchor="middle" font-size="13" fill="#1c6e3d">DB との送受信は非同期</text>
+  <text x="751" y="268" text-anchor="middle" font-size="13" fill="#1c6e3d">(待っている間スレッドを占有しない)</text>
+  <text x="751" y="344" text-anchor="middle" font-size="12" fill="#666">効果システムに依存しない共通エンジン</text>
+
+  <!-- Bridge arrow -->
+  <line x1="434" y1="225" x2="546" y2="225" stroke="#888" stroke-width="2" marker-end="url(#a)" marker-start="url(#b)"/>
+  <rect x="418" y="196" width="144" height="24" rx="12" fill="#fff3cd" stroke="#d98a1f"/>
+  <text x="490" y="213" text-anchor="middle" font-size="12" fill="#8a5a00">ブリッジ Fx ~&gt; F</text>
+
+  <text x="490" y="420" text-anchor="middle" font-size="13" fill="#333">Fx の完了は Fx 側スレッドで起き、コールバックで効果側へ受け渡す(=スレッドのホップは1回だけ)</text>
+  <text x="490" y="446" text-anchor="middle" font-size="12" fill="#666">DB I/O はノンブロッキングなので、コネクション数ぶんの専用スレッドプールは不要</text>
+
+  <defs>
+    <marker id="a" markerWidth="9" markerHeight="9" refX="5" refY="4.5" orient="auto"><path d="M0 0 L9 4.5 L0 9 z" fill="#888"/></marker>
+    <marker id="b" markerWidth="9" markerHeight="9" refX="4" refY="4.5" orient="auto"><path d="M9 0 L0 4.5 L9 9 z" fill="#888"/></marker>
+  </defs>
+</svg>
