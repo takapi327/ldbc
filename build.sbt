@@ -279,7 +279,7 @@ lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .defaultSettings
   .jvmSettings(
     Test / fork                       := true,
-    libraryDependencies += "com.mysql" % "mysql-connector-j" % "9.7.0" % Test
+    libraryDependencies += "com.mysql" % "mysql-connector-j" % "26.7.0" % Test
   )
   .jvmConfigure(_ dependsOn jdbcConnector.jvm)
   .jsSettings(
@@ -304,7 +304,7 @@ lazy val benchmark = (project in file("benchmark"))
   .settings(
     libraryDependencies ++= Seq(
       "org.scala-lang"     %% "scala3-compiler"   % scala3,
-      "com.mysql"           % "mysql-connector-j" % "9.7.0",
+      "com.mysql"           % "mysql-connector-j" % "26.7.0",
       "org.typelevel"      %% "doobie-core"       % "1.0.0-RC13",
       "com.typesafe.slick" %% "slick"             % "3.6.1",
       "com.zaxxer"          % "HikariCP"          % "7.1.0"
@@ -335,7 +335,7 @@ lazy val hikariCPExample = crossProject(JVMPlatform)
   .settings(
     libraryDependencies ++= Seq(
       "com.zaxxer" % "HikariCP"          % "7.1.0",
-      "com.mysql"  % "mysql-connector-j" % "9.7.0"
+      "com.mysql"  % "mysql-connector-j" % "26.7.0"
     )
   )
   .dependsOn(jdbcConnector, dsl)
