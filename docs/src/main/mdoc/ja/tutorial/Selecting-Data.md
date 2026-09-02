@@ -326,13 +326,17 @@ MySQLでは`UseCursorFetch`の設定によってストリーミングの効率�
 ```scala
 // UseCursorFetch=true（推奨）- 真のストリーミング
 val efficientDatasource = MySQLDataSource
-  .default[IO](host, port, user, password, database)
+  .build[IO](host, port, user)
+  .setPassword(password)
+  .setDatabase(database)
   .setUseCursorFetch(true)    // サーバーサイドカーソルを有効化
   .setSSL(SSL.None)
 
 // UseCursorFetch=false（デフォルト）- 制限されたストリーミング
 val standardDatasource = MySQLDataSource
-  .default[IO](host, port, user, password, database)
+  .build[IO](host, port, user)
+  .setPassword(password)
+  .setDatabase(database)
   .setSSL(SSL.None)
 ```
 

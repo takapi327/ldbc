@@ -96,6 +96,10 @@ val program = datasource.use { conn =>
 すでに確立されている`java.sql.Connection`オブジェクトがある場合は、それをラップして使用することもできます：
 
 ```scala
+// 必要なインポート
+import cats.effect.IO
+import jdbc.connector.*
+
 // 既存のjava.sql.Connection
 val jdbcConnection: java.sql.Connection = ???
 

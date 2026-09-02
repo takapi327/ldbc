@@ -96,6 +96,10 @@ val program = datasource.use { conn =>
 If you already have an established `java.sql.Connection` object, you can wrap and use it:
 
 ```scala
+// Required imports
+import cats.effect.IO
+import jdbc.connector.*
+
 // Existing java.sql.Connection
 val jdbcConnection: java.sql.Connection = ???
 

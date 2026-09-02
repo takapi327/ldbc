@@ -463,9 +463,9 @@ MySQL supports the following transaction isolation levels:
 For more information on MySQL transaction isolation levels, refer to the [official documentation](https://dev.mysql.com/doc/refman/8.0/en/innodb-transaction-isolation-levels.html).
 
 ```scala 3
-import ldbc.mysql.Connection.TransactionIsolationLevel
+import ldbc.sql.Connection
 
-conn.setTransactionIsolation(TransactionIsolationLevel.REPEATABLE_READ)
+conn.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ)
 ```
 
 To retrieve the currently set transaction isolation level, use the `getTransactionIsolation` method.

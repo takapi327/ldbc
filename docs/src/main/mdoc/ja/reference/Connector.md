@@ -463,9 +463,9 @@ MySQLでは以下のトランザクション分離レベルがサポートされ
 MySQLのトランザクション分離レベルについては[公式ドキュメント](https://dev.mysql.com/doc/refman/8.0/ja/innodb-transaction-isolation-levels.html)を参照してください。
 
 ```scala 3
-import ldbc.mysql.Connection.TransactionIsolationLevel
+import ldbc.sql.Connection
 
-conn.setTransactionIsolation(TransactionIsolationLevel.REPEATABLE_READ)
+conn.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ)
 ```
 
 現在設定されているトランザクション分離レベルを取得するには`getTransactionIsolation`メソッドを使用します。
