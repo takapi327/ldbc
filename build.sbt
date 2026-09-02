@@ -89,7 +89,7 @@ lazy val otel4s = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "otel4s-core-trace"   % "1.1.0",
       "org.typelevel" %%% "otel4s-core-metrics" % "1.1.0",
-      "org.typelevel" %%% "cats-effect"         % "3.7.0"  % Test,
+      "org.typelevel" %%% "cats-effect"         % "3.7.1"  % Test,
       "org.typelevel" %%% "otel4s-sdk-testkit"  % "0.19.1" % Test,
       "org.typelevel" %%% "munit-cats-effect"   % "2.2.0"  % Test
     )
@@ -166,7 +166,7 @@ lazy val queryBuilder = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("query-builder", "Project to build type-safe queries")
   .settings(
-    libraryDependencies += "org.typelevel" %%% "cats-effect" % "3.7.0" % Test
+    libraryDependencies += "org.typelevel" %%% "cats-effect" % "3.7.1" % Test
   )
   .dependsOn(statement)
 
@@ -202,7 +202,7 @@ lazy val jdbcConnector = crossProject(JVMPlatform)
   .settings(
     name                                    := "jdbc-connector",
     description                             := "JDBC API wrapped project with Effect System.",
-    libraryDependencies += "org.typelevel" %%% "cats-effect" % "3.7.0"
+    libraryDependencies += "org.typelevel" %%% "cats-effect" % "3.7.1"
   )
   .defaultSettings
   .dependsOn(core)
@@ -309,7 +309,7 @@ lazy val catsEffect = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .module("cats-effect", "Cats Effect boundary for ldbc (fs2 streaming and IO helpers over the shared DSL)")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-effect"       % "3.7.0",
+      "org.typelevel" %%% "cats-effect"       % "3.7.1",
       "co.fs2"        %%% "fs2-core"          % "3.13.0",
       "org.typelevel" %%% "munit-cats-effect" % "2.2.0" % Test
     )
