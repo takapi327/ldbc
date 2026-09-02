@@ -114,11 +114,13 @@ trait TableQueryUpdateConnectionTest[F[_]] extends DatabaseSuite[F]:
 
   private def code(index: Int): String =
     val tag = (prefix, effectLabel) match
-      case ("jdbc", _)         => "j"
-      case ("ldbc", _)         => "l"
+      case ("jdbc", "io")      => "j"
+      case ("ldbc", "io")      => "l"
+      case ("mysql", "io")     => "m"
       case ("mysql", "fx")     => "f"
       case ("mysql", "future") => "u"
-      case _                   => "m"
+      case ("mysql", "zio")    => "z"
+      case (p, e)              => sys.error(s"No test data tag is assigned to ($p, $e)")
     s"$tag$index"
 
   private def nishiName: String = s"${ prefix }_${ effectLabel }_Nishi"
