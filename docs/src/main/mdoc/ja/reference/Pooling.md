@@ -7,13 +7,13 @@ laika.metadata.language = ja
 
 ## 概要
 
-ldbc-connectorは、高性能で安全なデータベースコネクションプーリングを提供する、Cats Effect向けに設計されたライブラリです。JVMの伝統的なスレッドベースのプーリング（HikariCPなど）とは異なり、Cats Effectのファイバーベースの並行性モデルを最大限に活用した設計となっています。
+`ldbc-pool`は、高性能で安全なデータベースコネクションプーリングを提供する独立モジュールです。エフェクト非依存（`F: Concurrent`）に実装されており、Cats Effect（`IO`）・ZIO（`Task`）・`Fx` のいずれのエフェクトでも利用できます。JVMの伝統的なスレッドベースのプーリング（HikariCPなど）とは異なり、ファイバーベースの並行性モデルを最大限に活用した設計となっています（以下の説明とベンチマークは Cats Effect を例にしています）。
 
 ## アーキテクチャ概要
 
 ![Connection Pool Architecture](../../img/pooling/ConnectionPoolWithCircuitBreaker.svg)
 
-ldbc-connectorのプーリングシステムは、以下の主要コンポーネントで構成されています：
+ldbc-poolのプーリングシステムは、以下の主要コンポーネントで構成されています：
 
 ### 1. PooledDataSource
 
@@ -111,7 +111,7 @@ trait CircuitBreaker[F[_]]:
 - **スケーラビリティ**: 数千スレッドが実用的な上限
 - **ブロッキング**: スレッドが実際にブロックされる
 
-#### Cats Effectファイバーの特性（ldbc-connector）
+#### Cats Effectファイバーの特性（ldbc-pool）
 
 **利点:**
 - **メモリ効率**: ファイバーあたり約150バイト
@@ -135,7 +135,7 @@ trait CircuitBreaker[F[_]]:
 - **適用場面**: CPU集約的なタスク、レガシーシステムとの統合
 - **運用**: 既存の監視ツールでの管理が容易
 
-#### ファイバーベースプール（ldbc-connector）
+#### ファイバーベースプール（ldbc-pool）
 - **プールサイズ**: より大きなプールサイズが可能
 - **待機戦略**: 非ブロッキング待機、効率的なリソース共有
 - **適用場面**: I/O集約的なタスク、高並行性が必要な環境
@@ -152,7 +152,7 @@ trait CircuitBreaker[F[_]]:
 
 ### 相違点
 
-| 特徴             | HikariCP           | ldbc-connector   |
+| 特徴             | HikariCP           | ldbc-pool   |
 |----------------|--------------------|------------------|
 | 並行性モデル         | JVMスレッド            | Cats Effectファイバー |
 | ブロッキング処理       | スレッドをブロック          | セマンティックブロッキング    |
@@ -163,7 +163,7 @@ trait CircuitBreaker[F[_]]:
 
 ### 使用シナリオと適用判断
 
-#### ldbc-connectorが適している場面：
+#### ldbc-poolが適している場面：
 
 1. **高並行性環境**
    - 数千の同時接続リクエスト
@@ -199,7 +199,7 @@ trait CircuitBreaker[F[_]]:
 
 ## バックグラウンドタスク
 
-ldbc-connectorは、プールの健全性を維持するために複数のバックグラウンドタスクを実行します：
+ldbc-poolは、プールの健全性を維持するために複数のバックグラウンドタスクを実行します：
 
 ### HouseKeeper
 - 期限切れコネクションの削除
@@ -221,73 +221,77 @@ ldbc-connectorは、プールの健全性を維持するために複数のバッ
 
 ```scala 3
 import cats.effect.IO
-import ldbc.connector.*
 import scala.concurrent.duration.*
 
-// プール設定
-val config = MySQLConfig.default
-  .setHost("localhost")
-  .setPort(3306)
-  .setUser("myuser")
+import ldbc.dsl.*
+import ldbc.mysql.MySQLDataSource
+import ldbc.net.SSL
+import ldbc.catseffect.*
+import ldbc.pool.{ ConnectionPoolConfig, PooledDataSource, PoolLogger }
+
+// 接続情報
+val datasource = MySQLDataSource
+  .build[IO]("localhost", 3306, "myuser")
   .setPassword("mypassword")
   .setDatabase("mydb")
-  // プールサイズ設定
-  .setMinConnections(5)           // 最小接続数（デフォルト: 5）
-  .setMaxConnections(20)          // 最大接続数（デフォルト: 10）
-  // タイムアウト設定
-  .setConnectionTimeout(30.seconds)    // 接続取得タイムアウト（デフォルト: 30秒）
-  .setIdleTimeout(10.minutes)         // アイドルタイムアウト（デフォルト: 10分）
-  .setMaxLifetime(30.minutes)         // 最大生存時間（デフォルト: 30分）
-  .setValidationTimeout(5.seconds)    // 検証タイムアウト（デフォルト: 5秒）
-  // 検証とヘルスチェック
-  .setAliveBypassWindow(500.millis)   // 最近使用時の検証スキップ（デフォルト: 500ms）
-  .setKeepaliveTime(2.minutes)        // アイドル検証間隔（デフォルト: 2分）
-  .setConnectionTestQuery("SELECT 1") // カスタムテストクエリ（オプション）
-  // リーク検出
-  .setLeakDetectionThreshold(2.minutes) // 接続リーク検出（デフォルト: なし）
-  // メンテナンス
-  .setMaintenanceInterval(30.seconds)  // バックグラウンドクリーンアップ間隔（デフォルト: 30秒）
-  // アダプティブサイジング
-  .setAdaptiveSizing(true)            // 動的プールサイズ調整（デフォルト: false）
-  .setAdaptiveInterval(1.minute)      // アダプティブサイジング確認間隔（デフォルト: 1分）
+  .setSSL(SSL.Trusted)
 
-// プールデータソースの作成
-val poolResource = MySQLDataSource.pooling[IO](config)
+// プール設定
+val config = ConnectionPoolConfig(
+  // プールサイズ設定
+  minConnections         = 5,               // 最小接続数
+  maxConnections         = 20,              // 最大接続数
+  // タイムアウト設定
+  connectionTimeout      = 30.seconds,      // 接続取得タイムアウト（デフォルト: 30秒）
+  validationTimeout      = 5.seconds,       // 検証タイムアウト（デフォルト: 5秒）
+  idleTimeout            = 10.minutes,      // アイドルタイムアウト（デフォルト: 10分）
+  maxLifetime            = 30.minutes,      // 最大生存時間（デフォルト: 30分）
+  // 検証とヘルスチェック
+  aliveBypassWindow      = 500.millis,      // 最近使用時の検証スキップ（デフォルト: 500ms）
+  keepaliveTime          = Some(2.minutes), // アイドル検証間隔（デフォルト: なし）
+  // リーク検出
+  leakDetectionThreshold = Some(2.minutes), // 接続リーク検出（デフォルト: なし）
+  // メンテナンス
+  maintenanceInterval    = 30.seconds,      // バックグラウンドクリーンアップ間隔（デフォルト: 30秒）
+  // アダプティブサイジング
+  adaptiveSizing         = true,            // 動的プールサイズ調整（デフォルト: false）
+  adaptiveInterval       = 1.minute         // アダプティブサイジング確認間隔（デフォルト: 30秒）
+)
+
+// プールデータソースの作成（カスタムテストクエリは fromDataSource の引数で渡す）
+val poolResource = PooledDataSource.fromDataSource[IO](
+  config,
+  datasource,
+  connectionTestQuery = Some("SELECT 1")
+)
 
 // プールの使用
 poolResource.use { pool =>
-  pool.getConnection.use { conn =>
-    // コネクションの使用
-    for
-      stmt <- conn.createStatement()
-      rs   <- stmt.executeQuery("SELECT 1")
-      _    <- rs.next()
-      result <- rs.getInt(1)
-    yield result
-  }
+  sql"SELECT 1".query[Int].to[Option].readOnly(Connector.fromDataSource(pool))
 }
 ```
 
 ### メトリクス追跡付きプール
 
 ```scala 3
-import ldbc.connector.pool.*
+import ldbc.pool.*
 
 val metricsResource = for
   tracker <- Resource.eval(PoolMetricsTracker.inMemory[IO])
-  pool    <- MySQLDataSource.pooling[IO](
-    config,
-    metricsTracker = Some(tracker)
-  )
+  pool    <- PooledDataSource.fromDataSource[IO](
+               config,
+               datasource,
+               metricsTracker = Some(tracker)
+             )
 yield (pool, tracker)
 
 metricsResource.use { case (pool, tracker) =>
   // プールの使用とメトリクス監視
   for
-    _       <- pool.getConnection.use(conn => /* コネクション使用 */ IO.unit)
+    _       <- sql"SELECT 1".query[Int].to[Option].readOnly(Connector.fromDataSource(pool))
     metrics <- tracker.getMetrics
-    _       <- IO.println(s"総取得数: ${metrics.totalAcquisitions}")
-    _       <- IO.println(s"平均取得時間: ${metrics.acquisitionTime}")
+    _       <- IO.println(s"総取得数: ${ metrics.totalAcquisitions }")
+    _       <- IO.println(s"平均取得時間: ${ metrics.acquisitionTime }")
   yield ()
 }
 ```
@@ -295,6 +299,8 @@ metricsResource.use { case (pool, tracker) =>
 ### ライフサイクルフック付きプール
 
 ```scala 3
+import ldbc.sql.Connection
+
 case class SessionContext(userId: String, startTime: Long)
 
 val beforeHook: Connection[IO] => IO[SessionContext] = conn =>
@@ -304,12 +310,13 @@ val beforeHook: Connection[IO] => IO[SessionContext] = conn =>
   yield SessionContext("user123", startTime)
 
 val afterHook: (SessionContext, Connection[IO]) => IO[Unit] = (ctx, conn) =>
-  IO.println(s"ユーザー ${ctx.userId} が接続を ${System.currentTimeMillis - ctx.startTime}ms 使用")
+  IO.println(s"ユーザー ${ ctx.userId } が接続を ${ System.currentTimeMillis - ctx.startTime }ms 使用")
 
-val poolWithHooks = MySQLDataSource.poolingWithBeforeAfter[IO, SessionContext](
-  config = config,
-  before = Some(beforeHook),
-  after = Some(afterHook)
+val poolWithHooks = PooledDataSource.fromDataSourceWithBeforeAfter[IO, SessionContext](
+  config,
+  datasource,
+  before = beforeHook,
+  after  = afterHook
 )
 ```
 
@@ -324,11 +331,11 @@ CircuitBreakerは内部で自動的に設定されますが、現在の実装で
 
 ## ベンチマーク結果
 
-ldbc-connectorとHikariCPのパフォーマンスを、異なるスレッド数で比較したベンチマーク結果を以下に示します。ベンチマークは、SELECT文の実行における並行性能を測定したものです。
+ldbc-poolとHikariCPのパフォーマンスを、異なるスレッド数で比較したベンチマーク結果を以下に示します。ベンチマークは、SELECT文の実行における並行性能を測定したものです。
 
 ### 測定環境
 - ベンチマーク内容: SELECT文の並行実行
-- 測定対象: ldbc-connector vs HikariCP
+- 測定対象: ldbc-pool vs HikariCP
 - スレッド数: 1, 2, 4, 8, 16
 
 ### 結果グラフ
@@ -368,7 +375,7 @@ ldbc-connectorとHikariCPのパフォーマンスを、異なるスレッド数�
 
 ベンチマーク結果は、それぞれのアプローチが持つ固有の特性を反映しています：
 
-**ldbc-connector（ファイバーベース）**
+**ldbc-pool（ファイバーベース）**
 - 軽量な並行性プリミティブによる効率的なリソース利用
 - セマンティックブロッキングによるCPU使用率の最適化
 - 高並行性下でのスケーラビリティ
@@ -398,8 +405,8 @@ ldbc-connectorとHikariCPのパフォーマンスを、異なるスレッド数�
 
 ## まとめ
 
-ldbc-connectorのプーリングシステムは、Cats Effectの並行性モデルを活用した実装です。CircuitBreakerパターンを組み込むことで、データベース障害時の回復力を高めています。
+ldbc-poolのプーリングシステムは、Cats Effectの並行性モデルを活用した実装です。CircuitBreakerパターンを組み込むことで、データベース障害時の回復力を高めています。
 
 ファイバーベースとスレッドベースのアプローチには、それぞれ長所と短所があります。アプリケーションの要件、既存のインフラストラクチャ、チームのスキルセット、運用面の考慮事項などを総合的に評価して、適切な選択をすることが重要です。
 
-ldbc-connectorは、特に高並行性が求められる環境や、Cats Effectエコシステムを採用している場合に、その特性を最大限に活用できる選択肢となります。
+ldbc-poolは、特に高並行性が求められる環境や、Cats Effectエコシステムを採用している場合に、その特性を最大限に活用できる選択肢となります。

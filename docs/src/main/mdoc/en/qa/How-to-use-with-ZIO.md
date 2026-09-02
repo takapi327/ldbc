@@ -5,20 +5,27 @@ laika.metadata.language = ja
 
 # Q: How to use with ZIO?
 
-## A: For use with ZIO, use `ldbc-zio-interop`.
+## A: For use with ZIO, use `ldbc-mysql` and `ldbc-zio`.
+
+In 0.9.x, the effect-agnostic driver `ldbc-mysql` and the ZIO (`Task`) bridge `ldbc-zio` let you run natively on ZIO without going through `zio-interop-cats`.
 
 ```scala
-libraryDependencies += "io.github.takapi327" %% "ldbc-zio-interop" % "latest"
+libraryDependencies ++= Seq(
+  "io.github.takapi327" %% "ldbc-mysql" % "@VERSION@",
+  "io.github.takapi327" %% "ldbc-zio"   % "@VERSION@"
+)
 ```
 
 The following is sample code for using ldbc with ZIO.
 
-```scala 3 mdoc
+```scala 3
 import zio.*
 
-import ldbc.zio.interop.*
-import ldbc.connector.*
 import ldbc.dsl.*
+import ldbc.mysql.MySQLDataSource
+import ldbc.net.SSL
+import ldbc.zio.Connector
+import ldbc.zio.given
 
 object Main extends ZIOAppDefault:
 

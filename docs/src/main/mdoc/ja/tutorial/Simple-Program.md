@@ -24,7 +24,9 @@ ldbcでは、`DBIO`モナドを使って一連のデータベース操作を表�
 ```scala 3
 // 必要なインポート
 import ldbc.dsl.*
-import ldbc.connector.*
+import ldbc.mysql.MySQLDataSource
+import ldbc.net.SSL
+import ldbc.catseffect.*
 
 // SQLクエリを作成し、返り値の型を指定
 val program: DBIO[Option[Int]] = sql"SELECT 2".query[Int].to[Option]
@@ -71,7 +73,7 @@ program
 このプログラムは、Scala CLIを使って簡単に実行できます：
 
 ```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/02-Program.scala --dependency io.github.takapi327::ldbc-dsl:@VERSION@ --dependency io.github.takapi327::ldbc-connector:@VERSION@
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/02-Program.scala --dependency io.github.takapi327::ldbc-dsl:@VERSION@ --dependency io.github.takapi327::ldbc-mysql:@VERSION@ --dependency io.github.takapi327::ldbc-cats-effect:@VERSION@
 ```
 
 ## 2つめのプログラム：複数のクエリの組み合わせ
@@ -106,7 +108,7 @@ program
 **Scala CLIで実行**
 
 ```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/03-Program.scala --dependency io.github.takapi327::ldbc-dsl:@VERSION@ --dependency io.github.takapi327::ldbc-connector:@VERSION@
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/03-Program.scala --dependency io.github.takapi327::ldbc-dsl:@VERSION@ --dependency io.github.takapi327::ldbc-mysql:@VERSION@ --dependency io.github.takapi327::ldbc-cats-effect:@VERSION@
 ```
 
 ## 3つめのプログラム：データ更新操作
@@ -137,7 +139,7 @@ program
 **Scala CLIで実行**
 
 ```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/04-Program.scala --dependency io.github.takapi327::ldbc-dsl:@VERSION@ --dependency io.github.takapi327::ldbc-connector:@VERSION@
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/04-Program.scala --dependency io.github.takapi327::ldbc-dsl:@VERSION@ --dependency io.github.takapi327::ldbc-mysql:@VERSION@ --dependency io.github.takapi327::ldbc-cats-effect:@VERSION@
 ```
 
 ## トランザクション制御

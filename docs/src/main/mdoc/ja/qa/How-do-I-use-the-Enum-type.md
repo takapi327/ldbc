@@ -14,7 +14,8 @@ Enum型はEnumが持つ値をそのまま文字列として扱います。例え
 Example:
 
 ```scala 3
-import ldbc.codec.*
+import ldbc.dsl.*
+import ldbc.dsl.codec.*
 
 enum Color:
   case Red, Blue, Yellow
@@ -27,7 +28,8 @@ val query = sql"SELECT 'Red'".query[Color].to[Option]
 Enumを文字列ではなくEnumが持つフィールドの値を使用してエンコード/デコードする場合は、`Codec`を拡張して実装する必要があります。以下の例では、`Color`というEnum型を定義し、`Codec`を拡張してエンコード/デコードを行っています。
 
 ```scala 3
-import ldbc.codec.*
+import ldbc.dsl.*
+import ldbc.dsl.codec.*
 
 enum Color(val colorCode: String):
   case Red extends Color("FF0000")

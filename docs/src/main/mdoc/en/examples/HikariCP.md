@@ -53,7 +53,7 @@ import com.zaxxer.hikari.HikariDataSource
 import ldbc.dsl.*
 import ldbc.dsl.codec.Codec
 import jdbc.connector.*
-import ldbc.connector.Connector
+import ldbc.catseffect.Connector
 
 // Data model definition
 case class User(id: Int, name: String, email: String)

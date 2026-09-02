@@ -11,12 +11,16 @@ When no OpenTelemetry backend is connected, tracing and metrics automatically be
 
 ## Dependencies
 
-ldbc-connector depends only on `otel4s-core` (the abstract API). To actually collect and export telemetry data, you need to add a backend implementation.
+In 0.9.x, the telemetry SPI (`Tracer`/`Meter`) is defined by the DB-agnostic `ldbc-telemetry`, and its backend is plugged in via a separate module. When using otel4s with Cats Effect (`IO`), add `ldbc-otel4s` (`ldbc-telemetry` is introduced transitively by `ldbc-mysql`). To actually collect and export telemetry data, additionally add an OpenTelemetry SDK backend.
 
 ```scala
 libraryDependencies ++= Seq(
-  // ldbc connector (includes otel4s-core)
-  "@ORGANIZATION@" %% "ldbc-connector" % "@VERSION@",
+  // MySQL driver and Cats Effect bridge
+  "@ORGANIZATION@" %% "ldbc-mysql"       % "@VERSION@",
+  "@ORGANIZATION@" %% "ldbc-cats-effect" % "@VERSION@",
+
+  // otel4s backend for the ldbc.telemetry SPI
+  "@ORGANIZATION@" %% "ldbc-otel4s"      % "@VERSION@",
 
   // OpenTelemetry Java SDK backend
   "org.typelevel"    %% "otel4s-oteljava"                           % "0.15.1",
@@ -25,31 +29,39 @@ libraryDependencies ++= Seq(
 )
 ```
 
+> When using ZIO (`Task`), add `ldbc-zio` and `ldbc-zio-telemetry` (JVM only) instead of `ldbc-cats-effect`/`ldbc-otel4s`.
+
 ## Setup
 
-Set `Tracer[F]` and `Meter[F]` on `MySQLDataSource`.
+Convert otel4s's `TracerProvider`/`MeterProvider` into the `ldbc.telemetry` SPI with `Otel4sTelemetry`, and pass them to `MySQLDataSource.withTraced`. `withTraced` returns a `MySQLDataSource` with the obtained tracer and meter already configured.
 
 ```scala
 import cats.effect.*
 import io.opentelemetry.api.GlobalOpenTelemetry
 import org.typelevel.otel4s.oteljava.OtelJava
-import ldbc.connector.*
+import ldbc.mysql.{ MySQLConfig, MySQLDataSource }
+import ldbc.catseffect.*
+import ldbc.otel4s.Otel4sTelemetry
 
 object Main extends IOApp.Simple:
 
   override def run: IO[Unit] =
     val resource = for
-      otel   <- Resource
-                   .eval(IO.delay(GlobalOpenTelemetry.get))
-                   .evalMap(OtelJava.forAsync[IO])
-      tracer <- Resource.eval(otel.tracerProvider.get("my-app"))
-      meter  <- Resource.eval(otel.meterProvider.get("my-app"))
-      datasource = MySQLDataSource
-                     .build[IO]("127.0.0.1", 3306, "user")
-                     .setPassword("password")
-                     .setDatabase("mydb")
-                     .setTracer(tracer)
-                     .setMeter(meter)
+      otel <- Resource
+                .eval(IO.delay(GlobalOpenTelemetry.get))
+                .evalMap(OtelJava.forAsync[IO])
+      datasource <- Resource.eval(
+                      MySQLDataSource.withTraced[IO](
+                        MySQLConfig.default
+                          .setHost("127.0.0.1")
+                          .setPort(3306)
+                          .setUser("user")
+                          .setPassword("password")
+                          .setDatabase("mydb"),
+                        tracerProvider = Otel4sTelemetry.tracerProvider(otel.tracerProvider),
+                        meterProvider  = Otel4sTelemetry.meterProvider(otel.meterProvider)
+                      )
+                    )
       connection <- datasource.getConnection
     yield connection
 
@@ -58,19 +70,18 @@ object Main extends IOApp.Simple:
     }
 ```
 
-When using connection pooling, pass `meter` to the `pooling` method.
+If you want to configure them individually, you can also obtain a `Tracer`/`Meter` from the converted `TracerProvider`/`MeterProvider` and pass them to `setTracer`/`setMeter`.
 
 ```scala
-val pool = MySQLDataSource.pooling[IO](
-  config = MySQLConfig.default
-    .setHost("127.0.0.1")
-    .setPort(3306)
-    .setUser("user")
-    .setPassword("password")
-    .setDatabase("mydb"),
-  meter  = Some(meter),
-  tracer = Some(tracer)
-)
+for
+  tracer <- Otel4sTelemetry.tracerProvider(otel.tracerProvider).tracer("my-app").get
+  meter  <- Otel4sTelemetry.meterProvider(otel.meterProvider).meter("my-app").get
+yield MySQLDataSource
+  .build[IO]("127.0.0.1", 3306, "user")
+  .setPassword("password")
+  .setDatabase("mydb")
+  .setTracer(tracer)
+  .setMeter(meter)
 ```
 
 ## Tracing
@@ -138,7 +149,7 @@ When a database operation fails, the following is recorded on the span:
 Use `TelemetryConfig` to customize telemetry behavior.
 
 ```scala
-import ldbc.connector.telemetry.TelemetryConfig
+import ldbc.telemetry.TelemetryConfig
 
 // Default settings (all enabled)
 val default = TelemetryConfig.default

@@ -15,7 +15,7 @@
 [![scaladex](https://index.scala-lang.org/takapi327/ldbc/ldbc-dsl/latest-by-scala-version.svg?color=blue&targetType=js)](https://index.scala-lang.org/takapi327/ldbc)
 [![scaladex](https://index.scala-lang.org/takapi327/ldbc/ldbc-dsl/latest-by-scala-version.svg?color=blue&targetType=native)](https://index.scala-lang.org/takapi327/ldbc)
 
-ldbc (Lepus Database Connectivity) is Pure functional JDBC layer with Cats Effect 3 and Scala 3.
+ldbc (Lepus Database Connectivity) is a pure functional database connectivity layer for Scala 3. It provides a type-safe API with first-class support for multiple effect systems — Cats Effect 3, ZIO, and plain `Future`.
 
 ldbc is a [Typelevel](http://typelevel.org/) project. This means we embrace pure, typeful, functional programming, and provide a safe and friendly environment for teaching, learning, and contributing as described in the Scala [Code of Conduct](http://scala-lang.org/conduct.html).
 
@@ -32,19 +32,33 @@ ldbc is available on the JVM, Scala.js, and ScalaNative
 |----------------------------------|:---:|:------------:|:--------:|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `ldbc-sql`                       |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.9.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-sql_3)                       |
 | `ldbc-core`                      |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.9.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-core_3)                      |
-| `ldbc-connector`                 |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.9.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-connector_3)                 |
-| `jdbc-connector`                 |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.9.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/jdbc-connector_3)                 |
+| `ldbc-effect`                    |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.9.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-effect_3)                    |
 | `ldbc-dsl`                       |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.9.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3)                       |
 | `ldbc-statement`                 |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.9.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-statement_3)                 |
 | `ldbc-query-builder`             |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.9.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-query-builder_3)             |
 | `ldbc-schema`                    |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.9.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-schema_3)                    |
 | `ldbc-codegen`                   |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.9.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-codegen_3)                   |
-| `ldbc-plugin`                    |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.9.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-plugin_2.12_1.0)             |
-| `ldbc-zio-interop`               |  ✅  |      ❌       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.9.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-zio-interop_3)               |
+| `ldbc-mysql`                     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.9.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-mysql_3)                     |
+| `ldbc-net`                       |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.9.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-net_3)                       |
+| `ldbc-fx`                        |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.9.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-fx_3)                        |
+| `ldbc-pool`                      |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.9.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-pool_3)                      |
+| `ldbc-cats-effect`               |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.9.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-cats-effect_3)               |
+| `ldbc-zio`                       |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.9.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-zio_3)                       |
+| `ldbc-future`                    |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.9.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-future_3)                    |
+| `ldbc-telemetry`                 |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.9.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-telemetry_3)                 |
+| `ldbc-otel4s`                    |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.9.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-otel4s_3)                    |
+| `ldbc-zio-telemetry`             |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.9.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-zio-telemetry_3)             |
+| `jdbc-connector`                 |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.9.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/jdbc-connector_3)                 |
 | `ldbc-authentication-plugin`     |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.9.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-authentication-plugin_3)     |
 | `ldbc-aws-authentication-plugin` |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.9.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-aws-authentication-plugin_3) |
 | `ldbc-testkit`                   |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.9.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-testkit_3)                   |
 | `ldbc-testkit-munit`             |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.9.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-testkit-munit_3)             |
+| `ldbc-plugin`                    |  ✅  |      ❌       |    ❌     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.9.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-plugin_2.12_1.0)             |
+| `ldbc-connector` *(legacy)*      |  ✅  |      ✅       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.9.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-connector_3)                 |
+| `ldbc-zio-interop` *(legacy)*    |  ✅  |      ❌       |    ✅     | [![Scaladoc](https://img.shields.io/badge/javadoc-0.9.0-brightgreen.svg?label=Scaladoc)](https://javadoc.io/doc/io.github.takapi327/ldbc-zio-interop_3)               |
+
+> [!NOTE]
+> Modules marked *(legacy)* are still published but scheduled for removal in a future version. New projects should use `ldbc-mysql` (with the effect bridge of your choice: `ldbc-cats-effect`, `ldbc-zio`, or `ldbc-future`) instead of `ldbc-connector` / `ldbc-zio-interop`.
 
 ## Performance
 
@@ -78,17 +92,28 @@ The dependency package used depends on whether the database connection is made v
 libraryDependencies += "io.github.takapi327" %% "jdbc-connector" % "latest"
 ```
 
-**Use ldbc connector**
+**Use ldbc MySQL driver**
+
+Set the effect-agnostic MySQL driver `ldbc-mysql` together with the bridge for the effect system you use. For Cats Effect (`IO`), add `ldbc-cats-effect` (use `ldbc-zio` for ZIO, or `ldbc-future` for `scala.concurrent.Future`):
 
 ```scala
-libraryDependencies += "io.github.takapi327" %% "ldbc-connector" % "latest"
+libraryDependencies ++= Seq(
+  "io.github.takapi327" %% "ldbc-mysql"       % "latest",
+  "io.github.takapi327" %% "ldbc-cats-effect" % "latest"
+)
 ```
 
-For Cross-Platform projects (JVM, JS, and/or Native)
+For Cross-Platform projects (JVM, JS, and/or Native):
 
 ```scala
-libraryDependencies += "io.github.takapi327" %%% "ldbc-connector" % "latest"
+libraryDependencies ++= Seq(
+  "io.github.takapi327" %%% "ldbc-mysql"       % "latest",
+  "io.github.takapi327" %%% "ldbc-cats-effect" % "latest"
+)
 ```
+
+> [!NOTE]
+> The legacy `ldbc-connector` is still available but scheduled for removal in a future version. New projects are encouraged to use `ldbc-mysql`.
 
 ### Usage
 
@@ -112,10 +137,12 @@ ds.setPassword("password")
 val connector = Connector.fromDataSource[IO](ds, ExecutionContexts.synchronous)
 ```
 
-**ldbc connector**
+**ldbc MySQL driver**
 
 ```scala
-import ldbc.connector.*
+import ldbc.mysql.MySQLDataSource
+import ldbc.net.SSL
+import ldbc.catseffect.*
 
 val datasource = MySQLDataSource
   .build[IO]("127.0.0.1", 3306, "ldbc")
@@ -126,7 +153,7 @@ val datasource = MySQLDataSource
 val connector = Connector.fromDataSource(datasource)
 ```
 
-The connection process to the database can be carried out using the provider established by each of these methods.
+The connection process to the database can be carried out using the connector established by each of these methods.
 
 ```scala 3
 val result: IO[(List[Int], Option[Int], Int)] = (for
@@ -233,23 +260,28 @@ val result: IO[List[User]] =
 
 ## How to use with ZIO
 
-Although ldbc was created to run on the Cats Effect, can also be used in conjunction with ZIO by using `ldbc-zio-interop`.
-
-> [!CAUTION]
-> Although ldbc supports three platforms, Note that ZIO Interop Cats does not currently support Scala Native.
+To use ldbc with ZIO, set the effect-agnostic driver `ldbc-mysql` together with the ZIO (`Task`) bridge `ldbc-zio`. It runs natively on ZIO without going through `zio-interop-cats`.
 
 ```scala
-libraryDependencies += "io.github.takapi327" %% "ldbc-zio-interop" % "latest"
+libraryDependencies ++= Seq(
+  "io.github.takapi327" %% "ldbc-mysql" % "latest",
+  "io.github.takapi327" %% "ldbc-zio"   % "latest"
+)
 ```
+
+> [!NOTE]
+> The legacy `ldbc-zio-interop` (using `ldbc-connector` from ZIO via `zio-interop-cats`) is still available, but the native `ldbc-zio` is recommended.
 
 The following is sample code for using ldbc with ZIO.
 
 ```scala 3
 import zio.*
 
-import ldbc.zio.interop.*
-import ldbc.connector.*
 import ldbc.dsl.*
+import ldbc.mysql.MySQLDataSource
+import ldbc.net.SSL
+import ldbc.zio.Connector
+import ldbc.zio.given
 
 object Main extends ZIOAppDefault:
 
