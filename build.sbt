@@ -198,7 +198,7 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
 lazy val jdbcConnector = crossProject(JVMPlatform)
   .crossType(CrossType.Pure)
   .withoutSuffixFor(JVMPlatform)
-  .in(file("module/jdbc-connector"))
+  .in(file("modules/jdbc-connector"))
   .settings(
     name                                    := "jdbc-connector",
     description                             := "JDBC API wrapped project with Effect System.",
