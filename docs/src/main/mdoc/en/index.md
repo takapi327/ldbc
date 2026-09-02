@@ -7,7 +7,7 @@ laika.metadata.language = en
 
 Please note that **ldbc** is pre-1.0 software and is still under active development. Newer versions may no longer be binary compatible with earlier versions.
 
-ldbc is a library for building pure functional JDBC layers by [Cats Effect 3](https://typelevel.org/cats-effect/) and [Scala 3](https://github.com/scala/scala3).
+ldbc is a pure functional database connectivity layer for [Scala 3](https://github.com/scala/scala3). It provides a type-safe API with first-class support for multiple effect systems — [Cats Effect 3](https://typelevel.org/cats-effect/), [ZIO](https://zio.dev/), and plain `Future`.
 
 ldbc is a [Typelevel](http://typelevel.org/) project. It embraces pure, unconventional, functional programming as described in Scala's [Code of Conduct](http://scala-lang.org/conduct.html) and is meant to provide a safe and friendly environment for teaching, learning, and contributing.
 
@@ -59,6 +59,10 @@ libraryDependencies ++= Seq(
   "@ORGANIZATION@" %% "ldbc-schema"        % "@VERSION@", // Database schema construction
 )
 ```
+
+Choose the effect bridge that matches the effect system you use: `ldbc-cats-effect` for Cats Effect (`IO`), `ldbc-zio` for ZIO (`Task`), or `ldbc-future` for `scala.concurrent.Future`.
+
+> The legacy `ldbc-connector` is still available but scheduled for removal in a future version. New projects are encouraged to use `ldbc-mysql`.
 
 ## TODO
 
