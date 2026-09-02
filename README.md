@@ -66,7 +66,7 @@ ldbc is designed to be fast and efficient. It uses the latest features of Scala 
 
 | Reading                                                                | Writing                                                                |
 |------------------------------------------------------------------------|------------------------------------------------------------------------|
-| <img alt="ldbc" src="./docs/src/main/mdoc/img/connector/Select21.svg"> | <img alt="ldbc" src="./docs/src/main/mdoc/img/connector/Insert21.svg"> |
+| <img alt="ldbc" src="./docs/src/main/mdoc/img/connector/Select.svg"> | <img alt="ldbc" src="./docs/src/main/mdoc/img/connector/Insert21.svg"> |
 
 ## Quick Start
 
@@ -304,9 +304,47 @@ object Main extends ZIOAppDefault:
       }
 ```
 
+## How to use with Future
+
+To use ldbc with `scala.concurrent.Future`, set the effect-agnostic driver `ldbc-mysql` together with the `Future` bridge `ldbc-future`. Internally the program is interpreted with the lightweight `Fx` effect, and only the final result is bridged to `Future`.
+
+```scala
+libraryDependencies ++= Seq(
+  "io.github.takapi327" %% "ldbc-mysql"  % "latest",
+  "io.github.takapi327" %% "ldbc-future" % "latest"
+)
+```
+
+The following is sample code for using ldbc with `Future`.
+
+```scala 3
+import scala.concurrent.Future
+
+import ldbc.dsl.*
+import ldbc.fx.{ Fx, concurrentFx }
+import ldbc.future.Connector
+import ldbc.mysql.MySQLDataSource
+import ldbc.net.SSL
+
+val datasource =
+  MySQLDataSource
+    .build[Fx]("127.0.0.1", 3306, "ldbc")
+    .setPassword("password")
+    .setDatabase("world")
+    .setSSL(SSL.Trusted)
+
+val connector = Connector.fromDataSource(datasource)
+
+val cities: Future[List[String]] =
+  sql"SELECT Name FROM city"
+    .query[String]
+    .to[List]
+    .readOnly(connector)
+```
+
 ### Performance
 
-Performance results from the Cats Effect to ZIO conversion are shown below.
+Performance results for running ldbc across the supported effect systems are shown below.
 
 <div align="center">
   <img alt="ldbc" src="./docs/src/main/mdoc/img/connector/Select_effect.svg">
