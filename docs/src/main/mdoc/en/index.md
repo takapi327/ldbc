@@ -51,7 +51,8 @@ libraryDependencies ++= Seq(
   
   // Choose the connector you want to use
   "@ORGANIZATION@" %% "jdbc-connector" % "@VERSION@", // Java connector (supported platform: JVM)
-  "@ORGANIZATION@" %% "ldbc-connector" % "@VERSION@", // Scala connector (supported platforms: JVM, JS, Native)
+  "@ORGANIZATION@" %% "ldbc-mysql"       % "@VERSION@", // MySQL driver (supported platforms: JVM, JS, Native)
+  "@ORGANIZATION@" %% "ldbc-cats-effect" % "@VERSION@", // Cats Effect bridge
 
   // And add these as needed
   "@ORGANIZATION@" %% "ldbc-query-builder" % "@VERSION@", // Type-safe query building

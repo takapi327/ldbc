@@ -20,6 +20,12 @@ In our first program, we'll learn how to connect to the database and retrieve a 
 First, we use the `sql string interpolator` to create a query to the database. This feature allows us to write SQL queries safely and concisely.
 
 ```scala 3
+// Necessary imports
+import ldbc.dsl.*
+import ldbc.mysql.MySQLDataSource
+import ldbc.net.SSL
+import ldbc.catseffect.*
+
 // Create an SQL query and specify the return type
 val program: DBIO[Option[Int]] = sql"SELECT 2".query[Int].to[Option]
 ```
@@ -63,7 +69,7 @@ When you run this program, it will return the result `Some(2)` from the database
 This program can be easily executed using Scala CLI:
 
 ```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/02-Program.scala --dependency io.github.takapi327::ldbc-dsl:@VERSION@ --dependency io.github.takapi327::ldbc-connector:@VERSION@
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/02-Program.scala --dependency io.github.takapi327::ldbc-dsl:@VERSION@ --dependency io.github.takapi327::ldbc-mysql:@VERSION@ --dependency io.github.takapi327::ldbc-cats-effect:@VERSION@
 ```
 
 ## Second Program: Combining Multiple Queries
@@ -96,7 +102,7 @@ The execution result will look like `(List(1), Some(2), 3)`. This is a tuple con
 **Execute with Scala CLI**
 
 ```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/03-Program.scala --dependency io.github.takapi327::ldbc-dsl:@VERSION@ --dependency io.github.takapi327::ldbc-connector:@VERSION@
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/03-Program.scala --dependency io.github.takapi327::ldbc-dsl:@VERSION@ --dependency io.github.takapi327::ldbc-mysql:@VERSION@ --dependency io.github.takapi327::ldbc-cats-effect:@VERSION@
 ```
 
 ## Third Program: Data Update Operations
@@ -125,7 +131,7 @@ The `commit` method automatically enables `AutoCommit` and commits the transacti
 **Execute with Scala CLI**
 
 ```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/04-Program.scala --dependency io.github.takapi327::ldbc-dsl:@VERSION@ --dependency io.github.takapi327::ldbc-connector:@VERSION@
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/04-Program.scala --dependency io.github.takapi327::ldbc-dsl:@VERSION@ --dependency io.github.takapi327::ldbc-mysql:@VERSION@ --dependency io.github.takapi327::ldbc-cats-effect:@VERSION@
 ```
 
 ## Transaction Control

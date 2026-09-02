@@ -213,7 +213,7 @@ connection.use { conn =>
   for
     statement <- conn.createStatement()
     _ <- statement.executeUpdate("INSERT INTO users (name, age) VALUES ('Alice', 20)", Statement.RETURN_GENERATED_KEYS)
-    gereatedKeys <- statement.getGeneratedKeys()
+    generatedKeys <- statement.getGeneratedKeys()
   yield
 }
 ```
