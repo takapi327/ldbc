@@ -347,7 +347,7 @@ val cities: Future[List[String]] =
 Performance results for running ldbc across the supported effect systems are shown below.
 
 <div align="center">
-  <img alt="ldbc" src="./docs/src/main/mdoc/img/connector/Select_effect.svg">
+  <img alt="ldbc" src="./docs/src/main/mdoc/img/connector/Select.svg">
 </div>
 
 ## Documentation
