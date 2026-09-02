@@ -4,7 +4,6 @@
  *  please view the LICENSE file that was distributed with this source code.
  */
 
-import com.typesafe.tools.mima.core.*
 import BuildSettings.*
 import Implicits.*
 import JavaVersions.*
@@ -43,34 +42,103 @@ ThisBuild / githubWorkflowBuild ~= { steps =>
 ThisBuild / githubWorkflowTargetBranches        := Seq("**")
 ThisBuild / githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v")))
 ThisBuild / tlSitePublishBranch                 := None
-ThisBuild / mimaBinaryIssueFilters ++= List(
-  ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.connector.net.packet.response.ResultSetRowPacket.decoder"),
-  ProblemFilters.exclude[DirectMissingMethodProblem](
-    "ldbc.connector.net.packet.response.BinaryProtocolResultSetRowPacket.decodeValue"
-  ),
-  // New Statement methods introduced in line with MySQL Connector/J 9.7.0 (WL #17215)
-  ProblemFilters.exclude[ReversedMissingMethodProblem]("ldbc.sql.Statement.enquoteLiteral"),
-  ProblemFilters.exclude[ReversedMissingMethodProblem]("ldbc.sql.Statement.enquoteIdentifier"),
-  ProblemFilters.exclude[ReversedMissingMethodProblem]("ldbc.sql.Statement.enquoteNCharLiteral"),
-  ProblemFilters.exclude[ReversedMissingMethodProblem]("ldbc.sql.Statement.isSimpleIdentifier")
-)
 
 lazy val sql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("sql", "JDBC API wrapped project with Effect System")
+  .settings(
+    libraryDependencies += "org.scalameta" %%% "munit" % "1.2.4" % Test
+  )
   .platformsSettings(JSPlatform, NativePlatform)(
     libraryDependencies ++= Seq(
       "io.github.cquiroz" %%% "scala-java-time" % "2.7.0"
     )
   )
 
+lazy val effect = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
+  .module("effect", "Effect type-class hierarchy (Async/Temporal/Concurrent) and concurrent primitives")
+  .settings(
+    libraryDependencies += "org.typelevel" %%% "munit-cats-effect" % "2.2.0" % Test
+  )
+  .jsSettings(
+    Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
+  )
+
+lazy val telemetry = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
+  .module(
+    "telemetry",
+    "DB-agnostic OpenTelemetry tracing/metrics SPI (Tracer/Span/Meter) over the ldbc.effect type classes"
+  )
+  .settings(
+    libraryDependencies += "org.scalameta" %%% "munit" % "1.2.4" % Test
+  )
+  .jsSettings(
+    Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
+  )
+  .dependsOn(sql, effect)
+
+lazy val otel4s = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
+  .module(
+    "otel4s",
+    "otel4s-backed adapter for the DB-agnostic ldbc.telemetry SPI (native TracerProvider/MeterProvider for cats-effect)"
+  )
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel" %%% "otel4s-core-trace"   % "1.1.0",
+      "org.typelevel" %%% "otel4s-core-metrics" % "1.1.0",
+      "org.typelevel" %%% "cats-effect"         % "3.7.1"  % Test,
+      "org.typelevel" %%% "otel4s-sdk-testkit"  % "0.19.1" % Test,
+      "org.typelevel" %%% "munit-cats-effect"   % "2.2.0"  % Test
+    )
+  )
+  .jsSettings(
+    Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
+  )
+  .dependsOn(telemetry)
+
+lazy val zioTelemetry = crossProject(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .withoutSuffixFor(JVMPlatform)
+  .module(
+    "zio-telemetry",
+    "zio-telemetry (OpenTelemetry) adapter for the DB-agnostic ldbc.telemetry SPI — native TracerProvider[Task] (JVM only)"
+  )
+  .settings(
+    libraryDependencies ++= Seq(
+      "dev.zio"         %% "zio-opentelemetry"         % "3.1.19",
+      "io.opentelemetry" % "opentelemetry-sdk"         % "1.53.0" % Test,
+      "io.opentelemetry" % "opentelemetry-sdk-testing" % "1.53.0" % Test,
+      "org.scalameta"   %% "munit"                     % "1.2.4"  % Test
+    )
+  )
+  .dependsOn(telemetry)
+
+lazy val fx = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Full)
+  .module("fx", "Effect-agnostic core effect type (Fx); bridges to cats-effect / ZIO / Future")
+  .settings(
+    libraryDependencies += "org.scalameta" %%% "munit" % "1.2.4" % Test
+  )
+  .dependsOn(effect)
+
+lazy val net = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Full)
+  .module("net", "Non-blocking transport (IoEngine + Socket) over the ldbc.effect type classes")
+  .settings(
+    libraryDependencies += "org.scalameta" %%% "munit" % "1.2.4" % Test
+  )
+  .nativeSettings(Brew.nativeSettings)
+  .dependsOn(effect, fx % "test->compile;test->test")
+
 lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("core", "Core project for ldbc")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-free"   % "2.13.0",
-      "org.typelevel" %%% "cats-effect" % "3.7.1"
+      "org.typelevel" %%% "cats-free" % "2.13.0"
     )
   )
   .dependsOn(sql)
@@ -81,7 +149,6 @@ lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "twiddles-core"     % "1.1.0",
-      "co.fs2"        %%% "fs2-core"          % "3.13.0",
       "org.typelevel" %%% "munit-cats-effect" % "2.2.0" % Test
     )
   )
@@ -98,6 +165,9 @@ lazy val statement = crossProject(JVMPlatform, JSPlatform, NativePlatform)
 lazy val queryBuilder = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("query-builder", "Project to build type-safe queries")
+  .settings(
+    libraryDependencies += "org.typelevel" %%% "cats-effect" % "3.7.1" % Test
+  )
   .dependsOn(statement)
 
 lazy val schema = crossProject(JVMPlatform, JSPlatform, NativePlatform)
@@ -130,8 +200,9 @@ lazy val jdbcConnector = crossProject(JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .in(file("module/jdbc-connector"))
   .settings(
-    name        := "jdbc-connector",
-    description := "JDBC API wrapped project with Effect System."
+    name                                    := "jdbc-connector",
+    description                             := "JDBC API wrapped project with Effect System.",
+    libraryDependencies += "org.typelevel" %%% "cats-effect" % "3.7.1"
   )
   .defaultSettings
   .dependsOn(core)
@@ -202,6 +273,74 @@ lazy val awsAuthenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativeP
   )
   .nativeSettings(Brew.nativeSettings)
   .dependsOn(authenticationPlugin)
+
+lazy val mysql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Full)
+  .module("mysql", "Effect-agnostic MySQL driver (CE-free) built on Fx / net / pool")
+  .settings(
+    scalacOptions += "-Ykind-projector:underscores",
+    libraryDependencies ++= Seq(
+      "org.scodec"    %%% "scodec-bits"   % "1.2.5",
+      "org.scodec"    %%% "scodec-core"   % "2.3.3",
+      "org.typelevel" %%% "twiddles-core" % "1.1.0"
+    ),
+    (Compile / sourceGenerators) += Def.task {
+      Generator.version(
+        version      = version.value,
+        scalaVersion = scalaVersion.value,
+        sbtVersion   = sbtVersion.value,
+        dir          = (Compile / sourceManaged).value
+      )
+    }.taskValue
+  )
+  .jsSettings(
+    Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
+  )
+  .nativeSettings(Brew.nativeSettings)
+  .dependsOn(net, telemetry, authenticationPlugin, core, fx % "test->compile;test->test")
+
+lazy val pool = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Full)
+  .module("pool", "Effect-agnostic connection pool over the ldbc.effect type classes")
+  .dependsOn(sql, effect, fx % "test->compile;test->test")
+
+lazy val catsEffect = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
+  .module("cats-effect", "Cats Effect boundary for ldbc (fs2 streaming and IO helpers over the shared DSL)")
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel" %%% "cats-effect"       % "3.7.1",
+      "co.fs2"        %%% "fs2-core"          % "3.13.0",
+      "org.typelevel" %%% "munit-cats-effect" % "2.2.0" % Test
+    )
+  )
+  .dependsOn(dsl, effect)
+
+lazy val future = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
+  .module("future", "Future boundary for ldbc (bridges Fx to scala.concurrent.Future)")
+  .settings(
+    libraryDependencies += "org.scalameta" %%% "munit" % "1.2.4" % Test
+  )
+  .jsSettings(
+    Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
+  )
+  .dependsOn(dsl, fx)
+
+lazy val zio = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
+  .module("zio", "ZIO boundary for ldbc (native Concurrent[Task] and ZStream over the ldbc.effect type classes)")
+  .settings(
+    libraryDependencies ++= Seq(
+      "dev.zio"       %%% "zio"         % "2.1.26",
+      "dev.zio"       %%% "zio-streams" % "2.1.26",
+      "org.typelevel" %%% "cats-core"   % "2.13.0"
+    )
+  )
+  .jsSettings(
+    Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
+  )
+  .dependsOn(dsl, effect)
 
 lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
   .settings(description := "Projects that provide sbt plug-ins")
@@ -292,7 +431,7 @@ lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     }
   )
   .nativeSettings(Brew.nativeSettings)
-  .dependsOn(connector, queryBuilder, schema)
+  .dependsOn(connector, mysql, pool, queryBuilder, schema, catsEffect, future, zio, fx % "test->test")
   .enablePlugins(NoPublishPlugin)
 
 lazy val benchmark = (project in file("benchmark"))
@@ -307,10 +446,20 @@ lazy val benchmark = (project in file("benchmark"))
       "com.mysql"           % "mysql-connector-j" % "9.7.0",
       "org.typelevel"      %% "doobie-core"       % "1.0.0-RC13",
       "com.typesafe.slick" %% "slick"             % "3.6.1",
-      "com.zaxxer"          % "HikariCP"          % "7.1.0"
+      "com.zaxxer"          % "HikariCP"          % "7.1.0",
+      "dev.zio"            %% "zio"               % "2.1.26"
     )
   )
-  .dependsOn(jdbcConnector.jvm, connector.jvm, queryBuilder.jvm)
+  .dependsOn(
+    jdbcConnector.jvm,
+    connector.jvm,
+    queryBuilder.jvm,
+    fx.jvm,
+    mysql.jvm,
+    catsEffect.jvm,
+    future.jvm,
+    zio.jvm
+  )
   .enablePlugins(JmhPlugin, AutomateHeaderPlugin, NoPublishPlugin)
 
 lazy val http4sExample = crossProject(JVMPlatform)
@@ -389,7 +538,7 @@ lazy val testkitExample = crossProject(JVMPlatform)
   .crossType(CrossType.Pure)
   .withoutSuffixFor(JVMPlatform)
   .example("testkit", "ldbc-testkit usage example")
-  .dependsOn(connector, dsl, testkitMunit)
+  .dependsOn(dsl, testkitMunit)
 
 lazy val docs = (project in file("docs"))
   .settings(
@@ -426,6 +575,9 @@ lazy val docs = (project in file("docs"))
   .settings(commonSettings)
   .dependsOn(
     connector.jvm,
+    mysql.jvm,
+    catsEffect.jvm,
+    pool.jvm,
     schema.jvm
   )
   .enablePlugins(AutomateHeaderPlugin, TypelevelSitePlugin, NoPublishPlugin)
@@ -476,10 +628,21 @@ lazy val ldbc = tlCrossRootProject
   .settings(commonSettings)
   .aggregate(
     sql,
+    effect,
+    telemetry,
+    otel4s,
+    zioTelemetry,
     core,
-    jdbcConnector,
+    fx,
+    net,
+    mysql,
+    pool,
     connector,
+    jdbcConnector,
     dsl,
+    catsEffect,
+    future,
+    zio,
     statement,
     queryBuilder,
     schema,

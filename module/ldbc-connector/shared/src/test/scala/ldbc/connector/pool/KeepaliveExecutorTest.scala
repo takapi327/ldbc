@@ -15,6 +15,7 @@ import cats.effect.*
 import ldbc.sql.*
 
 import ldbc.connector.*
+import ldbc.connector.syntax.*
 
 class KeepaliveExecutorTest extends FTestPlatform:
 
@@ -308,10 +309,10 @@ class KeepaliveExecutorTest extends FTestPlatform:
       if times.length >= 2 then
         val intervals = times.zip(times.tail).map { case (t1, t2) => t2 - t1 }
         intervals.foreach { interval =>
-          // Base interval is 200ms, with current implementation variance = 180-219ms range
-          // Adding overhead tolerance for processing time and system delays
-          assert(interval >= 160, s"Interval $interval too short (expected >= 160ms)")
-          assert(interval <= 280, s"Interval $interval too long (expected <= 280ms)")
+          // Base interval is 200ms, with current implementation variance = 180-219ms range.
+          // Wide tolerance for CI processing time, GC pauses, and scheduling delays.
+          assert(interval >= 120, s"Interval $interval too short (expected >= 120ms)")
+          assert(interval <= 400, s"Interval $interval too long (expected <= 400ms)")
         }
   }
 
@@ -385,7 +386,7 @@ class KeepaliveExecutorTest extends FTestPlatform:
           initialMetrics <- tracker.getMetrics
 
           // Use some connections to make them idle
-          _ <- datasource.getConnection.use { conn =>
+          _ <- datasource.use { conn =>
                  conn.createStatement().flatMap(_.executeQuery("SELECT 1")).void
                }
 

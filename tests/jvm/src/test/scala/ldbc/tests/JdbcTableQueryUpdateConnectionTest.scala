@@ -14,7 +14,7 @@ import jdbc.connector.*
 
 import ldbc.Connector
 
-class JdbcTableQueryUpdateConnectionTest extends TableQueryUpdateConnectionTest:
+class JdbcTableQueryUpdateConnectionTest extends TableQueryUpdateConnectionTest[IO] with IODatabaseSuite:
 
   val ds = new MysqlDataSource()
   ds.setServerName(MySQLTestConfig.host)

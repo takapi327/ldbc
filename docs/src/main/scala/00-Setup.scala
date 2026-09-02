@@ -12,6 +12,7 @@ import cats.effect.unsafe.implicits.global
 import ldbc.dsl.*
 
 import ldbc.connector.*
+import ldbc.connector.syntax.*
 
 @main def setup(): Unit =
 
@@ -115,7 +116,7 @@ import ldbc.connector.*
 
   // #run
   (createDatabase.commit(connector) *>
-    datasource.getConnection.use { connection =>
+    datasource.use { connection =>
       connection.setCatalog("sandbox_db")
     } *>
     (setUpTables *> insertData)

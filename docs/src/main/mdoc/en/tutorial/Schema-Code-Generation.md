@@ -257,7 +257,7 @@ Next, implement the custom type conversion referenced in the YAML file.
 // com/example/ProductTypeMapping.scala
 package com.example
 
-import ldbc.dsl.Codec
+import ldbc.dsl.codec.Codec
 
 sealed trait ProductCategory {
   def id: Int
@@ -377,17 +377,25 @@ Generated code can be used like any other ldbc code.
 
 ```scala
 import ldbc.dsl.*
+import ldbc.mysql.MySQLDataSource
+import ldbc.net.SSL
+import ldbc.catseffect.*
 import ldbc.generated.shop.Product
 
-val datasource = MySQLDataSource(...)
+val datasource = MySQLDataSource
+  .build[IO]("127.0.0.1", 3306, "ldbc")
+  .setPassword("password")
+  .setDatabase("shop")
+  .setSSL(SSL.Trusted)
+
+val connector = Connector.fromDataSource(datasource)
 
 // Referencing table queries
 val products = Product.table
 
 // Executing queries
-val allProducts = datasource.getConnection.use { conn =>
-  products.filter(_.price > 100).all.run(conn)
-}
+val allProducts =
+  products.selectAll.where(_.price > 100).query.to[List].readOnly(connector)
 ```
 
 ## Best Practices for Code Generation

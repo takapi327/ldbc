@@ -13,6 +13,7 @@ import cats.syntax.all.*
 import cats.effect.*
 
 import ldbc.connector.*
+import ldbc.connector.syntax.*
 
 class AdaptivePoolSizerTest extends FTestPlatform:
 
@@ -41,8 +42,8 @@ class AdaptivePoolSizerTest extends FTestPlatform:
           initialStatus <- datasource.status
 
           // Create high load by acquiring most connections
-          _ <- datasource.getConnection.use { _ =>
-                 datasource.getConnection.use { _ =>
+          _ <- datasource.use { _ =>
+                 datasource.use { _ =>
                    for
                      // Wait for adaptive sizing to detect high utilization
                      _                <- IO.sleep(150.millis) // Multiple adaptive intervals
@@ -77,16 +78,19 @@ class AdaptivePoolSizerTest extends FTestPlatform:
 
     resource.use { datasource =>
       for
-        // First grow the pool by creating load
-        _ <- IO.parTraverseN(5)((1 to 5).toList) { _ =>
-               datasource.getConnection.use { _ => IO.sleep(50.millis) }
-             }
+        // First grow the pool by holding sustained load in the background, so the adaptive sizer
+        // observes high utilization across several intervals before we sample.
+        load <- (1 to 5).toList.parTraverse { _ =>
+                  datasource.use { _ => IO.sleep(1.second) }.start
+                }
+        _ <- IO.sleep(500.millis) // 10 adaptive intervals of sustained load
 
         statusAfterGrowth <- datasource.status
 
-        // Now let pool be idle to trigger shrinking
+        // Release the load and let the pool be idle to trigger shrinking
+        _ <- load.parTraverse(_.cancel)
         // Need multiple consecutive low utilization periods (3 as per implementation)
-        _ <- IO.sleep(200.millis) // 4 adaptive intervals
+        _ <- IO.sleep(500.millis)
 
         finalStatus <- datasource.status
       yield
@@ -119,7 +123,7 @@ class AdaptivePoolSizerTest extends FTestPlatform:
           // Note: On Scala.js, this runs on a single thread with cooperative yielding
           // Using shorter hold times and fewer concurrent requests for JS compatibility
           fibers <- IO.parTraverseN(5)((1 to 5).toList) { _ =>
-                      datasource.getConnection.use { _ => IO.sleep(100.millis) }.start
+                      datasource.use { _ => IO.sleep(100.millis) }.start
                     }
 
           // Wait for adaptive sizing to react
@@ -155,8 +159,8 @@ class AdaptivePoolSizerTest extends FTestPlatform:
         initialStatus <- datasource.status
 
         // Create load to trigger growth
-        _ <- datasource.getConnection.use { _ =>
-               datasource.getConnection.use { _ =>
+        _ <- datasource.use { _ =>
+               datasource.use { _ =>
                  IO.sleep(150.millis) // Wait for growth
                }
              }
@@ -164,8 +168,8 @@ class AdaptivePoolSizerTest extends FTestPlatform:
         statusAfterFirstAdjustment <- datasource.status
 
         // Try to create load again quickly (within cooldown)
-        _ <- datasource.getConnection.use { _ =>
-               datasource.getConnection.use { _ =>
+        _ <- datasource.use { _ =>
+               datasource.use { _ =>
                  IO.sleep(100.millis)
                }
              }
@@ -228,11 +232,11 @@ class AdaptivePoolSizerTest extends FTestPlatform:
           initialStatus <- datasource.status
 
           // Create sustained high load (need 2 consecutive high periods for growth)
-          fiber1 <- datasource.getConnection.use { _ => IO.sleep(200.millis) }.start
-          fiber2 <- datasource.getConnection.use { _ => IO.sleep(200.millis) }.start
+          fiber1 <- datasource.use { _ => IO.sleep(1000.millis) }.start
+          fiber2 <- datasource.use { _ => IO.sleep(1000.millis) }.start
 
           // Wait for multiple adaptive intervals
-          _ <- IO.sleep(150.millis)
+          _ <- IO.sleep(200.millis)
 
           statusDuringLoad <- datasource.status
 
@@ -268,7 +272,7 @@ class AdaptivePoolSizerTest extends FTestPlatform:
         initialStatus <- datasource.status
 
         // Create load
-        _ <- datasource.getConnection.use { _ =>
+        _ <- datasource.use { _ =>
                IO.sleep(150.millis) // Wait for adaptive sizing
              }
 
@@ -296,12 +300,12 @@ class AdaptivePoolSizerTest extends FTestPlatform:
       case (datasource, tracker) =>
         for
           // Perform operations to generate metrics
-          _ <- datasource.getConnection.use { _ => IO.sleep(10.millis) }
-          _ <- datasource.getConnection.use { _ => IO.sleep(10.millis) }
+          _ <- datasource.use { _ => IO.sleep(10.millis) }
+          _ <- datasource.use { _ => IO.sleep(10.millis) }
 
           // Create varying load
           _ <- IO.parTraverseN(2)((1 to 4).toList) { i =>
-                 datasource.getConnection.use { _ => IO.sleep((i * 10).millis) }
+                 datasource.use { _ => IO.sleep((i * 10).millis) }
                }
 
           // Wait for metrics update

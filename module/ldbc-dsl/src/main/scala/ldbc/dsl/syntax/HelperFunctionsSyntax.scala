@@ -6,11 +6,9 @@
 
 package ldbc.dsl.syntax
 
-import cats.{ Foldable, Functor, Reducible }
+import cats.{ Foldable, Functor, MonadError, Reducible }
 import cats.data.NonEmptyList
 import cats.syntax.all.*
-
-import cats.effect.kernel.Sync
 
 import ldbc.dsl.codec.Encoder
 
@@ -227,4 +225,4 @@ trait HelperFunctionsSyntax extends StringContextSyntax:
 
   implicit def toDBIO[A](dbio: ldbc.DBIO[A]): ldbc.dsl.DBIO.Ops[A] = new ldbc.dsl.DBIO.Ops(dbio)
 
-  implicit val syncDBIO: Sync[ldbc.DBIO] = ldbc.dsl.DBIO.syncDBIO
+  implicit val monadErrorDBIO: MonadError[ldbc.DBIO, Throwable] = ldbc.dsl.DBIO.monadErrorDBIO

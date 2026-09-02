@@ -11,12 +11,16 @@ OpenTelemetryバックエンドを接続しない場合、トレースとメト�
 
 ## 依存関係
 
-ldbc-connectorは`otel4s-core`（抽象API）のみに依存しています。実際にテレメトリデータを収集・送信するには、バックエンド実装を追加する必要があります。
+0.9.x では、テレメトリの SPI（`Tracer`/`Meter`）を DB 非依存の`ldbc-telemetry`が定義し、そのバックエンドを別モジュールで差し込みます。Cats Effect（`IO`）で otel4s を使う場合は`ldbc-otel4s`を追加します（`ldbc-telemetry`は`ldbc-mysql`が推移的に導入します）。実際にテレメトリデータを収集・送信するには、さらに OpenTelemetry の SDK バックエンドを追加します。
 
 ```scala
 libraryDependencies ++= Seq(
-  // ldbcコネクタ（otel4s-coreを含む）
-  "@ORGANIZATION@" %% "ldbc-connector" % "@VERSION@",
+  // MySQL ドライバと Cats Effect ブリッジ
+  "@ORGANIZATION@" %% "ldbc-mysql"       % "@VERSION@",
+  "@ORGANIZATION@" %% "ldbc-cats-effect" % "@VERSION@",
+
+  // ldbc.telemetry SPI の otel4s バックエンド
+  "@ORGANIZATION@" %% "ldbc-otel4s"      % "@VERSION@",
 
   // OpenTelemetry Java SDKバックエンド
   "org.typelevel"    %% "otel4s-oteljava"                           % "0.15.1",
@@ -25,31 +29,39 @@ libraryDependencies ++= Seq(
 )
 ```
 
+> ZIO（`Task`）で使う場合は、`ldbc-cats-effect`/`ldbc-otel4s`の代わりに`ldbc-zio`と`ldbc-zio-telemetry`（JVM のみ）を追加します。
+
 ## セットアップ
 
-`Tracer[F]`と`Meter[F]`を`MySQLDataSource`に設定します。
+otel4s の`TracerProvider`/`MeterProvider`を`Otel4sTelemetry`で`ldbc.telemetry`の SPI に変換し、`MySQLDataSource.withTraced`に渡します。`withTraced`は取得したトレーサー・メーターを設定済みの`MySQLDataSource`を返します。
 
 ```scala
 import cats.effect.*
 import io.opentelemetry.api.GlobalOpenTelemetry
 import org.typelevel.otel4s.oteljava.OtelJava
-import ldbc.connector.*
+import ldbc.mysql.{ MySQLConfig, MySQLDataSource }
+import ldbc.catseffect.*
+import ldbc.otel4s.Otel4sTelemetry
 
 object Main extends IOApp.Simple:
 
   override def run: IO[Unit] =
     val resource = for
-      otel   <- Resource
-                   .eval(IO.delay(GlobalOpenTelemetry.get))
-                   .evalMap(OtelJava.forAsync[IO])
-      tracer <- Resource.eval(otel.tracerProvider.get("my-app"))
-      meter  <- Resource.eval(otel.meterProvider.get("my-app"))
-      datasource = MySQLDataSource
-                     .build[IO]("127.0.0.1", 3306, "user")
-                     .setPassword("password")
-                     .setDatabase("mydb")
-                     .setTracer(tracer)
-                     .setMeter(meter)
+      otel <- Resource
+                .eval(IO.delay(GlobalOpenTelemetry.get))
+                .evalMap(OtelJava.forAsync[IO])
+      datasource <- Resource.eval(
+                      MySQLDataSource.withTraced[IO](
+                        MySQLConfig.default
+                          .setHost("127.0.0.1")
+                          .setPort(3306)
+                          .setUser("user")
+                          .setPassword("password")
+                          .setDatabase("mydb"),
+                        tracerProvider = Otel4sTelemetry.tracerProvider(otel.tracerProvider),
+                        meterProvider  = Otel4sTelemetry.meterProvider(otel.meterProvider)
+                      )
+                    )
       connection <- datasource.getConnection
     yield connection
 
@@ -58,19 +70,18 @@ object Main extends IOApp.Simple:
     }
 ```
 
-コネクションプーリング使用時は`meter`を`pooling`メソッドに渡します。
+個別に設定したい場合は、変換した`TracerProvider`/`MeterProvider`から`Tracer`/`Meter`を取得して`setTracer`/`setMeter`に渡すこともできます。
 
 ```scala
-val pool = MySQLDataSource.pooling[IO](
-  config = MySQLConfig.default
-    .setHost("127.0.0.1")
-    .setPort(3306)
-    .setUser("user")
-    .setPassword("password")
-    .setDatabase("mydb"),
-  meter  = Some(meter),
-  tracer = Some(tracer)
-)
+for
+  tracer <- Otel4sTelemetry.tracerProvider(otel.tracerProvider).tracer("my-app").get
+  meter  <- Otel4sTelemetry.meterProvider(otel.meterProvider).meter("my-app").get
+yield MySQLDataSource
+  .build[IO]("127.0.0.1", 3306, "user")
+  .setPassword("password")
+  .setDatabase("mydb")
+  .setTracer(tracer)
+  .setMeter(meter)
 ```
 
 ## トレーシング
@@ -138,7 +149,7 @@ ldbcは、データベース操作ごとにOpenTelemetryスパンを生成しま
 `TelemetryConfig`を使用して、テレメトリの動作をカスタマイズできます。
 
 ```scala
-import ldbc.connector.telemetry.TelemetryConfig
+import ldbc.telemetry.TelemetryConfig
 
 // デフォルト設定（すべて有効）
 val default = TelemetryConfig.default
