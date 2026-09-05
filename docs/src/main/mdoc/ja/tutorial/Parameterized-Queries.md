@@ -215,7 +215,51 @@ val table = "user"
 sql"SELECT * FROM ${ident(schema)}.${ident(table)}"
 ```
 
-> **注意**: `ident` はバッククォートでエスケープを行いますが、信頼できる値（定数・設定値など）に対して使用することを推奨します。ユーザー入力をそのまま識別子として使用する設計は避けてください。
+> **注意**: `ident` はバッククォートでエスケープを行いますが、信頼できる値（定数・設定値など）に対して使用することを推奨します。ユーザー入力をそのまま識別子として使用する設計は避けてください。値が識別子として妥当かを事前に検証したい場合は、後述の`isSimpleIdentifier`が利用できます。
+
+## パラメータのエスケープとsql_mode
+
+動的パラメータは`PreparedStatement`が処理するため、通常はエスケープを意識する必要はありません。ただし、ldbcコネクターのクライアントサイド`PreparedStatement`（`useServerPrepStmts = false`、既定）はクエリをクライアント側で組み立てるため、エスケープ方法がサーバーの`sql_mode`に依存します。
+
+ldbcはセッションの`sql_mode`を追跡し、以下のように文字列リテラルをエスケープします。
+
+| sql_mode | エスケープ方法 |
+|----------|--------------|
+| 既定 | `'` → `\'`、`"` → `\"`、`\` → `\\`、制御文字 → `\0` `\b` `\n` `\r` `\Z` |
+| `NO_BACKSLASH_ESCAPES` | `'` → `''`（シングルクォートの二重化） |
+
+`NO_BACKSLASH_ESCAPES`が有効なセッションではバックスラッシュが通常の文字として扱われるため、`\'`ではクォートを無効化できません。そのためクォートの二重化に切り替えています。
+
+この`sql_mode`は接続時に取得したあと、サーバーから受信するOK/EOFパケットごとに更新されます。接続後に`SET SESSION sql_mode = ...`を実行した場合でも、その時点以降のクエリ生成に正しく反映されます。
+
+利用者側で必要な設定はありません。
+
+## 識別子と値のクォート（JDBC 4.3互換API）
+
+JDBC 4.3で標準化されたクォート用のメソッドが`Statement`および`PreparedStatement`で利用できます。`sql`補間子の外でSQL文を組み立てる場合や、JDBC標準APIとの互換性が必要な場合に使用します。
+
+| メソッド | 用途 |
+|---------|------|
+| `enquoteLiteral(value)` | 文字列をシングルクォートで囲んだリテラルにする |
+| `enquoteIdentifier(identifier, alwaysQuote)` | 識別子をクォートする |
+| `enquoteNCharLiteral(value)` | `N`プレフィックス付きの各国文字リテラルにする |
+| `isSimpleIdentifier(identifier)` | クォートなしで使える単純な識別子か判定する |
+
+```scala
+for
+  stmt <- conn.createStatement()
+  a    <- stmt.enquoteLiteral("G'Day")              // 'G''Day'
+  b    <- stmt.enquoteIdentifier("my table", false) // `my table`
+  c    <- stmt.enquoteIdentifier("user", true)      // `user`
+  d    <- stmt.enquoteNCharLiteral("Hello")         // N'Hello'
+  e    <- stmt.isSimpleIdentifier("user_name")      // true
+  f    <- stmt.isSimpleIdentifier("select")         // false（予約語）
+yield ()
+```
+
+`isSimpleIdentifier`はMySQLの規則に従い、`[0-9a-zA-Z$_]`と`U+0080`以上の拡張文字のみで構成され、数字のみではなく、64文字以内で、予約語でないものを単純な識別子と判定します。`ANSI_QUOTES` sql_modeが有効な場合、識別子のクォート文字はバッククォートではなく`"`になります。
+
+> **注意**: `sql`補間子の中で識別子を埋め込む場合は、引き続き`ident`を使用してください。これらのメソッドは`Statement`のインスタンスを必要とするため、主にSQL文を文字列として組み立てる場面で使います。
 
 ## 条件付きSQL断片
 

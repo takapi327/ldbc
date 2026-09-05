@@ -226,8 +226,9 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
     else executeUpdate().map(_ => false)
 
   override def addBatch(): F[Unit] =
-    checkClosed() *> checkNullOrEmptyQuery(sql) *> params.get.flatMap { params =>
-      batchedArgs.update(_ :+ buildBatchQuery(sql, params))
+    checkClosed() *> checkNullOrEmptyQuery(sql) *> (params.get, protocol.noBackslashEscapes).flatMapN {
+      (params, noBackslashEscapes) =>
+        batchedArgs.update(_ :+ QueryRenderer.buildBatch(sql, params, noBackslashEscapes))
     } *> params.set(SortedMap.empty)
 
   override def clearBatch(): F[Unit] = batchedArgs.set(Vector.empty)

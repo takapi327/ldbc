@@ -31,8 +31,7 @@ ThisBuild / githubWorkflowBuildMatrixExclusions ++= Seq(
   MatrixExclude(Map("os" -> "ubuntu-24.04", "project" -> "ldbcJS")),
   MatrixExclude(Map("os" -> "ubuntu-22.04", "project" -> "ldbcNative"))
 )
-ThisBuild / githubWorkflowBuildPreamble ++= List(dockerRun, brewUpdate) ++ nativeBrewInstallWorkflowSteps.value
-ThisBuild / nativeBrewInstallCond := Some("matrix.project == 'ldbcNative'")
+ThisBuild / githubWorkflowBuildPreamble ++= List(dockerRun, brewUpdate, brewInstall)
 ThisBuild / githubWorkflowAddedJobs ++= Seq(sbtScripted.value, sbtCoverageReport.value)
 ThisBuild / githubWorkflowBuildPostamble += dockerStop
 ThisBuild / githubWorkflowBuild ~= { steps =>
@@ -48,7 +47,12 @@ ThisBuild / mimaBinaryIssueFilters ++= List(
   ProblemFilters.exclude[IncompatibleMethTypeProblem]("ldbc.connector.net.packet.response.ResultSetRowPacket.decoder"),
   ProblemFilters.exclude[DirectMissingMethodProblem](
     "ldbc.connector.net.packet.response.BinaryProtocolResultSetRowPacket.decodeValue"
-  )
+  ),
+  // New Statement methods introduced in line with MySQL Connector/J 9.7.0 (WL #17215)
+  ProblemFilters.exclude[ReversedMissingMethodProblem]("ldbc.sql.Statement.enquoteLiteral"),
+  ProblemFilters.exclude[ReversedMissingMethodProblem]("ldbc.sql.Statement.enquoteIdentifier"),
+  ProblemFilters.exclude[ReversedMissingMethodProblem]("ldbc.sql.Statement.enquoteNCharLiteral"),
+  ProblemFilters.exclude[ReversedMissingMethodProblem]("ldbc.sql.Statement.isSimpleIdentifier")
 )
 
 lazy val sql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
@@ -66,7 +70,7 @@ lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "cats-free"   % "2.13.0",
-      "org.typelevel" %%% "cats-effect" % "3.7.0"
+      "org.typelevel" %%% "cats-effect" % "3.7.1"
     )
   )
   .dependsOn(sql)
@@ -76,7 +80,7 @@ lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .module("dsl", "Projects that provide a way to connect to the database")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "twiddles-core"     % "0.10.0",
+      "org.typelevel" %%% "twiddles-core"     % "1.1.0",
       "co.fs2"        %%% "fs2-core"          % "3.13.0",
       "org.typelevel" %%% "munit-cats-effect" % "2.2.0" % Test
     )
@@ -144,8 +148,7 @@ lazy val authenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativePlat
   .jsSettings(
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
   )
-  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
-  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .nativeSettings(Brew.nativeSettings)
 
 lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
@@ -164,7 +167,7 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
       "org.typelevel" %%% "otel4s-semconv-experimental"         % "1.1.0",
       "org.typelevel" %%% "otel4s-semconv-metrics"              % "1.1.0",
       "org.typelevel" %%% "otel4s-semconv-metrics-experimental" % "1.1.0",
-      "org.typelevel" %%% "twiddles-core"                       % "0.10.0",
+      "org.typelevel" %%% "twiddles-core"                       % "1.1.0",
       "org.typelevel" %%% "munit-cats-effect"                   % "2.2.0"  % Test,
       "org.typelevel" %%% "otel4s-sdk-testkit"                  % "0.19.2" % Test
     ),
@@ -180,8 +183,7 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .jsSettings(
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
   )
-  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
-  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .nativeSettings(Brew.nativeSettings)
   .dependsOn(core, authenticationPlugin)
 
 lazy val awsAuthenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativePlatform)
@@ -198,12 +200,13 @@ lazy val awsAuthenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativeP
   .jsSettings(
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
   )
-  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
-  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .nativeSettings(Brew.nativeSettings)
   .dependsOn(authenticationPlugin)
 
 lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
   .settings(description := "Projects that provide sbt plug-ins")
+  .settings(addSbtPlugin("com.github.sbt" % "sbt2-compat" % "0.2.0"))
+  .settings(scalacOptions += "-Wconf:src=.*Settings\\.scala&msg=unused import:s")
   .settings((Compile / sourceGenerators) += Def.task {
     Generator.version(
       version      = version.value,
@@ -224,8 +227,7 @@ lazy val testkit = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .jsSettings(
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
   )
-  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
-  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .nativeSettings(Brew.nativeSettings)
   .dependsOn(connector)
 
 lazy val testkitMunit = crossProject(JVMPlatform, JSPlatform, NativePlatform)
@@ -239,8 +241,7 @@ lazy val testkitMunit = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .jsSettings(
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
   )
-  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
-  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .nativeSettings(Brew.nativeSettings)
   .dependsOn(testkit, dsl % Test)
 
 lazy val zioInterop = crossProject(JVMPlatform, JSPlatform)
@@ -278,7 +279,7 @@ lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .defaultSettings
   .jvmSettings(
     Test / fork                       := true,
-    libraryDependencies += "com.mysql" % "mysql-connector-j" % "9.6.0" % Test
+    libraryDependencies += "com.mysql" % "mysql-connector-j" % "9.7.0" % Test
   )
   .jvmConfigure(_ dependsOn jdbcConnector.jvm)
   .jsSettings(
@@ -290,8 +291,7 @@ lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
       }
     }
   )
-  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
-  .nativeSettings(Test / nativeBrewFormulas += "s2n")
+  .nativeSettings(Brew.nativeSettings)
   .dependsOn(connector, queryBuilder, schema)
   .enablePlugins(NoPublishPlugin)
 
@@ -304,7 +304,7 @@ lazy val benchmark = (project in file("benchmark"))
   .settings(
     libraryDependencies ++= Seq(
       "org.scala-lang"     %% "scala3-compiler"   % scala3,
-      "com.mysql"           % "mysql-connector-j" % "9.6.0",
+      "com.mysql"           % "mysql-connector-j" % "9.7.0",
       "org.typelevel"      %% "doobie-core"       % "1.0.0-RC13",
       "com.typesafe.slick" %% "slick"             % "3.6.1",
       "com.zaxxer"          % "HikariCP"          % "7.1.0"
@@ -335,7 +335,7 @@ lazy val hikariCPExample = crossProject(JVMPlatform)
   .settings(
     libraryDependencies ++= Seq(
       "com.zaxxer" % "HikariCP"          % "7.1.0",
-      "com.mysql"  % "mysql-connector-j" % "9.6.0"
+      "com.mysql"  % "mysql-connector-j" % "9.7.0"
     )
   )
   .dependsOn(jdbcConnector, dsl)
@@ -366,7 +366,7 @@ lazy val zioExample = crossProject(JVMPlatform)
   .example("zio", "ZIO example project")
   .settings(
     libraryDependencies ++= Seq(
-      "dev.zio" %% "zio-http" % "3.11.3"
+      "dev.zio" %% "zio-http" % "3.11.4"
     )
   )
   .dependsOn(connector, dsl, zioInterop)
@@ -399,7 +399,7 @@ lazy val docs = (project in file("docs"))
     mdocVariables ++= Map(
       "ORGANIZATION"  -> organization.value,
       "SCALA_VERSION" -> scalaVersion.value,
-      "MYSQL_VERSION" -> "9.6.0"
+      "MYSQL_VERSION" -> "9.7.0"
     ),
     laikaTheme  := LaikaSettings.helium.value,
     laikaConfig := LaikaConfig.defaults.withRawContent,
@@ -422,6 +422,7 @@ lazy val docs = (project in file("docs"))
       }
     }
   )
+  .settings(tlSitePublish ++= archiveSite.value)
   .settings(commonSettings)
   .dependsOn(
     connector.jvm,

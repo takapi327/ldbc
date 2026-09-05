@@ -91,31 +91,3 @@ private[ldbc] trait SharedPreparedStatement[F[_]: Sync] extends PreparedStatemen
 
   override def executeBatch(): F[Array[Int]] =
     executeLargeBatch().map(_.map(_.toInt))
-
-  protected def buildQuery(original: String, params: SortedMap[Int, Parameter]): String =
-
-    val result    = new StringBuilder(original.length * 2)
-    var lastIndex = 0
-
-    params.foreach {
-      case (offset, param) =>
-        val index = original.indexOf('?', lastIndex)
-        if index >= 0 then
-          result.append(original.substring(lastIndex, index))
-          result.append(param.sql)
-          lastIndex = index + 1
-    }
-
-    if lastIndex < original.length then result.append(original.substring(lastIndex))
-
-    result.toString
-
-  protected def buildBatchQuery(original: String, params: SortedMap[Int, Parameter]): String =
-    val placeholderCount = original.split("\\?", -1).length - 1
-    require(placeholderCount == params.size, "The number of parameters does not match the number of placeholders")
-    original.trim.toLowerCase match
-      case q if q.startsWith("insert") =>
-        val bindQuery = buildQuery(original, params)
-        bindQuery.split("(?i)VALUES").last
-      case q if q.startsWith("update") || q.startsWith("delete") => buildQuery(original, params)
-      case _ => throw new IllegalArgumentException("The batch query must be an INSERT, UPDATE, or DELETE statement.")

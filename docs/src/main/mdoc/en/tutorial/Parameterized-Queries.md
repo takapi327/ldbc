@@ -217,7 +217,51 @@ val table = "user"
 sql"SELECT * FROM ${ident(schema)}.${ident(table)}"
 ```
 
-> **Note**: While `ident` escapes with backticks, it is recommended to use it only with trusted values (constants, configuration values, etc.). Avoid using user input directly as identifiers.
+> **Note**: While `ident` escapes with backticks, it is recommended to use it only with trusted values (constants, configuration values, etc.). Avoid using user input directly as identifiers. If you want to validate a value as an identifier beforehand, use `isSimpleIdentifier` described below.
+
+## Parameter Escaping and sql_mode
+
+Dynamic parameters are handled by `PreparedStatement`, so escaping is normally not something you need to think about. However, the client-side `PreparedStatement` of the ldbc connector (`useServerPrepStmts = false`, the default) assembles the query on the client, so the escaping depends on the server `sql_mode`.
+
+ldbc tracks the session `sql_mode` and escapes string literals as follows.
+
+| sql_mode | Escaping |
+|----------|----------|
+| default | `'` -> `\'`, `"` -> `\"`, `\` -> `\\`, control characters -> `\0` `\b` `\n` `\r` `\Z` |
+| `NO_BACKSLASH_ESCAPES` | `'` -> `''` (doubling the single quote) |
+
+In a session with `NO_BACKSLASH_ESCAPES`, a backslash is an ordinary character, so `\'` does not neutralize the quote. ldbc therefore switches to doubling the quote.
+
+The `sql_mode` is read when the connection is established and then updated from every OK/EOF packet received from the server. A `SET SESSION sql_mode = ...` issued after connecting is reflected in subsequent query construction.
+
+No configuration is required on your side.
+
+## Quoting Identifiers and Values (JDBC 4.3 compatible API)
+
+The quoting methods standardised in JDBC 4.3 are available on `Statement` and `PreparedStatement`. Use them when assembling SQL statements outside the `sql` interpolator, or when you need compatibility with the standard JDBC API.
+
+| Method | Purpose |
+|--------|---------|
+| `enquoteLiteral(value)` | Wrap a string in single quotes as a literal |
+| `enquoteIdentifier(identifier, alwaysQuote)` | Quote an identifier |
+| `enquoteNCharLiteral(value)` | Produce an `N`-prefixed national character literal |
+| `isSimpleIdentifier(identifier)` | Report whether an identifier can be used without quoting |
+
+```scala
+for
+  stmt <- conn.createStatement()
+  a    <- stmt.enquoteLiteral("G'Day")              // 'G''Day'
+  b    <- stmt.enquoteIdentifier("my table", false) // `my table`
+  c    <- stmt.enquoteIdentifier("user", true)      // `user`
+  d    <- stmt.enquoteNCharLiteral("Hello")         // N'Hello'
+  e    <- stmt.isSimpleIdentifier("user_name")      // true
+  f    <- stmt.isSimpleIdentifier("select")         // false (reserved word)
+yield ()
+```
+
+Following the MySQL rules, `isSimpleIdentifier` treats an identifier as simple when it consists only of `[0-9a-zA-Z$_]` or extended characters (`U+0080` and above), is not made up solely of digits, is at most 64 characters long, and is not a reserved word. When the `ANSI_QUOTES` sql_mode is enabled, the identifier quote character is `"` rather than a backtick.
+
+> **Note**: to embed an identifier inside the `sql` interpolator, keep using `ident`. These methods require a `Statement` instance, so they are mainly for assembling SQL statements as strings.
 
 ## Conditional SQL Fragments
 

@@ -9,7 +9,7 @@ ldbcを使い始めるための最初のステップへようこそ！このペ�
 
 ## 必要なもの
 
-- JDK 21以上
+- JDK 17以上（17、21、25 で動作確認しています）
 - Scala 3
 - Docker（データベース環境のため）
 - [Scala CLI](https://scala-cli.virtuslab.org/)（推奨）
