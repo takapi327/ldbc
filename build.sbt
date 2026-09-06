@@ -87,14 +87,11 @@ lazy val otel4s = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "otel4s-core-trace"                   % "1.1.0",
-      "org.typelevel" %%% "otel4s-core-metrics"                 % "1.1.0",
-      "org.typelevel" %%% "otel4s-semconv-experimental"         % "1.1.0",
-      "org.typelevel" %%% "otel4s-semconv-metrics"              % "1.1.0",
-      "org.typelevel" %%% "otel4s-semconv-metrics-experimental" % "1.1.0",
-      "org.typelevel" %%% "cats-effect"                         % "3.7.1"  % Test,
-      "org.typelevel" %%% "otel4s-sdk-testkit"                  % "0.19.1" % Test,
-      "org.typelevel" %%% "munit-cats-effect"                   % "2.2.0"  % Test
+      "org.typelevel" %%% "otel4s-core-trace"   % "1.1.0",
+      "org.typelevel" %%% "otel4s-core-metrics" % "1.1.0",
+      "org.typelevel" %%% "cats-effect"         % "3.7.1"  % Test,
+      "org.typelevel" %%% "otel4s-sdk-testkit"  % "0.19.1" % Test,
+      "org.typelevel" %%% "munit-cats-effect"   % "2.2.0"  % Test
     )
   )
   .jsSettings(
@@ -117,7 +114,7 @@ lazy val zioTelemetry = crossProject(JVMPlatform)
       "org.scalameta"   %% "munit"                     % "1.2.4"  % Test
     )
   )
-  .dependsOn(telemetry)
+  .dependsOn(telemetry, zio % Test)
 
 lazy val fx = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
