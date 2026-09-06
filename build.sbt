@@ -417,9 +417,9 @@ lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .defaultSettings
   .jvmSettings(
-    Test / fork                            := true,
+    Test / fork := true,
     libraryDependencies ++= Seq(
-      "com.mysql"      % "mysql-connector-j"  % "9.7.0"  % Test,
+      "com.mysql"       % "mysql-connector-j"  % "9.7.0"  % Test,
       "org.typelevel" %%% "otel4s-sdk-testkit" % "0.19.1" % Test
     )
   )
