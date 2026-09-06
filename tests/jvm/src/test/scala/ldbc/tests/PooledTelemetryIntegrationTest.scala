@@ -17,8 +17,8 @@ import ldbc.dsl.codec.*
 
 import ldbc.catseffect.{ concurrentIO, toIOResource, Connector }
 import ldbc.effect.Resource
-import ldbc.mysql.syntax.*
 import ldbc.mysql.{ MySQLConfig, MySQLDataSource }
+import ldbc.mysql.syntax.*
 import ldbc.net.SSL
 import ldbc.otel4s.Otel4sTelemetry
 import ldbc.pool.{ ConnectionPoolConfig, PooledDataSource }
@@ -141,7 +141,7 @@ class PooledTelemetryIntegrationTest extends CatsEffectSuite:
         datasource <- MySQLDataSource.withTraced[IO](
                         config,
                         tracerProvider = Otel4sTelemetry.tracerProvider(testkit.tracerProvider),
-                        meterProvider = Otel4sTelemetry.meterProvider(testkit.meterProvider)
+                        meterProvider  = Otel4sTelemetry.meterProvider(testkit.meterProvider)
                       )
         queried <- sql"SELECT 7".query[Int].to[Option].readOnly(Connector.fromDataSource(datasource))
         spans   <- testkit.finishedSpans

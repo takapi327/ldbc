@@ -218,8 +218,8 @@ class PoolTelemetryTest extends FxSuite:
           config(1, 3),
           mockCreate,
           before = _ => hookCalls.update(_ + 1),
-          after = (_, _) => hookCalls.update(_ + 1),
-          meter = Some(recordingMeter(metrics))
+          after  = (_, _) => hookCalls.update(_ + 1),
+          meter  = Some(recordingMeter(metrics))
         )
         .use(datasource => datasource.use(_ => Fx.unit))
         .flatMap(_ => hookCalls.get)
@@ -239,8 +239,8 @@ class PoolTelemetryTest extends FxSuite:
           config(1, 3),
           mockDataSource(),
           before = _ => hookCalls.update(_ + 1),
-          after = (_, _) => hookCalls.update(_ + 1),
-          meter = Some(recordingMeter(metrics))
+          after  = (_, _) => hookCalls.update(_ + 1),
+          meter  = Some(recordingMeter(metrics))
         )
         .use(datasource => datasource.use(_ => Fx.unit))
         .flatMap(_ => hookCalls.get)
