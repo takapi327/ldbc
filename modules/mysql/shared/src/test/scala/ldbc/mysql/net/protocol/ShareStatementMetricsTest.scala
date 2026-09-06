@@ -45,11 +45,11 @@ class ShareStatementMetricsTest extends FxSuite:
       Fx.delay { calls.add("operationDuration"); () } *>
         (if failRecording then Fx.raiseError(new RuntimeException("metrics backend is down")) else Fx.unit)
 
-    override def recordReturnedRows(rows:             Long, attributes:     Attribute[?]*): Fx[Unit] = Fx.unit
-    override def recordConnectionCreateTime(duration: FiniteDuration, poolName: String):    Fx[Unit] = Fx.unit
-    override def recordConnectionWaitTime(duration:   FiniteDuration, poolName: String):    Fx[Unit] = Fx.unit
-    override def recordConnectionUseTime(duration:    FiniteDuration, poolName: String):    Fx[Unit] = Fx.unit
-    override def recordConnectionTimeout(poolName:    String):                              Fx[Unit] = Fx.unit
+    override def recordReturnedRows(rows:             Long, attributes:         Attribute[?]*): Fx[Unit] = Fx.unit
+    override def recordConnectionCreateTime(duration: FiniteDuration, poolName: String):        Fx[Unit] = Fx.unit
+    override def recordConnectionWaitTime(duration:   FiniteDuration, poolName: String):        Fx[Unit] = Fx.unit
+    override def recordConnectionUseTime(duration:    FiniteDuration, poolName: String):        Fx[Unit] = Fx.unit
+    override def recordConnectionTimeout(poolName:    String):                                  Fx[Unit] = Fx.unit
     override def registerPoolStateCallback(
       poolName:       String,
       minConnections: Int,
@@ -82,15 +82,15 @@ class ShareStatementMetricsTest extends FxSuite:
 
     private def unsupported[A]: Fx[A] = Fx.raiseError(new UnsupportedOperationException("not needed for this test"))
 
-    override def close():            Fx[Unit]              = Fx.unit
-    override def clearBatch():       Fx[Unit]              = Fx.unit
-    override def getGeneratedKeys(): Fx[ResultSet[Fx]]     = unsupported
-    override def addBatch(sql:            String): Fx[Unit]              = unsupported
-    override def execute(sql:             String): Fx[Boolean]           = unsupported
-    override def executeQuery(sql:        String): Fx[ResultSet[Fx]]     = unsupported
-    override def executeUpdate(sql:       String): Fx[Int]               = unsupported
-    override def executeLargeUpdate(sql:  String): Fx[Long]              = unsupported
-    override def executeLargeBatch():              Fx[Array[Long]]       = unsupported
+    override def close():                         Fx[Unit]          = Fx.unit
+    override def clearBatch():                    Fx[Unit]          = Fx.unit
+    override def getGeneratedKeys():              Fx[ResultSet[Fx]] = unsupported
+    override def addBatch(sql:           String): Fx[Unit]          = unsupported
+    override def execute(sql:            String): Fx[Boolean]       = unsupported
+    override def executeQuery(sql:       String): Fx[ResultSet[Fx]] = unsupported
+    override def executeUpdate(sql:      String): Fx[Int]           = unsupported
+    override def executeLargeUpdate(sql: String): Fx[Long]          = unsupported
+    override def executeLargeBatch():             Fx[Array[Long]]   = unsupported
 
   test("a successful operation records its duration exactly once") {
     val metrics = new RecordingMetrics(failRecording = false)
