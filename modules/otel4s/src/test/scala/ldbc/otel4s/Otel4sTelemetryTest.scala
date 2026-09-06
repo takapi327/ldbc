@@ -20,7 +20,7 @@ import munit.CatsEffectSuite
 import ldbc.sql.Attribute
 
 import ldbc.catseffect.concurrentIO
-import ldbc.telemetry.{ PoolMetricsState, StatusCode, TracerProvider }
+import ldbc.telemetry.{ DbMetricSpecs, InstrumentKind, PoolMetricsState, StatusCode, TracerProvider }
 
 class Otel4sTelemetryTest extends CatsEffectSuite:
 
@@ -354,6 +354,33 @@ class Otel4sTelemetryTest extends CatsEffectSuite:
         !metrics.map(_.name).contains("db.client.connection.count"),
         s"the gauge is unregistered on release, but got ${ metrics.map(_.name) }"
       )
+    }
+  }
+
+  test("every instrument matches the shared DbMetricSpecs definition") {
+    OpenTelemetrySdkTestkit.inMemory[IO]().use { testkit =>
+      val meterProvider = Otel4sTelemetry.meterProvider(testkit.meterProvider)
+      val state         = PoolMetricsState(1L, 1L, 1L)
+      for
+        meter   <- meterProvider.meter("ldbc").get
+        metrics <- meter.databaseMetrics.use { databaseMetrics =>
+                     databaseMetrics.recordOperationDuration(1.second) *>
+                       databaseMetrics.recordReturnedRows(1L) *>
+                       databaseMetrics.recordConnectionCreateTime(1.second, "p") *>
+                       databaseMetrics.recordConnectionWaitTime(1.second, "p") *>
+                       databaseMetrics.recordConnectionUseTime(1.second, "p") *>
+                       databaseMetrics.recordConnectionTimeout("p") *>
+                       databaseMetrics
+                         .registerPoolStateCallback("p", 1, 2, IO.pure(state))
+                         .use(_ => testkit.collectMetrics)
+                   }
+      yield DbMetricSpecs.all.foreach { spec =>
+        val exported = metric(metrics, spec.name)
+        assertEquals(exported.unit, Some(spec.unit), s"unit of ${ spec.name }")
+        assertEquals(exported.description, Some(spec.description), s"description of ${ spec.name }")
+        if spec.kind == InstrumentKind.Histogram then
+          assertEquals(boundaries(metrics, spec.name), spec.boundaries, s"boundaries of ${ spec.name }")
+      }
     }
   }
 

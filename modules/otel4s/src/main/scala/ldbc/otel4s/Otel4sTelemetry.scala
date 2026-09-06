@@ -12,11 +12,8 @@ import cats.syntax.all.*
 
 import cats.effect.kernel.{ MonadCancelThrow, Resource as CatsResource }
 
-import org.typelevel.otel4s.metrics.{ BucketBoundaries, Counter, Histogram }
+import org.typelevel.otel4s.metrics.{ BucketBoundaries, Counter, Histogram, ObservableMeasurement }
 import org.typelevel.otel4s.metrics as otelmetrics
-import org.typelevel.otel4s.semconv.experimental.attributes.DbExperimentalAttributes
-import org.typelevel.otel4s.semconv.experimental.metrics.DbExperimentalMetrics
-import org.typelevel.otel4s.semconv.metrics.DbMetrics
 import org.typelevel.otel4s.trace as oteltrace
 import org.typelevel.otel4s.Attribute as OtelAttribute
 
@@ -35,24 +32,10 @@ import ldbc.telemetry.*
  *
  * The metrics side implements [[ldbc.telemetry.Meter]] on top of otel4s instruments, so the driver's
  * [[ldbc.telemetry.DatabaseMetrics]] calls become real OpenTelemetry measurements. Instrument names, units,
- * descriptions and attribute keys come from the otel4s `semconv` artifacts rather than being spelled out
- * here, so they stay in step with the OpenTelemetry database semantic conventions.
+ * descriptions and bucket boundaries are read from [[ldbc.telemetry.DbMetricSpecs]] rather than being
+ * spelled out here, so this backend and `ldbc-zio-telemetry` cannot drift apart.
  */
 object Otel4sTelemetry:
-
-  /**
-   * Bucket boundaries for the duration histograms, per the OpenTelemetry database metrics semantic
-   * conventions: `[0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5, 10]` seconds.
-   */
-  private val operationDurationBuckets: BucketBoundaries =
-    BucketBoundaries(0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0, 5.0, 10.0)
-
-  /**
-   * Bucket boundaries for the returned-rows histogram, per the OpenTelemetry database metrics semantic
-   * conventions: `[1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000]` rows.
-   */
-  private val returnedRowsBuckets: BucketBoundaries =
-    BucketBoundaries(1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000)
 
   private def toOtelAttribute(attribute: Attribute[?]): OtelAttribute[?] =
     (attribute.value: Any) match
@@ -128,7 +111,7 @@ object Otel4sTelemetry:
     private def toSeconds(duration: FiniteDuration): Double = duration.toNanos.toDouble / 1e9
 
     private def poolNameAttribute(poolName: String): OtelAttribute[String] =
-      DbExperimentalAttributes.DbClientConnectionPoolName(poolName)
+      toOtelAttribute(DbAttributes.DbClientConnectionPoolName(poolName)).asInstanceOf[OtelAttribute[String]]
 
     override def recordOperationDuration(duration: FiniteDuration, attributes: Attribute[?]*): F[Unit] =
       operationDuration.record(toSeconds(duration), attributes.map(toOtelAttribute)*)
@@ -155,22 +138,22 @@ object Otel4sTelemetry:
       stateProvider:  F[PoolMetricsState]
     ): Resource[F, Unit] =
       val poolNameAttr = poolNameAttribute(poolName)
-      val stateIdle    = DbExperimentalAttributes.DbClientConnectionState(
-        DbExperimentalAttributes.DbClientConnectionStateValue.Idle.value
+      val stateIdle    = OtelAttribute(
+        DbAttributes.DbClientConnectionState.name,
+        DbAttributes.DbClientConnectionStateValue.Idle
       )
-      val stateUsed = DbExperimentalAttributes.DbClientConnectionState(
-        DbExperimentalAttributes.DbClientConnectionStateValue.Used.value
+      val stateUsed = OtelAttribute(
+        DbAttributes.DbClientConnectionState.name,
+        DbAttributes.DbClientConnectionStateValue.Used
       )
-
-      given otelmetrics.Meter[F] = meter
 
       fromCatsResource(
         meter.batchCallback.of(
-          DbExperimentalMetrics.ClientConnectionCount.createObserver[F, Long],
-          DbExperimentalMetrics.ClientConnectionIdleMax.createObserver[F, Long],
-          DbExperimentalMetrics.ClientConnectionIdleMin.createObserver[F, Long],
-          DbExperimentalMetrics.ClientConnectionMax.createObserver[F, Long],
-          DbExperimentalMetrics.ClientConnectionPendingRequests.createObserver[F, Long]
+          observerOf(meter, DbMetricSpecs.clientConnectionCount),
+          observerOf(meter, DbMetricSpecs.clientConnectionIdleMax),
+          observerOf(meter, DbMetricSpecs.clientConnectionIdleMin),
+          observerOf(meter, DbMetricSpecs.clientConnectionMax),
+          observerOf(meter, DbMetricSpecs.clientConnectionPendingRequests)
         ) { (connCount, idleMax, idleMin, connMax, pendingReqs) =>
           stateProvider.flatMap { state =>
             connCount.record(state.idleCount, poolNameAttr, stateIdle) *>
@@ -183,31 +166,38 @@ object Otel4sTelemetry:
         }
       )
 
+  /** Builds the histogram described by `spec` on `meter`. */
+  private def histogramOf[F[_]](meter: otelmetrics.Meter[F], spec: MetricSpec): F[Histogram[F, Double]] =
+    meter
+      .histogram[Double](spec.name)
+      .withUnit(spec.unit)
+      .withDescription(spec.description)
+      .withExplicitBucketBoundaries(BucketBoundaries(spec.boundaries*))
+      .create
+
+  /** Builds the counter described by `spec` on `meter`. */
+  private def counterOf[F[_]](meter: otelmetrics.Meter[F], spec: MetricSpec): F[Counter[F, Long]] =
+    meter.counter[Long](spec.name).withUnit(spec.unit).withDescription(spec.description).create
+
+  /** Builds the observable up-down counter described by `spec` on `meter`. */
+  private def observerOf[F[_]](meter: otelmetrics.Meter[F], spec: MetricSpec): F[ObservableMeasurement[F, Long]] =
+    meter
+      .observableUpDownCounter[Long](spec.name)
+      .withUnit(spec.unit)
+      .withDescription(spec.description)
+      .createObserver
+
   private def wrapMeter[F[_]](
     meter: otelmetrics.Meter[F]
   )(using MonadCancelThrow[F], Concurrent[F]): Meter[F] = new Meter[F]:
     override def databaseMetrics: Resource[F, DatabaseMetrics[F]] =
-      given otelmetrics.Meter[F] = meter
       for
-        operationDuration <- Resource.eval(
-                               DbMetrics.ClientOperationDuration.create[F, Double](operationDurationBuckets)
-                             )
-        returnedRows <- Resource.eval(
-                          DbExperimentalMetrics.ClientResponseReturnedRows.create[F, Double](returnedRowsBuckets)
-                        )
-        connectionCreateTime <- Resource.eval(
-                                  DbExperimentalMetrics.ClientConnectionCreateTime
-                                    .create[F, Double](operationDurationBuckets)
-                                )
-        connectionWaitTime <- Resource.eval(
-                                DbExperimentalMetrics.ClientConnectionWaitTime
-                                  .create[F, Double](operationDurationBuckets)
-                              )
-        connectionUseTime <- Resource.eval(
-                               DbExperimentalMetrics.ClientConnectionUseTime
-                                 .create[F, Double](operationDurationBuckets)
-                             )
-        connectionTimeouts <- Resource.eval(DbExperimentalMetrics.ClientConnectionTimeouts.create[F, Long])
+        operationDuration    <- Resource.eval(histogramOf(meter, DbMetricSpecs.clientOperationDuration))
+        returnedRows         <- Resource.eval(histogramOf(meter, DbMetricSpecs.clientResponseReturnedRows))
+        connectionCreateTime <- Resource.eval(histogramOf(meter, DbMetricSpecs.clientConnectionCreateTime))
+        connectionWaitTime   <- Resource.eval(histogramOf(meter, DbMetricSpecs.clientConnectionWaitTime))
+        connectionUseTime    <- Resource.eval(histogramOf(meter, DbMetricSpecs.clientConnectionUseTime))
+        connectionTimeouts   <- Resource.eval(counterOf(meter, DbMetricSpecs.clientConnectionTimeouts))
       yield new Otel4sDatabaseMetrics[F](
         operationDuration,
         returnedRows,
