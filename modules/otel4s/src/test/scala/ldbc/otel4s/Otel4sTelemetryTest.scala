@@ -20,7 +20,7 @@ import munit.CatsEffectSuite
 import ldbc.sql.Attribute
 
 import ldbc.catseffect.concurrentIO
-import ldbc.telemetry.{ DbMetricSpecs, InstrumentKind, PoolMetricsState, StatusCode, TracerProvider }
+import ldbc.telemetry.{ DbMetric, InstrumentKind, PoolMetricsState, StatusCode, TracerProvider }
 
 class Otel4sTelemetryTest extends CatsEffectSuite:
 
@@ -353,7 +353,7 @@ class Otel4sTelemetryTest extends CatsEffectSuite:
     }
   }
 
-  test("every instrument matches the shared DbMetricSpecs definition") {
+  test("every instrument matches the shared DbMetric definition") {
     OpenTelemetrySdkTestkit.inMemory[IO]().use { testkit =>
       val meterProvider = Otel4sTelemetry.meterProvider(testkit.meterProvider)
       val state         = PoolMetricsState(1L, 1L, 1L)
@@ -370,7 +370,7 @@ class Otel4sTelemetryTest extends CatsEffectSuite:
                          .registerPoolStateCallback("p", 1, 2, IO.pure(state))
                          .use(_ => testkit.collectMetrics)
                    }
-      yield DbMetricSpecs.all.foreach { spec =>
+      yield DbMetric.values.foreach { spec =>
         val exported = metric(metrics, spec.name)
         assertEquals(exported.unit, Some(spec.unit), s"unit of ${ spec.name }")
         assertEquals(exported.description, Some(spec.description), s"description of ${ spec.name }")
@@ -380,7 +380,7 @@ class Otel4sTelemetryTest extends CatsEffectSuite:
     }
   }
 
-  test("registerPoolStateCallback registers exactly the gauges listed in DbMetricSpecs.poolStateGauges") {
+  test("registerPoolStateCallback registers exactly the gauges listed in DbMetric.poolStateGauges") {
     OpenTelemetrySdkTestkit.inMemory[IO]().use { testkit =>
       val meterProvider = Otel4sTelemetry.meterProvider(testkit.meterProvider)
       val state         = PoolMetricsState(1L, 1L, 1L)
@@ -391,7 +391,7 @@ class Otel4sTelemetryTest extends CatsEffectSuite:
                        .registerPoolStateCallback("p", 1, 2, IO.pure(state))
                        .use(_ => testkit.collectMetrics)
                    }
-      yield assertEquals(metrics.map(_.name).toSet, DbMetricSpecs.poolStateGauges.map(_.name).toSet)
+      yield assertEquals(metrics.map(_.name).toSet, DbMetric.poolStateGauges.map(_.name).toSet)
     }
   }
 

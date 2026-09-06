@@ -64,14 +64,11 @@ class PooledTelemetryIntegrationTest extends CatsEffectSuite:
                   }
       yield
         val names = result.map(_.name).toSet
-        // the driver's own instruments
         assert(names.contains("db.client.operation.duration"), names.toString)
         assert(names.contains("db.client.response.returned_rows"), names.toString)
-        // the pool's instruments — the half that was missing before the pool was wired to the SPI
         assert(names.contains("db.client.connection.create_time"), names.toString)
         assert(names.contains("db.client.connection.wait_time"), names.toString)
         assert(names.contains("db.client.connection.use_time"), names.toString)
-        // the observable gauges, reported while the pool resource is open
         assert(names.contains("db.client.connection.count"), names.toString)
         assert(names.contains("db.client.connection.max"), names.toString)
         assert(names.contains("db.client.connection.pending_requests"), names.toString)

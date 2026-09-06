@@ -11,7 +11,7 @@ import scala.jdk.CollectionConverters.*
 
 import ldbc.sql.Attribute
 
-import ldbc.telemetry.{ DbMetricSpecs, InstrumentKind, MeterProvider, PoolMetricsState }
+import ldbc.telemetry.{ DbMetric, InstrumentKind, MeterProvider, PoolMetricsState }
 import ldbc.zio.concurrentTask
 
 import io.opentelemetry.api.common.AttributeKey
@@ -26,7 +26,7 @@ import zio.telemetry.opentelemetry.OpenTelemetry
 
 /**
  * Verifies that the zio-telemetry backend produces the same instruments as `ldbc-otel4s` — both build
- * them from [[ldbc.telemetry.DbMetricSpecs]], so the two must agree on names, units and descriptions.
+ * them from [[ldbc.telemetry.DbMetric]], so the two must agree on names, units and descriptions.
  *
  * Metrics are collected through an [[io.opentelemetry.sdk.testing.exporter.InMemoryMetricReader]], which
  * also drives the observable callbacks, so the pool state gauges are exercised for real.
@@ -197,7 +197,7 @@ class ZioTelemetryMetricsTest extends munit.FunSuite:
     assertEquals(longPoint(metrics, "db.client.connection.pending_requests", pool), 1L)
   }
 
-  test("every instrument matches the shared DbMetricSpecs definition") {
+  test("every instrument matches the shared DbMetric definition") {
     val state        = PoolMetricsState(1L, 1L, 1L)
     val (metrics, _) = withMetrics { (provider, collect) =>
       for
@@ -213,7 +213,7 @@ class ZioTelemetryMetricsTest extends munit.FunSuite:
                    }
       yield metrics
     }
-    DbMetricSpecs.all.foreach { spec =>
+    DbMetric.values.foreach { spec =>
       val exported = find(metrics, spec.name)
       assertEquals(exported.getUnit, spec.unit, s"unit of ${ spec.name }")
       assertEquals(exported.getDescription, spec.description, s"description of ${ spec.name }")
@@ -222,7 +222,7 @@ class ZioTelemetryMetricsTest extends munit.FunSuite:
     }
   }
 
-  test("registerPoolStateCallback registers exactly the gauges listed in DbMetricSpecs.poolStateGauges") {
+  test("registerPoolStateCallback registers exactly the gauges listed in DbMetric.poolStateGauges") {
     val state        = PoolMetricsState(1L, 1L, 1L)
     val (metrics, _) = withMetrics { (provider, collect) =>
       for
@@ -232,7 +232,7 @@ class ZioTelemetryMetricsTest extends munit.FunSuite:
                    }
       yield metrics
     }
-    assertEquals(metrics.map(_.getName).toSet, DbMetricSpecs.poolStateGauges.map(_.name).toSet)
+    assertEquals(metrics.map(_.getName).toSet, DbMetric.poolStateGauges.map(_.name).toSet)
   }
 
   test("a failed gauge registration closes the scope instead of leaking the gauges already registered") {

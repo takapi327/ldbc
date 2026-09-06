@@ -32,7 +32,7 @@ import ldbc.telemetry.*
  *
  * The metrics side implements [[ldbc.telemetry.Meter]] on top of otel4s instruments, so the driver's
  * [[ldbc.telemetry.DatabaseMetrics]] calls become real OpenTelemetry measurements. Instrument names, units,
- * descriptions and bucket boundaries are read from [[ldbc.telemetry.DbMetricSpecs]] rather than being
+ * descriptions and bucket boundaries are read from [[ldbc.telemetry.DbMetric]] rather than being
  * spelled out here, so this backend and `ldbc-zio-telemetry` cannot drift apart.
  */
 object Otel4sTelemetry:
@@ -149,11 +149,11 @@ object Otel4sTelemetry:
 
       fromCatsResource(
         meter.batchCallback.of(
-          observerOf(meter, DbMetricSpecs.clientConnectionCount),
-          observerOf(meter, DbMetricSpecs.clientConnectionIdleMax),
-          observerOf(meter, DbMetricSpecs.clientConnectionIdleMin),
-          observerOf(meter, DbMetricSpecs.clientConnectionMax),
-          observerOf(meter, DbMetricSpecs.clientConnectionPendingRequests)
+          observerOf(meter, DbMetric.ClientConnectionCount),
+          observerOf(meter, DbMetric.ClientConnectionIdleMax),
+          observerOf(meter, DbMetric.ClientConnectionIdleMin),
+          observerOf(meter, DbMetric.ClientConnectionMax),
+          observerOf(meter, DbMetric.ClientConnectionPendingRequests)
         ) { (connCount, idleMax, idleMin, connMax, pendingReqs) =>
           stateProvider.flatMap { state =>
             connCount.record(state.idleCount, poolNameAttr, stateIdle) *>
@@ -167,7 +167,7 @@ object Otel4sTelemetry:
       )
 
   /** Builds the histogram described by `spec` on `meter`. */
-  private def histogramOf[F[_]](meter: otelmetrics.Meter[F], spec: MetricSpec): F[Histogram[F, Double]] =
+  private def histogramOf[F[_]](meter: otelmetrics.Meter[F], spec: DbMetric): F[Histogram[F, Double]] =
     meter
       .histogram[Double](spec.name)
       .withUnit(spec.unit)
@@ -176,11 +176,11 @@ object Otel4sTelemetry:
       .create
 
   /** Builds the counter described by `spec` on `meter`. */
-  private def counterOf[F[_]](meter: otelmetrics.Meter[F], spec: MetricSpec): F[Counter[F, Long]] =
+  private def counterOf[F[_]](meter: otelmetrics.Meter[F], spec: DbMetric): F[Counter[F, Long]] =
     meter.counter[Long](spec.name).withUnit(spec.unit).withDescription(spec.description).create
 
   /** Builds the observable up-down counter described by `spec` on `meter`. */
-  private def observerOf[F[_]](meter: otelmetrics.Meter[F], spec: MetricSpec): F[ObservableMeasurement[F, Long]] =
+  private def observerOf[F[_]](meter: otelmetrics.Meter[F], spec: DbMetric): F[ObservableMeasurement[F, Long]] =
     meter
       .observableUpDownCounter[Long](spec.name)
       .withUnit(spec.unit)
@@ -192,12 +192,12 @@ object Otel4sTelemetry:
   )(using MonadCancelThrow[F], Concurrent[F]): Meter[F] = new Meter[F]:
     override def databaseMetrics: Resource[F, DatabaseMetrics[F]] =
       for
-        operationDuration    <- Resource.eval(histogramOf(meter, DbMetricSpecs.clientOperationDuration))
-        returnedRows         <- Resource.eval(histogramOf(meter, DbMetricSpecs.clientResponseReturnedRows))
-        connectionCreateTime <- Resource.eval(histogramOf(meter, DbMetricSpecs.clientConnectionCreateTime))
-        connectionWaitTime   <- Resource.eval(histogramOf(meter, DbMetricSpecs.clientConnectionWaitTime))
-        connectionUseTime    <- Resource.eval(histogramOf(meter, DbMetricSpecs.clientConnectionUseTime))
-        connectionTimeouts   <- Resource.eval(counterOf(meter, DbMetricSpecs.clientConnectionTimeouts))
+        operationDuration    <- Resource.eval(histogramOf(meter, DbMetric.ClientOperationDuration))
+        returnedRows         <- Resource.eval(histogramOf(meter, DbMetric.ClientResponseReturnedRows))
+        connectionCreateTime <- Resource.eval(histogramOf(meter, DbMetric.ClientConnectionCreateTime))
+        connectionWaitTime   <- Resource.eval(histogramOf(meter, DbMetric.ClientConnectionWaitTime))
+        connectionUseTime    <- Resource.eval(histogramOf(meter, DbMetric.ClientConnectionUseTime))
+        connectionTimeouts   <- Resource.eval(counterOf(meter, DbMetric.ClientConnectionTimeouts))
       yield new Otel4sDatabaseMetrics[F](
         operationDuration,
         returnedRows,

@@ -34,7 +34,7 @@ import zio.telemetry.opentelemetry.tracing.Tracing
  * accepted but ignored. The same holds for [[zio.telemetry.opentelemetry.metrics.Meter]] and
  * [[ldbc.telemetry.MeterBuilder]].
  *
- * The metrics side builds its instruments from [[ldbc.telemetry.DbMetricSpecs]], the same definitions
+ * The metrics side builds its instruments from [[ldbc.telemetry.DbMetric]], the same definitions
  * `ldbc-otel4s` uses, so both backends export identical names, units, descriptions and bucket boundaries.
  * One behavioural difference remains: zio-telemetry has no batch-callback API, so the five pool state
  * gauges are registered as five independent observables. Each reads the pool state when it is exported,
@@ -163,21 +163,21 @@ object ZioTelemetry:
           Seq(DbAttributes.DbClientConnectionPoolName(poolName), DbAttributes.DbClientConnectionState(state))
         )
 
-      def gauge(spec: MetricSpec)(callback: ObservableMeasurement[Long] => Task[Unit]): ZIO[Scope, Throwable, Unit] =
+      def gauge(spec: DbMetric)(callback: ObservableMeasurement[Long] => Task[Unit]): ZIO[Scope, Throwable, Unit] =
         meter.observableUpDownCounter(spec.name, Some(spec.unit), Some(spec.description))(callback)
 
       val scoped: ZIO[Scope, Throwable, Unit] =
         for
-          _ <- gauge(DbMetricSpecs.clientConnectionCount) { observer =>
+          _ <- gauge(DbMetric.ClientConnectionCount) { observer =>
                  stateProvider.flatMap { state =>
                    observer.record(state.idleCount, stateAttrs(DbAttributes.DbClientConnectionStateValue.Idle)) *>
                      observer.record(state.usedCount, stateAttrs(DbAttributes.DbClientConnectionStateValue.Used))
                  }
                }
-          _ <- gauge(DbMetricSpecs.clientConnectionIdleMax)(_.record(maxConnections.toLong, poolAttrs))
-          _ <- gauge(DbMetricSpecs.clientConnectionIdleMin)(_.record(minConnections.toLong, poolAttrs))
-          _ <- gauge(DbMetricSpecs.clientConnectionMax)(_.record(maxConnections.toLong, poolAttrs))
-          _ <- gauge(DbMetricSpecs.clientConnectionPendingRequests) { observer =>
+          _ <- gauge(DbMetric.ClientConnectionIdleMax)(_.record(maxConnections.toLong, poolAttrs))
+          _ <- gauge(DbMetric.ClientConnectionIdleMin)(_.record(minConnections.toLong, poolAttrs))
+          _ <- gauge(DbMetric.ClientConnectionMax)(_.record(maxConnections.toLong, poolAttrs))
+          _ <- gauge(DbMetric.ClientConnectionPendingRequests) { observer =>
                  stateProvider.flatMap(state => observer.record(state.pendingRequestCount, poolAttrs))
                }
         yield ()
@@ -198,17 +198,17 @@ object ZioTelemetry:
 
   private def wrapMeter(zmeter: ZMeter)(using Concurrent[Task]): Meter[Task] = new Meter[Task]:
     override def databaseMetrics: Resource[Task, DatabaseMetrics[Task]] =
-      def histogram(spec: MetricSpec): Task[zio.telemetry.opentelemetry.metrics.Histogram[Double]] =
+      def histogram(spec: DbMetric): Task[zio.telemetry.opentelemetry.metrics.Histogram[Double]] =
         zmeter.histogram(spec.name, Some(spec.unit), Some(spec.description), Some(Chunk.fromIterable(spec.boundaries)))
-      def counter(spec: MetricSpec): Task[zio.telemetry.opentelemetry.metrics.Counter[Long]] =
+      def counter(spec: DbMetric): Task[zio.telemetry.opentelemetry.metrics.Counter[Long]] =
         zmeter.counter(spec.name, Some(spec.unit), Some(spec.description))
       for
-        operationDuration    <- Resource.eval(histogram(DbMetricSpecs.clientOperationDuration))
-        returnedRows         <- Resource.eval(histogram(DbMetricSpecs.clientResponseReturnedRows))
-        connectionCreateTime <- Resource.eval(histogram(DbMetricSpecs.clientConnectionCreateTime))
-        connectionWaitTime   <- Resource.eval(histogram(DbMetricSpecs.clientConnectionWaitTime))
-        connectionUseTime    <- Resource.eval(histogram(DbMetricSpecs.clientConnectionUseTime))
-        connectionTimeouts   <- Resource.eval(counter(DbMetricSpecs.clientConnectionTimeouts))
+        operationDuration    <- Resource.eval(histogram(DbMetric.ClientOperationDuration))
+        returnedRows         <- Resource.eval(histogram(DbMetric.ClientResponseReturnedRows))
+        connectionCreateTime <- Resource.eval(histogram(DbMetric.ClientConnectionCreateTime))
+        connectionWaitTime   <- Resource.eval(histogram(DbMetric.ClientConnectionWaitTime))
+        connectionUseTime    <- Resource.eval(histogram(DbMetric.ClientConnectionUseTime))
+        connectionTimeouts   <- Resource.eval(counter(DbMetric.ClientConnectionTimeouts))
       yield new ZioDatabaseMetrics(
         zmeter,
         operationDuration,
