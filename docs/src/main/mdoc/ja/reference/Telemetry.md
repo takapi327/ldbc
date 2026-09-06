@@ -29,7 +29,24 @@ libraryDependencies ++= Seq(
 )
 ```
 
-> ZIO（`Task`）で使う場合は、`ldbc-cats-effect`/`ldbc-otel4s`の代わりに`ldbc-zio`と`ldbc-zio-telemetry`（JVM のみ）を追加します。
+> ZIO（`Task`）で使う場合は、`ldbc-cats-effect`/`ldbc-otel4s`の代わりに`ldbc-zio`と`ldbc-zio-telemetry`（JVM のみ）を追加します。トレース・メトリクスとも同じ内容が収集されます。
+>
+> ZIO では`ZioTelemetry.meterProvider`に zio-telemetry の`Meter`を渡します。`ldbc.effect.Concurrent[Task]`が必要なので`import ldbc.zio.given`をあわせて書いてください。
+>
+> ```scala
+> import ldbc.zio.given
+> import ldbc.ziotelemetry.ZioTelemetry
+>
+> ZIO.serviceWithZIO[zio.telemetry.opentelemetry.metrics.Meter] { zmeter =>
+>   ZioTelemetry.meterProvider(zmeter).meter("ldbc").get.map { meter =>
+>     MySQLDataSource.build[Task](...).setMeter(meter)
+>   }
+> }
+> ```
+>
+> **otel4s との差**: zio-telemetry には batch callback API がないため、プール状態のゲージ 5 つは個別の observable として登録されます。各ゲージがエクスポート時にそれぞれプール状態を読むので、5 つの値が厳密に同一スナップショットにならないことがあります（otel4s は 1 回の読み取りを 5 値で共有します）。
+
+なお、instrument の名前・単位・説明・バケット境界は`ldbc-telemetry`の`DbMetricSpecs`に定義されており、`ldbc-otel4s`と`ldbc-zio-telemetry`の双方がこれを参照します。バックエンドを切り替えても同じメトリクスが同じ定義で出ます。
 
 ## セットアップ
 

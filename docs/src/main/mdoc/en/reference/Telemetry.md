@@ -29,7 +29,24 @@ libraryDependencies ++= Seq(
 )
 ```
 
-> When using ZIO (`Task`), add `ldbc-zio` and `ldbc-zio-telemetry` (JVM only) instead of `ldbc-cats-effect`/`ldbc-otel4s`.
+> When using ZIO (`Task`), add `ldbc-zio` and `ldbc-zio-telemetry` (JVM only) instead of `ldbc-cats-effect`/`ldbc-otel4s`. Both traces and metrics are collected the same way.
+>
+> On ZIO you pass a zio-telemetry `Meter` to `ZioTelemetry.meterProvider`. It needs an `ldbc.effect.Concurrent[Task]`, so add `import ldbc.zio.given` alongside it.
+>
+> ```scala
+> import ldbc.zio.given
+> import ldbc.ziotelemetry.ZioTelemetry
+>
+> ZIO.serviceWithZIO[zio.telemetry.opentelemetry.metrics.Meter] { zmeter =>
+>   ZioTelemetry.meterProvider(zmeter).meter("ldbc").get.map { meter =>
+>     MySQLDataSource.build[Task](...).setMeter(meter)
+>   }
+> }
+> ```
+>
+> **Difference from otel4s**: zio-telemetry has no batch-callback API, so the five pool state gauges are registered as five independent observables. Each reads the pool state when it is exported, so the five values may not come from exactly the same snapshot (otel4s shares one read across all five).
+
+Note that instrument names, units, descriptions and bucket boundaries live in `DbMetricSpecs` in `ldbc-telemetry`, and both `ldbc-otel4s` and `ldbc-zio-telemetry` read them. Switching backends yields the same metrics from the same definitions.
 
 ## Setup
 
