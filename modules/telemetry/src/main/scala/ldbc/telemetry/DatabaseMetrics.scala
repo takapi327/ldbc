@@ -15,8 +15,8 @@ import ldbc.effect.{ Concurrent, Resource }
 /**
  * The metrics SPI for database operations, following the OpenTelemetry database semantic conventions
  * (operation duration, returned rows, connection pool timings). This is the CE-free trait; the core
- * ships only the no-op implementation ([[DatabaseMetrics.noop]]). A real OpenTelemetry-backed
- * implementation is provided later by the observability bridge, not by the core.
+ * ships only the no-op implementation ([[DatabaseMetrics.noop]]) and obtains a real one from a
+ * [[Meter]], which a backend module (`ldbc-otel4s`, ...) supplies.
  *
  * @see [[https://opentelemetry.io/docs/specs/semconv/database/database-metrics/]]
  */
@@ -103,11 +103,11 @@ object DatabaseMetrics:
     ): Resource[F, Unit] = Resource.pure(())
 
   /**
-   * Builds a [[DatabaseMetrics[F]]] from a [[Meter]]. In the CE-free core this always yields the no-op
-   * implementation, regardless of the meter — real instrument wiring is the observability bridge's job.
+   * Builds a [[DatabaseMetrics]] from a [[Meter]]. The instruments themselves are created by the meter's
+   * backend (`ldbc-otel4s`, ...); [[Meter.noop]] yields [[noop]], so a driver configured without a meter
+   * records nothing.
    *
-   * @param meter the meter (ignored by the core)
-   * @return a resource containing the no-op metrics instance
+   * @param meter the meter to build the instruments from
+   * @return an effect producing the metrics instance
    */
-  def fromMeter[F[_]](@annotation.unused meter: Meter)(using F: Concurrent[F]): Resource[F, DatabaseMetrics[F]] =
-    Resource.pure(noop)
+  def fromMeter[F[_]](meter: Meter[F]): F[DatabaseMetrics[F]] = meter.databaseMetrics

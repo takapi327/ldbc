@@ -36,6 +36,20 @@ object DbAttributes:
   /** `db.operation.batch.size` — the number of queries in a batch (set only when >= 2). */
   val DbOperationBatchSize: AttributeKey[Long] = AttributeKey("db.operation.batch.size")
 
+  /** `db.client.connection.pool.name` — the name of the connection pool the metric belongs to. */
+  val DbClientConnectionPoolName: AttributeKey[String] = AttributeKey("db.client.connection.pool.name")
+
+  /** `db.client.connection.state` — whether a pooled connection is idle or in use. */
+  val DbClientConnectionState: AttributeKey[String] = AttributeKey("db.client.connection.state")
+
+  /** Well-known values for [[DbClientConnectionState]]. */
+  object DbClientConnectionStateValue:
+    /** The literal `"idle"`. */
+    val Idle: String = "idle"
+
+    /** The literal `"used"`. */
+    val Used: String = "used"
+
   /** Well-known values for [[DbSystemName]]. */
   object DbSystemNameValue:
     /** The MySQL system name value. */

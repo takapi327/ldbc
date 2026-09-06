@@ -97,7 +97,7 @@ lazy val otel4s = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .jsSettings(
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
   )
-  .dependsOn(telemetry)
+  .dependsOn(telemetry, catsEffect % Test)
 
 lazy val zioTelemetry = crossProject(JVMPlatform)
   .crossType(CrossType.Pure)
@@ -114,7 +114,7 @@ lazy val zioTelemetry = crossProject(JVMPlatform)
       "org.scalameta"   %% "munit"                     % "1.2.4"  % Test
     )
   )
-  .dependsOn(telemetry)
+  .dependsOn(telemetry, zio % Test)
 
 lazy val fx = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
@@ -302,7 +302,7 @@ lazy val mysql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
 lazy val pool = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
   .module("pool", "Effect-agnostic connection pool over the ldbc.effect type classes")
-  .dependsOn(sql, effect, fx % "test->compile;test->test")
+  .dependsOn(sql, effect, telemetry, fx % "test->compile;test->test")
 
 lazy val catsEffect = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
@@ -417,10 +417,14 @@ lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .defaultSettings
   .jvmSettings(
-    Test / fork                       := true,
-    libraryDependencies += "com.mysql" % "mysql-connector-j" % "9.7.0" % Test
+    Test / fork := true,
+    libraryDependencies ++= Seq(
+      "com.mysql"       % "mysql-connector-j"  % "9.7.0"  % Test,
+      "org.typelevel" %%% "otel4s-sdk-testkit" % "0.19.1" % Test
+    )
   )
   .jvmConfigure(_ dependsOn jdbcConnector.jvm)
+  .jvmConfigure(_ dependsOn otel4s.jvm % Test)
   .jsSettings(
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule)),
     scalacOptions ++= {

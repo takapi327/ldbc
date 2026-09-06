@@ -14,6 +14,7 @@ import ldbc.sql.{ Connection, DataSource, SQLException }
 
 import ldbc.effect.{ Concurrent, Fiber, Ref, Resource }
 import ldbc.effect.syntax.*
+import ldbc.telemetry.{ DatabaseMetrics, Meter, PoolMetricsState }
 
 /**
  * A connection pool exposed as a [[ldbc.sql.DataSource]], generic over the effect `F: Concurrent`.
@@ -55,6 +56,7 @@ object PooledDataSource:
     create:              Resource[F, Connection[F]],
     connectionTestQuery: Option[String],
     metricsTracker:      PoolMetricsTracker[F],
+    databaseMetrics:     DatabaseMetrics[F],
     poolState:           Ref[F, PoolState[F]],
     idGenerator:         F[String],
     connectionBag:       ConcurrentBag[F, PooledConnection[F]],
@@ -159,6 +161,7 @@ object PooledDataSource:
                       _       <- pooled.useCount.update(_ + 1)
                       endTime <- F.monotonic
                       _       <- metricsTracker.recordAcquisition(endTime - startTime)
+                      _       <- databaseMetrics.recordConnectionWaitTime(endTime - startTime, config.poolName)
                       _       <- config.leakDetectionThreshold.traverse_ { threshold =>
                              val leakTask = F.sleep(threshold).flatMap { _ =>
                                pooled.state.get.flatMap {
@@ -181,6 +184,7 @@ object PooledDataSource:
                     for
                       endTime <- F.monotonic
                       _       <- metricsTracker.recordAcquisition(endTime - startTime)
+                      _       <- databaseMetrics.recordConnectionWaitTime(endTime - startTime, config.poolName)
                     yield wrapConnection(pooled)
                   }
                 else
@@ -194,6 +198,7 @@ object PooledDataSource:
                         s"active: $activeCount, idle: $idleCount, " +
                         s"waiting: ${ currentState.waitQueue.size })"
                     metricsTracker.recordTimeout() *>
+                      databaseMetrics.recordConnectionTimeout(config.poolName) *>
                       poolLogger.error(errorMessage) *>
                       F.raiseError(new SQLException(errorMessage))
                   }
@@ -213,7 +218,10 @@ object PooledDataSource:
           connectionBag.values.map(connections => connections.find(p => p.connection == unwrapConnection(conn)))
 
       val recordUse: F[Unit] =
-        F.monotonic.flatMap(endTime => metricsTracker.recordUsage(endTime - startTime))
+        F.monotonic.flatMap { endTime =>
+          metricsTracker.recordUsage(endTime - startTime) *>
+            databaseMetrics.recordConnectionUseTime(endTime - startTime, config.poolName)
+        }
 
       pooledF.flatMap {
         case Some(pooled) =>
@@ -263,7 +271,10 @@ object PooledDataSource:
       initialUseCount: Long
     ): F[PooledConnection[F]] =
       val recordCreationMetric: F[Unit] =
-        F.monotonic.flatMap(endTime => metricsTracker.recordCreation(endTime - startTime))
+        F.monotonic.flatMap { endTime =>
+          metricsTracker.recordCreation(endTime - startTime) *>
+            databaseMetrics.recordConnectionCreateTime(endTime - startTime, config.poolName)
+        }
 
       val created = circuitBreaker.protect {
         for
@@ -316,9 +327,9 @@ object PooledDataSource:
         yield pooled
       }
 
-      created
-        .flatTap(_ => recordCreationMetric)
-        .handleErrorWith(error => recordCreationMetric >> F.raiseError(error))
+      created.attempt.flatMap { result =>
+        recordCreationMetric.flatMap(_ => result.fold(F.raiseError, F.pure))
+      }
 
     private def resetConnection(conn: Connection[F]): F[Unit] = for
       _ <- conn.rollback().attempt.void
@@ -414,10 +425,11 @@ object PooledDataSource:
     metricsTracker:      Option[PoolMetricsTracker[F]] = None,
     connectionTestQuery: Option[String] = None,
     poolLogger:          Option[PoolLogger[F]] = None,
-    idGenerator:         F[String] = null.asInstanceOf[F[String]]
+    idGenerator:         Option[F[String]] = None,
+    meter:               Option[Meter[F]] = None
   )(using F: Concurrent[F]): Resource[F, PooledDataSource[F]] =
-    val idGen = if idGenerator == null then randomConnectionId[F] else idGenerator
-    build(config, create, metricsTracker, connectionTestQuery, poolLogger, idGen, None)
+    val idGen = idGenerator.getOrElse(randomConnectionId[F])
+    build(config, create, metricsTracker, connectionTestQuery, poolLogger, idGen, None, meter)
 
   def fromConfigWithBeforeAfter[F[_], A](
     config:              ConnectionPoolConfig,
@@ -427,12 +439,13 @@ object PooledDataSource:
     metricsTracker:      Option[PoolMetricsTracker[F]] = None,
     connectionTestQuery: Option[String] = None,
     poolLogger:          Option[PoolLogger[F]] = None,
-    idGenerator:         F[String] = null.asInstanceOf[F[String]]
+    idGenerator:         Option[F[String]] = None,
+    meter:               Option[Meter[F]] = None
   )(using F: Concurrent[F]): Resource[F, PooledDataSource[F]] =
-    val idGen = if idGenerator == null then randomConnectionId[F] else idGenerator
+    val idGen = idGenerator.getOrElse(randomConnectionId[F])
     val hook: Connection[F] => Resource[F, Unit] =
       conn => Resource.make(before(conn))(a => after(a, conn)).map(_ => ())
-    build(config, create, metricsTracker, connectionTestQuery, poolLogger, idGen, Some(hook))
+    build(config, create, metricsTracker, connectionTestQuery, poolLogger, idGen, Some(hook), meter)
 
   def fromDataSource[F[_]](
     config:              ConnectionPoolConfig,
@@ -440,10 +453,18 @@ object PooledDataSource:
     metricsTracker:      Option[PoolMetricsTracker[F]] = None,
     connectionTestQuery: Option[String] = None,
     poolLogger:          Option[PoolLogger[F]] = None,
-    idGenerator:         F[String] = null.asInstanceOf[F[String]]
+    idGenerator:         Option[F[String]] = None,
+    meter:               Option[Meter[F]] = None
   )(using F: Concurrent[F]): Resource[F, PooledDataSource[F]] =
-    val idGen = if idGenerator == null then randomConnectionId[F] else idGenerator
-    fromConfig(config, connectionResource(dataSource), metricsTracker, connectionTestQuery, poolLogger, idGen)
+    fromConfig(
+      config,
+      connectionResource(dataSource),
+      metricsTracker,
+      connectionTestQuery,
+      poolLogger,
+      idGenerator,
+      meter
+    )
 
   def fromDataSourceWithBeforeAfter[F[_], A](
     config:              ConnectionPoolConfig,
@@ -453,9 +474,9 @@ object PooledDataSource:
     metricsTracker:      Option[PoolMetricsTracker[F]] = None,
     connectionTestQuery: Option[String] = None,
     poolLogger:          Option[PoolLogger[F]] = None,
-    idGenerator:         F[String] = null.asInstanceOf[F[String]]
+    idGenerator:         Option[F[String]] = None,
+    meter:               Option[Meter[F]] = None
   )(using F: Concurrent[F]): Resource[F, PooledDataSource[F]] =
-    val idGen = if idGenerator == null then randomConnectionId[F] else idGenerator
     fromConfigWithBeforeAfter(
       config,
       connectionResource(dataSource),
@@ -464,7 +485,8 @@ object PooledDataSource:
       metricsTracker,
       connectionTestQuery,
       poolLogger,
-      idGen
+      idGenerator,
+      meter
     )
 
   /** Adapts an allocated-form [[ldbc.sql.DataSource]] into the [[ldbc.effect.Resource]] the pool consumes. */
@@ -478,13 +500,14 @@ object PooledDataSource:
     connectionTestQuery: Option[String],
     poolLogger:          Option[PoolLogger[F]],
     idGenerator:         F[String],
-    hooks:               Option[Connection[F] => Resource[F, Unit]]
+    hooks:               Option[Connection[F] => Resource[F, Unit]],
+    meter:               Option[Meter[F]]
   )(using F: Concurrent[F]): Resource[F, PooledDataSource[F]] =
     Resource.eval(PoolConfigValidator.validate[F](config)).flatMap { _ =>
       val tracker = metricsTracker.getOrElse(PoolMetricsTracker.noop[F])
       val logger  = poolLogger.getOrElse(PoolLogger.console[F](config.debug))
 
-      val createPool: F[PooledDataSource[F]] = for
+      def createPool(dbMetrics: DatabaseMetrics[F]): F[PooledDataSource[F]] = for
         poolState      <- Ref.of[F, PoolState[F]](PoolState.empty[F])
         connectionBag  <- ConcurrentBag[F, PooledConnection[F]]()
         circuitBreaker <- CircuitBreaker[F](CircuitBreaker.Config(maxFailures = 5, resetTimeout = 30.seconds))
@@ -493,6 +516,7 @@ object PooledDataSource:
         create              = create,
         connectionTestQuery = connectionTestQuery,
         metricsTracker      = tracker,
+        databaseMetrics     = dbMetrics,
         poolState           = poolState,
         idGenerator         = idGenerator,
         connectionBag       = connectionBag,
@@ -521,9 +545,24 @@ object PooledDataSource:
         ).flatten
         backgroundResources.foldLeft(Resource.pure[F, Unit](()))((acc, res) => acc.flatMap(_ => res))
 
+      /**
+       * Registers the observable pool gauges (`db.client.connection.count` and friends) for the lifetime of
+       * the pool. The callback reads the live pool state on every export, so the gauges report absolute
+       * values rather than deltas; releasing the resource unregisters them.
+       */
+      def registerObservableMetrics(pool: PooledDataSource[F], dbMetrics: DatabaseMetrics[F]): Resource[F, Unit] =
+        dbMetrics.registerPoolStateCallback(
+          config.poolName,
+          config.minConnections,
+          config.maxConnections,
+          pool.status.map(status => PoolMetricsState(status.idle.toLong, status.active.toLong, status.waiting.toLong))
+        )
+
       for
-        pool <- Resource.eval(createPool)
-        _    <- createMinimumConnections(pool)
-        _    <- createBackgroundResources(pool)
+        dbMetrics <- Resource.eval(DatabaseMetrics.fromMeter[F](meter.getOrElse(Meter.noop[F])))
+        pool      <- Resource.eval(createPool(dbMetrics))
+        _         <- registerObservableMetrics(pool, dbMetrics)
+        _         <- createMinimumConnections(pool)
+        _         <- createBackgroundResources(pool)
       yield pool
     }

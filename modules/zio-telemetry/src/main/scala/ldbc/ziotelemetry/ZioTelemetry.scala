@@ -6,13 +6,17 @@
 
 package ldbc.ziotelemetry
 
+import scala.concurrent.duration.FiniteDuration
+
 import ldbc.sql.Attribute
 
+import ldbc.effect.{ Concurrent, Resource }
 import ldbc.telemetry.*
 
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.StatusCode as JStatusCode
-import zio.{ Task, ZIO }
+import zio.{ Chunk, Exit, Scope, Task, ZIO }
+import zio.telemetry.opentelemetry.metrics.{ Meter as ZMeter, ObservableMeasurement }
 import zio.telemetry.opentelemetry.tracing.Tracing
 
 /**
@@ -27,7 +31,15 @@ import zio.telemetry.opentelemetry.tracing.Tracing
  *
  * The provided [[zio.telemetry.opentelemetry.tracing.Tracing]] already fixes the instrumentation name and
  * version, so [[ldbc.telemetry.TracerBuilder]]'s `withVersion` / `withSchemaUrl` and `tracer`'s name are
- * accepted but ignored.
+ * accepted but ignored. The same holds for [[zio.telemetry.opentelemetry.metrics.Meter]] and
+ * [[ldbc.telemetry.MeterBuilder]].
+ *
+ * The metrics side builds its instruments from [[ldbc.telemetry.DbMetric]], the same definitions
+ * `ldbc-otel4s` uses, so both backends export identical names, units, descriptions and bucket boundaries.
+ * One behavioural difference remains: zio-telemetry has no batch-callback API, so the five pool state
+ * gauges are registered as five independent observables. Each reads the pool state when it is exported,
+ * whereas the otel4s backend reads it once per batch — so the five values may come from marginally
+ * different snapshots.
  */
 object ZioTelemetry:
 
@@ -79,3 +91,130 @@ object ZioTelemetry:
       override def withVersion(version:     String): TracerBuilder[Task] = this
       override def withSchemaUrl(schemaUrl: String): TracerBuilder[Task] = this
       override def get:                              Task[Tracer[Task]]  = ZIO.succeed(wrapTracer(tracing))
+
+  /** Attaches the pool name every connection metric carries. */
+  private def poolAttributes(poolName: String): Attributes =
+    toJavaAttributes(Seq(DbAttributes.DbClientConnectionPoolName(poolName)))
+
+  /**
+   * Runs a scoped ZIO for the lifetime of an [[ldbc.effect.Resource]].
+   *
+   * The scope is acquired as its own resource *before* `scoped` runs, so that a failure partway through
+   * `scoped` still closes it. Registering the pool gauges is a sequence of scoped registrations; folding
+   * both steps into one `acquire` would mean a failure on the third registration left the first two
+   * attached to a scope nobody could close, leaking their callbacks (and the pool they capture).
+   */
+  private def scopedToResource(scoped: ZIO[Scope, Throwable, Unit])(using Concurrent[Task]): Resource[Task, Unit] =
+    Resource
+      .make(Scope.make: Task[Scope.Closeable])(scope => scope.close(Exit.unit).unit)
+      .flatMap(scope => Resource.eval(scope.extend[Any](scoped)))
+
+  /**
+   * [[ldbc.telemetry.DatabaseMetrics]] backed by zio-telemetry instruments.
+   *
+   * @param meter                the meter the observable pool gauges are registered on
+   * @param operationDuration    `db.client.operation.duration`
+   * @param returnedRows         `db.client.response.returned_rows`
+   * @param connectionCreateTime `db.client.connection.create_time`
+   * @param connectionWaitTime   `db.client.connection.wait_time`
+   * @param connectionUseTime    `db.client.connection.use_time`
+   * @param connectionTimeouts   `db.client.connection.timeouts`
+   */
+  private class ZioDatabaseMetrics(
+    meter:                ZMeter,
+    operationDuration:    zio.telemetry.opentelemetry.metrics.Histogram[Double],
+    returnedRows:         zio.telemetry.opentelemetry.metrics.Histogram[Double],
+    connectionCreateTime: zio.telemetry.opentelemetry.metrics.Histogram[Double],
+    connectionWaitTime:   zio.telemetry.opentelemetry.metrics.Histogram[Double],
+    connectionUseTime:    zio.telemetry.opentelemetry.metrics.Histogram[Double],
+    connectionTimeouts:   zio.telemetry.opentelemetry.metrics.Counter[Long]
+  )(using Concurrent[Task])
+    extends DatabaseMetrics[Task]:
+
+    private def toSeconds(duration: FiniteDuration): Double = duration.toNanos.toDouble / 1e9
+
+    override def recordOperationDuration(duration: FiniteDuration, attributes: Attribute[?]*): Task[Unit] =
+      operationDuration.record(toSeconds(duration), toJavaAttributes(attributes))
+
+    override def recordReturnedRows(rows: Long, attributes: Attribute[?]*): Task[Unit] =
+      returnedRows.record(rows.toDouble, toJavaAttributes(attributes))
+
+    override def recordConnectionCreateTime(duration: FiniteDuration, poolName: String): Task[Unit] =
+      connectionCreateTime.record(toSeconds(duration), poolAttributes(poolName))
+
+    override def recordConnectionWaitTime(duration: FiniteDuration, poolName: String): Task[Unit] =
+      connectionWaitTime.record(toSeconds(duration), poolAttributes(poolName))
+
+    override def recordConnectionUseTime(duration: FiniteDuration, poolName: String): Task[Unit] =
+      connectionUseTime.record(toSeconds(duration), poolAttributes(poolName))
+
+    override def recordConnectionTimeout(poolName: String): Task[Unit] =
+      connectionTimeouts.inc(poolAttributes(poolName))
+
+    override def registerPoolStateCallback(
+      poolName:       String,
+      minConnections: Int,
+      maxConnections: Int,
+      stateProvider:  Task[PoolMetricsState]
+    ): Resource[Task, Unit] =
+      val poolAttrs = poolAttributes(poolName)
+      def stateAttrs(state: String): Attributes =
+        toJavaAttributes(
+          Seq(DbAttributes.DbClientConnectionPoolName(poolName), DbAttributes.DbClientConnectionState(state))
+        )
+
+      def gauge(spec: DbMetric)(callback: ObservableMeasurement[Long] => Task[Unit]): ZIO[Scope, Throwable, Unit] =
+        meter.observableUpDownCounter(spec.name, Some(spec.unit), Some(spec.description))(callback)
+
+      val scoped: ZIO[Scope, Throwable, Unit] =
+        for
+          _ <- gauge(DbMetric.ClientConnectionCount) { observer =>
+                 stateProvider.flatMap { state =>
+                   observer.record(state.idleCount, stateAttrs(DbAttributes.DbClientConnectionStateValue.Idle)) *>
+                     observer.record(state.usedCount, stateAttrs(DbAttributes.DbClientConnectionStateValue.Used))
+                 }
+               }
+          _ <- gauge(DbMetric.ClientConnectionIdleMax)(_.record(maxConnections.toLong, poolAttrs))
+          _ <- gauge(DbMetric.ClientConnectionIdleMin)(_.record(minConnections.toLong, poolAttrs))
+          _ <- gauge(DbMetric.ClientConnectionMax)(_.record(maxConnections.toLong, poolAttrs))
+          _ <- gauge(DbMetric.ClientConnectionPendingRequests) { observer =>
+                 stateProvider.flatMap(state => observer.record(state.pendingRequestCount, poolAttrs))
+               }
+        yield ()
+
+      scopedToResource(scoped)
+
+  /**
+   * Wraps a zio-telemetry `Meter` as the `ldbc.telemetry.MeterProvider` the driver consumes.
+   *
+   * The `ldbc.effect.Concurrent[Task]` instance is taken implicitly rather than depended on directly, so
+   * this module stays independent of `ldbc-zio`; import `ldbc.zio.given` at the call site.
+   */
+  def meterProvider(zmeter: ZMeter)(using Concurrent[Task]): MeterProvider[Task] = new MeterProvider[Task]:
+    override def meter(name: String): MeterBuilder[Task] = new MeterBuilder[Task]:
+      override def withVersion(version:     String): MeterBuilder[Task] = this
+      override def withSchemaUrl(schemaUrl: String): MeterBuilder[Task] = this
+      override def get:                              Task[Meter[Task]]  = ZIO.succeed(wrapMeter(zmeter))
+
+  private def wrapMeter(zmeter: ZMeter)(using Concurrent[Task]): Meter[Task] = new Meter[Task]:
+    override def databaseMetrics: Task[DatabaseMetrics[Task]] =
+      def histogram(spec: DbMetric): Task[zio.telemetry.opentelemetry.metrics.Histogram[Double]] =
+        zmeter.histogram(spec.name, Some(spec.unit), Some(spec.description), Some(Chunk.fromIterable(spec.boundaries)))
+      def counter(spec: DbMetric): Task[zio.telemetry.opentelemetry.metrics.Counter[Long]] =
+        zmeter.counter(spec.name, Some(spec.unit), Some(spec.description))
+      for
+        operationDuration    <- histogram(DbMetric.ClientOperationDuration)
+        returnedRows         <- histogram(DbMetric.ClientResponseReturnedRows)
+        connectionCreateTime <- histogram(DbMetric.ClientConnectionCreateTime)
+        connectionWaitTime   <- histogram(DbMetric.ClientConnectionWaitTime)
+        connectionUseTime    <- histogram(DbMetric.ClientConnectionUseTime)
+        connectionTimeouts   <- counter(DbMetric.ClientConnectionTimeouts)
+      yield new ZioDatabaseMetrics(
+        zmeter,
+        operationDuration,
+        returnedRows,
+        connectionCreateTime,
+        connectionWaitTime,
+        connectionUseTime,
+        connectionTimeouts
+      )

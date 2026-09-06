@@ -503,5 +503,5 @@ object StatementImpl:
           F.monotonic.flatMap(endTime =>
             databaseMetrics.recordOperationDuration(endTime - startTime, metricsAttributes*)
           )
-        operation.flatTap(_ => record).handleErrorWith(error => record >> F.raiseError(error))
+        operation.attempt.flatMap(result => record.flatMap(_ => result.fold(F.raiseError, F.pure)))
       }

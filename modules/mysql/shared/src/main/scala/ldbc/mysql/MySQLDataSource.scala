@@ -12,7 +12,7 @@ import ldbc.sql.{ Connection as SqlConnection, DataSource, DatabaseMetaData }
 
 import ldbc.authentication.plugin.AuthenticationPlugin
 import ldbc.build.Version
-import ldbc.effect.{ Concurrent, Resource }
+import ldbc.effect.{ Concurrent, Ref, Resource }
 import ldbc.effect.syntax.*
 import ldbc.net.{ IoEngine, TlsUpgrade }
 import ldbc.net.{ SSL, SocketOptions }
@@ -80,7 +80,7 @@ final case class MySQLDataSource[F[_], A](
   maxAllowedPacket:            Int                                   = MySQLConfig.DEFAULT_PACKET_SIZE,
   defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]]       = None,
   plugins:                     List[AuthenticationPlugin[F]]         = List.empty[AuthenticationPlugin[F]],
-  meter:                       Option[Meter]                         = None,
+  meter:                       Option[Meter[F]]                      = None,
   before:                      Option[Connection[F] => F[A]]         = None,
   after:                       Option[(A, Connection[F]) => F[Unit]] = None
 )(using F: Concurrent[F], engine: IoEngine[F], tls: TlsUpgrade[F])
@@ -104,6 +104,33 @@ final case class MySQLDataSource[F[_], A](
   private given Tracer[F] = tracer.getOrElse(Tracer.noop[F])
 
   /**
+   * Caches the [[ldbc.telemetry.DatabaseMetrics]] built from [[meter]]. A backend meter creates real
+   * instruments when the metrics are built, so building them per [[getConnection]] would re-create the
+   * whole instrument set on every connection; they are created once per data source and shared instead.
+   */
+  private val databaseMetricsRef: Ref[F, Option[DatabaseMetrics[F]]] =
+    Ref.unsafe[F, Option[DatabaseMetrics[F]]](None)
+
+  /**
+   * Returns the cached [[ldbc.telemetry.DatabaseMetrics]], building it from [[meter]] on first use.
+   *
+   * Concurrent first calls may each build a set, but the atomic `modify` publishes only one of them and
+   * every caller receives that same instance, so two connections can never record through different
+   * instrument sets. The sets that lose the race are discarded without ever being used.
+   */
+  private def getOrCreateDatabaseMetrics: F[DatabaseMetrics[F]] =
+    databaseMetricsRef.get.flatMap {
+      case Some(cached) => F.pure(cached)
+      case None         =>
+        DatabaseMetrics.fromMeter[F](meter.getOrElse(Meter.noop[F])).flatMap { built =>
+          databaseMetricsRef.modify {
+            case Some(winner) => (Some(winner), winner)
+            case None         => (Some(built), built)
+          }
+        }
+    }
+
+  /**
    * Creates a new connection resource from this DataSource.
    *
    * The connection is managed as a resource, ensuring proper cleanup when the resource
@@ -115,7 +142,7 @@ final case class MySQLDataSource[F[_], A](
   override def getConnection: F[(SqlConnection[F], F[Unit])] = connectionResource.allocatedCase
 
   private def connectionResource: Resource[F, SqlConnection[F]] =
-    DatabaseMetrics.fromMeter[F](meter.getOrElse(Meter.noop)).flatMap { databaseMetrics =>
+    Resource.eval(getOrCreateDatabaseMetrics).flatMap { databaseMetrics =>
       val resource = (before, after) match
         case (Some(b), Some(a)) =>
           Connection.withBeforeAfter[F, A](
@@ -270,7 +297,7 @@ final case class MySQLDataSource[F[_], A](
     * @param newMeter the meter instance
     * @return a new MySQLDataSource with the updated meter
     */
-  def setMeter(newMeter: Meter): MySQLDataSource[F, A] =
+  def setMeter(newMeter: Meter[F]): MySQLDataSource[F, A] =
     copy(meter = Some(newMeter))
 
   /** Sets the telemetry configuration for telemetry behavior.
