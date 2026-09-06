@@ -96,11 +96,18 @@ object ZioTelemetry:
   private def poolAttributes(poolName: String): Attributes =
     toJavaAttributes(Seq(DbAttributes.DbClientConnectionPoolName(poolName)))
 
-  /** Runs a scoped ZIO for the lifetime of an [[ldbc.effect.Resource]]. */
+  /**
+   * Runs a scoped ZIO for the lifetime of an [[ldbc.effect.Resource]].
+   *
+   * The scope is acquired as its own resource *before* `scoped` runs, so that a failure partway through
+   * `scoped` still closes it. Registering the pool gauges is a sequence of scoped registrations; folding
+   * both steps into one `acquire` would mean a failure on the third registration left the first two
+   * attached to a scope nobody could close, leaking their callbacks (and the pool they capture).
+   */
   private def scopedToResource(scoped: ZIO[Scope, Throwable, Unit])(using Concurrent[Task]): Resource[Task, Unit] =
     Resource
-      .make(Scope.make.flatMap(scope => scope.extend[Any](scoped).as(scope)))(scope => scope.close(Exit.unit).unit)
-      .map(_ => ())
+      .make(Scope.make: Task[Scope.Closeable])(scope => scope.close(Exit.unit).unit)
+      .flatMap(scope => Resource.eval(scope.extend[Any](scoped)))
 
   /**
    * [[ldbc.telemetry.DatabaseMetrics]] backed by zio-telemetry instruments.

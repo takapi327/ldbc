@@ -384,6 +384,21 @@ class Otel4sTelemetryTest extends CatsEffectSuite:
     }
   }
 
+  test("registerPoolStateCallback registers exactly the gauges listed in DbMetricSpecs.poolStateGauges") {
+    OpenTelemetrySdkTestkit.inMemory[IO]().use { testkit =>
+      val meterProvider = Otel4sTelemetry.meterProvider(testkit.meterProvider)
+      val state         = PoolMetricsState(1L, 1L, 1L)
+      for
+        meter   <- meterProvider.meter("ldbc").get
+        metrics <- meter.databaseMetrics.use { databaseMetrics =>
+                     databaseMetrics
+                       .registerPoolStateCallback("p", 1, 2, IO.pure(state))
+                       .use(_ => testkit.collectMetrics)
+                   }
+      yield assertEquals(metrics.map(_.name).toSet, DbMetricSpecs.poolStateGauges.map(_.name).toSet)
+    }
+  }
+
   test("a Meter.noop-backed DatabaseMetrics accepts every call and exports nothing") {
     OpenTelemetrySdkTestkit.inMemory[IO]().use { testkit =>
       ldbc.telemetry.Meter
