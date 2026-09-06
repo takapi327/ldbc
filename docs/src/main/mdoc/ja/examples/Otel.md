@@ -84,12 +84,14 @@ val metricsOnly = MySQLDataSource.build[IO]("localhost", 3306, "user")
 
 ## コネクションプールとメトリクス
 
-コネクションプーリング使用時は、トレーサー・メーターを設定した`MySQLDataSource`を`PooledDataSource`に渡すことで、プールのメトリクス（接続待機時間・使用時間・タイムアウト件数など）が自動収集されます。
+トレーサー・メーターを設定した`MySQLDataSource`を`PooledDataSource`に渡し、プール側にも同じ`Meter`を渡すと、クエリのオペレーションメトリクスとプールのメトリクス（接続待機時間・使用時間・タイムアウト件数・プール状態ゲージ）の両方が収集されます。
+
+`Meter`を 2 か所に渡すのは、`ldbc-pool`が特定のドライバに依存しない独立モジュールであり、`MySQLDataSource`の設定を覗けないためです。
 
 ```scala
+import ldbc.catseffect.*
 import ldbc.mysql.MySQLDataSource
 import ldbc.net.SSL
-import ldbc.catseffect.*
 import ldbc.pool.{ ConnectionPoolConfig, PooledDataSource }
 
 val datasource = MySQLDataSource
@@ -102,11 +104,15 @@ val datasource = MySQLDataSource
 
 val poolConfig = ConnectionPoolConfig(minConnections = 2, maxConnections = 10)
 
-val pool: Resource[IO, PooledDataSource[IO]] =
-  PooledDataSource.fromDataSource[IO](poolConfig, datasource)
+// PooledDataSource.fromDataSource は ldbc.effect.Resource を返します。
+// Cats Effect の Resource として扱う場合は toIOResource で変換します。
+val pool: cats.effect.Resource[IO, PooledDataSource[IO]] =
+  toIOResource(
+    PooledDataSource.fromDataSource[IO](poolConfig, datasource, meter = Some(meter))
+  )
 ```
 
-収集されるプールメトリクスの一覧については [テレメトリリファレンス - コネクションプールメトリクス](../reference/Telemetry.md) を参照してください。
+収集されるメトリクスの一覧については [テレメトリリファレンス - メトリクス](../reference/Telemetry.md) を参照してください。
 
 ## TelemetryConfig によるカスタマイズ
 

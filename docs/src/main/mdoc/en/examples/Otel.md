@@ -84,12 +84,14 @@ val metricsOnly = MySQLDataSource.build[IO]("localhost", 3306, "user")
 
 ## Connection Pool with Metrics
 
-When using connection pooling, pass a `MySQLDataSource` configured with a tracer and meter to `PooledDataSource`, and pool metrics (connection wait time, use time, timeout count, etc.) are collected automatically.
+Pass a `MySQLDataSource` configured with a tracer and meter to `PooledDataSource`, and give the pool the same `Meter`, to collect both the query operation metrics and the pool metrics (connection wait time, use time, timeout count, and the pool state gauges).
+
+The `Meter` goes in two places because `ldbc-pool` is a standalone module that does not depend on any particular driver, so it cannot read the `MySQLDataSource` configuration.
 
 ```scala
+import ldbc.catseffect.*
 import ldbc.mysql.MySQLDataSource
 import ldbc.net.SSL
-import ldbc.catseffect.*
 import ldbc.pool.{ ConnectionPoolConfig, PooledDataSource }
 
 val datasource = MySQLDataSource
@@ -102,11 +104,15 @@ val datasource = MySQLDataSource
 
 val poolConfig = ConnectionPoolConfig(minConnections = 2, maxConnections = 10)
 
-val pool: Resource[IO, PooledDataSource[IO]] =
-  PooledDataSource.fromDataSource[IO](poolConfig, datasource)
+// PooledDataSource.fromDataSource returns an ldbc.effect.Resource.
+// Convert it with toIOResource to get a Cats Effect Resource.
+val pool: cats.effect.Resource[IO, PooledDataSource[IO]] =
+  toIOResource(
+    PooledDataSource.fromDataSource[IO](poolConfig, datasource, meter = Some(meter))
+  )
 ```
 
-For the full list of pool metrics, see [Telemetry Reference - Connection Pool Metrics](../reference/Telemetry.md).
+For the full list of collected metrics, see [Telemetry Reference - Metrics](../reference/Telemetry.md).
 
 ## Customization with TelemetryConfig
 

@@ -40,6 +40,7 @@ import cats.effect.*
 import io.opentelemetry.api.GlobalOpenTelemetry
 import org.typelevel.otel4s.oteljava.OtelJava
 import ldbc.mysql.{ MySQLConfig, MySQLDataSource }
+import ldbc.mysql.syntax.*
 import ldbc.catseffect.*
 import ldbc.otel4s.Otel4sTelemetry
 
@@ -62,11 +63,12 @@ object Main extends IOApp.Simple:
                         meterProvider  = Otel4sTelemetry.meterProvider(otel.meterProvider)
                       )
                     )
-      connection <- datasource.getConnection
-    yield connection
+    yield datasource
 
-    resource.use { conn =>
-      conn.createStatement().flatMap(_.executeQuery("SELECT 1")).void
+    resource.use { datasource =>
+      datasource.use { conn =>
+        conn.createStatement().flatMap(_.executeQuery("SELECT 1")).void
+      }
     }
 ```
 
@@ -253,7 +255,24 @@ Operation metrics are annotated with the following low-cardinality attributes. U
 
 ### Connection Pool Metrics
 
-Recorded only when using connection pooling (`PooledDataSource`). All metrics carry the `db.client.connection.pool.name` attribute.
+Recorded only when using connection pooling. All metrics carry the `db.client.connection.pool.name` attribute.
+
+They are emitted by both `ldbc-pool` (the effect-agnostic pool) and `ldbc.connector.pool.PooledDataSource` (the original Cats Effect one).
+
+With `ldbc-pool` you enable them by passing a `Meter` to the pool factory. This is configured independently of the driver's operation metrics, so pass the same `Meter` to both `MySQLDataSource` and `PooledDataSource` to collect both.
+
+```scala
+val meter = ... // obtained from Otel4sTelemetry.meterProvider(...).meter("ldbc").get
+
+val datasource = MySQLDataSource.fromConfig[IO](config).setMeter(meter) // operation metrics
+val pool       = PooledDataSource.fromDataSource[IO](
+  poolConfig,
+  datasource,
+  meter = Some(meter)                                                    // pool metrics
+)
+```
+
+If `meter` is omitted the pool metrics are a no-op (the pool itself behaves the same). The in-memory pool statistics are available from `pool.metrics` / `pool.status` whether or not a `Meter` is set.
 
 #### Histogram Metrics
 

@@ -40,6 +40,7 @@ import cats.effect.*
 import io.opentelemetry.api.GlobalOpenTelemetry
 import org.typelevel.otel4s.oteljava.OtelJava
 import ldbc.mysql.{ MySQLConfig, MySQLDataSource }
+import ldbc.mysql.syntax.*
 import ldbc.catseffect.*
 import ldbc.otel4s.Otel4sTelemetry
 
@@ -62,11 +63,12 @@ object Main extends IOApp.Simple:
                         meterProvider  = Otel4sTelemetry.meterProvider(otel.meterProvider)
                       )
                     )
-      connection <- datasource.getConnection
-    yield connection
+    yield datasource
 
-    resource.use { conn =>
-      conn.createStatement().flatMap(_.executeQuery("SELECT 1")).void
+    resource.use { datasource =>
+      datasource.use { conn =>
+        conn.createStatement().flatMap(_.executeQuery("SELECT 1")).void
+      }
     }
 ```
 
@@ -253,7 +255,24 @@ ldbcは[OpenTelemetry Database Metrics Semantic Conventions](https://opentelemet
 
 ### コネクションプールメトリクス
 
-コネクションプーリング（`PooledDataSource`）使用時にのみ記録されます。すべてのメトリクスは`db.client.connection.pool.name`属性を持ちます。
+コネクションプーリング使用時にのみ記録されます。すべてのメトリクスは`db.client.connection.pool.name`属性を持ちます。
+
+`ldbc-pool`（エフェクト非依存のプール）と`ldbc.connector.pool.PooledDataSource`（従来の Cats Effect 版）のどちらでも記録されます。
+
+`ldbc-pool`では、プールのファクトリに`Meter`を渡すことで有効になります。ドライバのオペレーションメトリクスとは独立して設定するため、両方を収集する場合は`MySQLDataSource`と`PooledDataSource`の両方に同じ`Meter`を渡してください。
+
+```scala
+val meter = ... // Otel4sTelemetry.meterProvider(...).meter("ldbc").get で取得
+
+val datasource = MySQLDataSource.fromConfig[IO](config).setMeter(meter) // オペレーションメトリクス
+val pool       = PooledDataSource.fromDataSource[IO](
+  poolConfig,
+  datasource,
+  meter = Some(meter)                                                    // プールメトリクス
+)
+```
+
+`meter`を省略した場合、プールメトリクスは no-op になります（プール自体の動作には影響しません）。インメモリのプール統計は`Meter`の有無にかかわらず`pool.metrics`/`pool.status`から取得できます。
 
 #### Histogram メトリクス
 
