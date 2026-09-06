@@ -327,8 +327,6 @@ object PooledDataSource:
         yield pooled
       }
 
-      // Record once on success and once on failure, never twice: `flatTap` + `handleErrorWith` would run
-      // the metric again if the recording itself failed, and would turn a successful creation into an error.
       created.attempt.flatMap { result =>
         recordCreationMetric.flatMap(_ => result.fold(F.raiseError, F.pure))
       }

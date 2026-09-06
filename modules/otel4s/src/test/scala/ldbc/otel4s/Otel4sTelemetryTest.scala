@@ -185,7 +185,6 @@ class Otel4sTelemetryTest extends CatsEffectSuite:
         assertEquals(byName.get("db.client.operation.duration"), Some(Some("s")))
         assertEquals(byName.get("db.client.response.returned_rows"), Some(Some("{row}")))
 
-        // the duration is exported in seconds, so 250ms must land as 0.25 and not as 250
         val duration = stats(metrics, "db.client.operation.duration")
         assertEqualsDouble(duration.sum, 0.25, 1e-9)
         assertEquals(duration.count, 1L)
@@ -299,13 +298,11 @@ class Otel4sTelemetryTest extends CatsEffectSuite:
       yield
         val pool = "db.client.connection.pool.name" -> "ldbc-pool"
 
-        // the three pool histograms and the timeout counter
         assertEquals(stats(metrics, "db.client.connection.create_time").count, 1L)
         assertEquals(stats(metrics, "db.client.connection.wait_time").count, 1L)
         assertEquals(stats(metrics, "db.client.connection.use_time").count, 1L)
         assertEquals(pointValue(metrics, "db.client.connection.timeouts", pool), 1L)
 
-        // idle and used share one instrument and are told apart by db.client.connection.state
         assertEquals(
           pointValue(metrics, "db.client.connection.count", pool, "db.client.connection.state" -> "idle"),
           3L
@@ -315,7 +312,6 @@ class Otel4sTelemetryTest extends CatsEffectSuite:
           2L
         )
 
-        // the bounds are reported from the pool configuration: min = 1, max = 10
         assertEquals(pointValue(metrics, "db.client.connection.idle.min", pool), 1L)
         assertEquals(pointValue(metrics, "db.client.connection.idle.max", pool), 10L)
         assertEquals(pointValue(metrics, "db.client.connection.max", pool), 10L)

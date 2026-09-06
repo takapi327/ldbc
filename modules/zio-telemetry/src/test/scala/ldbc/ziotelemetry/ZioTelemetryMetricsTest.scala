@@ -238,7 +238,6 @@ class ZioTelemetryMetricsTest extends munit.FunSuite:
   test("a failed gauge registration closes the scope instead of leaking the gauges already registered") {
     val state                 = PoolMetricsState(3L, 2L, 1L)
     val (outcome, afterwards) = withZMeter { (zmeter, _) =>
-      // the third registration is db.client.connection.idle.min; the first two must not survive it
       val failing = new FailingMeter(zmeter, failOn = 3)
       for
         meter  <- ZioTelemetry.meterProvider(failing).meter("ldbc").get
@@ -266,7 +265,6 @@ class ZioTelemetryMetricsTest extends munit.FunSuite:
              }
       yield ()
     }
-    // the reader collects after the resource is closed, so the gauges must no longer be observable
     assert(
       !metrics.map(_.getName).contains("db.client.connection.count"),
       s"the gauges are unregistered on release, but got ${ metrics.map(_.getName) }"

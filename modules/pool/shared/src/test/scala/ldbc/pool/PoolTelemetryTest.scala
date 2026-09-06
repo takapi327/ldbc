@@ -269,9 +269,7 @@ class PoolTelemetryTest extends FxSuite:
   }
 
   test("a release that removes the connection still records the use time exactly once") {
-    val metrics = new RecordingMetrics
-    // aliveBypassWindow = 0 forces validation on release, and the connection reports itself invalid,
-    // so the release takes the remove-from-pool branch rather than the return-to-pool one.
+    val metrics      = new RecordingMetrics
     val invalidating = config(0, 2).copy(aliveBypassWindow = Duration.Zero)
     val create       = Resource.make(MockConnection(isValidResult = false).map(c => (c: Connection[Fx])))(_.close())
     PooledDataSource
