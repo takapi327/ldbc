@@ -425,10 +425,10 @@ object PooledDataSource:
     metricsTracker:      Option[PoolMetricsTracker[F]] = None,
     connectionTestQuery: Option[String] = None,
     poolLogger:          Option[PoolLogger[F]] = None,
-    idGenerator:         F[String] = null.asInstanceOf[F[String]],
+    idGenerator:         Option[F[String]] = None,
     meter:               Option[Meter[F]] = None
   )(using F: Concurrent[F]): Resource[F, PooledDataSource[F]] =
-    val idGen = if idGenerator == null then randomConnectionId[F] else idGenerator
+    val idGen = idGenerator.getOrElse(randomConnectionId[F])
     build(config, create, metricsTracker, connectionTestQuery, poolLogger, idGen, None, meter)
 
   def fromConfigWithBeforeAfter[F[_], A](
@@ -439,10 +439,10 @@ object PooledDataSource:
     metricsTracker:      Option[PoolMetricsTracker[F]] = None,
     connectionTestQuery: Option[String] = None,
     poolLogger:          Option[PoolLogger[F]] = None,
-    idGenerator:         F[String] = null.asInstanceOf[F[String]],
+    idGenerator:         Option[F[String]] = None,
     meter:               Option[Meter[F]] = None
   )(using F: Concurrent[F]): Resource[F, PooledDataSource[F]] =
-    val idGen = if idGenerator == null then randomConnectionId[F] else idGenerator
+    val idGen = idGenerator.getOrElse(randomConnectionId[F])
     val hook: Connection[F] => Resource[F, Unit] =
       conn => Resource.make(before(conn))(a => after(a, conn)).map(_ => ())
     build(config, create, metricsTracker, connectionTestQuery, poolLogger, idGen, Some(hook), meter)
@@ -453,11 +453,18 @@ object PooledDataSource:
     metricsTracker:      Option[PoolMetricsTracker[F]] = None,
     connectionTestQuery: Option[String] = None,
     poolLogger:          Option[PoolLogger[F]] = None,
-    idGenerator:         F[String] = null.asInstanceOf[F[String]],
+    idGenerator:         Option[F[String]] = None,
     meter:               Option[Meter[F]] = None
   )(using F: Concurrent[F]): Resource[F, PooledDataSource[F]] =
-    val idGen = if idGenerator == null then randomConnectionId[F] else idGenerator
-    fromConfig(config, connectionResource(dataSource), metricsTracker, connectionTestQuery, poolLogger, idGen, meter)
+    fromConfig(
+      config,
+      connectionResource(dataSource),
+      metricsTracker,
+      connectionTestQuery,
+      poolLogger,
+      idGenerator,
+      meter
+    )
 
   def fromDataSourceWithBeforeAfter[F[_], A](
     config:              ConnectionPoolConfig,
@@ -467,10 +474,9 @@ object PooledDataSource:
     metricsTracker:      Option[PoolMetricsTracker[F]] = None,
     connectionTestQuery: Option[String] = None,
     poolLogger:          Option[PoolLogger[F]] = None,
-    idGenerator:         F[String] = null.asInstanceOf[F[String]],
+    idGenerator:         Option[F[String]] = None,
     meter:               Option[Meter[F]] = None
   )(using F: Concurrent[F]): Resource[F, PooledDataSource[F]] =
-    val idGen = if idGenerator == null then randomConnectionId[F] else idGenerator
     fromConfigWithBeforeAfter(
       config,
       connectionResource(dataSource),
@@ -479,7 +485,7 @@ object PooledDataSource:
       metricsTracker,
       connectionTestQuery,
       poolLogger,
-      idGen,
+      idGenerator,
       meter
     )
 
