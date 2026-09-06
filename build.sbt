@@ -87,17 +87,20 @@ lazy val otel4s = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "otel4s-core-trace"   % "1.1.0",
-      "org.typelevel" %%% "otel4s-core-metrics" % "1.1.0",
-      "org.typelevel" %%% "cats-effect"         % "3.7.1"  % Test,
-      "org.typelevel" %%% "otel4s-sdk-testkit"  % "0.19.1" % Test,
-      "org.typelevel" %%% "munit-cats-effect"   % "2.2.0"  % Test
+      "org.typelevel" %%% "otel4s-core-trace"                   % "1.1.0",
+      "org.typelevel" %%% "otel4s-core-metrics"                 % "1.1.0",
+      "org.typelevel" %%% "otel4s-semconv-experimental"         % "1.1.0",
+      "org.typelevel" %%% "otel4s-semconv-metrics"              % "1.1.0",
+      "org.typelevel" %%% "otel4s-semconv-metrics-experimental" % "1.1.0",
+      "org.typelevel" %%% "cats-effect"                         % "3.7.1"  % Test,
+      "org.typelevel" %%% "otel4s-sdk-testkit"                  % "0.19.1" % Test,
+      "org.typelevel" %%% "munit-cats-effect"                   % "2.2.0"  % Test
     )
   )
   .jsSettings(
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
   )
-  .dependsOn(telemetry)
+  .dependsOn(telemetry, catsEffect % Test)
 
 lazy val zioTelemetry = crossProject(JVMPlatform)
   .crossType(CrossType.Pure)
@@ -302,7 +305,7 @@ lazy val mysql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
 lazy val pool = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
   .module("pool", "Effect-agnostic connection pool over the ldbc.effect type classes")
-  .dependsOn(sql, effect, fx % "test->compile;test->test")
+  .dependsOn(sql, effect, telemetry, fx % "test->compile;test->test")
 
 lazy val catsEffect = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
@@ -417,10 +420,14 @@ lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .defaultSettings
   .jvmSettings(
-    Test / fork                       := true,
-    libraryDependencies += "com.mysql" % "mysql-connector-j" % "9.7.0" % Test
+    Test / fork                            := true,
+    libraryDependencies ++= Seq(
+      "com.mysql"      % "mysql-connector-j"  % "9.7.0"  % Test,
+      "org.typelevel" %%% "otel4s-sdk-testkit" % "0.19.1" % Test
+    )
   )
   .jvmConfigure(_ dependsOn jdbcConnector.jvm)
+  .jvmConfigure(_ dependsOn otel4s.jvm % Test)
   .jsSettings(
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule)),
     scalacOptions ++= {
