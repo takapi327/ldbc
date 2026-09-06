@@ -7,9 +7,11 @@
 
 0.9.x is a major change that re-architects ldbc to be effect-agnostic (tagless-final). The driver up to 0.8.x (`ldbc-connector`) was implemented on top of Cats Effect 3 (`IO`). In 0.9.x, ldbc introduces its own effect type-class hierarchy (`Async ⊂ Temporal ⊂ Concurrent`) and builds the driver, network layer, and connection pool on top of it. This lets **Cats Effect (`IO`) / ZIO (`Task`) / `scala.concurrent.Future`** each run natively. In addition, a lightweight effect type `Fx` that depends on no external effect library is also newly introduced in 0.9.x (`ldbc-fx`), used as the `Future` backend and for standalone use.
 
-> **Important**: The existing `ldbc-connector` (the Cats Effect-based MySQL connector) **still works as-is in 0.9.x**. 0.9.x does not break compatibility or force migration to the effect-agnostic version; it adds the **effect-agnostic new driver `ldbc-mysql`** alongside `ldbc-connector`, together with per-effect bridges (`ldbc-cats-effect` / `ldbc-zio` / `ldbc-future`). There is no need to migrate in a hurry.
+> **Important**: The existing `ldbc-connector` (the Cats Effect-based MySQL connector) **is still available in 0.9.x**. 0.9.x does not force migration to the effect-agnostic version; it adds the **effect-agnostic new driver `ldbc-mysql`** alongside `ldbc-connector`, together with per-effect bridges (`ldbc-cats-effect` / `ldbc-zio` / `ldbc-future`). There is no need to move to `ldbc-mysql` in a hurry.
 >
-> However, **`ldbc-connector` is scheduled to be removed in a future version**. The effect-agnostic new driver `ldbc-mysql` (and the effect-specific bridges) is its successor, so new projects are encouraged to use `ldbc-mysql`. Existing projects should also consider migrating to `ldbc-mysql` when ready.
+> However, making ldbc effect-agnostic **did introduce breaking changes in the shared modules (`ldbc-sql` / `ldbc-core` / `ldbc-dsl`)**. Even if you keep using `ldbc-connector`, code that acquires connections (`getConnection`), streams results (`Query#stream`), or requires `Sync[DBIO]` has to be updated. See "Breaking Changes" below for details.
+>
+> Also, **`ldbc-connector` is scheduled to be removed in a future version**. The effect-agnostic new driver `ldbc-mysql` (and the effect-specific bridges) is its successor, so new projects are encouraged to use `ldbc-mysql`. Existing projects should also consider migrating to `ldbc-mysql` when ready.
 
 ## Packages
 
@@ -127,7 +129,7 @@ Query-result streaming is provided with each effect's native stream type.
 - Cats Effect (`IO`): `fs2.Stream` (`ldbc-cats-effect`)
 - ZIO (`Task`): `zio.stream.ZStream` (`ldbc-zio`)
 
-fs2 streaming when using `ldbc-connector` is unchanged.
+As part of this, `ldbc-dsl` dropped its fs2 dependency and `Query#stream` was removed from it. **Even if you keep using `ldbc-connector`, you now need to add `ldbc-cats-effect` to use streaming** (see item 2 under "Breaking Changes").
 
 ### 4. Telemetry backends are separated
 
@@ -140,9 +142,133 @@ By default it is a no-op (emits nothing); you add the corresponding backend modu
 
 ## Breaking Changes
 
-### Source-compatible in principle
+0.9.x is a release that adds new modules, but making ldbc effect-agnostic **did introduce breaking changes in the shared modules (`ldbc-sql` / `ldbc-core` / `ldbc-dsl`)**. Even if you keep using `ldbc-connector` / `jdbc-connector` as-is, any code matching the items below has to be updated.
 
-0.9.x is a release that **adds new modules**, and there are in principle no breaking changes for code that uses the existing `ldbc-connector`. The APIs for the DSL, query builder, schema, code generation, and so on are the same as in 0.8.x.
+On the other hand, **the query-building APIs are the same as in 0.8.x**: the `sql"..."` interpolator, `query` / `to[List]` / `unsafe` / `option` / `nel`, `readOnly` / `commit` / `transaction` / `rollback`, the query builder (`ldbc-query-builder`), schema definitions (`ldbc-schema`), and code generation (`ldbc-codegen`) are unchanged.
+
+| # | Change | Affects |
+|---|--------|---------|
+| 1 | `DataSource` moved, and `getConnection`'s return type changed | Code calling `getConnection` directly / custom `DataSource` implementations |
+| 2 | `Query#stream` moved to `ldbc-cats-effect` | Code using fs2 streaming |
+| 3 | `Sync[DBIO]` became `MonadError[DBIO, Throwable]` | Code requiring `Sync` for `DBIO` |
+| 4 | cats-effect-derived operations removed from the Free algebra | Code implementing its own interpreter (`Visitor`) |
+| 5 | Transitive dependency changes | Code relying on fs2 / cats-effect coming in via `ldbc-dsl` / `ldbc-core` |
+
+### 1. `DataSource` moved to `ldbc.sql`, and `getConnection`'s return type changed
+
+| | 0.8.x | 0.9.0 |
+|---|---|---|
+| Type | `ldbc.DataSource` | `ldbc.sql.DataSource` |
+| `getConnection` | `Resource[F, Connection[F]]` | `F[(Connection[F], F[Unit])]` (allocated form) |
+
+`ldbc.DataSource` was removed and is now `ldbc.sql.DataSource`. If you use `import ldbc.connector.*` / `import jdbc.connector.*`, the type name still resolves because each package object re-exports `ldbc.sql.DataSource`. If you wrote `import ldbc.DataSource` directly, the import has to change.
+
+`getConnection` now returns **the connection together with its release action** rather than a `Resource`. `Resource` is a different type per effect (`cats.effect.Resource` / ZIO's `Scope` / `ldbc.effect.Resource`), so putting it in the signature would pin `DataSource` to one particular effect. With the allocated form, Cats Effect / ZIO / Fx / Future can all share the same `DataSource[F]`.
+
+**Before:**
+
+```scala
+datasource.getConnection.use { conn =>
+  conn.setCatalog("world") *> conn.getCatalog()
+}
+```
+
+**After (`ldbc-connector`):** import the `use` extension method. It is implemented with a bracket, so the release runs on success, error, and cancellation alike.
+
+```scala
+import ldbc.connector.syntax.*
+
+datasource.use { conn =>
+  conn.setCatalog("world") *> conn.getCatalog()
+}
+```
+
+With the effect-agnostic driver (`ldbc-mysql`), `import ldbc.mysql.syntax.*` (or `import ldbc.pool.*`) brings in an equivalent `use`.
+
+**If you want a `Resource`**, or if you use `jdbc-connector` alone and therefore cannot reach `ldbc.connector.syntax`, build it yourself:
+
+```scala
+val connection: Resource[F, Connection[F]] =
+  Resource.make(datasource.getConnection)(_._2).map(_._1)
+```
+
+**If you implement your own `DataSource`**, update the `getConnection` implementation. An existing `Resource`-based implementation migrates by appending `.allocated`.
+
+```scala
+// Before
+override def getConnection: Resource[F, Connection[F]] =
+  Resource.fromAutoCloseable(...).map(ConnectionImpl(_))
+
+// After
+override def getConnection: F[(Connection[F], F[Unit])] =
+  Resource.fromAutoCloseable(...).map(ConnectionImpl(_)).allocated
+```
+
+### 2. `Query#stream` moved from `ldbc-dsl` to `ldbc-cats-effect`
+
+`ldbc-dsl` dropped its fs2 dependency and removed `stream` / `stream(fetchSize)` from `Query`. fs2 streaming is now provided as an extension method in `ldbc-cats-effect`. **Even if you keep using `ldbc-connector`, you need to add the dependency to use streaming** (`ldbc-connector` does not depend on `ldbc-cats-effect`).
+
+```scala
+libraryDependencies += "io.github.takapi327" %%% "ldbc-cats-effect" % "0.9.0"
+```
+
+**Before:**
+
+```scala
+import ldbc.dsl.*
+
+sql"SELECT name FROM city".query[String].stream(100)
+```
+
+**After:**
+
+```scala
+import ldbc.dsl.*
+import ldbc.catseffect.*
+
+sql"SELECT name FROM city".query[String].stream(100)
+```
+
+> **Note**: importing both `ldbc.connector.*` and `ldbc.catseffect.*` makes the name `Connector` ambiguous, since it comes in from both. Qualify the connector construction as `ldbc.connector.Connector.fromDataSource(...)`, or import only what you need.
+
+To use `ZStream` with ZIO, add `ldbc-zio` and call `query.stream(connector)`. (`ZStream` is always a ZIO type, so it cannot be built on top of `DBIO`; it takes the connector as an argument instead.)
+
+### 3. `Sync[DBIO]` became `MonadError[DBIO, Throwable]`
+
+`ldbc-dsl` dropped its cats-effect dependency and changed the instance it provides for `DBIO`. The instance brought implicitly into scope by `import ldbc.dsl.*` changes accordingly.
+
+| | 0.8.x | 0.9.0 |
+|---|---|---|
+| Provided by `import ldbc.dsl.*` | `implicit val syncDBIO: Sync[DBIO]` | `implicit val monadErrorDBIO: MonadError[DBIO, Throwable]` |
+| When you need `Sync[DBIO]` | `ldbc.dsl.DBIO.syncDBIO` | `ldbc.catseffect.syncDBIO` (`ldbc-cats-effect`) |
+
+If you only use cats error-handling combinators such as `raiseError` / `handleErrorWith` / `attempt` / `onError` on `DBIO`, no change is needed. Where `Sync[DBIO]` is explicitly required (for example when combining with fs2), add `import ldbc.catseffect.*`.
+
+Note that `ldbc.catseffect.syncDBIO` has `rootCancelScope = Uncancelable`. `DBIO` is a Free program and cannot express real cancellation, so `MonadCancel` operations behave as their uncancelable identities.
+
+### 4. cats-effect-derived operations removed from `DBIO` / the Free algebra
+
+The following were removed from `ConnectionOp` / `StatementOp` / `PreparedStatementOp`:
+
+- `Monotonic` / `Realtime` (and constructors such as `ConnectionIO.monotonic` / `realtime`)
+- `ForceR` / `Uncancelable` / `Poll1` / `Canceled` / `OnCancel` (and `capturePoll`)
+- the `given Sync[PreparedStatementIO]` on `PreparedStatementIO`
+- `Suspend(hint: Sync.Type, thunk)`. Only `ConnectionOp` keeps a `Suspend(thunk)` that takes no `Sync.Type`; it was removed from `StatementOp` / `PreparedStatementOp`
+
+In addition, `drainRows` was added to `ResultSetOp.Visitor` (an operation that decodes a fully materialized result set in a single effect).
+
+`KleisliInterpreter`'s constraint was relaxed from `Sync[F]` to `MonadError[F, Throwable]`. Since `Sync[F]` satisfies `MonadError[F, Throwable]`, callers of `KleisliInterpreter` need no change.
+
+**Impact**: code that calls `ConnectionIO.monotonic` and friends directly, and code that implements `ConnectionOp.Visitor` / `StatementOp.Visitor` / `PreparedStatementOp.Visitor` / `ResultSetOp.Visitor` itself (i.e. a custom interpreter), will fail to compile. Ordinary DSL usage is unaffected.
+
+### 5. Transitive dependency changes
+
+| Module | 0.8.x | 0.9.0 |
+|--------|-------|-------|
+| `ldbc-core` | `cats-free` + `cats-effect` | `cats-free` only |
+| `ldbc-dsl` | `twiddles-core` + `fs2-core` | `twiddles-core` only |
+
+If you relied on cats-effect or fs2 reaching your classpath via `ldbc-dsl` / `ldbc-core`, add those dependencies explicitly, or add `ldbc-cats-effect`. `ldbc-connector` still depends on cats-effect / fs2, so if you use `ldbc-connector` your classpath contents are unchanged (but `Query#stream` has moved, as described in 2).
 
 ### `ldbc-mysql`'s `Parameter` is a new implementation for the effect-agnostic driver
 
@@ -168,11 +294,22 @@ When using the `ldbc-mysql` effect bridges, the following are additionally requi
 
 ### Keep using `ldbc-connector`
 
-The simplest migration is to just bump the version. The `ldbc-connector` API is compatible with 0.8.x.
+`ldbc-connector`'s `MySQLDataSource` / `Connector` / pooling APIs are the same as in 0.8.x. Start by bumping the version.
 
 ```scala
 libraryDependencies += "io.github.takapi327" %%% "ldbc-dsl"       % "0.9.0"
 libraryDependencies += "io.github.takapi327" %%% "ldbc-connector" % "0.9.0"
+```
+
+Then update the places matching these three items from "Breaking Changes". For most projects this completes the migration.
+
+1. `datasource.getConnection.use { ... }` → add `import ldbc.connector.syntax.*` and use `datasource.use { ... }`
+2. Using `query.stream` → add `ldbc-cats-effect` and `import ldbc.catseffect.*`
+3. Requiring `Sync[DBIO]` → likewise `import ldbc.catseffect.*`
+
+```scala
+// If 2 or 3 applies
+libraryDependencies += "io.github.takapi327" %%% "ldbc-cats-effect" % "0.9.0"
 ```
 
 ### Migrate to the effect-agnostic driver (`ldbc-mysql`)
@@ -226,6 +363,6 @@ libraryDependencies += "io.github.takapi327" %% "ldbc-zio-telemetry" % "0.9.0"
 1. **Effect-agnostic**: the `Async` / `Temporal` / `Concurrent` type-class hierarchy lets you handle `IO` / `Task` / `Future` / `Fx` natively
 2. **Multi-effect support**: bridges for Cats Effect / ZIO / Future are added. Streaming is also provided natively via fs2 / ZStream
 3. **Telemetry separation**: a DB-agnostic SPI (`ldbc-telemetry`) separated from the otel4s / zio-telemetry backends
-4. **Backward compatibility**: the existing `ldbc-connector` remains usable; migration is optional
+4. **The existing driver stays usable**: `ldbc-connector` still works in 0.9.x; moving to the effect-agnostic driver is optional
 
-Projects that keep using `ldbc-connector` can migrate simply by updating the dependency version. Whether to move to the effect-agnostic driver can be decided based on the effect you use and your future direction.
+That said, making ldbc effect-agnostic introduced breaking changes in the shared modules (`ldbc-sql` / `ldbc-core` / `ldbc-dsl`). Even projects that keep using `ldbc-connector` need to update the places that call `getConnection`, use `Query#stream`, or require `Sync[DBIO]`. See "Breaking Changes" below for details. The query-building APIs are unchanged, so the edits are confined to the connection-acquisition and streaming boundaries.
