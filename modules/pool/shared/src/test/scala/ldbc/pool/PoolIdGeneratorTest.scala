@@ -80,8 +80,8 @@ class PoolIdGeneratorTest extends FxSuite:
         .fromConfigWithBeforeAfter[Fx, Unit](
           config(2),
           mockCreate,
-          before = _ => Fx.unit,
-          after = (_, _) => Fx.unit,
+          before      = _ => Fx.unit,
+          after       = (_, _) => Fx.unit,
           idGenerator = Some(generator)
         )
         .use(pool => connectionIds(pool).map(ids => assertEquals(ids.sorted, List("hook-1", "hook-2"))))
@@ -94,8 +94,8 @@ class PoolIdGeneratorTest extends FxSuite:
         .fromDataSourceWithBeforeAfter[Fx, Unit](
           config(2),
           mockDataSource,
-          before = _ => Fx.unit,
-          after = (_, _) => Fx.unit,
+          before      = _ => Fx.unit,
+          after       = (_, _) => Fx.unit,
           idGenerator = Some(generator)
         )
         .use(pool => connectionIds(pool).map(ids => assertEquals(ids.sorted, List("dshook-1", "dshook-2"))))
