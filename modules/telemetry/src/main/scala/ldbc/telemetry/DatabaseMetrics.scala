@@ -108,6 +108,6 @@ object DatabaseMetrics:
    * records nothing.
    *
    * @param meter the meter to build the instruments from
-   * @return a resource containing the metrics instance
+   * @return an effect producing the metrics instance
    */
-  def fromMeter[F[_]](meter: Meter[F]): Resource[F, DatabaseMetrics[F]] = meter.databaseMetrics
+  def fromMeter[F[_]](meter: Meter[F]): F[DatabaseMetrics[F]] = meter.databaseMetrics

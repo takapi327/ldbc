@@ -171,7 +171,7 @@ class Otel4sTelemetryTest extends CatsEffectSuite:
       val meterProvider = Otel4sTelemetry.meterProvider(testkit.meterProvider)
       for
         meter   <- meterProvider.meter("ldbc").withVersion("v").get
-        metrics <- meter.databaseMetrics.use { databaseMetrics =>
+        metrics <- meter.databaseMetrics.flatMap { databaseMetrics =>
                      databaseMetrics.recordOperationDuration(
                        250.millis,
                        Attribute("db.system.name", "mysql"),
@@ -200,7 +200,7 @@ class Otel4sTelemetryTest extends CatsEffectSuite:
       val meterProvider = Otel4sTelemetry.meterProvider(testkit.meterProvider)
       for
         meter   <- meterProvider.meter("ldbc").get
-        metrics <- meter.databaseMetrics.use { databaseMetrics =>
+        metrics <- meter.databaseMetrics.flatMap { databaseMetrics =>
                      databaseMetrics.recordConnectionCreateTime(1500.millis, "p") *>
                        databaseMetrics.recordConnectionWaitTime(2.seconds, "p") *>
                        databaseMetrics.recordConnectionUseTime(500.micros, "p") *>
@@ -218,7 +218,7 @@ class Otel4sTelemetryTest extends CatsEffectSuite:
       val meterProvider = Otel4sTelemetry.meterProvider(testkit.meterProvider)
       for
         meter   <- meterProvider.meter("ldbc").get
-        metrics <- meter.databaseMetrics.use { databaseMetrics =>
+        metrics <- meter.databaseMetrics.flatMap { databaseMetrics =>
                      databaseMetrics.recordOperationDuration(1.second) *>
                        databaseMetrics.recordReturnedRows(1L) *>
                        databaseMetrics.recordConnectionWaitTime(1.second, "p") *>
@@ -245,7 +245,7 @@ class Otel4sTelemetryTest extends CatsEffectSuite:
       val meterProvider = Otel4sTelemetry.meterProvider(testkit.meterProvider)
       for
         meter   <- meterProvider.meter("ldbc").get
-        metrics <- meter.databaseMetrics.use { databaseMetrics =>
+        metrics <- meter.databaseMetrics.flatMap { databaseMetrics =>
                      databaseMetrics.recordOperationDuration(1.second, Attribute("weird", List(1, 2))) *>
                        testkit.collectMetrics
                    }
@@ -264,7 +264,7 @@ class Otel4sTelemetryTest extends CatsEffectSuite:
       val meterProvider = Otel4sTelemetry.meterProvider(testkit.meterProvider)
       for
         meter   <- meterProvider.meter("ldbc").get
-        metrics <- meter.databaseMetrics.use { databaseMetrics =>
+        metrics <- meter.databaseMetrics.flatMap { databaseMetrics =>
                      databaseMetrics.recordOperationDuration(1.second, Attribute("db.operation.name", "SELECT")) *>
                        testkit.collectMetrics
                    }
@@ -286,7 +286,7 @@ class Otel4sTelemetryTest extends CatsEffectSuite:
       val state         = PoolMetricsState(idleCount = 3L, usedCount = 2L, pendingRequestCount = 1L)
       for
         meter   <- meterProvider.meter("ldbc").get
-        metrics <- meter.databaseMetrics.use { databaseMetrics =>
+        metrics <- meter.databaseMetrics.flatMap { databaseMetrics =>
                      databaseMetrics.recordConnectionCreateTime(10.millis, "ldbc-pool") *>
                        databaseMetrics.recordConnectionWaitTime(5.millis, "ldbc-pool") *>
                        databaseMetrics.recordConnectionUseTime(20.millis, "ldbc-pool") *>
@@ -324,7 +324,7 @@ class Otel4sTelemetryTest extends CatsEffectSuite:
       val meterProvider = Otel4sTelemetry.meterProvider(testkit.meterProvider)
       for
         meter   <- meterProvider.meter("ldbc").withVersion("1.2.3").withSchemaUrl("https://example.test/schema").get
-        metrics <- meter.databaseMetrics.use { databaseMetrics =>
+        metrics <- meter.databaseMetrics.flatMap { databaseMetrics =>
                      databaseMetrics.recordOperationDuration(1.second) *> testkit.collectMetrics
                    }
       yield
@@ -341,7 +341,7 @@ class Otel4sTelemetryTest extends CatsEffectSuite:
       val state         = PoolMetricsState(idleCount = 1L, usedCount = 0L, pendingRequestCount = 0L)
       for
         meter   <- meterProvider.meter("ldbc").get
-        metrics <- meter.databaseMetrics.use { databaseMetrics =>
+        metrics <- meter.databaseMetrics.flatMap { databaseMetrics =>
                      databaseMetrics
                        .registerPoolStateCallback("ldbc-pool", 1, 10, IO.pure(state))
                        .use(_ => IO.unit) *> testkit.collectMetrics
@@ -359,7 +359,7 @@ class Otel4sTelemetryTest extends CatsEffectSuite:
       val state         = PoolMetricsState(1L, 1L, 1L)
       for
         meter   <- meterProvider.meter("ldbc").get
-        metrics <- meter.databaseMetrics.use { databaseMetrics =>
+        metrics <- meter.databaseMetrics.flatMap { databaseMetrics =>
                      databaseMetrics.recordOperationDuration(1.second) *>
                        databaseMetrics.recordReturnedRows(1L) *>
                        databaseMetrics.recordConnectionCreateTime(1.second, "p") *>
@@ -386,7 +386,7 @@ class Otel4sTelemetryTest extends CatsEffectSuite:
       val state         = PoolMetricsState(1L, 1L, 1L)
       for
         meter   <- meterProvider.meter("ldbc").get
-        metrics <- meter.databaseMetrics.use { databaseMetrics =>
+        metrics <- meter.databaseMetrics.flatMap { databaseMetrics =>
                      databaseMetrics
                        .registerPoolStateCallback("p", 1, 2, IO.pure(state))
                        .use(_ => testkit.collectMetrics)
@@ -400,7 +400,7 @@ class Otel4sTelemetryTest extends CatsEffectSuite:
       ldbc.telemetry.Meter
         .noop[IO]
         .databaseMetrics
-        .use(_.recordOperationDuration(1.second) *> testkit.collectMetrics)
+        .flatMap(_.recordOperationDuration(1.second) *> testkit.collectMetrics)
         .map(metrics => assertEquals(metrics.toList, Nil))
     }
   }

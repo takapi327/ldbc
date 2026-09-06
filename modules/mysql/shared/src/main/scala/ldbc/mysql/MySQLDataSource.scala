@@ -107,20 +107,26 @@ final case class MySQLDataSource[F[_], A](
    * Caches the [[ldbc.telemetry.DatabaseMetrics]] built from [[meter]]. A backend meter creates real
    * instruments when the metrics are built, so building them per [[getConnection]] would re-create the
    * whole instrument set on every connection; they are created once per data source and shared instead.
-   *
-   * Two concurrent first calls may both build a set, in which case one is discarded — instruments are
-   * identified by name, so the surviving duplicate records to the same series.
    */
   private val databaseMetricsRef: Ref[F, Option[DatabaseMetrics[F]]] =
     Ref.unsafe[F, Option[DatabaseMetrics[F]]](None)
 
-  /** Returns the cached [[ldbc.telemetry.DatabaseMetrics]], building it from [[meter]] on first use. */
-  private def getOrCreateDatabaseMetrics: Resource[F, DatabaseMetrics[F]] =
-    Resource.eval(databaseMetricsRef.get).flatMap {
-      case Some(cached) => Resource.pure(cached)
+  /**
+   * Returns the cached [[ldbc.telemetry.DatabaseMetrics]], building it from [[meter]] on first use.
+   *
+   * Concurrent first calls may each build a set, but the atomic `modify` publishes only one of them and
+   * every caller receives that same instance, so two connections can never record through different
+   * instrument sets. The sets that lose the race are discarded without ever being used.
+   */
+  private def getOrCreateDatabaseMetrics: F[DatabaseMetrics[F]] =
+    databaseMetricsRef.get.flatMap {
+      case Some(cached) => F.pure(cached)
       case None         =>
-        DatabaseMetrics.fromMeter[F](meter.getOrElse(Meter.noop[F])).flatMap { metrics =>
-          Resource.eval(databaseMetricsRef.set(Some(metrics))).map(_ => metrics)
+        DatabaseMetrics.fromMeter[F](meter.getOrElse(Meter.noop[F])).flatMap { built =>
+          databaseMetricsRef.modify {
+            case Some(winner) => (Some(winner), winner)
+            case None         => (Some(built), built)
+          }
         }
     }
 
@@ -136,7 +142,7 @@ final case class MySQLDataSource[F[_], A](
   override def getConnection: F[(SqlConnection[F], F[Unit])] = connectionResource.allocatedCase
 
   private def connectionResource: Resource[F, SqlConnection[F]] =
-    getOrCreateDatabaseMetrics.flatMap { databaseMetrics =>
+    Resource.eval(getOrCreateDatabaseMetrics).flatMap { databaseMetrics =>
       val resource = (before, after) match
         case (Some(b), Some(a)) =>
           Connection.withBeforeAfter[F, A](

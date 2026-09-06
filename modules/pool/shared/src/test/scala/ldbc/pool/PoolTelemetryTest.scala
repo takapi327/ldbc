@@ -73,7 +73,7 @@ class PoolTelemetryTest extends FxSuite:
       )(_ => Fx.delay { calls.add("unregister"); () })
 
   private def recordingMeter(metrics: RecordingMetrics): Meter[Fx] = new Meter[Fx]:
-    override def databaseMetrics: Resource[Fx, DatabaseMetrics[Fx]] = Resource.pure(metrics)
+    override def databaseMetrics: Fx[DatabaseMetrics[Fx]] = Fx.pure(metrics)
 
   private def mockCreate: Resource[Fx, Connection[Fx]] =
     Resource.make(MockConnection().map(c => (c: Connection[Fx])))(c => c.close())

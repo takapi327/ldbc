@@ -118,7 +118,7 @@ class ZioTelemetryMetricsTest extends munit.FunSuite:
     val (_, metrics) = withMetrics { (provider, _) =>
       for
         meter <- provider.meter("ldbc").withVersion("test").get
-        _     <- meter.databaseMetrics.use { databaseMetrics =>
+        _     <- meter.databaseMetrics.flatMap { databaseMetrics =>
                databaseMetrics.recordOperationDuration(250.millis, Attribute("db.system.name", "mysql")) *>
                  databaseMetrics.recordReturnedRows(42L)
              }
@@ -132,7 +132,7 @@ class ZioTelemetryMetricsTest extends munit.FunSuite:
     val (_, metrics) = withMetrics { (provider, _) =>
       for
         meter <- provider.meter("ldbc").get
-        _     <- meter.databaseMetrics.use { databaseMetrics =>
+        _     <- meter.databaseMetrics.flatMap { databaseMetrics =>
                databaseMetrics.recordOperationDuration(
                  1.second,
                  Attribute("db.operation.name", "SELECT"),
@@ -158,7 +158,7 @@ class ZioTelemetryMetricsTest extends munit.FunSuite:
     val (_, metrics) = withMetrics { (provider, _) =>
       for
         meter <- provider.meter("ldbc").get
-        _     <- meter.databaseMetrics.use { databaseMetrics =>
+        _     <- meter.databaseMetrics.flatMap { databaseMetrics =>
                databaseMetrics.recordConnectionCreateTime(1500.millis, "zio-pool") *>
                  databaseMetrics.recordConnectionWaitTime(2.seconds, "zio-pool") *>
                  databaseMetrics.recordConnectionUseTime(500.micros, "zio-pool") *>
@@ -183,7 +183,7 @@ class ZioTelemetryMetricsTest extends munit.FunSuite:
     val (metrics, _) = withMetrics { (provider, collect) =>
       for
         meter   <- provider.meter("ldbc").get
-        metrics <- meter.databaseMetrics.use { databaseMetrics =>
+        metrics <- meter.databaseMetrics.flatMap { databaseMetrics =>
                      databaseMetrics.registerPoolStateCallback("zio-pool", 1, 10, ZIO.succeed(state)).use(_ => collect)
                    }
       yield metrics
@@ -202,7 +202,7 @@ class ZioTelemetryMetricsTest extends munit.FunSuite:
     val (metrics, _) = withMetrics { (provider, collect) =>
       for
         meter   <- provider.meter("ldbc").get
-        metrics <- meter.databaseMetrics.use { databaseMetrics =>
+        metrics <- meter.databaseMetrics.flatMap { databaseMetrics =>
                      databaseMetrics.recordOperationDuration(1.second) *>
                        databaseMetrics.recordReturnedRows(1L) *>
                        databaseMetrics.recordConnectionCreateTime(1.second, "p") *>
@@ -227,7 +227,7 @@ class ZioTelemetryMetricsTest extends munit.FunSuite:
     val (metrics, _) = withMetrics { (provider, collect) =>
       for
         meter   <- provider.meter("ldbc").get
-        metrics <- meter.databaseMetrics.use { databaseMetrics =>
+        metrics <- meter.databaseMetrics.flatMap { databaseMetrics =>
                      databaseMetrics.registerPoolStateCallback("p", 1, 2, ZIO.succeed(state)).use(_ => collect)
                    }
       yield metrics
@@ -242,7 +242,7 @@ class ZioTelemetryMetricsTest extends munit.FunSuite:
       for
         meter  <- ZioTelemetry.meterProvider(failing).meter("ldbc").get
         result <- meter.databaseMetrics
-                    .use(_.registerPoolStateCallback("p", 1, 2, ZIO.succeed(state)).use(_ => ZIO.unit))
+                    .flatMap(_.registerPoolStateCallback("p", 1, 2, ZIO.succeed(state)).use(_ => ZIO.unit))
                     .either
       yield result
     }
@@ -259,7 +259,7 @@ class ZioTelemetryMetricsTest extends munit.FunSuite:
     val (_, metrics) = withMetrics { (provider, _) =>
       for
         meter <- provider.meter("ldbc").get
-        _     <- meter.databaseMetrics.use { databaseMetrics =>
+        _     <- meter.databaseMetrics.flatMap { databaseMetrics =>
                databaseMetrics.registerPoolStateCallback("zio-pool", 1, 10, ZIO.succeed(state)).use(_ => ZIO.unit) *>
                  ZIO.unit
              }

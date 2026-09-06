@@ -553,7 +553,7 @@ object PooledDataSource:
         )
 
       for
-        dbMetrics <- DatabaseMetrics.fromMeter[F](meter.getOrElse(Meter.noop[F]))
+        dbMetrics <- Resource.eval(DatabaseMetrics.fromMeter[F](meter.getOrElse(Meter.noop[F])))
         pool      <- Resource.eval(createPool(dbMetrics))
         _         <- registerObservableMetrics(pool, dbMetrics)
         _         <- createMinimumConnections(pool)

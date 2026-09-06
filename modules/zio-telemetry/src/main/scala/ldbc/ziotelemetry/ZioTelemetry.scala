@@ -197,18 +197,18 @@ object ZioTelemetry:
       override def get:                              Task[Meter[Task]]  = ZIO.succeed(wrapMeter(zmeter))
 
   private def wrapMeter(zmeter: ZMeter)(using Concurrent[Task]): Meter[Task] = new Meter[Task]:
-    override def databaseMetrics: Resource[Task, DatabaseMetrics[Task]] =
+    override def databaseMetrics: Task[DatabaseMetrics[Task]] =
       def histogram(spec: DbMetric): Task[zio.telemetry.opentelemetry.metrics.Histogram[Double]] =
         zmeter.histogram(spec.name, Some(spec.unit), Some(spec.description), Some(Chunk.fromIterable(spec.boundaries)))
       def counter(spec: DbMetric): Task[zio.telemetry.opentelemetry.metrics.Counter[Long]] =
         zmeter.counter(spec.name, Some(spec.unit), Some(spec.description))
       for
-        operationDuration    <- Resource.eval(histogram(DbMetric.ClientOperationDuration))
-        returnedRows         <- Resource.eval(histogram(DbMetric.ClientResponseReturnedRows))
-        connectionCreateTime <- Resource.eval(histogram(DbMetric.ClientConnectionCreateTime))
-        connectionWaitTime   <- Resource.eval(histogram(DbMetric.ClientConnectionWaitTime))
-        connectionUseTime    <- Resource.eval(histogram(DbMetric.ClientConnectionUseTime))
-        connectionTimeouts   <- Resource.eval(counter(DbMetric.ClientConnectionTimeouts))
+        operationDuration    <- histogram(DbMetric.ClientOperationDuration)
+        returnedRows         <- histogram(DbMetric.ClientResponseReturnedRows)
+        connectionCreateTime <- histogram(DbMetric.ClientConnectionCreateTime)
+        connectionWaitTime   <- histogram(DbMetric.ClientConnectionWaitTime)
+        connectionUseTime    <- histogram(DbMetric.ClientConnectionUseTime)
+        connectionTimeouts   <- counter(DbMetric.ClientConnectionTimeouts)
       yield new ZioDatabaseMetrics(
         zmeter,
         operationDuration,

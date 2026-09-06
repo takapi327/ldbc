@@ -6,7 +6,7 @@
 
 package ldbc.telemetry
 
-import ldbc.effect.{ Concurrent, Resource }
+import ldbc.effect.Concurrent
 
 /**
  * The metrics entry point of the telemetry SPI: a handle that can build the driver's [[DatabaseMetrics]]
@@ -24,17 +24,20 @@ import ldbc.effect.{ Concurrent, Resource }
 trait Meter[F[_]]:
 
   /**
-   * Builds the database metric instruments backed by this meter. Instruments are created when the resource
-   * is acquired, and any observable callback registered through
-   * [[DatabaseMetrics.registerPoolStateCallback]] is unregistered when it is released.
+   * Builds the database metric instruments backed by this meter.
+   *
+   * Instrument creation has no teardown of its own — the only thing with a lifetime is an observable
+   * callback, and [[DatabaseMetrics.registerPoolStateCallback]] returns its own resource for that. Keeping
+   * this a plain effect means callers may cache and share the result freely, which they could not do with a
+   * resource whose release they would have to keep alive.
    */
-  def databaseMetrics: Resource[F, DatabaseMetrics[F]]
+  def databaseMetrics: F[DatabaseMetrics[F]]
 
 object Meter:
 
   /** A meter whose metrics record nothing. */
   def noop[F[_]](using F: Concurrent[F]): Meter[F] = new Meter[F]:
-    override def databaseMetrics: Resource[F, DatabaseMetrics[F]] = Resource.pure(DatabaseMetrics.noop)
+    override def databaseMetrics: F[DatabaseMetrics[F]] = F.pure(DatabaseMetrics.noop)
 
 /**
  * A builder for a [[Meter]], mirroring otel4s's meter builder.

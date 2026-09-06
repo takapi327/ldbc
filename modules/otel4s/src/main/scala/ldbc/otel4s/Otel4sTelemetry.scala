@@ -111,7 +111,7 @@ object Otel4sTelemetry:
     private def toSeconds(duration: FiniteDuration): Double = duration.toNanos.toDouble / 1e9
 
     private def poolNameAttribute(poolName: String): OtelAttribute[String] =
-      toOtelAttribute(DbAttributes.DbClientConnectionPoolName(poolName)).asInstanceOf[OtelAttribute[String]]
+      OtelAttribute(DbAttributes.DbClientConnectionPoolName.name, poolName)
 
     override def recordOperationDuration(duration: FiniteDuration, attributes: Attribute[?]*): F[Unit] =
       operationDuration.record(toSeconds(duration), attributes.map(toOtelAttribute)*)
@@ -190,14 +190,14 @@ object Otel4sTelemetry:
   private def wrapMeter[F[_]](
     meter: otelmetrics.Meter[F]
   )(using MonadCancelThrow[F], Concurrent[F]): Meter[F] = new Meter[F]:
-    override def databaseMetrics: Resource[F, DatabaseMetrics[F]] =
+    override def databaseMetrics: F[DatabaseMetrics[F]] =
       for
-        operationDuration    <- Resource.eval(histogramOf(meter, DbMetric.ClientOperationDuration))
-        returnedRows         <- Resource.eval(histogramOf(meter, DbMetric.ClientResponseReturnedRows))
-        connectionCreateTime <- Resource.eval(histogramOf(meter, DbMetric.ClientConnectionCreateTime))
-        connectionWaitTime   <- Resource.eval(histogramOf(meter, DbMetric.ClientConnectionWaitTime))
-        connectionUseTime    <- Resource.eval(histogramOf(meter, DbMetric.ClientConnectionUseTime))
-        connectionTimeouts   <- Resource.eval(counterOf(meter, DbMetric.ClientConnectionTimeouts))
+        operationDuration    <- histogramOf(meter, DbMetric.ClientOperationDuration)
+        returnedRows         <- histogramOf(meter, DbMetric.ClientResponseReturnedRows)
+        connectionCreateTime <- histogramOf(meter, DbMetric.ClientConnectionCreateTime)
+        connectionWaitTime   <- histogramOf(meter, DbMetric.ClientConnectionWaitTime)
+        connectionUseTime    <- histogramOf(meter, DbMetric.ClientConnectionUseTime)
+        connectionTimeouts   <- counterOf(meter, DbMetric.ClientConnectionTimeouts)
       yield new Otel4sDatabaseMetrics[F](
         operationDuration,
         returnedRows,
