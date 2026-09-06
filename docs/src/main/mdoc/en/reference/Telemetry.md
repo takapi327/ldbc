@@ -44,7 +44,10 @@ libraryDependencies ++= Seq(
 > }
 > ```
 >
-> **Difference from otel4s**: zio-telemetry has no batch-callback API, so the five pool state gauges are registered as five independent observables. Each reads the pool state when it is exported, so the five values may not come from exactly the same snapshot (otel4s shares one read across all five).
+> **Differences from otel4s**:
+>
+> - zio-telemetry has no batch-callback API, so the five pool state gauges are registered as five independent observables. Each reads the pool state when it is exported, so the five values may not come from exactly the same snapshot (otel4s shares one read across all five).
+> - zio-telemetry's `Meter` fixes its instrumentation scope (name, version, schema URL) when the layer is built, so `MeterBuilder`'s `withVersion` / `withSchemaUrl` and the name given to `meter(name)` are **accepted but ignored**. The scope is whatever you configured in `OpenTelemetry.metrics("...")`, and ldbc's version and schema URL are not attached. The otel4s backend does honour them.
 
 Note that instrument names, units, descriptions and bucket boundaries live in `DbMetricSpecs` in `ldbc-telemetry`, and both `ldbc-otel4s` and `ldbc-zio-telemetry` read them. Switching backends yields the same metrics from the same definitions.
 
@@ -290,6 +293,16 @@ val pool       = PooledDataSource.fromDataSource[IO](
 ```
 
 If `meter` is omitted the pool metrics are a no-op (the pool itself behaves the same). The in-memory pool statistics are available from `pool.metrics` / `pool.status` whether or not a `Meter` is set.
+
+@:callout(info)
+
+**On passing the same `Meter` to two places**
+
+`ldbc-pool` is a database-agnostic module and cannot read the `MySQLDataSource` configuration, so the `Meter` has to be given to both the data source and the pool. As a result two sets of instruments are created.
+
+OpenTelemetry identifies instruments by name, and instruments sharing a name and descriptor aggregate into the same time series, so the exported metrics are correct and nothing is double-counted.
+
+@:@
 
 #### Histogram Metrics
 

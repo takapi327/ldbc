@@ -44,7 +44,10 @@ libraryDependencies ++= Seq(
 > }
 > ```
 >
-> **otel4s との差**: zio-telemetry には batch callback API がないため、プール状態のゲージ 5 つは個別の observable として登録されます。各ゲージがエクスポート時にそれぞれプール状態を読むので、5 つの値が厳密に同一スナップショットにならないことがあります（otel4s は 1 回の読み取りを 5 値で共有します）。
+> **otel4s との差**:
+>
+> - zio-telemetry には batch callback API がないため、プール状態のゲージ 5 つは個別の observable として登録されます。各ゲージがエクスポート時にそれぞれプール状態を読むので、5 つの値が厳密に同一スナップショットにならないことがあります（otel4s は 1 回の読み取りを 5 値で共有します）。
+> - zio-telemetry の`Meter`はレイヤー構築時に instrumentation scope（名前・バージョン・schema URL）を確定するため、`MeterBuilder`の`withVersion`/`withSchemaUrl`と`meter(name)`の名前は**受け取っても無視されます**。scope は`OpenTelemetry.metrics("...")`で指定したものになり、ldbc のバージョンや schema URL は付きません。otel4s 側はこれらを反映します。
 
 なお、instrument の名前・単位・説明・バケット境界は`ldbc-telemetry`の`DbMetricSpecs`に定義されており、`ldbc-otel4s`と`ldbc-zio-telemetry`の双方がこれを参照します。バックエンドを切り替えても同じメトリクスが同じ定義で出ます。
 
@@ -290,6 +293,16 @@ val pool       = PooledDataSource.fromDataSource[IO](
 ```
 
 `meter`を省略した場合、プールメトリクスは no-op になります（プール自体の動作には影響しません）。インメモリのプール統計は`Meter`の有無にかかわらず`pool.metrics`/`pool.status`から取得できます。
+
+@:callout(info)
+
+**同じ`Meter`を 2 か所に渡すことについて**
+
+`ldbc-pool`はデータベース非依存のモジュールで`MySQLDataSource`の設定を参照できないため、`Meter`はデータソースとプールの両方に渡す必要があります。その結果、instrument のセットは 2 組作られます。
+
+OpenTelemetry の instrument は名前で同定され、同名・同記述子であれば同じ時系列に集約されるため、出力されるメトリクスは正しく、二重計上にもなりません。
+
+@:@
 
 #### Histogram メトリクス
 
