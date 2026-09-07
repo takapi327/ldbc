@@ -81,7 +81,7 @@ lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "twiddles-core"     % "1.1.0",
-      "co.fs2"        %%% "fs2-core"          % "3.13.0",
+      "co.fs2"        %%% "fs2-core"          % "3.14.0",
       "org.typelevel" %%% "munit-cats-effect" % "2.2.0" % Test
     )
   )
@@ -156,8 +156,8 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     scalacOptions += "-Ykind-projector:underscores",
     libraryDependencies ++= Seq(
-      "co.fs2"        %%% "fs2-core"                            % "3.13.0",
-      "co.fs2"        %%% "fs2-io"                              % "3.13.0",
+      "co.fs2"        %%% "fs2-core"                            % "3.14.0",
+      "co.fs2"        %%% "fs2-io"                              % "3.14.0",
       "org.scodec"    %%% "scodec-bits"                         % "1.2.5",
       "org.scodec"    %%% "scodec-core"                         % "2.3.3",
       "org.scodec"    %%% "scodec-cats"                         % "1.3.0",
@@ -191,8 +191,8 @@ lazy val awsAuthenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativeP
   .module("aws-authentication-plugin", "Project for the plugin used with Aurora IAM authentication")
   .settings(
     libraryDependencies ++= Seq(
-      "co.fs2"            %%% "fs2-core"          % "3.13.0",
-      "co.fs2"            %%% "fs2-io"            % "3.13.0",
+      "co.fs2"            %%% "fs2-core"          % "3.14.0",
+      "co.fs2"            %%% "fs2-io"            % "3.14.0",
       "io.github.cquiroz" %%% "scala-java-time"   % "2.7.0",
       "org.typelevel"     %%% "munit-cats-effect" % "2.2.0" % Test
     )
