@@ -6,6 +6,8 @@
 
 package ldbc.fx
 
+import scala.concurrent.duration.{ FiniteDuration, MILLISECONDS }
+
 /**
  * Effect-agnostic execution substrate for [[Fx]]: the compute / blocking / scheduler / interruptible
  * facilities the run loop schedules onto.
@@ -49,8 +51,49 @@ trait FxRuntime:
    */
   def scheduleOnce(delayNanos: Long, task: () => Unit): Fx.Canceler
 
+  /**
+   * How many consecutive synchronous run-loop steps may execute before the loop re-schedules the
+   * remaining continuation onto [[executeCompute]] and returns, freeing the current thread.
+   *
+   * This keeps a long synchronous chain from monopolising a thread that resumes continuations inline —
+   * typically an I/O poller or selector thread. Lower it to yield sooner on a runtime whose threads are
+   * latency-sensitive; raise it to cut hand-offs on a runtime dedicated to compute.
+   *
+   * Must be at least [[FxRuntime.minAutoCedeThreshold]]: a smaller value would cede before executing
+   * anything, so the loop would re-schedule forever without making progress. The run loop clamps to that
+   * minimum rather than trusting the value, so an out-of-range override degrades to frequent ceding
+   * instead of a hang.
+   */
+  def autoCedeThreshold: Int = FxRuntime.defaultAutoCedeThreshold
+
+  /**
+   * The upper bound applied to each cancel-path release, so a release that never settles (a rollback to
+   * a dead peer, say) cannot make [[Fx.CancelToken.cancel]] hang forever.
+   *
+   * It belongs to the runtime rather than the process because the right bound depends on what the
+   * programs on that runtime release — a short-lived request runtime wants to give up long before a
+   * background one does.
+   *
+   * Must be positive. Zero or a negative duration means every release is abandoned before it can run,
+   * and because a release's error is suppressed the resources it would have freed are simply not freed;
+   * there is no way to express "wait forever", since the bound exists to stop `cancel` hanging.
+   */
+  def finalizerTimeout: FiniteDuration = FxRuntime.defaultFinalizerTimeout
+
 /** Companion providing the platform-default runtime and the dynamic "current runtime" scope. */
 object FxRuntime:
+
+  /** The [[FxRuntime.autoCedeThreshold]] a runtime gets unless it overrides it. */
+  val defaultAutoCedeThreshold: Int = 1024
+
+  /**
+   * The smallest workable [[FxRuntime.autoCedeThreshold]]. At 1 the loop would cede before running a
+   * single step, so the run loop clamps anything lower to this.
+   */
+  val minAutoCedeThreshold: Int = 2
+
+  /** The [[FxRuntime.finalizerTimeout]] a runtime gets unless it overrides it. */
+  val defaultFinalizerTimeout: FiniteDuration = FiniteDuration(30000, MILLISECONDS)
 
   /**
    * The platform-default runtime (owns the `fx-*` pools). Used by the Future / direct-`Fx`

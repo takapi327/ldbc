@@ -332,23 +332,13 @@ object Fx:
    * Test-only seam invoked on the running thread immediately after an `async` publishes its
    * suspension (i.e. after the `SUSPENDED` CAS wins), so concurrency tests can deterministically
    * open the suspend/cancel race window. It is a no-op in production and must stay `private[fx]`.
+   *
+   * Unlike the runtime's tuning knobs this is deliberately process-global: it is scaffolding, not
+   * configuration, so it does not belong on [[FxRuntime]]. It is therefore shared by every run in the
+   * process — a test that sets it must restore it, and tests that set it must not run in parallel with
+   * others that depend on suspension timing.
    */
   @volatile private[fx] var suspendHook: () => Unit = () => ()
-
-  /**
-   * Auto-cede threshold: after this many consecutive synchronous run-loop steps without suspending,
-   * the loop re-schedules the remaining continuation onto [[FxRuntime.executeCompute]] and returns,
-   * freeing the current thread. This prevents a long synchronous chain from monopolising an I/O
-   * poller/selector thread (which resumes continuations inline). Overridable `private[fx]` for tests.
-   */
-  @volatile private[fx] var autoCedeThreshold: Int = 1024
-
-  /**
-   * Upper bound applied per cancel-path release so a release that never settles (e.g. a rollback to
-   * a dead peer) cannot make [[CancelToken.cancel]] hang forever. Global `private[fx] var` for now;
-   * a per-runtime value would require extending [[FxRuntime]] (and every platform impl + test double).
-   */
-  @volatile private[fx] var finalizerTimeout: FiniteDuration = FiniteDuration(30000, MILLISECONDS)
 
   private def fromResult(r: Either[Throwable, Any]): Fx[Any] = r match
     case Right(a) => Pure(a)
@@ -392,8 +382,8 @@ object Fx:
 
     /**
      * Runs the cancel-path finalizers exactly once (guarded by `drained` so concurrent callers do not
-     * split the queue), sequentially in LIFO order, each bounded by `finalizerTimeout` and with its
-     * error suppressed. When the chain settles it closes `cancelDone` (run-independently) so a waiting
+     * split the queue), sequentially in LIFO order, each bounded by the runtime's `finalizerTimeout`
+     * and with its error suppressed. When the chain settles it closes `cancelDone` (run-independently) so a waiting
      * `CancelToken.cancel` unblocks. May be called from the loop, from `requestCancel`, or from the
      * Async self-cancel return.
      */
@@ -404,7 +394,8 @@ object Fx:
         while f != null do { fs = f :: fs; f = cancelFinalizers.poll() }
         val chain = fs.foldLeft(Fx.unit) { (acc, rel) =>
           acc.flatMap(_ =>
-            timeout(rel(), finalizerTimeout)(new TimeoutException("finalizer timed out")).handleErrorWith(_ => Fx.unit)
+            timeout(rel(), rt.finalizerTimeout)(new TimeoutException("finalizer timed out"))
+              .handleErrorWith(_ => Fx.unit)
           )
         }
         chain.unsafeRun(_ => if cancelDone != null then { cancelDone.unsafeComplete(()); () })(using rt)
@@ -426,8 +417,9 @@ object Fx:
      * across threads is arbitrated by the CAS on `cbState`.
      */
     def loop(): Unit =
-      var iters  = 0
-      val cedeAt = autoCedeThreshold // read the volatile once per loop entry, not per iteration
+      var iters = 0
+      // Clamped so a runtime declaring 0 or 1 cannot stop the loop from executing any step at all.
+      val cedeAt = math.max(FxRuntime.minAutoCedeThreshold, rt.autoCedeThreshold)
       while true do
         if cancelled.get() && maskDepth.get() == 0 then
           drainFinalizers()

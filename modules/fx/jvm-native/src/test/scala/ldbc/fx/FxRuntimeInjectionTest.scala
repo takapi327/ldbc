@@ -56,7 +56,7 @@ class FxRuntimeInjectionTest extends munit.FunSuite:
 
   test("auto-ceded continuation resumes on the injected runtime") {
     val rt = new RecordingRuntime
-    // A long chain of pure steps exceeds the auto-cede threshold (1024), forcing a re-schedule
+    // A long chain of pure steps exceeds the runtime's auto-cede threshold, forcing a re-schedule
     // through the injected runtime's executeCompute.
     var fx: Fx[Int] = Fx.pure(0)
     for _ <- 0 until 1500 do fx = fx.map(_ + 1)
