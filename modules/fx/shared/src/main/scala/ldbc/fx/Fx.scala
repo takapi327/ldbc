@@ -332,6 +332,11 @@ object Fx:
    * Test-only seam invoked on the running thread immediately after an `async` publishes its
    * suspension (i.e. after the `SUSPENDED` CAS wins), so concurrency tests can deterministically
    * open the suspend/cancel race window. It is a no-op in production and must stay `private[fx]`.
+   *
+   * Unlike the runtime's tuning knobs this is deliberately process-global: it is scaffolding, not
+   * configuration, so it does not belong on [[FxRuntime]]. It is therefore shared by every run in the
+   * process — a test that sets it must restore it, and tests that set it must not run in parallel with
+   * others that depend on suspension timing.
    */
   @volatile private[fx] var suspendHook: () => Unit = () => ()
 
@@ -412,8 +417,9 @@ object Fx:
      * across threads is arbitrated by the CAS on `cbState`.
      */
     def loop(): Unit =
-      var iters  = 0
-      val cedeAt = rt.autoCedeThreshold
+      var iters = 0
+      // Clamped so a runtime declaring 0 or 1 cannot stop the loop from executing any step at all.
+      val cedeAt = math.max(FxRuntime.minAutoCedeThreshold, rt.autoCedeThreshold)
       while true do
         if cancelled.get() && maskDepth.get() == 0 then
           drainFinalizers()
