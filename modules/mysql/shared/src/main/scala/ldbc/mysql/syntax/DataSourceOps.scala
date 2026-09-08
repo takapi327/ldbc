@@ -15,7 +15,10 @@ import ldbc.effect.Async
  *
  * `DataSource.getConnection` returns the connection in "allocated" form `(connection, release)`, which
  * must be released with a bracket to stay safe under cancellation. This extension performs that bracket
- * so callers keep a concise `ds.use { conn => ... }` while the release runs on every outcome.
+ * so callers keep a concise `ds.use { conn => ... }`.
+ *
+ * Release follows the [[ldbc.effect.Async.bracket]] contract: guaranteed on success and error, and
+ * best-effort per effect on cancellation (`IO`/`Task` release, `Future` never cancels).
  */
 trait DataSourceOps:
 

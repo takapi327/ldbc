@@ -12,8 +12,11 @@ import ldbc.effect.Async
 
 /**
  * Consumption helper for an [[ldbc.sql.DataSource]] over any effect `F` with an [[ldbc.effect.Async]]
- * instance: `use` acquires a connection, runs `f`, and releases the connection afterwards (on success
- * and error), all within a single `bracket`.
+ * instance: `use` acquires a connection, runs `f`, and releases the connection afterwards, all within a
+ * single `bracket`.
+ *
+ * Release follows the [[ldbc.effect.Async.bracket]] contract: guaranteed on success and error, and
+ * best-effort per effect on cancellation (`IO`/`Task` release, `Future` never cancels).
  */
 extension [F[_]](ds: DataSource[F])
   def use[B](f: Connection[F] => F[B])(using F: Async[F]): F[B] =
