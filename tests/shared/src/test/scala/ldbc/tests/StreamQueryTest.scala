@@ -14,8 +14,6 @@ import munit.*
 
 import ldbc.dsl.*
 
-import ldbc.connector.*
-
 import ldbc.catseffect.*
 import ldbc.fx.Fx
 import ldbc.Connector
@@ -23,6 +21,7 @@ import ldbc.Connector
 import zio.Task
 
 class LdbcStreamQueryTest extends StreamQueryTest[IO] with IODatabaseSuite:
+  import ldbc.connector.{ MySQLDataSource, SSL }
 
   private val datasource = MySQLDataSource
     .build[IO](host, port, user)
