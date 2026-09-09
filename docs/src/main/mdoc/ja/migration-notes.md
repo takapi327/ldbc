@@ -9,7 +9,7 @@
 
 > **重要**: 既存の `ldbc-connector`（Cats Effect ベースの MySQL コネクター）は **0.9.x でも引き続き利用できます**。0.9.x はエフェクト非依存版への強制移行を求めるものではなく、`ldbc-connector` の隣に **エフェクト非依存の新ドライバ `ldbc-mysql`** と、各エフェクト向けのブリッジ（`ldbc-cats-effect` / `ldbc-zio` / `ldbc-future`）を追加するものです。急いで `ldbc-mysql` へ移る必要はありません。
 >
-> ただし、エフェクト非依存化にともない**共有モジュール（`ldbc-sql` / `ldbc-core` / `ldbc-dsl`）には破壊的変更があります**。`ldbc-connector` を使い続ける場合でも、接続の取得（`getConnection`）・ストリーミング（`Query#stream`）・`Sync[DBIO]` に該当する箇所は書き換えが必要です。詳細は下記の「破壊的変更」を参照してください。
+> ただし、エフェクト非依存化にともない**共有モジュール（`ldbc-sql` / `ldbc-core` / `ldbc-dsl`）には破壊的変更があります**。`ldbc-connector` を使い続ける場合でも、接続の取得（`getConnection`）や `Sync[DBIO]` に該当する箇所は書き換えが必要です（ストリーミングは `import ldbc.connector.*` があればそのまま動きます）。詳細は下記の「破壊的変更」を参照してください。
 >
 > また、**`ldbc-connector` は将来のバージョンで廃止される予定です**。エフェクト非依存の新ドライバ `ldbc-mysql`（およびエフェクトに応じたブリッジ）が後継となるため、新規プロジェクトでは `ldbc-mysql` の利用を推奨します。既存プロジェクトも、準備が整い次第 `ldbc-mysql` への移行を検討してください。
 
@@ -129,7 +129,7 @@ val connector = Connector.fromDataSource(datasource)
 - Cats Effect（`IO`）: `fs2.Stream`（`ldbc-cats-effect`）
 - ZIO（`Task`）: `zio.stream.ZStream`（`ldbc-zio`）
 
-これにともない、`ldbc-dsl` は fs2 への依存をやめ、`Query#stream` を削除しました。**`ldbc-connector` を使い続ける場合でも、ストリーミングを使うなら `ldbc-cats-effect` の追加が必要です**（「破壊的変更」の 2 を参照）。
+これにともない、`ldbc-dsl` は fs2 への依存をやめ、`Query#stream` を削除しました。**`ldbc-connector` を使い続ける場合は、`import ldbc.connector.*` があればそのまま `query.stream` が使えます**（`ldbc-connector` が `ldbc-cats-effect` に依存し、`stream` を re-export しているため）。`ldbc-mysql` を使う場合のみ `ldbc-cats-effect` の追加が必要です。詳細は「破壊的変更」の 2 を参照してください。
 
 ### 4. テレメトリのバックエンドを分離
 
@@ -149,7 +149,7 @@ val connector = Connector.fromDataSource(datasource)
 | # | 変更 | 影響を受けるのは |
 |---|------|-----------------|
 | 1 | `DataSource` の移動と `getConnection` の戻り値変更 | `getConnection` を直接呼んでいるコード / `DataSource` を自作しているコード |
-| 2 | `Query#stream` が `ldbc-cats-effect` へ移動 | fs2 ストリーミングを使っているコード |
+| 2 | `Query#stream` が `ldbc-cats-effect` へ移動 | fs2 ストリーミングを使っているコード（`ldbc-connector` 利用時は影響なし） |
 | 3 | `Sync[DBIO]` が `MonadError[DBIO, Throwable]` に | `DBIO` に `Sync` を要求しているコード |
 | 4 | Free 代数から cats-effect 由来の操作を削除 | 独自の解釈器（`Visitor`）を実装しているコード |
 | 5 | 推移的依存の変更 | `ldbc-dsl` / `ldbc-core` 経由で fs2 / cats-effect を得ていたコード |
@@ -206,7 +206,30 @@ override def getConnection: F[(Connection[F], F[Unit])] =
 
 ### 2. `Query#stream` が `ldbc-dsl` から `ldbc-cats-effect` へ移りました
 
-`ldbc-dsl` は fs2 への依存をやめ、`Query` から `stream` / `stream(fetchSize)` を削除しました。fs2 ストリーミングは `ldbc-cats-effect` の拡張メソッドとして提供されます。**`ldbc-connector` を使い続ける場合も、ストリーミングを使うなら依存の追加が必要です**（`ldbc-connector` は `ldbc-cats-effect` に依存していません）。
+`ldbc-dsl` は fs2 への依存をやめ、`Query` から `stream` / `stream(fetchSize)` を削除しました。fs2 ストリーミングは `ldbc-cats-effect` の拡張メソッドとして提供されます。**必要な対応は、どちらのドライバを使うかで変わります。**
+
+#### `ldbc-connector`（従来のドライバ）を使う場合
+
+**依存の追加は不要です。** `ldbc-connector` が `ldbc-cats-effect` に依存し、`ldbc.connector` パッケージオブジェクトが `stream` と `syncDBIO` を re-export しているため、`import ldbc.connector.*` があれば `query.stream` はそのまま使えます。
+
+```scala
+import ldbc.dsl.*
+import ldbc.connector.*
+
+sql"SELECT name FROM city".query[String].stream(100)
+```
+
+`ldbc.connector` を wildcard で import せず `ldbc.connector.MySQLDataSource` のように修飾して使っていた場合のみ、`import ldbc.connector.*` を追加してください。0.8.x では `import ldbc.dsl.*` から `stream` が入っていたためです。
+
+@:callout(warning)
+
+`ldbc-connector` を使う場合、**`import ldbc.connector.*` と `import ldbc.catseffect.*` を同一ファイルで併用できません**。`stream` / `syncDBIO` / `Connector` が両方から入り、いずれも曖昧参照になります。どちらか一方に統一するか、必要なものだけを個別に import してください。
+
+@:@
+
+#### `ldbc-mysql`（エフェクト非依存ドライバ）を使う場合
+
+`ldbc-cats-effect` の追加と `import ldbc.catseffect.*` が必要です。
 
 ```scala
 libraryDependencies += "io.github.takapi327" %%% "ldbc-cats-effect" % "0.9.0"
@@ -228,8 +251,6 @@ import ldbc.catseffect.*
 
 sql"SELECT name FROM city".query[String].stream(100)
 ```
-
-> **注意**: `import ldbc.connector.*` と `import ldbc.catseffect.*` を同時に行うと、`Connector` という名前が両方から入ってくるため曖昧参照になります。コネクターの生成側を `ldbc.connector.Connector.fromDataSource(...)` のように修飾するか、必要なものだけを個別に import してください。
 
 ZIO で `ZStream` を使う場合は `ldbc-zio` を追加し、`query.stream(connector)` を呼びます（`ZStream` は常に ZIO 上の型のため、`DBIO` の上には構築できず、コネクターを引数に取る形になっています）。
 
@@ -268,7 +289,7 @@ ZIO で `ZStream` を使う場合は `ldbc-zio` を追加し、`query.stream(con
 | `ldbc-core` | `cats-free` + `cats-effect` | `cats-free` のみ |
 | `ldbc-dsl` | `twiddles-core` + `fs2-core` | `twiddles-core` のみ |
 
-`ldbc-dsl` / `ldbc-core` 経由で cats-effect や fs2 がクラスパスに入ることを当てにしていた場合は、明示的に依存を追加するか、`ldbc-cats-effect` を追加してください。`ldbc-connector` は従来どおり cats-effect / fs2 に依存しているため、`ldbc-connector` を使っている場合はクラスパス上の内容は変わりません（ただし `Query#stream` は 2 のとおり移動しています）。
+`ldbc-dsl` / `ldbc-core` 経由で cats-effect や fs2 がクラスパスに入ることを当てにしていた場合は、明示的に依存を追加するか、`ldbc-cats-effect` を追加してください。`ldbc-connector` は従来どおり cats-effect / fs2 に依存しており、0.9.x では新たに `ldbc-cats-effect` にも依存します。そのため `ldbc-connector` を使っている場合、クラスパス上で不足するものはありません。
 
 ### `ldbc-mysql` の `Parameter` はエフェクト非依存ドライバ向けの新実装
 
@@ -304,7 +325,7 @@ libraryDependencies += "io.github.takapi327" %%% "ldbc-connector" % "0.9.0"
 そのうえで、「破壊的変更」のうち次の 3 点に該当する箇所を書き換えます。多くのプロジェクトではこれで移行が完了します。
 
 1. `datasource.getConnection.use { ... }` → `import ldbc.connector.syntax.*` を追加して `datasource.use { ... }`
-2. `query.stream` を使っている → `ldbc-cats-effect` を依存に追加し、`import ldbc.catseffect.*`
+2. `query.stream` を使っている → `ldbc-connector` なら `import ldbc.connector.*` があればそのまま。`ldbc-mysql` なら `ldbc-cats-effect` を依存に追加し `import ldbc.catseffect.*`
 3. `Sync[DBIO]` を要求している → 同じく `import ldbc.catseffect.*`
 
 ```scala
