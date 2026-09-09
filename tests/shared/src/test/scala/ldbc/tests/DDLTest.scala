@@ -6,6 +6,10 @@
 
 package ldbc.tests
 
+import scala.concurrent.Future
+
+import cats.syntax.all.*
+
 import cats.effect.*
 
 import munit.*
@@ -16,9 +20,12 @@ import ldbc.schema.*
 
 import ldbc.connector.*
 
+import ldbc.fx.Fx
 import ldbc.Connector
 
-class LdbcDDLTest extends DDLTest:
+import zio.Task
+
+class LdbcDDLTest extends DDLTest[IO] with IODatabaseSuite:
 
   private val datasource = MySQLDataSource
     .build[IO](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
@@ -28,9 +35,66 @@ class LdbcDDLTest extends DDLTest:
 
   override def connector: Connector[IO] = Connector.fromDataSource(datasource)
 
-trait DDLTest extends CatsEffectSuite:
+class MysqlDDLTest extends DDLTest[IO] with IODatabaseSuite:
+  import ldbc.catseffect.concurrentIO
+  import ldbc.catseffect.Connector as MysqlConnector
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
 
-  def connector: Connector[IO]
+  private val datasource = MySQLDataSource
+    .build[IO](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+    .setPassword(MySQLTestConfig.password)
+    .setDatabase("connector_test")
+    .setSSL(MysqlSSL.Trusted)
+
+  override def connector: Connector[IO] = MysqlConnector.fromDataSource(datasource)
+
+class MysqlFxDDLTest extends DDLTest[Fx] with FxDatabaseSuite:
+  import ldbc.fx.concurrentFx
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
+  import ldbc.tests.TestConnector as MysqlConnector
+
+  override def connector: Connector[Fx] =
+    MysqlConnector.fromDataSource(
+      MySQLDataSource
+        .build[Fx](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+        .setPassword(MySQLTestConfig.password)
+        .setDatabase("connector_test")
+        .setSSL(MysqlSSL.Trusted)
+    )
+
+class MysqlFutureDDLTest extends DDLTest[Future] with FutureDatabaseSuite:
+  import ldbc.fx.concurrentFx
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
+
+  override def connector: Connector[Future] =
+    ldbc.future.Connector.fromDataSource(
+      MySQLDataSource
+        .build[Fx](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+        .setPassword(MySQLTestConfig.password)
+        .setDatabase("connector_test")
+        .setSSL(MysqlSSL.Trusted)
+    )
+
+class MysqlZioDDLTest extends DDLTest[Task] with ZioDatabaseSuite:
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
+  import ldbc.zio.concurrentTask
+
+  override def connector: Connector[Task] =
+    ldbc.zio.Connector.fromDataSource(
+      MySQLDataSource
+        .build[Task](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+        .setPassword(MySQLTestConfig.password)
+        .setDatabase("connector_test")
+        .setSSL(MysqlSSL.Trusted)
+    )
+
+trait DDLTest[F[_]] extends DatabaseSuite[F]:
+
+  def connector: Connector[F]
 
   final case class User(
     id:   Long,
@@ -38,7 +102,7 @@ trait DDLTest extends CatsEffectSuite:
     age:  Option[Int]
   )
 
-  class UserTable extends Table[User]("user"):
+  class UserTable(tableName: String) extends Table[User](tableName):
     def id:   Column[Long]        = bigint().autoIncrement
     def name: Column[String]      = varchar(255)
     def age:  Column[Option[Int]] = int()
@@ -47,35 +111,33 @@ trait DDLTest extends CatsEffectSuite:
 
     def * : Column[User] = (id *: name *: age).to[User]
 
-  final val userTable = TableQuery[UserTable]
+  final val userTable = TableQuery[User, UserTable](new UserTable(s"user_${ effectLabel }_${ getClass.getSimpleName }"))
 
   override def munitFixtures = List(
-    ResourceSuiteLocalFixture(
+    suiteFixture(
       "Database Setup",
-      Resource.make[IO, Unit](
-        DBIO
-          .sequence(
-            userTable.schema.create,
-            userTable.schema.createIfNotExists,
-            userTable.schema.dropIfExists,
-            userTable.schema.create
-          )
-          .commit(connector) *> IO.unit
-      ) { _ =>
-        DBIO.sequence(userTable.schema.drop).commit(connector) *> IO.unit
-      }
+      DBIO
+        .sequence(
+          userTable.schema.create,
+          userTable.schema.createIfNotExists,
+          userTable.schema.dropIfExists,
+          userTable.schema.create
+        )
+        .commit(connector)
+        .void,
+      DBIO.sequence(userTable.schema.drop).commit(connector).void
     )
   )
 
   test("When the table is created, the number of records is 0.") {
-    assertIO(
+    assertF(
       userTable.select(_.id.count).query.unsafe.readOnly(connector),
       0
     )
   }
 
   test("Records can be inserted into tables created before the test begins.") {
-    assertIO(
+    assertF(
       userTable
         .insertInto(user => user.name *: user.age)
         .values(

@@ -35,7 +35,9 @@ sql"SELECT name, email FROM user WHERE id = $id".query[(String, String)].to[List
 Connectorを使用してクエリを実行すると問題なく動作します。
 
 ```scala
-import ldbc.connector.*
+import ldbc.mysql.MySQLDataSource
+import ldbc.net.SSL
+import ldbc.catseffect.*
 
 // Connectorを作成
 val connector = Connector.fromDataSource(datasource)

@@ -35,6 +35,10 @@ sql"SELECT name, email FROM user WHERE id = $id".query[(String, String)].to[List
 When we execute the query using a connection, it works without issues.
 
 ```scala
+import ldbc.mysql.MySQLDataSource
+import ldbc.net.SSL
+import ldbc.catseffect.*
+
 // Create Connector
 val connector = Connector.fromDataSource(datasource)
 

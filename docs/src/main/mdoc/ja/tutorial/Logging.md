@@ -13,7 +13,7 @@ ldbcではデータベース接続の実行ログやエラーログを任意の�
 
 デフォルトではCats EffectのConsoleを使用したロガーが提供されているため開発時はこちらを使用することができます。
 
-任意のロギングライブラリを使用してログをカスタマイズする場合は`ldbc.sql.logging.LogHandler`を使用します。
+任意のロギングライブラリを使用してログをカスタマイズする場合は`ldbc.logging.LogHandler`を使用します。
 
 以下は標準実装のログ実装です。ldbcではデータベース接続で以下3種類のイベントが発生します。
 
@@ -24,6 +24,11 @@ ldbcではデータベース接続の実行ログやエラーログを任意の�
 それぞれのイベントでどのようなログを書き込むかをパターンマッチングによって振り分けを行います。
 
 ```scala 3
+import cats.effect.Sync
+import cats.effect.std.Console
+
+import ldbc.logging.{ LogEvent, LogHandler }
+
 def console[F[_]: Console: Sync]: LogHandler[F] =
   case LogEvent.Success(sql, args) =>
     Console[F].println(
@@ -51,17 +56,22 @@ def console[F[_]: Console: Sync]: LogHandler[F] =
     ) >> Console[F].printStackTrace(failure)
 ```
 
-作成されたLogHandlerはProvider生成時に`setLogHandler`に引数として渡すことで任意のログ出力方式を使用することができます。
+作成された`LogHandler`は`Connector`生成時に第2引数として渡すことで、任意のログ出力方式を使用することができます。
 
 ```scala 3
-import ldbc.connector.*
+import ldbc.logging.LogHandler
+import ldbc.mysql.MySQLDataSource
+import ldbc.net.SSL
+import ldbc.catseffect.*
+
 val datasource =
   MySQLDataSource
     .build[IO]("127.0.0.1", 3306, "ldbc")
     .setPassword("password")
     .setDatabase("ldbc")
     .setSSL(SSL.Trusted)
-    .setLogHandler(console[IO])
+
+val connector = Connector.fromDataSource(datasource, console[IO])
 ```
 
 ## 次のステップ

@@ -126,12 +126,15 @@ touch FirstSteps.scala
 ```scala
 //> using scala "@SCALA_VERSION@"
 //> using dep "@ORGANIZATION@::ldbc-dsl:@VERSION@"
-//> using dep "@ORGANIZATION@::ldbc-connector:@VERSION@"
+//> using dep "@ORGANIZATION@::ldbc-mysql:@VERSION@"
+//> using dep "@ORGANIZATION@::ldbc-cats-effect:@VERSION@"
 
 import cats.effect.*
 import cats.syntax.all.*
-import ldbc.connector.*
 import ldbc.dsl.*
+import ldbc.mysql.MySQLDataSource
+import ldbc.net.SSL
+import ldbc.catseffect.*
 
 object FirstSteps extends IOApp.Simple:
 
@@ -168,7 +171,7 @@ scala-cli FirstSteps.scala
 すべてのセットアップを自動で行うScala CLIスクリプトも用意しています：
 
 ```bash
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/00-Setup.scala --dependency io.github.takapi327::ldbc-dsl:@VERSION@ --dependency io.github.takapi327::ldbc-connector:@VERSION@
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/00-Setup.scala --dependency io.github.takapi327::ldbc-dsl:@VERSION@ --dependency io.github.takapi327::ldbc-mysql:@VERSION@ --dependency io.github.takapi327::ldbc-cats-effect:@VERSION@
 ```
 
 ## 次のステップ

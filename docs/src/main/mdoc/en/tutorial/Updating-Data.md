@@ -34,6 +34,10 @@ def insertUser(name: String, email: String): DBIO[Int] =
 Let's use this method to actually insert data and check the result:
 
 ```scala
+import ldbc.mysql.MySQLDataSource
+import ldbc.net.SSL
+import ldbc.catseffect.*
+
 // Create Connector
 val connector = Connector.fromDataSource(datasource)
 

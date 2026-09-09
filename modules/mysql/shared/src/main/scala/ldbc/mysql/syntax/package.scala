@@ -1,0 +1,9 @@
+/**
+ * Copyright (c) 2023-2026 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
+
+package ldbc.mysql
+
+package object syntax extends ResultSetOps with DataSourceOps

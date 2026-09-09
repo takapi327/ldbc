@@ -50,6 +50,33 @@ laika.metadata.language = ja
   - 日時型: LocalDate, LocalTime, LocalDateTime (2種)
   - 論理型: Boolean
 
+### ldbc固有の設定
+```scala
+MySQLDataSource
+  .build[IO]("127.0.0.1", 13306, "ldbc")
+  .setPassword("password")
+  .setDatabase("benchmark")
+  .setSSL(SSL.Trusted)
+  // デフォルト設定（最適化なし）
+  .setUseServerPrepStmts(false)
+  .setUseCursorFetch(false)
+```
+
+### jdbc固有の設定
+```scala
+val ds = new MysqlDataSource()
+ds.setServerName("127.0.0.1")
+ds.setPortNumber(13306)
+ds.setDatabaseName("benchmark")
+ds.setUser("ldbc")
+ds.setPassword("password")
+ds.setUseSSL(true)
+// 固定サイズのスレッドプール
+val executorService = Executors.newFixedThreadPool(
+  Math.max(4, Runtime.getRuntime.availableProcessors())
+)
+```
+
 ## スレッド数によるパフォーマンス比較
 
 ### 1スレッド環境

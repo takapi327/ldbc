@@ -564,6 +564,9 @@ Execute the constructed queries as follows:
 
 ```scala 3
 import ldbc.dsl.*
+import ldbc.mysql.MySQLDataSource
+import ldbc.net.SSL
+import ldbc.catseffect.*
 
 // Create Connector
 val connector = Connector.fromDataSource(datasource)

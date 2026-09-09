@@ -14,7 +14,9 @@
 ※ このチュートリアルでは、データベース操作を実行するために`Connector`を使用します：
 
 ```scala
-import ldbc.connector.*
+import ldbc.mysql.MySQLDataSource
+import ldbc.net.SSL
+import ldbc.catseffect.*
 
 // Connectorを作成
 val connector = Connector.fromDataSource(datasource)

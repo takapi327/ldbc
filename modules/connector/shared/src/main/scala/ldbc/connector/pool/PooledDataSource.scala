@@ -1,0 +1,1149 @@
+/**
+ * Copyright (c) 2023-2026 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
+
+package ldbc.connector.pool
+
+import scala.concurrent.duration.*
+
+import cats.*
+import cats.syntax.all.*
+
+import cats.effect.*
+import cats.effect.std.Console
+import cats.effect.std.UUIDGen
+import cats.effect.syntax.all.*
+
+import fs2.hashing.Hashing
+import fs2.io.net.*
+
+import org.typelevel.otel4s.metrics.*
+import org.typelevel.otel4s.trace.*
+
+import ldbc.sql.DataSource
+import ldbc.sql.DatabaseMetaData
+
+import ldbc.connector.*
+import ldbc.connector.exception.SQLException
+import ldbc.connector.telemetry.*
+
+import ldbc.authentication.plugin.AuthenticationPlugin
+import ldbc.build.Version
+
+/**
+ * A DataSource implementation that manages a pool of reusable database connections.
+ *
+ * PooledDataSource extends the basic [[ldbc.sql.DataSource]] interface to provide connection
+ * pooling capabilities, which significantly improve performance by reusing existing
+ * connections rather than creating new ones for each request.
+ *
+ * Key features include:
+ * - Connection reuse to minimize the overhead of connection establishment
+ * - Configurable pool size with minimum and maximum connections
+ * - Connection validation to ensure healthy connections
+ * - Idle timeout management to release unused connections
+ * - Leak detection to identify connections not properly returned to the pool
+ * - Adaptive sizing to dynamically adjust pool size based on load
+ * - Comprehensive metrics tracking for monitoring pool health
+ *
+ * The pool maintains connections in different states:
+ * - Available: Ready for use
+ * - In-use: Currently borrowed by a client
+ * - Invalid: Failed validation and awaiting removal
+ *
+ * @tparam F the effect type (e.g., IO) that wraps asynchronous operations
+ */
+trait PooledDataSource[F[_]] extends DataSource[F]:
+
+  /** The minimum number of connections to maintain in the pool. */
+  def minConnections: Int
+
+  /** The maximum number of connections allowed in the pool. */
+  def maxConnections: Int
+
+  /** The maximum time to wait for a connection to become available. */
+  def connectionTimeout: FiniteDuration
+
+  /** The maximum time a connection can remain idle before being closed. */
+  def idleTimeout: FiniteDuration
+
+  /** The maximum lifetime of a connection in the pool. */
+  def maxLifetime: FiniteDuration
+
+  /** The maximum time to wait for connection validation. */
+  def validationTimeout: FiniteDuration
+
+  /** Optional threshold for detecting connection leaks. */
+  def leakDetectionThreshold: Option[FiniteDuration]
+
+  /** Whether adaptive pool sizing is enabled. */
+  def adaptiveSizing: Boolean
+
+  /** The interval at which the adaptive sizing algorithm runs. */
+  def adaptiveInterval: FiniteDuration
+
+  /** The metrics tracker for monitoring pool performance. */
+  def metricsTracker: PoolMetricsTracker[F]
+
+  /** Internal state of the connection pool. */
+  def poolState: Ref[F, PoolState[F]]
+
+  /** Generates unique identifiers for connections. */
+  def idGenerator: F[String]
+
+  /** The alive bypass window for validation optimization. */
+  def aliveBypassWindow: FiniteDuration
+
+  /** The keepalive time for idle connections. */
+  def keepaliveTime: Option[FiniteDuration]
+
+  /** The connection test query. */
+  def connectionTestQuery: Option[String]
+
+  /** The pool logger for logging pool events. */
+  def poolLogger: PoolLogger[F]
+
+  /**
+   * Returns the current status of the pool.
+   *
+   * @return a PoolStatus containing information about available, in-use, and total connections
+   */
+  def status: F[PoolStatus]
+
+  /**
+   * Returns comprehensive metrics about pool performance.
+   *
+   * @return a PoolMetrics object with detailed statistics
+   */
+  def metrics: F[PoolMetrics]
+
+  /**
+   * Gracefully shuts down the pool, closing all connections.
+   *
+   * This method will:
+   * - Stop accepting new connection requests
+   * - Wait for in-use connections to be returned
+   * - Close all connections
+   * - Cancel background maintenance tasks
+   */
+  def close: F[Unit]
+
+  /**
+   * Creates a new pooled connection.
+   *
+   * @return a new PooledConnection wrapped in the effect type
+   */
+  def createNewConnection(): F[PooledConnection[F]]
+
+  /**
+   * Circuit breaker for connection creation.
+   */
+  def circuitBreaker: CircuitBreaker[F]
+
+  /**
+   * Creates a new connection specifically for pool initialization.
+   * Unlike createNewConnection, this creates connections in idle state.
+   *
+   * @return a new PooledConnection in idle state
+   */
+  def createNewConnectionForPool(): F[PooledConnection[F]]
+
+  /**
+   * Returns a connection to the pool for reuse.
+   *
+   * @param pooled the connection to return to the pool
+   */
+  def returnToPool(pooled: PooledConnection[F]): F[Unit]
+
+  /**
+   * Removes a connection from the pool permanently.
+   *
+   * @param pooled the connection to remove
+   */
+  def removeConnection(pooled: PooledConnection[F]): F[Unit]
+
+  /**
+   * Validates that a connection is still healthy and usable.
+   *
+   * @param conn the connection to validate
+   * @return true if the connection is valid, false otherwise
+   */
+  def validateConnection(conn: Connection[F]): F[Boolean]
+
+object PooledDataSource:
+
+  private case class Impl[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
+    host:                    String,
+    port:                    Int,
+    user:                    String,
+    password:                Option[String]                        = None,
+    database:                Option[String]                        = None,
+    debug:                   Boolean                               = false,
+    ssl:                     SSL                                   = SSL.None,
+    socketOptions:           List[SocketOption]                    = MySQLConfig.defaultSocketOptions,
+    readTimeout:             Duration                              = Duration.Inf,
+    allowPublicKeyRetrieval: Boolean                               = false,
+    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
+    useCursorFetch:          Boolean                               = false,
+    useServerPrepStmts:      Boolean                               = false,
+    plugins:                 List[AuthenticationPlugin[F]]         = List.empty[AuthenticationPlugin[F]],
+    before:                  Option[Connection[F] => F[A]]         = None,
+    after:                   Option[(A, Connection[F]) => F[Unit]] = None,
+    minConnections:          Int                                   = 5,
+    maxConnections:          Int                                   = 20,
+    connectionTimeout:       FiniteDuration                        = 30.seconds,
+    idleTimeout:             FiniteDuration                        = 10.minutes,
+    maxLifetime:             FiniteDuration                        = 30.minutes,
+    validationTimeout:       FiniteDuration                        = 5.seconds,
+    leakDetectionThreshold:  Option[FiniteDuration]                = None,
+    adaptiveSizing:          Boolean                               = true,
+    adaptiveInterval:        FiniteDuration                        = 30.seconds,
+    telemetryConfig:         TelemetryConfig                       = TelemetryConfig.default,
+    metricsTracker:          PoolMetricsTracker[F],
+    databaseMetrics:         DatabaseMetrics[F],
+    poolName:                String,
+    poolState:               Ref[F, PoolState[F]],
+    idGenerator:             F[String],
+    connectionBag:           ConcurrentBag[F, PooledConnection[F]],
+    circuitBreaker:          CircuitBreaker[F],
+    aliveBypassWindow:       FiniteDuration,
+    keepaliveTime:           Option[FiniteDuration],
+    connectionTestQuery:     Option[String],
+    poolLogger:              PoolLogger[F]
+  )(using Tracer[F])
+    extends PooledDataSource[F]:
+
+    override def getConnection: F[(Connection[F], F[Unit])] = Resource.make(acquire)(release).allocated
+
+    override def status: F[PoolStatus] = for {
+      state <- poolState.get
+      connections = state.connections
+      // Count states by checking each connection
+      stateChecks <- connections.traverse { c =>
+                       c.state.get.map(s => (c, s))
+                     }
+      active = stateChecks.count(_._2 == ConnectionState.InUse)
+      idle   = stateChecks.count(_._2 == ConnectionState.Idle)
+    } yield PoolStatus(
+      total   = connections.size,
+      active  = active,
+      idle    = idle,
+      waiting = state.waitQueue.size
+    )
+
+    override def metrics: F[PoolMetrics] = metricsTracker.getMetrics
+
+    override def close: F[Unit] =
+      poolState.modify { state =>
+        if state.closed then (state, Temporal[F].unit)
+        else
+          val newState = state.copy(closed = true)
+          val closeAll = state.connections.traverse_ { pooled =>
+            pooled.finalizer.attempt.flatMap {
+              case Left(error) =>
+                poolLogger.debug(s"Error closing connection ${ pooled.id }: ${ error.getMessage }") >>
+                  pooled.connection.close().attempt.void
+              case Right(_) =>
+                Temporal[F].unit
+            }
+          }
+          val failWaiters = state.waitQueue.traverse_ { deferred =>
+            deferred.complete(Left(new SQLException("Pool closed"))).attempt.void
+          }
+          val effect =
+            poolLogger.info(
+              s"Closing connection pool (host: $host:$port${ database.map(d => s", database: $d").getOrElse("") })"
+            ) >> closeAll *> failWaiters >> poolLogger.info("Connection pool closed successfully")
+          (newState, effect)
+      }.flatten
+
+    /**
+     * Acquires a connection from the pool, recording the start time for wait-time metrics.
+     *
+     * @return a connection from the pool
+     */
+    private def acquire: F[Connection[F]] = for
+      startTime <- Clock[F].monotonic
+      result    <- acquireConnectionWithStartTime(startTime)
+    yield result
+
+    /**
+     * Core acquisition logic that attempts to borrow a connection from the bag, validating it,
+     * or creating a new one if the pool has not reached its maximum size.
+     * Raises [[ldbc.connector.exception.SQLException]] if all connections are in use and a
+     * new connection cannot be created within [[connectionTimeout]].
+     *
+     * @param startTime monotonic timestamp captured at the beginning of the acquisition attempt,
+     *                  used to calculate connection wait time
+     * @return a healthy [[Connection]] ready for use
+     */
+    private def acquireConnectionWithStartTime(startTime: FiniteDuration): F[Connection[F]] =
+      poolState.get.flatMap { state =>
+        if state.closed then Temporal[F].raiseError(new SQLException("Pool is closed"))
+        else
+          connectionBag.borrow(connectionTimeout).flatMap {
+            case Some(pooled) =>
+              // Successfully borrowed from bag
+              for
+                // Check if validation is needed
+                shouldValidate <- needsValidation(pooled)
+                valid          <- if shouldValidate then {
+                           validateConnection(pooled.connection).flatTap {
+                             case true  => Temporal[F].unit
+                             case false =>
+                               poolLogger.warn(s"Connection ${ pooled.id } failed validation, removing from pool")
+                           }
+                         } else Temporal[F].pure(true)
+                result <- if !valid then {
+                            // Connection is invalid, remove it and try again
+                            removeConnection(pooled) >> acquireConnectionWithStartTime(startTime)
+                          } else
+                            for
+                              _ <- pooled.state.set(ConnectionState.InUse)
+                              // Remove from idleConnections when acquired
+                              _       <- poolState.update(s => s.copy(idleConnections = s.idleConnections - pooled.id))
+                              now     <- Clock[F].realTime.map(_.toMillis)
+                              _       <- pooled.lastUsedAt.set(now)
+                              _       <- pooled.useCount.update(_ + 1)
+                              endTime <- Clock[F].monotonic
+                              _       <- metricsTracker.recordAcquisition(endTime - startTime)
+                              _       <- databaseMetrics.recordConnectionWaitTime(endTime - startTime, poolName)
+                              // Start leak detection if configured
+                              _ <- leakDetectionThreshold.traverse_ { threshold =>
+                                     val leakFiber = Temporal[F]
+                                       .sleep(threshold)
+                                       .flatMap { _ =>
+                                         pooled.state.get.flatMap {
+                                           case ConnectionState.InUse =>
+                                             poolLogger.warn(
+                                               s"Possible connection leak detected: Connection ${ pooled.id } has been in use for longer than $threshold"
+                                             ) >>
+                                               metricsTracker.recordLeak()
+                                           case _ => Temporal[F].unit
+                                         }
+                                       }
+                                       .start
+
+                                     leakFiber.flatMap(fiber => pooled.leakDetection.set(Some(fiber)))
+                                   }
+                            yield wrapConnection(pooled)
+              yield result
+
+            case None =>
+              // Timeout or no connections available
+              // Check if we can create a new connection
+              poolState.get.flatMap { currentState =>
+                if currentState.connections.size < maxConnections then
+                  createNewConnection().flatMap { pooled =>
+                    for
+                      endTime <- Clock[F].monotonic
+                      _       <- metricsTracker.recordAcquisition(endTime - startTime)
+                      _       <- databaseMetrics.recordConnectionWaitTime(endTime - startTime, poolName)
+                    yield wrapConnection(pooled)
+                  }
+                else
+                  // Count active connections for more detailed error message
+                  currentState.connections.traverse(_.state.get).flatMap { states =>
+                    val activeCount  = states.count(_ == ConnectionState.InUse)
+                    val idleCount    = states.count(_ == ConnectionState.Idle)
+                    val errorMessage =
+                      s"Connection acquisition timeout after $connectionTimeout " +
+                        s"(host: $host:$port, db: ${ database.getOrElse("none") }, " +
+                        s"pool: ${ currentState.connections.size }/${ maxConnections }, " +
+                        s"active: $activeCount, idle: $idleCount, " +
+                        s"waiting: ${ currentState.waitQueue.size })"
+                    metricsTracker.recordTimeout() *>
+                      databaseMetrics.recordConnectionTimeout(poolName) *>
+                      poolLogger.error(errorMessage) *>
+                      Temporal[F].raiseError(new SQLException(errorMessage))
+                  }
+              }
+          }
+      }
+
+    /**
+     * Releases a connection back to the pool, recording the start time for use-time metrics.
+     *
+     * @param conn the connection being released
+     */
+    private def release(conn: Connection[F]): F[Unit] = for
+      startTime <- Clock[F].monotonic
+      _         <- releaseConnectionWithStartTime(conn, startTime)
+    yield ()
+
+    /**
+     * Core release logic that validates, resets, and returns a connection to the bag, or removes
+     * it from the pool if it is invalid or has exceeded its maximum lifetime.
+     * Connection use-time is recorded regardless of outcome.
+     *
+     * @param conn      the connection being released
+     * @param startTime monotonic timestamp captured at the beginning of the release operation,
+     *                  used to calculate connection use time
+     */
+    private def releaseConnectionWithStartTime(conn: Connection[F], startTime: FiniteDuration): F[Unit] =
+      // Extract the pooled connection from proxy if wrapped
+      val pooledF: F[Option[PooledConnection[F]]] = conn match {
+        case proxy: ProxyConnection[F] => Temporal[F].pure(Some(proxy.pooled))
+        case _                         =>
+          // Fallback: search by unwrapped connection
+          connectionBag.values.map { connections =>
+            connections.find(p => p.connection == unwrapConnection(conn))
+          }
+      }
+
+      pooledF.flatMap {
+        case Some(pooled) =>
+          // Cancel leak detection
+          pooled.leakDetection.get.flatMap(_.traverse_(_.cancel)) >>
+            pooled.leakDetection.set(None) >>
+            pooled.state.set(ConnectionState.Idle) >>
+            resetConnection(pooled.connection).attempt.flatMap {
+              case Right(_) =>
+                for
+                  // Skip validation if connection was recently validated
+                  shouldValidate <- needsValidation(pooled)
+                  valid          <- if shouldValidate then {
+                             validateConnection(pooled.connection).flatTap {
+                               case true  => Temporal[F].unit
+                               case false =>
+                                 poolLogger.warn(
+                                   s"Connection ${ pooled.id } failed validation on release, removing from pool"
+                                 )
+                             }
+                           } else Temporal[F].pure(true)
+                  expired <- isExpired(pooled)
+                  _       <- if valid && !expired then {
+                         // Return to bag for reuse, then add to idleConnections
+                         // Order matters: requite first to ensure connection is actually returned,
+                         // then update idleConnections to maintain consistency
+                         connectionBag.requite(pooled) *>
+                           poolState.update(s => s.copy(idleConnections = s.idleConnections + pooled.id)) *>
+                           Clock[F].monotonic.flatMap { endTime =>
+                             metricsTracker.recordUsage(endTime - startTime) *>
+                               databaseMetrics.recordConnectionUseTime(endTime - startTime, poolName)
+                           }
+                       } else
+                         // Invalid or expired, remove from pool
+                         removeConnection(pooled) *>
+                           Clock[F].monotonic.flatMap { endTime =>
+                             metricsTracker.recordUsage(endTime - startTime) *>
+                               databaseMetrics.recordConnectionUseTime(endTime - startTime, poolName)
+                           }
+                yield ()
+              case Left(error) =>
+                // Reset failed, remove from pool
+                poolLogger.warn(s"Failed to reset connection ${ pooled.id } on release: ${ error.getMessage }") >>
+                  removeConnection(pooled) *>
+                  Clock[F].monotonic.flatMap { endTime =>
+                    metricsTracker.recordUsage(endTime - startTime) *>
+                      databaseMetrics.recordConnectionUseTime(endTime - startTime, poolName)
+                  }
+            }
+        case None =>
+          // Connection not found - still record the usage time
+          Clock[F].monotonic.flatMap { endTime =>
+            metricsTracker.recordUsage(endTime - startTime) *>
+              databaseMetrics.recordConnectionUseTime(endTime - startTime, poolName)
+          }
+      }
+
+    override def createNewConnection(): F[PooledConnection[F]] = for
+      startTime <- Clock[F].monotonic
+      result    <- createNewConnectionWithStartTime(startTime)
+    yield result
+
+    /**
+     * Creates a new connection in [[ConnectionState.InUse]] state with an initial use count of 1,
+     * intended for immediate use by a caller that requested a connection when none was available.
+     *
+     * @param startTime monotonic timestamp captured at the beginning of the creation attempt,
+     *                  used to calculate connection creation time
+     * @return the newly created [[PooledConnection]]
+     */
+    private def createNewConnectionWithStartTime(startTime: FiniteDuration): F[PooledConnection[F]] =
+      createNewConnectionWithState(startTime, ConnectionState.InUse, 1L)
+
+    override def createNewConnectionForPool(): F[PooledConnection[F]] = for
+      startTime <- Clock[F].monotonic
+      result    <- createNewConnectionWithState(startTime, ConnectionState.Idle, 0L)
+    yield result
+
+    /**
+     * Creates a new physical connection, wraps it in a [[PooledConnection]], registers it in
+     * the pool state and the concurrent bag, and records creation-time metrics.
+     * A [[CircuitBreaker]] protects against cascading failures during connection establishment.
+     *
+     * @param startTime      monotonic timestamp captured at the beginning of the creation attempt,
+     *                       used to calculate connection creation time
+     * @param initialState   the [[ConnectionState]] the new connection should start in
+     *                       (`InUse` for on-demand connections, `Idle` for pool pre-warming)
+     * @param initialUseCount the initial value for the connection's use counter
+     * @return the newly created and registered [[PooledConnection]]
+     */
+    private def createNewConnectionWithState(
+      startTime:       FiniteDuration,
+      initialState:    ConnectionState,
+      initialUseCount: Long
+    ): F[PooledConnection[F]] =
+      circuitBreaker
+        .protect {
+          for
+            id        <- idGenerator
+            allocated <- connection.allocated
+            (conn, finalizer) = allocated
+            now              <- Clock[F].realTime.map(_.toMillis)
+            stateRef         <- Ref.of[F, ConnectionState](initialState)
+            lastUsedRef      <- Ref[F].of(now)
+            useCountRef      <- Ref[F].of(initialUseCount)
+            lastValidatedRef <- Ref[F].of(now)
+            leakDetectionRef <- Ref.of[F, Option[Fiber[F, Throwable, Unit]]](None)
+            bagStateRef      <- Ref.of[F, Int](
+                             if initialState == ConnectionState.InUse then BagEntry.STATE_IN_USE
+                             else BagEntry.STATE_NOT_IN_USE
+                           )
+
+            pooled = PooledConnection(
+                       id              = id,
+                       connection      = conn,
+                       finalizer       = finalizer,
+                       state           = stateRef,
+                       createdAt       = now,
+                       lastUsedAt      = lastUsedRef,
+                       useCount        = useCountRef,
+                       lastValidatedAt = lastValidatedRef,
+                       leakDetection   = leakDetectionRef,
+                       bagState        = bagStateRef
+                     )
+
+            // For Idle state connections (pool initialization), add to bag first
+            // to ensure consistency: bag contains the connection before idleConnections tracks it
+            _ <-
+              if initialState != ConnectionState.InUse then connectionBag.add(pooled)
+              else Temporal[F].unit
+
+            // Double-check the limit before adding to prevent race conditions
+            added <- poolState.modify { poolState =>
+                       if poolState.connections.size >= maxConnections then
+                         // Over limit, don't add
+                         (poolState, false)
+                       else
+                         val newState = poolState.copy(
+                           connections = poolState.connections :+ pooled,
+                           // Add to idleConnections if created in Idle state (for pool initialization)
+                           idleConnections =
+                             if initialState == ConnectionState.Idle then poolState.idleConnections + pooled.id
+                             else poolState.idleConnections
+                         )
+                         (newState, true)
+                     }
+
+            // If we couldn't add it, clean up and fail
+            _ <- if !added then {
+                   // Remove from bag if we added it earlier
+                   (if initialState != ConnectionState.InUse then connectionBag.remove(pooled).void
+                    else Temporal[F].unit) *>
+                     poolLogger.warn(s"Cannot create new connection: pool at maximum size ($maxConnections)") *>
+                     conn.close().attempt.void *>
+                     Temporal[F].raiseError[Unit](new SQLException("Pool reached maximum size"))
+                 } else Temporal[F].unit
+          yield pooled
+        }
+        .guaranteeCase {
+          case Outcome.Canceled() => Temporal[F].unit
+          case _                  =>
+            Clock[F].monotonic.flatMap { endTime =>
+              metricsTracker.recordCreation(endTime - startTime) *>
+                databaseMetrics.recordConnectionCreateTime(endTime - startTime, poolName)
+            }
+        }
+
+    /**
+     * Resets a connection to a clean state before returning it to the pool.
+     *
+     * Restores auto-commit mode and rolls back any uncommitted transaction.
+     * Both operations are attempted and their errors are swallowed so that
+     * a reset failure does not prevent the connection from being processed further.
+     *
+     * @param conn the connection to reset
+     */
+    private def resetConnection(conn: Connection[F]): F[Unit] = for
+      // Rollback must come first: in MySQL, calling setAutoCommit(true) during an active
+      // transaction implicitly commits it, making the subsequent rollback() a no-op.
+      _ <- conn.rollback().attempt.void
+      _ <- conn.setAutoCommit(true).attempt.void
+    // clearWarnings is not available in ldbc Connection interface
+    // _ <- conn.clearWarnings().attempt.void
+    yield ()
+
+    override def validateConnection(conn: Connection[F]): F[Boolean] =
+      connectionTestQuery match
+        case Some(query) =>
+          // Use custom test query
+          val validation = for
+            closed <- conn.isClosed()
+            valid  <-
+              if !closed then executeTestQuery(conn, query)
+              else Temporal[F].pure(false)
+          yield !closed && valid
+
+          validation
+            .timeout(validationTimeout)
+            .handleErrorWith { error =>
+              poolLogger
+                .debug(
+                  s"Connection validation failed or timed out after $validationTimeout: ${ error.getMessage }"
+                )
+                .as(false)
+            }
+
+        case None =>
+          // Use JDBC4 isValid() method (preferred)
+          val validation = for
+            closed <- conn.isClosed()
+            valid  <- if !closed then {
+                       // Ensure minimum timeout of 1 second as per JDBC spec
+                       conn.isValid(validationTimeout.toSeconds.toInt.max(1))
+                     } else Temporal[F].pure(false)
+          yield !closed && valid
+
+          validation
+            .timeout(validationTimeout)
+            .handleErrorWith { error =>
+              poolLogger
+                .debug(
+                  s"Connection validation failed or timed out after $validationTimeout: ${ error.getMessage }"
+                )
+                .as(false)
+            }
+
+    /**
+     * Executes a custom test query against the given connection to verify it is alive.
+     *
+     * @param conn  the connection to test
+     * @param query the SQL query to execute (e.g. `"SELECT 1"`)
+     * @return `true` if the query executes successfully, `false` on any error
+     */
+    private def executeTestQuery(conn: Connection[F], query: String): F[Boolean] =
+      conn
+        .createStatement()
+        .flatMap { stmt =>
+          stmt.execute(query).as(true).guarantee(stmt.close())
+        }
+        .handleError(_ => false)
+
+    /**
+     * Determines whether a connection should be validated before being used or returned to the pool.
+     *
+     * When [[aliveBypassWindow]] is zero, validation is always performed. Otherwise, validation is
+     * skipped if the connection was last used within the bypass window, reducing round-trip overhead
+     * for frequently reused connections.
+     *
+     * @param pooled the connection to check
+     * @return `true` if validation should be performed, `false` if it can be skipped
+     */
+    private def needsValidation(pooled: PooledConnection[F]): F[Boolean] =
+      if aliveBypassWindow.toMillis == 0 then
+        // Bypass disabled, always validate
+        Temporal[F].pure(true)
+      else
+        for
+          now      <- Clock[F].realTime.map(_.toMillis)
+          lastUsed <- pooled.lastUsedAt.get
+          elapsed = now - lastUsed
+        yield elapsed > aliveBypassWindow.toMillis
+
+    /**
+     * Checks whether a connection has exceeded its maximum lifetime ([[maxLifetime]]).
+     *
+     * Expired connections are removed from the pool rather than being returned for reuse,
+     * ensuring that stale connections are periodically refreshed.
+     *
+     * @param pooled the connection to check
+     * @return `true` if the connection has lived longer than [[maxLifetime]], `false` otherwise
+     */
+    private def isExpired(pooled: PooledConnection[F]): F[Boolean] =
+      Clock[F].realTime.map { now =>
+        val age = now.toMillis - pooled.createdAt
+        age > maxLifetime.toMillis
+      }
+
+    override def returnToPool(pooled: PooledConnection[F]): F[Unit] =
+      // Update the connection state, return to bag, then update idleConnections
+      // Order: state change -> bag requite -> idleConnections update
+      // This ensures the connection is in the correct state and available in the bag
+      // before being tracked as idle
+      pooled.state.set(ConnectionState.Idle) *>
+        connectionBag.requite(pooled) *>
+        poolState.update(s => s.copy(idleConnections = s.idleConnections + pooled.id))
+
+    override def removeConnection(pooled: PooledConnection[F]): F[Unit] = for
+      currentState <- pooled.state.get
+      _            <- poolLogger.debug(s"Removing connection ${ pooled.id } from pool (state: $currentState)")
+      _            <- pooled.state.set(ConnectionState.Removed)
+      _            <- connectionBag.remove(pooled)
+      _            <- pooled.finalizer.attempt.void // Use the finalizer instead of close()
+      _            <- pooled.leakDetection.get.flatMap(_.traverse_(_.cancel))
+      _            <- poolState.update { state =>
+             state.copy(
+               connections     = state.connections.filterNot(_ == pooled),
+               idleConnections = state.idleConnections - pooled.id
+             )
+           }
+      _ <- metricsTracker.recordRemoval()
+    yield ()
+
+    /**
+     * Wrap a pooled connection for leak detection and statement tracking.
+     */
+    private def wrapConnection(pooled: PooledConnection[F]): Connection[F] =
+      new ProxyConnection[F](pooled, release)
+
+    /**
+     * Unwrap a connection to get the original.
+     */
+    private def unwrapConnection(conn: Connection[F]): Connection[F] =
+      conn match
+        case proxy: ProxyConnection[F] => proxy.pooled.connection
+        case _                         => conn
+
+    /**
+     * Builds the [[Resource]] used to create a new physical [[Connection]].
+     *
+     * Selects the appropriate [[Connection]] factory depending on whether `before`/`after`
+     * lifecycle hooks are configured:
+     * - Both hooks present: uses [[Connection.withBeforeAfter]] with both callbacks.
+     * - Only `before` present: uses [[Connection.withBeforeAfter]] with a no-op `after`.
+     * - No `before`: uses the standard [[Connection]] factory.
+     *
+     * In all cases the [[TelemetryConfig]] and [[DatabaseMetrics]] are forwarded to the
+     * underlying connection so that per-statement observability is preserved.
+     */
+    private def connection: Resource[F, Connection[F]] =
+      (before, after) match
+        case (Some(b), Some(a)) =>
+          Connection.withBeforeAfter(
+            host                    = host,
+            port                    = port,
+            user                    = user,
+            before                  = b,
+            after                   = a,
+            password                = password,
+            database                = database,
+            debug                   = debug,
+            ssl                     = ssl,
+            socketOptions           = socketOptions,
+            readTimeout             = readTimeout,
+            allowPublicKeyRetrieval = allowPublicKeyRetrieval,
+            useCursorFetch          = useCursorFetch,
+            useServerPrepStmts      = useServerPrepStmts,
+            databaseTerm            = databaseTerm,
+            plugins                 = plugins,
+            telemetryConfig         = telemetryConfig,
+            databaseMetrics         = Some(databaseMetrics)
+          )
+        case (Some(b), None) =>
+          Connection.withBeforeAfter(
+            host                    = host,
+            port                    = port,
+            user                    = user,
+            before                  = b,
+            after                   = (_, _) => Async[F].unit,
+            password                = password,
+            database                = database,
+            debug                   = debug,
+            ssl                     = ssl,
+            socketOptions           = socketOptions,
+            readTimeout             = readTimeout,
+            allowPublicKeyRetrieval = allowPublicKeyRetrieval,
+            useCursorFetch          = useCursorFetch,
+            useServerPrepStmts      = useServerPrepStmts,
+            databaseTerm            = databaseTerm,
+            plugins                 = plugins,
+            telemetryConfig         = telemetryConfig,
+            databaseMetrics         = Some(databaseMetrics)
+          )
+        case (None, _) =>
+          Connection(
+            host                    = host,
+            port                    = port,
+            user                    = user,
+            password                = password,
+            database                = database,
+            debug                   = debug,
+            ssl                     = ssl,
+            socketOptions           = socketOptions,
+            readTimeout             = readTimeout,
+            allowPublicKeyRetrieval = allowPublicKeyRetrieval,
+            useCursorFetch          = useCursorFetch,
+            useServerPrepStmts      = useServerPrepStmts,
+            databaseTerm            = databaseTerm,
+            plugins                 = plugins,
+            telemetryConfig         = telemetryConfig,
+            databaseMetrics         = Some(databaseMetrics)
+          )
+
+  /**
+   * Internal factory method that validates the provided [[MySQLConfig]] and then delegates
+   * to [[createValidatedPool]] to build the fully-initialized [[PooledDataSource]].
+   *
+   * This method is package-private (`private[connector]`) and is intended to be called only
+   * from higher-level factory methods such as [[fromConfig]] and [[withTraced]].
+   *
+   * @param config          the [[MySQLConfig]] containing all pool and connection settings
+   * @param metricsTracker  optional [[PoolMetricsTracker]]; falls back to a no-op tracker if absent
+   * @param meter           optional [[org.typelevel.otel4s.metrics.Meter]] for OpenTelemetry metrics;
+   *                        falls back to a no-op meter if absent
+   * @param idGenerator     an effect that produces a unique string identifier for each new connection
+   * @param plugins         additional [[ldbc.authentication.plugin.AuthenticationPlugin]]s to register
+   * @param telemetryConfig tracing and metrics configuration; defaults to [[TelemetryConfig.default]]
+   * @param before          optional callback executed after acquiring a connection but before handing it
+   *                        to the caller; the returned value `A` is passed to `after`
+   * @param after           optional callback executed when the connection is returned to the pool
+   * @tparam F the effect type
+   * @tparam A the type produced by the `before` callback and consumed by the `after` callback
+   * @return a [[cats.effect.Resource]] that manages the full pool lifecycle
+   */
+  private[connector] def create[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
+    config:          MySQLConfig,
+    metricsTracker:  Option[PoolMetricsTracker[F]],
+    meter:           Option[Meter[F]],
+    idGenerator:     F[String],
+    plugins:         List[AuthenticationPlugin[F]],
+    telemetryConfig: TelemetryConfig = TelemetryConfig.default,
+    before:          Option[Connection[F] => F[A]] = None,
+    after:           Option[(A, Connection[F]) => F[Unit]] = None
+  )(using Tracer[F]): Resource[F, PooledDataSource[F]] =
+
+    // Validate configuration before creating the pool (similar to HikariDataSource)
+    Resource
+      .eval(PoolConfigValidator.validate(config))
+      .flatMap { _ =>
+        createValidatedPool(config, metricsTracker, meter, idGenerator, plugins, telemetryConfig, before, after)
+      }
+      .handleErrorWith { error =>
+        Resource.eval(Async[F].raiseError(error))
+      }
+
+  /**
+   * Builds and fully initializes a [[PooledDataSource]] after configuration has already been
+   * validated by [[create]].
+   *
+   * This method performs the following steps inside the returned [[cats.effect.Resource]]:
+   *  1. Resolves the [[PoolMetricsTracker]] (provided or no-op).
+   *  2. Creates [[DatabaseMetrics]] from the provided [[org.typelevel.otel4s.metrics.Meter]]
+   *     (or a no-op meter).
+   *  3. Allocates the mutable [[PoolState]], [[ConcurrentBag]], and [[CircuitBreaker]].
+   *  4. Registers observable OpenTelemetry gauges for pool state metrics.
+   *  5. Pre-warms the pool by creating the configured minimum number of connections.
+   *  6. Starts background maintenance tasks (house-keeper, adaptive sizer, keepalive, status
+   *     reporter) as long-lived fibers scoped to the resource.
+   *
+   * @param config          the validated [[MySQLConfig]]
+   * @param metricsTracker  optional [[PoolMetricsTracker]]; falls back to no-op if absent
+   * @param meter           optional [[org.typelevel.otel4s.metrics.Meter]]; falls back to no-op if absent
+   * @param idGenerator     an effect that produces a unique string identifier for each new connection
+   * @param plugins         additional authentication plugins to register on each connection
+   * @param telemetryConfig tracing and metrics configuration
+   * @param before          optional pre-use connection callback
+   * @param after           optional post-use connection callback
+   * @tparam F the effect type
+   * @tparam A the type produced by the `before` callback
+   * @return a [[cats.effect.Resource]] whose acquisition initializes the pool and whose release
+   *         closes all connections and cancels background tasks
+   */
+  private def createValidatedPool[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
+    config:          MySQLConfig,
+    metricsTracker:  Option[PoolMetricsTracker[F]],
+    meter:           Option[Meter[F]],
+    idGenerator:     F[String],
+    plugins:         List[AuthenticationPlugin[F]],
+    telemetryConfig: TelemetryConfig,
+    before:          Option[Connection[F] => F[A]],
+    after:           Option[(A, Connection[F]) => F[Unit]]
+  )(using Tracer[F]): Resource[F, PooledDataSource[F]] =
+
+    val trackerResource: Resource[F, PoolMetricsTracker[F]] =
+      metricsTracker match
+        case Some(tracker) => Resource.pure(tracker)
+        case None          => Resource.pure(PoolMetricsTracker.noop[F])
+
+    val databaseMetricsResource: Resource[F, DatabaseMetrics[F]] =
+      DatabaseMetrics.fromMeter(meter.getOrElse(Meter.noop[F]))
+
+    val poolLogger = PoolLogger.console[F](config.debug || config.logPoolState)
+
+    def createPool(tracker: PoolMetricsTracker[F], dbMetrics: DatabaseMetrics[F]) = for
+      poolState      <- Ref[F].of(PoolState.empty[F])
+      connectionBag  <- ConcurrentBag[F, PooledConnection[F]]()
+      circuitBreaker <- CircuitBreaker[F](
+                          CircuitBreaker.Config(
+                            maxFailures  = 5,
+                            resetTimeout = 30.seconds
+                          )
+                        )
+    yield Impl[F, A](
+      host                    = config.host,
+      port                    = config.port,
+      user                    = config.user,
+      password                = config.password,
+      database                = config.database,
+      debug                   = config.debug,
+      ssl                     = config.ssl,
+      socketOptions           = config.socketOptions,
+      readTimeout             = config.readTimeout,
+      allowPublicKeyRetrieval = config.allowPublicKeyRetrieval,
+      databaseTerm            = config.databaseTerm,
+      useCursorFetch          = config.useCursorFetch,
+      useServerPrepStmts      = config.useServerPrepStmts,
+      minConnections          = config.minConnections,
+      maxConnections          = config.maxConnections,
+      connectionTimeout       = config.connectionTimeout,
+      idleTimeout             = config.idleTimeout,
+      maxLifetime             = config.maxLifetime,
+      validationTimeout       = config.validationTimeout,
+      leakDetectionThreshold  = config.leakDetectionThreshold,
+      adaptiveSizing          = config.adaptiveSizing,
+      adaptiveInterval        = config.adaptiveInterval,
+      telemetryConfig         = telemetryConfig,
+      metricsTracker          = tracker,
+      databaseMetrics         = dbMetrics,
+      poolName                = config.poolName,
+      poolState               = poolState,
+      idGenerator             = idGenerator,
+      connectionBag           = connectionBag,
+      circuitBreaker          = circuitBreaker,
+      aliveBypassWindow       = config.aliveBypassWindow,
+      keepaliveTime           = config.keepaliveTime,
+      connectionTestQuery     = config.connectionTestQuery,
+      poolLogger              = poolLogger,
+      plugins                 = plugins,
+      before                  = before,
+      after                   = after
+    )
+
+    // Initialize minimum connections within the resource scope
+    def createMinimumConnections(pool: PooledDataSource[F]): Resource[F, Unit] =
+      Resource.make(
+        (1 to config.minConnections).toList.traverse_ { _ =>
+          pool.createNewConnectionForPool()
+        }
+      )(_ => pool.close) // Close the pool after minimum connections are no longer needed
+
+    def createBackgroundResources(pool: PooledDataSource[F], tracker: PoolMetricsTracker[F]): Resource[F, Unit] =
+      val houseKeeper       = HouseKeeper.fromAsync[F](config, tracker)
+      val adaptivePoolSizer = AdaptivePoolSizer.fromAsync[F](config, tracker)
+      val keepaliveExecutor = config.keepaliveTime.map(KeepaliveExecutor.fromAsync[F](_, tracker))
+      val statusReporter    =
+        if config.logPoolState then Some(PoolStatusReporter[F](config.poolStateLogInterval, poolLogger, tracker))
+        else None
+      val backgroundResources = List(
+        Some(houseKeeper.start(pool)),
+        if config.adaptiveSizing then Some(adaptivePoolSizer.start(pool))
+        else None,
+        keepaliveExecutor.map(_.start(pool)),
+        statusReporter.map(_.start(pool, config.poolName))
+      ).flatten
+      backgroundResources.sequence_
+
+    def registerObservableMetrics(pool: PooledDataSource[F], dbMetrics: DatabaseMetrics[F]): Resource[F, Unit] =
+      dbMetrics.registerPoolStateCallback(
+        config.poolName,
+        config.minConnections,
+        config.maxConnections,
+        pool.status.map(s => PoolMetricsState(s.idle.toLong, s.active.toLong, s.waiting.toLong))
+      )
+
+    for
+      tracker   <- trackerResource
+      dbMetrics <- databaseMetricsResource
+      pool      <- Resource.eval(createPool(tracker, dbMetrics))
+      _         <- registerObservableMetrics(pool, dbMetrics)
+      _         <- createMinimumConnections(pool)
+      _         <- createBackgroundResources(pool, tracker)
+    yield pool
+
+  /**
+   * Creates a PooledDataSource from a MySQL configuration.
+   *
+   * This is the primary way to create a connection pool. The pool will be initialized
+   * with the settings specified in the configuration, including minimum and maximum
+   * connection counts, timeouts, and maintenance intervals.
+   *
+   * The returned Resource ensures proper lifecycle management - the pool will be
+   * properly initialized when acquired and cleanly shut down when released.
+   *
+   * @param config the MySQL configuration containing all pool settings
+   * @param metricsTracker optional tracker for collecting pool metrics (defaults to in-memory tracker)
+   * @param tracer optional OpenTelemetry tracer for distributed tracing (defaults to no-op tracer)
+   * @tparam F the effect type with required type class instances
+   * @return a Resource that manages the pooled data source lifecycle
+   */
+  def fromConfig[F[_]: Async: Network: Console: Hashing: UUIDGen](
+    config:          MySQLConfig,
+    metricsTracker:  Option[PoolMetricsTracker[F]] = None,
+    meter:           Option[Meter[F]] = None,
+    tracer:          Option[Tracer[F]] = None,
+    plugins:         List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
+    telemetryConfig: TelemetryConfig = TelemetryConfig.default
+  ): Resource[F, PooledDataSource[F]] =
+    given Tracer[F] = tracer.getOrElse(Tracer.noop[F])
+    create(
+      config,
+      metricsTracker,
+      meter,
+      UUIDGen[F].randomUUID.map(_.toString),
+      plugins,
+      telemetryConfig = telemetryConfig
+    )
+
+  /**
+   * Creates a [[PooledDataSource]] with OpenTelemetry distributed tracing and metrics enabled.
+   *
+   * A [[org.typelevel.otel4s.trace.Tracer]] and a [[org.typelevel.otel4s.metrics.Meter]] are
+   * acquired from the implicit [[org.typelevel.otel4s.trace.TracerProvider]] and
+   * [[org.typelevel.otel4s.metrics.MeterProvider]] in scope. Both are registered under the
+   * `"ldbc"` instrumentation scope with the current library version and the OpenTelemetry
+   * semantic-convention schema URL.
+   *
+   * @param config          the [[MySQLConfig]] containing all pool and connection settings
+   * @param metricsTracker  optional [[PoolMetricsTracker]]; falls back to a no-op tracker if absent
+   * @param plugins         additional [[ldbc.authentication.plugin.AuthenticationPlugin]]s to register
+   * @param telemetryConfig tracing and metrics configuration; defaults to [[TelemetryConfig.default]]
+   * @tparam F the effect type, requiring [[cats.effect.Async]], [[fs2.io.net.Network]],
+   *           [[cats.effect.std.Console]], [[cats.effect.std.Hashing]],
+   *           [[cats.effect.std.UUIDGen]], [[org.typelevel.otel4s.trace.TracerProvider]],
+   *           and [[org.typelevel.otel4s.metrics.MeterProvider]]
+   * @return a [[cats.effect.Resource]] that manages the full pool lifecycle with observability enabled
+   *
+   * @example {{{
+   * // Given TracerProvider[IO] and MeterProvider[IO] in scope:
+   * PooledDataSource.withTraced[IO](MySQLConfig.default).use { pool =>
+   *   pool.use { conn => ... }
+   * }
+   * }}}
+   */
+  def withTraced[F[_]: Async: Network: Console: Hashing: UUIDGen: TracerProvider: MeterProvider](
+    config:          MySQLConfig,
+    metricsTracker:  Option[PoolMetricsTracker[F]] = None,
+    plugins:         List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
+    telemetryConfig: TelemetryConfig = TelemetryConfig.default
+  ): Resource[F, PooledDataSource[F]] =
+    for
+      given Tracer[F] <- Resource.eval(TracerProvider[F].tracer("ldbc").withVersion(Version.current).get)
+      meter           <- Resource.eval(
+                 MeterProvider[F]
+                   .meter("ldbc")
+                   .withVersion(Version.current)
+                   .withSchemaUrl(TelemetryAttribute.SCHEMA_URL_VALUE)
+                   .get
+               )
+      pool <- create(
+                config,
+                metricsTracker,
+                Some(meter),
+                UUIDGen[F].randomUUID.map(_.toString),
+                plugins,
+                telemetryConfig = telemetryConfig
+              )
+    yield pool
+
+    /**
+   * Creates a PooledDataSource with before/after hooks for each connection use.
+   *
+   * This variant allows you to specify callbacks that will be executed before
+   * and after each connection is used. This is useful for:
+   * - Setting up connection-specific state (e.g., session variables)
+   * - Logging or auditing connection usage
+   * - Cleaning up after connection use
+   *
+   * The before hook is called after acquiring a connection but before returning it
+   * to the client. The after hook is called when the connection is returned to the pool.
+   *
+   * @param config the MySQL configuration containing all pool settings
+   * @param metricsTracker optional tracker for collecting pool metrics (defaults to in-memory tracker)
+   * @param tracer optional OpenTelemetry tracer for distributed tracing (defaults to no-op tracer)
+   * @param before optional callback executed before connection use
+   * @param after optional callback executed after connection use
+   * @tparam F the effect type with required type class instances
+   * @tparam A the type returned by the before callback and passed to the after callback
+   * @return a Resource that manages the pooled data source lifecycle
+   */
+  def fromConfigWithBeforeAfter[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
+    config:          MySQLConfig,
+    metricsTracker:  Option[PoolMetricsTracker[F]] = None,
+    meter:           Option[Meter[F]] = None,
+    tracer:          Option[Tracer[F]] = None,
+    plugins:         List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
+    telemetryConfig: TelemetryConfig = TelemetryConfig.default,
+    before:          Option[Connection[F] => F[A]] = None,
+    after:           Option[(A, Connection[F]) => F[Unit]] = None
+  ): Resource[F, PooledDataSource[F]] =
+    given Tracer[F] = tracer.getOrElse(Tracer.noop[F])
+    create(
+      config,
+      metricsTracker,
+      meter,
+      UUIDGen[F].randomUUID.map(_.toString),
+      plugins,
+      telemetryConfig,
+      before,
+      after
+    )
+
+  /**
+   * Creates a [[PooledDataSource]] with OpenTelemetry tracing and metrics enabled, plus
+   * optional `before`/`after` lifecycle hooks for each connection use.
+   *
+   * Combines the observability setup of [[withTraced]] with the hook mechanism of
+   * [[fromConfigWithBeforeAfter]]. A [[org.typelevel.otel4s.trace.Tracer]] and a
+   * [[org.typelevel.otel4s.metrics.Meter]] are acquired from the implicit providers in scope.
+   *
+   * The `before` callback is invoked after a connection is acquired from the pool but before
+   * it is handed to the caller. Its result of type `A` is forwarded to the `after` callback,
+   * which is invoked when the connection is returned to the pool.
+   *
+   * @param config          the [[MySQLConfig]] containing all pool and connection settings
+   * @param metricsTracker  optional [[PoolMetricsTracker]]; falls back to a no-op tracker if absent
+   * @param plugins         additional [[ldbc.authentication.plugin.AuthenticationPlugin]]s to register
+   * @param telemetryConfig tracing and metrics configuration; defaults to [[TelemetryConfig.default]]
+   * @param before          optional callback executed before handing a connection to the caller;
+   *                        the value it returns is passed to `after`
+   * @param after           optional callback executed when the connection is returned to the pool
+   * @tparam F the effect type, requiring [[cats.effect.Async]], [[fs2.io.net.Network]],
+   *           [[cats.effect.std.Console]], [[cats.effect.std.Hashing]],
+   *           [[cats.effect.std.UUIDGen]], [[org.typelevel.otel4s.trace.TracerProvider]],
+   *           and [[org.typelevel.otel4s.metrics.MeterProvider]]
+   * @tparam A the type produced by `before` and consumed by `after`
+   * @return a [[cats.effect.Resource]] that manages the full pool lifecycle with observability
+   *         and per-connection hooks enabled
+   */
+  def withTracedBeforeAfter[F[_]: Async: Network: Console: Hashing: UUIDGen: TracerProvider: MeterProvider, A](
+    config:          MySQLConfig,
+    metricsTracker:  Option[PoolMetricsTracker[F]] = None,
+    plugins:         List[AuthenticationPlugin[F]] = List.empty[AuthenticationPlugin[F]],
+    telemetryConfig: TelemetryConfig = TelemetryConfig.default,
+    before:          Option[Connection[F] => F[A]] = None,
+    after:           Option[(A, Connection[F]) => F[Unit]] = None
+  ): Resource[F, PooledDataSource[F]] =
+    for
+      given Tracer[F] <- Resource.eval(TracerProvider[F].tracer("ldbc").withVersion(Version.current).get)
+      meter           <- Resource.eval(
+                 MeterProvider[F]
+                   .meter("ldbc")
+                   .withVersion(Version.current)
+                   .withSchemaUrl(TelemetryAttribute.SCHEMA_URL_VALUE)
+                   .get
+               )
+      pool <- create(
+                config,
+                metricsTracker,
+                Some(meter),
+                UUIDGen[F].randomUUID.map(_.toString),
+                plugins,
+                telemetryConfig,
+                before,
+                after
+              )
+    yield pool

@@ -7,13 +7,13 @@ laika.metadata.language = en
 
 ## Overview
 
-ldbc-connector is a library designed for Cats Effect that provides high-performance and safe database connection pooling. Unlike traditional JVM thread-based pooling (such as HikariCP), it is designed to fully utilize Cats Effect's fiber-based concurrency model.
+`ldbc-pool` is an independent module that provides high-performance and safe database connection pooling. It is implemented in an effect-agnostic manner (`F: Concurrent`), so it can be used with any of the Cats Effect (`IO`), ZIO (`Task`), or `Fx` effects. Unlike traditional JVM thread-based pooling (such as HikariCP), it is designed to fully utilize a fiber-based concurrency model (the explanations and benchmarks below use Cats Effect as an example).
 
 ## Architecture Overview
 
 ![Connection Pool Architecture](../../img/pooling/ConnectionPoolWithCircuitBreaker.svg)
 
-The ldbc-connector pooling system consists of the following main components:
+The ldbc-pool pooling system consists of the following main components:
 
 ### 1. PooledDataSource
 
@@ -111,7 +111,7 @@ Configuration parameters:
 - **Scalability**: Practical limit of thousands of threads
 - **Blocking**: Threads actually block
 
-#### Cats Effect Fiber Characteristics (ldbc-connector)
+#### Cats Effect Fiber Characteristics (ldbc-pool)
 
 **Advantages:**
 - **Memory efficiency**: ~150 bytes per fiber
@@ -135,7 +135,7 @@ The characteristics of each concurrency model lead to different pooling implemen
 - **Use cases**: CPU-intensive tasks, integration with legacy systems
 - **Operations**: Easy management with existing monitoring tools
 
-#### Fiber-based Pool (ldbc-connector)
+#### Fiber-based Pool (ldbc-pool)
 - **Pool size**: Larger pool sizes possible
 - **Wait strategy**: Non-blocking wait, efficient resource sharing
 - **Use cases**: I/O-intensive tasks, environments requiring high concurrency
@@ -152,7 +152,7 @@ The characteristics of each concurrency model lead to different pooling implemen
 
 ### Differences
 
-| Feature             | HikariCP                  | ldbc-connector             |
+| Feature             | HikariCP                  | ldbc-pool             |
 |---------------------|---------------------------|----------------------------|
 | Concurrency Model   | JVM Threads               | Cats Effect Fibers         |
 | Blocking Handling   | Blocks threads            | Semantic blocking          |
@@ -163,7 +163,7 @@ The characteristics of each concurrency model lead to different pooling implemen
 
 ### Usage Scenarios and Selection Criteria
 
-#### When ldbc-connector is suitable:
+#### When ldbc-pool is suitable:
 
 1. **High Concurrency Environments**
    - Thousands of concurrent connection requests
@@ -199,7 +199,7 @@ The characteristics of each concurrency model lead to different pooling implemen
 
 ## Background Tasks
 
-ldbc-connector runs multiple background tasks to maintain pool health:
+ldbc-pool runs multiple background tasks to maintain pool health:
 
 ### HouseKeeper
 - Removes expired connections
@@ -221,73 +221,77 @@ ldbc-connector runs multiple background tasks to maintain pool health:
 
 ```scala 3
 import cats.effect.IO
-import ldbc.connector.*
 import scala.concurrent.duration.*
 
-// Pool configuration
-val config = MySQLConfig.default
-  .setHost("localhost")
-  .setPort(3306)
-  .setUser("myuser")
+import ldbc.dsl.*
+import ldbc.mysql.MySQLDataSource
+import ldbc.net.SSL
+import ldbc.catseffect.*
+import ldbc.pool.{ ConnectionPoolConfig, PooledDataSource, PoolLogger }
+
+// Connection information
+val datasource = MySQLDataSource
+  .build[IO]("localhost", 3306, "myuser")
   .setPassword("mypassword")
   .setDatabase("mydb")
-  // Pool size settings
-  .setMinConnections(5)           // Minimum connections (default: 5)
-  .setMaxConnections(20)          // Maximum connections (default: 10)
-  // Timeout settings
-  .setConnectionTimeout(30.seconds)    // Connection acquisition timeout (default: 30s)
-  .setIdleTimeout(10.minutes)         // Idle timeout (default: 10min)
-  .setMaxLifetime(30.minutes)         // Maximum lifetime (default: 30min)
-  .setValidationTimeout(5.seconds)    // Validation timeout (default: 5s)
-  // Validation & Health checks
-  .setAliveBypassWindow(500.millis)   // Skip validation if used recently (default: 500ms)
-  .setKeepaliveTime(2.minutes)        // Idle validation interval (default: 2min)
-  .setConnectionTestQuery("SELECT 1") // Custom test query (optional)
-  // Leak detection
-  .setLeakDetectionThreshold(2.minutes) // Connection leak detection (default: none)
-  // Maintenance
-  .setMaintenanceInterval(30.seconds)  // Background cleanup interval (default: 30s)
-  // Adaptive sizing
-  .setAdaptiveSizing(true)            // Dynamic pool size adjustment (default: false)
-  .setAdaptiveInterval(1.minute)      // Adaptive sizing check interval (default: 1min)
+  .setSSL(SSL.Trusted)
 
-// Create pooled datasource
-val poolResource = MySQLDataSource.pooling[IO](config)
+// Pool configuration
+val config = ConnectionPoolConfig(
+  // Pool size settings
+  minConnections         = 5,               // Minimum connections
+  maxConnections         = 20,              // Maximum connections
+  // Timeout settings
+  connectionTimeout      = 30.seconds,      // Connection acquisition timeout (default: 30s)
+  validationTimeout      = 5.seconds,       // Validation timeout (default: 5s)
+  idleTimeout            = 10.minutes,      // Idle timeout (default: 10min)
+  maxLifetime            = 30.minutes,      // Maximum lifetime (default: 30min)
+  // Validation & Health checks
+  aliveBypassWindow      = 500.millis,      // Skip validation if used recently (default: 500ms)
+  keepaliveTime          = Some(2.minutes), // Idle validation interval (default: none)
+  // Leak detection
+  leakDetectionThreshold = Some(2.minutes), // Connection leak detection (default: none)
+  // Maintenance
+  maintenanceInterval    = 30.seconds,      // Background cleanup interval (default: 30s)
+  // Adaptive sizing
+  adaptiveSizing         = true,            // Dynamic pool size adjustment (default: false)
+  adaptiveInterval       = 1.minute         // Adaptive sizing check interval (default: 30s)
+)
+
+// Create the pooled datasource (pass a custom test query as an argument to fromDataSource)
+val poolResource = PooledDataSource.fromDataSource[IO](
+  config,
+  datasource,
+  connectionTestQuery = Some("SELECT 1")
+)
 
 // Use the pool
 poolResource.use { pool =>
-  pool.getConnection.use { conn =>
-    // Use connection
-    for
-      stmt <- conn.createStatement()
-      rs   <- stmt.executeQuery("SELECT 1")
-      _    <- rs.next()
-      result <- rs.getInt(1)
-    yield result
-  }
+  sql"SELECT 1".query[Int].to[Option].readOnly(Connector.fromDataSource(pool))
 }
 ```
 
 ### Pool with Metrics Tracking
 
 ```scala 3
-import ldbc.connector.pool.*
+import ldbc.pool.*
 
 val metricsResource = for
   tracker <- Resource.eval(PoolMetricsTracker.inMemory[IO])
-  pool    <- MySQLDataSource.pooling[IO](
-    config,
-    metricsTracker = Some(tracker)
-  )
+  pool    <- PooledDataSource.fromDataSource[IO](
+               config,
+               datasource,
+               metricsTracker = Some(tracker)
+             )
 yield (pool, tracker)
 
 metricsResource.use { case (pool, tracker) =>
   // Use pool and monitor metrics
   for
-    _       <- pool.getConnection.use(conn => /* use connection */ IO.unit)
+    _       <- sql"SELECT 1".query[Int].to[Option].readOnly(Connector.fromDataSource(pool))
     metrics <- tracker.getMetrics
-    _       <- IO.println(s"Total acquisitions: ${metrics.totalAcquisitions}")
-    _       <- IO.println(s"Average acquisition time: ${metrics.acquisitionTime}")
+    _       <- IO.println(s"Total acquisitions: ${ metrics.totalAcquisitions }")
+    _       <- IO.println(s"Average acquisition time: ${ metrics.acquisitionTime }")
   yield ()
 }
 ```
@@ -295,6 +299,8 @@ metricsResource.use { case (pool, tracker) =>
 ### Pool with Lifecycle Hooks
 
 ```scala 3
+import ldbc.sql.Connection
+
 case class SessionContext(userId: String, startTime: Long)
 
 val beforeHook: Connection[IO] => IO[SessionContext] = conn =>
@@ -306,10 +312,11 @@ val beforeHook: Connection[IO] => IO[SessionContext] = conn =>
 val afterHook: (SessionContext, Connection[IO]) => IO[Unit] = (ctx, conn) =>
   IO.println(s"Connection used by ${ctx.userId} for ${System.currentTimeMillis - ctx.startTime}ms")
 
-val poolWithHooks = MySQLDataSource.poolingWithBeforeAfter[IO, SessionContext](
-  config = config,
-  before = Some(beforeHook),
-  after = Some(afterHook)
+val poolWithHooks = PooledDataSource.fromDataSourceWithBeforeAfter[IO, SessionContext](
+  config,
+  datasource,
+  before = beforeHook,
+  after  = afterHook
 )
 ```
 
@@ -324,11 +331,11 @@ CircuitBreaker is configured automatically internally, with the following defaul
 
 ## Benchmark Results
 
-The following shows benchmark results comparing the performance of ldbc-connector and HikariCP with different thread counts. The benchmark measures concurrent performance in executing SELECT statements.
+The following shows benchmark results comparing the performance of ldbc-pool and HikariCP with different thread counts. The benchmark measures concurrent performance in executing SELECT statements.
 
 ### Test Environment
 - Benchmark content: Concurrent execution of SELECT statements
-- Test targets: ldbc-connector vs HikariCP
+- Test targets: ldbc-pool vs HikariCP
 - Thread counts: 1, 2, 4, 8, 16
 
 ### Result Graphs
@@ -368,7 +375,7 @@ The following trends can be observed from these benchmark results:
 
 The benchmark results reflect the inherent characteristics of each approach:
 
-**ldbc-connector (Fiber-based)**
+**ldbc-pool (Fiber-based)**
 - Efficient resource utilization through lightweight concurrency primitives
 - CPU usage optimization through semantic blocking
 - Scalability under high concurrency
@@ -398,8 +405,8 @@ It's important to note that benchmark results are measurements under specific co
 
 ## Summary
 
-The ldbc-connector pooling system is an implementation that leverages Cats Effect's concurrency model. By incorporating the CircuitBreaker pattern, it enhances resilience during database failures.
+The ldbc-pool pooling system is an implementation that leverages Cats Effect's concurrency model. By incorporating the CircuitBreaker pattern, it enhances resilience during database failures.
 
 Fiber-based and thread-based approaches each have their strengths and weaknesses. It's important to make appropriate choices by comprehensively evaluating application requirements, existing infrastructure, team skill sets, and operational considerations.
 
-ldbc-connector is a choice that can maximize its characteristics particularly in environments requiring high concurrency or when adopting the Cats Effect ecosystem.
+ldbc-pool is a choice that can maximize its characteristics particularly in environments requiring high concurrency or when adopting the Cats Effect ecosystem.
