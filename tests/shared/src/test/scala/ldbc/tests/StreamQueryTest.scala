@@ -16,7 +16,6 @@ import ldbc.dsl.*
 
 import ldbc.connector.*
 
-import ldbc.catseffect.*
 import ldbc.fx.Fx
 import ldbc.Connector
 

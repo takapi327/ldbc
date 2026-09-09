@@ -255,7 +255,7 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
   )
   .nativeSettings(Brew.nativeSettings)
-  .dependsOn(core, authenticationPlugin)
+  .dependsOn(core, authenticationPlugin, catsEffect)
 
 lazy val awsAuthenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)

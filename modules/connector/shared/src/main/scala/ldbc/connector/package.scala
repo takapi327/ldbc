@@ -9,4 +9,5 @@ package ldbc
 package object connector:
   export ldbc.sql.DataSource
 
+  export ldbc.catseffect.{ stream, syncDBIO }
   export ldbc.Connector
