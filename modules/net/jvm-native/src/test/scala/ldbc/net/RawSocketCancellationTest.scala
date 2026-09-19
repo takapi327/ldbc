@@ -110,8 +110,8 @@ class RawSocketCancellationTest extends munit.FunSuite:
     val reader   = new Thread(() =>
       try
         val in: InputStream = server.getInputStream
-        val buf             = new Array[Byte](64 * 1024)
-        var read            = in.read(buf)
+        val buf  = new Array[Byte](64 * 1024)
+        var read = in.read(buf)
         while read >= 0 && received.get() < size do
           received.addAndGet(read)
           read = if received.get() < size then in.read(buf) else -1

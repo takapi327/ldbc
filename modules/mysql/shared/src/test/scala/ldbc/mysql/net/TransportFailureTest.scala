@@ -43,8 +43,8 @@ class TransportFailureTest extends FTestPlatform:
 
   /** A PacketSocket whose `receive` always fails, standing in for a broken stream. */
   private final class FailingSocket(error: Throwable) extends PacketSocket[Fx]:
-    override def receive[P <: ResponsePacket](decoder: Decoder[P]): Fx[P] = Fx.raiseError(error)
-    override def send(request: RequestPacket):                      Fx[Unit] = Fx.unit
+    override def receive[P <: ResponsePacket](decoder: Decoder[P]):    Fx[P]    = Fx.raiseError(error)
+    override def send(request:                         RequestPacket): Fx[Unit] = Fx.unit
 
   /** A PacketSocket that succeeds, to show the flag is not set on a healthy exchange. */
   private final class HealthySocket(response: ResponsePacket) extends PacketSocket[Fx]:
@@ -118,4 +118,3 @@ class TransportFailureTest extends FTestPlatform:
     yield failed
 
     assertFx(program, false)
-
