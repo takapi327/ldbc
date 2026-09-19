@@ -11,28 +11,11 @@ import java.net.ServerSocket
 import java.util.concurrent.{ CountDownLatch, TimeUnit }
 import java.util.concurrent.atomic.{ AtomicBoolean, AtomicInteger, AtomicReference }
 
-/**
- * The cancellation contract of [[RawSocket]], asserted against the real platform engine. Kept in
- * `jvm-native` so the NIO selector and the epoll/kqueue poller are held to the same behaviour by one
- * source — they used to differ, in opposite directions for read and write.
- *
- * `IoEngineTest` also has a cancellation case, but it only checks that a cancelled read does not
- * hang; it asserts nothing about what `cancel()` actually does, so it passes even with a no-op
- * canceler. These tests cover the effect of cancelling.
- *
- * Both rely on a peer that does nothing until told to. The read case waits until no data can
- * possibly have arrived, so the read has to park; the write case sends far more than any send
- * buffer can absorb and leaves the peer unread, so the write has to park part-way through — that
- * mid-transfer state is the one whose cancellation matters. The peer only starts draining after
- * the cancel, which is what makes the final byte count meaningful.
- */
 class RawSocketCancellationTest extends munit.FunSuite:
-
   override val munitTimeout = scala.concurrent.duration.Duration(60, TimeUnit.SECONDS)
 
   private val engine = PlatformRawEngine.global
 
-  /** A server that accepts one connection and then does only what the test tells it to. */
   private def acceptOne(): (Int, AtomicReference[java.net.Socket]) =
     val server   = new ServerSocket(0)
     val accepted = new AtomicReference[java.net.Socket](null)

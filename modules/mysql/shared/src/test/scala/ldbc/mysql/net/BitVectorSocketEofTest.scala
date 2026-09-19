@@ -20,19 +20,7 @@ import ldbc.mysql.exception.EofException
 import ldbc.mysql.FTestPlatform
 import ldbc.net.Socket
 
-/**
- * `read` returning `None` means the peer closed the connection, which is a different fault from the
- * read timing out. Reporting both as `SQLTimeoutException` used to send debugging in the wrong
- * direction, so end of stream now surfaces as [[EofException]] carrying how much was read before
- * the stream ended.
- *
- * One case asserts the negative explicitly: the previous implementation raised
- * `SQLTimeoutException` here, which is also what an actual read timeout raises, leaving the two
- * indistinguishable in a stack trace.
- */
 class BitVectorSocketEofTest extends FTestPlatform:
-
-  /** A socket that hands over `chunks` in order and then reports end of stream. */
   private final class ScriptedSocket(chunks: Ref[Fx, List[Array[Byte]]]) extends Socket[Fx]:
     override def read(n: Int): Fx[Option[Array[Byte]]] =
       chunks.modify {

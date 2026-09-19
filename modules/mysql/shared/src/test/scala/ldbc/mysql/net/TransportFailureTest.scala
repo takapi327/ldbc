@@ -23,42 +23,19 @@ import ldbc.mysql.util.Version
 import ldbc.mysql.FTestPlatform
 import ldbc.telemetry.*
 
-/**
- * Anything that escapes the packet boundary — an I/O error, a decode failure, an EOF, a cancelled
- * read — must leave the connection marked as failed, because at that point we no longer know how
- * much of the byte stream was consumed and MySQL gives us no way to resynchronise.
- *
- * The guard lives inside `Protocol.Impl`, wrapping whichever `PacketSocket` was injected, so these
- * tests can drive it with a scripted socket instead of a real server.
- *
- * Two of the cases pin down the boundary. `readUntilEOF` and `repeatProcess` reach the injected
- * socket directly rather than through `Protocol`'s own `receive`, so they would slip past a guard
- * placed on those methods. Conversely an `ERR_Packet` decodes cleanly and is returned as a value —
- * only the caller turns it into an error — and must not be mistaken for a broken transport, or
- * perfectly good connections would be thrown away.
- *
- * The cancellation case is driven through `receive` rather than a `comXxx` command on purpose:
- * commands run inside `Exchange`'s `uncancelable`, which masks cancellation so the guard is never
- * reached. Covering the `onCancel` half directly keeps that branch from rotting while it waits for
- * cancellation to become reachable from the outside.
- */
 class TransportFailureTest extends FTestPlatform:
-
   given Tracer[Fx] = Tracer.noop[Fx]
 
-  /** A PacketSocket whose `receive` always fails, standing in for a broken stream. */
   private final class FailingSocket(error: Throwable) extends PacketSocket[Fx]:
     override def receive[P <: ResponsePacket](decoder: Decoder[P]):    Fx[P]    = Fx.raiseError(error)
     override def send(request:                         RequestPacket): Fx[Unit] = Fx.unit
 
-  /** A PacketSocket that replays one response and records everything written to it. */
   private final class RecordingSocket(response: ResponsePacket, sent: Ref[Fx, Vector[RequestPacket]])
     extends PacketSocket[Fx]:
     override def receive[P <: ResponsePacket](decoder: Decoder[P]): Fx[P] =
       Fx.pure(response.asInstanceOf[P])
     override def send(request: RequestPacket): Fx[Unit] = sent.update(_ :+ request)
 
-  /** A PacketSocket whose `receive` never completes, so the caller can only be cancelled out of it. */
   private final class NeverRespondingSocket(entered: Deferred[Fx, Unit]) extends PacketSocket[Fx]:
     override def receive[P <: ResponsePacket](decoder: Decoder[P]): Fx[P] =
       entered.complete(()) *> Fx.async[P](_ => Fx.Canceler.noop)

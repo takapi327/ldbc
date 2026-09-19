@@ -10,13 +10,7 @@ import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.scalajs.js
 import scala.scalajs.js.typedarray.Uint8Array
 
-/**
- * The JS counterpart of `RawSocketCancellationTest`: cancelling a read must not swallow bytes that
- * arrive afterwards. Here the buffering lives in [[ReadBuffer]] rather than in an OS readiness
- * registration, so the mechanism differs entirely from JVM/Native and needs its own cover.
- */
 class NodeReadCancellationTest extends munit.FunSuite:
-
   private given ExecutionContext = munitExecutionContext
 
   private lazy val netModule = js.Dynamic.global.require("net")

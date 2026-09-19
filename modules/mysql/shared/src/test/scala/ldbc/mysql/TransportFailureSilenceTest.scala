@@ -22,25 +22,9 @@ import ldbc.mysql.net.protocol.Exchange
 import ldbc.mysql.util.Version
 import ldbc.telemetry.*
 
-/**
- * Once the transport has failed, the point of the change is not only that operations raise — it is
- * that they stop writing to the socket. A connection whose stream position is unknown must not
- * receive a `ROLLBACK`, a `COM_QUIT`, a `COM_STMT_FETCH` or anything else.
- *
- * Every case here therefore asserts on what was *sent*, not just on the exception, because an
- * implementation that keeps talking to a dead peer would still raise and would still look green to
- * a test that only checks the error.
- *
- * `close()` is driven with `autoCommit = false` so that a healthy teardown would send `ROLLBACK`
- * and then `COM_QUIT` — without that, "wrote nothing" would hold trivially. The healthy
- * `StreamingResultSet` case is there for the same reason: the guard must not make the ordinary
- * fetch path unreachable.
- */
 class TransportFailureSilenceTest extends FTestPlatform:
-
   given Tracer[Fx] = Tracer.noop[Fx]
 
-  /** A PacketSocket that records writes and always fails reads, so the guard trips on first use. */
   private final class BrokenRecordingSocket(sent: Ref[Fx, Vector[RequestPacket]]) extends PacketSocket[Fx]:
     override def receive[P <: ResponsePacket](decoder: Decoder[P]): Fx[P] =
       Fx.raiseError(new java.io.IOException("connection reset"))
@@ -59,7 +43,6 @@ class TransportFailureSilenceTest extends FTestPlatform:
 
   private val hostInfo = HostInfo("127.0.0.1", 3306, "user", Some("secret"), Some("db"))
 
-  /** Builds a protocol on a recording socket and trips the guard, returning both. */
   private def failedProtocol: Fx[(Protocol[Fx], Ref[Fx, Vector[RequestPacket]])] =
     for
       sent               <- Ref.of[Fx, Vector[RequestPacket]](Vector.empty)

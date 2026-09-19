@@ -16,23 +16,7 @@ import ldbc.fx.syntax.*
 import ldbc.fx.Fx
 import ldbc.fx.FxSuite
 
-/**
- * `aliveBypassWindow` lets the pool skip the validation round trip for a connection it has just
- * seen. It must not also skip noticing that the connection is already dead: a driver that reports a
- * failed transport through `isClosed` costs nothing to consult, and handing such a connection back
- * out would fail the next caller's first statement.
- *
- * The cases assert `validationCount` as well as pool occupancy, because a pool that quietly ran the
- * round trip anyway would reach the same occupancy and hide the fact that the bypass never applied.
- * The last case disables the window on purpose: without that contrast, the others could pass simply
- * because validation never runs under any configuration.
- *
- * The lease case needs a factory that produces a *fresh* connection each time — reusing one
- * instance would make "the pool built a replacement" impossible to observe.
- */
 class DeadConnectionEvictionTest extends FxSuite:
-
-  /** A window wide enough that validation is always bypassed for a freshly used connection. */
   private def bypassing: ConnectionPoolConfig =
     ConnectionPoolConfig(
       minConnections    = 1,
@@ -42,7 +26,6 @@ class DeadConnectionEvictionTest extends FxSuite:
       adaptiveSizing    = false
     )
 
-  /** Hands the pool one connection we keep a handle on, so the test can kill it. */
   private def poolOver(mock: MockConnection, config: ConnectionPoolConfig): Resource[Fx, PooledDataSource[Fx]] =
     PooledDataSource.fromConfig(config, Resource.make(Fx.pure(mock: Connection[Fx]))(_ => Fx.unit))
 

@@ -13,16 +13,7 @@ import ldbc.fx.syntax.*
 import ldbc.fx.Fx
 import ldbc.telemetry.*
 
-/**
- * End-to-end cover for the one cancellation path that actually reaches a socket read: a finite
- * `readTimeout`. When it fires, the read is abandoned part-way through a packet, so the session can
- * no longer be trusted and must report itself closed.
- *
- * This exercises the whole chain against a real server — the raw canceler, the transport guard in
- * `Protocol.Impl`, and `isClosed` on both the connection and its statements.
- */
 class ReadTimeoutClosesConnectionTest extends FTestPlatform:
-
   given Tracer[Fx] = Tracer.noop[Fx]
 
   private def connection(readTimeout: Duration) =
