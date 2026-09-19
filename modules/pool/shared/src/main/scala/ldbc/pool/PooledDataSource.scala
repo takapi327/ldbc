@@ -149,7 +149,7 @@ object PooledDataSource:
                       case true  => F.unit
                       case false => poolLogger.warn(s"Connection ${ pooled.id } failed validation, removing from pool")
                     }
-                  else F.pure(true)
+                  else pooled.connection.isClosed().map(!_)
                 result <-
                   if !valid then removeConnection(pooled) >> acquireConnectionWithStartTime(startTime)
                   else
@@ -239,7 +239,7 @@ object PooledDataSource:
                         case false =>
                           poolLogger.warn(s"Connection ${ pooled.id } failed validation on release, removing from pool")
                       }
-                    else F.pure(true)
+                    else pooled.connection.isClosed().map(!_)
                   expired <- isExpired(pooled)
                   _       <-
                     if valid && !expired then
@@ -365,6 +365,14 @@ object PooledDataSource:
         .flatMap(stmt => stmt.execute(query).as(true).guarantee(stmt.close()))
         .handleError(_ => false)
 
+    /**
+     * Whether `pooled` is due for a validation round trip, i.e. whether it has been idle for longer
+     * than `aliveBypassWindow`.
+     *
+     * Only the round trip is skipped inside that window, never the health check itself: callers
+     * still consult `isClosed`, which a driver can answer from local state when its transport has
+     * failed. Handing such a connection out would fail the caller's very first statement.
+     */
     private def needsValidation(pooled: PooledConnection[F]): F[Boolean] =
       if config.aliveBypassWindow.toMillis == 0 then F.pure(true)
       else
