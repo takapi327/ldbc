@@ -11,6 +11,7 @@ import scala.collection.immutable.{ ListMap, SortedMap }
 import ldbc.sql.{ PreparedStatement, ResultSet, Statement }
 import ldbc.sql.Attribute
 import ldbc.sql.SQLException
+import ldbc.sql.SQLTransientConnectionException
 
 import ldbc.effect.{ Concurrent, Ref }
 import ldbc.effect.syntax.*
@@ -428,7 +429,8 @@ object StatementImpl:
       for
         connClosed <- connectionClosed.get
         stmtClosed <- statementClosed.get
-      yield connClosed || stmtClosed
+        txFailed   <- protocol.transportFailed
+      yield connClosed || stmtClosed || txFailed
 
     override def executeBatch(): F[Array[Int]] = executeLargeBatch().map(_.iterator.map(_.toInt).toArray)
 
@@ -460,11 +462,32 @@ object StatementImpl:
 
     private def backslashEscapesEnabled: Boolean = !sqlMode.contains("NO_BACKSLASH_ESCAPES")
 
+    /**
+     * Fails the calling operation if the statement can no longer be used.
+     *
+     * A failed transport is reported separately from an ordinary close, because the two call for
+     * different messages and different recovery. That branch also closes the statement state
+     * directly rather than through `close()`: `ServerPreparedStatement.close()` sends
+     * `COM_STMT_CLOSE`, which on a dead transport both fails and replaces the error raised here
+     * with a less informative one.
+     */
     protected def checkClosed(): F[Unit] =
-      isClosed().ifM(
-        close() *> F.raiseError(new SQLException("No operations allowed after statement closed.")),
-        F.unit
-      )
+      protocol.transportFailed.flatMap {
+        case true =>
+          statementClosed.set(true) *> resultSetClosed.set(true) *>
+            F.raiseError(
+              new SQLTransientConnectionException(
+                "No operations allowed: the connection's transport has failed.",
+                detail = Some("The byte stream position is unknown, so this session cannot be reused."),
+                hint   = Some("Discard this connection and obtain a new one.")
+              )
+            )
+        case false =>
+          isClosed().ifM(
+            close() *> F.raiseError(new SQLException("No operations allowed after statement closed.")),
+            F.unit
+          )
+      }
 
     protected def checkNullOrEmptyQuery(sql: String): F[Unit] =
       if sql.isEmpty then F.raiseError(new SQLException("Can not issue empty query."))

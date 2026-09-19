@@ -9,6 +9,7 @@ package ldbc.net
 import java.net.{ InetSocketAddress, StandardSocketOptions }
 import java.nio.channels.{ ClosedChannelException, SelectionKey, Selector, SocketChannel }
 import java.nio.ByteBuffer
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.ConcurrentLinkedQueue
 
 /**
@@ -75,21 +76,48 @@ private[net] object NioRawEngine:
 /** [[RawSocket]] over a non-blocking NIO channel driven by [[NioRawEngine]]. */
 private[net] final class NioRawSocket(ch: SocketChannel, engine: NioRawEngine) extends RawSocket:
 
+  /**
+   * Reads up to `n` bytes. A negative result from the channel is end of stream, zero means readable
+   * but nothing buffered yet — in which case readiness is registered and the attempt repeated.
+   *
+   * Cancelling stops the channel from being touched again, because consuming bytes is the one
+   * irreversible side effect here: a `cb` discarded after cancellation would take the bytes with it.
+   * Invoking `cb` late is harmless by comparison, since the effect layer ignores it, so only the
+   * read is suppressed. This is best effort — a cancel arriving while the selector thread is
+   * already inside `ch.read` cannot un-consume — which is why the contract tells callers to discard
+   * the session rather than resume it.
+   */
   override def read(n: Int, cb: Either[Throwable, Option[Array[Byte]]] => Unit): Canceler =
     if n <= 0 then { cb(Right(Some(Array.emptyByteArray))); Canceler.noop }
     else if !ch.isOpen then { cb(Left(new ClosedChannelException)); Canceler.noop }
     else
-      val buf = ByteBuffer.allocate(n)
+      val buf       = ByteBuffer.allocate(n)
+      val cancelled = new AtomicBoolean(false)
       def attempt(): Unit =
-        try
-          val got = ch.read(buf)
-          if got < 0 then cb(Right(None))                                                  // end of stream
-          else if got == 0 then engine.register(ch, SelectionKey.OP_READ, () => attempt()) // readable but no bytes yet
-          else { buf.flip(); val a = new Array[Byte](buf.remaining()); buf.get(a); cb(Right(Some(a))) } // up to n bytes
-        catch case e: Throwable => cb(Left(e))
+        if cancelled.get() then ()
+        else
+          try
+            val got = ch.read(buf)
+            if got < 0 then cb(Right(None))
+            else if got == 0 then engine.register(ch, SelectionKey.OP_READ, () => attempt())
+            else
+              buf.flip()
+              val bytes = new Array[Byte](buf.remaining())
+              buf.get(bytes)
+              cb(Right(Some(bytes)))
+          catch case e: Throwable => cb(Left(e))
       attempt()
-      Canceler.noop
+      new Canceler:
+        override def cancel(): Unit = cancelled.set(true)
 
+  /**
+   * Writes `bytes` in full, registering for writability whenever the channel accepts only part of
+   * them.
+   *
+   * The returned [[Canceler]] is intentionally a no-op: `write` is not cancelable (see
+   * [[RawSocket]]). Stopping midway would leave a partial frame on the peer, which is harder to
+   * recover from than simply finishing the transfer.
+   */
   override def write(bytes: Array[Byte], cb: Either[Throwable, Unit] => Unit): Canceler =
     val buf = ByteBuffer.wrap(bytes)
     def attempt(): Unit =
