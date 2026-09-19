@@ -24,6 +24,17 @@ object Canceler:
 /**
  * Non-blocking byte transport as raw callbacks. `read`/`write` register interest and invoke `cb` once
  * the operation completes, returning a [[Canceler]] that deregisters it.
+ *
+ * Cancellation contract — implementations must honour this, and callers must not expect more:
+ *   - `read`: cancelling MUST NOT consume bytes from the transport, so a later `read` still sees them.
+ *     This is best effort only: a cancel that races an in-flight platform read may still consume, and
+ *     nothing can prevent that. Callers must therefore treat a cancelled read as having left the byte
+ *     stream in an unknown position, and discard the session rather than resume it.
+ *   - `write`: NOT cancelable. The [[Canceler]] is a no-op on every platform, so the bytes already
+ *     handed to `write` are always transferred in full. Abandoning a partial write would leave a
+ *     framed protocol unrecoverable on the peer side, which is worse than finishing. Note that the
+ *     surrounding effect's fiber is still cancelled immediately; only the byte transfer runs on.
+ *   - `connect`: cancelling closes the channel.
  */
 trait RawSocket:
   /** Reads up to `n` bytes. `Some(bytes)` on data (empty for `n <= 0`), `None` at end of stream. */
