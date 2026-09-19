@@ -7,6 +7,7 @@
 package ldbc.mysql
 
 import ldbc.sql.ResultSet
+import ldbc.sql.SQLTransientConnectionException
 
 import ldbc.effect.{ Concurrent, Ref }
 import ldbc.effect.syntax.*
@@ -67,6 +68,29 @@ private[ldbc] case class StreamingResultSet[F[_]](
    */
   private def closeStmt(): F[Boolean] =
     protocol.send(ComStmtClosePacket(statementId)).as(false)
+
+  /**
+   * Adds a transport check on top of the shared close check.
+   *
+   * This is the only result set that keeps talking to the server — [[next]] fetches further rows
+   * with `COM_STMT_FETCH` — so it is the only one that must refuse to continue once the byte stream
+   * position is unknown. The check lives here rather than in [[SharedResultSet]] because a plain
+   * buffered result set needs no protocol at all, and requiring one there would make the shared
+   * path depend on state it does not use.
+   */
+  override protected def checkClosed(): F[Unit] =
+    protocol.transportFailed.flatMap {
+      case true =>
+        F.raiseError(
+          new SQLTransientConnectionException(
+            "No operations allowed: the connection's transport has failed.",
+            sql    = statement,
+            detail = Some("The byte stream position is unknown, so this session cannot be reused."),
+            hint   = Some("Discard this connection and obtain a new one.")
+          )
+        )
+      case false => super.checkClosed()
+    }
 
   override def next(): F[Boolean] =
     checkClosed() *> fetchSize.get.flatMap { size =>
