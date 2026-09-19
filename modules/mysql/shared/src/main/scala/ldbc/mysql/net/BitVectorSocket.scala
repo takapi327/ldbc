@@ -11,11 +11,10 @@ import scala.concurrent.duration.FiniteDuration
 
 import scodec.bits.{ BitVector, ByteVector }
 
-import ldbc.sql.SQLTimeoutException
-
 import ldbc.effect.{ Concurrent, Ref, Resource }
 import ldbc.effect.syntax.*
 import ldbc.mysql.data.CapabilitiesFlags
+import ldbc.mysql.exception.EofException
 import ldbc.mysql.net.packet.response.InitialPacket
 import ldbc.mysql.net.protocol.Initial
 import ldbc.net.{ Socket, TlsUpgrade }
@@ -53,11 +52,17 @@ object BitVectorSocket:
         case _: Duration.Infinite   => identity
         case finite: FiniteDuration => _.timeout(finite)
 
+      /**
+       * Accumulates reads until `nBytes` are available, carrying any surplus over to the next call.
+       *
+       * A `None` from the socket is end of stream — the peer closed — which is reported as an
+       * [[ldbc.mysql.exception.EofException]] rather than a timeout so the two stay distinguishable.
+       */
       private def readUntilN(nBytes: Int, carry: ByteVector): F[BitVector] =
         if carry.size < nBytes.toLong then
           withTimeout(socket.read(8192)).flatMap {
             case Some(bytes) => readUntilN(nBytes, carry ++ ByteVector(bytes))
-            case None        => F.raiseError(SQLTimeoutException("Timeout while reading from socket"))
+            case None        => F.raiseError(EofException(nBytes, carry.size.toInt))
           }
         else
           val (output, remainder) = carry.splitAt(nBytes.toLong)
