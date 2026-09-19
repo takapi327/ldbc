@@ -15,10 +15,10 @@ import ldbc.fx.concurrentFx
 import ldbc.fx.syntax.*
 import ldbc.fx.Fx
 import ldbc.mysql.data.{ BinaryColumnValueDecoder, CapabilitiesFlags, ServerStatusFlags }
+import ldbc.mysql.net.{ HostInfo, PacketSocket, Protocol }
 import ldbc.mysql.net.packet.{ RequestPacket, ResponsePacket }
 import ldbc.mysql.net.packet.response.InitialPacket
 import ldbc.mysql.net.protocol.Exchange
-import ldbc.mysql.net.{ HostInfo, PacketSocket, Protocol }
 import ldbc.mysql.util.Version
 import ldbc.telemetry.*
 
