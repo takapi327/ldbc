@@ -84,7 +84,7 @@ class AuthDowngradeTest extends FTestPlatform:
       protocol = Protocol.Impl(
                    initialPacket               = initialPacket,
                    hostInfo                    = hostInfo,
-                   socket                      = new ScriptedSocket(sent, toReceive),
+                   rawSocket                   = new ScriptedSocket(sent, toReceive),
                    useSSL                      = false,
                    allowPublicKeyRetrieval     = false,
                    capabilityFlags             = Set.empty[CapabilitiesFlags],
@@ -125,7 +125,7 @@ class AuthDowngradeTest extends FTestPlatform:
       protocol = Protocol.Impl(
                    initialPacket               = clearTextInitialPacket,
                    hostInfo                    = hostInfo,
-                   socket                      = new ScriptedSocket(sent, toReceive),
+                   rawSocket                   = new ScriptedSocket(sent, toReceive),
                    useSSL                      = false,
                    allowPublicKeyRetrieval     = false,
                    capabilityFlags             = Set.empty[CapabilitiesFlags],
