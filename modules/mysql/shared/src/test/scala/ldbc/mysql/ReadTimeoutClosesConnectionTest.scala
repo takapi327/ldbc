@@ -45,7 +45,7 @@ class ReadTimeoutClosesConnectionTest extends FTestPlatform:
           second <- conn.createStatement().flatMap(_.executeQuery("SELECT 1")).attempt
         yield second.left.exists(_.getMessage.contains("transport has failed"))
       },
-      "故障後の文が fail-fast していない"
+      "a statement on a failed transport did not fail fast"
     )
 
   test("a healthy connection is not marked closed"):

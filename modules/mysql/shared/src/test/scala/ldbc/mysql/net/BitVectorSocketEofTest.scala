@@ -42,7 +42,7 @@ class BitVectorSocketEofTest extends FTestPlatform:
       outcome <- socket.read(4).attempt
     yield outcome.left.map(_.getClass.getSimpleName).left.getOrElse("succeeded unexpectedly")
 
-    assertFx(program, "EofException", "EOF がタイムアウトとして報告されている")
+    assertFx(program, "EofException", "end of stream is still reported as a timeout")
 
   test("EofException reports how many bytes were requested and how many arrived"):
     val program = for
@@ -50,7 +50,7 @@ class BitVectorSocketEofTest extends FTestPlatform:
       outcome <- socket.read(8).attempt
     yield outcome.left.toOption.collect { case eof: EofException => (eof.bytesRequested, eof.bytesRead) }
 
-    assertFx(program, Some((8, 3)), "EofException が要求バイト数と既読バイト数を正しく持っていない")
+    assertFx(program, Some((8, 3)), "EofException does not carry the expected and received byte counts")
 
   test("end of stream is not reported as SQLTimeoutException"):
     val program = for

@@ -37,9 +37,9 @@ class DeadConnectionEvictionTest extends FxSuite:
                 }
       validations <- mock.validationCount.get
     yield
-      assertEquals(status.idle, 0, "死亡した接続がアイドルとしてプールに戻っている")
-      assertEquals(status.total, 0, "死亡した接続がプールから除去されていない")
-      assertEquals(validations, 0, "バイパス窓の中なのに検証の往復が走っている（バイパスが効いていない）")
+      assertEquals(status.idle, 0, "a dead connection went back into the pool as idle")
+      assertEquals(status.total, 0, "a dead connection was not removed from the pool")
+      assertEquals(validations, 0, "a validation round trip ran inside the bypass window, so the bypass is not working")
   }
 
   test("a connection that died while idle is evicted on lease, even inside aliveBypassWindow") {
@@ -57,8 +57,8 @@ class DeadConnectionEvictionTest extends FxSuite:
                          }
       total <- created.get.map(_.size)
     yield
-      assertEquals(leasedWasClosed, false, "死亡した接続がリース時に除去されず、そのまま払い出されている")
-      assert(total >= 2, s"死亡した接続を捨てたあと代替が生成されていない（生成数: $total）")
+      assertEquals(leasedWasClosed, false, "a dead connection was handed out instead of being evicted on lease")
+      assert(total >= 2, s"no replacement was created after discarding the dead connection ($total created)")
   }
 
   test("a healthy connection is still pooled inside aliveBypassWindow") {
@@ -69,9 +69,9 @@ class DeadConnectionEvictionTest extends FxSuite:
                 }
       validations <- mock.validationCount.get
     yield
-      assertEquals(status.idle, 1, "健全な接続が不必要に除去されている")
+      assertEquals(status.idle, 1, "a healthy connection was evicted for no reason")
       assertEquals(status.total, 1)
-      assertEquals(validations, 1, "テスト自身の isValid 以外に検証の往復が走っている")
+      assertEquals(validations, 1, "a validation round trip ran beyond the isValid this test performs itself")
   }
 
   test("with the bypass disabled the validation round trip does run") {
@@ -82,5 +82,5 @@ class DeadConnectionEvictionTest extends FxSuite:
              datasource.use(_ => Fx.unit) >> datasource.status
            }
       validations <- mock.validationCount.get
-    yield assert(validations > 0, "aliveBypassWindow = 0 でも検証の往復が走っていない")
+    yield assert(validations > 0, "no validation round trip ran even with aliveBypassWindow = 0")
   }

@@ -94,7 +94,7 @@ class TransportFailureTest extends FTestPlatform:
       failed <- pair._2.get
     yield failed
 
-    assertFx(program, true, "PacketTooBigException が故障として記録されていない")
+    assertFx(program, true, "PacketTooBigException was not recorded as a transport failure")
 
   test("a payload the decoder rejects marks the transport as failed"):
     val garbage = ByteVector(Array[Byte](0x7f, 0x01, 0x02)).toBitVector
@@ -105,7 +105,7 @@ class TransportFailureTest extends FTestPlatform:
       failed <- pair._2.get
     yield failed
 
-    assertFx(program, true, "デコード失敗が故障として記録されていない")
+    assertFx(program, true, "a decode failure was not recorded as a transport failure")
 
   test("cancelling a receive marks the transport as failed"):
     val program = for
@@ -117,7 +117,7 @@ class TransportFailureTest extends FTestPlatform:
       failed  <- pair._2.get
     yield failed
 
-    assertFx(program, true, "キャンセルされた receive が故障として記録されていない")
+    assertFx(program, true, "a cancelled receive was not recorded as a transport failure")
 
   test("a packet that decodes cleanly leaves the transport usable"):
     val program = for
@@ -127,7 +127,7 @@ class TransportFailureTest extends FTestPlatform:
       failed   <- pair._2.get
     yield (received.isInstanceOf[OKPacket], failed)
 
-    assertFx(program, (true, false), "正常にデコードできたのに故障として記録されている")
+    assertFx(program, (true, false), "a successfully decoded packet was recorded as a transport failure")
 
   test("a successful send leaves the transport usable"):
     val program = for

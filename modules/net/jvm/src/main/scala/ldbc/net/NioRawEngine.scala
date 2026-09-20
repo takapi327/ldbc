@@ -53,8 +53,7 @@ private[net] final class NioRawEngine private (selector: Selector) extends RawIo
     val ch = SocketChannel.open()
     try
       ch.configureBlocking(false)
-      ch.setOption(StandardSocketOptions.TCP_NODELAY, java.lang.Boolean.valueOf(options.noDelay))
-      ch.setOption(StandardSocketOptions.SO_KEEPALIVE, java.lang.Boolean.valueOf(options.keepAlive))
+      NioRawEngine.withOptions(ch, options)
       def completed(): Unit =
         try { ch.finishConnect(); cb(Right(new NioRawSocket(ch, this))) }
         catch case e: Throwable => cb(Left(e))
@@ -67,6 +66,19 @@ private[net] final class NioRawEngine private (selector: Selector) extends RawIo
         catch case _: Throwable => ()
 
 private[net] object NioRawEngine:
+
+  /**
+   * Applies [[SocketOptions]] to a channel before it is connected, the JVM counterpart of the Native
+   * `CInterop.applyOptions`. The buffer sizes are only set when given, so leaving them unset keeps the
+   * platform defaults rather than pinning them to a value of ours. The kernel is free to round what it
+   * is asked for, so the resulting socket may report a different size than the one requested.
+   */
+  private[net] def withOptions(ch: SocketChannel, options: SocketOptions): Unit =
+    ch.setOption(StandardSocketOptions.TCP_NODELAY, java.lang.Boolean.valueOf(options.noDelay))
+    ch.setOption(StandardSocketOptions.SO_KEEPALIVE, java.lang.Boolean.valueOf(options.keepAlive))
+    options.sendBufferSize.foreach(size => ch.setOption(StandardSocketOptions.SO_SNDBUF, Integer.valueOf(size)))
+    options.receiveBufferSize.foreach(size => ch.setOption(StandardSocketOptions.SO_RCVBUF, Integer.valueOf(size)))
+
   lazy val global: NioRawEngine =
     val engine = new NioRawEngine(Selector.open())
     val t      = new Thread(() => engine.loop(), "ldbc-net-nio-raw")
