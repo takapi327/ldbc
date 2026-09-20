@@ -36,6 +36,19 @@ trait PacketSocket[F[_]]:
   /** Sends the specified request packet. */
   def send(request: RequestPacket): F[Unit]
 
+  /**
+   * Whether the byte stream under this socket is no longer positioned at a packet boundary, because a
+   * read or write escaped by error or by cancellation part-way through one.
+   *
+   * MySQL offers no way to resynchronise, so once this is true the session can only be discarded; it
+   * never goes back to false. Reporting it is all this socket does — refusing further calls is left to
+   * the layers above, which translate it into "this connection is closed".
+   *
+   * A server-reported `ERR_Packet` is not a transport failure: it decodes successfully and is returned
+   * as a value, so it never reaches the recording path.
+   */
+  def transportFailed: F[Boolean]
+
 object PacketSocket:
 
   val DEFAULT_MAX_PACKET_SIZE  = 65535
@@ -45,17 +58,30 @@ object PacketSocket:
   /**
    * Wraps a [[BitVectorSocket]] as a [[PacketSocket]].
    *
-   * @param bvs              the underlying bit-vector socket
-   * @param debugEnabled     whether to log each packet
-   * @param sequenceIdRef    the MySQL packet sequence id
-   * @param maxAllowedPacket the maximum accepted payload size
+   * @param bvs                the underlying bit-vector socket
+   * @param debugEnabled       whether to log each packet
+   * @param sequenceIdRef      the MySQL packet sequence id
+   * @param maxAllowedPacket   the maximum accepted payload size
+   * @param transportFailedRef records whether the byte stream position has been lost
    */
   def fromBitVectorSocket[F[_]](
-    bvs:              BitVectorSocket[F],
-    debugEnabled:     Boolean,
-    sequenceIdRef:    Ref[F, Byte],
-    maxAllowedPacket: Int
+    bvs:                BitVectorSocket[F],
+    debugEnabled:       Boolean,
+    sequenceIdRef:      Ref[F, Byte],
+    maxAllowedPacket:   Int,
+    transportFailedRef: Ref[F, Boolean]
   )(using F: Concurrent[F]): PacketSocket[F] = new PacketSocket[F]:
+
+    override def transportFailed: F[Boolean] = transportFailedRef.get
+
+    /**
+     * Records a transport failure for anything that leaves a packet half-read or half-written.
+     * `onCancel` is currently unreachable — commands run inside `Exchange`'s `uncancelable`, and a
+     * `readTimeout` arrives here as an error — but it keeps the branch from silently reopening if
+     * cancellation ever becomes reachable.
+     */
+    private def guard[A](fa: F[A]): F[A] =
+      F.onCancel(fa.onError { case _ => transportFailedRef.set(true) })(transportFailedRef.set(true))
 
     private def debug(msg: => String): F[Unit] =
       F.whenA(debugEnabled) {
@@ -63,7 +89,7 @@ object PacketSocket:
       }
 
     override def receive[P <: ResponsePacket](decoder: Decoder[P]): F[P] =
-      (for
+      guard((for
         header <- bvs.read(4)
         payloadSize = parseHeader(header.toByteArray)
         _       <- validatePacketSize(payloadSize)
@@ -79,7 +105,7 @@ object PacketSocket:
           debug(
             s"Client ${ AnsiColor.BLUE }←${ AnsiColor.RESET } Server: ${ AnsiColor.RED }${ t.getMessage }${ AnsiColor.RESET }"
           )
-      }
+      })
 
     private def buildRequest(request: RequestPacket): F[BitVector] =
       sequenceIdRef.get.map { sequenceId =>
@@ -95,7 +121,7 @@ object PacketSocket:
       }
 
     override def send(request: RequestPacket): F[Unit] =
-      for
+      guard(for
         bits <- buildRequest(request)
         _    <-
           debug(
@@ -103,7 +129,7 @@ object PacketSocket:
           )
         _ <- bvs.write(bits)
         _ <- sequenceIdRef.update(sequenceId => ((sequenceId + 1) % 256).toByte)
-      yield ()
+      yield ())
 
     private def validatePacketSize(size: Int): F[Unit] =
       if size < MIN_PACKET_SIZE then F.raiseError(PacketTooBigException(size, maxAllowedPacket))
@@ -120,18 +146,20 @@ object PacketSocket:
    * @param initialPacketRef  receives the server's initial packet
    * @param readTimeout       the per-read timeout
    * @param capabilitiesFlags the negotiated capability flags
-   * @param maxAllowedPacket  the maximum accepted payload size
+   * @param maxAllowedPacket   the maximum accepted payload size
+   * @param transportFailedRef records whether the byte stream position has been lost
    */
   def apply[F[_]](
-    debug:             Boolean,
-    sockets:           Resource[F, Socket[F]],
-    sslOptions:        Option[SSLNegotiation.Options[F]],
-    sequenceIdRef:     Ref[F, Byte],
-    initialPacketRef:  Ref[F, Option[InitialPacket]],
-    readTimeout:       Duration,
-    capabilitiesFlags: Set[CapabilitiesFlags],
-    maxAllowedPacket:  Int
+    debug:              Boolean,
+    sockets:            Resource[F, Socket[F]],
+    sslOptions:         Option[SSLNegotiation.Options[F]],
+    sequenceIdRef:      Ref[F, Byte],
+    initialPacketRef:   Ref[F, Option[InitialPacket]],
+    readTimeout:        Duration,
+    capabilitiesFlags:  Set[CapabilitiesFlags],
+    maxAllowedPacket:   Int,
+    transportFailedRef: Ref[F, Boolean]
   )(using F: Concurrent[F], tls: TlsUpgrade[F]): Resource[F, PacketSocket[F]] =
     BitVectorSocket(sockets, sequenceIdRef, initialPacketRef, sslOptions, readTimeout, capabilitiesFlags).map(
-      fromBitVectorSocket(_, debug, sequenceIdRef, maxAllowedPacket)
+      fromBitVectorSocket(_, debug, sequenceIdRef, maxAllowedPacket, transportFailedRef)
     )

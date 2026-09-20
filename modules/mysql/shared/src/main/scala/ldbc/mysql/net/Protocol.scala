@@ -148,9 +148,9 @@ sealed trait Protocol[F[_]] extends UtilityCommands[F], Authentication[F]:
    * Whether the transport underlying this connection has failed — an I/O error, a packet decode
    * failure, or a read/write that was cancelled part-way through.
    *
-   * Once true it never goes back to false. The byte stream position is no longer known, and MySQL
-   * offers no way to resynchronise, so the only safe action is to discard the session. `isClosed`
-   * on the owning connection and statement reports this, which is how the pool evicts it.
+   * Delegated to the underlying [[PacketSocket]], which is the layer that knows whether a packet was
+   * completed. `isClosed` on the owning connection and statement reports it, which is how the pool
+   * evicts the session.
    */
   def transportFailed: F[Boolean]
 
@@ -162,7 +162,7 @@ object Protocol:
   private[ldbc] case class Impl[F[_]] private[Protocol] (
     initialPacket:               InitialPacket,
     hostInfo:                    HostInfo,
-    rawSocket:                   PacketSocket[F],
+    socket:                      PacketSocket[F],
     useSSL:                      Boolean = false,
     allowPublicKeyRetrieval:     Boolean = false,
     capabilityFlags:             Set[CapabilitiesFlags],
@@ -187,36 +187,7 @@ object Protocol:
 
     override def noBackslashEscapes: F[Boolean] = noBackslashEscapesRef.get
 
-    private val transportFailedRef: Ref[F, Boolean] = Ref.unsafe[F, Boolean](false)
-
-    override def transportFailed: F[Boolean] = transportFailedRef.get
-
-    private val markTransportFailed: F[Unit] = transportFailedRef.set(true)
-
-    /**
-     * Records a transport failure for anything that escapes the packet boundary, by error or by
-     * cancellation. Past that point we no longer know how much of the stream was consumed.
-     *
-     * An `ERR_Packet` does not come through here: it decodes successfully and is returned as a
-     * value, with the caller deciding to raise. That is what keeps "the server reported an error"
-     * from being mistaken for "the connection is broken".
-     *
-     * `onCancel` is currently unreachable — every command runs inside `Exchange`'s `uncancelable`,
-     * and a `readTimeout` surfaces here as an error rather than a cancellation. It is kept so that
-     * making cancellation reachable (e.g. a future `KILL QUERY`) cannot silently reopen the hole.
-     */
-    private def guardTransport[A](fa: F[A]): F[A] =
-      F.onCancel(fa.onError { case _ => markTransportFailed })(markTransportFailed)
-
-    /**
-     * The injected [[PacketSocket]] wrapped in the transport guard. Every `socket.*` call below
-     * resolves to this, so the guard cannot be bypassed by how an `Impl` happens to be constructed.
-     */
-    private val socket: PacketSocket[F] = new PacketSocket[F]:
-      override def receive[P <: ResponsePacket](decoder: Decoder[P]): F[P] =
-        guardTransport(rawSocket.receive(decoder))
-      override def send(request: RequestPacket): F[Unit] =
-        guardTransport(rawSocket.send(request))
+    override def transportFailed: F[Boolean] = socket.transportFailed
 
     override def receive[P <: ResponsePacket](decoder: Decoder[P]): F[P] =
       F.flatTap(socket.receive(decoder)) {
@@ -681,9 +652,10 @@ object Protocol:
     plugins:                     Map[String, AuthenticationPlugin[F]]
   )(using Tracer[F], Exchange[F], Concurrent[F], TlsUpgrade[F]): Resource[F, Protocol[F]] =
     for
-      sequenceIdRef    <- Resource.eval(Ref.of[F, Byte](0x01))
-      initialPacketRef <- Resource.eval(Ref.of[F, Option[InitialPacket]](None))
-      packetSocket     <-
+      sequenceIdRef      <- Resource.eval(Ref.of[F, Byte](0x01))
+      initialPacketRef   <- Resource.eval(Ref.of[F, Option[InitialPacket]](None))
+      transportFailedRef <- Resource.eval(Ref.of[F, Boolean](false))
+      packetSocket       <-
         PacketSocket(
           debug,
           sockets,
@@ -692,7 +664,8 @@ object Protocol:
           initialPacketRef,
           readTimeout,
           capabilitiesFlags,
-          maxAllowedPacket
+          maxAllowedPacket,
+          transportFailedRef
         )
       protocol <- Resource.eval(
                     fromPacketSocket(
