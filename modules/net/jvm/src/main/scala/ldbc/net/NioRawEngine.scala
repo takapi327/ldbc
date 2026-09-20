@@ -55,6 +55,8 @@ private[net] final class NioRawEngine private (selector: Selector) extends RawIo
       ch.configureBlocking(false)
       ch.setOption(StandardSocketOptions.TCP_NODELAY, java.lang.Boolean.valueOf(options.noDelay))
       ch.setOption(StandardSocketOptions.SO_KEEPALIVE, java.lang.Boolean.valueOf(options.keepAlive))
+      options.sendBufferSize.foreach(size => ch.setOption(StandardSocketOptions.SO_SNDBUF, Integer.valueOf(size)))
+      options.receiveBufferSize.foreach(size => ch.setOption(StandardSocketOptions.SO_RCVBUF, Integer.valueOf(size)))
       def completed(): Unit =
         try { ch.finishConnect(); cb(Right(new NioRawSocket(ch, this))) }
         catch case e: Throwable => cb(Left(e))
@@ -75,6 +77,9 @@ private[net] object NioRawEngine:
 
 /** [[RawSocket]] over a non-blocking NIO channel driven by [[NioRawEngine]]. */
 private[net] final class NioRawSocket(ch: SocketChannel, engine: NioRawEngine) extends RawSocket:
+
+  /** The underlying channel, exposed so the applied [[SocketOptions]] can be read back. */
+  private[net] def channel: SocketChannel = ch
 
   /**
    * Reads up to `n` bytes. A negative result from the channel is end of stream, zero means readable
