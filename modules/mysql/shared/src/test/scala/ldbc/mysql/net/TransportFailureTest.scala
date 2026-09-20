@@ -61,17 +61,19 @@ class TransportFailureTest extends FTestPlatform:
     for
       given Exchange[Fx] <- Exchange.apply[Fx]
       sequenceIdRef      <- Ref.of[Fx, Byte](0x01)
-    yield Protocol.Impl[Fx](
-      initialPacket               = initialPacket,
-      hostInfo                    = hostInfo,
-      rawSocket                   = socket,
-      useSSL                      = false,
-      allowPublicKeyRetrieval     = false,
-      capabilityFlags             = Set.empty[CapabilitiesFlags],
-      sequenceIdRef               = sequenceIdRef,
-      defaultAuthenticationPlugin = None,
-      plugins                     = Map.empty
-    )
+      initialPacketRef   <- Ref.of[Fx, Option[InitialPacket]](Some(initialPacket))
+      protocol           <- Protocol.fromPacketSocket[Fx](
+                    packetSocket                = socket,
+                    hostInfo                    = hostInfo,
+                    sslOptions                  = None,
+                    allowPublicKeyRetrieval     = false,
+                    capabilitiesFlags           = Set.empty[CapabilitiesFlags],
+                    sequenceIdRef               = sequenceIdRef,
+                    initialPacketRef            = initialPacketRef,
+                    defaultAuthenticationPlugin = None,
+                    plugins                     = Map.empty
+                  )
+    yield protocol
 
   test("a decode failure on receive marks the transport as failed"):
     val program = for

@@ -48,17 +48,18 @@ class TransportFailureSilenceTest extends FTestPlatform:
       sent               <- Ref.of[Fx, Vector[RequestPacket]](Vector.empty)
       given Exchange[Fx] <- Exchange.apply[Fx]
       sequenceIdRef      <- Ref.of[Fx, Byte](0x01)
-      protocol = Protocol.Impl[Fx](
-                   initialPacket               = initialPacket,
-                   hostInfo                    = hostInfo,
-                   rawSocket                   = new BrokenRecordingSocket(sent),
-                   useSSL                      = false,
-                   allowPublicKeyRetrieval     = false,
-                   capabilityFlags             = Set.empty[CapabilitiesFlags],
-                   sequenceIdRef               = sequenceIdRef,
-                   defaultAuthenticationPlugin = None,
-                   plugins                     = Map.empty
-                 )
+      initialPacketRef   <- Ref.of[Fx, Option[InitialPacket]](Some(initialPacket))
+      protocol           <- Protocol.fromPacketSocket[Fx](
+                    packetSocket                = new BrokenRecordingSocket(sent),
+                    hostInfo                    = hostInfo,
+                    sslOptions                  = None,
+                    allowPublicKeyRetrieval     = false,
+                    capabilitiesFlags           = Set.empty[CapabilitiesFlags],
+                    sequenceIdRef               = sequenceIdRef,
+                    initialPacketRef            = initialPacketRef,
+                    defaultAuthenticationPlugin = None,
+                    plugins                     = Map.empty
+                  )
       _ <- protocol.comPing().attempt
       _ <- sent.set(Vector.empty)
     yield (protocol, sent)
@@ -121,17 +122,18 @@ class TransportFailureSilenceTest extends FTestPlatform:
       sent               <- Ref.of[Fx, Vector[RequestPacket]](Vector.empty)
       given Exchange[Fx] <- Exchange.apply[Fx]
       sequenceIdRef      <- Ref.of[Fx, Byte](0x01)
-      protocol = Protocol.Impl[Fx](
-                   initialPacket               = initialPacket,
-                   hostInfo                    = hostInfo,
-                   rawSocket                   = new BrokenRecordingSocket(sent),
-                   useSSL                      = false,
-                   allowPublicKeyRetrieval     = false,
-                   capabilityFlags             = Set.empty[CapabilitiesFlags],
-                   sequenceIdRef               = sequenceIdRef,
-                   defaultAuthenticationPlugin = None,
-                   plugins                     = Map.empty
-                 )
+      initialPacketRef   <- Ref.of[Fx, Option[InitialPacket]](Some(initialPacket))
+      protocol           <- Protocol.fromPacketSocket[Fx](
+                    packetSocket                = new BrokenRecordingSocket(sent),
+                    hostInfo                    = hostInfo,
+                    sslOptions                  = None,
+                    allowPublicKeyRetrieval     = false,
+                    capabilitiesFlags           = Set.empty[CapabilitiesFlags],
+                    sequenceIdRef               = sequenceIdRef,
+                    initialPacketRef            = initialPacketRef,
+                    defaultAuthenticationPlugin = None,
+                    plugins                     = Map.empty
+                  )
       isClosed  <- Ref.of[Fx, Boolean](false)
       fetchSize <- Ref.of[Fx, Int](10)
       resultSet = StreamingResultSet[Fx](
