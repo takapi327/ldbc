@@ -6,131 +6,135 @@
 
 package ldbc.mysql.net
 
-import scodec.Decoder
-
-import ldbc.sql.SQLException
+import scodec.bits.{ BitVector, ByteVector }
 
 import ldbc.effect.{ Deferred, Ref }
 import ldbc.fx.concurrentFx
 import ldbc.fx.syntax.*
 import ldbc.fx.Fx
-import ldbc.mysql.data.{ CapabilitiesFlags, ServerStatusFlags }
+import ldbc.mysql.data.CapabilitiesFlags
 import ldbc.mysql.exception.EofException
-import ldbc.mysql.net.packet.{ RequestPacket, ResponsePacket }
-import ldbc.mysql.net.packet.response.{ ERRPacket, InitialPacket, OKPacket }
-import ldbc.mysql.net.protocol.Exchange
-import ldbc.mysql.util.Version
+import ldbc.mysql.net.packet.request.ComPingPacket
+import ldbc.mysql.net.packet.response.{ GenericResponsePackets, OKPacket }
 import ldbc.mysql.FTestPlatform
-import ldbc.telemetry.*
 
 class TransportFailureTest extends FTestPlatform:
-  given Tracer[Fx] = Tracer.noop[Fx]
 
-  private final class FailingSocket(error: Throwable) extends PacketSocket[Fx]:
-    override def receive[P <: ResponsePacket](decoder: Decoder[P]):    Fx[P]    = Fx.raiseError(error)
-    override def send(request:                         RequestPacket): Fx[Unit] = Fx.unit
+  private final class ScriptedBitVectorSocket(chunks: Ref[Fx, List[BitVector]]) extends BitVectorSocket[Fx]:
+    override def write(bits: BitVector): Fx[Unit]      = Fx.unit
+    override def read(nBytes: Int):      Fx[BitVector] =
+      chunks
+        .modify {
+          case head :: tail => (tail, Some(head))
+          case Nil          => (Nil, None)
+        }
+        .flatMap {
+          case Some(bits) => Fx.pure(bits)
+          case None       => Fx.raiseError(EofException(nBytes, 0))
+        }
 
-  private final class RecordingSocket(response: ResponsePacket, sent: Ref[Fx, Vector[RequestPacket]])
-    extends PacketSocket[Fx]:
-    override def receive[P <: ResponsePacket](decoder: Decoder[P]): Fx[P] =
-      Fx.pure(response.asInstanceOf[P])
-    override def send(request: RequestPacket): Fx[Unit] = sent.update(_ :+ request)
+  private final class FailingBitVectorSocket(error: Throwable) extends BitVectorSocket[Fx]:
+    override def write(bits:  BitVector): Fx[Unit]      = Fx.raiseError(error)
+    override def read(nBytes: Int):       Fx[BitVector] = Fx.raiseError(error)
 
-  private final class NeverRespondingSocket(entered: Deferred[Fx, Unit]) extends PacketSocket[Fx]:
-    override def receive[P <: ResponsePacket](decoder: Decoder[P]): Fx[P] =
-      entered.complete(()) *> Fx.async[P](_ => Fx.Canceler.noop)
-    override def send(request: RequestPacket): Fx[Unit] = Fx.unit
+  private final class NeverRespondingBitVectorSocket(entered: Deferred[Fx, Unit]) extends BitVectorSocket[Fx]:
+    override def write(bits: BitVector): Fx[Unit]      = Fx.unit
+    override def read(nBytes: Int):      Fx[BitVector] =
+      entered.complete(()) *> Fx.async[BitVector](_ => Fx.Canceler.noop)
 
-  private val initialPacket = InitialPacket(
-    protocolVersion = 10,
-    serverVersion   = Version(8, 4, 0),
-    threadId        = 1,
-    capabilityFlags = Set.empty[CapabilitiesFlags],
-    characterSet    = 45,
-    statusFlags     = Set.empty[ServerStatusFlags],
-    scrambleBuff    = Array.fill[Byte](20)(1),
-    authPlugin      = "mysql_native_password"
-  )
+  private def header(payloadSize: Int, sequenceId: Byte): BitVector =
+    ByteVector(
+      Array[Byte](
+        payloadSize.toByte,
+        ((payloadSize >> 8) & 0xff).toByte,
+        ((payloadSize >> 16) & 0xff).toByte,
+        sequenceId
+      )
+    ).toBitVector
 
-  private val hostInfo = HostInfo("127.0.0.1", 3306, "user", Some("secret"), Some("db"))
+  /** `0x00` status, then the length-encoded rows/id and the 2-byte status and warning fields. */
+  private val okPayload: BitVector =
+    ByteVector(Array[Byte](0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00)).toBitVector
 
-  private val okPacket  = OKPacket(0x00, 0L, 0L, Set.empty[ServerStatusFlags], None, None, None, None)
-  private val errPacket = ERRPacket(0xff, 1049, 0x23, Some("42000"), "Unknown database 'nope'")
-
-  private def protocolWith(socket: PacketSocket[Fx]): Fx[Protocol[Fx]] =
+  private def socketOver(bvs: BitVectorSocket[Fx]): Fx[(PacketSocket[Fx], Ref[Fx, Boolean])] =
     for
-      given Exchange[Fx] <- Exchange.apply[Fx]
-      sequenceIdRef      <- Ref.of[Fx, Byte](0x01)
-      initialPacketRef   <- Ref.of[Fx, Option[InitialPacket]](Some(initialPacket))
-      protocol           <- Protocol.fromPacketSocket[Fx](
-                    packetSocket                = socket,
-                    hostInfo                    = hostInfo,
-                    sslOptions                  = None,
-                    allowPublicKeyRetrieval     = false,
-                    capabilitiesFlags           = Set.empty[CapabilitiesFlags],
-                    sequenceIdRef               = sequenceIdRef,
-                    initialPacketRef            = initialPacketRef,
-                    defaultAuthenticationPlugin = None,
-                    plugins                     = Map.empty
-                  )
-    yield protocol
+      sequenceIdRef      <- Ref.of[Fx, Byte](0x00)
+      transportFailedRef <- Ref.of[Fx, Boolean](false)
+    yield (
+      PacketSocket.fromBitVectorSocket[Fx](bvs, false, sequenceIdRef, 65535, transportFailedRef),
+      transportFailedRef
+    )
 
-  test("a decode failure on receive marks the transport as failed"):
+  private val decoder = GenericResponsePackets.decoder(Set.empty[CapabilitiesFlags])
+
+  test("a read error marks the transport as failed"):
     val program = for
-      protocol <- protocolWith(new FailingSocket(new SQLException("malformed packet")))
-      before   <- protocol.transportFailed
-      _        <- protocol.comPing().attempt
-      after    <- protocol.transportFailed
+      pair   <- socketOver(new FailingBitVectorSocket(EofException(4, 0)))
+      before <- pair._2.get
+      _      <- pair._1.receive(decoder).attempt
+      after  <- pair._2.get
     yield (before, after)
 
     assertFx(program, (false, true))
 
-  test("an EOF while reading marks the transport as failed"):
+  test("a write error marks the transport as failed"):
     val program = for
-      protocol <- protocolWith(new FailingSocket(EofException(4, 0)))
-      _        <- protocol.comPing().attempt
-      failed   <- protocol.transportFailed
+      pair   <- socketOver(new FailingBitVectorSocket(new java.io.IOException("broken pipe")))
+      _      <- pair._1.send(ComPingPacket()).attempt
+      failed <- pair._2.get
     yield failed
 
     assertFx(program, true)
 
-  test("a failure raised through readUntilEOF is caught too"):
+  test("a header claiming more than maxAllowedPacket marks the transport as failed"):
     val program = for
-      protocol <- protocolWith(new FailingSocket(new SQLException("truncated row")))
-      _        <- protocol.readUntilEOF(OKPacket.decoder(Set.empty)).attempt
-      failed   <- protocol.transportFailed
+      chunks <- Ref.of[Fx, List[BitVector]](List(header(70000, 0)))
+      pair   <- socketOver(new ScriptedBitVectorSocket(chunks))
+      _      <- pair._1.receive(decoder).attempt
+      failed <- pair._2.get
     yield failed
 
-    assertFx(program, true)
+    assertFx(program, true, "PacketTooBigException が故障として記録されていない")
+
+  test("a payload the decoder rejects marks the transport as failed"):
+    val garbage = ByteVector(Array[Byte](0x7f, 0x01, 0x02)).toBitVector
+    val program = for
+      chunks <- Ref.of[Fx, List[BitVector]](List(header(3, 0), garbage))
+      pair   <- socketOver(new ScriptedBitVectorSocket(chunks))
+      _      <- pair._1.receive(decoder).attempt
+      failed <- pair._2.get
+    yield failed
+
+    assertFx(program, true, "デコード失敗が故障として記録されていない")
 
   test("cancelling a receive marks the transport as failed"):
     val program = for
-      entered  <- Deferred[Fx, Unit]
-      protocol <- protocolWith(new NeverRespondingSocket(entered))
-      fiber    <- protocol.receive(OKPacket.decoder(Set.empty)).start
-      _        <- entered.get
-      _        <- fiber.cancel
-      failed   <- protocol.transportFailed
+      entered <- Deferred[Fx, Unit]
+      pair    <- socketOver(new NeverRespondingBitVectorSocket(entered))
+      fiber   <- pair._1.receive(decoder).start
+      _       <- entered.get
+      _       <- fiber.cancel
+      failed  <- pair._2.get
     yield failed
 
     assertFx(program, true, "キャンセルされた receive が故障として記録されていない")
 
-  test("an ERR_Packet raises but leaves the transport usable"):
-    val sentRef = Ref.unsafe[Fx, Vector[RequestPacket]](Vector.empty)
+  test("a packet that decodes cleanly leaves the transport usable"):
     val program = for
-      protocol <- protocolWith(new RecordingSocket(errPacket, sentRef))
-      outcome  <- protocol.comInitDB("nope").attempt
-      failed   <- protocol.transportFailed
-    yield (outcome.isLeft, failed)
+      chunks   <- Ref.of[Fx, List[BitVector]](List(header(7, 0), okPayload))
+      pair     <- socketOver(new ScriptedBitVectorSocket(chunks))
+      received <- pair._1.receive(decoder)
+      failed   <- pair._2.get
+    yield (received.isInstanceOf[OKPacket], failed)
 
-    assertFx(program, (true, false), "サーバが返した ERR_Packet を接続の故障として扱っている")
+    assertFx(program, (true, false), "正常にデコードできたのに故障として記録されている")
 
-  test("a successful exchange leaves the transport usable"):
-    val sentRef = Ref.unsafe[Fx, Vector[RequestPacket]](Vector.empty)
+  test("a successful send leaves the transport usable"):
     val program = for
-      protocol <- protocolWith(new RecordingSocket(okPacket, sentRef))
-      _        <- protocol.comPing().attempt
-      failed   <- protocol.transportFailed
+      chunks <- Ref.of[Fx, List[BitVector]](List.empty)
+      pair   <- socketOver(new ScriptedBitVectorSocket(chunks))
+      _      <- pair._1.send(ComPingPacket())
+      failed <- pair._2.get
     yield failed
 
     assertFx(program, false)

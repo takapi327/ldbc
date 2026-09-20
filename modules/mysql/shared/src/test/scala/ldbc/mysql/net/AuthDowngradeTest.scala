@@ -53,7 +53,8 @@ class AuthDowngradeTest extends FTestPlatform:
           case Some(packet) => Fx.pure(packet.asInstanceOf[P])
           case None         => Fx.raiseError(new RuntimeException("scripted socket exhausted"))
         }
-    override def send(request: RequestPacket): Fx[Unit] = sent.update(_ :+ request)
+    override def send(request: RequestPacket): Fx[Unit]    = sent.update(_ :+ request)
+    override def transportFailed:              Fx[Boolean] = Fx.pure(false)
 
   private val initialPacket = InitialPacket(
     protocolVersion = 10,

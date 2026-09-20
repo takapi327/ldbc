@@ -25,10 +25,11 @@ import ldbc.telemetry.*
 class TransportFailureSilenceTest extends FTestPlatform:
   given Tracer[Fx] = Tracer.noop[Fx]
 
-  private final class BrokenRecordingSocket(sent: Ref[Fx, Vector[RequestPacket]]) extends PacketSocket[Fx]:
+  private final class RecordingSocket(sent: Ref[Fx, Vector[RequestPacket]], failed: Boolean) extends PacketSocket[Fx]:
     override def receive[P <: ResponsePacket](decoder: Decoder[P]): Fx[P] =
       Fx.raiseError(new java.io.IOException("connection reset"))
-    override def send(request: RequestPacket): Fx[Unit] = sent.update(_ :+ request)
+    override def send(request: RequestPacket): Fx[Unit]    = sent.update(_ :+ request)
+    override def transportFailed:              Fx[Boolean] = Fx.pure(failed)
 
   private val initialPacket = InitialPacket(
     protocolVersion = 10,
@@ -43,14 +44,14 @@ class TransportFailureSilenceTest extends FTestPlatform:
 
   private val hostInfo = HostInfo("127.0.0.1", 3306, "user", Some("secret"), Some("db"))
 
-  private def failedProtocol: Fx[(Protocol[Fx], Ref[Fx, Vector[RequestPacket]])] =
+  private def protocolWith(failed: Boolean): Fx[(Protocol[Fx], Ref[Fx, Vector[RequestPacket]])] =
     for
       sent               <- Ref.of[Fx, Vector[RequestPacket]](Vector.empty)
       given Exchange[Fx] <- Exchange.apply[Fx]
       sequenceIdRef      <- Ref.of[Fx, Byte](0x01)
       initialPacketRef   <- Ref.of[Fx, Option[InitialPacket]](Some(initialPacket))
       protocol           <- Protocol.fromPacketSocket[Fx](
-                    packetSocket                = new BrokenRecordingSocket(sent),
+                    packetSocket                = new RecordingSocket(sent, failed),
                     hostInfo                    = hostInfo,
                     sslOptions                  = None,
                     allowPublicKeyRetrieval     = false,
@@ -60,8 +61,6 @@ class TransportFailureSilenceTest extends FTestPlatform:
                     defaultAuthenticationPlugin = None,
                     plugins                     = Map.empty
                   )
-      _ <- protocol.comPing().attempt
-      _ <- sent.set(Vector.empty)
     yield (protocol, sent)
 
   private def connectionOn(protocol: Protocol[Fx]): Fx[ConnectionImpl[Fx]] =
@@ -82,12 +81,30 @@ class TransportFailureSilenceTest extends FTestPlatform:
       databaseMetrics    = DatabaseMetrics.noop[Fx]
     )
 
+  private def streamingResultSetOn(protocol: Protocol[Fx]): Fx[StreamingResultSet[Fx]] =
+    for
+      isClosed  <- Ref.of[Fx, Boolean](false)
+      fetchSize <- Ref.of[Fx, Int](10)
+    yield StreamingResultSet[Fx](
+      protocol           = protocol,
+      statementId        = 1L,
+      columns            = Vector.empty,
+      records            = Vector.empty,
+      serverVariables    = Map.empty,
+      version            = Version(8, 4, 0),
+      isClosed           = isClosed,
+      fetchSize          = fetchSize,
+      useCursorFetch     = true,
+      useServerPrepStmts = true,
+      decoder            = BinaryColumnValueDecoder
+    )
+
   test("close() on a failed transport writes nothing"):
     val program = for
-      failed     <- failedProtocol
-      connection <- connectionOn(failed._1)
+      pair       <- protocolWith(failed = true)
+      connection <- connectionOn(pair._1)
       _          <- connection.close()
-      written    <- failed._2.get
+      written    <- pair._2.get
       closed     <- connection.isClosed()
     yield (written.size, closed)
 
@@ -95,62 +112,20 @@ class TransportFailureSilenceTest extends FTestPlatform:
 
   test("StreamingResultSet.next() on a failed transport writes nothing"):
     val program = for
-      failed    <- failedProtocol
-      isClosed  <- Ref.of[Fx, Boolean](false)
-      fetchSize <- Ref.of[Fx, Int](10)
-      resultSet = StreamingResultSet[Fx](
-                    protocol           = failed._1,
-                    statementId        = 1L,
-                    columns            = Vector.empty,
-                    records            = Vector.empty,
-                    serverVariables    = Map.empty,
-                    version            = Version(8, 4, 0),
-                    isClosed           = isClosed,
-                    fetchSize          = fetchSize,
-                    useCursorFetch     = true,
-                    useServerPrepStmts = true,
-                    decoder            = BinaryColumnValueDecoder
-                  )
-      outcome <- resultSet.next().attempt
-      written <- failed._2.get
+      pair      <- protocolWith(failed = true)
+      resultSet <- streamingResultSetOn(pair._1)
+      outcome   <- resultSet.next().attempt
+      written   <- pair._2.get
     yield (outcome.left.exists(_.isInstanceOf[SQLTransientConnectionException]), written.size)
 
     assertFx(program, (true, 0), "故障後の next() が COM_STMT_FETCH を送っている")
 
   test("a healthy StreamingResultSet still fetches"):
     val program = for
-      sent               <- Ref.of[Fx, Vector[RequestPacket]](Vector.empty)
-      given Exchange[Fx] <- Exchange.apply[Fx]
-      sequenceIdRef      <- Ref.of[Fx, Byte](0x01)
-      initialPacketRef   <- Ref.of[Fx, Option[InitialPacket]](Some(initialPacket))
-      protocol           <- Protocol.fromPacketSocket[Fx](
-                    packetSocket                = new BrokenRecordingSocket(sent),
-                    hostInfo                    = hostInfo,
-                    sslOptions                  = None,
-                    allowPublicKeyRetrieval     = false,
-                    capabilitiesFlags           = Set.empty[CapabilitiesFlags],
-                    sequenceIdRef               = sequenceIdRef,
-                    initialPacketRef            = initialPacketRef,
-                    defaultAuthenticationPlugin = None,
-                    plugins                     = Map.empty
-                  )
-      isClosed  <- Ref.of[Fx, Boolean](false)
-      fetchSize <- Ref.of[Fx, Int](10)
-      resultSet = StreamingResultSet[Fx](
-                    protocol           = protocol,
-                    statementId        = 1L,
-                    columns            = Vector.empty,
-                    records            = Vector.empty,
-                    serverVariables    = Map.empty,
-                    version            = Version(8, 4, 0),
-                    isClosed           = isClosed,
-                    fetchSize          = fetchSize,
-                    useCursorFetch     = true,
-                    useServerPrepStmts = true,
-                    decoder            = BinaryColumnValueDecoder
-                  )
-      _       <- resultSet.next().attempt
-      written <- sent.get
+      pair      <- protocolWith(failed = false)
+      resultSet <- streamingResultSetOn(pair._1)
+      _         <- resultSet.next().attempt
+      written   <- pair._2.get
     yield written.size
 
     assertFxBoolean(program.map(_ > 0), "健全な接続で next() が一度もソケットに書いていない")
