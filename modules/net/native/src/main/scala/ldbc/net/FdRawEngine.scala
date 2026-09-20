@@ -176,6 +176,13 @@ private[net] final class FdRawSocket(fd: Int, st: ChannelState, engine: FdRawEng
       new Canceler:
         override def cancel(): Unit = st.readReady = null
 
+  /**
+   * Writes `bytes` in full, arming write readiness whenever `send` reports it would block.
+   *
+   * The returned [[Canceler]] is intentionally a no-op: `write` is not cancelable (see
+   * [[RawSocket]]). Clearing `writeReady` here would strand the unsent remainder of a partially
+   * written frame, leaving the peer waiting for bytes that never arrive.
+   */
   override def write(bytes: Array[Byte], cb: Either[Throwable, Unit] => Unit): Canceler =
     if closed.get() then { cb(Left(new java.io.IOException("socket closed"))); Canceler.noop }
     else
@@ -192,7 +199,7 @@ private[net] final class FdRawSocket(fd: Int, st: ChannelState, engine: FdRawEng
         if !blocked && !failed && off.get() >= bytes.length then cb(Right(()))
       attempt()
       new Canceler:
-        override def cancel(): Unit = st.writeReady = null
+        override def cancel(): Unit = ()
 
   override def close(): Unit =
     if closed.compareAndSet(false, true) then engine.deregisterAndClose(fd)

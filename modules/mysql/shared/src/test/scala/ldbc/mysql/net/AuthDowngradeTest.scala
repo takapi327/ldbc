@@ -53,7 +53,8 @@ class AuthDowngradeTest extends FTestPlatform:
           case Some(packet) => Fx.pure(packet.asInstanceOf[P])
           case None         => Fx.raiseError(new RuntimeException("scripted socket exhausted"))
         }
-    override def send(request: RequestPacket): Fx[Unit] = sent.update(_ :+ request)
+    override def send(request: RequestPacket): Fx[Unit]    = sent.update(_ :+ request)
+    override def transportFailed:              Fx[Boolean] = Fx.pure(false)
 
   private val initialPacket = InitialPacket(
     protocolVersion = 10,
@@ -81,20 +82,21 @@ class AuthDowngradeTest extends FTestPlatform:
                        OKPacket(0x00, 0L, 0L, Set.empty[ServerStatusFlags], None, None, None, None)
                      )
                    )
-      protocol = Protocol.Impl(
-                   initialPacket               = initialPacket,
-                   hostInfo                    = hostInfo,
-                   socket                      = new ScriptedSocket(sent, toReceive),
-                   useSSL                      = false,
-                   allowPublicKeyRetrieval     = false,
-                   capabilityFlags             = Set.empty[CapabilitiesFlags],
-                   sequenceIdRef               = null,
-                   defaultAuthenticationPlugin = None,
-                   plugins                     = Map(
-                     "mysql_native_password" -> MysqlNativePasswordPlugin[Fx],
-                     "mysql_clear_password"  -> MysqlClearPasswordPlugin[Fx]
-                   )
-                 )
+      initialPacketRef <- Ref.of[Fx, Option[InitialPacket]](Some(initialPacket))
+      protocol         <- Protocol.fromPacketSocket[Fx](
+                    packetSocket                = new ScriptedSocket(sent, toReceive),
+                    hostInfo                    = hostInfo,
+                    sslOptions                  = None,
+                    allowPublicKeyRetrieval     = false,
+                    capabilitiesFlags           = Set.empty[CapabilitiesFlags],
+                    sequenceIdRef               = null,
+                    initialPacketRef            = initialPacketRef,
+                    defaultAuthenticationPlugin = None,
+                    plugins                     = Map(
+                      "mysql_native_password" -> MysqlNativePasswordPlugin[Fx],
+                      "mysql_clear_password"  -> MysqlClearPasswordPlugin[Fx]
+                    )
+                  )
       result <- protocol.startAuthentication("user", password).attempt
       sends  <- sent.get
     yield
@@ -122,17 +124,18 @@ class AuthDowngradeTest extends FTestPlatform:
       given Exchange[Fx] <- Exchange.apply[Fx]
       sent               <- Ref.of[Fx, Vector[RequestPacket]](Vector.empty)
       toReceive          <- Ref.of[Fx, List[ResponsePacket]](List.empty[ResponsePacket])
-      protocol = Protocol.Impl(
-                   initialPacket               = clearTextInitialPacket,
-                   hostInfo                    = hostInfo,
-                   socket                      = new ScriptedSocket(sent, toReceive),
-                   useSSL                      = false,
-                   allowPublicKeyRetrieval     = false,
-                   capabilityFlags             = Set.empty[CapabilitiesFlags],
-                   sequenceIdRef               = null,
-                   defaultAuthenticationPlugin = None,
-                   plugins                     = Map("mysql_clear_password" -> MysqlClearPasswordPlugin[Fx])
-                 )
+      initialPacketRef   <- Ref.of[Fx, Option[InitialPacket]](Some(clearTextInitialPacket))
+      protocol           <- Protocol.fromPacketSocket[Fx](
+                    packetSocket                = new ScriptedSocket(sent, toReceive),
+                    hostInfo                    = hostInfo,
+                    sslOptions                  = None,
+                    allowPublicKeyRetrieval     = false,
+                    capabilitiesFlags           = Set.empty[CapabilitiesFlags],
+                    sequenceIdRef               = null,
+                    initialPacketRef            = initialPacketRef,
+                    defaultAuthenticationPlugin = None,
+                    plugins                     = Map("mysql_clear_password" -> MysqlClearPasswordPlugin[Fx])
+                  )
       result <- protocol.changeUser("user", "secret").attempt
       sends  <- sent.get
     yield (result, sends)

@@ -79,12 +79,32 @@ private[ldbc] case class ConnectionImpl[F[_]](
       )
   }
 
-  override def close(): F[Unit] = getAutoCommit().flatMap { autoCommit =>
-    (if !autoCommit then createStatement().flatMap(_.executeQuery("ROLLBACK")).void
-     else F.unit) *> protocol.resetSequenceId *> protocol.comQuit() *> connectionClosed.set(true)
+  /**
+   * Rolls back any open transaction and sends `COM_QUIT`, then marks the connection closed.
+   *
+   * When the transport has already failed, nothing can be written any more and attempting it only
+   * turns a clean teardown into a failure, so the network steps are skipped. The socket itself is
+   * released by the enclosing `Resource` either way.
+   */
+  override def close(): F[Unit] = protocol.transportFailed.flatMap {
+    case true  => connectionClosed.set(true)
+    case false =>
+      getAutoCommit().flatMap { autoCommit =>
+        (if !autoCommit then createStatement().flatMap(_.executeQuery("ROLLBACK")).void
+         else F.unit) *> protocol.resetSequenceId *> protocol.comQuit() *> connectionClosed.set(true)
+      }
   }
 
-  override def isClosed(): F[Boolean] = connectionClosed.get
+  /**
+   * True once [[close]] has been called, and also once the transport has failed — the JDBC contract
+   * this mirrors covers both ("if `close` has been called on it or if certain fatal errors have
+   * occurred"). Reporting the second case is what lets the pool evict a session whose byte stream
+   * is no longer usable.
+   */
+  override def isClosed(): F[Boolean] = connectionClosed.get.flatMap {
+    case true  => F.pure(true)
+    case false => protocol.transportFailed
+  }
 
   override def getMetaData(): F[DatabaseMetaData[F]] =
     isClosed().ifM(
