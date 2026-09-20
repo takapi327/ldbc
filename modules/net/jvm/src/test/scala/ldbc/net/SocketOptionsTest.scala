@@ -36,8 +36,8 @@ class SocketOptionsTest extends munit.FunSuite:
     applied(SocketOptions(sendBufferSize = Some(requested), receiveBufferSize = Some(requested))): ch =>
       val send = ch.getOption(StandardSocketOptions.SO_SNDBUF).intValue
       val recv = ch.getOption(StandardSocketOptions.SO_RCVBUF).intValue
-      assert(send > default._1, s"sendBufferSize がソケットに届いていない（既定 ${ default._1 } / 指定後 $send）")
-      assert(recv > default._2, s"receiveBufferSize がソケットに届いていない（既定 ${ default._2 } / 指定後 $recv）")
+      assert(send > default._1, s"sendBufferSize never reached the socket (default ${ default._1 }, applied $send)")
+      assert(recv > default._2, s"receiveBufferSize never reached the socket (default ${ default._2 }, applied $recv)")
 
   test("leaving the buffer sizes unset keeps the platform defaults"):
     val untouched = SocketChannel.open()

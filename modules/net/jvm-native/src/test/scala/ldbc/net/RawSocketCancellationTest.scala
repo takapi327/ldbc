@@ -31,15 +31,15 @@ class RawSocketCancellationTest extends munit.FunSuite:
     var waited = 0
     while accepted.get() == null && waited < 10000 do { Thread.sleep(25); waited += 25 }
     val socket = accepted.get()
-    assert(socket != null, "サーバが accept できなかった")
+    assert(socket != null, "the server never accepted a connection")
     socket
 
   private def connectRaw(port: Int): RawSocket =
     val ref   = new AtomicReference[Either[Throwable, RawSocket]](null)
     val latch = new CountDownLatch(1)
     engine.connect("127.0.0.1", port, SocketOptions.default, r => { ref.set(r); latch.countDown() })
-    assert(latch.await(10, TimeUnit.SECONDS), "connect がタイムアウトした")
-    ref.get().fold(e => fail(s"connect 失敗: $e"), identity)
+    assert(latch.await(10, TimeUnit.SECONDS), "connect timed out")
+    ref.get().fold(e => fail(s"connect failed: $e"), identity)
 
   test("cancelling a read leaves the bytes for the next read"):
     val (port, accepted) = acceptOne()
@@ -49,7 +49,7 @@ class RawSocketCancellationTest extends munit.FunSuite:
     val firstCallback = new AtomicReference[String]("not called")
     val canceler      = client.read(4, r => firstCallback.set(s"called: $r"))
     Thread.sleep(300)
-    assertEquals(firstCallback.get(), "not called", "データが無いのに1回目の read が完了している")
+    assertEquals(firstCallback.get(), "not called", "the first read completed even though no data had arrived")
 
     canceler.cancel()
     Thread.sleep(300)
@@ -71,7 +71,7 @@ class RawSocketCancellationTest extends munit.FunSuite:
     val got = if secondLatch.await(5, TimeUnit.SECONDS) then secondRef.get() else "timed out"
     client.close()
 
-    assertEquals(got, "AAAABBBB", s"キャンセルした read がバイトを消費して捨てている（読めたのは '$got'）")
+    assertEquals(got, "AAAABBBB", s"a cancelled read consumed and discarded bytes (only '$got' was left)")
 
   test("cancelling a write still transfers every byte"):
     val (port, accepted) = acceptOne()
@@ -85,7 +85,7 @@ class RawSocketCancellationTest extends munit.FunSuite:
     val canceler  = client.write(payload, _ => writeDone.set(true))
 
     Thread.sleep(500)
-    assert(!writeDone.get(), "ペイロードが小さすぎて部分書き込みが起きていない（テストの前提が崩れている）")
+    assert(!writeDone.get(), "the payload was too small to force a partial write, so this test proves nothing")
 
     canceler.cancel()
 
@@ -109,5 +109,5 @@ class RawSocketCancellationTest extends munit.FunSuite:
     assertEquals(
       received.get(),
       size,
-      s"キャンセルされた write が途中で打ち切られている（${ received.get() } / $size バイトしか届いていない）"
+      s"a cancelled write stopped midway (${ received.get() } of $size bytes arrived)"
     )

@@ -108,7 +108,7 @@ class TransportFailureSilenceTest extends FTestPlatform:
       closed     <- connection.isClosed()
     yield (written.size, closed)
 
-    assertFx(program, (0, true), "故障した接続の close() がネットワークに書き込んでいる")
+    assertFx(program, (0, true), "close() on a failed connection still wrote to the network")
 
   test("StreamingResultSet.next() on a failed transport writes nothing"):
     val program = for
@@ -118,7 +118,7 @@ class TransportFailureSilenceTest extends FTestPlatform:
       written   <- pair._2.get
     yield (outcome.left.exists(_.isInstanceOf[SQLTransientConnectionException]), written.size)
 
-    assertFx(program, (true, 0), "故障後の next() が COM_STMT_FETCH を送っている")
+    assertFx(program, (true, 0), "next() after a failure still sent COM_STMT_FETCH")
 
   test("a healthy StreamingResultSet still fetches"):
     val program = for
@@ -128,4 +128,4 @@ class TransportFailureSilenceTest extends FTestPlatform:
       written   <- pair._2.get
     yield written.size
 
-    assertFxBoolean(program.map(_ > 0), "健全な接続で next() が一度もソケットに書いていない")
+    assertFxBoolean(program.map(_ > 0), "next() on a healthy connection never wrote to the socket")

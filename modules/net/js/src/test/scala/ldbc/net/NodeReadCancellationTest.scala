@@ -60,7 +60,7 @@ class NodeReadCancellationTest extends munit.FunSuite:
       firstCalled = Promise[String]()
       canceler    = raw.read(4, r => { if !firstCalled.isCompleted then firstCalled.success(s"called: $r"); () })
       _ <- delay(200)
-      _ = assert(!firstCalled.isCompleted, "データが無いのに1回目の read が完了している")
+      _ = assert(!firstCalled.isCompleted, "the first read completed even though no data had arrived")
 
       _ = canceler.cancel()
       _ <- delay(100)
@@ -82,5 +82,5 @@ class NodeReadCancellationTest extends munit.FunSuite:
     yield
       raw.close()
       server.close()
-      assertEquals(got, "AAAABBBB", s"キャンセルした read がバイトを捨てている（読めたのは '$got'）")
+      assertEquals(got, "AAAABBBB", s"a cancelled read discarded bytes (only '$got' was left)")
   }
