@@ -42,12 +42,15 @@ private[net] final class NioRawEngine private (initial: Selector, baseName: Stri
   private val failedHandovers = new AtomicInteger(0)
   private val generation      = new AtomicInteger(0)
   private val revivals        = new AtomicInteger(0)
+  private val released        = new AtomicInteger(0)
   private val terminated      = new AtomicBoolean(false)
   private val threadName      = new AtomicReference[String](baseName)
 
   override def loopErrorCount: Long = loopErrors.get()
 
   override def revivalCount: Int = revivals.get()
+
+  override def releasedMultiplexers: Int = released.get()
 
   override def isTerminated: Boolean = terminated.get()
 
@@ -196,6 +199,19 @@ private[net] final class NioRawEngine private (initial: Selector, baseName: Stri
     }
     liveSockets.forEach(s => settle(s, cause))
 
+  /**
+   * Releases a selector that is being replaced.
+   *
+   * Built before the old one is closed, so a failure to create the replacement leaves the engine with
+   * a working selector rather than none at all.
+   */
+  private def closeQuietly(old: Selector): Unit =
+    try
+      old.close()
+      released.incrementAndGet()
+      ()
+    catch case NonFatal(e) => reportLoopError(e)
+
   private def settle(socket: NioRawSocket, cause: Throwable): Unit =
     try socket.failPending(cause)
     catch case NonFatal(e) => reportLoopError(e)
@@ -257,7 +273,9 @@ private[net] final class NioRawEngine private (initial: Selector, baseName: Stri
       if !terminated.get() then None
       else
         try
-          selector = Selector.open()
+          val replacement = Selector.open()
+          closeQuietly(selector)
+          selector = replacement
           failedHandovers.set(0)
           revivals.incrementAndGet()
           terminated.set(false)

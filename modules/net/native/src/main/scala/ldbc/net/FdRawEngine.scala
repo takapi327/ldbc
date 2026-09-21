@@ -45,6 +45,7 @@ private[net] final class FdRawEngine(initial: Poller, baseName: String = "ldbc-n
   private val failedHandovers = new AtomicInteger(0)
   private val generation      = new AtomicInteger(0)
   private val revivals        = new AtomicInteger(0)
+  private val released        = new AtomicInteger(0)
   private val terminated      = new AtomicBoolean(false)
   private val threadName      = new AtomicReference[String](baseName)
 
@@ -55,6 +56,8 @@ private[net] final class FdRawEngine(initial: Poller, baseName: String = "ldbc-n
   override def loopErrorCount: Long = loopErrors.get()
 
   override def revivalCount: Int = revivals.get()
+
+  override def releasedMultiplexers: Int = released.get()
 
   override def isTerminated: Boolean = terminated.get()
 
@@ -219,6 +222,19 @@ private[net] final class FdRawEngine(initial: Poller, baseName: String = "ldbc-n
       if w != null then guarded(w, cause)
     }
 
+  /**
+   * Releases a multiplexer that is being replaced.
+   *
+   * Built before the old one is closed, so a failure to create the replacement leaves the engine with
+   * a working poller rather than none at all.
+   */
+  private def closeQuietly(old: Poller): Unit =
+    try
+      old.close()
+      released.incrementAndGet()
+      ()
+    catch case NonFatal(e) => reportLoopError(e)
+
   private def guarded(fail: Throwable => Unit, cause: Throwable): Unit =
     try fail(cause)
     catch case NonFatal(e) => reportLoopError(e)
@@ -289,7 +305,9 @@ private[net] final class FdRawEngine(initial: Poller, baseName: String = "ldbc-n
       if !terminated.get() then None
       else
         try
-          poller = FdRawEngine.newPoller()
+          val replacement = FdRawEngine.newPoller()
+          closeQuietly(poller)
+          poller = replacement
           failedHandovers.set(0)
           revivals.incrementAndGet()
           terminated.set(false)

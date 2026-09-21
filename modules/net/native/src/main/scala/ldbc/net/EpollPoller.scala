@@ -73,6 +73,12 @@ private[net] final class EpollPoller extends Poller:
     cWrite(wakeFd, one.asInstanceOf[CVoidPtr], 8.toUSize)
     ()
 
+  override def close(): Unit =
+    registered.clear()
+    CInterop.closeFd(wakeFd)
+    CInterop.closeFd(epfd)
+    free(eventList)
+
   private def drainWake(): Unit =
     val buf = stackalloc[uint64_t]()
     cRead(wakeFd, buf.asInstanceOf[CVoidPtr], 8.toUSize)

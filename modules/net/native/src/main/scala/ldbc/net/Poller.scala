@@ -32,3 +32,12 @@ private[net] trait Poller:
 
   /** Wakes a thread blocked in [[poll]]. Thread-safe. */
   def wakeup(): Unit
+
+  /**
+   * Releases the descriptors this multiplexer owns.
+   *
+   * Called when an engine replaces its multiplexer. Without it every replacement would strand the
+   * previous one's descriptors — and replacement happens precisely while the process is already in
+   * trouble, which is the worst moment to be consuming them.
+   */
+  def close(): Unit

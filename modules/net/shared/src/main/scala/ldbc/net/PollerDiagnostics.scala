@@ -36,6 +36,16 @@ private[net] trait PollerDiagnostics:
   /** Times a terminated engine has been rebuilt by a subsequent connect. */
   def revivalCount: Int
 
+  /**
+   * Multiplexers this engine has released.
+   *
+   * A rebuild replaces the selector or poller, and the one being replaced owns descriptors that only
+   * an explicit close returns. Counting the releases is how a test can tell "replaced it" apart from
+   * "replaced it and let the old one leak" without measuring process-wide descriptors, which any
+   * other test running alongside would perturb.
+   */
+  def releasedMultiplexers: Int
+
   /** True once the engine has given up replacing its poller thread. */
   def isTerminated: Boolean
 

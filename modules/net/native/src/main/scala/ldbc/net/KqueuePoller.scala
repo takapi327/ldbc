@@ -76,6 +76,12 @@ private[net] final class KqueuePoller extends Poller:
     cWrite(wakePipe(1), one.asInstanceOf[CVoidPtr], 1.toUSize)
     ()
 
+  override def close(): Unit =
+    CInterop.closeFd(wakePipe(0))
+    CInterop.closeFd(wakePipe(1))
+    CInterop.closeFd(kq)
+    stdlibFree(eventList)
+
   private def registerWake(): Unit =
     change(wakePipe(0), EVFILT_READ, EV_ADD)
 
