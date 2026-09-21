@@ -109,14 +109,16 @@ private[net] final class FdRawEngine(initial: Poller, baseName: String = "ldbc-n
         else
           if writable then
             val cb = st.writeReady
-            st.writeReady = null
+            st.writeReady  = null
+            st.writeFailed = null
             val cc = st.connectReady
             st.connectReady = null
             if cc != null then cc()
             if cb != null then cb()
           if readable then
             val cb = st.readReady
-            st.readReady = null
+            st.readReady  = null
+            st.readFailed = null
             if cb != null then cb()
         dispatching.set(null)
       catch
@@ -194,11 +196,32 @@ private[net] final class FdRawEngine(initial: Poller, baseName: String = "ldbc-n
    * forgotten, which is the one outcome the completion contract rules out.
    */
   private def failAllPending(cause: Throwable): Unit =
-    pendingConnects.forEach { fail =>
-      try fail(cause)
-      catch case NonFatal(e) => reportLoopError(e)
-    }
+    pendingConnects.forEach(fail => guarded(fail, cause))
+    failArmed(cause)
     sockets.values().forEach(s => settle(s, cause))
+
+  /**
+   * Reports the failure to every continuation armed on the poller right now.
+   *
+   * These are not reachable through [[sockets]]: a continuation belongs to whoever armed it, and the
+   * TLS layer arms its own while driving a handshake. Refusing new arms only covers callers that
+   * arrive after the engine gave up — the ones already parked need telling.
+   */
+  private def failArmed(cause: Throwable): Unit =
+    registry.values().forEach { st =>
+      val r = st.readFailed
+      st.readFailed = null
+      st.readReady  = null
+      if r != null then guarded(r, cause)
+      val w = st.writeFailed
+      st.writeFailed = null
+      st.writeReady  = null
+      if w != null then guarded(w, cause)
+    }
+
+  private def guarded(fail: Throwable => Unit, cause: Throwable): Unit =
+    try fail(cause)
+    catch case NonFatal(e) => reportLoopError(e)
 
   private def settle(socket: FdRawSocket, cause: Throwable): Unit =
     try socket.failPending(cause)
@@ -263,6 +286,8 @@ private[net] final class FdRawEngine(initial: Poller, baseName: String = "ldbc-n
     }
 
   private def fireAll(st: ChannelState): Unit =
+    st.readFailed  = null
+    st.writeFailed = null
     val c = st.connectReady; st.connectReady = null; if c != null then c()
     val r = st.readReady; st.readReady       = null; if r != null then r()
     val w = st.writeReady; st.writeReady     = null; if w != null then w()
@@ -273,23 +298,28 @@ private[net] final class FdRawEngine(initial: Poller, baseName: String = "ldbc-n
    * Refused once the engine has given up: with no thread left to drive the multiplexer, arming would
    * park the caller on a notification that can never arrive. The JVM engine refuses the equivalent
    * registration for the same reason.
+   *
+   * `onFailure` is required rather than optional, and is the only way the refusal can reach the
+   * caller. Not every caller is a [[FdRawSocket]] — the Native TLS layer arms readiness with a
+   * continuation of its own while driving the handshake — so settling the socket's pending read or
+   * write is not enough to cover everyone waiting on this fd.
    */
-  private[net] def armRead(fd: Int, st: ChannelState, ready: () => Unit): Unit =
-    if terminated.get() then refuse(fd)
+  private[net] def armRead(fd: Int, st: ChannelState, ready: () => Unit, onFailure: Throwable => Unit): Unit =
+    if terminated.get() then onFailure(terminatedError)
     else
-      st.readReady = ready
+      st.readReady  = ready
+      st.readFailed = onFailure
       enqueue(() => poller.arm(fd, read = true, write = false))
 
   /** Arms one-shot write readiness for `fd`, refusing once the engine has given up (see [[armRead]]). */
-  private[net] def armWrite(fd: Int, st: ChannelState, ready: () => Unit): Unit =
-    if terminated.get() then refuse(fd)
+  private[net] def armWrite(fd: Int, st: ChannelState, ready: () => Unit, onFailure: Throwable => Unit): Unit =
+    if terminated.get() then onFailure(terminatedError)
     else
-      st.writeReady = ready
+      st.writeReady  = ready
+      st.writeFailed = onFailure
       enqueue(() => poller.arm(fd, read = false, write = true))
 
-  private def refuse(fd: Int): Unit =
-    val socket = sockets.get(fd)
-    if socket != null then settle(socket, new IOException("ldbc-net poller terminated"))
+  private def terminatedError: IOException = new IOException("ldbc-net poller terminated")
 
   private[net] def deregisterAndClose(fd: Int): Unit =
     sockets.remove(fd)
@@ -460,7 +490,8 @@ private[net] final class FdRawSocket(fd: Int, st: ChannelState, engine: FdRawEng
         val r   = CInterop.recvInto(fd, buf, n)
         if r > 0 then finish(Right(Some(java.util.Arrays.copyOf(buf, r))))
         else if r == 0 then finish(Right(None))
-        else if errno == EAGAIN || errno == EWOULDBLOCK then engine.armRead(fd, st, () => attempt())
+        else if errno == EAGAIN || errno == EWOULDBLOCK then
+          engine.armRead(fd, st, () => attempt(), e => finish(Left(e)))
         else finish(Left(new java.io.IOException(s"read failed (errno=$errno)")))
       attempt()
       new Canceler:
@@ -495,7 +526,7 @@ private[net] final class FdRawSocket(fd: Int, st: ChannelState, engine: FdRawEng
           val w = CInterop.sendFrom(fd, bytes, off.get(), bytes.length - off.get())
           if w > 0 then off.addAndGet(w)
           else if w < 0 && (errno == EAGAIN || errno == EWOULDBLOCK) then
-            engine.armWrite(fd, st, () => attempt()); blocked = true
+            engine.armWrite(fd, st, () => attempt(), e => finish(Left(e))); blocked = true
           else { finish(Left(new java.io.IOException(s"write failed (errno=$errno)"))); failed = true }
         if !blocked && !failed && off.get() >= bytes.length then finish(Right(()))
       attempt()

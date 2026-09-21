@@ -47,7 +47,7 @@ private[net] final class S2nTlsSocketF[F[_]](
   /** Suspends until the fd is readable, then resumes on the poller thread. */
   private def awaitReadable: F[Unit] = F.async { cb =>
     F.delay {
-      engine.armRead(fd, st, () => cb(Right(())))
+      engine.armRead(fd, st, () => cb(Right(())), e => cb(Left(e)))
       Some(F.delay { st.readReady = null }): Option[F[Unit]]
     }
   }
@@ -55,7 +55,7 @@ private[net] final class S2nTlsSocketF[F[_]](
   /** Suspends until the fd is writable, then resumes on the poller thread. */
   private def awaitWritable: F[Unit] = F.async { cb =>
     F.delay {
-      engine.armWrite(fd, st, () => cb(Right(())))
+      engine.armWrite(fd, st, () => cb(Right(())), e => cb(Left(e)))
       Some(F.delay { st.writeReady = null }): Option[F[Unit]]
     }
   }
