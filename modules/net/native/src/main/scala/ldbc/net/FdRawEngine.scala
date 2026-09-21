@@ -245,11 +245,26 @@ private[net] final class FdRawEngine(initial: Poller, baseName: String = "ldbc-n
         catch case _: Throwable => giveUp("could not be replaced")
     catch case _: Throwable => ()
 
+  /**
+   * Stops trying to keep a poller alive and settles everything that was waiting on it.
+   *
+   * The sockets that were just failed stop being tracked here. They are dead by definition — every
+   * operation on them has been settled and this engine will never serve them again — so counting
+   * them afterwards would misreport what the engine is responsible for. Their `close` still works;
+   * it simply has nothing left to deregister.
+   *
+   * Dropping the per-fd state here also keeps a later revival safe: the operating system reuses file
+   * descriptors, so a stale entry left behind could be picked up by an unrelated socket that happens
+   * to be given the same number.
+   */
   private def giveUp(reason: String): Unit =
     terminated.set(true)
     tasks.clear()
     System.err.println(s"[ldbc-net] poller $reason")
     failAllPending(new IOException(s"ldbc-net poller $reason"))
+    registry.clear()
+    sockets.clear()
+    pendingConnects.clear()
 
   private[net] def startThread(): Unit =
     val n    = generation.incrementAndGet()
@@ -275,8 +290,6 @@ private[net] final class FdRawEngine(initial: Poller, baseName: String = "ldbc-n
       else
         try
           poller = FdRawEngine.newPoller()
-          registry.clear()
-          sockets.clear()
           failedHandovers.set(0)
           revivals.incrementAndGet()
           terminated.set(false)

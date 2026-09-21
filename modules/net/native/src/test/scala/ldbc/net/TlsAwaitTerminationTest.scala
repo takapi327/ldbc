@@ -39,8 +39,8 @@ class TlsAwaitTerminationTest extends munit.FunSuite:
     val socket = ref.get().fold(e => fail(s"connect failed: $e"), identity).asInstanceOf[FdRawSocket]
     assert(await(() => accepted.get() != null, 10000), "the server never accepted")
 
-    val settled = new CountDownLatch(1)
-    val outcome = new AtomicReference[Either[Throwable, Unit]](null)
+    val settled  = new CountDownLatch(1)
+    val outcome  = new AtomicReference[Either[Throwable, Unit]](null)
     val awaiting = Fx.async[Unit] { cb =>
       engine.armRead(socket.fileDescriptor, socket.channelState, () => cb(Right(())), e => cb(Left(e)))
       new Fx.Canceler:

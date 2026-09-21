@@ -246,3 +246,31 @@ class PollerLifecycleTest extends munit.FunSuite:
     assert(await(() => engine.isTerminated, 20000), "the engine did not terminate")
     assert(settled.await(10, TimeUnit.SECONDS), "giving up left an in-flight connect unsettled")
     assert(outcome.get().isLeft, s"expected a failure, got ${ outcome.get() }")
+
+  test("giving up stops tracking the sockets it failed"):
+    val engine           = isolated()
+    val (port, accepted) = acceptOne()
+    val client           = connectRaw(engine, port)
+    awaitAccepted(accepted)
+    assertEquals(engine.liveSocketCount, 1, "the connected socket was not tracked")
+
+    engine.injectFault(() => throw new StackOverflowError("always fatal"))
+    assert(await(() => engine.isTerminated, 20000), "the engine did not terminate")
+
+    assert(
+      await(() => engine.liveSocketCount == 0, 5000),
+      s"sockets the engine gave up on are still tracked (live=${ engine.liveSocketCount })"
+    )
+
+    engine.injectFault(null)
+    val (secondPort, secondAccepted) = acceptOne()
+    val revived                      = connectRaw(engine, secondPort)
+    awaitAccepted(secondAccepted)
+
+    assertEquals(
+      engine.liveSocketCount,
+      1,
+      "the revived engine counts sockets it no longer serves"
+    )
+    client.close()
+    revived.close()

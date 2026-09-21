@@ -218,11 +218,21 @@ private[net] final class NioRawEngine private (initial: Selector, baseName: Stri
         catch case _: Throwable => giveUp("could not be replaced")
     catch case _: Throwable => ()
 
+  /**
+   * Stops trying to keep a poller alive and settles everything that was waiting on it.
+   *
+   * The sockets that were just failed stop being tracked here. They are dead by definition — every
+   * operation on them has been settled and this engine will never serve them again — so counting
+   * them afterwards would misreport what the engine is responsible for. Their `close` still works;
+   * it simply has nothing left to deregister.
+   */
   private def giveUp(reason: String): Unit =
     terminated.set(true)
     pending.clear()
     System.err.println(s"[ldbc-net] poller $reason")
     failAllPending(new IOException(s"ldbc-net poller $reason"))
+    liveSockets.clear()
+    pendingConnects.clear()
 
   private[net] def startThread(): Unit =
     val n    = generation.incrementAndGet()
