@@ -23,8 +23,8 @@ class PollBatchIsolationTest extends munit.FunSuite:
   test("one failing dispatch does not drop the rest of the poll batch"):
     val engine = PlatformRawEngine.startIsolated("ldbc-net-batch-test")
 
-    val server = new ServerSocket(0)
-    val peers  = new AtomicReference[List[java.net.Socket]](Nil)
+    val server   = new ServerSocket(0)
+    val peers    = new AtomicReference[List[java.net.Socket]](Nil)
     val acceptor = new Thread(() =>
       try
         while true do

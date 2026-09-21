@@ -53,6 +53,10 @@ private[net] final class ReadBuffer:
    * array (never confused with EOF). Otherwise the callback is served from the buffer / EOF /
    * error, or parked until data arrives. Returns a cancel action that drops a still-parked waiter.
    *
+   * Only one read may be parked at a time. A second one is refused rather than allowed to displace
+   * the first, which would leave the first callback unreachable and break the completion contract in
+   * [[RawSocket]]; a byte stream cannot be shared between two readers in any case.
+   *
    * @param n  the maximum number of bytes to return
    * @param cb invoked once with `Some(bytes)`, `None` at end of stream, or the error
    */
@@ -64,6 +68,8 @@ private[net] final class ReadBuffer:
         else if closed then cb(Left(new java.io.IOException("socket closed")))
         else if pending.nonEmpty then cb(Right(Some(takeN(n))))
         else if eof then cb(Right(None))
+        else if waiter.isDefined then
+          cb(Left(new IllegalStateException("another read is already in progress on this socket")))
         else
           waiterN = n
           waiter  = Some(cb)

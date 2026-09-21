@@ -366,6 +366,22 @@ private[net] final class NioRawSocket(ch: SocketChannel, engine: NioRawEngine) e
    * Called when the socket is closed, when a registration cannot be placed, and when the engine
    * gives up its poller.
    */
+  /**
+   * Claims the read slot, refusing to displace an operation that is already parked there.
+   *
+   * A byte stream has no way to share itself between two concurrent readers — whoever won the race
+   * would take bytes the other was waiting for — so overlapping reads are a misuse. Silently
+   * overwriting the slot would break the completion contract in [[RawSocket]]: the displaced
+   * callback would never be invoked at all. Refusing the newcomer keeps the parked operation intact
+   * and makes the mistake visible at the point it happens.
+   */
+  private def claimRead(cb: Either[Throwable, Option[Array[Byte]]] => Unit): Boolean =
+    pendingRead.compareAndSet(null, cb)
+
+  /** Claims the write slot. See [[claimRead]]; the same reasoning applies to a half-sent frame. */
+  private def claimWrite(cb: Either[Throwable, Unit] => Unit): Boolean =
+    pendingWrite.compareAndSet(null, cb)
+
   private[net] def failPending(cause: Throwable): Unit =
     val r = pendingRead.getAndSet(null)
     val w = pendingWrite.getAndSet(null)
@@ -389,7 +405,9 @@ private[net] final class NioRawSocket(ch: SocketChannel, engine: NioRawEngine) e
     else
       val buf       = ByteBuffer.allocate(n)
       val cancelled = new AtomicBoolean(false)
-      pendingRead.set(cb)
+      if !claimRead(cb) then
+        cb(Left(new IllegalStateException("another read is already in progress on this socket")))
+        return Canceler.noop
       def finish(result: Either[Throwable, Option[Array[Byte]]]): Unit =
         val waiting = pendingRead.getAndSet(null)
         if waiting != null then waiting(result)
@@ -425,7 +443,9 @@ private[net] final class NioRawSocket(ch: SocketChannel, engine: NioRawEngine) e
    */
   override def write(bytes: Array[Byte], cb: Either[Throwable, Unit] => Unit): Canceler =
     val buf = ByteBuffer.wrap(bytes)
-    pendingWrite.set(cb)
+    if !claimWrite(cb) then
+      cb(Left(new IllegalStateException("another write is already in progress on this socket")))
+      return Canceler.noop
     def finish(result: Either[Throwable, Unit]): Unit =
       val waiting = pendingWrite.getAndSet(null)
       if waiting != null then waiting(result)

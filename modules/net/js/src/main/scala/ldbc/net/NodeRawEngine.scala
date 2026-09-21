@@ -131,6 +131,9 @@ private[net] final class NodeRawSocket(sock: js.Dynamic) extends RawSocket:
     val u8 = new Uint8Array(bytes.length)
     var i  = 0
     while i < bytes.length do { u8(i) = (bytes(i) & 0xff).toShort; i += 1 }
+    if pendingWrite != null then
+      cb(Left(new IllegalStateException("another write is already in progress on this socket")))
+      return Canceler.noop
     pendingWrite = cb
     sock.write(
       u8,

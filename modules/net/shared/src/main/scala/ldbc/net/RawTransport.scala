@@ -29,6 +29,10 @@ object Canceler:
  *   - The `cb` handed to `read` / `write` is invoked **exactly once**, whether the operation succeeds
  *     or fails. Never invoking it is not a quiet no-op: the `F.async` wrapping this callback would
  *     never complete, stranding the caller with no way back short of a timeout it may not have set.
+ *   - At most one `read` and one `write` may be outstanding on a socket at a time. Issuing a second
+ *     one while the first is still parked fails immediately with an `IllegalStateException` rather
+ *     than displacing it — a byte stream cannot be split between two readers, and dropping the
+ *     first callback to make room would break the guarantee above.
  *   - `close` settles the pending `read` / `write` callbacks with a failure before returning. This
  *     does not contradict the cancellation contract below: `write` being uncancelable means
  *     *cancellation does not stop the transfer*, whereas closing gives up the socket itself, so the
