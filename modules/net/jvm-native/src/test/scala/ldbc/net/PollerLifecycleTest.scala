@@ -49,7 +49,10 @@ class PollerLifecycleTest extends munit.FunSuite:
     while !cond() && waited < millis do { Thread.sleep(25); waited += 25 }
     cond()
 
-  private def parkedRead(socket: RawSocket, n: Int): (CountDownLatch, AtomicReference[Either[Throwable, Option[Array[Byte]]]]) =
+  private def parkedRead(
+    socket: RawSocket,
+    n:      Int
+  ): (CountDownLatch, AtomicReference[Either[Throwable, Option[Array[Byte]]]]) =
     val settled = new CountDownLatch(1)
     val outcome = new AtomicReference[Either[Throwable, Option[Array[Byte]]]](null)
     socket.read(n, r => { outcome.set(r); settled.countDown() })

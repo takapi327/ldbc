@@ -13,9 +13,9 @@ import scala.concurrent.duration.Duration
 import ldbc.sql.SQLException
 
 import ldbc.effect.{ Ref, Resource }
+import ldbc.fx.{ Fx, FxSuite }
 import ldbc.fx.concurrentFx
 import ldbc.fx.syntax.*
-import ldbc.fx.{ Fx, FxSuite }
 import ldbc.mysql.data.CapabilitiesFlags
 import ldbc.mysql.net.packet.response.InitialPacket
 import ldbc.net.{ Socket, TlsUpgrade }
@@ -27,9 +27,9 @@ class BitVectorSocketWiringTest extends FxSuite:
       Fx.pure(socket)
 
   private val handshake: Array[Byte] =
-    val version   = "8.4.0".getBytes("UTF-8")
-    val plugin    = "mysql_native_password".getBytes("UTF-8")
-    val builder   = Array.newBuilder[Byte]
+    val version = "8.4.0".getBytes("UTF-8")
+    val plugin  = "mysql_native_password".getBytes("UTF-8")
+    val builder = Array.newBuilder[Byte]
     builder += 10.toByte
     builder ++= version
     builder += 0
@@ -52,13 +52,15 @@ class BitVectorSocketWiringTest extends FxSuite:
 
   private final class HandshakeThenFail(reads: Ref[Fx, List[Array[Byte]]]) extends Socket[Fx]:
     override def read(n: Int): Fx[Option[Array[Byte]]] =
-      reads.modify {
-        case head :: tail => (tail, Some(head))
-        case Nil          => (Nil, None)
-      }.flatMap {
-        case Some(bytes) => Fx.pure(Some(bytes))
-        case None        => Fx.raiseError(new IOException("connection reset by peer"))
-      }
+      reads
+        .modify {
+          case head :: tail => (tail, Some(head))
+          case Nil          => (Nil, None)
+        }
+        .flatMap {
+          case Some(bytes) => Fx.pure(Some(bytes))
+          case None        => Fx.raiseError(new IOException("connection reset by peer"))
+        }
     override def write(bytes: Array[Byte]): Fx[Unit] = Fx.unit
     override def close():                   Fx[Unit] = Fx.unit
 
