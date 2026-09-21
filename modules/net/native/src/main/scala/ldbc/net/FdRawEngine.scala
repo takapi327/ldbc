@@ -38,6 +38,7 @@ private[net] final class FdRawEngine(initial: Poller, baseName: String = "ldbc-n
 
   private val registry        = new ConcurrentHashMap[Int, ChannelState]()
   private val sockets         = new ConcurrentHashMap[Int, FdRawSocket]()
+  private val pendingConnects = ConcurrentHashMap.newKeySet[Throwable => Unit]()
   private val tasks           = new ConcurrentLinkedQueue[() => Unit]()
   private val dispatching     = new AtomicReference[FdRawSocket](null)
   private val loopErrors      = new AtomicLong(0)
@@ -184,7 +185,19 @@ private[net] final class FdRawEngine(initial: Poller, baseName: String = "ldbc-n
    * take the remaining sockets down with it — they would be left waiting on a poller that is already
    * gone, which is the failure this whole path exists to prevent.
    */
+  /**
+   * Failure handlers for connects that have not resolved yet.
+   *
+   * A connect in flight is not reachable through [[liveSockets]]: its callback expects a socket, not
+   * a read or write result, so [[failAllPending]] cannot settle it. Its interest registration also
+   * sits in the queue that [[giveUp]] discards. Without a handle of its own it would simply be
+   * forgotten, which is the one outcome the completion contract rules out.
+   */
   private def failAllPending(cause: Throwable): Unit =
+    pendingConnects.forEach { fail =>
+      try fail(cause)
+      catch case NonFatal(e) => reportLoopError(e)
+    }
     sockets.values().forEach(s => settle(s, cause))
 
   private def settle(socket: FdRawSocket, cause: Throwable): Unit =
@@ -305,6 +318,15 @@ private[net] final class FdRawEngine(initial: Poller, baseName: String = "ldbc-n
     val done  = new AtomicBoolean(false)
     val fdRef = new java.util.concurrent.atomic.AtomicInteger(-1)
 
+    lazy val failConnect: Throwable => Unit = error =>
+      if done.compareAndSet(false, true) then
+        pendingConnects.remove(failConnect)
+        val fd = fdRef.get()
+        if fd >= 0 then deregisterAndClose(fd)
+        cb(Left(error))
+
+    pendingConnects.add(failConnect)
+
     val connect: Runnable = () =>
       try
         val resolved = CInterop.resolve(host, port)
@@ -316,6 +338,7 @@ private[net] final class FdRawEngine(initial: Poller, baseName: String = "ldbc-n
 
         def finishConnect(): Unit =
           if done.compareAndSet(false, true) then
+            pendingConnects.remove(failConnect)
             val soError = CInterop.socketError(fd)
             if soError == 0 then
               val socket = new FdRawSocket(fd, st, this)
@@ -329,11 +352,8 @@ private[net] final class FdRawEngine(initial: Poller, baseName: String = "ldbc-n
         val err = CInterop.beginConnect(fd, resolved)
         if err == 0 then finishConnect()
         else if err == EINPROGRESS then enqueue(() => { poller.add(fd); poller.arm(fd, read = false, write = true) })
-        else
-          done.set(true)
-          registry.remove(fd); CInterop.closeFd(fd)
-          cb(Left(new java.io.IOException(s"connect to $host:$port failed (errno=$err)")))
-      catch case e: Throwable => if done.compareAndSet(false, true) then cb(Left(e))
+        else failConnect(new java.io.IOException(s"connect to $host:$port failed (errno=$err)"))
+      catch case e: Throwable => failConnect(e)
 
     val worker = new Thread(connect, "ldbc-net-fd-connect")
     worker.setDaemon(true)
@@ -342,6 +362,7 @@ private[net] final class FdRawEngine(initial: Poller, baseName: String = "ldbc-n
     new Canceler:
       override def cancel(): Unit =
         if done.compareAndSet(false, true) then
+          pendingConnects.remove(failConnect)
           val fd = fdRef.get()
           if fd >= 0 then deregisterAndClose(fd)
 

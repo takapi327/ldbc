@@ -36,6 +36,7 @@ private[net] final class NioRawEngine private (initial: Selector, baseName: Stri
 
   private val pending         = new ConcurrentLinkedQueue[() => Unit]()
   private val liveSockets     = ConcurrentHashMap.newKeySet[NioRawSocket]()
+  private val pendingConnects = ConcurrentHashMap.newKeySet[Throwable => Unit]()
   private val dispatching     = new AtomicReference[NioRawSocket](null)
   private val loopErrors      = new AtomicLong(0)
   private val failedHandovers = new AtomicInteger(0)
@@ -180,7 +181,19 @@ private[net] final class NioRawEngine private (initial: Selector, baseName: Stri
    * take the remaining sockets down with it — they would be left waiting on a poller that is already
    * gone, which is the failure this whole path exists to prevent.
    */
+  /**
+   * Failure handlers for connects that have not resolved yet.
+   *
+   * A connect in flight is not reachable through [[liveSockets]]: its callback expects a socket, not
+   * a read or write result, so [[failAllPending]] cannot settle it. Its interest registration also
+   * sits in the queue that [[giveUp]] discards. Without a handle of its own it would simply be
+   * forgotten, which is the one outcome the completion contract rules out.
+   */
   private def failAllPending(cause: Throwable): Unit =
+    pendingConnects.forEach { fail =>
+      try fail(cause)
+      catch case NonFatal(e) => reportLoopError(e)
+    }
     liveSockets.forEach(s => settle(s, cause))
 
   private def settle(socket: NioRawSocket, cause: Throwable): Unit =
@@ -290,28 +303,33 @@ private[net] final class NioRawEngine private (initial: Selector, baseName: Stri
         cb(Left(new IOException("ldbc-net poller could not be restarted", error)))
         Canceler.noop
       case None =>
-        val ch     = SocketChannel.open()
-        val socket = newSocket(ch)
+        val ch       = SocketChannel.open()
+        val socket   = newSocket(ch)
+        val resolved = new AtomicBoolean(false)
+
+        def settleConnect(result: Either[Throwable, RawSocket], fail: Throwable => Unit): Unit =
+          if resolved.compareAndSet(false, true) then
+            pendingConnects.remove(fail)
+            if result.isLeft then forget(socket)
+            cb(result)
+
+        lazy val failConnect: Throwable => Unit = e => settleConnect(Left(e), failConnect)
+        pendingConnects.add(failConnect)
+
         try
           ch.configureBlocking(false)
           NioRawEngine.withOptions(ch, options)
           def completed(): Unit =
-            try { ch.finishConnect(); cb(Right(socket)) }
-            catch
-              case e: Throwable =>
-                forget(socket)
-                cb(Left(e))
-          def failed(e: Throwable): Unit =
-            forget(socket)
-            cb(Left(e))
-          if ch.connect(new InetSocketAddress(host, port)) then cb(Right(socket))
-          else register(socket, ch, SelectionKey.OP_CONNECT, () => completed(), failed)
-        catch
-          case e: Throwable =>
-            forget(socket)
-            cb(Left(e))
+            try { ch.finishConnect(); settleConnect(Right(socket), failConnect) }
+            catch case e: Throwable => failConnect(e)
+          if ch.connect(new InetSocketAddress(host, port)) then settleConnect(Right(socket), failConnect)
+          else register(socket, ch, SelectionKey.OP_CONNECT, () => completed(), failConnect)
+        catch case e: Throwable => failConnect(e)
+
         new Canceler:
-          override def cancel(): Unit = socket.close()
+          override def cancel(): Unit =
+            pendingConnects.remove(failConnect)
+            socket.close()
 
 private[net] object NioRawEngine:
 

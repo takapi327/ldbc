@@ -231,3 +231,18 @@ class PollerLifecycleTest extends munit.FunSuite:
       await(() => engine.liveSocketCount == 0, 5000),
       s"a failed connect stayed tracked (live=${ engine.liveSocketCount })"
     )
+
+  test("a connect still in flight when the engine gives up is settled"):
+    val engine  = isolated()
+    val settled = new CountDownLatch(1)
+    val outcome = new AtomicReference[Either[Throwable, RawSocket]](null)
+
+    engine.connect("198.51.100.1", 9, SocketOptions.default, r => { outcome.set(r); settled.countDown() })
+    Thread.sleep(400)
+    assertEquals(settled.getCount, 1L, "the connect resolved on its own, so this test proved nothing")
+
+    engine.injectFault(() => throw new StackOverflowError("always fatal"))
+
+    assert(await(() => engine.isTerminated, 20000), "the engine did not terminate")
+    assert(settled.await(10, TimeUnit.SECONDS), "giving up left an in-flight connect unsettled")
+    assert(outcome.get().isLeft, s"expected a failure, got ${ outcome.get() }")
