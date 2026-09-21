@@ -22,6 +22,24 @@ import scala.scalajs.js.typedarray.Uint8Array
 private[net] object NodeRawEngine:
   private lazy val netModule = js.Dynamic.global.require("net")
 
+  /**
+   * Turns a node error object into an [[java.io.IOException]], keeping what node reported.
+   *
+   * `code` (`ECONNREFUSED`, `EHOSTUNREACH`, `ETIMEDOUT`, …) and `message` are the only way to tell
+   * these failures apart, and discarding them would leave Scala.js with far less diagnostic detail
+   * than the JVM and Native engines. `IOException` rather than `RuntimeException` so the type
+   * matches those engines too.
+   */
+  private[net] def nodeError(op: String, err: js.Dynamic): Throwable =
+    def field(name: String): Option[String] =
+      if err == null || js.isUndefined(err) then None
+      else
+        val value = err.selectDynamic(name)
+        if value == null || js.isUndefined(value) then None else Some(value.toString)
+    val code    = field("code").fold("")(c => s" ($c)")
+    val message = field("message").fold("")(m => s": $m")
+    new java.io.IOException(s"$op failed$code$message")
+
   lazy val global: RawIoEngine = new RawIoEngine:
     override def connect(
       host:    String,
@@ -40,7 +58,7 @@ private[net] object NodeRawEngine:
       sock.on(
         "error",
         (
-          (_: js.Dynamic) => if done.compareAndSet(false, true) then cb(Left(new RuntimeException("connect error")))
+          (err: js.Dynamic) => if done.compareAndSet(false, true) then cb(Left(NodeRawEngine.nodeError("connect", err)))
         ): js.Function1[js.Dynamic, Unit]
       )
       new Canceler:
@@ -56,7 +74,7 @@ private[net] final class NodeRawSocket(sock: js.Dynamic) extends RawSocket:
   sock.on("data", ((chunk: Uint8Array) => buffer.onData(toBytes(chunk))): js.Function1[Uint8Array, Unit])
   sock.on(
     "error",
-    ((_: js.Dynamic) => buffer.onError(new RuntimeException("socket error"))): js.Function1[js.Dynamic, Unit]
+    ((err: js.Dynamic) => buffer.onError(NodeRawEngine.nodeError("socket", err))): js.Function1[js.Dynamic, Unit]
   )
   sock.on("end", ((() => buffer.onEof())): js.Function0[Unit])
 
@@ -87,11 +105,25 @@ private[net] final class NodeRawSocket(sock: js.Dynamic) extends RawSocket:
     new Canceler:
       override def cancel(): Unit = cancelRead()
 
+  /**
+   * Writes `bytes` in full, completing on node's write callback.
+   *
+   * Node hands that callback an error as its first argument when the write fails, so the argument is
+   * inspected rather than ignored: reporting success for a write that never reached the peer would
+   * break the completion contract in [[RawSocket]] and hide the failure until the next read.
+   */
   override def write(bytes: Array[Byte], cb: Either[Throwable, Unit] => Unit): Canceler =
     val u8 = new Uint8Array(bytes.length)
     var i  = 0
     while i < bytes.length do { u8(i) = (bytes(i) & 0xff).toShort; i += 1 }
-    sock.write(u8, ((() => cb(Right(())))): js.Function0[Unit])
+    sock.write(
+      u8,
+      (
+        (err: js.Dynamic) =>
+          if err == null || js.isUndefined(err) then cb(Right(()))
+          else cb(Left(NodeRawEngine.nodeError("write", err)))
+      ): js.Function1[js.Dynamic, Unit]
+    )
     Canceler.noop
 
   override def close(): Unit = { sock.end(); buffer.onClose(); () }

@@ -6,13 +6,15 @@
 
 package ldbc.net
 
-import java.util.concurrent.atomic.AtomicBoolean
+import java.io.IOException
+import java.util.concurrent.atomic.{ AtomicBoolean, AtomicInteger, AtomicLong, AtomicReference }
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 
 import scala.scalanative.libc.errno.errno
 import scala.scalanative.meta.LinktimeInfo
 import scala.scalanative.posix.errno.{ EAGAIN, EINPROGRESS, EWOULDBLOCK }
+import scala.util.control.NonFatal
 
 /**
  * Scala Native [[RawIoEngine]]: a single daemon poller thread drives non-blocking sockets through
@@ -22,11 +24,46 @@ import scala.scalanative.posix.errno.{ EAGAIN, EINPROGRESS, EWOULDBLOCK }
  * The connect timeout is applied at the `F` layer ([[ldbc.net.IoEngine.fromRaw]]); blocking DNS
  * (`getaddrinfo`) runs on a transient daemon thread so the poller thread is never stalled, and the TCP
  * handshake plus all reads/writes are non-blocking (design `NATIVE_EPOLL_IOENGINE_DESIGN.md`).
+ *
+ * Every connection in the process shares this one thread, so its failure modes are handled explicitly
+ * rather than swallowed. Recoverable errors are reported and rate-limited so the loop survives without
+ * burning a core; fatal ones end the thread but hand over to a replacement, which resumes the same
+ * poller with every registration still intact.
  */
-private[net] final class FdRawEngine(poller: Poller) extends RawIoEngine:
+private[net] final class FdRawEngine(initial: Poller) extends RawIoEngine:
 
-  private val registry = new ConcurrentHashMap[Int, ChannelState]()
-  private val tasks    = new ConcurrentLinkedQueue[() => Unit]()
+  @volatile private var poller: Poller = initial
+
+  private val registry        = new ConcurrentHashMap[Int, ChannelState]()
+  private val sockets         = new ConcurrentHashMap[Int, FdRawSocket]()
+  private val tasks           = new ConcurrentLinkedQueue[() => Unit]()
+  private val dispatching     = new AtomicReference[FdRawSocket](null)
+  private val loopErrors      = new AtomicLong(0)
+  private val failedHandovers = new AtomicInteger(0)
+  private val generation      = new AtomicInteger(0)
+  private val revivals        = new AtomicInteger(0)
+  private val terminated      = new AtomicBoolean(false)
+
+  @volatile private var faultInjection: () => Unit = null
+
+  /** Number of recoverable loop errors swallowed so far. Exposed for tests; see [[reportLoopError]]. */
+  private[net] def loopErrorCount: Long = loopErrors.get()
+
+  /** Number of times a terminated engine was brought back up by [[connect]]. Exposed for tests. */
+  private[net] def revivalCount: Int = revivals.get()
+
+  /** True once the engine has given up replacing its poller thread. Exposed for tests. */
+  private[net] def isTerminated: Boolean = terminated.get()
+
+  /**
+   * Test seam for driving the loop's failure paths. The hook runs at the top of each iteration, so
+   * the poller is woken here as well — otherwise a loop already parked in `poll` would not reach it
+   * until unrelated traffic arrived. Throwing from the hook exercises the recoverable branch or the
+   * handover, depending on what is thrown; passing `null` removes it.
+   */
+  private[net] def injectFault(fault: () => Unit): Unit =
+    faultInjection = fault
+    poller.wakeup()
 
   private def enqueue(task: () => Unit): Unit =
     tasks.add(task)
@@ -36,33 +73,147 @@ private[net] final class FdRawEngine(poller: Poller) extends RawIoEngine:
     var t = tasks.poll()
     while t != null do
       try t()
-      catch { case _: Throwable => () }
+      catch case NonFatal(e) => reportLoopError(e)
       t = tasks.poll()
 
-  private def loop(): Unit =
-    while true do
-      try
-        poller.poll { (fd, readable, writable, error) =>
-          try
-            val st = registry.get(fd)
-            if st != null then
-              if error then fireAll(st)
-              else
-                if writable then
-                  val cb = st.writeReady
-                  st.writeReady = null
-                  val cc = st.connectReady
-                  st.connectReady = null
-                  if cc != null then cc()
-                  if cb != null then cb()
-                if readable then
-                  val cb = st.readReady
-                  st.readReady = null
-                  if cb != null then cb()
-          catch { case _: Throwable => () }
-        }
-        drainTasks()
-      catch { case _: Throwable => () }
+  /**
+   * Runs the continuations armed for one ready fd.
+   *
+   * The socket being dispatched is published so that a thread dying part-way through can be accounted
+   * for: the continuation has already been taken out of [[ChannelState]] by then, so a replacement
+   * thread has no way to find it again.
+   */
+  private def dispatch(fd: Int, readable: Boolean, writable: Boolean, error: Boolean): Unit =
+    val st = registry.get(fd)
+    if st != null then
+      dispatching.set(sockets.get(fd))
+      if error then fireAll(st)
+      else
+        if writable then
+          val cb = st.writeReady
+          st.writeReady = null
+          val cc = st.connectReady
+          st.connectReady = null
+          if cc != null then cc()
+          if cb != null then cb()
+        if readable then
+          val cb = st.readReady
+          st.readReady = null
+          if cb != null then cb()
+      dispatching.set(null)
+
+  /**
+   * The poller loop.
+   *
+   * Recoverable errors are reported and slept off so the loop keeps serving the other connections.
+   * Fatal ones are deliberately not caught: they leave through `finally`, which hands over to a
+   * replacement thread, and then reach the default uncaught-exception handler so the stack trace is
+   * not lost. `completed` records whether this thread ever finished a whole iteration, which is what
+   * distinguishes a thread that ran for a while from one that died on startup.
+   *
+   * Unlike the JVM engine, a failing multiplexer here does not throw: `epoll_wait` and `kevent`
+   * return `-1`, so the outcome has to be inspected rather than waited for as an exception.
+   */
+  private def runLoop(): Unit =
+    var completed = false
+    try
+      while true do
+        try
+          val fault = faultInjection
+          if fault != null then fault()
+          poller.poll(dispatch) match
+            case PollOutcome.Events(_)    => ()
+            case PollOutcome.Retry        => ()
+            case PollOutcome.Failed(code) =>
+              reportLoopError(new IOException(s"poll failed (errno=$code)"))
+              backoff()
+          drainTasks()
+          completed = true
+        catch
+          case NonFatal(e) =>
+            reportLoopError(e)
+            backoff()
+    finally handover(completed)
+
+  /**
+   * Reports a swallowed error.
+   *
+   * `ldbc-net` has no runtime dependencies, so there is no logger to route this through; `System.err`
+   * is the one sink available on all three platforms. Without it a poller that fails repeatedly is
+   * indistinguishable from one that is idle.
+   */
+  private def reportLoopError(t: Throwable): Unit =
+    loopErrors.incrementAndGet()
+    System.err.println(s"[ldbc-net] poller loop error (${ Thread.currentThread().getName }): $t")
+    t.printStackTrace()
+
+  /** Pauses after a recoverable error so a persistent failure cannot spin the thread at full speed. */
+  private def backoff(): Unit = Thread.sleep(FdRawEngine.BackoffMillis)
+
+  /** Settles the callbacks of the socket whose continuations were being run when the thread died. */
+  private def failInFlight(cause: Throwable): Unit =
+    val victim = dispatching.getAndSet(null)
+    if victim != null then victim.failPending(cause)
+
+  private def failAllPending(cause: Throwable): Unit =
+    sockets.values().forEach(s => s.failPending(cause))
+
+  /**
+   * Replaces the dying poller thread, or gives up.
+   *
+   * The whole body is guarded because this runs inside `finally`: an exception escaping here would
+   * replace the fatal error on its way out, and that error is the only record of what went wrong.
+   */
+  private def handover(completed: Boolean): Unit =
+    try
+      failInFlight(new IOException("ldbc-net poller died while dispatching"))
+      val n =
+        if completed then { failedHandovers.set(0); 0 }
+        else failedHandovers.incrementAndGet()
+      if n >= FdRawEngine.MaxFailedHandovers then giveUp(s"gave up after $n failed handovers")
+      else
+        try startThread()
+        catch case _: Throwable => giveUp("could not be replaced")
+    catch case _: Throwable => ()
+
+  private def giveUp(reason: String): Unit =
+    terminated.set(true)
+    tasks.clear()
+    System.err.println(s"[ldbc-net] poller $reason")
+    failAllPending(new IOException(s"ldbc-net poller $reason"))
+
+  private[net] def startThread(): Unit =
+    val n    = generation.incrementAndGet()
+    val name = if n == 1 then "ldbc-net-fd-raw" else s"ldbc-net-fd-raw-$n"
+    val t    = new Thread(() => runLoop(), name)
+    t.setDaemon(true)
+    t.start()
+
+  /**
+   * Brings a terminated engine back up with a fresh multiplexer and thread.
+   *
+   * Reaching the terminated state must not be the end of the process's database access: this engine
+   * is a singleton, so a permanent stop would mean no connection could ever be made again. Nothing
+   * needs to be carried over — every socket was already failed by [[giveUp]] — so a clean poller is
+   * the right starting point.
+   *
+   * @return the reason a revival could not happen, or `None` when the engine is usable
+   */
+  private def revive(): Option[Throwable] =
+    synchronized {
+      if !terminated.get() then None
+      else
+        try
+          poller = FdRawEngine.newPoller()
+          registry.clear()
+          sockets.clear()
+          failedHandovers.set(0)
+          revivals.incrementAndGet()
+          terminated.set(false)
+          startThread()
+          None
+        catch case NonFatal(e) => Some(e)
+    }
 
   private def fireAll(st: ChannelState): Unit =
     val c = st.connectReady; st.connectReady = null; if c != null then c()
@@ -78,6 +229,7 @@ private[net] final class FdRawEngine(poller: Poller) extends RawIoEngine:
     enqueue(() => poller.arm(fd, read = false, write = true))
 
   private[net] def deregisterAndClose(fd: Int): Unit =
+    sockets.remove(fd)
     enqueue { () =>
       registry.remove(fd)
       poller.remove(fd)
@@ -85,9 +237,7 @@ private[net] final class FdRawEngine(poller: Poller) extends RawIoEngine:
     }
 
   private[net] def start(): FdRawEngine =
-    val thread = new Thread(() => loop(), "ldbc-net-fd-raw")
-    thread.setDaemon(true)
-    thread.start()
+    startThread()
     this
 
   override def connect(
@@ -96,6 +246,12 @@ private[net] final class FdRawEngine(poller: Poller) extends RawIoEngine:
     options: SocketOptions,
     cb:      Either[Throwable, RawSocket] => Unit
   ): Canceler =
+    revive() match
+      case Some(error) =>
+        cb(Left(new IOException("ldbc-net poller could not be restarted", error)))
+        return Canceler.noop
+      case None => ()
+
     val done  = new AtomicBoolean(false)
     val fdRef = new java.util.concurrent.atomic.AtomicInteger(-1)
 
@@ -111,7 +267,10 @@ private[net] final class FdRawEngine(poller: Poller) extends RawIoEngine:
         def finishConnect(): Unit =
           if done.compareAndSet(false, true) then
             val soError = CInterop.socketError(fd)
-            if soError == 0 then cb(Right(new FdRawSocket(fd, st, this)))
+            if soError == 0 then
+              val socket = new FdRawSocket(fd, st, this)
+              sockets.put(fd, socket)
+              cb(Right(socket))
             else
               deregisterAndClose(fd)
               cb(Left(new java.io.IOException(s"connect to $host:$port failed (errno=$soError)")))
@@ -139,18 +298,45 @@ private[net] final class FdRawEngine(poller: Poller) extends RawIoEngine:
 private[net] object FdRawEngine:
   private lazy val ignoreSigpipe: Unit = CInterop.ignoreSigpipe()
 
-  lazy val global: FdRawEngine =
-    ignoreSigpipe
-    val poller =
-      if LinktimeInfo.isLinux then new EpollPoller()
-      else if LinktimeInfo.isMac then new KqueuePoller()
-      else throw new UnsupportedOperationException("ldbc-net: only Linux (epoll) and macOS (kqueue) are supported")
-    new FdRawEngine(poller).start()
+  /** Consecutive replacements that never completed an iteration before the engine gives up. */
+  private[net] val MaxFailedHandovers = 3
 
-/** [[RawSocket]] over a raw non-blocking fd, driven by [[FdRawEngine]]'s poller. */
+  /** Pause after a recoverable loop error, matching the interval Netty's event loop uses. */
+  private[net] val BackoffMillis = 1000L
+
+  private[net] def newPoller(): Poller =
+    if LinktimeInfo.isLinux then new EpollPoller()
+    else if LinktimeInfo.isMac then new KqueuePoller()
+    else throw new UnsupportedOperationException("ldbc-net: only Linux (epoll) and macOS (kqueue) are supported")
+
+  /** Starts an engine with its own multiplexer and thread. Tests use this to stay off [[global]]. */
+  private[net] def start(): FdRawEngine =
+    ignoreSigpipe
+    new FdRawEngine(newPoller()).start()
+
+  lazy val global: FdRawEngine = start()
+
+/**
+ * [[RawSocket]] over a raw non-blocking fd, driven by [[FdRawEngine]]'s poller.
+ *
+ * The socket holds the callback of whichever read and write are currently outstanding. Keeping them
+ * here is what makes the completion contract in [[RawSocket]] enforceable: closing the fd can settle
+ * them instead of leaving the caller waiting for a readiness notification that will never arrive,
+ * since `deregisterAndClose` drops the per-fd state the poller would have fired. Every settlement
+ * goes through `getAndSet(null)`, so a callback cannot be invoked twice however the races fall out.
+ */
 private[net] final class FdRawSocket(fd: Int, st: ChannelState, engine: FdRawEngine) extends RawSocket:
 
-  private val closed = new AtomicBoolean(false)
+  private val closed       = new AtomicBoolean(false)
+  private val pendingRead  = new AtomicReference[Either[Throwable, Option[Array[Byte]]] => Unit](null)
+  private val pendingWrite = new AtomicReference[Either[Throwable, Unit] => Unit](null)
+
+  /** Settles whatever read and write are outstanding with `cause`, if any still are. */
+  private[net] def failPending(cause: Throwable): Unit =
+    val r = pendingRead.getAndSet(null)
+    if r != null then r(Left(cause))
+    val w = pendingWrite.getAndSet(null)
+    if w != null then w(Left(cause))
 
   /** The raw fd, used by the Native TLS layer to drive s2n directly. */
   private[net] def fileDescriptor: Int = fd
@@ -161,32 +347,51 @@ private[net] final class FdRawSocket(fd: Int, st: ChannelState, engine: FdRawEng
   /** The owning engine, used by the Native TLS layer to arm read/write readiness on the poller. */
   private[net] def ioEngine: FdRawEngine = engine
 
+  /**
+   * Reads up to `n` bytes, arming read readiness whenever `recv` reports it would block.
+   *
+   * Cancelling clears the armed continuation so no further `recv` is issued, and clears the pending
+   * slot so a later `close` does not resurrect a callback the caller has already walked away from.
+   */
   override def read(n: Int, cb: Either[Throwable, Option[Array[Byte]]] => Unit): Canceler =
     if n <= 0 then { cb(Right(Some(Array.emptyByteArray))); Canceler.noop }
     else if closed.get() then { cb(Left(new java.io.IOException("socket closed"))); Canceler.noop }
     else
+      pendingRead.set(cb)
+      def finish(result: Either[Throwable, Option[Array[Byte]]]): Unit =
+        val waiting = pendingRead.getAndSet(null)
+        if waiting != null then waiting(result)
       def attempt(): Unit =
         val buf = new Array[Byte](n)
         val r   = CInterop.recvInto(fd, buf, n)
-        if r > 0 then cb(Right(Some(java.util.Arrays.copyOf(buf, r))))
-        else if r == 0 then cb(Right(None))
+        if r > 0 then finish(Right(Some(java.util.Arrays.copyOf(buf, r))))
+        else if r == 0 then finish(Right(None))
         else if errno == EAGAIN || errno == EWOULDBLOCK then engine.armRead(fd, st, () => attempt())
-        else cb(Left(new java.io.IOException(s"read failed (errno=$errno)")))
+        else finish(Left(new java.io.IOException(s"read failed (errno=$errno)")))
       attempt()
       new Canceler:
-        override def cancel(): Unit = st.readReady = null
+        override def cancel(): Unit =
+          st.readReady = null
+          pendingRead.getAndSet(null)
+          ()
 
   /**
    * Writes `bytes` in full, arming write readiness whenever `send` reports it would block.
    *
    * The returned [[Canceler]] is intentionally a no-op: `write` is not cancelable (see
    * [[RawSocket]]). Clearing `writeReady` here would strand the unsent remainder of a partially
-   * written frame, leaving the peer waiting for bytes that never arrive.
+   * written frame, leaving the peer waiting for bytes that never arrive. Closing the socket is a
+   * different matter and does settle the callback, since the remaining bytes can no longer be
+   * delivered at all.
    */
   override def write(bytes: Array[Byte], cb: Either[Throwable, Unit] => Unit): Canceler =
     if closed.get() then { cb(Left(new java.io.IOException("socket closed"))); Canceler.noop }
     else
       val off = new java.util.concurrent.atomic.AtomicInteger(0)
+      pendingWrite.set(cb)
+      def finish(result: Either[Throwable, Unit]): Unit =
+        val waiting = pendingWrite.getAndSet(null)
+        if waiting != null then waiting(result)
       def attempt(): Unit =
         var blocked = false
         var failed  = false
@@ -195,11 +400,21 @@ private[net] final class FdRawSocket(fd: Int, st: ChannelState, engine: FdRawEng
           if w > 0 then off.addAndGet(w)
           else if w < 0 && (errno == EAGAIN || errno == EWOULDBLOCK) then
             engine.armWrite(fd, st, () => attempt()); blocked = true
-          else { cb(Left(new java.io.IOException(s"write failed (errno=$errno)"))); failed = true }
-        if !blocked && !failed && off.get() >= bytes.length then cb(Right(()))
+          else { finish(Left(new java.io.IOException(s"write failed (errno=$errno)"))); failed = true }
+        if !blocked && !failed && off.get() >= bytes.length then finish(Right(()))
       attempt()
       new Canceler:
         override def cancel(): Unit = ()
 
+  /**
+   * Marks the socket closed, hands the fd to the poller thread for deregistration, and settles
+   * whatever was still waiting on it.
+   *
+   * Unlike the JVM engine, closing here cannot precede the notification: `deregisterAndClose` only
+   * queues the work, so the fd may still be open when the callbacks are settled. What keeps a
+   * settled read from resuming is the `closed` flag, which [[read]] checks on entry.
+   */
   override def close(): Unit =
-    if closed.compareAndSet(false, true) then engine.deregisterAndClose(fd)
+    if closed.compareAndSet(false, true) then
+      engine.deregisterAndClose(fd)
+      failPending(new java.io.IOException("socket closed"))
