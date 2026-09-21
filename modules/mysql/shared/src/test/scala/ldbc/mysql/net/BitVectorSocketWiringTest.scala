@@ -22,9 +22,22 @@ import ldbc.net.{ Socket, TlsUpgrade }
 
 class BitVectorSocketWiringTest extends FxSuite:
 
+  private final class Delegating(inner: Socket[Fx]) extends Socket[Fx]:
+    override def read(n:      Int):         Fx[Option[Array[Byte]]] = inner.read(n)
+    override def write(bytes: Array[Byte]): Fx[Unit]                = inner.write(bytes)
+    override def close():                   Fx[Unit]                = inner.close()
+
   private given TlsUpgrade[Fx] = new TlsUpgrade[Fx]:
     override def client(socket: Socket[Fx], host: String, port: Int, ssl: ldbc.net.SSL): Fx[Socket[Fx]] =
-      Fx.pure(socket)
+      Fx.pure(new Delegating(socket))
+
+  private val sslOptions = SSLNegotiation.Options[Fx](
+    tlsConfig  = ldbc.net.SSL.Trusted,
+    host       = "127.0.0.1",
+    port       = 3306,
+    fallbackOk = false,
+    logger     = None
+  )
 
   private val handshake: Array[Byte] =
     val version = "8.4.0".getBytes("UTF-8")
@@ -105,3 +118,12 @@ class BitVectorSocketWiringTest extends FxSuite:
                )
     yield assertEquals(error.getSQLState, "08001")
     program
+
+  test("a failure after a TLS handshake is also a communication link failure"):
+    failureAfterHandshake(Some(sslOptions)).map(error => assertEquals(error.getSQLState, "08S01"))
+
+  test("the wrapping is a single layer on a TLS connection"):
+    failureAfterHandshake(Some(sslOptions)).map { error =>
+      assert(!error.getCause.isInstanceOf[SQLException], s"a second SQLException layer was added: ${ error.getCause }")
+      assert(error.getCause.isInstanceOf[IOException], s"the original cause was lost: ${ error.getCause }")
+    }

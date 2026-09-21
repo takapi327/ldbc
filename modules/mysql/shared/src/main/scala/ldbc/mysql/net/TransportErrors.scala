@@ -29,26 +29,44 @@ import ldbc.net.{ RawBackedSocket, RawSocket, Socket }
 private[mysql] object TransportErrors:
 
   /**
-   * Wraps the socket used while the connection is still being established, covering the initial
-   * handshake and the TLS negotiation.
-   */
-  def connecting[F[_]: MonadThrow](socket: Socket[F]): Socket[F] =
-    wrap(socket, SQLState.UNABLE_TO_CONNECT, "Failed to establish a connection to the MySQL server")
-
-  /** Wraps the socket used for command traffic once the connection is established. */
-  def established[F[_]: MonadThrow](socket: Socket[F]): Socket[F] =
-    wrap(socket, SQLState.COMMUNICATION_LINK_FAILURE, "The connection to the MySQL server was lost")
-
-  /**
-   * Applies the decorator, preserving [[ldbc.net.RawBackedSocket]] when the wrapped socket carries it.
+   * Wraps a freshly connected socket, reporting failures as "unable to connect" until
+   * [[Phased.markEstablished]] says otherwise.
    *
-   * The platform TLS layers reach through that trait for the concrete raw socket they have to drive,
-   * so a decorator that dropped it would silently disable TLS on Scala.js and Scala Native.
+   * There is deliberately only ever one of these per connection, sitting directly on the raw socket.
+   * The alternative — one wrapper for the handshake and a second one afterwards — cannot work, because
+   * a TLS upgrade wraps whatever socket it is handed: the handshake-phase wrapper would survive
+   * underneath it and keep claiming `08001` long after the connection was established, on the
+   * platforms whose TLS layer goes through `Socket` rather than the raw socket. Switching one
+   * wrapper's phase keeps the layering flat and the reported state honest on every platform.
    */
-  private def wrap[F[_]: MonadThrow](socket: Socket[F], sqlState: String, message: String): Socket[F] =
-    socket match
-      case backed: RawBackedSocket => new BackedTranslating(socket, sqlState, message, backed.underlying)
-      case _                       => new Translating(socket, sqlState, message)
+  def phased[F[_]](socket: Socket[F])(using MonadThrow[F]): Phased[F] =
+    val phase   = new Phase
+    val wrapped = socket match
+      case backed: RawBackedSocket => new BackedTranslating(socket, phase, backed.underlying)
+      case _                       => new Translating(socket, phase)
+    new Phased(wrapped, phase)
+
+  /** Which half of a connection's life the socket is in. */
+  private final class Phase:
+    @volatile private var established: Boolean = false
+
+    def markEstablished(): Unit = established = true
+
+    def sqlState: String =
+      if established then SQLState.COMMUNICATION_LINK_FAILURE else SQLState.UNABLE_TO_CONNECT
+
+    def message: String =
+      if established then "The connection to the MySQL server was lost"
+      else "Failed to establish a connection to the MySQL server"
+
+  /** The wrapped socket together with the switch that moves it past the handshake. */
+  final class Phased[F[_]] private[TransportErrors] (val socket: Socket[F], private val phase: Phase):
+
+    /**
+     * Marks the connection established, so later failures are reported as a lost link rather than as
+     * an inability to connect. Called once the handshake and any TLS upgrade have completed.
+     */
+    def markEstablished(): Unit = phase.markEstablished()
 
   /**
    * Re-raises transport failures as [[ldbc.sql.SQLTransientConnectionException]], keeping the original
@@ -58,8 +76,7 @@ private[mysql] object TransportErrors:
    * meaning of their own — `EofException` distinguishes a closed peer from a timeout, for one — and
    * burying them under another layer would lose it.
    */
-  private class Translating[F[_]](socket: Socket[F], sqlState: String, message: String)(using F: MonadThrow[F])
-    extends Socket[F]:
+  private class Translating[F[_]](socket: Socket[F], phase: Phase)(using F: MonadThrow[F]) extends Socket[F]:
 
     private def translate[A](fa: F[A]): F[A] =
       F.handleErrorWith(fa) {
@@ -67,8 +84,8 @@ private[mysql] object TransportErrors:
         case error                 =>
           F.raiseError(
             SQLTransientConnectionException(
-              message  = message,
-              sqlState = Some(sqlState),
+              message  = phase.message,
+              sqlState = Some(phase.sqlState),
               detail   = Option(error.getMessage),
               hint     = Some("Discard this session and retry with a new one."),
               vendor   = "MySQL",
@@ -81,11 +98,16 @@ private[mysql] object TransportErrors:
     override def write(bytes: Array[Byte]): F[Unit]                = translate(socket.write(bytes))
     override def close():                   F[Unit]                = translate(socket.close())
 
+  /**
+   * The decorator, preserving [[ldbc.net.RawBackedSocket]] when the wrapped socket carries it.
+   *
+   * The platform TLS layers reach through that trait for the concrete raw socket they have to drive,
+   * so a decorator that dropped it would silently disable TLS on Scala.js and Scala Native.
+   */
   private class BackedTranslating[F[_]: MonadThrow](
-    socket:   Socket[F],
-    sqlState: String,
-    message:  String,
-    raw:      RawSocket
-  ) extends Translating[F](socket, sqlState, message),
+    socket: Socket[F],
+    phase:  Phase,
+    raw:    RawSocket
+  ) extends Translating[F](socket, phase),
             RawBackedSocket:
     override def underlying: RawSocket = raw

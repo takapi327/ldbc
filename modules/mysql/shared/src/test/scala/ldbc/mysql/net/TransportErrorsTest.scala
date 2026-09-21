@@ -35,6 +35,13 @@ class TransportErrorsTest extends FxSuite:
       override def write(bytes: Array[Byte]): Fx[Unit]                = Fx.raiseError(error)
       override def close():                   Fx[Unit]                = Fx.raiseError(error)
 
+  private def connecting(socket: Socket[Fx]): Socket[Fx] = TransportErrors.phased(socket).socket
+
+  private def established(socket: Socket[Fx]): Socket[Fx] =
+    val phased = TransportErrors.phased(socket)
+    phased.markEstablished()
+    phased.socket
+
   private def caught(socket: Socket[Fx]): Fx[SQLException] =
     interceptFx[SQLException](socket.read(4).void)
 
@@ -46,39 +53,44 @@ class TransportErrorsTest extends FxSuite:
 
   test("a transport failure becomes a transient connection exception"):
     val cause = new IOException("socket closed")
-    caught(TransportErrors.established(failing(cause))).map { error =>
+    caught(established(failing(cause))).map { error =>
       assert(error.isInstanceOf[SQLTransientConnectionException], s"unexpected type: ${ error.getClass }")
       assertEquals(error.getSQLState, "08S01")
       assertEquals(error.getCause, cause)
     }
 
   test("the connecting phase reports a different state"):
-    caught(TransportErrors.connecting(failing(new IOException("connection refused")))).map { error =>
+    caught(connecting(failing(new IOException("connection refused")))).map { error =>
       assertEquals(error.getSQLState, "08001")
     }
 
   test("an existing SQL exception passes through untouched"):
     val eof = EofException(4, 1)
-    caught(TransportErrors.established(failing(eof))).map(error => assertEquals(error, eof))
+    caught(established(failing(eof))).map(error => assertEquals(error, eof))
 
-  test("wrapping twice does not stack another layer"):
-    val cause = new IOException("socket closed")
-    caught(TransportErrors.established(TransportErrors.connecting(failing(cause)))).map { error =>
-      assertEquals(error.getCause, cause)
-      assert(!error.getCause.isInstanceOf[SQLException], "a second SQLException layer was added")
-    }
+  test("the same wrapper reports a lost link once the connection is established"):
+    val cause  = new IOException("socket closed")
+    val phased = TransportErrors.phased(failing(cause))
+    for
+      before <- caught(phased.socket)
+      _ = phased.markEstablished()
+      after <- caught(phased.socket)
+    yield
+      assertEquals(before.getSQLState, "08001")
+      assertEquals(after.getSQLState, "08S01")
+      assertEquals(after.getCause, cause)
 
   test("the raw socket stays reachable for the TLS layer"):
-    TransportErrors.connecting(failingBacked(new IOException("boom"))) match
+    connecting(failingBacked(new IOException("boom"))) match
       case backed: RawBackedSocket => assertEquals(backed.underlying, raw)
       case other                   => fail(s"RawBackedSocket was dropped by the decorator: $other")
 
   test("a plain socket does not gain the marker"):
-    assert(!TransportErrors.connecting(failing(new IOException("boom"))).isInstanceOf[RawBackedSocket])
+    assert(!connecting(failing(new IOException("boom"))).isInstanceOf[RawBackedSocket])
 
   test("a write failure is translated the same way"):
     val cause = new IOException("broken pipe")
-    caughtWriting(TransportErrors.established(failing(cause))).map { error =>
+    caughtWriting(established(failing(cause))).map { error =>
       assert(error.isInstanceOf[SQLTransientConnectionException], s"unexpected type: ${ error.getClass }")
       assertEquals(error.getSQLState, "08S01")
       assertEquals(error.getCause, cause)
@@ -86,7 +98,7 @@ class TransportErrorsTest extends FxSuite:
 
   test("a close failure is translated the same way"):
     val cause = new IOException("already closed")
-    caughtClosing(TransportErrors.connecting(failing(cause))).map { error =>
+    caughtClosing(connecting(failing(cause))).map { error =>
       assert(error.isInstanceOf[SQLTransientConnectionException], s"unexpected type: ${ error.getClass }")
       assertEquals(error.getSQLState, "08001")
       assertEquals(error.getCause, cause)
@@ -95,8 +107,8 @@ class TransportErrorsTest extends FxSuite:
   test("an existing SQL exception passes through write and close too"):
     val eof = EofException(4, 1)
     for
-      onWrite <- caughtWriting(TransportErrors.established(failing(eof)))
-      onClose <- caughtClosing(TransportErrors.established(failing(eof)))
+      onWrite <- caughtWriting(established(failing(eof)))
+      onClose <- caughtClosing(established(failing(eof)))
     yield
       assertEquals(onWrite, eof)
       assertEquals(onClose, eof)
