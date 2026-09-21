@@ -71,6 +71,21 @@ private[net] object NodeRawEngine:
 private[net] final class NodeRawSocket(sock: js.Dynamic) extends RawSocket:
   private val buffer = new ReadBuffer
 
+  private var pendingWrite: Either[Throwable, Unit] => Unit = null
+
+  /**
+   * Settles the outstanding write, if there is one.
+   *
+   * Node only invokes a write callback once the chunk is flushed, so a peer that has stopped reading
+   * leaves it pending indefinitely. Closing has to settle it, or the completion contract in
+   * [[RawSocket]] would hold on the JVM and Native engines but not here. Clearing the slot first
+   * keeps a late callback from node harmless.
+   */
+  private def settleWrite(result: Either[Throwable, Unit]): Unit =
+    val waiting = pendingWrite
+    pendingWrite = null
+    if waiting != null then waiting(result)
+
   sock.on("data", ((chunk: Uint8Array) => buffer.onData(toBytes(chunk))): js.Function1[Uint8Array, Unit])
   sock.on(
     "error",
@@ -116,14 +131,18 @@ private[net] final class NodeRawSocket(sock: js.Dynamic) extends RawSocket:
     val u8 = new Uint8Array(bytes.length)
     var i  = 0
     while i < bytes.length do { u8(i) = (bytes(i) & 0xff).toShort; i += 1 }
+    pendingWrite = cb
     sock.write(
       u8,
       (
         (err: js.Dynamic) =>
-          if err == null || js.isUndefined(err) then cb(Right(()))
-          else cb(Left(NodeRawEngine.nodeError("write", err)))
+          if err == null || js.isUndefined(err) then settleWrite(Right(()))
+          else settleWrite(Left(NodeRawEngine.nodeError("write", err)))
       ): js.Function1[js.Dynamic, Unit]
     )
     Canceler.noop
 
-  override def close(): Unit = { sock.end(); buffer.onClose(); () }
+  override def close(): Unit =
+    sock.end()
+    buffer.onClose()
+    settleWrite(Left(new java.io.IOException("socket closed")))

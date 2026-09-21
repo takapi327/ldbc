@@ -77,9 +77,9 @@ private[mysql] object TransportErrors:
           )
       }
 
-    override def read(n: Int): F[Option[Array[Byte]]] = translate(socket.read(n))
-    override def write(bytes: Array[Byte]): F[Unit]   = translate(socket.write(bytes))
-    override def close():                   F[Unit]   = translate(socket.close())
+    override def read(n:      Int):         F[Option[Array[Byte]]] = translate(socket.read(n))
+    override def write(bytes: Array[Byte]): F[Unit]                = translate(socket.write(bytes))
+    override def close():                   F[Unit]                = translate(socket.close())
 
   private class BackedTranslating[F[_]: MonadThrow](
     socket:   Socket[F],

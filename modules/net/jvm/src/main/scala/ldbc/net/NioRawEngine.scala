@@ -28,7 +28,9 @@ private[net] final class Registration(val socket: NioRawSocket, val cb: () => Un
  * burning a core; fatal ones end the thread but hand over to a replacement, which resumes the same
  * selector with every registration still intact.
  */
-private[net] final class NioRawEngine private (initial: Selector) extends RawIoEngine:
+private[net] final class NioRawEngine private (initial: Selector, baseName: String)
+  extends RawIoEngine,
+          PollerDiagnostics:
 
   @volatile private var selector: Selector = initial
 
@@ -40,26 +42,29 @@ private[net] final class NioRawEngine private (initial: Selector) extends RawIoE
   private val generation      = new AtomicInteger(0)
   private val revivals        = new AtomicInteger(0)
   private val terminated      = new AtomicBoolean(false)
+  private val threadName      = new AtomicReference[String](baseName)
 
-  /** Number of recoverable loop errors swallowed so far. Exposed for tests; see [[reportLoopError]]. */
-  private[net] def loopErrorCount: Long = loopErrors.get()
+  override def loopErrorCount: Long = loopErrors.get()
 
-  /** Number of times a terminated engine was brought back up by [[connect]]. Exposed for tests. */
-  private[net] def revivalCount: Int = revivals.get()
+  override def revivalCount: Int = revivals.get()
 
-  /** True once the engine has given up replacing its poller thread. Exposed for tests. */
-  private[net] def isTerminated: Boolean = terminated.get()
+  override def isTerminated: Boolean = terminated.get()
+
+  override def liveSocketCount: Int = liveSockets.size()
+
+  override def pollerThreadName: String = threadName.get()
 
   @volatile private var faultInjection: () => Unit = null
 
-  /**
-   * Test seam for driving the loop's failure paths. The hook runs at the top of each iteration, so
-   * the selector is woken here as well — otherwise a loop already parked in `select()` would not
-   * reach it until unrelated traffic arrived. Throwing from the hook exercises the recoverable
-   * branch or the handover, depending on what is thrown; passing `null` removes it.
-   */
-  private[net] def injectFault(fault: () => Unit): Unit =
+  @volatile private var dispatchFault: () => Unit = null
+
+  override def injectFault(fault: () => Unit): Unit =
     faultInjection = fault
+    selector.wakeup()
+    ()
+
+  override def injectDispatchFault(fault: () => Unit): Unit =
+    dispatchFault = fault
     selector.wakeup()
     ()
 
@@ -84,11 +89,18 @@ private[net] final class NioRawEngine private (initial: Selector) extends RawIoE
         else
           dispatching.set(reg.socket)
           key.interestOps(0)
+          val fault = dispatchFault
+          if fault != null then fault()
           if reg.cb != null then reg.cb()
           dispatching.set(null)
 
   /**
    * The poller loop.
+   *
+   * The interrupt flag is tested explicitly because the blocking call does not raise on it: an
+   * interrupted `select()` returns immediately with the flag still set, which would spin rather than
+   * stop. Reading it with `Thread.interrupted()` clears it and turns it into the exception the
+   * handover path expects.
    *
    * Recoverable errors are reported and slept off so the loop keeps serving the other connections.
    * Fatal ones are deliberately not caught: they leave through `finally`, which hands over to a
@@ -101,6 +113,7 @@ private[net] final class NioRawEngine private (initial: Selector) extends RawIoE
     try
       while true do
         try
+          if Thread.interrupted() then throw new InterruptedException("ldbc-net poller interrupted")
           val fault = faultInjection
           if fault != null then fault()
           drain()
@@ -129,10 +142,11 @@ private[net] final class NioRawEngine private (initial: Selector) extends RawIoE
   /**
    * Pauses after a recoverable error so a persistent failure cannot spin the thread at full speed.
    *
-   * `InterruptedException` is intentionally not caught. Restoring the interrupt flag instead would be
-   * worse than useless here: a `Selector.select()` called with the flag set returns immediately and
-   * never clears it, turning the loop into a silent busy-wait. Letting the interrupt through ends the
-   * thread and hands over to a replacement that starts with a clean flag.
+   * `InterruptedException` is intentionally not caught, for the same reason the loop tests the
+   * interrupt flag itself: an interrupted poller must end rather than carry the flag forward. A
+   * `Selector.select()` called with the flag set returns immediately and never clears it, so a loop
+   * that kept going would become a silent busy-wait — the very failure this back-off exists to
+   * prevent. Ending lets a replacement start with a clean flag.
    */
   private def backoff(): Unit = Thread.sleep(NioRawEngine.BackoffMillis)
 
@@ -144,10 +158,21 @@ private[net] final class NioRawEngine private (initial: Selector) extends RawIoE
    */
   private def failInFlight(cause: Throwable): Unit =
     val victim = dispatching.getAndSet(null)
-    if victim != null then victim.failPending(cause)
+    if victim != null then settle(victim, cause)
 
+  /**
+   * Settles every socket the engine still tracks.
+   *
+   * Each one is guarded separately: these callbacks belong to user code, and one that throws must not
+   * take the remaining sockets down with it — they would be left waiting on a poller that is already
+   * gone, which is the failure this whole path exists to prevent.
+   */
   private def failAllPending(cause: Throwable): Unit =
-    liveSockets.forEach(s => s.failPending(cause))
+    liveSockets.forEach(s => settle(s, cause))
+
+  private def settle(socket: NioRawSocket, cause: Throwable): Unit =
+    try socket.failPending(cause)
+    catch case NonFatal(e) => reportLoopError(e)
 
   /**
    * Replaces the dying poller thread, or gives up.
@@ -175,8 +200,9 @@ private[net] final class NioRawEngine private (initial: Selector) extends RawIoE
 
   private[net] def startThread(): Unit =
     val n    = generation.incrementAndGet()
-    val name = if n == 1 then "ldbc-net-nio-raw" else s"ldbc-net-nio-raw-$n"
-    val t    = new Thread(() => runLoop(), name)
+    val name = if n == 1 then baseName else s"$baseName-$n"
+    threadName.set(name)
+    val t = new Thread(() => runLoop(), name)
     t.setDaemon(true)
     t.start()
 
@@ -251,21 +277,28 @@ private[net] final class NioRawEngine private (initial: Selector) extends RawIoE
         cb(Left(new IOException("ldbc-net poller could not be restarted", error)))
         Canceler.noop
       case None =>
-        val ch = SocketChannel.open()
+        val ch     = SocketChannel.open()
+        val socket = newSocket(ch)
         try
           ch.configureBlocking(false)
           NioRawEngine.withOptions(ch, options)
-          val socket = newSocket(ch)
           def completed(): Unit =
             try { ch.finishConnect(); cb(Right(socket)) }
-            catch case e: Throwable => cb(Left(e))
+            catch
+              case e: Throwable =>
+                forget(socket)
+                cb(Left(e))
+          def failed(e: Throwable): Unit =
+            forget(socket)
+            cb(Left(e))
           if ch.connect(new InetSocketAddress(host, port)) then cb(Right(socket))
-          else register(socket, ch, SelectionKey.OP_CONNECT, () => completed(), e => cb(Left(e)))
-        catch case e: Throwable => cb(Left(e))
+          else register(socket, ch, SelectionKey.OP_CONNECT, () => completed(), failed)
+        catch
+          case e: Throwable =>
+            forget(socket)
+            cb(Left(e))
         new Canceler:
-          override def cancel(): Unit =
-            try ch.close()
-            catch case _: Throwable => ()
+          override def cancel(): Unit = socket.close()
 
 private[net] object NioRawEngine:
 
@@ -287,9 +320,14 @@ private[net] object NioRawEngine:
     options.sendBufferSize.foreach(size => ch.setOption(StandardSocketOptions.SO_SNDBUF, Integer.valueOf(size)))
     options.receiveBufferSize.foreach(size => ch.setOption(StandardSocketOptions.SO_RCVBUF, Integer.valueOf(size)))
 
-  /** Starts an engine with its own selector and thread. Tests use this to stay off [[global]]. */
-  private[net] def start(): NioRawEngine =
-    val engine = new NioRawEngine(Selector.open())
+  /**
+   * Starts an engine with its own selector and thread.
+   *
+   * `name` becomes the poller thread's name, with a generation suffix appended on each handover.
+   * Tests pass a distinct one so they can find their own thread and stay off [[global]].
+   */
+  private[net] def start(name: String = "ldbc-net-nio-raw"): NioRawEngine =
+    val engine = new NioRawEngine(Selector.open(), name)
     engine.startThread()
     engine
 
@@ -317,9 +355,9 @@ private[net] final class NioRawSocket(ch: SocketChannel, engine: NioRawEngine) e
    */
   private[net] def failPending(cause: Throwable): Unit =
     val r = pendingRead.getAndSet(null)
-    if r != null then r(Left(cause))
     val w = pendingWrite.getAndSet(null)
-    if w != null then w(Left(cause))
+    try if r != null then r(Left(cause))
+    finally if w != null then w(Left(cause))
 
   /**
    * Reads up to `n` bytes. A negative result from the channel is end of stream, zero means readable
