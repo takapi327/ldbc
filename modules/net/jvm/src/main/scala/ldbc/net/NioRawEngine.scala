@@ -78,6 +78,14 @@ private[net] final class NioRawEngine private (initial: Selector, baseName: Stri
    * wants more readiness re-registers itself, and re-arming after it would immediately undo that.
    * The socket being dispatched is published so that a thread dying between those two steps can be
    * accounted for — its key is left armed with no interest, so nothing will ever select it again.
+   *
+   * Each key is isolated. An exception from one continuation must not end the sweep: the keys not
+   * reached yet have already had their events reported, and the one that threw has already been
+   * disarmed.
+   *
+   * `dispatching` is cleared when the work finishes and when a recoverable error is handled, but
+   * deliberately **not** in a `finally`. A fatal error has to leave it set: the handover reads it to
+   * find the one socket whose event was consumed but whose continuation never ran (§ [[failInFlight]]).
    */
   private def processSelectedKeys(): Unit =
     val it = selector.selectedKeys().iterator()
@@ -88,11 +96,16 @@ private[net] final class NioRawEngine private (initial: Selector, baseName: Stri
         if reg == null then key.interestOps(0)
         else
           dispatching.set(reg.socket)
-          key.interestOps(0)
-          val fault = dispatchFault
-          if fault != null then fault()
-          if reg.cb != null then reg.cb()
-          dispatching.set(null)
+          try
+            key.interestOps(0)
+            val fault = dispatchFault
+            if fault != null then fault()
+            if reg.cb != null then reg.cb()
+            dispatching.set(null)
+          catch
+            case NonFatal(e) =>
+              dispatching.set(null)
+              reportLoopError(e)
 
   /**
    * The poller loop.

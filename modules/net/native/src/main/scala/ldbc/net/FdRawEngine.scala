@@ -86,27 +86,42 @@ private[net] final class FdRawEngine(initial: Poller, baseName: String = "ldbc-n
    * The socket being dispatched is published so that a thread dying part-way through can be accounted
    * for: the continuation has already been taken out of [[ChannelState]] by then, so a replacement
    * thread has no way to find it again.
+   *
+   * The whole body is isolated per fd. One event is one fd's worth of work, and the poller hands the
+   * whole batch over in a single call: letting an exception out of here would abandon the events the
+   * multiplexer already reported but has not delivered yet. Those fds are armed one-shot, so they are
+   * disarmed the moment the event was produced — nothing would ever report them again, and every
+   * socket in the rest of the batch would wait forever.
+   *
+   * `dispatching` is cleared when the work finishes and when a recoverable error is handled, but
+   * deliberately **not** in a `finally`. A fatal error has to leave it set: the handover reads it to
+   * find the one socket whose event was consumed but whose continuation never ran (§ [[failInFlight]]).
    */
   private def dispatch(fd: Int, readable: Boolean, writable: Boolean, error: Boolean): Unit =
     val st = registry.get(fd)
     if st != null then
       dispatching.set(sockets.get(fd))
-      val fault = dispatchFault
-      if fault != null then fault()
-      if error then fireAll(st)
-      else
-        if writable then
-          val cb = st.writeReady
-          st.writeReady = null
-          val cc = st.connectReady
-          st.connectReady = null
-          if cc != null then cc()
-          if cb != null then cb()
-        if readable then
-          val cb = st.readReady
-          st.readReady = null
-          if cb != null then cb()
-      dispatching.set(null)
+      try
+        val fault = dispatchFault
+        if fault != null then fault()
+        if error then fireAll(st)
+        else
+          if writable then
+            val cb = st.writeReady
+            st.writeReady = null
+            val cc = st.connectReady
+            st.connectReady = null
+            if cc != null then cc()
+            if cb != null then cb()
+          if readable then
+            val cb = st.readReady
+            st.readReady = null
+            if cb != null then cb()
+        dispatching.set(null)
+      catch
+        case NonFatal(e) =>
+          dispatching.set(null)
+          reportLoopError(e)
 
   /**
    * The poller loop.
