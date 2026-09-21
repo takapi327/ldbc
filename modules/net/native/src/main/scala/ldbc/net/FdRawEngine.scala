@@ -198,10 +198,24 @@ private[net] final class FdRawEngine(initial: Poller, baseName: String = "ldbc-n
    * sits in the queue that [[giveUp]] discards. Without a handle of its own it would simply be
    * forgotten, which is the one outcome the completion contract rules out.
    */
+  /**
+   * Entries are removed as they are visited rather than cleared afterwards. A callback invoked here
+   * can reach back into the engine — a pool told that its connection died will go and open another,
+   * and that one revives the engine — so by the time the sweep finishes the collections may hold
+   * sockets that have nothing to do with the failure. Wiping them wholesale would untrack a
+   * perfectly good connection, and nothing would ever settle it afterwards.
+   */
   private def failAllPending(cause: Throwable): Unit =
-    pendingConnects.forEach(fail => guarded(fail, cause))
+    pendingConnects.forEach { fail =>
+      pendingConnects.remove(fail)
+      guarded(fail, cause)
+    }
     failArmed(cause)
-    sockets.values().forEach(s => settle(s, cause))
+    sockets.forEach { (fd, socket) =>
+      sockets.remove(fd)
+      registry.remove(fd)
+      settle(socket, cause)
+    }
 
   /**
    * Reports the failure to every continuation armed on the poller right now.
@@ -264,10 +278,10 @@ private[net] final class FdRawEngine(initial: Poller, baseName: String = "ldbc-n
   /**
    * Stops trying to keep a poller alive and settles everything that was waiting on it.
    *
-   * The sockets that were just failed stop being tracked here. They are dead by definition — every
-   * operation on them has been settled and this engine will never serve them again — so counting
-   * them afterwards would misreport what the engine is responsible for. Their `close` still works;
-   * it simply has nothing left to deregister.
+   * The sockets that were just failed stop being tracked, one by one as [[failAllPending]] settles
+   * them. They are dead by definition — every operation on them has been settled and this engine
+   * will never serve them again — so counting them afterwards would misreport what the engine is
+   * responsible for. Their `close` still works; it simply has nothing left to deregister.
    *
    * Dropping the per-fd state here also keeps a later revival safe: the operating system reuses file
    * descriptors, so a stale entry left behind could be picked up by an unrelated socket that happens
@@ -278,9 +292,6 @@ private[net] final class FdRawEngine(initial: Poller, baseName: String = "ldbc-n
     tasks.clear()
     System.err.println(s"[ldbc-net] poller $reason")
     failAllPending(new IOException(s"ldbc-net poller $reason"))
-    registry.clear()
-    sockets.clear()
-    pendingConnects.clear()
 
   private[net] def startThread(): Unit =
     val n    = generation.incrementAndGet()

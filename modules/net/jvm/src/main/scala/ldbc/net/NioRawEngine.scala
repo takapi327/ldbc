@@ -183,6 +183,12 @@ private[net] final class NioRawEngine private (initial: Selector, baseName: Stri
    * Each one is guarded separately: these callbacks belong to user code, and one that throws must not
    * take the remaining sockets down with it — they would be left waiting on a poller that is already
    * gone, which is the failure this whole path exists to prevent.
+   *
+   * Entries are removed as they are visited rather than cleared afterwards. A callback invoked here
+   * can reach back into the engine — a pool told that its connection died will go and open another,
+   * and that one revives the engine — so by the time the sweep finishes the collections may hold
+   * sockets that have nothing to do with the failure. Wiping them wholesale would untrack a
+   * perfectly good connection, and nothing would ever settle it afterwards.
    */
   /**
    * Failure handlers for connects that have not resolved yet.
@@ -194,10 +200,14 @@ private[net] final class NioRawEngine private (initial: Selector, baseName: Stri
    */
   private def failAllPending(cause: Throwable): Unit =
     pendingConnects.forEach { fail =>
+      pendingConnects.remove(fail)
       try fail(cause)
       catch case NonFatal(e) => reportLoopError(e)
     }
-    liveSockets.forEach(s => settle(s, cause))
+    liveSockets.forEach { socket =>
+      liveSockets.remove(socket)
+      settle(socket, cause)
+    }
 
   /**
    * Releases a selector that is being replaced.
@@ -237,18 +247,16 @@ private[net] final class NioRawEngine private (initial: Selector, baseName: Stri
   /**
    * Stops trying to keep a poller alive and settles everything that was waiting on it.
    *
-   * The sockets that were just failed stop being tracked here. They are dead by definition — every
-   * operation on them has been settled and this engine will never serve them again — so counting
-   * them afterwards would misreport what the engine is responsible for. Their `close` still works;
-   * it simply has nothing left to deregister.
+   * The sockets that were just failed stop being tracked, one by one as [[failAllPending]] settles
+   * them. They are dead by definition — every operation on them has been settled and this engine
+   * will never serve them again — so counting them afterwards would misreport what the engine is
+   * responsible for. Their `close` still works; it simply has nothing left to deregister.
    */
   private def giveUp(reason: String): Unit =
     terminated.set(true)
     pending.clear()
     System.err.println(s"[ldbc-net] poller $reason")
     failAllPending(new IOException(s"ldbc-net poller $reason"))
-    liveSockets.clear()
-    pendingConnects.clear()
 
   private[net] def startThread(): Unit =
     val n    = generation.incrementAndGet()

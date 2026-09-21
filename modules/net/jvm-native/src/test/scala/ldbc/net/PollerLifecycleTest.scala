@@ -274,3 +274,55 @@ class PollerLifecycleTest extends munit.FunSuite:
     )
     client.close()
     revived.close()
+
+  test("a connection made while the engine is giving up is not swept away"):
+    val engine           = isolated()
+    val (port, accepted) = acceptOne()
+    val victim           = connectRaw(engine, port)
+    awaitAccepted(accepted)
+
+    val (secondPort, secondAccepted) = acceptOne()
+    val reconnected                  = new AtomicReference[RawSocket](null)
+    val reconnectFailed              = new AtomicReference[Throwable](null)
+    val reconnectDone                = new CountDownLatch(1)
+
+    victim.read(
+      4,
+      _ =>
+        engine.injectFault(null)
+        engine.connect(
+          "127.0.0.1",
+          secondPort,
+          SocketOptions.default,
+          {
+            case Right(socket) => reconnected.set(socket); reconnectDone.countDown()
+            case Left(error)   => reconnectFailed.set(error); reconnectDone.countDown()
+          }
+        )
+        ()
+    )
+    Thread.sleep(300)
+
+    engine.injectFault(() => throw new StackOverflowError("always fatal"))
+    assert(
+      reconnectDone.await(30, TimeUnit.SECONDS),
+      "the socket never reconnected from inside the sweep, so this test proved nothing"
+    )
+    assert(engine.revivalCount >= 1, "the reconnect did not have to revive the engine")
+
+    assertEquals(reconnectFailed.get(), null, s"the reconnect was rejected: ${ reconnectFailed.get() }")
+    val fresh = reconnected.get()
+    assert(fresh != null, "no replacement socket was produced")
+
+    assert(
+      await(() => engine.liveSocketCount == 1, 5000),
+      s"the socket made during the sweep was dropped from tracking (live=${ engine.liveSocketCount })"
+    )
+
+    val server             = awaitAccepted(secondAccepted)
+    val (settled, outcome) = parkedRead(fresh, 4)
+    server.getOutputStream.write("OKAY".getBytes("UTF-8"))
+    server.getOutputStream.flush()
+    assert(settled.await(10, TimeUnit.SECONDS), "the socket made during the sweep does not work")
+    assertEquals(outcome.get().map(_.map(new String(_, "UTF-8"))), Right(Some("OKAY")))
+    fresh.close()
