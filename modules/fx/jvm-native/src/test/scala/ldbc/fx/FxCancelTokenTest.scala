@@ -12,8 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * Tests for the completion-aware cancel path added for the frontend bridges: [[Fx.unsafeRunCancelable]]
  * returns a [[Fx.CancelToken]] whose `cancel: Fx[Unit]` completes only after the run's cancel-path
- * finalizers have actually drained (課題A), and cancelling a masked `bracket` acquire must not
- * interrupt it (課題B / Fix B).
+ * finalizers have actually drained, and cancelling a masked `bracket` acquire must not interrupt it.
  */
 class FxCancelTokenTest extends munit.FunSuite:
 

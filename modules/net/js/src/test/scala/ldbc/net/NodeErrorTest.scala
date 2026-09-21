@@ -74,13 +74,13 @@ class NodeErrorTest extends munit.FunSuite:
         connected.future
       }
       serverSocket <- peer.future
-      _             = serverSocket.destroy()
-      _            <- delay(200)
-      outcome       = Promise[Either[Throwable, Unit]]()
-      _             = raw.asInstanceOf[NodeRawSocket].underlying.destroy()
-      _             = raw.write(new Array[Byte](64), r => { outcome.trySuccess(r); () })
-      _            <- delay(500)
-      settled       = outcome.future.value
+      _ = serverSocket.destroy()
+      _ <- delay(200)
+      outcome = Promise[Either[Throwable, Unit]]()
+      _       = raw.asInstanceOf[NodeRawSocket].underlying.destroy()
+      _       = raw.write(new Array[Byte](64), r => { outcome.trySuccess(r); () })
+      _ <- delay(500)
+      settled = outcome.future.value
     yield
       server.close()
       settled match

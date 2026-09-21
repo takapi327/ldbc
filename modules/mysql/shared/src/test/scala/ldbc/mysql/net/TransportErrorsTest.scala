@@ -10,33 +10,39 @@ import java.io.IOException
 
 import ldbc.sql.{ SQLException, SQLTransientConnectionException }
 
+import ldbc.fx.{ Fx, FxSuite }
 import ldbc.fx.concurrentFx
 import ldbc.fx.syntax.*
-import ldbc.fx.{ Fx, FxSuite }
 import ldbc.mysql.exception.EofException
 import ldbc.net.{ RawBackedSocket, RawSocket, Socket }
 
 class TransportErrorsTest extends FxSuite:
 
   private val raw: RawSocket = new RawSocket:
-    override def read(n: Int, cb: Either[Throwable, Option[Array[Byte]]] => Unit) = ldbc.net.Canceler.noop
-    override def write(bytes: Array[Byte], cb: Either[Throwable, Unit] => Unit)   = ldbc.net.Canceler.noop
-    override def close(): Unit                                                    = ()
+    override def read(n:      Int, cb:         Either[Throwable, Option[Array[Byte]]] => Unit) = ldbc.net.Canceler.noop
+    override def write(bytes: Array[Byte], cb: Either[Throwable, Unit] => Unit) = ldbc.net.Canceler.noop
+    override def close(): Unit = ()
 
   private def failing(error: Throwable): Socket[Fx] = new Socket[Fx]:
-    override def read(n: Int): Fx[Option[Array[Byte]]] = Fx.raiseError(error)
-    override def write(bytes: Array[Byte]): Fx[Unit]   = Fx.raiseError(error)
-    override def close():                   Fx[Unit]   = Fx.raiseError(error)
+    override def read(n:      Int):         Fx[Option[Array[Byte]]] = Fx.raiseError(error)
+    override def write(bytes: Array[Byte]): Fx[Unit]                = Fx.raiseError(error)
+    override def close():                   Fx[Unit]                = Fx.raiseError(error)
 
   private def failingBacked(error: Throwable): Socket[Fx] =
     new Socket[Fx] with RawBackedSocket:
-      override def underlying:   RawSocket              = raw
-      override def read(n: Int): Fx[Option[Array[Byte]]] = Fx.raiseError(error)
-      override def write(bytes: Array[Byte]): Fx[Unit]   = Fx.raiseError(error)
-      override def close():                   Fx[Unit]   = Fx.raiseError(error)
+      override def underlying:                RawSocket               = raw
+      override def read(n:      Int):         Fx[Option[Array[Byte]]] = Fx.raiseError(error)
+      override def write(bytes: Array[Byte]): Fx[Unit]                = Fx.raiseError(error)
+      override def close():                   Fx[Unit]                = Fx.raiseError(error)
 
   private def caught(socket: Socket[Fx]): Fx[SQLException] =
     interceptFx[SQLException](socket.read(4).void)
+
+  private def caughtWriting(socket: Socket[Fx]): Fx[SQLException] =
+    interceptFx[SQLException](socket.write(Array[Byte](1)).void)
+
+  private def caughtClosing(socket: Socket[Fx]): Fx[SQLException] =
+    interceptFx[SQLException](socket.close().void)
 
   test("a transport failure becomes a transient connection exception"):
     val cause = new IOException("socket closed")
@@ -69,3 +75,28 @@ class TransportErrorsTest extends FxSuite:
 
   test("a plain socket does not gain the marker"):
     assert(!TransportErrors.connecting(failing(new IOException("boom"))).isInstanceOf[RawBackedSocket])
+
+  test("a write failure is translated the same way"):
+    val cause = new IOException("broken pipe")
+    caughtWriting(TransportErrors.established(failing(cause))).map { error =>
+      assert(error.isInstanceOf[SQLTransientConnectionException], s"unexpected type: ${ error.getClass }")
+      assertEquals(error.getSQLState, "08S01")
+      assertEquals(error.getCause, cause)
+    }
+
+  test("a close failure is translated the same way"):
+    val cause = new IOException("already closed")
+    caughtClosing(TransportErrors.connecting(failing(cause))).map { error =>
+      assert(error.isInstanceOf[SQLTransientConnectionException], s"unexpected type: ${ error.getClass }")
+      assertEquals(error.getSQLState, "08001")
+      assertEquals(error.getCause, cause)
+    }
+
+  test("an existing SQL exception passes through write and close too"):
+    val eof = EofException(4, 1)
+    for
+      onWrite <- caughtWriting(TransportErrors.established(failing(eof)))
+      onClose <- caughtClosing(TransportErrors.established(failing(eof)))
+    yield
+      assertEquals(onWrite, eof)
+      assertEquals(onClose, eof)

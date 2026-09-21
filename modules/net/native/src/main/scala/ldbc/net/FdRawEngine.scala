@@ -30,7 +30,9 @@ import scala.util.control.NonFatal
  * burning a core; fatal ones end the thread but hand over to a replacement, which resumes the same
  * poller with every registration still intact.
  */
-private[net] final class FdRawEngine(initial: Poller) extends RawIoEngine:
+private[net] final class FdRawEngine(initial: Poller, baseName: String = "ldbc-net-fd-raw")
+  extends RawIoEngine,
+          PollerDiagnostics:
 
   @volatile private var poller: Poller = initial
 
@@ -43,26 +45,28 @@ private[net] final class FdRawEngine(initial: Poller) extends RawIoEngine:
   private val generation      = new AtomicInteger(0)
   private val revivals        = new AtomicInteger(0)
   private val terminated      = new AtomicBoolean(false)
+  private val threadName      = new AtomicReference[String](baseName)
 
   @volatile private var faultInjection: () => Unit = null
 
-  /** Number of recoverable loop errors swallowed so far. Exposed for tests; see [[reportLoopError]]. */
-  private[net] def loopErrorCount: Long = loopErrors.get()
+  @volatile private var dispatchFault: () => Unit = null
 
-  /** Number of times a terminated engine was brought back up by [[connect]]. Exposed for tests. */
-  private[net] def revivalCount: Int = revivals.get()
+  override def loopErrorCount: Long = loopErrors.get()
 
-  /** True once the engine has given up replacing its poller thread. Exposed for tests. */
-  private[net] def isTerminated: Boolean = terminated.get()
+  override def revivalCount: Int = revivals.get()
 
-  /**
-   * Test seam for driving the loop's failure paths. The hook runs at the top of each iteration, so
-   * the poller is woken here as well — otherwise a loop already parked in `poll` would not reach it
-   * until unrelated traffic arrived. Throwing from the hook exercises the recoverable branch or the
-   * handover, depending on what is thrown; passing `null` removes it.
-   */
-  private[net] def injectFault(fault: () => Unit): Unit =
+  override def isTerminated: Boolean = terminated.get()
+
+  override def liveSocketCount: Int = sockets.size()
+
+  override def pollerThreadName: String = threadName.get()
+
+  override def injectFault(fault: () => Unit): Unit =
     faultInjection = fault
+    poller.wakeup()
+
+  override def injectDispatchFault(fault: () => Unit): Unit =
+    dispatchFault = fault
     poller.wakeup()
 
   private def enqueue(task: () => Unit): Unit =
@@ -87,6 +91,8 @@ private[net] final class FdRawEngine(initial: Poller) extends RawIoEngine:
     val st = registry.get(fd)
     if st != null then
       dispatching.set(sockets.get(fd))
+      val fault = dispatchFault
+      if fault != null then fault()
       if error then fireAll(st)
       else
         if writable then
@@ -119,6 +125,7 @@ private[net] final class FdRawEngine(initial: Poller) extends RawIoEngine:
     try
       while true do
         try
+          if Thread.interrupted() then throw new InterruptedException("ldbc-net poller interrupted")
           val fault = faultInjection
           if fault != null then fault()
           poller.poll(dispatch) match
@@ -153,10 +160,21 @@ private[net] final class FdRawEngine(initial: Poller) extends RawIoEngine:
   /** Settles the callbacks of the socket whose continuations were being run when the thread died. */
   private def failInFlight(cause: Throwable): Unit =
     val victim = dispatching.getAndSet(null)
-    if victim != null then victim.failPending(cause)
+    if victim != null then settle(victim, cause)
 
+  /**
+   * Settles every socket the engine still tracks.
+   *
+   * Each one is guarded separately: these callbacks belong to user code, and one that throws must not
+   * take the remaining sockets down with it — they would be left waiting on a poller that is already
+   * gone, which is the failure this whole path exists to prevent.
+   */
   private def failAllPending(cause: Throwable): Unit =
-    sockets.values().forEach(s => s.failPending(cause))
+    sockets.values().forEach(s => settle(s, cause))
+
+  private def settle(socket: FdRawSocket, cause: Throwable): Unit =
+    try socket.failPending(cause)
+    catch case NonFatal(e) => reportLoopError(e)
 
   /**
    * Replaces the dying poller thread, or gives up.
@@ -184,8 +202,9 @@ private[net] final class FdRawEngine(initial: Poller) extends RawIoEngine:
 
   private[net] def startThread(): Unit =
     val n    = generation.incrementAndGet()
-    val name = if n == 1 then "ldbc-net-fd-raw" else s"ldbc-net-fd-raw-$n"
-    val t    = new Thread(() => runLoop(), name)
+    val name = if n == 1 then baseName else s"$baseName-$n"
+    threadName.set(name)
+    val t = new Thread(() => runLoop(), name)
     t.setDaemon(true)
     t.start()
 
@@ -220,13 +239,29 @@ private[net] final class FdRawEngine(initial: Poller) extends RawIoEngine:
     val r = st.readReady; st.readReady       = null; if r != null then r()
     val w = st.writeReady; st.writeReady     = null; if w != null then w()
 
+  /**
+   * Arms one-shot read readiness for `fd`.
+   *
+   * Refused once the engine has given up: with no thread left to drive the multiplexer, arming would
+   * park the caller on a notification that can never arrive. The JVM engine refuses the equivalent
+   * registration for the same reason.
+   */
   private[net] def armRead(fd: Int, st: ChannelState, ready: () => Unit): Unit =
-    st.readReady = ready
-    enqueue(() => poller.arm(fd, read = true, write = false))
+    if terminated.get() then refuse(fd)
+    else
+      st.readReady = ready
+      enqueue(() => poller.arm(fd, read = true, write = false))
 
+  /** Arms one-shot write readiness for `fd`, refusing once the engine has given up (see [[armRead]]). */
   private[net] def armWrite(fd: Int, st: ChannelState, ready: () => Unit): Unit =
-    st.writeReady = ready
-    enqueue(() => poller.arm(fd, read = false, write = true))
+    if terminated.get() then refuse(fd)
+    else
+      st.writeReady = ready
+      enqueue(() => poller.arm(fd, read = false, write = true))
+
+  private def refuse(fd: Int): Unit =
+    val socket = sockets.get(fd)
+    if socket != null then settle(socket, new IOException("ldbc-net poller terminated"))
 
   private[net] def deregisterAndClose(fd: Int): Unit =
     sockets.remove(fd)
@@ -309,10 +344,15 @@ private[net] object FdRawEngine:
     else if LinktimeInfo.isMac then new KqueuePoller()
     else throw new UnsupportedOperationException("ldbc-net: only Linux (epoll) and macOS (kqueue) are supported")
 
-  /** Starts an engine with its own multiplexer and thread. Tests use this to stay off [[global]]. */
-  private[net] def start(): FdRawEngine =
+  /**
+   * Starts an engine with its own multiplexer and thread.
+   *
+   * `name` becomes the poller thread's name, with a generation suffix appended on each handover.
+   * Tests pass a distinct one so they can find their own thread and stay off [[global]].
+   */
+  private[net] def start(name: String = "ldbc-net-fd-raw"): FdRawEngine =
     ignoreSigpipe
-    new FdRawEngine(newPoller()).start()
+    new FdRawEngine(newPoller(), name).start()
 
   lazy val global: FdRawEngine = start()
 
@@ -334,9 +374,9 @@ private[net] final class FdRawSocket(fd: Int, st: ChannelState, engine: FdRawEng
   /** Settles whatever read and write are outstanding with `cause`, if any still are. */
   private[net] def failPending(cause: Throwable): Unit =
     val r = pendingRead.getAndSet(null)
-    if r != null then r(Left(cause))
     val w = pendingWrite.getAndSet(null)
-    if w != null then w(Left(cause))
+    try if r != null then r(Left(cause))
+    finally if w != null then w(Left(cause))
 
   /** The raw fd, used by the Native TLS layer to drive s2n directly. */
   private[net] def fileDescriptor: Int = fd
