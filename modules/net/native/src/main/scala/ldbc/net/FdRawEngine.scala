@@ -199,22 +199,22 @@ private[net] final class FdRawEngine(initial: Poller, baseName: String = "ldbc-n
    * forgotten, which is the one outcome the completion contract rules out.
    */
   /**
-   * Entries are removed as they are visited rather than cleared afterwards. A callback invoked here
-   * can reach back into the engine — a pool told that its connection died will go and open another,
-   * and that one revives the engine — so by the time the sweep finishes the collections may hold
-   * sockets that have nothing to do with the failure. Wiping them wholesale would untrack a
-   * perfectly good connection, and nothing would ever settle it afterwards.
+   * The collections are snapshotted before anything is settled. Removing entries as they are visited
+   * is not enough: a callback invoked here can reach back into the engine — a pool told that its
+   * connection died will go and open another, and that one revives the engine — and a
+   * `ConcurrentHashMap` iterator is free to hand back an entry added after the sweep began. Taking a
+   * copy first makes the set of victims exactly the set that existed when the engine gave up.
    */
   private def failAllPending(cause: Throwable): Unit =
-    pendingConnects.forEach { fail =>
+    new java.util.ArrayList(pendingConnects).forEach { fail =>
       pendingConnects.remove(fail)
       guarded(fail, cause)
     }
     failArmed(cause)
-    sockets.forEach { (fd, socket) =>
-      sockets.remove(fd)
+    new java.util.ArrayList(sockets.keySet()).forEach { fd =>
+      val socket = sockets.remove(fd)
       registry.remove(fd)
-      settle(socket, cause)
+      if socket != null then settle(socket, cause)
     }
 
   /**
@@ -225,7 +225,7 @@ private[net] final class FdRawEngine(initial: Poller, baseName: String = "ldbc-n
    * arrive after the engine gave up — the ones already parked need telling.
    */
   private def failArmed(cause: Throwable): Unit =
-    registry.values().forEach { st =>
+    new java.util.ArrayList(registry.values()).forEach { st =>
       val r = st.readFailed
       st.readFailed = null
       st.readReady  = null
