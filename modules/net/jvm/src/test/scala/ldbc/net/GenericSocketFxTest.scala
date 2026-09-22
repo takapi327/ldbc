@@ -14,7 +14,7 @@ import scala.concurrent.duration.*
 import munit.FunSuite
 
 import ldbc.fx.{ Fx, FxRuntime }
-import ldbc.fx.concurrentFx // given Concurrent[Fx]
+import ldbc.fx.concurrentFx
 import ldbc.net.IoEngine
 
 /**

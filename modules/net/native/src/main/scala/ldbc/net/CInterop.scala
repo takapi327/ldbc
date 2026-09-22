@@ -60,11 +60,15 @@ private[net] object CInterop:
   /**
    * Resolves `host`/`port` via blocking `getaddrinfo`, opens a non-blocking TCP socket, and returns
    * the pair. IP literals resolve without contacting DNS. Throws on resolution/socket failure.
+   *
+   * The hints are set positionally because `addrinfo` is a C struct: `_2` is `ai_family`, left at
+   * `AF_UNSPEC` so either IPv4 or IPv6 is acceptable, and `_3` is `ai_socktype`, pinned to
+   * `SOCK_STREAM` so only TCP results come back.
    */
   def resolve(host: String, port: Int): Resolved = Zone {
     val hints = alloc[addrinfo]()
-    hints._2 = 0           // ai_family = AF_UNSPEC
-    hints._3 = SOCK_STREAM // ai_socktype
+    hints._2 = 0
+    hints._3 = SOCK_STREAM
     val res = alloc[Ptr[addrinfo]]()
     val rc  = getaddrinfo(toCString(host), toCString(port.toString), hints, res)
     if rc != 0 then throw new java.io.IOException(s"getaddrinfo($host:$port) failed (code=$rc)")

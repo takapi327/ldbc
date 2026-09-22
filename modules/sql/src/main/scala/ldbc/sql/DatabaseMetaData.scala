@@ -328,12 +328,11 @@ trait DatabaseMetaData[F[_]]:
    */
   def getExtraNameCharacters(): String
 
-  // --------------------------------------------------------------------
-  // Functions describing which features are supported.
-
   /**
    * Retrieves whether this database supports <code>ALTER TABLE</code>
    * with add column.
+   *
+   * First of the methods describing which features are supported.
    *
    * @return <code>true</code> if so; <code>false</code> otherwise
    */
@@ -785,15 +784,13 @@ trait DatabaseMetaData[F[_]]:
    */
   def supportsOpenStatementsAcrossRollback(): Boolean
 
-  // ----------------------------------------------------------------------
-  // The following group of methods exposes various limitations
-  // based on the target database with the current driver.
-  // Unless otherwise specified, a result of zero means there is no
-  // limit, or the limit is not known.
-
   /**
    * Retrieves the maximum number of hex characters this database allows in an
    * inline binary literal.
+   *
+   * First of the methods exposing the limitations of the target database under the current driver.
+   * Unless a method says otherwise, a result of zero means there is no limit, or that the limit is
+   * not known.
    *
    * @return max the maximum length (in hex characters) for a binary literal;
    *      a result of zero means that there is no limit or the limit
