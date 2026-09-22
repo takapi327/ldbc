@@ -19,6 +19,14 @@ trait AuthenticationPacket extends ResponsePacket
 
 object AuthenticationPacket:
 
+  /**
+   * Reads the leading byte to pick a decoder for the rest of the packet.
+   *
+   * Most of the branches are handed the payload with that byte already removed, because their own
+   * decoders start after it. [[AuthMoreDataPacket]] is the exception: its status tag is part of what
+   * it decodes, so it receives the packet untouched. Doing it the other way would leave the tag in
+   * `authenticationMethodData` and oblige every caller to strip it.
+   */
   def decoder(
     capabilityFlags: Set[CapabilitiesFlags]
   ): Decoder[AuthenticationPacket | GenericResponsePackets | UnknownPacket] =
@@ -30,6 +38,6 @@ object AuthenticationPacket:
       status match
         case OKPacket.STATUS                => OKPacket.decoder(capabilityFlags).decode(remainder)
         case ERRPacket.STATUS               => ERRPacket.decoder(capabilityFlags).decode(remainder)
-        case AuthMoreDataPacket.STATUS      => AuthMoreDataPacket.decoder.decode(remainder)
+        case AuthMoreDataPacket.STATUS      => AuthMoreDataPacket.decoder.decode(bits)
         case AuthSwitchRequestPacket.STATUS => AuthSwitchRequestPacket.decoder.decode(remainder)
         case unknown => Decoder.pure(UnknownPacket(unknown, Some(s"Unknown status: $unknown"))).decode(remainder)

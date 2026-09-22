@@ -485,10 +485,7 @@ object Protocol:
       scrambleBuff: Array[Byte]
     ): F[Unit] =
       socket.receive(AuthMoreDataPacket.decoder).flatMap { moreData =>
-        // TODO: When converted to Array[Byte], it contains an extra 1 for some reason. This causes an error in public key parsing when executing Scala JS. Therefore, the first 1Byte is excluded.
-        val publicKeyString = moreData.authenticationMethodData
-          .drop(1)
-          .iterator
+        val publicKeyString = moreData.authenticationMethodData.iterator
           .map("%02x" format _)
           .map(hex => Integer.parseInt(hex, 16).toChar)
           .mkString("")
@@ -513,7 +510,8 @@ object Protocol:
       (useSSL, allowPublicKeyRetrieval) match
         case (true, _)     => sslHandshake(password)
         case (false, true) =>
-          socket.send(ComQuitPacket()) *> allowPublicKeyRetrievalRequest(plugin, password, scrambleBuff)
+          socket
+            .send(AuthPublicKeyRequestPacket.Sha256) *> allowPublicKeyRetrievalRequest(plugin, password, scrambleBuff)
         case (_, _) => plainTextHandshake(plugin, password, scrambleBuff)
 
     /**
@@ -532,7 +530,11 @@ object Protocol:
       (useSSL, allowPublicKeyRetrieval) match
         case (true, _)     => sslHandshake(password)
         case (false, true) =>
-          socket.send(ComInitDBPacket("")) *> allowPublicKeyRetrievalRequest(plugin, password, scrambleBuff)
+          socket.send(AuthPublicKeyRequestPacket.CachingSha2) *> allowPublicKeyRetrievalRequest(
+            plugin,
+            password,
+            scrambleBuff
+          )
         case (_, _) => plainTextHandshake(plugin, password, scrambleBuff)
 
     /**
