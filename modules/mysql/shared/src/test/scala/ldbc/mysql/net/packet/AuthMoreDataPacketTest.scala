@@ -26,12 +26,9 @@ class AuthMoreDataPacketTest extends FTestPlatform:
     assertEquals(packet.toString, "Protocol::AuthMoreData")
   }
 
-  test("AuthMoreDataPacket decoder") {
-    // Create sample packet data that would be received from server
-    val authData    = Array[Byte]('t', 'e', 's', 't', '_', 'd', 'a', 't', 'a')
-    val packetBytes = authData
-
-    val bitVector = BitVector(packetBytes)
+  test("AuthMoreDataPacket decoder strips the status tag") {
+    val authData  = Array[Byte]('t', 'e', 's', 't', '_', 'd', 'a', 't', 'a')
+    val bitVector = BitVector(Array[Byte](0x01) ++ authData)
     val result    = AuthMoreDataPacket.decoder.decode(bitVector)
 
     assert(result.isSuccessful)
@@ -40,6 +37,30 @@ class AuthMoreDataPacketTest extends FTestPlatform:
         val packet = decoded.value
         assertEquals(packet.status, 0x01)
         assertEquals(packet.authenticationMethodData.toSeq, authData.toSeq)
+      case _ => fail("Decoding failed")
+    }
+  }
+
+  test("AuthMoreDataPacket decoder reads the status actually sent") {
+    val bitVector = BitVector(Array[Byte](0x05, 0x42))
+    val result    = AuthMoreDataPacket.decoder.decode(bitVector)
+
+    result match {
+      case Attempt.Successful(decoded) =>
+        assertEquals(decoded.value.status, 0x05)
+        assertEquals(decoded.value.authenticationMethodData.toSeq, Seq(0x42.toByte))
+      case _ => fail("Decoding failed")
+    }
+  }
+
+  test("AuthMoreDataPacket decoder leaves nothing behind") {
+    val bitVector = BitVector(Array[Byte](0x01, 0x04))
+    val result    = AuthMoreDataPacket.decoder.decode(bitVector)
+
+    result match {
+      case Attempt.Successful(decoded) =>
+        assertEquals(decoded.remainder, BitVector.empty)
+        assertEquals(decoded.value.authenticationMethodData.toSeq, Seq(0x04.toByte))
       case _ => fail("Decoding failed")
     }
   }
