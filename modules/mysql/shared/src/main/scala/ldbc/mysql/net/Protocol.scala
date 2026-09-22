@@ -513,7 +513,8 @@ object Protocol:
       (useSSL, allowPublicKeyRetrieval) match
         case (true, _)     => sslHandshake(password)
         case (false, true) =>
-          socket.send(ComQuitPacket()) *> allowPublicKeyRetrievalRequest(plugin, password, scrambleBuff)
+          socket
+            .send(AuthPublicKeyRequestPacket.Sha256) *> allowPublicKeyRetrievalRequest(plugin, password, scrambleBuff)
         case (_, _) => plainTextHandshake(plugin, password, scrambleBuff)
 
     /**
@@ -532,7 +533,11 @@ object Protocol:
       (useSSL, allowPublicKeyRetrieval) match
         case (true, _)     => sslHandshake(password)
         case (false, true) =>
-          socket.send(ComInitDBPacket("")) *> allowPublicKeyRetrievalRequest(plugin, password, scrambleBuff)
+          socket.send(AuthPublicKeyRequestPacket.CachingSha2) *> allowPublicKeyRetrievalRequest(
+            plugin,
+            password,
+            scrambleBuff
+          )
         case (_, _) => plainTextHandshake(plugin, password, scrambleBuff)
 
     /**
