@@ -17,9 +17,9 @@ import ldbc.sql.{
   SQLFeatureNotSupportedException,
   SQLIntegrityConstraintViolationException,
   SQLInvalidAuthorizationSpecException,
+  SQLNonTransientConnectionException,
   SQLSyntaxErrorException,
-  SQLTransactionRollbackException,
-  SQLTransientConnectionException
+  SQLTransactionRollbackException
 }
 import ldbc.sql.Attribute
 
@@ -64,28 +64,39 @@ case class ERRPacket(
   override def toString: String = "ERR_Packet"
 
   def attributes: List[Attribute[?]] =
-    val errorType = sqlState match
-      case Some(SQLState.TRANSIENT_CONNECTION_EXCEPTION)           => "TransientConnectionException"
-      case Some(SQLState.DATA_EXCEPTION)                           => "DataException"
-      case Some(SQLState.INVALID_AUTHORIZATION_SPEC_EXCEPTION)     => "InvalidAuthorizationSpecException"
-      case Some(SQLState.INTEGRITY_CONSTRAINT_VIOLATION_EXCEPTION) => "IntegrityConstraintViolationException"
-      case Some(SQLState.TRANSACTION_ROLLBACK_EXCEPTION)           => "TransactionRollbackException"
-      case Some(SQLState.SYNTAX_ERROR_EXCEPTION)                   => "SyntaxErrorException"
-      case Some(SQLState.FEATURE_NOT_SUPPORTED_EXCEPTION)          => "FeatureNotSupportedException"
-      case Some(_)                                                 => "SQLException"
-      case None                                                    => "SQLException"
+    val errorType = sqlState.map(SQLState.classOf) match
+      case Some(SQLState.CONNECTION_EXCEPTION)           => "NonTransientConnectionException"
+      case Some(SQLState.DATA_EXCEPTION)                 => "DataException"
+      case Some(SQLState.INVALID_AUTHORIZATION_SPEC)     => "InvalidAuthorizationSpecException"
+      case Some(SQLState.INTEGRITY_CONSTRAINT_VIOLATION) => "IntegrityConstraintViolationException"
+      case Some(SQLState.TRANSACTION_ROLLBACK)           => "TransactionRollbackException"
+      case Some(SQLState.SYNTAX_ERROR)                   => "SyntaxErrorException"
+      case Some(SQLState.FEATURE_NOT_SUPPORTED)          => "FeatureNotSupportedException"
+      case _                                             => "SQLException"
     List(
       Attribute[String]("error.type", errorType),
       Attribute[Long]("db.response.status_code", errorCode.toLong)
     )
 
+  /**
+   * Maps the server's SQLSTATE onto the matching [[ldbc.sql.SQLException]] subclass.
+   *
+   * The match is on the SQLSTATE *class* — its first two characters — not the whole string. JDBC
+   * defines each subclass by class value, so `08000` and `08S01` are both connection errors; matching
+   * the full five characters would quietly demote every state whose subclass is not `000` to a bare
+   * `SQLException`, and MySQL does send such states (`08S01` for its network errors, for one).
+   *
+   * Class `08` is reported as non-transient. The state cannot say whether a retry would help, so the
+   * caller has to decide, and nothing is known here about why the server gave up on the connection.
+   * Failures ldbc raises itself are transient where that is actually known to be true.
+   */
   def toException(
     sql:    Option[String],
     detail: Option[String]
   ): ldbc.sql.SQLException =
-    sqlState match
-      case Some(SQLState.TRANSIENT_CONNECTION_EXCEPTION) =>
-        SQLTransientConnectionException(
+    sqlState.map(SQLState.classOf) match
+      case Some(SQLState.CONNECTION_EXCEPTION) =>
+        SQLNonTransientConnectionException(
           message    = errorMessage,
           sqlState   = sqlState,
           vendorCode = Some(errorCode),
@@ -102,7 +113,7 @@ case class ERRPacket(
           detail     = detail,
           vendor     = "MySQL"
         )
-      case Some(SQLState.INVALID_AUTHORIZATION_SPEC_EXCEPTION) =>
+      case Some(SQLState.INVALID_AUTHORIZATION_SPEC) =>
         SQLInvalidAuthorizationSpecException(
           message    = errorMessage,
           sqlState   = sqlState,
@@ -111,7 +122,7 @@ case class ERRPacket(
           detail     = detail,
           vendor     = "MySQL"
         )
-      case Some(SQLState.INTEGRITY_CONSTRAINT_VIOLATION_EXCEPTION) =>
+      case Some(SQLState.INTEGRITY_CONSTRAINT_VIOLATION) =>
         SQLIntegrityConstraintViolationException(
           message    = errorMessage,
           sqlState   = sqlState,
@@ -120,7 +131,7 @@ case class ERRPacket(
           detail     = detail,
           vendor     = "MySQL"
         )
-      case Some(SQLState.TRANSACTION_ROLLBACK_EXCEPTION) =>
+      case Some(SQLState.TRANSACTION_ROLLBACK) =>
         SQLTransactionRollbackException(
           message    = errorMessage,
           sqlState   = sqlState,
@@ -129,7 +140,7 @@ case class ERRPacket(
           detail     = detail,
           vendor     = "MySQL"
         )
-      case Some(SQLState.SYNTAX_ERROR_EXCEPTION) =>
+      case Some(SQLState.SYNTAX_ERROR) =>
         SQLSyntaxErrorException(
           message    = errorMessage,
           sqlState   = sqlState,
@@ -138,7 +149,7 @@ case class ERRPacket(
           detail     = detail,
           vendor     = "MySQL"
         )
-      case Some(SQLState.FEATURE_NOT_SUPPORTED_EXCEPTION) =>
+      case Some(SQLState.FEATURE_NOT_SUPPORTED) =>
         SQLFeatureNotSupportedException(
           message    = errorMessage,
           sqlState   = sqlState,

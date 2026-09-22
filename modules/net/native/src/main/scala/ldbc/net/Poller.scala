@@ -23,8 +23,21 @@ private[net] trait Poller:
   /**
    * Blocks until events are available, invoking `onEvent(fd, readable, writable, error)` for each.
    * The wakeup fd is handled internally and never surfaced.
+   *
+   * Returns what the underlying syscall did, so the caller can tell an interrupted call apart from a
+   * failing one. Failure arrives as `-1` and `errno` rather than as an exception, which is why this
+   * cannot be left to the loop's `catch`.
    */
-  def poll(onEvent: (Int, Boolean, Boolean, Boolean) => Unit): Unit
+  def poll(onEvent: (Int, Boolean, Boolean, Boolean) => Unit): PollOutcome
 
   /** Wakes a thread blocked in [[poll]]. Thread-safe. */
   def wakeup(): Unit
+
+  /**
+   * Releases the descriptors this multiplexer owns.
+   *
+   * Called when an engine replaces its multiplexer. Without it every replacement would strand the
+   * previous one's descriptors — and replacement happens precisely while the process is already in
+   * trouble, which is the worst moment to be consuming them.
+   */
+  def close(): Unit

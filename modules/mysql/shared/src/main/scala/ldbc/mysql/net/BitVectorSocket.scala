@@ -94,11 +94,13 @@ object BitVectorSocket:
     capabilitiesFlags: Set[CapabilitiesFlags]
   )(using F: Concurrent[F], tls: TlsUpgrade[F]): Resource[F, BitVectorSocket[F]] =
     for
-      socket        <- sockets
-      initialPacket <- Resource.eval(Initial(socket).start)
+      raw <- sockets
+      phased = TransportErrors.phased(raw)
+      initialPacket <- Resource.eval(Initial(phased.socket).start)
       _             <- Resource.eval(initialPacketRef.set(Some(initialPacket)))
-      socket$       <- sslOptions.fold(Resource.pure(socket))(option =>
-                   SSLNegotiation.negotiateSSL(socket, capabilitiesFlags, option, sequenceIdRef)
-                 )
+      upgraded      <- sslOptions.fold(Resource.pure(phased.socket))(option =>
+                    SSLNegotiation.negotiateSSL(phased.socket, capabilitiesFlags, option, sequenceIdRef)
+                  )
+      _        <- Resource.eval(F.delay(phased.markEstablished()))
       carryRef <- Resource.eval(Ref.of[F, ByteVector](ByteVector.empty))
-    yield fromSocket(socket$, readTimeout, carryRef)
+    yield fromSocket(upgraded, readTimeout, carryRef)

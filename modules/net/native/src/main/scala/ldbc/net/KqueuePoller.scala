@@ -7,6 +7,8 @@
 package ldbc.net
 
 import scala.scalanative.bsd.kevent.*
+import scala.scalanative.libc.errno.errno
+import scala.scalanative.posix.errno.EINTR
 import scala.scalanative.posix.stdint.{ int16_t, intptr_t, uint16_t, uint32_t, uintptr_t }
 import scala.scalanative.posix.unistd.{ pipe, read as cRead, write as cWrite }
 import scala.scalanative.runtime.Intrinsics
@@ -44,9 +46,10 @@ private[net] final class KqueuePoller extends Poller:
     change(fd, EVFILT_READ, EV_DELETE)
     change(fd, EVFILT_WRITE, EV_DELETE)
 
-  override def poll(onEvent: (Int, Boolean, Boolean, Boolean) => Unit): Unit =
-    val n = kevent(kq, null, 0, eventList.asInstanceOf[CVoidPtr], maxEvents, null)
-    var i = 0
+  override def poll(onEvent: (Int, Boolean, Boolean, Boolean) => Unit): PollOutcome =
+    val n       = kevent(kq, null, 0, eventList.asInstanceOf[CVoidPtr], maxEvents, null)
+    val outcome = PollOutcome.classify(n, errno, EINTR)
+    var i       = 0
     while i < n do
       val ident  = stackalloc[uintptr_t]()
       val filter = stackalloc[int16_t]()
@@ -65,12 +68,19 @@ private[net] final class KqueuePoller extends Poller:
         val writable = filt == EVFILT_WRITE
         onEvent(fd, readable, writable, isErr || isEof)
       i += 1
+    outcome
 
   override def wakeup(): Unit =
     val one = stackalloc[Byte]()
     !one = 1.toByte
     cWrite(wakePipe(1), one.asInstanceOf[CVoidPtr], 1.toUSize)
     ()
+
+  override def close(): Unit =
+    CInterop.closeFd(wakePipe(0))
+    CInterop.closeFd(wakePipe(1))
+    CInterop.closeFd(kq)
+    stdlibFree(eventList)
 
   private def registerWake(): Unit =
     change(wakePipe(0), EVFILT_READ, EV_ADD)

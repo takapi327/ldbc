@@ -35,7 +35,7 @@ class ERRPacketTest extends FTestPlatform:
 
     assertEquals(errPacket.status, 0xff)
     assertEquals(errPacket.errorCode, 1045)
-    assertEquals(errPacket.sqlStateMarker, '#'.toInt) // Charをintに変換
+    assertEquals(errPacket.sqlStateMarker, '#'.toInt)
     assertEquals(errPacket.sqlState, Some("28000"))
     assertEquals(errPacket.errorMessage, "Access denied for user")
     assertEquals(errPacket.toString, "ERR_Packet")
@@ -219,7 +219,6 @@ class ERRPacketTest extends FTestPlatform:
     val sqlException = sqlSyntaxErrPacket.toException(detail, sql)
     assert(sqlException.isInstanceOf[ldbc.sql.SQLException])
 
-    // メッセージに含まれているかを確認する方法でテスト
     val exceptionMessage = sqlException.getMessage
     assert(exceptionMessage.contains("invalid_column"), s"Exception message should contain SQL: $exceptionMessage")
     assert(exceptionMessage.contains("Syntax error"), s"Exception message should contain detail: $exceptionMessage")
@@ -233,12 +232,10 @@ class ERRPacketTest extends FTestPlatform:
       errorMessage   = "Duplicate entry"
     )
 
-    // 型を明示的に指定して変換する
     val longValues: Vector[Long] = Vector(1L, 2L, -3L)
     val batchException = batchErrPacket.toException("Batch failed", longValues)
     assert(batchException.isInstanceOf[BatchUpdateException])
 
-    // BatchUpdateExceptionのメッセージにUpdateCountsの情報が含まれているかを確認
     val batchExMessage = batchException.getMessage
     assert(
       batchExMessage.contains("Duplicate entry"),
@@ -246,7 +243,6 @@ class ERRPacketTest extends FTestPlatform:
     )
     assert(batchExMessage.contains("Batch failed"), s"Batch exception message should contain detail: $batchExMessage")
 
-    // fieldsメソッドを通じて間接的にupdateCountsをテスト
     val attributesList        = batchException.fields
     val updateCountsAttribute = attributesList.find(_.key.name == "error.updateCounts")
     assert(updateCountsAttribute.isDefined, "Should have updateCounts attribute")

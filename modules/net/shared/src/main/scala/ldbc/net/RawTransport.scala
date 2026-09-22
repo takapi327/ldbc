@@ -25,6 +25,21 @@ object Canceler:
  * Non-blocking byte transport as raw callbacks. `read`/`write` register interest and invoke `cb` once
  * the operation completes, returning a [[Canceler]] that deregisters it.
  *
+ * Completion contract — implementations must honour this:
+ *   - The `cb` handed to `read` / `write` is invoked **exactly once**, whether the operation succeeds
+ *     or fails. Never invoking it is not a quiet no-op: the `F.async` wrapping this callback would
+ *     never complete, stranding the caller with no way back short of a timeout it may not have set.
+ *   - At most one `read` and one `write` may be outstanding on a socket at a time. Issuing a second
+ *     one while the first is still parked fails immediately with an `IllegalStateException` rather
+ *     than displacing it — a byte stream cannot be split between two readers, and dropping the
+ *     first callback to make room would break the guarantee above.
+ *   - `close` settles the pending `read` / `write` callbacks with a failure before returning. This
+ *     does not contradict the cancellation contract below: `write` being uncancelable means
+ *     *cancellation does not stop the transfer*, whereas closing gives up the socket itself, so the
+ *     remaining bytes can no longer be delivered and success cannot honestly be reported.
+ *   - If the engine loses its multiplexer and can no longer drive callbacks, the pending ones are
+ *     settled with a failure too, for the same reason.
+ *
  * Cancellation contract — implementations must honour this, and callers must not expect more:
  *   - `read`: cancelling MUST NOT consume bytes from the transport, so a later `read` still sees them.
  *     This is best effort only: a cancel that races an in-flight platform read may still consume, and

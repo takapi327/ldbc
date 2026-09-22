@@ -8,8 +8,10 @@ package ldbc.net
 
 import java.util.concurrent.ConcurrentHashMap
 
+import scala.scalanative.libc.errno.errno
 import scala.scalanative.linux.epoll.*
 import scala.scalanative.linux.eventfd.{ eventfd, EFD_NONBLOCK }
+import scala.scalanative.posix.errno.EINTR
 import scala.scalanative.posix.stdint.{ uint32_t, uint64_t }
 import scala.scalanative.posix.unistd.{ read as cRead, write as cWrite }
 import scala.scalanative.unsafe.*
@@ -46,9 +48,10 @@ private[net] final class EpollPoller extends Poller:
   override def remove(fd: Int): Unit =
     if registered.remove(fd) then ctl(EPOLL_CTL_DEL, fd, 0.toUInt, fd)
 
-  override def poll(onEvent: (Int, Boolean, Boolean, Boolean) => Unit): Unit =
-    val n = epoll_wait(epfd, eventList.asInstanceOf[CVoidPtr], maxEvents, -1)
-    var i = 0
+  override def poll(onEvent: (Int, Boolean, Boolean, Boolean) => Unit): PollOutcome =
+    val n       = epoll_wait(epfd, eventList.asInstanceOf[CVoidPtr], maxEvents, -1)
+    val outcome = PollOutcome.classify(n, errno, EINTR)
+    var i       = 0
     while i < n do
       val events = stackalloc[uint32_t]()
       val data   = stackalloc[uint64_t]()
@@ -62,12 +65,19 @@ private[net] final class EpollPoller extends Poller:
         val error    = (ev & (EPOLLERR.toInt | EPOLLHUP.toInt)) != 0
         onEvent(fd, readable, writable, error)
       i += 1
+    outcome
 
   override def wakeup(): Unit =
     val one = stackalloc[uint64_t]()
     !one = 1.toULong
     cWrite(wakeFd, one.asInstanceOf[CVoidPtr], 8.toUSize)
     ()
+
+  override def close(): Unit =
+    registered.clear()
+    CInterop.closeFd(wakeFd)
+    CInterop.closeFd(epfd)
+    free(eventList)
 
   private def drainWake(): Unit =
     val buf = stackalloc[uint64_t]()
