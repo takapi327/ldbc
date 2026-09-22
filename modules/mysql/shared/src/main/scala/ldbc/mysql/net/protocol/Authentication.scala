@@ -45,3 +45,17 @@ trait Authentication[F[_]]:
 object Authentication:
 
   val FULL_AUTH = "4"
+
+  /**
+   * The byte a client sends to ask the server for its RSA public key, so a password can be encrypted
+   * before crossing an unencrypted connection.
+   *
+   * These are authentication-phase markers, not command ids. The server reads the first payload byte
+   * according to the phase the connection is in, so the fact that `0x01` and `0x02` also happen to be
+   * `COM_QUIT` and `COM_INIT_DB` means nothing here — the two sets of values are unrelated and free to
+   * diverge. Each plugin has its own marker.
+   */
+  val PUBLIC_KEY_REQUEST_SHA256: Byte = 0x01
+
+  /** See [[PUBLIC_KEY_REQUEST_SHA256]]. `caching_sha2_password` asks with a different byte. */
+  val PUBLIC_KEY_REQUEST_CACHING_SHA2: Byte = 0x02
