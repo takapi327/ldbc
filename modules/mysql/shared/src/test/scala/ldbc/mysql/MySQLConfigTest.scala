@@ -6,7 +6,7 @@
 
 package ldbc.mysql
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.*
 
 import ldbc.sql.DatabaseMetaData
 
@@ -101,6 +101,18 @@ class MySQLConfigTest extends FTestPlatform:
     val updated = config.setReadTimeout(timeout)
 
     assertEquals(updated.readTimeout, timeout)
+  }
+
+  test("connectTimeout defaults to the bounded value rather than being unset") {
+    val config = MySQLConfig.default
+    assertEquals(config.connectTimeout, Connection.defaultConnectTimeout)
+    assertEquals(config.connectTimeout, 30.seconds)
+  }
+
+  test("setConnectTimeout should update connectTimeout value") {
+    val updated = MySQLConfig.default.setConnectTimeout(2.seconds)
+    assertEquals(updated.connectTimeout, 2.seconds)
+    assertEquals(MySQLConfig.default.connectTimeout, Connection.defaultConnectTimeout)
   }
 
   test("setAllowPublicKeyRetrieval should update allowPublicKeyRetrieval value") {
