@@ -111,6 +111,20 @@ trait MySQLConfig:
     */
   def setReadTimeout(readTimeout: Duration): MySQLConfig
 
+  /** How long to wait for the TCP connection to be established. */
+  def connectTimeout: FiniteDuration
+
+  /** Sets how long to wait for the TCP connection to be established.
+    *
+    * Unlike the read timeout this cannot be disabled, because a connect that never completes gives
+    * the caller nothing to act on: the operating system retransmits the SYN for minutes before
+    * reporting a failure.
+    *
+    * @param connectTimeout the connect timeout duration
+    * @return a new MySQLConfig with the updated connect timeout
+    */
+  def setConnectTimeout(connectTimeout: FiniteDuration): MySQLConfig
+
   /** Whether to allow retrieval of RSA public keys from the server. */
   def allowPublicKeyRetrieval: Boolean
 
@@ -223,6 +237,7 @@ object MySQLConfig:
     ssl:                     SSL                                   = SSL.None,
     socketOptions:           SocketOptions                         = defaultSocketOptions,
     readTimeout:             Duration                              = Duration.Inf,
+    connectTimeout:          FiniteDuration                        = Connection.defaultConnectTimeout,
     allowPublicKeyRetrieval: Boolean                               = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
     useCursorFetch:          Boolean                               = false,
@@ -245,15 +260,17 @@ object MySQLConfig:
         s"useCursorFetch=$useCursorFetch, useServerPrepStmts=$useServerPrepStmts, " +
         s"maxAllowedPacket=$maxAllowedPacket)"
 
-    override def setHost(host:                   String):        MySQLConfig = copy(host = host)
-    override def setPort(port:                   Int):           MySQLConfig = copy(port = port)
-    override def setUser(user:                   String):        MySQLConfig = copy(user = user)
-    override def setPassword(password:           String):        MySQLConfig = copy(password = Some(password))
-    override def setDatabase(database:           String):        MySQLConfig = copy(database = Some(database))
-    override def setDebug(debug:                 Boolean):       MySQLConfig = copy(debug = debug)
-    override def setSSL(ssl:                     SSL):           MySQLConfig = copy(ssl = ssl)
-    override def setSocketOptions(socketOptions: SocketOptions): MySQLConfig = copy(socketOptions = socketOptions)
-    override def setReadTimeout(readTimeout:     Duration):      MySQLConfig = copy(readTimeout = readTimeout)
+    override def setHost(host:                   String):           MySQLConfig = copy(host = host)
+    override def setPort(port:                   Int):              MySQLConfig = copy(port = port)
+    override def setUser(user:                   String):           MySQLConfig = copy(user = user)
+    override def setPassword(password:           String):           MySQLConfig = copy(password = Some(password))
+    override def setDatabase(database:           String):           MySQLConfig = copy(database = Some(database))
+    override def setDebug(debug:                 Boolean):          MySQLConfig = copy(debug = debug)
+    override def setSSL(ssl:                     SSL):              MySQLConfig = copy(ssl = ssl)
+    override def setSocketOptions(socketOptions: SocketOptions):    MySQLConfig = copy(socketOptions = socketOptions)
+    override def setReadTimeout(readTimeout:     Duration):         MySQLConfig = copy(readTimeout = readTimeout)
+    override def setConnectTimeout(connectTimeout: FiniteDuration): MySQLConfig =
+      copy(connectTimeout = connectTimeout)
     override def setAllowPublicKeyRetrieval(allowPublicKeyRetrieval: Boolean): MySQLConfig =
       copy(allowPublicKeyRetrieval = allowPublicKeyRetrieval)
     override def setDatabaseTerm(databaseTerm: DatabaseMetaData.DatabaseTerm): MySQLConfig =
@@ -286,6 +303,7 @@ object MySQLConfig:
    * - ssl: SSL.None
    * - socketOptions: SocketOptions.default
    * - readTimeout: Duration.Inf
+   * - connectTimeout: 30.seconds
    * - allowPublicKeyRetrieval: false
    * - databaseTerm: Some(DatabaseMetaData.DatabaseTerm.CATALOG)
    * - useCursorFetch: false
