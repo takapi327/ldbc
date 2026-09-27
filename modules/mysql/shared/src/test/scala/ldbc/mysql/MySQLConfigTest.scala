@@ -6,7 +6,7 @@
 
 package ldbc.mysql
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.*
 
 import ldbc.sql.DatabaseMetaData
 
@@ -38,7 +38,6 @@ class MySQLConfigTest extends FTestPlatform:
     val updated = config.setHost("localhost")
 
     assertEquals(updated.host, "localhost")
-    // Ensure other values remain unchanged
     assertEquals(updated.port, config.port)
     assertEquals(updated.user, config.user)
   }
@@ -103,6 +102,18 @@ class MySQLConfigTest extends FTestPlatform:
     assertEquals(updated.readTimeout, timeout)
   }
 
+  test("connectTimeout defaults to the bounded value rather than being unset") {
+    val config = MySQLConfig.default
+    assertEquals(config.connectTimeout, Connection.defaultConnectTimeout)
+    assertEquals(config.connectTimeout, 30.seconds)
+  }
+
+  test("setConnectTimeout should update connectTimeout value") {
+    val updated = MySQLConfig.default.setConnectTimeout(2.seconds)
+    assertEquals(updated.connectTimeout, 2.seconds)
+    assertEquals(MySQLConfig.default.connectTimeout, Connection.defaultConnectTimeout)
+  }
+
   test("setAllowPublicKeyRetrieval should update allowPublicKeyRetrieval value") {
     val config  = MySQLConfig.default
     val updated = config.setAllowPublicKeyRetrieval(true)
@@ -133,10 +144,9 @@ class MySQLConfigTest extends FTestPlatform:
 
   test("setMaxAllowedPacket should update maxAllowedPacket value") {
     val config  = MySQLConfig.default
-    val updated = config.setMaxAllowedPacket(1048576) // 1MB
+    val updated = config.setMaxAllowedPacket(1048576)
 
     assertEquals(updated.maxAllowedPacket, 1048576)
-    // Ensure other values remain unchanged
     assertEquals(updated.host, config.host)
     assertEquals(updated.port, config.port)
   }
@@ -198,20 +208,17 @@ class MySQLConfigTest extends FTestPlatform:
     val originalHost = original.host
     val originalPort = original.port
 
-    // Make multiple changes
     val updated = original
       .setHost("newhost")
       .setPort(3308)
       .setUser("newuser")
       .setPassword("newpass")
 
-    // Original should remain unchanged
     assertEquals(original.host, originalHost)
     assertEquals(original.port, originalPort)
     assertEquals(original.user, "root")
     assertEquals(original.password, None)
 
-    // Updated should have new values
     assertEquals(updated.host, "newhost")
     assertEquals(updated.port, 3308)
     assertEquals(updated.user, "newuser")

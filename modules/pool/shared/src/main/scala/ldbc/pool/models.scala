@@ -50,12 +50,20 @@ enum PoolAdjustment:
 /**
  * A snapshot of the pool's connection counts.
  *
- * @param total   the total number of connections
- * @param active  the number of connections in use
- * @param idle    the number of idle connections
- * @param waiting the number of borrowers waiting for a connection
+ * `total` counts connections the pool has already registered. Connections that are still being
+ * established are counted separately by `creating`; judgements about remaining capacity need
+ * `total + creating`, since the pool has already committed to those.
+ *
+ * @param total    the total number of registered connections
+ * @param active   the number of connections in use
+ * @param idle     the number of idle connections
+ * @param waiting  the number of borrowers waiting for a connection
+ * @param creating the number of connections currently being established
  */
-case class PoolStatus(total: Int, active: Int, idle: Int, waiting: Int)
+case class PoolStatus(total: Int, active: Int, idle: Int, waiting: Int, creating: Int = 0):
+
+  /** Connections the pool holds or has committed to establishing. */
+  def committed: Int = total + creating
 
 /**
  * Aggregated pool metrics.

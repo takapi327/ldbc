@@ -14,7 +14,7 @@ import ldbc.fx.Fx
 /**
  * A configurable mock [[PooledDataSource]] for testing the background maintenance tasks (housekeeper,
  * keepalive, adaptive sizer, status reporter) in isolation. It exposes a real [[poolState]] and
- * pluggable `status`, `validateConnection`, `removeConnection`, and `createNewConnectionForPool`
+ * pluggable `status`, `validateConnection`, `removeConnection`, and `requestNewConnection`
  * behaviours; the members the maintenance tasks never touch raise on access.
  *
  * @param poolState      the live pool state the task reads and mutates
@@ -24,7 +24,7 @@ import ldbc.fx.Fx
  * @param statusEffect   an optional fixed status (otherwise derived from [[poolState]])
  * @param validateFn     the `validateConnection` behaviour
  * @param removeFn       the `removeConnection` behaviour
- * @param createForPool  the `createNewConnectionForPool` behaviour
+ * @param createForPool  the `requestNewConnection` behaviour
  */
 final class MockPool(
   val poolState:      Ref[Fx, PoolState[Fx]],
@@ -34,8 +34,13 @@ final class MockPool(
   statusEffect:       Option[Fx[PoolStatus]]           = None,
   validateFn:         Connection[Fx] => Fx[Boolean]    = _ => Fx.pure(true),
   removeFn:           PooledConnection[Fx] => Fx[Unit] = _ => Fx.unit,
-  createForPool: Fx[PooledConnection[Fx]] = Fx.raiseError(new NotImplementedError("createNewConnectionForPool"))
+  createForPool:      Fx[Unit]                         = Fx.unit
 ) extends PooledDataSource[Fx]:
+
+  private val requestedConnections = new java.util.concurrent.atomic.AtomicLong(0L)
+
+  /** How many times [[requestNewConnection]] was called. */
+  def requestCount: Long = requestedConnections.get()
 
   override def minConnections         = config.minConnections
   override def maxConnections         = config.maxConnections
@@ -55,22 +60,23 @@ final class MockPool(
     statusEffect.getOrElse(
       poolState.get.map(s =>
         PoolStatus(
-          total   = s.connections.size,
-          active  = s.connections.size - s.idleConnections.size,
-          idle    = s.idleConnections.size,
-          waiting = s.waitQueue.size
+          total    = s.connections.size,
+          active   = s.connections.size - s.idleConnections.size,
+          idle     = s.idleConnections.size,
+          waiting  = 0,
+          creating = s.creating
         )
       )
     )
 
-  override def metrics:                                        Fx[PoolMetrics]          = metricsTracker.getMetrics
-  override def close:                                          Fx[Unit]                 = Fx.unit
-  override def returnToPool(pooled:     PooledConnection[Fx]): Fx[Unit]                 = Fx.unit
-  override def removeConnection(pooled: PooledConnection[Fx]): Fx[Unit]                 = removeFn(pooled)
-  override def validateConnection(conn: Connection[Fx]):       Fx[Boolean]              = validateFn(conn)
-  override def createNewConnectionForPool():                   Fx[PooledConnection[Fx]] = createForPool
-  override def createNewConnection():                          Fx[PooledConnection[Fx]] =
-    Fx.raiseError(new NotImplementedError("createNewConnection"))
-  override def getConnection: Fx[(Connection[Fx], Fx[Unit])] =
+  override def metrics:                                        Fx[PoolMetrics] = metricsTracker.getMetrics
+  override def close:                                          Fx[Unit]        = Fx.unit
+  override def returnToPool(pooled:     PooledConnection[Fx]): Fx[Unit]        = Fx.unit
+  override def removeConnection(pooled: PooledConnection[Fx]): Fx[Unit]        = removeFn(pooled)
+  override def validateConnection(conn: Connection[Fx]):       Fx[Boolean]     = validateFn(conn)
+  override def requestNewConnection():                         Fx[Unit]        =
+    Fx.delay(requestedConnections.incrementAndGet()).flatMap(_ => createForPool)
+  override def abandonedCreations: Fx[Long]                       = Fx.pure(0L)
+  override def getConnection:      Fx[(Connection[Fx], Fx[Unit])] =
     Fx.raiseError(new NotImplementedError("getConnection"))
   override def circuitBreaker: CircuitBreaker[Fx] = throw new NotImplementedError("circuitBreaker")

@@ -6,7 +6,7 @@
 
 package ldbc.mysql
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.{ Duration, FiniteDuration }
 
 import ldbc.sql.{ Connection as SqlConnection, DataSource, DatabaseMetaData }
 
@@ -37,6 +37,7 @@ import ldbc.telemetry.{ DatabaseMetrics, TelemetryConfig }
  * @param ssl the SSL configuration for secure connections
  * @param socketOptions socket-level options for the TCP connection
  * @param readTimeout the timeout duration for read operations
+ * @param connectTimeout how long to wait for the TCP connection to be established
  * @param allowPublicKeyRetrieval whether to allow retrieval of RSA public keys from the server
  * @param databaseTerm the database terminology to use (CATALOG or SCHEMA)
  * @param tracer optional tracer for distributed tracing
@@ -71,6 +72,7 @@ final case class MySQLDataSource[F[_], A](
   ssl:                         SSL                                   = SSL.None,
   socketOptions:               SocketOptions                         = SocketOptions.default,
   readTimeout:                 Duration                              = Duration.Inf,
+  connectTimeout:              FiniteDuration                        = Connection.defaultConnectTimeout,
   allowPublicKeyRetrieval:     Boolean                               = false,
   databaseTerm:                Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
   tracer:                      Option[Tracer[F]]                     = None,
@@ -157,6 +159,7 @@ final case class MySQLDataSource[F[_], A](
             ssl                         = ssl,
             socketOptions               = socketOptions,
             readTimeout                 = readTimeout,
+            connectTimeout              = connectTimeout,
             allowPublicKeyRetrieval     = allowPublicKeyRetrieval,
             useCursorFetch              = useCursorFetch,
             useServerPrepStmts          = useServerPrepStmts,
@@ -180,6 +183,7 @@ final case class MySQLDataSource[F[_], A](
             ssl                         = ssl,
             socketOptions               = socketOptions,
             readTimeout                 = readTimeout,
+            connectTimeout              = connectTimeout,
             allowPublicKeyRetrieval     = allowPublicKeyRetrieval,
             useCursorFetch              = useCursorFetch,
             useServerPrepStmts          = useServerPrepStmts,
@@ -201,6 +205,7 @@ final case class MySQLDataSource[F[_], A](
             ssl                         = ssl,
             socketOptions               = socketOptions,
             readTimeout                 = readTimeout,
+            connectTimeout              = connectTimeout,
             allowPublicKeyRetrieval     = allowPublicKeyRetrieval,
             useCursorFetch              = useCursorFetch,
             useServerPrepStmts          = useServerPrepStmts,
@@ -269,6 +274,19 @@ final case class MySQLDataSource[F[_], A](
     */
   def setReadTimeout(newReadTimeout: Duration): MySQLDataSource[F, A] =
     copy(readTimeout = newReadTimeout)
+
+  /**
+   * Sets how long to wait for the TCP connection to be established.
+   *
+   * Unlike the read timeout this cannot be disabled: a connect that never completes gives the caller
+   * nothing to act on, since the operating system retransmits the SYN for minutes before reporting a
+   * failure.
+   */
+  def setConnectTimeout(newConnectTimeout: FiniteDuration): MySQLDataSource[F, A] =
+    copy(connectTimeout = newConnectTimeout)
+
+  override def withConnectTimeout(timeout: FiniteDuration): DataSource[F] =
+    setConnectTimeout(connectTimeout.min(timeout))
 
   /** Sets whether to allow retrieval of RSA public keys from the server.
     * This is required for certain authentication plugins when SSL is not used.
@@ -386,6 +404,7 @@ final case class MySQLDataSource[F[_], A](
       ssl                     = ssl,
       socketOptions           = socketOptions,
       readTimeout             = readTimeout,
+      connectTimeout          = connectTimeout,
       allowPublicKeyRetrieval = allowPublicKeyRetrieval,
       databaseTerm            = databaseTerm,
       tracer                  = tracer,
@@ -435,6 +454,7 @@ final case class MySQLDataSource[F[_], A](
       ssl                     = ssl,
       socketOptions           = socketOptions,
       readTimeout             = readTimeout,
+      connectTimeout          = connectTimeout,
       allowPublicKeyRetrieval = allowPublicKeyRetrieval,
       databaseTerm            = databaseTerm,
       tracer                  = tracer,
@@ -475,6 +495,7 @@ object MySQLDataSource:
       ssl                     = config.ssl,
       socketOptions           = config.socketOptions,
       readTimeout             = config.readTimeout,
+      connectTimeout          = config.connectTimeout,
       allowPublicKeyRetrieval = config.allowPublicKeyRetrieval,
       databaseTerm            = config.databaseTerm,
       useCursorFetch          = config.useCursorFetch,
@@ -557,6 +578,7 @@ object MySQLDataSource:
       ssl                     = config.ssl,
       socketOptions           = config.socketOptions,
       readTimeout             = config.readTimeout,
+      connectTimeout          = config.connectTimeout,
       allowPublicKeyRetrieval = config.allowPublicKeyRetrieval,
       databaseTerm            = config.databaseTerm,
       tracer                  = Some(tracer),

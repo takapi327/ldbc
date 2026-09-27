@@ -6,14 +6,17 @@
 
 package ldbc.pool
 
-import ldbc.sql.Connection
-
-import ldbc.effect.Deferred
-
+/**
+ * The pool's authoritative state.
+ *
+ * `creating` counts physical connections whose creation has been started but not yet registered in
+ * `connections`. Capacity is judged on `connections.size + creating`, so that concurrent callers
+ * cannot each start a creation that the pool has no room for.
+ */
 case class PoolState[F[_]](
   connections:     Vector[PooledConnection[F]],
   idleConnections: Set[String],
-  waitQueue:       Vector[Deferred[F, Either[Throwable, Connection[F]]]],
+  creating:        Int,
   metrics:         PoolMetrics,
   closed:          Boolean = false
 )
@@ -22,7 +25,7 @@ object PoolState:
   def empty[F[_]]: PoolState[F] = PoolState(
     connections     = Vector.empty,
     idleConnections = Set.empty,
-    waitQueue       = Vector.empty,
+    creating        = 0,
     metrics         = PoolMetrics.empty,
     closed          = false
   )

@@ -127,12 +127,19 @@ object HouseKeeper:
           }
       }
 
+    /**
+     * Tops the pool back up to its minimum size.
+     *
+     * Connections that are still being established count towards the total. Leaving them out would
+     * make every maintenance pass order the same connections again while the first batch is still
+     * being opened.
+     */
     private def ensureMinimumConnections(pool: PooledDataSource[F]): F[Unit] =
       pool.poolState.get.flatMap { state =>
         if state.closed then F.unit
         else
-          val toCreate = Math.max(0, config.minConnections - state.connections.size)
-          if toCreate > 0 then (1 to toCreate).toList.traverse_(_ => pool.createNewConnectionForPool().attempt.void)
+          val toCreate = Math.max(0, config.minConnections - (state.connections.size + state.creating))
+          if toCreate > 0 then (1 to toCreate).toList.traverse_(_ => pool.requestNewConnection())
           else F.unit
       }
 

@@ -26,7 +26,16 @@ type Connection[F[_]] = ldbc.sql.Connection[F]
 object Connection:
 
   /** The default timeout for establishing the TCP connection. */
-  private val defaultConnectTimeout: FiniteDuration = 30.seconds
+  /**
+   * How long to wait for the TCP connection to be established before giving up.
+   *
+   * Bounded by default, unlike the read timeout, because a connect that never completes has no
+   * natural end: the operating system keeps retransmitting the SYN for minutes before it reports a
+   * failure, and until then the caller has nothing to act on. Callers who need a different budget —
+   * a short-lived function that cannot afford to wait, or a link slow enough that thirty seconds is
+   * optimistic — pass their own.
+   */
+  val defaultConnectTimeout: FiniteDuration = 30.seconds
 
   private val defaultCapabilityFlags: Set[CapabilitiesFlags] = Set(
     CapabilitiesFlags.CLIENT_LONG_PASSWORD,
@@ -65,6 +74,7 @@ object Connection:
     ssl:                         SSL = SSL.None,
     socketOptions:               SocketOptions = SocketOptions.default,
     readTimeout:                 Duration = Duration.Inf,
+    connectTimeout:              FiniteDuration = Connection.defaultConnectTimeout,
     allowPublicKeyRetrieval:     Boolean = false,
     useCursorFetch:              Boolean = false,
     useServerPrepStmts:          Boolean = false,
@@ -84,6 +94,7 @@ object Connection:
     ssl,
     socketOptions,
     readTimeout,
+    connectTimeout,
     allowPublicKeyRetrieval,
     useCursorFetch,
     useServerPrepStmts,
@@ -109,6 +120,7 @@ object Connection:
     ssl:                         SSL = SSL.None,
     socketOptions:               SocketOptions = SocketOptions.default,
     readTimeout:                 Duration = Duration.Inf,
+    connectTimeout:              FiniteDuration = Connection.defaultConnectTimeout,
     allowPublicKeyRetrieval:     Boolean = false,
     useCursorFetch:              Boolean = false,
     useServerPrepStmts:          Boolean = false,
@@ -128,6 +140,7 @@ object Connection:
     ssl,
     socketOptions,
     readTimeout,
+    connectTimeout,
     allowPublicKeyRetrieval,
     useCursorFetch,
     useServerPrepStmts,
@@ -151,6 +164,7 @@ object Connection:
     ssl:                         SSL = SSL.None,
     socketOptions:               SocketOptions = SocketOptions.default,
     readTimeout:                 Duration = Duration.Inf,
+    connectTimeout:              FiniteDuration = Connection.defaultConnectTimeout,
     allowPublicKeyRetrieval:     Boolean = false,
     useCursorFetch:              Boolean = false,
     useServerPrepStmts:          Boolean = false,
@@ -177,7 +191,7 @@ object Connection:
     val sockets: Resource[F, Socket[F]] =
       Resource
         .eval(validateEndpoint)
-        .flatMap(_ => Resource.make(engine.connect(host, port, defaultConnectTimeout, socketOptions))(_.close()))
+        .flatMap(_ => Resource.make(engine.connect(host, port, connectTimeout, socketOptions))(_.close()))
 
     fromSockets[F, A](
       sockets,

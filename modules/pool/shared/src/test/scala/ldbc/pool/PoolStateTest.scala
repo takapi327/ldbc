@@ -10,7 +10,7 @@ import scala.concurrent.duration.*
 
 import ldbc.sql.Connection
 
-import ldbc.effect.{ Deferred, Ref }
+import ldbc.effect.Ref
 import ldbc.fx.concurrentFx
 import ldbc.fx.Fx
 import ldbc.fx.FxSuite
@@ -45,7 +45,7 @@ class PoolStateTest extends FxSuite:
     val emptyState = PoolState.empty[Fx]
     assertEquals(emptyState.connections.size, 0)
     assertEquals(emptyState.idleConnections.size, 0)
-    assertEquals(emptyState.waitQueue.size, 0)
+    assertEquals(emptyState.creating, 0)
     assertEquals(emptyState.metrics, PoolMetrics.empty)
     assertEquals(emptyState.closed, false)
   }
@@ -59,7 +59,7 @@ class PoolStateTest extends FxSuite:
       state = PoolState[Fx](
                 connections     = Vector(pooledConn1, pooledConn2, pooledConn3),
                 idleConnections = Set("conn-1", "conn-2", "conn-3"),
-                waitQueue       = Vector.empty,
+                creating        = 0,
                 metrics         = PoolMetrics.empty,
                 closed          = false
               )
@@ -81,7 +81,7 @@ class PoolStateTest extends FxSuite:
       state = PoolState[Fx](
                 connections     = Vector(pooledConn1, pooledConn2, pooledConn3),
                 idleConnections = Set("conn-1", "conn-3"),
-                waitQueue       = Vector.empty,
+                creating        = 0,
                 metrics         = PoolMetrics.empty,
                 closed          = false
               )
@@ -93,21 +93,16 @@ class PoolStateTest extends FxSuite:
       assert(state.idleConnections.contains("conn-3"))
   }
 
-  test("PoolState[Fx] should handle wait queue") {
-    for
-      deferred1 <- Deferred[Fx, Either[Throwable, Connection[Fx]]]
-      deferred2 <- Deferred[Fx, Either[Throwable, Connection[Fx]]]
-      deferred3 <- Deferred[Fx, Either[Throwable, Connection[Fx]]]
-      state = PoolState[Fx](
-                connections     = Vector.empty,
-                idleConnections = Set.empty,
-                waitQueue       = Vector(deferred1, deferred2, deferred3),
-                metrics         = PoolMetrics.empty,
-                closed          = false
-              )
-    yield
-      assertEquals(state.waitQueue.size, 3)
-      assertEquals(state.connections.size, 0)
+  test("PoolState[Fx] should count connections that are still being created") {
+    val state = PoolState[Fx](
+      connections     = Vector.empty,
+      idleConnections = Set.empty,
+      creating        = 3,
+      metrics         = PoolMetrics.empty,
+      closed          = false
+    )
+    assertEquals(state.creating, 3)
+    assertEquals(state.connections.size, 0)
   }
 
   test("PoolState[Fx] should store metrics") {
@@ -126,7 +121,7 @@ class PoolStateTest extends FxSuite:
     val state = PoolState[Fx](
       connections     = Vector.empty,
       idleConnections = Set.empty,
-      waitQueue       = Vector.empty,
+      creating        = 0,
       metrics         = metrics,
       closed          = false
     )
@@ -137,7 +132,7 @@ class PoolStateTest extends FxSuite:
     val openState = PoolState[Fx](
       connections     = Vector.empty,
       idleConnections = Set.empty,
-      waitQueue       = Vector.empty,
+      creating        = 0,
       metrics         = PoolMetrics.empty,
       closed          = false
     )
@@ -158,7 +153,7 @@ class PoolStateTest extends FxSuite:
       state = PoolState[Fx](
                 connections     = Vector(pooledConn1, pooledConn2, pooledConn3),
                 idleConnections = Set("conn-1", "conn-3"),
-                waitQueue       = Vector.empty,
+                creating        = 0,
                 metrics         = PoolMetrics.empty,
                 closed          = false
               )
@@ -178,25 +173,24 @@ class PoolStateTest extends FxSuite:
     for
       conn       <- mock
       pooledConn <- createPooledConnection("conn-1", conn)
-      deferred   <- Deferred[Fx, Either[Throwable, Connection[Fx]]]
       originalState = PoolState[Fx](
                         connections     = Vector(pooledConn),
                         idleConnections = Set("conn-1"),
-                        waitQueue       = Vector(deferred),
+                        creating        = 1,
                         metrics         = PoolMetrics.empty,
                         closed          = false
                       )
-      closedState     = originalState.copy(closed = true)
-      emptyQueueState = originalState.copy(waitQueue = Vector.empty)
-      updatedMetrics  = originalState.copy(metrics = PoolMetrics.empty.copy(timeouts = 10))
+      closedState    = originalState.copy(closed = true)
+      settledState   = originalState.copy(creating = 0)
+      updatedMetrics = originalState.copy(metrics = PoolMetrics.empty.copy(timeouts = 10))
     yield
       assertEquals(originalState.closed, false)
-      assertEquals(originalState.waitQueue.size, 1)
+      assertEquals(originalState.creating, 1)
       assertEquals(originalState.metrics.timeouts, 0L)
       assertEquals(closedState.closed, true)
       assertEquals(closedState.connections, originalState.connections)
-      assertEquals(emptyQueueState.waitQueue.size, 0)
-      assertEquals(emptyQueueState.connections, originalState.connections)
+      assertEquals(settledState.creating, 0)
+      assertEquals(settledState.connections, originalState.connections)
       assertEquals(updatedMetrics.metrics.timeouts, 10L)
       assertEquals(updatedMetrics.connections, originalState.connections)
   }
@@ -210,14 +204,14 @@ class PoolStateTest extends FxSuite:
       nonEmptyState = PoolState[Fx](
                         connections     = Vector(pooledConn1, pooledConn2),
                         idleConnections = Set("conn-1", "conn-2"),
-                        waitQueue       = Vector.empty,
+                        creating        = 0,
                         metrics         = PoolMetrics.empty,
                         closed          = false
                       )
     yield
       assert(emptyState.connections.isEmpty)
       assert(emptyState.idleConnections.isEmpty)
-      assert(emptyState.waitQueue.isEmpty)
+      assertEquals(emptyState.creating, 0)
       assert(nonEmptyState.connections.nonEmpty)
       assertEquals(nonEmptyState.connections.size, 2)
       assert(nonEmptyState.idleConnections.nonEmpty)
@@ -233,7 +227,7 @@ class PoolStateTest extends FxSuite:
       state = PoolState[Fx](
                 connections     = Vector(pooledConn1, pooledConn2, pooledConn3),
                 idleConnections = Set("conn-1", "conn-2", "conn-3"),
-                waitQueue       = Vector.empty,
+                creating        = 0,
                 metrics         = PoolMetrics.empty,
                 closed          = false
               )
