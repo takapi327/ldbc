@@ -120,6 +120,11 @@ object ConcurrentBag:
      * passed that check before [[close]] ran would otherwise enqueue into a queue that has already
      * been drained, and nothing would ever wake it. Re-checking here covers that ordering, while
      * `close` covers the opposite one.
+     *
+     * Winning the race means the handoff completed, carrying either an item or `None` if the bag was
+     * closed. Losing it means the wait ran out, and the abandoned slot is withdrawn so that a later
+     * handoff is not spent on a caller that has already given up; the losing `get` is cancelled by
+     * [[ldbc.effect.Concurrent.race]] itself.
      */
     private def waitForHandoff(timeout: FiniteDuration): F[Option[T]] =
       Deferred[F, Option[T]].flatMap { deferred =>
@@ -128,8 +133,8 @@ object ConcurrentBag:
             case true  => drainWaiters.flatMap(_ => removeWaiter(deferred).map(_ => None))
             case false =>
               F.race(deferred.get, F.sleep(timeout)).flatMap {
-                case Left(item) => F.pure(item)                          // handed off (Some(item) or None)
-                case Right(_)   => removeWaiter(deferred).map(_ => None) // timed out; loser (get) cancelled by race
+                case Left(item) => F.pure(item)
+                case Right(_)   => removeWaiter(deferred).map(_ => None)
               }
           }
         }
@@ -142,6 +147,12 @@ object ConcurrentBag:
     private def removeWaiter(deferred: Deferred[F, Option[T]]): F[Unit] =
       handoff.update(_.filterNot(_ eq deferred))
 
+    /**
+     * Hands the item to the first waiter that is still there.
+     *
+     * A slot whose owner has already timed out cannot be completed, so the search moves on to the
+     * next one. Returns false once the queue is exhausted without finding a taker.
+     */
     private def offerToWaiter(item: T): F[Boolean] =
       handoff
         .modify {
@@ -153,7 +164,7 @@ object ConcurrentBag:
           case Some(deferred) =>
             deferred.complete(Some(item)).flatMap {
               case true  => F.pure(true)
-              case false => offerToWaiter(item) // waiter already timed out; try the next
+              case false => offerToWaiter(item)
             }
         }
 

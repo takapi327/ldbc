@@ -49,8 +49,8 @@ class PoolConnectionCreationTest extends FxSuite:
       )(connection => released.update(_ + 1) *> connection.close())
 
   private def countingCreate(
-    delay:     FiniteDuration  = Duration.Zero,
-    failUntil: Int             = 0,
+    delay:     FiniteDuration = Duration.Zero,
+    failUntil: Int = 0,
     failWith:  () => Throwable = () => new RuntimeException("cannot connect")
   ): Fx[CountingCreate] =
     for
@@ -212,9 +212,9 @@ class PoolConnectionCreationTest extends FxSuite:
   }
 
   test("a pool whose connections have all died still answers within the acquisition budget") {
-    val budget    = 500.millis
-    val perCheck  = 400.millis
-    val poolSize  = 6
+    val budget     = 500.millis
+    val perCheck   = 400.millis
+    val poolSize   = 6
     val poolConfig = ConnectionPoolConfig(
       minConnections    = poolSize,
       maxConnections    = poolSize,

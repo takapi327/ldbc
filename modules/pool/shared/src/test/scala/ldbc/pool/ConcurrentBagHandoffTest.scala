@@ -34,8 +34,8 @@ class ConcurrentBagHandoffTest extends FxSuite:
 
   test("an item added while a borrower is announced but not yet parked is not stranded") {
     for
-      bag  <- ConcurrentBag[Fx, Entry]()
-      item <- entry("added-in-the-window")
+      bag      <- ConcurrentBag[Fx, Entry]()
+      item     <- entry("added-in-the-window")
       borrower <- bag.borrow(5.seconds).start
       _        <- Fx.sleep(2.millis)
       waiting  <- bag.waiting
