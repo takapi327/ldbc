@@ -6,6 +6,8 @@
 
 package ldbc.pool
 
+import scala.concurrent.duration.{ Duration, FiniteDuration }
+
 import ldbc.sql.*
 
 import ldbc.fx.{ Fx, Ref }
@@ -23,6 +25,10 @@ import ldbc.fx.syntax.*
  * @param closeCount      incremented on every `close()`
  * @param isValidResult   the value `isValid` returns
  * @param executeResult   the value a statement's `execute` returns
+ * @param failsFromCheck  if set, `isValid` returns false from this check onwards (1-based), so a test
+ *                        can make a connection that passes its first check and fails a later one
+ * @param validationDelay how long `isValid` takes before answering, for tests that need validation to
+ *                        be slow enough to hit the pool's validation timeout
  */
 final class MockConnection(
   val validationCount:     Ref[Int],
@@ -33,13 +39,20 @@ final class MockConnection(
   val statementCloseCount: Ref[Int],
   isValidResult:           Boolean,
   executeResult:           Boolean,
-  isValidError:            Option[Throwable] = None
+  isValidError:            Option[Throwable] = None,
+  failsFromCheck:          Option[Int]       = None,
+  validationDelay:         FiniteDuration    = Duration.Zero
 ) extends Connection[Fx]:
 
   override def isValid(timeout: Int): Fx[Boolean] =
-    validationCount.update(_ + 1) >> (isValidError match
-      case Some(error) => Fx.raiseError(error)
-      case None        => closedRef.get.map(closed => !closed && isValidResult))
+    validationCount.updateAndGet(_ + 1).flatMap { checks =>
+      val answer = isValidError match
+        case Some(error) => Fx.raiseError[Boolean](error)
+        case None        =>
+          val stillGood = failsFromCheck.forall(checks < _) && isValidResult
+          closedRef.get.map(closed => !closed && stillGood)
+      if validationDelay > Duration.Zero then Fx.sleep(validationDelay) *> answer else answer
+    }
 
   override def createStatement(): Fx[Statement[Fx]] =
     Fx.pure(new MockStatement(validationCount, statementCloseCount, executeResult))
@@ -174,12 +187,16 @@ object MockConnection:
    * @param isValidResult the value `isValid` returns (default `true`)
    * @param executeResult the value a statement's `execute` returns (default `true`)
    * @param isValidError  if set, `isValid` raises this instead of returning a value
+   * @param failsFromCheck if set, `isValid` returns false from this check onwards (1-based)
+   * @param validationDelay how long `isValid` takes before answering
    * @return an effect producing the mock connection
    */
   def apply(
-    isValidResult: Boolean = true,
-    executeResult: Boolean = true,
-    isValidError:  Option[Throwable] = None
+    isValidResult:   Boolean = true,
+    executeResult:   Boolean = true,
+    isValidError:    Option[Throwable] = None,
+    failsFromCheck:  Option[Int] = None,
+    validationDelay: FiniteDuration = Duration.Zero
   ): Fx[MockConnection] =
     for
       validationCount     <- Ref.of(0)
@@ -197,5 +214,7 @@ object MockConnection:
       statementCloseCount,
       isValidResult,
       executeResult,
-      isValidError
+      isValidError,
+      failsFromCheck,
+      validationDelay
     )

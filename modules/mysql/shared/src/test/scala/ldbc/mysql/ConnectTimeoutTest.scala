@@ -8,8 +8,8 @@ package ldbc.mysql
 
 import scala.concurrent.duration.*
 
-import ldbc.fx.concurrentFx
 import ldbc.fx.{ Fx, FxSuite }
+import ldbc.fx.concurrentFx
 import ldbc.net.ConnectTimeoutException
 import ldbc.telemetry.*
 
@@ -48,3 +48,20 @@ class ConnectTimeoutTest extends FxSuite:
       .build[Fx](blackhole, 3306, "root")
       .setConnectTimeout(1.second)
     assertEquals(source.connectTimeout, 1.second)
+
+  test("a pool's budget caps the data source but never loosens it"):
+    val base = MySQLDataSource.build[Fx](blackhole, 3306, "root")
+
+    val capped = base.setConnectTimeout(20.seconds).withConnectTimeout(5.seconds)
+    assertEquals(
+      capped.asInstanceOf[MySQLDataSource[Fx, Unit]].connectTimeout,
+      5.seconds,
+      "a budget shorter than the configured timeout must win"
+    )
+
+    val kept = base.setConnectTimeout(2.seconds).withConnectTimeout(30.seconds)
+    assertEquals(
+      kept.asInstanceOf[MySQLDataSource[Fx, Unit]].connectTimeout,
+      2.seconds,
+      "pooling must not stretch a shorter timeout its owner chose deliberately"
+    )

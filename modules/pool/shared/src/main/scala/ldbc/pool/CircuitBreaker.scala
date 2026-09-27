@@ -29,6 +29,13 @@ object CircuitBreaker:
     case HalfOpen
     case Probing
 
+  /**
+   * @param maxFailures              how many *consecutive* failures open the breaker; a success while
+   *                                 closed resets the count
+   * @param resetTimeout             how long the breaker stays open before it probes once
+   * @param exponentialBackoffFactor by how much `resetTimeout` grows after a failed probe
+   * @param maxResetTimeout          the ceiling for the grown `resetTimeout`
+   */
   case class Config(
     maxFailures:              Int            = 5,
     resetTimeout:             FiniteDuration = 60.seconds,
@@ -61,7 +68,9 @@ object CircuitBreaker:
     override def protect[A](action: F[A]): F[A] =
       stateRef.get.flatMap {
         case State.Closed =>
-          action.handleErrorWith(error => recordFailure.flatMap(_ => F.raiseError(error)))
+          action
+            .flatTap(_ => failuresRef.set(0))
+            .handleErrorWith(error => recordFailure.flatMap(_ => F.raiseError(error)))
 
         case State.Open =>
           checkIfShouldTransitionToHalfOpen.flatMap { shouldTransition =>

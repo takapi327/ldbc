@@ -285,6 +285,9 @@ final case class MySQLDataSource[F[_], A](
   def setConnectTimeout(newConnectTimeout: FiniteDuration): MySQLDataSource[F, A] =
     copy(connectTimeout = newConnectTimeout)
 
+  override def withConnectTimeout(timeout: FiniteDuration): DataSource[F] =
+    setConnectTimeout(connectTimeout.min(timeout))
+
   /** Sets whether to allow retrieval of RSA public keys from the server.
     * This is required for certain authentication plugins when SSL is not used.
     * @param newAllowPublicKeyRetrieval true to allow public key retrieval

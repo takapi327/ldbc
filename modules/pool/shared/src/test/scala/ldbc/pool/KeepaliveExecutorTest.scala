@@ -70,7 +70,7 @@ class KeepaliveExecutorTest extends FxSuite:
                  PoolState[Fx](
                    connections     = Vector(pooledConn1, pooledConn2),
                    idleConnections = Set("conn-1", "conn-2"),
-                   waitQueue       = Vector.empty,
+                   creating        = 0,
                    metrics         = PoolMetrics.empty,
                    closed          = false
                  )
@@ -94,7 +94,7 @@ class KeepaliveExecutorTest extends FxSuite:
                  PoolState[Fx](
                    connections     = Vector(pooledConn1, pooledConn2),
                    idleConnections = Set("conn-1", "conn-2"),
-                   waitQueue       = Vector.empty,
+                   creating        = 0,
                    metrics         = PoolMetrics.empty,
                    closed          = false
                  )
@@ -126,7 +126,7 @@ class KeepaliveExecutorTest extends FxSuite:
                  PoolState[Fx](
                    connections     = Vector(pooledConn),
                    idleConnections = Set("conn-1"),
-                   waitQueue       = Vector.empty,
+                   creating        = 0,
                    metrics         = PoolMetrics.empty,
                    closed          = false
                  )

@@ -164,7 +164,7 @@ class CircuitBreakerTest extends FxSuite:
     }
   }
 
-  test("CircuitBreaker should handle successful operations after failures") {
+  test("CircuitBreaker should reset the failure count on a success") {
     val config = CircuitBreaker.Config(maxFailures = 3)
     CircuitBreaker[Fx](config).flatMap { cb =>
       for
@@ -173,7 +173,23 @@ class CircuitBreakerTest extends FxSuite:
         _     <- cb.protect(Fx.pure("success"))
         _     <- cb.protect(Fx.raiseError(new Exception("fail 3"))).attempt
         state <- cb.state
-      yield assertEquals(state, CircuitBreaker.State.Open)
+      yield assertEquals(state, CircuitBreaker.State.Closed)
+    }
+  }
+
+  test("CircuitBreaker should open on consecutive failures only") {
+    val config = CircuitBreaker.Config(maxFailures = 3)
+    CircuitBreaker[Fx](config).flatMap { cb =>
+      for
+        _               <- (1 to 2).toList.traverse_(i => cb.protect(Fx.raiseError(new Exception(s"fail $i"))).attempt)
+        _               <- cb.protect(Fx.pure("success"))
+        _               <- (3 to 4).toList.traverse_(i => cb.protect(Fx.raiseError(new Exception(s"fail $i"))).attempt)
+        afterScattered  <- cb.state
+        _               <- cb.protect(Fx.raiseError(new Exception("fail 5"))).attempt
+        afterThirdInRow <- cb.state
+      yield
+        assertEquals(afterScattered, CircuitBreaker.State.Closed, "four failures split by a success must not open it")
+        assertEquals(afterThirdInRow, CircuitBreaker.State.Open, "three failures in a row must open it")
     }
   }
 

@@ -78,10 +78,6 @@ class PoolTelemetryTest extends FxSuite:
   private def mockCreate: Resource[Fx, Connection[Fx]] =
     Resource.make(MockConnection().map(c => (c: Connection[Fx])))(c => c.close())
 
-  /** A `create` that always fails, for the connection-creation failure path. */
-  private def failingCreate: Resource[Fx, Connection[Fx]] =
-    Resource.eval(Fx.raiseError[Connection[Fx]](new RuntimeException("cannot connect")))
-
   /** The allocated-form [[ldbc.sql.DataSource]] the `fromDataSource*` factories consume. */
   private def mockDataSource(create: Resource[Fx, Connection[Fx]] = mockCreate): DataSource[Fx] =
     new DataSource[Fx]:
@@ -184,17 +180,18 @@ class PoolTelemetryTest extends FxSuite:
     withoutMeter *> withNoopMeter
   }
 
-  test("a failing metrics backend records the create time once, not twice") {
+  test("a failing metrics backend neither fails nor retries connection creation") {
     val metrics = new RecordingMetrics(failCreateTime = true)
     PooledDataSource
       .fromConfig(config(1, 2), mockCreate, meter = Some(recordingMeter(metrics)))
       .use(_ => Fx.unit)
       .attempt
-      .map { _ =>
+      .map { result =>
+        assert(result.isRight, s"a metrics backend that is down must not stop the pool, but got $result")
         assertEquals(
           metrics.recorded.count(_ == "createTime:telemetry-pool"),
           1,
-          s"a failing recording must not be retried on the error path: ${ metrics.recorded }"
+          s"the creation succeeded, so it is measured exactly once: ${ metrics.recorded }"
         )
       }
   }
@@ -252,26 +249,35 @@ class PoolTelemetryTest extends FxSuite:
     }
   }
 
-  test("a failed connection creation records the create time exactly once and propagates the error") {
+  test("a failed connection creation records the create time once per attempt and propagates the error") {
     val metrics = new RecordingMetrics
-    PooledDataSource
-      .fromConfig(config(1, 2), failingCreate, meter = Some(recordingMeter(metrics)))
-      .use(_ => Fx.unit)
-      .attempt
-      .map { result =>
-        assert(result.isLeft, s"the pool fails to start when it cannot create a connection, but got $result")
-        assertEquals(
-          metrics.recorded.count(_ == "createTime:telemetry-pool"),
-          1,
-          s"recorded exactly once on the failure path: ${ metrics.recorded }"
-        )
-      }
+    Ref.of[Fx, Int](0).flatMap { attempts =>
+      val counting = Resource.eval(
+        attempts.update(_ + 1) *> Fx.raiseError[Connection[Fx]](new RuntimeException("cannot connect"))
+      )
+      PooledDataSource
+        .fromConfig(config(1, 2), counting, meter = Some(recordingMeter(metrics)))
+        .use(_ => Fx.unit)
+        .attempt
+        .flatMap { result =>
+          attempts.get.map { attempted =>
+            assert(result.isLeft, s"the pool fails to start when it cannot create a connection, but got $result")
+            assert(attempted >= 2, s"a failed creation is retried within its budget, but ran $attempted time(s)")
+            assertEquals(
+              metrics.recorded.count(_ == "createTime:telemetry-pool"),
+              attempted,
+              s"each attempt is measured exactly once: ${ metrics.recorded }"
+            )
+          }
+        }
+    }
   }
 
   test("a release that removes the connection still records the use time exactly once") {
     val metrics      = new RecordingMetrics
     val invalidating = config(0, 2).copy(aliveBypassWindow = Duration.Zero)
-    val create       = Resource.make(MockConnection(isValidResult = false).map(c => (c: Connection[Fx])))(_.close())
+    val create       =
+      Resource.make(MockConnection(failsFromCheck = Some(2)).map(c => (c: Connection[Fx])))(_.close())
     PooledDataSource
       .fromConfig(invalidating, create, meter = Some(recordingMeter(metrics)))
       .use(datasource => datasource.use(_ => Fx.unit) *> datasource.status)

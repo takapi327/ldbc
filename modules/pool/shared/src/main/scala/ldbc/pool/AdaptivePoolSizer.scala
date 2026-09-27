@@ -84,8 +84,9 @@ object AdaptivePoolSizer:
       val criticalUtilizationThreshold = 0.95
       val lowUtilizationThreshold      = 0.2
       val veryLowUtilizationThreshold  = 0.1
-      val waitQueueThreshold           = status.total * 0.1
-      val criticalWaitQueueThreshold   = status.total * 0.25
+      val committed                    = status.committed
+      val waitQueueThreshold           = committed * 0.1
+      val criticalWaitQueueThreshold   = committed * 0.25
       val recentSnapshots              = history.takeRight(5)
       val avgUtilization               =
         if recentSnapshots.nonEmpty then recentSnapshots.map(_.utilizationRate).sum / recentSnapshots.size
@@ -96,10 +97,10 @@ object AdaptivePoolSizer:
 
       if snapshot.utilizationRate > criticalUtilizationThreshold || snapshot.waitQueueLength > criticalWaitQueueThreshold
       then
-        val increase = Math.min(Math.max(5, (status.total * 0.5).toInt), config.maxConnections - status.total)
+        val increase = Math.min(Math.max(5, (committed * 0.5).toInt), config.maxConnections - committed)
         if increase > 0 then PoolAdjustment.Grow(increase) else PoolAdjustment.NoChange
       else if avgUtilization > highUtilizationThreshold || avgWaitQueue > waitQueueThreshold then
-        val increase = Math.min(Math.max(2, (status.total * 0.2).toInt), config.maxConnections - status.total)
+        val increase = Math.min(Math.max(2, (committed * 0.2).toInt), config.maxConnections - committed)
         if increase > 0 then PoolAdjustment.Grow(increase) else PoolAdjustment.NoChange
       else if avgUtilization < veryLowUtilizationThreshold && status.total > config.minConnections then
         val decrease = Math.min(Math.max(2, (status.idle * 0.5).toInt), status.total - config.minConnections)
@@ -134,16 +135,14 @@ object AdaptivePoolSizer:
 
           case PoolAdjustment.NoChange => F.pure(state.copy(consecutiveHighs = 0, consecutiveLows = 0))
 
+    /**
+     * Asks the pool to grow by up to `by` connections.
+     *
+     * Requests beyond the pool's capacity are simply ignored by the pool, and failures are reported
+     * where the connection is established, so there is nothing to handle here.
+     */
     private def growPool(pool: PooledDataSource[F], by: Int): F[Unit] =
-      (1 to by).toList.traverse_ { index =>
-        pool.createNewConnectionForPool().void.handleErrorWith { error =>
-          F.delay(
-            System.err.println(
-              s"[AdaptivePoolSizer] Failed to create connection $index/$by during pool growth: ${ error.getMessage }"
-            )
-          )
-        }
-      }
+      (1 to by).toList.traverse_(_ => pool.requestNewConnection())
 
     private def shrinkPool(pool: PooledDataSource[F], by: Int): F[Unit] =
       pool.poolState.get.flatMap { poolState =>

@@ -31,12 +31,20 @@ object BagEntry:
  */
 trait ConcurrentBag[F[_], T <: BagEntry[F]]:
   def borrow(timeout: FiniteDuration): F[Option[T]]
-  def requite(item:   T):              F[Unit]
-  def add(item:       T):              F[Unit]
-  def remove(item:    T):              F[Boolean]
-  def size:                            F[Int]
-  def values:                          F[List[T]]
-  def close:                           F[Unit]
+
+  /** Attempts to take an available item without waiting. */
+  def tryBorrow: F[Option[T]]
+
+  def requite(item: T): F[Unit]
+  def add(item:     T): F[Unit]
+  def remove(item:  T): F[Boolean]
+  def size:             F[Int]
+  def values:           F[List[T]]
+
+  /** The number of callers currently parked in [[borrow]]. */
+  def waiting: F[Int]
+
+  def close: F[Unit]
 
 object ConcurrentBag:
 
@@ -82,6 +90,12 @@ object ConcurrentBag:
         case None => F.pure(None)
       }
 
+    override def tryBorrow: F[Option[T]] =
+      closed.get.flatMap {
+        case true  => F.pure(None)
+        case false => tryBorrowFromShared
+      }
+
     private def tryBorrowFromShared: F[Option[T]] =
       borrowCounter.modify(c => (c + 1, c)).flatMap { counter =>
         sharedList.get.flatMap { list =>
@@ -99,15 +113,31 @@ object ConcurrentBag:
           case false => tryBorrowFromListShared(list, startIdx, offset + 1, size)
         }
 
+    /**
+     * Parks until an item is handed off or the timeout elapses.
+     *
+     * The `closed` check after enqueuing is not redundant with the one in [[borrow]]. A caller that
+     * passed that check before [[close]] ran would otherwise enqueue into a queue that has already
+     * been drained, and nothing would ever wake it. Re-checking here covers that ordering, while
+     * `close` covers the opposite one.
+     */
     private def waitForHandoff(timeout: FiniteDuration): F[Option[T]] =
       Deferred[F, Option[T]].flatMap { deferred =>
         handoff.update(_ :+ deferred).flatMap { _ =>
-          F.race(deferred.get, F.sleep(timeout)).flatMap {
-            case Left(item) => F.pure(item)                          // handed off (Some(item) or None)
-            case Right(_)   => removeWaiter(deferred).map(_ => None) // timed out; loser (get) cancelled by race
+          closed.get.flatMap {
+            case true  => drainWaiters.flatMap(_ => removeWaiter(deferred).map(_ => None))
+            case false =>
+              F.race(deferred.get, F.sleep(timeout)).flatMap {
+                case Left(item) => F.pure(item)                          // handed off (Some(item) or None)
+                case Right(_)   => removeWaiter(deferred).map(_ => None) // timed out; loser (get) cancelled by race
+              }
           }
         }
       }
+
+    /** Completes every parked waiter with `None`. */
+    private def drainWaiters: F[Unit] =
+      handoff.getAndSet(Vector.empty).flatMap(_.traverse_(_.complete(None).attempt))
 
     private def removeWaiter(deferred: Deferred[F, Option[T]]): F[Unit] =
       handoff.update(_.filterNot(_ eq deferred))
@@ -146,6 +176,14 @@ object ConcurrentBag:
           }
       }
 
+    /**
+     * Publishes an item and hands it straight to a waiter when there is one.
+     *
+     * `waiters` is incremented at the start of [[borrow]] but the waiter only enqueues itself once the
+     * non-blocking retries are exhausted, so `waiting > 0` does not imply that [[offerToWaiter]] will
+     * find a target. When it does not, the item must be put back into the borrowable state: leaving it
+     * `STATE_IN_USE` while nobody holds it makes it unreachable to both [[tryBorrow]] and [[requite]].
+     */
     override def add(item: T): F[Unit] =
       closed.get.flatMap {
         case true  => F.unit
@@ -154,7 +192,11 @@ object ConcurrentBag:
             waiters.get.flatMap { waiting =>
               if waiting > 0 then
                 item.compareAndSet(BagEntry.STATE_NOT_IN_USE, BagEntry.STATE_IN_USE).flatMap {
-                  case true  => offerToWaiter(item).map(_ => ())
+                  case true =>
+                    offerToWaiter(item).flatMap {
+                      case true  => F.unit
+                      case false => item.setState(BagEntry.STATE_NOT_IN_USE)
+                    }
                   case false => F.unit
                 }
               else F.unit
@@ -176,7 +218,9 @@ object ConcurrentBag:
 
     override def values: F[List[T]] = sharedList.get
 
-    override def close: F[Unit] = closed.set(true)
+    override def waiting: F[Int] = waiters.get
+
+    override def close: F[Unit] = closed.set(true).flatMap(_ => drainWaiters)
 
     private def distributeItem(item: T, list: List[T]): List[T] =
       if list.isEmpty then item :: list
