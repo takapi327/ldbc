@@ -219,8 +219,16 @@ object MySQLConfig:
   /** Maximum allowed packet size in bytes (16MB - MySQL protocol limit) */
   val MAX_PACKET_SIZE: Int = 16777215
 
-  /** Default packet size in bytes (64KB - MySQL JDBC Driver compatible) */
-  val DEFAULT_PACKET_SIZE: Int = 65535
+  /**
+   * Default packet size in bytes: the protocol maximum, narrowed to the server's own
+   * `max_allowed_packet` once the session is up.
+   *
+   * Left at a fixed small value, this would cap every connection at that size regardless of what the
+   * server permits, and a row larger than it could not be read at all. Starting at the protocol
+   * maximum makes "unconfigured" mean "as much as the protocol allows", and the server's value — read
+   * with the other session variables right after authentication — supplies the real ceiling.
+   */
+  val DEFAULT_PACKET_SIZE: Int = MAX_PACKET_SIZE
 
   /** Default socket options applied to all connections. */
   private[ldbc] val defaultSocketOptions: SocketOptions =

@@ -216,6 +216,30 @@ object Connection:
       after
     )
 
+  /**
+   * Holds the configured packet limit, refusing a value no connection could work with.
+   *
+   * The builders on `MySQLConfig` and `MySQLDataSource` already reject these, but this constructor
+   * takes the number directly and is reachable without them. Left unchecked, a zero or negative
+   * limit would turn every send and every receive on the connection into a size error, and the
+   * connection would look broken rather than misconfigured.
+   */
+  private def validatedPacketLimit[F[_]](maxAllowedPacket: Int)(using F: Concurrent[F]): F[Ref[F, Int]] =
+    if maxAllowedPacket < MySQLConfig.MIN_PACKET_SIZE then
+      F.raiseError(
+        new IllegalArgumentException(
+          s"maxAllowedPacket must be at least ${ MySQLConfig.MIN_PACKET_SIZE } bytes, but got $maxAllowedPacket"
+        )
+      )
+    else if maxAllowedPacket > MySQLConfig.MAX_PACKET_SIZE then
+      F.raiseError(
+        new IllegalArgumentException(
+          s"maxAllowedPacket must not exceed ${ MySQLConfig.MAX_PACKET_SIZE } bytes (MySQL protocol limit), " +
+            s"but got $maxAllowedPacket"
+        )
+      )
+    else Ref.of[F, Int](maxAllowedPacket)
+
   def fromSockets[F[_], A](
     sockets:                     Resource[F, Socket[F]],
     host:                        String,
@@ -245,8 +269,9 @@ object Connection:
       (if sslOptions.isDefined then Set(CapabilitiesFlags.CLIENT_SSL) else Set.empty)
     val hostInfo = HostInfo(host, port, user, password, database)
     for
-      given Exchange[F] <- Resource.eval(Exchange.apply[F])
-      protocol          <-
+      given Exchange[F]   <- Resource.eval(Exchange.apply[F])
+      maxAllowedPacketRef <- Resource.eval(validatedPacketLimit[F](maxAllowedPacket))
+      protocol            <-
         Protocol(
           sockets,
           hostInfo,
@@ -255,12 +280,13 @@ object Connection:
           allowPublicKeyRetrieval,
           readTimeout,
           capabilityFlags,
-          maxAllowedPacket,
+          maxAllowedPacketRef,
           defaultAuthenticationPlugin,
           pluginMap
         )
       _                <- Resource.eval(protocol.startAuthentication(user, password.getOrElse("")))
       serverVariables  <- Resource.eval(protocol.serverVariables())
+      _                <- Resource.eval(protocol.adoptServerPacketLimit(serverVariables))
       readOnly         <- Resource.eval(Ref.of[F, Boolean](false))
       autoCommit       <- Resource.eval(Ref.of[F, Boolean](true))
       connectionClosed <- Resource.eval(Ref.of[F, Boolean](false))
