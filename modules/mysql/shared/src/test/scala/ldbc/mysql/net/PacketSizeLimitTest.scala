@@ -16,8 +16,8 @@ import ldbc.fx.syntax.*
 import ldbc.fx.Fx
 import ldbc.mysql.data.{ CapabilitiesFlags, ServerStatusFlags }
 import ldbc.mysql.exception.PacketTooBigException
-import ldbc.mysql.net.packet.RequestPacket
 import ldbc.mysql.net.packet.response.{ GenericResponsePackets, InitialPacket, OKPacket }
+import ldbc.mysql.net.packet.RequestPacket
 import ldbc.mysql.net.protocol.Exchange
 import ldbc.mysql.util.Version
 import ldbc.mysql.FTestPlatform
@@ -67,8 +67,8 @@ class PacketSizeLimitTest extends FTestPlatform:
 
   private final class ScriptedBitVectorSocket(written: Ref[Fx, ByteVector], chunks: Ref[Fx, List[BitVector]])
     extends BitVectorSocket[Fx]:
-    override def write(bits: BitVector): Fx[Unit] = written.update(_ ++ bits.bytes)
-    override def read(nBytes: Int): Fx[BitVector] =
+    override def write(bits: BitVector): Fx[Unit]      = written.update(_ ++ bits.bytes)
+    override def read(nBytes: Int):      Fx[BitVector] =
       chunks
         .modify {
           case head :: tail => (tail, Some(head))
@@ -199,10 +199,10 @@ class PacketSizeLimitTest extends FTestPlatform:
 
   test("a refused send leaves the connection able to carry the next one"):
     for
-      harness  <- socketWithLimit(1024)
-      _        <- harness.socket.send(new SizedRequest(2000)).attempt
-      _        <- harness.socket.send(new SizedRequest(100))
-      written  <- harness.written.get
+      harness <- socketWithLimit(1024)
+      _       <- harness.socket.send(new SizedRequest(2000)).attempt
+      _       <- harness.socket.send(new SizedRequest(100))
+      written <- harness.written.get
     yield
       assertEquals(written.size.toInt, 104, "only the accepted request reached the wire")
       assertEquals(
@@ -230,7 +230,7 @@ class PacketSizeLimitTest extends FTestPlatform:
       )
 
   test("adopting the server's limit changes what the socket will actually send"):
-    given Tracer[Fx] = Tracer.noop[Fx]
+    given Tracer[Fx]  = Tracer.noop[Fx]
     val initialPacket = InitialPacket(
       protocolVersion = 10,
       serverVersion   = Version(8, 4, 0),
@@ -291,9 +291,9 @@ class PacketSizeLimitTest extends FTestPlatform:
       remaining <- Ref.of[Fx, ByteVector](payload)
       reads     <- Ref.of[Fx, Int](0)
       carry     <- Ref.of[Fx, ByteVector](ByteVector.empty)
-      socket     = BitVectorSocket.fromSocket[Fx](new ChunkedSocket(remaining, reads), Duration.Inf, carry)
-      body      <- socket.read(payloadSize)
-      count     <- reads.get
+      socket = BitVectorSocket.fromSocket[Fx](new ChunkedSocket(remaining, reads), Duration.Inf, carry)
+      body  <- socket.read(payloadSize)
+      count <- reads.get
     yield
       assert(count > 2, s"the payload must arrive over several reads for this to mean anything ($count)")
       assertEquals(
@@ -309,10 +309,10 @@ class PacketSizeLimitTest extends FTestPlatform:
       remaining <- Ref.of[Fx, ByteVector](first ++ second)
       reads     <- Ref.of[Fx, Int](0)
       carry     <- Ref.of[Fx, ByteVector](ByteVector.empty)
-      socket     = BitVectorSocket.fromSocket[Fx](new ChunkedSocket(remaining, reads), Duration.Inf, carry)
-      head      <- socket.read(10)
-      tail      <- socket.read(6)
-      count     <- reads.get
+      socket = BitVectorSocket.fromSocket[Fx](new ChunkedSocket(remaining, reads), Duration.Inf, carry)
+      head  <- socket.read(10)
+      tail  <- socket.read(6)
+      count <- reads.get
     yield
       assertEquals(head.bytes, first)
       assertEquals(tail.bytes, second, "the surplus from the first read was dropped instead of carried")

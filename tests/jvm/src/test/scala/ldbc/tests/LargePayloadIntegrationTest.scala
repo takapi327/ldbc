@@ -43,7 +43,7 @@ class LargePayloadIntegrationTest extends CatsEffectSuite:
     )
 
   test("a row well past the old 64KB default round-trips on an unconfigured connection") {
-    val body = "x" * (512 * 1024)
+    val body    = "x" * (512 * 1024)
     val program = for
       _       <- sql"DROP TABLE IF EXISTS large_payload".update.commit(connector)
       _       <- sql"CREATE TABLE large_payload (id INT PRIMARY KEY, body LONGTEXT)".update.commit(connector)
@@ -57,12 +57,13 @@ class LargePayloadIntegrationTest extends CatsEffectSuite:
   test("the session adopts the server's max_allowed_packet") {
     val program = for
       reported <- sql"SELECT @@max_allowed_packet".query[Long].to[Option].readOnly(connector)
-      body      = "y" * (2 * 1024 * 1024)
-      _        <- sql"DROP TABLE IF EXISTS large_payload_2".update.commit(connector)
-      _        <- sql"CREATE TABLE large_payload_2 (id INT PRIMARY KEY, body LONGTEXT)".update.commit(connector)
-      _        <- sql"INSERT INTO large_payload_2 (id, body) VALUES (1, $body)".update.commit(connector)
-      fetched  <- sql"SELECT CHAR_LENGTH(body) FROM large_payload_2 WHERE id = 1".query[Int].to[Option].readOnly(connector)
-      _        <- sql"DROP TABLE IF EXISTS large_payload_2".update.commit(connector)
+      body = "y" * (2 * 1024 * 1024)
+      _       <- sql"DROP TABLE IF EXISTS large_payload_2".update.commit(connector)
+      _       <- sql"CREATE TABLE large_payload_2 (id INT PRIMARY KEY, body LONGTEXT)".update.commit(connector)
+      _       <- sql"INSERT INTO large_payload_2 (id, body) VALUES (1, $body)".update.commit(connector)
+      fetched <-
+        sql"SELECT CHAR_LENGTH(body) FROM large_payload_2 WHERE id = 1".query[Int].to[Option].readOnly(connector)
+      _ <- sql"DROP TABLE IF EXISTS large_payload_2".update.commit(connector)
     yield (reported, fetched)
     program.map { (reported, fetched) =>
       assert(
