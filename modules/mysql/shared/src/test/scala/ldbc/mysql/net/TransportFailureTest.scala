@@ -58,10 +58,11 @@ class TransportFailureTest extends FTestPlatform:
 
   private def socketOver(bvs: BitVectorSocket[Fx]): Fx[(PacketSocket[Fx], Ref[Fx, Boolean])] =
     for
-      sequenceIdRef      <- Ref.of[Fx, Byte](0x00)
-      transportFailedRef <- Ref.of[Fx, Boolean](false)
+      sequenceIdRef       <- Ref.of[Fx, Byte](0x00)
+      transportFailedRef  <- Ref.of[Fx, Boolean](false)
+      maxAllowedPacketRef <- Ref.of[Fx, Int](65535)
     yield (
-      PacketSocket.fromBitVectorSocket[Fx](bvs, false, sequenceIdRef, 65535, transportFailedRef),
+      PacketSocket.fromBitVectorSocket[Fx](bvs, false, sequenceIdRef, maxAllowedPacketRef, transportFailedRef),
       transportFailedRef
     )
 

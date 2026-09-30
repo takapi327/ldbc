@@ -82,8 +82,9 @@ class AuthDowngradeTest extends FTestPlatform:
                        OKPacket(0x00, 0L, 0L, Set.empty[ServerStatusFlags], None, None, None, None)
                      )
                    )
-      initialPacketRef <- Ref.of[Fx, Option[InitialPacket]](Some(initialPacket))
-      protocol         <- Protocol.fromPacketSocket[Fx](
+      initialPacketRef    <- Ref.of[Fx, Option[InitialPacket]](Some(initialPacket))
+      maxAllowedPacketRef <- Ref.of[Fx, Int](ldbc.mysql.MySQLConfig.DEFAULT_PACKET_SIZE)
+      protocol            <- Protocol.fromPacketSocket[Fx](
                     packetSocket                = new ScriptedSocket(sent, toReceive),
                     hostInfo                    = hostInfo,
                     sslOptions                  = None,
@@ -91,6 +92,7 @@ class AuthDowngradeTest extends FTestPlatform:
                     capabilitiesFlags           = Set.empty[CapabilitiesFlags],
                     sequenceIdRef               = null,
                     initialPacketRef            = initialPacketRef,
+                    maxAllowedPacketRef         = maxAllowedPacketRef,
                     defaultAuthenticationPlugin = None,
                     plugins                     = Map(
                       "mysql_native_password" -> MysqlNativePasswordPlugin[Fx],
@@ -121,11 +123,12 @@ class AuthDowngradeTest extends FTestPlatform:
     val clearTextInitialPacket = initialPacket.copy(authPlugin = "mysql_clear_password")
 
     val program = for
-      given Exchange[Fx] <- Exchange.apply[Fx]
-      sent               <- Ref.of[Fx, Vector[RequestPacket]](Vector.empty)
-      toReceive          <- Ref.of[Fx, List[ResponsePacket]](List.empty[ResponsePacket])
-      initialPacketRef   <- Ref.of[Fx, Option[InitialPacket]](Some(clearTextInitialPacket))
-      protocol           <- Protocol.fromPacketSocket[Fx](
+      given Exchange[Fx]  <- Exchange.apply[Fx]
+      sent                <- Ref.of[Fx, Vector[RequestPacket]](Vector.empty)
+      toReceive           <- Ref.of[Fx, List[ResponsePacket]](List.empty[ResponsePacket])
+      initialPacketRef    <- Ref.of[Fx, Option[InitialPacket]](Some(clearTextInitialPacket))
+      maxAllowedPacketRef <- Ref.of[Fx, Int](ldbc.mysql.MySQLConfig.DEFAULT_PACKET_SIZE)
+      protocol            <- Protocol.fromPacketSocket[Fx](
                     packetSocket                = new ScriptedSocket(sent, toReceive),
                     hostInfo                    = hostInfo,
                     sslOptions                  = None,
@@ -133,6 +136,7 @@ class AuthDowngradeTest extends FTestPlatform:
                     capabilitiesFlags           = Set.empty[CapabilitiesFlags],
                     sequenceIdRef               = null,
                     initialPacketRef            = initialPacketRef,
+                    maxAllowedPacketRef         = maxAllowedPacketRef,
                     defaultAuthenticationPlugin = None,
                     plugins                     = Map("mysql_clear_password" -> MysqlClearPasswordPlugin[Fx])
                   )

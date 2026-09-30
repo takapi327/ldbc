@@ -200,7 +200,11 @@ class MySQLConfigTest extends FTestPlatform:
   test("MySQLConfig constants should have expected values") {
     assertEquals(MySQLConfig.MIN_PACKET_SIZE, 1024)
     assertEquals(MySQLConfig.MAX_PACKET_SIZE, 16777215)
-    assertEquals(MySQLConfig.DEFAULT_PACKET_SIZE, 65535)
+    assertEquals(
+      MySQLConfig.DEFAULT_PACKET_SIZE,
+      MySQLConfig.MAX_PACKET_SIZE,
+      "an unconfigured connection starts at the protocol maximum and is narrowed by the server"
+    )
   }
 
   test("MySQLConfig should be immutable - original config should not change") {
