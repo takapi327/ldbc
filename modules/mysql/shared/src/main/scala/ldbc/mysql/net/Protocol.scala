@@ -154,7 +154,44 @@ sealed trait Protocol[F[_]] extends UtilityCommands[F], Authentication[F]:
    */
   def transportFailed: F[Boolean]
 
+  /**
+   * Narrows the packet-size limit to what the server will actually accept.
+   *
+   * The server's `max_allowed_packet` is not knowable before the session is up — it arrives with the
+   * other session variables — so the limit starts at whatever was configured and is tightened here.
+   * The smaller of the two always wins: exceeding the server's limit gets the connection closed
+   * underneath us with no usable diagnosis, while exceeding the caller's own limit ignores a ceiling
+   * they set deliberately. The protocol's own maximum bounds both, since a single packet cannot
+   * describe more than three bytes of length.
+   *
+   * Called once, when the session is established. Resetting a connection does not repeat it: the
+   * server restores its session variables to the same global value the limit was taken from, so
+   * there is nothing new to learn. A limit changed on the server afterwards is picked up by
+   * connections opened from then on, not by ones already in a pool.
+   *
+   * @param serverVariables the session variables read straight after authentication
+   */
+  def adoptServerPacketLimit(serverVariables: Map[String, String]): F[Unit]
+
 object Protocol:
+
+  /**
+   * The packet size limit to use once the server's own limit is known.
+   *
+   * Three values bound a packet and the smallest wins. The protocol's maximum is absolute: a header
+   * describes its length in three bytes, so nothing larger can be framed at all. The server's
+   * `max_allowed_packet` is what the peer will actually accept; going past it gets the connection
+   * closed from the other end, with nothing on this side to explain why. The configured value is a
+   * ceiling its owner chose, and widening it here would ignore that choice.
+   *
+   * A server that does not report the variable, or reports something unusable, leaves the configured
+   * value in place rather than guessing.
+   */
+  private[ldbc] def effectivePacketLimit(configured: Int, serverVariables: Map[String, String]): Int =
+    val bounded = Math.min(configured, PacketSocket.PROTOCOL_MAX_PACKET_SIZE)
+    serverVariables.get("max_allowed_packet").flatMap(_.trim.toIntOption).filter(_ > 0) match
+      case Some(serverLimit) => Math.min(bounded, serverLimit)
+      case None              => bounded
 
   private val SELECT_SERVER_VARIABLES_QUERY =
     "SELECT @@session.auto_increment_increment AS auto_increment_increment, @@character_set_client AS character_set_client, @@character_set_connection AS character_set_connection, @@character_set_results AS character_set_results, @@character_set_server AS character_set_server, @@collation_server AS collation_server, @@collation_connection AS collation_connection, @@init_connect AS init_connect, @@interactive_timeout AS interactive_timeout, @@license AS license, @@lower_case_table_names AS lower_case_table_names, @@max_allowed_packet AS max_allowed_packet, @@net_write_timeout AS net_write_timeout, @@performance_schema AS performance_schema, @@sql_mode AS sql_mode, @@system_time_zone AS system_time_zone, @@time_zone AS time_zone, @@transaction_isolation AS transaction_isolation, @@wait_timeout AS wait_timeout"
@@ -167,6 +204,7 @@ object Protocol:
     allowPublicKeyRetrieval:     Boolean = false,
     capabilityFlags:             Set[CapabilitiesFlags],
     sequenceIdRef:               Ref[F, Byte],
+    maxAllowedPacketRef:         Ref[F, Int],
     defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
     plugins:                     Map[String, AuthenticationPlugin[F]]
   )(using tracer: Tracer[F], ex: Exchange[F], F: Concurrent[F])
@@ -188,6 +226,9 @@ object Protocol:
     override def noBackslashEscapes: F[Boolean] = noBackslashEscapesRef.get
 
     override def transportFailed: F[Boolean] = socket.transportFailed
+
+    override def adoptServerPacketLimit(serverVariables: Map[String, String]): F[Unit] =
+      maxAllowedPacketRef.update(effectivePacketLimit(_, serverVariables))
 
     override def receive[P <: ResponsePacket](decoder: Decoder[P]): F[P] =
       F.flatTap(socket.receive(decoder)) {
@@ -649,7 +690,7 @@ object Protocol:
     allowPublicKeyRetrieval:     Boolean = false,
     readTimeout:                 Duration,
     capabilitiesFlags:           Set[CapabilitiesFlags],
-    maxAllowedPacket:            Int,
+    maxAllowedPacketRef:         Ref[F, Int],
     defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
     plugins:                     Map[String, AuthenticationPlugin[F]]
   )(using Tracer[F], Exchange[F], Concurrent[F], TlsUpgrade[F]): Resource[F, Protocol[F]] =
@@ -666,7 +707,7 @@ object Protocol:
           initialPacketRef,
           readTimeout,
           capabilitiesFlags,
-          maxAllowedPacket,
+          maxAllowedPacketRef,
           transportFailedRef
         )
       protocol <- Resource.eval(
@@ -678,6 +719,7 @@ object Protocol:
                       capabilitiesFlags,
                       sequenceIdRef,
                       initialPacketRef,
+                      maxAllowedPacketRef,
                       defaultAuthenticationPlugin,
                       plugins
                     )
@@ -692,6 +734,7 @@ object Protocol:
     capabilitiesFlags:           Set[CapabilitiesFlags],
     sequenceIdRef:               Ref[F, Byte],
     initialPacketRef:            Ref[F, Option[InitialPacket]],
+    maxAllowedPacketRef:         Ref[F, Int],
     defaultAuthenticationPlugin: Option[AuthenticationPlugin[F]],
     plugins:                     Map[String, AuthenticationPlugin[F]]
   )(using tracer: Tracer[F], ex: Exchange[F], F: Concurrent[F]): F[Protocol[F]] =
@@ -706,6 +749,7 @@ object Protocol:
             allowPublicKeyRetrieval,
             capabilitiesFlags,
             sequenceIdRef,
+            maxAllowedPacketRef,
             defaultAuthenticationPlugin,
             Map(
               MYSQL_NATIVE_PASSWORD.toString -> MysqlNativePasswordPlugin[F],
