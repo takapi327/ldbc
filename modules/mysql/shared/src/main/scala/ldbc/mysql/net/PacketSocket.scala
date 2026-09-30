@@ -51,25 +51,28 @@ trait PacketSocket[F[_]]:
 
 object PacketSocket:
 
-  val DEFAULT_MAX_PACKET_SIZE  = 65535
+  /** The largest payload a single packet can describe: the header carries the length in 3 bytes. */
   val PROTOCOL_MAX_PACKET_SIZE = 16777215
-  val MIN_PACKET_SIZE          = 0
+
+  val MIN_PACKET_SIZE = 0
 
   /**
    * Wraps a [[BitVectorSocket]] as a [[PacketSocket]].
    *
-   * @param bvs                the underlying bit-vector socket
-   * @param debugEnabled       whether to log each packet
-   * @param sequenceIdRef      the MySQL packet sequence id
-   * @param maxAllowedPacket   the maximum accepted payload size
-   * @param transportFailedRef records whether the byte stream position has been lost
+   * @param bvs                 the underlying bit-vector socket
+   * @param debugEnabled        whether to log each packet
+   * @param sequenceIdRef       the MySQL packet sequence id
+   * @param maxAllowedPacketRef the largest payload either side may put in one packet. Mutable because
+   *                            the server's own limit is only knowable once the session is up, and
+   *                            adopting it is what keeps a send from being rejected by the peer
+   * @param transportFailedRef  records whether the byte stream position has been lost
    */
   def fromBitVectorSocket[F[_]](
-    bvs:                BitVectorSocket[F],
-    debugEnabled:       Boolean,
-    sequenceIdRef:      Ref[F, Byte],
-    maxAllowedPacket:   Int,
-    transportFailedRef: Ref[F, Boolean]
+    bvs:                 BitVectorSocket[F],
+    debugEnabled:        Boolean,
+    sequenceIdRef:       Ref[F, Byte],
+    maxAllowedPacketRef: Ref[F, Int],
+    transportFailedRef:  Ref[F, Boolean]
   )(using F: Concurrent[F]): PacketSocket[F] = new PacketSocket[F]:
 
     override def transportFailed: F[Boolean] = transportFailedRef.get
@@ -107,9 +110,9 @@ object PacketSocket:
           )
       })
 
-    private def buildRequest(request: RequestPacket): F[BitVector] =
+    private def buildRequest(payload: BitVector): F[BitVector] =
       sequenceIdRef.get.map { sequenceId =>
-        val bits        = request.encode
+        val bits        = payload
         val payloadSize = bits.toByteArray.length
         val header      = Array[Byte](
           payloadSize.toByte,
@@ -120,21 +123,50 @@ object PacketSocket:
         ByteVector(header).toBitVector ++ bits
       }
 
+    /**
+     * Sends a request, refusing one that is too large before any of it reaches the wire.
+     *
+     * The size check sits outside [[guard]] on purpose. A refused send writes nothing, so the byte
+     * stream is still positioned at a packet boundary and the connection remains usable; recording a
+     * transport failure here would discard a healthy connection over a single oversized statement.
+     *
+     * Without the check the length would simply be truncated to its low 3 bytes, and the peer would
+     * read the overflow as the packets that follow. That desynchronises the stream in a way neither
+     * side can detect, which surfaces much later as a lost connection rather than as the oversized
+     * request it was.
+     */
     override def send(request: RequestPacket): F[Unit] =
-      guard(for
-        bits <- buildRequest(request)
-        _    <-
-          debug(
-            s"Client ${ AnsiColor.BLUE }→${ AnsiColor.RESET } Server: ${ AnsiColor.YELLOW }$request${ AnsiColor.RESET }"
-          )
-        _ <- bvs.write(bits)
-        _ <- sequenceIdRef.update(sequenceId => ((sequenceId + 1) % 256).toByte)
-      yield ())
+      val payload = request.encode
+      validatePacketSize((payload.size + 7) / 8) *>
+        guard(for
+          bits <- buildRequest(payload)
+          _    <-
+            debug(
+              s"Client ${ AnsiColor.BLUE }→${ AnsiColor.RESET } Server: ${ AnsiColor.YELLOW }$request${ AnsiColor.RESET }"
+            )
+          _ <- bvs.write(bits)
+          _ <- sequenceIdRef.update(sequenceId => ((sequenceId + 1) % 256).toByte)
+        yield ())
 
-    private def validatePacketSize(size: Int): F[Unit] =
-      if size < MIN_PACKET_SIZE then F.raiseError(PacketTooBigException(size, maxAllowedPacket))
-      else if size > maxAllowedPacket then F.raiseError(PacketTooBigException(size, maxAllowedPacket))
-      else F.unit
+    /**
+     * Rejects a packet the connection cannot carry.
+     *
+     * The size is taken as a `Long` because an outgoing payload is measured before it is framed, and
+     * one over two gigabytes would wrap to a negative `Int` — reporting a nonsensical size for what
+     * is plainly an oversized request. Sizes that large are clamped for reporting so the message
+     * still names a number the reader can act on.
+     *
+     * The caller derives that length from the bit count rather than from `bytes`, which would
+     * compact the whole payload into contiguous storage first. Beyond two gigabytes scodec refuses
+     * to compact at all, so measuring that way would fail with an error about bit vectors instead of
+     * the size limit that is actually being exceeded.
+     */
+    private def validatePacketSize(size: Long): F[Unit] =
+      maxAllowedPacketRef.get.flatMap { maxAllowedPacket =>
+        if size < MIN_PACKET_SIZE || size > maxAllowedPacket.toLong then
+          F.raiseError(PacketTooBigException(Math.min(size, Int.MaxValue.toLong).toInt, maxAllowedPacket))
+        else F.unit
+      }
 
   /**
    * Builds a [[PacketSocket]] over a connected socket.
@@ -145,21 +177,21 @@ object PacketSocket:
    * @param sequenceIdRef     the MySQL packet sequence id
    * @param initialPacketRef  receives the server's initial packet
    * @param readTimeout       the per-read timeout
-   * @param capabilitiesFlags the negotiated capability flags
-   * @param maxAllowedPacket   the maximum accepted payload size
-   * @param transportFailedRef records whether the byte stream position has been lost
+   * @param capabilitiesFlags   the negotiated capability flags
+   * @param maxAllowedPacketRef the largest payload either side may put in one packet
+   * @param transportFailedRef  records whether the byte stream position has been lost
    */
   def apply[F[_]](
-    debug:              Boolean,
-    sockets:            Resource[F, Socket[F]],
-    sslOptions:         Option[SSLNegotiation.Options[F]],
-    sequenceIdRef:      Ref[F, Byte],
-    initialPacketRef:   Ref[F, Option[InitialPacket]],
-    readTimeout:        Duration,
-    capabilitiesFlags:  Set[CapabilitiesFlags],
-    maxAllowedPacket:   Int,
-    transportFailedRef: Ref[F, Boolean]
+    debug:               Boolean,
+    sockets:             Resource[F, Socket[F]],
+    sslOptions:          Option[SSLNegotiation.Options[F]],
+    sequenceIdRef:       Ref[F, Byte],
+    initialPacketRef:    Ref[F, Option[InitialPacket]],
+    readTimeout:         Duration,
+    capabilitiesFlags:   Set[CapabilitiesFlags],
+    maxAllowedPacketRef: Ref[F, Int],
+    transportFailedRef:  Ref[F, Boolean]
   )(using F: Concurrent[F], tls: TlsUpgrade[F]): Resource[F, PacketSocket[F]] =
     BitVectorSocket(sockets, sequenceIdRef, initialPacketRef, sslOptions, readTimeout, capabilitiesFlags).map(
-      fromBitVectorSocket(_, debug, sequenceIdRef, maxAllowedPacket, transportFailedRef)
+      fromBitVectorSocket(_, debug, sequenceIdRef, maxAllowedPacketRef, transportFailedRef)
     )
