@@ -10,6 +10,7 @@ import scala.concurrent.duration.*
 
 import ldbc.fx.{ Fx, FxSuite }
 import ldbc.fx.concurrentFx
+import ldbc.fx.syntax.*
 import ldbc.net.ConnectTimeoutException
 import ldbc.telemetry.*
 
@@ -65,3 +66,33 @@ class ConnectTimeoutTest extends FxSuite:
       2.seconds,
       "pooling must not stretch a shorter timeout its owner chose deliberately"
     )
+
+  test("a packet limit no connection could work with is refused before any socket is opened"):
+    val tooSmall = Connection[Fx](
+      host             = blackhole,
+      port             = 3306,
+      user             = "root",
+      maxAllowedPacket = 0
+    )
+    val tooLarge = Connection[Fx](
+      host             = blackhole,
+      port             = 3306,
+      user             = "root",
+      maxAllowedPacket = MySQLConfig.MAX_PACKET_SIZE + 1
+    )
+    for
+      small <- tooSmall.use(_ => Fx.unit).attempt
+      large <- tooLarge.use(_ => Fx.unit).attempt
+    yield
+      assert(
+        small.left.exists(_.isInstanceOf[IllegalArgumentException]),
+        s"a zero limit would fail every send and receive, but got $small"
+      )
+      assert(
+        large.left.exists(_.isInstanceOf[IllegalArgumentException]),
+        s"a limit past what a packet header can describe is not usable, but got $large"
+      )
+      assert(
+        small.left.exists(!_.getMessage.contains("timed out")),
+        "the limit must be rejected before the connection is attempted, not after it times out"
+      )

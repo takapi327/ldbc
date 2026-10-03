@@ -46,11 +46,12 @@ class TransportFailureSilenceTest extends FTestPlatform:
 
   private def protocolWith(failed: Boolean): Fx[(Protocol[Fx], Ref[Fx, Vector[RequestPacket]])] =
     for
-      sent               <- Ref.of[Fx, Vector[RequestPacket]](Vector.empty)
-      given Exchange[Fx] <- Exchange.apply[Fx]
-      sequenceIdRef      <- Ref.of[Fx, Byte](0x01)
-      initialPacketRef   <- Ref.of[Fx, Option[InitialPacket]](Some(initialPacket))
-      protocol           <- Protocol.fromPacketSocket[Fx](
+      sent                <- Ref.of[Fx, Vector[RequestPacket]](Vector.empty)
+      given Exchange[Fx]  <- Exchange.apply[Fx]
+      sequenceIdRef       <- Ref.of[Fx, Byte](0x01)
+      initialPacketRef    <- Ref.of[Fx, Option[InitialPacket]](Some(initialPacket))
+      maxAllowedPacketRef <- Ref.of[Fx, Int](MySQLConfig.DEFAULT_PACKET_SIZE)
+      protocol            <- Protocol.fromPacketSocket[Fx](
                     packetSocket                = new RecordingSocket(sent, failed),
                     hostInfo                    = hostInfo,
                     sslOptions                  = None,
@@ -58,6 +59,7 @@ class TransportFailureSilenceTest extends FTestPlatform:
                     capabilitiesFlags           = Set.empty[CapabilitiesFlags],
                     sequenceIdRef               = sequenceIdRef,
                     initialPacketRef            = initialPacketRef,
+                    maxAllowedPacketRef         = maxAllowedPacketRef,
                     defaultAuthenticationPlugin = None,
                     plugins                     = Map.empty
                   )
