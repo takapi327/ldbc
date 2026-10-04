@@ -12,6 +12,8 @@ import scala.io.AnsiColor
 import scodec.bits.{ BitVector, ByteVector }
 import scodec.Decoder
 
+import ldbc.sql.SQLFeatureNotSupportedException
+
 import ldbc.effect.{ Concurrent, Ref, Resource }
 import ldbc.effect.syntax.*
 import ldbc.mysql.data.CapabilitiesFlags
@@ -95,6 +97,7 @@ object PacketSocket:
       guard((for
         header <- bvs.read(4)
         payloadSize = parseHeader(header.toByteArray)
+        _       <- rejectContinuedPayload(payloadSize)
         _       <- validatePacketSize(payloadSize)
         payload <- bvs.read(payloadSize)
         response = decoder.decodeValue(payload).require
@@ -161,6 +164,40 @@ object PacketSocket:
      * to compact at all, so measuring that way would fail with an error about bit vectors instead of
      * the size limit that is actually being exceeded.
      */
+    /**
+     * Refuses a message the server has split across several packets.
+     *
+     * A payload of exactly [[PROTOCOL_MAX_PACKET_SIZE]] is the protocol's way of saying "there is
+     * more": the packets that follow belong to the same message and are meant to be concatenated.
+     * Reading only the first one yields a truncated message whose remainder stays in the stream, so
+     * the row decodes to nothing and the bytes left behind are read as the reply to whatever is
+     * asked next. Both failures surface far from their cause.
+     *
+     * The check is a size comparison because that is the whole of the protocol's signal — there is
+     * no flag to consult. Note that it is an equality, not the "greater than" of
+     * [[validatePacketSize]]: a payload at exactly the limit is the one case that means something
+     * other than what it appears to.
+     *
+     * Unlike the size check on the way out, this one happens with the header already consumed, so
+     * the stream is no longer on a packet boundary. Raising from inside the recording path is
+     * therefore correct: this connection cannot be used again.
+     */
+    private def rejectContinuedPayload(payloadSize: Int): F[Unit] =
+      F.whenA(payloadSize == PROTOCOL_MAX_PACKET_SIZE) {
+        F.raiseError(
+          new SQLFeatureNotSupportedException(
+            message = s"The server split this response across multiple packets, which is not supported.",
+            detail  = Some(
+              s"A payload of exactly $PROTOCOL_MAX_PACKET_SIZE bytes means the message continues in the " +
+                "packets that follow. Reassembling them is not implemented, so the connection is discarded " +
+                "rather than reporting a truncated result."
+            ),
+            hint   = Some("Reduce the size of the value being read, for example by selecting a substring of it."),
+            vendor = "MySQL"
+          )
+        )
+      }
+
     private def validatePacketSize(size: Long): F[Unit] =
       maxAllowedPacketRef.get.flatMap { maxAllowedPacket =>
         if size < MIN_PACKET_SIZE || size > maxAllowedPacket.toLong then
