@@ -10,6 +10,8 @@ import scala.concurrent.duration.Duration
 
 import scodec.bits.{ BitVector, ByteVector }
 
+import ldbc.sql.SQLFeatureNotSupportedException
+
 import ldbc.effect.Ref
 import ldbc.fx.concurrentFx
 import ldbc.fx.syntax.*
@@ -317,3 +319,33 @@ class PacketSizeLimitTest extends FTestPlatform:
       assertEquals(head.bytes, first)
       assertEquals(tail.bytes, second, "the surplus from the first read was dropped instead of carried")
       assertEquals(count, 1, "the whole 16 bytes arrived in one read, so no second read should have happened")
+
+  test("a payload at exactly the protocol maximum is refused as a continued message"):
+    for
+      harness <- socketWithLimit(
+                   PacketSocket.PROTOCOL_MAX_PACKET_SIZE,
+                   List(header(PacketSocket.PROTOCOL_MAX_PACKET_SIZE, 0))
+                 )
+      result <- harness.socket.receive(okDecoder).attempt
+      failed <- harness.transportFailed.get
+    yield
+      assert(
+        result.left.exists(_.isInstanceOf[SQLFeatureNotSupportedException]),
+        s"a payload at the limit means the message continues, but got $result"
+      )
+      assertEquals(
+        failed,
+        true,
+        "the header was already consumed, so the stream is off a packet boundary and the connection is spent"
+      )
+
+  test("a payload one byte under the protocol maximum is an ordinary message"):
+    val size    = PacketSocket.PROTOCOL_MAX_PACKET_SIZE - 1
+    val payload = okPayload ++ BitVector.fill((size - okPayload.bytes.size.toInt).toLong * 8)(false)
+    for
+      harness <- socketWithLimit(PacketSocket.PROTOCOL_MAX_PACKET_SIZE, List(header(size, 0), payload))
+      result  <- harness.socket.receive(okDecoder).attempt
+      failed  <- harness.transportFailed.get
+    yield
+      assert(result.isRight, s"one byte under the limit carries no continuation, but got $result")
+      assertEquals(failed, false)

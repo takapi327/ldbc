@@ -73,3 +73,22 @@ class LargePayloadIntegrationTest extends CatsEffectSuite:
       assertEquals(fetched, Some(2 * 1024 * 1024), "a 2MB statement is accepted because the server allows it")
     }
   }
+
+  test("a value the server has to split across packets is reported, not silently dropped") {
+    val program = for
+      _    <- sql"DROP TABLE IF EXISTS split_payload".update.commit(connector)
+      _    <- sql"CREATE TABLE split_payload (id INT PRIMARY KEY, body LONGTEXT)".update.commit(connector)
+      _    <- sql"INSERT INTO split_payload (id, body) VALUES (1, REPEAT('a', 20971520))".update.commit(connector)
+      read <- sql"SELECT body FROM split_payload WHERE id = 1".query[String].to[Option].readOnly(connector).attempt
+      _    <- sql"DROP TABLE IF EXISTS split_payload".update.commit(connector)
+    yield read
+    program.map { read =>
+      val error = read.left.getOrElse(
+        fail(s"a 20MB value cannot be delivered in one packet, so reading it must fail rather than return $read")
+      )
+      assert(
+        error.isInstanceOf[ldbc.sql.SQLFeatureNotSupportedException],
+        s"the reason must name the unsupported protocol feature, got ${ error.getClass.getName }: ${ error.getMessage }"
+      )
+    }
+  }
