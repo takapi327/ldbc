@@ -82,7 +82,7 @@ lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "twiddles-core"     % "1.1.0",
       "co.fs2"        %%% "fs2-core"          % "3.14.0",
-      "org.typelevel" %%% "munit-cats-effect" % "2.2.0" % Test
+      "org.typelevel" %%% "munit-cats-effect" % "2.2.1" % Test
     )
   )
   .dependsOn(core)
@@ -114,7 +114,7 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
       "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.5.0",
       "io.circe"               %%% "circe-core"               % "0.14.16",
       "org.virtuslab"          %%% "scala-yaml"               % "0.3.3",
-      "org.typelevel"          %%% "munit-cats-effect"        % "2.2.0" % Test
+      "org.typelevel"          %%% "munit-cats-effect"        % "2.2.1" % Test
     )
   )
   .jvmSettings(
@@ -168,7 +168,7 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
       "org.typelevel" %%% "otel4s-semconv-metrics"              % "1.1.0",
       "org.typelevel" %%% "otel4s-semconv-metrics-experimental" % "1.1.0",
       "org.typelevel" %%% "twiddles-core"                       % "1.1.0",
-      "org.typelevel" %%% "munit-cats-effect"                   % "2.2.0"  % Test,
+      "org.typelevel" %%% "munit-cats-effect"                   % "2.2.1"  % Test,
       "org.typelevel" %%% "otel4s-sdk-testkit"                  % "0.19.2" % Test
     ),
     (Compile / sourceGenerators) += Def.task {
@@ -194,7 +194,7 @@ lazy val awsAuthenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativeP
       "co.fs2"            %%% "fs2-core"          % "3.14.0",
       "co.fs2"            %%% "fs2-io"            % "3.14.0",
       "io.github.cquiroz" %%% "scala-java-time"   % "2.7.0",
-      "org.typelevel"     %%% "munit-cats-effect" % "2.2.0" % Test
+      "org.typelevel"     %%% "munit-cats-effect" % "2.2.1" % Test
     )
   )
   .jsSettings(
@@ -221,7 +221,7 @@ lazy val testkit = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .module("testkit", "Core test utilities for ldbc users")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "munit-cats-effect" % "2.2.0" % Test
+      "org.typelevel" %%% "munit-cats-effect" % "2.2.1" % Test
     )
   )
   .jsSettings(
@@ -235,7 +235,7 @@ lazy val testkitMunit = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .module("testkit-munit", "MUnit integration for ldbc-testkit")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "munit-cats-effect" % "2.2.0"
+      "org.typelevel" %%% "munit-cats-effect" % "2.2.1"
     )
   )
   .jsSettings(
@@ -267,7 +267,7 @@ lazy val tests = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     crossScalaVersions                      := Seq(scala3, scala38),
     name                                    := "tests",
     description                             := "Projects for testing",
-    libraryDependencies += "org.typelevel" %%% "munit-cats-effect" % "2.2.0",
+    libraryDependencies += "org.typelevel" %%% "munit-cats-effect" % "2.2.1",
     Test / unmanagedSourceDirectories ++= {
       val sourceDir = (Test / sourceDirectory).value
       CrossVersion.partialVersion(scalaVersion.value) match {
@@ -322,7 +322,7 @@ lazy val http4sExample = crossProject(JVMPlatform)
       "org.http4s"    %% "http4s-dsl"          % "0.23.38",
       "org.http4s"    %% "http4s-ember-server" % "0.23.38",
       "org.http4s"    %% "http4s-circe"        % "0.23.38",
-      "ch.qos.logback" % "logback-classic"     % "1.6.4",
+      "ch.qos.logback" % "logback-classic"     % "1.6.5",
       "io.circe"      %% "circe-generic"       % "0.14.10"
     )
   )
