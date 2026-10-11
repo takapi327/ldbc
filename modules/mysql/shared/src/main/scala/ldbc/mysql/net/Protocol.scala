@@ -178,20 +178,22 @@ object Protocol:
   /**
    * The packet size limit to use once the server's own limit is known.
    *
-   * Three values bound a packet and the smallest wins. The protocol's maximum is absolute: a header
-   * describes its length in three bytes, so nothing larger can be framed at all. The server's
-   * `max_allowed_packet` is what the peer will actually accept; going past it gets the connection
-   * closed from the other end, with nothing on this side to explain why. The configured value is a
-   * ceiling its owner chose, and widening it here would ignore that choice.
+   * Two values bound a message and the smaller wins. The server's `max_allowed_packet` is what the
+   * peer will actually accept; going past it gets the connection closed from the other end, with
+   * nothing on this side to explain why. The configured value is a ceiling its owner chose, and
+   * widening it here would ignore that choice.
+   *
+   * The protocol's own maximum does not appear here. A packet header describes its length in three
+   * bytes, but a message past that is carried by several packets, so framing bounds the step size and
+   * not the message. Narrowing to it would make a value the server accepts unreachable.
    *
    * A server that does not report the variable, or reports something unusable, leaves the configured
    * value in place rather than guessing.
    */
   private[ldbc] def effectivePacketLimit(configured: Int, serverVariables: Map[String, String]): Int =
-    val bounded = Math.min(configured, PacketSocket.PROTOCOL_MAX_PACKET_SIZE)
     serverVariables.get("max_allowed_packet").flatMap(_.trim.toIntOption).filter(_ > 0) match
-      case Some(serverLimit) => Math.min(bounded, serverLimit)
-      case None              => bounded
+      case Some(serverLimit) => Math.min(configured, serverLimit)
+      case None              => configured
 
   private val SELECT_SERVER_VARIABLES_QUERY =
     "SELECT @@session.auto_increment_increment AS auto_increment_increment, @@character_set_client AS character_set_client, @@character_set_connection AS character_set_connection, @@character_set_results AS character_set_results, @@character_set_server AS character_set_server, @@collation_server AS collation_server, @@collation_connection AS collation_connection, @@init_connect AS init_connect, @@interactive_timeout AS interactive_timeout, @@license AS license, @@lower_case_table_names AS lower_case_table_names, @@max_allowed_packet AS max_allowed_packet, @@net_write_timeout AS net_write_timeout, @@performance_schema AS performance_schema, @@sql_mode AS sql_mode, @@system_time_zone AS system_time_zone, @@time_zone AS time_zone, @@transaction_isolation AS transaction_isolation, @@wait_timeout AS wait_timeout"
