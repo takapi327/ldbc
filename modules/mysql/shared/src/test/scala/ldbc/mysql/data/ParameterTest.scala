@@ -284,3 +284,53 @@ class ParameterTest extends FTestPlatform:
     val negativeBigInt = BigInt("-123456789012345678901234567890")
     assertEquals(Parameter.bigInt(negativeBigInt).toString, negativeBigInt.toString)
   }
+
+  test("a parameter length under 251 is written as a single byte") {
+    val encoded = Parameter.string("a" * 250).encode.bytes
+    assertEquals(encoded.size, 251L)
+    assertEquals(encoded(0), 250.toByte)
+  }
+
+  test("a parameter length of 251 moves to the two-byte form") {
+    val encoded = Parameter.string("a" * 251).encode.bytes
+    assertEquals(encoded.size, 254L, "a marker byte plus a two-byte length plus the value")
+    assertEquals(encoded(0), 0xfc.toByte)
+    assertEquals(encoded(1), 251.toByte)
+    assertEquals(encoded(2), 0.toByte)
+  }
+
+  test("a parameter length past two bytes moves to the three-byte form") {
+    val length  = 65536
+    val encoded = Parameter.string("a" * length).encode.bytes
+    assertEquals(encoded.size, length.toLong + 4)
+    assertEquals(encoded(0), 0xfd.toByte)
+    assertEquals(encoded(1), 0.toByte)
+    assertEquals(encoded(2), 0.toByte)
+    assertEquals(encoded(3), 1.toByte)
+  }
+
+  test("a parameter length at the three-byte boundary stays in the three-byte form") {
+    val encoded = Parameter.bytes(new Array[Byte](16777215)).encode.bytes
+    assertEquals(encoded.size, 16777215L + 4)
+    assertEquals(encoded(0), 0xfd.toByte)
+  }
+
+  test("a parameter length past three bytes moves to the eight-byte form") {
+    val length  = 16777216
+    val encoded = Parameter.bytes(new Array[Byte](length)).encode.bytes
+    assertEquals(encoded.size, length.toLong + 9, "a marker byte plus an eight-byte length plus the value")
+    assertEquals(encoded(0), 0xfe.toByte)
+    assertEquals(encoded(1), 0.toByte)
+    assertEquals(encoded(2), 0.toByte)
+    assertEquals(encoded(3), 0.toByte)
+    assertEquals(encoded(4), 1.toByte)
+  }
+
+  test("a two-byte length is written little-endian") {
+    val length  = 300
+    val encoded = Parameter.string("a" * length).encode.bytes
+    assertEquals(encoded(0), 0xfc.toByte)
+    assertEquals(encoded(1), 44.toByte, "the low byte comes first")
+    assertEquals(encoded(2), 1.toByte)
+    assertEquals(encoded.size, length.toLong + 3, "writing the length as one byte would have truncated it to 44")
+  }

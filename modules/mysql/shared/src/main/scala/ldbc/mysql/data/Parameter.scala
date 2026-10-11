@@ -68,6 +68,23 @@ object Parameter:
 
   def parameter(value: String): Parameter = RawParameter(value)
 
+  /**
+   * Writes a length as the length-encoded integer that prefixes a variable-length value on the
+   * binary protocol.
+   *
+   * The form depends on the magnitude: one byte below 251, otherwise a marker byte naming the width
+   * of the little-endian length that follows. Writing the length as a single byte regardless would
+   * silently truncate it — a 300-byte value would announce 44 and a 20MB one would announce none at
+   * all, and the server would store whatever the truncated length described without complaining.
+   *
+   * @see https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_basic_dt_integers.html
+   */
+  private[ldbc] def lengthEncoded(length: Int): BitVector =
+    if length < 251 then BitVector.fromByte(length.toByte)
+    else if length <= 65535 then BitVector.fromByte(0xfc.toByte) ++ uint16L.encode(length).require
+    else if length <= 16777215 then BitVector.fromByte(0xfd.toByte) ++ uint24L.encode(length).require
+    else BitVector.fromByte(0xfe.toByte) ++ int64L.encode(length.toLong).require
+
   case object NullParameter extends Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_NULL
     override def encode:         BitVector      = BitVector.empty
@@ -102,7 +119,7 @@ object Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_STRING
     override def encode:         BitVector      =
       val bytes = value.toString.getBytes
-      BitVector(bytes.length) ++ BitVector(copyOf(bytes, bytes.length))
+      lengthEncoded(bytes.length) ++ BitVector(copyOf(bytes, bytes.length))
     override def toString: String = value.toString
 
   private[ldbc] final case class FloatParameter(value: Float) extends Parameter:
@@ -119,20 +136,20 @@ object Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_NEWDECIMAL
     override def encode:         BitVector      =
       val bytes = value.toString.getBytes
-      BitVector(bytes.length) ++ BitVector(copyOf(bytes, bytes.length))
+      lengthEncoded(bytes.length) ++ BitVector(copyOf(bytes, bytes.length))
     override def toString: String = value.toString
 
   private[ldbc] final case class StringParameter(value: String) extends Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_STRING
     override def encode:         BitVector      =
       val bytes = value.getBytes
-      BitVector(bytes.length) ++ BitVector(copyOf(bytes, bytes.length))
+      lengthEncoded(bytes.length) ++ BitVector(copyOf(bytes, bytes.length))
     override def toString: String = s"'$value'"
 
   private[ldbc] final case class BytesParameter(value: Array[Byte]) extends Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VAR_STRING
     override def encode:         BitVector      =
-      BitVector(value.length) ++ BitVector(copyOf(value, value.length))
+      lengthEncoded(value.length) ++ BitVector(copyOf(value, value.length))
     override def toString: String = "0x" + BitVector.view(value).toHex
 
   private[ldbc] final case class TimeParameter(value: LocalTime) extends Parameter:
@@ -235,5 +252,5 @@ object Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_STRING
     override def encode:         BitVector      =
       val bytes = value.getBytes
-      BitVector(bytes.length) ++ BitVector(copyOf(bytes, bytes.length))
+      lengthEncoded(bytes.length) ++ BitVector(copyOf(bytes, bytes.length))
     override def toString: String = value
