@@ -44,7 +44,8 @@ import ldbc.telemetry.{ DatabaseMetrics, TelemetryConfig }
  * @param telemetryConfig configuration for telemetry behavior
  * @param useCursorFetch whether to use cursor-based fetching for result sets
  * @param useServerPrepStmts whether to use server-side prepared statements
- * @param maxAllowedPacket Maximum allowed packet size for network communication in bytes.
+ * @param maxAllowedPacket Maximum size in bytes of a whole message sent to or received from the
+ *                         server, counted across every packet it is split into.
  * @param defaultAuthenticationPlugin The authentication plugin used first for communication with the server
  * @param plugins Additional authentication plugins used for communication with the server
  * @param meter optional meter for database metrics
@@ -345,10 +346,15 @@ final case class MySQLDataSource[F[_], A](
   def setUseServerPrepStmts(newUseServerPrepStmts: Boolean): MySQLDataSource[F, A] =
     copy(useServerPrepStmts = newUseServerPrepStmts)
 
-  /** Sets the maximum allowed packet size for network communication.
+  /** Sets the largest message that may be sent to or received from the server.
    *
-   * @param maxAllowedPacket the maximum packet size in bytes (1,024 to 16,777,215)
-   * @return a new MySQLDataSource with the updated packet size limit
+   * The limit applies to a whole message rather than to a packet: one past what a packet header can
+   * describe is carried by several and put back together, and this bounds the total. The effective
+   * ceiling is the smaller of this and what the server reports, so it only needs setting to stay
+   * below the server's own limit or to keep memory down.
+   *
+   * @param maxAllowedPacket the maximum message size in bytes (1,024 to 1,073,741,824)
+   * @return a new MySQLDataSource with the updated message size limit
    * @throws IllegalArgumentException if the value is outside the valid range
    */
   def setMaxAllowedPacket(maxAllowedPacket: Int): MySQLDataSource[F, A] = {
@@ -358,7 +364,8 @@ final case class MySQLDataSource[F[_], A](
     )
     require(
       maxAllowedPacket <= MySQLConfig.MAX_PACKET_SIZE,
-      s"maxAllowedPacket must not exceed ${ MySQLConfig.MAX_PACKET_SIZE } bytes (MySQL protocol limit), but got $maxAllowedPacket"
+      s"maxAllowedPacket must not exceed ${ MySQLConfig.MAX_PACKET_SIZE } bytes (the largest value a " +
+        s"MySQL server accepts for max_allowed_packet), but got $maxAllowedPacket"
     )
     copy(maxAllowedPacket = maxAllowedPacket)
   }

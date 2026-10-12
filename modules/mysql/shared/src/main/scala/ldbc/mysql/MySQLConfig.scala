@@ -166,44 +166,50 @@ trait MySQLConfig:
   def setUseServerPrepStmts(useServerPrepStmts: Boolean): MySQLConfig
 
   /**
-   * Gets the maximum allowed packet size for network communication with MySQL server.
-   * 
-   * This setting controls the maximum size of packets that can be sent to or received from
-   * the MySQL server. It helps prevent memory exhaustion attacks and ensures compatibility
-   * with the MySQL protocol limits.
-   * 
-   * The value corresponds to the MySQL server's `max_allowed_packet` system variable.
-   * 
-   * @return the maximum packet size in bytes
+   * Gets the largest message that may be sent to or received from the MySQL server.
+   *
+   * The limit applies to a whole message, not to a packet. A packet header carries its length in
+   * three bytes, so a message past that is carried by several packets and put back together by the
+   * receiver; this value bounds the total, which is what keeps a reply from consuming memory without
+   * end.
+   *
+   * The value corresponds to the MySQL server's `max_allowed_packet` system variable, and the
+   * effective ceiling is the smaller of this and what the server reports.
+   *
+   * @return the maximum message size in bytes
    */
   def maxAllowedPacket: Int
 
   /**
-   * Sets the maximum allowed packet size for network communication.
-   * 
+   * Sets the largest message that may be sent to or received from the MySQL server.
+   *
    * This setting provides protection against:
-   * - Memory exhaustion attacks through oversized packets
+   * - Memory exhaustion attacks through oversized messages
    * - Denial of Service (DoS) attacks via large data payloads
    * - Accidental transmission of extremely large data sets
-   * 
-   * @param maxAllowedPacket the maximum packet size in bytes
+   *
+   * @param maxAllowedPacket the maximum message size in bytes
    * @return a new MySQLConfig with the updated setting
-   * @throws IllegalArgumentException if the value is outside the valid range (1024 to 16,777,215)
-   * 
+   * @throws IllegalArgumentException if the value is outside the valid range (1,024 to 1,073,741,824)
+   *
+   * A practical 1MB ceiling for an application with moderate BLOB usage:
+   *
    * @example {{{
-   * // Set conservative 64KB limit (default)
-   * config.setMaxAllowedPacket(65535)
-   * 
-   * // Set practical 1MB limit for applications with moderate BLOB usage
    * config.setMaxAllowedPacket(1048576)
-   * 
-   * // Set maximum protocol limit for applications requiring large data transfers
-   * config.setMaxAllowedPacket(16777215)
    * }}}
-   * 
-   * @note The default value of 65,535 bytes (64KB) is compatible with MySQL JDBC Driver defaults
-   *       and provides good security against packet-based attacks while accommodating most use cases.
-   * @note Valid range: 1,024 bytes (1KB) minimum to 16,777,215 bytes (16MB) maximum (MySQL protocol limit)
+   *
+   * 64MB, matching the default `max_allowed_packet` of a MySQL 8 server:
+   *
+   * @example {{{
+   * config.setMaxAllowedPacket(67108864)
+   * }}}
+   *
+   * @note Left unset, a connection starts at the maximum and is narrowed to whatever the server
+   *       reports, so this only needs setting to stay below the server's own limit.
+   * @note Receiving a message needs roughly three times its size in memory while it is being
+   *       assembled, so a large limit on a small heap is worth setting down deliberately.
+   * @note Valid range: 1,024 bytes (1KB) minimum to 1,073,741,824 bytes (1GB) maximum, the largest
+   *       value a MySQL server will accept for `max_allowed_packet`
    * @see [[https://dev.mysql.com/doc/refman/en/packet-too-large.html MySQL Protocol Packet Limits]]
    */
   def setMaxAllowedPacket(maxAllowedPacket: Int): MySQLConfig
@@ -213,20 +219,32 @@ trait MySQLConfig:
  */
 object MySQLConfig:
 
-  /** Minimum allowed packet size in bytes (1KB) */
+  /** Minimum allowed message size in bytes (1KB) */
   val MIN_PACKET_SIZE: Int = 1024
 
-  /** Maximum allowed packet size in bytes (16MB - MySQL protocol limit) */
-  val MAX_PACKET_SIZE: Int = 16777215
+  /**
+   * Maximum allowed message size in bytes (1GB).
+   *
+   * This is not a protocol limit. A single packet can only describe 16,777,215 bytes, but a message
+   * past that is carried by several packets, so framing puts no ceiling on a message. Two other
+   * things do: a MySQL server clamps `max_allowed_packet` to this value however much more is asked
+   * for, and a reassembled message has to be flattened into contiguous storage, which scodec refuses
+   * to do beyond `Int.MaxValue` bytes. 1GB is the largest value that satisfies both.
+   */
+  val MAX_PACKET_SIZE: Int = 1073741824
 
   /**
-   * Default packet size in bytes: the protocol maximum, narrowed to the server's own
-   * `max_allowed_packet` once the session is up.
+   * Default message size in bytes: the maximum, narrowed to the server's own `max_allowed_packet`
+   * once the session is up.
    *
    * Left at a fixed small value, this would cap every connection at that size regardless of what the
-   * server permits, and a row larger than it could not be read at all. Starting at the protocol
-   * maximum makes "unconfigured" mean "as much as the protocol allows", and the server's value — read
-   * with the other session variables right after authentication — supplies the real ceiling.
+   * server permits, and a row larger than it could not be read at all. Starting at the maximum makes
+   * "unconfigured" mean "as much as the server allows", and the server's value — read with the other
+   * session variables right after authentication — supplies the real ceiling. This is also what
+   * MySQL Connector/J does with its own default.
+   *
+   * It is a ceiling, not a recommendation. Assembling a message needs roughly three times its size
+   * in memory, so a deployment with a large server limit and a small heap should set this down.
    */
   val DEFAULT_PACKET_SIZE: Int = MAX_PACKET_SIZE
 
@@ -293,7 +311,8 @@ object MySQLConfig:
       )
       require(
         maxAllowedPacket <= MAX_PACKET_SIZE,
-        s"maxAllowedPacket must not exceed $MAX_PACKET_SIZE bytes (MySQL protocol limit), but got $maxAllowedPacket"
+        s"maxAllowedPacket must not exceed $MAX_PACKET_SIZE bytes (the largest value a MySQL server " +
+          s"accepts for max_allowed_packet), but got $maxAllowedPacket"
       )
       copy(maxAllowedPacket = maxAllowedPacket)
     }

@@ -234,8 +234,8 @@ object Connection:
     else if maxAllowedPacket > MySQLConfig.MAX_PACKET_SIZE then
       F.raiseError(
         new IllegalArgumentException(
-          s"maxAllowedPacket must not exceed ${ MySQLConfig.MAX_PACKET_SIZE } bytes (MySQL protocol limit), " +
-            s"but got $maxAllowedPacket"
+          s"maxAllowedPacket must not exceed ${ MySQLConfig.MAX_PACKET_SIZE } bytes (the largest value a " +
+            s"MySQL server accepts for max_allowed_packet), but got $maxAllowedPacket"
         )
       )
     else Ref.of[F, Int](maxAllowedPacket)

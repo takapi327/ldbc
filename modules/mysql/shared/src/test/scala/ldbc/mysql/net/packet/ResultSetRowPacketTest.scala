@@ -6,7 +6,7 @@
 
 package ldbc.mysql.net.packet
 
-import scodec.bits.BitVector
+import scodec.bits.{ BitVector, ByteVector }
 import scodec.Attempt
 
 import ldbc.mysql.*
@@ -149,4 +149,51 @@ class ResultSetRowPacketTest extends FTestPlatform:
         }
       case _ => fail("Decoding failed")
     }
+  }
+
+  test("a 0xFE payload short enough to be a terminator ends the result set") {
+    val eof    = BitVector(Array[Byte](0xfe.toByte, 0x00, 0x00, 0x02, 0x00))
+    val result = textResultSetRowDecoder(Set.empty[CapabilitiesFlags]).decode(eof)
+    assert(result.isSuccessful, s"a five-byte 0xFE payload is an end-of-file packet, but got $result")
+    assert(
+      result.require.value.isInstanceOf[EOFPacket],
+      s"expected the result set to end, got ${ result.require.value }"
+    )
+  }
+
+  test("a 0xFE payload the size of a deprecated-EOF OK packet still ends the result set") {
+    val ok     = BitVector(Array[Byte](0xfe.toByte, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00))
+    val result = textResultSetRowDecoder(Set.empty[CapabilitiesFlags]).decode(ok)
+    assert(
+      result.isSuccessful && result.require.value.isInstanceOf[EOFPacket],
+      s"a terminator longer than five bytes must still end the result set, got $result"
+    )
+  }
+
+  test("the boundary between a terminator and a row sits at the protocol maximum") {
+    val lenenc = Array[Byte](0xfe.toByte) ++ Array.fill(8)(0x00.toByte)
+    def payload(size: Long): BitVector =
+      (ByteVector(lenenc) ++ ByteVector.viewAt(_ => 0x61.toByte, size - lenenc.length)).toBitVector
+
+    val atBoundary = textResultSetRowDecoder(Set.empty[CapabilitiesFlags]).decode(payload(16777215L))
+    assert(
+      atBoundary.isSuccessful && atBoundary.require.value.isInstanceOf[ResultSetRowPacket],
+      s"a payload of exactly 16,777,215 bytes is a row, got $atBoundary"
+    )
+
+    val belowBoundary = textResultSetRowDecoder(Set.empty[CapabilitiesFlags]).decode(payload(16777214L))
+    assert(
+      belowBoundary.isSuccessful && belowBoundary.require.value.isInstanceOf[EOFPacket],
+      s"one byte below the boundary is still a terminator, got $belowBoundary"
+    )
+  }
+
+  test("a 0xFE payload too large to be a terminator is a row") {
+    val lenenc = Array[Byte](0xfe.toByte) ++ Array.fill(8)(0x00.toByte)
+    val row    = (ByteVector(lenenc) ++ ByteVector.viewAt(_ => 0x61.toByte, 16777216L)).toBitVector
+    val result = textResultSetRowDecoder(Set.empty[CapabilitiesFlags]).decode(row)
+    assert(
+      result.isSuccessful && result.require.value.isInstanceOf[ResultSetRowPacket],
+      s"0xFE also opens an eight-byte length prefix, so a 16MB value must not read as a terminator, got $result"
+    )
   }
