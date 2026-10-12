@@ -197,3 +197,79 @@ class ResultSetRowPacketTest extends FTestPlatform:
       s"0xFE also opens an eight-byte length prefix, so a 16MB value must not read as a terminator, got $result"
     )
   }
+
+  private val protocol41 = Set(CapabilitiesFlags.CLIENT_PROTOCOL_41)
+
+  private def decodeTerminator(body: Array[Byte]): EOFPacket =
+    val bits   = ByteVector(Array[Byte](0xfe.toByte) ++ body).toBitVector
+    val result = GenericResponsePackets.decoder(protocol41).decodeValue(bits)
+    result.require match
+      case eof: EOFPacket => eof
+      case other          => fail(s"expected the packet that ends a result set, got $other")
+
+  test("an EOF packet reports its warning count and status flags") {
+    val eof = decodeTerminator(Array[Byte](0x07, 0x00, 0x02, 0x02))
+    assertEquals(eof.warnings, Some(7))
+    assertEquals(
+      eof.statusFlags,
+      Set(ServerStatusFlags.SERVER_STATUS_AUTOCOMMIT, ServerStatusFlags.SERVER_STATUS_NO_BACKSLASH_ESCAPES),
+      "0x0202 carries bit 1 and bit 9"
+    )
+  }
+
+  test("the OK packet that replaces EOF reports the same two values") {
+    val ok = decodeTerminator(Array[Byte](0x00, 0x00, 0x02, 0x02, 0x07, 0x00))
+    assertEquals(ok.warnings, Some(7))
+    assertEquals(
+      ok.statusFlags,
+      Set(ServerStatusFlags.SERVER_STATUS_AUTOCOMMIT, ServerStatusFlags.SERVER_STATUS_NO_BACKSLASH_ESCAPES),
+      "the flags sit past two length-encoded integers in this layout"
+    )
+  }
+
+  test("a status flag above the first four bits survives") {
+    val eof = decodeTerminator(Array[Byte](0x00, 0x00, 0x00, 0x02))
+    assertEquals(
+      eof.statusFlags,
+      Set(ServerStatusFlags.SERVER_STATUS_NO_BACKSLASH_ESCAPES),
+      "0x0200 is bit 9 alone, which does not fit in half a byte"
+    )
+  }
+
+  test("a warning count past 15 is not truncated") {
+    val eof = decodeTerminator(Array[Byte](0x2c, 0x01, 0x00, 0x00))
+    assertEquals(eof.warnings, Some(300), "reading only the low four bits would report 12")
+  }
+
+  test("a warning count at the two-byte maximum is reported in full") {
+    val eof = decodeTerminator(Array[Byte](0xff.toByte, 0xff.toByte, 0x00, 0x00))
+    assertEquals(eof.warnings, Some(65535))
+  }
+
+  test("the boundary between the two layouts is the body size") {
+    val fourBytes = decodeTerminator(Array[Byte](0x07, 0x00, 0x02, 0x00))
+    assertEquals(fourBytes.warnings, Some(7), "four bytes is the EOF layout, so warnings come first")
+
+    val sixBytes = decodeTerminator(Array[Byte](0x07, 0x00, 0x02, 0x00, 0x09, 0x00))
+    assertEquals(
+      sixBytes.warnings,
+      Some(9),
+      "the smallest OK layout opens with two length-encoded integers, so warnings come last"
+    )
+  }
+
+  test("a body too short to hold either layout is refused") {
+    val bits   = ByteVector(Array[Byte](0xfe.toByte, 0x07)).toBitVector
+    val result = GenericResponsePackets.decoder(protocol41).decodeValue(bits)
+    assert(result.isFailure, s"a two-byte body matches neither layout, but got $result")
+  }
+
+  test("without CLIENT_PROTOCOL_41 the packet carries neither value") {
+    val bits   = ByteVector(Array[Byte](0xfe.toByte)).toBitVector
+    val result = GenericResponsePackets.decoder(Set.empty[CapabilitiesFlags]).decodeValue(bits)
+    result.require match
+      case eof: EOFPacket =>
+        assertEquals(eof.warnings, None)
+        assertEquals(eof.statusFlags, Set.empty[ServerStatusFlags])
+      case other => fail(s"expected an EOF packet, got $other")
+  }
