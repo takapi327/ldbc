@@ -138,9 +138,13 @@ sealed trait Protocol[F[_]] extends UtilityCommands[F], Authentication[F]:
   /**
    * Whether the current server session has the `NO_BACKSLASH_ESCAPES` sql_mode enabled.
    *
-   * This tracks the live server status: it is seeded from the initial handshake and updated from
-   * the status flags of every OK/EOF packet received (so a mid-session `SET sql_mode` is reflected).
-   * Client-side statement construction consults this to escape string literals correctly.
+   * This tracks the live server status: it is seeded from the initial handshake and updated from the
+   * status flags of every packet that passes through [[receive]], so a mid-session `SET sql_mode` is
+   * reflected. Client-side statement construction consults this to escape string literals correctly.
+   *
+   * Note that the packet ending a result set does not pass through here: `readUntilEOF` and
+   * `repeatProcess` read from the socket directly. What keeps this current is the OK packet of
+   * statements that return no result set, which is what a `SET sql_mode` is.
    */
   def noBackslashEscapes: F[Boolean]
 
@@ -237,9 +241,7 @@ object Protocol:
         case ok: OKPacket =>
           noBackslashEscapesRef.set(ok.statusFlags.contains(ServerStatusFlags.SERVER_STATUS_NO_BACKSLASH_ESCAPES))
         case eof: EOFPacket =>
-          noBackslashEscapesRef.set(
-            ServerStatusFlags(eof.statusFlags.toLong).contains(ServerStatusFlags.SERVER_STATUS_NO_BACKSLASH_ESCAPES)
-          )
+          noBackslashEscapesRef.set(eof.statusFlags.contains(ServerStatusFlags.SERVER_STATUS_NO_BACKSLASH_ESCAPES))
         case _ => F.unit
       }
 
