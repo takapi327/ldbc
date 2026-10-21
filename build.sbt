@@ -169,7 +169,7 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
       "org.typelevel" %%% "otel4s-semconv-metrics-experimental" % "1.1.0",
       "org.typelevel" %%% "twiddles-core"                       % "1.1.0",
       "org.typelevel" %%% "munit-cats-effect"                   % "2.2.1"  % Test,
-      "org.typelevel" %%% "otel4s-sdk-testkit"                  % "0.19.2" % Test
+      "org.typelevel" %%% "otel4s-sdk-testkit"                  % "0.19.4" % Test
     ),
     (Compile / sourceGenerators) += Def.task {
       Generator.version(
@@ -249,10 +249,10 @@ lazy val zioInterop = crossProject(JVMPlatform, JSPlatform)
   .module("zio-interop", "Projects that provide a way to connect to the database for ZIO")
   .settings(
     libraryDependencies ++= Seq(
-      "dev.zio" %%% "zio"              % "2.1.26",
+      "dev.zio" %%% "zio"              % "2.1.27",
       "dev.zio" %%% "zio-interop-cats" % "23.1.0.13",
-      "dev.zio" %%% "zio-test"         % "2.1.26" % Test,
-      "dev.zio" %%% "zio-test-sbt"     % "2.1.26" % Test
+      "dev.zio" %%% "zio-test"         % "2.1.27" % Test,
+      "dev.zio" %%% "zio-test-sbt"     % "2.1.27" % Test
     )
   )
   .jsSettings(
@@ -347,8 +347,8 @@ lazy val otelExample = crossProject(JVMPlatform)
   .settings(
     libraryDependencies ++= Seq(
       "org.typelevel"   %% "otel4s-oteljava"                           % "1.1.0",
-      "io.opentelemetry" % "opentelemetry-exporter-otlp"               % "1.66.0" % Runtime,
-      "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.66.0" % Runtime
+      "io.opentelemetry" % "opentelemetry-exporter-otlp"               % "1.67.0" % Runtime,
+      "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.67.0" % Runtime
     )
   )
   .settings(
