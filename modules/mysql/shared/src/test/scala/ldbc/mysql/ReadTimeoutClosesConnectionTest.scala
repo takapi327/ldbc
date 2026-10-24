@@ -16,6 +16,11 @@ import ldbc.telemetry.*
 class ReadTimeoutClosesConnectionTest extends FTestPlatform:
   given Tracer[Fx] = Tracer.noop[Fx]
 
+  // readTimeout also bounds the handshake reads, which run outside the `.attempt` below, so it must leave
+  // room for a slow CI connect; the query sleeps well past it so only the query read can time out.
+  private val shortReadTimeout = 2.seconds
+  private val slowQuery        = "SELECT SLEEP(6)"
+
   private def connection(readTimeout: Duration) =
     Connection[Fx](
       host        = TestConfig.host,
@@ -28,9 +33,9 @@ class ReadTimeoutClosesConnectionTest extends FTestPlatform:
 
   test("a read timeout marks the connection closed"):
     assertFx(
-      connection(500.millis).use { conn =>
+      connection(shortReadTimeout).use { conn =>
         for
-          outcome  <- conn.createStatement().flatMap(_.executeQuery("SELECT SLEEP(3)")).attempt
+          outcome  <- conn.createStatement().flatMap(_.executeQuery(slowQuery)).attempt
           isClosed <- conn.isClosed()
         yield (outcome.isLeft, isClosed)
       },
@@ -39,9 +44,9 @@ class ReadTimeoutClosesConnectionTest extends FTestPlatform:
 
   test("statements on a timed-out connection fail fast instead of touching the network"):
     assertFxBoolean(
-      connection(500.millis).use { conn =>
+      connection(shortReadTimeout).use { conn =>
         for
-          _      <- conn.createStatement().flatMap(_.executeQuery("SELECT SLEEP(3)")).attempt
+          _      <- conn.createStatement().flatMap(_.executeQuery(slowQuery)).attempt
           second <- conn.createStatement().flatMap(_.executeQuery("SELECT 1")).attempt
         yield second.left.exists(_.getMessage.contains("transport has failed"))
       },
