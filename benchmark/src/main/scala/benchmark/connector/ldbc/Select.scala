@@ -62,7 +62,7 @@ class Select:
       .setDatabase("benchmark")
       .setSSL(SSL.Trusted)
 
-    connection = datasource.getConnection.allocated.unsafeRunSync()._1
+    connection = datasource.getConnection.unsafeRunSync()._1
 
   @TearDown(Level.Trial)
   def tearDown(): Unit =

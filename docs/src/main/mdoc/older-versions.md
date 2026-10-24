@@ -12,11 +12,12 @@ Older Versions
 Documentation for versions 0.1 through 0.2 is no longer available on this site,
 but you can still browse the documentation sources and scaladoc as linked in the table below.
 
-It's strongly recommended to upgrade to the latest release (0.8), which has increased functionality and robustness
+It's strongly recommended to upgrade to the latest release (0.9), which has increased functionality and robustness
 and now also more API stability than those older releases.
 
 | Release | Date     | Scala Versions | sbt plugin | Scala.js | Scala Native | Doc Sources     | API (Scaladoc)  |
 |---------|----------|----------------|------------|----------|--------------|-----------------|-----------------|
+| 0.8     | Aug 2026 | 3.3.x          | 1.x        |          |              | [Browse][doc08] | [Browse][api08] |
 | 0.7     | Jun 2026 | 3.3.x          | 1.x        |          |              | [Browse][doc07] | [Browse][api07] |
 | 0.6     | Mar 2026 | 3.3.x          | 1.x        |          |              | [Browse][doc06] | [Browse][api06] |
 | 0.5     | Dec 2025 | 3.3.x          | 1.x        |          |              | [Browse][doc05] | [Browse][api05] |
@@ -31,7 +32,9 @@ and now also more API stability than those older releases.
 [doc05]: https://takapi327.github.io/ldbc/0.5/
 [doc06]: https://takapi327.github.io/ldbc/0.6/
 [doc07]: https://takapi327.github.io/ldbc/0.7/
+[doc08]: https://takapi327.github.io/ldbc/0.8/
 
+[api08]: https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/0.8.0/index.html
 [api07]: https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/0.7.0/index.html
 [api06]: https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/0.6.0/index.html
 [api05]: https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/0.5.0/index.html

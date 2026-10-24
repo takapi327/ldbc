@@ -19,7 +19,7 @@ import jdbc.connector.*
 
 import ldbc.Connector
 
-class JdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
+class JdbcSQLStringContextQueryTest extends SQLStringContextQueryTest[IO] with IODatabaseSuite:
 
   val ds = new MysqlDataSource()
   ds.setServerName(MySQLTestConfig.host)

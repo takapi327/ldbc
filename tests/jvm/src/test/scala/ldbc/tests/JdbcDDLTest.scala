@@ -14,7 +14,7 @@ import jdbc.connector.*
 
 import ldbc.Connector
 
-class JdbcDDLTest extends DDLTest:
+class JdbcDDLTest extends DDLTest[IO] with IODatabaseSuite:
 
   val ds = new MysqlDataSource()
   ds.setServerName(MySQLTestConfig.host)

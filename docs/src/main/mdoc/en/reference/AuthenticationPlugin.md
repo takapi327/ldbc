@@ -22,7 +22,9 @@ Apart from the above, ldbc currently supports an additional 2 authentication met
 When using plain text password authentication:
 
 ```scala
-import ldbc.connector.*
+import ldbc.mysql.*
+import ldbc.net.SSL
+import ldbc.catseffect.*
 import ldbc.authentication.plugin.*
 
 val datasource = MySQLDataSource
@@ -45,7 +47,10 @@ When using IAM authentication with AWS Aurora:
 
 ```scala
 import ldbc.amazon.plugin.AwsIamAuthenticationPlugin
-import ldbc.connector.*
+import ldbc.mysql.*
+import ldbc.net.SSL
+import ldbc.catseffect.*
+import ldbc.pool.{ ConnectionPoolConfig, PooledDataSource }
 
 val hostname = "aurora-cluster.cluster-xxx.ap-northeast-1.rds.amazonaws.com"
 val username = "iam-user"
@@ -58,8 +63,14 @@ val config = MySQLConfig.default
 
 val awsPlugin = AwsIamAuthenticationPlugin.default[IO]("ap-northeast-1", hostname, username)
 
-MySQLDataSource.pooling[IO](config, plugins = List(awsPlugin)).use { datasource =>
-  val connector = Connector.fromDataSource(datasource)
+val datasource = MySQLDataSource
+  .fromConfig[IO](config)
+  .setPlugins(awsPlugin)
+
+val poolConfig = ConnectionPoolConfig(minConnections = 2, maxConnections = 10)
+
+PooledDataSource.fromDataSource[IO](poolConfig, datasource).use { pool =>
+  val connector = Connector.fromDataSource(pool)
   // Query execution
 }
 ```
@@ -69,12 +80,13 @@ MySQLDataSource.pooling[IO](config, plugins = List(awsPlugin)).use { datasource 
 When combining multiple authentication plugins:
 
 ```scala
-val plugins = List(
-  MysqlClearPasswordPlugin,
-  awsIamPlugin
-)
+val datasource = MySQLDataSource
+  .fromConfig[IO](config)
+  .setPlugins(MysqlClearPasswordPlugin, awsIamPlugin)
 
-val datasource = MySQLDataSource.pooling[IO](config, plugins = plugins)
+val poolConfig = ConnectionPoolConfig(minConnections = 2, maxConnections = 10)
+
+val pool = PooledDataSource.fromDataSource[IO](poolConfig, datasource)
 ```
 
 ### Required Dependencies
