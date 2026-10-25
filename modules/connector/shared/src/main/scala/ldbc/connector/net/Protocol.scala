@@ -367,6 +367,16 @@ object Protocol:
                   )
                 )
               )
+        case more: AuthMoreDataPacket if more.authenticationMethodData.mkString("") == Authentication.FULL_AUTH =>
+          ev.raiseError(
+            new SQLInvalidAuthorizationSpecException(
+              "Public Key Retrieval is not allowed",
+              detail = Some(
+                "The server requested full authentication, which needs either an SSL connection or the server's RSA public key to send the password."
+              ),
+              hint = Some("Enable SSL, or set allowPublicKeyRetrieval to true.")
+            )
+          )
         case more: AuthMoreDataPacket        => readUntilOk(plugin, password, span)
         case packet: AuthSwitchRequestPacket => changeAuthenticationMethod(packet, password, span)
         case _: OKPacket                     => ev.unit
