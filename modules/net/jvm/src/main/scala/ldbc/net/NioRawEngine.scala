@@ -199,12 +199,14 @@ private[net] final class NioRawEngine private (initial: Selector, baseName: Stri
    * forgotten, which is the one outcome the completion contract rules out.
    */
   private def failAllPending(cause: Throwable): Unit =
-    new java.util.ArrayList(pendingConnects).forEach { fail =>
+    val connects = new java.util.ArrayList(pendingConnects)
+    val tracked  = new java.util.ArrayList(liveSockets)
+    connects.forEach { fail =>
       pendingConnects.remove(fail)
       try fail(cause)
       catch case NonFatal(e) => reportLoopError(e)
     }
-    new java.util.ArrayList(liveSockets).forEach { socket =>
+    tracked.forEach { socket =>
       liveSockets.remove(socket)
       settle(socket, cause)
     }
