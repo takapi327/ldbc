@@ -6,6 +6,8 @@
 
 package ldbc.mysql
 
+import scala.concurrent.duration.*
+
 import ldbc.sql.{ SQLClientInfoException, SQLInvalidAuthorizationSpecException, SQLSyntaxErrorException }
 import ldbc.sql.DatabaseMetaData
 
@@ -70,6 +72,21 @@ class ConnectionTest extends FTestPlatform:
       port     = TestConfig.port,
       user     = "ldbc_sha256_user",
       password = Some("ldbc_sha256_password")
+    )
+    interceptFx[SQLInvalidAuthorizationSpecException] {
+      connection.use(_ => Fx.unit)
+    }
+  }
+
+  test(
+    "A caching_sha2_password user that needs full authentication fails fast on a non-SSL connection without allowPublicKeyRetrieval."
+  ) {
+    val connection = Connection[Fx](
+      host        = TestConfig.host,
+      port        = TestConfig.port,
+      user        = "ldbc_cold_sha2_user",
+      password    = Some("ldbc_cold_sha2_password"),
+      readTimeout = 5.seconds
     )
     interceptFx[SQLInvalidAuthorizationSpecException] {
       connection.use(_ => Fx.unit)

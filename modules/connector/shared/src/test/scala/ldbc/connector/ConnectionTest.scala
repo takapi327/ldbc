@@ -6,6 +6,8 @@
 
 package ldbc.connector
 
+import scala.concurrent.duration.*
+
 import com.comcast.ip4s.UnknownHostException
 
 import cats.Monad
@@ -62,6 +64,21 @@ class ConnectionTest extends FTestPlatform:
       user = "root"
     )
     interceptIO[SQLClientInfoException] {
+      connection.use(_ => IO.unit)
+    }
+  }
+
+  test(
+    "A caching_sha2_password user that needs full authentication fails fast on a non-SSL connection without allowPublicKeyRetrieval."
+  ) {
+    val connection = Connection[IO](
+      host        = TestConfig.host,
+      port        = TestConfig.port,
+      user        = "ldbc_cold_sha2_user",
+      password    = Some("ldbc_cold_sha2_password"),
+      readTimeout = 5.seconds
+    )
+    interceptIO[SQLInvalidAuthorizationSpecException] {
       connection.use(_ => IO.unit)
     }
   }
