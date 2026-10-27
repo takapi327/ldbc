@@ -18,12 +18,13 @@ class ReadTimeoutClosesConnectionTest extends FTestPlatform:
 
   private def connection(readTimeout: Duration) =
     Connection[Fx](
-      host        = TestConfig.host,
-      port        = TestConfig.port,
-      user        = TestConfig.user,
-      password    = Some(TestConfig.password),
-      database    = Some("connector_test"),
-      readTimeout = readTimeout
+      host                    = TestConfig.host,
+      port                    = TestConfig.port,
+      user                    = TestConfig.user,
+      password                = Some(TestConfig.password),
+      database                = Some("connector_test"),
+      readTimeout             = readTimeout,
+      allowPublicKeyRetrieval = true
     )
 
   test("a read timeout marks the connection closed"):

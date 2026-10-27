@@ -206,15 +206,19 @@ private[net] final class FdRawEngine(initial: Poller, baseName: String = "ldbc-n
    * copy first makes the set of victims exactly the set that existed when the engine gave up.
    */
   private def failAllPending(cause: Throwable): Unit =
-    new java.util.ArrayList(pendingConnects).forEach { fail =>
+    val connects = new java.util.ArrayList(pendingConnects)
+    val armed    = new java.util.HashMap[Int, ChannelState](registry)
+    val tracked  = new java.util.HashMap[Int, FdRawSocket](sockets)
+    connects.forEach { fail =>
       pendingConnects.remove(fail)
       guarded(fail, cause)
     }
-    failArmed(cause)
-    new java.util.ArrayList(sockets.keySet()).forEach { fd =>
-      val socket = sockets.remove(fd)
-      registry.remove(fd)
-      if socket != null then settle(socket, cause)
+    failArmed(armed.values(), cause)
+    tracked.forEach { (fd, socket) =>
+      if sockets.remove(fd, socket) then
+        val st = armed.get(fd)
+        if st != null then registry.remove(fd, st)
+        settle(socket, cause)
     }
 
   /**
@@ -224,8 +228,8 @@ private[net] final class FdRawEngine(initial: Poller, baseName: String = "ldbc-n
    * TLS layer arms its own while driving a handshake. Refusing new arms only covers callers that
    * arrive after the engine gave up — the ones already parked need telling.
    */
-  private def failArmed(cause: Throwable): Unit =
-    new java.util.ArrayList(registry.values()).forEach { st =>
+  private def failArmed(states: java.util.Collection[ChannelState], cause: Throwable): Unit =
+    states.forEach { st =>
       val r = st.readFailed
       st.readFailed = null
       st.readReady  = null

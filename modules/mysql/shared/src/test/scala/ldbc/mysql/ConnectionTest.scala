@@ -6,6 +6,8 @@
 
 package ldbc.mysql
 
+import scala.concurrent.duration.*
+
 import ldbc.sql.{ SQLClientInfoException, SQLInvalidAuthorizationSpecException, SQLSyntaxErrorException }
 import ldbc.sql.DatabaseMetaData
 
@@ -70,6 +72,21 @@ class ConnectionTest extends FTestPlatform:
       port     = TestConfig.port,
       user     = "ldbc_sha256_user",
       password = Some("ldbc_sha256_password")
+    )
+    interceptFx[SQLInvalidAuthorizationSpecException] {
+      connection.use(_ => Fx.unit)
+    }
+  }
+
+  test(
+    "A caching_sha2_password user that needs full authentication fails fast on a non-SSL connection without allowPublicKeyRetrieval."
+  ) {
+    val connection = Connection[Fx](
+      host        = TestConfig.host,
+      port        = TestConfig.port,
+      user        = "ldbc_cold_sha2_user",
+      password    = Some("ldbc_cold_sha2_password"),
+      readTimeout = 5.seconds
     )
     interceptFx[SQLInvalidAuthorizationSpecException] {
       connection.use(_ => Fx.unit)
@@ -884,7 +901,7 @@ class ConnectionTest extends FTestPlatform:
                         tableCatalog <- resultSet.getString("TABLE_CATALOG")
                         tableSchem   <- resultSet.getString("TABLE_SCHEM")
                       yield
-                        if tableSchem == "codec_test" then None
+                        if tableSchem.startsWith("ldbc_tmp_") then None
                         else Some(s"Table Catalog: $tableCatalog, Table Schema: $tableSchem")
                     }
         yield result.flatten
@@ -920,8 +937,7 @@ class ConnectionTest extends FTestPlatform:
           resultSet <- metaData.getCatalogs()
           result    <- resultSet.whileM[Vector, Option[String]] {
                       resultSet.getString("TABLE_CAT").map { tableCatalog =>
-                        // codec_test and connector_before_after_test are excluded because they are created and deleted in other tests, causing unintended test failures when tests are run in parallel.
-                        if tableCatalog == "codec_test" || tableCatalog == "connector_before_after_test" then None
+                        if tableCatalog.startsWith("ldbc_tmp_") then None
                         else Some(s"Table Catalog: $tableCatalog")
                       }
                     }
@@ -1638,8 +1654,8 @@ class ConnectionTest extends FTestPlatform:
     def before(connection: ldbc.sql.Connection[Fx]): Fx[Int] =
       for
         statement <- connection.createStatement()
-        _         <- statement.execute("CREATE DATABASE IF NOT EXISTS connector_before_after_test")
-        _         <- connection.setSchema("connector_before_after_test")
+        _         <- statement.execute("CREATE DATABASE IF NOT EXISTS ldbc_tmp_mysql_before_after")
+        _         <- connection.setSchema("ldbc_tmp_mysql_before_after")
         _         <- statement.execute(
                """
             |CREATE TABLE IF NOT EXISTS test (
@@ -1653,7 +1669,7 @@ class ConnectionTest extends FTestPlatform:
     def after(connection: ldbc.sql.Connection[Fx]): Fx[Unit] =
       for
         statement <- connection.createStatement()
-        _         <- statement.execute("DROP DATABASE IF EXISTS connector_before_after_test")
+        _         <- statement.execute("DROP DATABASE IF EXISTS ldbc_tmp_mysql_before_after")
       yield ()
 
     val connection = Connection.withBeforeAfter[Fx, Int](

@@ -93,7 +93,7 @@ trait CodecTest[F[_]] extends DatabaseSuite[F]:
   def prefix:     "jdbc" | "ldbc" | "mysql"
   def connection: ConnectionFixture[F]
 
-  private lazy val codecDb = ident(s"codec_test_${ prefix }_${ effectLabel }")
+  private lazy val codecDb = ident(s"ldbc_tmp_codec_${ prefix }_${ effectLabel }")
 
   private lazy val connectionFixture = connection
     .withBeforeAll(conn => sql"CREATE DATABASE IF NOT EXISTS $codecDb".update.commit(conn).void)

@@ -6,6 +6,8 @@
 
 package ldbc.connector
 
+import scala.concurrent.duration.*
+
 import com.comcast.ip4s.UnknownHostException
 
 import cats.Monad
@@ -62,6 +64,21 @@ class ConnectionTest extends FTestPlatform:
       user = "root"
     )
     interceptIO[SQLClientInfoException] {
+      connection.use(_ => IO.unit)
+    }
+  }
+
+  test(
+    "A caching_sha2_password user that needs full authentication fails fast on a non-SSL connection without allowPublicKeyRetrieval."
+  ) {
+    val connection = Connection[IO](
+      host        = TestConfig.host,
+      port        = TestConfig.port,
+      user        = "ldbc_cold_sha2_user",
+      password    = Some("ldbc_cold_sha2_password"),
+      readTimeout = 5.seconds
+    )
+    interceptIO[SQLInvalidAuthorizationSpecException] {
       connection.use(_ => IO.unit)
     }
   }
@@ -886,7 +903,7 @@ class ConnectionTest extends FTestPlatform:
                         tableCatalog <- resultSet.getString("TABLE_CATALOG")
                         tableSchem   <- resultSet.getString("TABLE_SCHEM")
                       yield
-                        if tableSchem == "codec_test" then None
+                        if tableSchem.startsWith("ldbc_tmp_") then None
                         else Some(s"Table Catalog: $tableCatalog, Table Schema: $tableSchem")
                     }
         yield result.flatten
@@ -922,8 +939,7 @@ class ConnectionTest extends FTestPlatform:
           resultSet <- metaData.getCatalogs()
           result    <- Monad[IO].whileM[Vector, Option[String]](resultSet.next()) {
                       resultSet.getString("TABLE_CAT").map { tableCatalog =>
-                        // codec_test and connector_before_after_test are excluded because they are created and deleted in other tests, causing unintended test failures when tests are run in parallel.
-                        if tableCatalog == "codec_test" || tableCatalog == "connector_before_after_test" then None
+                        if tableCatalog.startsWith("ldbc_tmp_") then None
                         else Some(s"Table Catalog: $tableCatalog")
                       }
                     }
@@ -1640,8 +1656,8 @@ class ConnectionTest extends FTestPlatform:
     def before(connection: ldbc.sql.Connection[IO]): IO[Int] =
       for
         statement <- connection.createStatement()
-        _         <- statement.execute("CREATE DATABASE IF NOT EXISTS connector_before_after_test")
-        _         <- connection.setSchema("connector_before_after_test")
+        _         <- statement.execute("CREATE DATABASE IF NOT EXISTS ldbc_tmp_connector_before_after")
+        _         <- connection.setSchema("ldbc_tmp_connector_before_after")
         _         <- statement.execute(
                """
             |CREATE TABLE IF NOT EXISTS test (
@@ -1655,7 +1671,7 @@ class ConnectionTest extends FTestPlatform:
     def after(connection: ldbc.sql.Connection[IO]): IO[Unit] =
       for
         statement <- connection.createStatement()
-        _         <- statement.execute("DROP DATABASE IF EXISTS connector_before_after_test")
+        _         <- statement.execute("DROP DATABASE IF EXISTS ldbc_tmp_connector_before_after")
       yield ()
 
     val connection = Connection.withBeforeAfter[IO, Int](
