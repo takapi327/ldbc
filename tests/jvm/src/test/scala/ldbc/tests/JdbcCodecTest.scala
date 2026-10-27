@@ -12,7 +12,7 @@ import cats.effect.*
 
 import jdbc.connector.*
 
-class JdbcCodecTest extends CodecTest:
+class JdbcCodecTest extends CodecTest[IO] with IODatabaseSuite:
 
   val ds = new MysqlDataSource()
   ds.setServerName(MySQLTestConfig.host)
@@ -22,8 +22,8 @@ class JdbcCodecTest extends CodecTest:
 
   override def prefix: "jdbc" | "ldbc" = "jdbc"
 
-  override def connection: ConnectionFixture =
-    JdbcConnectionFixture(
+  override def connection: ConnectionFixture[IO] =
+    ConnectionFixture(
       "connection",
       MySQLDataSource.fromDataSource(ds, ExecutionContexts.synchronous)
     )

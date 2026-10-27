@@ -12,6 +12,7 @@ You can implement a function to limit concurrent executions using Cats Effect's 
 ```scala 3
 import cats.effect.*
 import cats.effect.syntax.all.*
+import ldbc.Connector
 import ldbc.dsl.*
 
 def limitedConcurrency[A](program: DBIO[A], connector: Connector[IO], maxConcurrent: Int): IO[A] =

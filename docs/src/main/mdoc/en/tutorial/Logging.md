@@ -13,11 +13,16 @@ ldbc can export execution and error logs of database connections in any format u
 
 By default, a logger using Cats Effect's Console is provided, which can be used during development.
 
-To customize logging using an arbitrary logging library, use `ldbc.sql.logging.LogHandler`.
+To customize logging using an arbitrary logging library, use `ldbc.logging.LogHandler`.
 
 The following is the standard implementation of logging. ldbc generates the following three types of events on database connection.
 
 ```scala 3
+import cats.effect.Sync
+import cats.effect.std.Console
+
+import ldbc.logging.{ LogEvent, LogHandler }
+
 def console[F[_]: Console: Sync]: LogHandler[F] =
   case LogEvent.Success(sql, args) =>
     Console[F].println(
@@ -45,17 +50,22 @@ def console[F[_]: Console: Sync]: LogHandler[F] =
     ) >> Console[F].printStackTrace(failure)
 ```
 
-The created LogHandler can be passed as an argument to `setLogHandler` when creating a Provider to use any log output method.
+The created `LogHandler` can be passed as the second argument when creating a `Connector` to use any log output method.
 
 ```scala 3
-import ldbc.connector.*
+import ldbc.logging.LogHandler
+import ldbc.mysql.MySQLDataSource
+import ldbc.net.SSL
+import ldbc.catseffect.*
+
 val datasource =
   MySQLDataSource
     .build[IO]("127.0.0.1", 3306, "ldbc")
     .setPassword("password")
     .setDatabase("ldbc")
     .setSSL(SSL.Trusted)
-    .setLogHandler(console[IO])
+
+val connector = Connector.fromDataSource(datasource, console[IO])
 ```
 
 ## Next Steps

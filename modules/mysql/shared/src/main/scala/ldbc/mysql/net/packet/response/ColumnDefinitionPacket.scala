@@ -1,0 +1,46 @@
+/**
+ * Copyright (c) 2023-2026 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
+
+package ldbc.mysql.net.packet
+package response
+
+import scodec.*
+
+import ldbc.mysql.data.*
+
+/**
+ * A column definition packet is sent by the server to the client after a query is executed.
+ * It contains information about the columns of the result set.
+ */
+trait ColumnDefinitionPacket extends ResponsePacket:
+
+  /** Table name */
+  def table: String
+
+  /** Column name */
+  def name: String
+
+  /** Column Data Type */
+  def columnType: ColumnDataType
+
+  /** ColumnDefinitionFlags is a bitset of column definition flags. */
+  def flags: Seq[ColumnDefinitionFlags]
+
+  /**
+   * Java charset name for this column, derived from the column's collation index.
+   *
+   * Used to decode raw field bytes into strings when reading result set rows.
+   */
+  def charset: String
+
+  /** Full name with table and column names connected by dots */
+  def fullName: String = table + "." + name
+
+object ColumnDefinitionPacket:
+
+  def decoder(capabilitiesFlags: Set[CapabilitiesFlags]): Decoder[ColumnDefinitionPacket] =
+    if capabilitiesFlags.contains(CapabilitiesFlags.CLIENT_PROTOCOL_41) then ColumnDefinition41Packet.decoder
+    else ColumnDefinition320Packet.decoder

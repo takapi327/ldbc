@@ -114,19 +114,20 @@ import scala.concurrent.duration.*
 import cats.effect.{IO, Sync}
 import cats.effect.syntax.all.*
 import cats.syntax.all.*
+import ldbc.Connector
 import ldbc.dsl.*
 
 // Retry implementation example - combining IO and DBIO
 def retryWithBackoff[F[_]: Sync, A](
   dbioOperation: DBIO[A], 
-  connection: Connection[F],
+  connector: Connector[F],
   maxRetries: Int = 3, 
   initialDelay: FiniteDuration = 100.millis,
   maxDelay: FiniteDuration = 2.seconds
 ): F[A] =
   def retryLoop(remainingRetries: Int, delay: FiniteDuration): F[A] =
-    // Convert DBIO to F type (e.g., IO) and execute
-    dbioOperation.run(connection).handleErrorWith { error =>
+    // Execute DBIO in the F type (e.g., IO)
+    dbioOperation.run(connector).handleErrorWith { error =>
       if remainingRetries > 0 && isTransientError(error) then
         // For temporary errors, delay and retry
         val nextDelay = (delay * 2).min(maxDelay)
@@ -141,10 +142,10 @@ def retryWithBackoff[F[_]: Sync, A](
 // Example with concrete IO type
 def retryDatabaseOperation[A](
   operation: DBIO[A],
-  connection: Connection[IO],
+  connector: Connector[IO],
   maxRetries: Int = 3
 ): IO[A] =
-  retryWithBackoff(operation, connection, maxRetries)
+  retryWithBackoff(operation, connector, maxRetries)
 
 // Helper method to determine if an error is transient
 def isTransientError(error: Throwable): Boolean =
@@ -156,7 +157,7 @@ def isTransientError(error: Throwable): Boolean =
 
 // Usage example
 val query = sql"SELECT * FROM users".query[User].unsafe
-val result = retryDatabaseOperation(query, myConnection)
+val result = retryDatabaseOperation(query, myConnector)
 ```
 
 ### Error Handling with Custom Error Types and EitherT
@@ -248,6 +249,10 @@ def transferMoney(fromAccount: Int, toAccount: Int, amount: BigDecimal): DBIO[St
   }
 
 // Usage example
+import ldbc.mysql.MySQLDataSource
+import ldbc.net.SSL
+import ldbc.catseffect.*
+
 val fromAccount: Int = ???
 val toAccount: Int = ???
 val amount: BigDecimal = ???

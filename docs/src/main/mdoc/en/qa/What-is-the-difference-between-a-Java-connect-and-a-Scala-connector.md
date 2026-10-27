@@ -5,7 +5,7 @@
 
 # Q: What is the difference between a Java connector and a Scala connector?
 
-## A: While both Java connector (jdbc-connector) and Scala connector (ldbc-connector) provide database connectivity, they differ in the following aspects:
+## A: While both Java connector (jdbc-connector) and Scala connector (ldbc-mysql) provide database connectivity, they differ in the following aspects:
 
 ### A: Java Connector (jdbc-connector)
 The Java connector uses traditional JDBC API to connect to databases.  
@@ -30,19 +30,21 @@ val connector = Connector.fromDataSource[IO](ds, ExecutionContexts.synchronous)
 DBIO.pure(()).commit(connector)
 ```
 
-### A: Scala Connector (ldbc-connector)
+### A: Scala Connector (ldbc-mysql)
 The Scala connector manages database connections leveraging type safety and functional programming.  
 - Uses Cats Effect's `Resource` and `IO` for safe connection acquisition and release.  
 - Enables intuitive data manipulation when combined with DSL and query builders.  
-- Additionally, ldbc-connector works not only on JVM but also on non-JVM platforms like Scala.js and Scala Native.  
+- Additionally, ldbc-mysql works not only on JVM but also on non-JVM platforms like Scala.js and Scala Native.  
   This makes database connectivity easily achievable in cross-platform development environments.
 
 ```scala
 import cats.effect.IO
-import ldbc.connector.*
+import ldbc.mysql.*
+import ldbc.net.SSL
+import ldbc.catseffect.*
 import ldbc.dsl.DBIO
 
-// Example of creating a connection using ldbc-connector (JVM, Scala.js, Scala Native compatible)
+// Example of creating a connection using ldbc-mysql (JVM, Scala.js, Scala Native compatible)
 val datasource = MySQLDataSource
   .build[IO]("127.0.0.1", 3306, "ldbc")
   .setPassword("password")

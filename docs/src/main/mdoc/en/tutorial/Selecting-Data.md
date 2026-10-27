@@ -12,7 +12,9 @@ One of ldbc's most powerful features is its ability to easily map database resul
 *Note: In this tutorial, we use a `Connector` to execute database operations. Create it as follows:*
 
 ```scala
-import ldbc.connector.*
+import ldbc.mysql.MySQLDataSource
+import ldbc.net.SSL
+import ldbc.catseffect.*
 
 // Create Connector
 val connector = Connector.fromDataSource(datasource)
@@ -326,7 +328,7 @@ In MySQL, the efficiency of streaming changes significantly depending on the `Us
 
 ```scala
 // UseCursorFetch=true (recommended) - True streaming
-val efficientProvider = MySQLDataSource
+val efficientDatasource = MySQLDataSource
   .build[IO](host, port, user)
   .setPassword(password)
   .setDatabase(database)
@@ -334,7 +336,7 @@ val efficientProvider = MySQLDataSource
   .setSSL(SSL.None)
 
 // UseCursorFetch=false (default) - Limited streaming
-val standardProvider = MySQLDataSource
+val standardDatasource = MySQLDataSource
   .build[IO](host, port, user)
   .setPassword(password)
   .setDatabase(database)

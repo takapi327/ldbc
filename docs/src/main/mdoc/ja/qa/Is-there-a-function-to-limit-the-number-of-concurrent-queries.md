@@ -12,6 +12,7 @@ Cats Effectの`Semaphore`を使って、同時実行数を制限する関数を�
 ```scala 3
 import cats.effect.*
 import cats.effect.syntax.all.*
+import ldbc.Connector
 import ldbc.dsl.*
 
 def limitedConcurrency[A](program: DBIO[A], connector: Connector[IO], maxConcurrent: Int): IO[A] =

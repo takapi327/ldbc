@@ -11,12 +11,16 @@ When no OpenTelemetry backend is connected, tracing and metrics automatically be
 
 ## Dependencies
 
-ldbc-connector depends only on `otel4s-core` (the abstract API). To actually collect and export telemetry data, you need to add a backend implementation.
+In 0.9.x, the telemetry SPI (`Tracer`/`Meter`) is defined by the DB-agnostic `ldbc-telemetry`, and its backend is plugged in via a separate module. When using otel4s with Cats Effect (`IO`), add `ldbc-otel4s` (`ldbc-telemetry` is introduced transitively by `ldbc-mysql`). To actually collect and export telemetry data, additionally add an OpenTelemetry SDK backend.
 
 ```scala
 libraryDependencies ++= Seq(
-  // ldbc connector (includes otel4s-core)
-  "@ORGANIZATION@" %% "ldbc-connector" % "@VERSION@",
+  // MySQL driver and Cats Effect bridge
+  "@ORGANIZATION@" %% "ldbc-mysql"       % "@VERSION@",
+  "@ORGANIZATION@" %% "ldbc-cats-effect" % "@VERSION@",
+
+  // otel4s backend for the ldbc.telemetry SPI
+  "@ORGANIZATION@" %% "ldbc-otel4s"      % "@VERSION@",
 
   // OpenTelemetry Java SDK backend
   "org.typelevel"    %% "otel4s-oteljava"                           % "0.15.1",
@@ -25,52 +29,81 @@ libraryDependencies ++= Seq(
 )
 ```
 
+> When using ZIO (`Task`), add `ldbc-zio` and `ldbc-zio-telemetry` (JVM only) instead of `ldbc-cats-effect`/`ldbc-otel4s`. Both traces and metrics are collected the same way.
+>
+> On ZIO you pass a zio-telemetry `Meter` to `ZioTelemetry.meterProvider`. It needs an `ldbc.effect.Concurrent[Task]`, so add `import ldbc.zio.given` alongside it.
+>
+> ```scala
+> import ldbc.zio.given
+> import ldbc.ziotelemetry.ZioTelemetry
+>
+> ZIO.serviceWithZIO[zio.telemetry.opentelemetry.metrics.Meter] { zmeter =>
+>   ZioTelemetry.meterProvider(zmeter).meter("ldbc").get.map { meter =>
+>     MySQLDataSource.build[Task](...).setMeter(meter)
+>   }
+> }
+> ```
+>
+> **Differences from otel4s**:
+>
+> - zio-telemetry has no batch-callback API, so the five pool state gauges are registered as five independent observables. Each reads the pool state when it is exported, so the five values may not come from exactly the same snapshot (otel4s shares one read across all five).
+> - zio-telemetry's `Meter` fixes its instrumentation scope (name, version, schema URL) when the layer is built, so `MeterBuilder`'s `withVersion` / `withSchemaUrl` and the name given to `meter(name)` are **accepted but ignored**. The scope is whatever you configured in `OpenTelemetry.metrics("...")`, and ldbc's version and schema URL are not attached. The otel4s backend does honour them.
+
+Note that instrument names, units, descriptions and bucket boundaries live in `DbMetricSpecs` in `ldbc-telemetry`, and both `ldbc-otel4s` and `ldbc-zio-telemetry` read them. Switching backends yields the same metrics from the same definitions.
+
 ## Setup
 
-Set `Tracer[F]` and `Meter[F]` on `MySQLDataSource`.
+Convert otel4s's `TracerProvider`/`MeterProvider` into the `ldbc.telemetry` SPI with `Otel4sTelemetry`, and pass them to `MySQLDataSource.withTraced`. `withTraced` returns a `MySQLDataSource` with the obtained tracer and meter already configured.
 
 ```scala
 import cats.effect.*
 import io.opentelemetry.api.GlobalOpenTelemetry
 import org.typelevel.otel4s.oteljava.OtelJava
-import ldbc.connector.*
+import ldbc.mysql.{ MySQLConfig, MySQLDataSource }
+import ldbc.mysql.syntax.*
+import ldbc.catseffect.*
+import ldbc.otel4s.Otel4sTelemetry
 
 object Main extends IOApp.Simple:
 
   override def run: IO[Unit] =
     val resource = for
-      otel   <- Resource
-                   .eval(IO.delay(GlobalOpenTelemetry.get))
-                   .evalMap(OtelJava.forAsync[IO])
-      tracer <- Resource.eval(otel.tracerProvider.get("my-app"))
-      meter  <- Resource.eval(otel.meterProvider.get("my-app"))
-      datasource = MySQLDataSource
-                     .build[IO]("127.0.0.1", 3306, "user")
-                     .setPassword("password")
-                     .setDatabase("mydb")
-                     .setTracer(tracer)
-                     .setMeter(meter)
-      connection <- datasource.getConnection
-    yield connection
+      otel <- Resource
+                .eval(IO.delay(GlobalOpenTelemetry.get))
+                .evalMap(OtelJava.forAsync[IO])
+      datasource <- Resource.eval(
+                      MySQLDataSource.withTraced[IO](
+                        MySQLConfig.default
+                          .setHost("127.0.0.1")
+                          .setPort(3306)
+                          .setUser("user")
+                          .setPassword("password")
+                          .setDatabase("mydb"),
+                        tracerProvider = Otel4sTelemetry.tracerProvider(otel.tracerProvider),
+                        meterProvider  = Otel4sTelemetry.meterProvider(otel.meterProvider)
+                      )
+                    )
+    yield datasource
 
-    resource.use { conn =>
-      conn.createStatement().flatMap(_.executeQuery("SELECT 1")).void
+    resource.use { datasource =>
+      datasource.use { conn =>
+        conn.createStatement().flatMap(_.executeQuery("SELECT 1")).void
+      }
     }
 ```
 
-When using connection pooling, pass `meter` to the `pooling` method.
+If you want to configure them individually, you can also obtain a `Tracer`/`Meter` from the converted `TracerProvider`/`MeterProvider` and pass them to `setTracer`/`setMeter`.
 
 ```scala
-val pool = MySQLDataSource.pooling[IO](
-  config = MySQLConfig.default
-    .setHost("127.0.0.1")
-    .setPort(3306)
-    .setUser("user")
-    .setPassword("password")
-    .setDatabase("mydb"),
-  meter  = Some(meter),
-  tracer = Some(tracer)
-)
+for
+  tracer <- Otel4sTelemetry.tracerProvider(otel.tracerProvider).tracer("my-app").get
+  meter  <- Otel4sTelemetry.meterProvider(otel.meterProvider).meter("my-app").get
+yield MySQLDataSource
+  .build[IO]("127.0.0.1", 3306, "user")
+  .setPassword("password")
+  .setDatabase("mydb")
+  .setTracer(tracer)
+  .setMeter(meter)
 ```
 
 ## Tracing
@@ -138,7 +171,7 @@ When a database operation fails, the following is recorded on the span:
 Use `TelemetryConfig` to customize telemetry behavior.
 
 ```scala
-import ldbc.connector.telemetry.TelemetryConfig
+import ldbc.telemetry.TelemetryConfig
 
 // Default settings (all enabled)
 val default = TelemetryConfig.default
@@ -242,7 +275,34 @@ Operation metrics are annotated with the following low-cardinality attributes. U
 
 ### Connection Pool Metrics
 
-Recorded only when using connection pooling (`PooledDataSource`). All metrics carry the `db.client.connection.pool.name` attribute.
+Recorded only when using connection pooling. All metrics carry the `db.client.connection.pool.name` attribute.
+
+They are emitted by both `ldbc-pool` (the effect-agnostic pool) and `ldbc.connector.pool.PooledDataSource` (the original Cats Effect one).
+
+With `ldbc-pool` you enable them by passing a `Meter` to the pool factory. This is configured independently of the driver's operation metrics, so pass the same `Meter` to both `MySQLDataSource` and `PooledDataSource` to collect both.
+
+```scala
+val meter = ... // obtained from Otel4sTelemetry.meterProvider(...).meter("ldbc").get
+
+val datasource = MySQLDataSource.fromConfig[IO](config).setMeter(meter) // operation metrics
+val pool       = PooledDataSource.fromDataSource[IO](
+  poolConfig,
+  datasource,
+  meter = Some(meter)                                                    // pool metrics
+)
+```
+
+If `meter` is omitted the pool metrics are a no-op (the pool itself behaves the same). The in-memory pool statistics are available from `pool.metrics` / `pool.status` whether or not a `Meter` is set.
+
+@:callout(info)
+
+**On passing the same `Meter` to two places**
+
+`ldbc-pool` is a database-agnostic module and cannot read the `MySQLDataSource` configuration, so the `Meter` has to be given to both the data source and the pool. As a result two sets of instruments are created.
+
+OpenTelemetry identifies instruments by name, and instruments sharing a name and descriptor aggregate into the same time series, so the exported metrics are correct and nothing is double-counted.
+
+@:@
 
 #### Histogram Metrics
 
