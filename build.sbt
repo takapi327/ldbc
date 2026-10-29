@@ -60,7 +60,7 @@ lazy val sql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .module("sql", "JDBC API wrapped project with Effect System")
   .platformsSettings(JSPlatform, NativePlatform)(
     libraryDependencies ++= Seq(
-      "io.github.cquiroz" %%% "scala-java-time" % "2.7.0"
+      "io.github.cquiroz" %%% "scala-java-time" % "2.9.0"
     )
   )
 
@@ -193,7 +193,7 @@ lazy val awsAuthenticationPlugin = crossProject(JVMPlatform, JSPlatform, NativeP
     libraryDependencies ++= Seq(
       "co.fs2"            %%% "fs2-core"          % "3.14.0",
       "co.fs2"            %%% "fs2-io"            % "3.14.0",
-      "io.github.cquiroz" %%% "scala-java-time"   % "2.7.0",
+      "io.github.cquiroz" %%% "scala-java-time"   % "2.9.0",
       "org.typelevel"     %%% "munit-cats-effect" % "2.2.1" % Test
     )
   )
