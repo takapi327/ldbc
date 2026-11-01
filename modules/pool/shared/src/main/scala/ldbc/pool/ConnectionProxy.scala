@@ -6,7 +6,13 @@
 
 package ldbc.pool
 
+import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.ConcurrentLinkedQueue
+
 import ldbc.sql.*
+
+import ldbc.effect.syntax.*
+import ldbc.effect.Sync
 
 /**
  * A [[ldbc.sql.Connection]] proxy handed to pool clients. It delegates every operation to the pooled
@@ -18,24 +24,72 @@ import ldbc.sql.*
  */
 private[pool] class ConnectionProxy[F[_]](
   val pooled:      PooledConnection[F],
-  releaseCallback: Connection[F] => F[Unit]
-) extends Connection[F]:
+  releaseCallback: ConnectionProxy[F] => F[Unit]
+)(using F: Sync[F])
+  extends Connection[F]:
 
   private def delegate: Connection[F] = pooled.connection
 
+  private val openStatements     = new ConcurrentLinkedQueue[Statement[F]]()
+  private val originalAutoCommit = new AtomicReference[Option[Boolean]](None)
+  private val originalReadOnly   = new AtomicReference[Option[Boolean]](None)
+  private val originalIsolation  = new AtomicReference[Option[Int]](None)
+  private val originalCatalog    = new AtomicReference[Option[String]](None)
+  private val originalSchema     = new AtomicReference[Option[String]](None)
+
+  private def track[S <: Statement[F]](statement: F[S]): F[S] =
+    statement.flatTap(s => F.delay(openStatements.add(s)).void)
+
+  private def remember[A](slot: AtomicReference[Option[A]], current: => F[A]): F[Unit] =
+    F.delay(slot.get().isDefined).flatMap { known =>
+      if known then F.unit
+      else current.flatMap(value => F.delay(slot.compareAndSet(None, Some(value))).void)
+    }
+
+  private def restore[A](slot: AtomicReference[Option[A]])(set: A => F[Unit]): F[Unit] =
+    F.delay(slot.getAndSet(None)).flatMap {
+      case Some(value) => set(value)
+      case None        => F.unit
+    }
+
+  private def closeStatements: F[Unit] =
+    F.delay(Iterator.continually(openStatements.poll()).takeWhile(_ != null).toList).flatMap { statements =>
+      statements
+        .foldLeft(F.pure(Option.empty[Throwable])) { (acc, statement) =>
+          acc.flatMap(first => statement.close().attempt.map(result => first.orElse(result.left.toOption)))
+        }
+        .flatMap {
+          case Some(error) => F.raiseError(error)
+          case None        => F.unit
+        }
+    }
+
+  private[pool] def resetState: F[Unit] =
+    for
+      _          <- closeStatements
+      autoCommit <- delegate.getAutoCommit()
+      _          <- if autoCommit then F.unit else delegate.rollback()
+      _          <- restore(originalAutoCommit)(delegate.setAutoCommit)
+      _          <- restore(originalReadOnly)(delegate.setReadOnly)
+      _          <- restore(originalIsolation)(delegate.setTransactionIsolation)
+      _          <- restore(originalSchema)(delegate.setSchema)
+      _          <- restore(originalCatalog)(delegate.setCatalog)
+    yield ()
+
   override def close(): F[Unit] = releaseCallback(this)
 
-  override def createStatement(): F[Statement[F]] = delegate.createStatement()
+  override def createStatement(): F[Statement[F]] = track(delegate.createStatement())
 
-  override def prepareStatement(sql: String): F[PreparedStatement[F]] = delegate.prepareStatement(sql)
+  override def prepareStatement(sql: String): F[PreparedStatement[F]] = track(delegate.prepareStatement(sql))
 
-  override def prepareCall(sql: String): F[CallableStatement[F]] = delegate.prepareCall(sql)
+  override def prepareCall(sql: String): F[CallableStatement[F]] = track(delegate.prepareCall(sql))
 
   override def nativeSQL(sql: String): F[String] = delegate.nativeSQL(sql)
 
   override def getAutoCommit(): F[Boolean] = delegate.getAutoCommit()
 
-  override def setAutoCommit(autoCommit: Boolean): F[Unit] = delegate.setAutoCommit(autoCommit)
+  override def setAutoCommit(autoCommit: Boolean): F[Unit] =
+    remember(originalAutoCommit, delegate.getAutoCommit()) *> delegate.setAutoCommit(autoCommit)
 
   override def commit(): F[Unit] = delegate.commit()
 
@@ -43,15 +97,18 @@ private[pool] class ConnectionProxy[F[_]](
 
   override def getTransactionIsolation(): F[Int] = delegate.getTransactionIsolation()
 
-  override def setTransactionIsolation(level: Int): F[Unit] = delegate.setTransactionIsolation(level)
+  override def setTransactionIsolation(level: Int): F[Unit] =
+    remember(originalIsolation, delegate.getTransactionIsolation()) *> delegate.setTransactionIsolation(level)
 
   override def isReadOnly: F[Boolean] = delegate.isReadOnly
 
-  override def setReadOnly(readOnly: Boolean): F[Unit] = delegate.setReadOnly(readOnly)
+  override def setReadOnly(readOnly: Boolean): F[Unit] =
+    remember(originalReadOnly, delegate.isReadOnly) *> delegate.setReadOnly(readOnly)
 
   override def getCatalog(): F[String] = delegate.getCatalog()
 
-  override def setCatalog(catalog: String): F[Unit] = delegate.setCatalog(catalog)
+  override def setCatalog(catalog: String): F[Unit] =
+    remember(originalCatalog, delegate.getCatalog()) *> delegate.setCatalog(catalog)
 
   override def isClosed(): F[Boolean] = delegate.isClosed()
 
@@ -68,17 +125,18 @@ private[pool] class ConnectionProxy[F[_]](
   override def rollback(savepoint: Savepoint): F[Unit] = delegate.rollback(savepoint)
 
   override def createStatement(resultSetType: Int, resultSetConcurrency: Int): F[Statement[F]] =
-    delegate.createStatement(resultSetType, resultSetConcurrency)
+    track(delegate.createStatement(resultSetType, resultSetConcurrency))
 
   override def prepareStatement(sql: String, resultSetType: Int, resultSetConcurrency: Int): F[PreparedStatement[F]] =
-    delegate.prepareStatement(sql, resultSetType, resultSetConcurrency)
+    track(delegate.prepareStatement(sql, resultSetType, resultSetConcurrency))
 
   override def prepareCall(sql: String, resultSetType: Int, resultSetConcurrency: Int): F[CallableStatement[F]] =
-    delegate.prepareCall(sql, resultSetType, resultSetConcurrency)
+    track(delegate.prepareCall(sql, resultSetType, resultSetConcurrency))
 
   override def prepareStatement(sql: String, autoGeneratedKeys: Int): F[PreparedStatement[F]] =
-    delegate.prepareStatement(sql, autoGeneratedKeys)
+    track(delegate.prepareStatement(sql, autoGeneratedKeys))
 
-  override def setSchema(schema: String): F[Unit] = delegate.setSchema(schema)
+  override def setSchema(schema: String): F[Unit] =
+    remember(originalSchema, delegate.getSchema()) *> delegate.setSchema(schema)
 
   override def getSchema(): F[String] = delegate.getSchema()

@@ -46,3 +46,32 @@ class PooledMySQLIntegrationTest extends CatsEffectSuite:
     }
     assertIO(program, Some(7))
   }
+
+  test("session state changed by one borrower is reset before the next borrower gets the connection") {
+    val poolConfig = ConnectionPoolConfig(minConnections = 1, maxConnections = 1)
+    val pool       = PooledDataSource.fromDataSource[IO](poolConfig, MySQLDataSource.fromConfig[IO](config))
+    val program    = toIOResource(pool).use { ds =>
+      for
+        first <- ds.getConnection
+        (dirty, release1) = first
+        _      <- dirty.setReadOnly(true)
+        _      <- dirty.setTransactionIsolation(ldbc.sql.Connection.TRANSACTION_SERIALIZABLE)
+        _      <- dirty.setCatalog("world")
+        _      <- release1
+        second <- ds.getConnection
+        (clean, release2) = second
+        resultSet <-
+          clean
+            .createStatement()
+            .flatMap(
+              _.executeQuery("SELECT @@session.transaction_read_only, @@session.transaction_isolation, DATABASE()")
+            )
+        _         <- resultSet.next()
+        readOnly  <- resultSet.getString(1)
+        isolation <- resultSet.getString(2)
+        database  <- resultSet.getString(3)
+        _         <- release2
+      yield (readOnly, isolation, database)
+    }
+    assertIO(program, ("0", "REPEATABLE-READ", "connector_test"))
+  }
