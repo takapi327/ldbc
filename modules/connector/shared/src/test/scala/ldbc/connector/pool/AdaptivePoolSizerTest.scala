@@ -64,6 +64,19 @@ class AdaptivePoolSizerTest extends FTestPlatform:
     }
   }
 
+  private def awaitGrowth(datasource: PooledDataSource[IO], beyond: Int, within: FiniteDuration): IO[PoolStatus] =
+    IO.monotonic.flatMap { start =>
+      def loop: IO[PoolStatus] =
+        datasource.status.flatMap { status =>
+          if status.total > beyond then IO.pure(status)
+          else
+            IO.monotonic.flatMap { now =>
+              if now - start >= within then IO.pure(status) else IO.sleep(20.millis) *> loop
+            }
+        }
+      loop
+    }
+
   test("AdaptivePoolSizer should shrink pool under low load") {
     val testConfig = config
       .setMinConnections(2)
@@ -81,11 +94,9 @@ class AdaptivePoolSizerTest extends FTestPlatform:
         // First grow the pool by holding sustained load in the background, so the adaptive sizer
         // observes high utilization across several intervals before we sample.
         load <- (1 to 5).toList.parTraverse { _ =>
-                  datasource.use { _ => IO.sleep(1.second) }.start
+                  datasource.use { _ => IO.sleep(5.seconds) }.start
                 }
-        _ <- IO.sleep(500.millis) // 10 adaptive intervals of sustained load
-
-        statusAfterGrowth <- datasource.status
+        statusAfterGrowth <- awaitGrowth(datasource, beyond = 2, within = 5.seconds)
 
         // Release the load and let the pool be idle to trigger shrinking
         _ <- load.parTraverse(_.cancel)
