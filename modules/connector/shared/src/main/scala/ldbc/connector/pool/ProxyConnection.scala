@@ -6,6 +6,8 @@
 
 package ldbc.connector.pool
 
+import java.util.concurrent.atomic.AtomicReference
+
 import cats.syntax.all.*
 
 import cats.effect.*
@@ -29,12 +31,42 @@ import ldbc.connector.Connection
  */
 private[pool] class ProxyConnection[F[_]: Temporal: Console](
   val pooled:         PooledConnection[F],
-  releaseCallback:    Connection[F] => F[Unit],
+  releaseCallback:    ProxyConnection[F] => F[Unit],
   closeAllStatements: Boolean = true
 ) extends Connection[F]:
 
   private val openStatements = new FastList[Statement[F]]()
   private val delegate: Connection[F] = pooled.connection
+
+  private val originalAutoCommit = new AtomicReference[Option[Boolean]](None)
+  private val originalReadOnly   = new AtomicReference[Option[Boolean]](None)
+  private val originalIsolation  = new AtomicReference[Option[Int]](None)
+  private val originalCatalog    = new AtomicReference[Option[String]](None)
+  private val originalSchema     = new AtomicReference[Option[String]](None)
+
+  private def remember[A](slot: AtomicReference[Option[A]], current: => F[A]): F[Unit] =
+    Temporal[F].unit.flatMap { _ =>
+      if slot.get().isDefined then Temporal[F].unit
+      else current.map(value => slot.compareAndSet(None, Some(value))).void
+    }
+
+  private def restore[A](slot: AtomicReference[Option[A]])(set: A => F[Unit]): F[Unit] =
+    Temporal[F].unit.flatMap { _ =>
+      slot.getAndSet(None) match
+        case Some(value) => set(value)
+        case None        => Temporal[F].unit
+    }
+
+  private[pool] def resetState: F[Unit] =
+    for
+      autoCommit <- delegate.getAutoCommit()
+      _          <- if autoCommit then Temporal[F].unit else delegate.rollback()
+      _          <- restore(originalAutoCommit)(delegate.setAutoCommit)
+      _          <- restore(originalReadOnly)(delegate.setReadOnly)
+      _          <- restore(originalIsolation)(delegate.setTransactionIsolation)
+      _          <- restore(originalSchema)(delegate.setSchema)
+      _          <- restore(originalCatalog)(delegate.setCatalog)
+    yield ()
 
   // Override close to return to pool instead of closing
   override def close(): F[Unit] =
@@ -111,23 +143,28 @@ private[pool] class ProxyConnection[F[_]: Temporal: Console](
   }
 
   // Delegate all other methods without modification
-  override def nativeSQL(sql:                 String):  F[String]              = delegate.nativeSQL(sql)
-  override def getAutoCommit():                         F[Boolean]             = delegate.getAutoCommit()
-  override def setAutoCommit(autoCommit:      Boolean): F[Unit]                = delegate.setAutoCommit(autoCommit)
-  override def commit():                                F[Unit]                = delegate.commit()
-  override def rollback():                              F[Unit]                = delegate.rollback()
-  override def getTransactionIsolation():               F[Int]                 = delegate.getTransactionIsolation()
-  override def setTransactionIsolation(level: Int):     F[Unit]                = delegate.setTransactionIsolation(level)
-  override def isReadOnly:                              F[Boolean]             = delegate.isReadOnly
-  override def setReadOnly(readOnly:          Boolean): F[Unit]                = delegate.setReadOnly(readOnly)
-  override def getCatalog():                            F[String]              = delegate.getCatalog()
-  override def setCatalog(catalog:            String):  F[Unit]                = delegate.setCatalog(catalog)
-  override def isClosed():                              F[Boolean]             = delegate.isClosed()
-  override def isValid(timeout:               Int):     F[Boolean]             = delegate.isValid(timeout)
-  override def getMetaData():                           F[DatabaseMetaData[F]] = delegate.getMetaData()
-  override def setSavepoint():                          F[Savepoint]           = delegate.setSavepoint()
-  override def setSavepoint(name:             String):  F[Savepoint]           = delegate.setSavepoint(name)
-  override def releaseSavepoint(savepoint: Savepoint): F[Unit]   = delegate.releaseSavepoint(savepoint)
-  override def rollback(savepoint:         Savepoint): F[Unit]   = delegate.rollback(savepoint)
-  override def setSchema(schema:           String):    F[Unit]   = delegate.setSchema(schema)
-  override def getSchema():                            F[String] = delegate.getSchema()
+  override def nativeSQL(sql: String):             F[String]  = delegate.nativeSQL(sql)
+  override def getAutoCommit():                    F[Boolean] = delegate.getAutoCommit()
+  override def setAutoCommit(autoCommit: Boolean): F[Unit]    =
+    remember(originalAutoCommit, delegate.getAutoCommit()) *> delegate.setAutoCommit(autoCommit)
+  override def commit():                            F[Unit] = delegate.commit()
+  override def rollback():                          F[Unit] = delegate.rollback()
+  override def getTransactionIsolation():           F[Int]  = delegate.getTransactionIsolation()
+  override def setTransactionIsolation(level: Int): F[Unit] =
+    remember(originalIsolation, delegate.getTransactionIsolation()) *> delegate.setTransactionIsolation(level)
+  override def isReadOnly:                     F[Boolean] = delegate.isReadOnly
+  override def setReadOnly(readOnly: Boolean): F[Unit]    =
+    remember(originalReadOnly, delegate.isReadOnly) *> delegate.setReadOnly(readOnly)
+  override def getCatalog():                F[String] = delegate.getCatalog()
+  override def setCatalog(catalog: String): F[Unit]   =
+    remember(originalCatalog, delegate.getCatalog()) *> delegate.setCatalog(catalog)
+  override def isClosed():                             F[Boolean]             = delegate.isClosed()
+  override def isValid(timeout:            Int):       F[Boolean]             = delegate.isValid(timeout)
+  override def getMetaData():                          F[DatabaseMetaData[F]] = delegate.getMetaData()
+  override def setSavepoint():                         F[Savepoint]           = delegate.setSavepoint()
+  override def setSavepoint(name:          String):    F[Savepoint]           = delegate.setSavepoint(name)
+  override def releaseSavepoint(savepoint: Savepoint): F[Unit]                = delegate.releaseSavepoint(savepoint)
+  override def rollback(savepoint:         Savepoint): F[Unit]                = delegate.rollback(savepoint)
+  override def setSchema(schema: String):              F[Unit]                =
+    remember(originalSchema, delegate.getSchema()) *> delegate.setSchema(schema)
+  override def getSchema(): F[String] = delegate.getSchema()

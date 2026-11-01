@@ -172,6 +172,8 @@ trait PooledDataSource[F[_]] extends DataSource[F]:
    */
   def validateConnection(conn: Connection[F]): F[Boolean]
 
+private[pool] final class PoolAtMaximumSizeException extends SQLException("Pool reached maximum size")
+
 object PooledDataSource:
 
   private case class Impl[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
@@ -215,7 +217,8 @@ object PooledDataSource:
   )(using Tracer[F])
     extends PooledDataSource[F]:
 
-    override def getConnection: F[(Connection[F], F[Unit])] = Resource.make(acquire)(release).allocated
+    override def getConnection: F[(Connection[F], F[Unit])] =
+      Resource.make(acquire)(release).map(proxy => proxy: Connection[F]).allocated
 
     override def status: F[PoolStatus] = for {
       state <- poolState.get
@@ -264,7 +267,7 @@ object PooledDataSource:
      *
      * @return a connection from the pool
      */
-    private def acquire: F[Connection[F]] = for
+    private def acquire: F[ProxyConnection[F]] = for
       startTime <- Clock[F].monotonic
       result    <- acquireConnectionWithStartTime(startTime)
     yield result
@@ -279,98 +282,112 @@ object PooledDataSource:
      *                  used to calculate connection wait time
      * @return a healthy [[Connection]] ready for use
      */
-    private def acquireConnectionWithStartTime(startTime: FiniteDuration): F[Connection[F]] =
+    private def acquireConnectionWithStartTime(startTime: FiniteDuration): F[ProxyConnection[F]] =
       poolState.get.flatMap { state =>
         if state.closed then Temporal[F].raiseError(new SQLException("Pool is closed"))
         else
-          connectionBag.borrow(connectionTimeout).flatMap {
-            case Some(pooled) =>
-              // Successfully borrowed from bag
-              for
-                // Check if validation is needed
-                shouldValidate <- needsValidation(pooled)
-                valid          <- if shouldValidate then {
-                           validateConnection(pooled.connection).flatTap {
-                             case true  => Temporal[F].unit
-                             case false =>
-                               poolLogger.warn(s"Connection ${ pooled.id } failed validation, removing from pool")
-                           }
-                         } else Temporal[F].pure(true)
-                result <- if !valid then {
-                            // Connection is invalid, remove it and try again
-                            removeConnection(pooled) >> acquireConnectionWithStartTime(startTime)
-                          } else
-                            for
-                              _ <- pooled.state.set(ConnectionState.InUse)
-                              // Remove from idleConnections when acquired
-                              _       <- poolState.update(s => s.copy(idleConnections = s.idleConnections - pooled.id))
-                              now     <- Clock[F].realTime.map(_.toMillis)
-                              _       <- pooled.lastUsedAt.set(now)
-                              _       <- pooled.useCount.update(_ + 1)
-                              endTime <- Clock[F].monotonic
-                              _       <- metricsTracker.recordAcquisition(endTime - startTime)
-                              _       <- databaseMetrics.recordConnectionWaitTime(endTime - startTime, poolName)
-                              // Start leak detection if configured
-                              _ <- leakDetectionThreshold.traverse_ { threshold =>
-                                     val leakFiber = Temporal[F]
-                                       .sleep(threshold)
-                                       .flatMap { _ =>
-                                         pooled.state.get.flatMap {
-                                           case ConnectionState.InUse =>
-                                             poolLogger.warn(
-                                               s"Possible connection leak detected: Connection ${ pooled.id } has been in use for longer than $threshold"
-                                             ) >>
-                                               metricsTracker.recordLeak()
-                                           case _ => Temporal[F].unit
-                                         }
-                                       }
-                                       .start
+          connectionBag.borrow(Duration.Zero).flatMap {
+            case Some(pooled) => checkout(pooled, startTime)
+            case None         =>
+              createOnDemand.flatMap {
+                case Some(pooled) =>
+                  for
+                    endTime <- Clock[F].monotonic
+                    _       <- metricsTracker.recordAcquisition(endTime - startTime)
+                    _       <- databaseMetrics.recordConnectionWaitTime(endTime - startTime, poolName)
+                  yield wrapConnection(pooled)
+                case None => waitForIdle(startTime)
+              }
+          }
+      }
 
-                                     leakFiber.flatMap(fiber => pooled.leakDetection.set(Some(fiber)))
-                                   }
-                            yield wrapConnection(pooled)
-              yield result
+    private def createOnDemand: F[Option[PooledConnection[F]]] =
+      poolState.get.flatMap { state =>
+        if state.connections.size < maxConnections then
+          createNewConnection().map(Option(_)).recover { case _: PoolAtMaximumSizeException => None }
+        else Temporal[F].pure(None)
+      }
 
-            case None =>
-              // Timeout or no connections available
-              // Check if we can create a new connection
-              poolState.get.flatMap { currentState =>
-                if currentState.connections.size < maxConnections then
-                  createNewConnection().flatMap { pooled =>
+    private def waitForIdle(startTime: FiniteDuration): F[ProxyConnection[F]] =
+      Clock[F].monotonic.flatMap { now =>
+        val remaining = connectionTimeout - (now - startTime)
+        val borrowed  =
+          if remaining > Duration.Zero then connectionBag.borrow(remaining)
+          else Temporal[F].pure(Option.empty[PooledConnection[F]])
+        borrowed.flatMap {
+          case Some(pooled) => checkout(pooled, startTime)
+          case None         => acquisitionTimeout
+        }
+      }
+
+    private def checkout(pooled: PooledConnection[F], startTime: FiniteDuration): F[ProxyConnection[F]] =
+      for
+        shouldValidate <- needsValidation(pooled)
+        valid          <- if shouldValidate then {
+                   validateConnection(pooled.connection).flatTap {
+                     case true  => Temporal[F].unit
+                     case false =>
+                       poolLogger.warn(s"Connection ${ pooled.id } failed validation, removing from pool")
+                   }
+                 } else Temporal[F].pure(true)
+        result <- if !valid then {
+                    removeConnection(pooled) >> acquireConnectionWithStartTime(startTime)
+                  } else
                     for
+                      _       <- pooled.state.set(ConnectionState.InUse)
+                      _       <- poolState.update(s => s.copy(idleConnections = s.idleConnections - pooled.id))
+                      now     <- Clock[F].realTime.map(_.toMillis)
+                      _       <- pooled.lastUsedAt.set(now)
+                      _       <- pooled.useCount.update(_ + 1)
                       endTime <- Clock[F].monotonic
                       _       <- metricsTracker.recordAcquisition(endTime - startTime)
                       _       <- databaseMetrics.recordConnectionWaitTime(endTime - startTime, poolName)
+                      _       <- leakDetectionThreshold.traverse_ { threshold =>
+                             val leakFiber = Temporal[F]
+                               .sleep(threshold)
+                               .flatMap { _ =>
+                                 pooled.state.get.flatMap {
+                                   case ConnectionState.InUse =>
+                                     poolLogger.warn(
+                                       s"Possible connection leak detected: Connection ${ pooled.id } has been in use for longer than $threshold"
+                                     ) >>
+                                       metricsTracker.recordLeak()
+                                   case _ => Temporal[F].unit
+                                 }
+                               }
+                               .start
+
+                             leakFiber.flatMap(fiber => pooled.leakDetection.set(Some(fiber)))
+                           }
                     yield wrapConnection(pooled)
-                  }
-                else
-                  // Count active connections for more detailed error message
-                  currentState.connections.traverse(_.state.get).flatMap { states =>
-                    val activeCount  = states.count(_ == ConnectionState.InUse)
-                    val idleCount    = states.count(_ == ConnectionState.Idle)
-                    val errorMessage =
-                      s"Connection acquisition timeout after $connectionTimeout " +
-                        s"(host: $host:$port, db: ${ database.getOrElse("none") }, " +
-                        s"pool: ${ currentState.connections.size }/${ maxConnections }, " +
-                        s"active: $activeCount, idle: $idleCount, " +
-                        s"waiting: ${ currentState.waitQueue.size })"
-                    metricsTracker.recordTimeout() *>
-                      databaseMetrics.recordConnectionTimeout(poolName) *>
-                      poolLogger.error(errorMessage) *>
-                      Temporal[F].raiseError(new SQLException(errorMessage))
-                  }
-              }
-          }
+      yield result
+
+    private def acquisitionTimeout: F[ProxyConnection[F]] =
+      poolState.get.flatMap { currentState =>
+        currentState.connections.traverse(_.state.get).flatMap { states =>
+          val activeCount  = states.count(_ == ConnectionState.InUse)
+          val idleCount    = states.count(_ == ConnectionState.Idle)
+          val errorMessage =
+            s"Connection acquisition timeout after $connectionTimeout " +
+              s"(host: $host:$port, db: ${ database.getOrElse("none") }, " +
+              s"pool: ${ currentState.connections.size }/${ maxConnections }, " +
+              s"active: $activeCount, idle: $idleCount, " +
+              s"waiting: ${ currentState.waitQueue.size })"
+          metricsTracker.recordTimeout() *>
+            databaseMetrics.recordConnectionTimeout(poolName) *>
+            poolLogger.error(errorMessage) *>
+            Temporal[F].raiseError(new SQLException(errorMessage))
+        }
       }
 
     /**
      * Releases a connection back to the pool, recording the start time for use-time metrics.
      *
-     * @param conn the connection being released
+     * @param proxy the connection being released
      */
-    private def release(conn: Connection[F]): F[Unit] = for
+    private def release(proxy: ProxyConnection[F]): F[Unit] = for
       startTime <- Clock[F].monotonic
-      _         <- releaseConnectionWithStartTime(conn, startTime)
+      _         <- releaseConnectionWithStartTime(proxy, startTime)
     yield ()
 
     /**
@@ -382,72 +399,48 @@ object PooledDataSource:
      * @param startTime monotonic timestamp captured at the beginning of the release operation,
      *                  used to calculate connection use time
      */
-    private def releaseConnectionWithStartTime(conn: Connection[F], startTime: FiniteDuration): F[Unit] =
-      // Extract the pooled connection from proxy if wrapped
-      val pooledF: F[Option[PooledConnection[F]]] = conn match {
-        case proxy: ProxyConnection[F] => Temporal[F].pure(Some(proxy.pooled))
-        case _                         =>
-          // Fallback: search by unwrapped connection
-          connectionBag.values.map { connections =>
-            connections.find(p => p.connection == unwrapConnection(conn))
-          }
-      }
+    private def releaseConnectionWithStartTime(proxy: ProxyConnection[F], startTime: FiniteDuration): F[Unit] =
+      val pooled = proxy.pooled
 
-      pooledF.flatMap {
-        case Some(pooled) =>
-          // Cancel leak detection
-          pooled.leakDetection.get.flatMap(_.traverse_(_.cancel)) >>
-            pooled.leakDetection.set(None) >>
-            pooled.state.set(ConnectionState.Idle) >>
-            resetConnection(pooled.connection).attempt.flatMap {
-              case Right(_) =>
-                for
-                  // Skip validation if connection was recently validated
-                  shouldValidate <- needsValidation(pooled)
-                  valid          <- if shouldValidate then {
-                             validateConnection(pooled.connection).flatTap {
-                               case true  => Temporal[F].unit
-                               case false =>
-                                 poolLogger.warn(
-                                   s"Connection ${ pooled.id } failed validation on release, removing from pool"
-                                 )
-                             }
-                           } else Temporal[F].pure(true)
-                  expired <- isExpired(pooled)
-                  _       <- if valid && !expired then {
-                         // Return to bag for reuse, then add to idleConnections
-                         // Order matters: requite first to ensure connection is actually returned,
-                         // then update idleConnections to maintain consistency
-                         connectionBag.requite(pooled) *>
-                           poolState.update(s => s.copy(idleConnections = s.idleConnections + pooled.id)) *>
-                           Clock[F].monotonic.flatMap { endTime =>
-                             metricsTracker.recordUsage(endTime - startTime) *>
-                               databaseMetrics.recordConnectionUseTime(endTime - startTime, poolName)
-                           }
-                       } else
-                         // Invalid or expired, remove from pool
-                         removeConnection(pooled) *>
-                           Clock[F].monotonic.flatMap { endTime =>
-                             metricsTracker.recordUsage(endTime - startTime) *>
-                               databaseMetrics.recordConnectionUseTime(endTime - startTime, poolName)
-                           }
-                yield ()
-              case Left(error) =>
-                // Reset failed, remove from pool
-                poolLogger.warn(s"Failed to reset connection ${ pooled.id } on release: ${ error.getMessage }") >>
-                  removeConnection(pooled) *>
-                  Clock[F].monotonic.flatMap { endTime =>
-                    metricsTracker.recordUsage(endTime - startTime) *>
-                      databaseMetrics.recordConnectionUseTime(endTime - startTime, poolName)
-                  }
-            }
-        case None =>
-          // Connection not found - still record the usage time
-          Clock[F].monotonic.flatMap { endTime =>
-            metricsTracker.recordUsage(endTime - startTime) *>
-              databaseMetrics.recordConnectionUseTime(endTime - startTime, poolName)
-          }
-      }
+      pooled.leakDetection.get.flatMap(_.traverse_(_.cancel)) >>
+        pooled.leakDetection.set(None) >>
+        pooled.state.set(ConnectionState.Idle) >>
+        proxy.resetState.attempt.flatMap {
+          case Right(_) =>
+            for
+              shouldValidate <- needsValidation(pooled)
+              valid          <- if shouldValidate then {
+                         validateConnection(pooled.connection).flatTap {
+                           case true  => Temporal[F].unit
+                           case false =>
+                             poolLogger.warn(
+                               s"Connection ${ pooled.id } failed validation on release, removing from pool"
+                             )
+                         }
+                       } else Temporal[F].pure(true)
+              expired <- isExpired(pooled)
+              _       <- if valid && !expired then {
+                     connectionBag.requite(pooled) *>
+                       poolState.update(s => s.copy(idleConnections = s.idleConnections + pooled.id)) *>
+                       Clock[F].monotonic.flatMap { endTime =>
+                         metricsTracker.recordUsage(endTime - startTime) *>
+                           databaseMetrics.recordConnectionUseTime(endTime - startTime, poolName)
+                       }
+                   } else
+                     removeConnection(pooled) *>
+                       Clock[F].monotonic.flatMap { endTime =>
+                         metricsTracker.recordUsage(endTime - startTime) *>
+                           databaseMetrics.recordConnectionUseTime(endTime - startTime, poolName)
+                       }
+            yield ()
+          case Left(error) =>
+            poolLogger.warn(s"Failed to reset connection ${ pooled.id } on release: ${ error.getMessage }") >>
+              removeConnection(pooled) *>
+              Clock[F].monotonic.flatMap { endTime =>
+                metricsTracker.recordUsage(endTime - startTime) *>
+                  databaseMetrics.recordConnectionUseTime(endTime - startTime, poolName)
+              }
+        }
 
     override def createNewConnection(): F[PooledConnection[F]] = for
       startTime <- Clock[F].monotonic
@@ -546,7 +539,7 @@ object PooledDataSource:
                     else Temporal[F].unit) *>
                      poolLogger.warn(s"Cannot create new connection: pool at maximum size ($maxConnections)") *>
                      conn.close().attempt.void *>
-                     Temporal[F].raiseError[Unit](new SQLException("Pool reached maximum size"))
+                     Temporal[F].raiseError[Unit](new PoolAtMaximumSizeException)
                  } else Temporal[F].unit
           yield pooled
         }
@@ -558,24 +551,6 @@ object PooledDataSource:
                 databaseMetrics.recordConnectionCreateTime(endTime - startTime, poolName)
             }
         }
-
-    /**
-     * Resets a connection to a clean state before returning it to the pool.
-     *
-     * Restores auto-commit mode and rolls back any uncommitted transaction.
-     * Both operations are attempted and their errors are swallowed so that
-     * a reset failure does not prevent the connection from being processed further.
-     *
-     * @param conn the connection to reset
-     */
-    private def resetConnection(conn: Connection[F]): F[Unit] = for
-      // Rollback must come first: in MySQL, calling setAutoCommit(true) during an active
-      // transaction implicitly commits it, making the subsequent rollback() a no-op.
-      _ <- conn.rollback().attempt.void
-      _ <- conn.setAutoCommit(true).attempt.void
-    // clearWarnings is not available in ldbc Connection interface
-    // _ <- conn.clearWarnings().attempt.void
-    yield ()
 
     override def validateConnection(conn: Connection[F]): F[Boolean] =
       connectionTestQuery match
@@ -692,21 +667,24 @@ object PooledDataSource:
              )
            }
       _ <- metricsTracker.recordRemoval()
+      _ <- replaceForWaiters
     yield ()
+
+    private def replaceForWaiters: F[Unit] =
+      for
+        waiting <- connectionBag.waiting
+        state   <- poolState.get
+        _       <-
+          if waiting > 0 && !state.closed && state.connections.size < maxConnections then
+            createNewConnectionForPool().attempt.void.start.void
+          else Temporal[F].unit
+      yield ()
 
     /**
      * Wrap a pooled connection for leak detection and statement tracking.
      */
-    private def wrapConnection(pooled: PooledConnection[F]): Connection[F] =
+    private def wrapConnection(pooled: PooledConnection[F]): ProxyConnection[F] =
       new ProxyConnection[F](pooled, release)
-
-    /**
-     * Unwrap a connection to get the original.
-     */
-    private def unwrapConnection(conn: Connection[F]): Connection[F] =
-      conn match
-        case proxy: ProxyConnection[F] => proxy.pooled.connection
-        case _                         => conn
 
     /**
      * Builds the [[Resource]] used to create a new physical [[Connection]].

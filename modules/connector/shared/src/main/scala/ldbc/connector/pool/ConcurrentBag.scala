@@ -79,6 +79,8 @@ trait ConcurrentBag[F[_], T <: BagEntry[F]]:
    * 
    * @return the number of items in the bag
    */
+  def waiting: F[Int]
+
   def size: F[Int]
 
   /**
@@ -269,6 +271,8 @@ object ConcurrentBag:
               }
           }
       }
+
+    override def waiting: F[Int] = waiters.get
 
     override def add(item: T): F[Unit] =
       closed.get.flatMap {

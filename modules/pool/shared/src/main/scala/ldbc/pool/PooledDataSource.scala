@@ -112,7 +112,7 @@ object PooledDataSource:
     override def getConnection: F[(Connection[F], F[Unit])] = connectionResource.allocatedCase
 
     private def connectionResource: Resource[F, Connection[F]] =
-      val base = Resource.make(acquire)(release)
+      val base = Resource.make(acquire)(release).map(proxy => proxy: Connection[F])
       hooks match
         case None       => base
         case Some(hook) => base.flatMap(conn => hook(conn).map(_ => conn))
@@ -162,7 +162,7 @@ object PooledDataSource:
         }
         .flatMap(identity)
 
-    private def acquire: F[Connection[F]] = for
+    private def acquire: F[ConnectionProxy[F]] = for
       startTime <- F.monotonic
       result    <- acquireConnectionWithStartTime(startTime, 0)
     yield result
@@ -183,7 +183,7 @@ object PooledDataSource:
      * those costs would accumulate outside the budget rather than inside it. The count is a second
      * bound, for the case where the connections fail fast enough that the clock barely moves.
      */
-    private def acquireConnectionWithStartTime(startTime: FiniteDuration, attempt: Int): F[Connection[F]] =
+    private def acquireConnectionWithStartTime(startTime: FiniteDuration, attempt: Int): F[ConnectionProxy[F]] =
       poolState.get.flatMap { state =>
         if state.closed then F.raiseError(new SQLException("Pool is closed"))
         else if attempt > config.maxConnections then acquisitionTimeout
@@ -211,7 +211,7 @@ object PooledDataSource:
       }
 
     /** Validates a borrowed connection and marks it in use, or discards it and retries. */
-    private def checkout(pooled: PooledConnection[F], startTime: FiniteDuration, attempt: Int): F[Connection[F]] =
+    private def checkout(pooled: PooledConnection[F], startTime: FiniteDuration, attempt: Int): F[ConnectionProxy[F]] =
       for
         shouldValidate <- needsValidation(pooled)
         valid          <-
@@ -255,7 +255,7 @@ object PooledDataSource:
      * the caller's fiber, that failure would otherwise never reach the caller, leaving it with a bare
      * timeout and no indication of why the pool could not grow.
      */
-    private def acquisitionTimeout: F[Connection[F]] =
+    private def acquisitionTimeout: F[ConnectionProxy[F]] =
       for
         state   <- poolState.get
         states  <- state.connections.traverse(_.state.get)
@@ -271,7 +271,7 @@ object PooledDataSource:
         _      <- metricsTracker.recordTimeout()
         _      <- databaseMetrics.recordConnectionTimeout(config.poolName)
         _      <- poolLogger.error(message)
-        result <- F.raiseError[Connection[F]](
+        result <- F.raiseError[ConnectionProxy[F]](
                     new SQLTransientConnectionException(
                       message  = message,
                       sqlState = Some(PooledDataSource.ConnectionExceptionSqlState),
@@ -280,16 +280,13 @@ object PooledDataSource:
                   )
       yield result
 
-    private def release(conn: Connection[F]): F[Unit] = for
+    private def release(proxy: ConnectionProxy[F]): F[Unit] = for
       startTime <- F.monotonic
-      _         <- releaseConnectionWithStartTime(conn, startTime)
+      _         <- releaseConnectionWithStartTime(proxy, startTime)
     yield ()
 
-    private def releaseConnectionWithStartTime(conn: Connection[F], startTime: FiniteDuration): F[Unit] =
-      val pooledF: F[Option[PooledConnection[F]]] = conn match
-        case proxy: ConnectionProxy[F] @unchecked => F.pure(Some(proxy.pooled))
-        case _                                    =>
-          connectionBag.values.map(connections => connections.find(p => p.connection == unwrapConnection(conn)))
+    private def releaseConnectionWithStartTime(proxy: ConnectionProxy[F], startTime: FiniteDuration): F[Unit] =
+      val pooled = proxy.pooled
 
       val recordUse: F[Unit] =
         F.monotonic.flatMap { endTime =>
@@ -297,37 +294,33 @@ object PooledDataSource:
             databaseMetrics.recordConnectionUseTime(endTime - startTime, config.poolName)
         }
 
-      pooledF.flatMap {
-        case Some(pooled) =>
-          pooled.leakDetection.get.flatMap(_.traverse_(fiber => fiber.cancel)) >>
-            pooled.leakDetection.set(None) >>
-            pooled.state.set(ConnectionState.Idle) >>
-            resetConnection(pooled.connection).attempt.flatMap {
-              case Right(_) =>
-                for
-                  shouldValidate <- needsValidation(pooled)
-                  valid          <-
-                    if shouldValidate then
-                      validateConnection(pooled.connection).flatTap {
-                        case true  => F.unit
-                        case false =>
-                          poolLogger.warn(s"Connection ${ pooled.id } failed validation on release, removing from pool")
-                      }
-                    else pooled.connection.isClosed().map(!_)
-                  expired <- isExpired(pooled)
-                  _       <-
-                    if valid && !expired then
-                      connectionBag.requite(pooled) *>
-                        poolState.update(s => s.copy(idleConnections = s.idleConnections + pooled.id)) *>
-                        recordUse
-                    else removeConnection(pooled) *> recordUse
-                yield ()
-              case Left(error) =>
-                poolLogger.warn(s"Failed to reset connection ${ pooled.id } on release: ${ error.getMessage }") >>
-                  removeConnection(pooled) *> recordUse
-            }
-        case None => recordUse
-      }
+      pooled.leakDetection.get.flatMap(_.traverse_(fiber => fiber.cancel)) >>
+        pooled.leakDetection.set(None) >>
+        pooled.state.set(ConnectionState.Idle) >>
+        proxy.resetState.attempt.flatMap {
+          case Right(_) =>
+            for
+              shouldValidate <- needsValidation(pooled)
+              valid          <-
+                if shouldValidate then
+                  validateConnection(pooled.connection).flatTap {
+                    case true  => F.unit
+                    case false =>
+                      poolLogger.warn(s"Connection ${ pooled.id } failed validation on release, removing from pool")
+                  }
+                else pooled.connection.isClosed().map(!_)
+              expired <- isExpired(pooled)
+              _       <-
+                if valid && !expired then
+                  connectionBag.requite(pooled) *>
+                    poolState.update(s => s.copy(idleConnections = s.idleConnections + pooled.id)) *>
+                    recordUse
+                else removeConnection(pooled) *> recordUse
+            yield ()
+          case Left(error) =>
+            poolLogger.warn(s"Failed to reset connection ${ pooled.id } on release: ${ error.getMessage }") >>
+              removeConnection(pooled) *> recordUse
+        }
 
     override def requestNewConnection(): F[Unit] =
       reserveSlot.flatMap {
@@ -563,11 +556,6 @@ object PooledDataSource:
         case true  => runCreation.flatMap(_.fold(F.raiseError[Unit], _ => F.unit))
       }
 
-    private def resetConnection(conn: Connection[F]): F[Unit] = for
-      _ <- conn.rollback().attempt.void
-      _ <- conn.setAutoCommit(true).attempt.void
-    yield ()
-
     override def validateConnection(conn: Connection[F]): F[Boolean] =
       val timeoutError = new SQLException(s"Connection validation timed out after ${ config.validationTimeout }")
       val validation   = connectionTestQuery match
@@ -653,13 +641,8 @@ object PooledDataSource:
       _ <- metricsTracker.recordRemoval()
     yield ()
 
-    private def wrapConnection(pooled: PooledConnection[F]): Connection[F] =
+    private def wrapConnection(pooled: PooledConnection[F]): ConnectionProxy[F] =
       new ConnectionProxy[F](pooled, release)
-
-    private def unwrapConnection(conn: Connection[F]): Connection[F] =
-      conn match
-        case proxy: ConnectionProxy[F] @unchecked => proxy.pooled.connection
-        case _                                    => conn
 
   /**
    * The default connection-id generator: a random version-4 UUID string, built from `scala.util.Random`
