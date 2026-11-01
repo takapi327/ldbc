@@ -53,7 +53,9 @@ class PoolRecoveryTest extends FTestPlatform:
     yield id
 
   private def killOwnSession(conn: SqlConnection[IO]): IO[Unit] =
-    connectionId(conn).flatMap(id => admin.use(_.createStatement().flatMap(_.executeUpdate(s"KILL CONNECTION $id")))).void
+    connectionId(conn)
+      .flatMap(id => admin.use(_.createStatement().flatMap(_.executeUpdate(s"KILL CONNECTION $id"))))
+      .void
 
   test("a borrower is served without waiting for the timeout when the pool has room for another connection") {
     PooledDataSource.fromConfig[IO](config).use { datasource =>
@@ -66,10 +68,10 @@ class PoolRecoveryTest extends FTestPlatform:
   test("a waiting borrower is served promptly when the connection in use is discarded") {
     PooledDataSource.fromConfig[IO](config).use { datasource =>
       for
-        holding  <- Deferred[IO, Unit]
-        waiting  <- datasource.use { conn =>
-                      conn.setAutoCommit(false) *> holding.complete(()) *> IO.sleep(1.second) *> killOwnSession(conn)
-                    }.start
+        holding <- Deferred[IO, Unit]
+        waiting <- datasource.use { conn =>
+                     conn.setAutoCommit(false) *> holding.complete(()) *> IO.sleep(1.second) *> killOwnSession(conn)
+                   }.start
         _        <- holding.get
         borrower <- (IO.sleep(200.millis) *> datasource.use(connectionId).timed).start
         _        <- waiting.joinWithNever

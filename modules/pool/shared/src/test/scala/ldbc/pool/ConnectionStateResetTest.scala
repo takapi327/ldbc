@@ -35,18 +35,18 @@ final class SessionConnection(
 
   export base.{
     createStatement as _,
-    prepareStatement as _,
-    prepareCall as _,
-    setAutoCommit as _,
-    rollback as _,
-    isReadOnly as _,
-    setReadOnly as _,
-    getTransactionIsolation as _,
-    setTransactionIsolation as _,
     getCatalog as _,
-    setCatalog as _,
     getSchema as _,
+    getTransactionIsolation as _,
+    isReadOnly as _,
+    prepareCall as _,
+    prepareStatement as _,
+    rollback as _,
+    setAutoCommit as _,
+    setCatalog as _,
+    setReadOnly as _,
     setSchema as _,
+    setTransactionIsolation as _,
     *
   }
 
