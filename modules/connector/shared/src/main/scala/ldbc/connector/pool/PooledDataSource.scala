@@ -322,7 +322,6 @@ object PooledDataSource:
 
     private def checkout(pooled: PooledConnection[F], startTime: FiniteDuration): F[ProxyConnection[F]] =
       for
-        // Check if validation is needed
         shouldValidate <- needsValidation(pooled)
         valid          <- if shouldValidate then {
                    validateConnection(pooled.connection).flatTap {
@@ -332,12 +331,10 @@ object PooledDataSource:
                    }
                  } else Temporal[F].pure(true)
         result <- if !valid then {
-                    // Connection is invalid, remove it and try again
                     removeConnection(pooled) >> acquireConnectionWithStartTime(startTime)
                   } else
                     for
-                      _ <- pooled.state.set(ConnectionState.InUse)
-                      // Remove from idleConnections when acquired
+                      _       <- pooled.state.set(ConnectionState.InUse)
                       _       <- poolState.update(s => s.copy(idleConnections = s.idleConnections - pooled.id))
                       now     <- Clock[F].realTime.map(_.toMillis)
                       _       <- pooled.lastUsedAt.set(now)
@@ -345,8 +342,7 @@ object PooledDataSource:
                       endTime <- Clock[F].monotonic
                       _       <- metricsTracker.recordAcquisition(endTime - startTime)
                       _       <- databaseMetrics.recordConnectionWaitTime(endTime - startTime, poolName)
-                      // Start leak detection if configured
-                      _ <- leakDetectionThreshold.traverse_ { threshold =>
+                      _       <- leakDetectionThreshold.traverse_ { threshold =>
                              val leakFiber = Temporal[F]
                                .sleep(threshold)
                                .flatMap { _ =>
@@ -387,7 +383,7 @@ object PooledDataSource:
     /**
      * Releases a connection back to the pool, recording the start time for use-time metrics.
      *
-     * @param conn the connection being released
+     * @param proxy the connection being released
      */
     private def release(proxy: ProxyConnection[F]): F[Unit] = for
       startTime <- Clock[F].monotonic
@@ -406,14 +402,12 @@ object PooledDataSource:
     private def releaseConnectionWithStartTime(proxy: ProxyConnection[F], startTime: FiniteDuration): F[Unit] =
       val pooled = proxy.pooled
 
-      // Cancel leak detection
       pooled.leakDetection.get.flatMap(_.traverse_(_.cancel)) >>
         pooled.leakDetection.set(None) >>
         pooled.state.set(ConnectionState.Idle) >>
         proxy.resetState.attempt.flatMap {
           case Right(_) =>
             for
-              // Skip validation if connection was recently validated
               shouldValidate <- needsValidation(pooled)
               valid          <- if shouldValidate then {
                          validateConnection(pooled.connection).flatTap {
@@ -426,9 +420,6 @@ object PooledDataSource:
                        } else Temporal[F].pure(true)
               expired <- isExpired(pooled)
               _       <- if valid && !expired then {
-                     // Return to bag for reuse, then add to idleConnections
-                     // Order matters: requite first to ensure connection is actually returned,
-                     // then update idleConnections to maintain consistency
                      connectionBag.requite(pooled) *>
                        poolState.update(s => s.copy(idleConnections = s.idleConnections + pooled.id)) *>
                        Clock[F].monotonic.flatMap { endTime =>
@@ -436,7 +427,6 @@ object PooledDataSource:
                            databaseMetrics.recordConnectionUseTime(endTime - startTime, poolName)
                        }
                    } else
-                     // Invalid or expired, remove from pool
                      removeConnection(pooled) *>
                        Clock[F].monotonic.flatMap { endTime =>
                          metricsTracker.recordUsage(endTime - startTime) *>
@@ -444,7 +434,6 @@ object PooledDataSource:
                        }
             yield ()
           case Left(error) =>
-            // Reset failed, remove from pool
             poolLogger.warn(s"Failed to reset connection ${ pooled.id } on release: ${ error.getMessage }") >>
               removeConnection(pooled) *>
               Clock[F].monotonic.flatMap { endTime =>
