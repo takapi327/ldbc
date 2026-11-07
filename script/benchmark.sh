@@ -121,6 +121,7 @@ done
     TARGETS=(
         'jdbc'
         'ldbc'
+        'mysql'
         'doobie'
         'slick'
     )

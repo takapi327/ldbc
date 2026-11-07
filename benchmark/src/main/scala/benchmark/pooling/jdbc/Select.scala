@@ -26,8 +26,6 @@ import ldbc.connector.syntax.*
 
 import jdbc.connector.*
 
-import ldbc.DataSource
-
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
 @State(Scope.Benchmark)
@@ -101,7 +99,7 @@ class Select:
 
   @Benchmark
   def statement: List[BenchmarkType] =
-    datasource._1.getConnection
+    datasource._1
       .use { conn =>
         for
           statement <- conn.createStatement()
@@ -114,7 +112,7 @@ class Select:
 
   @Benchmark
   def prepareStatement: List[BenchmarkType] =
-    datasource._1.getConnection
+    datasource._1
       .use { conn =>
         for
           statement <- conn.prepareStatement("SELECT * FROM jdbc_prepare_statement_test LIMIT ?")

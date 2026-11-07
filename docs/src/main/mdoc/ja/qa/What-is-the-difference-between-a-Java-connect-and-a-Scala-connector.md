@@ -5,7 +5,7 @@
 
 # Q: JavaのコネクトとScalaのコネクタの違いは何ですか？
 
-## A: Javaのコネクト（jdbc-connector）とScalaのコネクタ（ldbc-connector）は、どちらもデータベースへの接続を提供しますが、以下の点で異なります。
+## A: Javaのコネクト（jdbc-connector）とScalaのコネクタ（ldbc-mysql）は、どちらもデータベースへの接続を提供しますが、以下の点で異なります。
 
 ### A: Javaのコネクト（jdbc-connector）
 Javaのコネクトは、従来のJDBC APIを利用してデータベースに接続します。  
@@ -30,19 +30,21 @@ val connector = Connector.fromDataSource[IO](ds, ExecutionContexts.synchronous)
 DBIO.pure(()).commit(connector)
 ```
 
-### A: Scalaのコネクタ（ldbc-connector）
+### A: Scalaのコネクタ（ldbc-mysql）
 Scalaのコネクタは、型安全性と関数型プログラミングを活かしてデータベース接続を管理します。  
 - Cats Effectの`Resource`や`IO`を利用し、接続の獲得・解放が安全に行えます。  
 - DSLやクエリビルダーと組み合わせることで、直感的なコードでデータ操作が可能です。  
-- また、ldbc-connectorはJVMだけでなく、Scala.jsやScala NativeといったJVM以外のプラットフォームでも動作します。  
+- また、ldbc-mysqlはJVMだけでなく、Scala.jsやScala NativeといったJVM以外のプラットフォームでも動作します。  
   これにより、クロスプラットフォームな開発環境でのデータベース接続が容易に実現できます。
 
 ```scala
 import cats.effect.IO
-import ldbc.connector.*
+import ldbc.mysql.*
+import ldbc.net.SSL
+import ldbc.catseffect.*
 import ldbc.dsl.DBIO
 
-// ldbc-connectorを利用してデータソースを作成する例（JVM, Scala.js, Scala Native対応）
+// ldbc-mysqlを利用してデータソースを作成する例（JVM, Scala.js, Scala Native対応）
 val datasource = MySQLDataSource
   .build[IO]("127.0.0.1", 3306, "ldbc")
   .setPassword("password")

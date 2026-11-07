@@ -1,0 +1,30 @@
+/**
+ * Copyright (c) 2023-2026 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
+
+package ldbc.mysql.net.packet
+package request
+
+import scodec.*
+import scodec.bits.BitVector
+
+import ldbc.mysql.data.CommandId
+
+case class ComStmtPreparePacket(query: String) extends RequestPacket:
+
+  override protected def encodeBody: Attempt[BitVector] =
+    ComStmtPreparePacket.encoder.encode(this)
+
+  override def encode: BitVector = encodeBody.require
+
+  override def toString: String = "COM_STMT_PREPARE Request"
+
+object ComStmtPreparePacket:
+
+  val encoder: Encoder[ComStmtPreparePacket] = Encoder { comStmtPrepare =>
+    Attempt.successful(
+      BitVector(CommandId.COM_STMT_PREPARE) ++ nullTerminatedStringCodec.encode(comStmtPrepare.query).require
+    )
+  }
