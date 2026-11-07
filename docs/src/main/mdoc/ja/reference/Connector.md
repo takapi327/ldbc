@@ -225,6 +225,10 @@ datasource.getConnection.use { conn =>
 
 ※ これらのメソッドはSQL文を文字列として組み立てる場合の補助です。動的な値を扱う場合は、`PreparedStatement`のパラメーターを使用してください。
 
+@:callout(warning)
+`enquoteIdentifier`は値が識別子の外に抜け出すことを防ぎますが、どのテーブルやカラムを参照するかは制限しません。信頼できない入力を渡さず、アプリケーション側でユーザー入力を固定の許可リストの識別子に対応付けてください。
+@:@
+
 ### Client/Server PreparedStatement
 
 ldbcでは`PreparedStatement`を`Client PreparedStatement`と`Server PreparedStatement`に分けて提供しています。

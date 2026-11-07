@@ -225,6 +225,10 @@ When the `ANSI_QUOTES` sql_mode is enabled, the identifier quote character is `"
 
 Note: these methods are a helper for assembling SQL as a string. For dynamic values, use the parameters of `PreparedStatement`.
 
+@:callout(warning)
+`enquoteIdentifier` prevents a value from breaking out of the identifier, but it does not restrict which table or column is referenced. Do not pass untrusted input to it; map user input to a fixed allowlist of identifiers in the application instead.
+@:@
+
 ### Client/Server PreparedStatement
 
 ldbc provides `PreparedStatement` divided into `Client PreparedStatement` and `Server PreparedStatement`.
