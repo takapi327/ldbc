@@ -388,10 +388,10 @@ lazy val zioInterop = crossProject(JVMPlatform, JSPlatform)
   .module("zio-interop", "Projects that provide a way to connect to the database for ZIO")
   .settings(
     libraryDependencies ++= Seq(
-      "dev.zio" %%% "zio"              % "2.1.26",
+      "dev.zio" %%% "zio"              % "2.1.27",
       "dev.zio" %%% "zio-interop-cats" % "23.1.0.13",
-      "dev.zio" %%% "zio-test"         % "2.1.26" % Test,
-      "dev.zio" %%% "zio-test-sbt"     % "2.1.26" % Test
+      "dev.zio" %%% "zio-test"         % "2.1.27" % Test,
+      "dev.zio" %%% "zio-test-sbt"     % "2.1.27" % Test
     )
   )
   .jsSettings(
@@ -475,7 +475,7 @@ lazy val http4sExample = crossProject(JVMPlatform)
       "org.http4s"    %% "http4s-dsl"          % "0.23.38",
       "org.http4s"    %% "http4s-ember-server" % "0.23.38",
       "org.http4s"    %% "http4s-circe"        % "0.23.38",
-      "ch.qos.logback" % "logback-classic"     % "1.6.5",
+      "ch.qos.logback" % "logback-classic"     % "1.6.6",
       "io.circe"      %% "circe-generic"       % "0.14.10"
     )
   )
