@@ -11,7 +11,7 @@ Logging is an important part of understanding application behavior and diagnosin
 
 ldbc can export execution and error logs of database connections in any format using any logging library.
 
-By default, a logger using Cats Effect's Console is provided, which can be used during development.
+A logger using Cats Effect's Console is provided for use during development. It is not enabled by default: unless you set a `LogHandler`, ldbc does not log query execution.
 
 To customize logging using an arbitrary logging library, use `ldbc.logging.LogHandler`.
 
@@ -49,6 +49,10 @@ def console[F[_]: Console: Sync]: LogHandler[F] =
          |""".stripMargin
     ) >> Console[F].printStackTrace(failure)
 ```
+
+@:callout(warning)
+`args` contains the values bound to the query parameters, which may include personal data, passwords, or tokens. The example above writes them out as-is, which is intended for development only. In production, do not log `args`, or mask sensitive values before logging them. What a `LogHandler` writes is the application's responsibility.
+@:@
 
 The created `LogHandler` can be passed as the second argument when creating a `Connector` to use any log output method.
 

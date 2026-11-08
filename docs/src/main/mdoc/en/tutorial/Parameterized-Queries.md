@@ -221,7 +221,12 @@ val table = "user"
 sql"SELECT * FROM ${ident(schema)}.${ident(table)}"
 ```
 
-> **Note**: While `ident` escapes with backticks, it is recommended to use it only with trusted values (constants, configuration values, etc.). Avoid using user input directly as identifiers. If you want to validate a value as an identifier beforehand, use `isSimpleIdentifier` described below.
+@:callout(warning)
+**Do not pass untrusted input to `ident`.**
+`ident` escapes backticks, so the value cannot break out of the identifier and change the structure of the SQL statement. It does not, however, restrict *which* identifier is referenced: if user input is passed to `ident`, the user can choose any table or column that the database user has access to.
+
+Use `ident` only with trusted values (constants, configuration values, etc.). When the identifier has to depend on user input, map the input to a fixed allowlist of identifiers in the application instead of passing it through. `isSimpleIdentifier`, described below, checks only that a value is well-formed as an identifier; it is not an authorization check.
+@:@
 
 ## Parameter Escaping and sql_mode
 
