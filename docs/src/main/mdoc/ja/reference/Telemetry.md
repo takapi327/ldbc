@@ -11,12 +11,16 @@ OpenTelemetryバックエンドを接続しない場合、トレースとメト�
 
 ## 依存関係
 
-ldbc-connectorは`otel4s-core`（抽象API）のみに依存しています。実際にテレメトリデータを収集・送信するには、バックエンド実装を追加する必要があります。
+0.9.x では、テレメトリの SPI（`Tracer`/`Meter`）を DB 非依存の`ldbc-telemetry`が定義し、そのバックエンドを別モジュールで差し込みます。Cats Effect（`IO`）で otel4s を使う場合は`ldbc-otel4s`を追加します（`ldbc-telemetry`は`ldbc-mysql`が推移的に導入します）。実際にテレメトリデータを収集・送信するには、さらに OpenTelemetry の SDK バックエンドを追加します。
 
 ```scala
 libraryDependencies ++= Seq(
-  // ldbcコネクタ（otel4s-coreを含む）
-  "@ORGANIZATION@" %% "ldbc-connector" % "@VERSION@",
+  // MySQL ドライバと Cats Effect ブリッジ
+  "@ORGANIZATION@" %% "ldbc-mysql"       % "@VERSION@",
+  "@ORGANIZATION@" %% "ldbc-cats-effect" % "@VERSION@",
+
+  // ldbc.telemetry SPI の otel4s バックエンド
+  "@ORGANIZATION@" %% "ldbc-otel4s"      % "@VERSION@",
 
   // OpenTelemetry Java SDKバックエンド
   "org.typelevel"    %% "otel4s-oteljava"                           % "0.15.1",
@@ -25,52 +29,81 @@ libraryDependencies ++= Seq(
 )
 ```
 
+> ZIO（`Task`）で使う場合は、`ldbc-cats-effect`/`ldbc-otel4s`の代わりに`ldbc-zio`と`ldbc-zio-telemetry`（JVM のみ）を追加します。トレース・メトリクスとも同じ内容が収集されます。
+>
+> ZIO では`ZioTelemetry.meterProvider`に zio-telemetry の`Meter`を渡します。`ldbc.effect.Concurrent[Task]`が必要なので`import ldbc.zio.given`をあわせて書いてください。
+>
+> ```scala
+> import ldbc.zio.given
+> import ldbc.ziotelemetry.ZioTelemetry
+>
+> ZIO.serviceWithZIO[zio.telemetry.opentelemetry.metrics.Meter] { zmeter =>
+>   ZioTelemetry.meterProvider(zmeter).meter("ldbc").get.map { meter =>
+>     MySQLDataSource.build[Task](...).setMeter(meter)
+>   }
+> }
+> ```
+>
+> **otel4s との差**:
+>
+> - zio-telemetry には batch callback API がないため、プール状態のゲージ 5 つは個別の observable として登録されます。各ゲージがエクスポート時にそれぞれプール状態を読むので、5 つの値が厳密に同一スナップショットにならないことがあります（otel4s は 1 回の読み取りを 5 値で共有します）。
+> - zio-telemetry の`Meter`はレイヤー構築時に instrumentation scope（名前・バージョン・schema URL）を確定するため、`MeterBuilder`の`withVersion`/`withSchemaUrl`と`meter(name)`の名前は**受け取っても無視されます**。scope は`OpenTelemetry.metrics("...")`で指定したものになり、ldbc のバージョンや schema URL は付きません。otel4s 側はこれらを反映します。
+
+なお、instrument の名前・単位・説明・バケット境界は`ldbc-telemetry`の`DbMetricSpecs`に定義されており、`ldbc-otel4s`と`ldbc-zio-telemetry`の双方がこれを参照します。バックエンドを切り替えても同じメトリクスが同じ定義で出ます。
+
 ## セットアップ
 
-`Tracer[F]`と`Meter[F]`を`MySQLDataSource`に設定します。
+otel4s の`TracerProvider`/`MeterProvider`を`Otel4sTelemetry`で`ldbc.telemetry`の SPI に変換し、`MySQLDataSource.withTraced`に渡します。`withTraced`は取得したトレーサー・メーターを設定済みの`MySQLDataSource`を返します。
 
 ```scala
 import cats.effect.*
 import io.opentelemetry.api.GlobalOpenTelemetry
 import org.typelevel.otel4s.oteljava.OtelJava
-import ldbc.connector.*
+import ldbc.mysql.{ MySQLConfig, MySQLDataSource }
+import ldbc.mysql.syntax.*
+import ldbc.catseffect.*
+import ldbc.otel4s.Otel4sTelemetry
 
 object Main extends IOApp.Simple:
 
   override def run: IO[Unit] =
     val resource = for
-      otel   <- Resource
-                   .eval(IO.delay(GlobalOpenTelemetry.get))
-                   .evalMap(OtelJava.forAsync[IO])
-      tracer <- Resource.eval(otel.tracerProvider.get("my-app"))
-      meter  <- Resource.eval(otel.meterProvider.get("my-app"))
-      datasource = MySQLDataSource
-                     .build[IO]("127.0.0.1", 3306, "user")
-                     .setPassword("password")
-                     .setDatabase("mydb")
-                     .setTracer(tracer)
-                     .setMeter(meter)
-      connection <- datasource.getConnection
-    yield connection
+      otel <- Resource
+                .eval(IO.delay(GlobalOpenTelemetry.get))
+                .evalMap(OtelJava.forAsync[IO])
+      datasource <- Resource.eval(
+                      MySQLDataSource.withTraced[IO](
+                        MySQLConfig.default
+                          .setHost("127.0.0.1")
+                          .setPort(3306)
+                          .setUser("user")
+                          .setPassword("password")
+                          .setDatabase("mydb"),
+                        tracerProvider = Otel4sTelemetry.tracerProvider(otel.tracerProvider),
+                        meterProvider  = Otel4sTelemetry.meterProvider(otel.meterProvider)
+                      )
+                    )
+    yield datasource
 
-    resource.use { conn =>
-      conn.createStatement().flatMap(_.executeQuery("SELECT 1")).void
+    resource.use { datasource =>
+      datasource.use { conn =>
+        conn.createStatement().flatMap(_.executeQuery("SELECT 1")).void
+      }
     }
 ```
 
-コネクションプーリング使用時は`meter`を`pooling`メソッドに渡します。
+個別に設定したい場合は、変換した`TracerProvider`/`MeterProvider`から`Tracer`/`Meter`を取得して`setTracer`/`setMeter`に渡すこともできます。
 
 ```scala
-val pool = MySQLDataSource.pooling[IO](
-  config = MySQLConfig.default
-    .setHost("127.0.0.1")
-    .setPort(3306)
-    .setUser("user")
-    .setPassword("password")
-    .setDatabase("mydb"),
-  meter  = Some(meter),
-  tracer = Some(tracer)
-)
+for
+  tracer <- Otel4sTelemetry.tracerProvider(otel.tracerProvider).tracer("my-app").get
+  meter  <- Otel4sTelemetry.meterProvider(otel.meterProvider).meter("my-app").get
+yield MySQLDataSource
+  .build[IO]("127.0.0.1", 3306, "user")
+  .setPassword("password")
+  .setDatabase("mydb")
+  .setTracer(tracer)
+  .setMeter(meter)
 ```
 
 ## トレーシング
@@ -138,7 +171,7 @@ ldbcは、データベース操作ごとにOpenTelemetryスパンを生成しま
 `TelemetryConfig`を使用して、テレメトリの動作をカスタマイズできます。
 
 ```scala
-import ldbc.connector.telemetry.TelemetryConfig
+import ldbc.telemetry.TelemetryConfig
 
 // デフォルト設定（すべて有効）
 val default = TelemetryConfig.default
@@ -242,7 +275,34 @@ ldbcは[OpenTelemetry Database Metrics Semantic Conventions](https://opentelemet
 
 ### コネクションプールメトリクス
 
-コネクションプーリング（`PooledDataSource`）使用時にのみ記録されます。すべてのメトリクスは`db.client.connection.pool.name`属性を持ちます。
+コネクションプーリング使用時にのみ記録されます。すべてのメトリクスは`db.client.connection.pool.name`属性を持ちます。
+
+`ldbc-pool`（エフェクト非依存のプール）と`ldbc.connector.pool.PooledDataSource`（従来の Cats Effect 版）のどちらでも記録されます。
+
+`ldbc-pool`では、プールのファクトリに`Meter`を渡すことで有効になります。ドライバのオペレーションメトリクスとは独立して設定するため、両方を収集する場合は`MySQLDataSource`と`PooledDataSource`の両方に同じ`Meter`を渡してください。
+
+```scala
+val meter = ... // Otel4sTelemetry.meterProvider(...).meter("ldbc").get で取得
+
+val datasource = MySQLDataSource.fromConfig[IO](config).setMeter(meter) // オペレーションメトリクス
+val pool       = PooledDataSource.fromDataSource[IO](
+  poolConfig,
+  datasource,
+  meter = Some(meter)                                                    // プールメトリクス
+)
+```
+
+`meter`を省略した場合、プールメトリクスは no-op になります（プール自体の動作には影響しません）。インメモリのプール統計は`Meter`の有無にかかわらず`pool.metrics`/`pool.status`から取得できます。
+
+@:callout(info)
+
+**同じ`Meter`を 2 か所に渡すことについて**
+
+`ldbc-pool`はデータベース非依存のモジュールで`MySQLDataSource`の設定を参照できないため、`Meter`はデータソースとプールの両方に渡す必要があります。その結果、instrument のセットは 2 組作られます。
+
+OpenTelemetry の instrument は名前で同定され、同名・同記述子であれば同じ時系列に集約されるため、出力されるメトリクスは正しく、二重計上にもなりません。
+
+@:@
 
 #### Histogram メトリクス
 

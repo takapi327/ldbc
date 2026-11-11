@@ -15,8 +15,12 @@ ldbcでOpenTelemetryを使用するには、以下の依存関係をプロジェ
 
 ```scala
 libraryDependencies ++= Seq(
-  // ldbcコネクタ（otel4s-coreを含む）
-  "@ORGANIZATION@" %% "ldbc-connector" % "@VERSION@",
+  // MySQL ドライバと Cats Effect ブリッジ
+  "@ORGANIZATION@" %% "ldbc-mysql"       % "@VERSION@",
+  "@ORGANIZATION@" %% "ldbc-cats-effect" % "@VERSION@",
+
+  // ldbc.telemetry SPI の otel4s バックエンド
+  "@ORGANIZATION@" %% "ldbc-otel4s"      % "@VERSION@",
 
   // otel4sライブラリ（OpenTelemetryのScala向けラッパー）
   "org.typelevel"    %% "otel4s-oteljava"                           % "0.15.1",
@@ -37,8 +41,11 @@ libraryDependencies ++= Seq(
 import cats.effect.*
 import io.opentelemetry.api.GlobalOpenTelemetry
 import org.typelevel.otel4s.oteljava.OtelJava
-import ldbc.connector.*
 import ldbc.dsl.*
+import ldbc.mysql.MySQLDataSource
+import ldbc.net.SSL
+import ldbc.catseffect.*
+import ldbc.otel4s.Otel4sTelemetry
 
 val serviceName = "my-ldbc-app"
 
@@ -47,8 +54,8 @@ val resource: Resource[IO, Connector[IO]] =
     otel   <- Resource
                 .eval(IO.delay(GlobalOpenTelemetry.get))
                 .evalMap(OtelJava.forAsync[IO])
-    tracer <- Resource.eval(otel.tracerProvider.get(serviceName))
-    meter  <- Resource.eval(otel.meterProvider.get(serviceName))
+    tracer <- Resource.eval(Otel4sTelemetry.tracerProvider(otel.tracerProvider).tracer(serviceName).get)
+    meter  <- Resource.eval(Otel4sTelemetry.meterProvider(otel.meterProvider).meter(serviceName).get)
     datasource = MySQLDataSource
                    .build[IO]("localhost", 3306, "user")
                    .setPassword("password")
@@ -77,31 +84,42 @@ val metricsOnly = MySQLDataSource.build[IO]("localhost", 3306, "user")
 
 ## コネクションプールとメトリクス
 
-コネクションプーリング使用時は `pooling` メソッドに `meter` を渡すことで、プールのメトリクス（接続待機時間・使用時間・タイムアウト件数など）が自動収集されます。
+トレーサー・メーターを設定した`MySQLDataSource`を`PooledDataSource`に渡し、プール側にも同じ`Meter`を渡すと、クエリのオペレーションメトリクスとプールのメトリクス（接続待機時間・使用時間・タイムアウト件数・プール状態ゲージ）の両方が収集されます。
+
+`Meter`を 2 か所に渡すのは、`ldbc-pool`が特定のドライバに依存しない独立モジュールであり、`MySQLDataSource`の設定を覗けないためです。
 
 ```scala
-import ldbc.connector.*
+import ldbc.catseffect.*
+import ldbc.mysql.MySQLDataSource
+import ldbc.net.SSL
+import ldbc.pool.{ ConnectionPoolConfig, PooledDataSource }
 
-val pool = MySQLDataSource.pooling[IO](
-  config = MySQLConfig.default
-    .setHost("127.0.0.1")
-    .setPort(3306)
-    .setUser("user")
-    .setPassword("password")
-    .setDatabase("mydb"),
-  meter  = Some(meter),
-  tracer = Some(tracer)
-)
+val datasource = MySQLDataSource
+  .build[IO]("127.0.0.1", 3306, "user")
+  .setPassword("password")
+  .setDatabase("mydb")
+  .setSSL(SSL.Trusted)
+  .setTracer(tracer)
+  .setMeter(meter)
+
+val poolConfig = ConnectionPoolConfig(minConnections = 2, maxConnections = 10)
+
+// PooledDataSource.fromDataSource は ldbc.effect.Resource を返します。
+// Cats Effect の Resource として扱う場合は toIOResource で変換します。
+val pool: cats.effect.Resource[IO, PooledDataSource[IO]] =
+  toIOResource(
+    PooledDataSource.fromDataSource[IO](poolConfig, datasource, meter = Some(meter))
+  )
 ```
 
-収集されるプールメトリクスの一覧については [テレメトリリファレンス - コネクションプールメトリクス](../reference/Telemetry.md) を参照してください。
+収集されるメトリクスの一覧については [テレメトリリファレンス - メトリクス](../reference/Telemetry.md) を参照してください。
 
 ## TelemetryConfig によるカスタマイズ
 
 `TelemetryConfig`を使用して、テレメトリの動作を制御できます。
 
 ```scala
-import ldbc.connector.telemetry.TelemetryConfig
+import ldbc.telemetry.TelemetryConfig
 
 // デフォルト設定（仕様準拠・すべて有効）
 val config = TelemetryConfig.default
@@ -158,8 +176,11 @@ otel-example/
 import cats.effect.*
 import io.opentelemetry.api.GlobalOpenTelemetry
 import org.typelevel.otel4s.oteljava.OtelJava
-import ldbc.connector.*
 import ldbc.dsl.*
+import ldbc.mysql.MySQLDataSource
+import ldbc.net.SSL
+import ldbc.catseffect.*
+import ldbc.otel4s.Otel4sTelemetry
 
 object Main extends IOApp.Simple:
 
@@ -170,8 +191,8 @@ object Main extends IOApp.Simple:
       otel   <- Resource
                   .eval(IO.delay(GlobalOpenTelemetry.get))
                   .evalMap(OtelJava.forAsync[IO])
-      tracer <- Resource.eval(otel.tracerProvider.get(serviceName))
-      meter  <- Resource.eval(otel.meterProvider.get(serviceName))
+      tracer <- Resource.eval(Otel4sTelemetry.tracerProvider(otel.tracerProvider).tracer(serviceName).get)
+      meter  <- Resource.eval(Otel4sTelemetry.meterProvider(otel.meterProvider).meter(serviceName).get)
       datasource = MySQLDataSource
                      .build[IO]("127.0.0.1", 13306, "ldbc")
                      .setPassword("password")

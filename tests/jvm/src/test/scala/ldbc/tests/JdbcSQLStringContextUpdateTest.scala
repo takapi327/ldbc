@@ -12,7 +12,7 @@ import cats.effect.*
 
 import jdbc.connector.*
 
-class JdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest:
+class JdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest[IO] with IODatabaseSuite:
 
   val ds = new MysqlDataSource()
   ds.setServerName(MySQLTestConfig.host)
@@ -24,8 +24,8 @@ class JdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest:
 
   override def prefix: "jdbc" | "ldbc" = "jdbc"
 
-  override def connection: ConnectionFixture =
-    JdbcConnectionFixture(
+  override def connection: ConnectionFixture[IO] =
+    ConnectionFixture(
       "connection",
       MySQLDataSource.fromDataSource(ds, ExecutionContexts.synchronous)
     )

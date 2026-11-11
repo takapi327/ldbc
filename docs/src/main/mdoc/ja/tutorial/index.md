@@ -22,7 +22,9 @@ ldbcは、Scala 3で書かれたタイプセーフなMySQLデータベースク�
 ```scala 3
 import cats.effect.*
 import cats.syntax.all.*
-import ldbc.connector.*
+import ldbc.mysql.MySQLDataSource
+import ldbc.net.SSL
+import ldbc.catseffect.*
 import ldbc.dsl.*
 
 // データベース接続の設定

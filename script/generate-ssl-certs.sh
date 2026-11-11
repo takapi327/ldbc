@@ -4,7 +4,7 @@
 mkdir -p ./database/ssl
 cd ./database/ssl
 
-RESOURCES_DIR="../../module/ldbc-connector/shared/src/test/resources"
+RESOURCES_DIR="../../modules/connector/shared/src/test/resources"
 mkdir -p "$RESOURCES_DIR"
 
 # CA certificate and key generation

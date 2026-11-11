@@ -8,18 +8,24 @@ package ldbc.tests
 
 import scala.concurrent.duration.*
 
+import cats.syntax.all.*
+
 import cats.effect.*
 
 import munit.*
 
 import ldbc.sql.*
+import ldbc.sql.DataSource
 
 import ldbc.connector.*
-import ldbc.connector.syntax.*
 
-import ldbc.DataSource
+import ldbc.effect.Concurrent
+import ldbc.fx.Fx
+import ldbc.mysql.syntax.*
 
-class LdbcServerCursorFetchTest extends ServerCursorFetchTest:
+import zio.Task
+
+class LdbcServerCursorFetchTest extends ServerCursorFetchTest[IO] with IOAsyncDatabaseSuite:
 
   // In case of Scala.js, timeout occurs when FetchSize: 1, so it is necessary to extend the time.
   override def munitIOTimeout: Duration = 80.seconds
@@ -31,7 +37,52 @@ class LdbcServerCursorFetchTest extends ServerCursorFetchTest:
     .setSSL(SSL.Trusted)
     .setUseCursorFetch(true)
 
-trait ServerCursorFetchTest extends CatsEffectSuite:
+class MysqlServerCursorFetchTest extends ServerCursorFetchTest[IO] with IOAsyncDatabaseSuite:
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
+
+  override def munitIOTimeout: Duration = 80.seconds
+
+  override def datasource: DataSource[IO] = MySQLDataSource
+    .build[IO](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+    .setPassword(MySQLTestConfig.password)
+    .setDatabase("world")
+    .setSSL(MysqlSSL.Trusted)
+    .setUseCursorFetch(true)
+
+class MysqlFxServerCursorFetchTest extends ServerCursorFetchTest[Fx] with FxAsyncDatabaseSuite:
+  import scala.concurrent.duration.*
+
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
+
+  override def munitTimeout: Duration = 80.seconds
+
+  override def datasource: DataSource[Fx] =
+    MySQLDataSource
+      .build[Fx](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+      .setPassword(MySQLTestConfig.password)
+      .setDatabase("world")
+      .setSSL(MysqlSSL.Trusted)
+      .setUseCursorFetch(true)
+
+class MysqlZioServerCursorFetchTest extends ServerCursorFetchTest[Task] with ZioAsyncDatabaseSuite:
+  import scala.concurrent.duration.*
+
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
+
+  override def munitTimeout: Duration = 80.seconds
+
+  override def datasource: DataSource[Task] =
+    MySQLDataSource
+      .build[Task](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+      .setPassword(MySQLTestConfig.password)
+      .setDatabase("world")
+      .setSSL(MysqlSSL.Trusted)
+      .setUseCursorFetch(true)
+
+trait ServerCursorFetchTest[F[_]] extends DatabaseSuite[F]:
 
   protected val host:     String = MySQLTestConfig.host
   protected val port:     Int    = MySQLTestConfig.port
@@ -39,11 +90,13 @@ trait ServerCursorFetchTest extends CatsEffectSuite:
   protected val password: String = MySQLTestConfig.password
   protected val database: String = "world"
 
-  def datasource: DataSource[IO]
+  protected given concurrent: Concurrent[F]
+
+  def datasource: DataSource[F]
 
   test("Statement: Query result retrieval using server cursor matches the specified number of results.") {
-    assertIO(
-      datasource.getConnection.use { conn =>
+    assertF(
+      datasource.use { conn =>
         for
           statement <- conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
           _         <- statement.setFetchSize(1)
@@ -58,8 +111,8 @@ trait ServerCursorFetchTest extends CatsEffectSuite:
   }
 
   test("Statement: Query result retrieval using server cursor matches the specified number of results.") {
-    assertIO(
-      datasource.getConnection.use { conn =>
+    assertF(
+      datasource.use { conn =>
         for
           statement <- conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
           _         <- statement.setFetchSize(5)
@@ -74,8 +127,8 @@ trait ServerCursorFetchTest extends CatsEffectSuite:
   }
 
   test("PreparedStatement: Query result retrieval using server cursor matches the specified number of results.") {
-    assertIO(
-      datasource.getConnection.use { conn =>
+    assertF(
+      datasource.use { conn =>
         for
           statement <- conn.prepareStatement("SELECT * FROM `city`")
           _         <- statement.setFetchSize(1)
@@ -90,8 +143,8 @@ trait ServerCursorFetchTest extends CatsEffectSuite:
   }
 
   test("PreparedStatement: Query result retrieval using server cursor matches the specified number of results.") {
-    assertIO(
-      datasource.getConnection.use { conn =>
+    assertF(
+      datasource.use { conn =>
         for
           statement <- conn.prepareStatement("SELECT * FROM `city`")
           _         <- statement.setFetchSize(5)

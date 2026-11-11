@@ -26,25 +26,31 @@ libraryDependencies ++= Seq(
 )
 ```
 
-**ldbc-connector**
+**ldbc-mysql（エフェクト非依存の MySQL ドライバ）**
 
-Scalaで書かれた新しいコネクタを使用する場合は以下の依存関係を設定します。
+Scalaで書かれたMySQLドライバを使用する場合は、ドライバ本体`ldbc-mysql`と、使用するエフェクトに対応するブリッジを設定します。Cats Effect（`IO`）の場合は`ldbc-cats-effect`を追加します。
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "@ORGANIZATION@" %% "ldbc-connector" % "@VERSION@"
+  "@ORGANIZATION@" %% "ldbc-mysql"       % "@VERSION@",
+  "@ORGANIZATION@" %% "ldbc-cats-effect" % "@VERSION@"
 )
 ```
 
-ldbc-connectorは、JVMだけではなくJS, Nativeのプラットフォームでも動作します。
+ZIO（`Task`）を使う場合は`ldbc-zio`、`scala.concurrent.Future`を使う場合は`ldbc-future`を`ldbc-cats-effect`の代わりに追加します。
+
+ldbc-mysqlは、JVMだけではなくJS, Nativeのプラットフォームでも動作します。
 
 Scala.jsやScala Nativeでldbcを使用する場合は、以下のように依存関係を設定します。
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "@ORGANIZATION@" %%% "ldbc-connector" % "@VERSION@"
+  "@ORGANIZATION@" %%% "ldbc-mysql"       % "@VERSION@",
+  "@ORGANIZATION@" %%% "ldbc-cats-effect" % "@VERSION@"
 )
 ```
+
+> **補足**: 従来の`ldbc-connector`も引き続き利用できますが、将来のバージョンで廃止される予定です。新規プロジェクトでは`ldbc-mysql`を推奨します。
 
 ### プレーンなDSL
 
@@ -168,19 +174,22 @@ addSbtPlugin("@ORGANIZATION@" % "ldbc-plugin" % "@VERSION@")
 
 ### ZIOとの併用
 
-Cats EffectではなくZIOを使用する場合は、`ldbc-zio-interop`を追加します。
+Cats EffectではなくZIO（`Task`）を使用する場合は、`ldbc-mysql`と ZIO ブリッジ`ldbc-zio`を追加します。`zio-interop-cats`を介さず、ZIO ネイティブで動作します。
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "@ORGANIZATION@" %% "ldbc-zio-interop" % "@VERSION@"
+  "@ORGANIZATION@" %% "ldbc-mysql" % "@VERSION@",
+  "@ORGANIZATION@" %% "ldbc-zio"   % "@VERSION@"
 )
 ```
 
-JVMとScala.jsで動作します（ZIO Interop CatsがScala Nativeに未対応のため、Scala Nativeでは利用できません）。詳細は[ZIOとの併用](/ja/qa/How-to-use-with-ZIO.md)を参照してください。
+詳細は[ZIOとの併用](/ja/qa/How-to-use-with-ZIO.md)を参照してください。
+
+> 従来の`ldbc-zio-interop`（`ldbc-connector`を`zio-interop-cats`で ZIO から利用する方式）も引き続き利用できますが、native な`ldbc-zio`の利用を推奨します。
 
 ### 認証プラグイン
 
-`ldbc-connector`には主要なMySQL認証プラグインが同梱されているため、通常は追加の依存関係は不要です。独自の認証プラグインを実装する場合や、Aurora IAM認証を利用する場合のみ以下を追加します。
+`ldbc-mysql`には主要なMySQL認証プラグインが同梱されているため、通常は追加の依存関係は不要です。独自の認証プラグインを実装する場合や、Aurora IAM認証を利用する場合のみ以下を追加します。
 
 **ldbc-authentication-plugin**（認証プラグインの基盤）
 
