@@ -31,7 +31,11 @@ class QueryRendererBatchTest extends FTestPlatform:
     val sql     = "INSERT INTO t (a,b) VALUES (?,?)"
     val payload = "VALUES (1,(SELECT password FROM users LIMIT 1))#"
     assertEquals(
-      rewrite(sql, params(Parameter.string(payload), Parameter.int(2)), params(Parameter.string("x"), Parameter.int(3))),
+      rewrite(
+        sql,
+        params(Parameter.string(payload), Parameter.int(2)),
+        params(Parameter.string("x"), Parameter.int(3))
+      ),
       "INSERT INTO t (a,b) VALUES ('VALUES (1,(SELECT password FROM users LIMIT 1))#',2),('x',3)"
     )
   }
@@ -115,7 +119,11 @@ class QueryRendererBatchTest extends FTestPlatform:
 
   test("the placeholder count must match the parameter count") {
     intercept[IllegalArgumentException] {
-      QueryRenderer.buildBatch("INSERT INTO t (a, b) VALUES (?, ?)", params(Parameter.int(1)), noBackslashEscapes = false)
+      QueryRenderer.buildBatch(
+        "INSERT INTO t (a, b) VALUES (?, ?)",
+        params(Parameter.int(1)),
+        noBackslashEscapes = false
+      )
     }
   }
 
