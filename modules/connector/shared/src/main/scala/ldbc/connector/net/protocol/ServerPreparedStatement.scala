@@ -235,8 +235,8 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
 
   override def executeLargeBatch(): F[Array[Long]] =
     checkClosed() *> checkNullOrEmptyQuery(sql) *> (
-      sql.trim.toLowerCase match
-        case q if q.startsWith("insert") =>
+      (sql.trim.toLowerCase, QueryRenderer.multiValuesTemplate(sql)) match
+        case (q, Some(template)) if q.startsWith("insert") =>
           exchange[F, Array[Long]](TelemetrySpanName.STMT_EXECUTE_BATCH_PREPARED) { (span: Span[F]) =>
             protocol.resetSequenceId *>
               batchedArgs.get.flatMap { args =>
@@ -251,7 +251,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
                       protocol.resetSequenceId *>
                       protocol.send(
                         ComQueryPacket(
-                          sql.split("VALUES").head + " VALUES" + args.mkString(","),
+                          template.head + args.mkString(",") + template.tail,
                           protocol.initialPacket.capabilityFlags,
                           ListMap.empty
                         )
@@ -277,7 +277,7 @@ case class ServerPreparedStatement[F[_]: Exchange: Tracer: Sync](
                   )
               }
           } <* params.set(SortedMap.empty) <* batchedArgs.set(Vector.empty)
-        case q if q.startsWith("update") || q.startsWith("delete") =>
+        case (q, _) if q.startsWith("insert") || q.startsWith("update") || q.startsWith("delete") =>
           protocol.resetSequenceId *>
             protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON) *>
             exchange[F, Array[Long]](TelemetrySpanName.STMT_EXECUTE_BATCH_PREPARED) { (span: Span[F]) =>

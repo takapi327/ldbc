@@ -13,6 +13,7 @@ import ldbc.sql.BatchUpdateException
 import ldbc.fx.{ Fx, Resource }
 import ldbc.fx.concurrentFx
 import ldbc.fx.syntax.*
+import ldbc.mysql.syntax.*
 import ldbc.net.SSL
 import ldbc.telemetry.*
 
@@ -268,5 +269,41 @@ class StatementBatchTest extends FTestPlatform:
           result            <- preparedStatement.executeBatch()
         yield result
       }
+    )
+  }
+
+  /**
+   * Regression guard for the batch INSERT SQL-injection finding. The payload carries no quote, so
+   * escaping alone never stopped it: the old implementation split the bound statement on `VALUES`
+   * and sent `... VALUES (99, 0x696E6A6563746564)#')`, inserting a row the caller never bound.
+   */
+  test("A bound value containing VALUES is inserted as data by a batch INSERT.") {
+    val payload = "VALUES (99, 0x696E6A6563746564)#"
+    val insert  = "INSERT INTO `mysql_batch_injection_test` (`c1`, `c2`) VALUES (?, ?)"
+    assertFx(
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          _         <- statement.executeUpdate(
+                 "CREATE TABLE IF NOT EXISTS `mysql_batch_injection_test` (`c1` BIGINT, `c2` VARCHAR(255))"
+               )
+          _         <- statement.executeUpdate("TRUNCATE TABLE `mysql_batch_injection_test`")
+          client    <- conn.clientPreparedStatement(insert)
+          _         <- client.setLong(1, 1L) *> client.setString(2, payload) *> client.addBatch()
+          _         <- client.executeBatch()
+          server    <- conn.serverPreparedStatement(insert)
+          _         <- server.setLong(1, 2L) *> server.setString(2, payload) *> server.addBatch()
+          _         <- server.executeBatch()
+          resultSet <- statement.executeQuery("SELECT `c1`, `c2` FROM `mysql_batch_injection_test` ORDER BY `c1`")
+          rows      <- resultSet.whileM[List, (Long, String)] {
+                    for
+                      c1 <- resultSet.getLong(1)
+                      c2 <- resultSet.getString(2)
+                    yield (c1, c2)
+                  }
+          _ <- statement.executeUpdate("DROP TABLE IF EXISTS `mysql_batch_injection_test`")
+        yield rows
+      },
+      List((1L, payload), (2L, payload))
     )
   }

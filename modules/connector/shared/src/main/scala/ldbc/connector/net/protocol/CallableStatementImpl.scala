@@ -272,11 +272,11 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
 
           if args.isEmpty then F.pure(Array.empty)
           else
-            sql.toUpperCase match
-              case q if q.startsWith("INSERT") =>
+            (sql.toUpperCase, QueryRenderer.multiValuesTemplate(sql)) match
+              case (q, Some(template)) if q.startsWith("INSERT") =>
                 withDurationMetrics(
                   span.addAttributes(batchAttributes*) *>
-                    sendQuery(sql.split("VALUES").head + " VALUES" + args.mkString(","))
+                    sendQuery(template.head + args.mkString(",") + template.tail)
                       .flatMap {
                         case _: OKPacket      => F.pure(Array.fill(args.length)(Statement.SUCCESS_NO_INFO.toLong))
                         case error: ERRPacket =>
@@ -294,7 +294,8 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                       },
                   metricsAttributes*
                 )
-              case q if q.startsWith("UPDATE") || q.startsWith("DELETE") || q.startsWith("CALL") =>
+              case (q, _)
+                if q.startsWith("INSERT") || q.startsWith("UPDATE") || q.startsWith("DELETE") || q.startsWith("CALL") =>
                 withDurationMetrics(
                   span.addAttributes(batchAttributes*) *>
                     protocol.resetSequenceId *>

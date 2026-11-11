@@ -6,6 +6,8 @@
 
 package ldbc.connector
 
+import cats.Monad
+
 import cats.effect.*
 
 import org.typelevel.otel4s.trace.Tracer
@@ -268,5 +270,54 @@ class StatementBatchTest extends FTestPlatform:
           result            <- preparedStatement.executeBatch()
         yield result
       }
+    )
+  }
+
+  /**
+   * Inserts `payload` through a batch of the prepared statement made by `prepare`, and returns the rows
+   * of the table.
+   */
+  private def insertBatch(
+    table:   String,
+    payload: String,
+    prepare: (LdbcConnection[IO], String) => IO[ldbc.sql.PreparedStatement[IO]]
+  ): IO[List[(Long, String)]] =
+    connection.use { conn =>
+      for
+        statement <- conn.createStatement()
+        _         <- statement.executeUpdate(s"CREATE TABLE IF NOT EXISTS `$table` (`c1` BIGINT, `c2` VARCHAR(255))")
+        _         <- statement.executeUpdate(s"TRUNCATE TABLE `$table`")
+        prepared  <- prepare(conn, s"INSERT INTO `$table` (`c1`, `c2`) VALUES (?, ?)")
+        _         <- prepared.setLong(1, 1L) *> prepared.setString(2, payload) *> prepared.addBatch()
+        _         <- prepared.executeBatch()
+        resultSet <- statement.executeQuery(s"SELECT `c1`, `c2` FROM `$table` ORDER BY `c1`")
+        rows      <- Monad[IO].whileM[List, (Long, String)](resultSet.next()) {
+                  for
+                    c1 <- resultSet.getLong(1)
+                    c2 <- resultSet.getString(2)
+                  yield (c1, c2)
+                }
+        _ <- statement.executeUpdate(s"DROP TABLE IF EXISTS `$table`")
+      yield rows
+    }
+
+  /**
+   * Regression guard for the batch INSERT SQL-injection finding. The payload carries no quote, so
+   * escaping alone never stopped it: the old implementation split the bound statement on `VALUES`
+   * and sent `... VALUES (99, 0x696E6A6563746564)#')`, inserting a row the caller never bound.
+   */
+  private val injectionPayload = "VALUES (99, 0x696E6A6563746564)#"
+
+  test("A bound value containing VALUES is inserted as data by a client batch INSERT.") {
+    assertIO(
+      insertBatch("client_batch_injection_test", injectionPayload, _.clientPreparedStatement(_)),
+      List((1L, injectionPayload))
+    )
+  }
+
+  test("A bound value containing VALUES is inserted as data by a server batch INSERT.") {
+    assertIO(
+      insertBatch("server_batch_injection_test", injectionPayload, _.serverPreparedStatement(_)),
+      List((1L, injectionPayload))
     )
   }
