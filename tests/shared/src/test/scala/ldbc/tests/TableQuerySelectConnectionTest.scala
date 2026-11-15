@@ -6,6 +6,8 @@
 
 package ldbc.tests
 
+import java.time.LocalDate
+
 import scala.concurrent.Future
 
 import cats.data.NonEmptyList
@@ -17,6 +19,8 @@ import munit.*
 
 import ldbc.dsl.*
 import ldbc.dsl.exception.*
+
+import ldbc.statement.functions.DateTime
 
 import ldbc.query.builder.*
 
@@ -114,6 +118,9 @@ trait TableQuerySelectConnectionTest[F[_]] extends DatabaseSuite[F]:
   private final val city             = TableQuery[City]
   private final val countryLanguage  = TableQuery[CountryLanguage]
   private final val governmentOffice = TableQuery[GovernmentOffice]
+
+  /** The date and time functions, kept apart so that their names do not clash with the members of this suite. */
+  private object functions extends DateTime
 
   test(
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value."
@@ -608,5 +615,46 @@ trait TableQuerySelectConnectionTest[F[_]] extends DatabaseSuite[F]:
   test("When nel is specified, an exception occurs if there is no data to be acquired.") {
     interceptF[UnexpectedEnd](
       city.select(_.name).where(_.id === 9999999).query.nel.readOnly(connector)
+    )
+  }
+
+  test("A string argument of a function column is bound and evaluated by the server.") {
+    assertF(
+      city
+        .select(_ => functions.DATE_FORMAT(LocalDate.of(2024, 1, 2), "%Y/%m/%d"))
+        .where(_.id === 1)
+        .query
+        .to[Option]
+        .readOnly(connector),
+      Some("2024/01/02")
+    )
+  }
+
+  test("The parameters of a nested function column in WHERE are bound in the order of their placeholders.") {
+    assertF(
+      city
+        .select(_.name)
+        .where(_ => functions.DATE_FORMAT(functions.STR_TO_DATE("01,5,2013", "%d,%m,%Y"), "%Y") === "2013")
+        .and(_.id === 1)
+        .query
+        .to[Option]
+        .readOnly(connector),
+      Some("Kabul")
+    )
+  }
+
+  /**
+   * Regression guard for the finding that `STR_TO_DATE` wrote its arguments into the SQL text. The payload closes the
+   * literal and replaces the format: written into the SQL it parsed as `2013-05-01`, bound it is just an invalid date.
+   */
+  test("A string argument of a function column cannot change the structure of the statement.") {
+    assertF(
+      city
+        .select(_ => functions.STR_TO_DATE("01,5,2013', '%d,%m,%Y') -- ", "%Y"))
+        .where(_.id === 1)
+        .query
+        .to[Option]
+        .readOnly(connector),
+      Some(None)
     )
   }

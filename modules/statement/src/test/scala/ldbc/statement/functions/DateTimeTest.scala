@@ -8,10 +8,17 @@ package ldbc.statement.functions
 
 import java.time.*
 
+import ldbc.dsl.Parameter
+
 import ldbc.statement.functions.DateTime.*
 import ldbc.statement.Column
 
 class DateTimeTest extends munit.FunSuite, DateTime:
+
+  /** Asserts the SQL of a function column and the values bound to its placeholders. */
+  private def assertFunction(column: Column[?], name: String, parameters: String*): Unit =
+    assertEquals(column.name, name)
+    assertEquals(column.parameters, parameters.toList.map(Parameter.Dynamic.Success(_)))
 
   private val c1  = Column.Impl[LocalDate]("local_date")
   private val c2  = Column.Impl[Option[LocalDate]]("local_date")
@@ -93,10 +100,12 @@ class DateTimeTest extends munit.FunSuite, DateTime:
   }
 
   test("Statement generated using the DATE_FORMAT function matches the specified string.") {
-    assert(DATE_FORMAT(c5, "%Y-%m-%d").name == "DATE_FORMAT(`local_date_time`, '%Y-%m-%d')")
-    assert(DATE_FORMAT(c6, "%Y-%m-%d").name == "DATE_FORMAT(`local_date_time`, '%Y-%m-%d')")
-    assert(
-      DATE_FORMAT(LocalDateTime.of(2021, 1, 1, 0, 0), "%Y-%m-%d").name == "DATE_FORMAT('2021-01-01T00:00', '%Y-%m-%d')"
+    assertFunction(DATE_FORMAT(c5, "%Y-%m-%d"), "DATE_FORMAT(`local_date_time`, ?)", "%Y-%m-%d")
+    assertFunction(DATE_FORMAT(c6, "%Y-%m-%d"), "DATE_FORMAT(`local_date_time`, ?)", "%Y-%m-%d")
+    assertFunction(
+      DATE_FORMAT(LocalDateTime.of(2021, 1, 1, 0, 0), "%Y-%m-%d"),
+      "DATE_FORMAT('2021-01-01T00:00', ?)",
+      "%Y-%m-%d"
     )
   }
 
@@ -320,18 +329,49 @@ class DateTimeTest extends munit.FunSuite, DateTime:
   }
 
   test("Statement generated using the STR_TO_DATE function matches the specified string.") {
-    assert(STR_TO_DATE(c17, "%d,%m,%Y").name == "STR_TO_DATE(`date_string`, '%d,%m,%Y')")
-    assert(STR_TO_DATE(c18, "%Y-%m-%d").name == "STR_TO_DATE(`date_string`, '%Y-%m-%d')")
-    assert(STR_TO_DATE("01,5,2013", "%d,%m,%Y").name == "STR_TO_DATE('01,5,2013', '%d,%m,%Y')")
-    assert(STR_TO_DATE("May 1, 2013", "%M %d,%Y").name == "STR_TO_DATE('May 1, 2013', '%M %d,%Y')")
+    assertFunction(STR_TO_DATE(c17, "%d,%m,%Y"), "STR_TO_DATE(`date_string`, ?)", "%d,%m,%Y")
+    assertFunction(STR_TO_DATE(c18, "%Y-%m-%d"), "STR_TO_DATE(`date_string`, ?)", "%Y-%m-%d")
+    assertFunction(STR_TO_DATE("01,5,2013", "%d,%m,%Y"), "STR_TO_DATE(?, ?)", "01,5,2013", "%d,%m,%Y")
+    assertFunction(STR_TO_DATE("May 1, 2013", "%M %d,%Y"), "STR_TO_DATE(?, ?)", "May 1, 2013", "%M %d,%Y")
   }
 
   test("Statement generated using the TIME_FORMAT function matches the specified string.") {
-    assert(TIME_FORMAT(c3, "%H:%i:%s").name == "TIME_FORMAT(`local_time`, '%H:%i:%s')")
-    assert(TIME_FORMAT(c4, "%h:%i %p").name == "TIME_FORMAT(`local_time`, '%h:%i %p')")
-    assert(TIME_FORMAT(c5, "%T").name == "TIME_FORMAT(`local_date_time`, '%T')")
-    assert(TIME_FORMAT(c6, "%H:%i:%s.%f").name == "TIME_FORMAT(`local_date_time`, '%H:%i:%s.%f')")
-    assert(TIME_FORMAT(LocalTime.of(10, 15, 30), "%H:%i:%s").name == "TIME_FORMAT('10:15:30', '%H:%i:%s')")
+    assertFunction(TIME_FORMAT(c3, "%H:%i:%s"), "TIME_FORMAT(`local_time`, ?)", "%H:%i:%s")
+    assertFunction(TIME_FORMAT(c4, "%h:%i %p"), "TIME_FORMAT(`local_time`, ?)", "%h:%i %p")
+    assertFunction(TIME_FORMAT(c5, "%T"), "TIME_FORMAT(`local_date_time`, ?)", "%T")
+    assertFunction(TIME_FORMAT(c6, "%H:%i:%s.%f"), "TIME_FORMAT(`local_date_time`, ?)", "%H:%i:%s.%f")
+    assertFunction(TIME_FORMAT(LocalTime.of(10, 15, 30), "%H:%i:%s"), "TIME_FORMAT('10:15:30', ?)", "%H:%i:%s")
+  }
+
+  test("A string argument is bound as a parameter and never written into the SQL text.") {
+    val payload = "x', '%d') IS NULL OR (SELECT SLEEP(5)) -- "
+    assertFunction(STR_TO_DATE(payload, "%Y"), "STR_TO_DATE(?, ?)", payload, "%Y")
+    assertFunction(STR_TO_DATE(c17, payload), "STR_TO_DATE(`date_string`, ?)", payload)
+    assertFunction(DATE_FORMAT(c5, payload), "DATE_FORMAT(`local_date_time`, ?)", payload)
+    assertFunction(TIME_FORMAT(c3, payload), "TIME_FORMAT(`local_time`, ?)", payload)
+  }
+
+  test("The parameters of a nested function column are kept in the order of their placeholders.") {
+    assertFunction(
+      DATE_FORMAT(STR_TO_DATE(c17, "%d,%m,%Y"), "%Y"),
+      "DATE_FORMAT(STR_TO_DATE(`date_string`, ?), ?)",
+      "%d,%m,%Y",
+      "%Y"
+    )
+    assertFunction(
+      TIMESTAMPADD(DateTime.TimeUnit.DAY, 1, STR_TO_DATE("01,5,2013", "%d,%m,%Y")),
+      "TIMESTAMPADD(DAY, 1, STR_TO_DATE(?, ?))",
+      "01,5,2013",
+      "%d,%m,%Y"
+    )
+  }
+
+  test("Wrapping a function column keeps its parameters.") {
+    val column = STR_TO_DATE(c17, "%Y")
+    assertEquals(column.as("d").parameters, column.parameters)
+    assertEquals(column.opt.parameters, column.parameters)
+    assertEquals(column.imap(identity)(identity).parameters, column.parameters)
+    assertEquals((column *: c1).parameters, column.parameters)
   }
 
   test("Statement generated using the TO_DAYS function matches the specified string.") {
