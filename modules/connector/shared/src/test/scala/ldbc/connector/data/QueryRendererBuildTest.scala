@@ -8,9 +8,9 @@ package ldbc.connector.data
 
 import scala.collection.immutable.SortedMap
 
-import ldbc.sql.SQLException
-
 import munit.CatsEffectSuite
+
+import ldbc.sql.SQLException
 
 /**
  * Unit tests for building a client-side prepared statement.
@@ -41,7 +41,10 @@ class QueryRendererBuildTest extends CatsEffectSuite:
       build("SELECT * FROM t WHERE /* why? */ id = ?", Parameter.string("*/ 1=1 -- ")),
       "SELECT * FROM t WHERE /* why? */ id = '*/ 1=1 -- '"
     )
-    assertEquals(build("SELECT `a?b` FROM t WHERE id = ? -- why?", Parameter.int(1)), "SELECT `a?b` FROM t WHERE id = 1 -- why?")
+    assertEquals(
+      build("SELECT `a?b` FROM t WHERE id = ? -- why?", Parameter.int(1)),
+      "SELECT `a?b` FROM t WHERE id = 1 -- why?"
+    )
     assertEquals(build("SELECT ? # why?\nFROM dual", Parameter.int(1)), "SELECT 1 # why?\nFROM dual")
   }
 
@@ -77,7 +80,11 @@ class QueryRendererBuildTest extends CatsEffectSuite:
 
   test("parameters are bound by index, not by order") {
     val exception = intercept[SQLException](
-      QueryRenderer.build("SELECT ?, ?", SortedMap(1 -> Parameter.int(1), 3 -> Parameter.int(3)), noBackslashEscapes = false)
+      QueryRenderer.build(
+        "SELECT ?, ?",
+        SortedMap(1 -> Parameter.int(1), 3 -> Parameter.int(3)),
+        noBackslashEscapes = false
+      )
     )
     assert(exception.getMessage.contains("No value specified for parameter 2"))
   }
