@@ -652,3 +652,25 @@ class ClientPreparedStatementQueryTest extends FTestPlatform:
       List(("a,b", null))
     )
   }
+
+  /**
+   * Regression guard for the finding that placeholders were found with `indexOf('?')`: the `?` inside the literal
+   * received the value, leaving the real placeholder unbound and the statement broken.
+   */
+  test("A question mark inside a string literal of the statement is not a placeholder.") {
+    assertIO(
+      connection.use { conn =>
+        for
+          statement <- conn.clientPreparedStatement("SELECT 'Why?', ?")
+          resultSet <- statement.setInt(1, 1) *> statement.executeQuery()
+          result    <- Monad[IO].whileM[List, (String, Int)](resultSet.next()) {
+                      for
+                        v1 <- resultSet.getString(1)
+                        v2 <- resultSet.getInt(2)
+                      yield (v1, v2)
+                    }
+        yield result
+      },
+      List(("Why?", 1))
+    )
+  }
