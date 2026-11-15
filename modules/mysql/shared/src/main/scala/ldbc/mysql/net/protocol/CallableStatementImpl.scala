@@ -105,13 +105,10 @@ case class CallableStatementImpl[F[_]](
                            params.get.flatMap { params =>
                              protocol.noBackslashEscapes.flatMap { noBackslashEscapes =>
                                protocol.resetSequenceId *>
-                                 protocol.send(
-                                   ComQueryPacket(
-                                     QueryRenderer.build(sql, params, noBackslashEscapes),
-                                     protocol.initialPacket.capabilityFlags,
-                                     ListMap.empty
-                                   )
-                                 ) *>
+                                 F.delay(QueryRenderer.build(sql, params, noBackslashEscapes)).flatMap { query =>
+                                   protocol
+                                     .send(ComQueryPacket(query, protocol.initialPacket.capabilityFlags, ListMap.empty))
+                                 } *>
                                  receiveQueryResult()
                              }
                            }
@@ -168,7 +165,7 @@ case class CallableStatementImpl[F[_]](
             else
               params.get.flatMap { params =>
                 protocol.noBackslashEscapes.flatMap { noBackslashEscapes =>
-                  sendQuery(QueryRenderer.build(sql, params, noBackslashEscapes)).flatMap {
+                  F.delay(QueryRenderer.build(sql, params, noBackslashEscapes)).flatMap(sendQuery).flatMap {
                     case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
                     case error: ERRPacket =>
                       val exception = error.toException(Some(sql), None)
@@ -219,7 +216,7 @@ case class CallableStatementImpl[F[_]](
                 )
 
                 span.addAttributes(queryAttributes*) *>
-                  sendQuery(QueryRenderer.build(sql, params, noBackslashEscapes)).flatMap {
+                  F.delay(QueryRenderer.build(sql, params, noBackslashEscapes)).flatMap(sendQuery).flatMap {
                     case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
                     case error: ERRPacket =>
                       val exception = error.toException(Some(sql), None)
@@ -870,13 +867,9 @@ case class CallableStatementImpl[F[_]](
 
           span.addAttributes(queryAttributes*) *>
             protocol.resetSequenceId *>
-            protocol.send(
-              ComQueryPacket(
-                QueryRenderer.build(sql, params, noBackslashEscapes),
-                protocol.initialPacket.capabilityFlags,
-                ListMap.empty
-              )
-            ) *>
+            F.delay(QueryRenderer.build(sql, params, noBackslashEscapes)).flatMap { query =>
+              protocol.send(ComQueryPacket(query, protocol.initialPacket.capabilityFlags, ListMap.empty))
+            } *>
             receiveUntilOkPacket(Vector.empty)
         }
       }

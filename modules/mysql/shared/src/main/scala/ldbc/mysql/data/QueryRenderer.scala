@@ -8,6 +8,8 @@ package ldbc.mysql.data
 
 import scala.collection.immutable.SortedMap
 
+import ldbc.sql.SQLException
+
 /**
  * The single place that renders bound [[Parameter]]s into a client-side (text protocol) SQL string.
  *
@@ -63,23 +65,41 @@ private[ldbc] object QueryRenderer:
   /**
    * Substitutes each `?` placeholder in `original` with the rendered literal of the corresponding
    * parameter, honouring the server `NO_BACKSLASH_ESCAPES` sql_mode for string parameters.
+   *
+   * As in MySQL Connector/J, the placeholders are located by scanning `original` while skipping
+   * quoted text and comments, so a `?` inside a string literal, an identifier or a comment is never
+   * replaced. The statement is then rebuilt from the text between the placeholders and the rendered
+   * values, and the parameters must be numbered exactly `1` to the number of placeholders.
+   *
+   * @throws SQLException
+   *   with SQLSTATE `07001` when a placeholder has no parameter or a parameter has no placeholder, or
+   *   with SQLSTATE `42000` when `original` has an unterminated quoted string or comment
    */
   def build(original: String, params: SortedMap[Int, Parameter], noBackslashEscapes: Boolean): String =
-    val result    = new StringBuilder(original.length * 2)
-    var lastIndex = 0
-
-    params.foreach {
-      case (_, param) =>
-        val index = original.indexOf('?', lastIndex)
-        if index >= 0 then
-          result.append(original.substring(lastIndex, index))
-          result.append(render(param, noBackslashEscapes))
-          lastIndex = index + 1
+    val placeholders = scan(original, noBackslashEscapes)
+      .map(_.tokens.collect { case Token.Placeholder(position) => position })
+      .getOrElse(
+        throw new SQLException(
+          "The statement contains an unterminated quoted string or comment.",
+          sqlState = Some("42000"),
+          sql      = Some(original)
+        )
+      )
+    (1 to placeholders.size).find(index => !params.contains(index)).foreach { index =>
+      throw new SQLException(
+        s"No value specified for parameter $index.",
+        sqlState = Some("07001"),
+        sql      = Some(original)
+      )
     }
-
-    if lastIndex < original.length then result.append(original.substring(lastIndex))
-
-    result.toString
+    params.keys.find(index => index < 1 || index > placeholders.size).foreach { index =>
+      throw new SQLException(
+        s"Parameter index out of range ($index > number of parameters, which is ${ placeholders.size }).",
+        sqlState = Some("07001"),
+        sql      = Some(original)
+      )
+    }
+    renderAt(original, placeholders, params, noBackslashEscapes)
 
   /**
    * Builds one entry of a batch.
@@ -149,59 +169,60 @@ private[ldbc] object QueryRenderer:
     yield withBackslashEscapes
 
   private def multiValuesTemplate(original: String, noBackslashEscapes: Boolean): Option[MultiValuesTemplate] =
-    scan(original, noBackslashEscapes).filterNot(_.hasExecutableComment).flatMap { result =>
-      val tokens       = result.tokens
-      val placeholders = tokens.collect { case Token.Placeholder(position) => position }
-      val isInsert     = tokens.headOption.exists {
-        case Token.Word(start, end, _) => original.substring(start, end).equalsIgnoreCase("INSERT")
-        case _                         => false
-      }
-      val hasSemicolon = tokens.exists {
-        case Token.Punct(_, ';', _) => true
-        case _                      => false
-      }
+    scan(original, noBackslashEscapes).filter(result => result.balanced && !result.hasExecutableComment).flatMap {
+      result =>
+        val tokens       = result.tokens
+        val placeholders = tokens.collect { case Token.Placeholder(position) => position }
+        val isInsert     = tokens.headOption.exists {
+          case Token.Word(start, end, _) => original.substring(start, end).equalsIgnoreCase("INSERT")
+          case _                         => false
+        }
+        val hasSemicolon = tokens.exists {
+          case Token.Punct(_, ';', _) => true
+          case _                      => false
+        }
 
-      def isValuesKeyword(token: Token): Boolean = token match
-        case Token.Word(start, end, 0) =>
-          val word = original.substring(start, end)
-          word.equalsIgnoreCase("VALUES") || word.equalsIgnoreCase("VALUE")
-        case _ => false
+        def isValuesKeyword(token: Token): Boolean = token match
+          case Token.Word(start, end, 0) =>
+            val word = original.substring(start, end)
+            word.equalsIgnoreCase("VALUES") || word.equalsIgnoreCase("VALUE")
+          case _ => false
 
-      def isPunct(index: Int, char: Char): Boolean = tokens.lift(index).exists {
-        case Token.Punct(_, `char`, 0) => true
-        case _                         => false
-      }
+        def isPunct(index: Int, char: Char): Boolean = tokens.lift(index).exists {
+          case Token.Punct(_, `char`, 0) => true
+          case _                         => false
+        }
 
-      /**
+        /**
        * Returns the index of the `)` that closes the last of the rows `(...), (...), ...` starting at
        * `openIndex`, or `-1` when the rows are malformed.
        */
-      def lastRowClose(openIndex: Int): Int =
-        val closeIndex = matchingClose(tokens, openIndex)
-        if closeIndex < 0 then -1
-        else if isPunct(closeIndex + 1, ',') then
-          if isPunct(closeIndex + 2, '(') then lastRowClose(closeIndex + 2) else -1
-        else closeIndex
+        def lastRowClose(openIndex: Int): Int =
+          val closeIndex = matchingClose(tokens, openIndex)
+          if closeIndex < 0 then -1
+          else if isPunct(closeIndex + 1, ',') then
+            if isPunct(closeIndex + 2, '(') then lastRowClose(closeIndex + 2) else -1
+          else closeIndex
 
-      def rowAt(keywordIndex: Int): Option[MultiValuesTemplate] =
-        if !isPunct(keywordIndex + 1, '(') then None
-        else
-          val closeIndex = lastRowClose(keywordIndex + 1)
-          (tokens(keywordIndex + 1), tokens.lift(closeIndex)) match
-            case (Token.Punct(open, _, _), Some(Token.Punct(close, ')', 0)))
-              if placeholders.forall(p => p > open && p < close) =>
-              Some(
-                MultiValuesTemplate(
-                  head            = original.substring(0, open),
-                  row             = original.substring(open, close + 1),
-                  rowPlaceholders = placeholders.map(_ - open),
-                  tail            = original.substring(close + 1)
+        def rowAt(keywordIndex: Int): Option[MultiValuesTemplate] =
+          if !isPunct(keywordIndex + 1, '(') then None
+          else
+            val closeIndex = lastRowClose(keywordIndex + 1)
+            (tokens(keywordIndex + 1), tokens.lift(closeIndex)) match
+              case (Token.Punct(open, _, _), Some(Token.Punct(close, ')', 0)))
+                if placeholders.forall(p => p > open && p < close) =>
+                Some(
+                  MultiValuesTemplate(
+                    head            = original.substring(0, open),
+                    row             = original.substring(open, close + 1),
+                    rowPlaceholders = placeholders.map(_ - open),
+                    tail            = original.substring(close + 1)
+                  )
                 )
-              )
-            case _ => None
+              case _ => None
 
-      if !isInsert || hasSemicolon || placeholders.isEmpty then None
-      else tokens.indices.iterator.filter(i => isValuesKeyword(tokens(i))).flatMap(rowAt).nextOption()
+        if !isInsert || hasSemicolon || placeholders.isEmpty then None
+        else tokens.indices.iterator.filter(i => isValuesKeyword(tokens(i))).flatMap(rowAt).nextOption()
     }
 
   /**
@@ -258,15 +279,16 @@ private[ldbc] object QueryRenderer:
     /** A `'...'` or `"..."` string, or a `` `...` `` identifier. */
     case Quoted(start: Int, end: Int)
 
-  private final case class ScanResult(tokens: Vector[Token], hasExecutableComment: Boolean)
+  private final case class ScanResult(tokens: Vector[Token], hasExecutableComment: Boolean, balanced: Boolean)
 
   /**
    * Splits `sql` into [[Token]]s, skipping whitespace, `-- `, `#` and `/* */` comments and the
    * contents of quoted text, following the MySQL lexical rules.
    *
    * The body of a `/*! ... */` executable comment is scanned as SQL, since the server runs it, and is
-   * reported through [[ScanResult.hasExecutableComment]]. Returns `None` when a quoted string or a
-   * comment is not terminated, or when the parentheses are not balanced.
+   * reported through [[ScanResult.hasExecutableComment]], and whether the parentheses are balanced
+   * through [[ScanResult.balanced]]. Returns `None` when a quoted string or a comment is not
+   * terminated.
    */
   private def scan(sql: String, noBackslashEscapes: Boolean): Option[ScanResult] =
     val tokens               = Vector.newBuilder[Token]
@@ -275,6 +297,7 @@ private[ldbc] object QueryRenderer:
     var depth                = 0
     var inExecutableComment  = false
     var hasExecutableComment = false
+    var balanced             = true
     var valid                = true
 
     def isWordChar(c: Char): Boolean = c.isLetterOrDigit || c == '_' || c == '$' || c >= 0x80
@@ -316,12 +339,13 @@ private[ldbc] object QueryRenderer:
         tokens += Token.Word(start, index, depth)
       else
         if c == ')' then depth -= 1
-        if depth < 0 then valid = false
+        if depth < 0 then balanced = false
         tokens += Token.Punct(index, c, depth)
         if c == '(' then depth += 1
         index += 1
 
-    if valid && depth == 0 && !inExecutableComment then Some(ScanResult(tokens.result(), hasExecutableComment))
+    if valid && !inExecutableComment then
+      Some(ScanResult(tokens.result(), hasExecutableComment, balanced && depth == 0))
     else None
 
   /**
