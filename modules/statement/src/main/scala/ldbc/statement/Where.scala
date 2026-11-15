@@ -323,7 +323,7 @@ object Where:
         table     = table,
         columns   = columns,
         statement = statement ++ s" GROUP BY ${ conditions.alias.getOrElse(conditions.name) }",
-        params    = params
+        params    = params ++ conditions.parameters
       )
 
   /**

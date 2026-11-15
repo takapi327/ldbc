@@ -48,18 +48,23 @@ object OrderBy:
   sealed trait Order[T]:
     def statement: String
 
+    /** Values bound to the `?` placeholders inside [[statement]], in order. */
+    def params: List[Parameter.Dynamic]
+
   object Order extends TwiddleSyntax[Order]:
 
-    private[ldbc] case class Impl[T](statement: String) extends Order[T]
+    private[ldbc] case class Impl[T](statement: String, params: List[Parameter.Dynamic] = List.empty) extends Order[T]
 
-    def asc[T](column:  Column[T]): Order[T] = Impl(s"${ column.alias.getOrElse(column.name) } ASC")
-    def desc[T](column: Column[T]): Order[T] = Impl(s"${ column.alias.getOrElse(column.name) } DESC")
+    def asc[T](column: Column[T]): Order[T] =
+      Impl(s"${ column.alias.getOrElse(column.name) } ASC", column.parameters)
+    def desc[T](column: Column[T]): Order[T] =
+      Impl(s"${ column.alias.getOrElse(column.name) } DESC", column.parameters)
 
     given Applicative[Order] with
       override def pure[A](x: A):                             Order[A] = Impl("")
       override def ap[A, B](ff: Order[A => B])(fa: Order[A]): Order[B] =
         val statement = if ff.statement.isEmpty then fa.statement else s"${ ff.statement }, ${ fa.statement }"
-        Impl(statement)
+        Impl(statement, ff.params ++ fa.params)
 
   /**
    * Transparent Trait to provide orderBy method.
@@ -85,9 +90,10 @@ object OrderBy:
      *   Function to construct an expression using the columns that Table has.
      */
     def orderBy[C](func: A => Order[C]): OrderBy[A, B] =
+      val order = func(self.table)
       OrderBy[A, B](
         table     = self.table,
         columns   = self.columns,
-        statement = self.statement ++ s" ORDER BY ${ func(self.table).statement }",
-        params    = self.params
+        statement = self.statement ++ s" ORDER BY ${ order.statement }",
+        params    = self.params ++ order.params
       )

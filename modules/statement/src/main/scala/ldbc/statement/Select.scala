@@ -136,9 +136,10 @@ case class Select[A, B](
    *   Function to construct an expression using the columns that Table has.
    */
   def groupBy[C](func: A => Column[C]): GroupBy[A, B] =
+    val conditions = func(table)
     GroupBy[A, B](
       table     = table,
       columns   = columns,
-      statement = statement ++ s" GROUP BY ${ func(table).toString }",
-      params    = params
+      statement = statement ++ s" GROUP BY ${ conditions.toString }",
+      params    = params ++ conditions.parameters
     )
