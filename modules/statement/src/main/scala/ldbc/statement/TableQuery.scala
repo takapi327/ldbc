@@ -52,7 +52,12 @@ trait TableQuery[A, O]:
    */
   def select[C](func: A => Column[C]): Select[A, C] =
     val columns = func(table)
-    Select(table, columns, s"SELECT ${ columns.alias.getOrElse(columns.name) } FROM $name", params)
+    Select(
+      table,
+      columns,
+      s"SELECT ${ columns.alias.getOrElse(columns.name) } FROM $name",
+      columns.parameters ++ params
+    )
 
   /**
    * Method to construct a query to select all columns of a table.
@@ -63,7 +68,7 @@ trait TableQuery[A, O]:
    * }}}
    */
   def selectAll: Select[A, Entity] =
-    Select(table, column, s"SELECT ${ column.alias.getOrElse(column.name) } FROM $name", params)
+    Select(table, column, s"SELECT ${ column.alias.getOrElse(column.name) } FROM $name", column.parameters ++ params)
 
   /**
    * Method to construct a query to insert a table.

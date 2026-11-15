@@ -43,7 +43,7 @@ class GroupByTest extends munit.FunSuite:
       List()
     )
 
-    val having = groupBy.having(_ => Expression.Over("AVG(population)", false, 1000000))
+    val having = groupBy.having(_ => Expression.Over("AVG(population)", List.empty, false, 1000000))
 
     assertEquals(
       having.statement,
@@ -105,7 +105,7 @@ class GroupByTest extends munit.FunSuite:
       List()
     )
 
-    val expression = Expression.Over("COUNT(*)", false, 100)
+    val expression = Expression.Over("COUNT(*)", List.empty, false, 100)
 
     val result = groupBy
       .having(_ => expression)
@@ -140,7 +140,7 @@ class GroupByTest extends munit.FunSuite:
     )
 
     val minCount = 50
-    val having   = groupBy.having(_ => Expression.Over("COUNT(*)", false, minCount))
+    val having   = groupBy.having(_ => Expression.Over("COUNT(*)", List.empty, false, minCount))
 
     assertEquals(having.statement, "SELECT age_group, COUNT(*) FROM users GROUP BY age_group HAVING COUNT(*) > ?")
     assertEquals(having.params.length, 1)

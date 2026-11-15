@@ -31,9 +31,10 @@ class WhereTest extends munit.FunSuite:
     Where.C[TestTable](table, statement, params, isFirst = true)
 
   // Create expressions for testing
-  def idEquals(value:       Long):   Expression = Expression.MatchCondition("id", false, value)(using Encoder[Long])
-  def nameEquals(value:     String): Expression = Expression.MatchCondition("name", false, value)(using Encoder[String])
-  def ageGreaterThan(value: Int):    Expression = Expression.Over("age", false, value)(using Encoder[Int])
+  def idEquals(value: Long): Expression = Expression.MatchCondition("id", List.empty, false, value)(using Encoder[Long])
+  def nameEquals(value: String): Expression =
+    Expression.MatchCondition("name", List.empty, false, value)(using Encoder[String])
+  def ageGreaterThan(value: Int): Expression = Expression.Over("age", List.empty, false, value)(using Encoder[Int])
 
   test("Where.Q should add AND conditions") {
     val query  = createQuery[String]("SELECT name FROM users", Nil)

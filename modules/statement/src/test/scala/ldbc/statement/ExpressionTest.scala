@@ -12,7 +12,7 @@ import ldbc.dsl.codec.{ Codec, Encoder }
 class ExpressionTest extends munit.FunSuite:
 
   test("Expression.MatchCondition should construct the correct SQL statement") {
-    val expr = Expression.MatchCondition("id", false, 1L)(using Encoder[Long])
+    val expr = Expression.MatchCondition("id", List.empty, false, 1L)(using Encoder[Long])
     assertEquals(expr.statement, "id = ?")
     assertEquals(expr.parameter.size, 1)
 
@@ -22,7 +22,7 @@ class ExpressionTest extends munit.FunSuite:
   }
 
   test("Expression.OrMore should construct the correct SQL statement") {
-    val expr = Expression.OrMore("id", false, 1L)(using Encoder[Long])
+    val expr = Expression.OrMore("id", List.empty, false, 1L)(using Encoder[Long])
     assertEquals(expr.statement, "id >= ?")
     assertEquals(expr.parameter.size, 1)
 
@@ -32,7 +32,7 @@ class ExpressionTest extends munit.FunSuite:
   }
 
   test("Expression.Over should construct the correct SQL statement") {
-    val expr = Expression.Over("id", false, 1L)(using Encoder[Long])
+    val expr = Expression.Over("id", List.empty, false, 1L)(using Encoder[Long])
     assertEquals(expr.statement, "id > ?")
     assertEquals(expr.parameter.size, 1)
 
@@ -42,7 +42,7 @@ class ExpressionTest extends munit.FunSuite:
   }
 
   test("Expression.LessThanOrEqualTo should construct the correct SQL statement") {
-    val expr = Expression.LessThanOrEqualTo("id", false, 1L)(using Encoder[Long])
+    val expr = Expression.LessThanOrEqualTo("id", List.empty, false, 1L)(using Encoder[Long])
     assertEquals(expr.statement, "id <= ?")
     assertEquals(expr.parameter.size, 1)
 
@@ -52,7 +52,7 @@ class ExpressionTest extends munit.FunSuite:
   }
 
   test("Expression.LessThan should construct the correct SQL statement") {
-    val expr = Expression.LessThan("id", false, 1L)(using Encoder[Long])
+    val expr = Expression.LessThan("id", List.empty, false, 1L)(using Encoder[Long])
     assertEquals(expr.statement, "id < ?")
     assertEquals(expr.parameter.size, 1)
 
@@ -62,7 +62,7 @@ class ExpressionTest extends munit.FunSuite:
   }
 
   test("Expression.NotEqual should construct the correct SQL statement") {
-    val expr = Expression.NotEqual("<>", "id", false, 1L)(using Encoder[Long])
+    val expr = Expression.NotEqual("<>", "id", List.empty, false, 1L)(using Encoder[Long])
     assertEquals(expr.statement, "id <> ?")
     assertEquals(expr.parameter.size, 1)
 
@@ -72,7 +72,7 @@ class ExpressionTest extends munit.FunSuite:
   }
 
   test("Expression.Is should construct the correct SQL statement") {
-    val expr = Expression.Is("id", false, "TRUE")
+    val expr = Expression.Is("id", List.empty, false, "TRUE")
     assertEquals(expr.statement, "id IS TRUE")
     assert(expr.parameter.isEmpty)
 
@@ -80,15 +80,15 @@ class ExpressionTest extends munit.FunSuite:
     assertEquals(notExpr.statement, "id IS NOT TRUE")
     assert(notExpr.parameter.isEmpty)
 
-    val nullExpr = Expression.Is("id", false, "NULL")
+    val nullExpr = Expression.Is("id", List.empty, false, "NULL")
     assertEquals(nullExpr.statement, "id IS NULL")
 
-    val notNullExpr = Expression.Is("id", true, "NULL")
+    val notNullExpr = Expression.Is("id", List.empty, true, "NULL")
     assertEquals(notNullExpr.statement, "id IS NOT NULL")
   }
 
   test("Expression.NullSafeEqual should construct the correct SQL statement") {
-    val expr = Expression.NullSafeEqual("id", false, 1L)(using Encoder[Long])
+    val expr = Expression.NullSafeEqual("id", List.empty, false, 1L)(using Encoder[Long])
     assertEquals(expr.statement, "id <=> ?")
     assertEquals(expr.parameter.size, 1)
 
@@ -98,7 +98,7 @@ class ExpressionTest extends munit.FunSuite:
   }
 
   test("Expression.In should construct the correct SQL statement") {
-    val expr = Expression.In("id", false, 1L, 2L, 3L)(using Encoder[Long])
+    val expr = Expression.In("id", List.empty, false, 1L, 2L, 3L)(using Encoder[Long])
     assertEquals(expr.statement, "id IN (?, ?, ?)")
     assertEquals(expr.parameter.size, 3)
 
@@ -108,7 +108,7 @@ class ExpressionTest extends munit.FunSuite:
   }
 
   test("Expression.Between should construct the correct SQL statement") {
-    val expr = Expression.Between("id", false, 1L, 10L)(using Encoder[Long])
+    val expr = Expression.Between("id", List.empty, false, 1L, 10L)(using Encoder[Long])
     assertEquals(expr.statement, "id BETWEEN ? AND ?")
     assertEquals(expr.parameter.size, 2)
 
@@ -118,7 +118,7 @@ class ExpressionTest extends munit.FunSuite:
   }
 
   test("Expression.Like should construct the correct SQL statement") {
-    val expr = Expression.Like("name", false, "%test%")(using Encoder[String])
+    val expr = Expression.Like("name", List.empty, false, "%test%")(using Encoder[String])
     assertEquals(expr.statement, "name LIKE ?")
     assertEquals(expr.parameter.size, 1)
 
@@ -128,7 +128,7 @@ class ExpressionTest extends munit.FunSuite:
   }
 
   test("Expression.LikeEscape should construct the correct SQL statement") {
-    val expr = Expression.LikeEscape("name", false, "T%", "$")(using Encoder[String])
+    val expr = Expression.LikeEscape("name", List.empty, false, "T%", "$")(using Encoder[String])
     assertEquals(expr.statement, "name LIKE ? ESCAPE ?")
     assertEquals(expr.parameter.size, 2)
 
@@ -138,7 +138,7 @@ class ExpressionTest extends munit.FunSuite:
   }
 
   test("Expression.Regexp should construct the correct SQL statement") {
-    val expr = Expression.Regexp("name", false, "^[A-Z].*")(using Encoder[String])
+    val expr = Expression.Regexp("name", List.empty, false, "^[A-Z].*")(using Encoder[String])
     assertEquals(expr.statement, "name REGEXP ?")
     assertEquals(expr.parameter.size, 1)
 
@@ -148,7 +148,7 @@ class ExpressionTest extends munit.FunSuite:
   }
 
   test("Expression.Div should construct the correct SQL statement") {
-    val expr = Expression.Div("id", false, 5L, 2L)(using Encoder[Long])
+    val expr = Expression.Div("id", List.empty, false, 5L, 2L)(using Encoder[Long])
     assertEquals(expr.statement, "id DIV ? = ?")
     assertEquals(expr.parameter.size, 2)
 
@@ -158,7 +158,7 @@ class ExpressionTest extends munit.FunSuite:
   }
 
   test("Expression.Mod should construct the correct SQL statement") {
-    val expr = Expression.Mod("MOD", "id", false, 5L, 2L)(using Encoder[Long])
+    val expr = Expression.Mod("MOD", "id", List.empty, false, 5L, 2L)(using Encoder[Long])
     assertEquals(expr.statement, "id MOD ? = ?")
     assertEquals(expr.parameter.size, 2)
 
@@ -166,12 +166,12 @@ class ExpressionTest extends munit.FunSuite:
     assertEquals(notExpr.statement, "NOT id MOD ? = ?")
     assertEquals(notExpr.parameter.size, 2)
 
-    val modExpr = Expression.Mod("%", "id", false, 5L, 2L)(using Encoder[Long])
+    val modExpr = Expression.Mod("%", "id", List.empty, false, 5L, 2L)(using Encoder[Long])
     assertEquals(modExpr.statement, "id % ? = ?")
   }
 
   test("Expression.LeftShift should construct the correct SQL statement") {
-    val expr = Expression.LeftShift("id", false, 2L)(using Encoder[Long])
+    val expr = Expression.LeftShift("id", List.empty, false, 2L)(using Encoder[Long])
     assertEquals(expr.statement, "id << ?")
     assertEquals(expr.parameter.size, 1)
 
@@ -181,7 +181,7 @@ class ExpressionTest extends munit.FunSuite:
   }
 
   test("Expression.RightShift should construct the correct SQL statement") {
-    val expr = Expression.RightShift("id", false, 2L)(using Encoder[Long])
+    val expr = Expression.RightShift("id", List.empty, false, 2L)(using Encoder[Long])
     assertEquals(expr.statement, "id >> ?")
     assertEquals(expr.parameter.size, 1)
 
@@ -191,7 +191,7 @@ class ExpressionTest extends munit.FunSuite:
   }
 
   test("Expression.BitXOR should construct the correct SQL statement") {
-    val expr = Expression.BitXOR("id", false, 5L)(using Encoder[Long])
+    val expr = Expression.BitXOR("id", List.empty, false, 5L)(using Encoder[Long])
     assertEquals(expr.statement, "id ^ ?")
     assertEquals(expr.parameter.size, 1)
 
@@ -201,7 +201,7 @@ class ExpressionTest extends munit.FunSuite:
   }
 
   test("Expression.BitFlip should construct the correct SQL statement") {
-    val expr = Expression.BitFlip("id", false, 5L)(using Encoder[Long])
+    val expr = Expression.BitFlip("id", List.empty, false, 5L)(using Encoder[Long])
     assertEquals(expr.statement, "~id = ?")
     assertEquals(expr.parameter.size, 1)
 
@@ -212,7 +212,7 @@ class ExpressionTest extends munit.FunSuite:
 
   test("Expression.SubQuery should construct the correct SQL statement") {
     val subQuery = sql"SELECT id FROM users WHERE active = true"
-    val expr     = Expression.SubQuery("=", "id", subQuery)
+    val expr     = Expression.SubQuery("=", "id", List.empty, subQuery)
     assertEquals(expr.statement, "id = (SELECT id FROM users WHERE active = true)")
   }
 
@@ -232,8 +232,8 @@ class ExpressionTest extends munit.FunSuite:
   }
 
   test("Expression.Pair should combine expressions with logical operators") {
-    val expr1 = Expression.MatchCondition("id", false, 1L)(using Encoder[Long])
-    val expr2 = Expression.Like("name", false, "test%")(using Encoder[String])
+    val expr1 = Expression.MatchCondition("id", List.empty, false, 1L)(using Encoder[Long])
+    val expr2 = Expression.Like("name", List.empty, false, "test%")(using Encoder[String])
 
     // AND
     val andExpr = Expression.Pair(" AND ", expr1, expr2)
@@ -251,7 +251,7 @@ class ExpressionTest extends munit.FunSuite:
     assertEquals(xorExpr.parameter.size, 2)
 
     // Complex nesting
-    val expr3       = Expression.In("age", false, 20, 30, 40)(using Encoder[Int])
+    val expr3       = Expression.In("age", List.empty, false, 20, 30, 40)(using Encoder[Int])
     val nestedAnd   = Expression.Pair(" AND ", expr1, expr2)
     val complexExpr = Expression.Pair(" OR ", nestedAnd, expr3)
 
@@ -260,9 +260,9 @@ class ExpressionTest extends munit.FunSuite:
   }
 
   test("Expression should support logical operators") {
-    val expr1 = Expression.MatchCondition("id", false, 1L)(using Encoder[Long])
-    val expr2 = Expression.Like("name", false, "test%")(using Encoder[String])
-    val expr3 = Expression.In("age", false, 20, 30, 40)(using Encoder[Int])
+    val expr1 = Expression.MatchCondition("id", List.empty, false, 1L)(using Encoder[Long])
+    val expr2 = Expression.Like("name", List.empty, false, "test%")(using Encoder[String])
+    val expr3 = Expression.In("age", List.empty, false, 20, 30, 40)(using Encoder[Int])
 
     // AND operator
     val andExpr = expr1 and expr2

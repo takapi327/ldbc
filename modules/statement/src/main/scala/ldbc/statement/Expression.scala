@@ -124,13 +124,14 @@ object Expression:
    *   Scala types that match SQL DataType
    */
   private[ldbc] case class SubQuery[T](
-    flag:   String,
-    column: String,
-    value:  SQL
+    flag:             String,
+    column:           String,
+    columnParameters: List[Parameter.Dynamic],
+    value:            SQL
   ) extends Expression:
 
     override def statement: String                  = s"$column $flag (${ value.statement })"
-    override def parameter: List[Parameter.Dynamic] = value.params
+    override def parameter: List[Parameter.Dynamic] = columnParameters ++ value.params
 
   /**
    * Model for building join queries.
@@ -153,253 +154,331 @@ object Expression:
   ) extends Expression:
 
     override def statement = s"${ left.alias.getOrElse(left.name) } $flag ${ right.alias.getOrElse(right.name) }"
-    override def parameter: List[Parameter.Dynamic] = List.empty
+    override def parameter: List[Parameter.Dynamic] = left.parameters ++ right.parameters
 
   /** comparison operator */
-  private[ldbc] case class MatchCondition[T](column: String, isNot: Boolean, value: T)(using
+  private[ldbc] case class MatchCondition[T](
+    column:           String,
+    columnParameters: List[Parameter.Dynamic],
+    isNot:            Boolean,
+    value:            T
+  )(using
     encoder: Encoder[T]
   ) extends SingleValue[T]:
     override def flag:      String                  = "="
-    override def parameter: List[Parameter.Dynamic] = Parameter.Dynamic.many(encoder.encode(value))
+    override def parameter: List[Parameter.Dynamic] = columnParameters ++ Parameter.Dynamic.many(encoder.encode(value))
     override def statement: String                  =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
 
-    def NOT: MatchCondition[T] = MatchCondition[T](this.column, true, this.value)
+    def NOT: MatchCondition[T] = MatchCondition[T](this.column, this.columnParameters, true, this.value)
 
-  private[ldbc] case class OrMore[T](column: String, isNot: Boolean, value: T)(using
+  private[ldbc] case class OrMore[T](
+    column:           String,
+    columnParameters: List[Parameter.Dynamic],
+    isNot:            Boolean,
+    value:            T
+  )(using
     encoder: Encoder[T]
   ) extends SingleValue[T]:
     override def flag: String = ">="
 
-    override def parameter: List[Parameter.Dynamic] = Parameter.Dynamic.many(encoder.encode(value))
+    override def parameter: List[Parameter.Dynamic] = columnParameters ++ Parameter.Dynamic.many(encoder.encode(value))
 
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
 
-    def NOT: OrMore[T] = OrMore[T](this.column, true, this.value)
+    def NOT: OrMore[T] = OrMore[T](this.column, this.columnParameters, true, this.value)
 
-  private[ldbc] case class Over[T](column: String, isNot: Boolean, value: T)(using
-    encoder: Encoder[T]
+  private[ldbc] case class Over[T](column: String, columnParameters: List[Parameter.Dynamic], isNot: Boolean, value: T)(
+    using encoder: Encoder[T]
   ) extends SingleValue[T]:
     override def flag: String = ">"
 
-    override def parameter: List[Parameter.Dynamic] = Parameter.Dynamic.many(encoder.encode(value))
+    override def parameter: List[Parameter.Dynamic] = columnParameters ++ Parameter.Dynamic.many(encoder.encode(value))
 
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
 
-    def NOT: Over[T] = Over[T](this.column, true, this.value)
+    def NOT: Over[T] = Over[T](this.column, this.columnParameters, true, this.value)
 
-  private[ldbc] case class LessThanOrEqualTo[T](column: String, isNot: Boolean, value: T)(using
+  private[ldbc] case class LessThanOrEqualTo[T](
+    column:           String,
+    columnParameters: List[Parameter.Dynamic],
+    isNot:            Boolean,
+    value:            T
+  )(using
     encoder: Encoder[T]
   ) extends SingleValue[T]:
     override def flag: String = "<="
 
-    override def parameter: List[Parameter.Dynamic] = Parameter.Dynamic.many(encoder.encode(value))
+    override def parameter: List[Parameter.Dynamic] = columnParameters ++ Parameter.Dynamic.many(encoder.encode(value))
 
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
 
-    def NOT: LessThanOrEqualTo[T] = LessThanOrEqualTo[T](this.column, true, this.value)
+    def NOT: LessThanOrEqualTo[T] = LessThanOrEqualTo[T](this.column, this.columnParameters, true, this.value)
 
-  private[ldbc] case class LessThan[T](column: String, isNot: Boolean, value: T)(using
+  private[ldbc] case class LessThan[T](
+    column:           String,
+    columnParameters: List[Parameter.Dynamic],
+    isNot:            Boolean,
+    value:            T
+  )(using
     encoder: Encoder[T]
   ) extends SingleValue[T]:
     override def flag: String = "<"
 
-    override def parameter: List[Parameter.Dynamic] = Parameter.Dynamic.many(encoder.encode(value))
+    override def parameter: List[Parameter.Dynamic] = columnParameters ++ Parameter.Dynamic.many(encoder.encode(value))
 
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
 
-    def NOT: LessThan[T] = LessThan[T](this.column, true, this.value)
+    def NOT: LessThan[T] = LessThan[T](this.column, this.columnParameters, true, this.value)
 
-  private[ldbc] case class NotEqual[T](flag: String, column: String, isNot: Boolean, value: T)(using
+  private[ldbc] case class NotEqual[T](
+    flag:             String,
+    column:           String,
+    columnParameters: List[Parameter.Dynamic],
+    isNot:            Boolean,
+    value:            T
+  )(using
     encoder: Encoder[T]
   ) extends SingleValue[T]:
-    override def parameter: List[Parameter.Dynamic] = Parameter.Dynamic.many(encoder.encode(value))
+    override def parameter: List[Parameter.Dynamic] = columnParameters ++ Parameter.Dynamic.many(encoder.encode(value))
 
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
 
-    def NOT: NotEqual[T] = NotEqual[T](this.flag, this.column, true, this.value)
+    def NOT: NotEqual[T] = NotEqual[T](this.flag, this.column, this.columnParameters, true, this.value)
 
   private[ldbc] case class Is[T <: "TRUE" | "FALSE" | "UNKNOWN" | "NULL"](
-    column: String,
-    isNot:  Boolean,
-    value:  T
+    column:           String,
+    columnParameters: List[Parameter.Dynamic],
+    isNot:            Boolean,
+    value:            T
   ) extends SingleValue[T]:
     override def flag: String = "IS"
 
-    override def parameter: List[Parameter.Dynamic] = List.empty
+    override def parameter: List[Parameter.Dynamic] = columnParameters
 
     override def statement: String =
       val not = if isNot then " NOT" else ""
       s"$column $flag$not $value"
 
-    def NOT: Is[T] = Is[T](this.column, true, this.value)
+    def NOT: Is[T] = Is[T](this.column, this.columnParameters, true, this.value)
 
-  private[ldbc] case class NullSafeEqual[T](column: String, isNot: Boolean, value: T)(using
+  private[ldbc] case class NullSafeEqual[T](
+    column:           String,
+    columnParameters: List[Parameter.Dynamic],
+    isNot:            Boolean,
+    value:            T
+  )(using
     encoder: Encoder[T]
   ) extends SingleValue[T]:
     override def flag: String = "<=>"
 
-    override def parameter: List[Parameter.Dynamic] = Parameter.Dynamic.many(encoder.encode(value))
+    override def parameter: List[Parameter.Dynamic] = columnParameters ++ Parameter.Dynamic.many(encoder.encode(value))
 
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
 
-    def NOT: NullSafeEqual[T] = NullSafeEqual[T](this.column, true, this.value)
+    def NOT: NullSafeEqual[T] = NullSafeEqual[T](this.column, this.columnParameters, true, this.value)
 
-  private[ldbc] case class In[T](column: String, isNot: Boolean, values: T*)(using
-    encoder: Encoder[T]
+  private[ldbc] case class In[T](column: String, columnParameters: List[Parameter.Dynamic], isNot: Boolean, values: T*)(
+    using encoder: Encoder[T]
   ) extends MultiValue[T]:
     override def flag: String = "IN"
 
     override def parameter: List[Parameter.Dynamic] =
-      values.flatMap(value => Parameter.Dynamic.many(encoder.encode(value))).toList
+      columnParameters ++ values.flatMap(value => Parameter.Dynamic.many(encoder.encode(value))).toList
 
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$column $not$flag (${ values.map(_ => "?").mkString(", ") })"
 
-    def NOT: In[T] = In[T](this.column, true, this.values*)
+    def NOT: In[T] = In[T](this.column, this.columnParameters, true, this.values*)
 
-  private[ldbc] case class Between[T](column: String, isNot: Boolean, values: T*)(using
+  private[ldbc] case class Between[T](
+    column:           String,
+    columnParameters: List[Parameter.Dynamic],
+    isNot:            Boolean,
+    values:           T*
+  )(using
     encoder: Encoder[T]
   ) extends MultiValue[T]:
     override def flag: String = "BETWEEN"
 
     override def parameter: List[Parameter.Dynamic] =
-      values.flatMap(value => Parameter.Dynamic.many(encoder.encode(value))).toList
+      columnParameters ++ values.flatMap(value => Parameter.Dynamic.many(encoder.encode(value))).toList
 
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$column $not$flag ? AND ?"
 
-    def NOT: Between[T] = Between[T](this.column, true, this.values*)
+    def NOT: Between[T] = Between[T](this.column, this.columnParameters, true, this.values*)
 
-  private[ldbc] case class Like[T](column: String, isNot: Boolean, value: T)(using
-    encoder: Encoder[T]
+  private[ldbc] case class Like[T](column: String, columnParameters: List[Parameter.Dynamic], isNot: Boolean, value: T)(
+    using encoder: Encoder[T]
   ) extends SingleValue[T]:
     override def flag: String = "LIKE"
 
-    override def parameter: List[Parameter.Dynamic] = Parameter.Dynamic.many(encoder.encode(value))
+    override def parameter: List[Parameter.Dynamic] = columnParameters ++ Parameter.Dynamic.many(encoder.encode(value))
 
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
 
-    def NOT: Like[T] = Like[T](this.column, true, this.value)
+    def NOT: Like[T] = Like[T](this.column, this.columnParameters, true, this.value)
 
-  private[ldbc] case class LikeEscape[T](column: String, isNot: Boolean, values: T*)(using
+  private[ldbc] case class LikeEscape[T](
+    column:           String,
+    columnParameters: List[Parameter.Dynamic],
+    isNot:            Boolean,
+    values:           T*
+  )(using
     encoder: Encoder[T]
   ) extends MultiValue[T]:
     override def flag: String = "LIKE"
 
     override def parameter: List[Parameter.Dynamic] =
-      values.flatMap(value => Parameter.Dynamic.many(encoder.encode(value))).toList
+      columnParameters ++ values.flatMap(value => Parameter.Dynamic.many(encoder.encode(value))).toList
 
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ? ESCAPE ?"
 
-    def NOT: LikeEscape[T] = LikeEscape[T](this.column, true, this.values*)
+    def NOT: LikeEscape[T] = LikeEscape[T](this.column, this.columnParameters, true, this.values*)
 
-  private[ldbc] case class Regexp[T](column: String, isNot: Boolean, value: T)(using
+  private[ldbc] case class Regexp[T](
+    column:           String,
+    columnParameters: List[Parameter.Dynamic],
+    isNot:            Boolean,
+    value:            T
+  )(using
     encoder: Encoder[T]
   ) extends SingleValue[T]:
     override def flag: String = "REGEXP"
 
-    override def parameter: List[Parameter.Dynamic] = Parameter.Dynamic.many(encoder.encode(value))
+    override def parameter: List[Parameter.Dynamic] = columnParameters ++ Parameter.Dynamic.many(encoder.encode(value))
 
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
 
-    def NOT: Regexp[T] = Regexp[T](this.column, true, this.value)
+    def NOT: Regexp[T] = Regexp[T](this.column, this.columnParameters, true, this.value)
 
-  private[ldbc] case class LeftShift[T](column: String, isNot: Boolean, value: T)(using
+  private[ldbc] case class LeftShift[T](
+    column:           String,
+    columnParameters: List[Parameter.Dynamic],
+    isNot:            Boolean,
+    value:            T
+  )(using
     encoder: Encoder[T]
   ) extends SingleValue[T]:
     override def flag: String = "<<"
 
-    override def parameter: List[Parameter.Dynamic] = Parameter.Dynamic.many(encoder.encode(value))
+    override def parameter: List[Parameter.Dynamic] = columnParameters ++ Parameter.Dynamic.many(encoder.encode(value))
 
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
 
-    def NOT: LeftShift[T] = LeftShift[T](this.column, true, this.value)
+    def NOT: LeftShift[T] = LeftShift[T](this.column, this.columnParameters, true, this.value)
 
-  private[ldbc] case class RightShift[T](column: String, isNot: Boolean, value: T)(using
+  private[ldbc] case class RightShift[T](
+    column:           String,
+    columnParameters: List[Parameter.Dynamic],
+    isNot:            Boolean,
+    value:            T
+  )(using
     encoder: Encoder[T]
   ) extends SingleValue[T]:
     override def flag: String = ">>"
 
-    override def parameter: List[Parameter.Dynamic] = Parameter.Dynamic.many(encoder.encode(value))
+    override def parameter: List[Parameter.Dynamic] = columnParameters ++ Parameter.Dynamic.many(encoder.encode(value))
 
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
 
-    def NOT: RightShift[T] = RightShift[T](this.column, true, this.value)
+    def NOT: RightShift[T] = RightShift[T](this.column, this.columnParameters, true, this.value)
 
-  private[ldbc] case class Div[T](column: String, isNot: Boolean, values: T*)(using
+  private[ldbc] case class Div[T](
+    column:           String,
+    columnParameters: List[Parameter.Dynamic],
+    isNot:            Boolean,
+    values:           T*
+  )(using
     encoder: Encoder[T]
   ) extends MultiValue[T]:
     override def flag: String = "DIV"
 
     override def parameter: List[Parameter.Dynamic] =
-      values.flatMap(value => Parameter.Dynamic.many(encoder.encode(value))).toList
+      columnParameters ++ values.flatMap(value => Parameter.Dynamic.many(encoder.encode(value))).toList
 
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ? = ?"
 
-    def NOT: Div[T] = Div[T](this.column, true, this.values*)
+    def NOT: Div[T] = Div[T](this.column, this.columnParameters, true, this.values*)
 
-  private[ldbc] case class Mod[T](flag: String, column: String, isNot: Boolean, values: T*)(using
+  private[ldbc] case class Mod[T](
+    flag:             String,
+    column:           String,
+    columnParameters: List[Parameter.Dynamic],
+    isNot:            Boolean,
+    values:           T*
+  )(using
     encoder: Encoder[T]
   ) extends MultiValue[T]:
     override def parameter: List[Parameter.Dynamic] =
-      values.flatMap(value => Parameter.Dynamic.many(encoder.encode(value))).toList
+      columnParameters ++ values.flatMap(value => Parameter.Dynamic.many(encoder.encode(value))).toList
 
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ? = ?"
 
-    def NOT: Mod[T] = Mod[T](this.flag, this.column, true, this.values*)
+    def NOT: Mod[T] = Mod[T](this.flag, this.column, this.columnParameters, true, this.values*)
 
-  private[ldbc] case class BitXOR[T](column: String, isNot: Boolean, value: T)(using
+  private[ldbc] case class BitXOR[T](
+    column:           String,
+    columnParameters: List[Parameter.Dynamic],
+    isNot:            Boolean,
+    value:            T
+  )(using
     encoder: Encoder[T]
   ) extends SingleValue[T]:
     override def flag: String = "^"
 
-    override def parameter: List[Parameter.Dynamic] = Parameter.Dynamic.many(encoder.encode(value))
+    override def parameter: List[Parameter.Dynamic] = columnParameters ++ Parameter.Dynamic.many(encoder.encode(value))
 
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
 
-    def NOT: BitXOR[T] = BitXOR[T](this.column, true, this.value)
+    def NOT: BitXOR[T] = BitXOR[T](this.column, this.columnParameters, true, this.value)
 
-  private[ldbc] case class BitFlip[T](column: String, isNot: Boolean, value: T)(using
+  private[ldbc] case class BitFlip[T](
+    column:           String,
+    columnParameters: List[Parameter.Dynamic],
+    isNot:            Boolean,
+    value:            T
+  )(using
     encoder: Encoder[T]
   ) extends SingleValue[T]:
     override def flag: String = "~"
 
-    override def parameter: List[Parameter.Dynamic] = Parameter.Dynamic.many(encoder.encode(value))
+    override def parameter: List[Parameter.Dynamic] = columnParameters ++ Parameter.Dynamic.many(encoder.encode(value))
 
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$flag$column = ?"
 
-    def NOT: BitFlip[T] = BitFlip[T](this.column, true, this.value)
+    def NOT: BitFlip[T] = BitFlip[T](this.column, this.columnParameters, true, this.value)
