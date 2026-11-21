@@ -155,25 +155,35 @@ private[ldbc] case class ConnectionImpl[F[_]: Tracer: Exchange: UUIDGen](
         )
 
   override def getTransactionIsolation(): F[Int] =
+    selectTransactionIsolation("SELECT @@session.transaction_isolation")
+      .recoverWith {
+        // MariaDB before 11.1 only has the old name tx_isolation (1193: Unknown system variable)
+        case e: SQLException if e.getErrorCode == 1193 =>
+          selectTransactionIsolation("SELECT @@session.tx_isolation")
+      }
+      .map {
+        case Some("READ-UNCOMMITTED") => Connection.TRANSACTION_READ_UNCOMMITTED
+        case Some("READ-COMMITTED")   => Connection.TRANSACTION_READ_COMMITTED
+        case Some("REPEATABLE-READ")  => Connection.TRANSACTION_REPEATABLE_READ
+        case Some("SERIALIZABLE")     => Connection.TRANSACTION_SERIALIZABLE
+        case Some(unknown)            =>
+          throw SQLFeatureNotSupportedException.submitIssues(
+            s"Unknown transaction isolation level $unknown",
+            Some("Expected READ-UNCOMMITTED, READ-COMMITTED, REPEATABLE-READ, or SERIALIZABLE")
+          )
+        case None =>
+          throw SQLFeatureNotSupportedException.submitIssues(
+            "Unknown transaction isolation level",
+            Some("Expected READ-UNCOMMITTED, READ-COMMITTED, REPEATABLE-READ, or SERIALIZABLE")
+          )
+      }
+
+  private def selectTransactionIsolation(sql: String): F[Option[String]] =
     for
       statement <- createStatement()
-      result    <- statement.executeQuery("SELECT @@session.transaction_isolation")
+      result    <- statement.executeQuery(sql)
       value     <- result.getString(1)
-    yield Option(value) match
-      case Some("READ-UNCOMMITTED") => Connection.TRANSACTION_READ_UNCOMMITTED
-      case Some("READ-COMMITTED")   => Connection.TRANSACTION_READ_COMMITTED
-      case Some("REPEATABLE-READ")  => Connection.TRANSACTION_REPEATABLE_READ
-      case Some("SERIALIZABLE")     => Connection.TRANSACTION_SERIALIZABLE
-      case Some(unknown)            =>
-        throw SQLFeatureNotSupportedException.submitIssues(
-          s"Unknown transaction isolation level $unknown",
-          Some("Expected READ-UNCOMMITTED, READ-COMMITTED, REPEATABLE-READ, or SERIALIZABLE")
-        )
-      case None =>
-        throw SQLFeatureNotSupportedException.submitIssues(
-          "Unknown transaction isolation level",
-          Some("Expected READ-UNCOMMITTED, READ-COMMITTED, REPEATABLE-READ, or SERIALIZABLE")
-        )
+    yield Option(value)
 
   override def createStatement(resultSetType: Int, resultSetConcurrency: Int): F[Statement[F]] =
     for
