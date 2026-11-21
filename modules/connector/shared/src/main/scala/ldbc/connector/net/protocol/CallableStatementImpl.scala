@@ -106,13 +106,10 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
                          else
                            (params.get, protocol.noBackslashEscapes).flatMapN { (params, noBackslashEscapes) =>
                              protocol.resetSequenceId *>
-                               protocol.send(
-                                 ComQueryPacket(
-                                   QueryRenderer.build(sql, params, noBackslashEscapes),
-                                   protocol.initialPacket.capabilityFlags,
-                                   ListMap.empty
-                                 )
-                               ) *>
+                               Sync[F].delay(QueryRenderer.build(sql, params, noBackslashEscapes)).flatMap { query =>
+                                 protocol
+                                   .send(ComQueryPacket(query, protocol.initialPacket.capabilityFlags, ListMap.empty))
+                               } *>
                                receiveQueryResult()
                            }
                          ,
@@ -167,7 +164,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
               } *> retrieveOutParams() *> F.pure(-1L)
             else
               (params.get, protocol.noBackslashEscapes).flatMapN { (params, noBackslashEscapes) =>
-                sendQuery(QueryRenderer.build(sql, params, noBackslashEscapes)).flatMap {
+                Sync[F].delay(QueryRenderer.build(sql, params, noBackslashEscapes)).flatMap(sendQuery).flatMap {
                   case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
                   case error: ERRPacket =>
                     val exception = error.toException(Some(sql), None)
@@ -216,7 +213,7 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
               )
 
               span.addAttributes(queryAttributes*) *>
-                sendQuery(QueryRenderer.build(sql, params, noBackslashEscapes)).flatMap {
+                Sync[F].delay(QueryRenderer.build(sql, params, noBackslashEscapes)).flatMap(sendQuery).flatMap {
                   case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
                   case error: ERRPacket =>
                     val exception = error.toException(Some(sql), None)
@@ -857,13 +854,9 @@ case class CallableStatementImpl[F[_]: Exchange: Tracer: Sync](
 
         span.addAttributes(queryAttributes*) *>
           protocol.resetSequenceId *>
-          protocol.send(
-            ComQueryPacket(
-              QueryRenderer.build(sql, params, noBackslashEscapes),
-              protocol.initialPacket.capabilityFlags,
-              ListMap.empty
-            )
-          ) *>
+          Sync[F].delay(QueryRenderer.build(sql, params, noBackslashEscapes)).flatMap { query =>
+            protocol.send(ComQueryPacket(query, protocol.initialPacket.capabilityFlags, ListMap.empty))
+          } *>
           receiveUntilOkPacket(Vector.empty)
       }
 

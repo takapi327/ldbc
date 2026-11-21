@@ -86,13 +86,9 @@ case class ClientPreparedStatement[F[_]](
           withDurationMetrics(
             span.addAttributes(queryAttributes*) *>
               protocol.resetSequenceId *>
-              protocol.send(
-                ComQueryPacket(
-                  QueryRenderer.build(sql, params, noBackslashEscapes),
-                  protocol.initialPacket.capabilityFlags,
-                  ListMap.empty
-                )
-              ) *>
+              F.delay(QueryRenderer.build(sql, params, noBackslashEscapes)).flatMap { query =>
+                protocol.send(ComQueryPacket(query, protocol.initialPacket.capabilityFlags, ListMap.empty))
+              } *>
               protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
                 case _: OKPacket =>
                   F.pure(
@@ -173,13 +169,9 @@ case class ClientPreparedStatement[F[_]](
           withDurationMetrics(
             span.addAttributes(queryAttributes*) *>
               protocol.resetSequenceId *>
-              protocol.send(
-                ComQueryPacket(
-                  QueryRenderer.build(sql, params, noBackslashEscapes),
-                  protocol.initialPacket.capabilityFlags,
-                  ListMap.empty
-                )
-              ) *>
+              F.delay(QueryRenderer.build(sql, params, noBackslashEscapes)).flatMap { query =>
+                protocol.send(ComQueryPacket(query, protocol.initialPacket.capabilityFlags, ListMap.empty))
+              } *>
               protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
                 case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
                 case error: ERRPacket =>
