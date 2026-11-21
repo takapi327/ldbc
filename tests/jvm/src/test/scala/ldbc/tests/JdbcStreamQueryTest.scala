@@ -14,7 +14,7 @@ import jdbc.connector.*
 
 import ldbc.Connector
 
-class JdbcStreamQueryTest extends StreamQueryTest:
+class JdbcStreamQueryTest extends StreamQueryTest[IO] with IODatabaseSuite:
 
   val ds = new MysqlDataSource()
   ds.setServerName(host)

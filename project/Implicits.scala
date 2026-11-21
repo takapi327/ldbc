@@ -34,7 +34,7 @@ object Implicits {
 
     def module(_name: String, projectDescription: String): CrossProject =
       project
-        .in(file(s"module/ldbc-${ _name }"))
+        .in(file(s"modules/${ _name }"))
         .settings(
           name        := s"${ (ThisBuild / projectName).value }-${ _name }",
           description := projectDescription

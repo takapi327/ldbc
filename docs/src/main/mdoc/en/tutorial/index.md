@@ -22,7 +22,9 @@ Let's first take a look at the basic usage of ldbc. Here's a simple example of r
 ```scala 3
 import cats.effect.*
 import cats.syntax.all.*
-import ldbc.connector.*
+import ldbc.mysql.MySQLDataSource
+import ldbc.net.SSL
+import ldbc.catseffect.*
 import ldbc.dsl.*
 
 // Database connection configuration

@@ -10,11 +10,11 @@ import com.mysql.cj.jdbc.MysqlDataSource
 
 import cats.effect.*
 
+import ldbc.sql.DataSource
+
 import jdbc.connector.*
 
-import ldbc.DataSource
-
-class JdbcConnectionTest extends ConnectionTest:
+class JdbcConnectionTest extends ConnectionTest[IO] with IOAsyncDatabaseSuite:
 
   val ds = new MysqlDataSource()
   ds.setServerName(host)

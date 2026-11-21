@@ -14,7 +14,7 @@ import jdbc.connector.*
 
 import ldbc.Connector
 
-class JdbcTableQuerySelectConnectionTest extends TableQuerySelectConnectionTest:
+class JdbcTableQuerySelectConnectionTest extends TableQuerySelectConnectionTest[IO] with IODatabaseSuite:
 
   val ds = new MysqlDataSource()
   ds.setServerName(MySQLTestConfig.host)

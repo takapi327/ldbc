@@ -564,7 +564,9 @@ val query = TableQuery[User]
 
 ```scala 3
 import ldbc.dsl.*
-import ldbc.connector.*
+import ldbc.mysql.MySQLDataSource
+import ldbc.net.SSL
+import ldbc.catseffect.*
 
 // Connectorを作成
 val connector = Connector.fromDataSource(datasource)

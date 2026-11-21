@@ -12,7 +12,7 @@ Connection 生成に`withBeforeAfter`メソッドを使用することでコネ�
 `withBeforeAfter`の第2引数には、Afterに渡すBeforeの処理結果の型を指定します。
 
 ```scala 3
-import ldbc.connector.*
+import ldbc.mysql.*
 
 def before: Connection[IO] => IO[Unit] = _ => IO.println("Connecting to...")
 def after: (Unit, Connection[IO]) => IO[Unit] = (_, _) => IO.println("Connection Closed")
@@ -25,10 +25,13 @@ val datasource =
 
 @:callout(warning)
 
-この機能は`ldbc-connector`を使用した場合にのみ利用可能です。
+この機能は`ldbc-mysql`（または従来の`ldbc-connector`）を使用した場合にのみ利用可能です。
 
 ```scala 3
-libraryDependencies += "@ORGANIZATION@" %% "ldbc-connector" % "@VERSION@"
+libraryDependencies ++= Seq(
+  "@ORGANIZATION@" %% "ldbc-mysql"       % "@VERSION@",
+  "@ORGANIZATION@" %% "ldbc-cats-effect" % "@VERSION@"
+)
 ```
 
 @:@

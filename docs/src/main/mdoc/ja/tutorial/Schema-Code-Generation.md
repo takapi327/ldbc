@@ -257,7 +257,7 @@ Compile / customYamlFiles := List(
 // com/example/ProductTypeMapping.scala
 package com.example
 
-import ldbc.dsl.Codec
+import ldbc.dsl.codec.Codec
 
 sealed trait ProductCategory {
   def id: Int
@@ -377,17 +377,25 @@ database:
 
 ```scala
 import ldbc.dsl.*
+import ldbc.mysql.MySQLDataSource
+import ldbc.net.SSL
+import ldbc.catseffect.*
 import ldbc.generated.shop.Product
 
-val datasource = MySQLDataSource(...)
+val datasource = MySQLDataSource
+  .build[IO]("127.0.0.1", 3306, "ldbc")
+  .setPassword("password")
+  .setDatabase("shop")
+  .setSSL(SSL.Trusted)
+
+val connector = Connector.fromDataSource(datasource)
 
 // テーブルクエリの参照
 val products = Product.table
 
 // クエリの実行
-val allProducts = datasource.getConnection.use { conn =>
-  products.filter(_.price > 100).all.run(conn)
-}
+val allProducts =
+  products.selectAll.where(_.price > 100).query.to[List].readOnly(connector)
 ```
 
 ## コード生成のベストプラクティス

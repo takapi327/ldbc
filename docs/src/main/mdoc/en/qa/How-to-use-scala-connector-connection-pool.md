@@ -5,79 +5,81 @@
 
 # Q: How to use connection pool with Scala connector?
 
-## A: ldbc-connector now provides built-in connection pooling support!
+## A: Use the standalone module `ldbc-pool`.
 
-Starting from version 0.4.0, ldbc-connector includes comprehensive connection pooling functionality. The pooling system is designed specifically for Cats Effect's fiber-based concurrency model, offering high performance and excellent resource efficiency.
+In 0.9.x, connection pooling is provided as the standalone module `ldbc-pool`, used in combination with the `ldbc-mysql` driver. The pooling system is effect-agnostic (`F: Concurrent`), leveraging a fiber-based concurrency model to offer high performance and excellent resource efficiency (the examples below use Cats Effect).
+
+Add `ldbc-mysql`, `ldbc-cats-effect`, and `ldbc-pool` to your dependencies.
 
 ## Quick Start
 
-Here's how to create and use a pooled connection with ldbc-connector:
+Create a pool from a `MySQLDataSource` (connection information) and a `ConnectionPoolConfig` (pool settings) with `PooledDataSource.fromDataSource`:
 
 ```scala 3
 import cats.effect.*
-import ldbc.connector.*
 import scala.concurrent.duration.*
+
+import ldbc.dsl.*
+import ldbc.mysql.MySQLDataSource
+import ldbc.net.SSL
+import ldbc.catseffect.*
+import ldbc.pool.{ ConnectionPoolConfig, PooledDataSource }
 
 object ConnectionPoolExample extends IOApp.Simple:
 
-  val run = 
-    // Configure your connection pool
-    val poolConfig = MySQLConfig.default
-      .setHost("localhost")
-      .setPort(3306)
-      .setUser("root")
+  val run =
+    // Connection information
+    val datasource = MySQLDataSource
+      .build[IO]("localhost", 3306, "root")
       .setPassword("password")
       .setDatabase("testdb")
-      // Pool-specific settings
-      .setMinConnections(5)         // Keep at least 5 connections ready
-      .setMaxConnections(20)        // Maximum 20 connections
-      .setConnectionTimeout(30.seconds)  // Wait up to 30 seconds for a connection
-      
+      .setSSL(SSL.Trusted)
+
+    // Connection pool configuration
+    val poolConfig = ConnectionPoolConfig(
+      minConnections    = 5,          // Keep at least 5 connections ready
+      maxConnections    = 20,         // Maximum 20 connections
+      connectionTimeout = 30.seconds  // Wait up to 30 seconds for a connection
+    )
+
     // Create the pooled data source
-    MySQLDataSource.pooling[IO](poolConfig).use { pool =>
-      // Use connections from the pool
-      pool.getConnection.use { connection =>
-        for
-          stmt   <- connection.createStatement()
-          rs     <- stmt.executeQuery("SELECT 'Hello from pooled connection!'")
-          _      <- rs.next()
-          result <- rs.getString(1)
-          _      <- IO.println(result)
-        yield ()
-      }
+    PooledDataSource.fromDataSource[IO](poolConfig, datasource).use { pool =>
+      // Use the pool as a Connector
+      sql"SELECT 'Hello from pooled connection!'"
+        .query[String]
+        .to[Option]
+        .readOnly(Connector.fromDataSource(pool))
+        .flatMap(IO.println)
     }
 ```
 
 ## Configuring Pool Settings
 
-ldbc-connector offers extensive configuration options for fine-tuning your connection pool:
+`ConnectionPoolConfig` offers extensive configuration options for fine-tuning your connection pool:
 
 ```scala 3
-val advancedConfig = MySQLConfig.default
-  .setHost("localhost")
-  .setPort(3306)
-  .setUser("myapp")
-  .setPassword("secret")
-  .setDatabase("production")
-  
-  // Pool Size Management
-  .setMinConnections(10)          // Minimum idle connections
-  .setMaxConnections(50)          // Maximum total connections
-  
-  // Timeout Configuration
-  .setConnectionTimeout(30.seconds)   // Max wait for connection
-  .setIdleTimeout(10.minutes)        // Remove idle connections after
-  .setMaxLifetime(30.minutes)        // Replace connections after
-  .setValidationTimeout(5.seconds)   // Connection validation timeout
-  
-  // Health Checks
-  .setKeepaliveTime(2.minutes)       // Validate idle connections every
-  .setConnectionTestQuery("SELECT 1") // Custom validation query (optional)
-  
-  // Advanced Features
-  .setLeakDetectionThreshold(2.minutes)  // Warn about leaked connections
-  .setAdaptiveSizing(true)              // Dynamic pool sizing
-  .setAdaptiveInterval(1.minute)        // Check pool size every
+val advancedConfig = ConnectionPoolConfig(
+  // Pool size management
+  minConnections         = 10,              // Minimum idle connections
+  maxConnections         = 50,              // Maximum total connections
+
+  // Timeout configuration
+  connectionTimeout      = 30.seconds,      // Max wait for a connection
+  validationTimeout      = 5.seconds,       // Connection validation timeout
+  idleTimeout            = 10.minutes,      // Remove idle connections after
+  maxLifetime            = 30.minutes,      // Maximum connection lifetime
+
+  // Health checks
+  keepaliveTime          = Some(2.minutes), // Validate idle connections every
+
+  // Advanced features
+  leakDetectionThreshold = Some(2.minutes), // Warn about leaked connections
+  adaptiveSizing         = true,            // Dynamic pool sizing
+  adaptiveInterval       = 1.minute         // Check pool size every
+)
+
+// Pass a custom validation query as an argument to fromDataSource:
+//   PooledDataSource.fromDataSource[IO](advancedConfig, datasource, connectionTestQuery = Some("SELECT 1"))
 ```
 
 ## Using with Resource Safety
@@ -86,28 +88,20 @@ The pooled data source is managed as a `Resource`, ensuring proper cleanup:
 
 ```scala 3
 import cats.effect.*
-import cats.implicits.*
-import ldbc.connector.*
 
-def processUsers[F[_]: Async: Network: Console](
-  pool: PooledDataSource[F]
-): F[List[String]] =
-  pool.getConnection.use { conn =>
-    conn.prepareStatement("SELECT name FROM users").use { stmt =>
-      stmt.executeQuery().flatMap { rs =>
-        // Safely iterate through results
-        LazyList.unfold(())(_ => 
-          rs.next().map(hasNext => 
-            if hasNext then Some((rs.getString("name"), ())) else None
-          ).toOption.flatten
-        ).compile.toList
-      }
-    }
-  }
+import ldbc.dsl.*
+import ldbc.pool.PooledDataSource
 
-// Usage
-val result = MySQLDataSource.pooling[IO](config).use { pool =>
-  processUsers[IO](pool)
+// Receive the pool as a Connector and run queries with the DSL
+def processUsers(pool: PooledDataSource[IO]): IO[List[String]] =
+  sql"SELECT name FROM users"
+    .query[String]
+    .to[List]
+    .readOnly(Connector.fromDataSource(pool))
+
+// Usage (the Resource reliably releases the pool)
+val result = PooledDataSource.fromDataSource[IO](poolConfig, datasource).use { pool =>
+  processUsers(pool)
 }
 ```
 
@@ -116,31 +110,33 @@ val result = MySQLDataSource.pooling[IO](config).use { pool =>
 Track your pool's performance with built-in metrics:
 
 ```scala 3
-import ldbc.connector.pool.*
+import ldbc.dsl.*
+import ldbc.pool.*
 
 val monitoredPool = for
   tracker <- Resource.eval(PoolMetricsTracker.inMemory[IO])
-  pool    <- MySQLDataSource.pooling[IO](
-    config,
-    metricsTracker = Some(tracker)
-  )
+  pool    <- PooledDataSource.fromDataSource[IO](
+               poolConfig,
+               datasource,
+               metricsTracker = Some(tracker)
+             )
 yield (pool, tracker)
 
 monitoredPool.use { (pool, tracker) =>
   for
     // Use the pool
-    _ <- pool.getConnection.use(conn => /* your queries */ IO.unit)
-    
+    _ <- sql"SELECT 1".query[Int].to[Option].readOnly(Connector.fromDataSource(pool))
+
     // Check metrics
     metrics <- tracker.getMetrics
     _ <- IO.println(s"""
       |Pool Metrics:
-      |  Total connections created: ${metrics.totalCreated}
-      |  Active connections: ${metrics.activeConnections}
-      |  Idle connections: ${metrics.idleConnections}
-      |  Waiting requests: ${metrics.waitingRequests}
-      |  Total acquisitions: ${metrics.totalAcquisitions}
-      |  Average wait time: ${metrics.averageAcquisitionTime}ms
+      |  Total connections created: ${ metrics.totalCreations }
+      |  Total acquisitions:        ${ metrics.totalAcquisitions }
+      |  Total releases:            ${ metrics.totalReleases }
+      |  Timeouts:                  ${ metrics.timeouts }
+      |  Leaks:                     ${ metrics.leaks }
+      |  Average acquisition time:  ${ metrics.acquisitionTime }
     """.stripMargin)
   yield ()
 }
@@ -151,20 +147,25 @@ monitoredPool.use { (pool, tracker) =>
 Add custom behavior when connections are acquired or released:
 
 ```scala 3
+import cats.syntax.all.*
+
+import ldbc.pool.PooledDataSource
+
 case class RequestContext(requestId: String, userId: String)
 
-val poolWithHooks = MySQLDataSource.poolingWithBeforeAfter[IO, RequestContext](
-  config = config,
-  before = Some { conn =>
-    // Set session variables or prepare connection
+val poolWithHooks = PooledDataSource.fromDataSourceWithBeforeAfter[IO, RequestContext](
+  poolConfig,
+  datasource,
+  before = { conn =>
+    // Set session variables or prepare the connection
     val context = RequestContext("req-123", "user-456")
     conn.createStatement()
-      .flatMap(_.executeUpdate(s"SET @request_id = '${context.requestId}'"))
+      .flatMap(_.executeUpdate(s"SET @request_id = '${ context.requestId }'"))
       .as(context)
   },
-  after = Some { (context, conn) =>
+  after = { (context, conn) =>
     // Log or cleanup after connection use
-    IO.println(s"Connection released for request: ${context.requestId}")
+    IO.println(s"Connection released for request: ${ context.requestId }")
   }
 )
 ```
@@ -203,16 +204,19 @@ hikariConfig.setMaximumPoolSize(20)
 hikariConfig.setMinimumIdle(5)
 hikariConfig.setConnectionTimeout(30000)
 
-// Equivalent ldbc-connector configuration
-val ldbcConfig = MySQLConfig.default
-  .setHost("localhost")
-  .setPort(3306)
-  .setDatabase("testdb")
-  .setUser("root")
+// Equivalent ldbc (ldbc-mysql + ldbc-pool) configuration
+val ldbcDataSource = MySQLDataSource
+  .build[IO]("localhost", 3306, "root")
   .setPassword("password")
-  .setMaxConnections(20)
-  .setMinConnections(5)
-  .setConnectionTimeout(30.seconds)
+  .setDatabase("testdb")
+
+val ldbcPoolConfig = ConnectionPoolConfig(
+  minConnections    = 5,
+  maxConnections    = 20,
+  connectionTimeout = 30.seconds
+)
+
+// PooledDataSource.fromDataSource[IO](ldbcPoolConfig, ldbcDataSource)
 ```
 
 ## Best Practices

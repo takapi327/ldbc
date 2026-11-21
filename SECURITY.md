@@ -8,10 +8,11 @@ vulnerability and what you can expect from us in return.
 ldbc is pre-1.0 software. Releases are not binary compatible with prior
 versions.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 0.8.x   | :white_check_mark: |
-| < 0.8   | :x:                |
+| Version | Supported                                                       |
+| ------- | --------------------------------------------------------------- |
+| 0.9.x   | :white_check_mark:                                              |
+| 0.8.x   | High / Critical fixes only, until 6 months after 0.9.0 release |
+| < 0.8   | :x:                                                             |
 
 We aim to publish security fixes for the latest release line. When a new
 release line is published, we intend to also provide fixes for
@@ -33,7 +34,7 @@ Report privately through GitHub Security Advisories:
 
 The more of this you can provide, the faster we can triage:
 
-- ldbc version and module (e.g. `ldbc-connector` 0.8.0)
+- ldbc version and module (e.g. `ldbc-mysql` 0.9.0)
 - Scala version and platform (JVM / Scala.js / Scala Native)
 - MySQL server version and configuration, if relevant
 - A description of the vulnerability and its impact
@@ -92,8 +93,10 @@ Vulnerabilities in ldbc's own code in any artifact we publish, on Maven Central
 or npm, except the test-only modules listed under "Out of scope". Areas of
 particular interest:
 
-- **MySQL wire protocol implementation** (currently `ldbc-connector`) — TLS
-  handling and certificate verification, authentication plugin
+- **MySQL wire protocol implementation and transport** (currently
+  `ldbc-mysql`, `ldbc-net`, `ldbc-authentication-plugin`,
+  `ldbc-aws-authentication-plugin`, and the legacy `ldbc-connector`) — TLS
+  handling, certificate and hostname verification, authentication plugin
   implementations, packet parsing, and anything that could allow a malicious
   or compromised server, or a network attacker on an unencrypted connection,
   to compromise the client. This includes protocol values that cause unbounded
@@ -102,13 +105,16 @@ particular interest:
   credentials, or bound parameter values leaking through exception messages,
   `toString` output, or the traces and metrics ldbc emits under its default
   telemetry configuration, including literals that slip past query-text
-  sanitization (currently `ldbc-connector`, `ldbc-authentication-plugin`,
-  `ldbc-aws-authentication-plugin`). Query-text sanitization is best-effort;
-  bypasses are in scope but are typically rated Low.
-- **Connection pool** (currently `ldbc-connector`) — returning a connection
-  that still carries the previous borrower's open transaction (including its
-  uncommitted writes and row locks) or authenticated identity, or committing a
-  previous borrower's partial work when a connection is returned.
+  sanitization (currently `ldbc-sql`, `ldbc-mysql`, `ldbc-telemetry`,
+  `ldbc-otel4s`, `ldbc-zio-telemetry`, `ldbc-authentication-plugin`,
+  `ldbc-aws-authentication-plugin`, and the legacy `ldbc-connector`).
+  Query-text sanitization is best-effort; bypasses are in scope but are
+  typically rated Low.
+- **Connection pool** (currently `ldbc-pool`, and the legacy pool in
+  `ldbc-connector`) — returning a connection that still carries the previous
+  borrower's open transaction (including its uncommitted writes and row locks)
+  or authenticated identity, or committing a previous borrower's partial work
+  when a connection is returned.
 - **Query construction APIs** (currently `ldbc-dsl`, `ldbc-statement`,
   `ldbc-query-builder`, `ldbc-schema`) — any way to inject SQL through the
   `sql` interpolator or the type-safe query and schema APIs while using them

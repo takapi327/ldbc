@@ -14,7 +14,8 @@ The Enum type treats the value of the Enum as it is as a string. For example, `C
 Example:
 
 ```scala 3
-import ldbc.codec.*
+import ldbc.dsl.*
+import ldbc.dsl.codec.*
 
 enum Color:
   case Red, Blue, Yellow
@@ -27,7 +28,8 @@ val query = sql"SELECT 'Red'".query[Color].to[Option]
 If you want to encode/decode an Enum using the values of the fields it contains instead of strings, you need to extend `Codec` to implement it. The following example defines an Enum type called `Color` and extends `Codec` to encode/decode it.
 
 ```scala 3
-import ldbc.codec.*
+import ldbc.dsl.*
+import ldbc.dsl.codec.*
 
 enum Color(val colorCode: String):
   case Red extends Color("FF0000")

@@ -13,11 +13,16 @@ ldbc can export execution and error logs of database connections in any format u
 
 A logger using Cats Effect's Console is provided for use during development. It is not enabled by default: unless you set a `LogHandler`, ldbc does not log query execution.
 
-To customize logging using an arbitrary logging library, use `ldbc.sql.logging.LogHandler`.
+To customize logging using an arbitrary logging library, use `ldbc.logging.LogHandler`.
 
 The following is the standard implementation of logging. ldbc generates the following three types of events on database connection.
 
 ```scala 3
+import cats.effect.Sync
+import cats.effect.std.Console
+
+import ldbc.logging.{ LogEvent, LogHandler }
+
 def console[F[_]: Console: Sync]: LogHandler[F] =
   case LogEvent.Success(sql, args) =>
     Console[F].println(
@@ -49,17 +54,22 @@ def console[F[_]: Console: Sync]: LogHandler[F] =
 `args` contains the values bound to the query parameters, which may include personal data, passwords, or tokens. The example above writes them out as-is, which is intended for development only. In production, do not log `args`, or mask sensitive values before logging them. What a `LogHandler` writes is the application's responsibility.
 @:@
 
-The created LogHandler can be passed as an argument to `setLogHandler` when creating a Provider to use any log output method.
+The created `LogHandler` can be passed as the second argument when creating a `Connector` to use any log output method.
 
 ```scala 3
-import ldbc.connector.*
+import ldbc.logging.LogHandler
+import ldbc.mysql.MySQLDataSource
+import ldbc.net.SSL
+import ldbc.catseffect.*
+
 val datasource =
   MySQLDataSource
     .build[IO]("127.0.0.1", 3306, "ldbc")
     .setPassword("password")
     .setDatabase("ldbc")
     .setSSL(SSL.Trusted)
-    .setLogHandler(console[IO])
+
+val connector = Connector.fromDataSource(datasource, console[IO])
 ```
 
 ## Next Steps

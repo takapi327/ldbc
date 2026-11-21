@@ -5,79 +5,81 @@
 
 # Q: Scalaコネクタでコネクションプールを使用する方法は？
 
-## A: ldbc-connectorがコネクションプーリング機能を内蔵するようになりました！
+## A: 独立モジュール `ldbc-pool` を使用します。
 
-バージョン0.4.0から、ldbc-connectorは包括的なコネクションプーリング機能を搭載しています。このプーリングシステムは、Cats Effectのファイバーベースの並行性モデル専用に設計されており、高いパフォーマンスと優れたリソース効率を提供します。
+0.9.x では、コネクションプーリングは独立モジュール `ldbc-pool` として提供されます。`ldbc-mysql` ドライバと組み合わせて使用します。このプーリングシステムはエフェクト非依存（`F: Concurrent`）で、ファイバーベースの並行性モデルを活用し、高いパフォーマンスと優れたリソース効率を提供します（以下は Cats Effect の例です）。
+
+依存関係には `ldbc-mysql`・`ldbc-cats-effect`・`ldbc-pool` を追加します。
 
 ## クイックスタート
 
-ldbc-connectorでプール化された接続を作成・使用する方法は以下の通りです：
+`MySQLDataSource`（接続情報）と `ConnectionPoolConfig`（プール設定）から `PooledDataSource.fromDataSource` でプールを作成します：
 
 ```scala 3
 import cats.effect.*
-import ldbc.connector.*
 import scala.concurrent.duration.*
+
+import ldbc.dsl.*
+import ldbc.mysql.MySQLDataSource
+import ldbc.net.SSL
+import ldbc.catseffect.*
+import ldbc.pool.{ ConnectionPoolConfig, PooledDataSource }
 
 object ConnectionPoolExample extends IOApp.Simple:
 
-  val run = 
-    // コネクションプールの設定
-    val poolConfig = MySQLConfig.default
-      .setHost("localhost")
-      .setPort(3306)
-      .setUser("root")
+  val run =
+    // 接続情報
+    val datasource = MySQLDataSource
+      .build[IO]("localhost", 3306, "root")
       .setPassword("password")
       .setDatabase("testdb")
-      // プール固有の設定
-      .setMinConnections(5)         // 最低5つの接続を維持
-      .setMaxConnections(20)        // 最大20接続まで
-      .setConnectionTimeout(30.seconds)  // 接続取得を最大30秒待機
-      
+      .setSSL(SSL.Trusted)
+
+    // コネクションプールの設定
+    val poolConfig = ConnectionPoolConfig(
+      minConnections    = 5,          // 最低5つの接続を維持
+      maxConnections    = 20,         // 最大20接続まで
+      connectionTimeout = 30.seconds  // 接続取得を最大30秒待機
+    )
+
     // プールデータソースの作成
-    MySQLDataSource.pooling[IO](poolConfig).use { pool =>
-      // プールから接続を使用
-      pool.getConnection.use { connection =>
-        for
-          stmt   <- connection.createStatement()
-          rs     <- stmt.executeQuery("SELECT 'プール接続からこんにちは！'")
-          _      <- rs.next()
-          result <- rs.getString(1)
-          _      <- IO.println(result)
-        yield ()
-      }
+    PooledDataSource.fromDataSource[IO](poolConfig, datasource).use { pool =>
+      // プールを Connector として使用
+      sql"SELECT 'プール接続からこんにちは！'"
+        .query[String]
+        .to[Option]
+        .readOnly(Connector.fromDataSource(pool))
+        .flatMap(IO.println)
     }
 ```
 
 ## プール設定の詳細
 
-ldbc-connectorは、コネクションプールを細かく調整するための豊富な設定オプションを提供します：
+`ConnectionPoolConfig` は、コネクションプールを細かく調整するための豊富な設定オプションを提供します：
 
 ```scala 3
-val advancedConfig = MySQLConfig.default
-  .setHost("localhost")
-  .setPort(3306)
-  .setUser("myapp")
-  .setPassword("secret")
-  .setDatabase("production")
-  
+val advancedConfig = ConnectionPoolConfig(
   // プールサイズ管理
-  .setMinConnections(10)          // 最小アイドル接続数
-  .setMaxConnections(50)          // 最大総接続数
-  
+  minConnections         = 10,              // 最小アイドル接続数
+  maxConnections         = 50,              // 最大総接続数
+
   // タイムアウト設定
-  .setConnectionTimeout(30.seconds)   // 接続取得の最大待機時間
-  .setIdleTimeout(10.minutes)        // アイドル接続の削除時間
-  .setMaxLifetime(30.minutes)        // 接続の最大生存時間
-  .setValidationTimeout(5.seconds)   // 接続検証のタイムアウト
-  
+  connectionTimeout      = 30.seconds,      // 接続取得の最大待機時間
+  validationTimeout      = 5.seconds,       // 接続検証のタイムアウト
+  idleTimeout            = 10.minutes,      // アイドル接続の削除時間
+  maxLifetime            = 30.minutes,      // 接続の最大生存時間
+
   // ヘルスチェック
-  .setKeepaliveTime(2.minutes)       // アイドル接続の検証間隔
-  .setConnectionTestQuery("SELECT 1") // カスタム検証クエリ（オプション）
-  
+  keepaliveTime          = Some(2.minutes), // アイドル接続の検証間隔
+
   // 高度な機能
-  .setLeakDetectionThreshold(2.minutes)  // 接続リークの警告
-  .setAdaptiveSizing(true)              // 動的プールサイジング
-  .setAdaptiveInterval(1.minute)        // プールサイズチェック間隔
+  leakDetectionThreshold = Some(2.minutes), // 接続リークの警告
+  adaptiveSizing         = true,            // 動的プールサイジング
+  adaptiveInterval       = 1.minute         // プールサイズチェック間隔
+)
+
+// カスタム検証クエリは fromDataSource の引数で渡す:
+//   PooledDataSource.fromDataSource[IO](advancedConfig, datasource, connectionTestQuery = Some("SELECT 1"))
 ```
 
 ## リソース安全性の確保
@@ -86,28 +88,20 @@ val advancedConfig = MySQLConfig.default
 
 ```scala 3
 import cats.effect.*
-import cats.implicits.*
-import ldbc.connector.*
 
-def processUsers[F[_]: Async: Network: Console](
-  pool: PooledDataSource[F]
-): F[List[String]] =
-  pool.getConnection.use { conn =>
-    conn.prepareStatement("SELECT name FROM users").use { stmt =>
-      stmt.executeQuery().flatMap { rs =>
-        // 結果を安全に反復処理
-        LazyList.unfold(())(_ => 
-          rs.next().map(hasNext => 
-            if hasNext then Some((rs.getString("name"), ())) else None
-          ).toOption.flatten
-        ).compile.toList
-      }
-    }
-  }
+import ldbc.dsl.*
+import ldbc.pool.PooledDataSource
 
-// 使用方法
-val result = MySQLDataSource.pooling[IO](config).use { pool =>
-  processUsers[IO](pool)
+// プールを Connector として受け取り、DSL でクエリを実行
+def processUsers(pool: PooledDataSource[IO]): IO[List[String]] =
+  sql"SELECT name FROM users"
+    .query[String]
+    .to[List]
+    .readOnly(Connector.fromDataSource(pool))
+
+// 使用方法（Resource が確実にプールを解放する）
+val result = PooledDataSource.fromDataSource[IO](poolConfig, datasource).use { pool =>
+  processUsers(pool)
 }
 ```
 
@@ -116,31 +110,33 @@ val result = MySQLDataSource.pooling[IO](config).use { pool =>
 組み込みメトリクスでプールのパフォーマンスを追跡：
 
 ```scala 3
-import ldbc.connector.pool.*
+import ldbc.dsl.*
+import ldbc.pool.*
 
 val monitoredPool = for
   tracker <- Resource.eval(PoolMetricsTracker.inMemory[IO])
-  pool    <- MySQLDataSource.pooling[IO](
-    config,
-    metricsTracker = Some(tracker)
-  )
+  pool    <- PooledDataSource.fromDataSource[IO](
+               poolConfig,
+               datasource,
+               metricsTracker = Some(tracker)
+             )
 yield (pool, tracker)
 
 monitoredPool.use { (pool, tracker) =>
   for
     // プールを使用
-    _ <- pool.getConnection.use(conn => /* クエリ実行 */ IO.unit)
-    
+    _ <- sql"SELECT 1".query[Int].to[Option].readOnly(Connector.fromDataSource(pool))
+
     // メトリクスを確認
     metrics <- tracker.getMetrics
     _ <- IO.println(s"""
       |プールメトリクス:
-      |  作成された総接続数: ${metrics.totalCreated}
-      |  アクティブ接続数: ${metrics.activeConnections}
-      |  アイドル接続数: ${metrics.idleConnections}
-      |  待機中リクエスト: ${metrics.waitingRequests}
-      |  総取得回数: ${metrics.totalAcquisitions}
-      |  平均待機時間: ${metrics.averageAcquisitionTime}ms
+      |  作成された総接続数: ${ metrics.totalCreations }
+      |  総取得回数:         ${ metrics.totalAcquisitions }
+      |  総返却回数:         ${ metrics.totalReleases }
+      |  タイムアウト件数:   ${ metrics.timeouts }
+      |  リーク件数:         ${ metrics.leaks }
+      |  平均取得時間:       ${ metrics.acquisitionTime }
     """.stripMargin)
   yield ()
 }
@@ -151,20 +147,25 @@ monitoredPool.use { (pool, tracker) =>
 接続の取得・解放時にカスタム処理を追加：
 
 ```scala 3
+import cats.syntax.all.*
+
+import ldbc.pool.PooledDataSource
+
 case class RequestContext(requestId: String, userId: String)
 
-val poolWithHooks = MySQLDataSource.poolingWithBeforeAfter[IO, RequestContext](
-  config = config,
-  before = Some { conn =>
+val poolWithHooks = PooledDataSource.fromDataSourceWithBeforeAfter[IO, RequestContext](
+  poolConfig,
+  datasource,
+  before = { conn =>
     // セッション変数の設定や接続の準備
     val context = RequestContext("req-123", "user-456")
     conn.createStatement()
-      .flatMap(_.executeUpdate(s"SET @request_id = '${context.requestId}'"))
+      .flatMap(_.executeUpdate(s"SET @request_id = '${ context.requestId }'"))
       .as(context)
   },
-  after = Some { (context, conn) =>
+  after = { (context, conn) =>
     // 接続使用後のログ記録やクリーンアップ
-    IO.println(s"リクエスト ${context.requestId} の接続を解放しました")
+    IO.println(s"リクエスト ${ context.requestId } の接続を解放しました")
   }
 )
 ```
@@ -203,16 +204,19 @@ hikariConfig.setMaximumPoolSize(20)
 hikariConfig.setMinimumIdle(5)
 hikariConfig.setConnectionTimeout(30000)
 
-// 同等のldbc-connector設定
-val ldbcConfig = MySQLConfig.default
-  .setHost("localhost")
-  .setPort(3306)
-  .setDatabase("testdb")
-  .setUser("root")
+// 同等のldbc（ldbc-mysql + ldbc-pool）設定
+val ldbcDataSource = MySQLDataSource
+  .build[IO]("localhost", 3306, "root")
   .setPassword("password")
-  .setMaxConnections(20)
-  .setMinConnections(5)
-  .setConnectionTimeout(30.seconds)
+  .setDatabase("testdb")
+
+val ldbcPoolConfig = ConnectionPoolConfig(
+  minConnections    = 5,
+  maxConnections    = 20,
+  connectionTimeout = 30.seconds
+)
+
+// PooledDataSource.fromDataSource[IO](ldbcPoolConfig, ldbcDataSource)
 ```
 
 ## ベストプラクティス

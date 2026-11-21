@@ -6,7 +6,12 @@
 
 package ldbc.tests
 
+import java.time.LocalDate
+
+import scala.concurrent.Future
+
 import cats.data.NonEmptyList
+import cats.syntax.all.*
 
 import cats.effect.*
 
@@ -15,14 +20,19 @@ import munit.*
 import ldbc.dsl.*
 import ldbc.dsl.exception.*
 
+import ldbc.statement.functions.DateTime
+
 import ldbc.query.builder.*
 
 import ldbc.connector.*
 
+import ldbc.fx.Fx
 import ldbc.tests.model.*
 import ldbc.Connector
 
-class LdbcTableQuerySelectConnectionTest extends TableQuerySelectConnectionTest:
+import zio.Task
+
+class LdbcTableQuerySelectConnectionTest extends TableQuerySelectConnectionTest[IO] with IODatabaseSuite:
 
   override def prefix: "jdbc" | "ldbc" = "ldbc"
 
@@ -34,20 +44,88 @@ class LdbcTableQuerySelectConnectionTest extends TableQuerySelectConnectionTest:
 
   override def connector: Connector[IO] = Connector.fromDataSource(datasource)
 
-trait TableQuerySelectConnectionTest extends CatsEffectSuite:
+class MysqlTableQuerySelectConnectionTest extends TableQuerySelectConnectionTest[IO] with IODatabaseSuite:
+  import ldbc.catseffect.concurrentIO
+  import ldbc.catseffect.Connector as MysqlConnector
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
 
-  def prefix:    "jdbc" | "ldbc"
-  def connector: Connector[IO]
+  override def prefix: "mysql" = "mysql"
+
+  private val datasource = MySQLDataSource
+    .build[IO](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+    .setPassword(MySQLTestConfig.password)
+    .setDatabase("world")
+    .setSSL(MysqlSSL.Trusted)
+
+  override def connector: Connector[IO] = MysqlConnector.fromDataSource(datasource)
+
+class MysqlFxTableQuerySelectConnectionTest extends TableQuerySelectConnectionTest[Fx] with FxDatabaseSuite:
+  import ldbc.fx.concurrentFx
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
+  import ldbc.tests.TestConnector as MysqlConnector
+
+  override def prefix: "mysql" = "mysql"
+
+  override def connector: Connector[Fx] =
+    MysqlConnector.fromDataSource(
+      MySQLDataSource
+        .build[Fx](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+        .setPassword(MySQLTestConfig.password)
+        .setDatabase("world")
+        .setSSL(MysqlSSL.Trusted)
+    )
+
+class MysqlFutureTableQuerySelectConnectionTest extends TableQuerySelectConnectionTest[Future] with FutureDatabaseSuite:
+  import ldbc.fx.concurrentFx
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
+
+  override def prefix: "mysql" = "mysql"
+
+  override def connector: Connector[Future] =
+    ldbc.future.Connector.fromDataSource(
+      MySQLDataSource
+        .build[Fx](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+        .setPassword(MySQLTestConfig.password)
+        .setDatabase("world")
+        .setSSL(MysqlSSL.Trusted)
+    )
+
+class MysqlZioTableQuerySelectConnectionTest extends TableQuerySelectConnectionTest[Task] with ZioDatabaseSuite:
+  import ldbc.mysql.MySQLDataSource
+  import ldbc.net.SSL as MysqlSSL
+  import ldbc.zio.concurrentTask
+
+  override def prefix: "mysql" = "mysql"
+
+  override def connector: Connector[Task] =
+    ldbc.zio.Connector.fromDataSource(
+      MySQLDataSource
+        .build[Task](MySQLTestConfig.host, MySQLTestConfig.port, MySQLTestConfig.user)
+        .setPassword(MySQLTestConfig.password)
+        .setDatabase("world")
+        .setSSL(MysqlSSL.Trusted)
+    )
+
+trait TableQuerySelectConnectionTest[F[_]] extends DatabaseSuite[F]:
+
+  def prefix:    "jdbc" | "ldbc" | "mysql"
+  def connector: Connector[F]
 
   private final val country          = TableQuery[Country]
   private final val city             = TableQuery[City]
   private final val countryLanguage  = TableQuery[CountryLanguage]
   private final val governmentOffice = TableQuery[GovernmentOffice]
 
+  /** The date and time functions, kept apart so that their names do not clash with the members of this suite. */
+  private object functions extends DateTime
+
   test(
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value."
   ) {
-    assertIO(
+    assertF(
       country.selectAll.query.to[List].readOnly(connector).map(_.length),
       239
     )
@@ -56,7 +134,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   test(
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value."
   ) {
-    assertIO(
+    assertF(
       city.selectAll.query.to[List].readOnly(connector).map(_.length),
       4079
     )
@@ -65,7 +143,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   test(
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value."
   ) {
-    assertIO(
+    assertF(
       countryLanguage.selectAll.query.to[List].readOnly(connector).map(_.length),
       984
     )
@@ -74,14 +152,14 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   test(
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value."
   ) {
-    assertIO(
+    assertF(
       governmentOffice.selectAll.query.to[List].readOnly(connector).map(_.length),
       3
     )
   }
 
   test("The number of cases retrieved using the subquery matches the specified value.") {
-    assertIO(
+    assertF(
       city
         .select(v => v.name *: v.countryCode)
         .where(_.countryCode _equals country.select(_.code).where(_.code _equals "JPN"))
@@ -94,7 +172,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   }
 
   test("The acquired data matches the specified model.") {
-    assertIO(
+    assertF(
       country.selectAll
         .where(_.code _equals "JPN")
         .query
@@ -123,7 +201,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   }
 
   test("The acquired data matches the specified model.") {
-    assertIO(
+    assertF(
       city.selectAll
         .where(_.id _equals 1532)
         .query
@@ -134,7 +212,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   }
 
   test("The acquired data matches the specified model.") {
-    assertIO(
+    assertF(
       countryLanguage.selectAll
         .where(_.countryCode _equals "JPN")
         .and(_.language _equals "Japanese")
@@ -146,7 +224,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   }
 
   test("The data retrieved by Join matches the specified model.") {
-    assertIO(
+    assertF(
       (city join country)
         .on((city, country) => city.countryCode _equals country.code)
         .select((city, country) => city.name *: country.name)
@@ -160,7 +238,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   }
 
   test("The data retrieved by Join matches the specified model.") {
-    assertIO(
+    assertF(
       (city join country)
         .on((city, country) => city.countryCode _equals country.code)
         .select((city, country) => city.name *: country.name)
@@ -174,7 +252,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   }
 
   test("The data retrieved by Left Join matches the specified model.") {
-    assertIO(
+    assertF(
       (city leftJoin country)
         .on((city, country) => city.countryCode _equals country.code)
         .select((city, country) => city.name *: country.name)
@@ -188,7 +266,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   }
 
   test("The data retrieved by Left Join matches the specified model.") {
-    assertIO(
+    assertF(
       (city leftJoin country)
         .on((city, country) => city.countryCode _equals country.code)
         .select((city, country) => city.name *: country.name)
@@ -202,7 +280,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   }
 
   test("The data retrieved by Right Join matches the specified model.") {
-    assertIO(
+    assertF(
       (city rightJoin country)
         .on((city, country) => city.countryCode _equals country.code)
         .select((city, country) => city.name *: country.name)
@@ -216,7 +294,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   }
 
   test("The data retrieved by Right Join matches the specified model.") {
-    assertIO(
+    assertF(
       (city rightJoin country)
         .on((city, country) => city.countryCode _equals country.code)
         .select((city, country) => city.name *: country.name)
@@ -230,7 +308,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   }
 
   test("The retrieved data matches the specified value.") {
-    assertIO(
+    assertF(
       city
         .select(v => v.countryCode *: v.id.count)
         .where(_.countryCode _equals "JPN")
@@ -242,7 +320,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   }
 
   test("The retrieved data matches the specified value.") {
-    assertIO(
+    assertF(
       city
         .select(v => v.countryCode *: v.id.count)
         .groupBy(_.countryCode)
@@ -257,7 +335,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   test(
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value."
   ) {
-    assertIO(
+    assertF(
       (for
         codeOpt <- country.select(_.code).where(_.code _equals "JPN").query.to[Option]
         cities  <- codeOpt match
@@ -276,7 +354,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   test(
     "If a record is retrieved from a Table model with sellectAll, it is converted to that model and the record is retrieved."
   ) {
-    assertIO(
+    assertF(
       city.selectAll.query.to[Option].readOnly(connector),
       Some(City(4079, "Rafah", "PSE", "Rafah", 92020))
     )
@@ -285,7 +363,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   test(
     "When a record is retrieved with sellectAll after performing a join, it is converted to the respective model and the record can be retrieved."
   ) {
-    assertIO(
+    assertF(
       (city join country)
         .on((city, country) => city.countryCode _equals country.code)
         .select((city, country) => city.* *: country.*)
@@ -320,7 +398,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   }
 
   test("Even if a column join is performed at join time, the retrieved data will match the specified values.") {
-    assertIO(
+    assertF(
       (city join country)
         .on((city, country) => city.countryCode _equals country.code)
         .select((city, country) => city.name *: (city.population ++ country.population))
@@ -334,7 +412,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   }
 
   test("If selectAll is performed with Left Join, the model with no value will be None.") {
-    assertIO(
+    assertF(
       (city leftJoin governmentOffice)
         .on((city, governmentOffice) => city.id _equals governmentOffice.cityId)
         .select((city, governmentOffice) => city.* *: governmentOffice.*)
@@ -352,7 +430,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   }
 
   test("If you do selectAll with Left Join, the model with the value is wrapped in Some.") {
-    assertIO(
+    assertF(
       (city leftJoin governmentOffice)
         .on((city, governmentOffice) => city.id _equals governmentOffice.cityId)
         .select((city, governmentOffice) => city.* *: governmentOffice.*)
@@ -370,7 +448,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   }
 
   test("If selectAll is performed with Right Join, the model with no value will be None.") {
-    assertIO(
+    assertF(
       (governmentOffice rightJoin city)
         .on((governmentOffice, city) => governmentOffice.cityId _equals city.id)
         .select((governmentOffice, city) => governmentOffice.* *: city.*)
@@ -388,7 +466,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   }
 
   test("If you do selectAll with Right Join, the model with the value is wrapped in Some.") {
-    assertIO(
+    assertF(
       (governmentOffice rightJoin city)
         .on((governmentOffice, city) => governmentOffice.cityId _equals city.id)
         .select((governmentOffice, city) => governmentOffice.* *: city.*)
@@ -408,7 +486,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   test(
     "If you use selectAll to retrieve records in a query with multiple Right Join joins, some with values will be set to Some and none without values will be set to None."
   ) {
-    assertIO(
+    assertF(
       (governmentOffice rightJoin city)
         .on((governmentOffice, city) => governmentOffice.cityId _equals city.id)
         .rightJoin(country)
@@ -447,7 +525,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   test(
     "When a record is retrieved with selectAll in a query using multiple Right Join joins, if there are only records in the base table, all other values will be None."
   ) {
-    assertIO(
+    assertF(
       (for
         _ <- (country += Country(
                "XXX",
@@ -506,21 +584,21 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   test(
     "If option is specified, the data to be acquired can be obtained with Some if the data to be acquired is one case."
   ) {
-    assertIO(
+    assertF(
       city.select(_.name).limit(1).query.option.readOnly(connector),
       Some("Kabul")
     )
   }
 
   test("If option is specified, None is returned when there is no data to be acquired.") {
-    assertIO(
+    assertF(
       city.select(_.name).where(_.id === 9999999).query.option.readOnly(connector),
       None
     )
   }
 
   test("If option is specified, an exception occurs if there are two or more data to be acquired.") {
-    interceptIO[UnexpectedContinuation](
+    interceptF[UnexpectedContinuation](
       city.select(_.name).query.option.readOnly(connector)
     )
   }
@@ -528,14 +606,55 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   test(
     "When nel is specified, if there is one or more data to be retrieved, it can be retrieved with NonEmptyList."
   ) {
-    assertIO(
+    assertF(
       city.select(_.name).limit(5).query.nel.readOnly(connector),
       NonEmptyList.of("Kabul", "Qandahar", "Herat", "Mazar-e-Sharif", "Amsterdam")
     )
   }
 
   test("When nel is specified, an exception occurs if there is no data to be acquired.") {
-    interceptIO[UnexpectedEnd](
+    interceptF[UnexpectedEnd](
       city.select(_.name).where(_.id === 9999999).query.nel.readOnly(connector)
+    )
+  }
+
+  test("A string argument of a function column is bound and evaluated by the server.") {
+    assertF(
+      city
+        .select(_ => functions.DATE_FORMAT(LocalDate.of(2024, 1, 2), "%Y/%m/%d"))
+        .where(_.id === 1)
+        .query
+        .to[Option]
+        .readOnly(connector),
+      Some("2024/01/02")
+    )
+  }
+
+  test("The parameters of a nested function column in WHERE are bound in the order of their placeholders.") {
+    assertF(
+      city
+        .select(_.name)
+        .where(_ => functions.DATE_FORMAT(functions.STR_TO_DATE("01,5,2013", "%d,%m,%Y"), "%Y") === "2013")
+        .and(_.id === 1)
+        .query
+        .to[Option]
+        .readOnly(connector),
+      Some("Kabul")
+    )
+  }
+
+  /**
+   * Regression guard for the finding that `STR_TO_DATE` wrote its arguments into the SQL text. The payload closes the
+   * literal and replaces the format: written into the SQL it parsed as `2013-05-01`, bound it is just an invalid date.
+   */
+  test("A string argument of a function column cannot change the structure of the statement.") {
+    assertF(
+      city
+        .select(_ => functions.STR_TO_DATE("01,5,2013', '%d,%m,%Y') -- ", "%Y"))
+        .where(_.id === 1)
+        .query
+        .to[Option]
+        .readOnly(connector),
+      Some(None)
     )
   }

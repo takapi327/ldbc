@@ -107,8 +107,8 @@ class DBIOTest extends CatsEffectSuite:
   test("DBIO#updateRaw") {
     assertIO(
       (for
-        r1 <- DBIO.updateRaw("CREATE DATABASE `dbio`;").commit(connector)
-        r2 <- DBIO.updateRaw("DROP DATABASE `dbio`;").commit(connector)
+        r1 <- DBIO.updateRaw("CREATE DATABASE `ldbc_tmp_dbio`;").commit(connector)
+        r2 <- DBIO.updateRaw("DROP DATABASE `ldbc_tmp_dbio`;").commit(connector)
       yield List(r1, r2)),
       List(1, 0)
     )
@@ -116,14 +116,14 @@ class DBIOTest extends CatsEffectSuite:
 
   test("DBIO#updateRaw#Exception") {
     interceptIO[SQLSyntaxErrorException](
-      DBIO.updateRaw("CREATE `dbio`;").commit(connector)
+      DBIO.updateRaw("CREATE `ldbc_tmp_dbio`;").commit(connector)
     )
   }
 
   test("DBIO#updateRaws") {
     val sql = """
-      |CREATE DATABASE `dbio`;
-      |DROP DATABASE `dbio`;
+      |CREATE DATABASE `ldbc_tmp_dbio`;
+      |DROP DATABASE `ldbc_tmp_dbio`;
       |""".stripMargin
     assertIO(
       DBIO.updateRaws(sql).commit(connector).map(_.toList),
@@ -133,8 +133,8 @@ class DBIOTest extends CatsEffectSuite:
 
   test("DBIO#updateRaws#Exception") {
     val sql = """
-                |CREATE DATABASE `dbio`
-                |DROP DATABASE `dbio`
+                |CREATE DATABASE `ldbc_tmp_dbio`
+                |DROP DATABASE `ldbc_tmp_dbio`
                 |""".stripMargin
     interceptIO[BatchUpdateException](
       DBIO.updateRaws(sql).commit(connector).map(_.toList)

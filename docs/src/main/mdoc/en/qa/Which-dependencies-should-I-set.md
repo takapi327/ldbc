@@ -26,25 +26,31 @@ libraryDependencies ++= Seq(
 )
 ```
 
-**ldbc-connector**
+**ldbc-mysql (effect-agnostic MySQL driver)**
 
-If you want to use the new connector written in Scala, set the following dependencies:
+To use the MySQL driver written in Scala, set the driver itself `ldbc-mysql` and the bridge for the effect you use. For Cats Effect (`IO`), add `ldbc-cats-effect`:
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "@ORGANIZATION@" %% "ldbc-connector" % "@VERSION@"
+  "@ORGANIZATION@" %% "ldbc-mysql"       % "@VERSION@",
+  "@ORGANIZATION@" %% "ldbc-cats-effect" % "@VERSION@"
 )
 ```
 
-ldbc-connector works not only on JVM but also on JS and Native platforms.
+For ZIO (`Task`), add `ldbc-zio`; for `scala.concurrent.Future`, add `ldbc-future` instead of `ldbc-cats-effect`.
+
+ldbc-mysql works not only on JVM but also on JS and Native platforms.
 
 To use ldbc with Scala.js or Scala Native, set the dependencies as follows:
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "@ORGANIZATION@" %%% "ldbc-connector" % "@VERSION@"
+  "@ORGANIZATION@" %%% "ldbc-mysql"       % "@VERSION@",
+  "@ORGANIZATION@" %%% "ldbc-cats-effect" % "@VERSION@"
 )
 ```
+
+> **Note**: The legacy `ldbc-connector` is still available, but is scheduled to be removed in a future version. New projects are encouraged to use `ldbc-mysql`.
 
 ### Plain DSL
 
@@ -168,19 +174,22 @@ See [Schema Code Generation](/en/tutorial/Schema-Code-Generation.md) for details
 
 ### Using ldbc with ZIO
 
-If you use ZIO instead of Cats Effect, add `ldbc-zio-interop`.
+If you use ZIO (`Task`) instead of Cats Effect, add `ldbc-mysql` and the ZIO bridge `ldbc-zio`. It runs natively on ZIO without going through `zio-interop-cats`.
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "@ORGANIZATION@" %% "ldbc-zio-interop" % "@VERSION@"
+  "@ORGANIZATION@" %% "ldbc-mysql" % "@VERSION@",
+  "@ORGANIZATION@" %% "ldbc-zio"   % "@VERSION@"
 )
 ```
 
-It works on JVM and Scala.js (Scala Native is not available because ZIO Interop Cats does not support it). See [How to use with ZIO](/en/qa/How-to-use-with-ZIO.md) for details.
+See [How to use with ZIO](/en/qa/How-to-use-with-ZIO.md) for details.
+
+> The legacy `ldbc-zio-interop` (using `ldbc-connector` from ZIO via `zio-interop-cats`) is still available, but the native `ldbc-zio` is recommended.
 
 ### Authentication Plugins
 
-`ldbc-connector` bundles the major MySQL authentication plugins, so no extra dependency is normally required. Add the following only when implementing your own authentication plugin, or when using Aurora IAM authentication.
+`ldbc-mysql` bundles the major MySQL authentication plugins, so no extra dependency is normally required. Add the following only when implementing your own authentication plugin, or when using Aurora IAM authentication.
 
 **ldbc-authentication-plugin** (authentication plugin foundation)
 

@@ -399,14 +399,18 @@ import ldbc.dsl.*
 // Combining schemas
 val schema = users.schema ++ profiles.schema ++ orders.schema
 
-// Apply schema using database connection
-datasource.getConnection.use { conn =>
-  DBIO.sequence(
-    // Create tables (only if they don't exist)
-    schema.createIfNotExists,
-    // Other operations such as data insertion...
-  ).commit(connector)
-}
+// Create a Connector
+import ldbc.mysql.MySQLDataSource
+import ldbc.net.SSL
+import ldbc.catseffect.*
+val connector = Connector.fromDataSource(datasource)
+
+// Apply the schema
+DBIO.sequence(
+  // Create tables (only if they don't exist)
+  schema.createIfNotExists,
+  // Other operations such as data insertion...
+).commit(connector)
 ```
 
 ### DDL Operations

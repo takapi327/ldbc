@@ -12,23 +12,26 @@ You can use the `withBeforeAfter` method when creating a Connection to invoke pr
 The second argument of `withBeforeAfter` specifies the type of the Before process result that will be passed to After.
 
 ```scala 3
-import ldbc.connector.*
+import ldbc.mysql.*
 
 def before: Connection[IO] => IO[Unit] = _ => IO.println("Connecting to...")
 def after: (Unit, Connection[IO]) => IO[Unit] = (_, _) => IO.println("Connection Closed")
 
-val provider =
-  ConnectionProvider
+val datasource =
+  MySQLDataSource
     ...
     .withBeforeAfter(before, after)
 ```
 
 @:callout(warning)
 
-This feature is only available when using `ldbc-connector`.
+This feature is only available when using `ldbc-mysql` (or the legacy `ldbc-connector`).
 
 ```scala 3
-libraryDependencies += "@ORGANIZATION@" %% "ldbc-connector" % "@VERSION@"
+libraryDependencies ++= Seq(
+  "@ORGANIZATION@" %% "ldbc-mysql"       % "@VERSION@",
+  "@ORGANIZATION@" %% "ldbc-cats-effect" % "@VERSION@"
+)
 ```
 
 @:@

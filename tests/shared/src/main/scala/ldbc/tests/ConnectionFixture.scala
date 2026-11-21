@@ -6,78 +6,85 @@
 
 package ldbc.tests
 
-import cats.effect.*
+import cats.MonadThrow
 
 import munit.*
-import munit.catseffect.IOFixture
-import munit.catseffect.ResourceFixture.FixtureNotInstantiatedException
 
-import ldbc.connector.*
+import ldbc.sql.DataSource
 
-trait ConnectionFixture:
+import ldbc.Connector
+
+/**
+ * Effect-agnostic connection fixture: a suite-level `Connector[F]` acquired in `beforeAll` and released
+ * in `afterAll`, with optional `F[Unit]` hooks around each phase. Works for any `F` with a
+ * `cats.MonadThrow` (IO / Fx / Future) — the connection is wrapped via the generic
+ * `ldbc.tests.TestConnector.fromConnection`, and munit awaits the `F[Unit]` lifecycle hooks through the
+ * suite's per-effect value transform.
+ */
+trait ConnectionFixture[F[_]]:
   def name: String
 
-  def withBeforeAll(f: Connector[IO] => IO[Unit]): ConnectionFixture
+  def withBeforeAll(f: Connector[F] => F[Unit]): ConnectionFixture[F]
 
-  def withAfterAll(f: Connector[IO] => IO[Unit]): ConnectionFixture
+  def withAfterAll(f: Connector[F] => F[Unit]): ConnectionFixture[F]
 
-  def withBeforeEach(f: Connector[IO] => IO[Unit]): ConnectionFixture
+  def withBeforeEach(f: Connector[F] => F[Unit]): ConnectionFixture[F]
 
-  def withAfterEach(f: Connector[IO] => IO[Unit]): ConnectionFixture
+  def withAfterEach(f: Connector[F] => F[Unit]): ConnectionFixture[F]
 
-  def fixture: IOFixture[Connector[IO]]
+  def fixture: AnyFixture[Connector[F]]
 
 object ConnectionFixture:
 
-  private case class Impl(
+  private case class Impl[F[_]](
     name:              String,
-    datasource:        MySQLDataSource[IO, Unit],
-    connectBeforeAll:  Connector[IO] => IO[Unit],
-    connectAfterAll:   Connector[IO] => IO[Unit],
-    connectBeforeEach: Connector[IO] => IO[Unit],
-    connectAfterEach:  Connector[IO] => IO[Unit]
-  ) extends ConnectionFixture:
-    override def withBeforeAll(f: Connector[IO] => IO[Unit]): ConnectionFixture =
+    datasource:        DataSource[F],
+    connectBeforeAll:  Connector[F] => F[Unit],
+    connectAfterAll:   Connector[F] => F[Unit],
+    connectBeforeEach: Connector[F] => F[Unit],
+    connectAfterEach:  Connector[F] => F[Unit]
+  )(using F: MonadThrow[F])
+    extends ConnectionFixture[F]:
+    override def withBeforeAll(f: Connector[F] => F[Unit]): ConnectionFixture[F] =
       copy(connectBeforeAll = f)
 
-    override def withAfterAll(f: Connector[IO] => IO[Unit]): ConnectionFixture =
+    override def withAfterAll(f: Connector[F] => F[Unit]): ConnectionFixture[F] =
       copy(connectAfterAll = f)
 
-    override def withBeforeEach(f: Connector[IO] => IO[Unit]): ConnectionFixture =
+    override def withBeforeEach(f: Connector[F] => F[Unit]): ConnectionFixture[F] =
       copy(connectBeforeEach = f)
 
-    override def withAfterEach(f: Connector[IO] => IO[Unit]): ConnectionFixture =
+    override def withAfterEach(f: Connector[F] => F[Unit]): ConnectionFixture[F] =
       copy(connectAfterEach = f)
 
-    override val fixture: IOFixture[Connector[IO]] =
-      new IOFixture[Connector[IO]](name):
-        @volatile private var value: Option[(Connector[IO], IO[Unit])] = None
+    override val fixture: AnyFixture[Connector[F]] =
+      new AnyFixture[Connector[F]](name):
+        @volatile private var value: Option[(Connector[F], F[Unit])] = None
 
-        override def apply(): Connector[IO] = value match
+        override def apply(): Connector[F] = value match
           case Some(v) => v._1
-          case None    => throw new FixtureNotInstantiatedException(name)
+          case None    => throw new IllegalStateException(s"fixture '$name' was not initialised")
 
-        override def beforeAll(): IO[Unit] =
-          datasource.getConnection.map(Connector.fromConnection).allocated.flatMap {
-            case (conn, close) =>
-              connectBeforeAll(conn) *> IO(this.value = Some((conn, close)))
+        override def beforeAll(): F[Unit] =
+          F.flatMap(datasource.getConnection) { (rawConnection, close) =>
+            val connector = TestConnector.fromConnection(rawConnection)
+            F.map(connectBeforeAll(connector))(_ => this.value = Some((connector, close)))
           }
 
-        override def afterAll(): IO[Unit] =
-          value.fold(IO.unit) {
-            case (conn, close) =>
-              connectAfterAll(conn) *> close
+        override def afterAll(): F[Unit] =
+          value.fold(F.unit) {
+            case (conn, close) => F.flatMap(connectAfterAll(conn))(_ => close)
           }
 
-        override def beforeEach(context: BeforeEach): IO[Unit] =
-          value.fold(IO.unit) {
-            case (conn, _) => connectBeforeEach(conn) *> IO.unit
+        override def beforeEach(context: BeforeEach): F[Unit] =
+          value.fold(F.unit) {
+            case (conn, _) => connectBeforeEach(conn)
           }
 
-        override def afterEach(context: AfterEach): IO[Unit] =
-          value.fold(IO.unit) {
-            case (conn, _) => connectAfterEach(conn) *> IO.unit
+        override def afterEach(context: AfterEach): F[Unit] =
+          value.fold(F.unit) {
+            case (conn, _) => connectAfterEach(conn)
           }
 
-  def apply(name: String, datasource: MySQLDataSource[IO, Unit]): ConnectionFixture =
-    Impl(name, datasource, _ => IO.unit, _ => IO.unit, _ => IO.unit, _ => IO.unit)
+  def apply[F[_]](name: String, datasource: DataSource[F])(using F: MonadThrow[F]): ConnectionFixture[F] =
+    Impl(name, datasource, _ => F.unit, _ => F.unit, _ => F.unit, _ => F.unit)

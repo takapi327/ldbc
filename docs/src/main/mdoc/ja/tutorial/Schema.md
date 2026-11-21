@@ -400,7 +400,9 @@ import ldbc.dsl.*
 val schema = users.schema ++ profiles.schema ++ orders.schema
 
 // Connectorを作成
-import ldbc.connector.*
+import ldbc.mysql.MySQLDataSource
+import ldbc.net.SSL
+import ldbc.catseffect.*
 val connector = Connector.fromDataSource(datasource)
 
 // スキーマを適用
