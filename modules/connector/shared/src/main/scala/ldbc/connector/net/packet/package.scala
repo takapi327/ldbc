@@ -40,6 +40,32 @@ package object packet:
    * @return
    *   A codec for a length encoded string.
    */
+  /**
+   * Reads a length-encoded integer from `bytes` at `offset`.
+   *
+   * A first byte below `0xFC` is the value itself, and `0xFC`, `0xFD` and `0xFE` are followed by a 2-, 3- and 8-byte
+   * little-endian integer, as MySQL Connector/J reads it. The 8-byte form is what the server sends for values of 2^24
+   * and above, such as a large affected-row count or AUTO_INCREMENT value in an OK packet.
+   *
+   * @see https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_basic_dt_integers.html#sect_protocol_basic_dt_int_le
+   * @return
+   *   The value and the offset just after it.
+   */
+  private[ldbc] def readLengthEncodedInt(bytes: Array[Byte], offset: Int): (Long, Int) =
+    (bytes(offset) & 0xff) match
+      case 0xfc  => (readLittleEndian(bytes, offset + 1, 2), offset + 3)
+      case 0xfd  => (readLittleEndian(bytes, offset + 1, 3), offset + 4)
+      case 0xfe  => (readLittleEndian(bytes, offset + 1, 8), offset + 9)
+      case first => (first.toLong, offset + 1)
+
+  /**
+   * Reads a `length`-byte little-endian integer from `bytes` at `offset`.
+   */
+  private def readLittleEndian(bytes: Array[Byte], offset: Int, length: Int): Long =
+    (0 until length).foldLeft(0L) { (value, index) =>
+      value | ((bytes(offset + index) & 0xffL) << (8 * index))
+    }
+
   def lengthEncodedIntDecoder: Decoder[Long] =
     uint8.flatMap {
       case len if len <= 251 =>
@@ -49,7 +75,7 @@ package object packet:
       case 253 =>
         uint24L.map(_.toLong)
       case 254 =>
-        uint32L.xmap(_.toLong, _.toInt)
+        int64L
       case int =>
         fail(Err("Invalid length encoded integer: " + int))
     }
