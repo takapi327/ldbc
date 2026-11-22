@@ -26,6 +26,7 @@ import ldbc.mysql.net.packet.request.*
 import ldbc.mysql.net.packet.response.*
 import ldbc.mysql.net.protocol.*
 import ldbc.mysql.telemetry.MysqlTelemetryAttribute
+import ldbc.mysql.util.Version
 import ldbc.net.{ Socket, TlsUpgrade }
 import ldbc.telemetry.*
 import ldbc.telemetry.{ DbAttributes, ServerAttributes }
@@ -136,6 +137,15 @@ sealed trait Protocol[F[_]] extends UtilityCommands[F], Authentication[F]:
   def serverVariables(): F[Map[String, String]]
 
   /**
+   * Makes the session character set utf8mb4, which is what every statement is encoded in.
+   *
+   * The collation requested in the handshake is not always the one the server applies, so the session variables read
+   * after authentication are checked and, when `character_set_client` or `character_set_connection` is anything else,
+   * `SET NAMES utf8mb4` is sent. Returns the variables as they are after that.
+   */
+  def ensureUtf8mb4Session(serverVariables: Map[String, String]): F[Map[String, String]]
+
+  /**
    * Whether the current server session has the `NO_BACKSLASH_ESCAPES` sql_mode enabled.
    *
    * This tracks the live server status: it is seeded from the initial handshake and updated from the
@@ -178,6 +188,23 @@ sealed trait Protocol[F[_]] extends UtilityCommands[F], Authentication[F]:
   def adoptServerPacketLimit(serverVariables: Map[String, String]): F[Unit]
 
 object Protocol:
+
+  /** The character set every statement is encoded in, and so the only one a session may use. */
+  private[ldbc] val UTF8MB4 = "utf8mb4"
+
+  private val SET_NAMES_UTF8MB4 = "SET NAMES utf8mb4"
+
+  /**
+   * The collation requested in the handshake: `utf8mb4_0900_ai_ci` (255), or `utf8mb4_general_ci` (45) on a server
+   * older than 8.0.1, which does not have the former.
+   *
+   * As in MySQL Connector/J, the character set the server announces in its greeting is never echoed back. Statements
+   * are always sent as UTF-8, so a session in another character set would parse them differently from how they were
+   * escaped, and in sjis, gbk or big5 a backslash inserted by escaping can be taken as the second byte of a multibyte
+   * character. The greeting is not reliable either, because it carries only the lower byte of the server collation ID.
+   */
+  private[ldbc] def handshakeCollation(serverVersion: Version): Int =
+    if serverVersion.compare(Version(8, 0, 1)) >= 0 then 255 else 45
 
   /**
    * The packet size limit to use once the server's own limit is known.
@@ -350,6 +377,25 @@ object Protocol:
         }
 
       loop
+
+    override def ensureUtf8mb4Session(serverVariables: Map[String, String]): F[Map[String, String]] =
+      val charsetVariables = List("character_set_client", "character_set_connection")
+      if charsetVariables.forall(name => serverVariables.get(name).exists(_.equalsIgnoreCase(Protocol.UTF8MB4))) then
+        F.pure(serverVariables)
+      else
+        resetSequenceId *>
+          send(ComQueryPacket(Protocol.SET_NAMES_UTF8MB4, initialPacket.capabilityFlags, ListMap.empty)) *>
+          receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
+            case error: ERRPacket => F.raiseError(error.toException(Some(Protocol.SET_NAMES_UTF8MB4), None))
+            case _                =>
+              F.pure(
+                serverVariables ++ List(
+                  "character_set_client"     -> Protocol.UTF8MB4,
+                  "character_set_connection" -> Protocol.UTF8MB4,
+                  "character_set_results"    -> Protocol.UTF8MB4
+                )
+              )
+          }
 
     override def serverVariables(): F[Map[String, String]] =
       resetSequenceId *>
@@ -606,7 +652,7 @@ object Protocol:
                               username,
                               hashedPassword.length.toByte +: hashedPassword.toArray,
                               plugin.name.toString,
-                              initialPacket.characterSet,
+                              Protocol.handshakeCollation(initialPacket.serverVersion),
                               hostInfo.database
                             )
         _ <- socket.send(handshakeResponse)
@@ -638,7 +684,7 @@ object Protocol:
                      capabilityFlags,
                      user,
                      hostInfo.database,
-                     initialPacket.characterSet,
+                     Protocol.handshakeCollation(initialPacket.serverVersion),
                      initialPacket.authPlugin,
                      hashedPassword
                    )
