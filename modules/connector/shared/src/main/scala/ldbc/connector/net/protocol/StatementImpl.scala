@@ -435,7 +435,10 @@ object StatementImpl:
 
     override def enquoteLiteral(value: String): F[String] =
       if value == null then F.pure("NULL")
-      else F.pure(StringHelper.enquoteLiteral(value, ansiQuotesEnabled, backslashEscapesEnabled))
+      else
+        noBackslashEscapes.map { noBackslashEscapes =>
+          StringHelper.enquoteLiteral(value, ansiQuotesEnabled, !noBackslashEscapes)
+        }
 
     override def enquoteIdentifier(identifier: String, alwaysQuote: Boolean): F[String] =
       if identifier == null then F.raiseError(new SQLException("Value 'null' is not a valid identifier."))
@@ -446,16 +449,25 @@ object StatementImpl:
 
     override def enquoteNCharLiteral(value: String): F[String] =
       if value == null then F.pure("NULL")
-      else F.pure(StringHelper.enquoteNCharLiteral(value, backslashEscapesEnabled))
+      else noBackslashEscapes.map(noBackslashEscapes => StringHelper.enquoteNCharLiteral(value, !noBackslashEscapes))
 
     override def isSimpleIdentifier(identifier: String): F[Boolean] =
       F.pure(StringHelper.isSimpleIdentifier(identifier))
 
-    private def sqlMode: String = serverVariables.getOrElse("sql_mode", "")
+    /**
+     * Whether the session currently has the `NO_BACKSLASH_ESCAPES` sql_mode, taken from the live
+     * [[Protocol.noBackslashEscapes]] so that literals are escaped the same way as prepared statement parameters.
+     */
+    protected def noBackslashEscapes: F[Boolean] = protocol.noBackslashEscapes
 
-    private def ansiQuotesEnabled: Boolean = sqlMode.contains("ANSI_QUOTES")
-
-    private def backslashEscapesEnabled: Boolean = !sqlMode.contains("NO_BACKSLASH_ESCAPES")
+    /**
+     * Whether `ANSI_QUOTES` is in the sql_mode read when the connection was made.
+     *
+     * Unlike `NO_BACKSLASH_ESCAPES`, which the server reports in the status flags of every OK packet and which literals
+     * therefore take from the live [[Protocol.noBackslashEscapes]], `ANSI_QUOTES` is not reported, so a `SET sql_mode`
+     * issued after connecting is not reflected here, as in MySQL Connector/J.
+     */
+    private def ansiQuotesEnabled: Boolean = serverVariables.getOrElse("sql_mode", "").contains("ANSI_QUOTES")
 
     protected def checkClosed(): F[Unit] =
       isClosed().ifM(

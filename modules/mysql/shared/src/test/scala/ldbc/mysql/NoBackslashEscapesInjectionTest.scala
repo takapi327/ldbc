@@ -88,3 +88,64 @@ class NoBackslashEscapesInjectionTest extends FTestPlatform:
 
     assertFx(program, List.empty[Int])
   }
+
+  /**
+   * Regression guard for the finding that `enquoteLiteral` and `enquoteNCharLiteral` read the sql_mode captured when
+   * the connection was made, while prepared statements follow the live session. After `SET sql_mode` the literal was
+   * escaped for the old mode, and the payload closed it. Selecting the literal must return the payload unchanged.
+   */
+  test("enquoteLiteral follows a NO_BACKSLASH_ESCAPES set after connecting") {
+    val payload = "\\' OR 1=1 -- "
+
+    val program = connection.use { conn =>
+      for
+        statement <- conn.createStatement()
+        _         <- statement.executeUpdate("SET SESSION sql_mode = 'NO_BACKSLASH_ESCAPES'")
+        literal   <- statement.enquoteLiteral(payload)
+        rs        <- statement.executeQuery(s"SELECT $literal")
+        rows      <- rs.whileM[List, String](rs.getString(1))
+      yield rows
+    }
+
+    assertFx(program, List(payload))
+  }
+
+  test("enquoteNCharLiteral follows a NO_BACKSLASH_ESCAPES set after connecting") {
+    val payload = "\\' OR 1=1 -- "
+
+    val program = connection.use { conn =>
+      for
+        statement <- conn.createStatement()
+        _         <- statement.executeUpdate("SET SESSION sql_mode = 'NO_BACKSLASH_ESCAPES'")
+        literal   <- statement.enquoteNCharLiteral(payload)
+        rs        <- statement.executeQuery(s"SELECT $literal")
+        rows      <- rs.whileM[List, String](rs.getString(1))
+      yield rows
+    }
+
+    assertFx(program, List(payload))
+  }
+
+  /**
+   * Regression guard for the finding that the reply to COM_CHANGE_USER was read past the `NO_BACKSLASH_ESCAPES`
+   * tracking. CHANGE_USER resets the session sql_mode, so the state set before it stayed on, string parameters were
+   * escaped by doubling quotes while the server again read backslashes as escapes, and the payload broke out.
+   */
+  test("CHANGE_USER resets the NO_BACKSLASH_ESCAPES tracking along with the session") {
+    val payload = "\\' OR 1=1 -- "
+
+    val program = connection.use { conn =>
+      for
+        statement <- conn.createStatement()
+        _         <- statement.executeUpdate("SET SESSION sql_mode = 'NO_BACKSLASH_ESCAPES'")
+        _         <- conn.changeUser(TestConfig.user, TestConfig.password)
+        ps        <- conn.clientPreparedStatement(
+                "SELECT cnt FROM (SELECT 1 AS cnt, 'admin' AS name) t WHERE t.name = ?"
+              )
+        rs   <- ps.setString(1, payload) *> ps.executeQuery()
+        rows <- rs.whileM[List, Int](rs.getInt(1))
+      yield rows
+    }
+
+    assertFx(program, List.empty[Int])
+  }
