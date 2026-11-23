@@ -56,10 +56,10 @@ class SqlModeTrackingTest extends FTestPlatform:
     use: Protocol[Fx] => Fx[Unit]
   ): Fx[Boolean] =
     for
-      given Exchange[Fx]  <- Exchange.apply[Fx]
-      toReceive           <- Ref.of[Fx, List[ResponsePacket]](replies)
-      sequenceIdRef       <- Ref.of[Fx, Byte](0x00)
-      initialPacketRef    <- Ref.of[Fx, Option[InitialPacket]](
+      given Exchange[Fx] <- Exchange.apply[Fx]
+      toReceive          <- Ref.of[Fx, List[ResponsePacket]](replies)
+      sequenceIdRef      <- Ref.of[Fx, Byte](0x00)
+      initialPacketRef   <- Ref.of[Fx, Option[InitialPacket]](
                             Some(
                               InitialPacket(
                                 protocolVersion = 10,
