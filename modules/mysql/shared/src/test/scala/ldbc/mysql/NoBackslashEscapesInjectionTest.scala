@@ -60,3 +60,31 @@ class NoBackslashEscapesInjectionTest extends FTestPlatform:
     // Secure expectation: the payload is a plain string that matches no row.
     assertFx(program, List.empty[Int])
   }
+
+  /**
+   * Regression guard for the finding that the OK packet read the 8-byte form of a length-encoded integer as 4 bytes.
+   * An AUTO_INCREMENT value of 2^24 or more is sent in that form, so the status flags were read from the wrong bytes
+   * and the tracked `NO_BACKSLASH_ESCAPES` state was switched off, letting the next string parameter break out.
+   */
+  test("an AUTO_INCREMENT value of 2^24 or more does not switch off the NO_BACKSLASH_ESCAPES tracking") {
+    val payload = "zzz' OR 1=1 -- "
+
+    val program = connection.use { conn =>
+      for
+        statement <- conn.createStatement()
+        _         <-
+          statement.executeUpdate(
+            "CREATE TEMPORARY TABLE `nbe_large_id` (`id` BIGINT AUTO_INCREMENT PRIMARY KEY, `v` INT) AUTO_INCREMENT = 16777216"
+          )
+        _  <- statement.executeUpdate("SET SESSION sql_mode = 'NO_BACKSLASH_ESCAPES'")
+        _  <- statement.executeUpdate("INSERT INTO `nbe_large_id` (`v`) VALUES (1)")
+        ps <- conn.clientPreparedStatement(
+                "SELECT cnt FROM (SELECT 1 AS cnt, 'admin' AS name) t WHERE t.name = ?"
+              )
+        rs   <- ps.setString(1, payload) *> ps.executeQuery()
+        rows <- rs.whileM[List, Int](rs.getInt(1))
+      yield rows
+    }
+
+    assertFx(program, List.empty[Int])
+  }

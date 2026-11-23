@@ -78,51 +78,9 @@ object OKPacket:
       val hasClientTransactionsFlag = capabilityFlags.contains(CapabilitiesFlags.CLIENT_TRANSACTIONS)
       val hasClientSessionTrackFlag = capabilityFlags.contains(CapabilitiesFlags.CLIENT_SESSION_TRACK)
 
-      val affectedRowsLength = bytes(offset) & 0xff
-      offset += 1
-
-      val affectedRows =
-        if affectedRowsLength <= 251 then affectedRowsLength
-        else if affectedRowsLength == 252 then
-          val rows = (bytes(offset) & 0xff) | ((bytes(offset + 1) & 0xff) << 8)
-          offset += 2
-          rows
-        else if affectedRowsLength == 253 then
-          val rows = (bytes(offset) & 0xff) |
-            ((bytes(offset + 1) & 0xff) << 8) |
-            ((bytes(offset + 2) & 0xff) << 16)
-          offset += 3
-          rows
-        else
-          val rows = (bytes(offset) & 0xff) |
-            ((bytes(offset + 1) & 0xff) << 8) |
-            ((bytes(offset + 2) & 0xff) << 16) |
-            ((bytes(offset + 3) & 0xff) << 24)
-          offset += 4
-          rows
-
-      val lastInsertIdLength = bytes(offset) & 0xff
-      offset += 1
-
-      val lastInsertId =
-        if lastInsertIdLength <= 251 then lastInsertIdLength
-        else if lastInsertIdLength == 252 then
-          val id = (bytes(offset) & 0xff) | ((bytes(offset + 1) & 0xff) << 8)
-          offset += 2
-          id
-        else if lastInsertIdLength == 253 then
-          val id = (bytes(offset) & 0xff) |
-            ((bytes(offset + 1) & 0xff) << 8) |
-            ((bytes(offset + 2) & 0xff) << 16)
-          offset += 3
-          id
-        else
-          val id = (bytes(offset) & 0xff) |
-            ((bytes(offset + 1) & 0xff) << 8) |
-            ((bytes(offset + 2) & 0xff) << 16) |
-            ((bytes(offset + 3) & 0xff) << 24)
-          offset += 4
-          id
+      val (affectedRows, afterAffectedRows) = readLengthEncodedInt(bytes, offset)
+      val (lastInsertId, afterLastInsertId) = readLengthEncodedInt(bytes, afterAffectedRows)
+      offset = afterLastInsertId
 
       val statusFlags: Set[ServerStatusFlags] = if hasClientProtocol41Flag || hasClientTransactionsFlag then
         val int = bytes(offset) & 0xff | ((bytes(offset + 1) & 0xff) << 8)

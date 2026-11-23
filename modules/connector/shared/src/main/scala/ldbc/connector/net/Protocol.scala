@@ -34,6 +34,7 @@ import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.protocol.*
 import ldbc.connector.telemetry.*
+import ldbc.connector.util.Version
 
 import ldbc.authentication.plugin.*
 
@@ -137,6 +138,15 @@ trait Protocol[F[_]] extends UtilityCommands[F], Authentication[F]:
   def serverVariables(): F[Map[String, String]]
 
   /**
+   * Makes the session character set utf8mb4, which is what every statement is encoded in.
+   *
+   * The collation requested in the handshake is not always the one the server applies, so the session variables read
+   * after authentication are checked and, when `character_set_client` or `character_set_connection` is anything else,
+   * `SET NAMES utf8mb4` is sent. Returns the variables as they are after that.
+   */
+  def ensureUtf8mb4Session(serverVariables: Map[String, String]): F[Map[String, String]]
+
+  /**
    * Whether the current server session has the `NO_BACKSLASH_ESCAPES` sql_mode enabled.
    *
    * This tracks the live server status: it is seeded from the initial handshake and updated from
@@ -146,6 +156,23 @@ trait Protocol[F[_]] extends UtilityCommands[F], Authentication[F]:
   def noBackslashEscapes: F[Boolean]
 
 object Protocol:
+
+  /** The character set every statement is encoded in, and so the only one a session may use. */
+  private[ldbc] val UTF8MB4 = "utf8mb4"
+
+  private val SET_NAMES_UTF8MB4 = "SET NAMES utf8mb4"
+
+  /**
+   * The collation requested in the handshake: `utf8mb4_0900_ai_ci` (255), or `utf8mb4_general_ci` (45) on a server
+   * older than 8.0.1, which does not have the former.
+   *
+   * As in MySQL Connector/J, the character set the server announces in its greeting is never echoed back. Statements
+   * are always sent as UTF-8, so a session in another character set would parse them differently from how they were
+   * escaped, and in sjis, gbk or big5 a backslash inserted by escaping can be taken as the second byte of a multibyte
+   * character. The greeting is not reliable either, because it carries only the lower byte of the server collation ID.
+   */
+  private[ldbc] def handshakeCollation(serverVersion: Version): Int =
+    if serverVersion.compare(Version(8, 0, 1)) >= 0 then 255 else 45
 
   private val SELECT_SERVER_VARIABLES_QUERY =
     "SELECT @@session.auto_increment_increment AS auto_increment_increment, @@character_set_client AS character_set_client, @@character_set_connection AS character_set_connection, @@character_set_results AS character_set_results, @@character_set_server AS character_set_server, @@collation_server AS collation_server, @@collation_connection AS collation_connection, @@init_connect AS init_connect, @@interactive_timeout AS interactive_timeout, @@license AS license, @@lower_case_table_names AS lower_case_table_names, @@max_allowed_packet AS max_allowed_packet, @@net_write_timeout AS net_write_timeout, @@performance_schema AS performance_schema, @@sql_mode AS sql_mode, @@system_time_zone AS system_time_zone, @@time_zone AS time_zone, @@transaction_isolation AS transaction_isolation, @@wait_timeout AS wait_timeout"
@@ -294,6 +321,25 @@ object Protocol:
         }
 
       loop
+
+    override def ensureUtf8mb4Session(serverVariables: Map[String, String]): F[Map[String, String]] =
+      val charsetVariables = List("character_set_client", "character_set_connection")
+      if charsetVariables.forall(name => serverVariables.get(name).exists(_.equalsIgnoreCase(Protocol.UTF8MB4))) then
+        ev.pure(serverVariables)
+      else
+        resetSequenceId *>
+          send(ComQueryPacket(Protocol.SET_NAMES_UTF8MB4, initialPacket.capabilityFlags, ListMap.empty)) *>
+          receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
+            case error: ERRPacket => ev.raiseError(error.toException(Some(Protocol.SET_NAMES_UTF8MB4), None))
+            case _                =>
+              ev.pure(
+                serverVariables ++ List(
+                  "character_set_client"     -> Protocol.UTF8MB4,
+                  "character_set_connection" -> Protocol.UTF8MB4,
+                  "character_set_results"    -> Protocol.UTF8MB4
+                )
+              )
+          }
 
     override def serverVariables(): F[Map[String, String]] =
       resetSequenceId *>
@@ -547,7 +593,7 @@ object Protocol:
                               username,
                               hashedPassword.length.toByte +: hashedPassword.toArray,
                               plugin.name.toString,
-                              initialPacket.characterSet,
+                              Protocol.handshakeCollation(initialPacket.serverVersion),
                               hostInfo.database
                             )
         _ <- socket.send(handshakeResponse)
@@ -579,7 +625,7 @@ object Protocol:
                      capabilityFlags,
                      user,
                      hostInfo.database,
-                     initialPacket.characterSet,
+                     Protocol.handshakeCollation(initialPacket.serverVersion),
                      initialPacket.authPlugin,
                      hashedPassword
                    )

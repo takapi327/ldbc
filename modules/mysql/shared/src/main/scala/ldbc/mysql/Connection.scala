@@ -285,7 +285,7 @@ object Connection:
           pluginMap
         )
       _                <- Resource.eval(protocol.startAuthentication(user, password.getOrElse("")))
-      serverVariables  <- Resource.eval(protocol.serverVariables())
+      serverVariables  <- Resource.eval(F.flatMap(protocol.serverVariables())(protocol.ensureUtf8mb4Session))
       _                <- Resource.eval(protocol.adoptServerPacketLimit(serverVariables))
       readOnly         <- Resource.eval(Ref.of[F, Boolean](false))
       autoCommit       <- Resource.eval(Ref.of[F, Boolean](true))

@@ -185,15 +185,18 @@ class OKPacketTest extends FTestPlatform:
     }
   }
 
-  test("OKPacket decoder with 4-byte affected rows (length=254)") {
-    // Create packet with affected rows that requires 4 bytes
+  test("OKPacket decoder with 8-byte affected rows (length=254)") {
     val packetBytes = Array[Byte](
-      0xfe.toByte, // 254 - indicator for 4 byte integer
+      0xfe.toByte,
       0x78,
       0x56,
       0x34,
-      0x12, // affected rows (0x12345678 = 305419896)
-      0x00, // last insert ID (0)
+      0x12,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
       0x02,
       0x00, // status flags
       0x00,
@@ -237,4 +240,48 @@ class OKPacketTest extends FTestPlatform:
     // Convert back to set
     val convertedFlags = ServerStatusFlags.toEnumSet(numericValue)
     assertEquals(convertedFlags, flags)
+  }
+
+  /**
+   * Regression guard for the finding that the 8-byte form of a length-encoded integer was read as 4 bytes, so the
+   * following fields, including the status flags that carry `NO_BACKSLASH_ESCAPES`, were read from the wrong bytes.
+   */
+  test("OKPacket decoder reads the fields after an 8-byte affected rows and last insert ID") {
+    val packetBytes = Array[Byte](
+      0xfe.toByte,
+      0x00,
+      0x00,
+      0x00,
+      0x01,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0xfe.toByte,
+      0x05,
+      0x00,
+      0x00,
+      0x00,
+      0x01,
+      0x00,
+      0x00,
+      0x00,
+      0x02,
+      0x02,
+      0x03,
+      0x00
+    )
+
+    val result = OKPacket.decoder(Set(CapabilitiesFlags.CLIENT_PROTOCOL_41)).decode(BitVector(packetBytes))
+
+    result match {
+      case Attempt.Successful(decoded) =>
+        val okPacket = decoded.value
+        assertEquals(okPacket.affectedRows, 16777216L)
+        assertEquals(okPacket.lastInsertId, 4294967301L)
+        assert(okPacket.statusFlags.contains(ServerStatusFlags.SERVER_STATUS_NO_BACKSLASH_ESCAPES))
+        assert(okPacket.statusFlags.contains(ServerStatusFlags.SERVER_STATUS_AUTOCOMMIT))
+        assertEquals(okPacket.warnings, Some(3))
+      case _ => fail("Decoding failed")
+    }
   }

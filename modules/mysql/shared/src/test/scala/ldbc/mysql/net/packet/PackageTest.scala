@@ -79,16 +79,10 @@ class PackageTest extends FTestPlatform:
     assertEquals(result.require.value, value.toLong)
   }
 
-  test("lengthEncodedIntDecoder should decode 4-byte integers") {
-    val value     = 16777216 // 2^24
+  test("lengthEncodedIntDecoder should decode 8-byte integers") {
+    val value     = 4294967301L
     val bitVector = BitVector(
-      Array[Byte](
-        0xfe.toByte, // 254 indicates 4-byte integer
-        (value & 0xff).toByte,
-        ((value >> 8) & 0xff).toByte,
-        ((value >> 16) & 0xff).toByte,
-        ((value >> 24) & 0xff).toByte
-      )
+      Array[Byte](0xfe.toByte) ++ Array.tabulate[Byte](8)(index => ((value >> (8 * index)) & 0xff).toByte)
     )
 
     val result = lengthEncodedIntDecoder.decode(bitVector)
