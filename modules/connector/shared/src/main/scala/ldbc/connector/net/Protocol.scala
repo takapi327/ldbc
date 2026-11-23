@@ -147,6 +147,15 @@ trait Protocol[F[_]] extends UtilityCommands[F], Authentication[F]:
   def ensureUtf8mb4Session(serverVariables: Map[String, String]): F[Map[String, String]]
 
   /**
+   * Seeds the tracked `NO_BACKSLASH_ESCAPES` state from the `sql_mode` read after authentication.
+   *
+   * The state is first taken from the server greeting, which is sent before the server runs `init_connect`, so an
+   * `init_connect` that changes the sql_mode would leave it wrong until the next OK packet. The variables read after
+   * authentication reflect it, as MySQL Connector/J relies on.
+   */
+  def adoptSessionSqlMode(serverVariables: Map[String, String]): F[Unit]
+
+  /**
    * Whether the current server session has the `NO_BACKSLASH_ESCAPES` sql_mode enabled.
    *
    * This tracks the live server status: it is seeded from the initial handshake and updated from
@@ -322,6 +331,11 @@ object Protocol:
 
       loop
 
+    override def adoptSessionSqlMode(serverVariables: Map[String, String]): F[Unit] =
+      serverVariables.get("sql_mode") match
+        case Some(sqlMode) => noBackslashEscapesRef.set(sqlMode.contains("NO_BACKSLASH_ESCAPES"))
+        case None          => ev.unit
+
     override def ensureUtf8mb4Session(serverVariables: Map[String, String]): F[Map[String, String]] =
       val charsetVariables = List("character_set_client", "character_set_connection")
       if charsetVariables.forall(name => serverVariables.get(name).exists(_.equalsIgnoreCase(Protocol.UTF8MB4))) then
@@ -425,8 +439,9 @@ object Protocol:
           )
         case more: AuthMoreDataPacket        => readUntilOk(plugin, password, span)
         case packet: AuthSwitchRequestPacket => changeAuthenticationMethod(packet, password, span)
-        case _: OKPacket                     => ev.unit
-        case error: ERRPacket                =>
+        case ok: OKPacket                    =>
+          noBackslashEscapesRef.set(ok.statusFlags.contains(ServerStatusFlags.SERVER_STATUS_NO_BACKSLASH_ESCAPES))
+        case error: ERRPacket =>
           ev.raiseError(
             error.toException(
               s"Check that the ${ hostInfo.host }:${ hostInfo.port } server is running or that the authentication information, etc. used for the connection is correct."
